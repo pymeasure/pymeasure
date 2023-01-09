@@ -33,272 +33,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Port(Channel):
-    placeholder = "pt"
-
-    power_level = Channel.control(
-        ":SOUR{{ch}}:POW:PORT{pt}?", ":SOUR{{ch}}:POW:PORT{pt} %g",
-        """Control the power level (in dBm) of the indicated port on the indicated channel. """,
-        values=[-3E1, 3E1],
-        validator=strict_range,
-    )
-
-
-class Trace(Channel):
-    placeholder = "tr"
-
-    def activate(self):
-        """ Sets the indicated trace as the active one. """
-        self.write(":CALC{{ch}}:PAR{tr}:SEL")
-
-    SPARAM_LIST = ["S11", "S12", "S21", "S22",
-                   "S13", "S23", "S33", "S31",
-                   "S32", "S14", "S24", "S34",
-                   "S41", "S42", "S43", "S44", ]
-
-    measurement_parameter = Channel.control(
-        ":CALC{{ch}}:PAR{tr}:DEF?", ":CALC{{ch}}:PAR{tr}:DEF %s",
-        """Control the measurement parameter of the indicated trace.
-
-        Valid values are any S-parameter (e.g. S11, S12, S41) for 4 ports, or one of the
-        following:
-
-        =====   ================================================================
-        value   description
-        =====   ================================================================
-        Sxx     S-parameters (1-4 for both x)
-        MIX     Response Mixed Mode
-        NFIG    Noise Figure trace response (only with option 41 or 48)
-        NPOW    Noise Power trace response (only with option 41 or 48)
-        NTEMP   Noise Temperature trace response (only with option 41 or 48)
-        AGA     Noise Figure Available Gain trace response (only with option 48)
-        IGA     Noise Figure Insertion Gain trace response (only with option 48)
-        =====   ================================================================
-        """,
-        values=SPARAM_LIST + ["MIX", "NFIG", "NPOW", "NTEMP", "AGA", "IGA"],
-        validator=strict_discrete_set,
-    )
-
-
-class MeasurementChannel(Channel):
-    FREQUENCY_RANGE = [1E7, 4E10]
-    TRACES = [1, 16]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        for pt in range(self.parent.PORTS[1]):
-            self.add_child(Port, pt + 1, collection="ports", prefix="pt_")
-        for tr in range(self.TRACES[1]):
-            self.add_child(Trace, tr + 1, collection="traces", prefix="tr_")
-
-    def check_errors(self):
-        return self.parent.check_errors()
-
-    def activate(self):
-        """ Sets the indicated channel as the active channel. """
-        self.write(":DISP:WIND{ch}:ACT")
-
-    number_of_traces = Channel.control(
-        ":CALC{ch}:PAR:COUN?", ":CALC{ch}:PAR:COUN %d",
-        """Control the number of traces on the specified channel
-
-        Valid values are between 1 and 16.
-        """,
-        values=TRACES,
-        validator=strict_range,
-        cast=int,
-    )
-
-    active_trace = Instrument.setting(
-        ":CALC{ch}:PAR%d:SEL",
-        """Set the active trace on the indicated channel. """,
-        values=TRACES,
-        validator=strict_range,
-    )
-
-    DISPLAY_LAYOUTS = ["R1C1", "R1C2", "R2C1", "R1C3", "R3C1",
-                       "R2C2C1", "R2C1C2", "C2R2R1", "C2R1R2",
-                       "R1C4", "R4C1", "R2C2", "R2C3", "R3C2",
-                       "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
-                       "R4C3", "R3C4", "R4C4"]
-    display_layout = Channel.control(
-        ":DISP:WIND{ch}:SPL?", ":DISP:WIND{ch}:SPL %s",
-        """Control the trace display layout in a Row-by-Column format for the indicated channel.
-
-        Valid values are: {}. The number following the R indicates the number of rows, following the
-        C the number of columns.
-        """.format(", ".join(DISPLAY_LAYOUTS)),
-        values=DISPLAY_LAYOUTS,
-        validator=strict_discrete_set,
-        cast=int,
-    )
-
-    application_type = Channel.control(
-        ":CALC{ch}:APPL:MEAS:TYP?", ":CALC{ch}:APPL:MEAS:TYP %s",
-        """Control the application type of the specified channel.
-
-        Valid values are TRAN (for transmission/reflection), NFIG (for noise figure measurement),
-        PULS (for PulseView).
-        """,
-        values=["TRAN", "NFIG", "PULS"],
-        validator=strict_discrete_set,
-    )
-
-    hold_function = Channel.control(
-        ":SENS{ch}:HOLD:FUNC?", ":SENS{ch}:HOLD:FUNC %s",
-        """Control the hold function of the specified channel.
-
-        valid values are:
-
-        =====   =================================================
-        value   description
-        =====   =================================================
-        CONT    Perform continuous sweeps on all channels
-        HOLD    Hold the sweep on all channels
-        SING    Perform a single sweep and then hold all channels
-        =====   =================================================
-        """,
-        values=["CONT", "HOLD", "SING"],
-        validator=strict_discrete_set,
-    )
-
-    cw_mode_enabled = Channel.control(
-        ":SENS{ch}:SWE:CW?", ":SENS{ch}:SWE:CW %d",
-        """Control the state of the CW sweep mode of the indicated channel. """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    cw_number_of_points = Channel.control(
-        ":SENS{ch}:SWE:CW:POIN?", ":SENS{ch}:SWE:CW:POIN %g",
-        """Control the CW sweep mode number of points of the indicated channel.
-
-        Valid values are between 1 and 25000 or 100000 depending on the maximum points setting.
-        """,
-        values=[1, 100000],
-        validator=strict_range,
-        cast=int,
-    )
-
-    number_of_points = Channel.control(
-        "SENS{ch}:SWE:POIN?", "SENS{ch}:SWE:POIN %g",
-        """Control the number of measurement points in a frequency sweep of the indicated channel.
-
-        Valid values are between 1 and 25000 or 100000 depending on the maximum points setting.
-        """,
-        values=[1, 100000],
-        validator=strict_range,
-        cast=int,
-    )
-
-    frequency_start = Channel.control(
-        ":SENS{ch}:FREQ:STAR?", ":SENS{ch}:FREQ:STAR %g",
-        """Control the start value of the sweep range of the indicated channel in hertz.
-
-        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
-        """,
-        values=FREQUENCY_RANGE,
-        validator=strict_range,
-    )
-
-    frequency_stop = Channel.control(
-        ":SENS{ch}:FREQ:STOP?", ":SENS{ch}:FREQ:STOP %g",
-        """Control the stop value of the sweep range of the indicated channel in hertz.
-
-        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
-        """,
-        values=FREQUENCY_RANGE,
-        validator=strict_range,
-    )
-
-    frequency_span = Channel.control(
-        ":SENS{ch}:FREQ:SPAN?", ":SENS{ch}:FREQ:SPAN %g",
-        """Control the span value of the sweep range of the indicated channel in hertz.
-
-        Valid values are between 2 [Hz] and 4E10 [Hz] (i.e. 40 GHz).
-        """,
-        values=[2, FREQUENCY_RANGE[1]],
-        validator=strict_range,
-    )
-
-    frequency_center = Channel.control(
-        ":SENS{ch}:FREQ:CENT?", ":SENS{ch}:FREQ:CENT %g",
-        """Control the center value of the sweep range of the indicated channel in hertz.
-
-        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
-        """,
-        values=FREQUENCY_RANGE,
-        validator=strict_range,
-    )
-
-    frequency_CW = Channel.control(
-        ":SENS{ch}:FREQ:CW?", ":SENS{ch}:FREQ:CW %g",
-        """Control the CW frequency of the indicated channel in hertz.
-
-        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
-        """,
-        values=FREQUENCY_RANGE,
-        validator=strict_range,
-    )
-
-    def clear_average_count(self):
-        """ Clears and restarts the averaging sweep count of the indicated channel. """
-        self.write(":SENS{ch}:AVER:CLE")
-
-    average_count = Channel.control(
-        ":SENS{ch}:AVER:COUN?", ":SENS{ch}:AVER:COUN %d",
-        """Control the averaging count for the indicated channel.
-
-        The channel must be turned on. Valid values are between 1 and 1024.
-        """,
-        values=[1, 1024],
-        validator=strict_range,
-        cast=int,
-    )
-
-    average_sweep_count = Channel.measurement(
-        ":SENS{ch}:AVER:SWE?",
-        """Get the averaging sweep count for the indicated channel. """,
-        cast=int,
-    )
-
-    average_type = Channel.control(
-        ":SENS{ch}:AVER:TYP?", ":SENS{ch}:AVER:TYP %s",
-        """Control the averaging type to for the indicated channel.
-
-        Valid values are POIN (point-by-point) or SWE (sweep-by-sweep)
-        """,
-        values=["POIN", "SWE"],
-        validator=strict_discrete_set,
-    )
-
-    averaging_enabled = Channel.control(
-        ":SENS{ch}:AVER?", ":SENS{ch}:AVER %d",
-        """Control whether the averaging is turned on for the indicated channel. """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    bandwidth = Channel.control(
-        ":SENS{ch}:BWID?", ":SENS{ch}:BWID %g",
-        """Control the IF bandwidth for the indicated channel.
-
-        Valid values are between 1 [Hz] and 1E6 [Hz] (i.e. 1 MHz). The system will automatically
-        select the closest IF bandwidth from the available options (1, 3, 10 ... 1E5, 3E5, 1E6).
-        """,
-        values=[1, 1E6],
-        validator=strict_range,
-    )
-
-    calibration_enabled = Channel.control(
-        ":SENS{ch}:CORR:STAT?", ":SENS{ch}:CORR:STAT %d",
-        """Control whether the RF correction (calibration) is enabled for indicated channel. """,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-
 class AnritsuMS4644B(Instrument):
     """ A class representing the Anritsu MS4644B Vector Network Analyzer (VNA).
 
@@ -307,6 +41,18 @@ class AnritsuMS4644B(Instrument):
     TRACES = [1, 16]
     PORTS = [1, 4]  # TODO: check number: 4 or 7/8
     TRIGGER_TYPES = ["POIN", "SWE", "CHAN", "ALL"]
+
+    FREQUENCY_RANGE = [1E7, 4E10]
+
+    SPARAM_LIST = ["S11", "S12", "S21", "S22",
+                   "S13", "S23", "S33", "S31",
+                   "S32", "S14", "S24", "S34",
+                   "S41", "S42", "S43", "S44", ]
+    DISPLAY_LAYOUTS = ["R1C1", "R1C2", "R2C1", "R1C3", "R3C1",
+                       "R2C2C1", "R2C1C2", "C2R2R1", "C2R1R2",
+                       "R1C4", "R4C1", "R2C2", "R2C3", "R3C2",
+                       "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
+                       "R4C3", "R3C4", "R4C4"]
 
     def __init__(self, adapter, **kwargs):
         super().__init__(
@@ -496,11 +242,6 @@ class AnritsuMS4644B(Instrument):
         cast=int,
     )
 
-    DISPLAY_LAYOUTS = ["R1C1", "R1C2", "R2C1", "R1C3", "R3C1",
-                       "R2C2C1", "R2C1C2", "C2R2R1", "C2R1R2",
-                       "R1C4", "R4C1", "R2C2", "R2C3", "R3C2",
-                       "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
-                       "R4C3", "R3C4", "R4C4"]
     display_layout = Channel.control(
         ":DISP:SPL?", ":DISP:SPL %s",
         """Control the channel display layout in a Row-by-Column format.
@@ -633,4 +374,258 @@ class AnritsuMS4644B(Instrument):
         """,
         values=["CONT", "HOLD", "SING"],
         validator=strict_discrete_set,
+    )
+
+
+class Port(Channel):
+    placeholder = "pt"
+
+    power_level = Channel.control(
+        ":SOUR{{ch}}:POW:PORT{pt}?", ":SOUR{{ch}}:POW:PORT{pt} %g",
+        """Control the power level (in dBm) of the indicated port on the indicated channel. """,
+        values=[-3E1, 3E1],
+        validator=strict_range,
+    )
+
+
+class Trace(Channel):
+    placeholder = "tr"
+
+    def activate(self):
+        """ Sets the indicated trace as the active one. """
+        self.write(":CALC{{ch}}:PAR{tr}:SEL")
+
+    measurement_parameter = Channel.control(
+        ":CALC{{ch}}:PAR{tr}:DEF?", ":CALC{{ch}}:PAR{tr}:DEF %s",
+        """Control the measurement parameter of the indicated trace.
+
+        Valid values are any S-parameter (e.g. S11, S12, S41) for 4 ports, or one of the
+        following:
+
+        =====   ================================================================
+        value   description
+        =====   ================================================================
+        Sxx     S-parameters (1-4 for both x)
+        MIX     Response Mixed Mode
+        NFIG    Noise Figure trace response (only with option 41 or 48)
+        NPOW    Noise Power trace response (only with option 41 or 48)
+        NTEMP   Noise Temperature trace response (only with option 41 or 48)
+        AGA     Noise Figure Available Gain trace response (only with option 48)
+        IGA     Noise Figure Insertion Gain trace response (only with option 48)
+        =====   ================================================================
+        """,
+        values=AnritsuMS4644B.SPARAM_LIST + ["MIX", "NFIG", "NPOW", "NTEMP", "AGA", "IGA"],
+        validator=strict_discrete_set,
+    )
+
+
+class MeasurementChannel(Channel):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for pt in range(self.parent.PORTS[1]):
+            self.add_child(Port, pt + 1, collection="ports", prefix="pt_")
+        for tr in range(self.parent.TRACES[1]):
+            self.add_child(Trace, tr + 1, collection="traces", prefix="tr_")
+
+    def check_errors(self):
+        return self.parent.check_errors()
+
+    def activate(self):
+        """ Sets the indicated channel as the active channel. """
+        self.write(":DISP:WIND{ch}:ACT")
+
+    number_of_traces = Channel.control(
+        ":CALC{ch}:PAR:COUN?", ":CALC{ch}:PAR:COUN %d",
+        """Control the number of traces on the specified channel
+
+        Valid values are between 1 and 16.
+        """,
+        values=AnritsuMS4644B.TRACES,
+        validator=strict_range,
+        cast=int,
+    )
+
+    active_trace = Instrument.setting(
+        ":CALC{ch}:PAR%d:SEL",
+        """Set the active trace on the indicated channel. """,
+        values=AnritsuMS4644B.TRACES,
+        validator=strict_range,
+    )
+
+    display_layout = Channel.control(
+        ":DISP:WIND{ch}:SPL?", ":DISP:WIND{ch}:SPL %s",
+        """Control the trace display layout in a Row-by-Column format for the indicated channel.
+
+        Valid values are: {}. The number following the R indicates the number of rows, following the
+        C the number of columns.
+        """.format(", ".join(AnritsuMS4644B.DISPLAY_LAYOUTS)),
+        values=AnritsuMS4644B.DISPLAY_LAYOUTS,
+        validator=strict_discrete_set,
+        cast=int,
+    )
+
+    application_type = Channel.control(
+        ":CALC{ch}:APPL:MEAS:TYP?", ":CALC{ch}:APPL:MEAS:TYP %s",
+        """Control the application type of the specified channel.
+
+        Valid values are TRAN (for transmission/reflection), NFIG (for noise figure measurement),
+        PULS (for PulseView).
+        """,
+        values=["TRAN", "NFIG", "PULS"],
+        validator=strict_discrete_set,
+    )
+
+    hold_function = Channel.control(
+        ":SENS{ch}:HOLD:FUNC?", ":SENS{ch}:HOLD:FUNC %s",
+        """Control the hold function of the specified channel.
+
+        valid values are:
+
+        =====   =================================================
+        value   description
+        =====   =================================================
+        CONT    Perform continuous sweeps on all channels
+        HOLD    Hold the sweep on all channels
+        SING    Perform a single sweep and then hold all channels
+        =====   =================================================
+        """,
+        values=["CONT", "HOLD", "SING"],
+        validator=strict_discrete_set,
+    )
+
+    cw_mode_enabled = Channel.control(
+        ":SENS{ch}:SWE:CW?", ":SENS{ch}:SWE:CW %d",
+        """Control the state of the CW sweep mode of the indicated channel. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    cw_number_of_points = Channel.control(
+        ":SENS{ch}:SWE:CW:POIN?", ":SENS{ch}:SWE:CW:POIN %g",
+        """Control the CW sweep mode number of points of the indicated channel.
+
+        Valid values are between 1 and 25000 or 100000 depending on the maximum points setting.
+        """,
+        values=[1, 100000],
+        validator=strict_range,
+        cast=int,
+    )
+
+    number_of_points = Channel.control(
+        "SENS{ch}:SWE:POIN?", "SENS{ch}:SWE:POIN %g",
+        """Control the number of measurement points in a frequency sweep of the indicated channel.
+
+        Valid values are between 1 and 25000 or 100000 depending on the maximum points setting.
+        """,
+        values=[1, 100000],
+        validator=strict_range,
+        cast=int,
+    )
+
+    frequency_start = Channel.control(
+        ":SENS{ch}:FREQ:STAR?", ":SENS{ch}:FREQ:STAR %g",
+        """Control the start value of the sweep range of the indicated channel in hertz.
+
+        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
+        """,
+        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        validator=strict_range,
+    )
+
+    frequency_stop = Channel.control(
+        ":SENS{ch}:FREQ:STOP?", ":SENS{ch}:FREQ:STOP %g",
+        """Control the stop value of the sweep range of the indicated channel in hertz.
+
+        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
+        """,
+        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        validator=strict_range,
+    )
+
+    frequency_span = Channel.control(
+        ":SENS{ch}:FREQ:SPAN?", ":SENS{ch}:FREQ:SPAN %g",
+        """Control the span value of the sweep range of the indicated channel in hertz.
+
+        Valid values are between 2 [Hz] and 4E10 [Hz] (i.e. 40 GHz).
+        """,
+        values=[2, AnritsuMS4644B.FREQUENCY_RANGE[1]],
+        validator=strict_range,
+    )
+
+    frequency_center = Channel.control(
+        ":SENS{ch}:FREQ:CENT?", ":SENS{ch}:FREQ:CENT %g",
+        """Control the center value of the sweep range of the indicated channel in hertz.
+
+        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
+        """,
+        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        validator=strict_range,
+    )
+
+    frequency_CW = Channel.control(
+        ":SENS{ch}:FREQ:CW?", ":SENS{ch}:FREQ:CW %g",
+        """Control the CW frequency of the indicated channel in hertz.
+
+        Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
+        """,
+        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        validator=strict_range,
+    )
+
+    def clear_average_count(self):
+        """ Clears and restarts the averaging sweep count of the indicated channel. """
+        self.write(":SENS{ch}:AVER:CLE")
+
+    average_count = Channel.control(
+        ":SENS{ch}:AVER:COUN?", ":SENS{ch}:AVER:COUN %d",
+        """Control the averaging count for the indicated channel.
+
+        The channel must be turned on. Valid values are between 1 and 1024.
+        """,
+        values=[1, 1024],
+        validator=strict_range,
+        cast=int,
+    )
+
+    average_sweep_count = Channel.measurement(
+        ":SENS{ch}:AVER:SWE?",
+        """Get the averaging sweep count for the indicated channel. """,
+        cast=int,
+    )
+
+    average_type = Channel.control(
+        ":SENS{ch}:AVER:TYP?", ":SENS{ch}:AVER:TYP %s",
+        """Control the averaging type to for the indicated channel.
+
+        Valid values are POIN (point-by-point) or SWE (sweep-by-sweep)
+        """,
+        values=["POIN", "SWE"],
+        validator=strict_discrete_set,
+    )
+
+    averaging_enabled = Channel.control(
+        ":SENS{ch}:AVER?", ":SENS{ch}:AVER %d",
+        """Control whether the averaging is turned on for the indicated channel. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    bandwidth = Channel.control(
+        ":SENS{ch}:BWID?", ":SENS{ch}:BWID %g",
+        """Control the IF bandwidth for the indicated channel.
+
+        Valid values are between 1 [Hz] and 1E6 [Hz] (i.e. 1 MHz). The system will automatically
+        select the closest IF bandwidth from the available options (1, 3, 10 ... 1E5, 3E5, 1E6).
+        """,
+        values=[1, 1E6],
+        validator=strict_range,
+    )
+
+    calibration_enabled = Channel.control(
+        ":SENS{ch}:CORR:STAT?", ":SENS{ch}:CORR:STAT %d",
+        """Control whether the RF correction (calibration) is enabled for indicated channel. """,
+        values={True: 1, False: 0},
+        map_values=True,
     )
