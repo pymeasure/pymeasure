@@ -22,9 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.test import expected_protocol
+import pytest
 
-from pymeasure.instruments.anritsu import AnritsuMS464xB
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.anritsu import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B,\
+    AnritsuMS4645B, AnritsuMS4647B
 
 
 def test_init():
@@ -95,3 +97,37 @@ def test_channel_trace_measurement_parameter():
     ) as instr:
         instr.ch_6.tr_1.measurement_parameter = "S11"
         assert instr.ch_2.tr_6.measurement_parameter == "S21"
+
+
+def test_subclasses():
+    with expected_protocol(
+        AnritsuMS4642B,
+        [(":SENS1:FREQ:STOP 2e+10", None)],
+    ) as instr:
+        instr.ch_1.frequency_stop = 2e10
+        with pytest.raises(ValueError):
+            instr.ch_1.frequency_stop = 3e10
+
+    with expected_protocol(
+        AnritsuMS4644B,
+        [(":SENS1:FREQ:STOP 4e+10", None)],
+    ) as instr:
+        instr.ch_1.frequency_stop = 4e10
+        with pytest.raises(ValueError):
+            instr.ch_1.frequency_stop = 5e10
+
+    with expected_protocol(
+        AnritsuMS4645B,
+        [(":SENS1:FREQ:STOP 5e+10", None)],
+    ) as instr:
+        instr.ch_1.frequency_stop = 5e10
+        with pytest.raises(ValueError):
+            instr.ch_1.frequency_stop = 6e10
+
+    with expected_protocol(
+        AnritsuMS4647B,
+        [(":SENS1:FREQ:STOP 7e+10", None)],
+    ) as instr:
+        instr.ch_1.frequency_stop = 7e10
+        with pytest.raises(ValueError):
+            instr.ch_1.frequency_stop = 8e10

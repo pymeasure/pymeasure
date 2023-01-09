@@ -35,7 +35,9 @@ log.addHandler(logging.NullHandler())
 
 class AnritsuMS464xB(Instrument):
     """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series. Supports the
-    MS4642B, MS4644B, MS4645B, and MS4647B.
+    MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in their respective classes
+    (:class:`~.AnritsuMS4642B`, :class:`~.AnritsuMS4644B`, :class:`~.AnritsuMS4645B`,
+    :class:`~.AnritsuMS4647B`), that only differ in the available frequency range.
 
     Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
     of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
@@ -66,12 +68,18 @@ class AnritsuMS464xB(Instrument):
             **kwargs,
         )
 
-        for ch in range(self.CHANNELS[1]):
-            self.add_child(MeasurementChannel, ch + 1)
+        self.update_channels(self.CHANNELS[1])
 
-    def update_channels(self):
-        """Create or remove channels to be correct with the actual number of channels. """
-        number_of_channels = self.number_of_channels
+    def update_channels(self, number_of_channels=None):
+        """Create or remove channels to be correct with the actual number of channels.
+
+        :param int number_of_channels: optional, if given defines the desired number of channels.
+        """
+        if number_of_channels is None:
+            number_of_channels = self.number_of_channels
+
+        if not hasattr(self, "channels"):
+            self.channels = {}
 
         if len(self.channels) == number_of_channels:
             return
@@ -82,7 +90,8 @@ class AnritsuMS464xB(Instrument):
 
         # Remove create new channels
         while len(self.channels) < number_of_channels:
-            self.add_child(MeasurementChannel, len(self.channels) + 1)
+            self.add_child(MeasurementChannel, len(self.channels) + 1,
+                           frequency_range=self.FREQUENCY_RANGE)
 
     def check_errors(self):
         """ Read all errors from the instrument.
@@ -521,22 +530,44 @@ class Trace(Channel):
 class MeasurementChannel(Channel):
     """Represents a channel of Anritsu MS464xB VNA.
 
-    Can contain up to 4 instances of :class:`~.Port` (accessible via the `ports` dict or directly
-    `pt_` + the port number) and up to 16 instances of :class:`~.Trace` (accessible via the `traces`
-    dict or directly `tr_` + the trace number).
+    Contains 4 instances of :class:`~.Port` (accessible via the `ports` dict or directly `pt_` + the
+    port number) and up to 16 instances of :class:`~.Trace` (accessible via the `traces` dict or
+    directly `tr_` + the trace number).
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, frequency_range=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         for pt in range(self.parent.PORTS[1]):
             self.add_child(Port, pt + 1, collection="ports", prefix="pt_")
-        for tr in range(self.parent.TRACES[1]):
-            self.add_child(Trace, tr + 1, collection="traces", prefix="tr_")
 
-    def update_traces(self):
-        """Create or remove traces to be correct with the actual number of traces. """
-        number_of_traces = self.number_of_traces
+        self.update_traces(self.parent.TRACES[1])
+
+        if frequency_range is not None:
+            self.update_frequency_range(frequency_range)
+
+    def update_frequency_range(self, frequency_range):
+        """Update the values-attribute of the frequency-related dynamic properties.
+
+        :param list frequency_range: the frequency range that the instrument is capable of.
+        """
+        self.frequency_start_values = frequency_range
+        self.frequency_stop_values = frequency_range
+        self.frequency_center_values = frequency_range
+        self.frequency_CW_values = frequency_range
+
+        self.frequency_span_values = [2, frequency_range[1]]
+
+    def update_traces(self, number_of_traces=None):
+        """Create or remove traces to be correct with the actual number of traces.
+
+        :param int number_of_traces: optional, if given defines the desired number of traces.
+        """
+        if number_of_traces is None:
+            number_of_traces = self.number_of_traces
+
+        if not hasattr(self, "traces"):
+            self.traces = {}
 
         if len(self.traces) == number_of_traces:
             return
@@ -652,6 +683,7 @@ class MeasurementChannel(Channel):
         """,
         values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
+        dynamic=True,
     )
 
     frequency_stop = Channel.control(
@@ -662,6 +694,7 @@ class MeasurementChannel(Channel):
         """,
         values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
+        dynamic=True,
     )
 
     frequency_span = Channel.control(
@@ -672,6 +705,7 @@ class MeasurementChannel(Channel):
         """,
         values=[2, AnritsuMS464xB.FREQUENCY_RANGE[1]],
         validator=strict_range,
+        dynamic=True,
     )
 
     frequency_center = Channel.control(
@@ -682,6 +716,7 @@ class MeasurementChannel(Channel):
         """,
         values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
+        dynamic=True,
     )
 
     frequency_CW = Channel.control(
@@ -692,6 +727,7 @@ class MeasurementChannel(Channel):
         """,
         values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
+        dynamic=True,
     )
 
     def clear_average_count(self):
@@ -790,3 +826,19 @@ class MeasurementChannel(Channel):
         values={True: 1, False: 0},
         map_values=True,
     )
+
+
+class AnritsuMS4642B(AnritsuMS464xB):
+    FREQUENCY_RANGE = [1E7, 2E10]
+
+
+class AnritsuMS4644B(AnritsuMS464xB):
+    FREQUENCY_RANGE = [1E7, 4E10]
+
+
+class AnritsuMS4645B(AnritsuMS464xB):
+    FREQUENCY_RANGE = [1E7, 5E10]
+
+
+class AnritsuMS4647B(AnritsuMS464xB):
+    FREQUENCY_RANGE = [1E7, 7E10]
