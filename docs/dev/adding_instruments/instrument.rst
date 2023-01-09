@@ -110,9 +110,9 @@ However, there are a couple of practices that have turned out to be useful to fo
 * The bulk of your instrument's interface will probably be made up of properties for quantities to set and/or read out. Our custom properties (see :ref:`writing_properties` ff. below) offer some convenience features and are therefore preferable, but plain Python properties are also fine.
 * "Actions", commands or verbs should typically be methods, not properties: :code:`recall()`, :code:`trigger_scan()`, :code:`prepare_resistance_measurement()`, etc.
 * This separation between properties and methods also naturally helps with observing the `"command-query separation" principle <https://en.wikipedia.org/wiki/Command%E2%80%93query_separation>`__.
-* If your instrument has multiple identical channels, see doc:`channels`.
+* If your instrument has multiple identical channels, see :ref:`channels`.
 
-In principle, you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see doc:`advanced_communication_protocols`.
+In principle, you are free to write any methods that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see :ref:`advanced_communication_protocols`.
 
 In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
 
@@ -272,4 +272,4 @@ When the instrument instance is created, the interface-specific settings for the
 This way, we always pass on a valid set of arguments.
 In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
 
-For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether doc:`advanced_communication_protocols` fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
+For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether :ref:`advanced_communication_protocols` fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
