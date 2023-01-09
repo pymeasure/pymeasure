@@ -394,7 +394,7 @@ class KeysightDSOX1102G(Instrument):
 
     @property
     def waveform_preamble(self):
-        """ Get preamble information for the selected waveform source as a dict with the following keys:  # noqa: E501
+        """ Get preamble information for the selected waveform source as a dict with the following keys:
             - "format": byte, word, or ascii (str)
             - "type": normal, peak detect, or average (str)
             - "points": nb of data points transferred (int)
@@ -404,7 +404,7 @@ class KeysightDSOX1102G(Instrument):
             - "xreference": data point associated with xorigin (int)
             - "yincrement": voltage difference between data points (float)
             - "yorigin": voltage at center of screen (float)
-            - "yreference": data point associated with yorigin (int)"""
+            - "yreference": data point associated with yorigin (int)"""  # noqa: E501
         return self._waveform_preamble()
 
     @property

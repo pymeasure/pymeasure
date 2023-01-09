@@ -230,12 +230,12 @@ class HP8116A(Instrument):
         self._wait_for_commands_processed()
 
     def ask(self, command, num_bytes=None):
-        """ Write a command to the instrument, read the response, and return the response as ASCII text.  # noqa: E501
+        """ Write a command to the instrument, read the response, and return the response as ASCII text.
 
         :param command: The command to send to the instrument.
         :param num_bytes: The number of bytes to read from the instrument. If not specified,
                           the number of bytes is automatically determined by the command.
-        """
+        """  # noqa: E501
         self.write(command)
 
         if num_bytes is None:

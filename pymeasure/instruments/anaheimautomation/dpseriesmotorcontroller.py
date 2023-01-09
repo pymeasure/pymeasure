@@ -331,10 +331,10 @@ class DPSeriesMotorController(Instrument):
         super().write(cmd_str)
 
     def wait_for_completion(self, interval=0.5):
-        """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)  # noqa: E501
+        """ Block until the controller is not "busy" (i.e. block until the motor is no longer moving.)
 
         :param interval: (float) seconds between queries to the "busy" flag.
         :return: None
-        """
+        """  # noqa: E501
         while self.busy:
             sleep(interval)

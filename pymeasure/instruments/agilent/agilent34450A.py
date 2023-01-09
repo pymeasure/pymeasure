@@ -321,8 +321,8 @@ class Agilent34450A(Instrument):
 
     temperature = Instrument.measurement(
         ":READ?",
-        """ Reads a temperature measurement in Celsius, based on the active :attr:`~.Agilent34450A.mode`.  # noqa: E501
-        """
+        """ Reads a temperature measurement in Celsius, based on the active :attr:`~.Agilent34450A.mode`.
+        """  # noqa: E501
     )
 
     #############
@@ -341,8 +341,8 @@ class Agilent34450A(Instrument):
 
     capacitance = Instrument.measurement(
         ":READ?",
-        """ Reads a capacitance measurement in Farads, based on the active :attr:`~.Agilent34450A.mode`.  # noqa: E501
-        """
+        """ Reads a capacitance measurement in Farads, based on the active :attr:`~.Agilent34450A.mode`.
+        """  # noqa: E501
     )
     capacitance_range = Instrument.control(
         ":SENS:CAP:RANG?", ":SENS:CAP:RANG:AUTO 0;:SENS:CAP:RANG %s",
