@@ -67,12 +67,12 @@ def test_procedure_properties():
     class TestProcedure(Procedure):
         @property
         def a(self):
-            assert(isinstance(self.x, int))
+            assert isinstance(self.x, int)
             return self.x
 
         @property
         def z(self):
-            assert(isinstance(self.x, int))
+            assert isinstance(self.x, int)
             return self.x
         x = Parameter('X', default=5)
 
