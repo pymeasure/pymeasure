@@ -66,7 +66,22 @@ class AnritsuMS4644B(Instrument):
         )
 
         for ch in range(self.CHANNELS[1]):
-            self.add_child(MeasurementChannel, ch+1)
+            self.add_child(MeasurementChannel, ch + 1)
+
+    def update_channels(self):
+        """Create or remove channels to be correct with the actual number of channels. """
+        number_of_channels = self.number_of_channels
+
+        if len(self.channels) == number_of_channels:
+            return
+
+        # Remove redant channels
+        while len(self.channels) > number_of_channels:
+            self.remove_child(self.channels[len(self.channels)])
+
+        # Remove create new channels
+        while len(self.channels) < number_of_channels:
+            self.add_child(MeasurementChannel, len(self.channels) + 1)
 
     def check_errors(self):
         """ Read all errors from the instrument.
@@ -518,6 +533,21 @@ class MeasurementChannel(Channel):
             self.add_child(Port, pt + 1, collection="ports", prefix="pt_")
         for tr in range(self.parent.TRACES[1]):
             self.add_child(Trace, tr + 1, collection="traces", prefix="tr_")
+
+    def update_traces(self):
+        """Create or remove traces to be correct with the actual number of traces. """
+        number_of_traces = self.number_of_traces
+
+        if len(self.traces) == number_of_traces:
+            return
+
+        # Remove redant channels
+        while len(self.traces) > number_of_traces:
+            self.remove_child(self.traces[len(self.traces)])
+
+        # Remove create new channels
+        while len(self.traces) < number_of_traces:
+            self.add_child(Trace, len(self.traces) + 1, collection="traces", prefix="tr_")
 
     def check_errors(self):
         return self.parent.check_errors()

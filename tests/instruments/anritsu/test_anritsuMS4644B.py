@@ -31,8 +31,23 @@ def test_init():
     with expected_protocol(
         AnritsuMS4644B,
         [],
-    ):
-        pass
+    ) as instr:
+        assert len(instr.channels) == 16
+        assert len(instr.ch_1.ports) == 4
+        assert len(instr.ch_1.traces) == 16
+
+
+def test_update_channels():
+    with expected_protocol(
+        AnritsuMS4644B,
+        [(":DISP:COUN?", "8"),
+         (":DISP:COUN?", "12")],
+    ) as instr:
+        assert len(instr.channels) == 16
+        instr.update_channels()
+        assert len(instr.channels) == 8
+        instr.update_channels()
+        assert len(instr.channels) == 12
 
 
 def test_channel_number_of_traces():
@@ -44,6 +59,20 @@ def test_channel_number_of_traces():
     ) as instr:
         instr.ch_6.number_of_traces = 16
         assert instr.ch_2.number_of_traces == 4
+
+
+def test_channel_update_traces():
+    # Test first level channel
+    with expected_protocol(
+        AnritsuMS4644B,
+        [(":CALC1:PAR:COUN?", "4"),
+         (":CALC1:PAR:COUN?", "12")],
+    ) as instr:
+        assert len(instr.ch_1.traces) == 16
+        instr.ch_1.update_traces()
+        assert len(instr.ch_1.traces) == 4
+        instr.ch_1.update_traces()
+        assert len(instr.ch_1.traces) == 12
 
 
 def test_channel_port_power_level():
