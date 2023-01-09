@@ -6,6 +6,21 @@ Advanced communication protocols
 Some devices require a more advanced communication protocol, e.g. due to checksums or device addresses. In most cases, it is sufficient to subclass :meth:`Instrument.write <pymeasure.instruments.Instrument.write>` and :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`.
 
 
+.. testsetup::
+
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting simple usage cases (default doctest group)
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
+
+.. testsetup:: with-protocol-tests
+
+    # If we want to run protocol tests on doctest code, we need to use a
+    # separate doctest "group" and a different set of imports.
+    # See https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
+    from pymeasure.instruments import Instrument, Channel
+    from pymeasure.test import expected_protocol
+
+
 Instrument's inner workings
 ***************************
 

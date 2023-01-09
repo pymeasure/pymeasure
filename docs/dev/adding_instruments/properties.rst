@@ -5,6 +5,17 @@ Writing properties
 
 In PyMeasure, `Python properties`_ are the preferred method for dealing with variables that are read or set.
 
+
+.. testsetup::
+
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting simple usage cases (default doctest group)
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
+    class Extreme5000(Instrument):
+        def __init__(self, adapter, name="Test", **kwargs):
+            super().__init__(adapter, name, **kwargs)
+
+
 The property factories
 **********************
 PyMeasure comes with three central convenience factory functions for making properties for classes: :func:`CommonBase.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`CommonBase.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`CommonBase.setting <pymeasure.instruments.common_base.CommonBase.setting>`.

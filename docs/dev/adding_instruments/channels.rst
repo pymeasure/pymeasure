@@ -3,6 +3,22 @@
 Instruments with channels
 =========================
 
+
+.. testsetup::
+
+    # Behind the scene, replace Instrument with FakeInstrument to enable
+    # doctesting simple usage cases (default doctest group)
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument
+
+.. testsetup:: with-protocol-tests
+
+    # If we want to run protocol tests on doctest code, we need to use a
+    # separate doctest "group" and a different set of imports.
+    # See https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
+    from pymeasure.instruments import Instrument, Channel
+    from pymeasure.test import expected_protocol
+
+
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name.
 For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :class:`~pymeasure.instruments.Instrument` instance (i.e., a parent instrument) instead of an :class:`~pymeasure.adapters.Adapter` as parameter.
 All the channel communication is routed through the instrument's methods (`write`, `read`, etc.).
