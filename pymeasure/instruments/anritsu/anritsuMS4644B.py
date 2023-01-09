@@ -39,7 +39,7 @@ class AnritsuMS4644B(Instrument):
     """
     CHANNELS = [1, 16]
     TRACES = [1, 16]
-    PORTS = [1, 4]  # TODO: check number: 4 or 7/8
+    PORTS = [1, 4]
     TRIGGER_TYPES = ["POIN", "SWE", "CHAN", "ALL"]
 
     FREQUENCY_RANGE = [1E7, 4E10]
@@ -75,7 +75,6 @@ class AnritsuMS4644B(Instrument):
             err = self.values("SYST:ERR?")
             if err[0] != "No Error":
                 log.error(f"{self.name}: {err[0]}")
-                print(err)  # TODO: remove this line
                 errors.append(err)
             else:
                 break
