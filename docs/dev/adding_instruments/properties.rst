@@ -1,4 +1,4 @@
-.. _writing_properties:
+.. _properties:
 
 Writing properties
 ==================

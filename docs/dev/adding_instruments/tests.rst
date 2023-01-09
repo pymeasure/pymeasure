@@ -16,6 +16,9 @@ The second group tests the code with a device connected.
 Implement device tests by adding files in the :code:`tests/instruments/...` directory tree, mirroring the structure of the instrument implementations.
 There are other instrument tests already available that can serve as inspiration.
 
+
+.. _protocol_tests:
+
 Protocol tests
 **************
 
@@ -59,6 +62,9 @@ Some protocol tests in the test suite can serve as examples:
 * Testing a simple instrument: :code:`tests/instruments/keithley/test_keithley2000.py`
 * Testing a multi-channel instrument: :code:`tests/instruments/tektronix/test_afg3152.py`
 * Testing instruments using frame-based communication: :code:`tests/instruments/hcp/tc038.py`
+
+
+.. _device_tests:
 
 Device tests
 ************
