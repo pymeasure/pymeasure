@@ -375,6 +375,86 @@ class AnritsuMS4644B(Instrument):
         validator=strict_discrete_set,
     )
 
+    def load_data_file(self, filename):
+        """Load a data file in VNA HDD.
+
+        :param str filename: full filename including path
+        """
+
+        self.write(f":MMEM:LOAD '{filename}'")
+
+    def delete_data_file(self, filename):
+        """Delete a file on the VNA HDD.
+
+        :param str filename: full filename including path
+        """
+        self.write(f":MMEM:DEL '{filename}'")
+
+    def copy_data_file(self, from_filename, to_filename):
+        """Copy a file on the VNA HDD.
+
+        :param str from_filename: full filename including pat
+        :param str to_filename: full filename including path
+        """
+        self.write(f":MMEM:COPY '{from_filename}', '{to_filename}'")
+
+    def load_data_file_to_memory(self, filename):
+        """Load a data file to a memory trace.
+
+        :param str filename: full filename including path
+        """
+        self.write(f":MMEM:LOAD:MDATA '{filename}'")
+
+    def create_directory(self, dir_name):
+        """Create a directory on the VNA HDD.
+
+        :param str dir_name: directory name
+        """
+        self.write(f":MMEM:MDIR '{dir_name}'")
+
+    def delete_directory(self, dir_name):
+        """Delete a directory on the VNA HDD.
+
+        :param str dir_name: directory name
+        """
+        self.write(f":MMEM:RDIR '{dir_name}'")
+
+    def store_image(self, filename):
+        """Capture a screenshot to the file specified.
+
+        :param str filename: full filename including path
+        """
+        self.write(f":MMEM:STOR:IMAG '{filename}'")
+
+    def read_datafile(
+        self,
+        channel,
+        sweep_points,
+        datafile_freq,
+        datafile_par,
+        filename,
+    ):
+        """Read a data file from the VNA.
+
+        :param int channel: Channel Index
+        :param int sweep_points: number of sweep point as an integer
+        :param DataFileFrequencyUnits datafile_freq: Data file frequency unit
+        :param DataFileParameter datafile_par: Data file parameter format
+        :param str filename: full path of the file to be saved
+        """
+        cur_ch = self.channels[channel]  # type: MeasurementChannel
+        cur_ch.sweep_points = sweep_points
+        self.datafile_frequency_unit = datafile_freq
+        self.datafile_parameter_format = datafile_par
+        self.write("TRS;WFS;OS2P")
+
+        bytes_to_transfer = int(self.read_bytes(11)[2:11])
+        data = self.read_bytes(bytes_to_transfer)
+        with open(filename, "w") as textfile:
+            data_list = data.split(b"\r\n")
+            for s in data_list:
+                textfile.write(str(s)[2 : len(s)] + "\n")  # noqa
+
 
 class Port(Channel):
     placeholder = "pt"
@@ -609,6 +689,47 @@ class MeasurementChannel(Channel):
         """Control whether the averaging is turned on for the indicated channel. """,
         values={True: 1, False: 0},
         map_values=True,
+    )
+
+    sweep_type = Instrument.control(
+        ":SENS{ch}:SWE:TYP?", ":SENS{ch}:SWE:TYP %s",
+        """Control the sweep type of the indicated channel.
+
+        Valid options are:
+
+        =====   ===============================================================
+        value   description
+        =====   ===============================================================
+        LIN     Frequency-based linear sweep
+        LOG     Frequency-based logarithmic sweep
+        FSEGM   Segment-based sweep with frequency-based segments
+        ISEGM   Index-based sweep with frequency-based segments
+        POW     Power-based sweep with either a CW frequency or swept-frequency
+        MFGC    Multiple frequency gain compression
+        =====   ===============================================================
+        """,
+        validator=strict_discrete_set,
+        values=["LIN", "LOG", "FSEGM", "ISEGM", "POW", "MFGC"],
+    )
+
+    sweep_mode = Instrument.control(
+        ":SENS{ch}:SA:MODE?", ":SENS{ch}:SA:MODE %s",
+        """Control the sweep mode for Spectrum Analysis on the indicated channel.
+
+        Valid options are VNA (for a VNA-like mode where the instrument will only measure at points
+        in the frequency list) or CLAS (for a classical mode, where the instrument will scan all
+        frequencies in the range).""",
+        validator=strict_discrete_set,
+        values=["VNA", "CLAS"],
+    )
+
+    sweep_time = Instrument.control(
+        ":SENS{ch}:SWE:TIM?", ":SENS{ch}:SWE:TIM %d",
+        """Control the sweep time of the indicated channel.
+
+        Valid values are between 2 and 100000.""",
+        validator=strict_range,
+        values=[2, 100000],
     )
 
     bandwidth = Channel.control(
