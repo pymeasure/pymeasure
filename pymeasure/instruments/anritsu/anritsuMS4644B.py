@@ -54,10 +54,10 @@ class AnritsuMS4644B(Instrument):
                        "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
                        "R4C3", "R3C4", "R4C4"]
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anritsu MS4644B Vector Network Analyzer", **kwargs):
         super().__init__(
             adapter,
-            "Anritsu MS4644B Vector Network Analyzer",
+            name,
             timeout=10000,
             **kwargs,
         )
