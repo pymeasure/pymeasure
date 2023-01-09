@@ -33,8 +33,9 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AnritsuMS4644B(Instrument):
-    """ A class representing the Anritsu MS4644B Vector Network Analyzer (VNA).
+class AnritsuMS464xB(Instrument):
+    """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series. Supports the
+    MS4642B, MS4644B, MS4645B, and MS4647B.
 
     Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
     of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
@@ -45,7 +46,7 @@ class AnritsuMS4644B(Instrument):
     PORTS = [1, 4]
     TRIGGER_TYPES = ["POIN", "SWE", "CHAN", "ALL"]
 
-    FREQUENCY_RANGE = [1E7, 4E10]
+    FREQUENCY_RANGE = [1E7, 7E10]
 
     SPARAM_LIST = ["S11", "S12", "S21", "S22",
                    "S13", "S23", "S33", "S31",
@@ -57,7 +58,7 @@ class AnritsuMS4644B(Instrument):
                        "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
                        "R4C3", "R3C4", "R4C4"]
 
-    def __init__(self, adapter, name="Anritsu MS4644B Vector Network Analyzer", **kwargs):
+    def __init__(self, adapter, name="Anritsu MS464xB Vector Network Analyzer", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -512,7 +513,7 @@ class Trace(Channel):
         IGA     Noise Figure Insertion Gain trace response (only with option 48)
         =====   ================================================================
         """,
-        values=AnritsuMS4644B.SPARAM_LIST + ["MIX", "NFIG", "NPOW", "NTEMP", "AGA", "IGA"],
+        values=AnritsuMS464xB.SPARAM_LIST + ["MIX", "NFIG", "NPOW", "NTEMP", "AGA", "IGA"],
         validator=strict_discrete_set,
     )
 
@@ -561,7 +562,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1 and 16.
         """,
-        values=AnritsuMS4644B.TRACES,
+        values=AnritsuMS464xB.TRACES,
         validator=strict_range,
         cast=int,
     )
@@ -569,7 +570,7 @@ class MeasurementChannel(Channel):
     active_trace = Instrument.setting(
         ":CALC{ch}:PAR%d:SEL",
         """Set the active trace on the indicated channel. """,
-        values=AnritsuMS4644B.TRACES,
+        values=AnritsuMS464xB.TRACES,
         validator=strict_range,
     )
 
@@ -579,8 +580,8 @@ class MeasurementChannel(Channel):
 
         Valid values are: {}. The number following the R indicates the number of rows, following the
         C the number of columns.
-        """.format(", ".join(AnritsuMS4644B.DISPLAY_LAYOUTS)),
-        values=AnritsuMS4644B.DISPLAY_LAYOUTS,
+        """.format(", ".join(AnritsuMS464xB.DISPLAY_LAYOUTS)),
+        values=AnritsuMS464xB.DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
         cast=int,
     )
@@ -649,7 +650,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
     )
 
@@ -659,7 +660,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
     )
 
@@ -669,7 +670,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 2 [Hz] and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=[2, AnritsuMS4644B.FREQUENCY_RANGE[1]],
+        values=[2, AnritsuMS464xB.FREQUENCY_RANGE[1]],
         validator=strict_range,
     )
 
@@ -679,7 +680,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
     )
 
@@ -689,7 +690,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1E7 [Hz] (i.e. 10 MHz) and 4E10 [Hz] (i.e. 40 GHz).
         """,
-        values=AnritsuMS4644B.FREQUENCY_RANGE,
+        values=AnritsuMS464xB.FREQUENCY_RANGE,
         validator=strict_range,
     )
 

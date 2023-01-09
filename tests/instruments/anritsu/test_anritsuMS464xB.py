@@ -24,12 +24,12 @@
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.anritsu import AnritsuMS4644B
+from pymeasure.instruments.anritsu import AnritsuMS464xB
 
 
 def test_init():
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [],
     ) as instr:
         assert len(instr.channels) == 16
@@ -39,7 +39,7 @@ def test_init():
 
 def test_update_channels():
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [(":DISP:COUN?", "8"),
          (":DISP:COUN?", "12")],
     ) as instr:
@@ -53,7 +53,7 @@ def test_update_channels():
 def test_channel_number_of_traces():
     # Test first level channel
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [(":CALC6:PAR:COUN 16", None),
          (":CALC2:PAR:COUN?", "4")],
     ) as instr:
@@ -64,7 +64,7 @@ def test_channel_number_of_traces():
 def test_channel_update_traces():
     # Test first level channel
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [(":CALC1:PAR:COUN?", "4"),
          (":CALC1:PAR:COUN?", "12")],
     ) as instr:
@@ -78,7 +78,7 @@ def test_channel_update_traces():
 def test_channel_port_power_level():
     # Test second level channel (port in channel)
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [(":SOUR6:POW:PORT1 12", None),
          (":SOUR2:POW:PORT4?", "-1.5E1")],
     ) as instr:
@@ -89,7 +89,7 @@ def test_channel_port_power_level():
 def test_channel_trace_measurement_parameter():
     # Test second level channel (trace in channel)
     with expected_protocol(
-        AnritsuMS4644B,
+        AnritsuMS464xB,
         [(":CALC6:PAR1:DEF S11", None),
          (":CALC2:PAR6:DEF?", "S21")],
     ) as instr:
