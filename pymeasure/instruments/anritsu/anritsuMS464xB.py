@@ -42,10 +42,21 @@ class AnritsuMS464xB(Instrument):
     Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
     of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
     channel number.
+
+    :param active_channels: defines the number of active channels (default=16); if active_channels
+        is "auto", the instrument will be queried for the number of active channels.
+    :type active_channels: int (1-16) or str ("auto")
+    :param installed_ports: defines the number of installed ports (default=4); if "auto" is
+        provided, the instrument will be queried for the number of ports
+    :type installed_ports: int (1-4) or str ("auto")
+    :param traces_per_channel: defines the number of traces that is assumed for each channel
+        (between 1 and 16); if not provided, the maximum number is assumed; "auto" is provided,
+        the instrument will be queried for the number of traces of each channel.
+    :type traces_per_channel: int (1-16) or str ("auto") or None
     """
-    CHANNELS = [1, 16]
-    TRACES = [1, 16]
-    PORTS = [1, 4]
+    CHANNELS_MAX = 16
+    TRACES_MAX = 16
+    PORTS = 4
     TRIGGER_TYPES = ["POIN", "SWE", "CHAN", "ALL"]
 
     FREQUENCY_RANGE = [1E7, 7E10]
@@ -60,7 +71,12 @@ class AnritsuMS464xB(Instrument):
                        "R2C4", "R4C2", "R3C3", "R5C2", "R2C5",
                        "R4C3", "R3C4", "R4C4"]
 
-    def __init__(self, adapter, name="Anritsu MS464xB Vector Network Analyzer", **kwargs):
+    def __init__(self, adapter,
+                 name="Anritsu MS464xB Vector Network Analyzer",
+                 active_channels=16,
+                 installed_ports=4,
+                 traces_per_channel=None,
+                 **kwargs):
         super().__init__(
             adapter,
             name,
@@ -68,9 +84,14 @@ class AnritsuMS464xB(Instrument):
             **kwargs,
         )
 
-        self.update_channels(self.CHANNELS[1])
+        self.PORTS = installed_ports if installed_ports != "auto" else self.number_of_ports
 
-    def update_channels(self, number_of_channels=None):
+        number_of_channels = active_channels if active_channels != "auto" else None
+
+        self.update_channels(number_of_channels=number_of_channels,
+                             traces=traces_per_channel)
+
+    def update_channels(self, number_of_channels=None, **kwargs):
         """Create or remove channels to be correct with the actual number of channels.
 
         :param int number_of_channels: optional, if given defines the desired number of channels.
@@ -91,7 +112,8 @@ class AnritsuMS464xB(Instrument):
         # Create new channels
         while len(self.channels) < number_of_channels:
             self.add_child(MeasurementChannel, len(self.channels) + 1,
-                           frequency_range=self.FREQUENCY_RANGE)
+                           frequency_range=self.FREQUENCY_RANGE,
+                           **kwargs)
 
     def check_errors(self):
         """ Read all errors from the instrument.
@@ -254,6 +276,12 @@ class AnritsuMS464xB(Instrument):
         cast=int,
     )
 
+    number_of_ports = Instrument.measurement(
+        ":SYST:PORT:COUN?",
+        """Get the number of instrument test ports. """,
+        cast=int,
+    )
+
     number_of_channels = Instrument.control(
         ":DISP:COUN?", ":DISP:COUN %d",
         """Control the number of displayed (and therefore accessible) channels.
@@ -263,7 +291,7 @@ class AnritsuMS464xB(Instrument):
         If a value is provided that is not valid in the present mode, the instrument is set to the
         next higher channel number.
         """,
-        values=[1, 16],
+        values=[1, CHANNELS_MAX],
         validator=strict_range,
         cast=int,
     )
@@ -283,7 +311,7 @@ class AnritsuMS464xB(Instrument):
     active_channel = Instrument.control(
         ":DISP:WIND:ACT?", ":DISP:WIND%d:ACT",
         """Control the active channel. """,
-        values=CHANNELS,
+        values=[1, CHANNELS_MAX],
         validator=strict_range,
         cast=int,
     )
@@ -533,15 +561,29 @@ class MeasurementChannel(Channel):
     Contains 4 instances of :class:`~.Port` (accessible via the `ports` dict or directly `pt_` + the
     port number) and up to 16 instances of :class:`~.Trace` (accessible via the `traces` dict or
     directly `tr_` + the trace number).
+
+    :param frequency_range: defines the number of installed ports (default=4).
+    :type frequency_range: list of floats
+    :param traces: defines the number of traces that is assumed for the channel
+        (between 1 and 16); if not provided, the maximum number is assumed; "auto" is provided,
+        the instrument will be queried for the number of traces.
+    :type traces: int (1-16) or str ("auto") or None
     """
 
-    def __init__(self, *args, frequency_range=None, **kwargs):
+    def __init__(self, *args, frequency_range=None, traces=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for pt in range(self.parent.PORTS[1]):
+        for pt in range(self.parent.PORTS):
             self.add_child(Port, pt + 1, collection="ports", prefix="pt_")
 
-        self.update_traces(self.parent.TRACES[1])
+        if traces is None:
+            number_of_traces = self.parent.TRACES_MAX
+        elif traces == "auto":
+            number_of_traces = None
+        else:
+            number_of_traces = traces
+
+        self.update_traces(number_of_traces)
 
         if frequency_range is not None:
             self.update_frequency_range(frequency_range)
@@ -593,7 +635,7 @@ class MeasurementChannel(Channel):
 
         Valid values are between 1 and 16.
         """,
-        values=AnritsuMS464xB.TRACES,
+        values=[1, AnritsuMS464xB.TRACES_MAX],
         validator=strict_range,
         cast=int,
     )
@@ -601,7 +643,7 @@ class MeasurementChannel(Channel):
     active_trace = Channel.setting(
         ":CALC{ch}:PAR%d:SEL",
         """Set the active trace on the indicated channel. """,
-        values=AnritsuMS464xB.TRACES,
+        values=[1, AnritsuMS464xB.TRACES_MAX],
         validator=strict_range,
     )
 

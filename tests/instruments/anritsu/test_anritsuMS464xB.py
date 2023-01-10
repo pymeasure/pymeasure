@@ -38,6 +38,34 @@ def test_init():
         assert len(instr.ch_1.ports) == 4
         assert len(instr.ch_1.traces) == 16
 
+    # Test init with different number of active channels and installed ports
+    with expected_protocol(
+        AnritsuMS464xB,
+        [],
+        active_channels=12,
+        installed_ports=2,
+        traces_per_channel=10
+    ) as instr:
+        assert len(instr.channels) == 12
+        assert len(instr.ch_1.ports) == 2
+        assert len(instr.ch_1.traces) == 10
+
+    # Test init with unknown active channels and traces
+    with expected_protocol(
+        AnritsuMS464xB,
+        [(":SYST:PORT:COUN?", "3"),
+         (":DISP:COUN?", "2"),
+         (":CALC1:PAR:COUN?", "8"),
+         (":CALC2:PAR:COUN?", "12")],
+        active_channels="auto",
+        installed_ports="auto",
+        traces_per_channel="auto",
+    ) as instr:
+        assert len(instr.channels) == 2
+        assert len(instr.ch_1.ports) == 3
+        assert len(instr.ch_1.traces) == 8
+        assert len(instr.ch_2.traces) == 12
+
 
 def test_update_channels():
     with expected_protocol(
