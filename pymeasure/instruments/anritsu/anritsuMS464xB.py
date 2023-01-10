@@ -84,7 +84,7 @@ class AnritsuMS464xB(Instrument):
         if len(self.channels) == number_of_channels:
             return
 
-        # Remove redant channels
+        # Remove redundant channels
         while len(self.channels) > number_of_channels:
             self.remove_child(self.channels[len(self.channels)])
 
