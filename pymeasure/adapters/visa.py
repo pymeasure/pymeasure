@@ -87,7 +87,9 @@ class VISAAdapter(Adapter):
                  query_delay=0, log=None, **kwargs):
         super().__init__(preprocess_reply=preprocess_reply, log=log)
         if query_delay:
-            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
+            warn(("Parameter `query_delay` is deprecated. "
+                  "Implement in Instrument's `wait_until_read` instead."),
+                 FutureWarning)
             kwargs.setdefault("query_delay", query_delay)
         self.query_delay = query_delay
         if isinstance(resource_name, ProtocolAdapter):
@@ -172,7 +174,7 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warn("Deprecated call `Instrument.ask` instead.", FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -187,7 +189,8 @@ class VISAAdapter(Adapter):
         :param kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
-        warn("Deprecated, call `Instrument.values` instead.", FutureWarning)
+        warn("`Adapter.ask_values` is deprecated, call `Instrument.values` instead.",
+             FutureWarning)
 
         return self.connection.query_ascii_values(command, **kwargs)
 
@@ -202,7 +205,7 @@ class VISAAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, call `Instrument.binary_values` instead.",
+        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
              FutureWarning)
         self.connection.write(command)
         binary = self.connection.read_raw()
