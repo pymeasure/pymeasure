@@ -59,8 +59,6 @@ class SignalChannel(Channel):
         get_process=lambda x: True if x[0].split(' ')[1] == 'ON' else False,
     )
 
-    # TODO: Add other OUTPut related controls like Load and Polarity
-
     wavetype = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV WVTP,%s",
@@ -72,7 +70,6 @@ class SignalChannel(Channel):
         get_process=lambda x: x[1],
     )
 
-    # TODO: Add frequency ranges per model?
     frequency = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV FRQ,%g",
@@ -85,7 +82,6 @@ class SignalChannel(Channel):
         check_set_errors=True,
     )
 
-    # TODO: Add range of outputs per model? Tricky without knowing offset and frequency
     amplitude = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV AMP,%g",
@@ -94,13 +90,12 @@ class SignalChannel(Channel):
         Max amplitude depends on offset, frequency, and load.
         Amplitude is also limited by the channel max output amplitude.""",
         validator=strict_range,
-        values=[0, 5],
+        values=[-5, 5],
         get_process=get_process_generator_search('AMP', 'V', float),
         dynamic=True,
         check_set_errors=True,
     )
 
-    # TODO: Add range of offset per model? Tricky without knowing amplitude, frequency
     offset = Channel.control(
         "C{ch}:BSWV?",
         "C{ch}:BSWV OFST,%g",
@@ -109,13 +104,11 @@ class SignalChannel(Channel):
         Max offset depends on amplitude, frequency, and load.
         Offset is also limited by the channel max output amplitude.""",
         validator=strict_range,
-        values=[0, 5],
+        values=[-5, 5],
         get_process=get_process_generator_search('OFST', 'V', float),
         dynamic=True,
         check_set_errors=True,
     )
-
-    # TODO: Add other Basic Waveform parameters like period
 
     max_output_amplitude = Channel.control(
         "C{ch}:BSWV?",
@@ -136,6 +129,12 @@ class TeledyneT3AFG(Instrument):
     lower end models and features from higher end models are not
     included here intially.
 
+    Future improvements (help welcomed):
+    Add other OUTPut related controls like Load and Polarity
+    Add other Basic Waveform related controls like Period
+    Add frequency ranges per model
+    Add channel coupling control
+
     .. code-block: python
     # Example assumes Ethernet (TCPIP) interface
     generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
@@ -153,5 +152,3 @@ class TeledyneT3AFG(Instrument):
             tcpip={'read_termination': '\n'},
             **kwargs
         )
-
-    # TODO: Add channel coupling control
