@@ -32,7 +32,6 @@ from pymeasure.instruments.toptica import IBeamSmart
 # Note: This communication does not contain the first two device responses, as they are
 # ignored due to `adapter.flush_read_buffer()`.
 # The device communication depends on previous commands and whether the device power cycled.
-# TODO verify the right talk usual communication
 init_comm = [("echo off", None), ("prom off", None), ("talk usual", ""), (None, "[OK]")]
 
 
@@ -74,3 +73,35 @@ def test_setting_failed():
     ) as inst:
         with pytest.raises(ValueError):
             inst.laser_enabled = False
+
+
+def test_enable_channel():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("en 3", ""), (None, "[OK]"),
+                         ("sta ch 3", ""), (None, "ON"), (None, "[OK]"),
+                         ("di 2", ""), (None, "[OK]"),
+                         ("sta ch 2", ""), (None, "OFF"), (None, "[OK]"),
+                         ]
+    ) as inst:
+        inst.ch_3.enabled = True
+        assert inst.ch_3.enabled is True
+        inst.ch_2.enabled = False
+        assert inst.ch_2.enabled is False
+
+
+def test_channel_power():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("ch 2 pow 100.000000 mic", ""), (None, "[OK]")]
+    ) as inst:
+        inst.ch_2.power = 100
+
+
+def test_shutdown():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("di 0", ""), (None, "[OK]"), ("la off", ""), (None, "[OK]")]
+    ) as inst:
+        inst.shutdown()
+        assert inst.isShutdown is True

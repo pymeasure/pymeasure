@@ -28,12 +28,33 @@ import time
 
 from pyvisa.errors import VisaIOError
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class DriverChannel(Channel):
+    """A Diode driver channel"""
+
+    power = Channel.setting(
+        "ch {ch} pow %f mic",
+        """Set the output power in µW.""",
+        check_set_errors=True,
+    )
+
+    enabled = Channel.control(
+        "sta ch {ch}",
+        "%s {ch}",
+        """Control the enabled state of the driver channel.""",
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda s: True if s == 'ON' else False,
+        set_process=lambda v: "en" if v else "di",
+        check_set_errors=True,
+    )
 
 
 class IBeamSmart(Instrument):
@@ -45,17 +66,19 @@ class IBeamSmart(Instrument):
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
+    channels = Instrument.ChannelCreator(DriverChannel, (1, 2, 3, 4, 5))
+
     def __init__(self, adapter, name="Toptica IBeam Smart laser diode", **kwargs):
-        kwargs.setdefault('read_termination', '\r\n')
-        kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
-            asrl={'baud_rate': 115200},
+            read_termination='\r\n',
+            write_termination='\r\n',
+            baud_rate=115200,
             **kwargs
         )
-        # configure communication mode
+        # configure communication mode: no repeating and no command prompt
         self.write('echo off')
         self.write('prom off')
         time.sleep(0.04)
@@ -148,6 +171,11 @@ class IBeamSmart(Instrument):
         """Measure base plate (heatsink) temperature in degree centigrade.""",
     )
 
+    current = Instrument.measurement(
+        "sh cur",
+        """Measure the laser diode current.""",
+    )
+
     laser_enabled = Instrument.control(
         "sta la", "la %s",
         """Control emission status of the laser diode driver (bool).""",
@@ -158,6 +186,7 @@ class IBeamSmart(Instrument):
         check_set_errors=True,
     )
 
+    # TODO mark as deprecated
     channel1_enabled = Instrument.control(
         "sta ch 1", "%s",
         """Control status of Channel 1 of the laser (bool).""",
@@ -168,6 +197,7 @@ class IBeamSmart(Instrument):
         check_set_errors=True,
     )
 
+    # TODO mark as deprecated
     channel2_enabled = Instrument.control(
         "sta ch 2", "%s",
         """Control status of Channel 2 of the laser (bool).""",
@@ -193,7 +223,7 @@ class IBeamSmart(Instrument):
         self.write('di ext')
         self.check_errors()
         self.laser_enabled = True
-        self.channel2_enabled = True
+        self.ch_2.enabled = True
 
     def enable_pulsing(self):
         """Enable pulsing mode.
@@ -201,13 +231,18 @@ class IBeamSmart(Instrument):
         The optical output is controlled by a digital
         input signal on a dedicated connnector on the device."""
         self.laser_enabled = True
-        self.channel2_enabled = True
+        self.ch_2.enabled = True
         self.write('en ext')
         self.check_errors()
 
     def disable(self):
         """Shutdown all laser operation."""
-        self.write('di ext')
+        # TODO verify with real device
+        self.write('di 0')
         self.check_errors()
-        self.channel2_enabled = False
         self.laser_enabled = False
+
+    def shutdown(self):
+        """Brings the instrument to a safe and stable state."""
+        self.disable()
+        super().shutdown()
