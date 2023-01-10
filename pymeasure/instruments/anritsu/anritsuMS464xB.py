@@ -268,7 +268,7 @@ class AnritsuMS464xB(Instrument):
         cast=int,
     )
 
-    display_layout = Channel.control(
+    display_layout = Instrument.control(
         ":DISP:SPL?", ":DISP:SPL %s",
         """Control the channel display layout in a Row-by-Column format.
 
@@ -598,7 +598,7 @@ class MeasurementChannel(Channel):
         cast=int,
     )
 
-    active_trace = Instrument.setting(
+    active_trace = Channel.setting(
         ":CALC{ch}:PAR%d:SEL",
         """Set the active trace on the indicated channel. """,
         values=AnritsuMS464xB.TRACES,
@@ -768,7 +768,7 @@ class MeasurementChannel(Channel):
         map_values=True,
     )
 
-    sweep_type = Instrument.control(
+    sweep_type = Channel.control(
         ":SENS{ch}:SWE:TYP?", ":SENS{ch}:SWE:TYP %s",
         """Control the sweep type of the indicated channel.
 
@@ -789,7 +789,7 @@ class MeasurementChannel(Channel):
         values=["LIN", "LOG", "FSEGM", "ISEGM", "POW", "MFGC"],
     )
 
-    sweep_mode = Instrument.control(
+    sweep_mode = Channel.control(
         ":SENS{ch}:SA:MODE?", ":SENS{ch}:SA:MODE %s",
         """Control the sweep mode for Spectrum Analysis on the indicated channel.
 
@@ -800,7 +800,7 @@ class MeasurementChannel(Channel):
         values=["VNA", "CLAS"],
     )
 
-    sweep_time = Instrument.control(
+    sweep_time = Channel.control(
         ":SENS{ch}:SWE:TIM?", ":SENS{ch}:SWE:TIM %d",
         """Control the sweep time of the indicated channel.
 
