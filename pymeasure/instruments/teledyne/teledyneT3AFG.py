@@ -130,10 +130,10 @@ class TeledyneT3AFG(Instrument):
     included here intially.
 
     Future improvements (help welcomed):
-    Add other OUTPut related controls like Load and Polarity
-    Add other Basic Waveform related controls like Period
-    Add frequency ranges per model
-    Add channel coupling control
+    - Add other OUTPut related controls like Load and Polarity
+    - Add other Basic Waveform related controls like Period
+    - Add frequency ranges per model
+    - Add channel coupling control
 
     .. code-block: python
     # Example assumes Ethernet (TCPIP) interface
