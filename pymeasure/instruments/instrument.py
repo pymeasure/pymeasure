@@ -64,13 +64,17 @@ class Instrument(CommonBase):
         Discarded otherwise.
     """
 
+    adapter_kwargs = {}
+
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True,
                  **kwargs):
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
+            akwargs = self.adapter_kwargs.copy()
+            akwargs.update(**kwargs)
             try:
-                adapter = VISAAdapter(adapter, **kwargs)
+                adapter = VISAAdapter(adapter, **akwargs)
             except ImportError:
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")

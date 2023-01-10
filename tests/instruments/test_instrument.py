@@ -113,11 +113,39 @@ def test_init_visa(adapter):
 @pytest.mark.xfail()  # I do not know, when this error is raised
 def test_init_visa_fail():
     with pytest.raises(Exception, match="Invalid adapter"):
-        Instrument("abc", "def", visa_library="@xyz")
+        Instrument('ASRL2::INSTR', "def", visa_library="@xyz")
+
+
+def test_init_visa_comm_kwargs():
+    """Test whether the adapter_kwargs are handed to the visa adapter"""
+    class TestInstrument(Instrument):
+        adapter_kwargs = {'kwarg_test': 5}
+    with pytest.raises(ValueError,
+                       match="'kwarg_test' is not a valid attribute for type"):
+        TestInstrument('ASRL2::INSTR', "def", visa_library='@sim')
+
+
+def test_init_visa_comm_kwargs_replaced():
+    """Test, whether a kwarg parameter replaces the default definition."""
+    class TestInstrument(Instrument):
+        adapter_kwargs = {'baud_rate': "abc"}
+    with pytest.raises(TypeError, match="str"):
+        # ensure, that the parameter is faulty and raises an error, unless changed
+        TestInstrument('ASRL2::INSTR', "def", visa_library='@sim')
+    TestInstrument('ASRL2::INSTR', "def", visa_library='@sim', baud_rate=500)
+    pass  # Test that no error is raised with corrected baud_rate
+
+
+def test_init_visa_comm_kwargs_replaced_class_dict_unchanged():
+    """Test, whether a kwarg parameter replacement does not change the class dict."""
+    class TestInstrument(Instrument):
+        adapter_kwargs = {'baud_rate': "abc"}
+    TestInstrument('ASRL2::INSTR', "def", visa_library='@sim', baud_rate=500)
+    assert TestInstrument.adapter_kwargs['baud_rate'] == "abc"
 
 
 def test_instrument_in_context():
-    with Instrument("abc", "def", visa_library="@sim") as instr:
+    with Instrument('ASRL2::INSTR', "def", visa_library="@sim") as instr:
         pass
     assert instr.isShutdown is True
 
