@@ -34,10 +34,12 @@ log.addHandler(logging.NullHandler())
 
 
 class AnritsuMS464xB(Instrument):
-    """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series. Supports the
-    MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in their respective classes
-    (:class:`~.AnritsuMS4642B`, :class:`~.AnritsuMS4644B`, :class:`~.AnritsuMS4645B`,
-    :class:`~.AnritsuMS4647B`), that only differ in the available frequency range.
+    """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series.
+
+    This familly consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in
+    their respective classes (:class:`~.AnritsuMS4642B`, :class:`~.AnritsuMS4644B`,
+    :class:`~.AnritsuMS4645B`, :class:`~.AnritsuMS4647B`), that only differ in the available
+    frequency range.
 
     Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
     of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
@@ -871,16 +873,40 @@ class MeasurementChannel(Channel):
 
 
 class AnritsuMS4642B(AnritsuMS464xB):
+    """A class representing the Anritsu MS4642B Vector Network Analyzer (VNA).
+
+    This VNA has a frequency range from 10 MHz to 20 GHz and is part of the
+    :class:`~.AnritsuMS464xB` family of instruments; for documentation, for documentation refer to
+    this base class.
+    """
     FREQUENCY_RANGE = [1E7, 2E10]
 
 
 class AnritsuMS4644B(AnritsuMS464xB):
+    """A class representing the Anritsu MS4644B Vector Network Analyzer (VNA).
+
+    This VNA has a frequency range from 10 MHz to 40 GHz and is part of the
+    :class:`~.AnritsuMS464xB` family of instruments; for documentation, for documentation refer to
+    this base class.
+    """
     FREQUENCY_RANGE = [1E7, 4E10]
 
 
 class AnritsuMS4645B(AnritsuMS464xB):
+    """A class representing the Anritsu MS4645B Vector Network Analyzer (VNA).
+
+    This VNA has a frequency range from 10 MHz to 50 GHz and is part of the
+    :class:`~.AnritsuMS464xB` family of instruments; for documentation, for documentation refer to
+    this base class.
+    """
     FREQUENCY_RANGE = [1E7, 5E10]
 
 
 class AnritsuMS4647B(AnritsuMS464xB):
+    """A class representing the Anritsu MS4647B Vector Network Analyzer (VNA).
+
+    This VNA has a frequency range from 10 MHz to 70 GHz and is part of the
+    :class:`~.AnritsuMS464xB` family of instruments; for documentation, for documentation refer to
+    this base class.
+    """
     FREQUENCY_RANGE = [1E7, 7E10]
