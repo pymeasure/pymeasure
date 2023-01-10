@@ -58,12 +58,12 @@ def test_power():
         assert inst.power == 1
 
 
-def test_disable_laser():
+def test_disable_emission():
     with expected_protocol(
             IBeamSmart,
             init_comm + [("la off", ""), (None, "[OK]")],
     ) as inst:
-        inst.laser_enabled = False
+        inst.emission = False
 
 
 def test_setting_failed():

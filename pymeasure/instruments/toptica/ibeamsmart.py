@@ -25,6 +25,7 @@
 import logging
 import re
 import time
+from warnings import warn
 
 from pyvisa.errors import VisaIOError
 
@@ -36,13 +37,23 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def _deprecation_warning(property_name):
+    def func(x):
+        warn(f'Deprecated property name "{property_name}", use the channels '
+             '"enabled" property instead.', FutureWarning)
+        return x
+    return func
+
+
 class DriverChannel(Channel):
-    """A Diode driver channel"""
+    """A laser diode driver channel for the IBeam Smart laser."""
 
     power = Channel.setting(
         "ch {ch} pow %f mic",
-        """Set the output power in µW.""",
+        """Set the output power in µW (float up to 200000).""",
         check_set_errors=True,
+        validator=strict_range,
+        values=[0, 200000],
     )
 
     enabled = Channel.control(
@@ -60,8 +71,17 @@ class DriverChannel(Channel):
 class IBeamSmart(Instrument):
     """ IBeam Smart laser diode
 
+    For the usage of the different diode driver channels, see the manual
+
+    .. code::
+
+        laser = IBeamSmart("SomeResourceString")
+        laser.emission = True
+        laser.ch_2.power = 1000  # µW
+        laser.ch_2.enabled = True
+        laser.shutdown()
+
     :param adapter: pyvisa resource name or adapter instance.
-    :param baud_rate: communication speed, defaults to 115200.
     :param \\**kwargs: Any valid key-word argument for VISAAdapter.
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
@@ -173,10 +193,11 @@ class IBeamSmart(Instrument):
 
     current = Instrument.measurement(
         "sh cur",
-        """Measure the laser diode current.""",
+        """Measure the laser diode current in mA.""",
+        # TODO verify the unit
     )
 
-    laser_enabled = Instrument.control(
+    emission = Instrument.control(
         "sta la", "la %s",
         """Control emission status of the laser diode driver (bool).""",
         validator=strict_discrete_set,
@@ -186,33 +207,52 @@ class IBeamSmart(Instrument):
         check_set_errors=True,
     )
 
-    # TODO mark as deprecated
+    laser_enabled = Instrument.control(
+        "sta la", "la %s",
+        """Control emission status of the laser diode driver (bool).
+
+        .. deprecated:: 0.12 Use attr:`emission` instead.
+        """,
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda s: True if s == 'ON' else False,
+        set_process=lambda v: "on" if v else "off",
+        check_set_errors=True,
+    )
+
     channel1_enabled = Instrument.control(
         "sta ch 1", "%s",
-        """Control status of Channel 1 of the laser (bool).""",
+        """Control status of Channel 1 of the laser (bool).
+
+        .. deprecated:: 0.12 Use :attr:`ch_1.enabled` instead.
+        """,
         validator=strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 1" if v else "di 1",
         check_set_errors=True,
+        command_process=_deprecation_warning("channel1_enabled"),
     )
 
-    # TODO mark as deprecated
     channel2_enabled = Instrument.control(
         "sta ch 2", "%s",
-        """Control status of Channel 2 of the laser (bool).""",
+        """Control status of Channel 2 of the laser (bool).
+
+        .. deprecated:: 0.12 Use :attr:`ch_2.enabled` instead.""",
         validator=strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 2" if v else "di 2",
         check_set_errors=True,
+        command_process=_deprecation_warning("channel2_enabled"),
     )
 
     power = Instrument.control(
         "sh pow", "ch pow %f mic",
-        """Control actual output power in uW of the laser system. In pulse mode
+        """Control actual output power in µW of the laser system. In pulse mode
         this means that the set value might not correspond to the readback
         one (float up to 200000).""",
+        # TODO verify with read device, that setter works as well.
         validator=strict_range,
         values=[0, 200000],
         check_set_errors=True,
@@ -222,7 +262,7 @@ class IBeamSmart(Instrument):
         """Enable countinous emmission mode."""
         self.write('di ext')
         self.check_errors()
-        self.laser_enabled = True
+        self.emission = True
         self.ch_2.enabled = True
 
     def enable_pulsing(self):
@@ -230,7 +270,7 @@ class IBeamSmart(Instrument):
 
         The optical output is controlled by a digital
         input signal on a dedicated connnector on the device."""
-        self.laser_enabled = True
+        self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')
         self.check_errors()
@@ -240,7 +280,7 @@ class IBeamSmart(Instrument):
         # TODO verify with real device
         self.write('di 0')
         self.check_errors()
-        self.laser_enabled = False
+        self.emission = False
 
     def shutdown(self):
         """Brings the instrument to a safe and stable state."""
