@@ -622,7 +622,7 @@ class PanasonicVP7722A(Instrument):
             analyzer.measure_level()
             analyzer.filter_high_pass_400hz = False
             analyzer.filter_low_pass_30khz = True
-            analyzer.measure_range_level = 1            # Set measurement range setting to 100 V, 40 dB
+            analyzer.measure_range_level = 1    # Set measurement range setting to 100 V, 40 dB
             for i in range(10):
                 print(analyzer.trigger_measurement())   # Write the pseudo-trigger and print result
 
