@@ -38,7 +38,7 @@ def test_init():
 def test_frequency():
     with expected_protocol(
         PanasonicVP7722A,
-        [("FR110000.00HZ", None),
+        [("FR 110000.00HZ", None),
          ("TM1", "10000E-01")]
     ) as inst:
         inst.frequency = 112000
