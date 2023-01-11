@@ -33,6 +33,12 @@ It also allows to send the measured results and panel setups by selecting
 a sending format by program codes. Eight formats are selectable for
 various measurements such as frequency, input level and distortion.
 
+.. note::
+    The analyzer does not have a device trigger function. Alternatively, the
+    analyzer has Pseudo-trigger function :meth:`PanasonicVP7722A.trigger_measurement`. 
+    This function enables the controller to get the measured data at the time 
+    when the controller sents a pseudo-trigger to the analyzer.
+
 .. autoclass:: pymeasure.instruments.panasonic.PanasonicVP7722A
     :members:
     :show-inheritance:

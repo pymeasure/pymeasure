@@ -71,10 +71,9 @@ class PanasonicVP7722A(Instrument):
         cast=float,
     )
 
-    oscillator_output_off = Instrument.setting(
-        "APOFF",
-        "Set oscillator to off and disconnect the oscillator signal (``APOFF``)",
-    )
+    def oscillator_output_off(self):
+        """Set oscillator to off and disconnect the oscillator signal (``APOFF``)"""
+        self.write("APOFF")
 
     oscillator_imd = Instrument.setting(
         "MX%d",
@@ -96,18 +95,15 @@ class PanasonicVP7722A(Instrument):
         cast=int,
     )
 
-    measure_level = Instrument.setting(
-        "MM1",
-        "Set to level measurement mode (``MM1``)"
-    )
+    def measure_level(self):
+        """Set to level measurement mode (``MM1``)"""
+        self.write("MM1")
 
-    measure_ratio_right_left = Instrument.setting(
-        "MM2",
-        "Set to ratio (R/L) measurement mode (``MM2``)"
-    )
+    def measure_ratio_right_left(self):
+        """Set to ratio (R/L) measurement mode (``MM2``)"""
+        self.write("MM2")
 
-    measure_signal_noise = Instrument.setting(
-        "MM3",
+    def measure_signal_noise(self):
         """Set to S/N measurement mode (``MM3``)
 
         .. note::
@@ -125,42 +121,35 @@ class PanasonicVP7722A(Instrument):
                 measure by the relative level measurement mode
 
         """
-    )
+        self.write("MM3")
 
-    measure_distortion = Instrument.setting(
-        "MM4",
+    def measure_distortion(self):
         "Set to total distortion measurement mode (``MM4``)"
-    )
+        self.write("MM4")
 
-    measure_thd1 = Instrument.setting(
-        "MM5",
+    def measure_thd1(self):
         "Set to THD1 measurement mode (``MM5``)"
-    )
+        self.write("MM5")
 
-    measure_average = Instrument.setting(
-        "MMS1",
+    def measure_average(self):
         "Set to average measurement mode (``MMS1``)"
-    )
+        self.write("MMS1")
 
-    measure_ratio_left_right = Instrument.setting(
-        "MMS2",
+    def measure_ratio_left_right(self):
         "Set to ratio (L/R) measurement mode (``MMS2``)"
-    )
+        self.write("MMS2")
 
-    measure_sinad = Instrument.setting(
-        "MMS3",
+    def measure_sinad(self):
         "Set to SINAD measurement mode (``MMS3``)"
-    )
+        self.write("MMS3")
 
-    measure_imd = Instrument.setting(
-        "MMS4",
+    def measure_imd(self):
         "Set to IMD measurement mode (``MMS4``)"
-    )
+        self.write("MMS4")
 
-    measure_thd2 = Instrument.setting(
-        "MMS5",
+    def measure_thd2(self):
         "Set to THD2 measurement mode (``MMS5``)"
-    )
+        self.write("MMS5")
 
     measure_harmonic_analysis = Instrument.setting(
         "HA%d",
@@ -237,10 +226,9 @@ class PanasonicVP7722A(Instrument):
         map_values=True
     )
 
-    filter_notch_auto = Instrument.setting(
-        "MD0.0",
-        "Set the notch filter to auto tuning (``MD0``)",
-    )
+    def filter_notch_auto(self):
+        "Set the notch filter to auto tuning (``MD0``)"
+        self.write("MD0.0")
 
     filter_notch = Instrument.setting(
         "MD0.%.2fHZ",
@@ -266,28 +254,23 @@ class PanasonicVP7722A(Instrument):
         map_values=True
     )
 
-    response_rms = Instrument.setting(
-        "DE1",
+    def response_rms(self):
         "Set indication response characteristics to RMS value response  (``DE1``)"
-    )
+        self.write("DE1")
 
-    response_average = Instrument.setting(
-        "DE2",
+    def response_average(self):
         "Set indication response characteristics to Average value response  (``DE2``)"
-    )
+        self.write("DE2")
 
-    channel_left = Instrument.setting(
-        "IN1",
+    def channel_left(self):
         "Set selection to left channel  (``IN1``)"
-    )
+        self.write("IN1")
 
-    channel_right = Instrument.setting(
-        "IN2",
+    def channel_right(self):
         "Set selection to right channel  (``IN2``)"
-    )
+        self.write("IN2")
 
-    channel_both = Instrument.setting(
-        "IN3",
+    def channel_both(self):
         """Set selection to left and right channel (``IN3``)
 
         .. note::
@@ -300,31 +283,27 @@ class PanasonicVP7722A(Instrument):
             (L or R single channel measurement) for each signal.
 
         """
-    )
+        self.write("IN3")
 
-    display_db = Instrument.setting(
-        "LOG",
+    def display_db(self):
         "Set unit display to dB (``LOG``)"
-    )
+        self.write("LOG")
 
-    display_volts = Instrument.setting(
-        "LIN",
+    def display_volts(self):
         "Set unit display to V, % (``LIN``)"
-    )
+        self.write("LIN")
 
-    display_auto = Instrument.setting(
-        "AU",
+    def display_auto(self):
         """Set unit display to automatic range (``AU``)
 
         This code is for selecting functions such as the automatic
         range. It clears the fixed state of manually set ranges, etc.
         """
-    )
+        self.write("AU")
 
-    input_range_auto = Instrument.setting(
-        "MD1.0",
-        "Set the input range to automatic ranging (default) (``MD1``)",
-    )
+    def input_range_auto(self):
+        "Set the input range to automatic ranging (default) (``MD1``)"
+        self.write("MD1.0")
 
     input_range = Instrument.setting(
         "MD1.%d",
@@ -375,10 +354,9 @@ class PanasonicVP7722A(Instrument):
         cast=int,
     )
 
-    measure_range_auto = Instrument.setting(
-        "MD2.0",
-        "Set the measuring range setting to automatic ranging (default) (``MD2``)",
-    )
+    def measure_range_auto(self):
+        "Set the measuring range setting to automatic ranging (default) (``MD2``)"
+        self.write("MD2.0")
 
     measure_range_level = Instrument.setting(
         "MD2.%d",
@@ -626,3 +604,27 @@ class PanasonicVP7722A(Instrument):
         """,
         lambda v: tuple(map(float, v.strip().split(','))),
     )
+
+    def trigger_measurement(self):
+        """ Send a pseudo-trigger signal to the analyzer and read the result.
+
+        The analyzer can utilize pseudo-trigger as a measurement trigger signal. The
+        GP-IB controller can get the measured data at the time when the pseudo-trigger
+        is sent to the analyzer. The pseudo-trigger function enables the controller to
+        read the latest measured data, since the measurement is started when the
+        controller sends the Pseudo-trigger signal independently of the measurement
+        cycle of the analyzer. An example program utilizing Pseudo-trigger function is
+        shown below. The device address of the analyzer is 15.
+
+        .. code-block:: python
+
+            analyzer = PanasonicVP7722A("GPIB::15")
+            analyzer.measure_level()
+            analyzer.filter_high_pass_400hz = False
+            analyzer.filter_low_pass_30khz = True
+            analyzer.measure_range_level = 1            # Set measurement range setting to 100 V, 40 dB
+            for i in range(10):
+                print(analyzer.trigger_measurement())   # Write the pseudo-trigger and print result
+
+        """
+        return float(self.ask(" ").strip())
