@@ -48,6 +48,7 @@ Instruments by manufacturer:
    ni/index
    oxfordinstruments/index
    parker/index
+   panasonic/index
    pendulum/index
    razorbill/index
    rohdeschwarz/index
