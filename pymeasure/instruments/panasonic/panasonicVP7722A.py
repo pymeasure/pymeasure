@@ -451,6 +451,32 @@ class PanasonicVP7722A(Instrument):
         """,
     )
 
+    trigger_measurement = Instrument.measurement(
+        " ",
+        """Measure the pseudo-triggered output that was set by any of the (``MD1-6``) functions. 
+        
+        The analyzer can utilize pseudo-trigger (a space ' ') as a measurement trigger
+        signal. The GP-IB controller can get the measured data at the time when the
+        pseudo-trigger is sent to the analyzer. The pseudo-trigger function enables 
+        the controller to read the latest measured data, since the measurement is 
+        started when the controller sends the Pseudo-trigger signal independently of 
+        the measurement cycle of the analyzer. An example program utilizing Pseudo-trigger
+        function is shown below.
+
+        .. code-block:: python
+
+            analyzer = PanasonicVP7722A("GPIB::15")
+            analyzer.measure_level()
+            analyzer.filter_high_pass_400hz = False
+            analyzer.filter_low_pass_30khz = True
+            analyzer.measure_range_level = 1    # Set measurement range setting to 100 V, 40 dB
+            for i in range(10):
+                print(analyzer.trigger_measurement())   # Write the pseudo-trigger and print result
+
+        """,
+        lambda v: float(v.strip()),
+    )
+
     config_recall = Instrument.setting(
         "RC%02d",
         "Set memory location to recall configuration (``RC``)",
@@ -604,27 +630,3 @@ class PanasonicVP7722A(Instrument):
         """,
         lambda v: tuple(map(float, v.strip().split(','))),
     )
-
-    def trigger_measurement(self):
-        """ Send a pseudo-trigger signal to the analyzer and read the result.
-
-        The analyzer can utilize pseudo-trigger as a measurement trigger signal. The
-        GP-IB controller can get the measured data at the time when the pseudo-trigger
-        is sent to the analyzer. The pseudo-trigger function enables the controller to
-        read the latest measured data, since the measurement is started when the
-        controller sends the Pseudo-trigger signal independently of the measurement
-        cycle of the analyzer. An example program utilizing Pseudo-trigger function is
-        shown below. The device address of the analyzer is 15.
-
-        .. code-block:: python
-
-            analyzer = PanasonicVP7722A("GPIB::15")
-            analyzer.measure_level()
-            analyzer.filter_high_pass_400hz = False
-            analyzer.filter_low_pass_30khz = True
-            analyzer.measure_range_level = 1    # Set measurement range setting to 100 V, 40 dB
-            for i in range(10):
-                print(analyzer.trigger_measurement())   # Write the pseudo-trigger and print result
-
-        """
-        return float(self.ask(" ").strip())
