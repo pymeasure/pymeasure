@@ -453,13 +453,13 @@ class PanasonicVP7722A(Instrument):
 
     trigger_measurement = Instrument.measurement(
         " ",
-        """Measure the pseudo-triggered output that was set by any of the (``MD1-6``) functions. 
-        
+        """Measure the pseudo-triggered output that was set by any of the (``MD1-6``) functions.
+
         The analyzer can utilize pseudo-trigger (a space ' ') as a measurement trigger
         signal. The GP-IB controller can get the measured data at the time when the
-        pseudo-trigger is sent to the analyzer. The pseudo-trigger function enables 
-        the controller to read the latest measured data, since the measurement is 
-        started when the controller sends the Pseudo-trigger signal independently of 
+        pseudo-trigger is sent to the analyzer. The pseudo-trigger function enables
+        the controller to read the latest measured data, since the measurement is
+        started when the controller sends the Pseudo-trigger signal independently of
         the measurement cycle of the analyzer. An example program utilizing Pseudo-trigger
         function is shown below.
 
