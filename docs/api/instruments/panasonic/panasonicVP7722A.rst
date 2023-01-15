@@ -35,7 +35,7 @@ various measurements such as frequency, input level and distortion.
 
 .. note::
     The analyzer does not have a device trigger function. Alternatively, the
-    analyzer has Pseudo-trigger function :meth:`PanasonicVP7722A.trigger_measurement`. 
+    analyzer has Pseudo-trigger function :meth:`PanasonicVP7722A.triggered_measurement`. 
     This function enables the controller to get the measured data at the time 
     when the controller sents a pseudo-trigger to the analyzer.
 
