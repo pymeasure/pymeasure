@@ -10,7 +10,7 @@ Dependency updates
 
 GUI
 ---
-- Added `DockWidget <https://pymeasure.readthedocs.io/en/latest/tutorial/graphical.html#using-the-manageddockwindow>`__ to allow multiple dockable plots (@mcdo0486, @CasperSchippers, #722)
+- Added `ManagedDockWindow <https://pymeasure.readthedocs.io/en/latest/tutorial/graphical.html#using-the-manageddockwindow>`__ to allow multiple dockable plots (@mcdo0486, @CasperSchippers, #722)
 - Move coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
 - New sequencer architecture (@msmttchr, @CasperSchippers, @mcdo0486, #518)
 - Added "Save Dock Layout" functionality to DockWidget context menu. (@mcdo0486, #762)
