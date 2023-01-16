@@ -4,6 +4,17 @@ New adapter and instrument mechanics
 ------------------------------------
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 
+Dependency updates
+------------------
+- Required version of `PyQtGraph <https://www.pyqtgraph.org/>`__ is increased from :code:`pyqtgraph >= 0.9.10` to :code:`pyqtgraph >= 0.12` to support new PyMeasure display widgets.
+
+GUI
+---
+- Added `DockWidget <https://pymeasure.readthedocs.io/en/latest/tutorial/graphical.html#using-the-manageddockwindow>`__ to allow multiple dockable plots (@mcdo0486, @CasperSchippers, #722)
+- Move coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
+- New sequencer architecture (@msmttchr, @CasperSchippers, @mcdo0486, #518)
+- Added "Save Dock Layout" functionality to DockWidget context menu. (@mcdo0486, #762)
+
 Version 0.11.0 (2022-11-19)
 ===========================
 Main items of this new release:
