@@ -5,6 +5,9 @@ New adapter and instrument mechanics
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
 
+Deprecated features
+- Toptica IBeamSmart: :code:`channel1_enabled` deprecated in favor of using `ch_1.enabled`property (similar channel2). Also `laser_enabled` is deprecated in favor of `emission`.
+
 Version 0.11.1 (2022-12-31)
 ===========================
 Adapter and instrument mechanics

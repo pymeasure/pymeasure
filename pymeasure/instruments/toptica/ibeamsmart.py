@@ -37,7 +37,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _deprecation_warning(property_name):
+def _deprecation_warning(text):
+    def func(x):
+        warn(text, FutureWarning)
+        return x
+    return func
+
+
+def _deprecation_warning_channels(property_name):
     def func(x):
         warn(f'Deprecated property name "{property_name}", use the channels '
              '"enabled" property instead.', FutureWarning)
@@ -110,7 +117,7 @@ class IBeamSmart(Instrument):
         self.ask('talk usual')
 
     def read(self):
-        """Read a reply of the instrument and exctract the values, if possible.
+        """Read a reply of the instrument and extract the values, if possible.
 
         Reads a reply of the instrument which consists of at least two
         lines. The initial ones are the reply to the command while the last one
@@ -218,6 +225,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
+        command_process=_deprecation_warning("Property `laser_enabled` is deprecated, use `emission` instead."),
     )
 
     channel1_enabled = Instrument.control(
@@ -231,7 +239,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 1" if v else "di 1",
         check_set_errors=True,
-        command_process=_deprecation_warning("channel1_enabled"),
+        command_process=_deprecation_warning_channels("channel1_enabled"),
     )
 
     channel2_enabled = Instrument.control(
@@ -244,7 +252,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 2" if v else "di 2",
         check_set_errors=True,
-        command_process=_deprecation_warning("channel2_enabled"),
+        command_process=_deprecation_warning_channels("channel2_enabled"),
     )
 
     power = Instrument.control(
