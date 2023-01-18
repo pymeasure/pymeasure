@@ -95,7 +95,7 @@ class IBeamSmart(Instrument):
             includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
-            baud_rate=115200,
+            asrl={'baud_rate', 115200},
             **kwargs
         )
         # configure communication mode: no repeating and no command prompt
@@ -168,7 +168,7 @@ class IBeamSmart(Instrument):
         reply = self.read()
         if reply:
             # anything else than '[OK]'.
-            self.adapter.connection.flush()
+            self.adapter.connection.flush_read_buffer()
             raise ValueError(
                 f"IBeamSmart: Error after command '{self.lastcommand}' with "
                 f"message '{reply}'")
