@@ -57,3 +57,4 @@ David Sanchez Sanchez
 Andres Ruz-Nieto
 Carlos Martinez
 Scott Candey
+Tom Verbeure

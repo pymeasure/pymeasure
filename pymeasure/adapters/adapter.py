@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,7 +58,8 @@ class Adapter:
             self.log = log.getChild("Adapter")
         self.log.addHandler(logging.NullHandler())
         if preprocess_reply is not None:
-            warn("Deprecated in Adapter, implement it in the instrument instead.",
+            warn(("Parameter `preprocess_reply` is deprecated in Adapter. "
+                 "Implement it in the instrument instead."),
                  FutureWarning)
 
     def __del__(self):
@@ -150,8 +151,7 @@ class Adapter:
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warn("Deprecated, call `Instrument.ask` instead.",
-             FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         self.write(command)
         return self.read()
 
@@ -171,7 +171,7 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        warn("Deprecated, call `Instrument.values` instead.",
+        warn("`Adapter.values` is deprecated, call `Instrument.values` instead.",
              FutureWarning)
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
@@ -202,7 +202,7 @@ class Adapter:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, call `Instrument.binary_values` instead.",
+        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
              FutureWarning)
         self.write(command)
         binary = self.read()
