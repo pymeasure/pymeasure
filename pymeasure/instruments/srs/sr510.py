@@ -35,47 +35,50 @@ class SR510(Instrument):
                      200e-6: 14, 500e-6: 15, 1e-3: 16, 2e-3: 17, 5e-3: 18, 10e-3: 19, 20e-3: 20,
                      50e-3: 21, 100e-3: 22, 200e-3: 23, 500e-3: 24, }
 
-    phase = Instrument.control("P", "P %g",
-                               """A float property that represents the SR510 reference to input
-                               phase offset in degrees. Queries return values between -180 and
-                               180 degrees. This property can be set with a range of values
-                               between -999 to 999 degrees. Set values are mapped internal in the
-                               lockin to -180 and 180 degrees.""",
-                               validator=truncated_range,
-                               values=[-999, 999],
-                               )
+    phase = Instrument.control(
+        "P", "P %g",
+        """A float property that represents the SR510 reference to input
+        phase offset in degrees. Queries return values between -180 and
+        180 degrees. This property can be set with a range of values
+        between -999 to 999 degrees. Set values are mapped internal in the
+        lockin to -180 and 180 degrees.""",
+        validator=truncated_range,
+        values=[-999, 999],
+    )
 
-    time_constant = Instrument.control("T1", "T1,%d",
-                                       """A float property that represents the SR510 PRE filter time constant.
-                                          This property can be set.""",
-                                       validator=truncated_discrete_set,
-                                       values=TIME_CONSTANTS,
-                                       map_values=True,
-                                       )
+    time_constant = Instrument.control(
+        "T1", "T1,%d",
+        """A float property that represents the SR510 PRE filter time constant.
+        This property can be set.""",
+        validator=truncated_discrete_set,
+        values=TIME_CONSTANTS,
+        map_values=True,
+    )
 
-    sensitivity = Instrument.control("G", "G%d",
-                                     """A float property that represents the SR510 sensitivity value.
-                                        This property can be set.""",
-                                     validator=truncated_discrete_set,
-                                     values=SENSITIVITIES,
-                                     map_values=True,
-                                     )
+    sensitivity = Instrument.control(
+        "G", "G%d",
+        """A float property that represents the SR510 sensitivity value.
+           This property can be set.""",
+        validator=truncated_discrete_set,
+        values=SENSITIVITIES,
+        map_values=True,
+    )
 
-    frequency = Instrument.measurement("F",
-                                       """A float property representing the SR510 input reference
-                                       frequency""",
-                                       )
+    frequency = Instrument.measurement(
+        "F",
+        """A float property representing the SR510 input reference frequency""",
+    )
 
-    status = Instrument.measurement("Y",
-                                    """A string property representing the bits set within the SR510
-                                    status byte""",
-                                    get_process=lambda s: bin(int(s))[2:],
-                                    )
+    status = Instrument.measurement(
+        "Y",
+        """A string property representing the bits set within the SR510 status byte""",
+        get_process=lambda s: bin(int(s))[2:],
+    )
 
-    output = Instrument.measurement("Q",
-                                    """A float property that represents the SR510 output voltage in
-                                    Volts.""",
-                                    )
+    output = Instrument.measurement(
+        "Q",
+        """A float property that represents the SR510 output voltage in Volts.""",
+    )
 
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault('write_termination', '\r')

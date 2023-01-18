@@ -90,10 +90,13 @@ class PrologixAdapter(VISAAdapter):
                  preprocess_reply=None, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
-            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
+            warn(("Parameter `rw_delay` is deprecated. "
+                  "Implement in Instrument's `wait_until_read` instead."),
+                 FutureWarning)
             kwargs['query_delay'] = rw_delay
         if serial_timeout:
-            warn("Use 'timeout' in ms instead", FutureWarning)
+            warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
+                 FutureWarning)
             kwargs['timeout'] = serial_timeout
         super().__init__(resource_name,
                          asrl={
@@ -122,8 +125,7 @@ class PrologixAdapter(VISAAdapter):
 
         :param command: SCPI command string to be sent to instrument
         """
-        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
-             FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         self.write(command)
         return self.read()
 

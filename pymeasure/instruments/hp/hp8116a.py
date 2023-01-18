@@ -235,7 +235,7 @@ class HP8116A(Instrument):
         :param command: The command to send to the instrument.
         :param num_bytes: The number of bytes to read from the instrument. If not specified,
                           the number of bytes is automatically determined by the command.
-        """
+        """  # noqa: E501
         self.write(command)
 
         if num_bytes is None:
