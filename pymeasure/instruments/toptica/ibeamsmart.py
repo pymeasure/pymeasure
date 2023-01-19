@@ -204,7 +204,6 @@ class IBeamSmart(Instrument):
     current = Instrument.measurement(
         "sh cur",
         """Measure the laser diode current in mA.""",
-        # TODO verify the unit
     )
 
     emission = Instrument.control(
@@ -264,7 +263,6 @@ class IBeamSmart(Instrument):
         """Control actual output power in µW of the laser system. In pulse mode
         this means that the set value might not correspond to the readback
         one (float up to 200000).""",
-        # TODO verify with read device, that setter works as well.
         validator=strict_range,
         values=[0, 200000],
         check_set_errors=True,
@@ -289,7 +287,6 @@ class IBeamSmart(Instrument):
 
     def disable(self):
         """Shutdown all laser operation."""
-        # TODO verify with real device
         self.write('di 0')
         self.check_errors()
         self.emission = False
