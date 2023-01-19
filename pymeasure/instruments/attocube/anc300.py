@@ -22,10 +22,12 @@
 # THE SOFTWARE.
 #
 
+import re
+import time
 from math import inf
 
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
@@ -216,7 +218,7 @@ class ANC300Controller(Instrument):
                       properties with these names
     :param passwd: password for the attocube standard console
     :param query_delay: delay between sending and reading (default 0.05 sec)
-    :param kwargs: Any valid key-word argument for TelnetAdapter
+    :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
         "ver", """ Version number and instrument identification """
@@ -226,17 +228,7 @@ class ANC300Controller(Instrument):
         "getcser", """ Serial number of the controller board """
     )
 
-    def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
-        kwargs['query_delay'] = query_delay
-        super().__init__(
-            AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
-            "attocube ANC300 Piezo Controller",
-            includeSCPI=False,
-            **kwargs
-        )
-        self._axisnames = axisnames
-        for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(self, i + 1))
+    _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
     def check_errors(self):
         """Read after setting a value."""
@@ -255,3 +247,66 @@ class ANC300Controller(Instrument):
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.stop()
+
+    def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
+        kwargs['query_delay'] = query_delay
+        address = f"TCPIP0::{host}::7230::SOCKET"
+        self.termination_str = "\r\n"
+
+        kwargs.setdefault('preprocess_reply', self.extract_value)
+
+        adapter = VISAAdapter(
+            address,
+            read_termination=self.termination_str,
+            write_termination=self.termination_str,
+            **kwargs
+        )
+
+        super().__init__(
+            adapter,
+            "attocube ANC300 Piezo Controller",
+            includeSCPI=False,
+            **kwargs
+        )
+
+        self._axisnames = axisnames
+        for i, axis in enumerate(axisnames):
+            setattr(self, axis, Axis(self, i + 1))
+
+        time.sleep(self.adapter.query_delay)
+        super().read()  # clear messages sent upon opening the connection
+        # send password and check authorization
+        self.write(passwd)
+        time.sleep(self.adapter.query_delay)
+        ret: str = super().read()
+        auth_msg = ret.split(self.termination_str)[1]
+        if auth_msg != 'Authorization success':
+            raise Exception(f"Attocube authorization failed '{auth_msg}'")
+        # switch console echo off
+        self.write('echo off')
+        _ = self.read()
+
+    def extract_value(self, reply):
+        """ preprocess_reply function for the Attocube console. This function
+        tries to extract <value> from 'name = <value> [unit]'. If <value> can
+        not be identified the original string is returned.
+
+        :param reply: reply string
+        :returns: string with only the numerical value, or the original string
+        """
+        r = self._reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
+
+    def read(self):
+        """Read after setting a value."""
+        raw: str = super().read()
+        raw = raw.strip(self.termination_str).rsplit(sep='\n', maxsplit=1)
+        if raw[-1] != 'OK':
+            if raw[0] == "" or len(raw) == 1:  # clear buffer
+                super().read()  # without error checking
+            raise ValueError("AttocubeConsoleAdapter: Error after previous "
+                             f"command with message {raw[0]}")
+        return raw[0].strip('\r')  # strip possible CR char
