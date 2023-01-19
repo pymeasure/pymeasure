@@ -89,20 +89,23 @@ class IBeamSmart(Instrument):
         laser.shutdown()
 
     :param adapter: pyvisa resource name or adapter instance.
+    :param baud_rate: The baud rate you have set in the instrument.
     :param \\**kwargs: Any valid key-word argument for VISAAdapter.
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
     channels = Instrument.ChannelCreator(DriverChannel, (1, 2, 3, 4, 5))
 
-    def __init__(self, adapter, name="Toptica IBeam Smart laser diode", **kwargs):
+    def __init__(self, adapter, name="Toptica IBeam Smart laser diode",
+                 baud_rate=115200,
+                 **kwargs):
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
-            asrl={'baud_rate', 115200},
+            asrl={'baud_rate', baud_rate},
             **kwargs
         )
         # configure communication mode: no repeating and no command prompt
