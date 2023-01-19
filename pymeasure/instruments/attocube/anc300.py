@@ -250,6 +250,7 @@ class ANC300Controller(Instrument):
 
     def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
         kwargs['query_delay'] = query_delay
+        kwargs['preprocess_reply'] = self.extract_value
         address = f"TCPIP0::{host}::7230::SOCKET"
         self.termination_str = "\r\n"
 
@@ -257,7 +258,6 @@ class ANC300Controller(Instrument):
             address,
             read_termination=self.termination_str,
             write_termination=self.termination_str,
-            preprocess_reply=kwargs.pop('preprocess_reply', self.extract_value),
             **kwargs
         )
 
