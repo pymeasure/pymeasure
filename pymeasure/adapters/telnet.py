@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import telnetlib
+import socket
 import time
 from warnings import warn
 
@@ -63,7 +63,9 @@ class TelnetAdapter(Adapter):
                 raise TypeError(
                     f"TelnetAdapter: unexpected keyword argument '{kw}', "
                     f"allowed are: {str(safe_keywords)}")
-        self.connection = telnetlib.Telnet(host, port, **kwargs)
+        self.connection = socket.socket(**kwargs)
+        self.connection.connect((host, port))
+        self.host, self.port = host, port
 
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
@@ -72,7 +74,7 @@ class TelnetAdapter(Adapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        self.connection.write((command + self.write_termination).encode(), **kwargs)
+        self.connection.send((command + self.write_termination).encode(), **kwargs)
 
     def _read(self, **kwargs):
         """ Read something even with blocking the I/O. After something is
@@ -81,13 +83,9 @@ class TelnetAdapter(Adapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        read = self.connection.read_some(**kwargs).decode() + \
-            self.connection.read_very_eager(**kwargs).decode()
-        # Python>3.8 return read.removesuffix(self.read_termination)
-        if self.read_termination:
-            return read.split(self.read_termination)[0]
-        else:
-            return read
+        # Maybe read until read_termination is found?
+        read = self.connection.recv(4096, **kwargs).decode()
+        return read.removesuffix(self.read_termination)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
@@ -106,4 +104,4 @@ class TelnetAdapter(Adapter):
         return self.read()
 
     def __repr__(self):
-        return "<TelnetAdapter(host=%s, port=%d)>" % (self.connection.host, self.connection.port)
+        return "<TelnetAdapter(host=%s, port=%d)>" % (self.host, self.port)
