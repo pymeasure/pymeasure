@@ -27,72 +27,15 @@ from unittest import mock
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
+from pymeasure.adapters import FakeAdapter
 
 from pymeasure.instruments.attocube import ANC300Controller
 from pymeasure.instruments.attocube import anc300
 
 
-class Mock_Adapter(AttocubeConsoleAdapter):
-    """Mocking the real adapter using the ProtocolAdapter as connection."""
-
-    def __init__(self, host, port, passwd, **kwargs):
-        self.read_termination = '\r\n'
-        self.write_termination = self.read_termination
-        kwargs.setdefault('preprocess_reply', self.extract_value)
-        self.preprocess_reply = kwargs['preprocess_reply']
-        self.connection = host  # take the ProtocolAdapter as connection
-        self.connection.close = self.close
-        self.query_delay = 0
-        self.log = mock.MagicMock()
-        self.connection.read()  # clear messages sent upon opening the connection
-        # send password and check authorization
-        self.write(passwd)
-        ret = self.connection.read()
-        authmsg = ret.split(self.read_termination)[1]
-        if authmsg != 'Authorization success':
-            raise Exception(f"Attocube authorization failed '{authmsg}'")
-        # switch console echo off
-        self.write('echo off')
-        _ = self.read()
-
-    def close(self):
-        pass
-
-    def _read(self):
-        """ Reads a reply of the instrument which consists of one or more
-        lines. The first ones are the reply to the command while the last one
-        is 'OK' or 'ERROR' to indicate any problem. In case the status is not OK
-        a ValueError is raised.
-
-        :returns: String ASCII response of the instrument.
-        """
-        # one would want to use self.read_termination as 'sep' below, but this
-        # is not possible because of a firmware bug resulting in inconsistent
-        # line endings
-        raw = self.connection._read().strip(self.read_termination).rsplit(sep='\n', maxsplit=1)
-        if raw[-1] != 'OK':
-            if raw[0] == "" or len(raw) == 1:  # clear buffer
-                super()._read()  # without error checking
-            raise ValueError("AttocubeConsoleAdapter: Error after command "
-                             f"{self.lastcommand} with message {raw[0]}")
-        return raw[0].strip('\r')  # strip possible CR char
-
-    def _write(self, command):
-        """ Writes a command to the instrument
-
-        :param command: command string to be sent to the instrument
-        :param check_ack: boolean flag to decide if the acknowledgement is read
-            back from the instrument. This should be True for set pure commands
-            and False otherwise.
-        """
-        self.lastcommand = command
-        self.connection.write(command + self.write_termination)
-
-
 @pytest.fixture(autouse=True)
 def modding(monkeypatch):
-    monkeypatch.setattr(anc300, "AttocubeConsoleAdapter", Mock_Adapter)
+    monkeypatch.setattr(anc300, "VISAAdapter", FakeAdapter)
 
 
 def test_stepu():

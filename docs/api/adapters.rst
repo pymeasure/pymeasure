@@ -56,15 +56,15 @@ VXI-11 adapter
     :inherited-members:
     :show-inheritance: 
 
-==============
-Telnet adapter
-==============
+.. ==============
+.. Telnet adapter
+.. ==============
 
-.. autoclass:: pymeasure.adapters.TelnetAdapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
+.. .. autoclass:: pymeasure.adapters.TelnetAdapter
+..     :members:
+..     :undoc-members:
+..     :inherited-members:
+..     :show-inheritance:
 
 =============
 Test adapters
