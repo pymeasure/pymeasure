@@ -228,7 +228,8 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
-        command_process=_deprecation_warning("Property `laser_enabled` is deprecated, use `emission` instead."),
+        command_process=_deprecation_warning(
+            "Property `laser_enabled` is deprecated, use `emission` instead."),
     )
 
     channel1_enabled = Instrument.control(

@@ -80,10 +80,11 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Current (A) #
     ###############
 
-    current = Instrument.measurement(":READ?",
-                                     """ Reads the current in Amps, if configured for this reading.
+    current = Instrument.measurement(
+        ":READ?",
+        """ Reads the current in Amps, if configured for this reading.
         """
-                                     )
+    )
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
@@ -148,10 +149,11 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Voltage (V) #
     ###############
 
-    voltage = Instrument.measurement(":READ?",
-                                     """ Reads the voltage in Volts, if configured for this reading.
+    voltage = Instrument.measurement(
+        ":READ?",
+        """ Reads the voltage in Volts, if configured for this reading.
         """
-                                     )
+    )
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
@@ -215,10 +217,12 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Resistance (Ohm) #
     ####################
 
-    resistance = Instrument.measurement(":READ?",
-                                        """ Reads the resistance in Ohms, if configured for this reading.
+    resistance = Instrument.measurement(
+        ":READ?",
+        """ Reads the resistance in Ohms, if configured for this reading.
         """
-                                        )
+    )
+
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range

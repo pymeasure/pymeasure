@@ -92,8 +92,8 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
-        query places an ASCII character 1 into the device's Output Queue when all pending
+        """ This property allows synchronization between a controller and a device. The Operation
+        Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
         if self.SCPI:

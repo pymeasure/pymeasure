@@ -6,7 +6,10 @@ New adapter and instrument mechanics
 - All instruments are required to accept a :code:`name` argument.
 
 Deprecated features
-- Toptica IBeamSmart: :code:`channel1_enabled` deprecated in favor of using `ch_1.enabled`property (similar channel2). Also `laser_enabled` is deprecated in favor of `emission`.
+-------------------
+- HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
+  use :code:`function_` and :code:`reading` properties instead.
+- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
 
 Version 0.11.1 (2022-12-31)
 ===========================
@@ -21,7 +24,7 @@ Version 0.11.0 (2022-11-19)
 Main items of this new release:
 
 - 11 new instrument drivers have been added
-- A method for testing instrument communication **without** hardware present has been added, see `the documentation <https://pymeasure.readthedocs.io/en/latest/dev/adding_instruments.html#protocol-tests>`__. 
+- A method for testing instrument communication **without** hardware present has been added, see `the documentation <https://pymeasure.readthedocs.io/en/latest/dev/adding_instruments.html#protocol-tests>`__.
 - The separation between :code:`Instrument` and :code:`Adapter` has been improved to make future modifications easier. Adapters now focus on the hardware communication, and the communication *protocol* should be defined in the Instruments. Details in a section below.
 - The GUI is now compatible with Qt6.
 - We have started to clean up our API in preparation for a future version 1.0. There will be deprecations and subsequent removals, which will be prominently listed in the changelog.
