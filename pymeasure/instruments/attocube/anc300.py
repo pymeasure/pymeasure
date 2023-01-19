@@ -257,7 +257,7 @@ class ANC300Controller(Instrument):
             address,
             read_termination=self.termination_str,
             write_termination=self.termination_str,
-            preprocess_reply=self.extract_value
+            preprocess_reply=self.extract_value,
             **kwargs
         )
 
