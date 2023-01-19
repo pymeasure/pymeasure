@@ -228,7 +228,15 @@ class VISAAdapter(Adapter):
         in the read buffer and no END-indicator was present, read from the device until
         encountering an END indicator (which causes loss of data).
         """
-        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        try:
+            self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        except NotImplementedError:
+            # fake discarding the read buffer by reading all available messages.
+            try:
+                while True:
+                    self.read()
+            except pyvisa.errors.VisaIOError:
+                pass
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
