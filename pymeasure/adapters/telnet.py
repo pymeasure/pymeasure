@@ -77,15 +77,18 @@ class TelnetAdapter(Adapter):
         self.connection.send((command + self.write_termination).encode(), **kwargs)
 
     def _read(self, **kwargs):
-        """ Read something even with blocking the I/O. After something is
+        """ Read everything even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        # Maybe read until read_termination is found?
-        read = self.connection.recv(4096, **kwargs).decode()
-        return read.removesuffix(self.read_termination)
+        data = ""
+        read = "placeholder"
+        while read:
+            read = self.connection.recv(4096).decode()
+            data += read
+        return data.removesuffix(self.read_termination)
 
     def ask(self, command):
         """ Writes a command to the instrument and returns the resulting ASCII
