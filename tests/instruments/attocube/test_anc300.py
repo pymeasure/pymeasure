@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from unittest import mock
+
 import pytest
 
 from pymeasure.test import expected_protocol
@@ -33,6 +35,7 @@ from pymeasure.instruments.attocube import anc300
 
 class Mock_Adapter(AttocubeConsoleAdapter):
     """Mocking the real adapter using the ProtocolAdapter as connection."""
+
     def __init__(self, host, port, passwd, **kwargs):
         self.read_termination = '\r\n'
         self.write_termination = self.read_termination
@@ -41,51 +44,41 @@ class Mock_Adapter(AttocubeConsoleAdapter):
         self.connection = host  # take the ProtocolAdapter as connection
         self.connection.close = self.close
         self.query_delay = 0
+        self.log = mock.MagicMock()
         self.connection.read()  # clear messages sent upon opening the connection
         # send password and check authorization
-        self.write(passwd, check_ack=False)
+        self.write(passwd)
         ret = self.connection.read()
         authmsg = ret.split(self.read_termination)[1]
         if authmsg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{authmsg}'")
         # switch console echo off
-        _ = self.ask('echo off')  # TODO
+        self.write('echo off')
+        _ = self.read()
 
     def close(self):
         pass
 
-    def check_acknowledgement(self, reply, msg=""):
-        """ checks the last reply of the instrument to be 'OK', otherwise a
-        ValueError is raised.
-
-        :param reply: last reply string of the instrument
-        :param msg: optional message for the eventual error
-        """
-        if reply != 'OK':
-            if msg == "":  # clear buffer
-                msg = reply
-                self.connection.read()
-            raise ValueError("AttocubeConsoleAdapter: Error after command "
-                             f"{self.lastcommand} with message {msg}")
-
-    def read(self):
-        """ Reads a reply of the instrument which consists of two or more
+    def _read(self):
+        """ Reads a reply of the instrument which consists of one or more
         lines. The first ones are the reply to the command while the last one
-        is 'OK' or 'ERROR' to indicate any problem. In case the reply is not OK
+        is 'OK' or 'ERROR' to indicate any problem. In case the status is not OK
         a ValueError is raised.
 
         :returns: String ASCII response of the instrument.
         """
-        raw = self.connection.read().strip(self.read_termination)
         # one would want to use self.read_termination as 'sep' below, but this
         # is not possible because of a firmware bug resulting in inconsistent
         # line endings
-        ret, ack = raw.rsplit(sep='\n', maxsplit=1)
-        ret = ret.strip('\r')  # strip possible CR char
-        self.check_acknowledgement(ack, ret)
-        return ret
+        raw = self.connection._read().strip(self.read_termination).rsplit(sep='\n', maxsplit=1)
+        if raw[-1] != 'OK':
+            if raw[0] == "" or len(raw) == 1:  # clear buffer
+                super()._read()  # without error checking
+            raise ValueError("AttocubeConsoleAdapter: Error after command "
+                             f"{self.lastcommand} with message {raw[0]}")
+        return raw[0].strip('\r')  # strip possible CR char
 
-    def write(self, command, check_ack=True):
+    def _write(self, command):
         """ Writes a command to the instrument
 
         :param command: command string to be sent to the instrument
@@ -95,10 +88,6 @@ class Mock_Adapter(AttocubeConsoleAdapter):
         """
         self.lastcommand = command
         self.connection.write(command + self.write_termination)
-        if check_ack:
-            reply = self.connection.read()
-            msg = reply.strip(self.read_termination)
-            self.check_acknowledgement(msg)
 
 
 @pytest.fixture(autouse=True)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,11 +58,11 @@ class Fluke7341(Instrument):
                                 get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}"
                                 )
 
-    def __init__(self, resource_name, **kwargs):
+    def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 2000)
         kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
-            resource_name,
+            adapter,
             "Fluke 7341",
             preprocess_reply=lambda x: x.split()[1],
             includeSCPI=False,

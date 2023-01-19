@@ -1,0 +1,25 @@
+################################
+HP Signal generator HP8657B
+################################
+
+
+*Note:*
+    * This instrument does not support reading back values, as it is a listen-only GPIB device.
+    
+    * Other instruments of this family could be implemented using the dynamic ranges feature.
+    
+    * Optional pulse modulation feature is not supported yet.
+    
+Glossary:
+    ============  ===========
+    Abbreviation  Explanation
+    ============  ===========
+    AM            Amplitude Modulation
+    FM            Frequency Modulation
+    dBm           power level in dB referenced to 1mW
+    ============  ===========
+    
+
+.. autoclass:: pymeasure.instruments.hp.HP8657B
+    :members:
+    :show-inheritance:

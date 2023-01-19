@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -342,9 +342,9 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, **kwargs):
         super().__init__(
-            resourceName,
+            adapter,
             "Stanford Research Systems SR830 Lock-in amplifier",
             **kwargs
         )
@@ -473,8 +473,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pauseBuffer()
-        ch1[index:count + 1] = self.buffer_data(1, index, count)
-        ch2[index:count + 1] = self.buffer_data(2, index, count)
+        ch1[index : count + 1] = self.buffer_data(1, index, count)  # noqa: E203
+        ch2[index : count + 1] = self.buffer_data(2, index, count)  # noqa: E203
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):

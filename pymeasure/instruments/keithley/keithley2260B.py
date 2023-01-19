@@ -1,3 +1,27 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2023 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
@@ -28,14 +52,14 @@ class Keithley2260B(Instrument):
     """
 
     def __init__(self, adapter, read_termination="\n", **kwargs):
+        kwargs.setdefault('name', "Keithley 2260B DC Power Supply")
         super().__init__(
             adapter,
-            "Keithley 2260B DC Power Supply",
             read_termination=read_termination,
             **kwargs
         )
 
-    enabled = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
         """A boolean property that controls whether the source is enabled, takes
@@ -92,6 +116,18 @@ class Keithley2260B(Instrument):
     )
 
     @property
+    def enabled(self):
+        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
+                    'instead.', FutureWarning)
+        return self.output_enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
+                    'instead.', FutureWarning)
+        self.output_enabled = value
+
+    @property
     def error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
@@ -115,5 +151,5 @@ class Keithley2260B(Instrument):
 
     def shutdown(self):
         """ Disable output, call parent function"""
-        self.enabled = False
+        self.output_enabled = False
         super().shutdown()
