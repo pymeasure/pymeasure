@@ -253,12 +253,11 @@ class ANC300Controller(Instrument):
         address = f"TCPIP0::{host}::7230::SOCKET"
         self.termination_str = "\r\n"
 
-        kwargs.setdefault('preprocess_reply', self.extract_value)
-
         adapter = VISAAdapter(
             address,
             read_termination=self.termination_str,
             write_termination=self.termination_str,
+            preprocess_reply=self.extract_value
             **kwargs
         )
 
