@@ -87,7 +87,7 @@ class PSChannel(Channel):
     voltage_limit_enabled = Instrument.control(
         "VOLT:LIM:STAT?",
         "VOLT:LIM:STAT %d",
-        """ Turns on or off the maximum voltage limit.""",
+        """ Control whether the maximum voltage limit is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
