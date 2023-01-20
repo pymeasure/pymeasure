@@ -56,7 +56,7 @@ class PSChannel(Channel):
     current_limit = Instrument.control(
         "CURR?",
         "CURR %g",
-        """ Set output current in Amps.""",
+        """ Control output current in Amps.""",
         validator=strict_range,
         values=CURRENT_RANGE,
     )
