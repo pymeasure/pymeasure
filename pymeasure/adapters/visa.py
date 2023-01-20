@@ -231,12 +231,15 @@ class VISAAdapter(Adapter):
         try:
             self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
         except NotImplementedError:
+            # NotImplementedError is raised when using resource types other than `asrl`
+            # in conjunction with pyvisa-py.
+            # Upstream issue: https://github.com/pyvisa/pyvisa-py/issues/348
             # fake discarding the read buffer by reading all available messages.
             timeout = self.connection.timeout
             self.connection.timeout = 0
             try:
                 while True:
-                    self.read()
+                    self.read_bytes(-1)
             except pyvisa.errors.VisaIOError:
                 pass
             self.connection.timeout = timeout
