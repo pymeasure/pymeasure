@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .adapters import TopticaAdapter
 from .ibeamsmart import IBeamSmart
