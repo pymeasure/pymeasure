@@ -248,23 +248,16 @@ class ANC300Controller(Instrument):
             if isinstance(attribute, Axis):
                 attribute.stop()
 
-    def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
-        kwargs['query_delay'] = query_delay
-        kwargs['preprocess_reply'] = self.extract_value
-        address = f"TCPIP0::{host}::7230::SOCKET"
+    def __init__(self, adapter, name="attocube ANC300 Piezo Controller", axisnames="", passwd="", query_delay=0.05, **kwargs):
+        self.query_delay = query_delay
         self.termination_str = "\r\n"
-
-        adapter = VISAAdapter(
-            address,
-            read_termination=self.termination_str,
-            write_termination=self.termination_str,
-            **kwargs
-        )
 
         super().__init__(
             adapter,
-            "attocube ANC300 Piezo Controller",
+            name,
             includeSCPI=False,
+            read_termination=self.termination_str,
+            write_termination=self.termination_str,
             **kwargs
         )
 
