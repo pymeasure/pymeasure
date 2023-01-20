@@ -48,7 +48,7 @@ class PSChannel(Channel):
     voltage_setpoint = Instrument.control(
         "VOLT?",
         "VOLT %g",
-        """ Set output voltage in Volts.""",
+        """ Control output voltage in Volts.""",
         validator=strict_range,
         values=VOLTAGE_RANGE,
     )
