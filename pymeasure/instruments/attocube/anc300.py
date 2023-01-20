@@ -272,11 +272,11 @@ class ANC300Controller(Instrument):
         for i, axis in enumerate(axisnames):
             setattr(self, axis, Axis(self, i + 1))
 
-        time.sleep(self.query_delay)
+        self.wait_for()
         super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
         self.write(passwd)
-        time.sleep(self.query_delay)
+        self.wait_for()
         ret: str = super().read()
         auth_msg = ret.split(self.termination_str)[1]
         if auth_msg != 'Authorization success':
@@ -309,3 +309,10 @@ class ANC300Controller(Instrument):
             raise ValueError("AttocubeConsoleAdapter: Error after previous "
                              f"command with message {raw[0]}")
         return raw[0].strip('\r')  # strip possible CR char
+
+    def wait_for(self, query_delay=0):
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+        """
+        super().wait_for(query_delay or self.query_delay)
