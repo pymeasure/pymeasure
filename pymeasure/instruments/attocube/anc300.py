@@ -24,7 +24,9 @@
 
 import re
 from math import inf
+from warnings import warn
 
+from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
@@ -248,13 +250,31 @@ class ANC300Controller(Instrument):
 
     def __init__(
         self,
-        adapter,
+        adapter=None,
         name="attocube ANC300 Piezo Controller",
         axisnames="",
         passwd="",
         query_delay=0.05,
         **kwargs,
     ):
+        """
+        The function is called with the following arguments:
+
+        The function checks if the adapter is None, and if so, it checks if the host is defined. If the
+        host is defined, it creates a VISA socket connection.
+
+        .. deprecated:: 0.11.2
+            The 'host' argument is deprecated. Use 'adapter' instead.
+
+        :param adapter: The address of the controller
+        :param name: The name of the device, defaults to attocube ANC300 Piezo Controller (optional)
+        :param axisnames: a string of the axis names, e.g. "xyz"
+        :param passwd: the password for the controller
+        :param query_delay: the time to wait between queries to the controller
+        """
+        if adapter is None:
+            adapter = self.handle_deprecated_host_arg(kwargs)
+
         self.query_delay = query_delay
         self.termination_str = "\r\n"
 
@@ -283,6 +303,24 @@ class ANC300Controller(Instrument):
         # switch console echo off
         self.write('echo off')
         _ = self.read()
+
+    def handle_deprecated_host_arg(self, kwargs: dict):
+        """
+        This pulls the host argument from the kwargs and creates a resource string
+        for the VISAAdapter. This is deprecated and separated out to make it easier
+        to remove in the future. This function should be removed and the adapter
+        argument should be made non-optional in the definition of the __init__ function.
+
+        .. deprecated:: 0.11.2
+            The 'host' argument is deprecated.
+        """
+        host = kwargs.pop("host")
+        if not host:
+            # because the host argument is deprecated, prompt for the desired
+            # argument which is the adapter argument.
+            raise TypeError("ANC300Controller: missing 'adapter' argument")
+        warn("The 'host' argument is deprecated. Use 'adapter' instead.", FutureWarning)
+        return f"TCPIP0::{host}::7230::SOCKET"
 
     def extract_value(self, reply):
         """ preprocess_reply function for the Attocube console. This function
