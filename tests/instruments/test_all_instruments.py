@@ -61,8 +61,8 @@ need_init_communication = [
     "AWG401x_AFG",
     "VARX",
     "HP8116A",
-    "ANC300Controller",
     "IBeamSmart",
+    "ANC300Controller",
 ]
 
 
