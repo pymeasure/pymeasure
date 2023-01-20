@@ -39,7 +39,7 @@ class PSChannel(Channel):
     output_enabled = Instrument.control(
         "SOURCE:OUTP:ENAB?",
         "SOURCE:OUTP:ENAB %d",
-        """ Enables or Disables the output.""",
+        """ Control the output state.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
