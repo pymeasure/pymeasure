@@ -79,7 +79,7 @@ class PSChannel(Channel):
     voltage_limit = Instrument.control(
         "VOLT:LIM?",
         "VOLT:LIM %g",
-        """ Limits the maximum voltage that can be set.""",
+        """ Control the maximum voltage that can be set.""",
         validator=strict_range,
         values=VOLTAGE_RANGE,
     )
