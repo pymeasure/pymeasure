@@ -23,7 +23,6 @@
 #
 
 import re
-import time
 from math import inf
 
 from pymeasure.instruments import Instrument
