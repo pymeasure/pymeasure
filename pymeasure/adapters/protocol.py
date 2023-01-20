@@ -25,6 +25,8 @@
 import logging
 from unittest.mock import MagicMock
 
+import pyvisa
+
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -160,3 +162,12 @@ class ProtocolAdapter(Adapter):
             else:
                 self._read_buffer = p_read[count:]
                 return p_read[:count]
+
+    def flush_read_buffer(self):
+        """ Flush and discard the input buffer
+
+        As detailed by pyvisa, discard the read buffer contents and if data was present
+        in the read buffer and no END-indicator was present, read from the device until
+        encountering an END indicator (which causes loss of data).
+        """
+        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
