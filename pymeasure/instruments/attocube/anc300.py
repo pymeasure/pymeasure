@@ -26,7 +26,6 @@ import re
 from math import inf
 from warnings import warn
 
-from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
@@ -260,8 +259,8 @@ class ANC300Controller(Instrument):
         """
         The function is called with the following arguments:
 
-        The function checks if the adapter is None, and if so, it checks if the host is defined. If the
-        host is defined, it creates a VISA socket connection.
+        The function checks if the adapter is None, and if so, it checks if the host is defined.
+        If the host is defined, it creates a VISA socket connection.
 
         .. deprecated:: 0.11.2
             The 'host' argument is deprecated. Use 'adapter' instead.
