@@ -26,7 +26,6 @@ import re
 import time
 from math import inf
 
-from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
@@ -143,7 +142,7 @@ class Axis:
         self.axis = str(axis)
         self.controller = controller
 
-    def _add_axis_id(self, command):
+    def _add_axis_id(self, command: str):
         """ add axis id to a command string at the correct position after the
         initial command, but before a potential value
 
@@ -265,11 +264,11 @@ class ANC300Controller(Instrument):
         for i, axis in enumerate(axisnames):
             setattr(self, axis, Axis(self, i + 1))
 
-        time.sleep(self.adapter.query_delay)
+        time.sleep(self.query_delay)
         super().read()  # clear messages sent upon opening the connection
         # send password and check authorization
         self.write(passwd)
-        time.sleep(self.adapter.query_delay)
+        time.sleep(self.query_delay)
         ret: str = super().read()
         auth_msg = ret.split(self.termination_str)[1]
         if auth_msg != 'Authorization success':
