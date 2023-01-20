@@ -22,43 +22,38 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from pymeasure.test import expected_protocol
-from pymeasure.adapters import FakeAdapter
 
 from pymeasure.instruments.attocube import ANC300Controller
-from pymeasure.instruments.attocube import anc300
 
 
-@pytest.fixture(autouse=True)
-def modding(monkeypatch):
-    monkeypatch.setattr(anc300, "VISAAdapter", FakeAdapter)
+def test_stepu():
+    """Test a setting."""
+    with expected_protocol(
+        ANC300Controller,
+        [
+            (None, b"xy"),
+            (b"passwd", b"xy\r\nAuthorization success\r\nOK"),
+            (b"echo off", b"x\r\nOK"),
+            (b"stepu 1 15", b"OK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd="passwd",
+    ) as instr:
+        instr.a.stepu = 15
 
 
-# def test_stepu():
-#     """Test a setting."""
-#     with expected_protocol(
-#             ANC300Controller,
-#             [(None, b"xy"),
-#              (b"passwd\r\n", b'xy\r\nAuthorization success\r\nOK'),
-#              (b"echo off\r\n", b"x\r\nOK"),
-#              (b"stepu 1 15\r\n", b"OK")],
-#             axisnames=["a", "b", "c"],
-#             passwd="passwd"
-#             ) as instr:
-#         instr.a.stepu = 15
-
-
-# def test_voltage():
-#     """Test a measurement."""
-#     with expected_protocol(
-#             ANC300Controller,
-#             [(None, b"xy"),
-#              (b"passwd\r\n", b'xy\r\nAuthorization success\r\nOK'),
-#              (b"echo off\r\n", b"x\r\nOK"),
-#              (b"geto 1\r\n", b"5\r\nOK")],
-#             axisnames=["a", "b", "c"],
-#             passwd="passwd"
-#             ) as instr:
-#         assert instr.a.output_voltage == 5
+def test_voltage():
+    """Test a measurement."""
+    with expected_protocol(
+        ANC300Controller,
+        [
+            (None, b"xy"),
+            (b"passwd", b"xy\r\nAuthorization success\r\nOK"),
+            (b"echo off", b"x\r\nOK"),
+            (b"geto 1", b"5\r\nOK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd="passwd",
+    ) as instr:
+        assert instr.a.output_voltage == 5
