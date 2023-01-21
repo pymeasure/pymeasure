@@ -34,7 +34,7 @@ class TelnetAdapter(Adapter):
     communication to instruments
 
     .. deprecated:: 0.11.2
-        Preparation for telnetlib deprecation. 
+        Preparation for telnetlib deprecation.
         TelnetAdapter is deprecated, use VISAAdapter instead.
 
     :param host: host address of the instrument
@@ -51,7 +51,6 @@ class TelnetAdapter(Adapter):
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
         this is only 'timeout'
     """
-
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
         warn("TelnetAdapter is deprecated, use VISAAdapter instead.", FutureWarning)
