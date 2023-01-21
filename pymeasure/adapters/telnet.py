@@ -33,6 +33,10 @@ class TelnetAdapter(Adapter):
     """ Adapter class for using the Python telnetlib package to allow
     communication to instruments
 
+    .. deprecated:: 0.11.2
+        Preparation for telnetlib deprecation. 
+        TelnetAdapter is deprecated, use VISAAdapter instead.
+
     :param host: host address of the instrument
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
@@ -50,6 +54,7 @@ class TelnetAdapter(Adapter):
 
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
+        warn("TelnetAdapter is deprecated, use VISAAdapter instead.", FutureWarning)
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         if query_delay:
