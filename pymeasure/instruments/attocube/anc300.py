@@ -212,11 +212,15 @@ class Axis:
 class ANC300Controller(Instrument):
     """ Attocube ANC300 Piezo stage controller with several axes
 
-    :param host: host address of the instrument
+    :param adapter: The VISA resource name of the controller
+        (e.g. "TCPIP::<address>::<port>::SOCKET") or a created Adapter.
     :param axisnames: a list of axis names which will be used to create
                       properties with these names
     :param passwd: password for the attocube standard console
     :param query_delay: delay between sending and reading (default 0.05 sec)
+    :param host: host address of the instrument (e.g. 169.254.0.1)
+        .. deprecated:: 0.11.2
+            The 'host' argument is deprecated. Use 'adapter' argument instead.
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
@@ -229,24 +233,6 @@ class ANC300Controller(Instrument):
 
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
-    def check_errors(self):
-        """Read after setting a value."""
-        self.read()
-
-    def ground_all(self):
-        """ Grounds all axis of the controller. """
-        for attr in self._axisnames:
-            attribute = getattr(self, attr)
-            if isinstance(attribute, Axis):
-                attribute.mode = 'gnd'
-
-    def stop_all(self):
-        """ Stop all movements of the axis. """
-        for attr in self._axisnames:
-            attribute = getattr(self, attr)
-            if isinstance(attribute, Axis):
-                attribute.stop()
-
     def __init__(
         self,
         adapter=None,
@@ -256,21 +242,6 @@ class ANC300Controller(Instrument):
         query_delay=0.05,
         **kwargs,
     ):
-        """
-        The function is called with the following arguments:
-
-        The function checks if the adapter is None, and if so, it checks if the host is defined.
-        If the host is defined, it creates a VISA socket connection.
-
-        .. deprecated:: 0.11.2
-            The 'host' argument is deprecated. Use 'adapter' instead.
-
-        :param adapter: The address of the controller
-        :param name: The name of the device, defaults to attocube ANC300 Piezo Controller (optional)
-        :param axisnames: a string of the axis names, e.g. "xyz"
-        :param passwd: the password for the controller
-        :param query_delay: the time to wait between queries to the controller
-        """
         if adapter is None:
             adapter = self.handle_deprecated_host_arg(kwargs)
 
@@ -303,15 +274,34 @@ class ANC300Controller(Instrument):
         self.write('echo off')
         _ = self.read()
 
-    def handle_deprecated_host_arg(self, kwargs: dict):
+    def check_errors(self):
+        """Read after setting a value."""
+        self.read()
+
+    def ground_all(self):
+        """ Grounds all axis of the controller. """
+        for attr in self._axisnames:
+            attribute = getattr(self, attr)
+            if isinstance(attribute, Axis):
+                attribute.mode = 'gnd'
+
+    def stop_all(self):
+        """ Stop all movements of the axis. """
+        for attr in self._axisnames:
+            attribute = getattr(self, attr)
+            if isinstance(attribute, Axis):
+                attribute.stop()
+
+    def handle_deprecated_host_arg(self, kwargs):
         """
         This pulls the host argument from the kwargs and creates a resource string
         for the VISAAdapter. This is deprecated and separated out to make it easier
         to remove in the future. This function should be removed and the adapter
         argument should be made non-optional in the definition of the __init__ function.
 
-        .. deprecated:: 0.11.2
-            The 'host' argument is deprecated.
+        :param dict kwargs: keyword arguments passed to the __init__ function,
+            including the deprecated `host` argument.
+        :return str: resource string for the VISAAdapter
         """
         host = kwargs.pop("host")
         if not host:
