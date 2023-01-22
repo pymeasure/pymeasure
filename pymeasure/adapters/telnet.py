@@ -54,6 +54,7 @@ class TelnetAdapter(Adapter):
     :param kwargs: Valid keyword arguments for telnetlib.Telnet, currently
         this is only 'timeout'
     """
+
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
         warn("TelnetAdapter is deprecated, use VISAAdapter instead.", FutureWarning)
@@ -82,7 +83,7 @@ class TelnetAdapter(Adapter):
         self.connection.write((command + self.write_termination).encode(), **kwargs)
 
     def _read(self, **kwargs):
-        """ Read everything even with blocking the I/O. After something is
+        """ Read something even with blocking the I/O. After something is
         received check again to obtain a full reply.
 
         :param kwargs: Keyword arguments for the connection itself.
