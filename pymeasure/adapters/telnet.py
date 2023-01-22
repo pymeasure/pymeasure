@@ -35,7 +35,10 @@ class TelnetAdapter(Adapter):
 
     .. deprecated:: 0.11.2
         Preparation for telnetlib deprecation.
-        TelnetAdapter is deprecated, use VISAAdapter instead.
+        As a result, TelnetAdapter is deprecated, use VISAAdapter instead.
+        The VISAAdapter supports TCPIP socket connections. When using the VISAAdapter,
+        the `resource_name` argument should be `TCPIP[board]::<host>::<port>::SOCKET`.
+        see here, <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>
 
     :param host: host address of the instrument
     :param port: TCPIP port
