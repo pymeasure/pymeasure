@@ -215,12 +215,14 @@ class ANC300Controller(Instrument):
     :param adapter: The VISA resource name of the controller
         (e.g. "TCPIP::<address>::<port>::SOCKET") or a created Adapter.
     :param axisnames: a list of axis names which will be used to create
-                      properties with these names
+        properties with these names
     :param passwd: password for the attocube standard console
     :param query_delay: delay between sending and reading (default 0.05 sec)
     :param host: host address of the instrument (e.g. 169.254.0.1)
+
         .. deprecated:: 0.11.2
             The 'host' argument is deprecated. Use 'adapter' argument instead.
+
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
