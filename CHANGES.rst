@@ -9,6 +9,7 @@ Deprecated features
 -------------------
 - HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
   use :code:`function_` and :code:`reading` properties instead.
+- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
 
 Version 0.11.1 (2022-12-31)
 ===========================
