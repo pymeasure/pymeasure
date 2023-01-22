@@ -313,7 +313,7 @@ class ANC300Controller(Instrument):
         warn("The 'host' argument is deprecated. Use 'adapter' instead.", FutureWarning)
         return f"TCPIP0::{host}::7230::SOCKET"
 
-    def extract_value(self, reply):
+    def _extract_value(self, reply):
         """ preprocess_reply function for the Attocube console. This function
         tries to extract <value> from 'name = <value> [unit]'. If <value> can
         not be identified the original string is returned.
@@ -336,7 +336,7 @@ class ANC300Controller(Instrument):
                 super().read()  # without error checking
             raise ValueError("AttocubeConsoleAdapter: Error after previous "
                              f"command with message {raw[0]}")
-        return raw[0].strip('\r')  # strip possible CR char
+        return self._extract_value(raw[0].strip('\r'))  # strip possible CR char
 
     def wait_for(self, query_delay=0):
         """Wait for some time. Used by 'ask' to wait before reading.
