@@ -142,11 +142,11 @@ class Axis:
         self.axis = str(axis)
         self.controller = controller
 
-    def _add_axis_id(self, command: str):
+    def _add_axis_id(self, command):
         """ add axis id to a command string at the correct position after the
         initial command, but before a potential value
 
-        :param command: command string
+        :param str command: command string
         :returns: command string with added axis id
         """
         cmdparts = command.split()
