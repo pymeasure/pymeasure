@@ -55,7 +55,7 @@ class VISAAdapter(Adapter):
     :param float query_delay: Time in s to wait after writing and before reading.
 
         .. deprecated:: 0.11
-            Implement it in the instrument's `wait_until_read` method instead.
+            Implement it in the instrument's `wait_for` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
@@ -88,7 +88,7 @@ class VISAAdapter(Adapter):
         super().__init__(preprocess_reply=preprocess_reply, log=log)
         if query_delay:
             warn(("Parameter `query_delay` is deprecated. "
-                  "Implement in Instrument's `wait_until_read` instead."),
+                  "Implement in Instrument's `wait_for` instead."),
                  FutureWarning)
             kwargs.setdefault("query_delay", query_delay)
         self.query_delay = query_delay
@@ -131,7 +131,7 @@ class VISAAdapter(Adapter):
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write(command, **kwargs)
 
@@ -139,14 +139,14 @@ class VISAAdapter(Adapter):
         """Write the bytes `content` to the instrument.
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write_raw(content, **kwargs)
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         return self.connection.read(**kwargs)
@@ -196,7 +196,7 @@ class VISAAdapter(Adapter):
             Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
-        :param kwargs: Key-word arguments to pass onto `query_ascii_values`
+        :param \\**kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
         warn("`Adapter.ask_values` is deprecated, call `Instrument.values` instead.",

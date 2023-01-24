@@ -44,7 +44,7 @@ class SerialAdapter(Adapter):
 
     :param write_termination: String appended to messages before writing them.
     :param read_termination: String expected at end of read message and removed.
-    :param kwargs: Any valid key-word argument for serial.Serial
+    :param \\**kwargs: Any valid key-word argument for serial.Serial
     """
 
     def __init__(self, port, preprocess_reply=None,
@@ -63,7 +63,7 @@ class SerialAdapter(Adapter):
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         command += self.write_termination
         self._write_bytes(command.encode(), **kwargs)
@@ -72,7 +72,7 @@ class SerialAdapter(Adapter):
         """Write the bytes `content` to the instrument.
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write(content, **kwargs)
 

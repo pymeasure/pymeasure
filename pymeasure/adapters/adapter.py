@@ -45,7 +45,7 @@ class Adapter:
             Implement it in the instrument's `read` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
-    :param kwargs: Keyword arguments just to be cooperative.
+    :param \\**kwargs: Keyword arguments just to be cooperative.
     """
 
     def __init__(self, preprocess_reply=None, log=None, **kwargs):
@@ -81,7 +81,7 @@ class Adapter:
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug("WRITE:%s", command)
         self._write(command, **kwargs)
@@ -92,7 +92,7 @@ class Adapter:
         Do not override in a subclass!
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug("WRITE:%s", content)
         self._write_bytes(content, **kwargs)
@@ -102,7 +102,7 @@ class Adapter:
 
         Do not override in a subclass!
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         read = self._read(**kwargs)
@@ -219,7 +219,7 @@ class Adapter:
         :param int header_bytes: Number of bytes to ignore in header.
         :param int termination_bytes: Number of bytes to strip at end of message or None.
         :param dtype: The NumPy data type to format the values with.
-        :param kwargs: Further arguments for the NumPy fromstring method.
+        :param \\**kwargs: Further arguments for the NumPy fromstring method.
         :returns: NumPy array of values
         """
         binary = self.read_bytes(-1)
@@ -253,7 +253,7 @@ class Adapter:
         :param command: command string to be sent to the instrument
         :param values: iterable representing the binary values
         :param termination: String added afterwards to terminate the message.
-        :param kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
+        :param \\**kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
         :returns: number of bytes written
         """
         block = self._format_binary_values(values, **kwargs)
