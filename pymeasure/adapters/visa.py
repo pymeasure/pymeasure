@@ -238,8 +238,7 @@ class VISAAdapter(Adapter):
             timeout = self.connection.timeout
             self.connection.timeout = 0
             try:
-                while True:
-                    self.read_bytes(-1)
+                self.read_bytes(-1)
             except pyvisa.errors.VisaIOError:
                 pass
             self.connection.timeout = timeout
