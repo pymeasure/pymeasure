@@ -241,7 +241,8 @@ class VISAAdapter(Adapter):
                 self.read_bytes(-1)
             except pyvisa.errors.VisaIOError:
                 pass
-            self.connection.timeout = timeout
+            finally:
+                self.connection.timeout = timeout
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
