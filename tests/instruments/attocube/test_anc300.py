@@ -36,6 +36,7 @@ init_comm = [
     (None, "OK"),
     ]
 
+
 def test_stepu():
     """Test a setting."""
     with expected_protocol(
