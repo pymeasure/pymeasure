@@ -214,6 +214,7 @@ class ANC300Controller(Instrument):
 
     :param adapter: The VISA resource name of the controller
         (e.g. "TCPIP::<address>::<port>::SOCKET") or a created Adapter.
+        The instruments default communication port is 7230.
     :param axisnames: a list of axis names which will be used to create
         properties with these names
     :param passwd: password for the attocube standard console

@@ -34,7 +34,8 @@ class TelnetAdapter(Adapter):
     communication to instruments
 
     .. deprecated:: 0.11.2
-        Preparation for telnetlib deprecation.
+        The Python telnetlib module is deprecated since Python 3.11 and will be removed
+        in Python 3.13 release.
         As a result, TelnetAdapter is deprecated, use VISAAdapter instead.
         The VISAAdapter supports TCPIP socket connections. When using the VISAAdapter,
         the `resource_name` argument should be `TCPIP[board]::<host>::<port>::SOCKET`.
