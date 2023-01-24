@@ -151,18 +151,28 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read(**kwargs)
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
         if count == -1:
-            return self.connection.read_raw(**kwargs)
+            if break_on_termchar:
+                return self.connection.read_raw(**kwargs)
+            else:
+                read_termination = self.connection.read_termination
+                self.connection.read_termination = None
+                # Try except allows to set the read_termination even after an error.
+                try:
+                    return self.connection.read_raw(**kwargs)
+                finally:
+                    self.connection.read_termination = read_termination
         else:
-            return self.connection.read_bytes(count, **kwargs)
+            return self.connection.read_bytes(count, break_on_termchar, **kwargs)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting

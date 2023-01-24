@@ -129,7 +129,7 @@ class ProtocolAdapter(Adapter):
         """Return an already present or freshly fetched read buffer as a string."""
         return self._read_bytes(-1).decode("utf-8")
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read `count` number of bytes from the buffer.
 
         :param int count: Number of bytes to read. If -1, return the buffer.

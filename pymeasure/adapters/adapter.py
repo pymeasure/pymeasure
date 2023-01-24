@@ -109,17 +109,18 @@ class Adapter:
         self.log.debug("READ:%s", read)
         return read
 
-    def read_bytes(self, count=-1, **kwargs):
+    def read_bytes(self, count=-1, break_on_termchar=False, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         Do not override in a subclass!
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        read = self._read_bytes(count, **kwargs)
+        read = self._read_bytes(count, break_on_termchar, **kwargs)
         self.log.debug("READ:%s", read)
         return read
 
@@ -136,7 +137,7 @@ class Adapter:
         """Read string from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading.")
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read bytes from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading bytes.")
 
@@ -287,7 +288,7 @@ class FakeAdapter(Adapter):
         self._buffer = ""
         return result
 
-    def _read_bytes(self, count):
+    def _read_bytes(self, count, break_on_termchar):
         """ Return the last commands given after the
         last read call.
         """

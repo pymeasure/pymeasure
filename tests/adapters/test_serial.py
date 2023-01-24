@@ -64,6 +64,17 @@ def test_read_bytes(adapter):
     assert adapter.read_bytes(11) == b"basd\x02fasdf\n"
 
 
+def test_read_bytes_unlimited(adapter):
+    adapter.write_bytes(b"basd\x02fasdf\n")
+    assert adapter.read_bytes(-1) == b"basd\x02fasdf\n"
+
+
+def test_read_bytes_break_on_termchar(adapter):
+    adapter.read_termination = "\n"
+    adapter.write_bytes(b"basd\x02\nfasdf\n")
+    assert adapter.read_bytes(-1, break_on_termchar=True) == b"basd\x02\n"
+
+
 @pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),
                                                  (range(100), b'OUTP#3100' + bytes(range(100)))])
 def test_adapter_write_binary_values(adapter, test_input, expected):

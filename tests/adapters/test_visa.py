@@ -98,6 +98,14 @@ def test_write_read_all_bytes(adapter):
     assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
 
+def test_write_read_break_on_termchar(adapter):
+    """Test read_bytes breaks or does not break on termchar."""
+    adapter.write("*IDN?")
+    adapter.connection.read_termination = ","
+    assert adapter.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
+    assert adapter.read_bytes(-1, break_on_termchar=False) == b"MOCK,VERSION_1.0\n"
+
+
 def test_visa_adapter(adapter):
     assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"
 

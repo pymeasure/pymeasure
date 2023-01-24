@@ -79,10 +79,10 @@ class SerialAdapter(Adapter):
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (read_termination is removed first).
         """
-        read = self._read_bytes(-1, **kwargs).decode()
+        read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
         # Python>3.8 this shorter form is possible:
         # self._read_bytes(-1).decode().removesuffix(self.read_termination)
         if self.read_termination:
@@ -90,19 +90,21 @@ class SerialAdapter(Adapter):
         else:
             return read
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer or until encountering the read_termination.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        if count == -1:
-            if self.read_termination:
-                return self.connection.read_until(self.read_termination, **kwargs)
-            else:
-                return b"\n".join(self.connection.readlines(**kwargs))
+        if break_on_termchar and self.read_termination:
+            return self.connection.read_until(self.read_termination.encode(),
+                                              count if count > 0 else None,
+                                              **kwargs)
+        elif count == -1:
+            return b"\n".join(self.connection.readlines(**kwargs))
         else:
             return self.connection.read(count, **kwargs)
 
