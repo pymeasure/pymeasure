@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -290,7 +290,7 @@ class CommonBase:
         self.wait_for(query_delay)
         return self.read(**kwargs)
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None, **kwargs):
+    def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1, **kwargs):
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -300,12 +300,14 @@ class CommonBase:
         :param preprocess_reply: optional callable used to preprocess values
             received from the instrument. The callable returns the processed
             string.
+        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param \\**kwargs: Keyword arguments to be passed to the ask method.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        results = str(self.ask(command, **kwargs)).strip()
+        results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        results = results.split(separator)
+        results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
                 if cast == bool:

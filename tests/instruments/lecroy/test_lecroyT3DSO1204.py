@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -259,7 +259,8 @@ def test_download_one_point():
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
              (b"C1:UNIT?", b"V")
-             ]
+             ],
+            connection_attributes={'chunk_size': 0},
     ) as instr:
         y, x, preamble = instr.download_waveform(source="c1", requested_points=1, sparsing=1)
         assert preamble == {
@@ -308,7 +309,8 @@ def test_download_two_points():
              (b"C1:VDIV?", b"5.00E-02"),
              (b"C1:OFST?", b"-1.50E-01"),
              (b"C1:UNIT?", b"V")
-             ]
+             ],
+            connection_attributes={'chunk_size': 0},
     ) as instr:
         y, x, preamble = instr.download_waveform(source="c1", requested_points=2, sparsing=1)
         assert preamble == {

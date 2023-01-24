@@ -44,6 +44,7 @@ Instruments by manufacturer:
    keysight/index
    lakeshore/index
    lecroy/index
+   mksinst/index
    newport/index
    ni/index
    oxfordinstruments/index
@@ -55,6 +56,7 @@ Instruments by manufacturer:
    signalrecovery/index
    srs/index
    tektronix/index
+   teledyne/index
    temptronic/index
    texio/index
    thermotron/index

@@ -1,6 +1,6 @@
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -321,4 +321,3 @@ class Channel:
         else:
             self.ramp_to_voltage(0.0)
         self.source_output = 'OFF'
-        super().shutdown()

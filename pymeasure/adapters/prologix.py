@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,13 +32,16 @@ class PrologixAdapter(VISAAdapter):
     to communicate over a Prologix GPIB-USB Adapter,
     using the :class:`VISAAdapter`.
 
-    Each PrologixAdapter is constructed based on a serial port or
-    connection and the GPIB address to be communicated to.
-    Serial connection sharing is achieved by using the :meth:`.gpib`
+    Each PrologixAdapter is constructed based on a connection to the Prologix device
+    itself and the GPIB address of the instrument to be communicated to.
+    Connection sharing is achieved by using the :meth:`.gpib`
     method to spawn new PrologixAdapters for different GPIB addresses.
 
-    :param port: The Serial port name or a connection object
-    :param address: Integer GPIB address of the desired instrument
+    :param resource_name: A
+        `VISA resource string <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
+        that identifies the connection to the Prologix device itself, for example
+        "ASRL5" for the 5th COM port.
+    :param address: Integer GPIB address of the desired instrument.
     :param rw_delay: An optional delay to set between a write and read call for
         slow to respond instruments.
 
@@ -54,7 +57,18 @@ class PrologixAdapter(VISAAdapter):
 
     :param kwargs: Key-word arguments if constructing a new serial object
 
-    :ivar address: Integer GPIB address of the desired instrument
+    :ivar address: Integer GPIB address of the desired instrument.
+
+    Usage example:
+
+    .. code::
+
+        adapter = PrologixAdapter("ASRL5::INSTR", 7)
+        sourcemeter = Keithley2400(adapter)  # at GPIB address 7
+        # generate another instance with a different GPIB address:
+        adapter2 = adapter.gpib(9)
+        multimeter = Keithley2000(adapter2)  # at GPIB address 9
+
 
     To allow user access to the Prologix adapter in Linux, create the file:
     :code:`/etc/udev/rules.d/51-prologix.rules`, with contents:
@@ -76,10 +90,13 @@ class PrologixAdapter(VISAAdapter):
                  preprocess_reply=None, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
-            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
+            warn(("Parameter `rw_delay` is deprecated. "
+                  "Implement in Instrument's `wait_until_read` instead."),
+                 FutureWarning)
             kwargs['query_delay'] = rw_delay
         if serial_timeout:
-            warn("Use 'timeout' in ms instead", FutureWarning)
+            warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
+                 FutureWarning)
             kwargs['timeout'] = serial_timeout
         super().__init__(resource_name,
                          asrl={
@@ -108,8 +125,7 @@ class PrologixAdapter(VISAAdapter):
 
         :param command: SCPI command string to be sent to instrument
         """
-        warn("Do not call `Adapter.ask`, but `Instrument.ask` instead.",
-             FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         self.write(command)
         return self.read()
 

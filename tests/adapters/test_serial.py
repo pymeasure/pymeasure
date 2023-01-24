@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,4 +69,4 @@ def test_read_bytes(adapter):
 def test_adapter_write_binary_values(adapter, test_input, expected):
     adapter.write_binary_values("OUTP", test_input, datatype='B')
     # Add 10 bytes more, just to check that no extra bytes are present
-    assert(adapter.connection.read(len(expected) + 10) == expected)
+    assert adapter.connection.read(len(expected) + 10) == expected
