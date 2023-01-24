@@ -188,10 +188,11 @@ class Axis:
         else:
             pass  # do not set stepu/d to 0 since it triggers a continous move
         # wait for the move to finish
-        self.write('stepw')
+        self.controller.wait_for(abs(steps)/self.frequency)
+        # ask if movement finished
+        self.ask('stepw')
         if gnd:
             self.mode = 'gnd'
-        self.check_errors()
 
     def measure_capacity(self):
         """ Obtains a new measurement of the capacity. The mode of the axis
@@ -201,6 +202,8 @@ class Axis:
         """
         self.mode = 'cap'
         # wait for the measurement to finish
+        self.controller.wait_for(1)
+        # ask if really finished
         self.ask('capw')
         return self.capacity
 
@@ -234,7 +237,7 @@ class ANC300Controller(Instrument):
         "getcser", """ Serial number of the controller board """
     )
 
-    _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
+    _reg_value = re.compile(r"\w+\s+=\s+([\w\.]+)")
 
     def __init__(
         self,
@@ -265,17 +268,19 @@ class ANC300Controller(Instrument):
             setattr(self, axis, Axis(self, i + 1))
 
         self.wait_for()
-        super().read()  # clear messages sent upon opening the connection
+        # clear messages sent upon opening the connection,
+        # this contains some non-ascii characters!
+        self.adapter.connection.clear()
+        # should be self.adapter.flush_read_buffer() after PR 836
         # send password and check authorization
         self.write(passwd)
         self.wait_for()
-        ret = super().read()
-        auth_msg = ret.split(self.termination_str)[1]
+        super().read()  # ignore echo of password
+        auth_msg = super().read()
         if auth_msg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{auth_msg}'")
         # switch console echo off
-        self.write('echo off')
-        _ = self.read()
+        self.ask('echo off')
 
     def check_errors(self):
         """Read after setting a value."""
@@ -330,14 +335,19 @@ class ANC300Controller(Instrument):
 
     def read(self):
         """Read after setting a value."""
-        raw = super().read()
-        raw = raw.strip(self.termination_str).rsplit(sep='\n', maxsplit=1)
-        if raw[-1] != 'OK':
-            if raw[0] == "" or len(raw) == 1:  # clear buffer
-                super().read()  # without error checking
+        lines = []
+        while True:
+            lines.append(super().read())
+            if lines[-1] in ["OK", "ERROR"]:
+                break
+        print(lines)
+        msg = self.termination_str.join(lines[:-1])
+        if lines[-1] != 'OK':
+            self.adapter.connection.clear()
+            # should be self.adapter.flush_read_buffer() after PR 836
             raise ValueError("AttocubeConsoleAdapter: Error after previous "
-                             f"command with message {raw[0]}")
-        return self._extract_value(raw[0].strip('\r'))  # strip possible CR char
+                             f"command with message {msg}")
+        return self._extract_value(msg)
 
     def wait_for(self, query_delay=0):
         """Wait for some time. Used by 'ask' to wait before reading.

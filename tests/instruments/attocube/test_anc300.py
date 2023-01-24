@@ -26,34 +26,95 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.attocube import ANC300Controller
 
+# Note: This communication does not contain the first several device
+# responses, as they are ignored due to `adapter.flush_read_buffer()`.
+passwd = "passwd"
+init_comm = [
+    (passwd, "*" * len(passwd)),
+    (None, "Authorization success"),
+    ("echo off", "> echo off"),
+    (None, "OK"),
+    ]
 
 def test_stepu():
     """Test a setting."""
     with expected_protocol(
         ANC300Controller,
-        [
-            (None, b"xy"),
-            (b"passwd", b"xy\r\nAuthorization success\r\nOK"),
-            (b"echo off", b"x\r\nOK"),
-            (b"stepu 1 15", b"OK"),
-        ],
+        init_comm + [("setm 1 stp", "OK"), ("stepu 1 15", "OK"), ],
         axisnames=["a", "b", "c"],
-        passwd="passwd",
+        passwd=passwd,
     ) as instr:
+        instr.a.mode = "stp"
         instr.a.stepu = 15
 
 
-def test_voltage():
-    """Test a measurement."""
+def test_capacity():
+    """Test a float measurement."""
     with expected_protocol(
         ANC300Controller,
-        [
-            (None, b"xy"),
-            (b"passwd", b"xy\r\nAuthorization success\r\nOK"),
-            (b"echo off", b"x\r\nOK"),
-            (b"geto 1", b"5\r\nOK"),
+        init_comm + [("getc 1", "capacitance = 998.901733 nF"), (None, "OK")],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        assert instr.a.capacity == 998.901733
+
+
+def test_frequency():
+    """Test an integer measurement."""
+    with expected_protocol(
+        ANC300Controller,
+        # the \n in the following is indeed included in the return msg!
+        init_comm + [("getf 1", "frequency = 111 Hz\n"), (None, "OK")],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        assert instr.a.frequency == 111
+
+
+def test_measure_capacity():
+    """Test triggering a capacity measurement."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [
+            ("setm 1 cap", "OK"),
+            ("capw 1", "capacitance = 0.000000 nF"),
+            (None, "OK"),
+            ("getc 1", "capacitance = 1020.173401 nF"),
+            (None, "OK"),
         ],
         axisnames=["a", "b", "c"],
-        passwd="passwd",
+        passwd=passwd,
     ) as instr:
-        assert instr.a.output_voltage == 5
+        assert instr.a.measure_capacity() == 1020.173401
+
+
+def test_move():
+    """Test a movement."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [
+            ("setm 3 stp", "OK"),
+            ("stepd 3 20", "OK"),
+            ("getf 3", "frequency = 111 Hz\n"),
+            (None, "OK"),
+            ("stepw 3", "OK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.c.move(-20, gnd=False)
+
+
+def test_ground_all():
+    """Test grounding of all axis"""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [
+            ("setm 1 gnd", "OK"),
+            ("setm 2 gnd", "OK"),
+            ("setm 3 gnd", "OK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.ground_all()
