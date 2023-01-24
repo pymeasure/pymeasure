@@ -268,7 +268,7 @@ class ANC300Controller(Instrument):
         # send password and check authorization
         self.write(passwd)
         self.wait_for()
-        ret: str = super().read()
+        ret = super().read()
         auth_msg = ret.split(self.termination_str)[1]
         if auth_msg != 'Authorization success':
             raise Exception(f"Attocube authorization failed '{auth_msg}'")
@@ -329,7 +329,7 @@ class ANC300Controller(Instrument):
 
     def read(self):
         """Read after setting a value."""
-        raw: str = super().read()
+        raw = super().read()
         raw = raw.strip(self.termination_str).rsplit(sep='\n', maxsplit=1)
         if raw[-1] != 'OK':
             if raw[0] == "" or len(raw) == 1:  # clear buffer
