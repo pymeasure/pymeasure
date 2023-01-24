@@ -340,7 +340,6 @@ class ANC300Controller(Instrument):
             lines.append(super().read())
             if lines[-1] in ["OK", "ERROR"]:
                 break
-        print(lines)
         msg = self.termination_str.join(lines[:-1])
         if lines[-1] != 'OK':
             self.adapter.connection.clear()
