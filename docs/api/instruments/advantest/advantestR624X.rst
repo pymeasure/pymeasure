@@ -42,7 +42,7 @@ wide source and measurement ranges. It is ideal for measurement of DC characteri
 of items ranging from separate semiconductors such as bipolar transistors, MOSFETs
 and GaAsFETs, to ICs and power devices. Further, due to the increased measuring speed
 and synchronized 2-channel measurement function, device I/O characteristics can be
-measured with precise timing at high speed which previously difficult to accomplish.
+measured with precise timing at high speed which was previously difficult to accomplish.
 Due to features such as the trigger link function and the sequence programming function
 which automatically performs a series of evaluation tests automatically, the R6245/6246
 enable much more efficient evaluation tests.
