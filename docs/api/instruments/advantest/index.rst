@@ -10,3 +10,4 @@ This section contains specific documentation on the Advantest instruments that a
    :maxdepth: 2
 
    advantestR3767CG
+   advantestR624X

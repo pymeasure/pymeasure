@@ -22,6 +22,36 @@
 # THE SOFTWARE.
 #
 
-from .advantestR3767CG import AdvantestR3767CG
-from .advantestR624X import AdvantestR6245
-from .advantestR624X import AdvantestR6246
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.advantest import AdvantestR6246
+
+
+def test_init():
+    with expected_protocol(
+            AdvantestR6246,
+            [],
+            ):
+        pass  # Verify the expected communication.
+
+
+def test_set_current():
+    with expected_protocol(
+        AdvantestR6246,
+        [("di 1,0,2.1100e-04,2.1300e-04", None),
+         ("spot 1,2.3120e-03", None),
+         (None, "ABCD 7.311e-4")]
+    ) as inst:
+        inst.ch_A.current_source(0, 0.000211, 2.13e-4)
+        inst.ch_A.change_source_current = 23.12e-4
+        assert inst.read_measurement() == 0.0007311
+
+
+def test_event_status_setter():
+    with expected_protocol(
+        AdvantestR6246,
+        [('*ese 255', None),
+         ('*ese?', "200")]
+    ) as inst:
+        inst.event_status_enable = 258  # too large, gets truncated
+        assert inst.event_status_enable == 200
