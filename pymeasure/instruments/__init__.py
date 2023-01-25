@@ -63,6 +63,7 @@ from . import rohdeschwarz
 from . import siglenttechnologies
 from . import signalrecovery
 from . import srs
+from . import tcpowerconversion
 from . import tektronix
 from . import temptronic
 from . import texio
