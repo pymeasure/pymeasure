@@ -161,6 +161,16 @@ class TestInstrumentCommunication:
         instr.write_binary_values("abc", [5, 6, 7])
         assert instr.adapter.method_calls == [mock.call.write_binary_values("abc", [5, 6, 7])]
 
+    def test_ask(self, instr):
+        instr.ask("abc")
+        assert instr.adapter.method_calls == [mock.call.write("abc"), mock.call.read()]
+
+    def test_ask_with_kwargs(self, instr):
+        """Test passing through kwargs to read method."""
+        instr.ask("abc", custom_kwarg="xyz")
+        assert instr.adapter.method_calls == [mock.call.write("abc"),
+                                              mock.call.read(custom_kwarg="xyz")]
+
 
 class TestWaiting:
     @pytest.fixture()
