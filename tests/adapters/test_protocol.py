@@ -27,7 +27,7 @@ import pytest
 
 from pymeasure.adapters.protocol import to_bytes, ProtocolAdapter
 
-from pytest import mark, raises, fixture
+from pytest import mark, raises, fixture, warns
 
 
 @pytest.fixture
@@ -212,6 +212,11 @@ class Test_read_bytes:
         a = ProtocolAdapter([(None, None)])
         with raises(AssertionError, match="None, None"):
             a.read_bytes(1)
+
+    def test_break_on_termchar_raises_warning(self):
+        a = ProtocolAdapter([(None, b"Response")])
+        with warns(UserWarning, match="cannot be tested"):
+            assert a.read_bytes(10, break_on_termchar=True) == b"Response"
 
 
 def test_read_write_sequence():

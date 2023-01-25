@@ -24,6 +24,7 @@
 import importlib.util
 
 import pytest
+import pyvisa
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.test import expected_protocol
@@ -39,14 +40,24 @@ if not is_pyvisa_sim_installed:
 @pytest.fixture
 def adapter():
     return VISAAdapter(SIM_RESOURCE, visa_library='@sim',
-                       read_termination="\n")
+                       read_termination="\n",
+                       timeout=10,
+                       )
 
 
-@pytest.mark.parametrize("query_delay", (0, 10))
-def test_nested_adapter(query_delay):
-    a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n",
-                     query_delay=query_delay)
+def test_nested_adapter():
+    a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n")
     a = VISAAdapter(a0)
+    assert a.resource_name == SIM_RESOURCE
+    assert a.connection == a0.connection
+
+
+def test_nested_adapter_query_delay():
+    query_delay = 10
+    with pytest.warns(FutureWarning, match="query_delay"):
+        a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n",
+                         query_delay=query_delay)
+        a = VISAAdapter(a0)
     assert a.resource_name == SIM_RESOURCE
     assert a.connection == a0.connection
     assert a.query_delay == query_delay
@@ -88,22 +99,34 @@ def test_write_bytes_read(adapter):
     assert adapter.read() == "SCPI,MOCK,VERSION_1.0"
 
 
-def test_write_read_bytes(adapter):
-    adapter.write("*IDN?")
-    assert adapter.read_bytes(22) == b"SCPI,MOCK,VERSION_1.0\n"
+class TestReadBytes:
+    @pytest.fixture()
+    def adapter(self, adapter):
+        adapter.write("*IDN?")
+        yield adapter
+        # empty the read buffer
+        try:
+            adapter.read_bytes(-1)
+        except pyvisa.errors.VisaIOError as exc:
+            if not exc.args[0].startswith("VI_ERROR_TMO"):
+                raise
 
+    def test_read_bytes(self, adapter):
+        assert adapter.read_bytes(22) == b"SCPI,MOCK,VERSION_1.0\n"
 
-def test_write_read_all_bytes(adapter):
-    adapter.write("*IDN?")
-    assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+    def test_read_all_bytes(self, adapter):
+        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
+    @pytest.mark.parametrize("count", (-1, 7))
+    def test_read_break_on_termchar(self, adapter, count):
+        """Test read_bytes breaks on termchar."""
+        adapter.connection.read_termination = ","
+        assert adapter.read_bytes(count, break_on_termchar=True) == b"SCPI,"
 
-def test_write_read_break_on_termchar(adapter):
-    """Test read_bytes breaks or does not break on termchar."""
-    adapter.write("*IDN?")
-    adapter.connection.read_termination = ","
-    assert adapter.read_bytes(-1, break_on_termchar=True) == b"SCPI,"
-    assert adapter.read_bytes(-1, break_on_termchar=False) == b"MOCK,VERSION_1.0\n"
+    def test_read_no_break_on_termchar(self, adapter):
+        adapter.connection.read_termination = ","
+        # `break_on_termchar=False` is default value
+        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
 
 def test_visa_adapter(adapter):

@@ -103,10 +103,9 @@ class SerialAdapter(Adapter):
             return self.connection.read_until(self.read_termination.encode(),
                                               count if count > 0 else None,
                                               **kwargs)
-        elif count == -1:
-            return b"\n".join(self.connection.readlines(**kwargs))
         else:
-            return self.connection.read(count, **kwargs)
+            # At negative count, we read up to one GB, which can be considered the whole buffer.
+            return self.connection.read(count if count >= 0 else 1e9, **kwargs)
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port
