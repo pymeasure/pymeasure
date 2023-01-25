@@ -54,6 +54,7 @@ Instruments by manufacturer:
    siglenttechnologies/index
    signalrecovery/index
    srs/index
+   tcpowerconversion/index
    tektronix/index
    teledyne/index
    temptronic/index
