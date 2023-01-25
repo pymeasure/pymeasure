@@ -160,9 +160,11 @@ class VISAAdapter(Adapter):
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        if break_on_termchar:
-            return self.connection.read_raw(size=count if count >= 0 else None, **kwargs)
-        elif count == -1:
+        if count >= 0:
+            return self.connection.read_bytes(count, break_on_termchar=break_on_termchar, **kwargs)
+        elif break_on_termchar:
+            return self.connection.read_raw(None, **kwargs)
+        else:
             read_termination = self.connection.read_termination
             self.connection.read_termination = None
             # Try except allows to set the read_termination even after an error.
@@ -170,8 +172,6 @@ class VISAAdapter(Adapter):
                 return self.connection.read_raw(**kwargs)
             finally:
                 self.connection.read_termination = read_termination
-        else:
-            return self.connection.read_bytes(count, **kwargs)
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
