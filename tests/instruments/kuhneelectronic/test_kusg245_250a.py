@@ -25,12 +25,53 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.kuhneelectronic import Kusg245_250A
+from pymeasure.instruments.kuhneelectronic.kusg245_250a import termination_character, encoding
+
+
+termination_character = termination_character.encode(encoding=encoding)[0]
+
+
+def test_voltage_5v():
+    with expected_protocol(
+        Kusg245_250A,
+        [("5", bytes([0, 1, termination_character]))],
+    ) as inst:
+        assert inst.voltage_5v == 103.0 / 4700.0
+
+
+def test_voltage_32v():
+    with expected_protocol(
+        Kusg245_250A,
+        [("8", bytes([0, 1, termination_character]))],
+    ) as inst:
+        assert inst.voltage_32v == 1282.0 / 8200.0
+
+
+def test_power_forward():
+    with expected_protocol(
+        Kusg245_250A,
+        [("6", bytes([255, termination_character]))],
+    ) as inst:
+        assert inst.power_forward == 255
+
+
+def test_power_reverse():
+    with expected_protocol(
+        Kusg245_250A,
+        [("7", bytes([255, termination_character]))],
+    ) as inst:
+        assert inst.power_reverse == 255
 
 
 def test_external_enabled():
     with expected_protocol(
         Kusg245_250A,
-        [("R", None), ("r?", "1"), ("r", None), ("r?", "0")],
+        [
+            ("R", "A"),
+            ("r?", bytes([1, termination_character])),
+            ("r", "A"),
+            ("r?", bytes([0, termination_character]))
+        ],
     ) as inst:
         inst.external_enabled = True
         assert inst.external_enabled is True
@@ -41,7 +82,12 @@ def test_external_enabled():
 def test_bias_enabled():
     with expected_protocol(
         Kusg245_250A,
-        [("X", None), ("x?", "1"), ("x", None), ("x?", "0")],
+        [
+            ("X", "A"),
+            ("x?", bytes([1, termination_character])),
+            ("x", "A"),
+            ("x?", bytes([0, termination_character]))
+        ],
     ) as inst:
         inst.bias_enabled = True
         assert inst.bias_enabled is True
@@ -52,7 +98,12 @@ def test_bias_enabled():
 def test_rf_enabled():
     with expected_protocol(
         Kusg245_250A,
-        [("O", None), ("o?", "1"), ("o", None), ("o?", "0")],
+        [
+            ("O", "A"),
+            ("o?", bytes([1, termination_character])),
+            ("o", "A"),
+            ("o?", bytes([0, termination_character]))
+        ],
     ) as inst:
         inst.rf_enabled = True
         assert inst.rf_enabled is True
@@ -63,7 +114,12 @@ def test_rf_enabled():
 def test_pulse_mode_enabled():
     with expected_protocol(
         Kusg245_250A,
-        [("P", None), ("p?", "1"), ("p", None), ("p?", "0")],
+        [
+            ("P", "A"),
+            ("p?", bytes([1, termination_character])),
+            ("p", "A"),
+            ("p?", bytes([0, termination_character]))
+        ],
     ) as inst:
         inst.pulse_mode_enabled = True
         assert inst.pulse_mode_enabled is True
@@ -74,7 +130,12 @@ def test_pulse_mode_enabled():
 def test_freq_steps_fine_enabled():
     with expected_protocol(
         Kusg245_250A,
-        [("fm1", None), ("fm?", "1"), ("fm0", None), ("fm?", "0")],
+        [
+            ("fm1", "A"),
+            ("fm?", bytes([1, termination_character])),
+            ("fm0", "A"),
+            ("fm?", bytes([0, termination_character]))
+        ],
     ) as inst:
         inst.freq_steps_fine_enabled = True
         assert inst.freq_steps_fine_enabled is True
@@ -86,12 +147,12 @@ def test_frequency_coarse():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("f2456", None),
-            ("f?", "2456"),
-            ("f2400", None),
-            ("f?", "2400"),
-            ("f2500", None),
-            ("f?", "2500"),
+            ("f2456", "A"),
+            ("f?", "2456MHz"),
+            ("f2400", "A"),
+            ("f?", "2400MHz"),
+            ("f2500", "A"),
+            ("f?", "2500MHz"),
         ],
     ) as inst:
         inst.frequency_coarse = 2456
@@ -106,12 +167,12 @@ def test_frequency_fine():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("f2456780", None),
-            ("f?", "2456780"),
-            ("f2400000", None),
-            ("f?", "2400000"),
-            ("f2500000", None),
-            ("f?", "2500000"),
+            ("f2456780", "A"),
+            ("f?", "2456780kHz"),
+            ("f2400000", "A"),
+            ("f?", "2400000kHz"),
+            ("f2500000", "A"),
+            ("f?", "2500000kHz"),
         ],
     ) as inst:
         inst.frequency_fine = 2456778  # must be rounded to 2456780
@@ -126,11 +187,11 @@ def test_power_setpoint():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("A123", None),
+            ("A123", "A"),
             ("A?", "123"),
-            ("A000", None),
+            ("A000", "A"),
             ("A?", "000"),
-            ("A250", None),
+            ("A250", "A"),
             ("A?", "250"),
         ],
     ) as inst:
@@ -144,7 +205,7 @@ def test_power_setpoint():
 
 def test_power_setpoint_limited():
     with expected_protocol(
-        Kusg245_250A, [("A000", None), ("A?", "000"), ("A020", None), ("A?", "020")], power_limit=20
+        Kusg245_250A, [("A000", "A"), ("A?", "000"), ("A020", "A"), ("A?", "020")], power_limit=20
     ) as inst:
         inst.power_setpoint = -1  # must be truncated to 0
         assert inst.power_setpoint == 0
@@ -156,11 +217,11 @@ def test_pulse_width():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("C0125", None),
+            ("C0125", "A"),
             ("C?", "0125"),
-            ("C0010", None),
+            ("C0010", "A"),
             ("C?", "0010"),
-            ("C1000", None),
+            ("C1000", "A"),
             ("C?", "1000"),
         ],
     ) as inst:
@@ -176,11 +237,11 @@ def test_off_time():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("c0125", None),
+            ("c0125", "A"),
             ("c?", "0125"),
-            ("c0010", None),
+            ("c0010", "A"),
             ("c?", "0010"),
-            ("c1000", None),
+            ("c1000", "A"),
             ("c?", "1000"),
         ],
     ) as inst:
@@ -196,12 +257,12 @@ def test_phase_shift():
     with expected_protocol(
         Kusg245_250A,
         [
-            ("H088", None),
-            ("H?", "088"),
-            ("H000", None),
-            ("H?", "000"),
-            ("H255", None),
-            ("H?", "255"),
+            ("H088", "A"),
+            ("H?", bytes([88, termination_character])),
+            ("H000", "A"),
+            ("H?", bytes([0, termination_character])),
+            ("H255", "A"),
+            ("H?", bytes([255, termination_character])),
         ],
     ) as inst:
         inst.phase_shift = 124
@@ -215,7 +276,14 @@ def test_phase_shift():
 def test_reflection_limit():
     with expected_protocol(
         Kusg245_250A,
-        [("B0", None), ("B?", "0"), ("B4", None), ("B?", "4"), ("B5", None), ("B?", "5")],
+        [
+            ("B0", "A"),
+            ("B?", bytes([0, termination_character])),
+            ("B4", "A"),
+            ("B?", bytes([4, termination_character])),
+            ("B5", "A"),
+            ("B?", bytes([5, termination_character]))
+        ],
     ) as inst:
         inst.reflection_limit = 0
         assert inst.reflection_limit == 0
@@ -229,20 +297,20 @@ def test_reflection_limit():
 def test_tune():
     with expected_protocol(
         Kusg245_250A,
-        [("b010", None)],
+        [("b010", "A")],
     ) as inst:
         inst.tune(10)
 
 
 def test_tune_power_limited():
-    with expected_protocol(Kusg245_250A, [("b020", None)], power_limit=20) as inst:
+    with expected_protocol(Kusg245_250A, [("b020", "A")], power_limit=20) as inst:
         inst.tune(100)
 
 
 def test_clear_VSWR_error():
     with expected_protocol(
         Kusg245_250A,
-        [("z", None)],
+        [("z", "A")],
     ) as inst:
         inst.clear_VSWR_error()
 
@@ -250,7 +318,7 @@ def test_clear_VSWR_error():
 def test_store_settings():
     with expected_protocol(
         Kusg245_250A,
-        [("SE", None)],
+        [("SE", "A")],
     ) as inst:
         inst.store_settings()
 
@@ -258,8 +326,8 @@ def test_store_settings():
 def test_shutdown():
     with expected_protocol(
         Kusg245_250A,
-        [("o", None),
-         ("x", None)],
+        [("o", "A"),
+         ("x", "A")],
     ) as inst:
         inst.shutdown()
 
@@ -267,7 +335,7 @@ def test_shutdown():
 def test_turn_on():
     with expected_protocol(
         Kusg245_250A,
-        [("X", None),
-         ("O", None)],
+        [("X", "A"),
+         ("O", "A")],
     ) as inst:
         inst.turn_on()

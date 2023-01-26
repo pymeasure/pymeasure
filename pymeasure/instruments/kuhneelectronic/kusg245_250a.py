@@ -29,6 +29,28 @@ from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
 
 
+byteorder = 'little'
+encoding = 'utf-8'
+termination_character = "\r"
+reflection_limit_map = {0: 0, 1: 100, 2: 150, 3: 180, 4: 200, 5: 230}
+
+
+def _has_correct_termination_character(b):
+    return b[-1] == termination_character.encode(encoding=encoding)[0]
+
+
+def _err_msg_invalid_termination_character(b):
+    return f"Invalid termination character received: {hex(b[-1])}"
+
+
+def _is_expecting_acknowledgement(command):
+    if command in ["v", "5", "8", "6", "7", "T"]:
+        return False
+    if command.endswith("?"):
+        return False
+    return True
+
+
 class Kusg245_250A(Instrument):
     """Represents KU SG 2.45 250 A the 2.45 GHz ISM-Band Microwave Generator
     and provides a high-level interface for interacting with the instrument.
@@ -57,8 +79,8 @@ class Kusg245_250A(Instrument):
 
     def __init__(self, adapter, name="KU SG 2.45 250 A", power_limit=250, **kwargs):
         kwargs.setdefault("baud_rate", 115200)
-        kwargs.setdefault("read_termination", "\r")
-        kwargs.setdefault("write_termination", "\r")
+        kwargs.setdefault("read_termination", termination_character)
+        kwargs.setdefault("write_termination", termination_character)
 
         super().__init__(adapter, name, **kwargs)
 
@@ -68,86 +90,154 @@ class Kusg245_250A(Instrument):
 
     version = Instrument.measurement("v", """Readout of the firmware version.""")
 
-    voltage_5v = Instrument.measurement(
-        "5",
-        """Readout of internal 5V supply voltage in Volts.""",
-        get_process=lambda v: 103.0 / 4700.0 * v,
-    )
+    @property
+    def voltage_5v(self):
+        """Readout of internal 5V supply voltage in Volts."""
+        self.write("5")
+        b = self.read_bytes(3)
+        if _has_correct_termination_character(b):
+            return 103.0 / 4700.0 * int.from_bytes(b[:2])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    voltage_32v = Instrument.measurement(
-        "8",
-        """Readout of 32V supply voltage in Volts.""",
-        get_process=lambda v: 1282.0 / 8200.0 * v,
-    )
+    @property
+    def voltage_32v(self):
+        """Readout of 32V supply voltage in Volts."""
+        self.write("8")
+        b = self.read_bytes(3)
+        if _has_correct_termination_character(b):
+            return 1282.0 / 8200.0 * int.from_bytes(b[:2])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    power_forward = Instrument.measurement("6", """Readout of forward power in Watts.""")
+    @property
+    def power_forward(self):
+        """Readout of forward power in Watts."""
+        self.write("6")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return int.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    power_reverse = Instrument.measurement("7", """Readout of reverse power in Watts.""")
+    @property
+    def power_reverse(self):
+        """Readout of reverse power in Watts."""
+        self.write("7")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return int.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     temperature = Instrument.measurement(
-        "T", """Readout of temperature sensor near the final transistor in °C."""
+        "T",
+        """Readout of temperature sensor near the final transistor in °C."""
     )
 
-    external_enabled = Instrument.control(
-        "r?",
-        "%s",
+    @property
+    def external_enabled(self):
         """Control the whether the amplifier enabling is done
         via external inputs on 8-pin connector
         or via the serial interface (boolean).
-        """,
-        validator=strict_discrete_set,
-        values=[False, True],
-        set_process=lambda v: {True: "R", False: "r"}[v],
-        get_process=lambda v: bool(v)
-    )
+        """
+        self.write("r?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return bool.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    bias_enabled = Instrument.control(
-        "x?",
-        "%s",
+    @external_enabled.setter
+    def external_enabled(self, value):
+        if value:
+            self.write("R")
+        else:
+            self.write("r")
+
+    @property
+    def bias_enabled(self):
         """Transistor biasing (boolean).
 
         Biasing must be enabled before switching RF on
         (see :attr:`~.Kusg245_250A.rf_enabled`).
-        """,
-        validator=strict_discrete_set,
-        values=[False, True],
-        set_process=lambda v: {True: "X", False: "x"}[v],
-        get_process=lambda v: bool(v)
-    )
+        """
+        self.write("x?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return bool.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    rf_enabled = Instrument.control(
-        "o?",
-        "%s",
+    @bias_enabled.setter
+    def bias_enabled(self, value):
+        if value:
+            self.write("X")
+        else:
+            self.write("x")
+
+    @property
+    def rf_enabled(self):
         """Enable RF output (boolean).
 
         .. note::
 
             Bias must be enabled before RF is enabled
             (see :attr:`~.Kusg245_250A.bias_enabled`)
-        """,
-        validator=strict_discrete_set,
-        values=[False, True],
-        set_process=lambda v: {True: "O", False: "o"}[v],
-        get_process=lambda v: bool(v)
-    )
+        """
+        self.write("o?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return bool.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    pulse_mode_enabled = Instrument.control(
-        "p?",
-        "%s",
-        """Enable pulse mode (boolean).""",
-        validator=strict_discrete_set,
-        values=[False, True],
-        set_process=lambda v: {True: "P", False: "p"}[v],
-        get_process=lambda v: bool(v)
-    )
+    @rf_enabled.setter
+    def rf_enabled(self, value):
+        if value:
+            self.write("O")
+        else:
+            self.write("o")
+
+    @property
+    def pulse_mode_enabled(self):
+        """Enable RF output (boolean).
+
+        .. note::
+
+            Bias must be enabled before RF is enabled
+            (see :attr:`~.Kusg245_250A.bias_enabled`)
+        """
+        self.write("p?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return bool.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
+
+    @pulse_mode_enabled.setter
+    def pulse_mode_enabled(self, value):
+        if value:
+            self.write("P")
+        else:
+            self.write("p")
+
+    @property
+    def freq_steps_fine_enabled(self):
+        """Enables fine frequency steps (boolean)."""
+        self.write("fm?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return bool.from_bytes(b[:1])
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
+
+    @freq_steps_fine_enabled.setter
+    def freq_steps_fine_enabled(self, value):
+        if value:
+            self.write("fm1")
+        else:
+            self.write("fm0")
 
     freq_steps_fine_enabled = Instrument.control(
         "fm?",
         "fm%d",
         """Enables fine frequency steps (boolean).""",
         validator=strict_discrete_set,
-        values={False: 0, True: 1},
-        map_values=True,
+        values=[False, True],
+        set_process=lambda v: {True: 1, False: 0}[v],
+        get_process=lambda v: bool.from_bytes(v.encode(encoding), byteorder=byteorder),
     )
 
     frequency_coarse = Instrument.control(
@@ -161,6 +251,7 @@ class Kusg245_250A(Instrument):
         """,
         validator=truncated_range,
         values=[2400, 2500],
+        get_process=lambda v: int(v[:-3]) if v.endswith("MHz") else None,
     )
 
     frequency_fine = Instrument.control(
@@ -176,6 +267,7 @@ class Kusg245_250A(Instrument):
         validator=truncated_range,
         values=[2400000, 2500000],
         set_process=lambda v: round(v, -1),
+        get_process=lambda v: int(v[:-3]) if v.endswith("kHz") else None,
     )
 
     power_setpoint = Instrument.control(
@@ -217,21 +309,25 @@ class Kusg245_250A(Instrument):
         set_process=lambda v: round(2 * v, -1) / 2,
     )
 
-    phase_shift = Instrument.control(
-        "H?",
-        "H%03d",
+    @property
+    def phase_shift(self):
         """Phase shift in degrees (float from 0 to 358.6).
 
         Resolution: 8-bits. Values out of range are truncated.
-        """,
-        validator=truncated_range,
-        values=[0, 358.6],
-        set_process=lambda v: round(v / 360 * 256),
-        get_process=lambda v: v / 256 * 360,
-    )
+        """
+        self.write("H?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return int.from_bytes(b[:1]) / 256.0 * 360.0
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
 
-    reflection_limit = Instrument.control(
-        "B?",
+    @phase_shift.setter
+    def phase_shift(self, value):
+        value = int(round(truncated_range(value, [0, 358.6])) / 360.0 * 256.0)
+        self.write(f"H{value:03d}")
+
+    @property
+    def reflection_limit(self):
         "B%d",
         """Limit of reflection in Watts (integer in 0 - no limit, 100, 150, 180, 200, 230).
 
@@ -241,11 +337,19 @@ class Kusg245_250A(Instrument):
             is reduced to the specified value and the power control mechanism
             is locked until the alarm has been cleared by the user via
             :meth:`~.Kusg245_250A.clear_VSWR_error()`.
-        """,
-        validator=truncated_discrete_set,
-        values={0: 0, 100: 1, 150: 2, 180: 3, 200: 4, 230: 5},
-        map_values=True,
-    )
+        """
+        self.write("B?")
+        b = self.read_bytes(2)
+        if _has_correct_termination_character(b):
+            return reflection_limit_map[b[0]]
+        raise ConnectionError(_err_msg_invalid_termination_character(b))
+
+    @reflection_limit.setter
+    def reflection_limit(self, value):
+        value = truncated_discrete_set(value, reflection_limit_map.values())
+        inv_reflection_limit_map = {v: k for k, v in reflection_limit_map.items()}
+        value = inv_reflection_limit_map[value]
+        self.write(f"B{value:d}")
 
     def tune(self, power):
         """
@@ -303,3 +407,8 @@ class Kusg245_250A(Instrument):
         self.bias_enabled = True
         time.sleep(0.500)  # not sure if needed
         self.rf_enabled = True
+
+    def write(self, command, **kwargs):
+        self.adapter.write(command, **kwargs)
+        if _is_expecting_acknowledgement(command) and self.read() != "A":
+            raise ConnectionError("Expected acknowledgment.")
