@@ -56,13 +56,13 @@ class DCXS(Instrument):
     """
 
     def __init__(self, adapter, name="AJA DCXS sputtering power supply", **kwargs):
-        kwargs.setdefault("asrl", dict(baud_rate=38400))
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
             write_termination="",
             read_termination="",
+            asrl={"baud_rate": 38400},
             **kwargs
         )
         # here we want to flush the read buffer since the device upon power up sends some '>'
@@ -86,6 +86,18 @@ class DCXS(Instrument):
         except AttributeError:
             # occurs in test suite (see #742 -> should be removed before merging)
             pass
+
+    def ask(self, command, query_delay=0, **kwargs):
+        """Write a command to the instrument and return the read response.
+
+        :param command: Command string to be sent to the instrument.
+        :param query_delay: Delay between writing and reading in seconds.
+        :param \\**kwargs: Keyword arguments passed to the read method.
+        :returns: String returned by the device without read_termination.
+        """
+        self.write(command)
+        self.wait_for(query_delay)
+        return self.read(**kwargs)
 
     def read(self, reply_length=-1, **kwargs):
         return self.read_bytes(reply_length, **kwargs).decode()

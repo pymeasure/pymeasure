@@ -284,12 +284,12 @@ class CommonBase:
 
         :param command: Command string to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
-        :param \\**kwargs: Keyword arguments to be passed to the read method.
+        :param \\**kwargs: Keyword arguments to be used when overloading ask
         :returns: String returned by the device without read_termination.
         """
         self.write(command)
         self.wait_for(query_delay)
-        return self.read(**kwargs)
+        return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1,
                **kwargs):
