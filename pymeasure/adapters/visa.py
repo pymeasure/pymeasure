@@ -101,10 +101,12 @@ class VISAAdapter(Adapter):
             # Allow to reuse the connection.
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
+            self.manager = resource_name.manager
             self.query_delay = resource_name.query_delay
             return
         elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name
+
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
 
@@ -125,6 +127,20 @@ class VISAAdapter(Adapter):
             resource_name,
             **kwargs
         )
+
+    def close(self):
+        """Close the connection.
+
+        .. note::
+
+            This closes the connection to the resource for all adapters using
+            it currently (e.g. different adapters using the same GPIB line).
+        """
+        super().close()
+        try:
+            self.manager.close()
+        except AttributeError:
+            pass  # Closed from another adapter using the same connection.
 
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.

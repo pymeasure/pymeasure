@@ -39,10 +39,21 @@ if not is_pyvisa_sim_installed:
 
 @pytest.fixture
 def adapter():
-    return VISAAdapter(SIM_RESOURCE, visa_library='@sim',
-                       read_termination="\n",
-                       timeout=10,
-                       )
+    adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
+                          read_termination="\n",
+                          timeout=10,
+                          )
+    yield adapter
+    # Empty the read buffer, as something might remain there after a test.
+    # `clear` is not implemented in pyvisa-sim and `flush_read_buffer` seems to do nothing.
+    adapter.timeout = 0
+    try:
+        adapter.read_bytes(-1)
+    except pyvisa.errors.VisaIOError as exc:
+        if not exc.args[0].startswith("VI_ERROR_TMO"):
+            raise
+    # Close the connection
+    adapter.close()
 
 
 def test_nested_adapter():
@@ -50,6 +61,7 @@ def test_nested_adapter():
     a = VISAAdapter(a0)
     assert a.resource_name == SIM_RESOURCE
     assert a.connection == a0.connection
+    assert a.manager == a0.manager
 
 
 def test_nested_adapter_query_delay():
@@ -84,6 +96,26 @@ def test_open_gpib():
     assert a.resource_name == "GPIB0::5::INSTR"
 
 
+class TestClose:
+    @pytest.fixture
+    def adapterC(self):
+        return VISAAdapter(SIM_RESOURCE, visa_library='@sim')
+
+    def test_connection_session_closed(self, adapterC):
+        # Verify first, that it works before closing
+        assert adapterC.connection.session is not None
+        adapterC.close()
+        with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+            adapterC.connection.session
+
+    def test_manager_session_closed(self, adapterC):
+        # Verify first, that it works before closing
+        assert adapterC.manager.session is not None
+        adapterC.close()
+        with pytest.raises(pyvisa.errors.InvalidSession, match="Invalid session"):
+            adapterC.manager.session
+
+
 def test_write_read(adapter):
     adapter.write(":VOLT:IMM:AMPL?")
     assert float(adapter.read()) == 1
@@ -101,32 +133,26 @@ def test_write_bytes_read(adapter):
 
 class TestReadBytes:
     @pytest.fixture()
-    def adapter(self, adapter):
+    def adapterR(self, adapter):
         adapter.write("*IDN?")
         yield adapter
-        # empty the read buffer
-        try:
-            adapter.read_bytes(-1)
-        except pyvisa.errors.VisaIOError as exc:
-            if not exc.args[0].startswith("VI_ERROR_TMO"):
-                raise
 
-    def test_read_bytes(self, adapter):
-        assert adapter.read_bytes(22) == b"SCPI,MOCK,VERSION_1.0\n"
+    def test_read_bytes(self, adapterR):
+        assert adapterR.read_bytes(22) == b"SCPI,MOCK,VERSION_1.0\n"
 
-    def test_read_all_bytes(self, adapter):
-        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+    def test_read_all_bytes(self, adapterR):
+        assert adapterR.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
     @pytest.mark.parametrize("count", (-1, 7))
-    def test_read_break_on_termchar(self, adapter, count):
+    def test_read_break_on_termchar(self, adapterR, count):
         """Test read_bytes breaks on termchar."""
-        adapter.connection.read_termination = ","
-        assert adapter.read_bytes(count, break_on_termchar=True) == b"SCPI,"
+        adapterR.connection.read_termination = ","
+        assert adapterR.read_bytes(count, break_on_termchar=True) == b"SCPI,"
 
-    def test_read_no_break_on_termchar(self, adapter):
-        adapter.connection.read_termination = ","
+    def test_read_no_break_on_termchar(self, adapterR):
+        adapterR.connection.read_termination = ","
         # `break_on_termchar=False` is default value
-        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+        assert adapterR.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
 
 def test_visa_adapter(adapter):

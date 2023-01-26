@@ -63,7 +63,7 @@ class Adapter:
                  FutureWarning)
 
     def __del__(self):
-        """Close connection upon garbage collection of the device"""
+        """Close connection upon garbage collection of the device."""
         self.close()
 
     def close(self):
