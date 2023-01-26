@@ -28,20 +28,6 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
-def truncated_string(value, maxlength):
-    """ Provides a validator function that truncates a string to a maximum length.
-    It returns the original value if its length is smaller or equal to the maximum,
-    otherwise only the characters up to the maximum length will be returned.
-
-    :param value: a value to test
-    :param maxlength: maximum length of the string ("values" arg of the property factories)
-    """
-    if len(value) <= maxlength:
-        return value
-    else:
-        return value[:maxlength]
-
-
 class DCXS(Instrument):
     """ AJA DCXS-750 or 1500 DC magnetron sputtering power supply with multiple outputs
 
@@ -103,61 +89,61 @@ class DCXS(Instrument):
         return self.read_bytes(reply_length, **kwargs).decode()
 
     id = Instrument.measurement(
-        "?", """Power supply type identifier""",
+        "?", """Get the power supply type identifier.""",
         cast=str,
         reply_length=9,
     )
 
     software_version = Instrument.measurement(
-        "z", """Software revision of the power supply firmware""",
+        "z", """Get the software revision of the power supply firmware.""",
         cast=str,
         reply_length=5,
     )
 
     power = Instrument.measurement(
-        "d", """Actual output power in W""",
+        "d", """Measure the actual output power in W.""",
         cast=int,
         reply_length=4,
     )
 
     voltage = Instrument.measurement(
-        "e", """Actual output voltage in V""",
+        "e", """Measure the output voltage in V.""",
         cast=int,
         reply_length=4,
     )
 
     current = Instrument.measurement(
-        "f", """Actual output current in mA""",
+        "f", """Measure the output current in mA.""",
         cast=int,
         reply_length=4,
     )
 
     remaining_deposition_time_min = Instrument.measurement(
-        "k", """minutes part of remaining deposition time""",
+        "k", """Get the minutes part of remaining deposition time.""",
         cast=int,
         reply_length=3,
     )
 
     remaining_deposition_time_sec = Instrument.measurement(
-        "l", """seconds part of remaining deposition time""",
+        "l", """Get the seconds part of remaining deposition time.""",
         cast=int,
         reply_length=2,
     )
 
     fault_code = Instrument.measurement(
-        "o", """error code from the power supply""",
+        "o", """Get the error code from the power supply.""",
         reply_length=1,
     )
 
     shutter_state = Instrument.measurement(
-        "p", """status of the gun shutters, returns 0 for closed and 1 for open shutters""",
+        "p", """Get the status of the gun shutters. 0 for closed and 1 for open shutters.""",
         reply_length=1,
         cast=lambda x: int.from_bytes(x.encode(), "big"),
         get_process=lambda x: [x & 1, x & 2, x & 4, x & 8, x & 16],
     )
 
     enabled = Instrument.control(
-        "a", "%s", """on/off state of the power supply""",
+        "a", "%s", """Control the on/off state of the power supply""",
         reply_length=1,
         validator=strict_discrete_set,
         map_values=True,
@@ -168,8 +154,8 @@ class DCXS(Instrument):
 
     setpoint = Instrument.control(
         "b", "C%04d",
-        """setpoint value, units determined by regulation mode
-           (power -> W, voltage -> V, current -> mA)""",
+        """Control the setpoint value. Units are determined by regulation mode
+           (power -> W, voltage -> V, current -> mA).""",
         reply_length=4,
         validator=strict_range,
         map_values=True,
@@ -178,7 +164,7 @@ class DCXS(Instrument):
 
     regulation_mode = Instrument.control(
         "c", "D%d",
-        """Regulation mode of the power supply""",
+        """Control the regulation mode of the power supply.""",
         reply_length=1,
         validator=strict_discrete_set,
         map_values=True,
@@ -190,7 +176,7 @@ class DCXS(Instrument):
 
     ramp_time = Instrument.control(
         "g", "E%02d",
-        """Ramp time in seconds, can be set only when 'enabled' is False""",
+        """Control the ramp time in seconds. Can be set only when 'enabled' is False.""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -199,7 +185,7 @@ class DCXS(Instrument):
 
     shutter_delay = Instrument.control(
         "h", "F%02d",
-        """shutter delay in seconds, can be set only when 'enabled' is False""",
+        """Control the shutter delay in seconds. Can be set only when 'enabled' is False.""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -208,7 +194,7 @@ class DCXS(Instrument):
 
     deposition_time_min = Instrument.control(
         "i", "G%03d",
-        """minutes part of deposition time, can be set only when 'enabled' is False""",
+        """Control the minutes part of deposition time. Can be set only when 'enabled' is False.""",
         reply_length=3,
         cast=int,
         validator=strict_range,
@@ -217,7 +203,7 @@ class DCXS(Instrument):
 
     deposition_time_sec = Instrument.control(
         "j", "H%02d",
-        """seconds part of deposition time, can be set only when 'enabled' is False""",
+        """Control the seconds part of deposition time. Can be set only when 'enabled' is False.""",
         reply_length=2,
         cast=int,
         validator=strict_range,
@@ -225,15 +211,15 @@ class DCXS(Instrument):
     )
 
     material = Instrument.control(
-        "n", "I%08s", """material name of the sputter target""",
+        "n", "I%08s", """Control the material name of the sputter target.""",
         cast=str,
         reply_length=8,
-        validator=truncated_string,
+        validator=lambda value, maxlength: value[:maxlength],
         values=8,
     )
 
     active_gun = Instrument.control(
-        "y", "Z%d", """select active gun number""",
+        "y", "Z%d", """Control the active gun number.""",
         cast=int,
         reply_length=1,
         validator=strict_range,

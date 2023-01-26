@@ -83,3 +83,18 @@ def test_enabled():
     ) as inst:
         inst.enabled = True
         assert inst.enabled is True
+
+
+def test_material():
+    """
+    Test DCXS material name and its truncation
+    """
+    with expected_protocol(
+        DCXS,
+        [
+            ("IALongNam", None),
+            ("n", "ALongNam"),
+        ],
+    ) as inst:
+        inst.material = "ALongNameWhichGetsTruncated"
+        assert "ALongNam" == inst.material
