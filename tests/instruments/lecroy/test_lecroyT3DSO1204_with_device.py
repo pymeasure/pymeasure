@@ -463,13 +463,11 @@ class TestLeCroyT3DSO1204:
         plt.scatter(x=time, y=data)
         plt.show()
 
-    """
-    Be careful because there is no way to turn on and off the MATH function
-    programmatically, so the user should push on the MATH button and make sure
-    that the (white) math line is displayed before running this test. 
-    """
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_math(self, instrument):
+        """ Be careful because there is no way to turn on and off the MATH function
+        programmatically, so the user should push on the MATH button and make sure
+        that the (white) math line is displayed before running this test. """
         from matplotlib import pyplot as plt
 
         instrument.arm_acquisition()
