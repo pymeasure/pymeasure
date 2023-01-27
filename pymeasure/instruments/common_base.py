@@ -279,12 +279,11 @@ class CommonBase:
         """
         raise NotImplementedError("Implement in subclass!")
 
-    def ask(self, command, query_delay=0, **kwargs):
+    def ask(self, command, query_delay=0):
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
         :param query_delay: Delay between writing and reading in seconds.
-        :param \\**kwargs: Keyword arguments to be used when overloading ask
         :returns: String returned by the device without read_termination.
         """
         self.write(command)
