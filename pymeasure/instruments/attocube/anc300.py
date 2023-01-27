@@ -326,13 +326,13 @@ class ANC300Controller(Instrument):
             if adapter.find("::") > -1:
                 # adapter is a resource string, so use it
                 return adapter
-            # otherwise, `adapter` can only be an (deprecated) IPv4 address, so display a
-            # deprecation warning and create a resource string
+            # otherwise, `adapter` can only be a (deprecated) hostname, so display a
+            # deprecation warning and create the resource string
             warn(
-                "Using an IPv4 address is deprecated. Use a full VISA resource string instead.",
+                "Using a hostname is deprecated. Use a full VISA resource string instead.",
                 FutureWarning,
             )
-            return f"TCPIP0::{adapter}::7230::SOCKET"
+            return f"TCPIP::{adapter}::7230::SOCKET"
         elif isinstance(adapter, Adapter):
             return adapter
         raise TypeError("ANC300Controller: 'adapter' argument must be a string or Adapter")
