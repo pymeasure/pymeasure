@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import importlib
 import pytest
 from unittest.mock import MagicMock
 
@@ -49,7 +50,7 @@ for manufacturer in dir(instruments):
                 devices.append(d)
 
 # Instruments unable to accept an Adapter instance.
-proper_adapters = ["IBeamSmart", "ANC300Controller"]
+proper_adapters = ["ANC300Controller"]
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
     "ThorlabsPM100USB",
@@ -60,6 +61,7 @@ need_init_communication = [
     "AWG401x_AFG",
     "VARX",
     "HP8116A",
+    "IBeamSmart",
 ]
 
 
@@ -161,3 +163,23 @@ def test_name_argument(cls):
         pytest.skip(f"{cls.__name__} does not accept a name argument yet.")
     inst = cls(adapter=MagicMock(), name="Name_Test")
     assert inst.name == "Name_Test"
+
+
+# This uses a pyvisa-sim default instrument, we could also define our own.
+SIM_RESOURCE = 'ASRL2::INSTR'
+is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec('pyvisa_sim'))
+
+
+@pytest.mark.skipif(is_pyvisa_sim_not_installed,
+                    reason='PyVISA tests require the pyvisa-sim library')
+@pytest.mark.parametrize("cls", devices)
+def test_kwargs_to_adapter(cls):
+    """Verify that kwargs are accepted and handed to the adapter."""
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
+
+    with pytest.raises(ValueError,
+                       match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
+        cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
