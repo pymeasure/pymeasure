@@ -359,8 +359,7 @@ class ANC300Controller(Instrument):
                 break
         msg = self.termination_str.join(lines[:-1])
         if lines[-1] != 'OK':
-            self.adapter.connection.clear()
-            # should be self.adapter.flush_read_buffer() after PR 836
+            self.adapter.flush_read_buffer()
             raise ValueError("AttocubeConsoleAdapter: Error after previous "
                              f"command with message {msg}")
         return self._extract_value(msg)
