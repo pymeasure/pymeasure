@@ -53,25 +53,7 @@ class DCXS(Instrument):
         )
         # here we want to flush the read buffer since the device upon power up sends some '>'
         # characters.
-        try:
-            self.adapter.flush_read_buffer()
-        except NotImplementedError:
-            # flush_read_buffer is not implemented for TCPIP sockets
-            try:
-                timeout = self.adapter.connection.timeout
-                self.adapter.connection.timeout = 0
-                try:
-                    self.read()
-                except pyvisa.errors.VisaIOError:
-                    # occurs always when calling read and no character is waiting
-                    pass
-                self.adapter.connection.timeout = timeout
-            except AttributeError:
-                # occurs in test suite (see #742 -> should be removed before merging)
-                pass
-        except AttributeError:
-            # occurs in test suite (see #742 -> should be removed before merging)
-            pass
+        self.adapter.flush_read_buffer()
 
     def ask(self, command, query_delay=0, **kwargs):
         """Write a command to the instrument and return the read response.
