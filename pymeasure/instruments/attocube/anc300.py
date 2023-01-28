@@ -270,8 +270,7 @@ class ANC300Controller(Instrument):
         self.wait_for()
         # clear messages sent upon opening the connection,
         # this contains some non-ascii characters!
-        self.adapter.connection.clear()
-        # should be self.adapter.flush_read_buffer() after PR 836
+        self.adapter.flush_read_buffer()
         # send password and check authorization
         self.write(passwd)
         self.wait_for()
