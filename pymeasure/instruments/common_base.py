@@ -290,7 +290,8 @@ class CommonBase:
         self.wait_for(query_delay)
         return self.read()
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1):
+    def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1,
+               **kwargs):
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -301,9 +302,10 @@ class CommonBase:
             received from the instrument. The callable returns the processed
             string.
         :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param \\**kwargs: Keyword arguments to be passed to the ask method.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        results = self.ask(command).strip()
+        results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
