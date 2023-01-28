@@ -253,7 +253,21 @@ class VISAAdapter(Adapter):
         in the read buffer and no END-indicator was present, read from the device until
         encountering an END indicator (which causes loss of data).
         """
-        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        try:
+            self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        except NotImplementedError:
+            # NotImplementedError is raised when using resource types other than `asrl`
+            # in conjunction with pyvisa-py.
+            # Upstream issue: https://github.com/pyvisa/pyvisa-py/issues/348
+            # fake discarding the read buffer by reading all available messages.
+            timeout = self.connection.timeout
+            self.connection.timeout = 0
+            try:
+                self.read_bytes(-1)
+            except pyvisa.errors.VisaIOError:
+                pass
+            finally:
+                self.connection.timeout = timeout
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
