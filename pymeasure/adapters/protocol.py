@@ -24,6 +24,7 @@
 
 import logging
 from unittest.mock import MagicMock
+from warnings import warn
 
 from .adapter import Adapter
 
@@ -129,11 +130,15 @@ class ProtocolAdapter(Adapter):
         """Return an already present or freshly fetched read buffer as a string."""
         return self._read_bytes(-1).decode("utf-8")
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read `count` number of bytes from the buffer.
 
         :param int count: Number of bytes to read. If -1, return the buffer.
         """
+        if break_on_termchar:
+            warn(("Breaking on termination character in `read_bytes` cannot be tested. "
+                  "You have to separate the message parts in the com_pairs."),
+                 UserWarning)
         if self._read_buffer is not None:
             if count == -1 or count >= len(self._read_buffer):
                 read = self._read_buffer
