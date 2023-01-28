@@ -171,17 +171,13 @@ class PandasModelBase(QtCore.QAbstractTableModel):
 
     def data(self, index, role=QtCore.Qt.ItemDataRole.DisplayRole):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
-            results, row, col = self.translate_to_local(index.row(), index.column())
             try:
-                if (self.column_index is not None) and isinstance(self, PandasModelByColumn):
-                    # Remap row to matching index entry when layout is by column
-                    index = self.vertical_header[row]
-                    row = list(results.data.index).index(index)
+                results, row, col = self.translate_to_local(index.row(), index.column())
                 value = results.data.iloc[row][col]
                 column_type = results.data.dtypes[col]
                 # Cast to column type
                 value_render = column_type.type(value)
-            except (IndexError, ValueError):
+            except (IndexError, ValueError, TypeError):
                 value = NaN
                 value_render = ""
             if isinstance(value_render, float64):
@@ -416,6 +412,13 @@ class PandasModelByColumn(PandasModelBase):
             if col < (columns + results.columns):
                 break
             columns += results.columns
+        if (self.column_index is not None):
+            # Remap row to matching index entry when indexing is used
+            try:
+                index = self.vertical_header[row]
+                row = list(results.data.index).index(index)
+            except ValueError:
+                row = None
         return results, row, col - columns
 
     def translate_to_global(self, results, row, col):
@@ -513,10 +516,12 @@ class Table(QtWidgets.QTableView):
 
         if df is not None:
             formats = ";;".join(self.supported_formats.keys())
-            filename_and_ext = QtWidgets.QFileDialog.getSaveFileName(self,
-                                                                     "Save File",
-                                                                     "",
-                                                                     formats)
+            filename_and_ext = QtWidgets.QFileDialog.getSaveFileName(
+                self,
+                "Save File",
+                "",
+                formats,
+            )
             filename = filename_and_ext[0]
             ext = filename_and_ext[1]
             if filename:
@@ -646,7 +651,8 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
                            layout_class=self.layout_class_map[self.table_layout],
                            column_index=self.column_index,
                            float_digits=self.float_digits,
-                           parent=self)
+                           parent=self,
+                           )
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
@@ -671,14 +677,13 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
 
     def update_column_index(self, entry):
         index = self.column_index_combo.itemText(entry)
-        if index == "<None>":
+        if index == '<None>':
             index = None
         self.column_index = index
         self.table.set_index(index)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        ret = ResultsTable(results, color, self.column_index, wdg=self, **kwargs)
-        return ret
+        return ResultsTable(results, color, self.column_index, wdg=self, **kwargs)
 
     def load(self, table):
         self.table.add_table(table)
