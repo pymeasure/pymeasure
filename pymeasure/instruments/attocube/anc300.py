@@ -251,6 +251,15 @@ class ANC300Controller(Instrument):
     ):
         adapter = self.handle_deprecated_host_arg(adapter, kwargs)
 
+        if not isinstance(name, str):
+            warn(
+                f"ANC300Controller.__init__: `name` was provided was {type(name)} but should be a "
+                + "string. This is likely because `name` was added as a keyword argument. "
+                + "All positional arguments after `adapter` should be provided as keyword argument"
+                + " (i.e. `axisnames=['x', 'y']`).",
+                FutureWarning
+            )
+
         self.query_delay = query_delay
         self.termination_str = "\r\n"
 
@@ -360,7 +369,7 @@ class ANC300Controller(Instrument):
         msg = self.termination_str.join(lines[:-1])
         if lines[-1] != 'OK':
             self.adapter.flush_read_buffer()
-            raise ValueError("AttocubeConsoleAdapter: Error after previous "
+            raise ValueError("ANC300Controller: Error after previous "
                              f"command with message {msg}")
         return self._extract_value(msg)
 
