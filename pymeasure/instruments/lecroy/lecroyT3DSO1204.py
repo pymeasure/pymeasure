@@ -736,7 +736,7 @@ class LeCroyT3DSO1204(Instrument):
         """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write("STOP")
 
-    def arm_acquisition(self):
+    def single(self):
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
         self.write("ARM")
