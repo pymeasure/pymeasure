@@ -71,8 +71,8 @@ class OxfordInstrumentsBase(Instrument):
                          **kwargs)
         self.max_attempts = max_attempts
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=lambda v: v[1:], maxsplit=-1,
-               **kwargs):
+    def values(self, command, separator=',', cast=float, preprocess_reply=lambda v: v[1:],
+               maxsplit=-1, **kwargs):
         """Write a command and get values."""
         return super().values(command, separator=separator, cast=cast,
                               preprocess_reply=preprocess_reply,
