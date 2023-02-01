@@ -9,5 +9,4 @@ This section contains specific documentation on the Attocube instruments that ar
 .. toctree::
    :maxdepth: 2
 
-   adapters
    anc300
