@@ -46,7 +46,7 @@ class PrologixAdapter(VISAAdapter):
         slow to respond instruments.
 
         .. deprecated:: 0.11
-            Implement it in the instrument's `wait_until_read` method instead.
+            Implement it in the instrument's `wait_for` method instead.
 
     :param preprocess_reply: optional callable used to preprocess
         strings received from the instrument. The callable returns the
@@ -91,7 +91,7 @@ class PrologixAdapter(VISAAdapter):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
             warn(("Parameter `rw_delay` is deprecated. "
-                  "Implement in Instrument's `wait_until_read` instead."),
+                  "Implement in Instrument's `wait_for` instead."),
                  FutureWarning)
             kwargs['query_delay'] = rw_delay
         if serial_timeout:

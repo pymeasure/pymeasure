@@ -24,6 +24,7 @@
 
 import logging
 from unittest.mock import MagicMock
+from warnings import warn
 
 from .adapter import Adapter
 
@@ -129,11 +130,15 @@ class ProtocolAdapter(Adapter):
         """Return an already present or freshly fetched read buffer as a string."""
         return self._read_bytes(-1).decode("utf-8")
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read `count` number of bytes from the buffer.
 
         :param int count: Number of bytes to read. If -1, return the buffer.
         """
+        if break_on_termchar:
+            warn(("Breaking on termination character in `read_bytes` cannot be tested. "
+                  "You have to separate the message parts in the com_pairs."),
+                 UserWarning)
         if self._read_buffer is not None:
             if count == -1 or count >= len(self._read_buffer):
                 read = self._read_buffer
@@ -160,3 +165,12 @@ class ProtocolAdapter(Adapter):
             else:
                 self._read_buffer = p_read[count:]
                 return p_read[:count]
+
+    def flush_read_buffer(self):
+        """ Flush and discard the input buffer
+
+        As detailed by pyvisa, discard the read buffer contents and if data was present
+        in the read buffer and no END-indicator was present, read from the device until
+        encountering an END indicator (which causes loss of data).
+        """
+        self.connection.flush("pyvisa.constants.BufferOperation.discard_read_buffer")
