@@ -273,11 +273,13 @@ class FSL(Instrument):
         self.write(f"INST:CRE:NEW {channel_type}, '{channel_name}'")
 
     def _channel_list_to_dict(raw):
-        """dictionary with channel_name as keys and channel_type as values
+        """
+        Convert a list of available channels to a dictionary of form {channel_name: channel_type}.
 
         :param raw: List of channel types and channel names
-        :return: dictionary with channel_name : channel_type
-        :rtype: has table type with string type elements
+        :type raw: list of string
+        :return: dictionary of form {channel_name : channel_type}
+        :rtype: dict
         """
         d = {
             set_keys.strip("'"): set_values.strip("'")
@@ -352,6 +354,7 @@ class FSL(Instrument):
         self.write(f"DISP:TRAC:SEL {trace}")
 
     # Overview -------------------------------------------------------------------------------------
+
     nominal_level = Instrument.control(
-        "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the R&S FSW"
+        "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the instrument"
     )
