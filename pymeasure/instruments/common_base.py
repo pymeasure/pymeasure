@@ -524,7 +524,7 @@ class CommonBase:
                 validator=lambda x, y: x, values=(), map_values=False,
                 set_process=lambda v: v,
                 check_set_errors=False, dynamic=False,
-                **kwargs):
+                ):
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
@@ -553,4 +553,4 @@ class CommonBase:
                                   set_process=set_process,
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
-                                  **kwargs)
+                                  )
