@@ -55,6 +55,9 @@ class PrologixAdapter(VISAAdapter):
         .. deprecated:: 0.11
             Implement it in the instrument's `read` method instead.
 
+    :param auto: Default to 0 to turn off read-after-write and address instrument to listen.
+    :param eoi: Enable (1) or disable (0) EOI assertion.
+    :param eos: Set command termination 0 for CR+LF; 2 for LF.
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument.
@@ -87,7 +90,7 @@ class PrologixAdapter(VISAAdapter):
     """
 
     def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None, **kwargs):
+                 preprocess_reply=None, auto=0, eoi=1, eos=2, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
             warn(("Parameter `rw_delay` is deprecated. "
@@ -107,15 +110,66 @@ class PrologixAdapter(VISAAdapter):
                          **kwargs)
         self.address = address
         if not isinstance(resource_name, PrologixAdapter):
-            self.set_defaults()
+            self.auto = auto
+            self.eoi = eoi
+            self.eos = eos
 
-    def set_defaults(self):
-        """ Set up the default behavior of the Prologix-GPIB
-        adapter
+    @property
+    def auto(self):
+        """Configure Prologix GPIB controller to automatically address instruments
+        to talk after sending them a command in order to read their response. The
+        feature called, Read-After-Write, saves the user from having to issue read commands
+        repeatedly. This property enabled or disabled the Read-After-Write feature.
         """
-        self.write("++auto 0")  # Turn off auto read-after-write
-        self.write("++eoi 1")  # Append end-of-line to commands
-        self.write("++eos 2")  # Append line-feed to commands
+        self.write("++auto")
+        return int(self.read())
+
+    @auto.setter
+    def auto(self, value):
+        self.write("++auto {}".format(value))
+
+    @property
+    def eoi(self):
+        """Enables or Disables the assertion of the EOI signal with the last character
+        of any command sent over GPIB port. Some instruments require EOI signal to be
+        asserted in order to properly detect the end of a command.
+        """
+        self.write("++eoi")
+        return int(self.read())
+
+    @eoi.setter
+    def eoi(self, value):
+        self.write("++eoi {}".format(value))
+
+    @property
+    def eos(self):
+        """Specify GPIB termination characters. When data from host is received,
+        all non-escaped LF, CR and ESC characters are removed and GPIB
+        terminators, as specified by this command, are appended before sending the data to
+        instruments. This command does not affect data from instruments received over GPIB
+        port.
+        """
+        self.write("++eos")
+        return int(self.read())
+
+    @eos.setter
+    def eos(self, value):
+        self.write("++eos {}".format(value))
+
+    @property
+    def version(self):
+        """Return the version string of the Prologix controller.
+        """
+        self.write('++ver')
+        return self.read()
+
+    def reset(self):
+        """Perform a power-on reset of the controller.
+
+        The process takes about 5 seconds. All input received during this time
+        is ignored and the connection is closed.
+        """
+        self.write('++rst')
 
     def ask(self, command):
         """ Ask the Prologix controller.
@@ -191,6 +245,7 @@ class PrologixAdapter(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
+        # TODO Prologix Ethernet version has only `write("++read")`
         self.write("++read eoi")
         return super()._read()
 

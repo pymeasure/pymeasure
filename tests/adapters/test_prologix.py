@@ -36,6 +36,15 @@ def test_init():
         pass
 
 
+def test_init_different_config():
+    with expected_protocol(
+            PrologixAdapter,
+            [("++auto 1", None), ("++eoi 3", None), ("++eos 5", None)],
+            auto=1, eoi=3, eos=5,
+    ):
+        pass
+
+
 def test_write():
     with expected_protocol(
             PrologixAdapter,
