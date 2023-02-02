@@ -54,7 +54,6 @@ def test_frequency():
     with expected_protocol(
         TeledyneT3AFG,
         [("C1:BSWV FRQ,1000", None),
-         ("SYST:ERR?", "-0, No errors"),
          ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
           "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
     ) as inst:
@@ -76,7 +75,6 @@ def test_amplitude():
     with expected_protocol(
         TeledyneT3AFG,
         [("C1:BSWV AMP,1", None),
-         ("SYST:ERR?", "-0, No errors"),
          ("C1:BSWV?", "C1:BSWV WVTP,SINE,FRQ,0.3HZ,PERI,3.33333S,AMP,0.08V,"
           "AMPVRMS,0.02828Vrms,MAX_OUTPUT_AMP,4.6V,OFST,-2V,HLEV,-1.96V,LLEV,-2.04V,PHSE,0")],
     ) as inst:
@@ -89,7 +87,6 @@ def test_offset():
     with expected_protocol(
         TeledyneT3AFG,
         [("C1:BSWV OFST,1", None),
-         ("SYST:ERR?", "-0, No errors"),
          ("C1:BSWV?", "C1:BSWV WVTP,DC,MAX_OUT_AMP,4.6V,OFST,0V")],
     ) as inst:
         inst.ch_1.offset = 1
