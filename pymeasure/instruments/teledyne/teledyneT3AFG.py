@@ -79,7 +79,6 @@ class SignalChannel(Channel):
         values=[0, 350e6],
         get_process=get_process_generator_search('FRQ', 'HZ', float),
         dynamic=True,
-        check_set_errors=True,
     )
 
     amplitude = Channel.control(
@@ -93,7 +92,6 @@ class SignalChannel(Channel):
         values=[-5, 5],
         get_process=get_process_generator_search('AMP', 'V', float),
         dynamic=True,
-        check_set_errors=True,
     )
 
     offset = Channel.control(
@@ -107,7 +105,6 @@ class SignalChannel(Channel):
         values=[-5, 5],
         get_process=get_process_generator_search('OFST', 'V', float),
         dynamic=True,
-        check_set_errors=True,
     )
 
     max_output_amplitude = Channel.control(
