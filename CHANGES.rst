@@ -4,13 +4,30 @@ New adapter and instrument mechanics
 ------------------------------------
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
+- Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+
+Deprecated features
+-------------------
+- HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
+  use :code:`function_` and :code:`reading` properties instead.
+- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
+- TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server.
+- Attocube ANC300: :code:`host` argument, pass a resource string or adapter as :code:`Adapter` passed to :code:`Instrument`. Now communicates through the :code:`VISAAdapter` rather than deprecated :code:`TelnetAdapter`. The initializer now accepts :code:`name` as its second keyword argument so all previous initialization positional arguments (`axisnames`, `passwd`, `query_delay`) should be switched to keyword arguments.
+
+Version 0.11.1 (2022-12-31)
+===========================
+Adapter and instrument mechanics
+--------------------------------
+- Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
 
 Version 0.11.0 (2022-11-19)
 ===========================
 Main items of this new release:
 
 - 11 new instrument drivers have been added
-- A method for testing instrument communication **without** hardware present has been added, see `the documentation <https://pymeasure.readthedocs.io/en/latest/dev/adding_instruments.html#protocol-tests>`__. 
+- A method for testing instrument communication **without** hardware present has been added, see `the documentation <https://pymeasure.readthedocs.io/en/latest/dev/adding_instruments.html#protocol-tests>`__.
 - The separation between :code:`Instrument` and :code:`Adapter` has been improved to make future modifications easier. Adapters now focus on the hardware communication, and the communication *protocol* should be defined in the Instruments. Details in a section below.
 - The GUI is now compatible with Qt6.
 - We have started to clean up our API in preparation for a future version 1.0. There will be deprecations and subsequent removals, which will be prominently listed in the changelog.

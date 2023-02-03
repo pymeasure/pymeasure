@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -92,8 +92,8 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
-        query places an ASCII character 1 into the device's Output Queue when all pending
+        """ This property allows synchronization between a controller and a device. The Operation
+        Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
         if self.SCPI:

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .adapters import AttocubeConsoleAdapter
 from .anc300 import ANC300Controller

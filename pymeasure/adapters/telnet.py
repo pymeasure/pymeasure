@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,14 @@ class TelnetAdapter(Adapter):
     """ Adapter class for using the Python telnetlib package to allow
     communication to instruments
 
+    .. deprecated:: 0.11.2
+        The Python telnetlib module is deprecated since Python 3.11 and will be removed
+        in Python 3.13 release.
+        As a result, TelnetAdapter is deprecated, use VISAAdapter instead.
+        The VISAAdapter supports TCPIP socket connections. When using the VISAAdapter,
+        the `resource_name` argument should be `TCPIP[board]::<host>::<port>::SOCKET`.
+        see here, <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>
+
     :param host: host address of the instrument
     :param port: TCPIP port
     :param query_delay: delay in seconds between write and read in the ask
@@ -50,6 +58,7 @@ class TelnetAdapter(Adapter):
 
     def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
                  **kwargs):
+        warn("TelnetAdapter is deprecated, use VISAAdapter instead.", FutureWarning)
         super().__init__(preprocess_reply=preprocess_reply)
         self.query_delay = query_delay
         if query_delay:
