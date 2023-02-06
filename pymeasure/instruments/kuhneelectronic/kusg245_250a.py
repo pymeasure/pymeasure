@@ -134,7 +134,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def external_enabled(self):
-        """Control the whether the amplifier enabling is done
+        """Control whether the amplifier enabling is done
         via external inputs on 8-pin connector
         or via the serial interface (boolean).
         """
