@@ -268,7 +268,7 @@ class LecroyWR8000(Instrument):
         """
         if channel == 0:
             source = 'Ext'
-        elif channel in [1, 2, 3, 4]:
+        elif channel in [1, 2, 3, 4, 5, 6, 7, 8]:
             source = 'C%d' % channel
         else:
             raise ValueError(f'{channel} not a valid trigger source')

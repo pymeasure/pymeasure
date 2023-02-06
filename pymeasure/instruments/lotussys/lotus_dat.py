@@ -30,7 +30,7 @@ log.addHandler(logging.NullHandler())
 from pymeasure.instruments import Instrument, RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
 from pymeasure.adapters.visa import VISAAdapter
-from visa import constants
+from pyvisa import constants
 
 import numpy as np
 import time
