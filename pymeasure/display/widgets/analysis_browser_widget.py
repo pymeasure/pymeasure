@@ -151,8 +151,8 @@ class AnalysisBrowserWidget(QtGui.QWidget):
 
     def finished(self, analysis):
         experiment = analysis.experiment
-        for wdg, curve in zip(self._parent.widget_list,experiment.curve_list):
-            wdg.load(curve)
+        #for wdg, curve in zip(self._parent.widget_list,experiment.curve_list):
+        #    wdg.load(curve)
         self.analysis_manager.remove(analysis)
         self.abort_button.setText("Abort Analysis")
         self.abort_button.clicked.disconnect()
