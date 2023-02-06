@@ -57,7 +57,7 @@ class PrologixAdapter(VISAAdapter):
 
     :param auto: Enable or disable read-after-write and address instrument to listen.
     :param eoi: Enable or disable EOI assertion.
-    :param eos: Set command termination string ("\r\n", "\r", "\n", or "")
+    :param eos: Set command termination string (CR+LF, CR, LF, or "")
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument.
@@ -151,10 +151,10 @@ class PrologixAdapter(VISAAdapter):
         """Control GPIB termination characters (str).
 
         possible values:
-            - "\r\n": CR+LF
-            - \r": CR
-            - "\n": LF
-            - None
+            - CR+LF
+            - CR
+            - LF
+            - empty string
 
         When data from host is received, all non-escaped LF, CR and ESC characters are
         removed and GPIB terminators, as specified by this command, are appended before
