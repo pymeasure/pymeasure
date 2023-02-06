@@ -186,11 +186,12 @@ class CSVFormatter_Pandas(logging.Formatter):
 class JSONFormatter(logging.Formatter):
     """ Formatter of data results """
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, procedure=None):
         """
         """
         # the default encoder doesn't understand FloatParameter, etc.
         # we could write our own encoder, but this one is easy enough.
+        self.procedure = procedure
         base_types = {}
         for key, item in parameters.items():
             base_types[key] = item.value
@@ -205,7 +206,14 @@ class JSONFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-
+        if self.procedure is not None:
+            parameters = self.procedure.parameter_objects()
+        else:
+            parameters = self.parameters
+        base_types = {}
+        for key, item in parameters.items():
+            base_types[key] = item.value
+        self.key = json.dumps(base_types)
         return json.dumps({self.key: record}, indent=1)
 
 
@@ -243,7 +251,7 @@ class Results:
             )
 
         elif self.output_format == 'JSON':
-            self.formatter = JSONFormatter(parameters=self.parameters)
+            self.formatter = JSONFormatter(parameters=self.parameters, procedure=self.procedure)
 
         else:  # default to CSV
             self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)

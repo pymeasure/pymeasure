@@ -64,7 +64,7 @@ class Channel():
         """ An integer parameter that sets the number of sweeps to average on this channel.
         Range is 1 to 1,000,000""",
         validator=strict_range,
-        values=[1,1000000],
+        values=[1, 1000000],
         map_values=True
     )
 
@@ -246,6 +246,28 @@ class LecroyWM845Zi_A(Instrument):
         validator=strict_range,
         values=[-0.82, 0.82]
     )
+
+    def setup_sequence(self, sequence_on, n_sequences=1):
+        """
+        Turn sequence mode on or off with sequence_on = [True, False] and
+        if True, specify the number of sequences to record. Memory depth is left
+        to the scope to optimize. Note: turning sequence on or off will invoke an
+        auto-calibrate.
+        """
+        if sequence_on:
+            self.write(f'SEQ ON, {n_sequences}')
+        else:
+            self.write('SEQ OFF')
+
+    def sequence_status(self):
+        """Returns the status of the sequencing mode on the oscillscope."""
+        status = self.ask('SEQ?').strip()
+        state, nseq, memdepth = status.split(',')
+        mapper = {'ON': True, 'OFF': False}
+        return {'is_on': mapper[state], 'n_sequences': int(nseq), 'memdepth': float(memdepth)}
+
+    def clear_sweeps(self):
+        self.write("""VBS 'app.ClearSweeps'""")
 
     def trigger_edge_source(self, channel):
         #good
