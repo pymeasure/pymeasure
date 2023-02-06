@@ -78,11 +78,12 @@ class Kusg245_250A(Instrument):
     """
 
     def __init__(self, adapter, name="KU SG 2.45 250 A", power_limit=250, **kwargs):
-        kwargs.setdefault("baud_rate", 115200)
-        kwargs.setdefault("read_termination", termination_character)
-        kwargs.setdefault("write_termination", termination_character)
-
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter,
+                         name,
+                         asrl={"baud_rate": 115200,
+                               "read_termination": termination_character,
+                               "write_termination": termination_character},
+                         **kwargs)
 
         assert 0 < power_limit <= 250
         self._power_limit = power_limit
