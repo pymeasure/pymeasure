@@ -55,7 +55,7 @@ class Kusg245_250A(Instrument):
     """Represents KU SG 2.45 250 A the 2.45 GHz ISM-Band Microwave Generator
     and provides a high-level interface for interacting with the instrument.
 
-    :param power_limit: power set-point limit in Watts.
+    :param power_limit: power set-point limit in Watts (integer from 0 to 250).
                         See :attr:`~.Kusg245_250A.power_setpoint`
                         and :meth:`~.Kusg245_250A.tune()`.
 
@@ -78,6 +78,7 @@ class Kusg245_250A(Instrument):
     """
 
     def __init__(self, adapter, name="KU SG 2.45 250 A", power_limit=250, **kwargs):
+        assert 0 < power_limit <= 250, "Param 'power_limit' is out of bounds (0, 250)."
         super().__init__(adapter,
                          name,
                          asrl={"baud_rate": 115200,
@@ -85,7 +86,6 @@ class Kusg245_250A(Instrument):
                                "write_termination": termination_character},
                          **kwargs)
 
-        assert 0 < power_limit <= 250
         self._power_limit = power_limit
         self.power_setpoint_values = [0, power_limit]
 
