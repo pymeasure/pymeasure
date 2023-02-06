@@ -25,11 +25,10 @@
 import time
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              truncated_range, truncated_discrete_set)
+from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
 
 
-byteorder = 'little'
+byteorder = 'big'
 encoding = 'utf-8'
 termination_character = "\r"
 reflection_limit_map = {0: 0, 1: 100, 2: 150, 3: 180, 4: 200, 5: 230}
@@ -97,7 +96,7 @@ class Kusg245_250A(Instrument):
         self.write("5")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
-            return 103.0 / 4700.0 * int.from_bytes(b[:2])
+            return 103.0 / 4700.0 * int.from_bytes(b[:2], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
@@ -106,7 +105,7 @@ class Kusg245_250A(Instrument):
         self.write("8")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
-            return 1282.0 / 8200.0 * int.from_bytes(b[:2])
+            return 1282.0 / 8200.0 * int.from_bytes(b[:2], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
@@ -115,7 +114,7 @@ class Kusg245_250A(Instrument):
         self.write("6")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1])
+            return int.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
@@ -124,7 +123,7 @@ class Kusg245_250A(Instrument):
         self.write("7")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1])
+            return int.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     temperature = Instrument.measurement(
@@ -141,7 +140,7 @@ class Kusg245_250A(Instrument):
         self.write("r?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1])
+            return bool.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @external_enabled.setter
@@ -161,7 +160,7 @@ class Kusg245_250A(Instrument):
         self.write("x?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1])
+            return bool.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @bias_enabled.setter
@@ -183,7 +182,7 @@ class Kusg245_250A(Instrument):
         self.write("o?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1])
+            return bool.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @rf_enabled.setter
@@ -205,7 +204,7 @@ class Kusg245_250A(Instrument):
         self.write("p?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1])
+            return bool.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @pulse_mode_enabled.setter
@@ -221,7 +220,7 @@ class Kusg245_250A(Instrument):
         self.write("fm?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1])
+            return bool.from_bytes(b[:1], byteorder=byteorder)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @freq_steps_fine_enabled.setter
@@ -230,16 +229,6 @@ class Kusg245_250A(Instrument):
             self.write("fm1")
         else:
             self.write("fm0")
-
-    freq_steps_fine_enabled = Instrument.control(
-        "fm?",
-        "fm%d",
-        """Enables fine frequency steps (boolean).""",
-        validator=strict_discrete_set,
-        values=[False, True],
-        set_process=lambda v: {True: 1, False: 0}[v],
-        get_process=lambda v: bool.from_bytes(v.encode(encoding), byteorder=byteorder),
-    )
 
     frequency_coarse = Instrument.control(
         "f?",
@@ -319,7 +308,7 @@ class Kusg245_250A(Instrument):
         self.write("H?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1]) / 256.0 * 360.0
+            return int.from_bytes(b[:1], byteorder=byteorder) / 256.0 * 360.0
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @phase_shift.setter
