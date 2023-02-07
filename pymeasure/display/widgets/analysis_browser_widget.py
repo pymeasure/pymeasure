@@ -151,6 +151,8 @@ class AnalysisBrowserWidget(QtGui.QWidget):
 
     def finished(self, analysis):
         experiment = analysis.experiment
+        # the next few lines are a hack to get the curve to reload
+        # by changing its state if it is visible
         browser_item = experiment.browser_item
         check_state = browser_item.checkState(0)
         if check_state:
