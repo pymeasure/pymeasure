@@ -25,7 +25,7 @@
 import logging
 
 from ..browser import AnalysisBrowser, AnalysisBrowserItem
-from ..Qt import QtGui
+from ..Qt import QtGui, QtCore
 from ..manager import AnalyzerManager, Analysis
 
 log = logging.getLogger(__name__)
@@ -151,6 +151,11 @@ class AnalysisBrowserWidget(QtGui.QWidget):
 
     def finished(self, analysis):
         experiment = analysis.experiment
+        browser_item = experiment.browser_item
+        check_state = browser_item.checkState(0)
+        if check_state:
+            browser_item.setCheckState(0, QtCore.Qt.Unchecked)
+            browser_item.setCheckState(0, QtCore.Qt.Checked)
         #for wdg, curve in zip(self._parent.widget_list,experiment.curve_list):
         #    wdg.load(curve)
         self.analysis_manager.remove(analysis)
