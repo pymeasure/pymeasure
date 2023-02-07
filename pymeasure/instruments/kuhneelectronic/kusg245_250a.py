@@ -88,11 +88,11 @@ class Kusg245_250A(Instrument):
         self._power_limit = power_limit
         self.power_setpoint_values = [0, power_limit]
 
-    version = Instrument.measurement("v", """Readout of the firmware version.""")
+    version = Instrument.measurement("v", """Get firmware version.""")
 
     @property
     def voltage_5v(self):
-        """Readout of internal 5V supply voltage in Volts."""
+        """Measure internal 5V supply voltage in Volts."""
         self.write("5")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
@@ -101,7 +101,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def voltage_32v(self):
-        """Readout of 32V supply voltage in Volts."""
+        """Measure 32V supply voltage in Volts."""
         self.write("8")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
@@ -110,7 +110,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def power_forward(self):
-        """Readout of forward power in Watts."""
+        """Measure forward power in Watts."""
         self.write("6")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
@@ -119,7 +119,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def power_reverse(self):
-        """Readout of reverse power in Watts."""
+        """Measure reverse power in Watts."""
         self.write("7")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
@@ -128,14 +128,14 @@ class Kusg245_250A(Instrument):
 
     temperature = Instrument.measurement(
         "T",
-        """Readout of temperature sensor near the final transistor in °C."""
+        """Measure temperature near final transistor in °C."""
     )
 
     @property
     def external_enabled(self):
-        """Control whether the amplifier enabling is done
+        """Control whether amplifier enabling is done
         via external inputs on 8-pin connector
-        or via the serial interface (boolean).
+        or via serial interface (boolean).
         """
         self.write("r?")
         b = self.read_bytes(2)
@@ -152,7 +152,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def bias_enabled(self):
-        """Transistor biasing (boolean).
+        """Control whether transistor biasing is enabled (boolean).
 
         Biasing must be enabled before switching RF on
         (see :attr:`~.Kusg245_250A.rf_enabled`).
@@ -172,11 +172,11 @@ class Kusg245_250A(Instrument):
 
     @property
     def rf_enabled(self):
-        """Enable RF output (boolean).
+        """Control whether RF output is enabled (boolean).
 
         .. note::
 
-            Bias must be enabled before RF is enabled
+            Biasing must be enabled before RF is enabled
             (see :attr:`~.Kusg245_250A.bias_enabled`)
         """
         self.write("o?")
@@ -194,11 +194,11 @@ class Kusg245_250A(Instrument):
 
     @property
     def pulse_mode_enabled(self):
-        """Enable RF output (boolean).
+        """Control whether pulse mode is enabled (boolean).
 
         .. note::
 
-            Bias must be enabled before RF is enabled
+            Biasing must be enabled before the pulse mode is enabled
             (see :attr:`~.Kusg245_250A.bias_enabled`)
         """
         self.write("p?")
@@ -216,7 +216,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def freq_steps_fine_enabled(self):
-        """Enables fine frequency steps (boolean)."""
+        """Control whether fine frequency steps are enabled (boolean)."""
         self.write("fm?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
@@ -233,7 +233,7 @@ class Kusg245_250A(Instrument):
     frequency_coarse = Instrument.control(
         "f?",
         "f%04d",
-        """Coarse frequency in MHz (integer from 2400 to 2500).
+        """Control coarse frequency in MHz (integer from 2400 to 2500).
 
         Fine frequency mode must be disabled
         (see :attr:`~.Kusg245_250A.freq_steps_fine_enabled`).
@@ -247,7 +247,7 @@ class Kusg245_250A(Instrument):
     frequency_fine = Instrument.control(
         "f?",
         "f%07d",
-        """Fine frequency in kHz (integer from 2400000 to 2500000).
+        """Control fine frequency in kHz (integer from 2400000 to 2500000).
 
         Fine frequency mode must be enabled
         (see :attr:`~.Kusg245_250A.freq_steps_fine_enabled`).
@@ -263,7 +263,7 @@ class Kusg245_250A(Instrument):
     power_setpoint = Instrument.control(
         "A?",
         "A%03d",
-        """Output power set-point in Watts (integer from 0 to :attr:`power_limit`
+        """Control output power set-point in Watts (integer from 0 to :attr:`power_limit`
         parameter - see constructor).
 
         Resolution: 1 W. Invalid values are truncated.
@@ -276,7 +276,7 @@ class Kusg245_250A(Instrument):
     pulse_width = Instrument.control(
         "C?",
         "C%04d",
-        """Pulse width in ms (integer from 10 to 1000).
+        """Control pulse width in ms (integer from 10 to 1000).
 
         Resolution: 5 ms. Invalid values are truncated.
         Values are rounded to multipliers of 5.
@@ -289,7 +289,7 @@ class Kusg245_250A(Instrument):
     off_time = Instrument.control(
         "c?",
         "c%04d",
-        """Off time for the pulse mode in ms (integer from 10 to 1000).
+        """Control off time for the pulse mode in ms (integer from 10 to 1000).
 
         Resolution: 5 ms. Invalid values are truncated.
         Values are rounded to multipliers of 5.
@@ -301,7 +301,7 @@ class Kusg245_250A(Instrument):
 
     @property
     def phase_shift(self):
-        """Phase shift in degrees (float from 0 to 358.6).
+        """Control phase shift in degrees (float from 0 to 358.6).
 
         Resolution: 8-bits. Values out of range are truncated.
         """
@@ -319,7 +319,8 @@ class Kusg245_250A(Instrument):
     @property
     def reflection_limit(self):
         "B%d",
-        """Limit of reflection in Watts (integer in 0 - no limit, 100, 150, 180, 200, 230).
+        """Control limit of reflection in Watts
+        (integer in 0 - no limit, 100, 150, 180, 200, 230).
 
         .. note::
 
@@ -342,8 +343,7 @@ class Kusg245_250A(Instrument):
         self.write(f"B{value:d}")
 
     def tune(self, power):
-        """
-        Find and set the frequency with lowest reflection
+        """Find and set frequency with lowest reflection
         at a given power.
 
         :param power: A power set-point for tuning (in Watts).
@@ -354,18 +354,16 @@ class Kusg245_250A(Instrument):
         self.write(f"b{power:03d}")
 
     def clear_VSWR_error(self):
-        """
-        Clears the VSWR error.
+        """Clear the VSWR error.
 
         See: :attr:`~.Kusg245_250A.reflection_limit`.
         """
         self.write("z")
 
     def store_settings(self):
-        """
-        Save actual settings to EEPROM.
+        """Save actual settings to EEPROM.
 
-        The following parameters are saved:
+        The following parameters are stored:
         frequency mode (see :attr:`~.Kusg245_250A.freq_steps_fine_enabled`),
         frequency (see :attr:`~.Kusg245_250A.frequency_coarse`
         or :attr:`~.Kusg245_250A.frequency_fine`),
@@ -378,8 +376,7 @@ class Kusg245_250A(Instrument):
         self.write("SE")
 
     def shutdown(self):
-        """
-        Safe shut-down the generator.
+        """Safe shut-down the generator.
 
         1. Disable RF output.
         2. Deactivate biasing.
@@ -388,8 +385,7 @@ class Kusg245_250A(Instrument):
         self.bias_enabled = False
 
     def turn_on(self):
-        """
-        Safe turn-on the generator.
+        """Safe turn-on the generator.
 
         1. Activate biasing.
         2. Enable RF output.
