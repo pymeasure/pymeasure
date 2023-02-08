@@ -27,12 +27,12 @@ from .ips120_10 import IPS120_10
 
 
 def PS_custom_get_process(v):
-    """convert string to proper float value, for working with the PS 120-10 """
-    return float(v[1:]) * 1e-2
+    """Adjust the received value, for working with the PS 120-10 """
+    return v * 1e-2
 
 
 def PS_custom_set_process(v):
-    """convert float to proper int value, for working with the PS 120-10 """
+    """Convert float to proper int value, for working with the PS 120-10 """
     return int(v * 1e2)
 
 
