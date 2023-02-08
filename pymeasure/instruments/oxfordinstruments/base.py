@@ -25,7 +25,7 @@
 
 from pymeasure.instruments import Instrument
 from pyvisa.errors import VisaIOError
-
+from pyvisa import constants as vconst
 import re
 import logging
 
@@ -65,8 +65,8 @@ class OxfordInstrumentsBase(Instrument):
                          asrl={
                              'baud_rate': 9600,
                              'data_bits': 8,
-                             'parity': 0,
-                             'stop_bits': 20,
+                             'parity': vconst.Parity.none,
+                             'stop_bits': vconst.StopBits.two,
                          },
                          **kwargs)
         self.max_attempts = max_attempts
