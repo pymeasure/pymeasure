@@ -396,5 +396,7 @@ class Kusg245_250A(Instrument):
 
     def write(self, command, **kwargs):
         self.adapter.write(command, **kwargs)
-        if _is_expecting_acknowledgement(command) and self.read() != "A":
-            raise ConnectionError("Expected acknowledgment.")
+        if _is_expecting_acknowledgement(command):
+            s = self.read()
+            if s != "A":
+                raise ConnectionError(f"Expected acknowledgment character 'A'. Received: '{s}'")
