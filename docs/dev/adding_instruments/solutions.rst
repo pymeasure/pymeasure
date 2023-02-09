@@ -13,8 +13,8 @@ General issues
 
 
 
-Communication issues
-********************
+Communication protocol issues
+*****************************
 
 - Binary, frame-based communication, see :class:`hcp.TC038D <pymeasure.instruments.hcp.TC038D>`
 - All replies have the same length, see :class:`aja.DCXS <pymeasure.instruments.aja.DCXS>`
