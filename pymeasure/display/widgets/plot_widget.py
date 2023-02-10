@@ -144,4 +144,4 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         if curve.opts['symbol'] is not None:
             curve.setSymbolBrush(pg.mkBrush(color=color))
             curve.setSymbolPen(curve.pen.color())
-        curve.updateItems()
+        curve.updateItems(styleUpdate=True)
