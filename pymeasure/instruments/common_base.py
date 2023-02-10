@@ -302,7 +302,7 @@ class CommonBase:
             received from the instrument. The callable returns the processed
             string.
         :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
-        :param \\**kwargs: Keyword arguments to be passed to the ask method.
+        :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
         :returns: A list of the desired type, or strings where the casting fails
         """
         results = self.ask(command, **kwargs).strip()
@@ -375,6 +375,7 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
+        :param \\**kwargs: Keyword arguments for :meth:`values`.
 
         Example of usage of dynamic parameter is as follows:
 
@@ -504,6 +505,7 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
+        :param \\**kwargs: Keyword arguments for :meth:`values`.
         """
 
         return CommonBase.control(get_command=get_command,
@@ -522,7 +524,7 @@ class CommonBase:
                 validator=lambda x, y: x, values=(), map_values=False,
                 set_process=lambda v: v,
                 check_set_errors=False, dynamic=False,
-                **kwargs):
+                ):
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
@@ -551,4 +553,4 @@ class CommonBase:
                                   set_process=set_process,
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
-                                  **kwargs)
+                                  )
