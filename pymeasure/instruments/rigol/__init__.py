@@ -23,3 +23,4 @@
 #
 
 from .mso5354 import RigolMSO5354
+from .hdo4804 import RigolHDO4804
