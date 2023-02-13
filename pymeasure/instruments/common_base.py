@@ -425,8 +425,9 @@ class CommonBase:
         considered reserved for dynamic property control.
         """
         if kwargs:
-            warn(f"Do not use keyword arguments {kwargs} as `control` parameter for the `values` method, "
-                 f"use `v_kwargs` parameter instead. docs:\n{docs}", FutureWarning)
+            warn(f"Do not use keyword arguments {kwargs} as `control` parameter "
+                 f"for the `values` method, use `v_kwargs` parameter instead. docs:\n{docs}",
+                 FutureWarning)
 
         def fget(self,
                  get_command=get_command,
@@ -548,8 +549,9 @@ class CommonBase:
                 Use `v_kwargs` dictionary parameter instead.
         """
         if kwargs:
-            warn(f"Do not use keyword arguments {kwargs} as `measurement` parameter for the `values` method, "
-                 f"use `v_kwargs` parameter instead. docs:\n{docs}", FutureWarning)
+            warn(f"Do not use keyword arguments {kwargs} as `measurement` parameter "
+                 f"for the `values` method, use `v_kwargs` parameter instead. docs:\n{docs}",
+                 FutureWarning)
             if not v_kwargs:
                 return CommonBase.control(get_command=get_command,
                                           set_command=None,
