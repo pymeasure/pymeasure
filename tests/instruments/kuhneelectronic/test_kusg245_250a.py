@@ -323,13 +323,13 @@ def test_store_settings():
         inst.store_settings()
 
 
-def test_shutdown():
+def test_turn_off():
     with expected_protocol(
         Kusg245_250A,
         [("o", "A"),
          ("x", "A")],
     ) as inst:
-        inst.shutdown()
+        inst.turn_off()
 
 
 def test_turn_on():

@@ -375,8 +375,8 @@ class Kusg245_250A(Instrument):
         """
         self.write("SE")
 
-    def shutdown(self):
-        """Safe shut-down the generator.
+    def turn_off(self):
+        """Safe turn-off the generator.
 
         1. Disable RF output.
         2. Deactivate biasing.
