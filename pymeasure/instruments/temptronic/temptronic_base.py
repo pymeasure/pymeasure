@@ -325,7 +325,6 @@ class ATSBase(Instrument):
 
         :type: :class:`.TemperatureStatusCode`
         """,
-        validator=truncated_range,
         values=[0, 255],
         get_process=lambda v: TemperatureStatusCode(int(v)),
     )
@@ -379,8 +378,6 @@ class ATSBase(Instrument):
         Refere to chapter 4 in the manual
 
         """,
-        validator=truncated_range,
-        values=[0, 1023]
     )
 
     copy_active_setup_file = Instrument.setting(
@@ -447,8 +444,6 @@ class ATSBase(Instrument):
 
         :type: :class:`.ErrorCode`
         """,
-        validator=truncated_range,
-        values=[0, int(2**16-1)],
         get_process=lambda v: ErrorCode(int(v)),
     )
 
@@ -521,8 +516,6 @@ class ATSBase(Instrument):
         Hint: Reading will clear register content.
 
         """,
-        validator=strict_range,
-        values=[0, 255]
     )
 
     air_temperature = Instrument.measurement(
