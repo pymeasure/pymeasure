@@ -391,6 +391,11 @@ class RigolHDO4804(Instrument):
         """ An attribute that returns the start time of the currently selected waveform transfer mode. """,
     )
 
+    waveform_xref = Instrument.measurement(
+        ":waveform:xref?",
+        """ An attribute that returns the start time of the currently selected waveform transfer mode. """,
+    )
+
 
 
     @property
