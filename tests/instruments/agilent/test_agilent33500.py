@@ -300,7 +300,7 @@ def test_channel_phase_synchronization():
     with expected_protocol(
         Agilent33500,
         [
-            ("PHAS:SYNC", '')
+            ("PHAS:SYNC", None)
         ]
     ) as inst:
         assert inst.phase_sync() is None
