@@ -297,12 +297,14 @@ class CommonBase:
         values from the result.
 
         :param command: SCPI command to be sent to the instrument.
-        :param separator: A separator character to split the string into a list.
-        :param cast: A type to cast the result.
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed
-            string.
-        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param cast: A type to cast each element of the splitted string.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
         :returns: A list of the desired type, or strings where the casting fails.
         """
@@ -381,12 +383,14 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
-        :param separator: A separator character to split the string into a list.
-        :param cast: A type to cast the result.
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed
-            string.
-        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param cast: A type to cast each element of the splitted string.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
         :param dict v_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
@@ -536,12 +540,14 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
-        :param separator: A separator character to split the string into a list.
-        :param cast: A type to cast the result.
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed
-            string.
-        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param cast: A type to cast each element of the splitted string.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
         :param dict v_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
