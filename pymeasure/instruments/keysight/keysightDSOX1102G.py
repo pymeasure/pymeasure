@@ -404,7 +404,7 @@ class KeysightDSOX1102G(Instrument):
             - "xreference": data point associated with xorigin (int)
             - "yincrement": voltage difference between data points (float)
             - "yorigin": voltage at center of screen (float)
-            - "yreference": data point associated with yorigin (int)"""
+            - "yreference": data point associated with yorigin (int)"""  # noqa: E501
         return self._waveform_preamble()
 
     @property

@@ -725,7 +725,7 @@ class ATSBase(Instrument):
         time.sleep(1)
         t = 0
         t_start = time.time()
-        while(not self.at_temperature()):  # assert at temperature
+        while not self.at_temperature():  # assert at temperature
             time.sleep(1)
             t = time.time() - t_start
 
