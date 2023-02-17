@@ -59,7 +59,7 @@ class Input:
             try:
                 self.setValue(parameter.value)
             except TypeError as e:
-                print(f'got type error for parameter: {parameter}')
+                print(f'got type error for parameter: {parameter}. Trying to setValue: {parameter.value}')
                 raise e
 
         if hasattr(parameter, 'units') and parameter.units:
