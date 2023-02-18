@@ -541,18 +541,19 @@ def test_control_preprocess_reply_property(dynamic):
 
 def test_control_kwargs_handed_to_values():
     """Test that kwargs parameters are handed to `values` method."""
-    class Fake(FakeBase):
-        x = CommonBase.control(
-            "", "JUNK%d",
-            "",
-            preprocess_reply=lambda v: v.replace('JUNK', ''),
-            cast=int,
-            testing=True,
-        )
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake(FakeBase):
+            x = CommonBase.control(
+                "", "JUNK%d",
+                "",
+                preprocess_reply=lambda v: v.replace('JUNK', ''),
+                cast=int,
+                testing=True,
+            )
 
-        def values(self, cmd, testing=False, **kwargs):
-            self.testing = testing
-            return super().values(cmd, **kwargs)
+            def values(self, cmd, testing=False, **kwargs):
+                self.testing = testing
+                return super().values(cmd, **kwargs)
 
     fake = Fake()
     fake.x = 5
@@ -582,7 +583,7 @@ def test_control_parameters_for_values():
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
             cast=int,
-            v_kwargs={'testing': True},
+            values_kwargs={'testing': True},
         )
 
         def values(self, cmd, testing=False, **kwargs):
@@ -603,7 +604,7 @@ def test_measurement_parameters_for_values():
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
             cast=int,
-            v_kwargs={'testing': True},
+            values_kwargs={'testing': True},
         )
 
         def values(self, cmd, testing=False, **kwargs):

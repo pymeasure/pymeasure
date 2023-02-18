@@ -71,60 +71,60 @@ class DCXS(Instrument):
     id = Instrument.measurement(
         "?", """Get the power supply type identifier.""",
         cast=str,
-        v_kwargs={'reply_length': 9},
+        values_kwargs={'reply_length': 9},
     )
 
     software_version = Instrument.measurement(
         "z", """Get the software revision of the power supply firmware.""",
         cast=str,
-        v_kwargs={'reply_length': 5},
+        values_kwargs={'reply_length': 5},
     )
 
     power = Instrument.measurement(
         "d", """Measure the actual output power in W.""",
         cast=int,
-        v_kwargs={'reply_length': 4},
+        values_kwargs={'reply_length': 4},
     )
 
     voltage = Instrument.measurement(
         "e", """Measure the output voltage in V.""",
         cast=int,
-        v_kwargs={'reply_length': 4},
+        values_kwargs={'reply_length': 4},
     )
 
     current = Instrument.measurement(
         "f", """Measure the output current in mA.""",
         cast=int,
-        v_kwargs={'reply_length': 4},
+        values_kwargs={'reply_length': 4},
     )
 
     remaining_deposition_time_min = Instrument.measurement(
         "k", """Get the minutes part of remaining deposition time.""",
         cast=int,
-        v_kwargs={'reply_length': 3},
+        values_kwargs={'reply_length': 3},
     )
 
     remaining_deposition_time_sec = Instrument.measurement(
         "l", """Get the seconds part of remaining deposition time.""",
         cast=int,
-        v_kwargs={'reply_length': 2},
+        values_kwargs={'reply_length': 2},
     )
 
     fault_code = Instrument.measurement(
         "o", """Get the error code from the power supply.""",
-        v_kwargs={'reply_length': 1},
+        values_kwargs={'reply_length': 1},
     )
 
     shutter_state = Instrument.measurement(
         "p", """Get the status of the gun shutters. 0 for closed and 1 for open shutters.""",
-        v_kwargs={'reply_length': 1},
+        values_kwargs={'reply_length': 1},
         cast=lambda x: int.from_bytes(x.encode(), "big"),
         get_process=lambda x: [x & 1, x & 2, x & 4, x & 8, x & 16],
     )
 
     enabled = Instrument.control(
         "a", "%s", """Control the on/off state of the power supply""",
-        v_kwargs={'reply_length': 1},
+        values_kwargs={'reply_length': 1},
         validator=strict_discrete_set,
         map_values=True,
         cast=int,
@@ -136,7 +136,7 @@ class DCXS(Instrument):
         "b", "C%04d",
         """Control the setpoint value. Units are determined by regulation mode
            (power -> W, voltage -> V, current -> mA).""",
-        v_kwargs={'reply_length': 4},
+        values_kwargs={'reply_length': 4},
         validator=strict_range,
         map_values=True,
         values=range(0, 1001),
@@ -145,7 +145,7 @@ class DCXS(Instrument):
     regulation_mode = Instrument.control(
         "c", "D%d",
         """Control the regulation mode of the power supply.""",
-        v_kwargs={'reply_length': 1},
+        values_kwargs={'reply_length': 1},
         validator=strict_discrete_set,
         map_values=True,
         values={"power": 0,
@@ -157,7 +157,7 @@ class DCXS(Instrument):
     ramp_time = Instrument.control(
         "g", "E%02d",
         """Control the ramp time in seconds. Can be set only when 'enabled' is False.""",
-        v_kwargs={'reply_length': 2},
+        values_kwargs={'reply_length': 2},
         cast=int,
         validator=strict_range,
         values=range(100),
@@ -166,7 +166,7 @@ class DCXS(Instrument):
     shutter_delay = Instrument.control(
         "h", "F%02d",
         """Control the shutter delay in seconds. Can be set only when 'enabled' is False.""",
-        v_kwargs={'reply_length': 2},
+        values_kwargs={'reply_length': 2},
         cast=int,
         validator=strict_range,
         values=range(100),
@@ -175,7 +175,7 @@ class DCXS(Instrument):
     deposition_time_min = Instrument.control(
         "i", "G%03d",
         """Control the minutes part of deposition time. Can be set only when 'enabled' is False.""",
-        v_kwargs={'reply_length': 3},
+        values_kwargs={'reply_length': 3},
         cast=int,
         validator=strict_range,
         values=range(1000),
@@ -184,7 +184,7 @@ class DCXS(Instrument):
     deposition_time_sec = Instrument.control(
         "j", "H%02d",
         """Control the seconds part of deposition time. Can be set only when 'enabled' is False.""",
-        v_kwargs={'reply_length': 2},
+        values_kwargs={'reply_length': 2},
         cast=int,
         validator=strict_range,
         values=range(60),
@@ -193,7 +193,7 @@ class DCXS(Instrument):
     material = Instrument.control(
         "n", "I%08s", """Control the material name of the sputter target.""",
         cast=str,
-        v_kwargs={'reply_length': 8},
+        values_kwargs={'reply_length': 8},
         validator=lambda value, maxlength: value[:maxlength],
         values=8,
     )
@@ -201,7 +201,7 @@ class DCXS(Instrument):
     active_gun = Instrument.control(
         "y", "Z%d", """Control the active gun number.""",
         cast=int,
-        v_kwargs={'reply_length': 1},
+        values_kwargs={'reply_length': 1},
         validator=strict_range,
         values=range(1, 6),
     )

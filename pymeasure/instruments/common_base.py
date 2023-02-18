@@ -297,14 +297,14 @@ class CommonBase:
         values from the result.
 
         :param command: SCPI command to be sent to the instrument.
-        :param separator: A separator character to split the string returned by
-            the device into a list.
-        :param cast: A type to cast each element of the splitted string.
         :param preprocess_reply: Optional callable used to preprocess the string
             received from the instrument, before splitting it.
             The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
         :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
             -1 (default) indicates no limit.
+        :param cast: A type to cast each element of the splitted string.
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
         :returns: A list of the desired type, or strings where the casting fails.
         """
@@ -351,11 +351,11 @@ class CommonBase:
         check_set_errors=False,
         check_get_errors=False,
         dynamic=False,
-        separator=',',
-        cast=float,
         preprocess_reply=None,
+        separator=',',
         maxsplit=-1,
-        v_kwargs={},
+        cast=float,
+        values_kwargs=None,
         **kwargs
     ):
         """Return a property for the class based on the supplied
@@ -383,19 +383,19 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
-        :param separator: A separator character to split the string returned by
-            the device into a list.
-        :param cast: A type to cast each element of the splitted string.
         :param preprocess_reply: Optional callable used to preprocess the string
             received from the instrument, before splitting it.
             The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
         :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
             -1 (default) indicates no limit.
-        :param dict v_kwargs: Further keyword arguments for :meth:`values`.
+        :param cast: A type to cast each element of the splitted string.
+        :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
             ..deprecated:: 0.12
-                Use `v_kwargs` dictionary parameter instead.
+                Use `values_kwargs` dictionary parameter instead.
 
         Example of usage of dynamic parameter is as follows:
 
@@ -428,10 +428,13 @@ class CommonBase:
         parameters name except `dynamic` and `docs` (e.g. `values` in the example) has to be
         considered reserved for dynamic property control.
         """
+        if values_kwargs is None:
+            values_kwargs = {}
         if kwargs:
             warn(f"Do not use keyword arguments {kwargs} as `control` parameter "
-                 f"for the `values` method, use `v_kwargs` parameter instead. docs:\n{docs}",
+                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
                  FutureWarning)
+            values_kwargs.update(kwargs)
 
         def fget(self,
                  get_command=get_command,
@@ -448,7 +451,7 @@ class CommonBase:
                                cast=cast,
                                preprocess_reply=preprocess_reply,
                                maxsplit=maxsplit,
-                               **v_kwargs, **kwargs)
+                               **values_kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
@@ -517,11 +520,11 @@ class CommonBase:
     def measurement(get_command, docs, values=(), map_values=None,
                     get_process=lambda v: v, command_process=lambda c: c,
                     check_get_errors=False, dynamic=False,
-                    separator=',',
-                    cast=float,
                     preprocess_reply=None,
+                    separator=',',
                     maxsplit=-1,
-                    v_kwargs={},
+                    cast=float,
+                    values_kwargs=None,
                     **kwargs):
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
@@ -540,40 +543,27 @@ class CommonBase:
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
-        :param separator: A separator character to split the string returned by
-            the device into a list.
-        :param cast: A type to cast each element of the splitted string.
         :param preprocess_reply: Optional callable used to preprocess the string
             received from the instrument, before splitting it.
             The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
         :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
             -1 (default) indicates no limit.
-        :param dict v_kwargs: Further keyword arguments for :meth:`values`.
+        :param cast: A type to cast each element of the splitted string.
+        :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
             ..deprecated:: 0.12
-                Use `v_kwargs` dictionary parameter instead.
+                Use `values_kwargs` dictionary parameter instead.
         """
+        if values_kwargs is None:
+            values_kwargs = {}
         if kwargs:
             warn(f"Do not use keyword arguments {kwargs} as `measurement` parameter "
-                 f"for the `values` method, use `v_kwargs` parameter instead. docs:\n{docs}",
+                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
                  FutureWarning)
-            if not v_kwargs:
-                return CommonBase.control(get_command=get_command,
-                                          set_command=None,
-                                          docs=docs,
-                                          values=values,
-                                          map_values=map_values,
-                                          get_process=get_process,
-                                          command_process=command_process,
-                                          check_get_errors=check_get_errors,
-                                          dynamic=dynamic,
-                                          separator=separator,
-                                          cast=cast,
-                                          preprocess_reply=preprocess_reply,
-                                          maxsplit=maxsplit,
-                                          v_kwargs=kwargs,
-                                          )
+            values_kwargs.update(kwargs)
 
         return CommonBase.control(get_command=get_command,
                                   set_command=None,
@@ -584,12 +574,11 @@ class CommonBase:
                                   command_process=command_process,
                                   check_get_errors=check_get_errors,
                                   dynamic=dynamic,
-                                  separator=separator,
-                                  cast=cast,
                                   preprocess_reply=preprocess_reply,
+                                  separator=separator,
                                   maxsplit=maxsplit,
-                                  v_kwargs=v_kwargs,
-                                  **kwargs
+                                  cast=cast,
+                                  values_kwargs=values_kwargs,
                                   )
 
     @staticmethod
