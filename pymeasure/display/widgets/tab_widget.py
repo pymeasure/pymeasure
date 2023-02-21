@@ -66,3 +66,11 @@ class TabWidget:
         """
 
         return None
+
+    def clear_widget(self):
+        """ Clear widget content
+
+        Behaviour is widget specific and it is currently used in preview mode
+        """
+
+        return None

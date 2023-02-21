@@ -698,21 +698,14 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
     def preview_widget(self, parent=None):
         """ Return a widget suitable for preview during loading """
         by_column = False if self.table_layout == self.layout_names[0] else True
-        return TablePreviewWidget("Table preview",
-                                  columns=self.columns,
-                                  by_column=by_column,
-                                  refresh_time=None,
-                                  check_status=False,
-                                  float_digits=self.float_digits,
-                                  parent=None,
-                                  )
+        return TableWidget("Table preview",
+                           columns=self.columns,
+                           by_column=by_column,
+                           refresh_time=None,
+                           check_status=False,
+                           float_digits=self.float_digits,
+                           parent=None,
+                           )
 
-
-class TablePreviewWidget(TableWidget):
-    """ Class variant intended to be used during preview """
-
-    def preview_update(self, results):
-        """ Update the preview widget """
+    def clear_widget(self):
         self.table.clear()
-        curve = self.new_curve(results)
-        self.load(curve)

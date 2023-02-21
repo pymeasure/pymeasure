@@ -141,19 +141,12 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
     def preview_widget(self, parent=None):
         """ Return a widget suitable for preview during loading """
-        return PlotPreviewWidget("Plot preview",
-                                 self.columns,
-                                 self.plot_frame.x_axis,
-                                 self.plot_frame.y_axis,
-                                 parent=parent,
-                                 )
+        return PlotWidget("Plot preview",
+                          self.columns,
+                          self.plot_frame.x_axis,
+                          self.plot_frame.y_axis,
+                          parent=parent,
+                          )
 
-
-class PlotPreviewWidget(PlotWidget):
-    """ Class variant intended to be used during preview """
-
-    def preview_update(self, results):
-        """ Update the preview widget """
+    def clear_widget(self):
         self.plot.clear()
-        curve = self.new_curve(results, antialias=True)
-        self.load(curve)

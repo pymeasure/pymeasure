@@ -103,7 +103,8 @@ class ResultsDialog(QtWidgets.QFileDialog):
             except Exception as e:
                 raise e
             for widget in self.preview_widget_list:
-                widget.preview_update(results)
+                widget.clear_widget()
+                widget.load(widget.new_curve(results))
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():
