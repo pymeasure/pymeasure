@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from math import sqrt, log10
+from math import sqrt, log10, pi
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -52,6 +52,12 @@ class Channel:
     }  # Vpp, Vrms and dBm limits
     UNIT_LIMIT = ["VPP", "VRMS", "DBM"]
     IMP_LIMIT = [1, 1e4]
+    PHASE_LIMIT = {
+        'RAD': [-2*pi, 2*pi],
+        'DEG': [-360, 360]
+        } #radian and degree limits
+
+
 
     shape = Instrument.control(
         "function:shape?",
@@ -113,6 +119,22 @@ class Channel:
             This property can be set.""",
         validator=strict_range,
         values=FREQ_LIMIT,
+    )
+    
+    phase_rad = Instrument.control( 
+        "phase:adjust?", "phase:adjust %e RAD",
+        """ A floating point property that controls the phase in radian units.
+        This property can be set.""",
+        validator = strict_range,
+        values = PHASE_LIMIT['RAD']
+    )
+    
+    phase_deg = Instrument.control(
+        "phase:adjust?", "phase:adjust %e DEG",
+        """ A floating point property that controls the phase in degrees.
+        This property can be set.""",
+        validator=strict_range,
+        values = PHASE_LIMIT['DEG']
     )
 
     duty = Instrument.control(
