@@ -662,7 +662,6 @@ class LeCroyT3DSO1204(Instrument):
 
     acquisition_status = Instrument.measurement(
         "SAST?", """A string parameter that defines the acquisition status of the scope.""",
-        validator=strict_discrete_set,
         values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
                 "armed": "Arm"},
         map_values=True
