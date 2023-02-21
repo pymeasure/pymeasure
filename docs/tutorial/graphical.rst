@@ -578,7 +578,7 @@ You can pop out a dockable plot from the main dock window to its own window by d
 You can return the popped out window to the main window by clicking the close icon X in the top right.
 
 After positioning your dock windows, you can save the layout by right-clicking a dock widget and select "Save Dock Layout" from the context menu.
-This will save the layout of all docks to a file. By default the file path is the current working directory of the python file
+This will save the layout of all docks and the settings for each plot to a file. By default the file path is the current working directory of the python file
 that started :code:`ManagedDockWindow`, and the default file name is '*procedure class* + "_dock_layout.json"'. For our example, that would be "./RandomProcedure_dock_layout.json"
 
 When you run the python file that invokes :code:`ManagedDockWindow` again, it will look for and load the dock layout file if it exists.
