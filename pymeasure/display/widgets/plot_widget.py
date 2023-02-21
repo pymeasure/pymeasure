@@ -77,7 +77,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.columns[1],
             self.refresh_time,
             self.check_status,
-            parent=self
+            parent=self,
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
@@ -112,7 +112,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                              wdg=self,
                              x=self.plot_frame.x_axis,
                              y=self.plot_frame.y_axis,
-                             **kwargs
+                             **kwargs,
                              )
         curve.setSymbol(None)
         curve.setSymbolBrush(None)
@@ -145,7 +145,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
                                  self.columns,
                                  self.plot_frame.x_axis,
                                  self.plot_frame.y_axis,
-                                 parent=parent)
+                                 parent=parent,
+                                 )
 
 
 class PlotPreviewWidget(PlotWidget):
