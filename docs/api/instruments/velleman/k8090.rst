@@ -1,0 +1,7 @@
+####################################
+Velleman K8090 8-channel relay board
+####################################
+
+.. autoclass:: pymeasure.instruments.velleman.VellemanK8090
+    :members:
+    :show-inheritance:
