@@ -68,10 +68,27 @@ def _ints_to_bool_lists(numbers):
 class VellemanK8090(Instrument):
     """For usage with the K8090 relay board, by Velleman.
 
-    The communication is done by serial USB.
-
     View the "K8090/VM8090 PROTOCOL MANUAL" for the serial command instructions.
+
+    The communication is done by serial USB. The IO settings are fixed:
+
+    ==================  ==================
+    Baud rate           19200
+    Data bits           8
+    Parity              None
+    Stop bits           1
+    Flow control        None
+    ==================  ==================
     """
+
+    def __init__(self, adapter, name="Velleman K8090", timeout=1000, **kwargs):
+        super().__init__(
+            adapter,
+            name=name,
+            asrl={"baud_rate": 19200},
+            timeout=timeout,
+            **kwargs
+        )
 
     BYTE_STX = 0x04
     BYTE_ETX = 0x0F
@@ -91,7 +108,7 @@ class VellemanK8090(Instrument):
         """
         Get current relay status.
         The reply has a different command byte than the request.
-        
+
         Three items (lists of 8 bools) are returned:
         - Previous state: the state of each relay before this event
         - Current state: the state of each relay now
@@ -114,19 +131,12 @@ class VellemanK8090(Instrument):
     switch_off = Instrument.setting(
         "0x12,%s",
         """"
-        Switch off a set of channels. See :prop:`switch_on`.
+        Switch off a set of channels. See :attr:`switch_on`.
         """,
         set_process=_parse_channels,
     )
 
     id = None  # No identification available
-
-    def __init__(
-        self, adapter, name="Velleman K8090", baud_rate=19200, timeout=1000, **kwargs
-    ):
-        super().__init__(
-            adapter, name=name, baud_rate=baud_rate, timeout=timeout, **kwargs
-        )
 
     def _make_checksum(self, command, mask, param1, param2):
         # The formula from the sheet requires twos-complement negation,
@@ -136,12 +146,12 @@ class VellemanK8090(Instrument):
     def switch_on_blocking(self, channels):
         """Switch on a set of channels and wait for the confirmation.
 
-        See :prop:`switch_on`.
+        See :attr:`switch_on`.
 
         The set command is identical, and the processing part of
-        :prop:`status` is called.
+        :attr:`status` is called.
 
-        :returns: See :prop:`status`
+        :returns: See :attr:`status`
         """
         mask = _parse_channels(channels)
         self.write(f"0x11,{mask}")
@@ -152,12 +162,12 @@ class VellemanK8090(Instrument):
     def switch_off_blocking(self, channels):
         """Switch off a set of channels and wait for the confirmation.
 
-        See :prop:`switch_off`.
+        See :attr:`switch_off`.
 
         The set command is identical, and the processing part of
-        :prop:`status` is called.
+        :attr:`status` is called.
 
-        :returns: See :prop:`status`
+        :returns: See :attr:`status`
         """
         mask = _parse_channels(channels)
         self.write(f"0x12,{mask}")
@@ -222,18 +232,13 @@ class VellemanK8090(Instrument):
         response = self.read_bytes(num_bytes)
 
         if len(response) < 7:
-            raise ConnectionError(
-                f"Incoming packet was {len(response)} bytes instead of 7"
-            )
-        elif len(response) > 7:
-            response = response[-7:]  # Keep the most recent block only
+            raise ConnectionError(f"Incoming packet was {len(response)} bytes instead of 7")
 
-        stx, command, mask, param1, param2, checksum, etx = list(response)
+        # Only consider the most recent block
+        stx, command, mask, param1, param2, checksum, etx = list(response[-7:])
 
         if stx != self.BYTE_STX or etx != self.BYTE_ETX:
-            raise ConnectionError(
-                f"Received invalid start and stop bytes `{stx}` and `{etx}`"
-            )
+            raise ConnectionError(f"Received invalid start and stop bytes `{stx}` and `{etx}`")
 
         if command == 0x00:
             raise ConnectionError(f"Received invalid command byte `{command}`")
@@ -241,7 +246,8 @@ class VellemanK8090(Instrument):
         real_checksum = self._make_checksum(command, mask, param1, param2)
         if real_checksum != checksum:
             raise ConnectionError(
-                f"Packet checksum was not correct, got {hex(checksum)} instead of {hex(real_checksum)}"
+                f"Packet checksum was not correct, got {hex(checksum)}"
+                f"instead of {hex(real_checksum)}"
             )
 
         values_str = [str(v) for v in [command, mask, param1, param2]]
