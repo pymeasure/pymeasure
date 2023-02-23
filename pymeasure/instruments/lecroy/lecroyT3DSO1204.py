@@ -216,6 +216,14 @@ class ScopeChannel(Channel):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
+    # Capture and split a reply like "RMS,281E-6" and "RMS,281E-6,OK"
+    # The third response item ("state"), is not present in all oscilloscopes
+    # For compatibility it is captured if it can, but ignored otherwise
+    _re_pava_response = re.compile(r"^\s*"
+                                   r"(?P<parameter>\w+),\s*"
+                                   r"(?P<value>[^,]*)\s*"
+                                   r"(?:,(?P<state>\w+)\s*)?$")
+
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
         """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
@@ -380,10 +388,12 @@ class ScopeChannel(Channel):
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
         output = self.ask("PAVA? %s" % parameter)
-        match = re.match(r'^\s*(?P<parameter>\w+),\s*(?P<value>.*)\s*$', output)
+        match = self._re_pava_response.match(output)
         if match:
             if match.group('parameter') != parameter:
                 raise ValueError(f"Parameter {match.group('parameter')} different from {parameter}")
+            if match.group('state') and match.group('state') == 'IV':
+                raise ValueError(f"Parameter state for {parameter} is invalid")
             return float(match.group('value'))
         else:
             raise ValueError(f"Cannot extract value from output {output}")
