@@ -30,7 +30,7 @@ This is not an integration test! This is software-only.
 """
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.velleman import VellemanK8090
+from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
 
 
 def test_version():
@@ -58,23 +58,24 @@ def test_status():
     ) as inst:
         last_on, curr_on, time_on = inst.status
 
-        assert last_on == [True, False, False, False, False, False, False, False]
-        assert curr_on == [True, False, True, False, True, False, False, False]
-        assert time_on == [False, False, False, False, False, False, False, True]
+        assert last_on == Switches.CH1
+        assert curr_on == Switches.CH1 | Switches.CH3 | Switches.CH5
+        assert time_on == Switches.CH8
 
 
 def test_switch_on():
     with expected_protocol(
-        VellemanK8090,
-        [
-            (
-                bytearray.fromhex("04 11 05 00 00 E6 0F"),
-                None,  # The real device does send a reply
-            )
-        ],
+            VellemanK8090,
+            [
+                (
+                        bytearray.fromhex("04 11 05 00 00 E6 0F"),
+                        None,  # The real device does send a reply!
+                )
+            ] * 2,
     ) as inst:
+        # Test both signatures
+        inst.switch_on = Switches.CH1 | Switches.CH3
         inst.switch_on = [1, 3]
-        # inst.switch_on([1, 3])
 
 
 def test_switch_off():
@@ -82,9 +83,9 @@ def test_switch_off():
         VellemanK8090,
         [
             (
-                bytearray.fromhex("04 12 05 00 00 E5 0F"),
-                None,
+                bytearray.fromhex("04 12 FF 00 00 EB 0F"),
+                None,  # The real device does send a reply!
             )
         ],
     ) as inst:
-        inst.switch_off = [1, 3]
+        inst.switch_off = Switches.ALL

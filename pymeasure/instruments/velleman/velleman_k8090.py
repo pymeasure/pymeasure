@@ -22,15 +22,30 @@
 # THE SOFTWARE.
 #
 
+from enum import IntFlag
 import serial
 
 from pymeasure.instruments import Instrument
 
 
+class VellemanK8090Switches(IntFlag):
+    """Use to identify switch channels."""
+    NONE = 0
+    CH1 = 1 << 0
+    CH2 = 1 << 1
+    CH3 = 1 << 2
+    CH4 = 1 << 3
+    CH5 = 1 << 4
+    CH6 = 1 << 5
+    CH7 = 1 << 6
+    CH8 = 1 << 7
+    ALL = CH1 | CH2 | CH3 | CH4 | CH5 | CH6 | CH7 | CH8
+
+
 def _parse_channels(channels) -> str:
     """Convert array of channel numbers into mask if needed."""
     if isinstance(channels, list):
-        mask = 0x00
+        mask = VellemanK8090Switches.NONE
         for ch in channels:
             mask |= 1 << (ch - 1)
     else:
@@ -40,29 +55,14 @@ def _parse_channels(channels) -> str:
 
 
 def _get_process_status(items):
-    """Process the result of a 0x51 status message."""
-    if len(items) < 4 or items[0] != 0x51:
-        return None
+    """Process the result of a 0x51 status message.
 
-    return _ints_to_bool_lists(items[1:])
-
-
-def _ints_to_bool_lists(numbers):
-    """Convert 8-bit integers into lists of booleans.
-
-    Also works for a single given integer.
-
-    The least significant bit (#0) will be first
+    :param items: List of 4 integers: [CMD, MASK, Param1, Param2]
     """
-    if isinstance(numbers, int):
-        numbers = [numbers]
+    if len(items) < 4 or items[0] != 0x51:
+        return None, None, None
 
-    bool_lists = [[bool(num & (1 << n)) for n in range(8)] for num in numbers]
-
-    if len(bool_lists) == 1:
-        return bool_lists[0]
-
-    return bool_lists
+    return [VellemanK8090Switches(it) for it in items[1:]]
 
 
 class VellemanK8090(Instrument):
@@ -79,6 +79,23 @@ class VellemanK8090(Instrument):
     Stop bits           1
     Flow control        None
     ==================  ==================
+
+    Use the class like:
+
+    .. code-block:: python
+
+       from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
+       from pymeasure.adapters import SerialAdapter
+
+       adapter = SerialAdapter("COM1", baudrate=19200, timeout=1.0)
+       instrument = VellemanK8090(adapter)
+
+       # Get status update from device
+       last_on, curr_on, time_on = instrument.status
+
+       # Toggle a selection of channels on
+       instrument.switch_on = Switches.CH3 | Switches.CH4 | Switches.CH5
+
     """
 
     def __init__(self, adapter, name="Velleman K8090", timeout=1000, **kwargs):
@@ -96,8 +113,7 @@ class VellemanK8090(Instrument):
     version = Instrument.measurement(
         "0x71",
         """
-        Get firmware version, as (year - 2000, week).
-        E.g. ``(10, 1)``
+        Get firmware version, as (year - 2000, week). E.g. ``(10, 1)``
         """,
         cast=int,
         get_process=lambda v: (v[2], v[3]) if len(v) > 3 and v[0] == 0x71 else None,
@@ -109,10 +125,11 @@ class VellemanK8090(Instrument):
         Get current relay status.
         The reply has a different command byte than the request.
 
-        Three items (lists of 8 bools) are returned:
-        - Previous state: the state of each relay before this event
-        - Current state: the state of each relay now
-        - Timer state: the state of each relay timer
+        Three items (:class:`VellemanK8090Switches` flags) are returned:
+
+        * Previous state: the state of each relay before this event
+        * Current state: the state of each relay now
+        * Timer state: the state of each relay timer
         """,
         cast=int,
         get_process=_get_process_status,
@@ -130,7 +147,7 @@ class VellemanK8090(Instrument):
 
     switch_off = Instrument.setting(
         "0x12,%s",
-        """"
+        """
         Switch off a set of channels. See :attr:`switch_on`.
         """,
         set_process=_parse_channels,

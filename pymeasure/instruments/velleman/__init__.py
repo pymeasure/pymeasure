@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .velleman_k8090 import VellemanK8090
+from .velleman_k8090 import VellemanK8090, VellemanK8090Switches
