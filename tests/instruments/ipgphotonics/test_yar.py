@@ -68,28 +68,22 @@ def test_emission_getter():
         assert inst.emission is True
 
 
-def test_emission_setter_on():
+@pytest.mark.parametrize("value", (True, "ON", "on", "On", "oN"))
+def test_emission_setter_on(value):
     with expected_protocol(
             YAR,
             init_comm + [("EMON", "EMON")]
     ) as inst:
-        inst.emission = "ON"
+        inst.emission = value
 
 
-def test_emission_setter_off():
+@pytest.mark.parametrize("value", (False, "OFF", "off", "Off", "oFF"))
+def test_emission_setter_off(value):
     with expected_protocol(
             YAR,
             init_comm + [("EMOFF", "EMOFF")]
     ) as inst:
-        inst.emission = "OFF"
-
-
-def test_emission_setter_off2():
-    with expected_protocol(
-            YAR,
-            init_comm + [("EMOFF", "EMOFF")]
-    ) as inst:
-        inst.emission = False
+        inst.emission = value
 
 
 def test_power():

@@ -29,19 +29,15 @@ from pyvisa.constants import Parity, StopBits
 
 
 def emission_validator(value, values):
-    if value in values:
-        return value
-    elif isinstance(value, str):
-        if value.capitalize() in values:
-            return value.capitalize()
-        else:
-            raise ValueError(f"Value is {value}, but 'ON' or 'OFF' required.")
-    elif value is True:
+    if value is True:
         return "ON"
     elif value is False:
         return "OFF"
-    else:
-        raise ValueError(f"Value is {value}, but 'ON' or 'OFF' required.")
+    elif isinstance(value, str):
+        value = value.upper()
+        if value in values:
+            return value
+    raise ValueError(f"Value is {value}, but a boolean or 'ON' or 'OFF' required.")
 
 
 def setpoint_validator(value, values):
