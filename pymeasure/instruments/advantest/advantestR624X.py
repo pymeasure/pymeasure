@@ -938,7 +938,6 @@ class AdvantestR624X(Instrument):
             SESR is cleared after being read.
 
         """,
-        validator=truncated_range,
         values=[0, 255],
         get_process=lambda v: SESR(int(v)),
     )
@@ -949,7 +948,6 @@ class AdvantestR624X(Instrument):
         in the form of a :class:`DOR` ``IntFlag`` (``DOC?``).
 
         """,
-        validator=strict_range,
         values=range(0, 65535),
         get_process=lambda v: DOR(int(v)),
     )
@@ -1120,7 +1118,7 @@ class SMUChannel(Channel):
         """,
         validator=strict_range,
         values=range(0, 63),
-        get_process=lambda v: TriggerOutputSignalTiming(int(v)),
+        # get_process=lambda v: TriggerOutputSignalTiming(int(v)),
     )
 
     def set_scanner_control(self, output, interlock):
@@ -1179,7 +1177,7 @@ class SMUChannel(Channel):
         """,
         validator=strict_range,
         values=range(1, 3),
-        get_process=lambda v: TriggerInputType(int(v)),
+        # get_process=lambda v: TriggerInputType(int(v)),
     )
 
     fast_mode_enabled = Channel.setting(
@@ -1222,7 +1220,7 @@ class SMUChannel(Channel):
         """,
         validator=strict_discrete_set,
         values=[0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-        get_process=lambda v: SampleHold(int(v)),
+        # get_process=lambda v: SampleHold(int(v)),
     )
 
     def set_sample_mode(self, mode, auto_sampling=True):
@@ -2011,7 +2009,6 @@ class SMUChannel(Channel):
         in the form of a :class:`COR` ``IntFlag`` (``COC?``).
 
         """,
-        validator=strict_range,
         values=range(0, 65535),
         get_process=lambda v: COR(int(v)),
     )
