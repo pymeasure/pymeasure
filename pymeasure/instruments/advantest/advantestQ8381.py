@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 import logging
-from time import sleep
-import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -32,19 +30,23 @@ from pymeasure.instruments.validators import (
     joined_validators
 )
 
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+# Join validators to allow for special sets of characters
+truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)
 
 
 class AdvantestQ8381(Instrument):
     """Advantest Q8381 Optical Spectrum Analyzer."""
+    ONOFF = {True: 'ON', False: 'OFF'}
 
     def __init__(self, adapter, name="Anritsu MS9710C Optical Spectrum Analyzer", **kwargs):
         """Constructor."""
         self.analysis_mode = None
         super().__init__(adapter, name=name, **kwargs)
 
-    
     ###########
     #  Modes  #
     ###########
@@ -59,16 +61,16 @@ class AdvantestQ8381(Instrument):
     # Spectrum Parameters - Wavelength #
     ####################################
     wavelength_center = Instrument.control(
-        'CNT?', 'CNT %g', "Center Wavelength of Spectrum Scan in nm.")
+        'CEN?', 'CEN%gnm', "Center Wavelength of Spectrum Scan in nm.")
 
     wavelength_span = Instrument.control(
-        'SPN?', 'SPN %g', "Wavelength Span of Spectrum Scan in nm.")
+        'SPA?', 'SPA%gnm', "Wavelength Span of Spectrum Scan in nm.")
 
     wavelength_start = Instrument.control(
-        'STA?', 'STA %g', "Wavelength Start of Spectrum Scan in nm.")
+        'STA?', 'STA%gnm', "Wavelength Start of Spectrum Scan in nm.")
 
     wavelength_stop = Instrument.control(
-        'STO?', 'STO %g', "Wavelength Stop of Spectrum Scan in nm.")
+        'STO?', 'STO%gnm', "Wavelength Stop of Spectrum Scan in nm.")
 
     wavelength_marker_value = Instrument.control(
         'MKV?', 'MKV %s',
@@ -169,8 +171,3 @@ class AdvantestQ8381(Instrument):
     analysis_result = Instrument.measurement(
         "ANAR?", "Read back anaysis result from current scan."
     )
-
-   
-if __name__ == "__main__":
-    test = AdvantestQ8381()
-    print("done")

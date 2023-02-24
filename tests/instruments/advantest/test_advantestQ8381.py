@@ -22,7 +22,22 @@
 # THE SOFTWARE.
 #
 
-from .advantestR3767CG import AdvantestR3767CG
-from .advantestR624X import AdvantestR6245
-from .advantestR624X import AdvantestR6246
-from .advantestQ8381 import AdvantestQ8381
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.advantest import AdvantestQ8381
+
+
+def test_init():
+    with expected_protocol(AdvantestQ8381, [], ):
+        pass  # Verify the expected communication.
+
+
+def test_wavelength_center():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("CEN10nm", None),
+         ("CEN?", "10")]
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_center = 10.0
+        assert instr.wavelength_center == 10.0
