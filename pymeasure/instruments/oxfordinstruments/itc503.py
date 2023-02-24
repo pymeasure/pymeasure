@@ -289,7 +289,7 @@ class ITC503(OxfordInstrumentsBase):
         'channel 3 freq/4'.
         """,
         validator=strict_discrete_set,
-        map=True,
+        map_values=True,
         values={
             "temperature setpoint": 0,
             "temperature 1": 1,
