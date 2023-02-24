@@ -100,12 +100,12 @@ class PS120_10(IPS120_10):
 
     current_setpoint_get_process = PS_custom_get_process
     current_setpoint_set_process = PS_custom_set_process
-    current_setpoint_set_command = "J%d"
+    current_setpoint_set_command = "I%d"
 
     field_setpoint_get_process = PS_custom_get_process
     field_setpoint_set_process = PS_custom_set_process
-    field_setpoint_set_command = "T%d"
+    field_setpoint_set_command = "J%d"
 
     sweep_rate_get_process = PS_custom_get_process
     sweep_rate_set_process = PS_custom_set_process
-    sweep_rate_set_command = "A%d"
+    sweep_rate_set_command = "T%d"
