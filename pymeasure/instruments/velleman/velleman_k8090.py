@@ -25,6 +25,7 @@
 from enum import IntFlag
 
 from pyvisa import VisaIOError
+from pymeasure.adapters import SerialAdapter, VISAAdapter
 from pymeasure.instruments import Instrument
 
 
@@ -142,11 +143,13 @@ class VellemanK8090(Instrument):
     switch_on = Instrument.setting(
         "0x11,%s",
         """"
-        Switch on a set of channels. Other channels are unaffected.  
+        Switch on a set of channels. Other channels are unaffected.
         Pass either a list or set of channel numbers (starting at 1), or pass a bitmask.
-        
-        After switching this waits for a reply from the device. Expect a blocking
-        time equal to the communication timeout!
+
+        After switching this waits for a reply from the device. This is only send when
+        a relay actually toggles, otherwise expect a blocking time equal to the
+        communication timeout
+        If speed is important, avoid calling `switch_` unnecessarily.
         """,
         set_process=_parse_channels,
         check_set_errors=True,
@@ -182,6 +185,15 @@ class VellemanK8090(Instrument):
         :param command: String like "CMD[, MASK, PARAM1, PARAM2]" - only CMD is mandatory
         :type command: str
         """
+
+        # The device can give status updates when we don't expect it,
+        # drop anything from the buffer first
+        if isinstance(self.adapter, VISAAdapter):
+            self.adapter.flush_read_buffer()
+        elif isinstance(self.adapter, SerialAdapter):
+            # The SerialAdapter does not have `flush_read_buffer` implemented
+            self.adapter.connection.flush()
+
         items_str = command.split(",")
 
         items = [int(it, 16) for it in items_str]
@@ -214,9 +226,8 @@ class VellemanK8090(Instrument):
 
         A read will return a list of CMD, MASK, PARAM1 and PARAM2.
         """
-        # Read all bytes from buffer - until the timeout
-        response = self.read_bytes(-1,break_on_termchar=True)  # `-1` causes a bug: #862
-        # Relying on the ETX byte is not possible since multiple status messages could be queued
+        # Read all bytes from buffer - until the termchar or a timeout
+        response = self.read_bytes(-1, break_on_termchar=True)
 
         if len(response) < 7:
             raise ConnectionError(f"Incoming packet was {len(response)} bytes instead of 7")

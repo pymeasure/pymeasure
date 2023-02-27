@@ -44,10 +44,10 @@ def instrument(connected_device_address):
     like ``--device-address="COM1"`` to use the serial adapter.
     """
     if "ASRL" in connected_device_address:
-        return VellemanK8090(connected_device_address)
+        return VellemanK8090(connected_device_address, timeout=500)
     else:
         adapter = SerialAdapter(
-            connected_device_address, baudrate=19200, timeout=1.0, read_termination=chr(0x0F)
+            connected_device_address, baudrate=19200, timeout=0.5, read_termination=chr(0x0F)
         )
         return VellemanK8090(adapter)
 
