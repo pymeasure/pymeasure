@@ -141,6 +141,10 @@ class Adapter:
         """Read bytes from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading bytes.")
 
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented input flush.")
+
     # Deprecated methods.
     def ask(self, command):
         """ Write the command to the instrument and returns the resulting
