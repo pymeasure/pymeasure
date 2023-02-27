@@ -38,8 +38,18 @@ from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches 
 
 @pytest.fixture()
 def instrument(connected_device_address):
-    adapter = SerialAdapter(connected_device_address, baudrate=19200, timeout=5.0)
-    return VellemanK8090(adapter)
+    """Get instrument object.
+
+    Run like ``--device-address="ASRL1::INSTR"`` to use the visa adapter, and
+    like ``--device-address="COM1"`` to use the serial adapter.
+    """
+    if "ASRL" in connected_device_address:
+        return VellemanK8090(connected_device_address)
+    else:
+        adapter = SerialAdapter(
+            connected_device_address, baudrate=19200, timeout=1.0, read_termination=chr(0x0F)
+        )
+        return VellemanK8090(adapter)
 
 
 def test_version(instrument):
@@ -77,26 +87,6 @@ def test_switch_on_off(instrument):
     assert curr_on_1 == Switches.CH1 | Switches.CH3
     assert curr_on_2 == Switches.NONE
 
-
-def test_switch_on_off_blocking(instrument):
-    """Test the blocking versions of the on/off switching.
-
-    You should also verify the sound of the toggling relays and
-    LEDs for 2 and 4 should alone be on.
-    """
+    # Test another pointless off switch, to test a lack of confirmation
     instrument.switch_off = Switches.ALL
-    sleep(0.5)  # Start with all off
-
-    _, curr_on_1, _ = instrument.switch_on_blocking(Switches.CH2 | Switches.CH4)
-
     sleep(0.5)
-
-    _, curr_on_2, _ = instrument.switch_off_blocking(Switches.CH2 | Switches.CH4)
-
-    sleep(0.5)
-
-    instrument.switch_off = Switches.ALL
-    sleep(0.5)  # Stop with all off
-
-    assert curr_on_1 == Switches.CH2 | Switches.CH4
-    assert curr_on_2 == Switches.NONE

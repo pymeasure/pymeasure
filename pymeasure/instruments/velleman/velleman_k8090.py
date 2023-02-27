@@ -23,13 +23,14 @@
 #
 
 from enum import IntFlag
-import serial
 
+from pyvisa import VisaIOError
 from pymeasure.instruments import Instrument
 
 
 class VellemanK8090Switches(IntFlag):
     """Use to identify switch channels."""
+
     NONE = 0
     CH1 = 1 << 0
     CH2 = 1 << 1
@@ -80,15 +81,16 @@ class VellemanK8090(Instrument):
     Flow control        None
     ==================  ==================
 
+    If a custom adapter is presented, it should have "0x0F" a termination
+    character to prevent unnecessarily waiting on a timeout.
+
     Use the class like:
 
     .. code-block:: python
 
        from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
-       from pymeasure.adapters import SerialAdapter
 
-       adapter = SerialAdapter("COM1", baudrate=19200, timeout=1.0)
-       instrument = VellemanK8090(adapter)
+       instrument = VellemanK8090("ASRL1::INSTR")
 
        # Get status update from device
        last_on, curr_on, time_on = instrument.status
@@ -103,8 +105,10 @@ class VellemanK8090(Instrument):
             adapter,
             name=name,
             asrl={"baud_rate": 19200},
+            write_termination="",
+            read_termination=chr(self.BYTE_ETX),  # Param is string
             timeout=timeout,
-            **kwargs
+            **kwargs,
         )
 
     BYTE_STX = 0x04
@@ -138,19 +142,23 @@ class VellemanK8090(Instrument):
     switch_on = Instrument.setting(
         "0x11,%s",
         """"
-        Switch on a set of channels.
-        Other channels are unaffected.
-        Pass either a list or set of channel numbers (starting at 1), or pass a bitmask
+        Switch on a set of channels. Other channels are unaffected.  
+        Pass either a list or set of channel numbers (starting at 1), or pass a bitmask.
+        
+        After switching this waits for a reply from the device. Expect a blocking
+        time equal to the communication timeout!
         """,
         set_process=_parse_channels,
+        check_set_errors=True,
     )
 
     switch_off = Instrument.setting(
         "0x12,%s",
         """
-        Switch off a set of channels. See :attr:`switch_on`.
+        Switch off a set of channels. See :attr:`switch_on` for more details.
         """,
         set_process=_parse_channels,
+        check_set_errors=True,
     )
 
     id = None  # No identification available
@@ -159,38 +167,6 @@ class VellemanK8090(Instrument):
         # The formula from the sheet requires twos-complement negation,
         # this works
         return 1 + 0xFF - ((self.BYTE_STX + command + mask + param1 + param2) & 0xFF)
-
-    def switch_on_blocking(self, channels):
-        """Switch on a set of channels and wait for the confirmation.
-
-        See :attr:`switch_on`.
-
-        The set command is identical, and the processing part of
-        :attr:`status` is called.
-
-        :returns: See :attr:`status`
-        """
-        mask = _parse_channels(channels)
-        self.write(f"0x11,{mask}")
-        data = self.read()
-        items = [int(it) for it in data.split(",")]
-        return _get_process_status(items)
-
-    def switch_off_blocking(self, channels):
-        """Switch off a set of channels and wait for the confirmation.
-
-        See :attr:`switch_off`.
-
-        The set command is identical, and the processing part of
-        :attr:`status` is called.
-
-        :returns: See :attr:`status`
-        """
-        mask = _parse_channels(channels)
-        self.write(f"0x12,{mask}")
-        data = self.read()
-        items = [int(it) for it in data.split(",")]
-        return _get_process_status(items)
 
     def write(self, command, **kwargs):
         """The write command specifically for the protocol of the K8090.
@@ -238,15 +214,9 @@ class VellemanK8090(Instrument):
 
         A read will return a list of CMD, MASK, PARAM1 and PARAM2.
         """
-        num_bytes = 7  # Each packet should always be exactly 7 bytes
-
-        if isinstance(self.adapter.connection, serial.Serial):
-            # Because we do not always read the reply to a setting, the buffer
-            # might not have been empty. Try to clear it completely but without waiting
-            # for more
-            num_bytes = max(7, self.adapter.connection.in_waiting)
-
-        response = self.read_bytes(num_bytes)
+        # Read all bytes from buffer - until the timeout
+        response = self.read_bytes(-1,break_on_termchar=True)  # `-1` causes a bug: #862
+        # Relying on the ETX byte is not possible since multiple status messages could be queued
 
         if len(response) < 7:
             raise ConnectionError(f"Incoming packet was {len(response)} bytes instead of 7")
@@ -270,3 +240,16 @@ class VellemanK8090(Instrument):
         values_str = [str(v) for v in [command, mask, param1, param2]]
 
         return ",".join(values_str)
+
+    def check_errors(self):
+        """Called after each set command, normally to look for errors.
+
+        The K8090 replies with a status after a switch command, but
+        **only** after any switch actually changed. In order to guarantee
+        the buffer is empty, we attempt to read it fully here.
+        No actual error checking is done here!
+        """
+        try:
+            self.read()
+        except (VisaIOError, ConnectionError):
+            pass  # Ignore a timeout

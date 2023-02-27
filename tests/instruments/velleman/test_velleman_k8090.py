@@ -65,13 +65,14 @@ def test_status():
 
 def test_switch_on():
     with expected_protocol(
-            VellemanK8090,
-            [
-                (
-                        bytearray.fromhex("04 11 05 00 00 E6 0F"),
-                        None,  # The real device does send a reply!
-                )
-            ] * 2,
+        VellemanK8090,
+        [
+            (
+                bytearray.fromhex("04 11 05 00 00 E6 0F"),
+                bytearray.fromhex("04 51 01 05 80 25 0F"),
+            )
+        ]
+        * 2,
     ) as inst:
         # Test both signatures
         inst.switch_on = Switches.CH1 | Switches.CH3
@@ -84,7 +85,7 @@ def test_switch_off():
         [
             (
                 bytearray.fromhex("04 12 FF 00 00 EB 0F"),
-                None,  # The real device does send a reply!
+                bytearray.fromhex("04 51 01 00 80 2A 0F"),
             )
         ],
     ) as inst:
