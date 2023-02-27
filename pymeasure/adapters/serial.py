@@ -107,5 +107,9 @@ class SerialAdapter(Adapter):
             # At -1 we read a very large number of bytes, which can be considered the whole buffer.
             return self.connection.read(1e99 if count == -1 else count, **kwargs)
 
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer."""
+        self.connection.reset_input_buffer()
+
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port
