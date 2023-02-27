@@ -94,7 +94,7 @@ class SerialAdapter(Adapter):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read from the whole read buffer.
+            read from the whole read buffer (waits for timeout).
         :param bool break_on_termchar: Stop reading at a termination character.
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
@@ -103,9 +103,12 @@ class SerialAdapter(Adapter):
             return self.connection.read_until(self.read_termination.encode(),
                                               count if count > 0 else None,
                                               **kwargs)
+        elif count >= 0:
+            return self.connection.read(count, **kwargs)
         else:
-            # At -1 we read a very large number of bytes, which can be considered the whole buffer.
-            return self.connection.read(1e99 if count == -1 else count, **kwargs)
+            # For -1 we empty the buffer completely
+            num_bytes = self.connection.in_waiting + 100  # Read what's already queued + some extra
+            return self.connection.read(num_bytes, **kwargs)
 
     def flush_read_buffer(self):
         """Flush and discard the input buffer."""
