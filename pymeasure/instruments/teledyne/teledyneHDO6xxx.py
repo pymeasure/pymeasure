@@ -34,9 +34,49 @@ from pymeasure.instruments.lecroy.lecroyT3DSO1204 import (
 class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
     """Extended Channel object for the HDO6xxx."""
 
+    trigger_level2 = None
+
+    skew_factor = None
+
+    unit = None
+
+    invert = None
+
     def autoscale(self):
         """Perform auto-setup command for channel."""
         self.write("AUTO_SETUP FIND")
+
+    @property
+    def current_configuration(self):
+        """ Read channel configuration as a dict containing the following keys:
+            - "channel": channel number (int)
+            - "attenuation": probe attenuation (float)
+            - "bandwidth_limit": bandwidth limiting enabled (bool)
+            - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
+            - "offset": vertical offset (float)
+            - "skew_factor": channel-tochannel skew factor (float)
+            - "display": currently displayed (bool)
+            - "unit": "A" or "V" units (str)
+            - "volts_div": vertical divisions (float)
+            - "inverted": inverted (bool)
+            - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
+            - "trigger_level": trigger level (float)
+            - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
+        """
+
+        ch_setup = {
+            "channel": self.id,
+            "attenuation": self.probe_attenuation,
+            "bandwidth_limit": self.bwlimit,
+            "coupling": self.coupling,
+            "offset": self.offset,
+            "display": self.display,
+            "volts_div": self.scale,
+            "trigger_coupling": self.trigger_coupling,
+            "trigger_level": self.trigger_level,
+            "trigger_slope": self.trigger_slope
+        }
+        return ch_setup
 
 
 class TeledyneHDO6xxx(LeCroyT3DSO1204):
