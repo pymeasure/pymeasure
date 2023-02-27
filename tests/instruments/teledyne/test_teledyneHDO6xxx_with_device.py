@@ -39,6 +39,20 @@ class TestTeledyneHDO6xxx:
         - A probe on Channel 1 must be connected to the Demo output of the oscilloscope.
     """
 
+    #########################
+    # PARAMETRIZATION CASES #
+    #########################
+
+    BOOLEANS = [False, True]
+    CHANNEL_COUPLINGS = ["ac 1M", "dc 1M", "ground"]
+    ACQUISITION_TYPES = ["normal", "average", "peak", "highres"]
+    TRIGGER_LEVELS = [0.125, 0.150, 0.175]
+    TRIGGER_SLOPES = ["negative", "positive", "window"]
+    ACQUISITION_AVERAGE = [4, 16, 32, 64, 128, 256]
+    WAVEFORM_POINTS = [100, 1000, 10000]
+    WAVEFORM_SOURCES = ["C1", "C2", "C3", "C4"]
+    CHANNELS = [1, 2, 3, 4]
+
     ############
     # FIXTURES #
     ############
@@ -46,6 +60,20 @@ class TestTeledyneHDO6xxx:
     @pytest.fixture(scope="module")
     def instrument(self, connected_device_address):
         return TeledyneHDO6xxx(connected_device_address)
+
+    @pytest.fixture
+    def resetted_instrument(self, instrument):
+        instrument.reset()
+        sleep(7)
+        return instrument
+
+    @pytest.fixture
+    def autoscaled_instrument(self, instrument):
+        instrument.reset()
+        sleep(7)
+        instrument.autoscale()
+        sleep(7)
+        return instrument
 
     #########
     # TESTS #
@@ -63,3 +91,27 @@ class TestTeledyneHDO6xxx:
     def test_channel_measure_parameter(self, instrument):
         instrument.ch(1).measure_parameter("RMS")
         sleep(0.1)
+
+    # Channel
+    def test_ch_current_configuration(self, autoscaled_instrument):
+        autoscaled_instrument.ch_1.offset = 0
+        autoscaled_instrument.ch_1.trigger_level = 0
+        expected = {
+            "channel": 1,
+            "attenuation": 1.0,
+            "bandwidth_limit": ['C1', 'OFF', 'C2', 'OFF', 'C3', 'OFF', 'C4', 'OFF'],
+            "coupling": "dc 1M",
+            "offset": 0.0,
+            "display": True,
+            "volts_div": 0.05,
+            "trigger_coupling": "dc",
+            "trigger_level": "0E-3 V",
+            "trigger_slope": "positive",
+        }
+        actual = autoscaled_instrument.ch(1).current_configuration
+        assert actual == expected
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    def test_ch_offset(self, instrument, ch_number):
+        instrument.ch(ch_number).offset = 1
+        assert instrument.ch(ch_number).offset == 1
