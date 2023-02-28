@@ -171,7 +171,7 @@ class VISAAdapter(Adapter):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read from the whole read buffer.
+            read from the whole read buffer until timeout.
         :param bool break_on_termchar: Stop reading at a termination character.
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
@@ -181,13 +181,14 @@ class VISAAdapter(Adapter):
         elif break_on_termchar:
             return self.connection.read_raw(None, **kwargs)
         else:
-            read_termination = self.connection.read_termination
-            self.connection.read_termination = None
-            # Try except allows to set the read_termination even after an error.
-            try:
-                return self.connection.read_raw(**kwargs)
-            finally:
-                self.connection.read_termination = read_termination
+            result = bytearray()
+            while True:
+                try:
+                    result.extend(self.connection.read_bytes(1))
+                except pyvisa.errors.VisaIOError as exc:
+                    if exc.error_code == pyvisa.constants.StatusCode.error_timeout:
+                        return bytes(result)
+                    raise
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
