@@ -27,25 +27,25 @@ import pytest
 from pymeasure.test import expected_protocol
 
 
-from pymeasure.instruments.oxfordinstruments.ips120_10 import IPS120_10
+from pymeasure.instruments.oxfordinstruments.ps120_10 import PS120_10
 
 
 def test_version():
-    with expected_protocol(IPS120_10,
+    with expected_protocol(PS120_10,
                            [("V", "IPS120-10 Version 3.04 @ Oxford Instruments 1996")]
                            ) as inst:
         assert inst.version == "IPS120-10 Version 3.04 @ Oxford Instruments 1996"
 
 
 def test_activity_getter():
-    with expected_protocol(IPS120_10,
+    with expected_protocol(PS120_10,
                            [("X", "X00A0C0M00P00")]
                            ) as inst:
         assert inst.activity == "hold"
 
 
 def test_activity_setter():
-    with expected_protocol(IPS120_10,
+    with expected_protocol(PS120_10,
                            [("A0", "A")]
                            ) as inst:
         inst.activity = "hold"
@@ -53,28 +53,28 @@ def test_activity_setter():
 
 @pytest.mark.xfail()  # TODO this test fails, the correct response has to be added.
 def test_current_setpoint_getter():
-    with expected_protocol(IPS120_10,
-                           [("R0", "R+1.3")]
+    with expected_protocol(PS120_10,
+                           [("R0", "R+130")]
                            ) as inst:
         assert inst.current_setpoint == 1.3
 
 
 def test_current_setpoint_setter():
-    with expected_protocol(IPS120_10,
-                           [("I1.300000", "I")]
+    with expected_protocol(PS120_10,
+                           [("I130", "I")]
                            ) as inst:
         inst.current_setpoint = 1.3
 
 
 def test_control_mode_getter():
-    with expected_protocol(IPS120_10,
+    with expected_protocol(PS120_10,
                            [("X", "X00A0C1M00P00")]
                            ) as inst:
         assert inst.control_mode == "RL"
 
 
 def test_control_mode_setter():
-    with expected_protocol(IPS120_10,
+    with expected_protocol(PS120_10,
                            [("C1", "C")]
                            ) as inst:
         inst.control_mode = "RL"
