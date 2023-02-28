@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from pymeasure.test import expected_protocol
 
 
