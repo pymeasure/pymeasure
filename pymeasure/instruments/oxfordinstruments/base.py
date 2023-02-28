@@ -86,7 +86,7 @@ class OxfordInstrumentsBase(Instrument):
         """
 
         for attempt in range(self.max_attempts):
-            # Skip the checks in "write"
+            # Skip the checks in "write", because we explicitly want to get an answer here
             super().write(command)
             self.wait_for()
             response = self.read()
