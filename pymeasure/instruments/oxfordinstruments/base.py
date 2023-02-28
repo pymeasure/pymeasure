@@ -183,4 +183,4 @@ class OxfordInstrumentsBase(Instrument):
         return bool(match)
 
     def __repr__(self):
-        return "<OxfordInstrumentsAdapter(resource='%s')>" % self.connection.resource_name
+        return "<OxfordInstrumentsAdapter(adapter='%s')>" % self.adapter.connection.resource_name
