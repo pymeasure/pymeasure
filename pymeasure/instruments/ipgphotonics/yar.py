@@ -124,7 +124,7 @@ class YAR(Instrument):
     emission = Instrument.control(
         "STA",
         "EM%s",
-        """Control emission of the amplifier.""",
+        """Control emission of the amplifier (bool).""",
         cast=int,
         values=("ON", "OFF"),
         validator=emission_validator,
