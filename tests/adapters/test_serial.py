@@ -73,6 +73,12 @@ def test_read_bytes_unlimited(adapter):
     assert adapter.read_bytes(-1) == b"basd\x02\nfasdf\n"
 
 
+def test_read_bytes_unlimited_long(adapter):
+    """Test whether all bytes are returned when a lot of data is sent."""
+    adapter.write_bytes(b"abcde" * 50)
+    assert adapter.read_bytes(-1) == b"abcde" * 50
+
+
 @pytest.mark.parametrize("count", (-1, 8))
 def test_read_bytes_break_on_termchar(adapter, count):
     adapter.read_termination = "\n"
