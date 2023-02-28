@@ -51,7 +51,6 @@ def test_activity_setter():
         inst.activity = "hold"
 
 
-@pytest.mark.xfail()  # TODO this test fails, the correct response has to be added.
 def test_current_setpoint_getter():
     with expected_protocol(PS120_10,
                            [("R0", "R+130")]
@@ -78,3 +77,10 @@ def test_control_mode_setter():
                            [("C1", "C")]
                            ) as inst:
         inst.control_mode = "RL"
+
+
+def test_field_setpoint():
+    with expected_protocol(PS120_10,
+                           [("R8", "R+00100")],
+                           ) as inst:
+        assert inst.field_setpoint == 1.0

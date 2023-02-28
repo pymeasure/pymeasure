@@ -71,14 +71,6 @@ class OxfordInstrumentsBase(Instrument):
                          **kwargs)
         self.max_attempts = max_attempts
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=lambda v: v[1:],
-               maxsplit=-1, **kwargs):
-        """Write a command and get values."""
-        return super().values(command, separator=separator, cast=cast,
-                              preprocess_reply=preprocess_reply,
-                              maxsplit=maxsplit,
-                              **kwargs)
-
     def ask(self, command):
         """Write the command to the instrument and return the resulting ASCII response. Also check
         the validity of the response before returning it; if the response is not valid, another
@@ -100,6 +92,9 @@ class OxfordInstrumentsBase(Instrument):
             response = self.read()
 
             if self.is_valid_response(response, command):
+                if command.startswith("R"):
+                    # Remove the leading R of the response
+                    return response.strip("R")
                 return response
 
             log.debug("Received invalid response to '%s': %s", command, response)

@@ -51,7 +51,6 @@ def test_activity_setter():
         inst.activity = "hold"
 
 
-@pytest.mark.xfail()  # TODO this test fails, the correct response has to be added.
 def test_current_setpoint_getter():
     with expected_protocol(IPS120_10,
                            [("R0", "R+1.3")]

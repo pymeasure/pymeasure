@@ -37,3 +37,11 @@ def test_wrong_response():
                            ) as inst:
         with pytest.raises(OxfordVISAError):
             inst.ask("A")
+
+
+def test_write_not_understood_command():
+    with expected_protocol(OxfordInstrumentsBase,
+                           [("A", "?B")],
+                           ) as inst:
+        with pytest.raises(OxfordVISAError):
+            inst.write("A")
