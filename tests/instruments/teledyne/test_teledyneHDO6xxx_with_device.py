@@ -44,6 +44,7 @@ class TestTeledyneHDO6xxx:
     #########################
 
     BOOLEANS = [False, True]
+    BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
     CHANNEL_COUPLINGS = ["ac 1M", "dc 1M", "ground"]
     ACQUISITION_TYPES = ["normal", "average", "peak", "highres"]
     TRIGGER_LEVELS = [0.125, 0.150, 0.175]
@@ -111,7 +112,69 @@ class TestTeledyneHDO6xxx:
         actual = autoscaled_instrument.ch(1).current_configuration
         assert actual == expected
 
+    @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
+    def test_ch_bwlimit(self, instrument, case):
+        instrument.bwlimit = case
+        expected = {ch: case for ch in TestTeledyneHDO6xxx.WAVEFORM_SOURCES}
+        assert instrument.bwlimit == expected
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
+    def test_ch_bwlimit_channel(self, instrument, ch_number, case):
+        instrument.ch(ch_number).bwlimit = case
+        assert instrument.bwlimit[f"C{ch_number}"] == case
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    @pytest.mark.parametrize("case", CHANNEL_COUPLINGS)
+    def test_ch_coupling(self, instrument, ch_number, case):
+        instrument.ch(ch_number).coupling = case
+        assert instrument.ch(ch_number).coupling == case
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    @pytest.mark.parametrize("case", BOOLEANS)
+    def test_ch_display(self, instrument, ch_number, case):
+        instrument.ch(ch_number).display = case
+        assert instrument.ch(ch_number).display == case
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    @pytest.mark.parametrize("case", BOOLEANS)
+    def test_ch_invert(self, instrument, ch_number, case):
+        instrument.ch(ch_number).invert = case
+        assert instrument.ch(ch_number).invert == case
+
     @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_offset(self, instrument, ch_number):
         instrument.ch(ch_number).offset = 1
         assert instrument.ch(ch_number).offset == 1
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    def test_ch_probe_attenuation(self, instrument, ch_number):
+        instrument.ch(ch_number).probe_attenuation = 10
+        assert instrument.ch(ch_number).probe_attenuation == 10
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    def test_ch_scale(self, instrument, ch_number):
+        instrument.ch(ch_number).scale = 1
+        assert instrument.ch(ch_number).scale == 1
+
+    def test_ch_trigger_level(self, autoscaled_instrument):
+        for case in self.TRIGGER_LEVELS:
+            autoscaled_instrument.ch_1.trigger_level = case
+            assert autoscaled_instrument.ch_1.trigger_level == case
+
+    def test_ch_trigger_level2(self, autoscaled_instrument):
+        for case in self.TRIGGER_LEVELS:
+            autoscaled_instrument.ch_1.trigger_level2 = case
+            assert autoscaled_instrument.ch_1.trigger_level2 == case
+
+    def test_ch_trigger_slope(self, autoscaled_instrument):
+        with pytest.raises(ValueError):
+            autoscaled_instrument.ch_1.trigger_slope = "abcd"
+        autoscaled_instrument.trigger_select = ("edge", "c1", "off")
+        for case in self.TRIGGER_SLOPES:
+            autoscaled_instrument.ch_1.trigger_slope = case
+            assert autoscaled_instrument.ch_1.trigger_slope == case
+
+
+if __name__ == "__main__":
+    pytest.main()
