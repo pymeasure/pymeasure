@@ -82,8 +82,8 @@ class VellemanK8090(Instrument):
     Flow control        None
     ==================  ==================
 
-    If a custom adapter is presented, it should have "0x0F" a termination
-    character to prevent unnecessarily waiting on a timeout.
+    A short timeout is recommended, since the device is not consistent in giving status messages
+    and serial timeouts will occur also in normal operation.
 
     Use the class like:
 
@@ -101,13 +101,13 @@ class VellemanK8090(Instrument):
 
     """
 
-    def __init__(self, adapter, name="Velleman K8090", timeout=1000, **kwargs):
+    def __init__(self, adapter, name="Velleman K8090", timeout=100, **kwargs):
         super().__init__(
             adapter,
             name=name,
             asrl={"baud_rate": 19200},
             write_termination="",
-            read_termination=chr(self.BYTE_ETX),  # Param is string
+            read_termination="",
             timeout=timeout,
             **kwargs,
         )
@@ -226,8 +226,10 @@ class VellemanK8090(Instrument):
 
         A read will return a list of CMD, MASK, PARAM1 and PARAM2.
         """
-        # Read all bytes from buffer - until the termchar or a timeout
-        response = self.read_bytes(-1, break_on_termchar=True)
+        # A message is always 7 bytes
+        # (there is also a termination char, but since it is not exclusive it cannot be
+        # reliably used)
+        response = self.read_bytes(7)
 
         if len(response) < 7:
             raise ConnectionError(f"Incoming packet was {len(response)} bytes instead of 7")
@@ -244,7 +246,7 @@ class VellemanK8090(Instrument):
         real_checksum = self._make_checksum(command, mask, param1, param2)
         if real_checksum != checksum:
             raise ConnectionError(
-                f"Packet checksum was not correct, got {hex(checksum)}"
+                f"Packet checksum was not correct, got {hex(checksum)} "
                 f"instead of {hex(real_checksum)}"
             )
 
