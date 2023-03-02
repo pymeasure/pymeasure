@@ -31,8 +31,30 @@ from pymeasure.instruments.lecroy.lecroyT3DSO1204 import (
 )
 
 
+def _channel_results_to_dict(results):
+    """Turn a per-channel result list into a more convenient dict.
+
+    E.g. turn ['C1', 'OFF', 'C2', 'OFF', 'C3', 'OFF', 'C4', 'OFF'] into
+    {'C1': 'OFF', 'C2': 'OFF', 'C3': 'OFF', 'C4': 'OFF'}
+    """
+    keys = results[::2]
+    values = results[1::2]
+    return dict(zip(keys, values))
+
+
+def _remove_unit(value):
+    """Remove a unit from the returned string and cast to float."""
+    if value.endswith(" V"):
+        value = value[:-2]
+
+    return float(value)
+
+
 class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
     """Extended Channel object for the HDO6xxx."""
+
+    # For reason "20MHZ" is registered as "ON"
+    BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
 
     trigger_level2 = None
 
@@ -41,6 +63,30 @@ class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
     unit = None
 
     invert = None
+
+    bwlimit = Instrument.setting(
+        "BWL %s",
+        """
+        Sets bandwidth limit for this channel.
+        
+        The current bandwidths can only be read back for all channels at once.
+        """,
+        validator=strict_discrete_set,
+        values=BANDWIDTH_LIMITS,
+    )
+
+    trigger_level = Instrument.control(
+        "TRLV?", "TRLV %.2EV",
+        """ A float parameter that sets the trigger level voltage for the active trigger source.
+            When there are two trigger levels to set, this command is used to set the higher
+            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
+            the lower trigger level voltage.
+            When setting the trigger level it must be divided by the probe attenuation. This is
+            not documented in the datasheet and it is probably a bug of the scope firmware.
+            An out-of-range value will be adjusted to the closest legal value.
+        """,
+        get_process=_remove_unit,
+    )
 
     def autoscale(self):
         """Perform auto-setup command for channel."""
@@ -54,11 +100,8 @@ class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
             - "bandwidth_limit": bandwidth limiting enabled (bool)
             - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
             - "offset": vertical offset (float)
-            - "skew_factor": channel-tochannel skew factor (float)
             - "display": currently displayed (bool)
-            - "unit": "A" or "V" units (str)
             - "volts_div": vertical divisions (float)
-            - "inverted": inverted (bool)
             - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
             - "trigger_level": trigger level (float)
             - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
@@ -92,3 +135,11 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
     """
 
     channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
+
+    bwlimit = Instrument.control(
+        "BWL?", "BWL %s",
+        """Sets the internal low-pass filter for all channels.""",
+        validator=strict_discrete_set,
+        values=ScopeChannel.BANDWIDTH_LIMITS,
+        get_process=_channel_results_to_dict,
+    )
