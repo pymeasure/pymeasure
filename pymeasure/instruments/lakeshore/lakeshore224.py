@@ -22,10 +22,29 @@
 # THE SOFTWARE.
 #
 
-from .lakeshore_base import LakeShoreTemperatureInputChannel, LakeShoreHeaterOutputChannel
-from .lakeshore224 import LakeShore224
-from .lakeshore331 import LakeShore331
-from .lakeshore421 import LakeShore421
-from .lakeshore425 import LakeShore425
+import logging
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.lakeshore import LakeShoreTemperatureInputChannel
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
+class LakeShore224(Instrument):
+    """ Represents the Lakeshore 224 Temperature monitor and provides a high-level interface
+    for interacting with the instrument. Note that the 224 provides 12 temperature input channels
+    (A, B, C1-5, D1-5). This driver makes use of the pymeasure channels interface.
+
+    .. code-block:: python
+
+        monitor = LakeShore224('GPIB::1')
+
+        print(monitor.input_A.kelvin)           # Print the temperature in kelvin on sensor A
+        monitor.input_A.wait_for_temperature()  # Wait for the temperature on sensor A to stabilize.
+    """
+
+    tchannels = ['0', 'A', 'B', 'C1', 'C2', 'C3', 'C4', 'C5', 'D1', 'D2', 'D3', 'D4', 'D5']
+    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureInputChannel, tchannels, prefix='input_')
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(adapter, 'Lakeshore Model 224 Temperature Monitor', **kwargs)
