@@ -9,6 +9,7 @@ Several Lakeshore instruments are channel based and make use of the :ref:`Channe
 following common :class:`Channel Classes <pymeasure.instruments.Channel>` are utilized:
 
 .. _LakeShoreChannels:
+
 LakeShore Channel Classes
 --------------------------
 

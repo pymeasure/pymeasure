@@ -52,6 +52,6 @@ class LakeShore331(Instrument):
     o_ch = Instrument.ChannelCreator(LakeShoreHeaterOutputChannel, (1, 2), prefix='output_')
 
     def __init__(self, adapter, **kwargs):
-        name = 'Lakeshore Model 336 Temperature Controller' if 'name' in kwargs.keys() \
+        name = 'Lakeshore Model 336 Temperature Controller' if 'name' not in kwargs.keys() \
             else kwargs.pop('name')
         super().__init__(adapter, name, **kwargs)
