@@ -34,7 +34,9 @@ log.addHandler(logging.NullHandler())
 
 
 class LakeShoreTemperatureInputChannel(Channel):
-    """ Temperature input channel on a lakeshore temperature monitor.
+    """ Temperature input channel on a lakeshore temperature monitor. Reads the temperature in
+    kelvin, celcius, or sensor units. Also provides a method to block the program until a given
+    stable temperature is reached.
     """
 
     kelvin = Instrument.measurement('KRDG? {ch}', """Read the temperature in kelvin from a channel.""")
@@ -44,7 +46,7 @@ class LakeShoreTemperatureInputChannel(Channel):
     def wait_for_temperature(self, target, unit='kelvin', accuracy=0.1,
                              interval=1, timeout=360,
                              should_stop=lambda: False):
-        """ Blocks the program, waiting for the temperature to reach the setpoint
+        """ Blocks the program, waiting for the temperature to reach the target
         within the accuracy (%), checking this each interval time in seconds.
 
         :param target: Target temperature in kelvin, celcius, or sensor units.
@@ -75,7 +77,9 @@ class LakeShoreTemperatureInputChannel(Channel):
 
 
 class LakeShoreHeaterOutputChannel(Channel):
-    """ Heater output channel on a lakeshore temperature controller.
+    """ Heater output channel on a lakeshore temperature controller. Provides properties to query
+    the output power in percent of the max, set the manual output power, heater range, and PID
+    temperature setpoint.
     """
 
     output = Instrument.measurement('HTR? {ch}', """Query the heater output in percent of the max.""")

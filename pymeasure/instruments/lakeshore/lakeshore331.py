@@ -37,6 +37,8 @@ class LakeShore331(Instrument):
     a high-level interface for interacting with the instrument. Note that the
     331 provides two input channels (A and B) and two output channels (1 and 2).
     This driver makes use of the pymeasure :ref:`Channels Interface <channels>`
+    with an A, B :class:`Temperature Input Channel <pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreTemperatureInputChannel>`
+    and a 1, 2 :class:`Heater Output Channel <pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreHeaterOutputChannel>`.
 
     .. code-block:: python
 
