@@ -23,6 +23,7 @@
 #
 
 import pytest
+from unittest.mock import ANY
 
 from time import sleep
 
@@ -112,12 +113,19 @@ class TestTeledyneHDO6xxx:
         actual = autoscaled_instrument.ch(1).current_configuration
         assert actual == expected
 
-    def test_removed_property(self, instrument):
+    def test_removed_property_channel(self, instrument):
         """Verify the behaviour of a removed property."""
         props = ["trigger_level2", "skew_factor", "unit", "invert"]
         for prop in props:
             with pytest.raises(NotImplementedError):
                 _ = getattr(instrument.ch(1), prop)
+
+    def test_removed_property(self, instrument):
+        """Verify the behaviour of a removed property."""
+        props = ["timebase_hor_magnify", "acquisition_status"]
+        for prop in props:
+            with pytest.raises(NotImplementedError):
+                _ = getattr(instrument, prop)
 
     @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
     def test_ch_bwlimit(self, instrument, case):
@@ -170,6 +178,56 @@ class TestTeledyneHDO6xxx:
         for case in self.TRIGGER_SLOPES:
             autoscaled_instrument.ch_1.trigger_slope = case
             assert autoscaled_instrument.ch_1.trigger_slope == case
+
+    # Timebase
+
+    def test_timebase(self, autoscaled_instrument):
+        autoscaled_instrument.timebase_scale = 5e-4
+        autoscaled_instrument.timebase_offset = 0
+        expected = {
+            "timebase_scale": 5e-4,
+            "timebase_offset": 0.0,
+        }
+        actual = autoscaled_instrument.timebase
+        for key, val in actual.items():
+            assert pytest.approx(val, 0.1) == expected[key]
+
+    def test_timebase_scale(self, resetted_instrument):
+        resetted_instrument.timebase_scale = 1e-3
+        assert resetted_instrument.timebase_scale == 1e-3
+
+    def test_timebase_offset(self, instrument):
+        instrument.timebase_offset = 1e-3
+        assert instrument.timebase_offset == 1e-3
+
+    # Acquisition
+
+    @pytest.mark.parametrize("case", WAVEFORM_POINTS)
+    def test_waveform_points(self, instrument, case):
+        instrument.waveform_points = case
+        assert instrument.waveform_points == case
+
+    def test_waveform_preamble(self, autoscaled_instrument):
+        autoscaled_instrument.ch_1.offset = 0
+        autoscaled_instrument.waveform_points = 0
+        autoscaled_instrument.waveform_first_point = 0
+        autoscaled_instrument.waveform_sparsing = 1
+        autoscaled_instrument.waveform_source = "C1"
+        expected_preamble = {
+            "sparsing": 1.0,
+            "requested_points": 0.0,
+            "memory_size": 2.5e6,
+            "transmitted_points": None,
+            "first_point": 0.0,
+            "source": "C1",
+            "grid_number": 14,
+            "xdiv": 1e-6,
+            "xoffset": 0.0,
+            "ydiv": 0.05,
+            "yoffset": 0.0,
+        }
+        preamble = autoscaled_instrument.waveform_preamble
+        assert preamble == expected_preamble
 
 
 if __name__ == "__main__":

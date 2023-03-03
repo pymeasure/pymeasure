@@ -151,6 +151,34 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
 
     channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
 
+    # HMAG and the like now only apply to math functions (F1..Fn):
+
+    @property
+    def timebase_hor_magnify(self):
+        raise NotImplementedError("Property is not available on this device")
+
+    @property
+    def timebase_hor_position(self):
+        raise NotImplementedError("Property is not available on this device")
+
+    # PEAK_DETECT, AVERAGE, etc. are moved to functions (F1..Fn);
+
+    @property
+    def acquisition_type(self):
+        raise NotImplementedError("Property is not available on this device")
+
+    @property
+    def acquisition_average(self):
+        raise NotImplementedError("Property is not available on this device")
+
+    @property
+    def acquisition_status(self):
+        raise NotImplementedError("Property is not available on this device")
+
+    @property
+    def acquisition_sampling_rate(self):
+        raise NotImplementedError("Property is not available on this device")
+
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
         """Sets the internal low-pass filter for all channels.""",
@@ -158,3 +186,71 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
         values=ScopeChannel._BANDWIDTH_LIMITS,
         get_process=_channel_results_to_dict,
     )
+
+    @property
+    def timebase(self):
+        """ Read timebase setup as a dict containing the following keys:
+            - "timebase_scale": horizontal scale in seconds/div (float)
+            - "timebase_offset": interval in seconds between the trigger and the reference
+            position (float)
+        """
+        tb_setup = {
+            "timebase_scale": self.timebase_scale,
+            "timebase_offset": self.timebase_offset,
+        }
+        return tb_setup
+
+    memory_size = Instrument.control(
+        "MSIZ?", "MSIZ %s",
+        """A float parameter or string that selects the maximum depth of memory.
+        Use for example 500, 100e6, "100K", "25MA".
+        
+        The reply will always be a float.
+        """
+    )
+
+    @property
+    def waveform_preamble(self):
+        """ Get preamble information for the selected waveform source as a dict with the
+        following keys:
+        - "requested_points": number of data points requested by the user (int)
+        - "sampled_points": number of data points sampled by the oscilloscope (int)
+        - "transmitted_points": number of data points actually transmitted (optional) (int)
+        - "memory_size": size of the oscilloscope internal memory in bytes (int)
+        - "sparsing": sparse point. It defines the interval between data points. (int)
+        - "first_point": address of the first data point to be sent (int)
+        - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
+        - "grid_number": number of horizontal grids (it is a read-only property)
+        - "xdiv": horizontal scale (units per division) in seconds
+        - "xoffset": time interval in seconds between the trigger event and the reference position
+        - "ydiv": vertical scale (units per division) in Volts
+        - "yoffset": value that is represented at center of screen in Volts
+        """
+        vals = self.values("WFSU?")
+        preamble = {
+            "sparsing": vals[vals.index("SP") + 1],
+            "requested_points": vals[vals.index("NP") + 1],
+            "first_point": vals[vals.index("FP") + 1],
+            "transmitted_points": None,
+            "source": self.waveform_source,
+            "grid_number": self._grid_number,
+            "memory_size": self.memory_size,
+            "xdiv": self.timebase_scale,
+            "xoffset": self.timebase_offset
+        }
+        return self._fill_yaxis_preamble(preamble)
+
+    def _fill_yaxis_preamble(self, preamble=None):
+        """ Fill waveform preamble section concerning the Y-axis.
+        :param preamble: waveform preamble to be filled
+        :return: filled preamble
+        """
+        if preamble is None:
+            preamble = {}
+        if self.waveform_source == "MATH":
+            preamble["ydiv"] = self.math_vdiv
+            preamble["yoffset"] = self.math_vpos
+        else:
+            preamble["ydiv"] = self.ch(self.waveform_source).scale
+            preamble["yoffset"] = self.ch(self.waveform_source).offset
+        return preamble
