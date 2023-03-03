@@ -41,6 +41,20 @@ def test_init():
         pass  # Verify the expected communication.
 
 
+def test_removed_property():
+    """Verify the behaviour of a property belonging to a cousin device."""
+    with expected_protocol(TeledyneHDO6xxx, [(b'CHDR OFF', None)]) as instr:
+        props = ["timebase_hor_magnify"]
+        for prop in props:
+            with pytest.raises(AttributeError):
+                _ = getattr(instr, prop)
+
+        ch_props = ["trigger_level2", "skew_factor", "unit", "invert"]
+        for prop in ch_props:
+            with pytest.raises(AttributeError):
+                _ = getattr(instr.ch(1), prop)
+
+
 @pytest.mark.parametrize("channel", INVALID_CHANNELS)
 def test_invalid_source(channel):
     with pytest.raises(ValueError):
@@ -59,13 +73,17 @@ def test_bwlimit():
              (b"BWL C1,OFF", None),
              (b"BWL?", b"C1,OFF"),
              (b"BWL C1,200MHZ", None),
-             (b"BWL?", b"C1,200MHZ")
+             (b"BWL?", b"C1,200MHZ"),
+             (b"BWL C1,ON", None),
+             (b"BWL?", b"C1,ON"),
              ]
     ) as instr:
         instr.ch_1.bwlimit = "OFF"
         assert instr.bwlimit["C1"] == "OFF"
         instr.ch_1.bwlimit = "200MHZ"
         assert instr.bwlimit["C1"] == "200MHZ"
+        instr.ch_1.bwlimit = "ON"
+        assert instr.bwlimit["C1"] == "ON"
 
 
 def test_offset():

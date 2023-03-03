@@ -161,6 +161,27 @@ def _measure_delay_validator(value, values):
     return output
 
 
+def _results_list_to_dict(results):
+    """Turn a list into a dict, using the uneven indices as keys
+
+    E.g. turn ['C1', 'OFF', 'C2', 'OFF'] into {'C1': 'OFF', 'C2': 'OFF'}
+    """
+    keys = results[::2]
+    values = results[1::2]
+    return dict(zip(keys, values))
+
+
+def _remove_unit(value):
+    """Remove a unit from the returned string and cast to float."""
+    if isinstance(value, float):
+        return value
+
+    if value.endswith(" V"):
+        value = value[:-2]
+
+    return float(value)
+
+
 def _intensity_validator(value, values):
     """ Validate the input of the intensity property (grid intensity and trace intensity)
     :param value: input parameters as a 2-element tuple
@@ -212,7 +233,9 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
-    _TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS", "window": "WINDOW"}
+    BANDWIDTH_LIMITS = ["OFF", "ON"]
+
+    TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS"}
 
     # Capture and split a reply like "RMS,281E-6" and "RMS,281E-6,OK"
     # The third response item ("state"), is not present in all oscilloscopes
@@ -224,10 +247,14 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
+        """Sets the internal low-pass filter for all channels.
+        
+        The current bandwidths can only be read back for all channels at once!
+        """,
         validator=strict_discrete_set,
-        values=_BOOLS,
-        map_values=True
+        values=BANDWIDTH_LIMITS,
+        get_process=_results_list_to_dict,
+        dynamic=True,
     )
 
     coupling = Instrument.control(
@@ -246,14 +273,6 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         map_values=True
     )
 
-    invert = Instrument.control(
-        "INVS?", "INVS %s",
-        """ Toggles the inversion of the input signal. (strict bool)""",
-        validator=strict_discrete_set,
-        values=_BOOLS,
-        map_values=True
-    )
-
     offset = Instrument.control(
         "OFST?", "OFST %.2EV",
         """ A float parameter to set value that is represented at center of screen in
@@ -261,17 +280,6 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         value is outside of the legal range, the offset value is automatically set to the nearest
         legal value.
         """
-    )
-
-    skew_factor = Instrument.control(
-        "SKEW?", "SKEW %.2ES",
-        """ Channel-to-channel skew factor for the specified channel. Each analog channel can be
-        adjusted + or -100 ns for a total of 200 ns difference between channels. You can use
-        the oscilloscope's skew control to remove cable-delay errors between channels.
-        """,
-        validator=strict_range,
-        values=[-1e-7, 1e-7],
-        preprocess_reply=lambda v: v.rstrip('S')
     )
 
     probe_attenuation = Instrument.control(
@@ -285,14 +293,6 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
     scale = Instrument.control(
         "VDIV?", "VDIV %.2EV",
         """ A float parameter that specifies the vertical scale (units per division) in Volts."""
-    )
-
-    unit = Instrument.control(
-        "UNIT?", "UNIT %s",
-        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger
-        level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
-        validator=strict_discrete_set,
-        values=["A", "V"]
     )
 
     trigger_coupling = Instrument.control(
@@ -319,17 +319,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
             When setting the trigger level it must be divided by the probe attenuation. This is
             not documented in the datasheet and it is probably a bug of the scope firmware.
             An out-of-range value will be adjusted to the closest legal value.
-        """
-    )
-
-    trigger_level2 = Instrument.control(
-        "TRLV2?", "TRLV2 %.2EV",
-        """ A float parameter that sets the lower trigger level voltage for the specified source.
-        Higher and lower trigger levels are used with runt/slope triggers.
-        When setting the trigger level it must be divided by the probe attenuation. This is
-        not documented in the datasheet and it is probably a bug of the scope firmware.
-        An out-of-range value will be adjusted to the closest legal value.
-        """
+        """,
+        get_process=_remove_unit,
     )
 
     trigger_slope = Instrument.control(
@@ -339,8 +330,9 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         <trig_slope>:={NEG,POS} for other trigger
         """,
         validator=strict_discrete_set,
-        values=_TRIGGER_SLOPES,
-        map_values=True
+        values=TRIGGER_SLOPES,
+        map_values=True,
+        dynamic=True,
     )
 
     _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
@@ -491,6 +483,8 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
+    CHANNEL_CLS = TeledyneOscilloscopeChannel
+
     channels = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, (1, 2, 3, 4))
 
     def __init__(self, adapter, name="Teledyne Oscilloscope", **kwargs):
@@ -521,6 +515,14 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         if the communication header is anything other than OFF, the whole driver breaks down.
         """
         self._comm_header = "OFF"
+
+    @staticmethod
+    def get_channel_cls():
+        """Dynamically get the class of the channel of this scope.
+
+        This is a static method that should be overridden by new child classes.
+        """
+        return TeledyneOscilloscopeChannel
 
     def ch(self, source):
         """ Get channel object from its index or its name. Or if source is "math", just return the
@@ -568,6 +570,19 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         values=["OFF", "SHORT", "LONG"],
     )
 
+    ###########
+    # General #
+    ###########
+
+    bwlimit = Instrument.control(
+        "BWL?", "BWL %s",
+        """Sets the internal low-pass filter for all channels.""",
+        validator=strict_discrete_set,
+        values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
+        get_process=_results_list_to_dict,
+        dynamic=True,
+    )
+
     ##################
     # Timebase Setup #
     ##################
@@ -586,57 +601,32 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         values=[1e-9, 100]
     )
 
-    timebase_hor_magnify = Instrument.control(
-        "HMAG?", "HMAG %.2ES",
-        """ A float parameter that sets the zoomed (delayed) window horizontal scale (
-        seconds/div). The main sweep scale determines the range for this command. """,
-        validator=strict_range,
-        values=[1e-9, 20e-3]
-    )
-
-    timebase_hor_position = Instrument.control(
-        "HPOS?", "HPOS %.2ES",
-        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of
-        the main sweep. The main sweep range and the main sweep horizontal position determine
-        the range for this command. The value for this command must keep the zoomed view window
-        within the main sweep range.""",
-    )
-
     @property
     def timebase(self):
         """ Read timebase setup as a dict containing the following keys:
             - "timebase_scale": horizontal scale in seconds/div (float)
             - "timebase_offset": interval in seconds between the trigger and the reference
             position (float)
-            - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
-            - "timebase_hor_position": horizontal position in the zoomed window in seconds
-            (float)"""
+        """
         tb_setup = {
             "timebase_scale": self.timebase_scale,
             "timebase_offset": self.timebase_offset,
-            "timebase_hor_magnify": self.timebase_hor_magnify,
-            "timebase_hor_position": self.timebase_hor_position
         }
         return tb_setup
 
-    def timebase_setup(self, scale=None, offset=None, hor_magnify=None, hor_position=None):
+    def timebase_setup(self, scale=None, offset=None):
         """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
 
         :param scale: interval in seconds between the trigger event and the reference position.
         :param offset: horizontal scale per division in seconds/div.
-        :param hor_magnify: horizontal scale in the zoomed window in seconds/div.
-        :param hor_position: horizontal position in the zoomed window in seconds."""
+        """
 
         if scale is not None:
             self.timebase_scale = scale
         if offset is not None:
             self.timebase_offset = offset
-        if hor_magnify is not None:
-            self.timebase_hor_magnify = hor_magnify
-        if hor_position is not None:
-            self.timebase_hor_position = hor_position
 
     ###############
     # Acquisition #

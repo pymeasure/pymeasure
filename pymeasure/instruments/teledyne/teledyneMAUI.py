@@ -25,78 +25,19 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
-    TeledyneOscilloscopeChannel
-
-
-def _channel_results_to_dict(results):
-    """Turn a per-channel result list into a more convenient dict.
-
-    E.g. turn ['C1', 'OFF', 'C2', 'OFF', 'C3', 'OFF', 'C4', 'OFF'] into
-    {'C1': 'OFF', 'C2': 'OFF', 'C3': 'OFF', 'C4': 'OFF'}
-    """
-    keys = results[::2]
-    values = results[1::2]
-    return dict(zip(keys, values))
-
-
-def _remove_unit(value):
-    """Remove a unit from the returned string and cast to float."""
-    if value.endswith(" V"):
-        value = value[:-2]
-
-    return float(value)
+    TeledyneOscilloscopeChannel, _results_list_to_dict
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
     """Base class for channels on a :class:`TeledyneMAUI` device."""
 
     # For some reason "20MHZ" is registered as "ON"
-    _BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
+    BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
 
-    _TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS"}
+    TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS"}
 
-    @property
-    def trigger_level2(self):
-        raise NotImplementedError("Property is not available on this device")
-
-    @property
-    def skew_factor(self):
-        raise NotImplementedError("Property is not available on this device")
-
-    @property
-    def unit(self):
-        raise NotImplementedError("Property is not available on this device")
-
-    @property
-    def invert(self):
-        # There is checkbox on the oscilloscope labeled "Invert", but
-        # I cannot find a Visa command to match
-        raise NotImplementedError("Property is not available on this device")
-
-    bwlimit = Instrument.control(
-        "BWL?", "BWL %s",
-        """
-        Sets bandwidth limit for this channel.
-
-        The current bandwidths can only be read back for all channels at once!
-        """,
-        validator=strict_discrete_set,
-        values=_BANDWIDTH_LIMITS,
-        get_process=_channel_results_to_dict,
-    )
-
-    trigger_level = Instrument.control(
-        "TRLV?", "TRLV %.2EV",
-        """ A float parameter that sets the trigger level voltage for the active trigger source.
-            When there are two trigger levels to set, this command is used to set the higher
-            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
-            the lower trigger level voltage.
-            When setting the trigger level it must be divided by the probe attenuation. This is
-            not documented in the datasheet and it is probably a bug of the scope firmware.
-            An out-of-range value will be adjusted to the closest legal value.
-        """,
-        get_process=_remove_unit,
-    )
+    # Reset listed values for existing commands:
+    bwlimit_values = BANDWIDTH_LIMITS
 
     def autoscale(self):
         """Perform auto-setup command for channel."""
@@ -143,15 +84,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     channels = Instrument.ChannelCreator(TeledyneMAUIChannel, (1, 2, 3, 4))
 
-    # HMAG and the like now only apply to math functions (F1..Fn):
-
-    @property
-    def timebase_hor_magnify(self):
-        raise NotImplementedError("Property is not available on this device")
-
-    @property
-    def timebase_hor_position(self):
-        raise NotImplementedError("Property is not available on this device")
+    # Change listed values for existing commands:
+    bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS
 
     # PEAK_DETECT, AVERAGE, etc. are moved to functions (F1..Fn);
 
@@ -170,14 +104,6 @@ class TeledyneMAUI(TeledyneOscilloscope):
     @property
     def acquisition_sampling_rate(self):
         raise NotImplementedError("Property is not available on this device")
-
-    bwlimit = Instrument.control(
-        "BWL?", "BWL %s",
-        """Sets the internal low-pass filter for all channels.""",
-        validator=strict_discrete_set,
-        values=TeledyneMAUIChannel._BANDWIDTH_LIMITS,
-        get_process=_channel_results_to_dict,
-    )
 
     @property
     def timebase(self):

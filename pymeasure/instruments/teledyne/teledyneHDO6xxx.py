@@ -46,3 +46,7 @@ class TeledyneHDO6xxx(TeledyneMAUI):
     """
 
     channels = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, (1, 2, 3, 4))
+
+    @staticmethod
+    def get_channel_cls():
+        return TeledyneHDO6xxxChannel

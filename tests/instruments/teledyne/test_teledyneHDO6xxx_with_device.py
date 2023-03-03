@@ -113,20 +113,6 @@ class TestTeledyneHDO6xxx:
         actual = autoscaled_instrument.ch(1).current_configuration
         assert actual == expected
 
-    def test_removed_property_channel(self, instrument):
-        """Verify the behaviour of a removed property."""
-        props = ["trigger_level2", "skew_factor", "unit", "invert"]
-        for prop in props:
-            with pytest.raises(NotImplementedError):
-                _ = getattr(instrument.ch(1), prop)
-
-    def test_removed_property(self, instrument):
-        """Verify the behaviour of a removed property."""
-        props = ["timebase_hor_magnify", "acquisition_status"]
-        for prop in props:
-            with pytest.raises(NotImplementedError):
-                _ = getattr(instrument, prop)
-
     @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
     def test_ch_bwlimit(self, instrument, case):
         instrument.bwlimit = case
