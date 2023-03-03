@@ -39,9 +39,18 @@ class LakeShoreTemperatureInputChannel(Channel):
     stable temperature is reached.
     """
 
-    kelvin = Instrument.measurement('KRDG? {ch}', """Read the temperature in kelvin from a channel.""")
-    celcius = Instrument.measurement('CRDG? {ch}', """Read the temperature in celcius from a channel.""")
-    sensor = Instrument.measurement('SRDG? {ch}', """Read the temperature in sensor units from a channel.""")
+    kelvin = Instrument.measurement(
+        'KRDG? {ch}',
+        """Read the temperature in kelvin from a channel."""
+    )
+    celcius = Instrument.measurement(
+        'CRDG? {ch}',
+        """Read the temperature in celcius from a channel."""
+    )
+    sensor = Instrument.measurement(
+        'SRDG? {ch}',
+        """Read the temperature in sensor units from a channel."""
+    )
 
     def wait_for_temperature(self, target, unit='kelvin', accuracy=0.1,
                              interval=1, timeout=360,
@@ -57,8 +66,10 @@ class LakeShoreTemperatureInputChannel(Channel):
         :param should_stop: A function that returns True if waiting should stop, by
                             default this always returns False
         """
+
         def percent_difference(temperature):
             return np.abs(100 * (temperature - target) / target)
+
         t = time()
         target_acquired = False
         while not target_acquired:
@@ -69,9 +80,9 @@ class LakeShoreTemperatureInputChannel(Channel):
             sleep(interval)
             if (time() - t) > timeout:
                 raise Exception((
-                            "Timeout occurred after waiting %g seconds for "
-                            "the LakeShore 331 temperature to reach %g %s."
-                        ) % (timeout, target, unit))
+                                    "Timeout occurred after waiting %g seconds for "
+                                    "the LakeShore 331 temperature to reach %g %s."
+                                ) % (timeout, target, unit))
             if should_stop():
                 return
 
@@ -82,15 +93,25 @@ class LakeShoreHeaterOutputChannel(Channel):
     temperature setpoint.
     """
 
-    output = Instrument.measurement('HTR? {ch}', """Query the heater output in percent of the max.""")
-    mout = Instrument.control('MOUT? {ch}', 'MOUT {ch},%f', """Manual heater output in percent.""")
-    range = Instrument.control('RANGE? {ch}', 'RANGE {ch},%i',
-                               """String property controlling heater range, which can take the
-                               values: off, low, medium, and high.""",
-                               validator=strict_discrete_set,
-                               values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
-                               map_values=True)
+    output = Instrument.measurement(
+        'HTR? {ch}',
+        """Query the heater output in percent of the max."""
+    )
+    mout = Instrument.control(
+        'MOUT? {ch}',
+        'MOUT {ch},%f',
+        """Manual heater output in percent."""
+    )
+    range = Instrument.control(
+        'RANGE? {ch}',
+        'RANGE {ch},%i',
+        """String property controlling heater range, which can take the 
+       values: off, low, medium, and high.""",
+        validator=strict_discrete_set,
+        values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
+        map_values=True)
     setpoint = Instrument.control(
-        'SETP? {ch}', 'SETP {ch},%f', """A floating point property that control the setpoint temperature
+        'SETP? {ch}', 'SETP {ch},%f',
+        """A floating point property that control the setpoint temperature
         in the preferred units of the control loop sensor."""
     )

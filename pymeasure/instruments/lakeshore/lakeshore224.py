@@ -33,8 +33,7 @@ log.addHandler(logging.NullHandler())
 class LakeShore224(Instrument):
     """ Represents the Lakeshore 224 Temperature monitor and provides a high-level interface
     for interacting with the instrument. Note that the 224 provides 12 temperature input channels
-    (A, B, C1-5, D1-5). This driver makes use of the pymeasure :ref:`Channels Interface <channels>`
-    with an (A, B, C1-5, D1-5) :class:`Temperature Input Channel <pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreTemperatureInputChannel>`.
+    (A, B, C1-5, D1-5). This driver makes use of the :ref:`LakeShoreChannels`
 
     .. code-block:: python
 
@@ -48,4 +47,5 @@ class LakeShore224(Instrument):
     i_ch = Instrument.ChannelCreator(LakeShoreTemperatureInputChannel, tchannels, prefix='input_')
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, 'Lakeshore Model 224 Temperature Monitor', **kwargs)
+        name = kwargs.get('name', 'Lakeshore Model 224 Temperature Controller')
+        super().__init__(adapter, name, **kwargs)
