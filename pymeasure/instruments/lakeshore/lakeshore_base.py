@@ -105,7 +105,7 @@ class LakeShoreHeaterOutputChannel(Channel):
     range = Instrument.control(
         'RANGE? {ch}',
         'RANGE {ch},%i',
-        """String property controlling heater range, which can take the 
+        """String property controlling heater range, which can take the
        values: off, low, medium, and high.""",
         validator=strict_discrete_set,
         values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
