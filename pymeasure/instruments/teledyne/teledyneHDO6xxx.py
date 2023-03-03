@@ -53,26 +53,39 @@ def _remove_unit(value):
 class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
     """Extended Channel object for the HDO6xxx."""
 
-    # For reason "20MHZ" is registered as "ON"
-    BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
+    # For some reason "20MHZ" is registered as "ON"
+    _BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
 
-    trigger_level2 = None
+    _TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS"}
 
-    skew_factor = None
+    @property
+    def trigger_level2(self):
+        raise NotImplementedError("Property is not available on this device")
 
-    unit = None
+    @property
+    def skew_factor(self):
+        raise NotImplementedError("Property is not available on this device")
 
-    invert = None
+    @property
+    def unit(self):
+        raise NotImplementedError("Property is not available on this device")
 
-    bwlimit = Instrument.setting(
-        "BWL %s",
+    @property
+    def invert(self):
+        # There is checkbox on the oscilloscope labeled "Invert", but
+        # I cannot find a Visa command to match
+        raise NotImplementedError("Property is not available on this device")
+
+    bwlimit = Instrument.control(
+        "BWL?", "BWL %s",
         """
         Sets bandwidth limit for this channel.
         
-        The current bandwidths can only be read back for all channels at once.
+        The current bandwidths can only be read back for all channels at once!
         """,
         validator=strict_discrete_set,
-        values=BANDWIDTH_LIMITS,
+        values=_BANDWIDTH_LIMITS,
+        get_process=_channel_results_to_dict,
     )
 
     trigger_level = Instrument.control(
@@ -97,7 +110,7 @@ class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
         """ Read channel configuration as a dict containing the following keys:
             - "channel": channel number (int)
             - "attenuation": probe attenuation (float)
-            - "bandwidth_limit": bandwidth limiting enabled (bool)
+            - "bandwidth_limit": bandwidth limiting, parsed for this channel (str)
             - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
             - "offset": vertical offset (float)
             - "display": currently displayed (bool)
@@ -107,10 +120,12 @@ class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
             - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
         """
 
+        bwlimits = self.bwlimit  # Result only exists for all channels
+
         ch_setup = {
             "channel": self.id,
             "attenuation": self.probe_attenuation,
-            "bandwidth_limit": self.bwlimit,
+            "bandwidth_limit": bwlimits[f"C{self.id}"],
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
@@ -140,6 +155,6 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
         "BWL?", "BWL %s",
         """Sets the internal low-pass filter for all channels.""",
         validator=strict_discrete_set,
-        values=ScopeChannel.BANDWIDTH_LIMITS,
+        values=ScopeChannel._BANDWIDTH_LIMITS,
         get_process=_channel_results_to_dict,
     )

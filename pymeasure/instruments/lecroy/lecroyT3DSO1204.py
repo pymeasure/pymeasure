@@ -216,6 +216,8 @@ class ScopeChannel(Channel):
 
     _BOOLS = {True: "ON", False: "OFF"}
 
+    _TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS", "window": "WINDOW"}
+
     # Capture and split a reply like "RMS,281E-6" and "RMS,281E-6,OK"
     # The third response item ("state"), is not present in all oscilloscopes
     # For compatibility it is captured if it can, but ignored otherwise
@@ -341,7 +343,7 @@ class ScopeChannel(Channel):
         <trig_slope>:={NEG,POS} for other trigger
         """,
         validator=strict_discrete_set,
-        values={"negative": "NEG", "positive": "POS", "window": "WINDOW"},
+        values=_TRIGGER_SLOPES,
         map_values=True
     )
 
