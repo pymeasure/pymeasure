@@ -29,7 +29,9 @@ from decimal import Decimal
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
+    TeledyneOscilloscopeChannel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -209,7 +211,7 @@ class _ChunkResizer:
             self.adapter.connection.chunk_size = self.old_chunk_size
 
 
-class ScopeChannel(Channel):
+class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
     """ Implementation of a LeCroy T3DSO1204 Oscilloscope channel.
 
     Implementation modeled on Channel object of Keysight DSOX1102G instrument. """
@@ -473,7 +475,7 @@ class ScopeChannel(Channel):
         return ch_setup
 
 
-class LeCroyT3DSO1204(Instrument):
+class LeCroyT3DSO1204(TeledyneOscilloscope):
     """ Represents the LeCroy T3DSO1204 Oscilloscope interface for interacting with the instrument.
 
     Refer to the LeCroy T3DSO1204 Oscilloscope Programmer's Guide for further details about
@@ -503,7 +505,7 @@ class LeCroyT3DSO1204(Instrument):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
-    channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
+    channels = Instrument.ChannelCreator(LeCroyT3DSO1204Channel, (1, 2, 3, 4))
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)

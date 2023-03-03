@@ -22,7 +22,18 @@
 # THE SOFTWARE.
 #
 
-from .teledyneT3AFG import TeledyneT3AFG
-from .teledyne_oscilloscope import TeledyneOscilloscope
-from .teledyneMAUI import TeledyneMAUI
-from .teledyneHDO6xxx import TeledyneHDO6xxx
+from abc import ABCMeta
+
+from pymeasure.instruments import Instrument, Channel
+
+
+class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
+    """A base abstract class for channel on a :class:`TeledyneOscilloscope` device."""
+
+
+class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
+    """A base abstract class for any Teledyne Lecroy oscilloscope.
+
+    All Teledyne oscilloscopes have a very similar interface, hence this basic base class to combine
+    them.
+    """

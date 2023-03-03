@@ -25,10 +25,7 @@ import re
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments.lecroy.lecroyT3DSO1204 import (
-    LeCroyT3DSO1204,
-    ScopeChannel as LeCroyT3DSO1204ScopeChannel,
-)
+from pymeasure.instruments.teledyne.teledyneMAUI import TeledyneMAUI, TeledynMAUIChannel
 
 
 def _channel_results_to_dict(results):
@@ -50,7 +47,7 @@ def _remove_unit(value):
     return float(value)
 
 
-class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
+class TeledyneHDO6xxxChannel(TeledynMAUIChannel):
     """Extended Channel object for the HDO6xxx."""
 
     # For some reason "20MHZ" is registered as "ON"
@@ -137,7 +134,7 @@ class ScopeChannel(LeCroyT3DSO1204ScopeChannel):
         return ch_setup
 
 
-class TeledyneHDO6xxx(LeCroyT3DSO1204):
+class TeledyneHDO6xxx(TeledyneMAUI):
     """Reference to the Teledyne-Lecroy HDo6xxx class of oscilloscopes.
 
     Most functionality is inherited from :class:`LeCroyT3DSO1204`.
@@ -149,7 +146,7 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
     .. _: https://cdn.teledynelecroy.com/files/manuals/wp_rcm_revc.pdf
     """
 
-    channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
+    channels = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, (1, 2, 3, 4))
 
     # HMAG and the like now only apply to math functions (F1..Fn):
 
@@ -183,7 +180,7 @@ class TeledyneHDO6xxx(LeCroyT3DSO1204):
         "BWL?", "BWL %s",
         """Sets the internal low-pass filter for all channels.""",
         validator=strict_discrete_set,
-        values=ScopeChannel._BANDWIDTH_LIMITS,
+        values=TeledyneHDO6xxxChannel._BANDWIDTH_LIMITS,
         get_process=_channel_results_to_dict,
     )
 

@@ -22,7 +22,17 @@
 # THE SOFTWARE.
 #
 
-from .teledyneT3AFG import TeledyneT3AFG
-from .teledyne_oscilloscope import TeledyneOscilloscope
-from .teledyneMAUI import TeledyneMAUI
-from .teledyneHDO6xxx import TeledyneHDO6xxx
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
+    TeledyneOscilloscopeChannel
+
+
+class TeledynMAUIChannel(TeledyneOscilloscopeChannel):
+    """Base class for channels on a :class:`TeledyneMAUI` device."""
+
+
+class TeledyneMAUI(TeledyneOscilloscope):
+    """A base class for the MAUI-type of Teledyne oscilloscopes.
+
+    This class is not exactly device specific. Nonetheless, it might already work out of the box and
+    therefore this class not abstract.
+    """
