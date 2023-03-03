@@ -48,7 +48,7 @@ class TestTeledyneHDO6xxx:
     CHANNEL_COUPLINGS = ["ac 1M", "dc 1M", "ground"]
     ACQUISITION_TYPES = ["normal", "average", "peak", "highres"]
     TRIGGER_LEVELS = [0.125, 0.150, 0.175]
-    TRIGGER_SLOPES = ["negative", "positive", "window"]
+    TRIGGER_SLOPES = ["negative", "positive"]
     ACQUISITION_AVERAGE = [4, 16, 32, 64, 128, 256]
     WAVEFORM_POINTS = [100, 1000, 10000]
     WAVEFORM_SOURCES = ["C1", "C2", "C3", "C4"]
@@ -100,17 +100,24 @@ class TestTeledyneHDO6xxx:
         expected = {
             "channel": 1,
             "attenuation": 1.0,
-            "bandwidth_limit": ['C1', 'OFF', 'C2', 'OFF', 'C3', 'OFF', 'C4', 'OFF'],
+            "bandwidth_limit": "OFF",
             "coupling": "dc 1M",
             "offset": 0.0,
             "display": True,
             "volts_div": 0.05,
             "trigger_coupling": "dc",
-            "trigger_level": "0E-3 V",
+            "trigger_level": 0.0,
             "trigger_slope": "positive",
         }
         actual = autoscaled_instrument.ch(1).current_configuration
         assert actual == expected
+
+    def test_removed_property(self, instrument):
+        """Verify the behaviour of a removed property."""
+        props = ["trigger_level2", "skew_factor", "unit", "invert"]
+        for prop in props:
+            with pytest.raises(NotImplementedError):
+                _ = getattr(instrument.ch(1), prop)
 
     @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
     def test_ch_bwlimit(self, instrument, case):
@@ -137,12 +144,6 @@ class TestTeledyneHDO6xxx:
         assert instrument.ch(ch_number).display == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
-    @pytest.mark.parametrize("case", BOOLEANS)
-    def test_ch_invert(self, instrument, ch_number, case):
-        instrument.ch(ch_number).invert = case
-        assert instrument.ch(ch_number).invert == case
-
-    @pytest.mark.parametrize("ch_number", CHANNELS)
     def test_ch_offset(self, instrument, ch_number):
         instrument.ch(ch_number).offset = 1
         assert instrument.ch(ch_number).offset == 1
@@ -161,11 +162,6 @@ class TestTeledyneHDO6xxx:
         for case in self.TRIGGER_LEVELS:
             autoscaled_instrument.ch_1.trigger_level = case
             assert autoscaled_instrument.ch_1.trigger_level == case
-
-    def test_ch_trigger_level2(self, autoscaled_instrument):
-        for case in self.TRIGGER_LEVELS:
-            autoscaled_instrument.ch_1.trigger_level2 = case
-            assert autoscaled_instrument.ch_1.trigger_level2 == case
 
     def test_ch_trigger_slope(self, autoscaled_instrument):
         with pytest.raises(ValueError):
