@@ -107,8 +107,19 @@ class SerialAdapter(Adapter):
             return self.connection.read(count, **kwargs)
         else:
             # For -1 we empty the buffer completely
-            num_bytes = self.connection.in_waiting + 100  # Read what's already queued + some extra
-            return self.connection.read(num_bytes, **kwargs)
+            return self._read_bytes_until_timeout()
+
+    def _read_bytes_until_timeout(self, **kwargs):
+        """Read from the serial until a timeout occurs, regardless of how many bytes."""
+        # `Serial.readlines()` sounds appropriate instead but it turns out it has an
+        # unpredictable timeout
+        data = bytes()
+        chunk_size = 256
+        while True:
+            chunk = self.connection.read(chunk_size, **kwargs)
+            data += chunk
+            if len(chunk) < chunk_size:  # If fewer bytes got returned, we had a timeout
+                return data
 
     def flush_read_buffer(self):
         """Flush and discard the input buffer."""
