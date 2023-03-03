@@ -36,7 +36,7 @@ class LakeShore331(Instrument):
     """ Represents the Lake Shore 331 Temperature Controller and provides
     a high-level interface for interacting with the instrument. Note that the
     331 provides two input channels (A and B) and two output channels (1 and 2).
-    This driver makes use of the pymeasure channels interface.
+    This driver makes use of the pymeasure :ref:`Channels Interface <channels>`
 
     .. code-block:: python
 
