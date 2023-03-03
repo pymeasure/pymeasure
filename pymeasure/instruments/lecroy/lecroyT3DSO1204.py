@@ -31,7 +31,7 @@ import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
-    TeledyneOscilloscopeChannel
+    TeledyneOscilloscopeChannel, sanitize_source
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -45,9 +45,10 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
     Implementation modeled on Channel object of Keysight DSOX1102G instrument.
     """
 
-    _BANDWIDTH_LIMITS = ["OFF", "ON"]
+    TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS", "window": "WINDOW"}
 
-    _TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS", "window": "WINDOW"}
+    # Change listed values for existing commands:
+    trigger_slope_values = TRIGGER_SLOPES
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
@@ -191,3 +192,167 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
             self.timebase_hor_magnify = hor_magnify
         if hor_position is not None:
             self.timebase_hor_position = hor_position
+
+    ###############
+    # Acquisition #
+    ###############
+
+    acquisition_type = Instrument.control(
+        "ACQW?", "ACQW %s",
+        """ A string parameter that sets the type of data acquisition. Can be "normal", "peak",
+         "average", "highres".""",
+        validator=strict_discrete_set,
+        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
+                "highres": "HIGH_RES"},
+        map_values=True,
+        get_process=lambda v: [v[0].lower(), int(v[1])] if len(v) == 2 and v[0] == "AVERAGE" else v
+    )
+
+    acquisition_average = Instrument.control(
+        "AVGA?", "AVGA %d",
+        """ A integer parameter that selects the average times of average acquisition.""",
+        validator=strict_discrete_set,
+        values=[4, 16, 32, 64, 128, 256, 512, 1024]
+    )
+
+    acquisition_status = Instrument.measurement(
+        "SAST?", """A string parameter that defines the acquisition status of the scope.""",
+        values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
+                "armed": "Arm"},
+        map_values=True
+    )
+
+    acquisition_sampling_rate = Instrument.measurement(
+        "SARA?", """A integer parameter that returns the sample rate of the scope."""
+    )
+
+    def acquisition_sample_size(self, source):
+        """ Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
+        If the source is MATH, the SANU? MATH query does not seem to work, so I return the memory
+        size instead.
+
+        :param source: channel number of channel name.
+        :return: acquisition sample size of that channel. """
+        if isinstance(source, str):
+            source = sanitize_source(source)
+        if source in [1, "C1"]:
+            return self.acquisition_sample_size_c1
+        elif source in [2, "C2"]:
+            return self.acquisition_sample_size_c2
+        elif source in [3, "C3"]:
+            return self.acquisition_sample_size_c3
+        elif source in [4, "C4"]:
+            return self.acquisition_sample_size_c4
+        elif source == "MATH":
+            math_define = self.math_define[1]
+            match = re.match(r"'(\w+)[+\-/*](\w+)'", math_define)
+            return min(self.acquisition_sample_size(match.group(1)),
+                       self.acquisition_sample_size(match.group(2)))
+        else:
+            raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
+
+    acquisition_sample_size_c1 = Instrument.measurement(
+        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 1.
+        Note.
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c2 = Instrument.measurement(
+        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 2.
+        Note.
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c3 = Instrument.measurement(
+        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 3.
+        Note.
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+    )
+
+    acquisition_sample_size_c4 = Instrument.measurement(
+        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        will acquire from the input signal of channel 4.
+        Note.
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+    )
+
+    ##################
+    #    Waveform    #
+    ##################
+
+    memory_size = Instrument.control(
+        "MSIZ?", "MSIZ %s",
+        """ A float parameter that selects the maximum depth of memory.
+        <size>:={7K,70K,700K,7M} for non-interleaved mode. Non-interleaved means a single channel is
+        active per A/D converter. Most oscilloscopes feature two channels per A/D converter.
+        <size>:={14K,140K,1.4M,14M} for interleave mode. Interleave mode means multiple active
+        channels per A/D converter. """,
+        validator=strict_discrete_set,
+        values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
+                14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
+        map_values=True
+    )
+
+    @property
+    def waveform_preamble(self):
+        """ Get preamble information for the selected waveform source as a dict with the
+        following keys:
+        - "type": normal, peak detect, average, high resolution (str)
+        - "requested_points": number of data points requested by the user (int)
+        - "sampled_points": number of data points sampled by the oscilloscope (int)
+        - "transmitted_points": number of data points actually transmitted (optional) (int)
+        - "memory_size": size of the oscilloscope internal memory in bytes (int)
+        - "sparsing": sparse point. It defines the interval between data points. (int)
+        - "first_point": address of the first data point to be sent (int)
+        - "source": source of the data : "C1", "C2", "C3", "C4", "MATH".
+        - "unit": Physical units of the Y-axis
+        - "type":  type of data acquisition. Can be "normal", "peak", "average", "highres"
+        - "average": average times of average acquisition
+        - "sampling_rate": sampling rate (it is a read-only property)
+        - "grid_number": number of horizontal grids (it is a read-only property)
+        - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
+        "auto", "armed"
+        - "xdiv": horizontal scale (units per division) in seconds
+        - "xoffset": time interval in seconds between the trigger event and the reference position
+        - "ydiv": vertical scale (units per division) in Volts
+        - "yoffset": value that is represented at center of screen in Volts
+        """
+        vals = self.values("WFSU?")
+        preamble = {
+            "sparsing": vals[vals.index("SP") + 1],
+            "requested_points": vals[vals.index("NP") + 1],
+            "first_point": vals[vals.index("FP") + 1],
+            "transmitted_points": None,
+            "source": self.waveform_source,
+            "type": self.acquisition_type,
+            "sampling_rate": self.acquisition_sampling_rate,
+            "grid_number": self._grid_number,
+            "status": self.acquisition_status,
+            "memory_size": self.memory_size,
+            "xdiv": self.timebase_scale,
+            "xoffset": self.timebase_offset
+        }
+        preamble["average"] = self.acquisition_average if preamble["type"][0] == "average" else None
+        strict_discrete_set(self.waveform_source, ["C1", "C2", "C3", "C4", "MATH"])
+        preamble["sampled_points"] = self.acquisition_sample_size(self.waveform_source)
+        return self._fill_yaxis_preamble(preamble)
+
+    def _fill_yaxis_preamble(self, preamble=None):
+        """ Fill waveform preamble section concerning the Y-axis.
+        :param preamble: waveform preamble to be filled
+        :return: filled preamble
+        """
+        if preamble is None:
+            preamble = {}
+        if self.waveform_source == "MATH":
+            preamble["ydiv"] = self.math_vdiv
+            preamble["yoffset"] = self.math_vpos
+            preamble["unit"] = None
+        else:
+            preamble["ydiv"] = self.ch(self.waveform_source).scale
+            preamble["yoffset"] = self.ch(self.waveform_source).offset
+            preamble["unit"] = self.ch(self.waveform_source).unit
+        return preamble
