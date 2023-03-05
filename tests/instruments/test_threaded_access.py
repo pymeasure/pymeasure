@@ -1,3 +1,7 @@
+"""Test thread-safe access to instrument connections.
+
+See https://github.com/pymeasure/pymeasure/issues/506
+"""
 #
 # This file is part of the PyMeasure package.
 #
@@ -23,41 +27,38 @@
 #
 import queue
 import threading
+import time
 
-from pymeasure.test import expected_protocol
-from pymeasure.instruments import Instrument
+import pytest
+
+from pymeasure.instruments.fakes import FakeInstrument
 
 
-class ThreadedAccessTester(Instrument):
-    """Pause-able instrument class for testing threaded access.
-
-    It automatically pauses at wait_for() invocations (e.g. during ask).
-    Call its resume() method to continue, and pause() to enable pausing again.
-    """
+class ThreadedAccessTester(FakeInstrument):
+    """Pause-able instrument class for testing threaded access."""
     def __init__(self, adapter, name="Threadtest instr", event_timeout=1):
         super().__init__(adapter, name)
-        self._event = threading.Event()
         self._event_timeout = event_timeout
         self._wait_timed_out = False
 
-    def wait_for(self, query_delay=0):
-        """During ask, wait using a threading.Event has been set."""
-        self._wait_timed_out = not self._event.wait(timeout=self._event_timeout)
+    def wait_for(self, query_delay: threading.Event):
+        """Wait until the passed event has been set.
 
-    def pause(self):
-        self._event.clear()
+        Uses the fact that we can pass a delay to ask(), that is passed to
+        wait_for, to have per-thread events when invoking ask()
+        """
+        timed_out = not query_delay.wait(timeout=self._event_timeout)
+        # Latching way to store timed-out event(s)
+        # TODO: Needs locks or atomic access to be guaranteed to be correct
+        self._wait_timed_out = self._wait_timed_out or timed_out
 
-    def resume(self):
-        self._event.set()
 
-    ctrl = Instrument.control("G?", "S %g", "Control a thing.")
-
-
+@pytest.mark.xfail(strict=True)
 def test_thieving_ask():
     """Avoid that another thread can interrupt an occurring ask() and steal its reply.
 
     mermaid diagram:
-        sequenceDiagram
+    sequenceDiagram
         Note over Thread1: ask(CMD1)
         activate Thread1
         Thread1->>connection: write CMD1
@@ -71,16 +72,24 @@ def test_thieving_ask():
         Note right of Thread1: wrong reply!
         deactivate Thread1
     """
-    with expected_protocol(
-        ThreadedAccessTester,
-        [("G?", "42")],
-    ) as inst:
-        # inst.ctrl == 42
-        print('starting')
-        q1 = queue.Queue()
-        t1 = threading.Thread(target=lambda q: q.put(inst.ctrl), args=[q1])
-        t1.start()
-        inst.resume()
-        t1.join(timeout=2)
-        assert q1.get() == 42
-        assert not inst._wait_timed_out
+    inst = ThreadedAccessTester("")
+
+    q1 = queue.Queue()
+    t1Event = threading.Event()
+    t1 = threading.Thread(target=lambda q, e: q.put(inst.ask("M1", e)), args=(q1, t1Event))
+    t1.start()
+
+    q2 = queue.Queue()
+    t2Event = threading.Event()
+    t2 = threading.Thread(target=lambda q, e: q.put(inst.ask("M2", e)), args=(q2, t2Event))
+    t2.start()
+
+    t2Event.set()  # Wake thread 2 so it could steal the read buffer meant for thread 1
+    time.sleep(0.1)
+    t1Event.set()  # Now wake up thread 1 to fetch its reply
+    t2.join(timeout=2)
+    t1.join(timeout=2)
+
+    assert not inst._wait_timed_out
+    assert q1.get() == "M1"
+    assert q2.get() == "M2"
