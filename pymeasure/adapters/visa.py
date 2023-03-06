@@ -181,6 +181,9 @@ class VISAAdapter(Adapter):
         elif break_on_termchar:
             return self.connection.read_raw(None, **kwargs)
         else:
+            # pyvisa's `read_raw` reads until newline, if no termination_character defined
+            # and if not configured to stop at a termination lane etc.
+            # see https://github.com/pyvisa/pyvisa/issues/728
             result = bytearray()
             while True:
                 try:
