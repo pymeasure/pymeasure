@@ -24,6 +24,7 @@
 
 from inspect import getmembers
 import logging
+from threading import RLock
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -127,6 +128,7 @@ class CommonBase:
     __reserved_prefix = "___"
 
     def __init__(self, preprocess_reply=None, **kwargs):
+        self._rlock = RLock()
         self._special_names = self._setup_special_names()
         self._create_channels()
         if preprocess_reply is not None:
@@ -382,9 +384,10 @@ class CommonBase:
         :param query_delay: Delay between writing and reading in seconds.
         :returns: String returned by the device without read_termination.
         """
-        self.write(command)
-        self.wait_for(query_delay)
-        return self.read()
+        with self._rlock:
+            self.write(command)
+            self.wait_for(query_delay)
+            return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1,
                **kwargs):

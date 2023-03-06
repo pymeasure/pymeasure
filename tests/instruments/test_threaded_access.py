@@ -29,8 +29,6 @@ import queue
 import threading
 import time
 
-import pytest
-
 from pymeasure.instruments.fakes import FakeInstrument
 
 
@@ -53,7 +51,6 @@ class ThreadedAccessTester(FakeInstrument):
         self._wait_timed_out = self._wait_timed_out or timed_out
 
 
-@pytest.mark.xfail(strict=True)
 def test_thieving_ask():
     """Avoid that another thread can interrupt an occurring ask() and steal its reply.
 
