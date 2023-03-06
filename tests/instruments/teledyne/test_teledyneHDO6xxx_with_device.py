@@ -23,7 +23,6 @@
 #
 
 import pytest
-from unittest.mock import ANY
 
 from time import sleep
 
@@ -84,7 +83,7 @@ class TestTeledyneHDO6xxx:
     def test_instrument_connection(self, connected_device_address):
         instrument = TeledyneHDO6xxx(connected_device_address)
         channel = instrument.ch(1)
-        return
+        assert channel is not None
 
     def test_channel_autoset(self, instrument):
         instrument.ch(1).autoscale()
@@ -214,6 +213,103 @@ class TestTeledyneHDO6xxx:
         }
         preamble = autoscaled_instrument.waveform_preamble
         assert preamble == expected_preamble
+
+    # Setup methods
+
+    @pytest.mark.parametrize("ch_number", CHANNELS)
+    def test_channel_setup(self, instrument, ch_number):
+        # Only autoscale on the first channel
+        instrument = instrument
+        if ch_number == self.CHANNELS[0]:
+            instrument.reset()
+            sleep(7)
+            instrument.autoscale()
+            sleep(7)
+
+        # Not testing the actual values assignment since different combinations of
+        # parameters can play off each other.
+        expected = instrument.ch(ch_number).current_configuration
+        instrument.ch(ch_number).setup()
+        assert instrument.ch(ch_number).current_configuration == expected
+        with pytest.raises(AttributeError):
+            instrument.ch(5)
+        instrument.ch(ch_number).setup(
+            bwlimit="ON",
+            coupling="dc 1M",
+            display=True,
+            offset=0.0,
+            probe_attenuation=1.0,
+            scale=0.05,
+            trigger_coupling="dc",
+            trigger_level=0.150,
+            trigger_slope="positive",
+        )
+        expected = {
+            "channel": ch_number,
+            "attenuation": 1.0,
+            "bandwidth_limit": "ON",
+            "coupling": "dc 1M",
+            "offset": 0.0,
+            "display": True,
+            "volts_div": 0.05,
+            "trigger_coupling": "dc",
+            "trigger_level": 0.150,
+            "trigger_slope": "positive",
+        }
+        actual = instrument.ch(ch_number).current_configuration
+        assert actual == expected
+
+    def test_timebase_setup(self, resetted_instrument):
+        expected = resetted_instrument.timebase
+        resetted_instrument.timebase_setup()
+        assert resetted_instrument.timebase == expected
+
+    # Download methods
+
+    def test_hardcopy_setup(self, instrument):
+
+        instrument.hardcopy_setup(
+            device="BMP", format="PORTRAIT", background="Std", destination="FILE",
+            area="GRIDONLY", directory="D:\\Waveforms\\temp"
+        )
+        config_expected = {
+            "DEV": "BMP", "FORMAT": "PORTRAIT", "BCKG": "Std", "DEST": "FILE",
+            "DIR": '"D:\\WAVEFORMS\\TEMP"', "AREA": "GRIDAREAONLY",
+        }
+        config = instrument.hardcopy_setup_current
+        assert config_expected.items() <= config.items()
+
+    def test_download_image_default_arguments(self, autoscaled_instrument):
+        """Note: the path specified here must exist on the device already!"""
+        img = autoscaled_instrument.download_image()
+        assert type(img) is bytearray
+        assert pytest.approx(len(img), 0.1) == 2734135
+
+    # Trigger
+
+    def test_trigger_select(self, resetted_instrument):
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = "edge"
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = ("edge", "c2")
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = ("edge", "c2", "time")
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = ("ABCD", "c1", "time", 0)
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = ("edge", "c1", "time", 1000)
+        with pytest.raises(ValueError):
+            resetted_instrument.trigger_select = ("edge", "c1", "time", 0, 1)
+        resetted_instrument.trigger_select = ("edge", "c1", "off")
+        resetted_instrument.trigger_select = ("EDGE", "C1", "OFF")
+        assert resetted_instrument.trigger_select == ["edge", "c1", "off"]
+        resetted_instrument.trigger_select = ("glit", "c1", "p2", 1e-3, 2e-3)
+        assert resetted_instrument.trigger_select == ["glit", "c1", "p2", 1e-3, 2e-3]
+
+    def test_trigger_setup(self, resetted_instrument):
+        expected = resetted_instrument.trigger
+        resetted_instrument.trigger_setup(**expected)
+        assert resetted_instrument.trigger == expected
 
 
 if __name__ == "__main__":

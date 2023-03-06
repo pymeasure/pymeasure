@@ -23,20 +23,48 @@
 
 import logging
 import re
-import sys
-import time
-from decimal import Decimal
-
-import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
     TeledyneOscilloscopeChannel, sanitize_source
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-    strict_discrete_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+def _math_define_validator(value, values):
+    """
+    Validate the input of the math_define property
+    :param value: input parameters as a 3-element tuple
+    :param values: allowed space for each parameter
+    """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) != 3:
+        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+    output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
+    for i in range(3):
+        strict_discrete_set(output[i], values=values[i])
+    return output
+
+
+def _measure_delay_validator(value, values):
+    """
+    Validate the input of the measure_delay property
+    :param value: input parameters as a 3-element tuple
+    :param values: allowed space for each parameter
+    """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) != 3:
+        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+    output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))
+    if output[1][0] > output[2][0]:
+        raise ValueError(f'First channel number {output[1]} must be <= than second one {output[2]}')
+    for i in range(3):
+        strict_discrete_set(output[i], values=values[i])
+    return output
 
 
 class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
@@ -356,3 +384,89 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
             preamble["yoffset"] = self.ch(self.waveform_source).offset
             preamble["unit"] = self.ch(self.waveform_source).unit
         return preamble
+
+    ###############
+    #    Math     #
+    ###############
+
+    math_define = Instrument.control(
+        "DEF?", "DEF EQN,'%s%s%s'",
+        """ A string parameter that sets the desired waveform math operation between two channels.
+        Three parameters must be passed as a tuple:
+        1. source1 : source channel on the left
+        2. operation : operator must be "*", "/", "+", "-"
+        3. source2 : source channel on the right """,
+        validator=_math_define_validator,
+        values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]]
+    )
+
+    math_vdiv = Instrument.control(
+        "MTVD?", "MTVD %.2EV",
+        """ A float parameter that sets the vertical scale of the selected math operation. This
+        command is only valid in add, subtract, multiply and divide operation.
+        Note:
+        Legal values for the scale depend on the selected operation.""",
+        validator=strict_discrete_set,
+        values=[5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
+    )
+
+    math_vpos = Instrument.control(
+        "MTVP?", "MTVP %d",
+        """ A integer parameter that sets the vertical position of the math waveform with
+        specified source.
+        Note:
+        The point represents the screen pixels and is related to the screen center. For example,
+        if the point is 50. The math waveform will be displayed 1 grid above the vertical center
+        of the screen. Namely one grid is 50. """,
+        validator=strict_range,
+        values=[-255, 255]
+    )
+
+    ###############
+    #   Measure   #
+    ###############
+
+    measure_delay = Instrument.control(
+        "MEAD?", "MEAD %s,%s-%s",
+        """ The MEASURE_DELY command places the instrument in the continuous measurement mode and
+        starts a type of delay measurement.
+        The MEASURE_DELY? query returns the measured value of delay type.
+        The command accepts three arguments with the following syntax:
+        measure_delay = (<type>,<sourceA>,<sourceB>)
+        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
+        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+        Type      Description
+        PHA       The phase difference between two channels. (rising edge - rising edge)
+        FRR       Delay between two channels. (first rising edge - first rising edge)
+        FRF       Delay between two channels. (first rising edge - first falling edge)
+        FFR       Delay between two channels. (first falling edge - first rising edge)
+        FFF       Delay between two channels. (first falling edge - first falling edge)
+        LRR       Delay between two channels. (first rising edge - last rising edge)
+        LRF       Delay between two channels. (first rising edge - last falling edge)
+        LFR       Delay between two channels. (first falling edge - last rising edge)
+        LFF       Delay between two channels. (first falling edge - last falling edge)
+        Skew      Delay between two channels. (edge – edge of the same type) """,
+        validator=_measure_delay_validator,
+        values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
+                ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
+    )
+
+    ###############
+    #   Display   #
+    ###############
+
+    menu = Instrument.control(
+        "MENU?", "MENU %s",
+        """ Control the bottom menu enabled state. (strict bool) """,
+        validator=strict_discrete_set,
+        values=TeledyneOscilloscope._BOOLS,
+        map_values=True
+    )
+
+    grid_display = Instrument.control(
+        "GRDS?", "GRDS %s",
+        """ Select the type of the grid which is used to display (FULL, HALF, OFF) """,
+        validator=strict_discrete_set,
+        values={"full": "FULL", "half": "HALF", "off": "OFF"},
+        map_values=True
+    )

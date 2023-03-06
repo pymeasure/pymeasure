@@ -21,10 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-import re
-
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.teledyne.teledyneMAUI import TeledyneMAUI, TeledyneMAUIChannel
 
 

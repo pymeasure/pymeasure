@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
     TeledyneOscilloscopeChannel, _results_list_to_dict
 
@@ -42,6 +41,27 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
     def autoscale(self):
         """Perform auto-setup command for channel."""
         self.write("AUTO_SETUP FIND")
+
+    # noinspection PyIncorrectDocstring
+    def setup(self, **kwargs):
+        """Setup channel. Unspecified settings are not modified.
+
+        Modifying values such as probe attenuation will modify offset, range, etc. Refer to
+        oscilloscope documentation and make multiple consecutive calls to setup() if needed.
+        See property descriptions for more information.
+
+        :param bwlimit:
+        :param coupling:
+        :param display:
+        :param offset:
+        :param probe_attenuation:
+        :param scale:
+        :param trigger_coupling:
+        :param trigger_level:
+        :param trigger_slope:
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
     def current_configuration(self):
@@ -83,3 +103,94 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     # Change listed values for existing commands:
     bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS
+
+    ###############
+    #   Trigger   #
+    ###############
+
+    @property
+    def trigger(self):
+        """ Read trigger setup as a dict containing the following keys:
+            - "mode": trigger sweep mode [auto, normal, single, stop]
+            - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
+            slew,glit,intv,runt,drop]
+            - "source": trigger source [c1,c2,c3,c4]
+            - "hold_type": hold type (refer to page 172 of programing guide)
+            - "hold_value1": hold value1 (refer to page 172 of programing guide)
+            - "hold_value2": hold value2 (refer to page 172 of programing guide)
+            - "coupling": input coupling for the selected trigger sources
+            - "level": trigger level voltage for the active trigger source
+            - "slope": trigger slope of the specified trigger source
+        """
+        trigger_select = self.trigger_select
+        ch = self.ch(trigger_select[1])
+        tb_setup = {
+            "mode": self.trigger_mode,
+            "trigger_type": trigger_select[0],
+            "source": trigger_select[1],
+            "hold_type": trigger_select[2],
+            "hold_value1": trigger_select[3] if len(trigger_select) >= 4 else None,
+            "hold_value2": trigger_select[4] if len(trigger_select) >= 5 else None,
+            "coupling": ch.trigger_coupling,
+            "level": ch.trigger_level,
+            "slope": ch.trigger_slope
+        }
+        return tb_setup
+
+    def force_trigger(self):
+        """Make one acquisition if in active trigger mode.
+
+        No action is taken if the device is in 'Stop trigger mode'.
+        """
+        # Method instead of property since no reply is sent
+        self.write("FRTR")
+
+    #################
+    # Download data #
+    #################
+
+    hardcopy_setup_current = Instrument.measurement(
+        "HCSU?",
+        """Get current hardcopy config.""",
+        get_process=_results_list_to_dict,
+    )
+
+    def hardcopy_setup(self, **kwargs):
+        """Specify hardcopy settings.
+
+        Connect a printer or define how to save to file. Set any or all
+        of the following parameters.
+
+        :param device: {BMP, JPEG, PNG, TIFF}
+        :param format: {PORTRAIT, LANDSCAPE}
+        :param background: {Std, Print, BW}
+        :param destination: {PRINTER, CLIPBOARD, EMAIL, FILE, REMOTE}
+        :param area: {GRIDAREAONLY, DSOWINDOW, FULLSCREEN}
+        :param directory: Any legal DOS path, for FILE mode only
+        :param filename: Filename string, no extension, for FILE mode only
+        :param printername: Valid printer name, for PRINTER mode only
+        :param portname: {GPIB, NET}
+        """
+        keys = {
+            "device": "DEV",
+            "format": "FORMAT",
+            "background": "BCKG",
+            "destination": "DEST",
+            "area": "AREA",
+            "directory": "DIR",
+            "filename": "FILE",
+            "printername": "PRINTER",
+            "portname": "PORT",
+        }
+
+        arg_strs = [keys[key] + "," + value for key, value in kwargs.items()]
+
+        self.write("HCSU " + ",".join(arg_strs))
+
+    def download_image(self):
+        """Get a BMP image of oscilloscope screen in bytearray of specified file format.
+
+        This will first set the hardcopy destination to "REMOTE".
+        """
+        self.hardcopy_setup(destination="REMOTE")
+        return super().download_image()

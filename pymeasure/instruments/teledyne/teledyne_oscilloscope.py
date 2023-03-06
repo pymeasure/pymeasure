@@ -23,7 +23,6 @@
 #
 
 from abc import ABCMeta
-import logging
 import re
 import sys
 import time
@@ -127,40 +126,6 @@ def _trigger_select_get_process(value):
     return output
 
 
-def _math_define_validator(value, values):
-    """
-    Validate the input of the math_define property
-    :param value: input parameters as a 3-element tuple
-    :param values: allowed space for each parameter
-    """
-    if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
-    if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
-    output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
-    for i in range(3):
-        strict_discrete_set(output[i], values=values[i])
-    return output
-
-
-def _measure_delay_validator(value, values):
-    """
-    Validate the input of the measure_delay property
-    :param value: input parameters as a 3-element tuple
-    :param values: allowed space for each parameter
-    """
-    if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
-    if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
-    output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))
-    if output[1][0] > output[2][0]:
-        raise ValueError(f'First channel number {output[1]} must be <= than second one {output[2]}')
-    for i in range(3):
-        strict_discrete_set(output[i], values=values[i])
-    return output
-
-
 def _results_list_to_dict(results):
     """Turn a list into a dict, using the uneven indices as keys
 
@@ -248,7 +213,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
         """Sets the internal low-pass filter for all channels.
-        
+
         The current bandwidths can only be read back for all channels at once!
         """,
         validator=strict_discrete_set,
@@ -399,27 +364,26 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     # noinspection PyIncorrectDocstring
     def setup(self, **kwargs):
-        """ Setup channel. Unspecified settings are not modified. Modifying values such as
-        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
-        make multiple consecutive calls to setup() if needed.
+        """Setup channel. Unspecified settings are not modified.
 
-        :param bwlimit: A boolean, which enables 20 MHz internal low-pass filter.
-        :param coupling: "AC 1M", "DC 1M", "ground".
-        :param display: A boolean, which enables channel display.
-        :param invert: A boolean, which enables input signal inversion.
-        :param offset: Numerical value represented at center of screen, must be inside
-                       the legal range.
-        :param skew_factor: Channel-tochannel skew factor from -100ns to 100ns.
-        :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
-        :param scale: Units per division.
-        :param unit: Unit of the specified trace: "A" for Amperes, "V" for Volts
-        :param trigger_coupling: input coupling for the selected trigger sources
-        :param trigger_level: trigger level voltage for the active trigger source
-        :param trigger_level2: trigger lower level voltage for the active trigger source (only
-                               SLEW/RUNT trigger)
-        :param trigger_slope: trigger slope of the specified trigger source
+        Modifying values such as probe attenuation will modify offset, range, etc. Refer to
+        oscilloscope documentation and make multiple consecutive calls to setup() if needed.
+        See property descriptions for more information.
+
+        :param bwlimit:
+        :param coupling:
+        :param display:
+        :param invert:
+        :param offset:
+        :param skew_factor:
+        :param probe_attenuation:
+        :param scale:
+        :param unit:
+        :param trigger_coupling:
+        :param trigger_level:
+        :param trigger_level2:
+        :param trigger_slope:
         """
-
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -479,7 +443,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         depending on the commands and connection latency.
     """
 
-    _BOOLS = {True: "ON", False: "OFF"}
+    _BOOLS = TeledyneOscilloscopeChannel._BOOLS
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
@@ -1077,67 +1041,9 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     #    Math     #
     ###############
 
-    math_define = Instrument.control(
-        "DEF?", "DEF EQN,'%s%s%s'",
-        """ A string parameter that sets the desired waveform math operation between two channels.
-        Three parameters must be passed as a tuple:
-        1. source1 : source channel on the left
-        2. operation : operator must be "*", "/", "+", "-"
-        3. source2 : source channel on the right """,
-        validator=_math_define_validator,
-        values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]]
-    )
-
-    math_vdiv = Instrument.control(
-        "MTVD?", "MTVD %.2EV",
-        """ A float parameter that sets the vertical scale of the selected math operation. This
-        command is only valid in add, subtract, multiply and divide operation.
-        Note:
-        Legal values for the scale depend on the selected operation.""",
-        validator=strict_discrete_set,
-        values=[5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
-    )
-
-    math_vpos = Instrument.control(
-        "MTVP?", "MTVP %d",
-        """ A integer parameter that sets the vertical position of the math waveform with
-        specified source.
-        Note:
-        The point represents the screen pixels and is related to the screen center. For example,
-        if the point is 50. The math waveform will be displayed 1 grid above the vertical center
-        of the screen. Namely one grid is 50. """,
-        validator=strict_range,
-        values=[-255, 255]
-    )
-
     ###############
     #   Measure   #
     ###############
-
-    measure_delay = Instrument.control(
-        "MEAD?", "MEAD %s,%s-%s",
-        """ The MEASURE_DELY command places the instrument in the continuous measurement mode and
-        starts a type of delay measurement.
-        The MEASURE_DELY? query returns the measured value of delay type.
-        The command accepts three arguments with the following syntax:
-        measure_delay = (<type>,<sourceA>,<sourceB>)
-        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
-        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
-        Type      Description
-        PHA       The phase difference between two channels. (rising edge - rising edge)
-        FRR       Delay between two channels. (first rising edge - first rising edge)
-        FRF       Delay between two channels. (first rising edge - first falling edge)
-        FFR       Delay between two channels. (first falling edge - first rising edge)
-        FFF       Delay between two channels. (first falling edge - first falling edge)
-        LRR       Delay between two channels. (first rising edge - last rising edge)
-        LRF       Delay between two channels. (first rising edge - last falling edge)
-        LFR       Delay between two channels. (first falling edge - last rising edge)
-        LFF       Delay between two channels. (first falling edge - last falling edge)
-        Skew      Delay between two channels. (edge – edge of the same type) """,
-        validator=_measure_delay_validator,
-        values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
-                ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
-    )
 
     def display_parameter(self, parameter, channel):
         """
@@ -1155,22 +1061,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     ###############
     #   Display   #
     ###############
-
-    menu = Instrument.control(
-        "MENU?", "MENU %s",
-        """ Control the bottom menu enabled state. (strict bool) """,
-        validator=strict_discrete_set,
-        values=_BOOLS,
-        map_values=True
-    )
-
-    grid_display = Instrument.control(
-        "GRDS?", "GRDS %s",
-        """ Select the type of the grid which is used to display (FULL, HALF, OFF) """,
-        validator=strict_discrete_set,
-        values={"full": "FULL", "half": "HALF", "off": "OFF"},
-        map_values=True
-    )
 
     intensity = Instrument.control(
         "INTS?", "INTS GRID,%d,TRACE,%d",
