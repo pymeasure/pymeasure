@@ -33,10 +33,6 @@ def emission_validator(value, values):
         return "ON"
     elif value is False:
         return "OFF"
-    elif isinstance(value, str):
-        value = value.upper()
-        if value in values:
-            return value
     raise ValueError(f"Value is {value}, but a boolean or 'ON' or 'OFF' required.")
 
 
@@ -121,7 +117,7 @@ class YAR(Instrument):
         got = int(self.values("STA")[0])
         return self.Status(got)
 
-    emission = Instrument.control(
+    emission_enabled = Instrument.control(
         "STA",
         "EM%s",
         """Control emission of the amplifier (bool).""",

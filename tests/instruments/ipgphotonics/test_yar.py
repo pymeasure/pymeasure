@@ -60,30 +60,28 @@ def test_status_backreflection():
         assert inst.status == YAR.Status.HIGH_BACKREFLECTION
 
 
-def test_emission_getter():
+def test_emission_enabled_getter():
     with expected_protocol(
             YAR,
             init_comm + [("STA", "STA:1")]
     ) as inst:
-        assert inst.emission is True
+        assert inst.emission_enabled is True
 
 
-@pytest.mark.parametrize("value", (True, "ON", "on", "On", "oN"))
-def test_emission_setter_on(value):
+def test_emission_enabled_setter_on():
     with expected_protocol(
             YAR,
             init_comm + [("EMON", "EMON")]
     ) as inst:
-        inst.emission = value
+        inst.emission_enabled = True
 
 
-@pytest.mark.parametrize("value", (False, "OFF", "off", "Off", "oFF"))
-def test_emission_setter_off(value):
+def test_emission_enabled_setter_off():
     with expected_protocol(
             YAR,
             init_comm + [("EMOFF", "EMOFF")]
     ) as inst:
-        inst.emission = value
+        inst.emission_enabled = False
 
 
 def test_power():
@@ -208,7 +206,6 @@ def test_clear():
 
 
 def test_model():
-    """This test tests already getting min/max output power."""
     with expected_protocol(
             YAR,
             init_comm + [("RMN", "RMN: YLM-10-SF")]
@@ -217,7 +214,6 @@ def test_model():
 
 
 def test_firmware():
-    """This test tests already getting min/max output power."""
     with expected_protocol(
             YAR,
             init_comm + [("RFV", "RFV: 1.0.114")]
