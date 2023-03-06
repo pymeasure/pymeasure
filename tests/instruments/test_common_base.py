@@ -636,7 +636,7 @@ def test_control_dict_str_map(dynamic):
 
 
 def test_value_not_in_map(fake):
-    fake.parent._buffer = "123"
+    fake.parent._buffer = "123\n"
     with pytest.raises(KeyError, match="not found in mapped values"):
         fake.fake_measurement
 

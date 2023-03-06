@@ -269,6 +269,10 @@ class FakeAdapter(Adapter):
     which bounces back the command so that arbitrary values
     testing is possible.
 
+    read/write automatically append a message terminator on write and strip it on read. 
+    This enables reading messages out of a buffer one-by-one.
+    read_bytes/write_bytes don't do that.
+
     .. code-block:: python
 
         a = FakeAdapter()
@@ -282,14 +286,21 @@ class FakeAdapter(Adapter):
     """
 
     _buffer = ""
+    _separator = '\n'
 
     def _read(self):
         """ Return the last commands given after the
         last read call.
         """
-        result = copy(self._buffer)
-        # Reset the buffer
-        self._buffer = ""
+        # Return empty string if buffer is already empty. This matches
+        # the previous behaviour of FakeAdapter.
+        if not self._buffer:
+            return ''
+        sep_idx = self._buffer.find(self._separator)
+        if sep_idx == -1:
+            raise ValueError(f"Read buffer does not contain separator:'{self._buffer}'")
+        result = self._buffer[0:sep_idx]
+        self._buffer = self._buffer[sep_idx+1:]
         return result
 
     def _read_bytes(self, count, break_on_termchar):
@@ -305,7 +316,10 @@ class FakeAdapter(Adapter):
         """ Write the command to a buffer, so that it can
         be read back.
         """
-        self._buffer += command
+        # Only write if no empty string was passed. This matches
+        # the previous behaviour of FakeAdapter.
+        if command:
+            self._buffer += command + self._separator
 
     def _write_bytes(self, command):
         """ Write the command to a buffer, so that it can
