@@ -9,6 +9,17 @@ This section contains specific documentation on the Teledyne instruments that ar
 If the instrument you are looking for is not here, also check :doc:`LeCroy<../lecroy/index>` for older instruments. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    teledyneT3AFG
+   teledyneHDO6xxx
+
+
+There are shared base classes for Teledyne oscilloscopes.
+If your device is missing, the base class might already work well enough.
+If adding a new device, these base classes should limit the amount of new code necessary.
+
+.. toctree::
+   :maxdepth: 2
+
+   teledyne_bases

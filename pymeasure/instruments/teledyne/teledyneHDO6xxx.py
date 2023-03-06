@@ -33,13 +33,7 @@ class TeledyneHDO6xxxChannel(TeledyneMAUIChannel):
 class TeledyneHDO6xxx(TeledyneMAUI):
     """Reference to the Teledyne-Lecroy HDo6xxx class of oscilloscopes.
 
-    Most functionality is inherited from :class:`LeCroyT3DSO1204`.
-
-    It is unclear which manual details the exact API of the oscilloscope, but
-    this file seems very close: "WavePro Remote Control Manual" (`link`_).
-    The file is from 2002, but it still seems to apply to this model.
-
-    .. _: https://cdn.teledynelecroy.com/files/manuals/wp_rcm_revc.pdf
+    All functionality is inherited from the base class.
     """
 
     channels = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, (1, 2, 3, 4))

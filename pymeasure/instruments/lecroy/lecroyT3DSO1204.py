@@ -68,7 +68,7 @@ def _measure_delay_validator(value, values):
 
 
 class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
-    """ Implementation of a LeCroy T3DSO1204 Oscilloscope channel.
+    """Implementation of a LeCroy T3DSO1204 Oscilloscope channel.
 
     Implementation modeled on Channel object of Keysight DSOX1102G instrument.
     """
@@ -125,10 +125,12 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
 
 class LeCroyT3DSO1204(TeledyneOscilloscope):
-    """ Represents the LeCroy T3DSO1204 Oscilloscope interface for interacting with the instrument.
+    """Represents the LeCroy T3DSO1204 Oscilloscope interface for interacting with the instrument.
 
     Refer to the LeCroy T3DSO1204 Oscilloscope Programmer's Guide for further details about
     using the lower-level methods to interact directly with the scope.
+
+    This implementation is based on the shared base class :class:`TeledyneOscilloscope`.
 
     Attributes:
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than

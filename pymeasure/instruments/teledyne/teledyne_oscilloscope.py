@@ -262,13 +262,15 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     trigger_coupling = Instrument.control(
         "TRCP?", "TRCP %s",
-        """ A string parameter that specifies the input coupling for the selected trigger sources.
-        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage
-                  from the trigger waveform. Use AC coupling to get a stable edge trigger when
-                  your waveform has a large dc offset.
-        • dc    — DC coupling allows dc and ac signals into the trigger path.
-        • lowpass  — HFREJ coupling places a lowpass filter in the trigger path.
-        • highpass — LFREJ coupling places a highpass filter in the trigger path.
+        """A string parameter that specifies the input coupling for the selected trigger sources.
+
+        - ``ac``       — AC coupling block DC component in the trigger path, removing dc offset
+          voltage from the trigger waveform. Use AC coupling to get a stable edge trigger when
+          your waveform has a large dc offset.
+        - ``dc``       — DC coupling allows dc and ac signals into the trigger path.
+        - ``lowpass``  — HFREJ coupling places a lowpass filter in the trigger path.
+        - ``highpass`` — LFREJ coupling places a highpass filter in the trigger path.
+
         """,
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ"},
@@ -277,21 +279,25 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     trigger_level = Instrument.control(
         "TRLV?", "TRLV %.2EV",
-        """ A float parameter that sets the trigger level voltage for the active trigger source.
-            When there are two trigger levels to set, this command is used to set the higher
-            trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
-            the lower trigger level voltage.
-            When setting the trigger level it must be divided by the probe attenuation. This is
-            not documented in the datasheet and it is probably a bug of the scope firmware.
-            An out-of-range value will be adjusted to the closest legal value.
+        """A float parameter that sets the trigger level voltage for the active trigger source.
+
+        When there are two trigger levels to set, this command is used to set the higher
+        trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
+        the lower trigger level voltage.
+
+        When setting the trigger level it must be divided by the probe attenuation. This is
+        not documented in the datasheet and it is probably a bug of the scope firmware.
+        An out-of-range value will be adjusted to the closest legal value.
         """,
         get_process=_remove_unit,
     )
 
     trigger_slope = Instrument.control(
         "TRSL?", "TRSL %s",
-        """ A string parameter that sets the trigger slope of the specified trigger source.
-        <trig_slope>:={NEG,POS,WINDOW} for edge trigger.
+        """A string parameter that sets the trigger slope of the specified trigger source.
+
+        <trig_slope>:={NEG,POS,WINDOW} for edge trigger
+
         <trig_slope>:={NEG,POS} for other trigger
         """,
         validator=strict_discrete_set,
@@ -307,8 +313,13 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
     display_parameter = Instrument.setting(
         "PACU %s",
         """Set the waveform processing of this channel with the specified algorithm and the result
-        is displayed on the front panel. The command accepts the following parameters:
+        is displayed on the front panel.
+
+        The command accepts the following parameters:
+
+        =========   ===================================
         Parameter   Description
+        =========   ===================================
         PKPK        vertical peak-to-peak
         MAX         maximum vertical value
         MIN         minimum vertical value
@@ -332,13 +343,16 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         WID         Burst width
         DUTY        positive duty cycle
         NDUTY       negative duty cycle
-        ALL         All measurement """,
+        ALL         All measurement
+        =========   ===================================
+        """,
         validator=strict_discrete_set,
         values=_measurable_parameters
     )
 
     def measure_parameter(self, parameter: str):
-        """ Process a waveform with the selected algorithm and returns the specified measurement.
+        """Process a waveform with the selected algorithm and returns the specified measurement.
+
         :param parameter: same as the display_parameter property
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
@@ -389,21 +403,22 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     @property
     def current_configuration(self):
-        """ Read channel configuration as a dict containing the following keys:
-            - "channel": channel number (int)
-            - "attenuation": probe attenuation (float)
-            - "bandwidth_limit": bandwidth limiting enabled (bool)
-            - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
-            - "offset": vertical offset (float)
-            - "skew_factor": channel-tochannel skew factor (float)
-            - "display": currently displayed (bool)
-            - "unit": "A" or "V" units (str)
-            - "volts_div": vertical divisions (float)
-            - "inverted": inverted (bool)
-            - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
-            - "trigger_level": trigger level (float)
-            - "trigger_level2": trigger lower level for SLEW or RUNT trigger (float)
-            - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
+        """Read channel configuration as a dict containing the following keys:
+
+        - "channel": channel number (int)
+        - "attenuation": probe attenuation (float)
+        - "bandwidth_limit": bandwidth limiting enabled (bool)
+        - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
+        - "offset": vertical offset (float)
+        - "skew_factor": channel-tochannel skew factor (float)
+        - "display": currently displayed (bool)
+        - "unit": "A" or "V" units (str)
+        - "volts_div": vertical divisions (float)
+        - "inverted": inverted (bool)
+        - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
+        - "trigger_level": trigger level (float)
+        - "trigger_level2": trigger lower level for SLEW or RUNT trigger (float)
+        - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
         """
 
         ch_setup = {
@@ -446,8 +461,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     _BOOLS = TeledyneOscilloscopeChannel._BOOLS
 
     WRITE_INTERVAL_S = 0.02  # seconds
-
-    CHANNEL_CLS = TeledyneOscilloscopeChannel
 
     channels = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, (1, 2, 3, 4))
 
@@ -654,8 +667,9 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     @property
     def waveform_preamble(self):
-        """ Get preamble information for the selected waveform source as a dict with the
+        """Get preamble information for the selected waveform source as a dict with the
         following keys:
+
         - "requested_points": number of data points requested by the user (int)
         - "sampled_points": number of data points sampled by the oscilloscope (int)
         - "transmitted_points": number of data points actually transmitted (optional) (int)
@@ -668,6 +682,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         - "xoffset": time interval in seconds between the trigger event and the reference position
         - "ydiv": vertical scale (units per division) in Volts
         - "yoffset": value that is represented at center of screen in Volts
+
         """
         vals = self.values("WFSU?")
         preamble = {
@@ -831,19 +846,22 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return data_points, time_points, preamble
 
     def download_waveform(self, source, requested_points=None, sparsing=None):
-        """ Get data points from the specified source of the oscilloscope. The returned objects are
-        two np.ndarray of data and time points and a dict with the waveform preamble, that contains
-        metadata about the waveform.
-        Note.
+        """Get data points from the specified source of the oscilloscope.
+
+        The returned objects are two np.ndarray of data and time points and a dict with the
+        waveform preamble, that contains metadata about the waveform.
+
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
         :param requested_points: number of points to acquire. If None the number of points
-        requested in the previous call will be assumed, i.e. the value of the number of points
-        stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
+            requested in the previous call will be assumed, i.e. the value of the number of points
+            stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
-        point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
-        i.e. the value of the sparsing stored in the oscilloscope memory.
+            point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
+            i.e. the value of the sparsing stored in the oscilloscope memory.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
-        property for dict format. """
+            property for dict format.
+
+        """
         # Sanitize the input arguments
         if not sparsing:
             sparsing = self.waveform_sparsing
@@ -866,31 +884,35 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     trigger_mode = Instrument.control(
         "TRMD?", "TRMD %s",
-        """ A string parameter that selects the trigger sweep mode.
+        """A string parameter that selects the trigger sweep mode.
+
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • auto : When AUTO sweep mode is selected, the oscilloscope begins to search for the
-        trigger signal that meets the conditions.
-        If the trigger signal is satisfied, the running state on the top left corner of
-        the user interface shows Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state always shows Auto, and the interface shows unstable
-        waveform.
-        • normal : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
-        state and begins to search for trigger signals that meet the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
-        shows stable waveform.
-        Otherwise, the running state shows Ready, and the interface displays the last
-        triggered waveform (previous trigger) or does not display the waveform (no
-        previous trigger).
-        • single : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
-        the oscilloscope enters the waiting trigger state and begins to search for the
-        trigger signal that meets the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
-        shows stable waveform.
-        Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
-        and the running status shows Stop.
-        Otherwise, the running state shows Ready, and the interface does not display the waveform.
-        • stopped : STOP is a part of the option of this command, but not a trigger mode of the
-        oscilloscope.""",
+
+        - auto : When AUTO sweep mode is selected, the oscilloscope begins to search for the
+          trigger signal that meets the conditions.
+          If the trigger signal is satisfied, the running state on the top left corner of
+          the user interface shows Trig'd, and the interface shows stable waveform.
+          Otherwise, the running state always shows Auto, and the interface shows unstable
+          waveform.
+        - normal : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
+          state and begins to search for trigger signals that meet the conditions.
+          If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+          shows stable waveform.
+          Otherwise, the running state shows Ready, and the interface displays the last
+          triggered waveform (previous trigger) or does not display the waveform (no
+          previous trigger).
+        - single : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
+          the oscilloscope enters the waiting trigger state and begins to search for the
+          trigger signal that meets the conditions.
+          If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+          shows stable waveform.
+          Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
+          and the running status shows Stop.
+          Otherwise, the running state shows Ready, and the interface does not display the waveform.
+        - stopped : STOP is a part of the option of this command, but not a trigger mode of the
+          oscilloscope.
+
+        """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
         map_values=True
@@ -925,30 +947,40 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     @property
     def trigger_select(self):
-        """ A string parameter that selects the condition that will trigger the acquisition of
+        """A string parameter that selects the condition that will trigger the acquisition of
         waveforms.
+
         Depending on the trigger type, additional parameters must be specified. These additional
         parameters are grouped in pairs. The first in the pair names the variable to be modified,
         while the second gives the new value to be assigned. Pairs may be given in any order and
         restricted to those variables to be changed.
+
         There are five parameters that can be specified. Parameters 1. 2. 3. are always mandatory.
         Parameters 4. 5. are required only for certain combinations of the previous parameters.
+
         1. <trig_type>:={edge, slew, glit, intv, runt, drop}
         2. <source>:={c1, c2, c3, c4, line}
-        3. - <hold_type>:={ti, off} for edge trigger.
-        - <hold_type>:={ti} for drop trigger.
-        - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
-        - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
+        3. <hold_type>:=
+
+           * {ti, off} for edge trigger.
+           * {ti} for drop trigger.
+           * {ps, pl, p2, p1} for glit/runt trigger.
+           * {is, il, i2, i1} for slew/intv trigger.
+
         4. <hold_value1>:= a time value with unit.
         5. <hold_value2>:= a time value with unit.
+
         Note:
-        • "line" can only be selected when the trigger type is "edge".
-        • All time arguments should be given in multiples of seconds. Use the scientific notation
-        if necessary.
-        • The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
-        and [2nS, 4.2S] for others.
-        • The trigger_select command is switched automatically between the short, normal and
-        extended version depending on the number of expected parameters. """
+
+        - "line" can only be selected when the trigger type is "edge".
+        - All time arguments should be given in multiples of seconds. Use the scientific notation
+          if necessary.
+        - The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
+          and [2nS, 4.2S] for others.
+        - The trigger_select command is switched automatically between the short, normal and
+          extended version depending on the number of expected parameters.
+
+        """
         return self._trigger_select
 
     # noinspection PyAttributeOutsideInit
@@ -966,21 +998,25 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     def trigger_setup(self, mode=None, source=None, trigger_type=None, hold_type=None,
                       hold_value1=None, hold_value2=None, coupling=None, level=None, level2=None,
                       slope=None):
-        """ Set up trigger. Unspecified parameters are not modified. Modifying a single parameter
+        """Set up trigger.
+
+        Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to trigger_setup and channel_setup if needed.
+
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
-        [edge,slew,glit,intv,runt,drop]
+            [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
-        trigger)
-        :param slope: trigger slope of the specified trigger source"""
+            trigger)
+        :param slope: trigger slope of the specified trigger source
+        """
         if mode is not None:
             self.trigger_mode = mode
         if all(i is not None for i in [source, trigger_type, hold_type]):
@@ -1007,19 +1043,21 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     @property
     def trigger(self):
-        """ Read trigger setup as a dict containing the following keys:
-            - "mode": trigger sweep mode [auto, normal, single, stop]
-            - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
-            slew,glit,intv,runt,drop]
-            - "source": trigger source [c1,c2,c3,c4]
-            - "hold_type": hold type (refer to page 172 of programing guide)
-            - "hold_value1": hold value1 (refer to page 172 of programing guide)
-            - "hold_value2": hold value2 (refer to page 172 of programing guide)
-            - "coupling": input coupling for the selected trigger sources
-            - "level": trigger level voltage for the active trigger source
-            - "level2": trigger lower level voltage for the active trigger source (only slew/runt
-            trigger)
-            - "slope": trigger slope of the specified trigger source
+        """Read trigger setup as a dict containing the following keys:
+
+        - "mode": trigger sweep mode [auto, normal, single, stop]
+        - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
+          slew,glit,intv,runt,drop]
+        - "source": trigger source [c1,c2,c3,c4]
+        - "hold_type": hold type (refer to page 172 of programing guide)
+        - "hold_value1": hold value1 (refer to page 172 of programing guide)
+        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "coupling": input coupling for the selected trigger sources
+        - "level": trigger level voltage for the active trigger source
+        - "level2": trigger lower level voltage for the active trigger source (only slew/runt
+          trigger)
+        - "slope": trigger slope of the specified trigger source
+
         """
         trigger_select = self.trigger_select
         ch = self.ch(trigger_select[1])
@@ -1046,9 +1084,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     ###############
 
     def display_parameter(self, parameter, channel):
-        """
-        Same as the display_parameter method in the Channel subclass
-        """
+        """Same as the display_parameter method in the Channel subclass."""
         self.ch(channel).display_parameter = parameter
 
     def measure_parameter(self, parameter, channel):

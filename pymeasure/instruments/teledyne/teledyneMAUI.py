@@ -65,17 +65,18 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
 
     @property
     def current_configuration(self):
-        """ Read channel configuration as a dict containing the following keys:
-            - "channel": channel number (int)
-            - "attenuation": probe attenuation (float)
-            - "bandwidth_limit": bandwidth limiting, parsed for this channel (str)
-            - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
-            - "offset": vertical offset (float)
-            - "display": currently displayed (bool)
-            - "volts_div": vertical divisions (float)
-            - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
-            - "trigger_level": trigger level (float)
-            - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
+        """Read channel configuration as a dict containing the following keys:
+
+        - "channel": channel number (int)
+        - "attenuation": probe attenuation (float)
+        - "bandwidth_limit": bandwidth limiting, parsed for this channel (str)
+        - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
+        - "offset": vertical offset (float)
+        - "display": currently displayed (bool)
+        - "volts_div": vertical divisions (float)
+        - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
+        - "trigger_level": trigger level (float)
+        - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
         """
         ch_setup = {
             "channel": self.id,
@@ -97,6 +98,12 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     This class is not exactly device specific. Nonetheless, it might already work out of the box and
     therefore this class not abstract.
+
+    The manual detailing the API is "MAUI Oscilloscopes Remote Control and Automation Manual"
+    (`link`_).
+
+    .. _link: https://cdn.teledynelecroy.com/files/manuals/
+              maui-remote-control-automation_27jul22.pdf
     """
 
     channels = Instrument.ChannelCreator(TeledyneMAUIChannel, (1, 2, 3, 4))
@@ -110,17 +117,19 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     @property
     def trigger(self):
-        """ Read trigger setup as a dict containing the following keys:
-            - "mode": trigger sweep mode [auto, normal, single, stop]
-            - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
-            slew,glit,intv,runt,drop]
-            - "source": trigger source [c1,c2,c3,c4]
-            - "hold_type": hold type (refer to page 172 of programing guide)
-            - "hold_value1": hold value1 (refer to page 172 of programing guide)
-            - "hold_value2": hold value2 (refer to page 172 of programing guide)
-            - "coupling": input coupling for the selected trigger sources
-            - "level": trigger level voltage for the active trigger source
-            - "slope": trigger slope of the specified trigger source
+        """Read trigger setup as a dict containing the following keys:
+
+        - "mode": trigger sweep mode [auto, normal, single, stop]
+        - "trigger_type": condition that will trigger the acquisition of waveforms
+          [edge,slew,glit,intv,runt,drop]
+        - "source": trigger source [c1,c2,c3,c4]
+        - "hold_type": hold type (refer to page 172 of programing guide)
+        - "hold_value1": hold value1 (refer to page 172 of programing guide)
+        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "coupling": input coupling for the selected trigger sources
+        - "level": trigger level voltage for the active trigger source
+        - "slope": trigger slope of the specified trigger source
+
         """
         trigger_select = self.trigger_select
         ch = self.ch(trigger_select[1])
