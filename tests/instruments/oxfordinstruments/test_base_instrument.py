@@ -22,7 +22,26 @@
 # THE SOFTWARE.
 #
 
+import pytest
 
-from .itc503 import ITC503
-from .ips120_10 import IPS120_10
-from .ps120_10 import PS120_10
+from pymeasure.test import expected_protocol
+
+
+from pymeasure.instruments.oxfordinstruments.base import OxfordInstrumentsBase, OxfordVISAError
+
+
+def test_wrong_response():
+    with expected_protocol(OxfordInstrumentsBase,
+                           [("A", "B"), (None, "")],
+                           max_attempts=1,
+                           ) as inst:
+        with pytest.raises(OxfordVISAError):
+            inst.ask("A")
+
+
+def test_write_not_understood_command():
+    with expected_protocol(OxfordInstrumentsBase,
+                           [("A", "?B")],
+                           ) as inst:
+        with pytest.raises(OxfordVISAError):
+            inst.write("A")
