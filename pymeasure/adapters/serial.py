@@ -109,12 +109,14 @@ class SerialAdapter(Adapter):
             # For -1 we empty the buffer completely
             return self._read_bytes_until_timeout()
 
-    def _read_bytes_until_timeout(self, **kwargs):
-        """Read from the serial until a timeout occurs, regardless of how many bytes."""
-        # `Serial.readlines()` sounds appropriate instead but it turns out it has an
-        # unpredictable timeout
+    def _read_bytes_until_timeout(self, chunk_size=256, **kwargs):
+        """Read from the serial until a timeout occurs, regardless of the number of bytes.
+
+        :chunk_size: The number of bytes attempted to in a single transaction.
+            Multiple of these transactions will occur.
+        """
+        # `Serial.readlines()` has an unpredictable timeout, see PR #866
         data = bytes()
-        chunk_size = 256
         while True:
             chunk = self.connection.read(chunk_size, **kwargs)
             data += chunk
