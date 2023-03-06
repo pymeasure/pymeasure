@@ -43,8 +43,11 @@ class LakeShore224(Instrument):
         monitor.input_A.wait_for_temperature()  # Wait for the temperature on sensor A to stabilize.
     """
 
-    tchannels = ['0', 'A', 'B', 'C1', 'C2', 'C3', 'C4', 'C5', 'D1', 'D2', 'D3', 'D4', 'D5']
-    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureInputChannel, tchannels, prefix='input_')
+    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureInputChannel,
+                                     ['0', 'A', 'B',
+                                      'C1', 'C2', 'C3', 'C4', 'C5',
+                                      'D1', 'D2', 'D3', 'D4', 'D5'],
+                                     prefix='input_')
 
     def __init__(self, adapter, **kwargs):
         name = 'Lakeshore Model 224 Temperature Controller' if 'name' not in kwargs.keys() \

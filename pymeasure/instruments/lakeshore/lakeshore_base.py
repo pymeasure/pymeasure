@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LakeShoreTemperatureInputChannel(Channel):
+class LakeShoreTemperatureChannel(Channel):
     """ Temperature input channel on a lakeshore temperature monitor. Reads the temperature in
     kelvin, celcius, or sensor units. Also provides a method to block the program until a given
     stable temperature is reached.
@@ -59,24 +59,21 @@ class LakeShoreTemperatureInputChannel(Channel):
         within the accuracy (%), checking this each interval time in seconds.
 
         :param target: Target temperature in kelvin, celcius, or sensor units.
+        :param unit: 'kelvin', 'celcius', or 'sensor' specifying the unit
+                     for queried temperature values.
         :param accuracy: An acceptable percentage deviation between the
-                         target and temperature
-
+                         target and temperature.
+        :param interval: Interval time in seconds between queries.
         :param timeout: A timeout in seconds after which an exception is raised
         :param should_stop: A function that returns True if waiting should stop, by
                             default this always returns False
         """
-
-        def percent_difference(temperature):
-            return np.abs(100 * (temperature - target) / target)
-
+        abs_tolerance = target * (accuracy / 100)
+        target_reached = False
         t = time()
-        target_acquired = False
-        while not target_acquired:
-            reading = getattr(self, unit)
-            reading = np.array([reading]) if self.id != '0' else np.array(reading)
-            diff = percent_difference(reading)
-            target_acquired = True if np.all(diff < accuracy) else False
+        while not target_reached:
+            reading = np.array([getattr(self, unit)])
+            target_reached = np.allclose(reading, target, atol=abs_tolerance)
             sleep(interval)
             if (time() - t) > timeout:
                 raise Exception((
@@ -87,7 +84,7 @@ class LakeShoreTemperatureInputChannel(Channel):
                 return
 
 
-class LakeShoreHeaterOutputChannel(Channel):
+class LakeShoreHeaterChannel(Channel):
     """ Heater output channel on a lakeshore temperature controller. Provides properties to query
     the output power in percent of the max, set the manual output power, heater range, and PID
     temperature setpoint.
