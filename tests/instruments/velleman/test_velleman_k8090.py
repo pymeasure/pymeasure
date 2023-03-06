@@ -28,6 +28,7 @@ Test the instrument class for the Velleman F8090.
 
 This is not an integration test! This is software-only.
 """
+import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.velleman import VellemanK8090, VellemanK8090Switches as Switches
@@ -44,6 +45,25 @@ def test_version():
         ],
     ) as inst:
         assert inst.version == (10, 1)
+
+
+@pytest.mark.parametrize("reply,msg", [
+    (b"0", "Incoming packet was 1 bytes instead of 7"),
+    (bytearray.fromhex("04 71 FF 0A 01 82 0F"), "Packet checksum was not correct"),
+    (bytearray.fromhex("04 71 FF 0A 01 81 00"), "Received invalid start and stop bytes"),
+])
+def test_version_bad_reply_short(reply, msg):
+    with expected_protocol(
+        VellemanK8090,
+        [
+            (
+                bytearray.fromhex("04 71 00 00 00 8B 0F"),
+                reply,
+            )
+        ],
+    ) as inst:
+        with pytest.raises(ConnectionError, match=msg):
+            _ = inst.version
 
 
 def test_status():
