@@ -13,11 +13,11 @@ following common :class:`Channel Classes <pymeasure.instruments.Channel>` are ut
 LakeShore Channel Classes
 --------------------------
 
-.. autoclass:: pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreTemperatureInputChannel
+.. autoclass:: pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreTemperatureChannel
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreHeaterOutputChannel
+.. autoclass:: pymeasure.instruments.lakeshore.lakeshore_base.LakeShoreHeaterChannel
     :members:
     :show-inheritance:
 
