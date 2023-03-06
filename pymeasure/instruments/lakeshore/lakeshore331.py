@@ -25,8 +25,8 @@
 import logging
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureInputChannel, \
-    LakeShoreHeaterOutputChannel
+from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel, \
+    LakeShoreHeaterChannel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -48,10 +48,17 @@ class LakeShore331(Instrument):
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
         print(controller.input_A.temperature)       # Print the temperature at sensor A.
     """
-    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureInputChannel, ('A', 'B'), prefix='input_')
-    o_ch = Instrument.ChannelCreator(LakeShoreHeaterOutputChannel, (1, 2), prefix='output_')
+    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel, ('A', 'B'), prefix='input_')
+    o_ch = Instrument.ChannelCreator(LakeShoreHeaterChannel, (1, 2), prefix='output_')
 
     def __init__(self, adapter, **kwargs):
         name = 'Lakeshore Model 336 Temperature Controller' if 'name' not in kwargs.keys() \
             else kwargs.pop('name')
-        super().__init__(adapter, name, **kwargs)
+        read_termination = '\r\n' if 'read_termination' not in kwargs.keys() \
+            else kwargs.pop('read_termination')
+        super().__init__(
+            adapter,
+            name,
+            read_termination=read_termination,
+            **kwargs
+        )
