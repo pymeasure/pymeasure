@@ -4,12 +4,16 @@ New adapter and instrument mechanics
 ------------------------------------
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
+- Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
 
 Deprecated features
 -------------------
 - HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
   use :code:`function_` and :code:`reading` properties instead.
 - Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
+- TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server.
+- Attocube ANC300: :code:`host` argument, pass a resource string or adapter as :code:`Adapter` passed to :code:`Instrument`. Now communicates through the :code:`VISAAdapter` rather than deprecated :code:`TelnetAdapter`. The initializer now accepts :code:`name` as its second keyword argument so all previous initialization positional arguments (`axisnames`, `passwd`, `query_delay`) should be switched to keyword arguments.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
 
 Version 0.11.1 (2022-12-31)
 ===========================
@@ -18,6 +22,17 @@ Adapter and instrument mechanics
 - Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
+
+Dependency updates
+------------------
+- Required version of `PyQtGraph <https://www.pyqtgraph.org/>`__ is increased from :code:`pyqtgraph >= 0.9.10` to :code:`pyqtgraph >= 0.12` to support new PyMeasure display widgets.
+
+GUI
+---
+- Added `ManagedDockWindow <https://pymeasure.readthedocs.io/en/latest/tutorial/graphical.html#using-the-manageddockwindow>`__ to allow multiple dockable plots (@mcdo0486, @CasperSchippers, #722)
+- Move coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
+- New sequencer architecture (@msmttchr, @CasperSchippers, @mcdo0486, #518)
+- Added "Save Dock Layout" functionality to DockWidget context menu. (@mcdo0486, #762)
 
 Version 0.11.0 (2022-11-19)
 ===========================

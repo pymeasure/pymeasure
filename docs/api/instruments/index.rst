@@ -22,6 +22,7 @@ Instruments by manufacturer:
    activetechnologies/index
    advantest/index
    agilent/index
+   aja/index
    ametek/index
    ami/index
    anaheimautomation/index
@@ -62,4 +63,5 @@ Instruments by manufacturer:
    thermotron/index
    thorlabs/index
    toptica/index
+   velleman/index
    yokogawa/index

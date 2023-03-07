@@ -44,7 +44,7 @@ class SerialAdapter(Adapter):
 
     :param write_termination: String appended to messages before writing them.
     :param read_termination: String expected at end of read message and removed.
-    :param kwargs: Any valid key-word argument for serial.Serial
+    :param \\**kwargs: Any valid key-word argument for serial.Serial
     """
 
     def __init__(self, port, preprocess_reply=None,
@@ -63,7 +63,7 @@ class SerialAdapter(Adapter):
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         command += self.write_termination
         self._write_bytes(command.encode(), **kwargs)
@@ -72,17 +72,17 @@ class SerialAdapter(Adapter):
         """Write the bytes `content` to the instrument.
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write(content, **kwargs)
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (read_termination is removed first).
         """
-        read = self._read_bytes(-1, **kwargs).decode()
+        read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
         # Python>3.8 this shorter form is possible:
         # self._read_bytes(-1).decode().removesuffix(self.read_termination)
         if self.read_termination:
@@ -90,21 +90,42 @@ class SerialAdapter(Adapter):
         else:
             return read
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer or until encountering the read_termination.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer (waits for timeout).
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        if count == -1:
-            if self.read_termination:
-                return self.connection.read_until(self.read_termination, **kwargs)
-            else:
-                return b"\n".join(self.connection.readlines(**kwargs))
-        else:
+        if break_on_termchar and self.read_termination:
+            return self.connection.read_until(self.read_termination.encode(),
+                                              count if count > 0 else None,
+                                              **kwargs)
+        elif count >= 0:
             return self.connection.read(count, **kwargs)
+        else:
+            # For -1 we empty the buffer completely
+            return self._read_bytes_until_timeout()
+
+    def _read_bytes_until_timeout(self, chunk_size=256, **kwargs):
+        """Read from the serial until a timeout occurs, regardless of the number of bytes.
+
+        :chunk_size: The number of bytes attempted to in a single transaction.
+            Multiple of these transactions will occur.
+        """
+        # `Serial.readlines()` has an unpredictable timeout, see PR #866
+        data = bytes()
+        while True:
+            chunk = self.connection.read(chunk_size, **kwargs)
+            data += chunk
+            if len(chunk) < chunk_size:  # If fewer bytes got returned, we had a timeout
+                return data
+
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer."""
+        self.connection.reset_input_buffer()
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

@@ -470,12 +470,13 @@ Building off the `Using the ManagedWindow`_ section where we used a :code:`Manag
 To start with, let's make the following highlighted edits to the code example from `Using the ManagedWindow`_:
 
 1. On line 10 we now import :class:`~pymeasure.display.windows.managed_dock_window.ManagedDockWindow`
-2. On line 44 we make :code:`MainWindow` a subclass of :code:`ManagedDockWindow`
-3. On line 51 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`x_axis` argument
-4. On line 52 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`y_axis` argument
+2. On line 20, and lines 32 and 33, we add two new columns of data to be recorded :code:`'Random Number 2'` and :code:`'Random Number 3'`
+3. On line 44 we make :code:`MainWindow` a subclass of :code:`ManagedDockWindow`
+4. On line 51 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`x_axis` argument
+5. On line 52 we will pass in a list of strings from :code:`DATA_COLUMNS` to the :code:`y_axis` argument
 
 .. code-block:: python
-   :emphasize-lines: 10,44,51,52
+   :emphasize-lines: 10,20,32,33,44,51,52
 
    import logging
    log = logging.getLogger(__name__)
@@ -576,6 +577,15 @@ You can pop out a dockable plot from the main dock window to its own window by d
 
 You can return the popped out window to the main window by clicking the close icon X in the top right.
 
+After positioning your dock windows, you can save the layout by right-clicking a dock widget and select "Save Dock Layout" from the context menu.
+This will save the layout of all docks and the settings for each plot to a file. By default the file path is the current working directory of the python file
+that started :code:`ManagedDockWindow`, and the default file name is '*procedure class* + "_dock_layout.json"'. For our example, that would be "./RandomProcedure_dock_layout.json"
+
+When you run the python file that invokes :code:`ManagedDockWindow` again, it will look for and load the dock layout file if it exists.
+
+.. image:: managed_dock_window_save.png
+    :alt: Save dock window layout
+
 You can drag a dockable plot to reposition it in reference to other plots in the main dock window in several ways. You can drag the blue "Dock #" title bar to the left or right side of another plot to reposition a plot to be side by side with another plot:
 
 .. image:: managed_dock_window_side_drag.png
@@ -589,7 +599,7 @@ You can also drag the blue "Dock #" title bar to the top or bottom side of anoth
 .. image:: managed_dock_window_top.png
     :alt: Top position managed dock window
 
-Finally, you can drag the blue "Dock #" title bar to the middle of another plot to reposition a plot to create a tabbed view of the two plots:
+You can drag the blue "Dock #" title bar to the middle of another plot to reposition a plot to create a tabbed view of the two plots:
 
 .. image:: managed_dock_window_tab_drag.png
     :alt: Tab drag managed dock window

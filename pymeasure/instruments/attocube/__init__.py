@@ -22,5 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .adapters import AttocubeConsoleAdapter
 from .anc300 import ANC300Controller
