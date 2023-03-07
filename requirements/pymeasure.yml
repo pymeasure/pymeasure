@@ -6,14 +6,14 @@ dependencies:
   - numpy=1.21.4
   - pandas=1.3.5
   - pint=0.18
-  - pyqt=5.12.3
-  - pyqtgraph=0.12.3
+  - pyqt=5.15.7
+  - pyqtgraph=0.12.4
   - pyserial=3.4
   - pyvisa=1.11.3
   - pyzmq=22.3.0
-  - qt=5.12.9
+  - qt=5.15.4
 # Development dependencies below
-  - pytest-qt=3.3.0
+  - pytest-qt=4.2.0
   - pytest-runner=5.2
   - pytest=6.2.5
   - flake8=5.0.4  # can be bumped to v6 when support for python 3.7 is dropped

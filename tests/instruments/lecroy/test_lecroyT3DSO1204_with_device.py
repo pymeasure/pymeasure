@@ -228,9 +228,7 @@ class TestLeCroyT3DSO1204:
     @pytest.mark.parametrize("case", WAVEFORM_POINTS)
     def test_waveform_points(self, instrument, case):
         instrument.waveform_points = case
-        vals = instrument.waveform_points
-        # noinspection PyUnresolvedReferences
-        assert vals[vals.index("NP") + 1] == case
+        assert instrument.waveform_points == case
 
     def test_waveform_preamble(self, autoscaled_instrument):
         autoscaled_instrument.acquisition_type = "normal"
@@ -339,6 +337,7 @@ class TestLeCroyT3DSO1204:
             sleep(7)
         instrument.ch(case1).display = True
         instrument.single()
+        sleep(1)
         data, time, preamble = instrument.download_waveform(
             source=case1, requested_points=case2, sparsing=0
         )
@@ -352,22 +351,30 @@ class TestLeCroyT3DSO1204:
         instrument.acquisition_type = "normal"
         instrument.ch_1.display = True
         instrument.single()
+        sleep(1)
         data, time, preamble = instrument.download_waveform(source="c1", requested_points=1)
         assert type(data) is np.ndarray
         assert len(data) == 1
         assert type(time) is np.ndarray
         assert len(time) == 1
         assert type(preamble) is dict
-        assert preamble == {
-            "sparsing": 1,
-            "requested_points": 1.0,
-            "transmitted_points": 1.0,
-            "first_point": 0,
-            "source": "C1",
-            "ydiv": ANY,
-            "yoffset": ANY,
-            "unit": "V",
-        }
+        assert preamble == {'average': None,
+                            'first_point': 0,
+                            'grid_number': 14,
+                            'memory_size': 7000000.0,
+                            'requested_points': 1,
+                            'sampled_points': 3500000.0,
+                            'sampling_rate': 500000000.0,
+                            'source': 'C1',
+                            'sparsing': 1.0,
+                            'status': 'stopped',
+                            'transmitted_points': 1,
+                            'type': 'normal',
+                            'unit': 'V',
+                            'xdiv': 0.0005,
+                            'xoffset': -0.0,
+                            'ydiv': ANY,
+                            'yoffset': ANY}
 
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_all_points(self, instrument):
@@ -375,7 +382,7 @@ class TestLeCroyT3DSO1204:
 
         instrument.ch_1.display = True
         instrument.single()
-        sleep(1)
+        sleep(3)
         data, time, preamble = instrument.download_waveform(source="c1", requested_points=0)
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
@@ -458,6 +465,9 @@ class TestLeCroyT3DSO1204:
 
     @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_math(self, instrument):
+        """ Be careful because there is no way to turn on and off the MATH function
+        programmatically, so the user should push on the MATH button and make sure
+        that the (white) math line is displayed before running this test. """
         from matplotlib import pyplot as plt
 
         instrument.single()
@@ -468,31 +478,29 @@ class TestLeCroyT3DSO1204:
         assert type(data) is np.ndarray
         assert type(time) is np.ndarray
         assert type(preamble) is dict
-        assert preamble["type"] == "normal"
-        assert preamble["sparsing"] == 10
         print(preamble)
         plt.scatter(x=time, y=data)
         plt.show()
 
     # Trigger
-    def test_trigger_select(self, instrument):
+    def test_trigger_select(self, resetted_instrument):
         with pytest.raises(ValueError):
-            instrument.trigger_select = "edge"
+            resetted_instrument.trigger_select = "edge"
         with pytest.raises(ValueError):
-            instrument.trigger_select = ("edge", "c2")
+            resetted_instrument.trigger_select = ("edge", "c2")
         with pytest.raises(ValueError):
-            instrument.trigger_select = ("edge", "c2", "time")
+            resetted_instrument.trigger_select = ("edge", "c2", "time")
         with pytest.raises(ValueError):
-            instrument.trigger_select = ("ABCD", "c1", "time", 0)
+            resetted_instrument.trigger_select = ("ABCD", "c1", "time", 0)
         with pytest.raises(ValueError):
-            instrument.trigger_select = ("edge", "c1", "time", 1000)
+            resetted_instrument.trigger_select = ("edge", "c1", "time", 1000)
         with pytest.raises(ValueError):
-            instrument.trigger_select = ("edge", "c1", "time", 0, 1)
-        instrument.trigger_select = ("edge", "c1", "off")
-        instrument.trigger_select = ("EDGE", "C1", "OFF")
-        assert instrument.trigger_select == ["edge", "c1", "off"]
-        instrument.trigger_select = ("glit", "c1", "p2", 1e-3, 2e-3)
-        assert instrument.trigger_select == ["glit", "c1", "p2", 1e-3, 2e-3]
+            resetted_instrument.trigger_select = ("edge", "c1", "time", 0, 1)
+        resetted_instrument.trigger_select = ("edge", "c1", "off")
+        resetted_instrument.trigger_select = ("EDGE", "C1", "OFF")
+        assert resetted_instrument.trigger_select == ["edge", "c1", "off"]
+        resetted_instrument.trigger_select = ("glit", "c1", "p2", 1e-3, 2e-3)
+        assert resetted_instrument.trigger_select == ["glit", "c1", "p2", 1e-3, 2e-3]
 
     def test_trigger_setup(self, resetted_instrument):
         expected = resetted_instrument.trigger

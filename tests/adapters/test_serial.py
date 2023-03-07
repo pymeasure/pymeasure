@@ -60,8 +60,30 @@ def test_write_bytes(adapter, msg):
 
 
 def test_read_bytes(adapter):
-    adapter.write_bytes(b"basd\x02fasdf\n")
-    assert adapter.read_bytes(11) == b"basd\x02fasdf\n"
+    """Test whether `count` bytes are returned, even though a term char is defined."""
+    adapter.read_termination = "\n"
+    adapter.write_bytes(b"basd\x02\nfasdf\n")
+    assert adapter.read_bytes(9) == b"basd\x02\nfas"
+
+
+def test_read_bytes_unlimited(adapter):
+    """Test whether all bytes are returned, even though a term char is defined."""
+    adapter.read_termination = "\n"
+    adapter.write_bytes(b"basd\x02\nfasdf\n")
+    assert adapter.read_bytes(-1) == b"basd\x02\nfasdf\n"
+
+
+def test_read_bytes_unlimited_long(adapter):
+    """Test whether all bytes are returned when a lot of data is sent."""
+    adapter.write_bytes(b"abcde" * 50)
+    assert adapter.read_bytes(-1) == b"abcde" * 50
+
+
+@pytest.mark.parametrize("count", (-1, 8))
+def test_read_bytes_break_on_termchar(adapter, count):
+    adapter.read_termination = "\n"
+    adapter.write_bytes(b"basd\x02\nfasdf\n")
+    assert adapter.read_bytes(count, break_on_termchar=True) == b"basd\x02\n"
 
 
 @pytest.mark.parametrize("test_input,expected", [([1, 2, 3], b'OUTP#13\x01\x02\x03'),

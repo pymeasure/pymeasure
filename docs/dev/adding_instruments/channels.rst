@@ -25,6 +25,17 @@ All the channel communication is routed through the instrument's methods (`write
 However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses `str.format` to insert the channel's id at any occurence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
 For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the device, if the channel's id is "3".
 
+Please add the channel to the documentation. In the instrument's documentation file, you may add
+
+.. code::
+
+    .. autoclass:: pymeasure.instruments.MANUFACTURER.INSTRUMENT.CHANNEL
+        :members:
+        :show-inheritance:
+
+`MANUFACTURER` is the folder name of the manufacturer and `INSTRUMENT` the file name of the instrument definition, which contains the `CHANNEL` class.
+You may link in the instrument's docstring to the channel with :code:`:class:\`CHANNEL\``
+
 In order to add a channel to an instrument or to another channel (nesting channels is possible), create the channels with the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` as class attributes.
 Its constructor accepts a single channel class or list of classes and a list of corresponding ids.
 Instead of lists, you may also use tuples.
