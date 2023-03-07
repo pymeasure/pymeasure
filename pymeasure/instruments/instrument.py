@@ -149,7 +149,8 @@ class Instrument(CommonBase):
 
     def read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer."""
-        return self.adapter.read(**kwargs)
+        with self._rlock:
+            return self.adapter.read(**kwargs)
 
     def read_bytes(self, count, **kwargs):
         """Read a certain number of bytes from the instrument.

@@ -31,6 +31,8 @@ import time
 
 from pymeasure.instruments.fakes import FakeInstrument
 
+# TODO: also guard CommonBase.binary_values and binary methods in general
+
 
 class ThreadedAccessTester(FakeInstrument):
     """Pause-able instrument class for testing threaded access."""
@@ -79,6 +81,51 @@ def test_thieving_ask():
     q2 = queue.Queue()
     t2Event = threading.Event()
     t2 = threading.Thread(target=lambda q, e: q.put(inst.ask("M2", e)), args=(q2, t2Event))
+    t2.start()
+
+    t2Event.set()  # Wake thread 2 so it could steal the read buffer meant for thread 1
+    time.sleep(0.1)
+    t1Event.set()  # Now wake up thread 1 to fetch its reply
+    t2.join(timeout=2)
+    t1.join(timeout=2)
+
+    assert not inst._wait_timed_out
+    assert q1.get() == "M1"
+    assert q2.get() == "M2"
+
+
+def test_thieving_read():
+    """Avoid that another thread can interrupt an occurring ask() and steal its reply with a read().
+
+    mermaid diagram:
+    sequenceDiagram
+        Note over Thread1: ask(CMD1)
+        activate Thread1
+        Thread1->>connection: write CMD1
+        Note over Thread2: manual sequencing
+        opt not strictly needed
+            Thread2->>connection: write CMD2
+        end
+        connection-->>Thread2: read REPLY1
+        connection-->>Thread1: read REPLY2
+        deactivate Thread1
+
+    """
+    inst = ThreadedAccessTester("")
+
+    q1 = queue.Queue()
+    t1Event = threading.Event()
+    t1 = threading.Thread(target=lambda q, e: q.put(inst.ask("M1", e)), args=(q1, t1Event))
+    t1.start()
+
+    q2 = queue.Queue()
+    t2Event = threading.Event()
+
+    def t2_func(q, e):
+        inst.write("M2")
+        q.put(inst.read(), e)
+
+    t2 = threading.Thread(target=t2_func, args=(q2, t2Event))
     t2.start()
 
     t2Event.set()  # Wake thread 2 so it could steal the read buffer meant for thread 1
