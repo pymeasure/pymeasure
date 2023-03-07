@@ -118,17 +118,15 @@ def test_thieving_read():
     t1 = threading.Thread(target=lambda q, e: q.put(inst.ask("M1", e)), args=(q1, t1Event))
     t1.start()
 
-    q2 = queue.Queue()
-    t2Event = threading.Event()
-
-    def t2_func(q, e):
+    def t2_func(q):
         inst.write("M2")
-        q.put(inst.read(), e)
+        q.put(inst.read())
 
-    t2 = threading.Thread(target=t2_func, args=(q2, t2Event))
+    q2 = queue.Queue()
+    t2 = threading.Thread(target=t2_func, args=(q2,))
     t2.start()
 
-    t2Event.set()  # Wake thread 2 so it could steal the read buffer meant for thread 1
+    # Thread 2 can steal the read buffer meant for thread 1
     time.sleep(0.1)
     t1Event.set()  # Now wake up thread 1 to fetch its reply
     t2.join(timeout=2)
