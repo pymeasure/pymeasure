@@ -85,7 +85,7 @@ def test_read_bytes(fake):
 @pytest.mark.parametrize("method, args", (['_write', ['5']],
                                           ['_read', []],
                                           ['_write_bytes', ['8']],
-                                          ['_read_bytes', ['5']],
+                                          ['_read_bytes', ['5', False]],
                                           ))
 def test_not_implemented_methods(adapter, method, args):
     with pytest.raises(NotImplementedError):

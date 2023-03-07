@@ -219,7 +219,6 @@ class AnritsuMS2090A(Instrument):
         """
         Return the EMF measurement data for a specified sample number. JSON format.
         """,
-        validator=strict_range,
         values=[1, 16],
     )
 
@@ -242,7 +241,6 @@ class AnritsuMS2090A(Instrument):
         """
         Returns the different set of measurement information depending on the suffix.
         """,
-        validator=truncated_range,
         values=[1, 2]
     )
 

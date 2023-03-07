@@ -23,9 +23,9 @@
 #
 
 
-from pymeasure.adapters import VISAAdapter
+from pymeasure.instruments import Instrument
 from pyvisa.errors import VisaIOError
-
+from pyvisa import constants as vconst
 import re
 import logging
 
@@ -38,23 +38,37 @@ class OxfordVISAError(Exception):
     pass
 
 
-class OxfordInstrumentsAdapter(VISAAdapter):
-    """Adapter class for the VISA library using PyVISA to communicate
-    with instruments.
+class OxfordInstrumentsBase(Instrument):
+    """Base instrument for devices from Oxford Instruments.
+
     Checks the replies from instruments for validity.
 
-    :param resource_name: VISA resource name that identifies the address
+    :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
+    :param string name: The name of the instrument. Often the model designation by default.
     :param max_attempts: Integer that sets how many attempts at getting a
         valid response to a query can be made
-    :param kwargs: key-word arguments for constructing a PyVISA Adapter
+    :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
+        to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
+        Discarded otherwise.
     """
 
     timeoutError = VisaIOError(-1073807339)
 
     regex_pattern = r"^([a-zA-Z])[\d.+-]*$"
 
-    def __init__(self, resource_name, max_attempts=5, **kwargs):
-        super().__init__(resource_name, **kwargs)
+    def __init__(self, adapter, name="OxfordInstruments Base", max_attempts=5, **kwargs):
+        kwargs.setdefault('read_termination', '\r')
+
+        super().__init__(adapter,
+                         name=name,
+                         includeSCPI=False,
+                         asrl={
+                             'baud_rate': 9600,
+                             'data_bits': 8,
+                             'parity': vconst.Parity.none,
+                             'stop_bits': vconst.StopBits.two,
+                         },
+                         **kwargs)
         self.max_attempts = max_attempts
 
     def ask(self, command):
@@ -72,9 +86,15 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         """
 
         for attempt in range(self.max_attempts):
-            response = super().ask(command)
+            # Skip the checks in "write", because we explicitly want to get an answer here
+            super().write(command)
+            self.wait_for()
+            response = self.read()
 
             if self.is_valid_response(response, command):
+                if command.startswith("R"):
+                    # Remove the leading R of the response
+                    return response.strip("R")
                 return response
 
             log.debug("Received invalid response to '%s': %s", command, response)
@@ -92,7 +112,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "
                               "response, maybe there is something worse at hand.")
 
-    def _write(self, command):
+    def write(self, command):
         """Write command to instrument and check whether the reply indicates that the given command
         was not understood.
         The devices from Oxford Instruments reply with '?xxx' to a command 'xxx' if this command is
@@ -103,7 +123,7 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         :raises: :class:`~.OxfordVISAError` if the instrument does not recognise the supplied
             command or if the response of the instrument is not understood
         """
-        super()._write(command)
+        super().write(command)
 
         if not command[0] == "$":
             response = self.read()
@@ -158,4 +178,4 @@ class OxfordInstrumentsAdapter(VISAAdapter):
         return bool(match)
 
     def __repr__(self):
-        return "<OxfordInstrumentsAdapter(resource='%s')>" % self.connection.resource_name
+        return "<OxfordInstrumentsAdapter(adapter='%s')>" % self.adapter.connection.resource_name

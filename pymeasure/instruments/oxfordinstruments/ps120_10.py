@@ -27,12 +27,12 @@ from .ips120_10 import IPS120_10
 
 
 def PS_custom_get_process(v):
-    """convert string to proper float value, for working with the PS 120-10 """
-    return float(v[1:]) * 1e-2
+    """Adjust the received value, for working with the PS 120-10 """
+    return v * 1e-2
 
 
 def PS_custom_set_process(v):
-    """convert float to proper int value, for working with the PS 120-10 """
+    """Convert float to proper int value, for working with the PS 120-10 """
     return int(v * 1e2)
 
 
@@ -100,12 +100,12 @@ class PS120_10(IPS120_10):
 
     current_setpoint_get_process = PS_custom_get_process
     current_setpoint_set_process = PS_custom_set_process
-    current_setpoint_set_command = "J%d"
+    current_setpoint_set_command = "I%d"
 
     field_setpoint_get_process = PS_custom_get_process
     field_setpoint_set_process = PS_custom_set_process
-    field_setpoint_set_command = "T%d"
+    field_setpoint_set_command = "J%d"
 
     sweep_rate_get_process = PS_custom_get_process
     sweep_rate_set_process = PS_custom_set_process
-    sweep_rate_set_command = "A%d"
+    sweep_rate_set_command = "T%d"

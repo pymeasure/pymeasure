@@ -32,7 +32,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
-from .adapters import OxfordInstrumentsAdapter
+from .base import OxfordInstrumentsBase
 
 
 # Setup logging
@@ -58,7 +58,7 @@ def pointer_validator(value, values):
     return tuple(strict_range(v, values) for v in value)
 
 
-class ITC503(Instrument):
+class ITC503(OxfordInstrumentsBase):
     """Represents the Oxford Intelligent Temperature Controller 503.
 
     .. code-block:: python
@@ -84,25 +84,10 @@ class ITC503(Instrument):
                  max_temperature=1677.7,
                  **kwargs):
 
-        if isinstance(adapter, (int, str)):
-            kwargs.setdefault('read_termination', '\r')
-            kwargs.setdefault('send_end', True)
-            adapter = OxfordInstrumentsAdapter(
-                adapter,
-                asrl={
-                    'baud_rate': 9600,
-                    'data_bits': 8,
-                    'parity': 0,
-                    'stop_bits': 20,
-                },
-                preprocess_reply=lambda v: v[1:],
-                **kwargs,
-            )
-
         super().__init__(
             adapter=adapter,
             name=name,
-            includeSCPI=False,
+            **kwargs,
         )
 
         # Clear the buffer in order to prevent communication problems
@@ -304,7 +289,7 @@ class ITC503(Instrument):
         'channel 3 freq/4'.
         """,
         validator=strict_discrete_set,
-        map=True,
+        map_values=True,
         values={
             "temperature setpoint": 0,
             "temperature 1": 1,
