@@ -68,10 +68,12 @@ class DSP7265(Instrument):
             adapter,
             "Signal Recovery DSP 7265",
             includeSCPI=False,
-            # Remove extra unicode character
-            preprocess_reply=lambda r: r.replace('\x00', ''),
             **kwargs
         )
+
+    def read(self, **kwargs):
+        """Remove extra unicode character from instrument readings"""
+        return super().read(**kwargs).replace('\x00', '')
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -371,7 +373,7 @@ class DSP7265(Instrument):
 
         bits = 0
         for q in quantities:
-            bits += 2**self.CURVE_BITS.index(q)
+            bits += 2 ** self.CURVE_BITS.index(q)
 
         self.curve_buffer_bits = bits
         self.curve_buffer_length = points
