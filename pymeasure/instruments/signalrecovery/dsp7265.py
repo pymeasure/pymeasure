@@ -193,7 +193,6 @@ class DSP7265(Instrument):
 
         # Check and map the value
         value = truncated_discrete_set(value, sensitivities)
-        print(value)
         value = sensitivities.index(value)
 
         # Set sensitivity
