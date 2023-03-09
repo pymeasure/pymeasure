@@ -27,36 +27,8 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class Fluke7341(Instrument):
-    """ Represents the compact constant temperature bath from Fluke
+    """ Represents the compact constant temperature bath from Fluke.
     """
-
-    set_point = Instrument.control("s", "s=%g",
-                                   """ A `float` property to set the bath temperature set-point.
-                                   Valid values are  in the range -40 to 150 °C.
-                                   The unit is as defined in property :attr:`~.unit`. This property
-                                   can be read
-                                   """,
-                                   validator=strict_range,
-                                   values=(-40, 150),
-                                   )
-
-    unit = Instrument.control("u", "u=%s",
-                              """ A string property that controls the temperature
-                              unit. Possible values are `c` for Celsius and `f` for Fahrenheit`.""",
-                              validator=strict_discrete_set,
-                              values=('c', 'f'),
-                              )
-
-    temperature = Instrument.measurement("t",
-                                         """ Read the current bath temperature.
-                                         The unit is as defined in property :attr:`unit`.""",
-                                         )
-
-    id = Instrument.measurement("*ver",
-                                """ Read the instrument model """,
-                                preprocess_reply=lambda x: x,
-                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}"
-                                )
 
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 2000)
@@ -64,8 +36,44 @@ class Fluke7341(Instrument):
         super().__init__(
             adapter,
             "Fluke 7341",
-            preprocess_reply=lambda x: x.split()[1],
             includeSCPI=False,
             asrl={'baud_rate': 2400},
             **kwargs
         )
+
+    def read(self):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        Extract the value from the response string.
+
+        Responses are in the format "`type`: `value` `optional information`".
+        Optional information is for example the unit (degree centigrade or Fahrenheit).
+        """
+        return super().read().split(":")[-1]
+
+    set_point = Instrument.control("s", "s=%g",
+                                   """Control the temperature setpoint (float from -40 to 150 °C)
+                                   The unit is as defined in property :attr:`~.unit`.""",
+                                   validator=strict_range,
+                                   values=(-40, 150),
+                                   preprocess_reply=lambda x: x.split()[0],
+                                   )
+
+    unit = Instrument.control(
+        "u", "u=%s",
+        """Control the temperature unit: `c` for Celsius and `f` for Fahrenheit`.""",
+        validator=strict_discrete_set,
+        values=('c', 'f'),
+    )
+
+    temperature = Instrument.measurement("t",
+                                         """Measure the current bath temperature.
+                                         The unit is as defined in property :attr:`unit`.""",
+                                         preprocess_reply=lambda x: x.split()[0],
+                                         )
+
+    id = Instrument.measurement("*ver",
+                                """Get the instrument model.""",
+                                cast=str,
+                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
+                                )
