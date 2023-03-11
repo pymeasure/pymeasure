@@ -31,7 +31,6 @@ See https://github.com/pymeasure/pymeasure/issues/506
 import queue
 import threading
 import time
-import types
 
 import pytest
 
@@ -149,7 +148,56 @@ def test_thieving_read():
     assert q2.get() == "M2"
 
 
-def test_property_get_errcheck_is_not_intercepted():
+@pytest.fixture
+def sequencingtester():
+    # we need to define the event before the class because we need to pass this to control()
+    post_ask_event = threading.Event()
+    pre_check_errors_event = threading.Event()
+
+    class ThreadedSequencingTester(ThreadedAccessTester):
+        _errcheck_result = []
+        _set_errstate_when_entering_check_errors = False
+        prop1 = FakeInstrument.control(
+            "", "%s", """""",
+            check_get_errors=True,
+            values_kwargs={'post_ask_event': post_ask_event},
+        )
+        prop2 = FakeInstrument.control(
+            "", "%s", """""",
+            check_get_errors=True,
+        )
+
+        def ask(self, command, query_delay=0, post_ask_event=None):
+            """Ask variant that can wait after the ask has completed.
+            """
+            ret = super().ask(command, query_delay=query_delay)
+            if post_ask_event:
+                # If we stop because of an event, we first need to put an
+                # errorstate marker in the buffer to indicate that this command
+                # put the instrument into an error state
+                self.write('errstate_from_interrupted_ask')
+                timed_out = not post_ask_event.wait(timeout=self._event_timeout)
+                # Latching way to store timed-out event(s)
+                if timed_out:
+                    self._wait_timed_out.set()
+            return ret
+
+        def check_errors(self):
+            # Mimic main feature of vanilla check_errors: the values call
+            # This consumes the errorstate marker we set above; don't send a command
+            # as that would remain in the buffer.
+            if self._set_errstate_when_entering_check_errors:
+                self.adapter._buffer += 'errstate\n'
+            timed_out = not pre_check_errors_event.wait(timeout=self._event_timeout)
+            if timed_out:
+                self._wait_timed_out.set()
+            self._errcheck_result.append(*self.values(''))
+
+    inst = ThreadedSequencingTester("")
+    return inst, post_ask_event, pre_check_errors_event
+
+
+def test_property_get_errcheck_is_not_intercepted(sequencingtester):
     """Avoid that another thread can interrupt sequencing when getting in our properties.
     We want to make sure that a property command and its check_errors() call stay together.
 
@@ -180,43 +228,9 @@ def test_property_get_errcheck_is_not_intercepted():
         deactivate Thread1
 
     """
-    # we need to define the event before the class because we need to pass this to control()
-    t1Event = threading.Event()
 
-    class ThreadedSequencingTester(ThreadedAccessTester):
-        _errcheck_result = []
-        prop1 = FakeInstrument.control(
-            "", "%s", """""",
-            check_get_errors=True,
-            values_kwargs={'post_ask_event': t1Event},
-        )
-        prop2 = FakeInstrument.control(
-            "", "%s", """""",
-            check_get_errors=True,
-        )
-
-        def ask(self, command, query_delay=0, post_ask_event=None):
-            """Ask variant that can wait after the ask has completed.
-            """
-            ret = super().ask(command, query_delay=query_delay)
-            if post_ask_event:
-                # If we stop because of an event, we first need to put an
-                # errorstate marker in the buffer to indicate that this command
-                # put the instrument into an error state
-                self.write('errstate_from_interrupted_ask')
-                timed_out = not post_ask_event.wait(timeout=self._event_timeout)
-                # Latching way to store timed-out event(s)
-                if timed_out:
-                    self._wait_timed_out.set()
-            return ret
-
-        def check_errors(self):
-            # Mimic main feature of vanilla check_errors: the values call
-            # This consumes the errorstate marker we set above; don't send a command
-            # as that would remain in the buffer.
-            self._errcheck_result.append(*self.values(''))
-
-    inst = ThreadedSequencingTester("")
+    inst, post_ask_event, pre_check_errors_event = sequencingtester
+    pre_check_errors_event.set()  # we don't need this for this test
     inst.write('M1')  # reply for the first property read
 
     def t1_func(q):
@@ -236,7 +250,7 @@ def test_property_get_errcheck_is_not_intercepted():
     t2.start()
 
     time.sleep(0.1)
-    t1Event.set()  # Now wake up thread 1 to proceed and run check_errors
+    post_ask_event.set()  # Now wake up thread 1 to proceed and run check_errors
     t2.join(timeout=2)
     t1.join(timeout=2)
 
