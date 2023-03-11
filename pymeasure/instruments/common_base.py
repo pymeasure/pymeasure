@@ -555,23 +555,24 @@ class CommonBase:
                  ):
             if get_command is None:
                 raise LookupError("Property can not be read.")
-            vals = self.values(command_process(get_command),
-                               separator=separator,
-                               cast=cast,
-                               preprocess_reply=preprocess_reply,
-                               maxsplit=maxsplit,
-                               **values_kwargs)
-            if check_get_errors:
-                try:
-                    error_list = self.check_get_errors()
-                except Exception as exc:
-                    log.error("Exception raised while getting a property with the command "
-                              f"""'{command_process(get_command)}': '{str(exc)}'.""")
-                    raise
-                errors = [str(error) for error in error_list]
-                if errors:
-                    log.error("Error received after trying to get a property with the command "
-                              f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
+            with self._rlock:
+                vals = self.values(command_process(get_command),
+                                   separator=separator,
+                                   cast=cast,
+                                   preprocess_reply=preprocess_reply,
+                                   maxsplit=maxsplit,
+                                   **values_kwargs)
+                if check_get_errors:
+                    try:
+                        error_list = self.check_get_errors()
+                    except Exception as exc:
+                        log.error("Exception raised while getting a property with the command "
+                                  f"""'{command_process(get_command)}': '{str(exc)}'.""")
+                        raise
+                    errors = [str(error) for error in error_list]
+                    if errors:
+                        log.error("Error received after trying to get a property with the command "
+                                  f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
