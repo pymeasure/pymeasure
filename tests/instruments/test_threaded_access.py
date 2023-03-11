@@ -1,5 +1,8 @@
 """Test thread-safe access to instrument connections.
 
+If you want to confirm that the tests still properly test thread issues, replace CommonBase._rlock
+temporarily with a contextlib.nullcontext() -- all tests in this module must fail!
+
 See https://github.com/pymeasure/pymeasure/issues/506
 """
 #
@@ -30,9 +33,12 @@ import threading
 import time
 import types
 
+import pytest
+
 from pymeasure.instruments.fakes import FakeInstrument
 
 # TODO: also guard CommonBase.binary_values and binary methods in general
+# TODO: Need more thread-safety in manipulating ThreadedAccessTester?
 # TODO: Maybe smoother to fake comms with pyvisa-sim?
 
 
@@ -41,7 +47,7 @@ class ThreadedAccessTester(FakeInstrument):
     def __init__(self, adapter, name="Threadtest instr", event_timeout=1):
         super().__init__(adapter, name)
         self._event_timeout = event_timeout
-        self._wait_timed_out = False
+        self._wait_timed_out = threading.Event()
 
     def wait_for(self, query_delay: threading.Event):
         """Wait until the passed event has been set.
@@ -54,8 +60,8 @@ class ThreadedAccessTester(FakeInstrument):
             return
         timed_out = not query_delay.wait(timeout=self._event_timeout)
         # Latching way to store timed-out event(s)
-        # TODO: Needs locks or atomic access to be guaranteed to be correct
-        self._wait_timed_out = self._wait_timed_out or timed_out
+        if timed_out:
+            self._wait_timed_out.set()
 
 
 def test_thieving_ask():
@@ -94,7 +100,7 @@ def test_thieving_ask():
     t2.join(timeout=2)
     t1.join(timeout=2)
 
-    assert not inst._wait_timed_out
+    assert not inst._wait_timed_out.is_set()
     assert q1.get() == "M1"
     assert q2.get() == "M2"
 
@@ -138,7 +144,7 @@ def test_thieving_read():
     t2.join(timeout=2)
     t1.join(timeout=2)
 
-    assert not inst._wait_timed_out
+    assert not inst._wait_timed_out.is_set()
     assert q1.get() == "M1"
     assert q2.get() == "M2"
 
@@ -200,8 +206,8 @@ def test_property_get_errcheck_is_not_intercepted():
                 self.write('errstate_from_interrupted_ask')
                 timed_out = not post_ask_event.wait(timeout=self._event_timeout)
                 # Latching way to store timed-out event(s)
-                # TODO: Needs locks or atomic access to be guaranteed to be correct
-                self._wait_timed_out = self._wait_timed_out or timed_out
+                if timed_out:
+                    self._wait_timed_out.set()
             return ret
 
         def check_errors(self):
@@ -234,7 +240,7 @@ def test_property_get_errcheck_is_not_intercepted():
     t2.join(timeout=2)
     t1.join(timeout=2)
 
-    assert not inst._wait_timed_out
+    assert not inst._wait_timed_out.is_set()
     assert q1.get() == "M1"
     assert q2.get() == "M2"
     # The errchecks must be: first element from the prop1 access, the second empty from prop2
