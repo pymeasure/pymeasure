@@ -23,36 +23,34 @@
 #
 
 import logging
-
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel, \
-    LakeShoreHeaterChannel
+from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LakeShore331(Instrument):
-    """ Represents the Lake Shore 331 Temperature Controller and provides
-    a high-level interface for interacting with the instrument. Note that the
-    331 provides two input channels (A and B) and two output channels (1 and 2).
-    This driver makes use of the :ref:`LakeShoreChannels`.
+class LakeShore224(Instrument):
+    """ Represents the Lakeshore 224 Temperature monitor and provides a high-level interface
+    for interacting with the instrument. Note that the 224 provides 12 temperature input channels
+    (A, B, C1-5, D1-5). This driver makes use of the :ref:`LakeShoreChannels`
 
     .. code-block:: python
 
-        controller = LakeShore331("GPIB::1")
+        monitor = LakeShore224('GPIB::1')
 
-        print(controller.output_1.setpoint)         # Print the current setpoint for loop 1
-        controller.output_1.setpoint = 50           # Change the loop 1 setpoint to 50 K
-        controller.output_1.heater_range = 'low'    # Change the heater range to low.
-        controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
-        print(controller.input_A.temperature)       # Print the temperature at sensor A.
+        print(monitor.input_A.kelvin)           # Print the temperature in kelvin on sensor A
+        monitor.input_A.wait_for_temperature()  # Wait for the temperature on sensor A to stabilize.
     """
-    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel, ('A', 'B'), prefix='input_')
-    o_ch = Instrument.ChannelCreator(LakeShoreHeaterChannel, (1, 2), prefix='output_')
+
+    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel,
+                                     ['0', 'A', 'B',
+                                      'C1', 'C2', 'C3', 'C4', 'C5',
+                                      'D1', 'D2', 'D3', 'D4', 'D5'],
+                                     prefix='input_')
 
     def __init__(self, adapter, **kwargs):
-        name = 'Lakeshore Model 336 Temperature Controller' if 'name' not in kwargs.keys() \
+        name = 'Lakeshore Model 224 Temperature Controller' if 'name' not in kwargs.keys() \
             else kwargs.pop('name')
         read_termination = '\r\n' if 'read_termination' not in kwargs.keys() \
             else kwargs.pop('read_termination')
