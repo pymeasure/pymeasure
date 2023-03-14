@@ -227,7 +227,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
-        command_process=_deprecation_warning(
+        preprocess_reply=_deprecation_warning(
             "Property `laser_enabled` is deprecated, use `emission` instead."),
     )
 
@@ -242,7 +242,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 1" if v else "di 1",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel1_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel1_enabled"),
     )
 
     channel2_enabled = Instrument.control(
@@ -255,7 +255,7 @@ class IBeamSmart(Instrument):
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 2" if v else "di 2",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel2_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel2_enabled"),
     )
 
     power = Instrument.control(
