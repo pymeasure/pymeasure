@@ -60,11 +60,7 @@ class LakeShore421(Instrument):
         super().__init__(
             adapter,
             name,
-            "Lake Shore 421 Gaussmeter",
-            baud_rate=baud_rate,
-            data_bits=7,
-            stop_bits=10,
-            parity=1,
+            asrl={'baud_rate': baud_rate, 'data_bits': 7, 'stop_bits': 10, 'parity': 1},
             read_termination='\r',
             write_termination='\n',
             **kwargs
