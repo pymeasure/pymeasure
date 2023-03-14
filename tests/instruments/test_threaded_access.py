@@ -34,7 +34,9 @@ import time
 
 import pytest
 
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.fakes import FakeInstrument
+from pymeasure.test import expected_protocol
 
 # TODO: also guard CommonBase.binary_values and binary methods in general
 # TODO: Need more thread-safety in manipulating ThreadedAccessTester?
@@ -43,6 +45,7 @@ from pymeasure.instruments.fakes import FakeInstrument
 
 class ThreadedAccessTester(FakeInstrument):
     """Pause-able instrument class for testing threaded access."""
+
     def __init__(self, adapter, name="Threadtest instr", event_timeout=1):
         super().__init__(adapter, name)
         self._event_timeout = event_timeout
@@ -156,7 +159,9 @@ def sequencingtester():
 
     class ThreadedSequencingTester(ThreadedAccessTester):
         _errcheck_result = []
+        _errcheck_lock = threading.Lock()
         _set_errstate_when_entering_check_errors = False
+        errcheck_has_happened_once = threading.Event()
         prop1 = FakeInstrument.control(
             "", "%s", """""",
             check_get_errors=True,
@@ -186,12 +191,15 @@ def sequencingtester():
             # Mimic main feature of vanilla check_errors: the values call
             # This consumes the errorstate marker we set above; don't send a command
             # as that would remain in the buffer.
-            if self._set_errstate_when_entering_check_errors:
+            if self._set_errstate_when_entering_check_errors and not self.errcheck_has_happened_once.is_set():
                 self.adapter._buffer += 'errstate\n'
+                self.errcheck_has_happened_once.set()
+
             timed_out = not pre_check_errors_event.wait(timeout=self._event_timeout)
             if timed_out:
                 self._wait_timed_out.set()
-            self._errcheck_result.append(*self.values(''))
+            with self._errcheck_lock:
+                self._errcheck_result.append(*self.values(''))
 
     inst = ThreadedSequencingTester("")
     return inst, post_ask_event, pre_check_errors_event
@@ -259,3 +267,87 @@ def test_property_get_errcheck_is_not_intercepted(sequencingtester):
     assert q2.get() == "M2"
     # The errchecks must be: first element from the prop1 access, the second empty from prop2
     assert inst._errcheck_result == ['errstate_from_interrupted_ask', '']
+
+
+@pytest.fixture
+def sequencingtester2():
+    # we need to define the event before the class because we need to pass this to control()
+    post_ask_event = threading.Event()
+    pre_check_errors_event = threading.Event()
+
+    class ThreadedSequencingTester(Instrument):
+        _wait_timed_out = threading.Event()
+        _event_timeout = 1
+
+        def ask(self, command, query_delay=0, post_ask_event=None):
+            """Ask variant that can wait after the ask has completed.
+            """
+            ret = super().ask(command, query_delay=query_delay)
+            if post_ask_event:
+                timed_out = not post_ask_event.wait(timeout=self._event_timeout)
+                # Latching way to store timed-out event(s)
+                if timed_out:
+                    self._wait_timed_out.set()
+            return ret
+
+        def check_errors(self):
+            timed_out = not pre_check_errors_event.wait(timeout=self._event_timeout)
+            if timed_out:
+                self._wait_timed_out.set()
+            super().check_errors()
+
+        checked_prop1 = Instrument.control(
+            "CP1?", "CP1 %s", """""",
+            check_set_errors=True,
+            # values_kwargs={'post_ask_event': post_ask_event},
+        )
+        prop2 = Instrument.control(
+            "P2?", "P2 %s", """""",
+        )
+
+    return ThreadedSequencingTester, post_ask_event, pre_check_errors_event
+
+
+def test_property_set_errcheck_is_not_intercepted(sequencingtester2):
+    """Avoid that another thread can interrupt sequencing when setting in our properties.
+
+    Equivalent to test_property_get_errcheck_is_not_intercepted(), just for setting.
+    """
+
+    inst, post_ask_event, pre_check_errors_event = sequencingtester2
+    post_ask_event.set()  # we don't need this for this test
+
+    with expected_protocol(
+        inst,
+        [
+            ('CP1 42', None),
+            ('SYST:ERR?', '1,5'),
+            ('SYST:ERR?', '0'),
+            ('P2?', 'M2'),
+        ],
+        name='Test12',
+    ) as inst:
+
+        def t1_func():
+            inst.checked_prop1 = '42'
+
+        t1 = threading.Thread(target=t1_func)
+        t1.start()
+
+        def t2_func(q):
+            q.put(inst.prop2)
+
+        q2 = queue.Queue()
+        # Thread 2 runs without stopping at an event
+        t2 = threading.Thread(target=t2_func, args=(q2,))
+        t2.start()
+
+        time.sleep(0.1)
+        pre_check_errors_event.set()  # Now wake up thread 1 to proceed with check_errors
+        t2.join(timeout=2)
+        t1.join(timeout=2)
+
+        assert not inst._wait_timed_out.is_set(), "Timed out waiting for an event"
+        # If expected_protocol raises an AssertionError because the comm pairs mismatch,
+        # q2 will remain empty, so this cannot block otherwise the test hangs.
+        assert q2.get(block=False) == "M2"

@@ -619,20 +619,21 @@ class CommonBase:
                     'Values of type `{}` are not allowed '
                     'for CommonBase.control'.format(type(values))
                 )
-            self.write(command_process(set_command) % value)
-            if check_set_errors:
-                try:
-                    error_list = self.check_set_errors()
-                except Exception as exc:
-                    log.error("Exception raised while setting a property with the command "
-                              f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
-                    raise
-                errors = [str(error) for error in error_list]
-                if errors:
-                    log.error(
-                        "Error received after trying to set a property with the command "
-                        f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
-                    )
+            with self._rlock:
+                self.write(command_process(set_command) % value)
+                if check_set_errors:
+                    try:
+                        error_list = self.check_set_errors()
+                    except Exception as exc:
+                        log.error("Exception raised while setting a property with the command "
+                                  f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
+                        raise
+                    errors = [str(error) for error in error_list]
+                    if errors:
+                        log.error(
+                            "Error received after trying to set a property with the command "
+                            f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
+                        )
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
