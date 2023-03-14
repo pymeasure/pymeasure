@@ -202,10 +202,10 @@ class SFM(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Rohde&Schwarz SFM", **kwargs):
         super().__init__(
             adapter,
-            "Rohde&Schwarz SFM",
+            name,
             includeSCPI=True,
             **kwargs
         )

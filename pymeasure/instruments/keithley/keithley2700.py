@@ -139,9 +139,9 @@ class Keithley2700(Instrument, KeithleyBuffer):
         """
         self.write(":ROUTe:OPEN:ALL")
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
         super().__init__(
-            adapter, "Keithley 2700 MultiMeter/Switch System", **kwargs
+            adapter, name, **kwargs
         )
 
         self.check_errors()

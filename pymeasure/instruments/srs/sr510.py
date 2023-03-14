@@ -80,11 +80,12 @@ class SR510(Instrument):
         """A float property that represents the SR510 output voltage in Volts.""",
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SR510 Lock-in amplifier",
+                 **kwargs):
         kwargs.setdefault('write_termination', '\r')
         super().__init__(
             adapter,
-            "Stanford Research Systems SR510 Lock-in amplifier",
+            name,
             includeSCPI=False,
             **kwargs,
         )

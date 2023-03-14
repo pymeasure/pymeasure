@@ -34,9 +34,9 @@ log.addHandler(logging.NullHandler())
 class ThorlabsPM100USB(Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
         super().__init__(
-            adapter, "ThorlabsPM100USB powermeter", **kwargs
+            adapter, name, **kwargs
         )
         self.timout = 3000
         self._set_flags()

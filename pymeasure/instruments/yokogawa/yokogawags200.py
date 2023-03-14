@@ -86,9 +86,9 @@ class YokogawaGS200(Instrument):
         values=[1e-3, 200e-3]
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Yokogawa GS200 Source", **kwargs):
         super().__init__(
-            adapter, "Yokogawa GS200 Source", **kwargs
+            adapter, name, **kwargs
         )
 
     @property

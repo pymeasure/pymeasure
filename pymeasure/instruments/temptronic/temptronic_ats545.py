@@ -64,5 +64,5 @@ class ATS545(ATSBase):
         """
         raise NotImplementedError
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, name="Temptronic ATS-545 Thermostream", **kwargs)
+    def __init__(self, adapter, name="Temptronic ATS-545 Thermostream", **kwargs):
+        super().__init__(adapter, name, **kwargs)

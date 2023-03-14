@@ -51,14 +51,10 @@ class LakeShore331(Instrument):
     i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel, ('A', 'B'), prefix='input_')
     o_ch = Instrument.ChannelCreator(LakeShoreHeaterChannel, (1, 2), prefix='output_')
 
-    def __init__(self, adapter, **kwargs):
-        name = 'Lakeshore Model 336 Temperature Controller' if 'name' not in kwargs.keys() \
-            else kwargs.pop('name')
-        read_termination = '\r\n' if 'read_termination' not in kwargs.keys() \
-            else kwargs.pop('read_termination')
+    def __init__(self, adapter, name="Lakeshore Model 336 Temperature Controller", **kwargs):
+        kwargs.setdefault('read_termination', "\r\n")
         super().__init__(
             adapter,
             name,
-            read_termination=read_termination,
             **kwargs
         )

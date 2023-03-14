@@ -249,10 +249,10 @@ class ESP300(Instrument):
         cast=int
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Newport ESP 300 Motion Controller", **kwargs):
         super().__init__(
             adapter,
-            "Newport ESP 300 Motion Controller",
+            name,
             **kwargs
         )
         # Defines default axes, which can be overwritten
