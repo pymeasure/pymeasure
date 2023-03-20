@@ -79,7 +79,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             kwargs['default'] = default
             if _type is not None:
                 kwargs['type'] = _type
-            self.add_argument("--"+name, **kwargs)
+            self.add_argument("--" + name, **kwargs)
 
         special_options = copy.deepcopy(self.special_options)
         for option, kwargs in special_options.items():
@@ -90,7 +90,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             del kwargs['desc']
             self.add_argument("--" + option, **kwargs)
 
-    def _cli_help_fields(self, name, inst, help_fields):
+    @staticmethod
+    def _cli_help_fields(name, inst, help_fields):
         def hasattr_dict(inst, key):
             return key in inst
 
