@@ -17,7 +17,7 @@ from time import sleep
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
 from pymeasure.experiment import Results
 from pymeasure.display.console import ManagedConsole
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 import logging
 log = logging.getLogger('')
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         app = Console(sys.argv)
     else:
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
         window.show()
 
