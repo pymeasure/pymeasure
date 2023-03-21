@@ -23,5 +23,4 @@ dependencies:
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
     - pyvisa-sim==0.4.0
-    - progressbar2==3.53.3
 

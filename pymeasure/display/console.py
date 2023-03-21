@@ -27,7 +27,10 @@ import logging
 import os
 import copy
 import argparse
-import progressbar
+try:
+    import progressbar
+except ImportError:
+    progressbar = None
 from .Qt import QtCore
 import signal
 from ..log import console_log
@@ -231,8 +234,6 @@ class ManagedConsole(QtCore.QCoreApplication):
         if args['sequence_file'] is not None:
             raise NotImplementedError("Sequencer not yet implemented")
 
-        bar_enabled = not args['no_progressbar']
-
         # Set procedure parameters
         parameter_values = {}
 
@@ -248,7 +249,7 @@ class ManagedConsole(QtCore.QCoreApplication):
                     parameter_values[name] = args[name]
 
         procedure.set_parameters(parameter_values)
-        if (bar_enabled):
+        if (progressbar and not args['no_progressbar']):
             progressbar.streams.wrap_stderr()
             self.bar = progressbar.ProgressBar(max_value=100,
                                                prefix='{variables.status}: ',
