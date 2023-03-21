@@ -31,7 +31,7 @@ try:
     import progressbar
     # Check that progressbar is progressbar2
     progressbar.streams
-except:
+except (AttributeError, ImportError):
     progressbar = None
 from .Qt import QtCore
 import signal
