@@ -29,7 +29,9 @@ import copy
 import argparse
 try:
     import progressbar
-except ImportError:
+    # Check that progressbar is progressbar2
+    progressbar.streams
+except:
     progressbar = None
 from .Qt import QtCore
 import signal
