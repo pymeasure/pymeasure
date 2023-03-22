@@ -221,6 +221,11 @@ class BN765(Instrument):
         "*IDN?", """ Reads the instrument identification """
     )
 
+    run_status = Instrument.measurement(
+        "PULSEGENControl:STATus?",
+        """Returns the instrument status, 0 if stopped, 1 if running"""
+    )
+
     def __init__(self, adapter, **kwargs):
         super(BN765, self).__init__(
             adapter,
@@ -284,10 +289,12 @@ class BN765(Instrument):
         """
         Arms the instrument to receive a trigger. Does not modify output state.
         """
-        self.write('PULSEGENControl:START')
+        if self.run_status != 1:
+            self.write('PULSEGENControl:START')
 
     def disarm(self):
         """
         Stops and disarms the instrument. Does not modify output state.
         """
-        self.write('PULSEGENControl:STOP')
+        if self.run_status != 0:
+            self.write('PULSEGENControl:STOP')

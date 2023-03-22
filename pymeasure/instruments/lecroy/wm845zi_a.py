@@ -65,7 +65,6 @@ class Channel():
         Range is 1 to 1,000,000""",
         validator=strict_range,
         values=[1, 1000000],
-        map_values=True
     )
 
     display = Instrument.control(
