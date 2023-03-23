@@ -76,7 +76,22 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
 
         self.procedure = self.procedure_class()
         parameter_objects = self.procedure.parameter_objects()
+
+        special_options = copy.deepcopy(self.special_options)
+        special_opts_group = self.add_argument_group("Common options")
+        for option, kwargs in special_options.items():
+            help_fields = [('units are', 'units')] + kwargs['help_fields']
+            desc = kwargs['desc']
+            kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
+            del kwargs['help_fields']
+            del kwargs['desc']
+            special_opts_group.add_argument("--" + option, **kwargs)
+
+        experiment_opts_group = self.add_argument_group("Experiment options")
         for name in inputs:
+            if name in special_options:
+                raise Exception (f"Experiment option {name} " + \
+                                  "is already defined as common options")
             kwargs = {}
             parameter = parameter_objects[name]
             default, help_fields, _type = parameter.cli_args
@@ -84,16 +99,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             kwargs['default'] = default
             if _type is not None:
                 kwargs['type'] = _type
-            self.add_argument("--" + name, **kwargs)
-
-        special_options = copy.deepcopy(self.special_options)
-        for option, kwargs in special_options.items():
-            help_fields = [('units are', 'units')] + kwargs['help_fields']
-            desc = kwargs['desc']
-            kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
-            del kwargs['help_fields']
-            del kwargs['desc']
-            self.add_argument("--" + option, **kwargs)
+            experiment_opts_group.add_argument("--" + name, **kwargs)
 
     @staticmethod
     def _cli_help_fields(name, inst, help_fields):
