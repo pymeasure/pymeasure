@@ -90,8 +90,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         experiment_opts_group = self.add_argument_group("Experiment options")
         for name in inputs:
             if name in special_options:
-                raise Exception (f"Experiment option {name} " + \
-                                  "is already defined as common options")
+                raise Exception f"Experiment option {name} " +
+                                "is already defined as common options"
             kwargs = {}
             parameter = parameter_objects[name]
             default, help_fields, _type = parameter.cli_args
