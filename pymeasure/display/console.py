@@ -46,25 +46,26 @@ log.addHandler(logging.NullHandler())
 
 class ConsoleArgumentParser(argparse.ArgumentParser):
     special_options = {
-        "no-progressbar":  {"default": False,
-                            "desc": "Disable progressbar",
-                            "help_fields": ["default"],
-                            "action": 'store_true'},
-        "log-level":       {"default": logging.INFO,
-                            "desc": "Set log level (logging module values)",
-                            "help_fields": ["default"]},
-        "sequence-file":   {"default": None,
-                            "desc": "Sequencer file",
-                            "help_fields": ["default"]},
-        "log-directory":   {"default": ".",
-                            "desc": "Log directory",
-                            "help_fields": ["default"]},
-        "log-file":        {"default": None,
-                            "desc": "Log filename (string or callable which return a string)",
-                            "help_fields": ["default"]},
-        "use-log-file":    {"default": None,
-                            "desc": "File to retrieve params from",
-                            "help_fields": ["default"]},
+        "no-progressbar":   {"default": False,
+                             "desc": "Disable progressbar",
+                             "help_fields": ["default"],
+                             "action": 'store_true'},
+        "log-level":        {"default": 'INFO',
+                             "choices": list(logging._nameToLevel.keys()),
+                             "desc": "Set log level (logging module values)",
+                             "help_fields": ["default"]},
+        "sequence-file":    {"default": None,
+                             "desc": "Sequencer file",
+                             "help_fields": ["default"]},
+        "result-directory": {"default": ".",
+                             "desc": "directory where experiment's result are saved",
+                             "help_fields": ["default"]},
+        "result-file":      {"default": None,
+                             "desc": "File name where results are stored",
+                             "help_fields": ["default"]},
+        "use-result-file":  {"default": None,
+                             "desc": "Result file to retrieve params from",
+                             "help_fields": ["default"]},
     }
 
     def __init__(self, procedure_class, **kwargs):
@@ -147,7 +148,6 @@ class ManagedConsole(QtCore.QCoreApplication):
     will be saved.
     """
     def __init__(self,
-                 args,
                  procedure_class,
                  log_channel='',
                  log_level=logging.INFO,
@@ -155,8 +155,7 @@ class ManagedConsole(QtCore.QCoreApplication):
                  directory_input=False,
                  ):
 
-        super().__init__(args)
-        self.args = args
+        super().__init__([])
         self.procedure_class = procedure_class
         self.sequence_file = sequence_file
         self.directory_input = directory_input
@@ -221,11 +220,11 @@ class ManagedConsole(QtCore.QCoreApplication):
 
     def exec(self):
         # Parse command line arguments
-        args = vars(self.parser.parse_args(self.args[1:]))
+        args = vars(self.parser.parse_args())
         procedure = self.procedure_class()
 
-        self.directory = args['log_directory']
-        self.filename = args['log_file']
+        self.directory = args['result_directory']
+        self.filename = args['result_file']
         try:
             log_level = int(args['log_level'])
         except ValueError:
@@ -241,9 +240,9 @@ class ManagedConsole(QtCore.QCoreApplication):
         # Set procedure parameters
         parameter_values = {}
 
-        if args['use_log_file'] is not None:
+        if args['use_result_file'] is not None:
             # Special case set parameters from log file
-            results = Results.load(args['use_log_file'])
+            results = Results.load(args['use_result_file'])
             for name in results.parameters:
                 parameter_values[name] = results.parameters[name].value
         else:

@@ -59,15 +59,6 @@ class TestProcedure(Procedure):
         log.info("Finished")
 
 
-class Console(ManagedConsole):
-
-    def __init__(self, argv):
-        super().__init__(
-            argv,
-            procedure_class=TestProcedure,
-        )
-
-
 class MainWindow(ManagedWindow):
 
     def __init__(self):
@@ -93,8 +84,8 @@ class MainWindow(ManagedWindow):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         # If any parameter is passed, the console mode is run
-        # This creiteria can be changed at user discretion
-        app = Console(sys.argv)
+        # This criteria can be changed at user discretion
+        app = ManagedConsole(procedure_class=TestProcedure)
     else:
         app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
