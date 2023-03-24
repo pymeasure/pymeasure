@@ -70,8 +70,9 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
     def __init__(self, procedure_class, **kwargs):
         super().__init__(**kwargs)
         self.procedure_class = procedure_class
+        self.setup_parser()
 
-    def setup_parser(self, inputs):
+    def setup_parser(self):
         """ Setup command line arguments parsing from parameters information """
 
         self.procedure = self.procedure_class()
@@ -88,7 +89,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             special_opts_group.add_argument("--" + option, **kwargs)
 
         experiment_opts_group = self.add_argument_group("Experiment options")
-        for name in inputs:
+        for name in parameter_objects:
             if name in special_options:
                 raise Exception(f"Experiment option {name} " +
                                 "is already defined as common options")
@@ -138,8 +139,6 @@ class ManagedConsole(QtCore.QCoreApplication):
 
     :param procedure_class: procedure class describing the experiment
     (see :class:`~pymeasure.experiment.procedure.Procedure`)
-    :param inputs: list of :class:`~pymeasure.experiment.parameters.Parameter`
-    instance variable names, which the display will generate graphical fields for
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
     :param sequence_file: simple text file to quickly load a pre-defined
@@ -150,7 +149,6 @@ class ManagedConsole(QtCore.QCoreApplication):
     def __init__(self,
                  args,
                  procedure_class,
-                 inputs=(),
                  log_channel='',
                  log_level=logging.INFO,
                  sequence_file=None,
@@ -160,7 +158,6 @@ class ManagedConsole(QtCore.QCoreApplication):
         super().__init__(args)
         self.args = args
         self.procedure_class = procedure_class
-        self.inputs = inputs
         self.sequence_file = sequence_file
         self.directory_input = directory_input
         self.log = logging.getLogger(log_channel)
@@ -171,7 +168,6 @@ class ManagedConsole(QtCore.QCoreApplication):
         # Check if the get_estimates function is reimplemented
         self.use_estimator = not self.procedure_class.get_estimates == Procedure.get_estimates
         self.parser = ConsoleArgumentParser(procedure_class)
-        self.parser.setup_parser(self.inputs)
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
         # Handle Ctrl+C nicely

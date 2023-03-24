@@ -65,7 +65,6 @@ class Console(ManagedConsole):
         super().__init__(
             argv,
             procedure_class=TestProcedure,
-            inputs=['iterations', 'delay', 'seed'],
         )
 
 
