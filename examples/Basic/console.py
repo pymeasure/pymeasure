@@ -1,11 +1,15 @@
 """
-This example demonstrates how to make a graphical interface, and uses
+This example demonstrates how to run an experiment both with graphical
+interface or with a console mode. If the script run without any parameter,
+the GUI version is displayed, otherwise the console mode is run. It uses
 a random number generator to simulate data so that it does not require
 an instrument to use.
 
 Run the program by changing to the directory containing this file and calling:
 
-python gui.py
+python console.py #GUI version
+python console.py --seed 12345 #Console version
+
 
 """
 
@@ -89,6 +93,8 @@ class MainWindow(ManagedWindow):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
+        # If any parameter is passed, the console mode is run
+        # This creiteria can be changed at user discretion
         app = Console(sys.argv)
     else:
         app = QtWidgets.QApplication(sys.argv)
