@@ -40,6 +40,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   ipgphotonics/index
    keithley/index
    keysight/index
    lakeshore/index
