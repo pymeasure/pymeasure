@@ -92,11 +92,6 @@ class DynamicProperty(property):
         self.name = name
 
 
-def null_operation(value):
-    """Return the value unmodified."""
-    return value
-
-
 class CommonBase:
     """Base class for instruments and channels.
 
@@ -446,7 +441,7 @@ class CommonBase:
             values_kwargs.update(kwargs)
 
         if command_process is None:
-            command_process = null_operation
+            command_process = lambda c: c  # noqa: E731
         else:
             warn("Do not use `command_process`, use a dynamic property instead.", FutureWarning)
 
