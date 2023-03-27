@@ -130,8 +130,8 @@ class CommonBase:
         self._special_names = self._setup_special_names()
         self._create_channels()
         if preprocess_reply is not None:
-            warn(("Parameter `preprocess_reply` is deprecated in CommonBase. "
-                 "Implement it in the instrument instead."),
+            warn(("Parameter `preprocess_reply` is deprecated. "
+                 "Implement it in the instrument, e.g. in `read`, instead."),
                  FutureWarning)
         self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
