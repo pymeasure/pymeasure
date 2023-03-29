@@ -38,7 +38,6 @@ class ThorlabsPM100USB(Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
-        self.timout = 3000  # TODO what is this for?
         self._set_flags()
 
     wavelength_min = Instrument.measurement(
