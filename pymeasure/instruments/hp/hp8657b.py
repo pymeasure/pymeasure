@@ -37,10 +37,10 @@ class HP8657B(Instrument):
     with the instrument.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP8657B", **kwargs):
         super().__init__(
             adapter,
-            "Hewlett-Packard HP8657B",
+            name,
             includeSCPI=False,
             send_end=True,
             **kwargs,

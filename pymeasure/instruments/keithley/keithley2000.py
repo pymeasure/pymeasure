@@ -436,9 +436,9 @@ class Keithley2000(Instrument, KeithleyBuffer):
         values=[0, 999999.999]
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2000 Multimeter", **kwargs):
         super().__init__(
-            adapter, "Keithley 2000 Multimeter", **kwargs
+            adapter, name, **kwargs
         )
 
     def measure_voltage(self, max_voltage=1, ac=False):

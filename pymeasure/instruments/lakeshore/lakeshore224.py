@@ -49,14 +49,10 @@ class LakeShore224(Instrument):
                                       'D1', 'D2', 'D3', 'D4', 'D5'],
                                      prefix='input_')
 
-    def __init__(self, adapter, **kwargs):
-        name = 'Lakeshore Model 224 Temperature Controller' if 'name' not in kwargs.keys() \
-            else kwargs.pop('name')
-        read_termination = '\r\n' if 'read_termination' not in kwargs.keys() \
-            else kwargs.pop('read_termination')
+    def __init__(self, adapter, name="Lakeshore Model 224 Temperature Controller", **kwargs):
+        kwargs.setdefault('read_termination', "\r\n")
         super().__init__(
             adapter,
             name,
-            read_termination=read_termination,
             **kwargs
         )

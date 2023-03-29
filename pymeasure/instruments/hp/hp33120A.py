@@ -105,10 +105,10 @@ class HP33120A(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett Packard 33120A Function Generator", **kwargs):
         super().__init__(
             adapter,
-            "Hewlett Packard 33120A Function Generator",
+            name,
             **kwargs
         )
         self.amplitude_units = 'Vpp'

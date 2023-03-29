@@ -47,5 +47,5 @@ class ATS525(ATSBase):
         """,
     )
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, name="Temptronic ATS-525 Thermostream", **kwargs)
+    def __init__(self, adapter, name="Temptronic ATS-525 Thermostream", **kwargs):
+        super().__init__(adapter, name, **kwargs)

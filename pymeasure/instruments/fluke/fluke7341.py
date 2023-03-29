@@ -30,12 +30,12 @@ class Fluke7341(Instrument):
     """ Represents the compact constant temperature bath from Fluke.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Fluke 7341", **kwargs):
         kwargs.setdefault('timeout', 2000)
         kwargs.setdefault('write_termination', '\r\n')
         super().__init__(
             adapter,
-            "Fluke 7341",
+            name,
             includeSCPI=False,
             asrl={'baud_rate': 2400},
             **kwargs
