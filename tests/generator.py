@@ -33,18 +33,18 @@ log.addHandler(logging.NullHandler())
 
 
 def write_test(file, name, cls_name, comm_pairs, tests):
-    """Write a test"""
-    instr = ""
+    """Write a test."""
+    inst = ""
     for test in tests:
-        if "instr" in test:
-            instr = " as instr"
+        if "inst" in test:
+            inst = " as inst"
             break
     file.writelines(
         ["\n", "\n", f"def test_{name}():\n",
          "    with expected_protocol(\n",
          f"            {cls_name},\n",
          f"            {comm_pairs}\n".replace("), (", "),\n             ("),
-         f"            ){instr}:\n"])
+         f"            ){inst}:\n"])
     if tests == ["pass"]:
         tests = ["pass  # Verify the expected communication."]
     file.writelines(f"        {test}\n" for test in tests)
@@ -87,6 +87,8 @@ def parse_stream(stream):
 
 
 class ByteFormatter(logging.Formatter):
+    """Logging formatter with bytes values for the test generation."""
+
     @staticmethod
     def make_bytes(value):
         if isinstance(value, (bytes, bytearray)):
@@ -96,10 +98,11 @@ class ByteFormatter(logging.Formatter):
 
     def format(self, record):
         return b"".join((record.msg.replace(r"%s", "").encode(),
-                          *[self.make_bytes(arg) for arg in record.args]))
+                         *[self.make_bytes(arg) for arg in record.args]))
 
 
 class ByteStreamHandler(logging.StreamHandler):
+    """Logging handler using bytes streams."""
 
     terminator = b"\n"
 
@@ -132,7 +135,12 @@ class Generator:
         self._incomm = []  # Initializiation comm_pairs
 
     def __del__(self):
-        self._file.close()
+        self.close()
+
+    def close(self):
+        """Close the file handler."""
+        if not self._file.closed:
+            self._file.close()
 
     def parse_stream(self):
         """Parse the stream not yet read."""
@@ -163,39 +171,39 @@ class Generator:
                                 " PyVISA is not present")
         adapter.log.addHandler(ByteStreamHandler(self._stream))
         adapter.log.setLevel(logging.DEBUG)
-        self.instr = instrument_class(adapter, **kwargs)
+        self.inst = instrument_class(adapter, **kwargs)
         comm = self.parse_stream()
         self._incomm = comm
         write_test(self._file, "init", self._class, comm, ['pass'])
 
     def test_property(self, property):
-        """Test getting the instrument's `property`."""
+        """Test getting some `property` of an instrument."""
         log.info(f"Test property {property} getter.")
-        value = getattr(self.instr, property)
+        value = getattr(self.inst, property)
         comm = self.parse_stream()
         if isinstance(value, str):
             value = f"\'{value}\'"
         write_test(self._file, property, self._class, comm,
-                   [f"assert instr.{property} == {value}"])
+                   [f"assert inst.{property} == {value}"])
         return value
 
     def test_property_setter(self, property, value):
-        """Test setting the instrument's `property` to `value`."""
+        """Test setting the `property` of the instrument to `value`."""
         log.info(f"Test property {property} setter.")
-        setattr(self.instr, property, value)
+        setattr(self.inst, property, value)
         comm = self.parse_stream()
         if isinstance(value, str):
             value = f"\'{value}\'"
         write_test(self._file, f"{property}_setter", self._class, comm,
-                   [f"instr.{property} = {value}"])
+                   [f"inst.{property} = {value}"])
 
     def test_method(self, method, *args, **kwargs):
-        """Test the instrument's `method` with `args` and `kwargs`."""
+        """Test calling the `method` of the instruments with `args` and `kwargs`."""
         log.info(f"Test method {method}.")
-        value = getattr(self.instr, method)(*args, **kwargs)
+        value = getattr(self.inst, method)(*args, **kwargs)
         comm = self.parse_stream()
         if isinstance(value, str):
             value = f"\'{value}\'"
         write_test(self._file, method, self._class, comm,
-                   [f"assert instr.{method}({f'*{args}, ' if args else ''}"
+                   [f"assert inst.{method}({f'*{args}, ' if args else ''}"
                     f"{f'**{kwargs}' if kwargs else ''}) == {value}"])
