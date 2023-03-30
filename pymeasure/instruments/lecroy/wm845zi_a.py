@@ -320,6 +320,18 @@ class LecroyWM845Zi_A(Instrument):
         This is the same as pressing the Single key on the front panel. """
         self.run_state = 'SINGLE'
 
+    def wait_for_idle(self, basewait=0.01, timeout=5):
+        cmd = f"""vbs? 'return=app.WaitUntilIdle({basewait})"""
+        returned = int(self.ask(cmd))
+        breaker = int(timeout/basewait)
+        if breaker <= 0:
+            raise ValueError(f'timeout {timeout} is shorter than wait {basewait}')
+        i = 0
+        while returned == 0. and i < breaker:
+            sleep(basewait)
+            returned = int(self.ask(cmd))
+            i += 1
+
     def wait_for_op(self, timeout=3600, should_stop=lambda: False):
         #good
         """ Wait until all operations have finished or timeout is reached.
