@@ -476,7 +476,7 @@ class CommonBase:
                                maxsplit=maxsplit,
                                **values_kwargs)
             if check_get_errors:
-                self.check_errors()
+                self.check_get_errors()
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -525,7 +525,7 @@ class CommonBase:
                 )
             self.write(command_process(set_command) % value)
             if check_set_errors:
-                self.check_errors()
+                self.check_set_errors()
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
@@ -644,3 +644,24 @@ class CommonBase:
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
                                   )
+
+    def check_errors(self):
+        """ Read all errors from the instrument.
+
+        :return: list of error entries
+        """
+        raise NotImplementedError("Implement it in a subclass.")
+
+    def check_get_errors(self):
+        """Check for errors after having gotten a property.
+
+        Called if :code:`check_get_errors=True` is set for that property.
+        """
+        self.check_errors()
+
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        self.check_errors()
