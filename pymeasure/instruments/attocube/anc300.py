@@ -27,7 +27,7 @@ from math import inf
 from warnings import warn
 
 from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
@@ -60,7 +60,7 @@ truncated_int_array_strict_length = joined_validators(strict_length,
                                                       truncated_int_array)
 
 
-class Axis:
+class Axis(Channel):
     """ Represents a single open loop axis of the Attocube ANC350
 
     :param axis: axis identifier, integer from 1 to 7
@@ -139,34 +139,23 @@ class Axis:
         positive.""",
         validator=strict_range, values=[0, inf], check_set_errors=True)
 
-    def __init__(self, controller, axis):
-        self.axis = str(axis)
-        self.controller = controller
+    def insert_id(self, command):
+        """Insert the channel id in a command replacing `placeholder`.
 
-    def _add_axis_id(self, command):
-        """ add axis id to a command string at the correct position after the
-        initial command, but before a potential value
-
-        :param str command: command string
-        :returns: command string with added axis id
+        Add axis id to a command string at the correct position after the
+        initial command, but before a potential value.
         """
         cmdparts = command.split()
-        cmdparts.insert(1, self.axis)
+        cmdparts.insert(1, self.id)
         return ' '.join(cmdparts)
 
-    def ask(self, command, **kwargs):
-        return self.controller.ask(self._add_axis_id(command), **kwargs)
-
-    def write(self, command, **kwargs):
-        return self.controller.write(self._add_axis_id(command), **kwargs)
-
-    def values(self, command, **kwargs):
-        return self.controller.values(self._add_axis_id(command), **kwargs)
+    def _add_axis_id(self, command):
+        self.insert_id(command)
 
     def stop(self):
         """ Stop any motion of the axis """
         self.write('stop')
-        self.check_errors()
+        self.check_set_errors()
 
     def move(self, steps, gnd=True):
         """ Move 'steps' steps in the direction given by the sign of the
@@ -189,7 +178,7 @@ class Axis:
         else:
             pass  # do not set stepu/d to 0 since it triggers a continous move
         # wait for the move to finish
-        self.controller.wait_for(abs(steps)/self.frequency)
+        self.parent.wait_for(abs(steps)/self.frequency)
         # ask if movement finished
         self.ask('stepw')
         if gnd:
@@ -203,14 +192,14 @@ class Axis:
         """
         self.mode = 'cap'
         # wait for the measurement to finish
-        self.controller.wait_for(1)
+        self.parent.wait_for(1)
         # ask if really finished
         self.ask('capw')
         return self.capacity
 
-    def check_errors(self):
+    def check_set_errors(self):
         """Read after setting a setting or control."""
-        self.controller.check_errors()
+        self.parent.check_set_errors()
 
 
 class ANC300Controller(Instrument):
@@ -274,7 +263,7 @@ class ANC300Controller(Instrument):
 
         self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(self, i + 1))
+            setattr(self, axis, self.add_child(Axis, id=str(i + 1)))
 
         self.wait_for()
         # clear messages sent upon opening the connection,
@@ -290,7 +279,7 @@ class ANC300Controller(Instrument):
         # switch console echo off
         self.ask('echo off')
 
-    def check_errors(self):
+    def check_set_errors(self):
         """Read after setting a value."""
         self.read()
 
