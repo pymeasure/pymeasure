@@ -116,6 +116,7 @@ def parse_stream(stream):
     lines = stream.readlines()
     write = None
     read = None
+    mode = None
     for line in lines:
         if line.startswith(b"WRITE:"):
             # Store the last comm_pair unless there is none.
@@ -123,11 +124,21 @@ def parse_stream(stream):
                 comm.append((write, read))
                 read = None
             write = line[6:-1]
-        else:
+            mode = "W"
+        elif line.startswith(b"READ:"):
             if read is not None:
                 read += line[5:-1]
             else:
                 read = line[5:-1]
+            mode = "R"
+        else:
+            # newline due to "\n" character in communication
+            if mode == "W":
+                write += b"\n" + line[:-1]
+            elif mode == "R":
+                read += b"\n" + line[:-1]
+            else:
+                raise TypeError("start with newline!")
     if read is not None or write is not None:
         comm.append((write, read))
     return comm

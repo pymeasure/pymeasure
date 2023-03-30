@@ -160,6 +160,8 @@ class Test_parse_stream:
             (b"WRITE:abc\nWRITE:def\n", [(b"abc", None), (b"def", None)]),
             (b"WRITE:\x03ab\x04\nREAD:super\x05\n",
              [(b'\x03ab\x04', b'super\x05')]),
+            (b"WRITE:ho\n 9\nWRITE:\n hey\nREAD:7\n9\n",
+             [(b"ho\n 9", None), (b"\n hey", b"7\n9")]),
         ))
     def test_parsing(self, text, comms):
         with io.BytesIO(text) as buf:
