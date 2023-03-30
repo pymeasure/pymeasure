@@ -98,11 +98,9 @@ class YAR(Instrument):
         else:
             return reply[-1].strip()
 
-    def check_errors(self):
-        """Empty the read buffer."""
-        got = self.read().split(":")
-        if got[0] == "ERR":
-            raise ConnectionError(f"Connection error {got[-1]}.")
+    def check_set_errors(self):
+        """Empty the read buffer after setting a property and check for errors.."""
+        self.read()
 
     # COMMUNICATION FUNCTIONS
 

@@ -254,7 +254,7 @@ class VellemanK8090(Instrument):
 
         return ",".join(values_str)
 
-    def check_errors(self):
+    def check_set_errors(self):
         """Called after each set command, normally to look for errors.
 
         The K8090 replies with a status after a switch command, but

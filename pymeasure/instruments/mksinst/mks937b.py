@@ -56,6 +56,10 @@ class PressureChannel(Channel):
         check_set_errors=True,
     )
 
+    def check_set_errors(self):
+        """Check for errors after setting a property."""
+        self.parent.check_set_errors()
+
 
 class IonGaugeAndPressureChannel(PressureChannel):
     """Channel having both a pressure and an ion gauge sensor"""
@@ -147,11 +151,11 @@ class MKS937B(Instrument):
         """
         super().write(self._prepend_address(command))
 
-    def check_errors(self):
+    def check_set_errors(self):
         """
         check reply string for acknowledgement string
         """
-        ret = self.adapter.read()  # use adapter read to get raw reply
+        ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)
         if reply:
             if reply.group('ack') == 'ACK':

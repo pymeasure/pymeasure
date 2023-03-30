@@ -79,6 +79,10 @@ class DriverChannel(Channel):
         check_set_errors=True,
     )
 
+    def check_set_errors(self):
+        """Check for errors after setting a variable."""
+        self.parent.check_set_errors()
+
 
 class IBeamSmart(Instrument):
     """ IBeam Smart laser diode
@@ -173,7 +177,7 @@ class IBeamSmart(Instrument):
         self.lastcommand = command
         super().write(command)
 
-    def check_errors(self):
+    def check_set_errors(self):
         """Check communication after setting a value.
 
         Checks if the last reply is only '[OK]', otherwise a ValueError is
@@ -276,7 +280,7 @@ class IBeamSmart(Instrument):
     def enable_continous(self):
         """Enable countinous emmission mode."""
         self.write('di ext')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = True
         self.ch_2.enabled = True
 
@@ -288,12 +292,12 @@ class IBeamSmart(Instrument):
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')
-        self.check_errors()
+        self.check_set_errors()
 
     def disable(self):
         """Shutdown all laser operation."""
         self.write('di 0')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = False
 
     def shutdown(self):

@@ -100,8 +100,11 @@ class TC038(Instrument):
             raise ConnectionError(errors[0])
         return got
 
-    def check_errors(self):
-        """Read the error from the instrument and return a list of errors."""
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
         self.read()
 
     def set_monitored_quantity(self, quantity='temperature'):

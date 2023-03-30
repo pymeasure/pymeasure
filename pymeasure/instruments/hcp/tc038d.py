@@ -132,8 +132,11 @@ class TC038D(Instrument):
             else:
                 raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
-    def check_errors(self):
-        """To be called from the property setters to read the acknowledgment."""
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
         self.read()
 
     def ping(self, test_data=0):
