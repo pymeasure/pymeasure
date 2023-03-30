@@ -44,46 +44,45 @@ class EurotestHPP120256(Instrument):
 
     .. code-block:: python
 
-    hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
+        hpp120256 = EurotestHPP120256("GPIB0::20::INSTR")
 
-    print(hpp120256.id)
-    print(hpp120256.lam_status)
-    print(hpp120256.status)
+        print(hpp120256.id)
+        print(hpp120256.lam_status)
+        print(hpp120256.status)
 
-    hpp120256.ramp_to_zero(100.0)
+        hpp120256.ramp_to_zero(100.0)
 
-    hpp120256.voltage_ramp = 50.0  # V/s
-    hpp120256.current_limit = 2.0  # mA
-    inst.kill_enabled = True  # Enable over-current protection
-    time.sleep(1.0)  # Give time to enable kill
-    inst.output_enabled = True
-    time.sleep(1.0)  # Give time to output on
+        hpp120256.voltage_ramp = 50.0  # V/s
+        hpp120256.current_limit = 2.0  # mA
+        inst.kill_enabled = True  # Enable over-current protection
+        time.sleep(1.0)  # Give time to enable kill
+        inst.output_enabled = True
+        time.sleep(1.0)  # Give time to output on
 
-    abs_output_voltage_error = 0.02 # kV
+        abs_output_voltage_error = 0.02 # kV
 
-    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
+        hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
 
-    # Here voltage HV output should be at 0.0 kV
+        # Here voltage HV output should be at 0.0 kV
 
-    print("Setting the output voltage to 1.0kV...")
-    hpp120256.voltage_setpoint = 1.0  # kV
+        print("Setting the output voltage to 1.0kV...")
+        hpp120256.voltage_setpoint = 1.0  # kV
 
-    # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
+        # Now HV output should be rising to reach the 1.0kV at 50.0 V/s
 
-    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
+        hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 40.0)
 
-    # Here voltage HV output should be at 1.0 kV
+        # Here voltage HV output should be at 1.0 kV
 
-    hpp120256.shutdown()
+        hpp120256.shutdown()
 
-    hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 60.0)
+        hpp120256.wait_for_output_voltage_reached(abs_output_voltage_error, 1.0, 60.0)
 
-    # Here voltage HV output should be at 0.0 kV
+        # Here voltage HV output should be at 0.0 kV
 
-    inst.output_enabled = False
+        inst.output_enabled = False
 
-    # Now the HV voltage source is in safe state
-
+        # Now the HV voltage source is in safe state
     """
 
     VOLTAGE_RANGE = [0.0, 12.0]  # kVolts
