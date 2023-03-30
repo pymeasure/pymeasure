@@ -121,13 +121,13 @@ def test_init(comm_pairs, value):
 """
 
 
-def test_write_method(file):
+def test_write_parametrized_method(file):
     write_parametrized_method_test(file, "set_monitored_quantity", "TC038",
                                    [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
                                     [(b'\x0201010W0002\x03', b'\x020K\x03')]],
                                    [('temperature',), ()],
                                    [{}, {'quantity': 'temperature'}],
-                                   [None, 7],
+                                   [None, "'xyz'"],
                                    "assert inst.set_monitored_quantity(*args, **kwargs) == value"
                                    )
     assert file.getvalue() == r"""
@@ -136,7 +136,7 @@ def test_write_method(file):
     ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
      ('temperature',), {}, None),
     ([(b'\x0201010W0002\x03', b'\x020K\x03')],
-     (), {'quantity': 'temperature'}, 7),
+     (), {'quantity': 'temperature'}, 'xyz'),
 ))
 def test_set_monitored_quantity(comm_pairs, args, kwargs, value):
     with expected_protocol(
@@ -174,6 +174,8 @@ class Test_generator:
         generator = Generator()
         adapter = ProtocolAdapter(
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
+        TC038.string_test = TC038.control("test?", "test %s", "Control some string.", cast=str,
+                                          get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp")
         return generator
 
@@ -204,6 +206,17 @@ def test_init():
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')]],
             [20],
+        )}
+
+    def test_property_string(self, generator):
+        """Ensure that a returned string is encapsulated by single ticks."""
+        generator.inst.adapter.comm_pairs.extend(
+            [(b"\x0201010test?\x03", b"\x020101OKall fine\x03")])
+        assert generator.test_property_getter("string_test") == "all fine"
+        assert generator._getters == {'string_test': (
+            [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b"\x0201010test?\x03", b"\x020101OKall fine\x03")]],
+            ["'all fine'"],
         )}
 
     def test_write_getter_tests(self, generator, file):
@@ -248,6 +261,17 @@ def test_temperature_getter():
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')]],
             [20],
+        )}
+
+    def test_property_setter_string(self, generator):
+        """Ensure that a string value is encapsulated by single ticks."""
+        generator.inst.adapter.comm_pairs.extend(
+            [(b"\x0201010test xy\x03", b"\x020101OK\x03")])
+        generator.test_property_setter("string_test", "xy")
+        assert generator._setters == {'string_test': (
+            [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010test xy\x03', None)]],
+            ["'xy'"],
         )}
 
     def test_write_setter_tests(self, generator, file):
@@ -314,7 +338,7 @@ def test_set_monitored_quantity():
         generator._calls = {'set_monitored_quantity': (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
              [(b'\x0201010W0002\x03', b'\x020K\x03')]],
-            [('temperature',), (),],
+            [('temperature',), (), ],
             [{}, {'quantity': 'temperature'}],
             [None, 7],
         )}

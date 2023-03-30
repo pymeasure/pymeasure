@@ -138,7 +138,7 @@ def parse_stream(stream):
             elif mode == "R":
                 read += b"\n" + line[:-1]
             else:
-                raise TypeError("start with newline!")
+                raise ValueError("Very first line does not contain 'WRITE' or 'READ'!")
     if read is not None or write is not None:
         comm.append((write, read))
     return comm
@@ -292,13 +292,11 @@ class Generator:
         log.info(f"Test property {property} getter.")
         value = getattr(self.inst, property)
         comm = self.parse_stream()
-        if isinstance(value, str):
-            value = f"\'{value}\'"
         if property not in self._getters:
             self._getters[property] = [], []
         c, v = self._getters[property]
         c.append(comm)
-        v.append(value)
+        v.append(f"\'{value}\'" if isinstance(value, str) else value)
         return value
 
     def test_property_setter(self, property, value):
@@ -306,28 +304,24 @@ class Generator:
         log.info(f"Test property {property} setter.")
         setattr(self.inst, property, value)
         comm = self.parse_stream()
-        if isinstance(value, str):
-            value = f"\'{value}\'"
         if property not in self._setters:
             self._setters[property] = [], []
         c, v = self._setters[property]
         c.append(comm)
-        v.append(value)
+        v.append(f"\'{value}\'" if isinstance(value, str) else value)
 
     def test_method(self, method, *args, **kwargs):
         """Test calling the `method` of the instruments with `args` and `kwargs`."""
         log.info(f"Test method {method}.")
         value = getattr(self.inst, method)(*args, **kwargs)
         comm = self.parse_stream()
-        if isinstance(value, str):
-            value = f"\'{value}\'"
         if method not in self._calls:
             self._calls[method] = [], [], [], []
         c, a, k, v = self._calls[method]
         c.append(comm)
         a.append(args)
         k.append(kwargs)
-        v.append(value)
+        v.append(f"\'{value}\'" if isinstance(value, str) else value)
 
     # batch tests
     def test_property_setter_batch(self, property, values):
