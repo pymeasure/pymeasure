@@ -56,10 +56,6 @@ class PressureChannel(Channel):
         check_set_errors=True,
     )
 
-    def check_set_errors(self):
-        """Check for errors after setting a property."""
-        self.parent.check_set_errors()
-
 
 class IonGaugeAndPressureChannel(PressureChannel):
     """Channel having both a pressure and an ion gauge sensor"""
@@ -145,7 +141,7 @@ class MKS937B(Instrument):
 
     def write(self, command):
         """
-        Writes to the instrument including the device address
+        Write to the instrument including the device address.
 
         :param command: command string to be sent to the instrument
         """
@@ -153,7 +149,7 @@ class MKS937B(Instrument):
 
     def check_set_errors(self):
         """
-        check reply string for acknowledgement string
+        Check reply string for acknowledgement string.
         """
         ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)

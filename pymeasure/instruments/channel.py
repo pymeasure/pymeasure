@@ -109,6 +109,20 @@ class Channel(CommonBase):
         """
         return self.parent.check_errors()
 
+    def check_get_errors(self):
+        """Check for errors after having gotten a property.
+
+        Called if :code:`check_get_errors=True` is set for that property.
+        """
+        self.parent.check_get_errors()
+
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        self.parent.check_set_errors()
+
     # Communication functions
     def wait_for(self, query_delay=0):
         """Wait for some time. Used by 'ask' to wait before reading.

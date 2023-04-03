@@ -79,10 +79,6 @@ class DriverChannel(Channel):
         check_set_errors=True,
     )
 
-    def check_set_errors(self):
-        """Check for errors after setting a variable."""
-        self.parent.check_set_errors()
-
 
 class IBeamSmart(Instrument):
     """ IBeam Smart laser diode

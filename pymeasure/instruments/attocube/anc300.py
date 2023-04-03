@@ -178,7 +178,7 @@ class Axis(Channel):
         else:
             pass  # do not set stepu/d to 0 since it triggers a continous move
         # wait for the move to finish
-        self.parent.wait_for(abs(steps)/self.frequency)
+        self.parent.wait_for(abs(steps) / self.frequency)
         # ask if movement finished
         self.ask('stepw')
         if gnd:
@@ -196,10 +196,6 @@ class Axis(Channel):
         # ask if really finished
         self.ask('capw')
         return self.capacity
-
-    def check_set_errors(self):
-        """Read after setting a setting or control."""
-        self.parent.check_set_errors()
 
 
 class ANC300Controller(Instrument):
