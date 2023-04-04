@@ -371,9 +371,9 @@ def test_control_doc(dynamic):
     assert Fake.x.__doc__ == expected_doc
 
 
-def test_check_errors(fake):
+def test_check_get_errors_not_implemented(fake):
     with pytest.raises(NotImplementedError):
-        fake.check_errors()
+        fake.check_get_errors()
 
 
 def test_control_check_errors_get(fake):
@@ -386,15 +386,9 @@ def test_control_check_errors_get(fake):
     assert fake.error is True
 
 
-def test_control_check_errors_get_global(fake):
-    """Test whether it calls the global `check_errors`."""
-    fake.fake_ctrl_check_get_errors = True
-
-    def checking():
-        fake.error = True
-    fake.check_errors = checking
-    fake.fake_ctrl
-    assert fake.error is True
+def test_check_set_errors_not_implemented(fake):
+    with pytest.raises(NotImplementedError):
+        fake.check_set_errors()
 
 
 def test_control_check_errors_set(fake):
@@ -403,17 +397,6 @@ def test_control_check_errors_set(fake):
     def checking():
         fake.error = True
     fake.check_set_errors = checking
-    fake.fake_ctrl = 7
-    assert fake.error is True
-
-
-def test_control_check_errors_set_global(fake):
-    """Test whether it calls the global `check_errors`."""
-    fake.fake_ctrl_check_set_errors = True
-
-    def checking():
-        fake.error = True
-    fake.check_errors = checking
     fake.fake_ctrl = 7
     assert fake.error is True
 

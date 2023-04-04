@@ -149,9 +149,6 @@ class Axis(Channel):
         cmdparts.insert(1, self.id)
         return ' '.join(cmdparts)
 
-    def _add_axis_id(self, command):
-        self.insert_id(command)
-
     def stop(self):
         """ Stop any motion of the axis """
         self.write('stop')

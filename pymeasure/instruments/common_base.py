@@ -645,23 +645,16 @@ class CommonBase:
                                   dynamic=dynamic,
                                   )
 
-    def check_errors(self):
-        """ Read all errors from the instrument.
-
-        :return: list of error entries
-        """
-        raise NotImplementedError("Implement it in a subclass.")
-
     def check_get_errors(self):
         """Check for errors after having gotten a property.
 
         Called if :code:`check_get_errors=True` is set for that property.
         """
-        self.check_errors()
+        raise NotImplementedError("Implement it in a subclass.")
 
     def check_set_errors(self):
         """Check for errors after having set a property.
 
         Called if :code:`check_set_errors=True` is set for that property.
         """
-        self.check_errors()
+        raise NotImplementedError("Implement it in a subclass.")

@@ -219,3 +219,17 @@ class Instrument(CommonBase):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    def check_get_errors(self):
+        """Check for errors after having gotten a property.
+
+        Called if :code:`check_get_errors=True` is set for that property.
+        """
+        self.check_errors()
+
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        self.check_errors()
