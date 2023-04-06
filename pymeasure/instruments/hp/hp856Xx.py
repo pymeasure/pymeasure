@@ -254,8 +254,9 @@ class HP8560A(HP856Xx):
     # HP8560A is able to go up to 2.9 GHz
     freq_center_values = [[0, 2.9e9], ["UP", "DN"]]
 
-    def __init__(self, name="Hewlett-Packard HP8560A", **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP8560A", **kwargs):
         super().__init__(
+            adapter,
             name,
             **kwargs,
         )
@@ -265,8 +266,9 @@ class HP8561B(HP856Xx):
     # HP8561B is able to go up to 6.5 GHz
     freq_center_values = [[0, 6.5e9], ["UP", "DN"]]
 
-    def __init__(self, name="Hewlett-Packard HP8561B", **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP8561B", **kwargs):
         super().__init__(
+            adapter,
             name,
             **kwargs,
         )
