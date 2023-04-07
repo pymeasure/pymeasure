@@ -28,8 +28,7 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
-    DetectionModes, AmplitudeUnits
-from pymeasure.instruments.hp.hp856Xx import HP856Xx
+    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode
 
 
 class TestHP856Xx:
@@ -178,6 +177,34 @@ class TestHP856Xx:
         ) as instr:
             instr.detector_mode = detector_mode
             assert instr.detector_mode == detector_mode
+
+    @pytest.mark.parametrize("string_params", ["UP", "DN", "ON", "OFF"])
+    def test_display_line_strings(self, string_params):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("DL 1.00000000000E01", None),
+                    ("DL " + string_params, None),
+                    ("DL?", "1.00000000000E01")
+                ]
+        ) as instr:
+            instr.display_line = 1.0e01
+            instr.display_line = string_params
+            assert instr.display_line == 10
+
+    def test_done(self):
+        with expected_protocol(
+                HP856Xx,
+                [("DONE?", "1")],
+        ) as instr:
+            assert instr.done
+
+    def test_errors(self):
+        with expected_protocol(
+                HP856Xx,
+                [("ERR?", "112,101,111")],
+        ) as instr:
+            assert instr.errors == [ErrorCode(112), ErrorCode(101), ErrorCode(111)]
 
 
 class TestHP8561B:
