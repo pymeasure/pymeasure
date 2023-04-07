@@ -378,6 +378,7 @@ class ErrorCode:
     def __eq__(self, other):
         return self.code == other.code
 
+
 class HP856Xx(Instrument):
     """
 
@@ -562,7 +563,7 @@ class HP856Xx(Instrument):
         "DL?", "DL %s",
         """
         Activates a horizontal display line for use as a visual aid or for
-        computational purposes. The default value is 0 dBm. 'UP' or 'DN' changes the display line 
+        computational purposes. The default value is 0 dBm. 'UP' or 'DN' changes the display line
         by one vertical division.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
@@ -574,11 +575,10 @@ class HP856Xx(Instrument):
         "DONE?",
         """
         Returns True to the controller when all commands in a command string
-        entered before DONE have been completed. Sending a 'triggger_sweep' command before DONE 
+        entered before DONE have been completed. Sending a 'triggger_sweep' command before DONE
         ensures
         that the spectrum analyzer will complete a full sweep before continuing on in a program.
-        
-        Depending on the timeout a timeout error from the adapter will raise before the spectrum 
+        Depending on the timeout a timeout error from the adapter will raise before the spectrum
         analyzer can finish due to an extreme long sweep time
         """,
         map_values=True,
@@ -591,13 +591,11 @@ class HP856Xx(Instrument):
         """
         Outputs a list of errors present. An error code of “0” means there are
         no errors present. For a list of error codes and descriptions, refer to Appendix C or the
-        Installation and Verification Manual. Executing ERR clears all HP-IB errors. 
+        Installation and Verification Manual. Executing ERR clears all HP-IB errors.
         For best results, enter error data immediately after querying for errors.
         """,
         cast=ErrorCode,
     )
-
-
 
 
 class HP8560A(HP856Xx):
