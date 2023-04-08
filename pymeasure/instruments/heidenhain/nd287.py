@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,8 +42,8 @@ class ND287(Instrument):
 
     # get_process lambda functions used in the position property
     position_get_process_map = {
-        "mm": lambda p: float(p.split("\x02")[-1])*1e-4,
-        "inch": lambda p: float(p.split("\x02")[-1])*1e-5
+        "mm": lambda p: float(p.split("\x02")[-1]) * 1e-4,
+        "inch": lambda p: float(p.split("\x02")[-1]) * 1e-5
     }
 
     position = Instrument.measurement(
@@ -56,7 +56,7 @@ class ND287(Instrument):
         dynamic=True
     )
 
-    def __init__(self, adapter, units="mm", **kwargs):
+    def __init__(self, adapter, name="Heidenhain ND287", units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
         :param: units: Specify the units that the gauge is working in.
@@ -66,7 +66,7 @@ class ND287(Instrument):
 
         super().__init__(
             adapter,
-            "Heidenhain ND287",
+            name,
             includeSCPI=False,
             write_termination="\r",
             **kwargs

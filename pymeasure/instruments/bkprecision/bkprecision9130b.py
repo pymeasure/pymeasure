@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2019 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,9 +60,9 @@ class BKPrecision9130B(Instrument):
         get_process=lambda x: int(x[2])
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="BK Precision 9130B Source", **kwargs):
         super().__init__(
-            adapter, "BK Precision 9130B Source", **kwargs
+            adapter, name, **kwargs
         )
 
     @property

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -243,9 +243,9 @@ class KeysightDSOX1102G(Instrument):
 
     BOOLS = {True: 1, False: 0}
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight DSOX1102G Oscilloscope", **kwargs):
         super().__init__(
-            adapter, "Keysight DSOX1102G Oscilloscope", timeout=6000, **kwargs
+            adapter, name, timeout=6000, **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
         self.ch1 = Channel(self, 1)
@@ -404,7 +404,7 @@ class KeysightDSOX1102G(Instrument):
             - "xreference": data point associated with xorigin (int)
             - "yincrement": voltage difference between data points (float)
             - "yorigin": voltage at center of screen (float)
-            - "yreference": data point associated with yorigin (int)"""
+            - "yreference": data point associated with yorigin (int)"""  # noqa: E501
         return self._waveform_preamble()
 
     @property

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -493,8 +493,8 @@ class LeCroyT3DSO1204(Instrument):
 
     channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "LeCroy T3DSO1204 Oscilloscope", **kwargs)
+    def __init__(self, adapter, name="LeCroy T3DSO1204 Oscilloscope", **kwargs):
+        super().__init__(adapter, name, **kwargs)
         if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
         self._grid_number = 14  # Number of grids in the horizontal direction
@@ -662,7 +662,6 @@ class LeCroyT3DSO1204(Instrument):
 
     acquisition_status = Instrument.measurement(
         "SAST?", """A string parameter that defines the acquisition status of the scope.""",
-        validator=strict_discrete_set,
         values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
                 "armed": "Arm"},
         map_values=True
@@ -736,7 +735,7 @@ class LeCroyT3DSO1204(Instrument):
         """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write("STOP")
 
-    def arm_acquisition(self):
+    def single(self):
         """ Causes the instrument to acquire a single trigger of data.
         This is the same as pressing the Single key on the front panel. """
         self.write("ARM")
@@ -988,14 +987,16 @@ class LeCroyT3DSO1204(Instrument):
         metadata about the waveform.
         Note.
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
-        :param requested_points: number of points to acquire. If 0, all available points
-        will be returned.
+        :param requested_points: number of points to acquire. If None the number of points
+        requested in the previous call will be assumed, i.e. the value of the number of points
+        stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
-        point every 4 points is read.
+        point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
+        i.e. the value of the sparsing stored in the oscilloscope memory.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
         property for dict format. """
         # Sanitize the input arguments
-        if sparsing is None:
+        if not sparsing:
             sparsing = self.waveform_sparsing
         if requested_points is None:
             requested_points = self.waveform_points

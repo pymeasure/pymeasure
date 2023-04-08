@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -131,9 +131,9 @@ class Yokogawa7651(Instrument):
         set_process=lambda v: v * 1e3,  # converts mA to A
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Yokogawa 7651 Programmable DC Source", **kwargs):
         super().__init__(
-            adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
+            adapter, name, **kwargs
         )
 
         self.write("H0;E")  # Set no header in output data

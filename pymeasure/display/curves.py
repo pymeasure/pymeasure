@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from .Qt import QtCore
+from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -82,11 +82,13 @@ class ResultsImage(pg.ImageItem):
 
         super().__init__(image=self.img_data)
 
-        # Scale and translate image so that the pixels are in the coorect
+        # Scale and translate image so that the pixels are in the correct
         # position in "data coordinates"
-        self.scale(self.xstep, self.ystep)
-        self.translate(int(self.xstart / self.xstep) - 0.5,
-                       int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        tr = QtGui.QTransform()
+        tr.scale(self.xstep, self.ystep)
+        tr.translate(int(self.xstart / self.xstep) - 0.5,
+                     int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        self.setTransform(tr)
 
     def update_data(self):
         if self.force_reload:

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -280,28 +280,28 @@ class SR860(Instrument):
     sine_amplitudepreset1 = Instrument.control(
         "PSTA? 0", "PSTA0, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A1 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A2 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
@@ -521,7 +521,7 @@ class SR860(Instrument):
     strip_chart_dat1 = Instrument.control(
         "CGRF? 0", "CGRF 0, %i",
         """A integer property that turns the strip chart graph of data channel 1 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -529,7 +529,7 @@ class SR860(Instrument):
     strip_chart_dat2 = Instrument.control(
         "CGRF? 1", "CGRF 1, %i",
         """A integer property that turns the strip chart graph of data channel 2 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -537,7 +537,7 @@ class SR860(Instrument):
     strip_chart_dat3 = Instrument.control(
         "CGRF? 2", "CGRF 2, %i",
         """A integer property that turns the strip chart graph of data channel 1 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -545,7 +545,7 @@ class SR860(Instrument):
     strip_chart_dat4 = Instrument.control(
         "CGRF? 3", "CGRF 3, %i",
         """A integer property that turns the strip chart graph of data channel 4 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -559,9 +559,10 @@ class SR860(Instrument):
         values=range(0, 16)
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SR860 Lock-in amplifier",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Stanford Research Systems SR860 Lock-in amplifier",
+            name,
             **kwargs
         )

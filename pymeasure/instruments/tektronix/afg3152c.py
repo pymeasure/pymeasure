@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -197,10 +197,10 @@ class AFG3152C(Instrument):
         afg.ch1.enable()               # Enables the output from CH1
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Tektronix AFG3152C arbitrary function generator", **kwargs):
         super().__init__(
             adapter,
-            "Tektronix AFG3152C arbitrary function generator",
+            name,
             **kwargs
         )
         self.ch1 = Channel(self, 1)

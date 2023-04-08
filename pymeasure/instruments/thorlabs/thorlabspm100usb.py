@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,11 +34,10 @@ log.addHandler(logging.NullHandler())
 class ThorlabsPM100USB(Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
         super().__init__(
-            adapter, "ThorlabsPM100USB powermeter", **kwargs
+            adapter, name, **kwargs
         )
-        self.timout = 3000
         self._set_flags()
 
     wavelength_min = Instrument.measurement(

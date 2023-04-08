@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -291,3 +291,16 @@ def test_ramp_symmetry(ramp_symmetry):
         inst.ch[1].ramp_symmetry = ramp_symmetry
         inst.ch[2].ramp_symmetry = ramp_symmetry
         inst.ramp_symmetry = ramp_symmetry
+
+
+def test_channel_phase_synchronization():
+    """
+    Test Agilent 33500 channel phase synchronization
+    """
+    with expected_protocol(
+        Agilent33500,
+        [
+            ("PHAS:SYNC", None)
+        ]
+    ) as inst:
+        assert inst.phase_sync() is None
