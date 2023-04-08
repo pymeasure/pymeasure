@@ -602,10 +602,10 @@ class Keithley2306(Instrument):
     """ Represents the Keithley 2306 Dual Channel Battery/Charger Simulator.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2306", **kwargs):
         super().__init__(
             adapter,
-            "Keithley 2306",
+            name,
             **kwargs
         )
         self.ch1 = BatteryChannel(self, 1)

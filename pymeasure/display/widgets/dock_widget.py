@@ -82,12 +82,15 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
     def save_dock_layout(self):
         """
-        Save the current layout of the docks. When running the GUI you can access this
-        function by right-clicking in the widget area to bring up the context men
-        and selecting "Save Dock Layout"
+        Save the current layout of the docks and the plot settings.
+        When running the GUI you can access this function by right-clicking in the
+        widget area to bring up the context menu and selecting "Save Dock Layout"
         """
 
-        layout = self.dock_area.saveState()
+        layout = {
+            'docks': self.dock_area.saveState(),
+            'plots': [i.plot_frame.plot_widget.saveState() for i in self.plot_frames]
+        }
         with open(self.dock_layout_filename, 'w') as f:
             f.write(json.dumps(layout))
         log.info('Saved dock layout to file %s' % self.dock_layout_filename)
@@ -134,10 +137,14 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         if path.exists(self.dock_layout_filename):
             with open(self.dock_layout_filename, 'r') as f:
                 dock_layout = f.read()
-
-            # make sure number of docks in the file matches num_plots
-            if dock_layout.count('dock') == self.num_plots:
-                self.dock_area.restoreState(json.loads(dock_layout))
+            layout = json.loads(dock_layout)
+            docks = layout['docks']
+            plots = layout['plots']
+            # Make sure number of plots in the file matches num_plots
+            if len(plots) == self.num_plots:
+                self.dock_area.restoreState(docks)
+                for idx, i in enumerate(self.plot_frames):
+                    i.plot_frame.plot_widget.restoreState(plots[idx])
                 log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
             else:
                 log.warning(

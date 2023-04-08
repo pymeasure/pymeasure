@@ -192,9 +192,9 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
-            adapter, "Keithley 6517B Electrometer/High Resistance Meter",
+            adapter, name,
             **kwargs
         )
 

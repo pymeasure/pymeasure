@@ -36,11 +36,11 @@ class SPD1305X(SPDSingleChannelBase):
                                          voltage_range=voltage_range,
                                          current_range=current_range)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Siglent Technologies SPD1305X Power Supply", **kwargs):
 
         super().__init__(
             adapter,
-            name="Siglent Technologies SPD1305X Power Supply",
+            name,
             **kwargs
         )
 

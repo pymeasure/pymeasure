@@ -32,10 +32,10 @@ class ThorlabsPro8000(Instrument):
     LDC_POLARITIES = ['AG', 'CG']
     STATUS = ['ON', 'OFF']
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Thorlabs Pro 8000", **kwargs):
         super().__init__(
             adapter,
-            "Thorlabs Pro 8000",
+            name,
             **kwargs
         )
         self.write(':SYST:ANSW VALUE')

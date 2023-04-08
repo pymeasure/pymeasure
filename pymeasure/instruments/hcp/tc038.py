@@ -76,10 +76,10 @@ class TC038(Instrument):
     :param int timeout: Timeout in ms.
     """
 
-    def __init__(self, adapter, address=1, timeout=1000,
+    def __init__(self, adapter, name="TC038", address=1, timeout=1000,
                  includeSCPI=False, **kwargs):
 
-        super().__init__(adapter, "TC038", timeout=timeout,
+        super().__init__(adapter, name, timeout=timeout,
                          write_termination="\r", read_termination="\r",
                          parity=Parity.even, **kwargs)
         self.address = address

@@ -49,6 +49,7 @@ from . import fwbell
 from . import hcp
 from . import heidenhain
 from . import hp
+from . import ipgphotonics
 from . import keithley
 from . import keysight
 from . import lakeshore
@@ -71,4 +72,5 @@ from . import texio
 from . import thermotron
 from . import thorlabs
 from . import toptica
+from . import velleman
 from . import yokogawa

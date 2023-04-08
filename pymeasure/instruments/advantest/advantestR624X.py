@@ -938,7 +938,6 @@ class AdvantestR624X(Instrument):
             SESR is cleared after being read.
 
         """,
-        validator=truncated_range,
         values=[0, 255],
         get_process=lambda v: SESR(int(v)),
     )
@@ -949,7 +948,6 @@ class AdvantestR624X(Instrument):
         in the form of a :class:`DOR` ``IntFlag`` (``DOC?``).
 
         """,
-        validator=strict_range,
         values=range(0, 65535),
         get_process=lambda v: DOR(int(v)),
     )
@@ -2011,7 +2009,6 @@ class SMUChannel(Channel):
         in the form of a :class:`COR` ``IntFlag`` (``COC?``).
 
         """,
-        validator=strict_range,
         values=range(0, 65535),
         get_process=lambda v: COR(int(v)),
     )

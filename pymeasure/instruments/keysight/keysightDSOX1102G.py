@@ -243,9 +243,9 @@ class KeysightDSOX1102G(Instrument):
 
     BOOLS = {True: 1, False: 0}
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight DSOX1102G Oscilloscope", **kwargs):
         super().__init__(
-            adapter, "Keysight DSOX1102G Oscilloscope", timeout=6000, **kwargs
+            adapter, name, timeout=6000, **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
         self.ch1 = Channel(self, 1)

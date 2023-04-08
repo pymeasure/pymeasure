@@ -113,12 +113,12 @@ class HP3478A(HPLegacyInstrument):
     """
     status_desc = Status
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3478A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3478A",
+            name,
             **kwargs,
         )
 

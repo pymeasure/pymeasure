@@ -60,9 +60,9 @@ class BKPrecision9130B(Instrument):
         get_process=lambda x: int(x[2])
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="BK Precision 9130B Source", **kwargs):
         super().__init__(
-            adapter, "BK Precision 9130B Source", **kwargs
+            adapter, name, **kwargs
         )
 
     @property

@@ -94,7 +94,7 @@ class SerialAdapter(Adapter):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read from the whole read buffer.
+            read from the whole read buffer (waits for timeout).
         :param bool break_on_termchar: Stop reading at a termination character.
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
@@ -103,9 +103,29 @@ class SerialAdapter(Adapter):
             return self.connection.read_until(self.read_termination.encode(),
                                               count if count > 0 else None,
                                               **kwargs)
+        elif count >= 0:
+            return self.connection.read(count, **kwargs)
         else:
-            # At -1 we read a very large number of bytes, which can be considered the whole buffer.
-            return self.connection.read(1e99 if count == -1 else count, **kwargs)
+            # For -1 we empty the buffer completely
+            return self._read_bytes_until_timeout()
+
+    def _read_bytes_until_timeout(self, chunk_size=256, **kwargs):
+        """Read from the serial until a timeout occurs, regardless of the number of bytes.
+
+        :chunk_size: The number of bytes attempted to in a single transaction.
+            Multiple of these transactions will occur.
+        """
+        # `Serial.readlines()` has an unpredictable timeout, see PR #866
+        data = bytes()
+        while True:
+            chunk = self.connection.read(chunk_size, **kwargs)
+            data += chunk
+            if len(chunk) < chunk_size:  # If fewer bytes got returned, we had a timeout
+                return data
+
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer."""
+        self.connection.reset_input_buffer()
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

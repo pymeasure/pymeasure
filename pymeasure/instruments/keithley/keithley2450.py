@@ -365,9 +365,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
         super().__init__(
-            adapter, "Keithley 2450 SourceMeter", **kwargs
+            adapter, name, **kwargs
         )
 
     def enable_source(self):

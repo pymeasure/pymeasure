@@ -49,10 +49,10 @@ class AgilentB1500(Instrument):
     measurements.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent B1500 Semiconductor Parameter Analyzer", **kwargs):
         super().__init__(
             adapter,
-            "Agilent B1500 Semiconductor Parameter Analyzer",
+            name,
             **kwargs
         )
         self._smu_names = {}

@@ -35,10 +35,10 @@ log.addHandler(logging.NullHandler())
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
         super().__init__(
             adapter,
-            "Keithley 2600 SourceMeter",
+            name,
             **kwargs
         )
         self.ChA = Channel(self, 'a')

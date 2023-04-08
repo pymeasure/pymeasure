@@ -24,6 +24,7 @@
 
 from inspect import getmembers
 import logging
+from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -96,6 +97,13 @@ class CommonBase:
 
     This class contains everything needed for pymeasure's property creator
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
+
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
@@ -118,9 +126,14 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self, **kwargs):
+    def __init__(self, preprocess_reply=None, **kwargs):
         self._special_names = self._setup_special_names()
         self._create_channels()
+        if preprocess_reply is not None:
+            warn(("Parameter `preprocess_reply` is deprecated. "
+                 "Implement it in the instrument, e.g. in `read`, instead."),
+                 FutureWarning)
+        self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
 
     class ChannelCreator:
@@ -295,19 +308,23 @@ class CommonBase:
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
-        :param command: SCPI command to be sent to the instrument
-        :param separator: A separator character to split the string into a list
-        :param cast: A type to cast the result
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed
-            string.
-        :param maxsplit: At most `maxsplit` splits are done. -1 (default) indicates no limit.
+        :param command: SCPI command to be sent to the instrument.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
+        :param cast: A type to cast each element of the splitted string.
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
-        :returns: A list of the desired type, or strings where the casting fails
+        :returns: A list of the desired type, or strings where the casting fails.
         """
         results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
+        elif callable(self.preprocess_reply):
+            results = self.preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
@@ -344,10 +361,15 @@ class CommonBase:
         map_values=False,
         get_process=lambda v: v,
         set_process=lambda v: v,
-        command_process=lambda c: c,
+        command_process=None,
         check_set_errors=False,
         check_get_errors=False,
         dynamic=False,
+        preprocess_reply=None,
+        separator=',',
+        maxsplit=-1,
+        cast=float,
+        values_kwargs=None,
         **kwargs
     ):
         """Return a property for the class based on the supplied
@@ -371,11 +393,27 @@ class CommonBase:
             before value mapping, returning the processed value
         :param command_process: A function that takes a command and allows processing
             before executing the command
+
+            .. deprecated:: 0.12
+                Use a dynamic property instead.
+
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
+        :param cast: A type to cast each element of the splitted string.
+        :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
+
+            .. deprecated:: 0.12
+                Use `values_kwargs` dictionary parameter instead.
 
         Example of usage of dynamic parameter is as follows:
 
@@ -408,6 +446,18 @@ class CommonBase:
         parameters name except `dynamic` and `docs` (e.g. `values` in the example) has to be
         considered reserved for dynamic property control.
         """
+        if values_kwargs is None:
+            values_kwargs = {}
+        if kwargs:
+            warn(f"Do not use keyword arguments {kwargs} as `control` parameter "
+                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
+                 FutureWarning)
+            values_kwargs.update(kwargs)
+
+        if command_process is None:
+            command_process = lambda c: c  # noqa: E731
+        else:
+            warn("Do not use `command_process`, use a dynamic property instead.", FutureWarning)
 
         def fget(self,
                  get_command=get_command,
@@ -419,7 +469,12 @@ class CommonBase:
                  ):
             if get_command is None:
                 raise LookupError("Property can not be read.")
-            vals = self.values(command_process(get_command), **kwargs)
+            vals = self.values(command_process(get_command),
+                               separator=separator,
+                               cast=cast,
+                               preprocess_reply=preprocess_reply,
+                               maxsplit=maxsplit,
+                               **values_kwargs)
             if check_get_errors:
                 self.check_errors()
             if len(vals) == 1:
@@ -486,8 +541,15 @@ class CommonBase:
 
     @staticmethod
     def measurement(get_command, docs, values=(), map_values=None,
-                    get_process=lambda v: v, command_process=lambda c: c,
-                    check_get_errors=False, dynamic=False, **kwargs):
+                    get_process=lambda v: v,
+                    command_process=None,
+                    check_get_errors=False, dynamic=False,
+                    preprocess_reply=None,
+                    separator=',',
+                    maxsplit=-1,
+                    cast=float,
+                    values_kwargs=None,
+                    **kwargs):
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -502,11 +564,34 @@ class CommonBase:
             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
+
+            .. deprecated:: 0.12
+                Use a dynamic property instead.
+
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
+        :param preprocess_reply: Optional callable used to preprocess the string
+            received from the instrument, before splitting it.
+            The callable returns the processed string.
+        :param separator: A separator character to split the string returned by
+            the device into a list.
+        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+            -1 (default) indicates no limit.
+        :param cast: A type to cast each element of the splitted string.
+        :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
+
+            .. deprecated:: 0.12
+                Use `values_kwargs` dictionary parameter instead.
         """
+        if values_kwargs is None:
+            values_kwargs = {}
+        if kwargs:
+            warn(f"Do not use keyword arguments {kwargs} as `measurement` parameter "
+                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
+                 FutureWarning)
+            values_kwargs.update(kwargs)
 
         return CommonBase.control(get_command=get_command,
                                   set_command=None,
@@ -517,7 +602,12 @@ class CommonBase:
                                   command_process=command_process,
                                   check_get_errors=check_get_errors,
                                   dynamic=dynamic,
-                                  **kwargs)
+                                  preprocess_reply=preprocess_reply,
+                                  separator=separator,
+                                  maxsplit=maxsplit,
+                                  cast=cast,
+                                  values_kwargs=values_kwargs,
+                                  )
 
     @staticmethod
     def setting(set_command, docs,
