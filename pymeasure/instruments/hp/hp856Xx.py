@@ -24,7 +24,6 @@
 
 import logging
 from enum import Enum
-from decimal import Decimal
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
@@ -34,35 +33,45 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Trace(str, Enum):
+class StrEnum(str, Enum):
+    def __str__(self):
+        return self.value
+
+
+class Trace(StrEnum):
     A = "TRA"
     B = "TRB"
 
 
-class MixerMode(str, Enum):
+class MixerMode(StrEnum):
     Internal = "INT"
     External = "EXT"
 
 
-class CouplingMode(str, Enum):
+class CouplingMode(StrEnum):
     AC = "AC"
     DC = "DC"
 
 
-class DemodulationMode(str, Enum):
+class DemodulationMode(StrEnum):
     Amplitude = "AM"
     Frequency = "FM"
     Off = "OFF"
 
 
-class DetectionModes(str, Enum):
+class FrequencyReference(StrEnum):
+    Internal = "INT"
+    External = "EXT"
+
+
+class DetectionModes(StrEnum):
     NegativePeak = "NEG"
     Normal = "NRM"
     PositivePeak = "POS"
     Sample = "SMP"
 
 
-class AmplitudeUnits(str, Enum):
+class AmplitudeUnits(StrEnum):
     DBM = "DBM"
     DBMV = "DBMV"
     DBUV = "DBUV"
@@ -394,39 +403,28 @@ class HP856Xx(Instrument):
             **kwargs,
         )
 
-    id = Instrument.measurement(
-        "ID?",
-        """
-        Get identification of the device with software and hardware revision (e.g. HP8560A,002,H03)
-        """,
-        maxsplit=0
-    )
-
     attenuation = Instrument.control(
         "AT?", "AT %s",
         """
-        Controls input attenuation in decade steps from 10 to 70db or set to AUTO and MAN(ual)
-        as well as incremental control via UP/DN
+        Control input attenuation in decade steps from 10 to 70 db or set to AUTO and MAN(ual)
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN", "UP", "DN"], [10, 20, 30, 40, 50, 60, 70]]
+        values=[["AUTO", "MAN"], [10, 20, 30, 40, 50, 60, 70]]
     )
 
     amplitude_unit = Instrument.control(
         "AUNITS?", "AUNITS %s",
         """
-        Controls the amplitude unit with a selection of the following parameters:
-        'DBM', 'DBMV', 'DBUV', 'V', 'W', 'AUTO', 'MAN'
-        and affects the following properties:
+        Control the amplitude unit with a selection of the following parameters: string
+        'DBM', 'DBMV', 'DBUV', 'V', 'W', 'AUTO', 'MAN' or use the enum 'AmplitudeUnits'
         """,
         validator=strict_discrete_set,
-        set_process=lambda v: v.value,
         values=[e for e in AmplitudeUnits]
     )
 
     def auto_couple(self):
         """
-        Sets video bandwidth, resolution bandwidth, input attenuation,
+        Set the video bandwidth, resolution bandwidth, input attenuation,
         sweep time, and center frequency step-size to coupled mode. These functions can be recoupled
         individually or all at once. The spectrum analyzer chooses appropriate values for these
         functions. The video bandwidth and resolution bandwidth are set according to the coupled
@@ -437,55 +435,65 @@ class HP856Xx(Instrument):
 
     def exchange_traces(self):
         """
-        Exchanges the contents of trace A with those of trace B. If the traces are
+        Exchange the contents of trace A with those of trace B. If the traces are
         in clear-write or max-hold mode, the mode is changed to view. Otherwise, the traces remain
         in their initial mode.
         """
         self.write("AXB")
 
-    def blank_trace(self, trace: Trace):
+    def blank_trace(self, trace):
         """
-        Blanks the chosen trace from the display. The current contents of the
+        Blank the chosen trace from the display. The current contents of the
         trace remain in the trace but are not updated.
-        trace: Takes type 'Trace' selecting the trace
+        trace: Takes type 'Trace' selecting the trace or 'TRA', 'TRB'
         """
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
         self.write("BLANK " + trace)
 
     def subtract_display_line_from_trace_b(self):
         """
-        Subtracts the display line from trace B and places the result in dBm
+        Subtract the display line from trace B and places the result in dBm
         (when in log mode) in trace B, which is then set to view mode. In linear mode, the results
         are in volts.
         """
         self.write("BML")
 
-    freq_center = Instrument.control(
-        "CF?", "CF %s",
+    center_frequency = Instrument.control(
+        "CF?", "CF %.11E",
         """
-        Sets the center frequency in hertz and sets the spectrum analyzer to center
+        Set the center frequency in hertz and sets the spectrum analyzer to center
         frequency / span mode. The span remains constant; the start and stop frequencies change as
         the center frequency changes.
         """,
-        validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[0, 1], ["UP", "DN"]],
-        dynamic=True,
-        set_process=lambda v: v if isinstance(v, str) else (
-                '%.11E HZ' % Decimal(v)).replace('+', ''
-                                                 )
+        validator=strict_range,
+        values=[0, 1],
+        dynamic=True
     )
 
-    def clear_write_trace(self, trace: Trace):
+    def clear_write_trace(self, trace):
         """
-        Sets the chosen trace to clear-write mode. This mode sets each element
+        Set the chosen trace to clear-write mode. This mode sets each element
         of the chosen trace to the bottom-screen value;
         then new data from the detector is put in the trace with each sweep.
-        trace: Takes type 'Trace' selecting the trace
+        trace: Takes type 'Trace' selecting the trace or 'TRA', 'TRB'
         """
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
+
         self.write("CLRW " + trace)
 
     def continuous_sweep(self):
         """
-        Activates the continuous-sweep mode. This mode enables another
+        Activate the continuous-sweep mode. This mode enables another
         sweep at the completion of the current sweep once the trigger conditions are met.
         """
         self.write("CONTS")
@@ -493,11 +501,12 @@ class HP856Xx(Instrument):
     coupling = Instrument.control(
         "COUPLE?", "COUPLE %s",
         """
-        Specifies the mixer mode. Select either the internal mixer
-        or supply an external mixer.
+        Set the input coupling to AC or DC coupling.
+        Takes enum 'CouplingMode' or string 'AC', 'DC'. AC coupling protects
+        the input of the analyzer from damaging dc signals, while limiting the lower frequency-range
+        to 100 kHz (although the analyzer will tune down to 0 Hz with signal attenuation).
         """,
         validator=strict_discrete_set,
-        set_process=lambda v: v.value,
         values=[e for e in CouplingMode]
     )
 
@@ -505,14 +514,14 @@ class HP856Xx(Instrument):
         "DEMOD?", "DEMOD %s",
         """
         Activates either AM or FM demodulation, or turns the demodulation —
-        off. Place a marker on a desired signal and then activate the 'demodulation_mode';
+        off. Takes enum 'DemodulationMode' or string 'OFF', 'AM', 'OFF'
+        Place a marker on a desired signal and then activate the 'demodulation_mode';
         demodulation takes place on this signal. If no marker is on, 'demodulation_mode'
         automatically places a marker at the center of the
         trace and demodulates the frequency at that marker position. Use the volume and squelch
         controls to adjust the speaker and listen.
         """,
         validator=strict_discrete_set,
-        set_process=lambda v: v.value,
         values=[e for e in DemodulationMode]
     )
 
@@ -530,29 +539,26 @@ class HP856Xx(Instrument):
     )
 
     demodulation_time = Instrument.control(
-        "DEMODT?", "DEMODT %s",
+        "DEMODT?", "DEMODT %.11E",
         """
         Selects the amount of time that the sweep pauses at the marker to
         demodulate a signal. The default value is 1 second. When the frequency span equals 0 Hz,
         demodulation is continuous, except when between sweeps. For truly continuous demodulation,
         set the frequency span to 0 Hz and the trigger mode to single sweep (see TM).
         """,
-        validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[100e-3, 60], ["UP", "DN"]],
-        set_process=lambda v: v if isinstance(v, str) else ('%.11E' % Decimal(v)).replace('+', '')
+        validator=strict_range,
+        values=[100e-3, 60],
     )
 
     detector_mode = Instrument.control(
         "DET?", "DET %s",
         """
-        Specifies the IF detector used for acquiring measurement data. This is
+        Control the IF detector used for acquiring measurement data.
+        Takes enum DetectionModes or string 'NEG', 'NRM', 'POS', 'SMP'. This is
         normally a coupled function, in which the spectrum analyzer selects the appropriate detector
-        mode. Four modes are available: normal, positive, negative, and sample. The modes are
-        described below. When a mode other than normal is chosen, a "D" appears on the left side of
-        the display.
+        mode. Four modes are available: normal, positive, negative, and sample.
         """,
         validator=strict_discrete_set,
-        set_process=lambda v: v.value,
         values=[e for e in DetectionModes]
     )
 
@@ -562,13 +568,12 @@ class HP856Xx(Instrument):
     display_line = Instrument.control(
         "DL?", "DL %s",
         """
-        Activates a horizontal display line for use as a visual aid or for
-        computational purposes. The default value is 0 dBm. 'UP' or 'DN' changes the display line
-        by one vertical division.
+        Activate a horizontal display line for use as a visual aid or for
+        computational purposes. The default value is 0 dBm.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[float("-inf"), float("inf")], ["ON", "OFF", "UP", "DN"]],
-        set_process=lambda v: v if isinstance(v, str) else ('%.11E' % Decimal(v)).replace('+', '')
+        values=[[float("-inf"), float("inf")], ["ON", "OFF"]],
+        set_process=lambda v: v if isinstance(v, str) else '%.11E' % v
     )
 
     done = Instrument.measurement(
@@ -589,7 +594,7 @@ class HP856Xx(Instrument):
     errors = Instrument.measurement(
         "ERR?",
         """
-        Outputs a list of errors present. An error code of “0” means there are
+        Outputs a list of errors present (of type ErrorCode). An error code of “0” means there are
         no errors present. For a list of error codes and descriptions, refer to Appendix C or the
         Installation and Verification Manual. Executing ERR clears all HP-IB errors.
         For best results, enter error data immediately after querying for errors.
@@ -597,10 +602,230 @@ class HP856Xx(Instrument):
         cast=ErrorCode,
     )
 
+    elapsed_time = Instrument.measurement(
+        "EL?",
+        """
+        Returns to the elapsed time (in hours) of analyzer operation.
+        This value can be reset only by Hewlett-Packard.
+        """,
+        cast=int
+    )
+
+    start_frequency = Instrument.control(
+        "FA?", "FA %.11E",
+        """
+        Set the start frequency and set the spectrum analyzer to start-frequency/
+        stop-frequency mode. If the start frequency exceeds the stop frequency, the stop frequency
+        increases to equal the start frequency plus 100 Hz. The center frequency and span change
+        with changes in the start frequency.
+        """,
+        validator=strict_range,
+        values=[0, 1],
+        dynamic=True
+    )
+
+    stop_frequency = Instrument.control(
+        "FB?", "FB %.11E",
+        """
+        Set the stop frequency and sets the spectrum analyzer to start-frequency/
+        stop-frequency mode. If the stop frequency is less than the start frequency, the start
+        frequency decreases to equal the stop frequency minus 100 Hz. The center frequency and
+        span change with changes in the stop frequency.
+        """,
+        validator=strict_range,
+        values=[0, 1],
+        dynamic=True
+    )
+
+    sampling_frequency = Instrument.measurement(
+        "FDIAG SMP,?",
+        """
+        Diagnostic Attribute
+        Returns the sampling oscillator frequency corresponding to the current start
+        frequency.
+        """
+    )
+
+    lo_frequency = Instrument.measurement(
+        "FDIAG LO,?",
+        """
+        Diagnostic Attribute
+        Returns the first local oscillator frequency corresponding to the current start
+        frequency.
+        """
+    )
+
+    mroll_frequency = Instrument.measurement(
+        "FDIAG MROLL,?",
+        """
+        Diagnostic Attribute
+        Returns the main roller oscillator frequency corresponding to the current start
+        frequency, except then the resolution bandwidth is less than or equal to 100 Hz.
+        """
+    )
+
+    oroll_frequency = Instrument.measurement(
+        "FDIAG OROLL,?",
+        """
+        Diagnostic Attribute
+        Returns the offset roller oscillator frequency corresponding to the current start
+        frequency, except when the resolution bandwidth is less than or equal to 100 Hz.
+        """
+    )
+
+    xroll_frequency = Instrument.measurement(
+        "FDIAG XROLL,?",
+        """
+        Diagnostic Attribute
+        Returns the transfer roller oscillator frequency corresponding to the current start
+        frequency, except when the resolution bandwidth is less than or equal to 100 Hz.
+        """
+    )
+
+    sampler_harmonic_number = Instrument.measurement(
+        "FDIAG HARM,?",
+        """
+        Diagnostic Attribute
+        Returns the sampler harmonic number corresponding to the current start
+        frequency.
+        """,
+        get_process=lambda v: int(float(v))
+    )
+
+    # practically you could also write "OFF" to actively disable it or reset via "IP"
+    frequency_display = Instrument.measurement(
+        "FDSP?",
+        """
+        Returns if all annotations that describes the spectrum analyzer frequency
+        setting are displayed or not. This includes the start and stop
+        frequencies, the center frequency, the frequency span, marker readouts, the center
+        frequency step-size, and signal identification to center frequency.  To retrieve the
+        frequency data, query the spectrum analyzer.
+        """,
+        map_values=True,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    def fft(self, source, destination, window):
+        """
+        The FFT command performs a discrete Fourier transform on the source trace array and stores
+        the logarithms of the magnitudes of the results in the destination array. The maximum length
+        of any of the traces is 601 points.
+        Takes type 'Trace' or 'TRA', 'TRB'
+        FFT is designed to be used in transforming zero-span amplitude-modulation information into
+        the frequency domain. Performing an FFT on a frequency sweep will not provide time-domain
+        results. The FFT results are displayed on the spectrum analyzer in a logarithmic
+        amplitude scale. For the horizontal dimension, the frequency at the left side of the
+        graph is 0 Hz, and at the right side is Finax- Fmax is equal to 300 divided by sweep time.
+        As an example, if the sweep time of the analyzer is 60 ms, Fmax equals 5 kHz.
+        The FFT algorithm assumes that the sampled signal is periodic with an integral number of
+        periods within the time-record length (that is, the sweep time of the analyzer). Given this
+        assumption, the transform computed is that of a time waveform of infinite duration, formed
+        of concatenated time records. In actual measurements, the number of periods of the sampled
+        signal within the time record may not be integral. In this case, there is a step
+        discontinuity at the intersections of the concatenated time records in the assumed time
+        waveform of infinite duration. This step discontinuity causes measurement errors,
+        both amplitude uncertainty (where the signal level appears to vary with small changes in
+        frequency) and frequency resolution (due to filter shape factor and sidelobes). Windows
+        are weighting functions that are applied to the input data to force the ends of that
+        data smoothly to zero, thus reducing the step discontinuity and reducing measurement
+        errors.
+        """
+        if not isinstance(source, str):
+            raise TypeError("Should be of type string but is '%s'" % type(source))
+
+        if not isinstance(destination, str):
+            raise TypeError("Should be of type string but is '%s'" % type(destination))
+
+        if not isinstance(window, str):
+            raise TypeError("Should be of type string but is '%s'" % type(window))
+
+        if source not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           source))
+        if destination not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           destination))
+        if window not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           window))
+        self.write("FFT %s,%s,%s" % (source, destination, window))
+
+    frequency_offset = Instrument.control(
+        "FOFFSET?", "FOFFSET %.11E",
+        """
+        Add a specified offset to the displayed absolute-frequency values,
+        including marker-frequency values. It does not affect the frequency range of the sweep, nor
+        does it affect relative frequency readouts. When this function is active, an "F" appears on
+        the left side of the display.
+        """,
+        validator=strict_range,
+        values=[0, 1],
+        dynamic=True
+    )
+
+    frequency_reference = Instrument.control(
+        "FREF?", "FREF %s",
+        """
+        The FREF command specifies the frequency reference source.
+        Takes enum FrequencyReference or string 'INT', 'EXT'. Select either the internal
+        frequency reference (INT) or supply your own external reference (EXT). An external reference
+        must be 10 MHz (+100 Hz) at a minimum amplitude of 0 dBm. Connect the external
+        reference to J9 (10 MHz REF IN/OUT) on the rear panel. When the external mode is
+        selected, an "X" appears on the left edge of the display.
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in FrequencyReference]
+    )
+
+    def full_span(self):
+        """
+        Select the full frequency span as defined by the instrument. The full span
+        is 2.9 GHz for the HP 8560A. For the HP 8561B, the full span is 6.5 GHz.
+        """
+        self.write("FS")
+
+    graticule = Instrument.control(
+        "GRAT?", "GRAT %s",
+        """
+        Turn the display graticule on or off.
+        """,
+        map_values=True,
+        values={True: "1", False: "0"},
+        validator=strict_discrete_set,
+        cast=str
+    )
+
+    def hold(self):
+        """
+        Freezes the active function at its current value. If no function is active, no
+        operation takes place.
+        """
+        self.write("HD")
+
+    id = Instrument.measurement(
+        "ID?",
+        """
+        Get identification of the device with software and hardware revision (e.g. HP8560A,002,H03)
+        """,
+        maxsplit=0,
+        cast=str
+    )
+
+    def preset(self):
+        """
+        The IP command sets the spectrum analyzer to a known, predefined state.
+        'preset' does not affect the contents of any data or trace registers or stored preselector
+        data. 'preset' does not clear the input or output data buffers; to clear these, execute the
+        statement CLEAR 718.
+        """
+        self.write("IP")
+
 
 class HP8560A(HP856Xx):
     # HP8560A is able to go up to 2.9 GHz
-    freq_center_values = [[0, 2.9e9], ["UP", "DN"]]
+    MAX_FREQUENCY = 6.5e9
 
     def __init__(self, adapter, name="Hewlett-Packard HP8560A", **kwargs):
         super().__init__(
@@ -609,10 +834,15 @@ class HP8560A(HP856Xx):
             **kwargs,
         )
 
+        self.center_frequency_values = [0, self.MAX_FREQUENCY]
+        self.start_frequency_values = [0, self.MAX_FREQUENCY]
+        self.stop_frequency_values = [0, self.MAX_FREQUENCY]
+        self.frequency_offset_values = [0, self.MAX_FREQUENCY]
+
 
 class HP8561B(HP856Xx):
     # HP8561B is able to go up to 6.5 GHz
-    freq_center_values = [[0, 6.5e9], ["UP", "DN"]]
+    MAX_FREQUENCY = 6.5e9
 
     def __init__(self, adapter, name="Hewlett-Packard HP8561B", **kwargs):
         super().__init__(
@@ -621,21 +851,25 @@ class HP8561B(HP856Xx):
             **kwargs,
         )
 
+        self.center_frequency_values = [0, self.MAX_FREQUENCY]
+        self.start_frequency_values = [0, self.MAX_FREQUENCY]
+        self.stop_frequency_values = [0, self.MAX_FREQUENCY]
+        self.frequency_offset_values = [0, self.MAX_FREQUENCY]
+
     mixer_mode = Instrument.control(
         "MXRMODE?", "MXRMODE %s",
         """
-        Specifies the mixer mode. Select either the internal mixer
-        or supply an external mixer.
+        Specifie the mixer mode. Select either the internal mixer
+        or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
         """,
         validator=strict_discrete_set,
-        set_process=lambda v: v.value,
         values=[e for e in MixerMode]
     )
 
     conversion_loss = Instrument.control(
         "CNVLOSS?", "CNVLOSS %s",
         """
-        Compensates for losses outside the instrument when in external
+        Compensate for losses outside the instrument when in external
         mixer mode (such as losses within connector cables, external mixers, etc.).
         'conversion_loss' specifies the mean conversion loss for the current harmonic band.
         In a full frequency band (such as band K), the mean conversion loss is defined as the
@@ -646,7 +880,98 @@ class HP8561B(HP856Xx):
         external-mixer mode in order for this command to work. When in internal-mixer mode,
         querying 'conversion_loss' returns a zero.
         """,
+        validator=strict_range,
+        values=[0, float("inf")]
+    )
+
+    def fullband(self, band):
+        """
+        The FULBAND command selects a commonly-used, external-mixer frequency band, as shown
+        in the table. The harmonic lock function (HNLOCK) is also set; this locks the harmonic of
+        the chosen band. External-mixing functions are not available with an HP 8560A Option 002.
+        Takes frequency band letter as string.
+
+        Frequency Band | Frequency Range (GHz) | Mixing Harmonic | Conversion Loss
+        K   18.0—26.5       6- 30 dB
+        A   26.5—40.0       8- 30 dB
+        Q   33.0—50.0       10- 30 dB
+        U   40.0—60.0       10- 30 dB
+        V   50.0—75.0       14- 30 dB
+        E   60.0—-90.0      16- 30 dB
+        W   75.0—110.0      18- 30 dB
+        F   90.0—140.0      24— 30 dB
+        D   110.0—170.0     30- 30 dB
+        G   140.0—220.0     36-— 30 dB
+        Y   170.0—260.0     44-— 30 dB
+        J   220.0—325.0     54- 30 dB
+        """
+        frequency_mapping = {
+            "K": [18e9, 26.5e9],
+            "A": [26.5e9, 40e9],
+            "Q": [33e9, 50e9],
+            "U": [40e9, 60e9],
+            "V": [50e9, 75e9],
+            "E": [60e9, 90e9],
+            "W": [75e9, 110e9],
+            "F": [90e9, 140e9],
+            "D": [110e9, 170e9],
+            "G": [140e9, 220e9],
+            "Y": [170e9, 260e9],
+            "J": [220e9, 325e9],
+        }
+
+        if not isinstance(band, str):
+            raise TypeError("Frequency band should be of type string but is '%s'" % type(band))
+
+        if band not in frequency_mapping.keys():
+            raise ValueError("Should be one of the available bands but is '%s'" % band)
+
+        self.center_frequency_values = frequency_mapping[band]
+        self.start_frequency_values = frequency_mapping[band]
+        self.stop_frequency_values = frequency_mapping[band]
+
+        self.write("FULLBAND %s" % band)
+
+    harmonic_number_lock = Instrument.control(
+        "HNLOCK?", "HNLOCK %s",
+        """
+        Lock a chosen harmonic so only that harmonic is used to sweep
+        an external frequency band. To select a frequency band, use the 'fullband' command; it
+        selects an appropriate harmonic for the desired band. To change the harmonic number, use
+        'harmonic_number_lock'.
+        Note that 'harmonic_number_lock' also works in internal-mixing modes.
+        Once 'fullband' or 'harmonic_number_lock' are set, only center frequencies and spans that
+        fall within the frequency band of the current harmonic may be entered. When the 'full_span'
+        command is activated, the span is limited to the frequency band of the selected harmonic.
+        """,
         validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[0, float("inf")], ["UP", "DN"]],
-        set_process=lambda v: str(v) + " DB" if isinstance(v, float) else v
+        values=[[int(1), int(54)], ["ON", "OFF"]],
+        cast=int
+    )
+
+    def harmonic_number_unlock(self):
+        """
+        Unlock the harmonic number, allowing you to select frequencies and
+        spans outside the range of the locked harmonic number. Also, when HNUNLK is executed,
+        more than one harmonic can then be used to sweep across a desired span. For example, sweep
+        a span from 18 GHz to 40 GHz. In this case, the analyzer will automatically sweep first
+        using 6—, then using 8—.
+        """
+        self.write("HUNLK")
+
+    def signal_identification_to_center_frequency(self):
+        """
+        The IDCF command sets the center frequency to the frequency obtained from the command
+        SIGID. SIGID must be in AUTO mode and have found a valid result for this command to
+        execute properly. Use SIGID on signals greater than 18 GHz {i.e., in external mixing mode).
+        SIGID and IDCF may also be used on signals less than 6.5 GHz in an HP 8561B.
+        """
+        self.write("IDCF")
+
+    signal_identification_frequency = Instrument.measurement(
+        "IDFREQ?",
+        """
+        Returns the frequency of the last identified signal. After an instrument preset or an
+        invalid signal identification, IDFREQ returns a “0”.
+        """
     )

@@ -22,13 +22,12 @@
 # THE SOFTWARE.
 #
 import pytest
-from _decimal import Decimal
 
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
-    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode
+    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference
 
 
 class TestHP856Xx:
@@ -46,10 +45,6 @@ class TestHP856Xx:
                  ("AT?", "70"),
                  ("AT AUTO", None),
                  ("AT?", "20"),
-                 ("AT DN", None),
-                 ("AT?", "10"),
-                 ("AT UP", None),
-                 ("AT?", "20"),
                  ("AT 20", None),
                  ("AT?", "20")],
         ) as instr:
@@ -58,10 +53,6 @@ class TestHP856Xx:
             assert instr.attenuation == 70
             # test string parameters
             instr.attenuation = "AUTO"
-            assert instr.attenuation == 20
-            instr.attenuation = "DN"
-            assert instr.attenuation == 10
-            instr.attenuation = "UP"
             assert instr.attenuation == 20
             # test truncation
             instr.attenuation = 16
@@ -83,7 +74,8 @@ class TestHP856Xx:
             ("auto_couple", "AUTOCPL"),
             ("exchange_traces", "AXB"),
             ("subtract_display_line_from_trace_b", "BML"),
-            ("continuous_sweep", "CONTS")
+            ("continuous_sweep", "CONTS"),
+            ("full_span", "FS")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -104,19 +96,32 @@ class TestHP856Xx:
         ) as instr:
             instr.blank_trace(trace)
 
-    @pytest.mark.parametrize("up_down", ["UP", "DN"])
+    def test_blank_trace_exceptions(self):
+        with expected_protocol(
+                HP856Xx,
+                []
+        ) as instr:
+            with pytest.raises(ValueError):
+                instr.blank_trace("TEST")
+
+            with pytest.raises(TypeError):
+                instr.blank_trace(0)
+
+    @pytest.mark.parametrize("function,command", [
+        ("start_frequency", "FA"),
+        ("center_frequency", "CF"),
+        ("stop_frequency", "FB"),
+        ("frequency_offset", "FOFFSET")
+    ])
     @pytest.mark.parametrize("hp_derivat,max_freq", [(HP8560A, 2.9e9), (HP8561B, 6.5e9)])
-    def test_freq_center(self, hp_derivat, max_freq, up_down):
+    def test_frequencies(self, function, command, hp_derivat, max_freq):
         with expected_protocol(
                 hp_derivat,
-                [("CF %s HZ" % ('%.11E' % Decimal(max_freq)).replace('+', ''), None),
-                 ("CF " + up_down, None),
-                 ("CF?", ('%.11E' % Decimal(max_freq)).replace('+', ''))]
+                [("%s %.11E" % (command, max_freq), None),
+                 ("%s?" % command, '%.11E' % max_freq)]
         ) as instr:
-            instr.freq_center = max_freq
-            # TODO test external mixer mode of HP8561B
-            instr.freq_center = up_down
-            assert instr.freq_center == max_freq
+            setattr(instr, function, max_freq)
+            assert getattr(instr, function) == max_freq
 
     @pytest.mark.parametrize("trace", [e for e in Trace])
     def test_clear_write_trace(self, trace):
@@ -125,6 +130,17 @@ class TestHP856Xx:
                 [("CLRW " + trace, None)]
         ) as instr:
             instr.clear_write_trace(trace)
+
+    def test_clear_write_trace_exceptions(self):
+        with expected_protocol(
+                HP856Xx,
+                []
+        ) as instr:
+            with pytest.raises(ValueError):
+                instr.clear_write_trace("TEST")
+
+            with pytest.raises(TypeError):
+                instr.clear_write_trace(0)
 
     @pytest.mark.parametrize("coupling", [e for e in CouplingMode])
     def test_coupling(self, coupling):
@@ -156,16 +172,13 @@ class TestHP856Xx:
             instr.demodulation_agc = boole
             assert instr.demodulation_agc == boole
 
-    @pytest.mark.parametrize("up_down", ["UP", "DN"])
-    def test_demodulation_time(self, up_down):
+    def test_demodulation_time(self):
         with expected_protocol(
                 HP8561B,
-                [("DEMODT 1.02000000000E01", None),
-                 ("DEMODT " + up_down, None),
-                 ("DEMODT?", "1.03000000000E01")]
+                [("DEMODT 1.02000000000E+01", None),
+                 ("DEMODT?", "1.03000000000E+01")]
         ) as instr:
             instr.demodulation_time = 10.2
-            instr.demodulation_time = up_down
             assert instr.demodulation_time == 10.3
 
     @pytest.mark.parametrize("detector_mode", [e for e in DetectionModes])
@@ -178,14 +191,14 @@ class TestHP856Xx:
             instr.detector_mode = detector_mode
             assert instr.detector_mode == detector_mode
 
-    @pytest.mark.parametrize("string_params", ["UP", "DN", "ON", "OFF"])
+    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
     def test_display_line_strings(self, string_params):
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("DL 1.00000000000E01", None),
+                    ("DL 1.00000000000E+01", None),
                     ("DL " + string_params, None),
-                    ("DL?", "1.00000000000E01")
+                    ("DL?", "1.00000000000E+01")
                 ]
         ) as instr:
             instr.display_line = 1.0e01
@@ -206,6 +219,83 @@ class TestHP856Xx:
         ) as instr:
             assert instr.errors == [ErrorCode(112), ErrorCode(101), ErrorCode(111)]
 
+    def test_elapsed_time(self):
+        with expected_protocol(
+                HP856Xx,
+                [("EL?", "1800")],
+        ) as instr:
+            assert instr.elapsed_time == 1800
+
+    @pytest.mark.parametrize(
+        "function,command",
+        [
+            ("sampling_frequency", "SMP"),
+            ("lo_frequency", "LO"),
+            ("mroll_frequency", "MROLL"),
+            ("oroll_frequency", "OROLL"),
+            ("xroll_frequency", "XROLL")
+        ]
+    )
+    def test_fdiag_frequencies(self, function, command):
+        with expected_protocol(
+                HP856Xx,
+                [("FDIAG %s,?" % command, '%.11E' % 2.8E8)]
+        ) as instr:
+            assert getattr(instr, function) == 2.8E8
+
+    def test_sampler_harmonic_number(self):
+        with expected_protocol(
+                HP856Xx,
+                [("FDIAG HARM,?", '%.11E' % 1.40000000000E1)]
+        ) as instr:
+            assert instr.sampler_harmonic_number == 14
+
+    def test_frequency_display(self):
+        with expected_protocol(
+                HP856Xx,
+                [("FDSP?", "0")]
+        ) as instr:
+            assert instr.frequency_display is False
+
+    def test_fft(self):
+        with expected_protocol(
+                HP856Xx,
+                [("FFT TRA,TRB,TRA", None)]
+        ) as instr:
+            instr.fft(Trace.A, Trace.B, Trace.A)
+
+    def test_fft_exceptions(self):
+        with expected_protocol(
+                HP856Xx,
+                []
+        ) as instr:
+            with pytest.raises(TypeError):
+                instr.fft(0, 4, 5)
+
+            with pytest.raises(ValueError):
+                instr.fft("TRAZ", "zuo", "TEWST")
+
+    @pytest.mark.parametrize("frequency_reference", [e for e in FrequencyReference])
+    def test_frequecy_reference(self, frequency_reference):
+        with expected_protocol(
+                HP856Xx,
+                [("FREF " + frequency_reference, None),
+                 ("FREF?", frequency_reference)]
+        ) as instr:
+            instr.frequency_reference = frequency_reference
+            assert instr.frequency_reference == frequency_reference
+
+    def test_graticule(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("GRAT 0", None),
+                    ("GRAT?", "1")
+                ]
+        ) as instr:
+            instr.graticule = False
+            assert instr.graticule is True
+
 
 class TestHP8561B:
 
@@ -219,14 +309,66 @@ class TestHP8561B:
             instr.mixer_mode = mixer_mode
             assert instr.mixer_mode == mixer_mode
 
-    @pytest.mark.parametrize("up_down", ["UP", "DN"])
-    def test_conversion_loss(self, up_down):
+    def test_conversion_loss(self):
         with expected_protocol(
                 HP8561B,
-                [("CNVLOSS 10.2 DB", None),
-                 ("CNVLOSS " + up_down, None),
+                [("CNVLOSS 10.2", None),
                  ("CNVLOSS?", "10.3")]
         ) as instr:
             instr.conversion_loss = 10.2
-            instr.conversion_loss = up_down
             assert instr.conversion_loss == 10.3
+
+    def test_fullband(self):
+        with expected_protocol(
+                HP8561B,
+                [("FULLBAND K", None)]
+        ) as instr:
+            instr.fullband("K")
+
+    def test_fullband_exceptions(self):
+        with expected_protocol(
+                HP8561B,
+                []
+        ) as instr:
+            with pytest.raises(TypeError):
+                instr.fullband(1)
+
+            with pytest.raises(ValueError):
+                instr.fullband("Z")
+
+    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
+    def test_harmonic_number_lock(self, string_params):
+        with expected_protocol(
+                HP8561B,
+                [("HNLOCK 10", None),
+                 ("HNLOCK %s" % string_params, None),
+                 ("HNLOCK?", "10")]
+        ) as instr:
+            instr.harmonic_number_lock = 10
+            instr.harmonic_number_lock = string_params
+            assert instr.harmonic_number_lock == 10
+
+    @pytest.mark.parametrize(
+        "function,command",
+        [
+            ("harmonic_number_unlock", "HUNLK"),
+            ("signal_identification_to_center_frequency", "IDCF"),
+            ("preset", "IP")
+        ]
+    )
+    def test_primitive_commands(self, command, function):
+        """
+        Tests primitive commands which have no parameter or query derivat
+        """
+        with expected_protocol(
+                HP8561B,
+                [(command, None)]
+        ) as instr:
+            getattr(instr, function)()
+
+    def test_signal_identification_frequency(self):
+        with expected_protocol(
+                HP8561B,
+                [("IDFREQ?", 2.7897e9)]
+        ) as instr:
+            assert instr.signal_identification_frequency == 2.7897e9
