@@ -21,8 +21,51 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from .lakeshore211 import LakeShore211
-from .lakeshore224 import LakeShore224
-from .lakeshore331 import LakeShore331
-from .lakeshore421 import LakeShore421
-from .lakeshore425 import LakeShore425
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.lakeshore.lakeshore211 import LakeShore211
+
+
+def test_init():
+    with expected_protocol(
+            LakeShore211,
+            [],
+    ):
+        pass  # Verify the expected communication.
+
+
+def test_temp_kelvin():
+    with expected_protocol(
+            LakeShore211,
+            [(b"KRDG?", b"27.1")],
+    ) as instr:
+        assert instr.temperature_kelvin == 27.1
+
+
+def test_temp_celsius():
+    with expected_protocol(
+            LakeShore211,
+            [(b"CRDG?", b"27.1")],
+    ) as instr:
+        assert instr.temperature_celsius == 27.1
+
+
+def test_set_analog():
+    with expected_protocol(
+            LakeShore211,
+            [(b"ANALOG 0,1", None),
+             (b"ANALOG?", b"0,1")],
+    ) as instr:
+        instr.analog = (0, 1)
+        assert instr.analog == (0, 1)
+
+
+def test_set_display():
+    with expected_protocol(
+            LakeShore211,
+            [(b"DISPFLD 1", None),
+             (b"DISPFLD?", b"1")],
+    ) as instr:
+        instr.display = 'celsius'
+        assert instr.display == 'celsius'
