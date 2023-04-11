@@ -24,6 +24,7 @@ LakeShore Channel Classes
 .. toctree::
    :maxdepth: 2
 
+   lakeshore211
    lakeshore224
    lakeshore331
    lakeshore421

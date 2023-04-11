@@ -1,5 +1,5 @@
 ##################################
-Lake Shore 224 Temperature Monitor
+Lake Shore 211 Temperature Monitor
 ##################################
 
 .. autoclass:: pymeasure.instruments.lakeshore.LakeShore211

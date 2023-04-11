@@ -38,17 +38,20 @@ class LakeShore211(Instrument):
     Untested properties and methods will be noted in their docstrings.
 
     .. code-block:: python
+
         controller = LakeShore211("GPIB::1")
+
         print(controller.temperature_celsius)     # Print the sensor temperature in celsius
+
     """
     alarm_keys = ['on', 'high_value', 'low_value', 'deadband', 'latch']
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Lake Shore 211 Temperature Monitor", **kwargs):
         kwargs.setdefault('data_bits', 7)
         kwargs.setdefault('parity', Parity.odd)
         super().__init__(
             adapter,
-            "Lake Shore 211 Temperature Monitor",
+            name,
             **kwargs
         )
 
@@ -58,14 +61,32 @@ class LakeShore211(Instrument):
         Set the analog mode and analog range.
         Values need to be supplied as a tuple of (analog mode, analog range)
         Analog mode can be 0 or 1
-        0 = voltage
-        1 = current
+
+        +--------+--------+
+        | setting| mode   |
+        +--------+--------+
+        | 0      | voltage|
+        +--------+--------+
+        | 1      | current|
+        +--------+--------+
 
         Analog mode can be 0 through 5
 
-        0 = 0 – 20 K 3 = 0 – 325 K
-        1 = 0 – 100 K 4 = 0 – 475 K
-        2 = 0 – 200 K 5 = 0 – 1000 K
+        +--------+----------+
+        | setting| range    |
+        +--------+----------+
+        | 0      | 0 – 20 K |
+        +--------+----------+
+        | 1      | 0 – 100 K|
+        +--------+----------+
+        | 2      | 0 – 200 K|
+        +--------+----------+
+        | 3      | 0 – 325 K|
+        +--------+----------+
+        | 4      | 0 – 475 K|
+        +--------+----------+
+        | 5      |0 – 1000 K|
+        +--------+----------+
         """,
         get_process=lambda x: (int(x[0]), int(x[1])),
     )
@@ -80,7 +101,18 @@ class LakeShore211(Instrument):
         "DISPFLD?", "DISPFLD %d",
         """
         Specifies input data to display. Valid entries:
-        0 = Kelvin, 1 = Celsius, 2 = sensor units, 3 = Fahrenheit.
+
+        +-------------+--------------+
+        | setting     | units        |
+        +-------------+--------------+
+        | 'kelvin'    | Kelvin       |
+        +-------------+--------------+
+        | 'celsius'   | Celsius      |
+        +-------------+--------------+
+        | 'sensor'    | Sensor Units |
+        +-------------+--------------+
+        | 'fahrenheit'| Fahrenheit   |
+        +-------------+--------------+
         """,
         values={'kelvin': 0, 'celsius': 1, 'sensor': 2, 'fahrenheit': 3},
         map_values=True
@@ -116,13 +148,26 @@ class LakeShore211(Instrument):
         Specifies which relay to configure. Values need to be supplied as a tuple of
         (relay number, relay mode)
         Relay number can be 1 or 2
-        1 = low alarm relay
-        2 = high alarm relay
+
+        +--------+-----------------+
+        | setting|       mode      |
+        +--------+-----------------+
+        | 0      | low alarm relay |
+        +--------+-----------------+
+        | 1      | high alarm relay|
+        +--------+-----------------+
 
         Relay mode can be 0, 1, or 2
-        0 = off
-        1 = on
-        2 = alarms
+
+        +--------+--------+
+        | setting| mode   |
+        +--------+--------+
+        | 0      | off    |
+        +--------+--------+
+        | 1      | on     |
+        +--------+--------+
+        | 2      | alarms |
+        +--------+--------+
 
         Property is UNTESTED
         """,
