@@ -391,7 +391,7 @@ class ErrorCode:
 class HP856Xx(Instrument):
     """
 
-    Some command descriptions are taken from the document: 'HP 8560A, 8561B Operating & Programming'
+    Most command descriptions are taken from the document: 'HP 8560A, 8561B Operating & Programming'
     """
 
     def __init__(self, adapter, name="Hewlett-Packard HP856Xx", **kwargs):
@@ -822,12 +822,168 @@ class HP856Xx(Instrument):
         """
         self.write("IP")
 
+    logarithmic_scale = Instrument.control(
+        "LG?", "LG %d",
+        """
+        Select a 1, 2, 5, or 10 dB logarithmic amplitude scale. When in linear
+        mode, querying LG returns a “0”.
+        """,
+        cast=int,
+        validator=strict_discrete_set,
+        values=[0, 1, 2, 5, 10]
+    )
+
+    def linear_scale(self):
+        """
+        Select a linear amplitude scale. Measurements made on a linear scale can
+        be read out in any units.
+        """
+        self.write("LN")
+
+    def minimum_hold(self, trace):
+        """
+        Update the chosen trace with the minimum signal level detected at each
+        trace-data point from subsequent sweeps. This function employs the negative peak detector
+        (refer to the DET command).
+        trace: Takes type 'Trace' selecting the trace or 'TRA', 'TRB'
+        """
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
+
+        self.write("MINH %s" % trace)
+
+    marker_amplitude = Instrument.measurement(
+        "MKA?",
+        """
+        Return the amplitude of the active marker. If no marker is active, MKA
+        places a marker at the center of the trace and returns that amplitude value.
+        """
+    )
+
+    def marker_to_center_frequency(self):
+        """
+        Set the center frequency to the frequency value of an active marker.
+        """
+        self.write("MKCF")
+
+    marker_delta = Instrument.control(
+        "MKD?", "MKD %.11E",
+        """
+        Place a second marker on the trace. The number specifies the distance
+        in frequency or time (when in zero span) between the two markers.
+        """
+    )
+
+    # the documentation mentions this command, but it doesn't work on my unit and a
+    # reference unit so I leave it here for reference but commented out
+    #
+    # marker_reciprocal = Instrument.control(
+    #    "MKDR?", "MKDR %.11E",
+    #    """
+    #    Return the reciprocal of the frequency or time (when in zero span)
+    #    difference between two markers.
+    #    """
+    # )
+
+    marker_frequency = Instrument.control(
+        "MKF?", "MKF %.11E",
+        """
+        Place an active marker on the chosen frequency or can be queried to
+        return the frequency of the active marker. Default units are in Hertz.
+        """,
+        validator=strict_range,
+        values=[0, 1],
+        dynamic=True
+    )
+
+    def frequency_counter_mode(self, activate):
+        """
+        Activate a frequency counter that counts the frequency of the active
+        marker or the difference in frequency between two markers. If no marker is active,
+        'frequency_counter_mode' places a marker at the center of the trace and counts that marker
+        frequency. The frequency counter provides a more accurate frequency reading; it pauses
+        at the marker, counts the value, then continues the sweep. To adjust the frequency
+        counter resolution, use the 'frequency_counter_resolution' command. To return the counter
+        value, use the 'marker_frequency' command.
+        """
+
+        if not isinstance(activate, bool):
+            raise TypeError("Should be of type bool but is '%s'" % type(activate))
+
+        parameter = "OFF"
+        if activate:
+            parameter = "ON"
+
+        self.write("MKFC %s" % parameter)
+
+    frequency_counter_resolution = Instrument.control(
+        "MKFCR?", "MKFCR %d",
+        """
+        Specify the resolution of the frequency counter. Refer to the 'frequency_counter_mode'
+        command. The default value is 10 kHz.
+        """,
+        validator=strict_range,
+        values=[1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6]
+    )
+
+    def marker_minimum(self):
+        """
+        Place an active marker on the minimum signal detected on a trace.
+        """
+        self.write("MKMIN")
+
+    # here would be the implementation of the command 'marker_normal' ('MKN') but
+    # it has no advantage over the 'marker_frequency' command except if no marker is active it
+    # places it automagically to the center of the trace (I think there's no sense in
+    # implementing it here)
+
+    marker_noise_mode = Instrument.control(
+        "MKNOISE?", "MKNOISE %s",
+        """
+        Set the detector mode to sample and compute the average of 32 data points (16 points
+        on one side of the marker, the marker itself, and 15 points on the other side of the
+        marker). This average is corrected for effects of the log or linear amplifier, bandwidth
+        shape factor, IF detector, and resolution bandwidth. If two markers are on (whether in
+        'marker_delta' mode or 1/marker delta mode), 'marker_noise_mode' works on the active marker
+        and not on the anchor marker. This allows you to measure signal-to-noise density directly.
+        To query the value, use the 'marker_amplitude' command.
+        """,
+        map_values=True,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    def trigger_sweep(self):
+        self.write("TS")
+
 
 class HP8560A(HP856Xx):
+    """
+    Represents the HP 8560A Spectrum Analyzer and
+    provides a high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+        from pymeasure.instruments.hp import HP8560A
+        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+
+        sa = HP8560A("GPIB::1")
+
+        sa.amplitude_unit = AmplitudeUnits.DBUV
+        sa.start_frequency = 299.5e6
+        sa.stop_frequency = 300.5e6
+
+        print(sa.marker_amplitude)
+    """
+
     # HP8560A is able to go up to 2.9 GHz
-    MAX_FREQUENCY = 6.5e9
+    MAX_FREQUENCY = 2.9e9
 
     def __init__(self, adapter, name="Hewlett-Packard HP8560A", **kwargs):
+        print(kwargs)
         super().__init__(
             adapter,
             name,
@@ -838,9 +994,27 @@ class HP8560A(HP856Xx):
         self.start_frequency_values = [0, self.MAX_FREQUENCY]
         self.stop_frequency_values = [0, self.MAX_FREQUENCY]
         self.frequency_offset_values = [0, self.MAX_FREQUENCY]
+        self.marker_frequency_values = [0, self.MAX_FREQUENCY]
 
 
 class HP8561B(HP856Xx):
+    """
+    Represents the HP 8561B Spectrum Analyzer and
+    provides a high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+        from pymeasure.instruments.hp import 8561B
+        from pymeasure.instruments.hp.hp856Xx import AmplitudeUnits
+
+        sa = HP8560A("GPIB::1")
+
+        sa.amplitude_unit = AmplitudeUnits.DBUV
+        sa.start_frequency = 6.4e9
+        sa.stop_frequency = 6.5e9
+
+        print(sa.marker_amplitude)
+    """
+
     # HP8561B is able to go up to 6.5 GHz
     MAX_FREQUENCY = 6.5e9
 
@@ -855,13 +1029,14 @@ class HP8561B(HP856Xx):
         self.start_frequency_values = [0, self.MAX_FREQUENCY]
         self.stop_frequency_values = [0, self.MAX_FREQUENCY]
         self.frequency_offset_values = [0, self.MAX_FREQUENCY]
+        self.marker_frequency_values = [0, self.MAX_FREQUENCY]
 
     mixer_mode = Instrument.control(
         "MXRMODE?", "MXRMODE %s",
         """
-        Specifie the mixer mode. Select either the internal mixer
-        or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
-        """,
+               Specifie the mixer mode. Select either the internal mixer
+               or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
+               """,
         validator=strict_discrete_set,
         values=[e for e in MixerMode]
     )
@@ -974,4 +1149,18 @@ class HP8561B(HP856Xx):
         Returns the frequency of the last identified signal. After an instrument preset or an
         invalid signal identification, IDFREQ returns a “0”.
         """
+    )
+
+    mixer_bias = Instrument.control(
+        "MBIAS?", "MBIAS %s",
+        """
+        Set the bias for an external mixer that requires diode bias for efficient
+        mixer operation. The bias, which is provided on the center conductor of the IF input, is
+        activated when MBIAS is executed. A "+" or "—" appears on the left edge of the spectrum
+        analyzer display, indicating that positive or negative bias is on. When the bias is
+        turned off, MBIAS is set to 0. Default units are in milliamps.
+        """,
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=[[float(-10E3), int(10E3)], ["ON", "OFF"]],
+        cast=float
     )

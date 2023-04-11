@@ -75,7 +75,10 @@ class TestHP856Xx:
             ("exchange_traces", "AXB"),
             ("subtract_display_line_from_trace_b", "BML"),
             ("continuous_sweep", "CONTS"),
-            ("full_span", "FS")
+            ("full_span", "FS"),
+            ("linear_scale", "LN"),
+            ("marker_to_center_frequency", "MKCF"),
+            ("marker_minimum", "MKMIN")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -174,7 +177,7 @@ class TestHP856Xx:
 
     def test_demodulation_time(self):
         with expected_protocol(
-                HP8561B,
+                HP856Xx,
                 [("DEMODT 1.02000000000E+01", None),
                  ("DEMODT?", "1.03000000000E+01")]
         ) as instr:
@@ -288,13 +291,101 @@ class TestHP856Xx:
     def test_graticule(self):
         with expected_protocol(
                 HP856Xx,
-                [
-                    ("GRAT 0", None),
-                    ("GRAT?", "1")
-                ]
+                [("GRAT 0", None),
+                 ("GRAT?", "1")]
         ) as instr:
             instr.graticule = False
             assert instr.graticule is True
+
+    def test_logarithmic_scale(self):
+        with expected_protocol(
+                HP856Xx,
+                [("LG 1", None),
+                 ("LG?", "10")]
+        ) as instr:
+            instr.logarithmic_scale = 1
+            assert instr.logarithmic_scale == 10
+
+    @pytest.mark.parametrize("trace", [e for e in Trace])
+    def test_minimum_hold(self, trace):
+        with expected_protocol(
+                HP856Xx,
+                [("MINH " + trace, None)]
+        ) as instr:
+            instr.minimum_hold(trace)
+
+    def test_minimum_hold_exceptions(self):
+        with expected_protocol(
+                HP856Xx,
+                []
+        ) as instr:
+            with pytest.raises(ValueError):
+                instr.minimum_hold("TEST")
+
+            with pytest.raises(TypeError):
+                instr.minimum_hold(0)
+
+    def test_marker_amplitude(self):
+        with expected_protocol(
+                HP856Xx,
+                [("MKA?", 2.8e7)]
+        ) as instr:
+            assert instr.marker_amplitude == 2.8e7
+
+    def test_marker_delta(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKD %.11E" % 28, None),
+                    ("MKD?", 2.8e7)
+                ]
+        ) as instr:
+            instr.marker_delta = 2.8e1
+            assert instr.marker_delta == 2.8e7
+
+    def test_marker_frequency(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKF %.11E" % 1, None),
+                    ("MKF?", 0.5)
+                ]
+        ) as instr:
+            instr.marker_frequency = 1
+            assert instr.marker_frequency == 0.5
+
+    def test_frequency_counter_mode(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKFC OFF", None),
+                    ("MKFC ON", None)
+                ]
+        ) as instr:
+            instr.frequency_counter_mode(False)
+            instr.frequency_counter_mode(True)
+
+    def test_frequency_counter_resolution(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKFCR %d" % 1e3, None),
+                    ("MKFCR?", 1e4)
+                ]
+        ) as instr:
+            instr.frequency_counter_resolution = 1e3
+            assert instr.frequency_counter_resolution == 1e4
+
+    def test_marker_noise_mode(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKNOISE %s" % "1", None),
+                    ("MKNOISE?", "0")
+                ]
+        ) as instr:
+            instr.marker_noise_mode = True
+            assert instr.marker_noise_mode is False
 
 
 class TestHP8561B:
@@ -372,3 +463,15 @@ class TestHP8561B:
                 [("IDFREQ?", 2.7897e9)]
         ) as instr:
             assert instr.signal_identification_frequency == 2.7897e9
+
+    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
+    def test_mixer_bias(self, string_params):
+        with expected_protocol(
+                HP8561B,
+                [("MBIAS -9.9", None),
+                 ("MBIAS %s" % string_params, None),
+                 ("MBIAS?", "5.5")]
+        ) as instr:
+            instr.mixer_bias = -9.9
+            instr.mixer_bias = string_params
+            assert instr.mixer_bias == 5.5
