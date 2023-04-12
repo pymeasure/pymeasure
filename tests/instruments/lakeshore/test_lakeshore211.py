@@ -57,8 +57,8 @@ def test_set_analog():
             [(b"ANALOG 0,1", None),
              (b"ANALOG?", b"0,1")],
     ) as instr:
-        instr.analog = (0, 1)
-        assert instr.analog == (0, 1)
+        instr.analog_configuration = (0, 1)
+        assert instr.analog_configuration == (0, 1)
 
 
 def test_set_display():
@@ -67,5 +67,5 @@ def test_set_display():
             [(b"DISPFLD 1", None),
              (b"DISPFLD?", b"1")],
     ) as instr:
-        instr.display = 'celsius'
-        assert instr.display == 'celsius'
+        instr.display_units = 'celsius'
+        assert instr.display_units == 'celsius'
