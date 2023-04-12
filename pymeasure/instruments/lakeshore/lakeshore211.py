@@ -96,7 +96,7 @@ class LakeShore211(Instrument):
         """
     )
 
-    display = Instrument.control(
+    display_units = Instrument.control(
         "DISPFLD?", "DISPFLD %d",
         """
         Specifies input data to display. Valid entries:
