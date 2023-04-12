@@ -47,18 +47,17 @@ class LakeShore211(Instrument):
     alarm_keys = ['on', 'high_value', 'low_value', 'deadband', 'latch']
 
     def __init__(self, adapter, name="Lake Shore 211 Temperature Monitor", **kwargs):
-        kwargs.setdefault('data_bits', 7)
-        kwargs.setdefault('parity', Parity.odd)
         super().__init__(
             adapter,
             name,
+            asrl={'data_bits': 7, 'parity': Parity.odd},
             **kwargs
         )
 
-    analog = Instrument.control(
+    analog_configuration = Instrument.control(
         "ANALOG?", "ANALOG %d,%d",
         """
-        Set the analog mode and analog range.
+        Control the analog mode and analog range.
         Values need to be supplied as a tuple of (analog mode, analog range)
         Analog mode can be 0 or 1
 
@@ -70,7 +69,7 @@ class LakeShore211(Instrument):
         | 1      | current|
         +--------+--------+
 
-        Analog mode can be 0 through 5
+        Analog range can be 0 through 5
 
         +--------+----------+
         | setting| range    |
@@ -152,9 +151,9 @@ class LakeShore211(Instrument):
         +--------+-----------------+
         | setting|       mode      |
         +--------+-----------------+
-        | 0      | low alarm relay |
+        | 1      | low alarm relay |
         +--------+-----------------+
-        | 1      | high alarm relay|
+        | 2      | high alarm relay|
         +--------+-----------------+
 
         Relay mode can be 0, 1, or 2
@@ -174,7 +173,7 @@ class LakeShore211(Instrument):
         cast=int
     )
 
-    def alarm_status(self):
+    def get_alarm_status(self):
         """
         Query the current alarm status
 
@@ -186,7 +185,7 @@ class LakeShore211(Instrument):
                         [int(status[0]), float(status[1]), float(status[2]), float(status[3]),
                          int(status[4])]))
 
-    def alarm_config(self, on=True, high_value=270.0, low_value=0.0, deadband=0, latch=False):
+    def set_alarm_config(self, on=True, high_value=270.0, low_value=0.0, deadband=0, latch=False):
         """Configures the alarm parameters for the input.
 
         :param on:  Boolean setting of alarm, default True
