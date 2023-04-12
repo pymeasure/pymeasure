@@ -92,14 +92,14 @@ class LakeShore211(Instrument):
 
     analog_out = Instrument.measurement(
         "AOUT?",
-        """Returns the percentage of output of the analog output.
+        """Measure the percentage of output of the analog output.
         """
     )
 
     display_units = Instrument.control(
         "DISPFLD?", "DISPFLD %d",
         """
-        Specifies input data to display. Valid entries:
+        Control the input data to display. Valid entries:
 
         +-------------+--------------+
         | setting     | units        |
@@ -119,32 +119,32 @@ class LakeShore211(Instrument):
 
     temperature_celsius = Instrument.measurement(
         "CRDG?",
-        """Reads the temperature of the sensor in celsius
+        """Measure the temperature of the sensor in celsius
         """
     )
 
     temperature_fahrenheit = Instrument.measurement(
         "FRDG?",
-        """Reads the temperature of the sensor in fahrenheit
+        """Measure the temperature of the sensor in fahrenheit
         """
     )
 
     temperature_sensor = Instrument.measurement(
         "SRDG?",
-        """Reads the temperature of the sensor in sensor units
+        """Measure the temperature of the sensor in sensor units
         """
     )
 
     temperature_kelvin = Instrument.measurement(
         "KRDG?",
-        """Reads the temperature of the sensor in kelvin
+        """Measure the temperature of the sensor in kelvin
         """
     )
 
     relay = Instrument.control(
         "RELAY?", "RELAY %d,%d",
         """
-        Specifies which relay to configure. Values need to be supplied as a tuple of
+        Control which relay to configure. Values need to be supplied as a tuple of
         (relay number, relay mode)
         Relay number can be 1 or 2
 
