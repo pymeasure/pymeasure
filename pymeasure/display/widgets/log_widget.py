@@ -25,7 +25,7 @@
 import logging
 
 from ..log import LogHandler
-from ..Qt import QtWidgets
+from ..Qt import QtWidgets, QtCore, QtGui
 from .tab_widget import TabWidget
 
 log = logging.getLogger(__name__)
@@ -60,6 +60,9 @@ class HTMLFormatter(logging.Formatter):
         for replacement in self.html_replacements.items():
             formatted = formatted.replace(*replacement)
 
+        # Prepend the level as HTML comment
+        formatted = f"<!--{record.levelname}-->{formatted}"
+
         return formatted
 
 
@@ -73,6 +76,13 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
     fmt = '%(asctime)s : %(message)s (%(levelname)s)'
     datefmt = '%m/%d/%Y %I:%M:%S %p'
 
+    tab_widget = None
+    tab_index = None
+
+    blink_qtimer = QtCore.QTimer()
+    blink_color = None
+    blink_state = False
+
     def __init__(self, name, parent=None, fmt=None, datefmt=None):
         if fmt is not None:
             self.fmt = fmt
@@ -82,6 +92,10 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         super().__init__(name, parent)
         self._setup_ui()
         self._layout()
+
+        # Setup blinking
+        self.blink_qtimer.timeout.connect(self.blink)
+        self.handler.connect(self.blinking_start)
 
     def _setup_ui(self):
         self.view = QtWidgets.QPlainTextEdit()
@@ -99,3 +113,60 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
 
         vbox.addWidget(self.view)
         self.setLayout(vbox)
+
+    def blink(self):
+        if self.blink_state:
+            self.tab_widget.tabBar().setTabTextColor(
+                self.tab_index,
+                QtGui.QColor("black")
+            )
+        else:
+            self.tab_widget.tabBar().setTabTextColor(
+                self.tab_index,
+                QtGui.QColor(self.blink_color)
+            )
+
+        self.blink_state = not self.blink_state
+
+    def blinking_stop(self, index):
+        if index == self.tab_index:
+            self.blink_qtimer.stop()
+            self.blink_state = True
+            self.blink()
+
+            self.blink_color = None
+            self.tab_widget.setTabIcon(self.tab_index, QtGui.QIcon())
+
+    def blinking_start(self, message):
+        # Delayed setup, since only now the widget is added to the TabWidget
+        if self.tab_widget is None:
+            self.tab_widget = self.parent().parent()
+            self.tab_index = self.tab_widget.indexOf(self)
+            self.tab_widget.tabBar().setIconSize(QtCore.QSize(12, 12))
+            self.tab_widget.tabBar().currentChanged.connect(self.blinking_stop)
+
+        if message.startswith("<!--ERROR-->") or message.startswith("<!--CRITICAL-->"):
+            error = True
+        elif message.startswith("<!--WARNING-->"):
+            error = False
+        else:  # no blinking
+            return
+
+        # Check if the current tab is actually the log-tab
+        if self.tab_widget.currentIndex() == self.tab_index:
+            self.blinking_stop(self.tab_widget.currentIndex())
+            return
+
+        # Define color and icon based on severity
+        # If already red, this should not be updated
+        if not self.blink_color == "red":
+            self.blink_color = "red" if error else "darkorange"
+
+            pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxCritical if \
+                error else QtWidgets.QStyle.StandardPixmap.SP_MessageBoxWarning
+
+            icon = self.style().standardIcon(pixmapi)
+            self.tab_widget.setTabIcon(self.tab_index, icon)
+
+        # Start timer
+        self.blink_qtimer.start(500)
