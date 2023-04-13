@@ -32,6 +32,37 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class HTMLFormatter(logging.Formatter):
+    level_colors = {
+        "DEBUG": "DarkGray",
+        # "INFO": "Black",
+        "WARNING": "DarkOrange",
+        "ERROR": "Red",
+        "CRITICAL": "DarkRed",
+    }
+
+    html_replacements = {
+        "\r\n": "<br>  ",
+        "\n": "<br>  ",
+        "\r": "<br>  ",
+        "  ": "&nbsp;" * 2,
+        "\t": "&nbsp;" * 4,
+    }
+
+    def format(self, record):
+        formatted = super().format(record)
+
+        # Apply color if a level-color is defined
+        if record.levelname in self.level_colors:
+            formatted = f"<font color=\"{self.level_colors[record.levelname]}\">{formatted}</font>"
+
+        # ensure newlines and indents are preserved
+        for replacement in self.html_replacements.items():
+            formatted = formatted.replace(*replacement)
+
+        return formatted
+
+
 class LogWidget(TabWidget, QtWidgets.QWidget):
     """ Widget to display logging information in GUI
 
@@ -48,11 +79,11 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         self.view = QtWidgets.QPlainTextEdit()
         self.view.setReadOnly(True)
         self.handler = LogHandler()
-        self.handler.setFormatter(logging.Formatter(
+        self.handler.setFormatter(HTMLFormatter(
             fmt='%(asctime)s : %(message)s (%(levelname)s)',
             datefmt='%m/%d/%Y %I:%M:%S %p'
         ))
-        self.handler.connect(self.view.appendPlainText)
+        self.handler.connect(self.view.appendHtml)
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
