@@ -70,7 +70,15 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
     :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`
     """
 
-    def __init__(self, name, parent=None):
+    fmt = '%(asctime)s : %(message)s (%(levelname)s)'
+    datefmt = '%m/%d/%Y %I:%M:%S %p'
+
+    def __init__(self, name, parent=None, fmt=None, datefmt=None):
+        if fmt is not None:
+            self.fmt = fmt
+        if datefmt is not None:
+            self.datefmt = datefmt
+
         super().__init__(name, parent)
         self._setup_ui()
         self._layout()
@@ -80,8 +88,8 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         self.view.setReadOnly(True)
         self.handler = LogHandler()
         self.handler.setFormatter(HTMLFormatter(
-            fmt='%(asctime)s : %(message)s (%(levelname)s)',
-            datefmt='%m/%d/%Y %I:%M:%S %p'
+            fmt=self.fmt,
+            datefmt=self.datefmt,
         ))
         self.handler.connect(self.view.appendHtml)
 
