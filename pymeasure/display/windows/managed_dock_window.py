@@ -51,7 +51,8 @@ class ManagedDockWindow(ManagedWindowBase):
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, log_fmt=None, log_datefmt=None, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None,
+                 log_fmt=None, log_datefmt=None, **kwargs):
 
         self.x_axis = x_axis
         self.y_axis = y_axis
