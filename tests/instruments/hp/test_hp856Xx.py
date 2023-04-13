@@ -42,19 +42,28 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [("AT 70", None),
-                 ("AT?", "70"),
-                 ("AT AUTO", None),
-                 ("AT?", "20"),
-                 ("AT 20", None),
-                 ("AT?", "20")],
+                 ("AT?", "70")],
         ) as instr:
             # test set and get of attenuation as integer
             instr.attenuation = 70
             assert instr.attenuation == 70
+
+    def test_attenuation_string_parameters(self):
+        with expected_protocol(
+                HP856Xx,
+                [("AT AUTO", None),
+                 ("AT?", "20"),],
+        ) as instr:
             # test string parameters
             instr.attenuation = "AUTO"
             assert instr.attenuation == 20
-            # test truncation
+
+    def test_attenuation_truncation(self):
+        with expected_protocol(
+                HP856Xx,
+                [("AT 20", None),
+                 ("AT?", "20")],
+        ) as instr:
             instr.attenuation = 16
             assert instr.attenuation == 20
 
@@ -69,7 +78,7 @@ class TestHP856Xx:
             assert instr.amplitude_unit == amplitude_unit
 
     @pytest.mark.parametrize(
-        "function,command",
+        "function, command",
         [
             ("auto_couple", "AUTOCPL"),
             ("exchange_traces", "AXB"),
@@ -110,13 +119,13 @@ class TestHP856Xx:
             with pytest.raises(TypeError):
                 instr.blank_trace(0)
 
-    @pytest.mark.parametrize("function,command", [
+    @pytest.mark.parametrize("function, command", [
         ("start_frequency", "FA"),
         ("center_frequency", "CF"),
         ("stop_frequency", "FB"),
         ("frequency_offset", "FOFFSET")
     ])
-    @pytest.mark.parametrize("hp_derivat,max_freq", [(HP8560A, 2.9e9), (HP8561B, 6.5e9)])
+    @pytest.mark.parametrize("hp_derivat, max_freq", [(HP8560A, 2.9e9), (HP8561B, 6.5e9)])
     def test_frequencies(self, function, command, hp_derivat, max_freq):
         with expected_protocol(
                 hp_derivat,
@@ -230,7 +239,7 @@ class TestHP856Xx:
             assert instr.elapsed_time == 1800
 
     @pytest.mark.parametrize(
-        "function,command",
+        "function, command",
         [
             ("sampling_frequency", "SMP"),
             ("lo_frequency", "LO"),
@@ -440,7 +449,7 @@ class TestHP8561B:
             assert instr.harmonic_number_lock == 10
 
     @pytest.mark.parametrize(
-        "function,command",
+        "function, command",
         [
             ("harmonic_number_unlock", "HUNLK"),
             ("signal_identification_to_center_frequency", "IDCF"),
