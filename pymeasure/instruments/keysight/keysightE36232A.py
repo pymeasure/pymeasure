@@ -42,10 +42,10 @@ class KeysightE36232A(Instrument):
     ###############
     # Current (A) #
     ###############
-    _max_current = Instrument.measurement(":CURR? MAX", 
-										  """ Gets the unit's max current """
-										  )
-	
+    _max_current = Instrument.measurement(":CURR? MAX",
+                                          """ Gets the unit's max current """
+                                          )
+
     current_range = Instrument.control(
         ":CURR?", ":CURR %g",
         """ A floating point property that controls the DC current range in
@@ -62,10 +62,10 @@ class KeysightE36232A(Instrument):
     ###############
     # Voltage (V) #
     ###############
-    _max_voltage = Instrument.measurement(":VOLT? MAX", 
-										 """ Gets the unit's max voltage """
-										 )
-	
+    _max_voltage = Instrument.measurement(":VOLT? MAX",
+                                          """ Gets the unit's max voltage """
+                                          )
+
     voltage_range = Instrument.control(
         ":VOLT?", ":VOLT %g V",
         """ A floating point property that controls the DC voltage range in
@@ -76,15 +76,14 @@ class KeysightE36232A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-                                     """ Reads a DC voltage measurement in Volts. """
+                                     """ Reads voltage meas. in Volts """
                                      )
-	
 
     #################
     # _status (0/1) #
     #################
     _status = Instrument.measurement(":OUTP?",
-                                     """ Read power supply current output status. """,
+                                     """ Read power supply coutput status. """,
                                      )
 
     def enable(self):
@@ -106,4 +105,3 @@ class KeysightE36232A(Instrument):
         super().__init__(
             adapter, "Keysight E36232A power supply", **kwargs
         )
-		
