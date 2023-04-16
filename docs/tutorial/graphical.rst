@@ -225,14 +225,14 @@ For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that o
 
 For :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.managed_window.ManagedWindow` and :class:`~pymeasure.display.windows.managed_image_window.ManagedImageWindow` which are subclasses ready to use for GUI.
 
-Using Table Widget
-~~~~~~~~~~~~~~~~~~
+Using tabular format
+~~~~~~~~~~~~~~~~~~~~
 
 In some experiments, data in tabular format may be useful in addition or in alternative to graphical plot.
 :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` allows adding a :class:`~pymeasure.display.widgets.table_widget.TableWidget` to show
 experiments data, the widget supports also exporting data in some popular format like CSV, HTML, etc.
 Below an example on how to customize :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` to use tabular format,
-it derived from example above and changed lines are highlited.
+it derived from example above and changed lines are marked.
 
 .. code-block:: python
    :emphasize-lines: 11, 12, 18, 44, 47, 48, 49, 50, 51, 52, 57, 59, 60, 61
