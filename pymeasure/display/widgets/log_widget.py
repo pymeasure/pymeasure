@@ -115,16 +115,10 @@ class LogWidget(TabWidget, QtWidgets.QWidget):
         self.setLayout(vbox)
 
     def blink(self):
-        if self.blink_state:
-            self.tab_widget.tabBar().setTabTextColor(
-                self.tab_index,
-                QtGui.QColor("black")
-            )
-        else:
-            self.tab_widget.tabBar().setTabTextColor(
-                self.tab_index,
-                QtGui.QColor(self.blink_color)
-            )
+        self.tab_widget.tabBar().setTabTextColor(
+            self.tab_index,
+            QtGui.QColor("black" if self.blinking_state else self.blink_color)
+        )
 
         self.blink_state = not self.blink_state
 
