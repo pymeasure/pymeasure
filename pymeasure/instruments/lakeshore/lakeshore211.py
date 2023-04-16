@@ -178,7 +178,7 @@ class LakeShore211(Instrument):
         Property is UNTESTED
 
         :param RelayNumber relay: Specify which relay to query
-        :return Current RelayNumber of the relay
+        :return: Current RelayMode of queried relay
         """
         relay = strict_discrete_set(relay, list(self.RelayNumber))
         return int(self.ask("RELAY? %d" % relay))
