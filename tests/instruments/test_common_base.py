@@ -371,12 +371,17 @@ def test_control_doc(dynamic):
     assert Fake.x.__doc__ == expected_doc
 
 
+def test_check_errors_not_implemented(fake):
+    with pytest.raises(NotImplementedError):
+        fake.check_errors()
+
+
 def test_check_get_errors_not_implemented(fake):
     with pytest.raises(NotImplementedError):
         fake.check_get_errors()
 
 
-def test_control_check_errors_get(fake):
+def test_control_check_get_errors(fake):
     fake.fake_ctrl_check_get_errors = True
 
     def checking():
@@ -391,7 +396,7 @@ def test_check_set_errors_not_implemented(fake):
         fake.check_set_errors()
 
 
-def test_control_check_errors_set(fake):
+def test_control_check_set_errors(fake):
     fake.fake_ctrl_check_set_errors = True
 
     def checking():
