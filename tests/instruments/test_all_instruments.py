@@ -51,7 +51,7 @@ for manufacturer in dir(instruments):
 
 
 # Collect all properties
-# TODO add Channel properties as well.
+# TODO add Channel properties as well: How collect all Channel classes?
 properties = []
 for device in devices:
     for property_name in dir(device):
