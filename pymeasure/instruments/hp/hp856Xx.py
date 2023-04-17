@@ -1560,12 +1560,14 @@ class HP856Xx(Instrument):
     marker_signal_tracking = Instrument.control(
         "MKTRACK?", "MKTRACK %s",
         """
-        locates the active marker and sets the center frequency to the
+        Locate the active marker and sets the center frequency to the
         marker value. This is done after every sweep, thus maintaining the marker value at the
         center frequency. This allows you to “zoom in” quickly from a wide span to a narrow one,
-        without losing the signal from the screen. Or, use MKTRACK to keep a slowly drifting
-        signal centered on the display. When this function is active, a "K" appears on the left
-        edge of the display.
+        without losing the signal from the screen. Or, use 'marker_signal_tracking' to keep a slowly
+        drifting signal centered on the display. When this function is active, a "K" appears on
+        the left edge of the display.
+
+        Type: :code:`bool`
         """,
         map_values=True,
         validator=strict_discrete_set,
@@ -1578,7 +1580,9 @@ class HP856Xx(Instrument):
         """
         Control the maximum signal level that is at the input mixer. The
         attenuator automatically adjusts to ensure that this level is not exceeded for signals less
-        than the reference level.
+        than the reference level. From -80 to -10 DB.
+
+        Type: :code:`int`
         """,
         validator=strict_range,
         cast=int,
@@ -1612,7 +1616,149 @@ class HP856Xx(Instrument):
             raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
                                                                            trace))
 
-        self.write("MAXH %s" % trace)
+        self.write("MXMH %s" % trace)
+
+    normalize_trace_data = Instrument.control(
+        "NORMLIZE?", "NORMLIZE %s",
+        """
+        Activate or deactivate the normalization routine for
+        stimulus-response measurements. This function subtracts trace B from trace A, offsets the
+        result by the value of the normalized reference position
+        (:attr:`normalized_reference_level`), and displays the result in trace A.
+        'normalize_trace_data' is intended for use with the TODO STOREOPEN and
+        TODO STORESHORT or
+        TODO STORETHRU commands. These functions are used to store a reference trace into trace B.
+        Refer to the respective command descriptions for more information.
+        Accurate normalization occurs only if the reference trace and the measured trace are
+        on-screen. If any of these traces are off-screen, an error message will be displayed.
+        If the error message ERR 903 A > DLMT is displayed, the range level (RL) can be adjusted
+        to move the measured response within the displayed measurement range of the analyzer. If
+        ERR 904 B > DLMT is displayed, the calibration is invalid and a thru or open/short
+        calibration must be performed.
+        If active (ON), the 'normalize_trace_data' command is automatically turned off with an
+        instrument preset (IP) or at power on.
+
+        Type: :code:`bool`
+        """,
+        map_values=True,
+        validator=strict_discrete_set,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    normalized_reference_level = Instrument.control(
+        "NRL?", "NRL %d",
+        """
+        Control the normalized reference level. It is intended to be used with the
+        :attr:`normalize_trace_data` command. When using 'normalized_reference_level', the input
+        attenuator and IF step gains are not affected. This function is a trace-offset function
+        enabling the user to offset the displayed trace without introducing hardware-switching
+        errors into the stimulus-response measurement. The unit of measure for
+        'normalized_reference_level' is dB. In absolute power mode (dBm), reference level (
+        :attr:`reference_level`) affects the gain and RF attenuation settings of the instrument,
+        which affects the measurement or dynamic range. In normalized mode
+        (relative power or dB-measurement mode), NRL offsets the trace data on-screen and does
+        not affect the instrument gain or attenuation settings. This allows the displayed
+        normalized trace to be moved without decreasing the measurement accuracy due to changes
+        in gain or RF attenuation. If the measurement range must be changed to bring trace data
+        on-screen, then the range level should be adjusted. Adjusting the range-level normalized
+        mode has the same effect on the instrument settings as does reference level in absolute
+        power mode (normalize off).
+
+        Type: :code:`int`
+
+        .. code-block:: python
+
+            # reference level in case of normalization to -30 DB
+            instr.normalized_reference_level = -30
+
+            if instr.normalized_reference_level == -30:
+                pass
+        """,
+        validator=strict_range,
+        values=[-200, 30],
+        cast=int
+    )
+
+    normalized_reference_position = Instrument.control(
+        "NRPOS?", "NRPOS %f",
+        """
+        Adjust the normalized reference-position that corresponds to the
+        position on the graticule where the difference between the measured and calibrated traces
+        resides. The dB value of the normalized reference-position is equal to the normalized
+        reference level. The normalized reference-position may be adjusted between 0.0 and 10.0,
+        corresponding to the bottom and top graticule lines, respectively.
+
+        Type: :code:`float`
+
+        .. code-block:: python
+
+            instr.normalized_reference_position = 5.5
+
+            if instr.normalized_reference_position == 5.5:
+                pass
+        """,
+        validator=strict_range,
+        values=[0.0, 10.0]
+    )
+
+    display_parameters = Instrument.measurement(
+        "OP?",
+        """
+        Returns the location of the lower left (P1) and upper right (P2) vertices as a tuple of
+        the display window.
+
+        Type: :code:`tuple`
+
+        .. code-block:: python
+
+            repr(instr.display_parameters)
+            (72, 16, 712, 766)
+
+        """,
+        maxsplit=4,
+        cast=int,
+        get_process=tuple
+    )
+
+    def plot(self, p1x, p1y, p2x, p2y):
+        """
+        Copies the specified display contents onto any HP-GL plotter. Set the
+        plotter address to 5, select the Pi and P2 positions, and then execute the plot command. P1
+        and P2 correspond to the lower-left and upper-right plotter positions, respectively. If P1
+        and P2 are not specified, default values (either preloaded from power-up or sent in via
+        a previous plot command) are used. Once PLOT is executed, no subsequent commands are
+        executed until PLOT is done. For more information, refer to Chapter 4.
+
+        :param p1x: plotter-dependent value that specify the lower-left plotter position x-axis
+        :type p1x: int
+        :param p1y: plotter-dependent value that specify the lower-left plotter position y-axis
+        :type p1y: int
+        :param p2x: plotter-dependent values that specify the upper-right plotter position x-axis
+        :type p2x: int
+        :param p2y: plotter-dependent values that specify the upper-right plotter position y-axis
+        :type p2y: int
+
+        """
+
+        if not (isinstance(p1x, int) or isinstance(p1y, int) or isinstance(p2x, int) or
+                isinstance(p2y, int)):
+            raise TypeError("Should be of type int")
+
+        # TODO: Value check
+
+        self.write("PLOT %d,%d,%d,%d" % (p1x, p1y, p2x, p2y))
+
+    @property
+    def display_origins(self):
+        raise NotImplementedError()
+
+    @property
+    def plot_source(self):
+        raise NotImplementedError()
+
+    def print(self):
+        raise NotImplementedError()
 
 
 class HP8560A(HP856Xx):
@@ -1687,16 +1833,6 @@ class HP8561B(HP856Xx):
         self.stop_frequency_values = [0, self.MAX_FREQUENCY]
         self.frequency_offset_values = [0, self.MAX_FREQUENCY]
         self.marker_frequency_values = [0, self.MAX_FREQUENCY]
-
-    mixer_mode = Instrument.control(
-        "MXRMODE?", "MXRMODE %s",
-        """
-        Specifie the mixer mode. Select either the internal mixer
-        or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
-        """,
-        validator=strict_discrete_set,
-        values=[e for e in MixerMode]
-    )
 
     conversion_loss = Instrument.control(
         "CNVLOSS?", "CNVLOSS %s",
@@ -1863,4 +1999,39 @@ class HP8561B(HP856Xx):
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[float(-10E3), int(10E3)], ["ON", "OFF"]],
         cast=float
+    )
+
+    mixer_mode = Instrument.control(
+        "MXRMODE?", "MXRMODE %s",
+        """
+        Specifie the mixer mode. Select either the internal mixer
+        or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in MixerMode]
+    )
+
+    def preselector_peak(self):
+        """
+        Peaks the preselector in the HP 8561B Spectrum Analyzer. Make sure the
+        entire frequency span is in high band, set the desired trace to clear-write mode, place a
+        marker on a desired signal, then execute PP. The peaking routine zooms to zero span,
+        peaks the preselector tracking, then returns to the original position. To read the new
+        preselector peaking number, use the PSDAC command. Commands following PP are not
+        executed until after the analyzer has finished peaking the preselector.
+        """
+
+        self.write("PP")
+
+    preselector_dac_number = Instrument.control(
+        "PSDAC?", "PSDAC %d",
+        """
+        Adjusts or returns the preselector peak DAC number. For use with an
+        HP 8561B Spectrum Analyzer.
+
+        Type: :code:`int`
+        """,
+        cast=int,
+        validator=strict_range,
+        values=[0, 255]
     )

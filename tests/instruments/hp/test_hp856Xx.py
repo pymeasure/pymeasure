@@ -90,7 +90,8 @@ class TestHP856Xx:
             ("marker_minimum", "MKMIN"),
             ("marker_to_reference_level", "MKRL"),
             ("marker_delta_to_span", "MKSP"),
-            ("marker_to_center_frequency_step_size", "MKSS")
+            ("marker_to_center_frequency_step_size", "MKSS"),
+            ("preset", "IP")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -300,14 +301,23 @@ class TestHP856Xx:
             instr.frequency_reference = frequency_reference
             assert instr.frequency_reference == frequency_reference
 
-    def test_graticule(self):
+    @pytest.mark.parametrize(
+        "function, command",
+        [
+            ("graticule", "GRAT"),
+            ("marker_signal_tracking", "MKTRACK"),
+            ("marker_noise_mode", "MKNOISE"),
+            ("normalize_trace_data", "NORMLIZE")
+        ]
+    )
+    def test_on_off_commands(self, function, command):
         with expected_protocol(
                 HP856Xx,
-                [("GRAT 0", None),
-                 ("GRAT?", "1")]
+                [(command + " 0", None),
+                 (command + "?", "1")]
         ) as instr:
-            instr.graticule = False
-            assert instr.graticule is True
+            setattr(instr, function, False)
+            assert getattr(instr, function) is True
 
     def test_logarithmic_scale(self):
         with expected_protocol(
@@ -322,7 +332,7 @@ class TestHP856Xx:
         "function, cmdstr",
         [
             ("minimum_hold", "MINH"),
-            ("maximum_hold", "MAXH")
+            ("maximum_hold", "MXMH")
         ]
     )
     @pytest.mark.parametrize("trace", [e for e in Trace])
@@ -396,17 +406,6 @@ class TestHP856Xx:
             instr.frequency_counter_resolution = 1e3
             assert instr.frequency_counter_resolution == 1e4
 
-    def test_marker_noise_mode(self):
-        with expected_protocol(
-                HP856Xx,
-                [
-                    ("MKNOISE %s" % "1", None),
-                    ("MKNOISE?", "0")
-                ]
-        ) as instr:
-            instr.marker_noise_mode = True
-            assert instr.marker_noise_mode is False
-
     @pytest.mark.parametrize("all_markers, cmdstring", [(True, " ALL"), (False, "")])
     def test_marker_off(self, all_markers, cmdstring):
         with expected_protocol(
@@ -458,17 +457,6 @@ class TestHP856Xx:
             instr.marker_time = 10.3
             assert instr.marker_time == 10.3
 
-    def test_marker_signal_tracking(self):
-        with expected_protocol(
-                HP856Xx,
-                [
-                    ("MKTRACK 1", None),
-                    ("MKTRACK?", "1")
-                ]
-        ) as instr:
-            instr.marker_signal_tracking = True
-            assert instr.marker_signal_tracking is True
-
     def test_mixer_level(self):
         with expected_protocol(
                 HP856Xx,
@@ -479,6 +467,35 @@ class TestHP856Xx:
         ) as instr:
             instr.mixer_level = -30
             assert instr.mixer_level == -30
+
+    def test_normalized_reference_level(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("NRL -30", None),
+                    ("NRL?", "-30")
+                ]
+        ) as instr:
+            instr.normalized_reference_level = -30
+            assert instr.normalized_reference_level == -30
+
+    def test_display_parameters(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("OP?", "72,16,712,766")
+                ]
+        ) as instr:
+            assert instr.display_parameters == (72, 16, 712, 766)
+
+    def test_plot(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("PLOT 72,16,712,766", None)
+                ]
+        ) as instr:
+            instr.plot(72, 16, 712, 766)
 
 
 class TestHP8561B:
@@ -537,7 +554,7 @@ class TestHP8561B:
         [
             ("harmonic_number_unlock", "HUNLK"),
             ("signal_identification_to_center_frequency", "IDCF"),
-            ("preset", "IP")
+            ("preselector_peak", "PP")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -568,3 +585,12 @@ class TestHP8561B:
             instr.mixer_bias = -9.9
             instr.mixer_bias = string_params
             assert instr.mixer_bias == 5.5
+
+    def test_preselector_dac_number(self):
+        with expected_protocol(
+                HP8561B,
+                [("PSDAC 10", None),
+                 ("PSDAC?", "10")]
+        ) as instr:
+            instr.preselector_dac_number = 10
+            assert instr.preselector_dac_number == 10
