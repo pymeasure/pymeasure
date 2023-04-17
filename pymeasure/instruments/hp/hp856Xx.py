@@ -35,7 +35,7 @@ log.addHandler(logging.NullHandler())
 
 class StrEnum(str, Enum):
     """
-    Until StrEnum is broadly available / pymeasure relies on python => 3.10.x
+    Until StrEnum is broadly available / pymeasure relies on python <= 3.10.x
     """
 
     def __str__(self):
@@ -64,6 +64,24 @@ class MixerMode(StrEnum):
 
     #: Mixer Mode External
     External = "EXT"
+
+
+class PeakSearchMode(StrEnum):
+    """
+    Enumeration to represent the Marker Peak Search Mode
+    """
+
+    #: Place marker to the highest value on the trace
+    High = "HI"
+
+    #: Place marker to the next highest value on the trace
+    NextHigh = "NH"
+
+    #: Place marker to the next peak to the right
+    NextRight = "NR"
+
+    #: Place marker to the next peak to the left
+    NextLeft = "NL"
 
 
 class CouplingMode(StrEnum):
@@ -520,7 +538,7 @@ class HP856Xx(Instrument):
         "AUNITS?", "AUNITS %s",
         """
         Control the amplitude unit with a selection of the following parameters: string
-        'DBM', 'DBMV', 'DBUV', 'V', 'W', 'AUTO', 'MAN' or use the enum :class:`.AmplitudeUnits`
+        'DBM', 'DBMV', 'DBUV', 'V', 'W', 'AUTO', 'MAN' or use the enum :class:`AmplitudeUnits`
 
         Type: :code:`str`
 
@@ -563,7 +581,7 @@ class HP856Xx(Instrument):
             instr.blank_trace('TRA')
             instr.blank_trace(Trace.A)
 
-        :param trace: A representation of the trace, either from :class:`.Trace` or
+        :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
 
         :type trace: str
@@ -621,7 +639,7 @@ class HP856Xx(Instrument):
             instr.clear_write_trace('TRA')
             instr.clear_write_trace(Trace.A)
 
-        :param trace: A representation of the trace, either from :class:`.Trace` or
+        :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
 
         :type trace: str
@@ -655,7 +673,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`str`
 
-        Takes a representation of the coupling mode, either from :class:`.CouplingMode` or
+        Takes a representation of the coupling mode, either from :class:`CouplingMode` or
         use 'AC' / 'DC'
 
         .. code-block:: python
@@ -683,7 +701,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`str`
 
-        Takes a representation of the demodulation mode, either from :class:`.DemodulationMode` or
+        Takes a representation of the demodulation mode, either from :class:`DemodulationMode` or
         use 'OFF', 'AM', 'OFF'
 
         .. code-block:: python
@@ -755,7 +773,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`str`
 
-        Takes a representation of the detector mode, either from :class:`.DetectionModes` or
+        Takes a representation of the detector mode, either from :class:`DetectionModes` or
         use 'NEG', 'NRM', 'POS', 'SMP'
 
         .. code-block:: python
@@ -1087,7 +1105,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`str`
 
-        Takes element of :class:`.FrequencyReference` or use 'INT', 'EXT'
+        Takes element of :class:`FrequencyReference` or use 'INT', 'EXT'
 
         .. code-block:: python
 
@@ -1198,14 +1216,14 @@ class HP856Xx(Instrument):
         """
         Update the chosen trace with the minimum signal level detected at each
         trace-data point from subsequent sweeps. This function employs the negative peak detector
-        (refer to the DET command).
+        (refer to the :attr:`detector_mode` command).
 
         .. code-block:: python
 
             instr.minimum_hold('TRA')
             instr.minimum_hold(Trace.A)
 
-        :param trace: A representation of the trace, either from :class:`.Trace` or
+        :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
 
         :type trace: str
@@ -1391,6 +1409,210 @@ class HP856Xx(Instrument):
         values={True: "1", False: "0"},
         cast=str
     )
+
+    def marker_off(self, all_markers=False):
+        """
+        Turn off the active marker or, if specified, turn off all markers.
+
+        :param all_markers: If True the call deactivates all markers, if false only the currently
+            active marker (optional)
+        :type all_markers: bool
+
+        .. code-block:: python
+
+            # place first marker at 300 MHz
+            instr.marker_frequency = 300e6
+
+            # place second marker 2 MHz apart from first
+            instr.marker_delta = 2e6
+
+            # deactivate active marker (delta marker)
+            instr.marker_off()
+
+            # deactivate all markers
+            instr.marker_off(all_markers=True)
+
+        """
+        if all_markers:
+            self.write("MKOFF ALL")
+        else:
+            self.write("MKOFF")
+
+    def peak_search(self, mode):
+        """
+        Place a marker on the highest point on a trace, the next-highest point,
+        the next-left peak, or the next-right peak. The default is 'HI' (highest point). The trace
+        peaks must meet the criteria of the marker threshold and peak excursion functions in order
+        for a peak to be found. See also the :attr:`peak_threshold` and :attr:`peak_excursion`
+        commands.
+
+        :param mode: Takes 'HI', 'NH', 'NR', 'NL' or the enumeration :class:`PeakSearchMode`
+        :type mode: str
+
+        .. code-block:: python
+
+            instr.peak_search('NL')
+            instr.peak_search(PeakSearchMode.NextHigh)
+
+        """
+
+        if not isinstance(mode, str):
+            raise TypeError("Should be of type string but is '%s'" % type(mode))
+
+        if mode not in [e for e in PeakSearchMode]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             ([e for e in PeakSearchMode], mode))
+
+        self.write("MKPK %s" % mode)
+
+    marker_threshold = Instrument.control(
+        "MKPT?", "MKPT %g",
+        """
+        Control the minimum amplitude level from which a peak on the trace can
+        be detected. The default value is -130 dBm. See also the :attr:`peak_excursion` command.
+        Any portion of a peak that falls below the peak threshold is used to satisfy the peak
+        excursion criteria. For example, a peak that is equal to 3 dB above the threshold when
+        the peak excursion is equal to 6 dB will be found if the peak extends an additional 3 dB
+        or more below the threshold level. Maximum 30 db to minimum -200 db.
+
+        Type: :code:`signed int`
+
+        .. code-block:: python
+
+            instr.marker_threshold = -70
+            if instr.marker_threshold > -80:
+                pass
+
+        """,
+        validator=strict_range,
+        values=[-200, 30]
+    )
+
+    peak_excursion = Instrument.control(
+        "MKPX?", "MKPX %g",
+        """
+        Control what constitutes a peak on a trace. The chosen value specifies
+        the amount that a trace must increase monotonically, then decrease monotonically, in order
+        to be a peak. For example, if the peak excursion is 10 dB, the amplitude of the sides of a
+        candidate peak must descend at least 10 dB in order to be considered a peak (see Figure 5-4)
+        The default value is 6 dB. In linear mode, enter the marker peak excursion as a unit-less
+        number.
+        Any portion of a peak that falls below the peak threshold is also used to satisfy the peak
+        excursion criteria. For example, a peak that is equal to 3 dB above the threshold when the
+        peak excursion is equal to 6 dB will be found if the peak extends an additional 3 dB or more
+        below the threshold level.
+
+        Type: :code:`float`
+
+        .. code-block:: python
+
+            instr.peak_excursion = 2
+            if instr.peak_excursion == 2:
+                pass
+
+        """,
+        validator=strict_range,
+        values=[0.1, 99]
+    )
+
+    def marker_to_reference_level(self):
+        """
+        Set the reference level to the amplitude of an active marker. If no
+        marker is active, 'marker_to_reference_level' places a marker at the center of the trace
+        and uses that marker amplitude to set the reference level.
+        """
+        self.write("MKRL")
+
+    def marker_delta_to_span(self):
+        """
+        Set the frequency span equal to the frequency difference between two
+        markers on a trace. The start frequency is set equal to the frequency of the left-most
+        marker and the stop frequency is set equal to the frequency of the right-most marker.
+        """
+        self.write("MKSP")
+
+    def marker_to_center_frequency_step_size(self):
+        """
+        Set the center frequency step-size equal to the frequency value of the
+        active marker.
+        """
+        self.write("MKSS")
+
+    marker_time = Instrument.control(
+        "MKT?", "MKT %gS",
+        """
+        Place a marker at a position that corresponds to a specified point in
+        time during the sweep. Default units are seconds.
+
+        Type: :code:`float`
+
+        .. code-block:: python
+
+            # set marker at sweep time corresponding second two
+            instr.marker_time = 2
+
+            if instr.marker_time == 2:
+                pass
+
+        """
+    )
+
+    marker_signal_tracking = Instrument.control(
+        "MKTRACK?", "MKTRACK %s",
+        """
+        locates the active marker and sets the center frequency to the
+        marker value. This is done after every sweep, thus maintaining the marker value at the
+        center frequency. This allows you to “zoom in” quickly from a wide span to a narrow one,
+        without losing the signal from the screen. Or, use MKTRACK to keep a slowly drifting
+        signal centered on the display. When this function is active, a "K" appears on the left
+        edge of the display.
+        """,
+        map_values=True,
+        validator=strict_discrete_set,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    mixer_level = Instrument.control(
+        "ML?", "ML %d",
+        """
+        Control the maximum signal level that is at the input mixer. The
+        attenuator automatically adjusts to ensure that this level is not exceeded for signals less
+        than the reference level.
+        """,
+        validator=strict_range,
+        cast=int,
+        values=[-80, -10]
+    )
+
+    def maximum_hold(self, trace):
+        """
+        Set the chosen trace with the maximum signal level detected
+        at each trace-data point from subsequent sweeps. This function employs the positive peak
+        detector (refer to the :attr:`detector_mode` command). The detector mode can be changed,
+        if desired, after max hold is initialized.
+
+        .. code-block:: python
+
+            instr.maximum_hold('TRA')
+            instr.maximum_hold(Trace.A)
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+
+        :type trace: str
+        :raises TypeError: Type isn't 'string'
+        :raises ValueError: Value is 'TRA' nor 'TRB'
+
+        """
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
+
+        self.write("MAXH %s" % trace)
 
 
 class HP8560A(HP856Xx):

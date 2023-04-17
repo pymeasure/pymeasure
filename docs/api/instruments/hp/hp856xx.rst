@@ -45,3 +45,7 @@ HP 8560A / 8561B Spectrum Analyzer
 .. autoclass:: pymeasure.instruments.hp.hp856Xx.FrequencyReference
     :members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp856Xx.PeakSearchMode
+    :members:
+    :show-inheritance:

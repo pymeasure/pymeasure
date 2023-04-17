@@ -27,7 +27,7 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
-    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference
+    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode
 
 
 class TestHP856Xx:
@@ -52,7 +52,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [("AT AUTO", None),
-                 ("AT?", "20"),],
+                 ("AT?", "20"), ],
         ) as instr:
             # test string parameters
             instr.attenuation = "AUTO"
@@ -87,7 +87,10 @@ class TestHP856Xx:
             ("full_span", "FS"),
             ("linear_scale", "LN"),
             ("marker_to_center_frequency", "MKCF"),
-            ("marker_minimum", "MKMIN")
+            ("marker_minimum", "MKMIN"),
+            ("marker_to_reference_level", "MKRL"),
+            ("marker_delta_to_span", "MKSP"),
+            ("marker_to_center_frequency_step_size", "MKSS")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -315,24 +318,32 @@ class TestHP856Xx:
             instr.logarithmic_scale = 1
             assert instr.logarithmic_scale == 10
 
+    @pytest.mark.parametrize(
+        "function, cmdstr",
+        [
+            ("minimum_hold", "MINH"),
+            ("maximum_hold", "MAXH")
+        ]
+    )
     @pytest.mark.parametrize("trace", [e for e in Trace])
-    def test_minimum_hold(self, trace):
+    def test_hold(self, trace, function, cmdstr):
         with expected_protocol(
                 HP856Xx,
-                [("MINH " + trace, None)]
+                [(cmdstr + " " + trace, None)]
         ) as instr:
-            instr.minimum_hold(trace)
+            getattr(instr, function)(trace)
 
-    def test_minimum_hold_exceptions(self):
+    @pytest.mark.parametrize("function", ["minimum_hold", "maximum_hold"])
+    def test_hold_exceptions(self, function):
         with expected_protocol(
                 HP856Xx,
                 []
         ) as instr:
             with pytest.raises(ValueError):
-                instr.minimum_hold("TEST")
+                getattr(instr, function)("TEST")
 
             with pytest.raises(TypeError):
-                instr.minimum_hold(0)
+                getattr(instr, function)(0)
 
     def test_marker_amplitude(self):
         with expected_protocol(
@@ -395,6 +406,79 @@ class TestHP856Xx:
         ) as instr:
             instr.marker_noise_mode = True
             assert instr.marker_noise_mode is False
+
+    @pytest.mark.parametrize("all_markers, cmdstring", [(True, " ALL"), (False, "")])
+    def test_marker_off(self, all_markers, cmdstring):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKOFF%s" % cmdstring, None),
+                ]
+        ) as instr:
+            instr.marker_off(all_markers)
+
+    @pytest.mark.parametrize("mode", [e for e in PeakSearchMode])
+    def test_minimum_hold(self, mode):
+        with expected_protocol(
+                HP856Xx,
+                [("MKPK " + mode, None)]
+        ) as instr:
+            instr.peak_search(mode)
+
+    def test_marker_threshold(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKPT %d" % -30, None),
+                    ("MKPT?", -70)
+                ]
+        ) as instr:
+            instr.marker_threshold = -30
+            assert instr.marker_threshold == -70
+
+    def test_peak_excursion(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKPX %g" % 10.3, None),
+                    ("MKPX?", 10.3)
+                ]
+        ) as instr:
+            instr.peak_excursion = 10.3
+            assert instr.peak_excursion == 10.3
+
+    def test_marker_time(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKT %gS" % 10.3, None),
+                    ("MKT?", 10.3)
+                ]
+        ) as instr:
+            instr.marker_time = 10.3
+            assert instr.marker_time == 10.3
+
+    def test_marker_signal_tracking(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("MKTRACK 1", None),
+                    ("MKTRACK?", "1")
+                ]
+        ) as instr:
+            instr.marker_signal_tracking = True
+            assert instr.marker_signal_tracking is True
+
+    def test_mixer_level(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("ML -30", None),
+                    ("ML?", "-30")
+                ]
+        ) as instr:
+            instr.mixer_level = -30
+            assert instr.mixer_level == -30
 
 
 class TestHP8561B:

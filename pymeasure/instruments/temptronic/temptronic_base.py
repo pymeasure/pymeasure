@@ -442,7 +442,7 @@ class ATSBase(Instrument):
         "EROR?",  # it is indeed EROR
         """Read the device-specific error register (16 bits).
 
-        :type: :class:`.ErrorCode`
+        :type: :class:`ErrorCode`
         """,
         get_process=lambda v: ErrorCode(int(v)),
     )
@@ -775,7 +775,7 @@ class ATSBase(Instrument):
     def error_status(self):
         """Returns error status code (maybe used for logging).
 
-        :returns: :class:`.ErrorCode`
+        :returns: :class:`temptronic_base.ErrorCode`
         """
         code = self.error_code
         if not code == 0:
