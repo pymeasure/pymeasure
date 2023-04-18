@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
@@ -50,6 +51,12 @@ class Ametek7270(Instrument):
         200.0e-3, 500.0e-3, 1.0
     ]
 
+    SENSITIVITIES_IMODE = {0: SENSITIVITIES,
+                           1: list(np.array(SENSITIVITIES) * 1e-6),
+                           2: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2e-15, 5e-15, 10e-15,
+                               20e-15, 50e-15, 100e-15, 200e-15, 500e-15, 1e-12, 2e-12]}
+
+
     TIME_CONSTANTS = [
         10.0e-6, 20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6,
         1.0e-3, 2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
@@ -66,7 +73,8 @@ class Ametek7270(Instrument):
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
         map_values=True,
-        check_set_errors=True
+        check_set_errors=True,
+        dynamic=True
     )
 
     slope = Instrument.control(
@@ -115,6 +123,11 @@ class Ametek7270(Instrument):
     mag = Instrument.measurement("MAG.",
                                  """ Reads the magnitude in Volts """
                                  )
+
+    theta = Instrument.measurement("PHA.",
+                                   """ Reads the signal phase in degrees """
+                                   )
+
     harmonic = Instrument.control(
         "REFN", "REFN %d",
         """ An integer property that represents the reference
@@ -129,7 +142,8 @@ class Ametek7270(Instrument):
         """ A floating point property that represents the reference
         harmonic phase in degrees. This property can be set. """,
         validator=modular_range,
-        values=[0, 360]
+        values=[0, 360],
+        check_set_errors=True
     )
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -144,7 +158,8 @@ class Ametek7270(Instrument):
         """ A floating point property that represents the lock-in
         frequency in Hz. This property can be set. """,
         validator=truncated_range,
-        values=[0, 2.5e5]
+        values=[0, 2.5e5],
+        check_set_errors=True
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
@@ -203,16 +218,25 @@ class Ametek7270(Instrument):
 
     def set_voltage_mode(self):
         """ Sets instrument to voltage control mode """
-        self.write("IMODE 0")
+        self.ask("IMODE 0")
+        self.sensitivity_values = self.SENSITIVITIES_IMODE[0]
 
     def set_differential_mode(self, lineFiltering=True):
         """ Sets instrument to differential mode -- assuming it is in voltage mode """
-        self.write("VMODE 3")
-        self.write("LF %d 0" % 3 if lineFiltering else 0)
+        self.ask("VMODE 3")
+        self.ask("LF %d 0" % 3 if lineFiltering else 0)
+
+    def set_current_mode(self, low_noise=False):
+        if low_noise:
+            self.ask("IMODE 2")
+            self.sensitivity_values = self.SENSITIVITIES_IMODE[2]
+        else:
+            self.ask("IMODE 1")
+            self.sensitivity_values = self.SENSITIVITIES_IMODE[1]
 
     def set_channel_A_mode(self):
         """ Sets instrument to channel A mode -- assuming it is in voltage mode """
-        self.write("VMODE 1")
+        self.ask("VMODE 1")
 
     @property
     def auto_gain(self):
@@ -221,9 +245,9 @@ class Ametek7270(Instrument):
     @auto_gain.setter
     def auto_gain(self, setval):
         if setval:
-            self.write("AUTOMATIC 1")
+            self.ask("AUTOMATIC 1")
         else:
-            self.write("AUTOMATIC 0")
+            self.ask("AUTOMATIC 0")
 
     def shutdown(self):
         """ Ensures the instrument in a safe state """
