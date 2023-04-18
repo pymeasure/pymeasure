@@ -76,7 +76,7 @@ need_init_communication = [
     "ANC300Controller",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
-legacy_instruments = [
+grandfathered_docstring_instruments = [
     "AWG401x_AFG",
     "AWG401x_AWG",
     "AdvantestR3767CG",
@@ -230,10 +230,16 @@ def test_kwargs_to_adapter(cls):
         cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
 
 
-@pytest.mark.parametrize("prop_set", properties)
+def property_name_to_id(value):
+    """Create a test id from `value`."""
+    device, property_name, prop = value
+    return f"{device.__name__}.{property_name}"
+
+
+@pytest.mark.parametrize("prop_set", properties, ids=property_name_to_id)
 def test_property_docstrings(prop_set):
     device, property_name, prop = prop_set
-    if device.__name__ in legacy_instruments:
+    if device.__name__ in grandfathered_docstring_instruments:
         pytest.skip(f"{device.__name__} is in the codebase and has to be refactored later on.")
     start = prop.__doc__.split(maxsplit=1)[0]
     assert start in ("Control", "Measure", "Set", "Get"), (
