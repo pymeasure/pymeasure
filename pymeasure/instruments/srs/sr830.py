@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -342,10 +342,11 @@ class SR830(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SR830 Lock-in amplifier",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Stanford Research Systems SR830 Lock-in amplifier",
+            name,
             **kwargs
         )
 

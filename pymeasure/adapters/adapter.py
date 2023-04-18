@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ class Adapter:
             Implement it in the instrument's `read` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
-    :param kwargs: Keyword arguments just to be cooperative.
+    :param \\**kwargs: Keyword arguments just to be cooperative.
     """
 
     def __init__(self, preprocess_reply=None, log=None, **kwargs):
@@ -58,11 +58,12 @@ class Adapter:
             self.log = log.getChild("Adapter")
         self.log.addHandler(logging.NullHandler())
         if preprocess_reply is not None:
-            warn("Deprecated in Adapter, implement it in the instrument instead.",
+            warn(("Parameter `preprocess_reply` is deprecated in Adapter. "
+                 "Implement it in the instrument instead."),
                  FutureWarning)
 
     def __del__(self):
-        """Close connection upon garbage collection of the device"""
+        """Close connection upon garbage collection of the device."""
         self.close()
 
     def close(self):
@@ -80,7 +81,7 @@ class Adapter:
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug("WRITE:%s", command)
         self._write(command, **kwargs)
@@ -91,7 +92,7 @@ class Adapter:
         Do not override in a subclass!
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.log.debug("WRITE:%s", content)
         self._write_bytes(content, **kwargs)
@@ -101,24 +102,25 @@ class Adapter:
 
         Do not override in a subclass!
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         read = self._read(**kwargs)
         self.log.debug("READ:%s", read)
         return read
 
-    def read_bytes(self, count=-1, **kwargs):
+    def read_bytes(self, count=-1, break_on_termchar=False, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         Do not override in a subclass!
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        read = self._read_bytes(count, **kwargs)
+        read = self._read_bytes(count, break_on_termchar, **kwargs)
         self.log.debug("READ:%s", read)
         return read
 
@@ -135,9 +137,13 @@ class Adapter:
         """Read string from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading.")
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read bytes from the instrument. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented reading bytes.")
+
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer. Implement in subclass."""
+        raise NotImplementedError("Adapter class has not implemented input flush.")
 
     # Deprecated methods.
     def ask(self, command):
@@ -150,8 +156,7 @@ class Adapter:
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warn("Deprecated, call `Instrument.ask` instead.",
-             FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         self.write(command)
         return self.read()
 
@@ -171,7 +176,7 @@ class Adapter:
             preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
-        warn("Deprecated, call `Instrument.values` instead.",
+        warn("`Adapter.values` is deprecated, call `Instrument.values` instead.",
              FutureWarning)
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
@@ -202,7 +207,7 @@ class Adapter:
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, call `Instrument.binary_values` instead.",
+        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
              FutureWarning)
         self.write(command)
         binary = self.read()
@@ -218,7 +223,7 @@ class Adapter:
         :param int header_bytes: Number of bytes to ignore in header.
         :param int termination_bytes: Number of bytes to strip at end of message or None.
         :param dtype: The NumPy data type to format the values with.
-        :param kwargs: Further arguments for the NumPy fromstring method.
+        :param \\**kwargs: Further arguments for the NumPy fromstring method.
         :returns: NumPy array of values
         """
         binary = self.read_bytes(-1)
@@ -252,7 +257,7 @@ class Adapter:
         :param command: command string to be sent to the instrument
         :param values: iterable representing the binary values
         :param termination: String added afterwards to terminate the message.
-        :param kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
+        :param \\**kwargs: Key-word arguments to pass onto :meth:`Adapter._format_binary_values`
         :returns: number of bytes written
         """
         block = self._format_binary_values(values, **kwargs)
@@ -287,7 +292,7 @@ class FakeAdapter(Adapter):
         self._buffer = ""
         return result
 
-    def _read_bytes(self, count):
+    def _read_bytes(self, count, break_on_termchar):
         """ Return the last commands given after the
         last read call.
         """

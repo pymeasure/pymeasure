@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -219,7 +219,6 @@ class AnritsuMS2090A(Instrument):
         """
         Return the EMF measurement data for a specified sample number. JSON format.
         """,
-        validator=strict_range,
         values=[1, 16],
     )
 
@@ -242,7 +241,6 @@ class AnritsuMS2090A(Instrument):
         """
         Returns the different set of measurement information depending on the suffix.
         """,
-        validator=truncated_range,
         values=[1, 2]
     )
 

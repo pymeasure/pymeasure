@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,6 +59,12 @@ class Instrument(CommonBase):
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
@@ -66,6 +72,7 @@ class Instrument(CommonBase):
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True,
+                 preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
@@ -79,7 +86,7 @@ class Instrument(CommonBase):
         self.isShutdown = False
         self.name = name
 
-        super().__init__()
+        super().__init__(preprocess_reply=preprocess_reply)
 
         log.info("Initializing %s." % self.name)
 
@@ -92,8 +99,8 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
-        query places an ASCII character 1 into the device's Output Queue when all pending
+        """ This property allows synchronization between a controller and a device. The Operation
+        Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
         if self.SCPI:

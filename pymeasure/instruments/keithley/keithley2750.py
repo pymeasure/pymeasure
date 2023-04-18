@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,9 +59,9 @@ class Keithley2750(Instrument):
                                              "Reads the list of closed channels",
                                              get_process=clean_closed_channels)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2750 Multimeter/Switch System", **kwargs):
         super().__init__(
-            adapter, "Keithley 2750 Multimeter/Switch System", **kwargs
+            adapter, name, **kwargs
         )
 
     def open(self, channel):

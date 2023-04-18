@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -63,15 +63,17 @@ class DSP7265(Instrument):
                   # Dual modes
                   'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2']
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Signal Recovery DSP 7265", **kwargs):
         super().__init__(
             adapter,
-            "Signal Recovery DSP 7265",
+            name,
             includeSCPI=False,
-            # Remove extra unicode character
-            preprocess_reply=lambda r: r.replace('\x00', ''),
             **kwargs
         )
+
+    def read(self, **kwargs):
+        """Remove extra unicode character from instrument readings"""
+        return super().read(**kwargs).replace('\x00', '')
 
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -191,7 +193,6 @@ class DSP7265(Instrument):
 
         # Check and map the value
         value = truncated_discrete_set(value, sensitivities)
-        print(value)
         value = sensitivities.index(value)
 
         # Set sensitivity
@@ -371,7 +372,7 @@ class DSP7265(Instrument):
 
         bits = 0
         for q in quantities:
-            bits += 2**self.CURVE_BITS.index(q)
+            bits += 2 ** self.CURVE_BITS.index(q)
 
         self.curve_buffer_bits = bits
         self.curve_buffer_length = points

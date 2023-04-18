@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,9 +95,9 @@ class KeysightN5767A(Instrument):
         """
         return bool(self._status)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight N5767A power supply", **kwargs):
         super().__init__(
-            adapter, "Keysight N5767A power supply", **kwargs
+            adapter, name, **kwargs
         )
         # Set up data transfer format
         if isinstance(self.adapter, VISAAdapter):

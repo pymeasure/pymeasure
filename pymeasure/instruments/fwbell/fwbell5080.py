@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,12 +48,12 @@ class FWBell5080(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="F.W. Bell 5080 Handheld Gaussmeter", **kwargs):
         kwargs.setdefault('timeout', 500)
         kwargs.setdefault('baudrate', 2400)
         super().__init__(
             adapter,
-            "F.W. Bell 5080 Handheld Gaussmeter",
+            name,
             includeSCPI=True,
             **kwargs
         )

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -96,6 +96,7 @@ class EurotestHPP120256(Instrument):
 
     def __init__(self,
                  adapter,
+                 name="Euro Test High Voltage DC Source model HPP-120-256",
                  query_delay=0.1,
                  write_delay=0.4,
                  timeout=5000,
@@ -103,7 +104,7 @@ class EurotestHPP120256(Instrument):
 
         super().__init__(
             adapter,
-            "Euro Test High Voltage DC Source model HPP-120-256",
+            name,
             write_termination="\n",
             read_termination="",
             send_end=True,

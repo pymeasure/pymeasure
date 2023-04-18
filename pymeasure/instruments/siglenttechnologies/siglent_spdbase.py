@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -157,12 +157,14 @@ class SPDChannel(Channel):
 
 class SPDBase(Instrument):
     """ The base class for Siglent SPDxxxxX instruments.
+
+    Uses :class:`SPDChannel` for measurement channels.
     """
 
-    def __init__(self, adapter, **kwargs):
-        kwargs.setdefault('name', 'Siglent SPDxxxxX instrument Base Class')
+    def __init__(self, adapter, name="Siglent SPDxxxxX instrument Base Class", **kwargs):
         super().__init__(
             adapter,
+            name,
             usb=dict(write_termination='\n',
                      read_termination='\n'),
             tcpip=dict(write_termination='\n',

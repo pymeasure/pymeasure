@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments.validators import truncated_range
 
-from .adapters import OxfordInstrumentsAdapter
+from .base import OxfordInstrumentsBase
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class SwitchHeaterError(ValueError):
     pass
 
 
-class IPS120_10(Instrument):
+class IPS120_10(OxfordInstrumentsBase):
     """Represents the Oxford Superconducting Magnet Power Supply IPS 120-10.
 
     .. code-block:: python
@@ -116,25 +116,10 @@ class IPS120_10(Instrument):
                  field_range=None,
                  **kwargs):
 
-        if isinstance(adapter, (int, str)):
-            kwargs.setdefault('read_termination', '\r')
-            kwargs.setdefault('send_end', True)
-            adapter = OxfordInstrumentsAdapter(
-                adapter,
-                asrl={
-                    'baud_rate': 9600,
-                    'data_bits': 8,
-                    'parity': 0,
-                    'stop_bits': 20,
-                },
-                preprocess_reply=lambda v: v[1:],
-                **kwargs,
-            )
-
         super().__init__(
             adapter=adapter,
             name=name,
-            includeSCPI=False,
+            **kwargs
         )
 
         if switch_heater_heating_delay is not None:
@@ -155,7 +140,6 @@ class IPS120_10(Instrument):
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """,
-        preprocess_reply=lambda v: v,
     )
 
     control_mode = Instrument.control(
