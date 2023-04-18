@@ -30,6 +30,15 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class Instrument(Instrument):
+
+    def check_errors(self):
+        errors = []
+        if self.read() != '':
+            errors.append(f'Incorrect return from previously set property')
+        return errors
+
+
 class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier"""
 
@@ -56,8 +65,10 @@ class Ametek7270(Instrument):
         1 V. This property can be set. """,
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
-        map_values=True
+        map_values=True,
+        check_set_errors=True
     )
+
     slope = Instrument.control(
         "SLOPE", "SLOPE %d",
         """ A integer property that controls the filter slope in
@@ -65,7 +76,8 @@ class Ametek7270(Instrument):
         This property can be set. """,
         validator=truncated_discrete_set,
         values=[6, 12, 18, 24],
-        map_values=True
+        map_values=True,
+        check_set_errors=True
     )
     time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
         "TC.", "TC %d",
@@ -74,7 +86,8 @@ class Ametek7270(Instrument):
         seconds. This property can be set. """,
         validator=truncated_discrete_set,
         values=TIME_CONSTANTS,
-        map_values=True
+        map_values=True,
+        check_set_errors=True
     )
     # TODO: Figure out if this actually can send for X1. X2. Y1. Y2. or not.
     #       There's nothing in the manual about it but UtilMOKE sends these.
@@ -108,7 +121,8 @@ class Ametek7270(Instrument):
         harmonic mode control, taking values from 1 to 127.
         This property can be set. """,
         validator=truncated_discrete_set,
-        values=list(range(1, 128))
+        values=list(range(1, 128)),
+        check_set_errors=True
     )
     phase = Instrument.control(
         "REFP.", "REFP. %g",
@@ -122,7 +136,8 @@ class Ametek7270(Instrument):
         """ A floating point property that represents the voltage
         in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[0, 5]
+        values=[0, 5],
+        check_set_errors=True
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
@@ -136,28 +151,32 @@ class Ametek7270(Instrument):
         """ A floating point property that represents the output
         value on DAC1 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10, 10]
+        values=[-10, 10],
+        check_set_errors=True
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
         """ A floating point property that represents the output
         value on DAC2 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10, 10]
+        values=[-10, 10],
+        check_set_errors=True
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
         """ A floating point property that represents the output
         value on DAC3 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10, 10]
+        values=[-10, 10],
+        check_set_errors=True
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
         """ A floating point property that represents the output
         value on DAC4 in Volts. This property can be set. """,
         validator=truncated_range,
-        values=[-10, 10]
+        values=[-10, 10],
+        check_set_errors=True
     )
     adc1 = Instrument.measurement("ADC. 1",
                                   """ Reads the input value of ADC1 in Volts """
