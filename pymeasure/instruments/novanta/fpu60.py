@@ -44,7 +44,7 @@ class Fpu60(Instrument):
                          read_termination="\r\n",
                          **kwargs)
 
-    interlock = Instrument.measurement(
+    interlock_enabled = Instrument.measurement(
         "INTERLOCK?",
         """Measure the interlock enabled status.""",
         values={True: "ENABLED", False: "DISABLED"},
@@ -53,29 +53,29 @@ class Fpu60(Instrument):
 
     emission_enabled = Instrument.measurement(
         "STATUS?",
-        """Measure the emission status.""",
+        """Measure the emission status. (bool)""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
     )
 
     power = Instrument.measurement(
         "POWER?",
-        """Measure current output power in Watts.""",
+        """Measure current output power in Watts. (float)""",
         # Response is in form:" ##.###W"
         preprocess_reply=lambda r: r.replace("W", ""),
     )
 
     power_setpoint = Instrument.control(
         "SETPOWER?", "POWER=%.3f",
-        """Control the output power setpoint in Watts.""",
+        """Control the output power setpoint in Watts. (float)""",
         # Getter response is in form:" ##.###W"
         preprocess_reply=lambda r: r.replace("W", ""),
         check_set_errors=True,
     )
 
-    shutter = Instrument.control(
+    shutter_open = Instrument.control(
         "SHUTTER?", "SHUTTER %s",
-        """Control the shutter.""",
+        """Control whether the shutter is open. (bool)""",
         # set values: OPEN, CLOSE
         # get response: "SHUTTER OPEN", "SHUTTER CLOSED"
         values={True: "OPEN", False: "CLOSE"},
@@ -129,5 +129,5 @@ class Fpu60(Instrument):
 
     def check_errors(self):
         """Use check_errors to read the responses of setters."""
-        # TODO change to check_set_errors, once that is merged.
+        # TODO change to check_set_errors, once PR #883 is merged.
         self.read()

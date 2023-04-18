@@ -29,14 +29,9 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.novanta import Fpu60
 
 
-# Actual response at setters is an empty string, but due to the ProtocolAdapter
-# " " is used in order to have something. Check_errors does not analyze the string
-# such that it is not a problem.
-
-
 def test_disable_emission():
     with expected_protocol(Fpu60,
-                           [("LASER=OFF", " "), ("LASER=ON", " ")],
+                           [("LASER=OFF", ""), ("LASER=ON", "")],
                            ) as inst:
         inst.disable_emission()
 
@@ -58,7 +53,7 @@ def test_power():
 
 def test_power_setpoint():
     with expected_protocol(Fpu60,
-                           [("POWER=12.345", " "), ("SETPOWER?", " 12.345W")],
+                           [("POWER=12.345", ""), ("SETPOWER?", " 12.345W")],
                            ) as inst:
         inst.power_setpoint = 12.345
         assert inst.power_setpoint == 12.345
@@ -66,25 +61,25 @@ def test_power_setpoint():
 
 def test_shutter_open():
     with expected_protocol(Fpu60,
-                           [("SHUTTER OPEN", " "), ("SHUTTER?", "SHUTTER OPEN")],
+                           [("SHUTTER OPEN", ""), ("SHUTTER?", "SHUTTER OPEN")],
                            ) as inst:
-        inst.shutter = True
-        assert inst.shutter is True
+        inst.shutter_open = True
+        assert inst.shutter_open is True
 
 
 def test_shutter_close():
     with expected_protocol(Fpu60,
-                           [("SHUTTER CLOSE", " "), ("SHUTTER?", "SHUTTER CLOSED")],
+                           [("SHUTTER CLOSE", ""), ("SHUTTER?", "SHUTTER CLOSED")],
                            ) as inst:
-        inst.shutter = False
-        assert inst.shutter is False
+        inst.shutter_open = False
+        assert inst.shutter_open is False
 
 
 def test_shutter_close_read():
     with expected_protocol(Fpu60,
                            [("SHUTTER?", "SHUTTER CLOSED")],
                            ) as inst:
-        assert inst.shutter is False
+        assert inst.shutter_open is False
 
 
 @pytest.mark.parametrize("string, value", (("ENABLED", True), ("DISABLED", False)))
@@ -92,7 +87,7 @@ def test_interlock(string, value):
     with expected_protocol(Fpu60,
                            [("INTERLOCK?", string)],
                            ) as inst:
-        assert inst.interlock is value
+        assert inst.interlock_enabled is value
 
 
 def test_head_temperature():
@@ -115,7 +110,7 @@ def test_get_operation_times():
             [("TIMERS?", "PSU Time = 00594820 Mins"),
              (None, "Laser Enabled Time   =  00196700 Mins"),
              (None, "Laser Threshold Time =  00196500 Mins"),
-             (None, " ")],
+             (None, "")],
     ) as inst:
         assert inst.get_operation_times() == {'psu': 594820,
                                               'laser': 196700,
