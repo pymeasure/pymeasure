@@ -59,7 +59,7 @@ class Ametek7270(Instrument):
     ]
 
     sensitivity = Instrument.control(  # NOTE: only for IMODE = 1.
-        "SEN.", "SEN %d",
+        "SEN", "SEN %d",
         """ A floating point property that controls the sensitivity
         range in Volts, which can take discrete values from 2 nV to
         1 V. This property can be set. """,
@@ -80,7 +80,7 @@ class Ametek7270(Instrument):
         check_set_errors=True
     )
     time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
-        "TC.", "TC %d",
+        "TC", "TC %d",
         """ A floating point property that controls the time constant
         in seconds, which takes values from 10 microseconds to 100,000
         seconds. This property can be set. """,
