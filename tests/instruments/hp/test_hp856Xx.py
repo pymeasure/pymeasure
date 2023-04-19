@@ -520,10 +520,10 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("PWRBW TRA,99.2", None)
+                    ("PWRBW TRA,99.2?", "1.0e3")
                 ]
         ) as instr:
-            instr.power_bandwidth(Trace.A, 99.2)
+            assert instr.power_bandwidth(Trace.A, 99.2) == 1e3
 
     def test_resolution_bandwidth(self):
         with expected_protocol(

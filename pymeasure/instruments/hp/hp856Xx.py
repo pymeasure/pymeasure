@@ -1875,7 +1875,7 @@ class HP856Xx(Instrument):
             raise ValueError("Only accepts values in the range of %s but was '%s'" %
                              (ran, percent))
 
-        return self.ask("PWRBW %s,%.1f?" % (trace, percent))
+        return float(self.ask("PWRBW %s,%.1f?" % (trace, percent)))
 
     resolution_bandwidth = Instrument.control(
         "RB?", "RB %s",
