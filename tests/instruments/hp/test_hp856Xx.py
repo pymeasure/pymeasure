@@ -21,13 +21,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from datetime import datetime
+
 import pytest
 
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
-    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode
+    DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode, \
+    StatusRegister, SourceLevelingControlMode
 
 
 class TestHP856Xx:
@@ -91,7 +94,10 @@ class TestHP856Xx:
             ("marker_to_reference_level", "MKRL"),
             ("marker_delta_to_span", "MKSP"),
             ("marker_to_center_frequency_step_size", "MKSS"),
-            ("preset", "IP")
+            ("preset", "IP"),
+            ("recall_open_short_average", "RCLOSCAL"),
+            ("recall_thru", "RCLTHRU"),
+            ("single_sweep", "SNGLS")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -127,7 +133,8 @@ class TestHP856Xx:
         ("start_frequency", "FA"),
         ("center_frequency", "CF"),
         ("stop_frequency", "FB"),
-        ("frequency_offset", "FOFFSET")
+        ("frequency_offset", "FOFFSET"),
+        ("span", "SP")
     ])
     @pytest.mark.parametrize("hp_derivat, max_freq", [(HP8560A, 2.9e9), (HP8561B, 6.5e9)])
     def test_frequencies(self, function, command, hp_derivat, max_freq):
@@ -307,7 +314,8 @@ class TestHP856Xx:
             ("graticule", "GRAT"),
             ("marker_signal_tracking", "MKTRACK"),
             ("marker_noise_mode", "MKNOISE"),
-            ("normalize_trace_data", "NORMLIZE")
+            ("normalize_trace_data", "NORMLIZE"),
+            ("protect_state", "PSTATE")
         ]
     )
     def test_on_off_commands(self, function, command):
@@ -479,6 +487,17 @@ class TestHP856Xx:
             instr.normalized_reference_level = -30
             assert instr.normalized_reference_level == -30
 
+    def test_normalized_reference_position(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("NRPOS 8.000000", None),
+                    ("NRPOS?", "8")
+                ]
+        ) as instr:
+            instr.normalized_reference_position = 8
+            assert instr.normalized_reference_position == 8
+
     def test_display_parameters(self):
         with expected_protocol(
                 HP856Xx,
@@ -496,6 +515,174 @@ class TestHP856Xx:
                 ]
         ) as instr:
             instr.plot(72, 16, 712, 766)
+
+    def test_power_bandwidth(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("PWRBW TRA,99.2", None)
+                ]
+        ) as instr:
+            instr.power_bandwidth(Trace.A, 99.2)
+
+    def test_resolution_bandwidth(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RB 30", None),
+                    ("RB AUTO", None),
+                    ("RB?", "30")
+                ]
+        ) as instr:
+            instr.resolution_bandwidth = 30
+            instr.resolution_bandwidth = "AUTO"
+            assert instr.resolution_bandwidth == 30
+
+    def test_resolution_bandwidth_to_span_ratio(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RBR 0.014", None),
+                    ("RBR?", "0.014")
+                ]
+        ) as instr:
+            instr.resolution_bandwidth_to_span_ratio = 0.0140
+            assert instr.resolution_bandwidth_to_span_ratio == 0.0140
+
+    def test_recall_state(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RCLS LAST", None),
+                    ("RCLS 8", None)
+                ]
+        ) as instr:
+            instr.recall_state("LAST")
+            instr.recall_state(8)
+
+    def test_recall_trace(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RCLT TRA,6", None)
+                ]
+        ) as instr:
+            instr.recall_trace(Trace.A, 6)
+
+    def test_revision(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("REV?", "20221101")
+                ]
+        ) as instr:
+            assert instr.revision == datetime.strptime("11-01-2022", '%m-%d-%Y').date()
+
+    def test_reference_level(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RL 10", None),
+                    ("RL?", "10")
+                ]
+        ) as instr:
+            instr.reference_level = 10
+            assert instr.reference_level == 10
+
+    def test_reference_level_calibration(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RLCAL 33", None),
+                    ("RLCAL?", "33")
+                ]
+        ) as instr:
+            instr.reference_level_calibration = 33
+            assert instr.reference_level_calibration == 33
+
+    def test_request_service_conditions(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("RQS 48", None),
+                    ("RQS?", "48")
+                ]
+        ) as instr:
+            instr.request_service_conditions = \
+                StatusRegister.COMMAND_COMPLETE | StatusRegister.ERROR_PRESENT
+            assert instr.request_service_conditions == \
+                   StatusRegister.COMMAND_COMPLETE | StatusRegister.ERROR_PRESENT
+
+    def test_save_state(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("SAVES 6", None)
+                ]
+        ) as instr:
+            instr.save_state(6)
+
+    def test_save_trace(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("SAVET TRA,6", None)
+                ]
+        ) as instr:
+            instr.save_trace(Trace.A, 6)
+
+    @pytest.mark.parametrize("param", ["FULL", "ZERO"])
+    def test_span_string_params(self, param):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("SP %s" % param, None)
+                ]
+        ) as instr:
+            instr.span = param
+
+    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
+    def test_squelch(self, string_params):
+        with expected_protocol(
+                HP856Xx,
+                [("SQUELCH 10", None),
+                 ("SQUELCH %s" % string_params, None),
+                 ("SQUELCH?", "10")]
+        ) as instr:
+            instr.squelch = 10
+            instr.squelch = string_params
+            assert instr.squelch == 10
+
+
+class TestHP8560A:
+
+    @pytest.mark.parametrize("mode", [e for e in SourceLevelingControlMode])
+    def test_source_leveling_control(self, mode):
+        with expected_protocol(
+                HP8560A,
+                [("SRCALC " + mode, None),
+                 ("SRCALC?", mode)]
+        ) as instr:
+            instr.source_leveling_control = mode
+            assert instr.source_leveling_control == mode
+
+    def test_tracking_adjust_coarse(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCCRSTK 10", None),
+                 ("SRCCRSTK?", "10")]
+        ) as instr:
+            instr.tracking_adjust_coarse = 10
+            assert instr.tracking_adjust_coarse == 10
+
+    def test_tracking_adjust_fine(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCFINTK 10", None),
+                 ("SRCFINTK?", "10")]
+        ) as instr:
+            instr.tracking_adjust_fine = 10
+            assert instr.tracking_adjust_fine == 10
 
 
 class TestHP8561B:
@@ -594,3 +781,12 @@ class TestHP8561B:
         ) as instr:
             instr.preselector_dac_number = 10
             assert instr.preselector_dac_number == 10
+
+    def test_signal_identification(self):
+        with expected_protocol(
+                HP8561B,
+                [("SIGID AUTO", None),
+                 ("SIGID?", "1")]
+        ) as instr:
+            instr.signal_identification = "AUTO"
+            assert instr.signal_identification is True

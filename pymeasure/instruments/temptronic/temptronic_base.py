@@ -775,7 +775,7 @@ class ATSBase(Instrument):
     def error_status(self):
         """Returns error status code (maybe used for logging).
 
-        :returns: :class:`temptronic_base.ErrorCode`
+        :returns: :class:`ErrorCode`
         """
         code = self.error_code
         if not code == 0:

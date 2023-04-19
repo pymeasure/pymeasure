@@ -23,7 +23,9 @@
 #
 
 import logging
-from enum import Enum
+from enum import Enum, IntFlag
+from numpy import arange
+from datetime import datetime
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
@@ -40,6 +42,30 @@ class StrEnum(str, Enum):
 
     def __str__(self):
         return self.value
+
+
+class StatusRegister(IntFlag):
+    """
+    Enumeration to represent the Status Register
+    """
+
+    #: Request Service
+    RQS = 64
+
+    #: Set when error present
+    ERROR_PRESENT = 32
+
+    #: Any command is completed
+    COMMAND_COMPLETE = 16
+
+    #: Set when any sweep is completed
+    END_OF_SWEEP = 4
+
+    #: Set when display message appears
+    MESSAGE = 2
+
+    #: Trigger is activated
+    TRIGGER = 1
 
 
 class Trace(StrEnum):
@@ -63,6 +89,18 @@ class MixerMode(StrEnum):
     Internal = "INT"
 
     #: Mixer Mode External
+    External = "EXT"
+
+
+class SourceLevelingControlMode(StrEnum):
+    """
+    Enumeration to represent the Source Leveling Control Mode of the HP8560A
+    """
+
+    #: Source Leveling Control Mode Internal
+    Internal = "INT"
+
+    #: Source Leveling Control Mode External
     External = "EXT"
 
 
@@ -1031,7 +1069,6 @@ class HP856Xx(Instrument):
         The FFT command performs a discrete Fourier transform on the source trace array and stores
         the logarithms of the magnitudes of the results in the destination array. The maximum length
         of any of the traces is 601 points.
-        Takes type 'Trace' or 'TRA', 'TRB'
         FFT is designed to be used in transforming zero-span amplitude-modulation information into
         the frequency domain. Performing an FFT on a frequency sweep will not provide time-domain
         results. The FFT results are displayed on the spectrum analyzer in a logarithmic
@@ -1048,8 +1085,19 @@ class HP856Xx(Instrument):
         both amplitude uncertainty (where the signal level appears to vary with small changes in
         frequency) and frequency resolution (due to filter shape factor and sidelobes). Windows
         are weighting functions that are applied to the input data to force the ends of that
-        data smoothly to zero, thus reducing the step discontinuity and reducing measurement
+        data smoothly to zero, thus reducing the step discontinuity and reducing measuremen
         errors.
+
+        :param source: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param destination: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param window: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+
+        :type source: str
+        :type destination: str
+        :type window: str
         """
         if not isinstance(source, str):
             raise TypeError("Should be of type string but is '%s'" % type(source))
@@ -1757,8 +1805,417 @@ class HP856Xx(Instrument):
     def plot_source(self):
         raise NotImplementedError()
 
-    def print(self):
+    def print(self, active):
         raise NotImplementedError()
+
+    protect_state = Instrument.control(
+        "PSTATE?", "PSTATE %s",
+        """
+        Control the storing of any new data in the state or trace registers.
+        If set to 'True', the registers are “locked”; the data in them cannot be erased or
+        overwritten, although the data can be recalled. To “unlock” the registers, and store new
+        data, set 'protect_state' to off by selecting 'False' as the parameter.
+
+        Type: :code:`bool`
+        """,
+        map_values=True,
+        validator=strict_discrete_set,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    def power_bandwidth(self, trace, percent):
+        """
+        Measure the combined power of all signal responses contained
+        in a trace array. The command then computes the bandwidth equal to a percentage of the
+        total power. For example, if 100% is specified, the power bandwidth equals the current
+        frequency span. If 50% is specified, trace elements are eliminated from either end of the
+        array, until the combined power of the remaining trace elements equals half of the total
+        power computed. The frequency span of these remaining trace elements is the power
+        bandwidth output to the controller.
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param percent: Percentage of total power 0 ... 100 %
+        :type trace: str
+        :type percent: float
+
+        .. code-block:: python
+
+            # reset spectrum analyzer
+            instr.preset()
+
+            # set to single sweep mode
+            instr.single_sweep()
+
+            instr.center_frequency = 300e6
+            instr.span = 1e6
+
+            instr.maximum_hold()
+
+            instr.trigger_sweep()
+
+            if instr.done:
+                pbw = instr.power_bandwidth(Trace.A, 99.0)
+                print("The power bandwidth at 99 percent is %f kHz" % (pbw / 1e3))
+        """
+        ran = arange(0, 100, 0.1)
+
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if not isinstance(percent, float):
+            raise TypeError("Should be of type float but is '%s'" % type(percent))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             ([e for e in Trace], trace))
+
+        if percent not in ran:
+            raise ValueError("Only accepts values in the range of %s but was '%s'" %
+                             (ran, percent))
+
+        return self.ask("PWRBW %s,%.1f?" % (trace, percent))
+
+    resolution_bandwidth = Instrument.control(
+        "RB?", "RB %s",
+        """
+        Control the resolution bandwidth. This is normally a coupled function that
+        is selected according to the ratio selected by the RBR command. If no ratio is selected, a
+        default ratio (0.011) is used. The bandwidth, which ranges from 10 Hz to 2 MHz, may also be
+        selected manually.
+
+        Type: :code:`str, dec`
+        """,
+        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
+        values=[["AUTO", "MAN"], arange(10, 2e6)],
+        set_process=lambda v: v if isinstance(v, str) else int(v),
+        get_process=lambda v: v if isinstance(v, str) else int(v)
+    )
+
+    resolution_bandwidth_to_span_ratio = Instrument.control(
+        "RBR?", "RBR %.3f",
+        """
+        Control the coupling ratio between the resolution bandwidth and the
+        frequency span. When the frequency span is changed, the resolution bandwidth is changed
+        to satisfy the selected ratio. The ratio ranges from 0.002 to 0.10. The “UP” and “DN”
+        parameters adjust the ratio in a 1, 2, 5 sequence. The default ratio is 0.011.
+        """,
+        validator=strict_range,
+        values=arange(0.002, 0.10, 0.001)
+    )
+
+    def recall_open_short_average(self):
+        """
+        Set the internally stored open/short average reference trace
+        into trace B. The instrument state is also set to the stored open/short reference state.
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.single_sweep()
+            instr.start_frequency = 300e3
+            instr.stop_frequency = 1e9
+
+            TODO
+            TODO
+            TODO
+
+            instr.trigger_sweep()
+            instr.done()
+            TODO
+            instr.trigger_sweep()
+            instr.done()
+            TODO
+            instr.trigger_sweep()
+            instr.done()
+
+            instr.normalize = True
+
+            instr.trigger_sweep()
+            instr.done()
+
+            instr.normalized_reference_position = 8
+            instr.trigger_sweep()
+
+            instr.preset()
+            instr.recall_open_short_average()
+            instr.trigger_sweep()
+        """
+        self.write("RCLOSCAL")
+
+    def recall_state(self, inp):
+        """
+        Set to the display a previously saved instrument state. See :meth:`save_state`.
+
+        :param inp: State to be recalled: either storage slot 0 ... 9 or 'LAST' or 'PWRON'
+        :param inp: str, int
+
+        .. code-block:: python
+
+            instr.save_state(7)
+            instr.preset()
+            instr.recall_state(7)
+        """
+        values = ["LAST", "PWRON"] + [str(f) for f in range(0, 9)]
+        if not (isinstance(inp, str) or isinstance(inp, int)):
+            raise TypeError("Should be of type 'str' or 'int' but is '%s'" % type(inp))
+
+        if str(inp) not in values:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             (values, str(inp)))
+
+        self.write("RCLS %s" % str(inp))
+
+    def recall_trace(self, trace, number):
+        """
+        Recalls previously saved trace data to the display. See :meth:`save_trace`.
+        Either as Trace A or Trace B.
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param number: Storage location from 0 ... 7 where to store the trace
+        :type trace: str
+        :type number: int
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.center_frequency = 300e6
+            instr.span = 20e6
+
+            instr.save_trace(Trace.A, 7)
+            instr.preset()
+
+            # reload - at 7 stored trace - to Trace B
+            instr.recall_trace(Trace.B, 7)
+        """
+        ran = range(0, 7)
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type str but is '%s'" % type(trace))
+
+        if not isinstance(number, int):
+            raise TypeError("Should be of type int but is '%s'" % type(number))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             ([e for e in Trace], trace))
+
+        if number not in ran:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             (ran, number))
+
+        self.write("RCLT %s,%s" % (trace, number))
+
+    def recall_thru(self):
+        """
+        Recalls the internally stored thru-reference trace into trace B. The
+        instrument state is also set to the stored thru-reference state.
+        """
+        self.write("RCLTHRU")
+
+    revision = Instrument.measurement(
+        "REV?",
+        """
+        Return the revision date code of the spectrum analyzer firmware.
+
+        Type: :code:`datetime.date`
+        """,
+        get_process=lambda v: datetime.strptime(v, '%Y%m%d').date(),
+        cast=str
+    )
+
+    reference_level = Instrument.control(
+        "RL?", "RL %g",
+        """
+        Control the reference level, or range level when in normalized mode. (Range level
+        functions the same as reference level.) The reference level is the top horizontal line on
+        the graticule. For best measurement accuracy, place the peak of a signal of interest on the
+        reference-level line. The spectrum analyzer input attenuator is coupled to the reference
+        level and automatically adjusts to avoid compression of the input signal. Refer also to
+        :attr:`amplitude_unit`. Minimum reference level is -120.0 dBm or 2.2 uV
+
+        Type: :code:`float`
+        """
+    )
+
+    reference_level_calibration = Instrument.control(
+        "RLCAL?", "RLCAL %g",
+        """
+        Calibrates the reference level remotely or retuns the
+        current calibration. To calibrate the reference level, connect the 300 MHz calibration
+        signal to the RF input. Set the center frequency to 300 MHz, the frequency span to 20
+        MHz, and the reference level to -10 dBm. Use the RLCAL command to move the input signal
+        to the reference level. When the signal peak falls directly on the reference-level line,
+        the reference level is calibrated. Storing this value in the analyzer in EEROM can be
+        done only from the front panel. The RLCAL command, when queried, returns the current value.
+
+        Type: :code:`float`
+
+        .. code-block:: python
+
+            # connect cal signal to rf input
+            instr.preset()
+            instr.amplitude_unit = AmplitudeUnits.DBM
+            instr.center_frequency = 300e6
+            instr.span = 100e3
+            instr.reference_level = 0
+            instr.trigger_sweep()
+
+            instr.peak_search(PeakSearchMode.High)
+            level = instr.marker_amplitude
+            rlcal = instr.reference_level_calibration - int((level + 10) / 0.17)
+            instr.reference_level_calibration = rlcal
+        """,
+        cast=int,
+        validator=strict_range,
+        values=[-33, 33]
+    )
+
+    reference_offset = Instrument.control(
+        "ROFFSET?", "ROFFSET %d",
+        """
+        The ROFFSET command introduces an offset to all amplitude readouts (for example, the
+        reference level and marker amplitude). The offset is in dB, regardless of the selected scale
+        and units. The offset can be useful to account for gains of losses in accessories connected
+        to the input of the analyzer. When this function is active, an "R" appears on the left
+        edge of the display.
+
+        Type: :code:`int`
+        """,
+        cast=int,
+        values=[-100, 100],
+        validator=strict_range
+    )
+
+    request_service_conditions = Instrument.control(
+        "RQS?", "RQS %d",
+        """
+        Controls a bit mask that specifies which service requests can interrupt
+        a program sequence.
+        """,
+        get_process=lambda v: StatusRegister(int(v))
+    )
+
+    def save_state(self, inp):
+        """
+        Saves the currently displayed instrument state in the specified state
+        register.
+
+        :param inp: State to be recalled: either storage slot 0 ... 9 or 'LAST' or 'PWRON'
+        :param inp: str, int
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.center_frequency = 300e6
+            instr.span = 20e6
+            instr.save_state("PWRON")
+        """
+        values = ["PWRON"] + [str(f) for f in range(0, 9)]
+        if not (isinstance(inp, str) or isinstance(inp, int)):
+            raise TypeError("Should be of type 'str' or 'int' but is '%s'" % type(inp))
+
+        if str(inp) not in values:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             (values, str(inp)))
+
+        self.write("SAVES %s" % str(inp))
+
+    def save_trace(self, trace, number):
+        """
+        Saves the selected trace in the specified trace register.
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :param number: Storage location from 0 ... 7 where to store the trace
+        :type trace: str
+        :type number: int
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.center_frequency = 300e6
+            instr.span = 20e6
+
+            instr.save_trace(Trace.A, 7)
+            instr.preset()
+
+            # reload - at 7 stored trace - to Trace B
+            instr.recall_trace(Trace.B, 7)
+        """
+        ran = range(0, 7)
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type str but is '%s'" % type(trace))
+
+        if not isinstance(number, int):
+            raise TypeError("Should be of type int but is '%s'" % type(number))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             ([e for e in Trace], trace))
+
+        if number not in ran:
+            raise ValueError("Only accepts values of [%s] but was '%s'" %
+                             (ran, number))
+
+        self.write("SAVET %s,%s" % (trace, number))
+
+    @property
+    def serial_number(self):
+        """
+        Returns the spectrum analyzer serial number to the computer.
+        """
+        raise NotImplementedError()
+
+    def single_sweep(self):
+        """
+        Sets the spectrum analyzer into single-sweep mode. This mode allows only one sweep when
+        trigger conditions are met. When this function is active, an 'S' appears on the left edge of
+        the display.
+        """
+        self.write("SNGLS")
+
+    span = Instrument.control(
+        "SP?", "SP %s",
+        """
+        Control the frequency span. The center frequency does not change with
+        changes in the frequency span; start and stop frequencies do change. Setting the frequency
+        span to 0 Hz effectively allows an amplitude-versus-time mode in which to view signals. This
+        is especially useful for viewing modulation. Querying SP will leave the analyzer in center
+        frequency /span mode.
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
+        set_process=lambda v: v if isinstance(v, str) else "%.11E" % v,
+        get_process=lambda v: v if isinstance(v, str) else v
+    )
+
+    squelch = Instrument.control(
+        "SQUELCH?", "SQUELCH %s",
+        """
+        Control the squelch level for demodulation. When this function is
+        on, a dashed line indicating the squelch level appears on the display.
+        A marker must be active and above the squelch line for demodulation to occur. Refer to
+        the :attr:`demodulation_mode` command. The default value is -120 dBm.
+
+        Type: :code:`str,int`
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.start_frequency = 88e6
+            instr.stop_frequency = 108e6
+
+            instr.peak_search(PeakSearchMode.High)
+            instr.demodulation_time = 10
+
+            instr.squelch = -60
+            instr.demodulation_mode = DemodulationMode.FM
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["ON", "OFF"], range(-220, 30)],
+    )
 
 
 class HP8560A(HP856Xx):
@@ -1796,6 +2253,66 @@ class HP8560A(HP856Xx):
         self.stop_frequency_values = [0, self.MAX_FREQUENCY]
         self.frequency_offset_values = [0, self.MAX_FREQUENCY]
         self.marker_frequency_values = [0, self.MAX_FREQUENCY]
+        self.span_values = [["FULL", "ZERO"], [0, self.MAX_FREQUENCY]]
+
+    source_leveling_control = Instrument.control(
+        "SRCALC?", "SRCALC %s",
+        """
+        Select internal or external leveling for use with the
+        built-in tracking generator.
+        Takes either 'INT', 'EXT' or members of enumeration :class:`SourceLevelingControlMode`
+
+        Type: :code:`str`
+
+        .. code-block:: python
+
+            instr.preset()
+            instr.single_sweep()
+            instr.center_frequency = 300e6
+            instr.span = 1e6
+
+            # TODO
+            # TODO
+
+            instr.trigger_sweep()
+            instr.source_leveling_control = SourceLevelingControlMode.External
+
+            if ErrorCode(900) in instr.errors:
+                print("UNLEVELED CONDITION. CHECK LEVELING LOOP.")
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in SourceLevelingControlMode]
+    )
+
+    tracking_adjust_coarse = Instrument.control(
+        "SRCCRSTK?", "SRCCRSTK %d",
+        """
+        The SRCCRSTK command controls the coarse adjustment to the frequency of the built-in
+        tracking-generator oscillator. Once enabled, this adjustment is made in
+        digital-to-analogconverter (DAC) values from 0 to 255. For fine adjustment, refer to the
+        SRCFINTK command description.
+
+        Type: :code:`int`
+        """,
+        validator=strict_range,
+        values=[0, 255],
+        cast=int
+    )
+
+    tracking_adjust_fine = Instrument.control(
+        "SRCFINTK?", "SRCFINTK %d",
+        """
+        The SRCFINTK command controls the fine adjustment of the frequency of the built-in
+        tracking-generator oscillator. Once enabled, this adjustment is made in
+        digital-to-analogconverter (DAC) values from 0 to 255. For coarse adjustment, refer to
+        the SRCCRSTK command description.
+
+        Type: :code:`int`
+        """,
+        validator=strict_range,
+        values=[0, 255],
+        cast=int
+    )
 
 
 class HP8561B(HP856Xx):
@@ -1833,6 +2350,7 @@ class HP8561B(HP856Xx):
         self.stop_frequency_values = [0, self.MAX_FREQUENCY]
         self.frequency_offset_values = [0, self.MAX_FREQUENCY]
         self.marker_frequency_values = [0, self.MAX_FREQUENCY]
+        self.span_values = [["FULL", "ZERO"], [0, self.MAX_FREQUENCY]]
 
     conversion_loss = Instrument.control(
         "CNVLOSS?", "CNVLOSS %s",
@@ -2034,4 +2552,26 @@ class HP8561B(HP856Xx):
         cast=int,
         validator=strict_range,
         values=[0, 255]
+    )
+
+    signal_identification = Instrument.control(
+        "SIGID?", "SIGID %s",
+        """
+        Controls the signal identification for identifying signals for the external
+        mixing frequency bands.
+        Two signal identification methods are available. AUTO employs the image response method
+        for locating correct mixer responses. Place a marker on the desired signal, then activate
+        signal_identification = 'AUTO'. The frequency of a correct response appears in the active
+        function block. Use this mode before executing the
+        :meth:`signal_identification_to_center_frequency` command. The second method of signal
+        identification, 'MAN', shifts responses both horizontally and vertically. A correct
+        response is shifted horizontally by less than 80 kHz. To ensure accuracy in MAN mode,
+        limit the frequency span to less than 20 MHz.
+        Where True = manual mode is active and False = auto mode is active or
+        'signal_identification' is off.
+        """,
+        map_values=True,
+        validator=strict_discrete_set,
+        values={True: "1", False: "0", "AUTO": "AUTO", "MAN": "MAN"},
+        cast=str
     )
