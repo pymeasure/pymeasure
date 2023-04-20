@@ -57,3 +57,11 @@ HP 8560A / 8561B Spectrum Analyzer
 .. autoclass:: pymeasure.instruments.hp.hp856Xx.StatusRegister
     :members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp856Xx.SweepCoupleMode
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp856Xx.SweepOut
+    :members:
+    :show-inheritance:

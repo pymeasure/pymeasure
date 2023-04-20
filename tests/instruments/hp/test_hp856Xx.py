@@ -30,7 +30,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
     DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode, \
-    StatusRegister, SourceLevelingControlMode
+    StatusRegister, SourceLevelingControlMode, SweepCoupleMode, SweepOut, TraceDataFormat
 
 
 class TestHP856Xx:
@@ -97,7 +97,10 @@ class TestHP856Xx:
             ("preset", "IP"),
             ("recall_open_short_average", "RCLOSCAL"),
             ("recall_thru", "RCLTHRU"),
-            ("single_sweep", "SNGLS")
+            ("single_sweep", "SNGLS"),
+            ("store_open", "STOREOPEN"),
+            ("store_short", "STORESHORT"),
+            ("store_thru", "STORETHRU")
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -573,10 +576,10 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("REV?", "20221101")
+                    ("REV?", "901101")
                 ]
         ) as instr:
-            assert instr.revision == datetime.strptime("11-01-2022", '%m-%d-%Y').date()
+            assert instr.revision == datetime.strptime("11-01-1990", '%m-%d-%Y').date()
 
     def test_reference_level(self):
         with expected_protocol(
@@ -653,6 +656,67 @@ class TestHP856Xx:
             instr.squelch = string_params
             assert instr.squelch == 10
 
+    def test_service_request(self):
+        with expected_protocol(
+                HP856Xx,
+                [
+                    ("SRQ 48", None)
+                ]
+        ) as instr:
+            instr.service_request(StatusRegister.COMMAND_COMPLETE | StatusRegister.ERROR_PRESENT)
+
+    def test_sweep_time(self):
+        with expected_protocol(
+                HP856Xx,
+                [("ST 1.000E+01", None),
+                 ("ST AUTO", None),
+                 ("ST?", "10.00")]
+        ) as instr:
+            instr.sweep_time = 10
+            instr.sweep_time = "AUTO"
+            assert instr.sweep_time == 10
+
+    @pytest.mark.parametrize("mode", [e for e in SweepCoupleMode])
+    def test_sweep_couple(self, mode):
+        with expected_protocol(
+                HP856Xx,
+                [("SWPCPL " + mode, None),
+                 ("SWPCPL?", mode)]
+        ) as instr:
+            instr.sweep_couple = mode
+            assert instr.sweep_couple == mode
+
+    @pytest.mark.parametrize("mode", [e for e in SweepOut])
+    def test_sweep_output(self, mode):
+        with expected_protocol(
+                HP856Xx,
+                [("SWPOUT " + mode, None),
+                 ("SWPOUT?", mode)]
+        ) as instr:
+            instr.sweep_output = mode
+            assert instr.sweep_output == mode
+
+    @pytest.mark.parametrize("mode", [e for e in TraceDataFormat])
+    def test_trace_data_format(self, mode):
+        with expected_protocol(
+                HP856Xx,
+                [("TDF " + mode, None),
+                 ("TDF?", mode)]
+        ) as instr:
+            instr.trace_data_format = mode
+            assert instr.trace_data_format == mode
+
+    def test_threshold(self):
+        with expected_protocol(
+                HP856Xx,
+                [("TH 1.00E+01", None),
+                 ("TH ON", None),
+                 ("TH?", "10.00")]
+        ) as instr:
+            instr.threshold = 10
+            instr.threshold = "ON"
+            assert instr.threshold == 10
+
 
 class TestHP8560A:
 
@@ -683,6 +747,53 @@ class TestHP8560A:
         ) as instr:
             instr.tracking_adjust_fine = 10
             assert instr.tracking_adjust_fine == 10
+
+    def test_source_power_offset(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCPOFS 10", None),
+                 ("SRCPOFS?", "10")]
+        ) as instr:
+            instr.source_power_offset = 10
+            assert instr.source_power_offset == 10
+
+    def test_source_power_step(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCPSTP 10.10", None),
+                 ("SRCPSTP?", "10.10")]
+        ) as instr:
+            instr.source_power_step = 10.1
+            assert instr.source_power_step == 10.1
+
+    def test_source_power_sweep(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCPSWP 10.00", None),
+                 ("SRCPSWP OFF", None),
+                 ("SRCPSWP?", "10.00")]
+        ) as instr:
+            instr.source_power_sweep = 10
+            instr.source_power_sweep = "OFF"
+            assert instr.source_power_sweep == 10
+
+    def test_source_power(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCPWR 2.00", None),
+                 ("SRCPWR ON", None),
+                 ("SRCPWR?", "2.00")]
+        ) as instr:
+            instr.source_power = 2.0
+            instr.source_power = "ON"
+            assert instr.source_power == 2.0
+
+    def test_source_peak_tracking(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCTKPK", None)]
+        ) as instr:
+            instr.source_peak_tracking()
 
 
 class TestHP8561B:

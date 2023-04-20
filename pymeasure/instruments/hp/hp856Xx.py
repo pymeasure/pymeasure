@@ -36,18 +36,15 @@ log.addHandler(logging.NullHandler())
 
 
 class StrEnum(str, Enum):
-    """
-    Until StrEnum is broadly available / pymeasure relies on python <= 3.10.x
-    """
+    """Until StrEnum is broadly available / pymeasure relies on python <=
+    3.10.x."""
 
     def __str__(self):
         return self.value
 
 
 class StatusRegister(IntFlag):
-    """
-    Enumeration to represent the Status Register
-    """
+    """Enumeration to represent the Status Register."""
 
     #: Request Service
     RQS = 64
@@ -58,6 +55,9 @@ class StatusRegister(IntFlag):
     #: Any command is completed
     COMMAND_COMPLETE = 16
 
+    #: Unused but sometimes set
+    NA = 8
+
     #: Set when any sweep is completed
     END_OF_SWEEP = 4
 
@@ -67,11 +67,12 @@ class StatusRegister(IntFlag):
     #: Trigger is activated
     TRIGGER = 1
 
+    #: No Interrupts can interrupt the program sequence
+    NONE = 0
+
 
 class Trace(StrEnum):
-    """
-    Enumeration to represent either Trace A or Trace B
-    """
+    """Enumeration to represent either Trace A or Trace B."""
 
     #: Trace A
     A = "TRA"
@@ -80,10 +81,28 @@ class Trace(StrEnum):
     B = "TRB"
 
 
+class SweepCoupleMode(StrEnum):
+    """Enumeration."""
+
+    #: Stimulus Response
+    SpectrumAnalyzer = "SA"
+
+    #: Spectrum Analyeze
+    StimulusResponse = "SR"
+
+
+class SweepOut(StrEnum):
+    """Enumeration."""
+
+    #: 0 - 10V Ramp
+    Ramp = "RAMP"
+
+    #: DC Ramp 0.5V / GHz
+    Fav = "FAV"
+
+
 class MixerMode(StrEnum):
-    """
-    Enumeration to represent the Mixer Mode of the HP8561B
-    """
+    """Enumeration to represent the Mixer Mode of the HP8561B."""
 
     #: Mixer Mode Internal
     Internal = "INT"
@@ -93,9 +112,8 @@ class MixerMode(StrEnum):
 
 
 class SourceLevelingControlMode(StrEnum):
-    """
-    Enumeration to represent the Source Leveling Control Mode of the HP8560A
-    """
+    """Enumeration to represent the Source Leveling Control Mode of the
+    HP8560A."""
 
     #: Source Leveling Control Mode Internal
     Internal = "INT"
@@ -105,9 +123,7 @@ class SourceLevelingControlMode(StrEnum):
 
 
 class PeakSearchMode(StrEnum):
-    """
-    Enumeration to represent the Marker Peak Search Mode
-    """
+    """Enumeration to represent the Marker Peak Search Mode."""
 
     #: Place marker to the highest value on the trace
     High = "HI"
@@ -123,9 +139,7 @@ class PeakSearchMode(StrEnum):
 
 
 class CouplingMode(StrEnum):
-    """
-    Enumeration to represent the Coupling Mode
-    """
+    """Enumeration to represent the Coupling Mode."""
 
     #: AC
     AC = "AC"
@@ -135,9 +149,7 @@ class CouplingMode(StrEnum):
 
 
 class DemodulationMode(StrEnum):
-    """
-    Enumeration to represent the Demodulation Mode
-    """
+    """Enumeration to represent the Demodulation Mode."""
 
     #: Amplitude Modulation
     Amplitude = "AM"
@@ -149,10 +161,27 @@ class DemodulationMode(StrEnum):
     Off = "OFF"
 
 
+class TraceDataFormat(StrEnum):
+    """Enumeration to represent the different trace data formats."""
+
+    #: A-Block format
+    A_BLOCK = "A"
+
+    #: Binary format
+    BINARY = "B"
+
+    #: I-Block format
+    I_BLOCK = "I"
+
+    #: ASCII format
+    ASCII = "M"
+
+    #: Real numbers format like are in Hz, volts, watts, dBm, dBmV, dBuV, dBV, or seconds.
+    REAL = "P"
+
+
 class FrequencyReference(StrEnum):
-    """
-    Enumeration to represent the frequency reference source
-    """
+    """Enumeration to represent the frequency reference source."""
 
     #: Internal Frequency Reference
     Internal = "INT"
@@ -162,9 +191,7 @@ class FrequencyReference(StrEnum):
 
 
 class DetectionModes(StrEnum):
-    """
-    Enumeration to represent the Detection Modes
-    """
+    """Enumeration to represent the Detection Modes."""
 
     #: Negative Peak Detection
     NegativePeak = "NEG"
@@ -180,9 +207,7 @@ class DetectionModes(StrEnum):
 
 
 class AmplitudeUnits(StrEnum):
-    """
-    Enumeration to represent the amplitude units
-    """
+    """Enumeration to represent the amplitude units."""
 
     #: DB over millit Watt
     DBM = "DBM"
@@ -507,8 +532,7 @@ class ErrorCode:
     code = 0
 
     def __init__(self, code):
-        """
-        Initialize an ErrorCode
+        """Initialize an ErrorCode.
 
         :param code: Representing an error as id or short description
         :type code: str, int
@@ -535,14 +559,13 @@ class ErrorCode:
 
 
 class HP856Xx(Instrument):
-    """
-    Represents the HP856XX series spectrum analyzers.
+    """Represents the HP856XX series spectrum analyzers.
+
     Don't use this class directly - use their derivative classes
 
     .. note::
         Most command descriptions are taken from the document:
         'HP 8560A, 8561B Operating & Programming'
-
     """
 
     def __init__(self, adapter, name="Hewlett-Packard HP856Xx", **kwargs):
@@ -591,27 +614,29 @@ class HP856Xx(Instrument):
     )
 
     def auto_couple(self):
-        """
-        Set the video bandwidth, resolution bandwidth, input attenuation,
-        sweep time, and center frequency step-size to coupled mode. These functions can be recoupled
-        individually or all at once. The spectrum analyzer chooses appropriate values for these
-        functions. The video bandwidth and resolution bandwidth are set according to the coupled
-        ratios stored under TODO and TODO.
-        If no ratios are chosen, default ratios (1.0 and 0.011, respectively) are used instead.
+        """Set the video bandwidth, resolution bandwidth, input attenuation,
+        sweep time, and center frequency step-size to coupled mode.
+
+        These functions can be recoupled individually or all at once.
+        The spectrum analyzer chooses appropriate values for these
+        functions. The video bandwidth and resolution bandwidth are set
+        according to the coupled ratios stored under TODO and TODO. If
+        no ratios are chosen, default ratios (1.0 and 0.011,
+        respectively) are used instead.
         """
         self.write("AUTOCPL")
 
     def exchange_traces(self):
-        """
-        Exchange the contents of trace A with those of trace B. If the traces are
-        in clear-write or max-hold mode, the mode is changed to view. Otherwise, the traces remain
-        in their initial mode.
+        """Exchange the contents of trace A with those of trace B.
+
+        If the traces are in clear-write or max-hold mode, the mode is
+        changed to view. Otherwise, the traces remain in their initial
+        mode.
         """
         self.write("AXB")
 
     def blank_trace(self, trace):
-        """
-        Blank the chosen trace from the display. The current contents of the
+        """Blank the chosen trace from the display. The current contents of the
         trace remain in the trace but are not updated.
 
         .. code-block:: python
@@ -625,7 +650,6 @@ class HP856Xx(Instrument):
         :type trace: str
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
-
         """
         if not isinstance(trace, str):
             raise TypeError("Should be of type string but is '%s'" % type(trace))
@@ -636,10 +660,10 @@ class HP856Xx(Instrument):
         self.write("BLANK " + trace)
 
     def subtract_display_line_from_trace_b(self):
-        """
-        Subtract the display line from trace B and places the result in dBm
-        (when in log mode) in trace B, which is then set to view mode. In linear mode, the results
-        are in volts.
+        """Subtract the display line from trace B and places the result in dBm
+        (when in log mode) in trace B, which is then set to view mode.
+
+        In linear mode, the results are in volts.
         """
         self.write("BML")
 
@@ -667,10 +691,9 @@ class HP856Xx(Instrument):
     )
 
     def clear_write_trace(self, trace):
-        """
-        Set the chosen trace to clear-write mode. This mode sets each element
-        of the chosen trace to the bottom-screen value;
-        then new data from the detector is put in the trace with each sweep
+        """Set the chosen trace to clear-write mode. This mode sets each
+        element of the chosen trace to the bottom-screen value; then new data
+        from the detector is put in the trace with each sweep.
 
         .. code-block:: python
 
@@ -683,7 +706,6 @@ class HP856Xx(Instrument):
         :type trace: str
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
-
         """
         if not isinstance(trace, str):
             raise TypeError("Should be of type string but is '%s'" % type(trace))
@@ -695,9 +717,10 @@ class HP856Xx(Instrument):
         self.write("CLRW " + trace)
 
     def continuous_sweep(self):
-        """
-        Set the instrument to continuous-sweep mode. This mode enables another
-        sweep at the completion of the current sweep once the trigger conditions are met.
+        """Set the instrument to continuous-sweep mode.
+
+        This mode enables another sweep at the completion of the current
+        sweep once the trigger conditions are met.
         """
         self.write("CONTS")
 
@@ -1065,28 +1088,31 @@ class HP856Xx(Instrument):
     )
 
     def fft(self, source, destination, window):
-        """
-        The FFT command performs a discrete Fourier transform on the source trace array and stores
-        the logarithms of the magnitudes of the results in the destination array. The maximum length
-        of any of the traces is 601 points.
-        FFT is designed to be used in transforming zero-span amplitude-modulation information into
-        the frequency domain. Performing an FFT on a frequency sweep will not provide time-domain
-        results. The FFT results are displayed on the spectrum analyzer in a logarithmic
-        amplitude scale. For the horizontal dimension, the frequency at the left side of the
-        graph is 0 Hz, and at the right side is Finax- Fmax is equal to 300 divided by sweep time.
-        As an example, if the sweep time of the analyzer is 60 ms, Fmax equals 5 kHz.
-        The FFT algorithm assumes that the sampled signal is periodic with an integral number of
-        periods within the time-record length (that is, the sweep time of the analyzer). Given this
-        assumption, the transform computed is that of a time waveform of infinite duration, formed
-        of concatenated time records. In actual measurements, the number of periods of the sampled
-        signal within the time record may not be integral. In this case, there is a step
-        discontinuity at the intersections of the concatenated time records in the assumed time
-        waveform of infinite duration. This step discontinuity causes measurement errors,
-        both amplitude uncertainty (where the signal level appears to vary with small changes in
-        frequency) and frequency resolution (due to filter shape factor and sidelobes). Windows
-        are weighting functions that are applied to the input data to force the ends of that
-        data smoothly to zero, thus reducing the step discontinuity and reducing measuremen
-        errors.
+        """The FFT command performs a discrete Fourier transform on the source
+        trace array and stores the logarithms of the magnitudes of the results
+        in the destination array. The maximum length of any of the traces is
+        601 points. FFT is designed to be used in transforming zero-span
+        amplitude-modulation information into the frequency domain. Performing
+        an FFT on a frequency sweep will not provide time-domain results. The
+        FFT results are displayed on the spectrum analyzer in a logarithmic
+        amplitude scale. For the horizontal dimension, the frequency at the
+        left side of the graph is 0 Hz, and at the right side is Finax- Fmax is
+        equal to 300 divided by sweep time. As an example, if the sweep time of
+        the analyzer is 60 ms, Fmax equals 5 kHz. The FFT algorithm assumes
+        that the sampled signal is periodic with an integral number of periods
+        within the time-record length (that is, the sweep time of the
+        analyzer). Given this assumption, the transform computed is that of a
+        time waveform of infinite duration, formed of concatenated time
+        records. In actual measurements, the number of periods of the sampled
+        signal within the time record may not be integral. In this case, there
+        is a step discontinuity at the intersections of the concatenated time
+        records in the assumed time waveform of infinite duration. This step
+        discontinuity causes measurement errors, both amplitude uncertainty
+        (where the signal level appears to vary with small changes in
+        frequency) and frequency resolution (due to filter shape factor and
+        sidelobes). Windows are weighting functions that are applied to the
+        input data to force the ends of that data smoothly to zero, thus
+        reducing the step discontinuity and reducing measuremen errors.
 
         :param source: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -1169,9 +1195,11 @@ class HP856Xx(Instrument):
     )
 
     def full_span(self):
-        """
-        Set the spectrum analyzer to the full frequency span as defined by the instrument. The full
-        span is 2.9 GHz for the HP 8560A. For the HP 8561B, the full span is 6.5 GHz.
+        """Set the spectrum analyzer to the full frequency span as defined by
+        the instrument.
+
+        The full span is 2.9 GHz for the HP 8560A. For the HP 8561B, the
+        full span is 6.5 GHz.
         """
         self.write("FS")
 
@@ -1197,9 +1225,9 @@ class HP856Xx(Instrument):
     )
 
     def hold(self):
-        """
-        Freeze the active function at its current value. If no function is active, no
-        operation takes place.
+        """Freeze the active function at its current value.
+
+        If no function is active, no operation takes place.
         """
         self.write("HD")
 
@@ -1222,10 +1250,11 @@ class HP856Xx(Instrument):
     )
 
     def preset(self):
-        """
-        Set the spectrum analyzer to a known, predefined state.
-        'preset' does not affect the contents of any data or trace registers or stored preselector
-        data. 'preset' does not clear the input or output data buffers; to clear these, execute the
+        """Set the spectrum analyzer to a known, predefined state.
+
+        'preset' does not affect the contents of any data or trace
+        registers or stored preselector data. 'preset' does not clear
+        the input or output data buffers; to clear these, execute the
         statement CLEAR 718.
         """
         self.write("IP")
@@ -1254,17 +1283,17 @@ class HP856Xx(Instrument):
     )
 
     def linear_scale(self):
-        """
-        Set the spectrum analyzers display to linear amplitude scale. Measurements made on a linear
-        scale can be read out in any units.
+        """Set the spectrum analyzers display to linear amplitude scale.
+
+        Measurements made on a linear scale can be read out in any
+        units.
         """
         self.write("LN")
 
     def minimum_hold(self, trace):
-        """
-        Update the chosen trace with the minimum signal level detected at each
-        trace-data point from subsequent sweeps. This function employs the negative peak detector
-        (refer to the :attr:`detector_mode` command).
+        """Update the chosen trace with the minimum signal level detected at
+        each trace-data point from subsequent sweeps. This function employs the
+        negative peak detector (refer to the :attr:`detector_mode` command).
 
         .. code-block:: python
 
@@ -1277,7 +1306,6 @@ class HP856Xx(Instrument):
         :type trace: str
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
-
         """
         if not isinstance(trace, str):
             raise TypeError("Should be of type string but is '%s'" % type(trace))
@@ -1307,9 +1335,8 @@ class HP856Xx(Instrument):
     )
 
     def marker_to_center_frequency(self):
-        """
-        Set the center frequency to the frequency value of an active marker.
-        """
+        """Set the center frequency to the frequency value of an active
+        marker."""
         self.write("MKCF")
 
     marker_delta = Instrument.control(
@@ -1366,14 +1393,14 @@ class HP856Xx(Instrument):
     )
 
     def frequency_counter_mode(self, activate):
-        """
-        Activate a frequency counter that counts the frequency of the active
-        marker or the difference in frequency between two markers. If no marker is active,
-        'frequency_counter_mode' places a marker at the center of the trace and counts that marker
-        frequency. The frequency counter provides a more accurate frequency reading; it pauses
-        at the marker, counts the value, then continues the sweep. To adjust the frequency
-        counter resolution, use the 'frequency_counter_resolution' command. To return the counter
-        value, use the 'marker_frequency' command.
+        """Activate a frequency counter that counts the frequency of the active
+        marker or the difference in frequency between two markers. If no marker
+        is active, 'frequency_counter_mode' places a marker at the center of
+        the trace and counts that marker frequency. The frequency counter
+        provides a more accurate frequency reading; it pauses at the marker,
+        counts the value, then continues the sweep. To adjust the frequency
+        counter resolution, use the 'frequency_counter_resolution' command. To
+        return the counter value, use the 'marker_frequency' command.
 
         :param activate: Whether to activate or to deactivate the frequency counter mode
         :type activate: bool
@@ -1381,9 +1408,7 @@ class HP856Xx(Instrument):
         .. code-block:: python
 
             instr.frequency_counter_mode(True)
-
         """
-
         if not isinstance(activate, bool):
             raise TypeError("Should be of type bool but is '%s'" % type(activate))
 
@@ -1421,9 +1446,7 @@ class HP856Xx(Instrument):
     )
 
     def marker_minimum(self):
-        """
-        Place an active marker on the minimum signal detected on a trace.
-        """
+        """Place an active marker on the minimum signal detected on a trace."""
         self.write("MKMIN")
 
     # here would be the implementation of the command 'marker_normal' ('MKN') but
@@ -1459,8 +1482,7 @@ class HP856Xx(Instrument):
     )
 
     def marker_off(self, all_markers=False):
-        """
-        Turn off the active marker or, if specified, turn off all markers.
+        """Turn off the active marker or, if specified, turn off all markers.
 
         :param all_markers: If True the call deactivates all markers, if false only the currently
             active marker (optional)
@@ -1479,7 +1501,6 @@ class HP856Xx(Instrument):
 
             # deactivate all markers
             instr.marker_off(all_markers=True)
-
         """
         if all_markers:
             self.write("MKOFF ALL")
@@ -1487,11 +1508,11 @@ class HP856Xx(Instrument):
             self.write("MKOFF")
 
     def peak_search(self, mode):
-        """
-        Place a marker on the highest point on a trace, the next-highest point,
-        the next-left peak, or the next-right peak. The default is 'HI' (highest point). The trace
-        peaks must meet the criteria of the marker threshold and peak excursion functions in order
-        for a peak to be found. See also the :attr:`peak_threshold` and :attr:`peak_excursion`
+        """Place a marker on the highest point on a trace, the next-highest
+        point, the next-left peak, or the next-right peak. The default is 'HI'
+        (highest point). The trace peaks must meet the criteria of the marker
+        threshold and peak excursion functions in order for a peak to be found.
+        See also the :attr:`peak_threshold` and :attr:`peak_excursion`
         commands.
 
         :param mode: Takes 'HI', 'NH', 'NR', 'NL' or the enumeration :class:`PeakSearchMode`
@@ -1501,9 +1522,7 @@ class HP856Xx(Instrument):
 
             instr.peak_search('NL')
             instr.peak_search(PeakSearchMode.NextHigh)
-
         """
-
         if not isinstance(mode, str):
             raise TypeError("Should be of type string but is '%s'" % type(mode))
 
@@ -1564,26 +1583,27 @@ class HP856Xx(Instrument):
     )
 
     def marker_to_reference_level(self):
-        """
-        Set the reference level to the amplitude of an active marker. If no
-        marker is active, 'marker_to_reference_level' places a marker at the center of the trace
-        and uses that marker amplitude to set the reference level.
+        """Set the reference level to the amplitude of an active marker.
+
+        If no marker is active, 'marker_to_reference_level' places a
+        marker at the center of the trace and uses that marker amplitude
+        to set the reference level.
         """
         self.write("MKRL")
 
     def marker_delta_to_span(self):
-        """
-        Set the frequency span equal to the frequency difference between two
-        markers on a trace. The start frequency is set equal to the frequency of the left-most
-        marker and the stop frequency is set equal to the frequency of the right-most marker.
+        """Set the frequency span equal to the frequency difference between two
+        markers on a trace.
+
+        The start frequency is set equal to the frequency of the left-
+        most marker and the stop frequency is set equal to the frequency
+        of the right-most marker.
         """
         self.write("MKSP")
 
     def marker_to_center_frequency_step_size(self):
-        """
-        Set the center frequency step-size equal to the frequency value of the
-        active marker.
-        """
+        """Set the center frequency step-size equal to the frequency value of
+        the active marker."""
         self.write("MKSS")
 
     marker_time = Instrument.control(
@@ -1638,11 +1658,11 @@ class HP856Xx(Instrument):
     )
 
     def maximum_hold(self, trace):
-        """
-        Set the chosen trace with the maximum signal level detected
-        at each trace-data point from subsequent sweeps. This function employs the positive peak
-        detector (refer to the :attr:`detector_mode` command). The detector mode can be changed,
-        if desired, after max hold is initialized.
+        """Set the chosen trace with the maximum signal level detected at each
+        trace-data point from subsequent sweeps. This function employs the
+        positive peak detector (refer to the :attr:`detector_mode` command).
+        The detector mode can be changed, if desired, after max hold is
+        initialized.
 
         .. code-block:: python
 
@@ -1655,7 +1675,6 @@ class HP856Xx(Instrument):
         :type trace: str
         :raises TypeError: Type isn't 'string'
         :raises ValueError: Value is 'TRA' nor 'TRB'
-
         """
         if not isinstance(trace, str):
             raise TypeError("Should be of type string but is '%s'" % type(trace))
@@ -1770,13 +1789,14 @@ class HP856Xx(Instrument):
     )
 
     def plot(self, p1x, p1y, p2x, p2y):
-        """
-        Copies the specified display contents onto any HP-GL plotter. Set the
-        plotter address to 5, select the Pi and P2 positions, and then execute the plot command. P1
-        and P2 correspond to the lower-left and upper-right plotter positions, respectively. If P1
-        and P2 are not specified, default values (either preloaded from power-up or sent in via
-        a previous plot command) are used. Once PLOT is executed, no subsequent commands are
-        executed until PLOT is done. For more information, refer to Chapter 4.
+        """Copies the specified display contents onto any HP-GL plotter. Set
+        the plotter address to 5, select the Pi and P2 positions, and then
+        execute the plot command. P1 and P2 correspond to the lower-left and
+        upper-right plotter positions, respectively. If P1 and P2 are not
+        specified, default values (either preloaded from power-up or sent in
+        via a previous plot command) are used. Once PLOT is executed, no
+        subsequent commands are executed until PLOT is done. For more
+        information, refer to Chapter 4.
 
         :param p1x: plotter-dependent value that specify the lower-left plotter position x-axis
         :type p1x: int
@@ -1786,9 +1806,7 @@ class HP856Xx(Instrument):
         :type p2x: int
         :param p2y: plotter-dependent values that specify the upper-right plotter position y-axis
         :type p2y: int
-
         """
-
         if not (isinstance(p1x, int) or isinstance(p1y, int) or isinstance(p2x, int) or
                 isinstance(p2y, int)):
             raise TypeError("Should be of type int")
@@ -1825,14 +1843,14 @@ class HP856Xx(Instrument):
     )
 
     def power_bandwidth(self, trace, percent):
-        """
-        Measure the combined power of all signal responses contained
-        in a trace array. The command then computes the bandwidth equal to a percentage of the
-        total power. For example, if 100% is specified, the power bandwidth equals the current
-        frequency span. If 50% is specified, trace elements are eliminated from either end of the
-        array, until the combined power of the remaining trace elements equals half of the total
-        power computed. The frequency span of these remaining trace elements is the power
-        bandwidth output to the controller.
+        """Measure the combined power of all signal responses contained in a
+        trace array. The command then computes the bandwidth equal to a
+        percentage of the total power. For example, if 100% is specified, the
+        power bandwidth equals the current frequency span. If 50% is specified,
+        trace elements are eliminated from either end of the array, until the
+        combined power of the remaining trace elements equals half of the total
+        power computed. The frequency span of these remaining trace elements is
+        the power bandwidth output to the controller.
 
         :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -1906,9 +1924,9 @@ class HP856Xx(Instrument):
     )
 
     def recall_open_short_average(self):
-        """
-        Set the internally stored open/short average reference trace
-        into trace B. The instrument state is also set to the stored open/short reference state.
+        """Set the internally stored open/short average reference trace into
+        trace B. The instrument state is also set to the stored open/short
+        reference state.
 
         .. code-block:: python
 
@@ -1945,8 +1963,8 @@ class HP856Xx(Instrument):
         self.write("RCLOSCAL")
 
     def recall_state(self, inp):
-        """
-        Set to the display a previously saved instrument state. See :meth:`save_state`.
+        """Set to the display a previously saved instrument state. See
+        :meth:`save_state`.
 
         :param inp: State to be recalled: either storage slot 0 ... 9 or 'LAST' or 'PWRON'
         :param inp: str, int
@@ -1968,9 +1986,8 @@ class HP856Xx(Instrument):
         self.write("RCLS %s" % str(inp))
 
     def recall_trace(self, trace, number):
-        """
-        Recalls previously saved trace data to the display. See :meth:`save_trace`.
-        Either as Trace A or Trace B.
+        """Recalls previously saved trace data to the display. See
+        :meth:`save_trace`. Either as Trace A or Trace B.
 
         :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -2008,9 +2025,10 @@ class HP856Xx(Instrument):
         self.write("RCLT %s,%s" % (trace, number))
 
     def recall_thru(self):
-        """
-        Recalls the internally stored thru-reference trace into trace B. The
-        instrument state is also set to the stored thru-reference state.
+        """Recalls the internally stored thru-reference trace into trace B.
+
+        The instrument state is also set to the stored thru-reference
+        state.
         """
         self.write("RCLTHRU")
 
@@ -2021,7 +2039,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`datetime.date`
         """,
-        get_process=lambda v: datetime.strptime(v, '%Y%m%d').date(),
+        get_process=lambda v: datetime.strptime(v, '%y%m%d').date(),
         cast=str
     )
 
@@ -2093,14 +2111,20 @@ class HP856Xx(Instrument):
         """
         Controls a bit mask that specifies which service requests can interrupt
         a program sequence.
+
+        .. code-block:: python
+
+            instr.request_service_conditions = StatusRegister.ERROR_PRESENT | StatusRegister.TRIGGER
+
+            print(instr.request_service_conditions)
+            StatusRegister.ERROR_PRESENT|TRIGGER
         """,
         get_process=lambda v: StatusRegister(int(v))
     )
 
     def save_state(self, inp):
-        """
-        Saves the currently displayed instrument state in the specified state
-        register.
+        """Saves the currently displayed instrument state in the specified
+        state register.
 
         :param inp: State to be recalled: either storage slot 0 ... 9 or 'LAST' or 'PWRON'
         :param inp: str, int
@@ -2123,8 +2147,7 @@ class HP856Xx(Instrument):
         self.write("SAVES %s" % str(inp))
 
     def save_trace(self, trace, number):
-        """
-        Saves the selected trace in the specified trace register.
+        """Saves the selected trace in the specified trace register.
 
         :param trace: A representation of the trace, either from :class:`Trace` or
             use 'TRA' for Trace A or 'TRB' for Trace B
@@ -2161,17 +2184,19 @@ class HP856Xx(Instrument):
 
         self.write("SAVET %s,%s" % (trace, number))
 
-    @property
-    def serial_number(self):
+    serial_number = Instrument.measurement(
+        "SER?",
         """
-        Returns the spectrum analyzer serial number to the computer.
-        """
-        raise NotImplementedError()
+        Returns the spectrum analyzer serial number.
+        """,
+        cast=str
+    )
 
     def single_sweep(self):
-        """
-        Sets the spectrum analyzer into single-sweep mode. This mode allows only one sweep when
-        trigger conditions are met. When this function is active, an 'S' appears on the left edge of
+        """Sets the spectrum analyzer into single-sweep mode.
+
+        This mode allows only one sweep when trigger conditions are met.
+        When this function is active, an 'S' appears on the left edge of
         the display.
         """
         self.write("SNGLS")
@@ -2215,13 +2240,175 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["ON", "OFF"], range(-220, 30)],
+        set_process=lambda v: v if isinstance(v, str) else v
     )
+
+    def service_request(self, input):
+        """Triggers a service request. This command allows you to force a
+        service request and test a program designed to handle service requests.
+        However, the service request can be triggered only if it is first
+        masked using the :attr:`request_service_conditions` command.
+
+        :param input: Bits to emulate a service request
+        :type input: :class:`StatusRegister`
+        """
+        if input not in range(0, 255):
+            raise ValueError("Bit mask needs to be between 0 ... 255")
+
+        self.write("SRQ %d" % input)
+
+    # `center_frequency_step_size` would be a command but is pretty unnecesary
+
+    sweep_time = Instrument.control(
+        "ST?", "ST %s",
+        """
+        Control the sweep time. This is normally a coupled function which is
+        automatically set to the optimum value allowed by the current instrument settings.
+        Alternatively, you may specify the sweep time. Note that when the specified sweep time is
+        too fast for the current instrument settings, the instrument is no longer calibrated and the
+        message 'MEAS UNCAL' appears on the display. The sweep time cannot be adjusted when the
+        resolution bandwidth is set to 10 Hz, 30 Hz, or 100 Hz.
+
+        Type: :code:`str, float`
+
+        Real from 50E—3 to 100 when the span is greater than 0 Hz; 50E—6 to 60 when
+        the span equals 0 Hz. When the resolution bandwidth is <100 Hz, the sweep time
+        cannot be adjusted.
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["AUTO", "MAN"], arange(50E-6, 100)],
+        set_process=lambda v: v if isinstance(v, str) else ("%.3E" % v)
+    )
+
+    status = Instrument.measurement(
+        "STB?",
+        """
+        Returns to the controller the decimal equivalent of the bits set in the
+        status byte (see the RQS and SRQ commands). STB is equivalent to a serial poll command.
+        The RQS and associated bits are cleared in the same way that a serial poll command would
+        clear them.
+        """,
+        get_process=lambda v: StatusRegister(int(v))
+    )
+
+    def store_open(self):
+        """Save the current instrument state and trace A into nonvolatile
+        memory.
+
+        This command must be used in conjunction with the
+        :meth:`store_short` command and must precede the
+        :meth:`store_short` command. The data obtained during the store
+        open procedure is averaged with the data obtained during the
+        :meth:`store_short` procedure to provide an open/short
+        calibration. The instrument state (that is, instrument settings)
+        must not change between the :meth:`store_open` and
+        :meth:`store_short` operations in order for the open/short
+        calibration to be valid. Refer to the :meth:`store_short`
+        command description for more information.
+        """
+        self.write("STOREOPEN")
+
+    def store_short(self):
+        """Take currently displayed trace A data and averages this data with
+        previously stored open data, and stores it in trace B.
+
+        This command is used in conjunction with the :meth:`store_open`
+        command and must be preceded by it for proper operation. Refer
+        to the :meth:`store_open` command description for more
+        information. The state of the open/short average trace is stored
+        in state register #8.
+        """
+        self.write("STORESHORT")
+
+    def store_thru(self):
+        """Store a thru-calibration trace into trace B and into the nonvolatile
+        memory of the spectrum analyzer.
+
+        The state of the thru information is stored in state register
+        #9.
+        """
+        self.write("STORETHRU")
+
+    sweep_couple = Instrument.control(
+        "SWPCPL?", "SWPCPL %s",
+        """
+        Select either a stimulus-response or spectrum-analyzer
+        auto-coupled sweep time. In stimulus-response mode, auto-coupled sweep times are usually
+        much faster for swept-response measurements. Stimulus-response auto-coupled sweep times
+        are typicallly valid in stimulus-response measurements when the system’s frequency span is
+        less than 20 times the bandwidth of the device under test.
+
+        Type: :code:`str` or :class:`SweepCoupleMode`
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in SweepCoupleMode]
+    )
+
+    sweep_output = Instrument.control(
+        "SWPOUT?", "SWPOUT %s",
+        """
+        Select the sweep-related signal that is available from J8 on the rear
+        panel. FAV provides a dc ramp of 0.5V/GHz. RAMP provides a 0—10 V ramp corresponding
+        to the sweep ramp that tunes the first local oscillator (LO). For the HP 8561B, in multiband
+        sweeps one ramp is provided for each frequency band.
+
+        Type: :code:`str` or :class:`SweepOut`
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in SweepOut]
+    )
+
+    trace_data_format = Instrument.control(
+        "TDF?", "TDF %s",
+        """
+        Select the format used to input and output trace data (see the
+        TRA/TRB command or refer to Chapter 4). You must specify the desired format when
+        transferring data from the spectrum analyzer to a computer; this is optional when
+        transferring data to the analyzer.
+
+        Type: :code:`str` or :class:`TraceDataFormat`
+
+        .. warning::
+            Only needed for manual read out of trace data. Don't use this if you don't know what
+            You are doing.
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in TraceDataFormat]
+    )
+
+    threshold = Instrument.control(
+        "TH?", "TH %s",
+        """
+        Control the minimum amplitude level and clips data at this value. Default
+        value is -90 dBm. See also - :attr:`marker_threshold` does not clip data below its threshold
+
+        Type: :code:`str, float` range -200 to 30
+
+        .. note::
+            When a trace is in max-hold mode, if the threshold is raised above any of the
+            trace data, the data below the threshold will be permanently lost.
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["ON", "OFF"], arange(-200, 30)],
+        set_process=lambda v: v if isinstance(v, str) else ("%.2E" % v)
+    )
+
+    def title(self, string):
+        """Sets character data in the title area of the display, which is in
+        the upper-right corner.
+
+        A title can be up to two rows of sixteen characters each and can
+        include the special characters shown in Table 5-8. Carriage
+        return and line feed characters are not recommended. For more
+        information on creating titles, refer to Chapter 6 of this
+        manual.
+        """
+        raise NotImplementedError()
 
 
 class HP8560A(HP856Xx):
-    """
-    Represents the HP 8560A Spectrum Analyzer and
-    provides a high-level interface for interacting with the instrument.
+    """Represents the HP 8560A Spectrum Analyzer and provides a high-level
+    interface for interacting with the instrument.
 
     .. code-block:: python
 
@@ -2235,7 +2422,6 @@ class HP8560A(HP856Xx):
         sa.stop_frequency = 300.5e6
 
         print(sa.marker_amplitude)
-
     """
 
     # HP8560A is able to go up to 2.9 GHz
@@ -2279,6 +2465,9 @@ class HP8560A(HP856Xx):
 
             if ErrorCode(900) in instr.errors:
                 print("UNLEVELED CONDITION. CHECK LEVELING LOOP.")
+
+        .. note::
+            Only available with an HP 8560A Option 002.
         """,
         validator=strict_discrete_set,
         values=[e for e in SourceLevelingControlMode]
@@ -2293,6 +2482,9 @@ class HP8560A(HP856Xx):
         SRCFINTK command description.
 
         Type: :code:`int`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
         """,
         validator=strict_range,
         values=[0, 255],
@@ -2308,17 +2500,99 @@ class HP8560A(HP856Xx):
         the SRCCRSTK command description.
 
         Type: :code:`int`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
         """,
         validator=strict_range,
         values=[0, 255],
         cast=int
     )
 
+    source_power_offset = Instrument.control(
+        "SRCPOFS?", "SRCPOFS %g",
+        """
+        Control the offset of the displayed power of the built-in tracking generator so that
+        it is equal to the measured power at the input of the spectrum analyzer. This function may
+        be used to take into account system losses (for example, cable loss) or gains (for example,
+        preamplifier gain) reflecting the actual power delivered to the device under test.
+
+        Type: :code:`int`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
+        """,
+        validator=strict_range,
+        values=[-100, 100],
+        cast=int
+    )
+
+    source_power_step = Instrument.control(
+        "SRCPSTP?", "SRCPSTP %.2f",
+        """
+        Control the step size of the source power level, source power offset, and
+        power-sweep range functions. Range: 0.1 ... 12.75 DB with 0.05 steps.
+
+        Type: :code:`float`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
+        """,
+        validator=strict_range,
+        values=arange(0.1, 12.75, 0.05)
+    )
+
+    source_power_sweep = Instrument.control(
+        "SRCPSWP?", "SRCPSWP %s",
+        """
+        Activate and deactivate the power-sweep function, where the
+        output power of the tracking generator is swept over the power-sweep range chosen. The
+        starting source power level is set using the :attr:`source_power` command. The output power
+        of the tracking generator is swept according to the sweep rate of the spectrum analyzer.
+
+        Type: :code:`str, float`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
+        """,
+        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
+        values=[["OFF", "ON"], arange(0.1, 12.75, 0.05)],
+        set_process=lambda v: v if isinstance(v, str) else ("%.2f" % v)
+    )
+
+    source_power = Instrument.control(
+        "SRCPWR?", "SRCPWR %s",
+        """
+        Control the built-in tracking generator on and off and adjusts the
+        output power.
+
+        Type: :code:`str, float`
+
+        .. note::
+            Only available with an HP 8560A Option 002.
+        """,
+        validator=joined_validators(strict_discrete_set, truncated_discrete_set),
+        values=[["OFF", "ON"], arange(-10, 2.8, 0.05)],
+        set_process=lambda v: v if isinstance(v, str) else ("%.2f" % v)
+    )
+
+    def source_peak_tracking(self):
+        """Activate a routine which automatically adjusts both the coarse and
+        fine-tracking adjustments to obtain the peak response of the tracking
+        generator on the spectrum-analyzer display. Tracking peak is not
+        necessary for resolution bandwidths greater than or equal to 300 kHz. A
+        thru connection should be made prior to peaking in order to ensure
+        accuracy.
+
+        .. note::
+            Only available with an HP 8560A Option 002.
+        """
+        self.write("SRCTKPK")
+
 
 class HP8561B(HP856Xx):
-    """
-    Represents the HP 8561B Spectrum Analyzer and
-    provides a high-level interface for interacting with the instrument.
+    """Represents the HP 8561B Spectrum Analyzer and provides a high-level
+    interface for interacting with the instrument.
 
     .. code-block:: python
 
@@ -2332,7 +2606,6 @@ class HP8561B(HP856Xx):
         sa.stop_frequency = 6.5e9
 
         print(sa.marker_amplitude)
-
     """
 
     # HP8561B is able to go up to 6.5 GHz
@@ -2371,11 +2644,11 @@ class HP8561B(HP856Xx):
     )
 
     def fullband(self, band):
-        """
-        Select a commonly-used, external-mixer frequency band, as shown
-        in the table. The harmonic lock function :attr:`harmonic_number_lock` is also set; this
-        locks the harmonic of the chosen band. External-mixing functions are not available with
-        an HP 8560A Option 002. Takes frequency band letter as string.
+        """Select a commonly-used, external-mixer frequency band, as shown in
+        the table. The harmonic lock function :attr:`harmonic_number_lock` is
+        also set; this locks the harmonic of the chosen band. External-mixing
+        functions are not available with an HP 8560A Option 002. Takes
+        frequency band letter as string.
 
         .. list-table:: Title
             :widths: 25 25 25 25
@@ -2479,21 +2752,24 @@ class HP8561B(HP856Xx):
     )
 
     def harmonic_number_unlock(self):
-        """
-        Unlock the harmonic number, allowing you to select frequencies and
-        spans outside the range of the locked harmonic number. Also, when HNUNLK is executed,
-        more than one harmonic can then be used to sweep across a desired span. For example, sweep
-        a span from 18 GHz to 40 GHz. In this case, the analyzer will automatically sweep first
-        using 6—, then using 8—.
+        """Unlock the harmonic number, allowing you to select frequencies and
+        spans outside the range of the locked harmonic number.
+
+        Also, when HNUNLK is executed, more than one harmonic can then
+        be used to sweep across a desired span. For example, sweep a
+        span from 18 GHz to 40 GHz. In this case, the analyzer will
+        automatically sweep first using 6—, then using 8—.
         """
         self.write("HUNLK")
 
     def signal_identification_to_center_frequency(self):
-        """
-        Set the center frequency to the frequency obtained from the command
-        SIGID. SIGID must be in AUTO mode and have found a valid result for this command to
-        execute properly. Use SIGID on signals greater than 18 GHz {i.e., in external mixing mode).
-        SIGID and IDCF may also be used on signals less than 6.5 GHz in an HP 8561B.
+        """Set the center frequency to the frequency obtained from the command
+        SIGID.
+
+        SIGID must be in AUTO mode and have found a valid result for
+        this command to execute properly. Use SIGID on signals greater
+        than 18 GHz {i.e., in external mixing mode). SIGID and IDCF may
+        also be used on signals less than 6.5 GHz in an HP 8561B.
         """
         self.write("IDCF")
 
@@ -2530,15 +2806,16 @@ class HP8561B(HP856Xx):
     )
 
     def preselector_peak(self):
-        """
-        Peaks the preselector in the HP 8561B Spectrum Analyzer. Make sure the
-        entire frequency span is in high band, set the desired trace to clear-write mode, place a
-        marker on a desired signal, then execute PP. The peaking routine zooms to zero span,
-        peaks the preselector tracking, then returns to the original position. To read the new
-        preselector peaking number, use the PSDAC command. Commands following PP are not
-        executed until after the analyzer has finished peaking the preselector.
-        """
+        """Peaks the preselector in the HP 8561B Spectrum Analyzer.
 
+        Make sure the entire frequency span is in high band, set the
+        desired trace to clear-write mode, place a marker on a desired
+        signal, then execute PP. The peaking routine zooms to zero span,
+        peaks the preselector tracking, then returns to the original
+        position. To read the new preselector peaking number, use the
+        PSDAC command. Commands following PP are not executed until
+        after the analyzer has finished peaking the preselector.
+        """
         self.write("PP")
 
     preselector_dac_number = Instrument.control(
