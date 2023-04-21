@@ -30,7 +30,8 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP8560A, HP8561B
 from pymeasure.instruments.hp.hp856Xx import Trace, MixerMode, CouplingMode, DemodulationMode, \
     DetectionModes, AmplitudeUnits, HP856Xx, ErrorCode, FrequencyReference, PeakSearchMode, \
-    StatusRegister, SourceLevelingControlMode, SweepCoupleMode, SweepOut, TraceDataFormat
+    StatusRegister, SourceLevelingControlMode, SweepCoupleMode, SweepOut, TraceDataFormat, \
+    TriggerMode, WindowType
 
 
 class TestHP856Xx:
@@ -100,7 +101,10 @@ class TestHP856Xx:
             ("single_sweep", "SNGLS"),
             ("store_open", "STOREOPEN"),
             ("store_short", "STORESHORT"),
-            ("store_thru", "STORETHRU")
+            ("store_thru", "STORETHRU"),
+            ("adjust_all", "ADJALL"),
+            ("crt_adjustment_pattern", "ADJCRT"),
+            ("trigger_sweep", "TS"),
         ]
     )
     def test_primitive_commands(self, command, function):
@@ -318,7 +322,10 @@ class TestHP856Xx:
             ("marker_signal_tracking", "MKTRACK"),
             ("marker_noise_mode", "MKNOISE"),
             ("normalize_trace_data", "NORMLIZE"),
-            ("protect_state", "PSTATE")
+            ("protect_state", "PSTATE"),
+            ("trace_a_minus_b", "AMB"),
+            ("trace_a_minus_b_plus_dl", "AMBPL"),
+            ("annotation", "ANNOT")
         ]
     )
     def test_on_off_commands(self, function, command):
@@ -329,6 +336,18 @@ class TestHP856Xx:
         ) as instr:
             setattr(instr, function, False)
             assert getattr(instr, function) is True
+
+    @pytest.mark.parametrize("cmd", ["CURR", "FULL"])
+    def test_adjust_if(self, cmd):
+        with expected_protocol(
+                HP856Xx,
+                [("ADJIF 1", None),
+                 ("ADJIF %s" % cmd, None),
+                 ("ADJIF?", "1")]
+        ) as instr:
+            instr.adjust_if = True
+            instr.adjust_if = cmd
+            assert instr.adjust_if is True
 
     def test_logarithmic_scale(self):
         with expected_protocol(
@@ -716,6 +735,157 @@ class TestHP856Xx:
             instr.threshold = 10
             instr.threshold = "ON"
             assert instr.threshold == 10
+
+    def test_title(self):
+        with expected_protocol(
+                HP856Xx,
+                [("TITLE@%s@" % "TestString", None)]
+        ) as instr:
+            instr.title("TestString")
+
+    @pytest.mark.parametrize("mode", [e for e in TriggerMode])
+    def test_trigger_mode(self, mode):
+        with expected_protocol(
+                HP856Xx,
+                [("TM " + mode, None),
+                 ("TM?", mode)]
+        ) as instr:
+            instr.trigger_mode = mode
+            assert instr.trigger_mode == mode
+
+    @pytest.mark.parametrize("function, cmd", [("trace_data_a", "TRA"), ("trace_data_b", "TRB")])
+    def test_trace_data(self, function, cmd):
+        data = [-31.83, -89.16, -66.33, -94.66, -68.16, -88.83, -67.66, -89.33, -67.50, -89.16,
+                -67.66, -87.50, -68.83, -90.16, -68.83, -87.00, -68.16, -90.00, -67.16, -87.33,
+                -68.50, -89.16, -68.00, -91.50, -67.83, -88.00, -68.16, -89.00, -68.00, -89.83,
+                -67.33, -91.33, -68.16, -90.33, -68.83, -92.66, -67.66, -87.83, -70.00, -92.00,
+                -69.33, -89.50, -67.66, -91.33, -66.83, -88.66, -68.00, -90.66, -68.00, -88.33,
+                -68.66, -89.50, -61.00, -91.16, -68.16, -88.50, -65.50, -90.66, -66.16, -88.83,
+                -68.50, -86.16, -10.50, -91.83, -66.83, -93.33, -68.50, -92.16, -68.83, -89.50,
+                -68.50, -89.33, -67.33, -90.50, -68.33, -91.16, -68.16, -89.00, -68.16, -90.16,
+                -67.50, -89.66, -69.00, -89.00, -68.33, -89.16, -68.66, -88.66, -67.00, -91.66,
+                -69.66, -91.00, -68.00, -91.33, -68.16, -91.00, -67.83, -89.16, -67.66, -88.83,
+                -67.50, -89.33, -68.16, -92.66, -66.66, -89.33, -68.83, -89.33, -68.16, -89.83,
+                -67.33, -89.66, -68.83, -90.66, -68.16, -90.16, -68.66, -90.50, -68.33, -89.00,
+                -67.83, -87.83, -68.00, -89.50, -45.16, -92.33, -68.00, -88.33, -66.83, -89.16,
+                -66.83, -90.66, -67.66, -90.66, -67.83, -88.16, -67.33, -87.33, -68.16, -91.16,
+                -67.00, -90.16, -67.66, -88.33, -68.33, -88.66, -68.00, -89.66, -67.50, -89.66,
+                -67.83, -88.16, -68.66, -91.00, -68.00, -90.16, -68.16, -89.00, -68.00, -90.83,
+                -67.00, -92.00, -67.50, -89.33, -67.66, -88.50, -68.33, -89.33, -68.16, -90.50,
+                -68.16, -88.83, -68.50, -89.50, -68.33, -90.83, -67.00, -88.83, -69.00, -92.33,
+                -67.66, -89.00, -68.33, -91.16, -68.33, -90.16, -67.50, -90.00, -59.50, -87.83,
+                -69.00, -90.83, -67.50, -88.50, -68.66, -91.66, -68.16, -90.16, -68.33, -90.66,
+                -68.66, -87.83, -68.00, -89.16, -68.00, -87.66, -68.16, -90.00, -67.66, -89.50,
+                -68.50, -92.16, -67.66, -89.16, -68.16, -89.16, -67.16, -89.50, -68.00, -89.66,
+                -67.50, -87.16, -67.33, -90.66, -68.16, -91.50, -68.16, -90.16, -68.66, -87.66,
+                -68.33, -89.83, -68.83, -90.33, -68.66, -86.33, -68.00, -91.00, -65.66, -92.33,
+                -69.33, -90.66, -67.33, -92.00, -68.16, -90.66, -68.00, -90.33, -68.50, -85.66,
+                -61.33, -88.50, -67.83, -92.16, -67.16, -90.00, -67.16, -87.33, -67.83, -93.00,
+                -67.66, -89.83, -66.00, -91.66, -68.33, -90.83, -69.33, -91.00, -67.33, -88.50,
+                -67.33, -90.00, -67.83, -91.00, -67.16, -93.16, -67.50, -87.00, -67.33, -88.33,
+                -67.66, -88.33, -67.33, -88.33, -66.66, -87.66, -68.33, -90.66, -68.00, -88.83,
+                -68.66, -88.83, -67.66, -88.16, -67.66, -90.66, -67.50, -92.50, -67.83, -90.33,
+                -68.66, -89.16, -66.83, -91.66, -67.83, -87.83, -68.16, -89.16, -67.33, -88.00,
+                -67.33, -89.00, -61.83, -88.00, -68.00, -89.50, -68.50, -90.66, -67.16, -88.83,
+                -67.16, -87.66, -67.83, -92.66, -68.83, -91.16, -68.00, -91.00, -68.16, -90.33,
+                -67.83, -91.16, -67.66, -94.83, -67.00, -91.16, -68.00, -87.83, -67.66, -90.00,
+                -66.66, -90.33, -68.16, -87.66, -67.00, -88.66, -67.66, -87.50, -67.66, -88.66,
+                -67.33, -89.16, -67.00, -91.33, -68.16, -89.66, -67.83, -91.00, -67.83, -89.33,
+                -68.33, -88.33, -67.83, -88.16, -65.50, -86.83, -67.16, -90.33, -68.16, -86.83,
+                -67.83, -89.33, -67.83, -91.33, -63.50, -89.16, -66.83, -93.00, -67.66, -89.83,
+                -68.00, -89.00, -67.50, -90.00, -66.16, -89.33, -66.00, -88.83, -68.00, -88.33,
+                -66.50, -88.16, -67.00, -88.66, -67.66, -91.50, -67.33, -88.83, -68.33, -90.50,
+                -67.66, -88.33, -68.33, -90.66, -68.16, -89.83, -67.33, -89.83, -66.66, -91.33,
+                -68.16, -90.33, -66.33, -89.33, -67.00, -89.00, -68.16, -89.16, -68.50, -90.83,
+                -66.50, -89.83, -66.66, -90.33, -67.16, -90.83, -67.50, -90.16, -65.00, -89.33,
+                -66.16, -86.33, -68.00, -89.50, -66.50, -89.00, -67.50, -88.33, -64.66, -90.83,
+                -67.66, -88.16, -68.66, -89.00, -67.50, -91.16, -67.50, -91.33, -67.66, -92.00,
+                -67.00, -89.16, -66.33, -89.50, -67.16, -89.16, -68.00, -85.83, -67.16, -89.83,
+                -67.33, -89.16, -67.66, -88.83, -67.33, -90.33, -68.33, -87.83, -66.83, -89.33,
+                -69.00, -90.16, -67.16, -90.16, -66.33, -92.16, -67.50, -89.66, -64.83, -90.00,
+                -66.50, -88.83, -66.50, -88.33, -66.66, -89.50, -66.83, -88.83, -66.00, -88.66,
+                -67.66, -89.00, -66.16, -89.00, -67.16, -90.16, -67.16, -90.50, -67.33, -89.50,
+                -66.83, -89.00, -68.00, -89.50, -68.33, -89.50, -66.66, -88.50, -66.33, -89.83,
+                -68.33, -89.16, -68.16, -89.33, -68.33, -88.16, -66.33, -87.50, -67.00, -90.00,
+                -68.50, -86.50, -67.66, -89.00, -66.00, -88.83, -68.33, -88.66, -66.83, -87.00,
+                -68.00, -88.33, -67.50, -93.83, -67.66, -88.83, -67.50, -93.00, -66.50, -89.00,
+                -68.33, -91.66, -67.00, -88.83, -66.00, -92.33, -67.66, -92.66, -67.66, -92.66,
+                -67.66, -88.66, -68.00, -89.83, -69.00, -89.66, -68.00, -90.00, -67.50, -90.33,
+                -67.66, -91.00, -67.00, -88.16, -66.66, -92.00, -67.66, -87.16, -67.83, -89.50,
+                -68.00, -91.33, -67.50, -91.00, -66.66, -86.83, -66.66, -88.50, -66.00, -89.33,
+                -68.16, -90.33, -67.33, -91.83, -67.16, -90.33, -67.50, -89.00, -65.16, -89.66,
+                -67.00, -91.00, -67.83, -87.83, -66.50, -91.00, -67.66, -91.16, -67.00, -88.83,
+                -65.66]
+        with expected_protocol(
+                HP856Xx,
+                [(cmd + " %s" % ','.join([str(i) for i in data]), None),
+                 (cmd + "?", ','.join([str(i) for i in data]))]
+        ) as instr:
+            setattr(instr, function, data)
+            assert getattr(instr, function) == data
+
+    def test_fft_trace_window(self):
+        with expected_protocol(
+                HP856Xx,
+                [("TWNDOW TRA,FLATTOP", None)]
+        ) as instr:
+            instr.fft_trace_window(Trace.A, WindowType.Flattop)
+
+    @pytest.mark.parametrize("str_param", ["ON", "OFF"])
+    def test_video_average(self, str_param):
+        with expected_protocol(
+                HP856Xx,
+                [("VAVG 89", None),
+                 ("VAVG " + str_param, None),
+                 ("VAVG?", "89")]
+        ) as instr:
+            instr.video_average = 89
+            instr.video_average = str_param
+            assert instr.video_average == 89
+
+    def test_video_bandwidth(self):
+        with expected_protocol(
+                HP856Xx,
+                [("VB 70", None),
+                 ("VB?", "70")],
+        ) as instr:
+            instr.video_bandwidth = 70
+            assert instr.video_bandwidth == 70
+
+    def test_video_bandwidth_string_parameters(self):
+        with expected_protocol(
+                HP856Xx,
+                [("VB AUTO", None),
+                 ("VB?", "20"), ],
+        ) as instr:
+            instr.video_bandwidth = "AUTO"
+            assert instr.video_bandwidth == 20
+
+    def test_video_bandwidth_to_resolution_bandwidth(self):
+        with expected_protocol(
+                HP856Xx,
+                [("VBR 5.000E-03", None),
+                 ("VBR?", "0.005")],
+        ) as instr:
+            instr.video_bandwidth_to_resolution_bandwidth = 0.005
+            assert instr.video_bandwidth_to_resolution_bandwidth == 0.005
+
+    @pytest.mark.parametrize("trace", [e for e in Trace])
+    def test_view_trace(self, trace):
+        with expected_protocol(
+                HP856Xx,
+                [("VIEW " + trace, None)]
+        ) as instr:
+            instr.view_trace(trace)
+
+    def test_video_trigger_level(self):
+        with expected_protocol(
+                HP856Xx,
+                [("VTL -200.780", None),
+                 ("VTL?", "0.005")],
+        ) as instr:
+            instr.video_trigger_level = -200.78
+            assert instr.video_trigger_level == 0.005
 
 
 class TestHP8560A:

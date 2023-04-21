@@ -43,6 +43,19 @@ class StrEnum(str, Enum):
         return self.value
 
 
+class WindowType(StrEnum):
+    """Enumeration to represent the different window mode for FFT functions"""
+
+    #: Flattop provides optimum amplitude accuracy
+    Flattop = "FLATTOP"
+
+    #: Hanning provides an amplitude accuracy/frequency resolution compromise
+    Hanning = "HANNING"
+
+    #: Uniform provides equal weighting of the time record for measuring transients.
+    Uniform = "UNIFORM"
+
+
 class StatusRegister(IntFlag):
     """Enumeration to represent the Status Register."""
 
@@ -161,6 +174,22 @@ class DemodulationMode(StrEnum):
     Off = "OFF"
 
 
+class TriggerMode(StrEnum):
+    """Enumeration to represent the different trigger modes"""
+
+    #: External Mode
+    External = "EXT"
+
+    #: Free Running
+    Free = "FREE"
+
+    #: Line Mode
+    Line = "LINE"
+
+    #: Video Mode
+    Video = "VID"
+
+
 class TraceDataFormat(StrEnum):
     """Enumeration to represent the different trace data formats."""
 
@@ -232,6 +261,9 @@ class AmplitudeUnits(StrEnum):
 
 
 class ErrorCode:
+    """
+    Class to decode error codes from the spectrum analyzer.
+    """
     __error_code_list = {
         0: ("NO ERR", "No Error at all"),
         100: ("PWRON", "Power-on state is invalid; default state is loaded"),
@@ -577,6 +609,102 @@ class HP856Xx(Instrument):
             **kwargs,
         )
 
+    def adjust_all(self):
+        """Activate the local oscillator (LO) and intermediate frequency (IF)
+        alignment routines. These are the same routines that occur when is switched on.
+        Commands following 'adjust_all' are not executed until after the analyzer has finished the
+        alignment routines.
+        """
+        self.write("ADJALL")
+
+    def crt_adjustment_pattern(self):
+        """Activate a CRT adjustment pattern, shown in Figure 5-3. Use the
+        X POSN, Y POSN, and TRACE ALIGN adjustments (available from the rear panel) to
+        align the display. Use X POSN and Y POSN to move the display horizontally and vertically,
+        respectively. Use TRACE ALIGN to straighten a tilted display. To remove the pattern from
+        the screen, execute the :meth:`preset` command."""
+        self.write("ADJCRT")
+
+    adjust_if = Instrument.control(
+        "ADJIF?", "ADJIF %s",
+        """
+        Control the automatic IF adjustment. This function is normally
+        on. Because the IF is continuously adjusting, executing the IF alignment routine is seldom
+        necessary. When the IF adjustment is not active, an "A" appears on the left side of the
+        display.
+
+        - FULL IF adjustment is done for all IF settings.
+        - CURR IF adjustment is done only for the IF settings currently displayed.
+        - OFF turns the continuous IF adjustment off.
+        - ON reactivates the continuous IF adjustment.
+
+        Type: :code:`bool, str`
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "1", False: "0", "FULL": "FULL", "CURR": "CURR"},
+        cast=str
+    )
+
+    trace_a_minus_b = Instrument.control(
+        "AMB?", "AMB %s",
+        """
+        Subtract the contents of trace B from trace A and places the result, in
+        dBm (when in log mode), in trace A. When in linear mode, the result is in volts. If trace
+        A is in clear-write or max-hold mode, this function is continuous. When AMB is active, an
+        "M" appears on the left side of the display. :attr:`trace_a_minus_b_plus_dl`  overrides AMB.
+
+        Type: :code:`bool`
+
+        .. warning::
+
+            The displayed amplitude of each trace element falls in one of 600 data points.
+            There are 10 points of overrange, which corresponds to one-sixth of a division
+            Kg of overrange. When adding or subtracting trace data, any results exceeding
+            this limit are clipped at the limit.
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    trace_a_minus_b_plus_dl = Instrument.control(
+        "AMBPL?", "AMBPL %s",
+        """
+        Subtract the contents of trace B from trace A, adds the display line
+        to this value, and stores the result in dBm (when in log mode) in trace A. When in linear
+        mode, the result is in volts. If trace A is in clear-write or max-hold mode, this function
+        is continuous. When this function is active, an "M" appears on the left side of the display.
+
+        Type: :code:`bool`
+
+        .. warning::
+
+            The displayed amplitude of each trace element falls in one of 600 data points.
+            There are 10 points of overrange, which corresponds to one-sixth of a division
+            Kg of overrange. When adding or subtracting trace data, any results exceeding
+            this limit are clipped at the limit.
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
+    annotation = Instrument.control(
+        "ANNOT?", "ANNOT %s",
+        """
+        Turn the display annotation off or on.
+
+        Type: :code:`bool`
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "1", False: "0"},
+        cast=str
+    )
+
     attenuation = Instrument.control(
         "AT?", "AT %s",
         """
@@ -592,7 +720,8 @@ class HP856Xx(Instrument):
 
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN"], [10, 20, 30, 40, 50, 60, 70]]
+        values=[["AUTO", "MAN"], arange(10, 80, 10)],
+        cast=int
     )
 
     amplitude_unit = Instrument.control(
@@ -763,7 +892,7 @@ class HP856Xx(Instrument):
         Type: :code:`str`
 
         Takes a representation of the demodulation mode, either from :class:`DemodulationMode` or
-        use 'OFF', 'AM', 'OFF'
+        use 'OFF', 'AM', 'FM'
 
         .. code-block:: python
 
@@ -1254,8 +1383,7 @@ class HP856Xx(Instrument):
 
         'preset' does not affect the contents of any data or trace
         registers or stored preselector data. 'preset' does not clear
-        the input or output data buffers; to clear these, execute the
-        statement CLEAR 718.
+        the input or output data buffers;
         """
         self.write("IP")
 
@@ -2399,11 +2527,196 @@ class HP856Xx(Instrument):
 
         A title can be up to two rows of sixteen characters each and can
         include the special characters shown in Table 5-8. Carriage
-        return and line feed characters are not recommended. For more
-        information on creating titles, refer to Chapter 6 of this
+        return and line feed characters are not recommended.
         manual.
         """
-        raise NotImplementedError()
+        if not isinstance(string, str):
+            raise TypeError("Parameter should be of type 'str'")
+
+        if len(string) > 32:
+            raise ValueError("Title should have maximum 32 chars but has '%d'" % len(string))
+
+        self.write("TITLE@%s@" % string)
+
+    trigger_mode = Instrument.control(
+        "TM?", "TM %s",
+        """
+        Select a trigger mode. Selected trigger conditions must be met in order for
+        a sweep to occur. The available trigger modes are listed below. When any trigger mode other
+        than free run is selected, a "T" appears on the left edge of the display.
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in TriggerMode]
+    )
+
+    trace_data_a = Instrument.control(
+        "TRA?", "TRA %s",
+        """
+        Returns the trace data of trace A also allows to write the data.
+
+        .. warning::
+
+            The string based method this attribute is using takes its time. Something around 5000ms
+            timeout at the adapter seems to work well.
+
+        .. warning::
+
+            Dont't change the trace data format, it is initially 'real-number' format 'P'.
+            If you change it, you have to change it back to Real before using this function.
+        """,
+        set_process=lambda v: (','.join([str(i) for i in v]))
+    )
+
+    trace_data_b = Instrument.control(
+        "TRB?", "TRB %s",
+        """
+        Returns the trace data of trace B also allows to write the data.
+
+        .. warning::
+
+            The string based method this attribute is using takes its time. Something around 5000ms
+            timeout at the adapter seems to work well.
+
+        .. warning::
+
+            Dont't change the trace data format, it is initially 'real-number' format 'P'.
+            If you change it, you have to change it back to Real before using this function.
+        """,
+        set_process=lambda v: (','.join([str(i) for i in v]))
+    )
+
+    def trigger_sweep(self):
+        """Command the spectrum analyzer to take one full sweep across the trace display.
+        Commands following TS are not executed until after the analyzer has finished the trace
+        sweep. This ensures that the instrument is set to a known condition before subsequent
+        commands are executed.
+        """
+        self.write("TS")
+
+    def fft_trace_window(self, trace, window_mode):
+        """creates a window trace array for the fast Fourier transform
+        (FFT) function. The trace-window function creates a trace array according to three built-in
+        algorithms: UNIFORM, HANNING, and FLATTOP. When used with the FFT command,
+        the three algorithms give resultant passband shapes that represent a compromise among
+        amplitude uncertainty, sensitivity, and frequency resolution. Refer to the FFT command
+        description for more information.
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :type trace: str
+        :param window_mode: A representation of the window mode, either from :class:`WindowType` or
+            use 'HANNING', 'FLATTOP' or 'UNIFORM'
+        :type window_mode: str
+        """
+
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
+
+        if not isinstance(window_mode, str):
+            raise TypeError("Should be of type string but is '%s'" % type(window_mode))
+
+        if window_mode not in [e for e in WindowType]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in
+                                                                            WindowType],
+                                                                           window_mode))
+
+        self.write("TWNDOW %s,%s" % (trace, window_mode))
+
+    video_average = Instrument.control(
+        "VAVG?", "VAVG %s",
+        """
+        Activate the video averaging function. Video averaging smooths the
+        displayed trace without using a narrow bandwidth. 'video_average' sets the IF detector to
+        sample mode (see the DET command) and smooths the trace by averaging successive traces
+        with each other. If desired, you can change the detector mode during video averaging.
+        Video averaging is available only for trace A, and trace A must be in clear-write mode for
+        'video_average' to operate. After 'video_average' is executed, the number of sweeps that
+        have been averaged appears at the top of the analyzer screen. Using video averaging
+        allows you to view changes to the entire trace much faster than using narrow video
+        filters. Narrow video filters require long sweep times, which may not be desired. Video
+        averaging, though requiring more sweeps, uses faster sweep times; in some cases, it can
+        produce a smooth trace as fast as a video filter.
+
+        Type: :code:`str, int`
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["ON", "OFF"], arange(1, 999)],
+        set_process=lambda v: v if isinstance(v, str) else v,
+        cast=int
+    )
+
+    video_bandwidth = Instrument.control(
+        "VB?", "VB %s",
+        """
+        specifies the video bandwidth. This is normally a coupled function that
+        is selected according to the ratio selected by the VBR command. (If no ratio is selected,
+        a default ratio, 1.0, is used instead.) Video bandwidth filters (or smooths) post-detected
+        video information. The bandwidth, which ranges from 1 Hz to 3 MHz, may also be selected
+        manually. If the specified video bandwidth is less than 300 Hz and the resolution bandwidth
+        is greater than or equal to 300 Hz, the IF detector is set to sample mode. Reducing the
+        video bandwidth or increasing the number of video averages will usually smooth the trace
+        by about as much for the same total measurement time. Reducing the video bandwidth to
+        one-third or less of the resolution bandwidth is desirable when the number of video
+        averages is above 25. For the case where the number of video averages is very large, and
+        the video bandwidth is equal to the resolution bandwidth, internal mathematical limitations
+        allow about 0.4 dB overresponse to noise on the logarithmic scale. The overresponse is
+        negligible (less than 0.1 dB) for narrower video bandwidths.
+
+        Type: :code:`int`
+        """,
+        validator=joined_validators(strict_discrete_set, strict_range),
+        values=[["AUTO", "MAN"], arange(1, 3e6)],
+        cast=int
+    )
+
+    video_bandwidth_to_resolution_bandwidth = Instrument.control(
+        "VBR?", "VBR %.3E",
+        """
+        Specify the coupling ratio between the video bandwidth and the
+        resolution bandwidth. Thus, when the resolution bandwidth is changed, the video bandwidth
+        changes to satisfy the ratio. The ratio ranges from 0.003 to 3 in a 1, 3, 10 sequence. The
+        default ratio is 1. When a new ratio is selected, the video bandwidth changes to satisfy the
+        new ratio—the resolution bandwidth does not change value.
+        """,
+        validator=strict_range,
+        values=arange(0.002, 0.10, 0.001)
+    )
+
+    def view_trace(self, trace):
+        """Display the current contents of the selected trace, but does not update
+        the contents. View mode may be executed before a sweep is complete when :meth:`single_sweep`
+        and :meth:`trigger_sweep` are not used.
+
+        :param trace: A representation of the trace, either from :class:`Trace` or
+            use 'TRA' for Trace A or 'TRB' for Trace B
+        :type trace: str
+        :raises TypeError: Type isn't 'string'
+        :raises ValueError: Value is 'TRA' nor 'TRB'
+        """
+        if not isinstance(trace, str):
+            raise TypeError("Should be of type string but is '%s'" % type(trace))
+
+        if trace not in [e for e in Trace]:
+            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
+                                                                           trace))
+        self.write("VIEW " + trace)
+
+    video_trigger_level = Instrument.control(
+        "VTL?", "VTL %.3f",
+        """
+        Control the video trigger level when the trigger mode is set to VIDEO (refer
+        to the :attr:`trigger_mode` command). A dashed line appears on the display to indicate the
+        level. The default value is 0 dBm. Range -220 to 30.
+
+        Type: :code:`float`
+        """,
+        validator=strict_range,
+        values=[-220, 30]
+    )
 
 
 class HP8560A(HP856Xx):
