@@ -1923,8 +1923,7 @@ class HP856Xx(Instrument):
         upper-right plotter positions, respectively. If P1 and P2 are not
         specified, default values (either preloaded from power-up or sent in
         via a previous plot command) are used. Once PLOT is executed, no
-        subsequent commands are executed until PLOT is done. For more
-        information, refer to Chapter 4.
+        subsequent commands are executed until PLOT is done.
 
         :param p1x: plotter-dependent value that specify the lower-left plotter position x-axis
         :type p1x: int
@@ -2490,7 +2489,7 @@ class HP856Xx(Instrument):
         "TDF?", "TDF %s",
         """
         Select the format used to input and output trace data (see the
-        TRA/TRB command or refer to Chapter 4). You must specify the desired format when
+        TRA/TRB command, You must specify the desired format when
         transferring data from the spectrum analyzer to a computer; this is optional when
         transferring data to the analyzer.
 
@@ -2525,8 +2524,7 @@ class HP856Xx(Instrument):
         """Sets character data in the title area of the display, which is in
         the upper-right corner.
 
-        A title can be up to two rows of sixteen characters each and can
-        include the special characters shown in Table 5-8. Carriage
+        A title can be up to two rows of sixteen characters each, Carriage
         return and line feed characters are not recommended.
         manual.
         """
