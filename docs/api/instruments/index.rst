@@ -46,6 +46,7 @@ Instruments by manufacturer:
    lakeshore/index
    lecroy/index
    mksinst/index
+   nanovna/index
    newport/index
    ni/index
    oxfordinstruments/index
