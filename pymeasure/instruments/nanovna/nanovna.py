@@ -163,23 +163,3 @@ class NanoVNA(Instrument):
         cal_isoln = self._process_data(self.ask("data 6"))
         return {"load": cal_load, "open": cal_open, "short": cal_short,
                 "thru": cal_thru, "isoln": cal_isoln}
-
-
-if __name__ == "__main__":
-    _cr = '\r'
-    _lf = '\n'
-    _crlf = _cr + _lf
-    _prompt = 'ch> '
-    port = '/dev/ttyACM0'
-    adapter = SerialAdapterWithEcho(port,
-                                    timeout=1,
-                                    write_termination=_cr,
-                                    read_termination=_crlf + _prompt,
-                                    )
-    unit = nanovna(adapter)
-
-    print(unit.help)
-    print(unit.info)
-
-    frequencies = unit.get_frequencies()
-    S11_data = unit.get_S11_data()
