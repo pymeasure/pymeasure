@@ -146,7 +146,7 @@ class NanoVNA(Instrument):
         return self._process_frequencies(self.ask("frequencies"))
 
     def _process_data(self, data):
-        data = array(data.replace(" ", ",").split(","), dtype=float)
+        data = array(data.split(), dtype=float)
         return data[::2] + data[1::2] * 1j
 
     def get_S11_data(self):
