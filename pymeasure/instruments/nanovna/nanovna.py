@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from numpy import array
+from numpy import array as _array
 from pymeasure.adapters import SerialAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
@@ -107,16 +107,68 @@ class NanoVNA(Instrument):
         'resume',
         """Resume acquisition.  Returns nothing. """)
 
+    cal_on = Instrument.measurement(
+        "cal on",
+        """ Enables existing calibration. """)
+
+    cal_off = Instrument.measurement(
+        "cal off",
+        """ Disables existing calibration. """)
+
     frequencies = Instrument.measurement("frequencies",
                                          docs=""" Returns frequencies as a list
                                          of floats. """,
-                                         # get_process=_process_frequencies,
+                                         get_process=_array,
                                          )
 
-    data = Instrument.measurement("data",
-                                  docs=""" Returns a list of strings containing
-                                  the complex numbers. """,
-                                  )
+    def _process_complex_data(data_in):
+        temp = _array(",".join(data_in).replace(" ", ",").split(","))
+        temp = temp.astype(float)
+        return temp[::2] + temp[1::2] * 1j
+
+    data_S11 = Instrument.measurement("data 0",
+                                      docs=""" Returns a complex numpy array
+                                      containing the S11 measurement. """,
+                                      get_process=_process_complex_data,
+                                      )
+
+    data_S21 = Instrument.measurement("data 1",
+                                      docs=""" Returns a complex numpy array
+                                      containing the S21 measurement. """,
+                                      get_process=_process_complex_data,
+                                      )
+
+    cal_load = Instrument.measurement("data 2",
+                                      docs=""" Returns a complex numpy array
+                                      containing the load cal measurement. """,
+                                      get_process=_process_complex_data,
+                                      )
+
+    cal_open = Instrument.measurement("data 3",
+                                      docs=""" Returns a complex numpy array
+                                      containing the open cal measurement. """,
+                                      get_process=_process_complex_data,
+                                      )
+
+    cal_short = Instrument.measurement("data 4",
+                                       docs=""" Returns a complex numpy array
+                                       containing the short cal
+                                       measurement. """,
+                                       get_process=_process_complex_data,
+                                       )
+
+    cal_thru = Instrument.measurement("data 5",
+                                      docs=""" Returns a complex numpy array
+                                      containing the thru cal measurement. """,
+                                      get_process=_process_complex_data,
+                                      )
+
+    cal_isoln = Instrument.measurement("data 6",
+                                       docs=""" Returns a complex numpy array
+                                       containing the isolation cal
+                                       measurement. """,
+                                       get_process=_process_complex_data,
+                                       )
 
     trace = Instrument.measurement("trace",
                                    docs=""" Gets the trace settings. """,
@@ -139,27 +191,49 @@ class NanoVNA(Instrument):
                                Example:  '13000000 16000000 101'  """,
                                )
 
-    def _process_frequencies(self, freqs):
-        return array(freqs.split(","), dtype=float)
+    def get_all_cals(self):
 
-    def get_frequencies(self):
-        return self._process_frequencies(self.ask("frequencies"))
+        def _process(data_in):
+            temp = _array(data_in.replace(" ", ",").split(","))
+            temp = temp.astype(float)
+            return temp[::2] + temp[1::2] * 1j
 
-    def _process_data(self, data):
-        data = array(data.replace(" ", ",").split(","), dtype=float)
-        return data[::2] + data[1::2] * 1j
+        cals = {}
+        cals["cal_load"] = _process(unit.ask("data 2"))
+        cals["cal_open"] = _process(unit.ask("data 3"))
+        cals["cal_short"] = _process(unit.ask("data 4"))
+        cals["cal_thru"] = _process(unit.ask("data 5"))
+        cals["cal_isoln"] = _process(unit.ask("data 6"))
 
-    def get_S11_data(self):
-        return self._process_data(self.ask("data 0"))
+        return cals
 
-    def get_S21_data(self):
-        return self._process_data(self.ask("data 1"))
+    def perform_1port_cal(self):
+        self.write('cal off')
 
-    def get_cals(self):
-        cal_load = self._process_data(self.ask("data 2"))
-        cal_open = self._process_data(self.ask("data 3"))
-        cal_short = self._process_data(self.ask("data 4"))
-        cal_thru = self._process_data(self.ask("data 5"))
-        cal_isoln = self._process_data(self.ask("data 6"))
-        return {"load": cal_load, "open": cal_open, "short": cal_short,
-                "thru": cal_thru, "isoln": cal_isoln}
+        input('Connect open')
+        self.write('cal open')
+
+        input('Connect short')
+        self.write('cal short')
+
+        input('Connect load')
+        self.write('cal load')
+
+        self.write('cal done')
+        self.write('cal on')
+
+        print('Calibration completed.  ')
+
+
+if __name__ == "__main__":
+    _cr = '\r'
+    _lf = '\n'
+    _crlf = _cr + _lf
+    _prompt = 'ch> '
+    port = '/dev/ttyACM0'
+    adapter = SerialAdapterWithEcho(port,
+                                    timeout=1,
+                                    write_termination=_cr,
+                                    read_termination=_crlf + _prompt,
+                                    )
+    unit = NanoVNA(adapter)
