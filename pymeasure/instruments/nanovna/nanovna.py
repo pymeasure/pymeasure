@@ -182,13 +182,13 @@ class NanoVNA(Instrument):
                                )
 
     sweep = Instrument.control('sweep',
-                               'sweep %s',
-                               """Sets the sweep details.  Input is a string
-                               containing 3 integers separated by spaces.
+                               'sweep %i %i %i',
+                               """Set the sweep details.  Input is a tuple
+                               containing 3 integers.
                                First int is the start frequency (in Hz).
                                Second int is the strop frequency (in Hz).
                                Third int is the number of points in the sweep.
-                               Example:  '13000000 16000000 101'  """,
+                               Example:  :code:`13000000 16000000 101`.  """,
                                )
 
     def get_all_cals(self):
