@@ -23,29 +23,9 @@
 #
 
 from numpy import array as _array
-from pymeasure.adapters import SerialAdapter
+# from pymeasure.adapters import SerialAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
-
-
-class SerialAdapterWithEcho(SerialAdapter):
-
-    echo_termination = '\r\n'
-    # write_termination = '\r'
-    # read_termination = '\r\nch> '
-
-    def _read_echo(self, **kwargs):
-        """Read function but includes scrubbing the echo from the reply.
-
-        :param \\**kwargs: Keyword arguments for the connection itself.
-        :returns str: ASCII response of the instrument with echo removed.
-        """
-        read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
-        read = read.replace('ch> ', "").split(self.echo_termination)
-        # echo = read[0]
-        reply = read[1:-1]
-
-        return ",".join(reply)  # TODO maybe don't return as a single string???
 
 
 class NanoVNA(Instrument):
@@ -56,12 +36,17 @@ class NanoVNA(Instrument):
     """
 
     def __init__(self, adapter, name="NanoVNA", **kwargs):
+        # kwargs.setdefault('read_termination', '\r\nch> ')
+        # kwargs.setdefault('write_termination', '\r')
+        self.write_termination = '\r'
+        self.read_termination = '\r\nch> '
+        self.echo_termination = '\r\n'
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
-            read_termination='\r\nch> ',
-            write_termination='\r',
+            # read_termination='\r\nch> ',
+            # write_termination='\r',
             **kwargs
         )
 
@@ -69,8 +54,15 @@ class NanoVNA(Instrument):
         """
         Reads from the instrument including the correct termination characters
         """
-        ret = self.adapter._read_echo()
-        return ret
+        # ret = self.adapter._read_echo()
+        # return ret
+
+        read = self.adapter._read_bytes(-1, break_on_termchar=True).decode()
+        read = read.replace('ch> ', "").split(self.echo_termination)
+        # echo = read[0]
+        reply = read[1:-1]
+
+        return ",".join(reply)  # TODO maybe don't return as a single string???
 
     def write(self, command):
         """
@@ -78,7 +70,8 @@ class NanoVNA(Instrument):
 
         :param command: command string to be sent to the instrument
         """
-        super().write(command)
+        # super().write(command)
+        self.adapter._write(command + self.write_termination)
 
     def ask(self, command, query_delay=0):
         """Write a command to the instrument and return the read response.
@@ -89,7 +82,7 @@ class NanoVNA(Instrument):
         """
         self.write(command)
         self.wait_for(query_delay)
-        return self.adapter._read_echo()
+        return self.read()
 
     help = Instrument.measurement(
         'help',
@@ -122,6 +115,11 @@ class NanoVNA(Instrument):
                                          )
 
     def _process_complex_data(data_in):
+        """ Processes a list of strings containing complex pairs
+
+        :param data_in: list of strings containing complex pairs
+        :returns: Numpy array of complex numbers.
+        """
         temp = _array(",".join(data_in).replace(" ", ",").split(","))
         temp = temp.astype(float)
         return temp[::2] + temp[1::2] * 1j
@@ -172,51 +170,66 @@ class NanoVNA(Instrument):
 
     trace = Instrument.measurement("trace",
                                    docs=""" Gets the trace settings. """,
-                                   # TODO - make this into a control,
+                                   # TODO - make this into a control eventually
                                    )
 
     power = Instrument.setting('power %d',
                                """ Sets the output power. """,
                                validator=strict_discrete_set,
                                values=[-1, 0, 1, 2, 3],
+                               # TODO add maps
                                )
 
     sweep = Instrument.control('sweep',
                                'sweep %i %i %i',
-                               """Set the sweep details.  Input is a tuple
-                               containing 3 integers.
+                               """Set the sweep details.  Input and output is
+                               a tuple containing 3 integers.
                                First int is the start frequency (in Hz).
                                Second int is the strop frequency (in Hz).
                                Third int is the number of points in the sweep.
-                               Example:  :code:`13000000 16000000 101`.  """,
+                               """,
+                               get_process=lambda x:
+                               tuple(_array(x.split()).astype(int)),
                                )
 
-    def get_all_cals(self):
+    def get_port1_cals(self):
+        """ Acuires all the three port 1 calibration measurements and returns
+        them as a dict.
+
+        :returns cals: Dictionary containing cal measurements.
+        """
 
         def _process(data_in):
+            """ Subfunction to process complex numbers into numpy arrays.
+
+            :param data_in: Str containing complex data
+            :returns: Complex numpy array
+            """
+            # temp = _array(data_in.split())
             temp = _array(data_in.replace(" ", ",").split(","))
             temp = temp.astype(float)
             return temp[::2] + temp[1::2] * 1j
 
         cals = {}
-        cals["cal_load"] = _process(unit.ask("data 2"))
-        cals["cal_open"] = _process(unit.ask("data 3"))
-        cals["cal_short"] = _process(unit.ask("data 4"))
-        cals["cal_thru"] = _process(unit.ask("data 5"))
-        cals["cal_isoln"] = _process(unit.ask("data 6"))
+        cals["cal_load"] = _process(self.ask("data 2"))
+        cals["cal_open"] = _process(self.ask("data 3"))
+        cals["cal_short"] = _process(self.ask("data 4"))
+        # cals["cal_thru"] = _process(unit.ask("data 5"))
+        # cals["cal_isoln"] = _process(unit.ask("data 6"))
 
         return cals
 
     def perform_1port_cal(self):
+        """ Performs 1-port calibration on port 1. """
         self.write('cal off')
 
-        input('Connect open')
+        input('Connect open to port 1')
         self.write('cal open')
 
-        input('Connect short')
+        input('Connect short to port 1')
         self.write('cal short')
 
-        input('Connect load')
+        input('Connect load to port 1')
         self.write('cal load')
 
         self.write('cal done')
@@ -225,15 +238,18 @@ class NanoVNA(Instrument):
         print('Calibration completed.  ')
 
 
-if __name__ == "__main__":
-    _cr = '\r'
-    _lf = '\n'
-    _crlf = _cr + _lf
-    _prompt = 'ch> '
-    port = '/dev/ttyACM0'
-    adapter = SerialAdapterWithEcho(port,
-                                    timeout=1,
-                                    write_termination=_cr,
-                                    read_termination=_crlf + _prompt,
-                                    )
-    unit = NanoVNA(adapter)
+# if __name__ == "__main__":
+#     port = '/dev/ttyACM0'
+
+#     case = 1
+#     if case == 1:
+#         adapter = SerialAdapter(port)
+#         unit = NanoVNA(adapter)
+#         print(unit.info)
+#     elif case == 2:
+#         adapter = SerialAdapter(port, timeout=1)
+#         unit = NanoVNA(adapter)
+#         print(unit.info)
+#     elif case == 3:
+#         unit = NanoVNA(port)
+#         print(unit.info)
