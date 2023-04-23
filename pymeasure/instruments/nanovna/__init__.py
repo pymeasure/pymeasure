@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .nanovna import nanovna
+from .nanovna import NanoVNA
