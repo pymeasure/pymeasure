@@ -34,10 +34,10 @@ log.addHandler(logging.NullHandler())
 class Instrument(Instrument):
 
     def check_errors(self):
-        errors = []
-        if self.read() != '':
-            errors.append(f'Incorrect return from previously set property')
-        return errors
+        if self.read() == '':
+            return []
+        else:
+            return ['Incorrect return from previously set property']
 
 
 class Ametek7270(Instrument):
