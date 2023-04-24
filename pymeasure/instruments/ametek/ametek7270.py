@@ -74,7 +74,8 @@ class Ametek7270(Instrument):
         values=SENSITIVITIES,
         map_values=True,
         check_set_errors=True,
-        dynamic=True
+        dynamic=True,
+
     )
 
     slope = Instrument.control(
