@@ -205,13 +205,16 @@ class Ametek7270(Instrument):
                                   """ Reads the input value of ADC4 in Volts """
                                   )
     id = Instrument.measurement("ID",
-                                """ Reads the instrument identification """
+                                """ Reads the instrument identification """,
+                                cast=str
                                 )
 
-    def __init__(self, adapter, name="Ametek DSP 7270", **kwargs):
+    def __init__(self, adapter, name="Ametek DSP 7270", read_termination='\x00', write_termination='\x00', **kwargs):
         super().__init__(
             adapter,
             name,
+            read_termination=read_termination,
+            write_termination=write_termination,
             **kwargs
         )
 
@@ -237,6 +240,10 @@ class Ametek7270(Instrument):
     def set_channel_A_mode(self):
         """ Sets instrument to channel A mode -- assuming it is in voltage mode """
         self.ask("VMODE 1")
+
+    def identification(self):
+        """Get the instrument ID and firmware version"""
+        return f"{self.id}/{self.ask('VER')}"
 
     @property
     def auto_gain(self):
