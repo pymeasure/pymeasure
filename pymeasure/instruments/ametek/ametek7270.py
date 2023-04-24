@@ -56,7 +56,6 @@ class Ametek7270(Instrument):
                            2: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2e-15, 5e-15, 10e-15,
                                20e-15, 50e-15, 100e-15, 200e-15, 500e-15, 1e-12, 2e-12]}
 
-
     TIME_CONSTANTS = [
         10.0e-6, 20.0e-6, 50.0e-6, 100.0e-6, 200.0e-6, 500.0e-6,
         1.0e-3, 2.0e-3, 5.0e-3, 10.0e-3, 20.0e-3, 50.0e-3, 100.0e-3,
@@ -98,8 +97,7 @@ class Ametek7270(Instrument):
         map_values=True,
         check_set_errors=True
     )
-    # TODO: Figure out if this actually can send for X1. X2. Y1. Y2. or not.
-    #       There's nothing in the manual about it but UtilMOKE sends these.
+
     x = Instrument.measurement("X.",
                                """ Reads the X value in Volts """
                                )
@@ -228,6 +226,7 @@ class Ametek7270(Instrument):
         self.ask("LF %d 0" % 3 if lineFiltering else 0)
 
     def set_current_mode(self, low_noise=False):
+        """ Sets instrument to current control mode with either low noise or high bandwidth"""
         if low_noise:
             self.ask("IMODE 2")
             self.sensitivity_values = self.SENSITIVITIES_IMODE[2]
