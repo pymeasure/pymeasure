@@ -39,6 +39,9 @@ class Instrument(Instrument):
         else:
             return ['Incorrect return from previously set property']
 
+    def ask(self, command, query_delay=0):
+        return super().ask(command, query_delay).strip()
+
 
 class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier"""
@@ -261,3 +264,5 @@ class Ametek7270(Instrument):
         log.info("Shutting down %s" % self.name)
         self.voltage = 0.
         super().shutdown()
+
+
