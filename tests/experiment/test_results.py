@@ -32,7 +32,7 @@ import pytest
 import numpy as np
 
 from pymeasure.units import ureg
-from pymeasure.experiment.results import Results, CSVFormatter
+from pymeasure.experiment.results import Results, CSVFormatter, CSVFormatterPandas
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
 from data.procedure_for_testing import RandomProcedure
@@ -47,10 +47,11 @@ def test_procedure():
     assert hasattr(procedure, 'execute')
 
 
-def test_csv_formatter_format_header():
+@pytest.mark.parametrize("Formatter", (CSVFormatter, CSVFormatterPandas))
+def test_csv_formatter_format_header(Formatter):
     """Tests CSVFormatter.format_header() method."""
     columns = ['t', 'x', 'y', 'z', 'V']
-    formatter = CSVFormatter(columns=columns)
+    formatter = Formatter(columns=columns)
     assert formatter.format_header() == 't,x,y,z,V'
 
 
@@ -94,6 +95,32 @@ class Test_csv_formatter_format:
         formatter.units['index'] = ureg.km
         data = {'index': "10 stupid", 'length (m)': "50 cV", 'voltage (V)': True}
         assert formatter.format(data) == "nan,nan,nan"
+
+
+class Test_CSVFormatterPandas():
+    columns = ['index', 'length (m)']
+    formatter = CSVFormatterPandas(columns=columns)
+
+    def test_dict_single_record(self):
+        record = {"index": 0, "length (m)": 10.4}
+        assert self.formatter.format(record) == "0,10.4"
+
+    def test_dict_multi_record(self):
+        record = {"index": [0, 1], "length (m)": [10.4, 20.4]}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
+    def test_dataframe_record(self):
+        record = pd.DataFrame({"index": [0, 1], "length (m)": [10.4, 20.4]})
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
+    def test_dict_unitful_records(self):
+        record = {"index": [0, 1], "length (m)": [1040. * ureg.cm, 20.4 * ureg.m]}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
+    def test_dict_unitful_array(self):
+        record = {"index": [0, 1], "length (m)": ureg.Quantity([1040., 2040.], "cm")}
+        assert self.formatter.format(record) == "0,10.4\n1,20.4"
+
 
 
 @pytest.mark.parametrize("header, units", (

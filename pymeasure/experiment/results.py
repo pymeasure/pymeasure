@@ -42,29 +42,32 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
+def replace_placeholders(string, procedure, date_format="%Y-%m-%d",
+                         time_format="%H:%M:%S"):
     """Replace placeholders in string with values from procedure parameters.
 
     Replaces the placeholders in the provided string with the values of the
     associated parameters, as provided by the procedure. This uses the standard
-    python string.format syntax. Apart from the parameter in the procedure (which
-    should be called by their full names) "date" and "time" are also added as optional
-    placeholders.
+    python string.format syntax. Apart from the parameter in the procedure
+    (which should be called by their full names) "date" and "time" are also
+    added as optional placeholders.
 
     :param string:
-        The string in which the placeholders are to be replaced. Python string.format
-        syntax is used, e.g. "{Parameter Name}" to insert a FloatParameter called
-        "Parameter Name", or "{Parameter Name:.2f}" to also specifically format the
-        parameter.
+        The string in which the placeholders are to be replaced. Python
+        string.format syntax is used, e.g. "{Parameter Name}" to insert a
+        FloatParameter called "Parameter Name", or "{Parameter Name:.2f}"
+        to also specifically format the parameter.
 
     :param procedure:
         The procedure from which to get the parameter values.
 
     :param date_format:
-        A string to represent how the additional placeholder "date" will be formatted.
+        A string to represent how the additional placeholder "date" will
+        be formatted.
 
     :param time_format:
-        A string to represent how the additional placeholder "time" will be formatted.
+        A string to represent how the additional placeholder "time" will
+        be formatted.
 
     """
     now = datetime.now()
@@ -118,21 +121,24 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
     return filename
 
 
-class CSVFormatter(logging.Formatter):
-    """ Formatter of data results """
-
-    def __init__(self, columns, delimiter=','):
-        """Creates a csv formatter for a given list of columns (=header).
+class Results_Formatter(logging.Formatter):
+    """Base class for formatters."""
+    def __init__(self, columns, delimiter=',', line_break='\n'):
+        """Prepares formatter for a given list of columns (=header).
 
         :param columns: list of column names.
         :type columns: list
-        :param delimiter: delimiter between columns.
+        :param delimiter: delimiter between columns, defaults to ','
+        :type delimiter: str
+        :param line_break: line termination character to use,
+                           defaults to '\n'
         :type delimiter: str
         """
         super().__init__()
         self.columns = columns
         self.units = self._parse_columns(columns)
         self.delimiter = delimiter
+        self.line_break = line_break
 
     @staticmethod
     def _parse_columns(columns):
@@ -145,6 +151,55 @@ class CSVFormatter(logging.Formatter):
                 units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
+    def conform_units(self, value, column):
+        units = self.units.get(column, None)
+
+        if units is not None:
+            if isinstance(value, str):
+                try:
+                    value = ureg.Quantity(value)
+                except pint.UndefinedUnitError:
+                    log.warning(
+                        f"Value {value} for column {column} cannot be parsed to"
+                        f" unit {units}.")
+
+            if isinstance(value, pint.Quantity):
+                try:
+                    value = value.m_as(units)
+                except pint.DimensionalityError:
+                    value = float("nan")
+                    log.warning(
+                        f"Value {value} for column {column} does not have the "
+                        f"right unit {units}.")
+            elif isinstance(value, bool):
+                value = float("nan")
+                log.warning(
+                    f"Boolean for column {column} does not have unit {units}.")
+            elif isinstance(value, (float, int, Decimal)):
+                pass
+            else:
+                value = float("nan")
+                log.warning(
+                    f"Value {value} for column {column} does not have the right"
+                    f" type for unit {units}.")
+
+        else:
+            if isinstance(value, pint.Quantity):
+                if value.units == ureg.dimensionless:
+                    value = value.magnitude
+                else:
+                    self.units[column] = value.to_base_units().units
+                    value = value.m_as(self.units[column])
+                    log.info(f"Column {column} units was set to {self.units[column]}")
+            else:
+                pass
+
+        return value
+
+
+class CSVFormatter(Results_Formatter):
+    """ Formatter of data results, single-line CSV """
+
     def format(self, record):
         """Formats a record as csv.
 
@@ -153,50 +208,63 @@ class CSVFormatter(logging.Formatter):
         :return: a string
         """
         line = []
-        for x in self.columns:
-            value = record.get(x, float("nan"))
-            units = self.units.get(x, None)
-            if units is not None:
-                if isinstance(value, str):
-                    try:
-                        value = ureg.Quantity(value)
-                    except pint.UndefinedUnitError:
-                        log.warning(
-                            f"Value {value} for column {x} cannot be parsed to"
-                            f" unit {units}.")
-                if isinstance(value, pint.Quantity):
-                    try:
-                        line.append(f"{value.m_as(units)}")
-                    except pint.DimensionalityError:
-                        line.append("nan")
-                        log.warning(
-                            f"Value {value} for column {x} does not have the "
-                            f"right unit {units}.")
-                elif isinstance(value, bool):
-                    line.append("nan")
-                    log.warning(
-                        f"Boolean for column {x} does not have unit {units}.")
-                elif isinstance(value, (float, int, Decimal)):
-                    line.append(f"{value}")
-                else:
-                    line.append("nan")
-                    log.warning(
-                        f"Value {value} for column {x} does not have the right"
-                        f" type for unit {units}.")
-            else:
-                if isinstance(value, pint.Quantity):
-                    if value.units == ureg.dimensionless:
-                        line.append(f"{value.magnitude}")
-                    else:
-                        self.units[x] = value.to_base_units().units
-                        line.append(f"{value.m_as(self.units[x])}")
-                        log.info(f"Column {x} units was set to {self.units[x]}")
-                else:
-                    line.append(f"{value}")
+        for column in self.columns:
+            value = record.get(column, float("nan"))
+            value = self.conform_units(value, column)
+            line.append(f"{value}")
+
         return self.delimiter.join(line)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
+
+
+class CSVFormatterPandas(Results_Formatter):
+    """ Formatter of data results, pandas dataframe or single-line CSV """
+
+    def format(self, record):
+        """Formats a record as csv using pandas built-in ``to_csv`` method.
+        Accepts a pandas dataframe or a dict of values matching
+        the given list of columns.
+
+        :param record: record to format.
+        :type record: pandas.DataFrame or dict
+        :return: str
+        """
+        if isinstance(record, pd.DataFrame):
+            record = record.reindex(columns=self.columns)
+        elif isinstance(record, dict):
+            if isinstance(list(record.values())[0], (list, tuple)):
+                record = pd.DataFrame(record, columns=self.columns)
+            else:
+                record = pd.DataFrame([record], columns=self.columns)
+        else:
+            raise TypeError('Formatting of data failed. '
+                            'Pandas dataframe or dict required.')
+
+        # Convert units if applicable
+        print(record.dtypes)
+        for column in record.select_dtypes(object).columns:
+            print(column)
+            record[column] = record[column].apply(self.conform_units, column=column)
+
+        return record.to_csv(
+            sep=self.delimiter,
+            header=False,
+            index=False,
+            # explicit line_terminator required, otherwise Windows
+            # uses \r\n which results in double blank lines
+            line_terminator=self.line_break,
+        ).strip()
+
+    def format_header(self):
+        record = pd.DataFrame(columns=self.columns)
+        return record.to_csv(
+            sep=self.delimiter,
+            header=True,
+            index=False,
+            line_terminator=self.line_break,
+        ).strip()
 
 
 class Results:
@@ -211,6 +279,9 @@ class Results:
     :param procedure: Procedure object
     :param data_filename: The data filename where the data is or should be
                           stored
+    :param output_format: Formatter which converts the emitted result data
+                          so it can be written to file, defaults to CSV
+                          Possible options: CSV, CSV_PANDAS
     """
 
     COMMENT = '#'
@@ -218,7 +289,7 @@ class Results:
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure, data_filename, output_format='CSV'):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
@@ -227,7 +298,16 @@ class Results:
         self._header_count = -1
         self._metadata_count = -1
 
-        self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
+        # set formatter
+        formatter_class = {
+            'CSV': CSVFormatter,
+            'CSV_PANDAS': CSVFormatterPandas,
+        }[output_format]
+        self.formatter = formatter_class(
+            columns=self.procedure.DATA_COLUMNS,
+            delimiter=self.DELIMITER,
+            line_break=self.LINE_BREAK
+            )
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
@@ -376,7 +456,8 @@ class Results:
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
-                    raise Exception("Error partitioning header line %s." % line)
+                    raise Exception(
+                        "Error partitioning header line %s." % line)
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
@@ -463,8 +544,8 @@ class Results:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
                 # only append new data if there is any
                 # if no new data, tmp_frame dtype is object, which override's
-                # self._data's original dtype - this can cause problems plotting
-                # (e.g. if trying to plot int data on a log axis)
+                # self._data's original dtype - this can cause problems
+                # plotting (e.g. if trying to plot int data on a log axis)
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
                                            ignore_index=True)
