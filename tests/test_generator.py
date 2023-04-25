@@ -68,6 +68,23 @@ def test_init():
         pass
 """
 
+    def test_write_init_kwargs(self, file):
+        write_test(file, "init", "Super", [(b"sent", b"received")],
+                   "pass  # Verify the expected communication.",
+                   {'address': 7, 'name': "my name", 'bool': True})
+        assert file.getvalue() == """
+
+def test_init():
+    with expected_protocol(
+            Super,
+            [(b'sent', b'received')],
+            address=7,
+            name='my name',
+            bool=True,
+    ):
+        pass  # Verify the expected communication.
+"""
+
     def test_write_bytes(self, file):
         write_test(file, "init", "Super",
                    [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
@@ -194,6 +211,32 @@ def test_init():
     with expected_protocol(
             TC038,
             [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
+    ):
+        pass  # Verify the expected communication.
+"""
+
+    def test_instantiate_with_kwargs(self, file):
+        generator = Generator()
+        adapter = ProtocolAdapter(
+            [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
+        TC038.string_test = TC038.control("test?", "test %s", "Control some string.", cast=str,
+                                          get_process=lambda v: v[7:-1])
+        generator.instantiate(TC038, adapter, "hcp", some_kwarg=5.7, other_kwarg=True,
+                              str_kwarg="abc")
+        generator.write_init_test(file)
+        assert file.getvalue() == r"""import pytest
+
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.hcp import TC038
+
+
+def test_init():
+    with expected_protocol(
+            TC038,
+            [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
+            some_kwarg=5.7,
+            other_kwarg=True,
+            str_kwarg='abc',
     ):
         pass  # Verify the expected communication.
 """

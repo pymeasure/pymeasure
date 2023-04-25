@@ -31,8 +31,20 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def write_generic_test(file, name, cls_name, header_text, comm_text, test):
-    """Write a generic test."""
+def write_generic_test(file, name, cls_name, header_text, comm_text, test, inkwargs=None):
+    """Write a generic test.
+
+    :param file: File to write to.
+    :param str name: Name of the test.
+    :param cls_name: Name of the instrument class.
+    :param list comm_pairs: List of communication pairs.
+    :param str test: Test to assert for.
+    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
+    """
+    if inkwargs is None:
+        args_text = "",
+    else:
+        args_text = [f'            {key}={repr(value)},\n' for key, value in inkwargs.items()]
     inst = " as inst" if "inst" in test else ""
     file.writelines([
         "\n",
@@ -41,26 +53,32 @@ def write_generic_test(file, name, cls_name, header_text, comm_text, test):
         "    with expected_protocol(\n",
         f"            {cls_name},\n",
         *comm_text,
+        *args_text,
         f"    ){inst}:\n",
         f"        {test}\n"
     ])
 
 
-def write_test(file, name, cls_name, comm_pairs, test):
-    """Write a test.
+def write_test(file, name, cls_name, comm_pairs, test, inkwargs=None):
+    """Write a single test.
 
     :param file: File to write to.
     :param str name: Name of the test.
     :param cls_name: Name of the instrument class.
     :param list comm_pairs: List of communication pairs.
     :param str test: Test to assert for.
+    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
     write_generic_test(file, name, cls_name, [f"def test_{name}():\n"],
-                       [f"            {comm_pairs},\n".replace("), (", "),\n             (")], test)
+                       [f"            {comm_pairs},\n".replace("), (", "),\n             (")],
+                       test=test,
+                       inkwargs=inkwargs,
+                       )
 
 
-def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, test):
-    """Write a test.
+def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, test,
+                            inkwargs=None):
+    """Write a parametrized test.
 
     :param file: File to write to.
     :param str name: Name of the test.
@@ -68,6 +86,7 @@ def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, 
     :param list comm_pairs_list: List of communication pairs list for each test
     :param list values_list: List of expected values.
     :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
+    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
     params = [f"    ({cp},\n     {v}),\n".replace(
         "), (", "),\n      (") for cp, v in zip(comm_pairs_list, values_list)]
@@ -78,19 +97,24 @@ def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, 
                                     f"def test_{name}(comm_pairs, value):\n",
                                     ],
                        comm_text=["            comm_pairs,\n"],
-                       test=test)
+                       test=test,
+                       inkwargs=inkwargs,
+                       )
 
 
 def write_parametrized_method_test(file, name, cls_name, comm_pairs_list, args_list, kwargs_list,
-                                   values_list, test):
-    """Write a test.
+                                   values_list, test, inkwargs=None):
+    """Write a parametrized test for a method.
 
     :param file: File to write to.
     :param str name: Name of the test.
     :param cls_name: Name of the instrument class.
     :param list comm_pairs_list: List of communication pairs list for each test
+    :param list args_list: List of arguments lists for the method.
+    :param list kwargs_list: List of keyword dictionaries for the method.
     :param list values_list: List of expected values.
     :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
+    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
     z = zip(comm_pairs_list, args_list, kwargs_list, values_list)
     params = [f"    ({cp},\n     {a}, {k}, {v}),\n".replace(
@@ -102,7 +126,9 @@ def write_parametrized_method_test(file, name, cls_name, comm_pairs_list, args_l
                         f"def test_{name}(comm_pairs, args, kwargs, value):\n",
                         ],
                        comm_text=["            comm_pairs,\n"],
-                       test=test)
+                       test=test,
+                       inkwargs=inkwargs
+                       )
 
 
 def parse_stream(stream):
@@ -186,7 +212,6 @@ class Generator:
     """
 
     def __init__(self):
-        """Initialize the generator writing the testfile to `filepath`."""
         self._stream = io.BytesIO()
         self._index = 0
         self._incomm = []  # Initializiation comm_pairs
@@ -199,7 +224,9 @@ class Generator:
         """Write the header and init test."""
         file.write(self._header)
         write_test(file, "init", self._class, self._incomm,
-                   "pass  # Verify the expected communication.")
+                   "pass  # Verify the expected communication.",
+                   self._inkwargs,
+                   )
 
     def write_getter_tests(self, file):
         """Write all parametrized getters tests."""
@@ -208,11 +235,15 @@ class Generator:
                 v = value[1][0]
                 comparison = "is" if isinstance(v, bool) or v is None else "=="
                 write_test(file, property + "_getter", self._class, value[0][0],
-                           f"assert inst.{property} {comparison} {v}")
+                           f"assert inst.{property} {comparison} {v}",
+                           self._inkwargs,
+                           )
             else:
                 write_parametrized_test(file, property + "_getter", self._class,
                                         value[0], value[1],
-                                        f"assert inst.{property} == value")
+                                        f"assert inst.{property} == value",
+                                        self._inkwargs,
+                                        )
 
     def write_setter_tests(self, file):
         """Write all parametrized setters tests."""
@@ -224,7 +255,9 @@ class Generator:
             else:
                 write_parametrized_test(file, property + "_setter", self._class,
                                         *value,
-                                        f"inst.{property} = value")
+                                        f"inst.{property} = value",
+                                        self._inkwargs,
+                                        )
 
     def write_method_tests(self, file):
         """Write all parametrized method tests."""
@@ -235,18 +268,25 @@ class Generator:
                 arg_string = f"*{value[1][0]}, " if value[1][0] else ""
                 kwarg_string = f"**{value[2][0]}" if value[2][0] else ""
                 write_test(file, method, self._class, value[0][0],
-                           f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}")
+                           f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}",
+                           self._inkwargs,
+                           )
             else:
                 write_parametrized_method_test(file, method, self._class,
                                                *value,
-                                               f"assert inst.{method}(*args, **kwargs) == value")
+                                               f"assert inst.{method}(*args, **kwargs) == value",
+                                               self._inkwargs,
+                                               )
 
-    def write_file(self, filepath="tests.py"):
-        """Write the tests into the file."""
-        if isinstance(filepath, io.StringIO):
-            file = filepath
+    def write_file(self, filename="tests.py"):
+        """Write the tests into the file.
+
+        :param filename: Name to save the tests to, may contain the path, e.g. "/tests/test_abc.py".
+        """
+        if isinstance(filename, io.StringIO):
+            file = filename
         else:
-            file = open(filepath, "w")
+            file = open(filename, "w")
         self.write_init_test(file)
         self.write_getter_tests(file)
         self.write_setter_tests(file)
@@ -260,14 +300,21 @@ class Generator:
         self._index = self._stream.tell()
         return self._incomm + comm
 
-    def instantiate(self, instrument_class, adapter, manufacturer, **kwargs):
+    def instantiate(self, instrument_class, adapter, manufacturer, adapter_kwargs=None, **kwargs):
         """
         Instantiate the instrument and store the istantiation communication.
+
+        ..note::
+
+            You have to give all keyword arguments necessary for adapter instantiation in
+            `adapter_kwargs`, even those, which are defined in the instrument's
+            `__init__` method.
 
         :param instrument_class: Class of the instrument to test.
         :param adapter: Adapter (instance or str) for the instrument instantiation.
         :param manufacturer: Module from which to import the instrument, e.g. 'hcp' if
             instrument_class is 'pymeasure.hcp.tc038'.
+        :param adapter_kwargs: Keyword arguments for the adapter instantiation (see note above).
         :param \\**kwargs: Keyword arguments for the instrument instantiation.
         """
         self._class = instrument_class.__name__
@@ -277,8 +324,10 @@ class Generator:
             "from pymeasure.test import expected_protocol\n"
             f"from pymeasure.instruments.{manufacturer} import {self._class}\n")
         if isinstance(adapter, (int, str)):
+            if adapter_kwargs is None:
+                adapter_kwargs = {}
             try:
-                adapter = VISAAdapter(adapter, **kwargs)
+                adapter = VISAAdapter(adapter, **adapter_kwargs)
             except ImportError:
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
@@ -286,6 +335,7 @@ class Generator:
         adapter.log.setLevel(logging.DEBUG)
         self.inst = instrument_class(adapter, **kwargs)
         self._incomm = self.parse_stream()  # communication of instantiation.
+        self._inkwargs = kwargs  # instantiation kwargs
 
     def test_property_getter(self, property):
         """Test getting the `property` of the instrument, adding it to the list."""
