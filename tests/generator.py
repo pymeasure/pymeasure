@@ -228,55 +228,70 @@ class Generator:
                    self._inkwargs,
                    )
 
-    def write_getter_tests(self, file):
-        """Write all parametrized getters tests."""
-        for property, value in self._getters.items():
-            if len(value[0]) == 1:
-                v = value[1][0]
-                comparison = "is" if isinstance(v, bool) or v is None else "=="
-                write_test(file, property + "_getter", self._class, value[0][0],
-                           f"assert inst.{property} {comparison} {v}",
-                           self._inkwargs,
-                           )
-            else:
-                write_parametrized_test(file, property + "_getter", self._class,
-                                        value[0], value[1],
-                                        f"assert inst.{property} == value",
-                                        self._inkwargs,
-                                        )
+    def write_getter_test(self, file, property, parameters):
+        """Write a getter test."""
+        if len(parameters[0]) == 1:
+            v = parameters[1][0]
+            comparison = "is" if isinstance(v, bool) or v is None else "=="
+            write_test(file, property + "_getter", self._class, parameters[0][0],
+                       f"assert inst.{property} {comparison} {v}",
+                       self._inkwargs,
+                       )
+        else:
+            write_parametrized_test(file, property + "_getter", self._class,
+                                    *parameters,
+                                    f"assert inst.{property} == value",
+                                    self._inkwargs,
+                                    )
 
-    def write_setter_tests(self, file):
-        """Write all parametrized setters tests."""
-        for property, value in self._setters.items():
-            if len(value[0]) == 1:
-                v = value[1][0]
-                write_test(file, property + "_setter", self._class, value[0][0],
-                           f"inst.{property} = {v}")
-            else:
-                write_parametrized_test(file, property + "_setter", self._class,
-                                        *value,
-                                        f"inst.{property} = value",
-                                        self._inkwargs,
-                                        )
+    def write_setter_test(self, file, property, parameters):
+        """Write a setter test."""
+        if len(parameters[0]) == 1:
+            v = parameters[1][0]
+            write_test(file, property + "_setter", self._class, parameters[0][0],
+                       f"inst.{property} = {v}")
+        else:
+            write_parametrized_test(file, property + "_setter", self._class,
+                                    *parameters,
+                                    f"inst.{property} = value",
+                                    self._inkwargs,
+                                    )
+
+    def write_method_test(self, file, method, parameters):
+        """Write a test for a method."""
+        if len(parameters[0]) == 1:
+            v = parameters[-1][0]
+            comparison = "is" if isinstance(v, bool) or v is None else "=="
+            arg_string = f"*{parameters[1][0]}, " if parameters[1][0] else ""
+            kwarg_string = f"**{parameters[2][0]}" if parameters[2][0] else ""
+            write_test(file, method, self._class, parameters[0][0],
+                       f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}",
+                       self._inkwargs,
+                       )
+        else:
+            write_parametrized_method_test(file, method, self._class,
+                                           *parameters,
+                                           f"assert inst.{method}(*args, **kwargs) == value",
+                                           self._inkwargs,
+                                           )
+
+    def write_property_tests(self, file):
+        """Write tests for properties in alphabetic order.
+
+        If getter and setter exist, the setter is the first test.
+        """
+        # Get a sorted list of all properties, without repeating them
+        property_names = sorted(set(list(self._getters.keys()) + list(self._setters.keys())))
+        for property in property_names:
+            if property in self._setters:
+                self.write_setter_test(file, property, self._setters[property])
+            if property in self._getters:
+                self.write_getter_test(file, property, self._getters[property])
 
     def write_method_tests(self, file):
-        """Write all parametrized method tests."""
-        for method, value in self._calls.items():
-            if len(value[0]) == 1:
-                v = value[-1][0]
-                comparison = "is" if isinstance(v, bool) or v is None else "=="
-                arg_string = f"*{value[1][0]}, " if value[1][0] else ""
-                kwarg_string = f"**{value[2][0]}" if value[2][0] else ""
-                write_test(file, method, self._class, value[0][0],
-                           f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}",
-                           self._inkwargs,
-                           )
-            else:
-                write_parametrized_method_test(file, method, self._class,
-                                               *value,
-                                               f"assert inst.{method}(*args, **kwargs) == value",
-                                               self._inkwargs,
-                                               )
+        """Write all parametrized method tests in alphabetic order."""
+        for method in sorted(self._calls.keys()):
+            self.write_method_test(file, method, self._calls[method])
 
     def write_file(self, filename="tests.py"):
         """Write the tests into the file.
@@ -288,8 +303,7 @@ class Generator:
         else:
             file = open(filename, "w")
         self.write_init_test(file)
-        self.write_getter_tests(file)
-        self.write_setter_tests(file)
+        self.write_property_tests(file)
         self.write_method_tests(file)
         file.close()
 

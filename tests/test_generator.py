@@ -262,13 +262,12 @@ def test_init():
             ["'all fine'"],
         )}
 
-    def test_write_getter_tests(self, generator, file):
-        generator._getters = {'temperature': (
+    def test_write_getter_test(self, generator, file):
+        generator.write_getter_test(file, 'temperature', (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')]],
             [20],
-        )}
-        generator.write_getter_tests(file)
+        ))
         assert file.getvalue() == r"""
 
 def test_temperature_getter():
@@ -287,13 +286,12 @@ def test_temperature_getter():
         (7, "== 7"),
         (12.34, "== 12.34"),
     ))
-    def test_write_getter_tests_comparison(self, generator, file, value, test):
+    def test_write_getter_test_comparison(self, generator, file, value, test):
         """Test whether the comparison is changed to 'is', if the value is a boolean or None."""
-        generator._getters = {'temperature': (
+        generator.write_getter_test(file, 'temperature', (
             [[]],
             [value],
-        )}
-        generator.write_getter_tests(file)
+        ))
         assert file.getvalue().endswith(test + "\n")
 
     def test_property_setter(self, generator):
@@ -317,13 +315,12 @@ def test_temperature_getter():
             ["'xy'"],
         )}
 
-    def test_write_setter_tests(self, generator, file):
-        generator._setters = {'setpoint': (
+    def test_write_setter_test(self, generator, file):
+        generator.write_setter_test(file, 'setpoint', (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')]],
             [20],
-        )}
-        generator.write_setter_tests(file)
+        ))
         assert file.getvalue() == r"""
 
 def test_setpoint_setter():
@@ -357,15 +354,14 @@ def test_setpoint_setter():
         ((), {'quantity': 'temperature'}, 7, "(**{'quantity': 'temperature'}) == 7"),
         ((), {'quantity': 'temperature'}, False, "(**{'quantity': 'temperature'}) is False"),
     ))
-    def test_write_methods_single(self, generator, file, args, kwargs, value, test):
-        generator._calls = {'set_monitored_quantity': (
+    def test_write_method_single(self, generator, file, args, kwargs, value, test):
+        generator.write_method_test(file, 'set_monitored_quantity', (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')]],
             [args],
             [kwargs],
             [value],
-        )}
-        generator.write_method_tests(file)
+        ))
         assert file.getvalue() == r"""
 
 def test_set_monitored_quantity():
@@ -377,15 +373,14 @@ def test_set_monitored_quantity():
         assert inst.set_monitored_quantity
 """[:-1] + test + "\n"
 
-    def test_write_methods_multiple(self, generator, file):
-        generator._calls = {'set_monitored_quantity': (
+    def test_write_method_parametrized(self, generator, file):
+        generator.write_method_test(file, 'set_monitored_quantity', (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
              [(b'\x0201010W0002\x03', b'\x020K\x03')]],
             [('temperature',), (), ],
             [{}, {'quantity': 'temperature'}],
             [None, 7],
-        )}
-        generator.write_method_tests(file)
+        ))
         assert file.getvalue() == r"""
 
 @pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
@@ -422,7 +417,7 @@ def test_set_monitored_quantity(comm_pairs, args, kwargs, value):
             [100.0],
         )}
         generator._class = "TC038D"
-        generator.write_getter_tests(file)
+        generator.write_property_tests(file)
         assert file.getvalue() == r"""
 
 def test_temperature_getter():
@@ -449,34 +444,32 @@ def test_temperature_getter():
         generator.test_property_setter("setpoint", 60)
 
         generator.inst.adapter.comm_pairs.extend(
+            [(b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03')])
+        assert generator.test_property_getter("information") == "UT150333 V01.R001111222233334444"
+
+        generator.inst.adapter.comm_pairs.extend(
             [(b"\x0201010WRDD0002,01\x03", b"\x020101OK0258\x03")])
         assert generator.test_property_getter("temperature") == 60
 
+        generator.inst.adapter.comm_pairs.extend(
+            [(b"\x0201010WRDD0120,01\x03", b"\x020101OK00C8\x03")])
+        assert generator.test_property_getter("setpoint") == 20
+
         return generator
 
-    def test_multiple_getter(self, generator_multiple, file):
-        generator_multiple.write_getter_tests(file)
+    def test_write_property_tests(self, generator_multiple, file):
+        """Test that they are sorted alphabetically and collected in a single, parametrized test."""
+        generator_multiple.write_property_tests(file)
         assert file.getvalue() == r"""
 
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-      (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')],
-     20.0),
-    ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-      (b'\x0201010WRDD0002,01\x03', b'\x020101OK0258\x03')],
-     60.0),
-))
-def test_temperature_getter(comm_pairs, value):
+def test_information_getter():
     with expected_protocol(
             TC038,
-            comm_pairs,
+            [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03')],
     ) as inst:
-        assert inst.temperature == value
-"""
+        assert inst.information == 'UT150333 V01.R001111222233334444'
 
-    def test_multiple_setter(self, generator_multiple, file):
-        generator_multiple.write_setter_tests(file)
-        assert file.getvalue() == r"""
 
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
@@ -492,4 +485,29 @@ def test_setpoint_setter(comm_pairs, value):
             comm_pairs,
     ) as inst:
         inst.setpoint = value
+
+
+def test_setpoint_getter():
+    with expected_protocol(
+            TC038,
+            [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03')],
+    ) as inst:
+        assert inst.setpoint == 20.0
+
+
+@pytest.mark.parametrize("comm_pairs, value", (
+    ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+      (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')],
+     20.0),
+    ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+      (b'\x0201010WRDD0002,01\x03', b'\x020101OK0258\x03')],
+     60.0),
+))
+def test_temperature_getter(comm_pairs, value):
+    with expected_protocol(
+            TC038,
+            comm_pairs,
+    ) as inst:
+        assert inst.temperature == value
 """
