@@ -27,10 +27,38 @@ import logging
 import pytest
 
 from pymeasure.adapters import ProtocolAdapter
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.hcp import TC038, TC038D
 
 from generator import (write_test, write_parametrized_test, write_parametrized_method_test,
                        parse_stream, Generator, ByteStreamHandler)
+
+
+class FakeChildChannel(Channel):
+
+    channel_control = Channel.control("G{{ch}}.{ch}", "S{{ch}}{ch} %f",
+                                      "Control something. (float)")
+
+
+class FakeChannel(Channel):
+
+    port = Channel.ChannelCreator(FakeChildChannel, id=1)
+
+    channel_control = Channel.control("G{ch}", "S{ch} %f", "Control something. (float)")
+
+    def funny_method(self, value=7):
+        """Some method for testing purposes."""
+        return float(self.ask("M{ch} " + str(value)))
+
+
+class FakeInstrument(Instrument):
+
+    channels = Instrument.ChannelCreator(FakeChannel, id="A")
+
+    def __init__(self, adapter, name="Fake"):
+        super().__init__(adapter, name)
+
+    i_control = Instrument.control("G", "S %f", "Control instrument. (float)")
 
 
 @pytest.fixture
@@ -99,6 +127,19 @@ def test_init():
         del instr
 """
 
+    def test_write_replaces_period_with_underscore_in_name(self, file):
+        write_test(file, "ch.init", "Super", [(b"sent", b"received")],
+                   "pass  # Verify the expected communication.")
+        assert file.getvalue() == """
+
+def test_ch_init():
+    with expected_protocol(
+            Super,
+            [(b'sent', b'received')],
+    ):
+        pass  # Verify the expected communication.
+"""
+
 
 class Test_write_parametrized_test:
     def test_write(self, file):
@@ -137,9 +178,27 @@ def test_init(comm_pairs, value):
         pass
 """
 
+    def test_write_replaces_period_with_underscore_in_name(self, file):
+        write_parametrized_test(file, "ch.init", "Super", [[(b"sent", b"received")]], [None],
+                                "assert inst.xyz == value")
+        assert file.getvalue() == """
+
+@pytest.mark.parametrize("comm_pairs, value", (
+    ([(b'sent', b'received')],
+     None),
+))
+def test_ch_init(comm_pairs, value):
+    with expected_protocol(
+            Super,
+            comm_pairs,
+    ) as inst:
+        assert inst.xyz == value
+"""
+
 
 def test_write_parametrized_method(file):
-    write_parametrized_method_test(file, "set_monitored_quantity", "TC038",
+    """Test also, that a period in the name is changed to underscore."""
+    write_parametrized_method_test(file, "set_monitored.quantity", "TC038",
                                    [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
                                     [(b'\x0201010W0002\x03', b'\x020K\x03')]],
                                    [('temperature',), ()],
@@ -219,6 +278,7 @@ def test_init():
         generator = Generator()
         adapter = ProtocolAdapter(
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
+        # add a control with a str for test purposes.
         TC038.string_test = TC038.control("test?", "test %s", "Control some string.", cast=str,
                                           get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp", some_kwarg=5.7, other_kwarg=True,
@@ -245,6 +305,16 @@ def test_init():
         generator.inst.adapter.comm_pairs.extend(
             [(b"\x0201010WRDD0002,01\x03", b"\x020101OK00C8\x03")])
         assert generator.test_property_getter("temperature") == 20
+        assert generator._getters == {'temperature': (
+            [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')]],
+            [20],
+        )}
+
+    def test_property_with_test_instrument(self, generator):
+        generator.inst.adapter.comm_pairs.extend(
+            [(b"\x0201010WRDD0002,01\x03", b"\x020101OK00C8\x03")])
+        assert generator.test_inst.temperature == 20
         assert generator._getters == {'temperature': (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WRDD0002,01\x03', b'\x020101OK00C8\x03')]],
@@ -304,6 +374,16 @@ def test_temperature_getter():
             [20],
         )}
 
+    def test_property_setter_with_test_instrument(self, generator):
+        generator.inst.adapter.comm_pairs.extend(
+            [(b"\x0201010WWRD0120,01,00C8\x03", b"\x020101OK\x03")])
+        generator.test_inst.setpoint = 20
+        assert generator._setters == {'setpoint': (
+            [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')]],
+            [20],
+        )}
+
     def test_property_setter_string(self, generator):
         """Ensure that a string value is encapsulated by single ticks."""
         generator.inst.adapter.comm_pairs.extend(
@@ -340,6 +420,22 @@ def test_setpoint_setter():
         generator.inst.adapter.comm_pairs.extend(
             [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')])
         generator.test_method("set_monitored_quantity", *args, **kwargs)
+        assert generator._calls == {'set_monitored_quantity': (
+            [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+             (b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')]],
+            [args],
+            [kwargs],
+            [None],
+        )}
+
+    @pytest.mark.parametrize("args, kwargs", (
+        (('temperature',), {}),
+        ((), {'quantity': 'temperature'})
+    ))
+    def test_method_arg_with_test_instrument(self, generator, args, kwargs):
+        generator.inst.adapter.comm_pairs.extend(
+            [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')])
+        generator.test_inst.set_monitored_quantity(*args, **kwargs)
         assert generator._calls == {'set_monitored_quantity': (
             [[(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
              (b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')]],
@@ -511,3 +607,52 @@ def test_temperature_getter(comm_pairs, value):
     ) as inst:
         assert inst.temperature == value
 """
+
+
+class TestTestInstrument:
+    @pytest.fixture(scope="function")
+    def inst(self):
+        generator = Generator()
+        adapter = ProtocolAdapter()
+        inst = generator.instantiate(FakeInstrument, adapter, "fake")
+        return inst
+
+    def test_channel_setter(self, inst):
+        inst.adapter.comm_pairs.extend([("SA 15.000000", None)])
+        inst.ch_A.channel_control = 15
+        assert inst._generator._setters == {'ch_A.channel_control':
+                                            ([[(b"SA 15.000000", None)]], [15])}
+
+    def test_channel_getter(self, inst):
+        inst.adapter.comm_pairs.extend([("GA", "123.5")])
+        assert inst.ch_A.channel_control == 123.5
+        assert inst._generator._getters == {'ch_A.channel_control':
+                                            ([[(b"GA", b"123.5")]], [123.5])}
+
+    def test_write_channel_getter_test(self, inst, file):
+        """Importantly, this test checks also, that the test name does not contain a period."""
+        inst.adapter.comm_pairs.extend([("GA", "123.5")])
+        assert inst.ch_A.channel_control == 123.5
+        inst._generator.write_property_tests(file)
+        assert file.getvalue() == r"""
+
+def test_ch_A_channel_control_getter():
+    with expected_protocol(
+            FakeInstrument,
+            [(b'GA', b'123.5')],
+    ) as inst:
+        assert inst.ch_A.channel_control == 123.5
+"""
+
+    def test_channel_method(self, inst):
+        inst.adapter.comm_pairs.extend([("MA 9", "11")])
+        assert inst.ch_A.funny_method(9) == 11
+        assert inst._generator._calls == {'ch_A.funny_method':
+                                          ([[(b"MA 9", b"11")]], [(9,)], [{}], [11.])}
+
+    def test_child_channel(self, inst):
+        """Whether the child of a channel can be accessed as expected."""
+        inst.adapter.comm_pairs.extend([("GA.1", "7")])
+        assert inst.ch_A.ch_1.channel_control == 7
+        assert inst._generator._getters == {'ch_A.ch_1.channel_control':
+                                            ([[(b"GA.1", b"7")]], [7])}

@@ -26,16 +26,17 @@ import io
 import logging
 
 from pymeasure.adapters import VISAAdapter
+from pymeasure.instruments import Channel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def write_generic_test(file, name, cls_name, header_text, comm_text, test, inkwargs=None):
+def write_generic_test(file, header_text, cls_name, comm_text, test, inkwargs=None):
     """Write a generic test.
 
     :param file: File to write to.
-    :param str name: Name of the test.
+    :param list header_text: Text of the header (parametrization, test name etc.)
     :param cls_name: Name of the instrument class.
     :param list comm_pairs: List of communication pairs.
     :param str test: Test to assert for.
@@ -69,11 +70,14 @@ def write_test(file, name, cls_name, comm_pairs, test, inkwargs=None):
     :param str test: Test to assert for.
     :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
-    write_generic_test(file, name, cls_name, [f"def test_{name}():\n"],
-                       [f"            {comm_pairs},\n".replace("), (", "),\n             (")],
-                       test=test,
-                       inkwargs=inkwargs,
-                       )
+    write_generic_test(
+        file,
+        header_text=[f"def test_{name.replace('.', '_')}():\n"],
+        cls_name=cls_name,
+        comm_text=[f"            {comm_pairs},\n".replace("), (", "),\n             (")],
+        test=test,
+        inkwargs=inkwargs,
+    )
 
 
 def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, test,
@@ -90,12 +94,13 @@ def write_parametrized_test(file, name, cls_name, comm_pairs_list, values_list, 
     """
     params = [f"    ({cp},\n     {v}),\n".replace(
         "), (", "),\n      (") for cp, v in zip(comm_pairs_list, values_list)]
-    write_generic_test(file, name, cls_name,
+    write_generic_test(file,
                        header_text=['@pytest.mark.parametrize("comm_pairs, value", (\n',
                                     *params,
                                     "))\n",
-                                    f"def test_{name}(comm_pairs, value):\n",
+                                    f"def test_{name.replace('.', '_')}(comm_pairs, value):\n",
                                     ],
+                       cls_name=cls_name,
                        comm_text=["            comm_pairs,\n"],
                        test=test,
                        inkwargs=inkwargs,
@@ -119,16 +124,18 @@ def write_parametrized_method_test(file, name, cls_name, comm_pairs_list, args_l
     z = zip(comm_pairs_list, args_list, kwargs_list, values_list)
     params = [f"    ({cp},\n     {a}, {k}, {v}),\n".replace(
         "), (", "),\n      (") for cp, a, k, v in z]
-    write_generic_test(file, name, cls_name,
-                       ['@pytest.mark.parametrize("comm_pairs, args, kwargs, value", (\n',
-                        *params,
-                        "))\n",
-                        f"def test_{name}(comm_pairs, args, kwargs, value):\n",
-                        ],
-                       comm_text=["            comm_pairs,\n"],
-                       test=test,
-                       inkwargs=inkwargs
-                       )
+    write_generic_test(
+        file,
+        cls_name=cls_name,
+        header_text=['@pytest.mark.parametrize("comm_pairs, args, kwargs, value", (\n',
+                     *params,
+                     "))\n",
+                     f"def test_{name.replace('.', '_')}(comm_pairs, args, kwargs, value):\n",
+                     ],
+        comm_text=["            comm_pairs,\n"],
+        test=test,
+        inkwargs=inkwargs
+    )
 
 
 def parse_stream(stream):
@@ -195,6 +202,43 @@ class ByteStreamHandler(logging.StreamHandler):
         self.formatter = ByteFormatter()
 
 
+class TestInstrument:
+    """A man-in-the-middle instrument, which logs property access and method calls.
+
+    :param instrument: The real instrument, given by the generator.
+    :param generator: The generator which writes the tests.
+    :param name: Name in case of a channel with trailing period, for example :code:`"ch_1."`.
+    """
+
+    def __init__(self, instrument, generator, name=""):
+        self._inst = instrument
+        self._generator = generator
+        self._name = name
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            return super().__getattribute__(name)
+        elif name == "adapter":
+            return self._inst.adapter
+        else:
+            value = getattr(self._inst, name)
+            if callable(value):
+                def test_method(*args, **kwargs):
+                    return self._generator._test_method(value, self._name + name, *args, **kwargs)
+                return test_method
+            elif isinstance(value, Channel):
+                return TestInstrument(value, self._generator, f"{self._name}{name}.")
+            self._generator._store_property_getter_test(self._name + name, value)
+            return value
+
+    def __setattr__(self, name, value):
+        if name.startswith("_"):
+            super().__setattr__(name, value)
+        else:
+            setattr(self._inst, name, value)
+            self._generator._store_property_setter_test(self._name + name, value)
+
+
 class Generator:
     """
     Generates tests from the communication with an instrument.
@@ -203,12 +247,11 @@ class Generator:
     .. code::
 
         g = Generator()
-        g.instantiate(TC038, "COM5", 'hcp')
-        g.test_property("information")
-        g.test_property("monitored_value")
-        g.test_property_setter("setpoint", 20)
-        g.test_property("setpoint")
-        g.write_file("test_tc038.py")
+        inst = g.instantiate(TC038, "COM5", 'hcp')
+        inst.information  # returns the 'information' property and adds it to the tests
+        inst.setpoint = 20
+        inst.setpoint == 20  # should be True
+        g.write_file("test_tc038.py")  # write the tests to a file
     """
 
     def __init__(self):
@@ -233,28 +276,42 @@ class Generator:
         if len(parameters[0]) == 1:
             v = parameters[1][0]
             comparison = "is" if isinstance(v, bool) or v is None else "=="
-            write_test(file, property + "_getter", self._class, parameters[0][0],
-                       f"assert inst.{property} {comparison} {v}",
-                       self._inkwargs,
+            write_test(file,
+                       name=property.replace(".", "_") + "_getter",
+                       cls_name=self._class,
+                       comm_pairs=parameters[0][0],
+                       test=f"assert inst.{property} {comparison} {v}",
+                       inkwargs=self._inkwargs,
                        )
         else:
-            write_parametrized_test(file, property + "_getter", self._class,
-                                    *parameters,
-                                    f"assert inst.{property} == value",
-                                    self._inkwargs,
+            write_parametrized_test(file,
+                                    name=property.replace(".", "_") + "_getter",
+                                    cls_name=self._class,
+                                    comm_pairs_list=parameters[0],
+                                    values_list=parameters[1],
+                                    test=f"assert inst.{property} == value",
+                                    inkwargs=self._inkwargs,
                                     )
 
     def write_setter_test(self, file, property, parameters):
         """Write a setter test."""
         if len(parameters[0]) == 1:
             v = parameters[1][0]
-            write_test(file, property + "_setter", self._class, parameters[0][0],
-                       f"inst.{property} = {v}")
+            write_test(file,
+                       name=property.replace(".", "_") + "_setter",
+                       cls_name=self._class,
+                       comm_pairs=parameters[0][0],
+                       test=f"inst.{property} = {v}",
+                       # inkwargs=self._inkwargs,  TODO
+                       )
         else:
-            write_parametrized_test(file, property + "_setter", self._class,
-                                    *parameters,
-                                    f"inst.{property} = value",
-                                    self._inkwargs,
+            write_parametrized_test(file,
+                                    name=property.replace(".", "_") + "_setter",
+                                    cls_name=self._class,
+                                    comm_pairs_list=parameters[0],
+                                    values_list=parameters[-1],
+                                    test=f"inst.{property} = value",
+                                    inkwargs=self._inkwargs,
                                     )
 
     def write_method_test(self, file, method, parameters):
@@ -264,15 +321,23 @@ class Generator:
             comparison = "is" if isinstance(v, bool) or v is None else "=="
             arg_string = f"*{parameters[1][0]}, " if parameters[1][0] else ""
             kwarg_string = f"**{parameters[2][0]}" if parameters[2][0] else ""
-            write_test(file, method, self._class, parameters[0][0],
-                       f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}",
-                       self._inkwargs,
+            write_test(file,
+                       name=method.replace(".", "_"),
+                       cls_name=self._class,
+                       comm_pairs=parameters[0][0],
+                       test=f"assert inst.{method}({arg_string}{kwarg_string}) {comparison} {v}",
+                       inkwargs=self._inkwargs,
                        )
         else:
-            write_parametrized_method_test(file, method, self._class,
-                                           *parameters,
-                                           f"assert inst.{method}(*args, **kwargs) == value",
-                                           self._inkwargs,
+            write_parametrized_method_test(file,
+                                           name=method.replace(".", "_"),
+                                           cls_name=self._class,
+                                           comm_pairs_list=parameters[0],
+                                           args_list=parameters[1],
+                                           kwargs_list=parameters[2],
+                                           values_list=parameters[-1],
+                                           test=f"assert inst.{method}(*args, **kwargs) == value",
+                                           inkwargs=self._inkwargs,
                                            )
 
     def write_property_tests(self, file):
@@ -316,7 +381,7 @@ class Generator:
 
     def instantiate(self, instrument_class, adapter, manufacturer, adapter_kwargs=None, **kwargs):
         """
-        Instantiate the instrument and store the istantiation communication.
+        Instantiate the instrument and store the instantiation communication.
 
         ..note::
 
@@ -330,6 +395,7 @@ class Generator:
             instrument_class is 'pymeasure.hcp.tc038'.
         :param adapter_kwargs: Keyword arguments for the adapter instantiation (see note above).
         :param \\**kwargs: Keyword arguments for the instrument instantiation.
+        :return: A man-in-the-middle instrument, which can be used like a normal instrument.
         """
         self._class = instrument_class.__name__
         log.info(f"Instantiate {self._class}.")
@@ -350,11 +416,11 @@ class Generator:
         self.inst = instrument_class(adapter, **kwargs)
         self._incomm = self.parse_stream()  # communication of instantiation.
         self._inkwargs = kwargs  # instantiation kwargs
+        self.test_inst = TestInstrument(self.inst, self)
+        return self.test_inst
 
-    def test_property_getter(self, property):
-        """Test getting the `property` of the instrument, adding it to the list."""
-        log.info(f"Test property {property} getter.")
-        value = getattr(self.inst, property)
+    def _store_property_getter_test(self, property, value):
+        """Store the property getter test with returned `value`."""
         comm = self.parse_stream()
         if property not in self._getters:
             self._getters[property] = [], []
@@ -363,10 +429,15 @@ class Generator:
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
         return value
 
-    def test_property_setter(self, property, value):
-        """Test setting the `property` of the instrument to `value`, adding it to the list."""
-        log.info(f"Test property {property} setter.")
-        setattr(self.inst, property, value)
+    def test_property_getter(self, property):
+        """Test getting the `property` of the instrument, adding it to the list."""
+        log.info(f"Test property {property} getter.")
+        value = getattr(self.inst, property)
+        self._store_property_getter_test(property, value)
+        return value
+
+    def _store_property_setter_test(self, property, value):
+        """Store the property setter test with `value`."""
         comm = self.parse_stream()
         if property not in self._setters:
             self._setters[property] = [], []
@@ -374,18 +445,30 @@ class Generator:
         c.append(comm)
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
 
-    def test_method(self, method, *args, **kwargs):
-        """Test calling the `method` of the instruments with `args` and `kwargs`."""
-        log.info(f"Test method {method}.")
-        value = getattr(self.inst, method)(*args, **kwargs)
+    def test_property_setter(self, property, value):
+        """Test setting the `property` of the instrument to `value`, adding it to the list."""
+        log.info(f"Test property {property} setter.")
+        setattr(self.inst, property, value)
+        self._store_property_setter_test(property, value)
+
+    def _test_method(self, method, method_name, *args, **kwargs):
+        """Test calling `method` with the full `method_name` and `args` and `kwargs`."""
+        value = method(*args, **kwargs)
         comm = self.parse_stream()
-        if method not in self._calls:
-            self._calls[method] = [], [], [], []
-        c, a, k, v = self._calls[method]
+        if method_name not in self._calls:
+            self._calls[method_name] = [], [], [], []
+        c, a, k, v = self._calls[method_name]
         c.append(comm)
         a.append(args)
         k.append(kwargs)
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
+        return value
+
+    def test_method(self, method_name, *args, **kwargs):
+        """Test calling the `method_name` of the instruments with `args` and `kwargs`."""
+        log.info(f"Test method {method_name}.")
+        method = getattr(self.inst, method_name)
+        return self._test_method(method, method_name, *args, **kwargs)
 
     # batch tests
     def test_property_setter_batch(self, property, values):
