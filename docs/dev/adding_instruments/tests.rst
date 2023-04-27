@@ -63,6 +63,39 @@ Some protocol tests in the test suite can serve as examples:
 * Testing a multi-channel instrument: :code:`tests/instruments/tektronix/test_afg3152.py`
 * Testing instruments using frame-based communication: :code:`tests/instruments/hcp/tc038.py`
 
+Test generator
+--------------
+
+In order to facilitate writing tests, if you already have working code and a device at hand, we have a :class:`Generator` for tests.
+You can control your instrument with the TestGenerator as a middle man.
+It logs the method calls, the device communication and the return values, if any, and writes tests according to these log entries.
+
+.. code-block:: python
+
+    from generator import Generator
+
+    generator = Generator()
+    inst = generator.instantiate(TC038, "COM5", 'hcp', adapter_kwargs={'baud_rate': 9600})
+
+As a first step, this code imports the Generator and generates a middle man instrument.
+The :meth:`instantiate` method creates an instrument instance and logs the communication at startup.
+As the generator is not able to inspect the instrument's :meth:`__init__`, you have to specify the connection settings via the :code:`adapter_kwargs` dictionary.
+These adapter arguments are not written to tests.
+If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
+These additional keyword arguments are included in the tests.
+
+Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038("COM5")`.
+Having gotten and set some properties, and called some methods, we can write the tests to a file.
+
+.. code-block:: python
+
+    inst.information  # returns the 'information' property
+    inst.setpoint  # returns some value
+    inst.setpoint = 20
+    inst.setpoint == 20
+
+    generator.write_file("test_tc038.py")
+
 
 .. _device_tests:
 
