@@ -45,6 +45,7 @@ class ResultsCurve(pg.PlotDataItem):
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
+        self.color = self.opts['pen'].color()
 
     def update_data(self):
         """Updates the data by polling the results"""
@@ -55,8 +56,13 @@ class ResultsCurve(pg.PlotDataItem):
         # Set x-y data
         self.setData(data[self.x], data[self.y])
 
+    def set_color(self, color):
+        self.pen.setColor(color)
+        self.color = self.opts['pen'].color()
+        self.updateItems(styleUpdate=True)
 
 # TODO: Add method for changing x and y
+
 
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
