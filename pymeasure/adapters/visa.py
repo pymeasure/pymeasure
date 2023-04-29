@@ -140,7 +140,7 @@ class VISAAdapter(Adapter):
         try:
             if self.manager.visalib.library_path == "unset":
                 # if using the pyvisa-sim library the manager has to be also closed.
-                # this works around pyvisa/pyvisa-sim#68
+                # this works around https://github.com/pyvisa/pyvisa-sim/issues/82
                 self.manager.close()
         except AttributeError:
             # AttributeError can occur during __del__ calling close
