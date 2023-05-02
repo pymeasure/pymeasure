@@ -64,7 +64,7 @@ class DSP7265(DSPBase):
         lockin7265.voltage = 1                  # Set oscillator amplitude to 1 V
         lockin7265.gain = 20                    # Set AC gain to 20 dB
         print(lockin7265.x)                     # Measure X channel voltage
-        lockin7265.shutdown                     # Instrument shutdown
+        lockin7265.shutdown()                   # Instrument shutdown
 
     """
 
