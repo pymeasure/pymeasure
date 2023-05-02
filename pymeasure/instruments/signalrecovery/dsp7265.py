@@ -90,10 +90,10 @@ class DSP7265(DSPBase):
     # Initializer
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Signal Recovery DSP 7265", **kwargs):
         super().__init__(
             adapter,
-            name="Signal Recovery DSP 7265",
+            name,
             **kwargs
         )
 

@@ -36,6 +36,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 # =============================================================================
 # Instrument file
 # =============================================================================
@@ -75,9 +76,9 @@ class DSP7225(DSPBase):
     # Initializer
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Signal Recovery DSP 7225", **kwargs):
         super().__init__(
             adapter,
-            name="Signal Recovery DSP 7225",
+            name,
             **kwargs
         )
