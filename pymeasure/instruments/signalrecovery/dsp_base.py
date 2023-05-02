@@ -434,11 +434,11 @@ class DSPBase(Instrument):
 
         Command returns four values:
         **First value - Curve Acquisition Status:** Number with 5 possibilities:
-            0: no activity
-            1: acquisition via TD command running
-            2: acquisition by a TDC command running
-            5: acquisition via TD command halted
-            6: acquisition bia TDC command halted
+        0: no activity
+        1: acquisition via TD command running
+        2: acquisition by a TDC command running
+        5: acquisition via TD command halted
+        6: acquisition bia TDC command halted
         **Second value - Number of Sweeps Acquired**: Number of sweeps already
         acquired.
         **Third value - Status Byte:** Decimal representation of the status byte
@@ -644,11 +644,11 @@ class DSPBase(Instrument):
         The requirements for converting the data are as follows:
 
         - Converting X, Y, magnitude and noise requires sensitivity data, which
-        can either be part of the provided data or can be provided via the
-        sensitivity argument
+          can either be part of the provided data or can be provided via the
+          sensitivity argument
         - The same holds for X2, Y2 and magnitude2 with sensitivity2.
         - Converting the frequency requires both 'frequency part 1' and
-        'frequency part 2'.
+          'frequency part 2'.
 
         :param dict buffer_data:
             The data to be converted. Must be in the format as returned by the
