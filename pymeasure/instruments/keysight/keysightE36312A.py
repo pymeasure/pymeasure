@@ -77,11 +77,12 @@ class KeysightE36312A(Instrument):
     interface for interacting with the instrument.
 
     .. code-block:: python
-    supply = KeysightE36312A(resource)
-    supply.ch_1.voltage_setpoint=10
-    supply.ch_1.current_setpoint=0.1
-    supply.ch_1.output_enabled=True
-    print(supply.ch_1.voltage)
+
+        supply = KeysightE36312A(resource)
+        supply.ch_1.voltage_setpoint=10
+        supply.ch_1.current_setpoint=0.1
+        supply.ch_1.output_enabled=True
+        print(supply.ch_1.voltage)
     """
 
     channels = Instrument.ChannelCreator(VoltageChannel, (1, 2, 3))
