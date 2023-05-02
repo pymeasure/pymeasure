@@ -30,10 +30,6 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.signalrecovery.dsp7225 import DSP7225
 
 
-# frequency_values = [0.001, 1.2e5]
-#  harmonic_values = [1, 32]
-#   curve_buffer_bit_values = [1, 65535]
-
 @pytest.mark.parametrize("frequency", [
     .001,
     1e4,
