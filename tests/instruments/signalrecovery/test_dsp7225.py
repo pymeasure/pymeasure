@@ -22,5 +22,39 @@
 # THE SOFTWARE.
 #
 
-from .dsp7265 import DSP7265
-from .dsp7225 import DSP7225
+import pytest
+from pytest import raises
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.signalrecovery.dsp7225 import DSP7225
+
+
+# frequency_values = [0.001, 1.2e5]
+#  harmonic_values = [1, 32]
+#   curve_buffer_bit_values = [1, 65535]
+
+@pytest.mark.parametrize("frequency", [
+    .001,
+    1e4,
+    100,
+])
+def test_valid_frequency(frequency):
+    with expected_protocol(
+            DSP7225,
+            [(b"OF. %g" % frequency, None)],
+    ) as instr:
+        instr.frequency = frequency
+
+
+@pytest.mark.parametrize("frequency", [
+    0,
+    1e14,
+])
+def test_invalid_frequency(frequency):
+    with raises(ValueError):
+        with expected_protocol(
+                DSP7225,
+                [(b"OF. %g" % frequency, None)],
+        ) as instr:
+            instr.frequency = frequency
