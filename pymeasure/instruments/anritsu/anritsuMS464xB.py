@@ -41,7 +41,7 @@ class AnritsuMS464xB(Instrument):
     :class:`~.AnritsuMS4645B`, :class:`~.AnritsuMS4647B`), that only differ in the available
     frequency range.
 
-    Can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
+    They can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
     of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
     channel number.
 
@@ -153,7 +153,7 @@ class AnritsuMS464xB(Instrument):
 
     datafile_frequency_unit = Instrument.control(
         ":FORM:SNP:FREQ?", ":FORM:SNP:FREQ %s",
-        """Control the frequency unit displayed in an SNP data file.
+        """Control the frequency unit displayed in a SNP data file.
 
         Valid values are HZ, KHZ, MHZ, GHZ.
         """,
@@ -357,7 +357,7 @@ class AnritsuMS464xB(Instrument):
 
     external_trigger_delay = Instrument.control(
         ":TRIG:EXT:DEL?", ":TRIG:EXT:DEL %g",
-        """Control the the delay time of the external trigger.
+        """Control the delay time of the external trigger in seconds.
 
         Valid values are between 0 [s] and 10 [s] in steps of 1e-9 [s] (i.e. 1 ns).
         """,
@@ -367,7 +367,7 @@ class AnritsuMS464xB(Instrument):
 
     external_trigger_edge = Instrument.control(
         ":TRIG:EXT:EDG?", ":TRIG:EXT:EDG %s",
-        """Control the which edge is used for triggering of the external trigger.
+        """Control the edge type of the external trigger.
 
         Valid values are POS (for positive or leading edge) or NEG (for negative or trailing edge).
         """,
@@ -403,15 +403,15 @@ class AnritsuMS464xB(Instrument):
     )
 
     def trigger(self):
-        """ Triggers a continuous sweep from the remote interface. """
+        """ Trigger a continuous sweep from the remote interface. """
         self.write("*TRG")
 
     def trigger_single(self):
-        """ Triggers a single sweep with synchronization from the remote interface. """
+        """ Trigger a single sweep with synchronization from the remote interface. """
         self.write(":TRIG:SING")
 
     def trigger_continuous(self):
-        """ Triggers a continuous sweep from the remote interface. """
+        """ Trigger a continuous sweep from the remote interface. """
         self.write(":TRIG")
 
     hold_function_all_channels = Instrument.control(
@@ -530,7 +530,7 @@ class Trace(Channel):
     placeholder = "tr"
 
     def activate(self):
-        """ Sets the indicated trace as the active one. """
+        """ Set the indicated trace as the active one. """
         self.write(":CALC{{ch}}:PAR{tr}:SEL")
 
     measurement_parameter = Channel.control(
@@ -628,7 +628,7 @@ class MeasurementChannel(Channel):
         return self.parent.check_errors()
 
     def activate(self):
-        """ Sets the indicated channel as the active channel. """
+        """ Set the indicated channel as the active channel. """
         self.write(":DISP:WIND{ch}:ACT")
 
     number_of_traces = Channel.control(
@@ -775,7 +775,7 @@ class MeasurementChannel(Channel):
     )
 
     def clear_average_count(self):
-        """ Clears and restarts the averaging sweep count of the indicated channel. """
+        """ Clear and restart the averaging sweep count of the indicated channel. """
         self.write(":SENS{ch}:AVER:CLE")
 
     average_count = Channel.control(
