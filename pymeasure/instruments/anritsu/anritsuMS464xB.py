@@ -96,7 +96,7 @@ class AnritsuMS464xB(Instrument):
     def update_channels(self, number_of_channels=None, **kwargs):
         """Create or remove channels to be correct with the actual number of channels.
 
-        :param int number_of_channels: optional, if given defines the desired number of channels.
+        :param int number_of_channels: optional, if given, defines the desired number of channels.
         """
         if number_of_channels is None:
             number_of_channels = self.number_of_channels
