@@ -433,7 +433,7 @@ class AnritsuMS464xB(Instrument):
     )
 
     def load_data_file(self, filename):
-        """Load a data file in VNA HDD.
+        """Load a data file from the VNA HDD into the VNA memory.
 
         :param str filename: full filename including path
         """
