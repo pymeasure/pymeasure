@@ -86,9 +86,9 @@ class AnritsuMS464xB(Instrument):
             **kwargs,
         )
 
-        self.PORTS = installed_ports if installed_ports != "auto" else self.number_of_ports
+        self.PORTS = self.number_of_ports if installed_ports == "auto" else installed_ports
 
-        number_of_channels = active_channels if active_channels != "auto" else None
+        number_of_channels = None if active_channels == "auto" else active_channels
 
         self.update_channels(number_of_channels=number_of_channels,
                              traces=traces_per_channel)
