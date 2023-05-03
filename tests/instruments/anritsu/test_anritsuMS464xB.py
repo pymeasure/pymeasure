@@ -38,6 +38,8 @@ def test_init():
         assert len(instr.ch_1.ports) == 4
         assert len(instr.ch_1.traces) == 16
 
+
+def test_init_with_different_channel_numbers():
     # Test init with different number of active channels and installed ports
     with expected_protocol(
         AnritsuMS464xB,
@@ -50,6 +52,8 @@ def test_init():
         assert len(instr.ch_1.ports) == 2
         assert len(instr.ch_1.traces) == 10
 
+
+def test_init_unknown_active_channels():
     # Test init with unknown active channels and traces
     with expected_protocol(
         AnritsuMS464xB,
@@ -127,7 +131,7 @@ def test_channel_trace_measurement_parameter():
         assert instr.ch_2.tr_6.measurement_parameter == "S21"
 
 
-def test_subclasses():
+def test_subclass_MS4642B_frequency_range():
     with expected_protocol(
         AnritsuMS4642B,
         [(":SENS1:FREQ:STOP 2e+10", None)],
@@ -136,6 +140,8 @@ def test_subclasses():
         with pytest.raises(ValueError):
             instr.ch_1.frequency_stop = 3e10
 
+
+def test_subclass_MS4644B_frequency_range():
     with expected_protocol(
         AnritsuMS4644B,
         [(":SENS1:FREQ:STOP 4e+10", None)],
@@ -144,6 +150,8 @@ def test_subclasses():
         with pytest.raises(ValueError):
             instr.ch_1.frequency_stop = 5e10
 
+
+def test_subclass_MS4645B_frequency_range():
     with expected_protocol(
         AnritsuMS4645B,
         [(":SENS1:FREQ:STOP 5e+10", None)],
@@ -152,6 +160,8 @@ def test_subclasses():
         with pytest.raises(ValueError):
             instr.ch_1.frequency_stop = 6e10
 
+
+def test_subclass_MS4647B_frequency_range():
     with expected_protocol(
         AnritsuMS4647B,
         [(":SENS1:FREQ:STOP 7e+10", None)],
