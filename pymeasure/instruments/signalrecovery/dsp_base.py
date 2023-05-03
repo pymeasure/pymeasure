@@ -101,7 +101,7 @@ class DSPBase(Instrument):
         )
 
     def read(self, **kwargs):
-        """Removes extra unicode character from instrument readings."""
+        """Read the response and remove extra unicode character from instrument readings."""
         return super().read(**kwargs).replace('\x00', '')
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

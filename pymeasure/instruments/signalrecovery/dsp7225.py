@@ -43,9 +43,10 @@ log.addHandler(logging.NullHandler())
 
 
 class DSP7225(DSPBase):
-    """Represents the Signal Recovery DSP 7225 lock-in amplifier. Class
-    inherits commands from the DSPBase parent class and utilizes dynamic
-    properties adjust valid values on various properties.
+    """Represents the Signal Recovery DSP 7225 lock-in amplifier.
+
+    Class inherits commands from the DSPBase parent class and utilizes dynamic
+    properties for various properties.
 
     .. code-block:: python
 

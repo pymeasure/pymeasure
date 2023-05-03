@@ -46,9 +46,10 @@ log.addHandler(logging.NullHandler())
 
 
 class DSP7265(DSPBase):
-    """Represents the Signal Recovery DSP 7265 lock-in amplifier. Class
-    inherits commands from the DSPBase parent class and utilizes dynamic
-    properties adjust valid values on various properties.
+    """Represents the Signal Recovery DSP 7265 lock-in amplifier.
+
+    Class inherits commands from the DSPBase parent class and utilizes dynamic
+    properties for various properties and includes additional functionality.
 
     .. code-block:: python
 
@@ -123,7 +124,7 @@ class DSP7265(DSPBase):
 
     @property
     def adc3(self):
-        """Reads the ADC3 input voltage."""
+        """Measure the ADC3 input voltage."""
         # 50,000 for 1V signal over 1 s
         integral = self.values("ADC 3")[0]
         return integral / (50000.0 * self.adc3_time)
