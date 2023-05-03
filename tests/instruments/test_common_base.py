@@ -35,7 +35,10 @@ class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
     def __init__(self, parent, id=None, *args, **kwargs):
-        super().__init__()
+        print(args, kwargs)
+        if "test" in kwargs:
+            self.test = kwargs.pop("test")
+        super().__init__(*args, **kwargs)
         self.parent = parent
         self.id = id
         self.args = args
@@ -85,7 +88,7 @@ def generic():
 
 class FakeBase(CommonBaseTesting):
     def __init__(self, *args, **kwargs):
-        super().__init__(FakeAdapter())
+        super().__init__(FakeAdapter(), *args, **kwargs)
 
     fake_ctrl = CommonBase.control(
         "", "%d", "docs",
@@ -217,7 +220,7 @@ class TestAddChild:
 
     def test_arguments(self, parent):
         assert parent.channels["A"].id == "A"
-        assert parent.channels["A"].kwargs == {'test': 5}
+        assert parent.channels["A"].test == 5
 
     def test_attribute_access(self, parent):
         assert parent.ch_B == parent.channels["B"]
@@ -334,6 +337,18 @@ def test_ask_writes_and_reads():
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
+
+
+def test_global_preprocess_reply():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
+        assert cb.values("x5x") == [5]
+
+
+def test_values_global_preprocess_reply():
+    cb = CommonBaseTesting(FakeAdapter())
+    cb.preprocess_reply = lambda v: v.strip("x")
+    assert cb.values("x5x") == [5]
 
 
 def test_binary_values(fake):
@@ -626,7 +641,7 @@ def test_measurement_cast(cast, expected):
     class Fake(CommonBaseTesting):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
-    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
         assert instr.x == expected
 
 

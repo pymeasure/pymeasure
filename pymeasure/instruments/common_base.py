@@ -97,6 +97,13 @@ class CommonBase:
 
     This class contains everything needed for pymeasure's property creator
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
+
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
@@ -119,9 +126,14 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self, **kwargs):
+    def __init__(self, preprocess_reply=None, **kwargs):
         self._special_names = self._setup_special_names()
         self._create_channels()
+        if preprocess_reply is not None:
+            warn(("Parameter `preprocess_reply` is deprecated. "
+                 "Implement it in the instrument, e.g. in `read`, instead."),
+                 FutureWarning)
+        self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
 
     class ChannelCreator:
@@ -311,6 +323,8 @@ class CommonBase:
         results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
+        elif callable(self.preprocess_reply):
+            results = self.preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
@@ -347,7 +361,7 @@ class CommonBase:
         map_values=False,
         get_process=lambda v: v,
         set_process=lambda v: v,
-        command_process=lambda c: c,
+        command_process=None,
         check_set_errors=False,
         check_get_errors=False,
         dynamic=False,
@@ -379,6 +393,10 @@ class CommonBase:
             before value mapping, returning the processed value
         :param command_process: A function that takes a command and allows processing
             before executing the command
+
+            .. deprecated:: 0.12
+                Use a dynamic property instead.
+
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
@@ -394,7 +412,7 @@ class CommonBase:
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
-            ..deprecated:: 0.12
+            .. deprecated:: 0.12
                 Use `values_kwargs` dictionary parameter instead.
 
         Example of usage of dynamic parameter is as follows:
@@ -435,6 +453,11 @@ class CommonBase:
                  f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
                  FutureWarning)
             values_kwargs.update(kwargs)
+
+        if command_process is None:
+            command_process = lambda c: c  # noqa: E731
+        else:
+            warn("Do not use `command_process`, use a dynamic property instead.", FutureWarning)
 
         def fget(self,
                  get_command=get_command,
@@ -518,7 +541,8 @@ class CommonBase:
 
     @staticmethod
     def measurement(get_command, docs, values=(), map_values=None,
-                    get_process=lambda v: v, command_process=lambda c: c,
+                    get_process=lambda v: v,
+                    command_process=None,
                     check_get_errors=False, dynamic=False,
                     preprocess_reply=None,
                     separator=',',
@@ -540,6 +564,10 @@ class CommonBase:
             before value mapping, returning the processed value
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
+
+            .. deprecated:: 0.12
+                Use a dynamic property instead.
+
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
@@ -554,7 +582,7 @@ class CommonBase:
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
-            ..deprecated:: 0.12
+            .. deprecated:: 0.12
                 Use `values_kwargs` dictionary parameter instead.
         """
         if values_kwargs is None:

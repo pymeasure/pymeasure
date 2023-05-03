@@ -73,10 +73,10 @@ class LakeShore425(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="LakeShore 425 Gaussmeter", **kwargs):
         super().__init__(
             adapter,
-            "LakeShore 425 Gaussmeter",
+            name,
             asrl={'write_termination': "\n",
                   'read_termination': "\n",  # from manual
                   'baud_rate': 57600,

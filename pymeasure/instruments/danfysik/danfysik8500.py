@@ -56,10 +56,10 @@ class Danfysik8500(Instrument):
         "PRINT", """ Reads the idenfitication information. """
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Danfysik 8500 Current Supply", **kwargs):
         super().__init__(
             adapter,
-            "Danfysik 8500 Current Supply",
+            name,
             includeSCPI=False,
             write_termination="\r",
             read_termination="\r",

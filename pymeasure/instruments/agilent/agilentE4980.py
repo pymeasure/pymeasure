@@ -98,9 +98,9 @@ Select trigger source; accept the values:
                                         validator=strict_discrete_set,
                                         values=["HOLD", "INT", "BUS", "EXT"])
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent E4980A/AL LCR meter", **kwargs):
         super().__init__(
-            adapter, "Agilent E4980A/AL LCR meter", **kwargs
+            adapter, name, **kwargs
         )
         self.timeout = 30000
         # format: output ascii
