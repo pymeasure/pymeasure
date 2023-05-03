@@ -86,8 +86,8 @@ def text_length_validator(value, values):
     return value[:values]
 
 
-class Keithley2700(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 2700 Multimeter/Switch System and provides a
+class Keithley2700(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 2700 Multimeter/Switch System and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
