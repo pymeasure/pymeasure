@@ -41,9 +41,9 @@ class AnritsuMS464xB(Instrument):
     :class:`~.AnritsuMS4645B`, :class:`~.AnritsuMS4647B`), that only differ in the available
     frequency range.
 
-    They can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the configuration
-    of the instrument), that are accessible via the `channels` dict or directly via `ch_` + the
-    channel number.
+    They can contain up to 16 instances of :class:`~.MeasurementChannel` (depending on the
+    configuration of the instrument), that are accessible via the `channels` dict or directly via
+    `ch_` + the channel number.
 
     :param active_channels: defines the number of active channels (default=16); if active_channels
         is "auto", the instrument will be queried for the number of active channels.
@@ -302,8 +302,8 @@ class AnritsuMS464xB(Instrument):
         ":DISP:SPL?", ":DISP:SPL %s",
         """Control the channel display layout in a Row-by-Column format.
 
-        Valid values are: {}. The number
-        following the R indicates the number of rows, following the C the number of columns.
+        Valid values are: {}. The number following the R indicates the number of rows, following the
+        C the number of columns.
         """.format(", ".join(DISPLAY_LAYOUTS)),
         values=DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
