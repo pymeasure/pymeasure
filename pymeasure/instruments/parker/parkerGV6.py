@@ -35,10 +35,10 @@ class ParkerGV6(Instrument):
 
     degrees_per_count = 0.00045  # 90 deg per 200,000 count
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Parker GV6 Motor Controller", **kwargs):
         super().__init__(
             adapter,
-            "Parker GV6 Motor Controller",
+            name,
             asrl={'baud_rate': 9600,
                   'timeout': 500,
                   },

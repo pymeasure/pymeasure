@@ -81,7 +81,7 @@ class PlotFrame(QtWidgets.QFrame):
                                                   style=QtCore.Qt.PenStyle.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
         self.timer.timeout.connect(self.crosshairs.update)
         self.timer.timeout.connect(self.updated)

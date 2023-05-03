@@ -50,10 +50,11 @@ class SG380(Instrument):
         in Hz. This property can be set. """
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SG380 RF Signal Generator",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Stanford Research Systems SG380 RF Signal Generator",
+            name,
             **kwargs
         )
 

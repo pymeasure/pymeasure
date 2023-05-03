@@ -52,6 +52,11 @@ def _deprecation_warning_channels(property_name):
     return func
 
 
+def deprecated_strict_discrete_set(value, values):
+    warn("This property is deprecated, use channels instead.", FutureWarning)
+    return strict_discrete_set(value, values)
+
+
 class DriverChannel(Channel):
     """A laser diode driver channel for the IBeam Smart laser."""
 
@@ -222,12 +227,12 @@ class IBeamSmart(Instrument):
 
         .. deprecated:: 0.12 Use attr:`emission` instead.
         """,
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
-        command_process=_deprecation_warning(
+        preprocess_reply=_deprecation_warning(
             "Property `laser_enabled` is deprecated, use `emission` instead."),
     )
 
@@ -237,12 +242,12 @@ class IBeamSmart(Instrument):
 
         .. deprecated:: 0.12 Use :attr:`ch_1.enabled` instead.
         """,
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 1" if v else "di 1",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel1_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel1_enabled"),
     )
 
     channel2_enabled = Instrument.control(
@@ -250,12 +255,12 @@ class IBeamSmart(Instrument):
         """Control status of Channel 2 of the laser (bool).
 
         .. deprecated:: 0.12 Use :attr:`ch_2.enabled` instead.""",
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 2" if v else "di 2",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel2_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel2_enabled"),
     )
 
     power = Instrument.control(

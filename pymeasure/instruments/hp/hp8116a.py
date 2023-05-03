@@ -56,13 +56,13 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard 8116A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            'Hewlett-Packard 8116A',
+            name,
             includeSCPI=False,
             **kwargs
         )

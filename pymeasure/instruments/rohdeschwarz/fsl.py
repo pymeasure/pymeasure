@@ -50,9 +50,9 @@ class FSL(Instrument):
     dBm, etc.).
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
         super().__init__(
-            adapter, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs
+            adapter, name, includeSCPI=True, **kwargs
         )
 
     # Frequency settings ------------------------------------------------------
