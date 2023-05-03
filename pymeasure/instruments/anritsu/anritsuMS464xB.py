@@ -307,7 +307,6 @@ class AnritsuMS464xB(Instrument):
         """.format(", ".join(DISPLAY_LAYOUTS)),
         values=DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
-        cast=int,
     )
 
     active_channel = Instrument.control(
@@ -658,7 +657,6 @@ class MeasurementChannel(Channel):
         """.format(", ".join(AnritsuMS464xB.DISPLAY_LAYOUTS)),
         values=AnritsuMS464xB.DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
-        cast=int,
     )
 
     application_type = Channel.control(
