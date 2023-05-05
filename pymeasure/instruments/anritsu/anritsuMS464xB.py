@@ -303,10 +303,13 @@ class AnritsuMS464xB(Instrument):
         """Control the channel display layout in a Row-by-Column format.
 
         Valid values are: {}. The number following the R indicates the number of rows, following the
-        C the number of columns.
+        C the number of columns; e.g. R2C2 results in a 2-by-2 layout. The options that contain two
+        C's or R's result in asymmetric layouts; e.g. R2C1C2 results in a layout with 1 channel on
+        top and two channels side-by-side on the bottom row.
         """.format(", ".join(DISPLAY_LAYOUTS)),
         values=DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
+        cast=str,
     )
 
     active_channel = Instrument.control(
@@ -653,10 +656,13 @@ class MeasurementChannel(Channel):
         """Control the trace display layout in a Row-by-Column format for the indicated channel.
 
         Valid values are: {}. The number following the R indicates the number of rows, following the
-        C the number of columns.
+        C the number of columns; e.g. R2C2 results in a 2-by-2 layout. The options that contain two
+        C's or R's result in asymmetric layouts; e.g. R2C1C2 results in a layout with 1 trace on top
+        and two traces side-by-side on the bottom row.
         """.format(", ".join(AnritsuMS464xB.DISPLAY_LAYOUTS)),
         values=AnritsuMS464xB.DISPLAY_LAYOUTS,
         validator=strict_discrete_set,
+        cast=str,
     )
 
     application_type = Channel.control(
