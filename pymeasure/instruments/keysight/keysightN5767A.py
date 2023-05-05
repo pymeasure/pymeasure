@@ -95,9 +95,9 @@ class KeysightN5767A(Instrument):
         """
         return bool(self._status)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight N5767A power supply", **kwargs):
         super().__init__(
-            adapter, "Keysight N5767A power supply", **kwargs
+            adapter, name, **kwargs
         )
         # Set up data transfer format
         if isinstance(self.adapter, VISAAdapter):

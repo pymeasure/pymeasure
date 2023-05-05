@@ -23,49 +23,34 @@
 #
 
 import pytest
+from pytest import raises
 
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.signalrecovery.dsp7265 import DSP7265
 
 
-@pytest.mark.parametrize("index, reference", [(idx, i) for idx, i in enumerate(DSP7265.REFERENCES)])
-def test_reference(index, reference):
+@pytest.mark.parametrize("frequency", [
+    .001,
+    2.51e4,
+    100,
+])
+def test_valid_frequency(frequency):
     with expected_protocol(
             DSP7265,
-            [(f"IE {index}", None)],
+            [(b"OF. %g" % frequency, None)],
     ) as instr:
-        instr.reference = reference
+        instr.frequency = frequency
 
 
-@pytest.mark.parametrize("index, imode", [(idx, i) for idx, i in enumerate(DSP7265.IMODES)])
-def test_imode(index, imode):
-    with expected_protocol(
-            DSP7265,
-            [(f"IMODE {index}", None)],
-    ) as instr:
-        instr.imode = imode
-
-
-@pytest.mark.parametrize("reading, value",
-                         [(b"-12\x00", -12), (b"0\x00", 0), (b"5", 5), (b"12", 12)])
-def test_dac1(reading, value):
-    with expected_protocol(
-            DSP7265,
-            [("DAC. 1", reading)],
-    ) as instr:
-        assert instr.dac1 == value
-
-
-@pytest.mark.parametrize("reading, value",
-                         [(b'-2.14E-07\r\n', -2.14e-07),
-                          (b'-0.0E+00\x00\r\n', 0.0),
-                          (b'1.2E-07\r\n', 1.2e-07),
-                          (b'6.44E-07\r\n', 6.44e-07),
-                          ])
-def test_x(reading, value):
-    with expected_protocol(
-            DSP7265,
-            [('X.', reading)],
-    ) as instr:
-        assert instr.x == value
+@pytest.mark.parametrize("frequency", [
+    0,
+    1e14,
+])
+def test_invalid_frequency(frequency):
+    with raises(ValueError):
+        with expected_protocol(
+                DSP7265,
+                [(b"OF. %g" % frequency, None)],
+        ) as instr:
+            instr.frequency = frequency

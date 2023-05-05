@@ -370,9 +370,9 @@ class Agilent34450A(Instrument):
                                         based on the active :attr:`~.Agilent34450A.mode`. """
                                         )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="HP/Agilent/Keysight 34450A Multimeter", **kwargs):
         super().__init__(
-            adapter, "HP/Agilent/Keysight 34450A Multimeter", timeout=10000, **kwargs
+            adapter, name, timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
         self.check_errors()
