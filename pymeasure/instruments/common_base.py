@@ -646,22 +646,30 @@ class CommonBase:
                                   )
 
     def check_errors(self):
-        """Read all errors from the instrument.
+        """Read all errors from the instrument and log them.
 
-        :return: list of error entries
+        :return: List of error entries.
         """
         raise NotImplementedError("Implement it in a subclass.")
 
     def check_get_errors(self):
-        """Check for errors after having gotten a property.
+        """Check for errors after having gotten a property and log them.
 
         Called if :code:`check_get_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
         """
         raise NotImplementedError("Implement it in a subclass.")
 
     def check_set_errors(self):
-        """Check for errors after having set a property.
+        """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
         """
         raise NotImplementedError("Implement it in a subclass.")
