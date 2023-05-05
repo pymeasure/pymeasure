@@ -114,7 +114,6 @@ class Recorder(QueueListener):
         if self.results.output_format == 'JSON':
             self.handle = self._json_handle
         else:
-
             for filename in results.data_filenames:
                 fh = FileHandler(filename=filename, **kwargs)
                 fh.setFormatter(results.formatter)
@@ -134,6 +133,7 @@ class Recorder(QueueListener):
         The json formatter returns a string for compatibility with filehandling, so the first
         step is to re-extract the dict. Then we check various conditions. The end result is a file with a
         single (possibly updated) dictionary of dictionaries"""
+
         record = json.loads(self.results.formatter.format(record))
         key = list(record.keys())[0]
         item = record[key]

@@ -141,7 +141,13 @@ class CSVFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-        return self.delimiter.join(f'{record[x]}' for x in self.columns)
+        if isinstance(record, list):
+            total = ""
+            for dd in record:
+                total += self.delimiter.join(f'{dd[x]}' for x in self.columns) + "\n"
+            return total
+        elif isinstance(record, dict):
+            return self.delimiter.join(f'{record[x]}' for x in self.columns)
 
     def format_header(self):
         return self.delimiter.join(self.columns)
