@@ -213,11 +213,11 @@ class ANC300Controller(Instrument):
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
-        "ver", """ Version number and instrument identification """
+        "ver", """ Get the version number and instrument identification. """
     )
 
     controllerBoardVersion = Instrument.measurement(
-        "getcser", """ Serial number of the controller board """
+        "getcser", """ Get the serial number of the controller board. """
     )
 
     _reg_value = re.compile(r"\w+\s+=\s+([\w\.]+)")

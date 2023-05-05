@@ -145,7 +145,7 @@ class TC038D(Instrument):
 
     setpoint = Instrument.control(
         "R,0x106", "W,0x106,%i",
-        """The setpoint of the oven in °C.""",
+        """Control the setpoint of the oven in °C.""",
         check_set_errors=True,
         get_process=lambda v: v / 10,
         set_process=lambda v: int(round(v * 10)),
@@ -153,6 +153,6 @@ class TC038D(Instrument):
 
     temperature = Instrument.measurement(
         "R,0x0",
-        """The current oven temperature in °C.""",
+        """Measure the current oven temperature in °C.""",
         get_process=lambda v: v / 10,
     )

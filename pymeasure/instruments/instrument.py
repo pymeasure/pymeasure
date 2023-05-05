@@ -99,7 +99,9 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation
+        """Get the synchronization bit.
+
+        This property allows synchronization between a controller and a device. The Operation
         Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
@@ -110,7 +112,7 @@ class Instrument(CommonBase):
 
     @property
     def status(self):
-        """ Requests and returns the status byte and Master Summary Status bit. """
+        """ Get the status byte and Master Summary Status bit. """
         if self.SCPI:
             return self.ask("*STB?").strip()
         else:
@@ -118,7 +120,7 @@ class Instrument(CommonBase):
 
     @property
     def options(self):
-        """ Requests and returns the device options installed. """
+        """ Get the device options installed. """
         if self.SCPI:
             return self.ask("*OPT?").strip()
         else:
@@ -126,7 +128,7 @@ class Instrument(CommonBase):
 
     @property
     def id(self):
-        """ Requests and returns the identification of the instrument. """
+        """ Get the identification of the instrument. """
         if self.SCPI:
             return self.ask("*IDN?").strip()
         else:
