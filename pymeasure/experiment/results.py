@@ -143,8 +143,11 @@ class CSVFormatter(logging.Formatter):
         """
         if isinstance(record, list):
             total = ""
-            for dd in record:
-                total += self.delimiter.join(f'{dd[x]}' for x in self.columns) + "\n"
+            for i, dd in enumerate(record):
+                if i != len(record)-1:
+                    total += self.delimiter.join(f'{dd[x]}' for x in self.columns) + "\n"
+                else:
+                    total += self.delimiter.join(f'{dd[x]}' for x in self.columns)
             return total
         elif isinstance(record, dict):
             return self.delimiter.join(f'{record[x]}' for x in self.columns)
