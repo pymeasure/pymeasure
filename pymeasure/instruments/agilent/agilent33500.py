@@ -50,6 +50,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Agilent33500(Instrument):
+    #TODO reimplement with channels
     """Represents the Agilent 33500 Function/Arbitrary Waveform Generator family.
     Individual devices are represented by subclasses.
 

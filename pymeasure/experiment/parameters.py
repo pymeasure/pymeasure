@@ -69,7 +69,7 @@ class Parameter:
         if self.is_set():
             return self._value
         else:
-            raise ValueError("Parameter value is not set")
+            raise ValueError(f"Parameter value is not set for {self.name}" )
 
     @value.setter
     def value(self, value):

@@ -56,7 +56,11 @@ class Input:
         self._parameter = parameter
 
         if parameter.is_set():
-            self.setValue(parameter.value)
+            try:
+                self.setValue(parameter.value)
+            except TypeError as e:
+                print(f'got type error for parameter: {parameter}. Trying to setValue: {parameter.value}')
+                raise e
 
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)

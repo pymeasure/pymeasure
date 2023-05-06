@@ -148,14 +148,7 @@ class CSVFormatter(logging.Formatter):
                 units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
-    def format(self, record):
-        """Formats a record as csv.
-
-        :param record: record to format.
-        :type record: dict
-        :return: a string
-        """
-
+    def parse_through_pint(self, record):
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
@@ -199,6 +192,24 @@ class CSVFormatter(logging.Formatter):
                     line.append(f"{value}")
         return self.delimiter.join(line)
 
+    def format(self, record):
+        """Formats a record as csv.
+
+        :param record: record to format.
+        :type record: dict
+        :return: a string
+        """
+        if isinstance(record, list):
+            total = ""
+            for i, dd in enumerate(record):
+                if i != len(record)-1:
+                    total += self.parse_through_pint(record) + "\n"
+                else:
+                    total += self.parse_through_pint(record)
+            return total
+        elif isinstance(record, dict):
+            return self.parse_through_pint(record)
+
     def format_header(self):
         return self.delimiter.join(self.columns)
 
@@ -219,7 +230,7 @@ class CSVFormatter_Pandas(logging.Formatter):
         self.delimiter = delimiter
         self.line_break = line_break
 
-    def format(self, record):
+    def format(self, record:pd.DataFrame):
         """Formats a record as csv.
 
         :param record: record to format.
@@ -232,7 +243,7 @@ class CSVFormatter_Pandas(logging.Formatter):
             index=False,
             # explicit line_terminator required, otherwise Windows
             # uses \r\n which results in double blank lines
-            line_terminator=self.line_break
+            lineterminator=self.line_break
         )
 
     def format_header(self):
@@ -242,11 +253,12 @@ class CSVFormatter_Pandas(logging.Formatter):
 class JSONFormatter(logging.Formatter):
     """ Formatter of data results """
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, procedure=None):
         """
         """
         # the default encoder doesn't understand FloatParameter, etc.
         # we could write our own encoder, but this one is easy enough.
+        self.procedure = procedure
         base_types = {}
         for key, item in parameters.items():
             base_types[key] = item.value
@@ -261,7 +273,14 @@ class JSONFormatter(logging.Formatter):
         :type record: dict
         :return: a string
         """
-
+        if self.procedure is not None:
+            parameters = self.procedure.parameter_objects()
+        else:
+            parameters = self.parameters
+        base_types = {}
+        for key, item in parameters.items():
+            base_types[key] = item.value
+        self.key = json.dumps(base_types)
         return json.dumps({self.key: record}, indent=1)
 
 
@@ -299,7 +318,7 @@ class Results:
             )
 
         elif self.output_format == 'JSON':
-            self.formatter = JSONFormatter(parameters=self.parameters)
+            self.formatter = JSONFormatter(parameters=self.parameters, procedure=self.procedure)
 
         else:  # default to CSV
             self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)

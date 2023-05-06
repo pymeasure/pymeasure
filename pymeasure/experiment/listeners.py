@@ -114,7 +114,6 @@ class Recorder(QueueListener):
         if self.results.output_format == 'JSON':
             self.handle = self._json_handle
         else:
-
             for filename in results.data_filenames:
                 fh = FileHandler(filename=filename, **kwargs)
                 fh.setFormatter(results.formatter)
@@ -134,6 +133,7 @@ class Recorder(QueueListener):
         The json formatter returns a string for compatibility with filehandling, so the first
         step is to re-extract the dict. Then we check various conditions. The end result is a file with a
         single (possibly updated) dictionary of dictionaries"""
+
         record = json.loads(self.results.formatter.format(record))
         key = list(record.keys())[0]
         item = record[key]
@@ -154,17 +154,29 @@ class Recorder(QueueListener):
                 with open(file, 'r') as f:
                     extant = json.load(f)
 
-                if key in extant.keys():
-                    data = extant[key]
-                    for column, array in data.items():
-                        if isinstance(item[column], (list,tuple)):
+                keys = list(extant.keys())
+                if len(keys) != 1:
+                    raise ValueError(f'got more than one key for json, {len(keys)}')
+                data = extant[keys[0]]
+                for column, array in data.items():
+                    if isinstance(data[column], (list,tuple)):
+                        if isinstance(data[column], tuple):
+                            data[column] = list(data[column])
+                        if isinstance(item[column], (list,tuple,np.ndarray)):
                             data[column] = list(np.concatenate([array,item[column]]))
-                        elif isinstance(item[column], (float,int)):
-                            array.append(item[column])
+                        elif isinstance(item[column], (float, int)):
+                            data[column].append(item[column])
                         else:
-                            raise TypeError(f'got unexpected type for {item[column]}, {type(item[column])}')
-                else:
-                    extant[key] = item
+                            raise TypeError(f'got {item[column]} to append but it is type {type(item[column])}')
+                    elif isinstance(data[column], (float,int)):
+                        if isinstance(item[column], (float,int)):
+                            data[column] = [data[column], item[column]]
+                        elif isinstance(item[column], (list, tuple, np.ndarray)):
+                            data[column] = [data[column], *item[column]]
+                        else:
+                            TypeError(f'got {item[column]} to add but it is type {type(item[column])}')
+                    else:
+                        raise TypeError(f'got unexpected type for the old data {data[column]}, {type(data[column])}')
 
                 with open(file, 'w') as f:
                     json.dump(extant, f)
