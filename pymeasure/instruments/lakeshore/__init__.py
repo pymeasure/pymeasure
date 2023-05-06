@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+<<<<<<< HEAD
 
 
+=======
+from .lakeshore224 import LakeShore224
+>>>>>>> upstream/master
 from .lakeshore331 import LakeShore331
 from .lakeshore421 import LakeShore421
 from .lakeshore425 import LakeShore425

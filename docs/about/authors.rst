@@ -5,6 +5,7 @@ PyMeasure was started in 2013 by Colin Jermain and Graham Rowlands at Cornell Un
 
 The following developers have contributed to the PyMeasure package:
 
+<<<<<<< HEAD
 | Colin Jermain
 | Graham Rowlands
 | Minh-Hai Nguyen
@@ -60,3 +61,7 @@ The following developers have contributed to the PyMeasure package:
 | Fabio Garzetti
 | Daniel Schmeer
 >>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
+=======
+.. include:: ../../AUTHORS.txt
+    :literal:
+>>>>>>> upstream/master

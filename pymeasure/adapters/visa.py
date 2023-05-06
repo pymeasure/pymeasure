@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ class VISAAdapter(Adapter):
     :param float query_delay: Time in s to wait after writing and before reading.
 
         .. deprecated:: 0.11
-            Implement it in the instrument's `wait_until_read` method instead.
+            Implement it in the instrument's `wait_for` method instead.
 
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
@@ -85,9 +85,13 @@ class VISAAdapter(Adapter):
 
     def __init__(self, resource_name, visa_library='', preprocess_reply=None,
                  query_delay=0, log=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply, log=log, query_delay=query_delay)
+        super().__init__(preprocess_reply=preprocess_reply, log=log)
         if query_delay:
-            warn("Implement in Instrument's 'wait_until_read' instead.", FutureWarning)
+            warn(("Parameter `query_delay` is deprecated. "
+                  "Implement in Instrument's `wait_for` instead."),
+                 FutureWarning)
+            kwargs.setdefault("query_delay", query_delay)
+        self.query_delay = query_delay
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes
@@ -97,10 +101,12 @@ class VISAAdapter(Adapter):
             # Allow to reuse the connection.
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
+            self.manager = resource_name.manager
             self.query_delay = resource_name.query_delay
             return
         elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name
+
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
 
@@ -122,12 +128,26 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
+    def close(self):
+        """Close the connection.
+
+        .. note::
+
+            This closes the connection to the resource for all adapters using
+            it currently (e.g. different adapters using the same GPIB line).
+        """
+        super().close()
+        try:
+            self.manager.close()
+        except AttributeError:
+            pass  # Closed from another adapter using the same connection.
+
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
         :param str command: Command string to be sent to the instrument
             (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write(command, **kwargs)
 
@@ -135,30 +155,43 @@ class VISAAdapter(Adapter):
         """Write the bytes `content` to the instrument.
 
         :param bytes content: The bytes to write to the instrument.
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
         self.connection.write_raw(content, **kwargs)
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param kwargs: Keyword arguments for the connection itself.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         return self.connection.read(**kwargs)
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read the whole read buffer.
-        :param kwargs: Keyword arguments for the connection itself.
+            read from the whole read buffer until timeout.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        if count == -1:
-            return self.connection.read_raw(**kwargs)
+        if count >= 0:
+            return self.connection.read_bytes(count, break_on_termchar=break_on_termchar, **kwargs)
+        elif break_on_termchar:
+            return self.connection.read_raw(None, **kwargs)
         else:
-            return self.connection.read_bytes(count, **kwargs)
+            # pyvisa's `read_raw` reads until newline, if no termination_character defined
+            # and if not configured to stop at a termination lane etc.
+            # see https://github.com/pyvisa/pyvisa/issues/728
+            result = bytearray()
+            while True:
+                try:
+                    result.extend(self.connection.read_bytes(1))
+                except pyvisa.errors.VisaIOError as exc:
+                    if exc.error_code == pyvisa.constants.StatusCode.error_timeout:
+                        return bytes(result)
+                    raise
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting
@@ -170,7 +203,7 @@ class VISAAdapter(Adapter):
         :param command: SCPI command string to be sent to the instrument
         :returns: String ASCII response of the instrument
         """
-        warn("Deprecated call `Instrument.ask` instead.", FutureWarning)
+        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         return self.connection.query(command)
 
     def ask_values(self, command, **kwargs):
@@ -182,10 +215,11 @@ class VISAAdapter(Adapter):
             Call `Instrument.values` instead.
 
         :param command: SCPI command to be sent to the instrument
-        :param kwargs: Key-word arguments to pass onto `query_ascii_values`
+        :param \\**kwargs: Key-word arguments to pass onto `query_ascii_values`
         :returns: Formatted response of the instrument.
         """
-        warn("Deprecated, call `Instrument.values` instead.", FutureWarning)
+        warn("`Adapter.ask_values` is deprecated, call `Instrument.values` instead.",
+             FutureWarning)
 
         return self.connection.query_ascii_values(command, **kwargs)
 
@@ -200,7 +234,7 @@ class VISAAdapter(Adapter):
         :param dtype: The NumPy data type to format the values with
         :returns: NumPy array of values
         """
-        warn("Deprecated, call `Instrument.binary_values` instead.",
+        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
              FutureWarning)
         self.connection.write(command)
         binary = self.connection.read_raw()
@@ -223,7 +257,21 @@ class VISAAdapter(Adapter):
         in the read buffer and no END-indicator was present, read from the device until
         encountering an END indicator (which causes loss of data).
         """
-        self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        try:
+            self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+        except NotImplementedError:
+            # NotImplementedError is raised when using resource types other than `asrl`
+            # in conjunction with pyvisa-py.
+            # Upstream issue: https://github.com/pyvisa/pyvisa-py/issues/348
+            # fake discarding the read buffer by reading all available messages.
+            timeout = self.connection.timeout
+            self.connection.timeout = 0
+            try:
+                self.read_bytes(-1)
+            except pyvisa.errors.VisaIOError:
+                pass
+            finally:
+                self.connection.timeout = timeout
 
     def __repr__(self):
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name

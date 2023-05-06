@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,77 +25,15 @@
 import logging
 import time
 
-from pymeasure.adapters.visa import VISAAdapter
+from .common_base import CommonBase, DynamicProperty
+from ..adapters import VISAAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DynamicProperty(property):
-    """ Class that allows managing python property behaviour in a "dynamic" fashion
-
-    The class allows passing, in addition to regular property parameters, a list of
-    runtime configurable parameters.
-    The effect is that the behaviour of fget/fset not only depends on the obj parameter, but
-    also on a set of keyword parameters with a default value.
-    These extra parameters are read from instance, if available, or left with the default value.
-    Dynamic behaviour is achieved by changing class or instance variables with special names
-    defined as `<prefix> + <property name> + <param name>`.
-
-    Code has been based on Python equivalent implementation of properties provided in the
-    python documentation `here <https://docs.python.org/3/howto/descriptor.html#properties>`_.
-
-    :param fget: class property fget parameter whose signature is expanded with a
-                 set of keyword arguments as in fget_params_list
-    :param fset: class property fget parameter whose signature is expanded with a
-                 set of keyword arguments as in fset_params_list
-    :param fdel: class property fdel parameter
-    :param doc: class property doc parameter
-    :param fget_params_list: List of parameter names that are dynamically configurable
-    :param fset_params_list: List of parameter names that are dynamically configurable
-    :param prefix: String to be prefixed to get dynamically configurable
-                   parameters.
-    """
-
-    def __init__(self, fget=None, fset=None, fdel=None, doc=None, fget_params_list=None,
-                 fset_params_list=None, prefix=""):
-        super().__init__(fget, fset, fdel, doc)
-        self.fget_params_list = () if fget_params_list is None else fget_params_list
-        self.fset_params_list = () if fset_params_list is None else fset_params_list
-        self.name = ""
-        self.prefix = prefix
-
-    def __get__(self, obj, objtype=None):
-        if obj is None:
-            # Property return itself when invoked from a class
-            return self
-        if self.fget is None:
-            raise AttributeError(f"Unreadable attribute {self.name}")
-
-        kwargs = {}
-        for attr in self.fget_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
-            if hasattr(obj, attr_instance_name):
-                kwargs[attr] = getattr(obj, attr_instance_name)
-        return self.fget(obj, **kwargs)
-
-    def __set__(self, obj, value):
-        if self.fset is None:
-            raise AttributeError(f"Can't set attribute {self.name}")
-        kwargs = {}
-        for attr in self.fset_params_list:
-            attr_instance_name = self.prefix + "_".join([self.name, attr])
-            if hasattr(obj, attr_instance_name):
-                kwargs[attr] = getattr(obj, attr_instance_name)
-        self.fset(obj, value, **kwargs)
-
-    def __set_name__(self, owner, name):
-        self.name = name
-
-
-class Instrument:
+class Instrument(CommonBase):
     """ The base class for all Instrument definitions.
-<<<<<<< HEAD
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
     with the connected hardware device. This decouples the instrument/command definition from the
@@ -107,19 +45,6 @@ class Instrument:
     `VISA resource name <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
     defining the target of your connection.
 
-=======
-
-    It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
-    with the connected hardware device. This decouples the instrument/command definition from the
-    specific communication interface used.
-
-    When ``adapter`` is a string, this is taken as an appropriate resource name. Depending on your
-    installed VISA library, this can be something simple like ``COM1`` or ``ASRL2``, or a more
-    complicated
-    `VISA resource name <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`__
-    defining the target of your connection.
-
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
     When ``adapter`` is an integer, a GPIB resource name is created based on that.
     In either case a :py:class:`~pymeasure.adapters.VISAAdapter` is constructed based on that
     resource name.
@@ -134,47 +59,34 @@ class Instrument:
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
     """
 
-    # Variable holding the list of DynamicProperty parameters that are configurable
-    # by users
-    _fget_params_list = ('get_command',
-                         'values',
-                         'map_values',
-                         'get_process',
-                         'command_process',
-                         'check_get_errors')
-
-    _fset_params_list = ('set_command',
-                         'validator',
-                         'values',
-                         'map_values',
-                         'set_process',
-                         'command_process',
-                         'check_set_errors')
-
-    # Prefix used to store reserved variables
-    __reserved_prefix = "___"
-
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=True,
+                 preprocess_reply=None,
                  **kwargs):
+        # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
             try:
                 adapter = VISAAdapter(adapter, **kwargs)
             except ImportError:
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
-
-        self.name = name
-        self.SCPI = includeSCPI
         self.adapter = adapter
-
+        self.SCPI = includeSCPI
         self.isShutdown = False
-        self._special_names = self._setup_special_names()
+        self.name = name
+
+        super().__init__(preprocess_reply=preprocess_reply)
 
         log.info("Initializing %s." % self.name)
 
@@ -184,50 +96,13 @@ class Instrument:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.shutdown()
 
-    def _setup_special_names(self):
-        """ Return list of class/instance special names
-
-        Compute the list of special names based on the list of
-        class attributes that are a DynamicProperty. Check also for class variables
-        with special name and copy them at instance level
-        Internal method, not intended to be accessed at user level."""
-        special_names = []
-        dynamic_params = tuple(set(self._fget_params_list + self._fset_params_list))
-        # Check whether class variables of DynamicProperty type are present
-        for obj in (self,) + self.__class__.__mro__:
-            for attr_name, attr in obj.__dict__.items():
-                if isinstance(attr, DynamicProperty):
-                    special_names += [attr_name + "_" + key for key in dynamic_params]
-        # Check if special variables are defined at class level
-        for obj in (self,) + self.__class__.__mro__:
-            for attr in obj.__dict__:
-                if attr in special_names:
-                    # Copy class special variable at instance level, prefixing reserved_prefix
-                    setattr(self, self.__reserved_prefix + attr, obj.__dict__[attr])
-        return special_names
-
-    def __setattr__(self, name, value):
-        """ Add reserved_prefix in front of special variables """
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                name = self.__reserved_prefix + name
-        super().__setattr__(name, value)
-
-    def __getattribute__(self, name):
-        """ Prevent read access to variables with special names used to
-        support dynamic property behaviour """
-        if name in ('_special_names', '__dict__'):
-            return super().__getattribute__(name)
-        if hasattr(self, '_special_names'):
-            if name in self._special_names:
-                raise AttributeError(
-                    f"{name} is a reserved variable name and it cannot be read")
-        return super().__getattribute__(name)
-
+    # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
-        query places an ASCII character 1 into the device's Output Queue when all pending
+        """Get the synchronization bit.
+
+        This property allows synchronization between a controller and a device. The Operation
+        Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
         if self.SCPI:
@@ -237,7 +112,7 @@ class Instrument:
 
     @property
     def status(self):
-        """ Requests and returns the status byte and Master Summary Status bit. """
+        """ Get the status byte and Master Summary Status bit. """
         if self.SCPI:
             return self.ask("*STB?").strip()
         else:
@@ -245,7 +120,7 @@ class Instrument:
 
     @property
     def options(self):
-        """ Requests and returns the device options installed. """
+        """ Get the device options installed. """
         if self.SCPI:
             return self.ask("*OPT?").strip()
         else:
@@ -253,7 +128,7 @@ class Instrument:
 
     @property
     def id(self):
-        """ Requests and returns the identification of the instrument. """
+        """ Get the identification of the instrument. """
         if self.SCPI:
             return self.ask("*IDN?").strip()
         else:
@@ -294,6 +169,10 @@ class Instrument:
         :param \\*args, \\**kwargs: Further arguments to hand to the Adapter.
         """
         self.adapter.write_binary_values(command, values, *args, **kwargs)
+
+    def read_binary_values(self, **kwargs):
+        """Read binary values from the device."""
+        return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
     def wait_for(self, query_delay=0):
@@ -412,7 +291,6 @@ class Instrument:
                     values=(1, 20),
                     dynamic=True  # enable changing property parameters on-the-fly
                 )
-<<<<<<< HEAD
 
             class SpecificInstrument(GenericInstrument):
                 # Identical to GenericInstrument, except for frequency range
@@ -421,18 +299,6 @@ class Instrument:
 
             instrument = SpecificInstrument()
             instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
-
-=======
-
-            class SpecificInstrument(GenericInstrument):
-                # Identical to GenericInstrument, except for frequency range
-                # Override the "values" parameter of the "center_frequency" property
-                center_frequency_values = (1, 10) # Redefined at subclass level
-
-            instrument = SpecificInstrument()
-            instrument.center_frequency_values = (1, 6e9) # Redefined at instance level
-
->>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
         .. warning:: Unexpected side effects when using dynamic properties
 
         Users must pay attention when using dynamic properties, since definition of class and/or
@@ -606,7 +472,7 @@ class Instrument:
     def shutdown(self):
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
-        log.info("Shutting down %s" % self.name)
+        log.info(f"Finished shutting down {self.name}")
 
     def check_errors(self):
         """ Read all errors from the instrument.

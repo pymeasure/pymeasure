@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -309,6 +309,8 @@ class Results:
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self.output_format = output_format
+        self._header_count = -1
+        self._metadata_count = -1
 
         if self.output_format == 'CSV_PANDAS':
             self.formatter = CSVFormatter_Pandas(
@@ -417,6 +419,36 @@ class Results:
             data[key] = items[i]
         return data
 
+    def metadata(self):
+        """ Returns a text header for the metadata to write into the datafile """
+        if not self.procedure.metadata_objects():
+            return
+
+        m = ["Metadata:"]
+        for _, metadata in self.procedure.metadata_objects().items():
+            value = str(metadata).encode("unicode_escape").decode("utf-8")
+            m.append(f"\t{metadata.name}: {value}")
+
+        self._metadata_count = len(m)
+        m = [Results.COMMENT + line for line in m]  # Comment each line
+        return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
+
+    def store_metadata(self):
+        """ Inserts the metadata header (if any) into the datafile """
+        c_header = self.metadata()
+        if c_header is None:
+            return
+
+        for filename in self.data_filenames:
+            with open(filename, 'r+') as f:
+                contents = f.readlines()
+                contents.insert(self._header_count - 1, c_header)
+
+                f.seek(0)
+                f.writelines(contents)
+
+        self._header_count += self._metadata_count
+
     @staticmethod
     def parse_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
@@ -470,10 +502,23 @@ class Results:
                 value = parameters[parameter.name]
                 setattr(procedure, name, value)
             else:
-                raise Exception("Missing '{}' parameter when loading '{}' class".format(
-                    parameter.name, procedure_class))
+                log.warning(
+                    f"Parameter \"{parameter.name}\" not found when loading " +
+                    f"'{procedure_class}', setting default value")
+                setattr(procedure, name, parameter.default)
 
         procedure.refresh_parameters()  # Enforce update of meta data
+
+        # Fill the procedure with the metadata found
+        for name, metadata in procedure.metadata_objects().items():
+            if metadata.name in parameters:
+                value = parameters[metadata.name]
+                setattr(procedure, name, value)
+
+                # Set the value in the metadata
+                metadata._value = value
+                metadata.evaluated = True
+
         return procedure
 
     @staticmethod

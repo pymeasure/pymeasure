@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,38 +51,44 @@ class KeysightN7776C(Instrument):
         laser.output_enabled = 0
 
     """
-    def __init__(self, adapter, **kwargs):
-        super(KeysightN7776C, self).__init__(
-            adapter, "N7776C Tunable Laser Source", **kwargs)
 
-    locked = Instrument.control(':LOCK?', ':LOCK %g,'+str(LOCK_PW),
-                                """ Boolean property controlling the lock state (True/False) of
-                                the laser source""",
-                                validator=strict_discrete_set,
-                                map_values=True,
-                                values={True: 1, False: 0})
+    def __init__(self, adapter, name="N7776C Tunable Laser Source", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs)
 
-    output_enabled = Instrument.control('SOUR0:POW:STAT?', 'SOUR0:POW:STAT %g',
-                                        """ Boolean Property that controls the state (on/off) of
-                                        the laser source """,
-                                        validator=strict_discrete_set,
-                                        map_values=True,
-                                        values={True: 1, False: 0})
+    locked = Instrument.control(
+        ':LOCK?', ':LOCK %g,' + str(LOCK_PW),
+        """ Boolean property controlling the lock state (True/False) of the laser source""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0}
+    )
 
-    _output_power_mW = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f mW',
-                                          """ Floating point value indicating the laser output power
-                                          in mW.""",
-                                          get_process=lambda v: v*1e3)
+    output_enabled = Instrument.control(
+        'SOUR0:POW:STAT?', 'SOUR0:POW:STAT %g',
+        """ Boolean Property that controls the state (on/off) of the laser source """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0}
+    )
 
-    _output_power_dBm = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f dBm',
-                                           """ Floating point value indicating the laser output power
-                                           in dBm.""")
+    _output_power_mW = Instrument.control(
+        'SOUR0:POW?', 'SOUR0:POW %f mW',
+        """ Floating point value indicating the laser output power in mW.""",
+        get_process=lambda v: v * 1e3
+    )
 
-    _output_power_unit = Instrument.control('SOUR0:POW:UNIT?', 'SOUR0:POW:UNIT %g',
-                                            """ String parameter controlling the power unit used internally
-                                            by the laser.""",
-                                            map_values=True,
-                                            values={'dBm': 0, 'mW': 1})
+    _output_power_dBm = Instrument.control(
+        'SOUR0:POW?', 'SOUR0:POW %f dBm',
+        """ Floating point value indicating the laser output power in dBm."""
+    )
+
+    _output_power_unit = Instrument.control(
+        'SOUR0:POW:UNIT?', 'SOUR0:POW:UNIT %g',
+        """ String parameter controlling the power unit used internally by the laser.""",
+        map_values=True,
+        values={'dBm': 0, 'mW': 1}
+    )
 
     @property
     def output_power_mW(self):
@@ -102,11 +108,13 @@ class KeysightN7776C(Instrument):
     def output_power_dBm(self, new_power):
         self._output_power_dBm = new_power
 
-    trigger_out = Instrument.control('TRIG0:OUTP?', 'TRIG0:OUTP %s',
-                                     """ Specifies if and at which point in a sweep cycle an output trigger
-                                     is generated and arms the module. """,
-                                     validator=strict_discrete_set,
-                                     values=['DIS', 'STF', 'SWF', 'SWST'])
+    trigger_out = Instrument.control(
+        'TRIG0:OUTP?', 'TRIG0:OUTP %s',
+        """ Specifies if and at which point in a sweep cycle an output trigger
+        is generated and arms the module. """,
+        validator=strict_discrete_set,
+        values=['DIS', 'STF', 'SWF', 'SWST']
+    )
 
     trigger_in = Instrument.control('TRIG0:INP?', 'TRIG0:INP %s',
                                     """ Sets the incoming trigger response and arms the module. """,
@@ -117,29 +125,29 @@ class KeysightN7776C(Instrument):
                                     """ Absolute wavelength of the output light (in nanometers)""",
                                     validator=strict_range,
                                     values=WL_RANGE,
-                                    get_process=lambda v: v*1e9)
+                                    get_process=lambda v: v * 1e9)
 
     sweep_wl_start = Instrument.control('sour0:wav:swe:star?', 'sour0:wav:swe:star %fnm',
                                         """ Start Wavelength (in nanometers) for a sweep.""",
                                         validator=strict_range,
                                         values=WL_RANGE,
-                                        get_process=lambda v: v*1e9)
+                                        get_process=lambda v: v * 1e9)
     sweep_wl_stop = Instrument.control('sour0:wav:swe:stop?', 'sour0:wav:swe:stop %fnm',
                                        """ End Wavelength (in nanometers) for a sweep.""",
                                        validator=strict_range,
                                        values=WL_RANGE,
-                                       get_process=lambda v: v*1e9)
+                                       get_process=lambda v: v * 1e9)
 
     sweep_step = Instrument.control('sour0:wav:swe:step?', 'sour0:wav:swe:step %fnm',
                                     """ Step width of the sweep (in nanometers).""",
                                     validator=strict_range,
-                                    values=[0.0001, WL_RANGE[1]-WL_RANGE[0]],
-                                    get_process=lambda v: v*1e9)
+                                    values=[0.0001, WL_RANGE[1] - WL_RANGE[0]],
+                                    get_process=lambda v: v * 1e9)
     sweep_speed = Instrument.control('sour0:wav:swe:speed?', 'sour0:wav:swe:speed %fnm/s',
                                      """ Speed of the sweep (in nanometers per second).""",
                                      validator=strict_discrete_set,
                                      values=[0.5, 1, 50, 80, 200],
-                                     get_process=lambda v: v*1e9)
+                                     get_process=lambda v: v * 1e9)
     sweep_mode = Instrument.control('sour0:wav:swe:mode?', 'sour0:wav:swe:mode %s',
                                     """ Sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
@@ -157,9 +165,10 @@ class KeysightN7776C(Instrument):
         sweep configuration problem, the laser source is not
         able to pass a wavelength sweep.""")
 
-    sweep_points = Instrument.measurement('sour0:read:points? llog',
-                                          """Returns the number of datapoints that the :READout:DATA?
-                                          command will return.""")
+    sweep_points = Instrument.measurement(
+        'sour0:read:points? llog',
+        """Returns the number of datapoints that the :READout:DATA?
+        command will return.""")
 
     sweep_state = Instrument.control('sour0:wav:swe?', 'sour0:wav:swe %g',
                                      """ State of the wavelength sweep. Stops, starts, pauses

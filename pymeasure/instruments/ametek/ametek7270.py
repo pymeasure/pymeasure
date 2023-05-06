@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -175,10 +175,10 @@ class Ametek7270(Instrument):
                                 """ Reads the instrument identification """
                                 )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Ametek DSP 7270", **kwargs):
         super().__init__(
             adapter,
-            "Ametek DSP 7270",
+            name,
             **kwargs
         )
 
@@ -208,6 +208,6 @@ class Ametek7270(Instrument):
 
     def shutdown(self):
         """ Ensures the instrument in a safe state """
-        self.voltage = 0.
-        self.isShutdown = True
         log.info("Shutting down %s" % self.name)
+        self.voltage = 0.
+        super().shutdown()

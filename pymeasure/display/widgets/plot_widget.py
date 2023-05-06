@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,8 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.columns[0],
             self.columns[1],
             self.refresh_time,
-            self.check_status
+            self.check_status,
+            parent=self,
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
@@ -108,9 +109,10 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         curve = ResultsCurve(results,
+                             wdg=self,
                              x=self.plot_frame.x_axis,
                              y=self.plot_frame.y_axis,
-                             **kwargs
+                             **kwargs,
                              )
         if marker is not None:
             curve.setSymbol(marker)
@@ -140,8 +142,24 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
+<<<<<<< HEAD
         curve.pen.setColor(color)
         if curve.opts['symbol'] is not None:
             curve.setSymbolBrush(pg.mkBrush(color=color))
             curve.setSymbolPen(curve.pen.color())
         curve.updateItems(styleUpdate=True)
+=======
+        curve.set_color(color)
+
+    def preview_widget(self, parent=None):
+        """ Return a widget suitable for preview during loading """
+        return PlotWidget("Plot preview",
+                          self.columns,
+                          self.plot_frame.x_axis,
+                          self.plot_frame.y_axis,
+                          parent=parent,
+                          )
+
+    def clear_widget(self):
+        self.plot.clear()
+>>>>>>> upstream/master

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -181,8 +181,9 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.load(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.load(curve)
 
         self.browser.add(experiment)
         self.experiments.append(experiment)
@@ -201,8 +202,9 @@ class Manager(QtCore.QObject):
         self.experiments.remove(experiment)
         self.browser.takeTopLevelItem(
             self.browser.indexOfTopLevelItem(experiment.browser_item))
-        for wdg, curve in zip(self.widget_list, experiment.curve_list):
-            wdg.remove(curve)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.remove(curve)
 
     def clear(self):
         """ Remove all Experiments
@@ -283,7 +285,7 @@ class Manager(QtCore.QObject):
         log.debug("Manager's running experiment has finished")
         experiment = self._running_experiment
         self._clean_up()
-        experiment.browser_item.setProgress(100.)
+        experiment.browser_item.setProgress(100)
         for curve in experiment.curve_list:
             if curve:
                 curve.update_data()

@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset the cache
         with:
@@ -75,7 +75,7 @@ jobs:
           fetch-depth: 0
 >>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset the cache
         with:

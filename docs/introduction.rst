@@ -24,7 +24,7 @@ The package includes a number of :doc:`instruments already defined<api/instrumen
 
   from pymeasure.instruments.keithley import Keithley2400
 
-The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
+The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments/index>`.
 
 
 Graphical displays

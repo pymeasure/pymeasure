@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 import pytest
 
@@ -30,18 +31,19 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.fakes import FakeInstrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 =======
+=======
+
+>>>>>>> upstream/master
 import time
 from unittest import mock
 
 import pytest
 
-from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.instrument import DynamicProperty
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.fakes import FakeInstrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+from pymeasure.instruments.validators import truncated_range
 
 
 class GenericInstrument(FakeInstrument):
@@ -66,28 +68,52 @@ class GenericInstrument(FakeInstrument):
     )
 
 
-class ExtendedInstrument(GenericInstrument):
-    # Keep values unchanged, just derive another instrument, e.g. to add more properties
-    pass
-
-
-class StrictExtendedInstrument(ExtendedInstrument):
-    # Use strict instead of truncated range validator
-    fake_ctrl_validator = strict_range
-    fake_setting_validator = strict_range
-
-
 @pytest.fixture()
 def generic():
     return GenericInstrument()
 
 
+<<<<<<< HEAD
 class NewRangeInstrument(GenericInstrument):
     # Choose different properties' values, like you would for another device model
     fake_ctrl_values = (10, 20)
     fake_setting_values = (10, 20)
     fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 >>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
+=======
+class GenericChannel(Channel):
+    #  Use truncated_range as this easily lets us test for the range boundaries
+    fake_ctrl = Instrument.control(
+        "C{ch}:control?", "C{ch}:control %d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_setting = Instrument.setting(
+        "C{ch}:setting %d", "docs",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+    )
+    fake_measurement = Instrument.measurement(
+        "C{ch}:measurement?", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        map_values=True,
+        dynamic=True,
+    )
+    special_control = Instrument.control(
+        "SOUR{ch}:special?", "OUTP{ch}:special %s",
+        """A special control with different channel specifiers for get and set.""",
+        cast=str,
+    )
+
+
+class ChannelInstrument(Instrument):
+    def __init__(self, adapter, name="ChannelInstrument", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        self.add_child(GenericChannel, "A")
+        self.add_child(GenericChannel, "B")
+>>>>>>> upstream/master
 
 
 def test_fake_instrument():
@@ -112,10 +138,29 @@ def test_init_visa_fail():
         Instrument("abc", "def", visa_library="@xyz")
 
 
+def test_global_preprocess_reply():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        inst = Instrument(FakeAdapter(), "name", preprocess_reply=lambda v: v.strip("x"))
+        assert inst.values("x5x") == [5]
+
+
 def test_instrument_in_context():
     with Instrument("abc", "def", visa_library="@sim") as instr:
         pass
     assert instr.isShutdown is True
+
+
+def test_with_statement():
+    """ Test the with-statement-behaviour of the instruments. """
+    with FakeInstrument() as fake:
+        # Check if fake is an instance of FakeInstrument
+        assert isinstance(fake, FakeInstrument)
+
+        # Check whether the shutdown function is already called
+        assert fake.isShutdown is False
+
+    # Check whether the shutdown function is called upon
+    assert fake.isShutdown is True
 
 
 class TestInstrumentCommunication:
@@ -216,33 +261,29 @@ def test_SCPI_false_raises_errors(method):
         getattr(Instrument(FakeAdapter(), "abc", includeSCPI=False), method)()
 
 
-@pytest.mark.parametrize("value, kwargs, result",
-                         (("5,6,7", {}, [5, 6, 7]),
-                          ("5.6.7", {'separator': '.'}, [5, 6, 7]),
-                          ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
-                          ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
-                          ("0,5,7.1", {'cast': bool}, [False, True, True]),
-                          ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5])
-                          ))
-def test_values(value, kwargs, result):
-    instr = Instrument(FakeAdapter(), "test")
-    assert instr.values(value, **kwargs) == result
+# Channel
+class TestMultiFunctionality:
+    """Test the usage of children for different functionalities."""
+    class SomeFunctionality(Channel):
+        """This Functionality needs a prepended `id`."""
 
+        def insert_id(self, command, **kwargs):
+            return f"{self.id}:{command}"
 
+<<<<<<< HEAD
 # Testing Instrument.control
 >>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 @pytest.mark.parametrize("dynamic", [False, True])
 def test_control_doc(dynamic):
     doc = """ X property """
+=======
+        voltage = Channel.control("Volt?", "Volt %f", "Set voltage in Volts.")
+>>>>>>> upstream/master
 
-    class Fake(Instrument):
-        x = Instrument.control(
-            "", "%d", doc,
-            dynamic=dynamic
-        )
+    class InstrumentWithFunctionality(ChannelInstrument):
+        """Instrument with some functionality."""
 
+<<<<<<< HEAD
     expected_doc = doc + "(dynamic)" if dynamic else doc
     assert Fake.x.__doc__ == expected_doc
 <<<<<<< HEAD
@@ -468,16 +509,19 @@ def test_measurement_cast(cast, expected):
 
 def test_measurement_cast_int():
     class Fake(Instrument):
+=======
+>>>>>>> upstream/master
         def __init__(self, adapter, **kwargs):
-            super().__init__(adapter, "test", **kwargs)
-        x = Instrument.measurement(
-            "x", "doc", cast=int)
-    with expected_protocol(Fake, [("x", "5")]) as instr:
-        y = instr.x
-        assert y == 5
-        assert type(y) is int
+            super().__init__(adapter, **kwargs)
+            self.add_child(TestMultiFunctionality.SomeFunctionality, "X",
+                           collection="functions", prefix="f_")
 
+    def test_functionality_dict(self):
+        inst = TestMultiFunctionality.InstrumentWithFunctionality(ProtocolAdapter())
+        assert isinstance(inst.functions["X"], TestMultiFunctionality.SomeFunctionality)
+        assert inst.functions["X"] == inst.f_X
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 def test_measurement_unitful_property():
@@ -713,3 +757,18 @@ def test_dynamic_property_reading_special_attributes_forbidden():
     generic = GenericInstrument()
     with pytest.raises(AttributeError):
         generic.fake_ctrl_validator
+=======
+    def test_functions_voltage_getter(self):
+        with expected_protocol(
+                TestMultiFunctionality.InstrumentWithFunctionality,
+                [("X:Volt?", "123.456")]
+        ) as inst:
+            assert inst.f_X.voltage == 123.456
+
+    def test_functions_voltage_setter(self):
+        with expected_protocol(
+                TestMultiFunctionality.InstrumentWithFunctionality,
+                [("X:Volt 123.456000", None)]
+        ) as inst:
+            inst.f_X.voltage = 123.456
+>>>>>>> upstream/master

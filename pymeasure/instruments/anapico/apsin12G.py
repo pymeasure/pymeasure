@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,10 +62,10 @@ class APSIN12G(Instrument):
         values=['ON', 'OFF']
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anapico APSIN12G Signal Generator", **kwargs):
         super().__init__(
             adapter,
-            "Anapico APSIN12G Signal Generator",
+            name,
             **kwargs
         )
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -303,6 +303,156 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.close()
 
+<<<<<<< HEAD
+=======
+    def browser_item_changed(self, item, column):
+        if column == 0:
+            state = item.checkState(0)
+            experiment = self.manager.experiments.with_browser_item(item)
+            if state == QtCore.Qt.CheckState.Unchecked:
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.remove(curve)
+            else:
+                for curve in experiment.curve_list:
+                    if curve:
+                        curve.wdg.load(curve)
+
+    def browser_item_menu(self, position):
+        item = self.browser.itemAt(position)
+
+        if item is not None:
+            experiment = self.manager.experiments.with_browser_item(item)
+
+            menu = QtWidgets.QMenu(self)
+
+            # Open
+            action_open = QtGui.QAction(menu)
+            action_open.setText("Open Data Externally")
+            action_open.triggered.connect(
+                lambda: self.open_file_externally(experiment.results.data_filename))
+            menu.addAction(action_open)
+
+            # Change Color
+            action_change_color = QtGui.QAction(menu)
+            action_change_color.setText("Change Color")
+            action_change_color.triggered.connect(
+                lambda: self.change_color(experiment))
+            menu.addAction(action_change_color)
+
+            # Remove
+            action_remove = QtGui.QAction(menu)
+            action_remove.setText("Remove Graph")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_remove.setEnabled(False)
+            action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
+            menu.addAction(action_remove)
+
+            # Delete
+            action_delete = QtGui.QAction(menu)
+            action_delete.setText("Delete Data File")
+            if self.manager.is_running():
+                if self.manager.running_experiment() == experiment:  # Experiment running
+                    action_delete.setEnabled(False)
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            menu.addAction(action_delete)
+
+            # Use parameters
+            action_use = QtGui.QAction(menu)
+            action_use.setText("Use These Parameters")
+            action_use.triggered.connect(
+                lambda: self.set_parameters(experiment.procedure.parameter_objects()))
+            menu.addAction(action_use)
+            menu.exec(self.browser.viewport().mapToGlobal(position))
+
+    def remove_experiment(self, experiment):
+        reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
+                                               "Are you sure you want to remove the graph?",
+                                               QtWidgets.QMessageBox.StandardButton.Yes |
+                                               QtWidgets.QMessageBox.StandardButton.No,
+                                               QtWidgets.QMessageBox.StandardButton.No)
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.manager.remove(experiment)
+
+    def delete_experiment_data(self, experiment):
+        reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
+                                               "Are you sure you want to delete this data file?",
+                                               QtWidgets.QMessageBox.StandardButton.Yes |
+                                               QtWidgets.QMessageBox.StandardButton.No,
+                                               QtWidgets.QMessageBox.StandardButton.No)
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.manager.remove(experiment)
+            os.unlink(experiment.data_filename)
+
+    def show_experiments(self):
+        root = self.browser.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            item.setCheckState(0, QtCore.Qt.CheckState.Checked)
+
+    def hide_experiments(self):
+        root = self.browser.invisibleRootItem()
+        for i in range(root.childCount()):
+            item = root.child(i)
+            item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+
+    def clear_experiments(self):
+        self.manager.clear()
+
+    def open_experiment(self):
+        dialog = ResultsDialog(self.procedure_class,
+                               widget_list=self.widget_list)
+        if dialog.exec():
+            filenames = dialog.selectedFiles()
+            for filename in map(str, filenames):
+                if filename in self.manager.experiments:
+                    QtWidgets.QMessageBox.warning(
+                        self, "Load Error",
+                        "The file %s cannot be opened twice." % os.path.basename(filename)
+                    )
+                elif filename == '':
+                    return
+                else:
+                    results = Results.load(filename)
+                    experiment = self.new_experiment(results)
+                    for curve in experiment.curve_list:
+                        if curve:
+                            curve.update_data()
+                    experiment.browser_item.progressbar.setValue(100)
+                    self.manager.load(experiment)
+                    log.info('Opened data file %s' % filename)
+
+    def change_color(self, experiment):
+        color = QtWidgets.QColorDialog.getColor(
+            parent=self)
+        if color.isValid():
+            pixelmap = QtGui.QPixmap(24, 24)
+            pixelmap.fill(color)
+            experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            for curve in experiment.curve_list:
+                if curve:
+                    curve.wdg.set_color(curve, color=color)
+
+    def open_file_externally(self, filename):
+        """ Method to open the datafile using an external editor or viewer. Uses the default
+        application to open a datafile of this filetype, but can be overridden by the child
+        class in order to open the file in another application of choice.
+        """
+        system = platform.system()
+        if (system == 'Windows'):
+            # The empty argument after the start is needed to be able to cope
+            # correctly with filenames with spaces
+            _ = subprocess.Popen(['start', '', filename], shell=True)
+        elif (system == 'Linux'):
+            _ = subprocess.Popen(['xdg-open', filename])
+        elif (system == 'Darwin'):
+            _ = subprocess.Popen(['open', filename])
+        else:
+            raise Exception("{cls} method open_file_externally does not support {system} OS".format(
+                cls=type(self).__name__, system=system))
+
+>>>>>>> upstream/master
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):
             raise Exception("ManagedWindow can not make a Procedure"
@@ -318,14 +468,22 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if curve is None:
             curve_list = []
             for wdg in self.widget_list:
+<<<<<<< HEAD
                 curve_list.append(self.new_curve(wdg, results, marker=self.marker_choice))
+=======
+                new_curve = self.new_curve(wdg, results)
+                if isinstance(new_curve, (tuple, list)):
+                    curve_list.extend(new_curve)
+                else:
+                    curve_list.append(new_curve)
+>>>>>>> upstream/master
         else:
             curve_list = curve[:]
 
         curve_color = pg.intColor(0)
-        for wdg, curve in zip(self.widget_list, curve_list):
-            if isinstance(wdg, PlotWidget):
-                curve_color = curve.opts['pen'].color()
+        for curve in curve_list:
+            if hasattr(curve, 'color'):
+                curve_color = curve.color
                 break
 
         browser_item = BrowserItem(results, curve_color)
@@ -413,15 +571,18 @@ class ManagedWindow(ManagedWindowBase):
     :param x_axis: the initial data-column for the x-axis of the plot
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
+    :param log_fmt: formatting string for the log-widget
+    :param log_datefmt: formatting string for the date in the log-widget
     :param \\**kwargs: optional keyword arguments that will be passed to
     :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
 
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1,
+                 log_fmt=None, log_datefmt=None, **kwargs):
         self.x_axis = x_axis
         self.y_axis = y_axis
-        self.log_widget = LogWidget("Experiment Log")
+        self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis,
                                       self.y_axis, linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)
@@ -432,7 +593,7 @@ class ManagedWindow(ManagedWindowBase):
         super().__init__(procedure_class, **kwargs)
 
         # Setup measured_quantities once we know x_axis and y_axis
-        self.browser_widget.browser.measured_quantities = [self.x_axis, self.y_axis]
+        self.browser_widget.browser.measured_quantities.update([self.x_axis, self.y_axis])
 
         logging.getLogger().addHandler(self.log_widget.handler)  # needs to be in Qt context?
         log.setLevel(self.log_level)

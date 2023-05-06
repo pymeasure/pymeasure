@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,13 +56,13 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard 8116A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            'Hewlett-Packard 8116A',
+            name,
             includeSCPI=False,
             **kwargs
         )
@@ -236,7 +236,7 @@ class HP8116A(Instrument):
         :param command: The command to send to the instrument.
         :param num_bytes: The number of bytes to read from the instrument. If not specified,
                           the number of bytes is automatically determined by the command.
-        """
+        """  # noqa: E501
         self.write(command)
 
         if num_bytes is None:

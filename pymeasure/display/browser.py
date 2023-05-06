@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +94,7 @@ class Browser(QtWidgets.QTreeWidget):
         super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
-        self.measured_quantities = measured_quantities
+        self.measured_quantities = set(measured_quantities)
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
         for parameter in self.display_parameters:

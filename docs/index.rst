@@ -76,7 +76,7 @@ Information about development is also available:
 
    dev/contribute
    dev/reporting_errors
-   dev/adding_instruments
+   dev/adding_instruments/index
    dev/coding_standards
 
 .. _about-docs:
@@ -87,4 +87,4 @@ Information about development is also available:
 
    about/authors
    about/license
-
+   about/changes

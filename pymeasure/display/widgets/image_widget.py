@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -94,9 +94,11 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         """ Creates a new image """
         image = ResultsImage(results,
+                             wdg=self,
                              x=self.image_frame.x_axis,
                              y=self.image_frame.y_axis,
-                             z=self.image_frame.z_axis
+                             z=self.image_frame.z_axis,
+                             **kwargs
                              )
         return image
 
