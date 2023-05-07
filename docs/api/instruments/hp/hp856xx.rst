@@ -2,7 +2,7 @@
 HP 8560A / 8561B Spectrum Analyzer
 ##################################
 
-Every unit is the base unit so for time it's seconds, frequency in hertz etc...
+Every unit is used in the base unit, so for time it is s (Seconds), frequency in Hz (Hertz) etc...
 
 -------------------------------------
 Generic Specific Attributes & Methods
