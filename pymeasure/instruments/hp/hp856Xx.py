@@ -633,10 +633,10 @@ class HP856Xx(Instrument):
         necessary. When the IF adjustment is not active, an "A" appears on the left side of the
         display.
 
-        - FULL IF adjustment is done for all IF settings.
-        - CURR IF adjustment is done only for the IF settings currently displayed.
-        - OFF turns the continuous IF adjustment off.
-        - ON reactivates the continuous IF adjustment.
+        - `"FULL"` IF adjustment is done for all IF settings.
+        - `"CURR"` IF adjustment is done only for the IF settings currently displayed.
+        - `False` turns the continuous IF adjustment off.
+        - `True` reactivates the continuous IF adjustment.
 
         Type: :code:`bool, str`
         """,
@@ -692,7 +692,7 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    annotation = Instrument.control(
+    annotation_enabled = Instrument.control(
         "ANNOT?", "ANNOT %s",
         """
         Turn the display annotation off or on.
@@ -721,7 +721,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["AUTO", "MAN"], arange(10, 80, 10)],
-        cast=int
+        cast=int,
     )
 
     amplitude_unit = Instrument.control(
@@ -1217,7 +1217,9 @@ class HP856Xx(Instrument):
     )
 
     def fft(self, source, destination, window):
-        """The FFT command performs a discrete Fourier transform on the source
+        """Calculate and show a discrete Fourier transform.
+
+        The FFT command performs a discrete Fourier transform on the source
         trace array and stores the logarithms of the magnitudes of the results
         in the destination array. The maximum length of any of the traces is
         601 points. FFT is designed to be used in transforming zero-span
@@ -2159,7 +2161,7 @@ class HP856Xx(Instrument):
         """
         self.write("RCLTHRU")
 
-    revision = Instrument.measurement(
+    firmware_revision = Instrument.measurement(
         "REV?",
         """
         Return the revision date code of the spectrum analyzer firmware.
@@ -2410,7 +2412,7 @@ class HP856Xx(Instrument):
     status = Instrument.measurement(
         "STB?",
         """
-        Returns to the controller the decimal equivalent of the bits set in the
+        Get the decimal equivalent of the bits set in the
         status byte (see the RQS and SRQ commands). STB is equivalent to a serial poll command.
         The RQS and associated bits are cleared in the same way that a serial poll command would
         clear them.
@@ -2627,7 +2629,7 @@ class HP856Xx(Instrument):
     video_average = Instrument.control(
         "VAVG?", "VAVG %s",
         """
-        Activate the video averaging function. Video averaging smooths the
+        Control the video averaging function. Video averaging smooths the
         displayed trace without using a narrow bandwidth. 'video_average' sets the IF detector to
         sample mode (see the DET command) and smooths the trace by averaging successive traces
         with each other. If desired, you can change the detector mode during video averaging.
@@ -2650,7 +2652,7 @@ class HP856Xx(Instrument):
     video_bandwidth = Instrument.control(
         "VB?", "VB %s",
         """
-        specifies the video bandwidth. This is normally a coupled function that
+        Control the video bandwidth. This is normally a coupled function that
         is selected according to the ratio selected by the VBR command. (If no ratio is selected,
         a default ratio, 1.0, is used instead.) Video bandwidth filters (or smooths) post-detected
         video information. The bandwidth, which ranges from 1 Hz to 3 MHz, may also be selected
@@ -2674,7 +2676,7 @@ class HP856Xx(Instrument):
     video_bandwidth_to_resolution_bandwidth = Instrument.control(
         "VBR?", "VBR %.3E",
         """
-        Specify the coupling ratio between the video bandwidth and the
+        Control the coupling ratio between the video bandwidth and the
         resolution bandwidth. Thus, when the resolution bandwidth is changed, the video bandwidth
         changes to satisfy the ratio. The ratio ranges from 0.003 to 3 in a 1, 3, 10 sequence. The
         default ratio is 1. When a new ratio is selected, the video bandwidth changes to satisfy the
