@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 import pytest
 
 from pymeasure.units import ureg
@@ -107,6 +109,14 @@ class FakeBase(CommonBaseTesting):
         values={'X': 1, 'Y': 2, 'Z': 3},
         map_values=True,
         dynamic=True,
+    )
+    fake_ctrl_errors = CommonBase.control(
+        "ge", "se %d", "Fake control for getting errors after getting/setting values.",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+        check_get_errors=True,
+        check_set_errors=True
     )
 
 
@@ -381,14 +391,31 @@ def test_check_get_errors_not_implemented(fake):
         fake.check_get_errors()
 
 
-def test_control_check_get_errors(fake):
-    fake.fake_ctrl_check_get_errors = True
-
+def test_control_check_get_errors(fake, caplog):
     def checking():
         fake.error = True
+        return [(7, "some error")]
     fake.check_get_errors = checking
-    fake.fake_ctrl
+    fake.fake_ctrl_errors
     assert fake.error is True
+    assert caplog.record_tuples == [(
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error recieved after trying to get a property with the command 'ge': '(7, 'some error')'."
+    )]
+
+
+def test_control_check_get_errors_multiple_errors(fake, caplog):
+    def checking():
+        fake.error = True
+        return [15, (19, "x")]
+    fake.check_get_errors = checking
+    fake.fake_ctrl_errors
+    assert caplog.record_tuples == [(
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error recieved after trying to get a property with the command 'ge': '15', '(19, 'x')'."
+    )]
 
 
 def test_check_set_errors_not_implemented(fake):
@@ -396,14 +423,18 @@ def test_check_set_errors_not_implemented(fake):
         fake.check_set_errors()
 
 
-def test_control_check_set_errors(fake):
-    fake.fake_ctrl_check_set_errors = True
-
+def test_control_check_set_errors(fake, caplog):
     def checking():
         fake.error = True
+        return [(7, "Error!")]
     fake.check_set_errors = checking
-    fake.fake_ctrl = 7
+    fake.fake_ctrl_errors = 7
     assert fake.error is True
+    assert caplog.record_tuples == [(
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error recieved after trying to set a property with the command 'se 7': '(7, 'Error!')'."
+    )]
 
 
 @pytest.mark.parametrize("dynamic", [False, True])

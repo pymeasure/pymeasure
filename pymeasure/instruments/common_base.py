@@ -476,7 +476,10 @@ class CommonBase:
                                maxsplit=maxsplit,
                                **values_kwargs)
             if check_get_errors:
-                self.check_get_errors()
+                errors = [str(error) for error in self.check_get_errors()]
+                if errors:
+                    log.error("Error recieved after trying to get a property with the command "
+                              f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -525,7 +528,12 @@ class CommonBase:
                 )
             self.write(command_process(set_command) % value)
             if check_set_errors:
-                self.check_set_errors()
+                errors = [str(error) for error in self.check_set_errors()]
+                if errors:
+                    log.error(
+                        "Error recieved after trying to set a property with the command "
+                        f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
+                    )
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
