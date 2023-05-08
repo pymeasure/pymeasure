@@ -200,7 +200,7 @@ class PrologixAdapter(VISAAdapter):
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
-        If the GPIB address in :attr:`.address` is defined, it is sent first.
+        If the GPIB address in :attr:`self.address` is defined, it is sent first.
 
         :param str command: Command string to be sent to the instrument
             (without termination).
