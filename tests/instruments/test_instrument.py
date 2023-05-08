@@ -116,6 +116,16 @@ def test_init_visa_fail():
         Instrument("abc", "def", visa_library="@xyz")
 
 
+def test_init_includeSCPI_implicit_warning():
+    with pytest.warns(FutureWarning, match="includeSCPI"):
+        Instrument("COM1", "def", visa_library="@sim")
+
+
+def test_init_includeSCPI_explicit_warning():
+    with pytest.warns(FutureWarning, match="includeSCPI"):
+        Instrument("COM1", "def", visa_library="@sim", includeSCPI=True)
+
+
 def test_global_preprocess_reply():
     with pytest.warns(FutureWarning, match="deprecated"):
         inst = Instrument(FakeAdapter(), "name", preprocess_reply=lambda v: v.strip("x"))

@@ -24,6 +24,7 @@
 
 import logging
 import time
+from warnings import warn
 
 from .common_base import CommonBase
 from ..adapters import VISAAdapter
@@ -59,6 +60,10 @@ class Instrument(CommonBase):
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+
+        .. deprecated:: 0.12
+            Inherit the :class:`~pymeasure.instruments.generic_types.SCPImixin` class instead.
+
     :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
@@ -83,6 +88,9 @@ class Instrument(CommonBase):
                                 " PyVISA is not present")
         self.adapter = adapter
         self.SCPI = includeSCPI
+        if includeSCPI:
+            warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
+                 "the `SCPImixin` class instead.", FutureWarning)
         self.isShutdown = False
         self.name = name
 
