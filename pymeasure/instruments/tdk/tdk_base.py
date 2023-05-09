@@ -50,12 +50,9 @@ log.addHandler(logging.NullHandler())
 class TDK_Lambda_Base(Instrument):
     """
     This is the base class for TDK Lambda Genesys Series DC power supplies.
-
     Do not directly instantiate an object with this class. Use one of the
     TDK-Lambda power supply instrument classes that inherit from this parent
-    class.
-
-    Untested commands are noted in docstrings.
+    class. Untested commands are noted in docstrings.
     """
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,14 +60,6 @@ class TDK_Lambda_Base(Instrument):
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def __init__(self, adapter, name="TDK-Lambda Base", address=6, **kwargs):
-        """
-        The initialization of a TDK instrument requires the current address
-        of the TDK power supply. The default address for the TDK Lambda is 6.
-
-        :param adapter: VISAAdapter instance
-        :param name: Instrument name
-        :param address: Serial port daisy chain number. Default is 6.
-        """
         super().__init__(
             adapter,
             name,
@@ -103,7 +92,7 @@ class TDK_Lambda_Base(Instrument):
 
         super().write(command)
         if '?' not in command:
-            # clear "OK" from the adapter read buffer
+            # clear response from the adapter read buffer
             self.read()
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,7 +110,7 @@ class TDK_Lambda_Base(Instrument):
 
     remote = Instrument.control(
         "RMT?", "RMT %s",
-        """Get the current remote operation of the power supply.
+        """Control the current remote operation of the power supply.
 
         Valid values are ``'LOC'`` for local mode, ``'REM'`` for remote mode,
         and ``'LLO'`` for local lockout mode.
@@ -261,25 +250,27 @@ class TDK_Lambda_Base(Instrument):
         values=[18, 23, 46]
     )
 
-    source_output = Instrument.control(
+    output_enabled = Instrument.control(
         "OUT?", "OUT %s",
         """Control the output of the power supply.
 
-        Valid values are ``'ON'`` and ``'OFF'``.
+        Valid values are ``True`` and ``False``.
         """,
         validator=strict_discrete_set,
-        values=["ON", "OFF"]
+        values={True: "ON", False: "OFF"},
+        map_values=True
     )
 
     foldback = Instrument.control(
         "FLD?", "FLD %s",
         """Control the fold back protection of the power supply.
 
-        Valid values are ``'ON'`` to arm the fold back protection and ``'OFF'``
+        Valid values are ``True`` to arm the fold back protection and ``False``
         to cancel the fold back protection.
         """,
         validator=strict_discrete_set,
-        values=["ON", "OFF"]
+        values={True: "ON", False: "OFF"},
+        map_values=True
     )
 
     foldback_delay = Instrument.control(
@@ -319,10 +310,11 @@ class TDK_Lambda_Base(Instrument):
         "AST?", "AST %s",
         """Control the auto restart mode.
 
-        Valid values are ``'ON'`` and ``'OFF'``.
+        Valid values are ``True`` and ``False``.
         """,
         validator=strict_discrete_set,
-        values=["ON", "OFF"]
+        values={True: "ON", False: "OFF"},
+        map_values=True
     )
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -382,6 +374,5 @@ class TDK_Lambda_Base(Instrument):
         """
         log.info("Shutting down %s." % self.name)
         self.ramp_to_current(0.0)
-        self.source_output = "OFF"
-        log.info("%s has been shut down." % self.name)
+        self.source_output = False
         super().shutdown()

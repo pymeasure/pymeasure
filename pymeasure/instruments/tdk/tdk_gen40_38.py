@@ -50,6 +50,12 @@ class TDK_Gen40_38(TDK_Lambda_Base):
         print(psu.actual_voltage)           # Measure actual PSU voltage
         psu.shutdown()                      # Run shutdown command
 
+    The initialization of a TDK instrument requires the current address
+    of the TDK power supply. The default address for the TDK Lambda is 6.
+
+    :param adapter: VISAAdapter instance
+    :param name: Instrument name. Default is "TDK Lambda Gen40-38"
+    :param address: Serial port daisy chain number. Default is 6.
     """
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
