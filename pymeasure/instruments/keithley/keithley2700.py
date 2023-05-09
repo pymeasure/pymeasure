@@ -96,7 +96,7 @@ class Keithley2700(Instrument, KeithleyBuffer):
 
     """
 
-    CLIST_VALUES = list(range(101, 300))
+    CLIST_VALUES = range(101, 300)
 
     # Routing commands
     closed_channels = Instrument.control(
