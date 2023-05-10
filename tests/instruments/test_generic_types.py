@@ -51,7 +51,7 @@ class Test_SCPIMixin:
             assert getattr(instr, method) == reply
 
     @pytest.mark.parametrize("method, write", (("clear", "*CLS"),
-                                               ("reset", "*RST")
+                                               ("reset", "*RST"),
                                                ))
     def test_SCPI_write_commands(self, method, write):
         with expected_protocol(
@@ -59,6 +59,17 @@ class Test_SCPIMixin:
                 [(write, None)],
                 name="test") as instr:
             getattr(instr, method)()
+
+    def test_check_errors(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("SYST:ERR?", '-100,"Command error"'),
+                 ("SYST:ERR?", '-222,"Data out of range"'),
+                 ("SYST:ERR?", '0,"No error"'),
+                 ],
+                name="test") as instr:
+            assert instr.check_errors() == [[-100, '"Command error"'],
+                                            [-222, '"Data out of range"']]
 
 
 def test_SCPIunknownMixin():
