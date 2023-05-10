@@ -832,11 +832,10 @@ class Tektronix371A(Instrument):
         and creates a function for handling the srq event.
         :return: None
         """
-
         def event_handler(resource, event, user_handle):
             self.srq_called = True
             # print(f"Handled event {event.event_type} on {resource}")
-            self.adapter.connection.disable_event(event_type, event_mech)
+            # self.adapter.connection.disable_event(event.event_type, event.event_mech)
             # self.adapter.connection.uninstall_handler(event_type, wrapped, user_handle)
 
         event_type = pyvisa_constants.VI_EVENT_SERVICE_REQ
