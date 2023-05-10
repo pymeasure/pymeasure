@@ -26,7 +26,7 @@ import time
 from pyvisa import constants as pyvisa_constants
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, truncated_discrete_set
+from pymeasure.instruments.validators import strict_range
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -368,7 +368,7 @@ class Tektronix371A(Instrument):
 
     cs_breakers = Instrument.measurement(
         "CSOut?",
-        """Return the actual collector HIGH VOLTAGE and HIGH CURRENT breakers settings 
+        """Return the actual collector HIGH VOLTAGE and HIGH CURRENT breakers settings
         of the instrument.""",
         get_process=lambda r:
         "".join(r)
@@ -529,10 +529,11 @@ class Tektronix371A(Instrument):
 
     display_horizontal_source_sensitivity = Instrument.control(
         "HORiz?", "HORiz %s:%s",
-        """Control the horizontal source (COLLECT O STPGEN) and 
+        """Control the horizontal source (COLLECT O STPGEN) and
         its sensitivity (volt/div) for the horizontal axis on the display.\n
         Use example: instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0)
-        Use example: instrument.display_horizontal_source_sensitivity will return ['COLLECT',1.0]"""
+        Use example: instrument.display_horizontal_source_sensitivity will return ['COLLECT', 1.0]
+        """
         # e.g. if we want to configure the horizontal source and sensitivity as 'COLLECT' with
         # sensitivity equals to 1.0 volt/div then we will use the next expression:
         # instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0).\n After that,
@@ -548,10 +549,11 @@ class Tektronix371A(Instrument):
 
     display_vertical_source_sensitivity = Instrument.control(
         "VERt?", "VERt %s:%s",
-        """Control the vertical source (COLLECT) and its sensitivity (A/div) 
+        """Control the vertical source (COLLECT) and its sensitivity (A/div)
         for the vertical axis on the display.\n
         Use example: instrument.display_vertical_source_sensitivity = ("COLLECT", 1.0)
-        Use example: instrument.display_vertical_source_sensitivity will return ['COLLECT',1.0] """
+        Use example: instrument.display_vertical_source_sensitivity will return ['COLLECT', 1.0]
+        """
         # e.g. if we want to configure the vertical source and sensitivity as 'COLLECT' with
         # sensitivity equals to 1.0 A/div then we will use the next expression:
         # instrument.display_vertical_source_sensitivity = ("COLLECT", 1.0).\n After that,
@@ -572,7 +574,7 @@ class Tektronix371A(Instrument):
     stepgen_output = Instrument.control(
         "STPgen?", "STPgen OUT:%s",
         """Control the instrument step generator output enable (boolean).\n
-        After enable the stepgen_output (even if it was enable before) 
+        After enable the stepgen_output (even if it was enable before)
         step generator parameters change.""",
         validator=strict_discrete_set,
         values={True: 'ON', False: 'OFF'},
@@ -615,13 +617,14 @@ class Tektronix371A(Instrument):
         "STPgen?", "STPgen %s:%s",
         """Control the step size and souce for the step generator (Amps or Volts per step).\n
         Use example: instrument.stepgen_step_source_and_size = ("VOLTAGE", 2.0)
-        Use example: instrument.stepgen_step_source_and_size will return ['VOLTAGE',2.0] """
+        Use example: instrument.stepgen_step_source_and_size will return ['VOLTAGE', 2.0]
+        """
         # e.g. if we want to configure the step generator as voltage with step size equals to 2V
         # then we will use the next expression: instrument.stepgen_step_source_and_size = (
         # "VOLTAGE", 2.0).\n After that, if we want to ask the instrument for the step generator
         # source and size then we will use the next expression:
-        # instrument.stepgen_step_source_and_size and we should obtain a list as follow: [
-        # 'VOLTAGE',2.0]. Parameters out ouf range will have no effect.
+        # instrument.stepgen_step_source_and_size and we should obtain a list as follow:
+        # ['VOLTAGE',2.0]. Parameters out ouf range will have no effect.
         ,
         get_process=lambda r:
         [r[5].split(":")[0], float(r[5].split(":")[1])] if isinstance(r, list)
