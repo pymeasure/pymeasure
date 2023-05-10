@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
+
 import pytest
 
 from pymeasure.units import ureg
@@ -207,6 +209,7 @@ class TestInitWithChildren:
 
 class TestAddChild:
     """Test the `add_child` method"""
+
     @pytest.fixture()
     def parent(self):
         parent = CommonBaseTesting(ProtocolAdapter())
@@ -290,11 +293,11 @@ class TestInheritanceWithChildren:
 
 # Test ChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
-    ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-    (((Child, GenericBase, Child), (1, 2, 3)),
-     [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
-    ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
-    ((Child, None, None), [(Child, None)], {'prefix': None}),
+        ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
+        (((Child, GenericBase, Child), (1, 2, 3)),
+         [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
+        ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
+        ((Child, None, None), [(Child, None)], {'prefix': None}),
 ))
 def test_ChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""
@@ -376,6 +379,7 @@ def test_control_check_errors_get(fake):
 
     def checking():
         fake.error = True
+
     fake.check_errors = checking
     fake.fake_ctrl
     assert fake.error is True
@@ -386,6 +390,7 @@ def test_control_check_errors_set(fake):
 
     def checking():
         fake.error = True
+
     fake.check_errors = checking
     fake.fake_ctrl = 7
     assert fake.error is True
@@ -481,6 +486,7 @@ def test_control_invalid_values_get():
         x = CommonBase.control(
             "", "%d", "",
             values=b"abasdfe", map_values=True)
+
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x
 
@@ -490,6 +496,7 @@ def test_control_invalid_values_set():
         x = CommonBase.control(
             "", "%d", "",
             values=b"abasdfe", map_values=True)
+
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x = 7
 
@@ -592,6 +599,7 @@ def test_measurement_warning_at_kwargs():
 
 def test_control_parameters_for_values():
     """Test how to hand a parameter to `values` method."""
+
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "JUNK%d",
@@ -613,6 +621,7 @@ def test_control_parameters_for_values():
 
 def test_measurement_parameters_for_values():
     """Test how to hand a parameter to `values` method."""
+
     class Fake(FakeBase):
         x = CommonBase.measurement(
             "JUNK%d",
@@ -641,6 +650,7 @@ def test_measurement_cast(cast, expected):
     class Fake(CommonBaseTesting):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
+
     with expected_protocol(Fake, [("x", "5.5")]) as instr:
         assert instr.x == expected
 
@@ -649,8 +659,10 @@ def test_measurement_cast_int():
     class Fake(CommonBaseTesting):
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, "test", **kwargs)
+
         x = CommonBase.measurement(
             "x", "doc", cast=int)
+
     with expected_protocol(Fake, [("x", "5")]) as instr:
         y = instr.x
         assert y == 5
@@ -661,8 +673,10 @@ def test_measurement_unitful_property():
     class Fake(CommonBaseTesting):
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, "test", **kwargs)
+
         x = CommonBase.measurement(
             "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
+
     with expected_protocol(Fake, [("x", "5.5")]) as instr:
         y = instr.x
         assert y.m_as(ureg.m) == 5.5
@@ -736,6 +750,7 @@ def test_control_multivalue(dynamic):
 def test_FakeBase_control(set_command, given, expected, dynamic):
     """FakeBase's custom simple control needs to process values correctly.
     """
+
     class Fake(FakeBase):
         x = FakeBase.control(
             "", set_command, "",
@@ -837,3 +852,64 @@ def test_dynamic_property_values_defined_at_superclass_level():
     inst.fake_ctrl2 = 17  # should raise an error if change unsuccessful
     with pytest.raises(ValueError):
         inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
+
+
+# Test automatic docstring creation
+class DocValuesTesting(GenericBase):
+    no_map_measurement = CommonBase.measurement(
+        "", "docs",
+        values={'X': 1, 'Y': 2, 'Z': 3},
+        dynamic=True,
+    )
+
+    no_range_ctrl = CommonBase.control(
+        "", "%d",
+        """
+        Test ``docstring`` with no range ``validator``
+        """,
+        values=[23, 43, 'test']
+    )
+
+    np_arange_ctrl = CommonBase.control(
+        "", "%d",
+        """np.arange""",
+        values=np.arange(0, 65.1, 0.1)
+    )
+
+    np_logspace_ctrl = CommonBase.control(
+        "", "%d",
+        """np.logspace""",
+        values=np.logspace(1, 42, 5),
+        dynamic=True
+    )
+
+    int_ctrl = CommonBase.control(
+        "", "%d",
+        """Single int""",
+        values=42
+    )
+
+    str_ctrl = CommonBase.control(
+        "", "%d",
+        """Single str""",
+        values='TEST'
+    )
+
+
+def test_doc_values():
+    fake = DocValuesTesting
+    assert fake.fake_ctrl.fget.__doc__ == \
+           'docs(dynamic)\n\n        **Valid Values in range:** 1 - 10'
+    assert fake.fake_setting.fget.__doc__ == \
+           'docs(dynamic)\n\n        **Valid Values in range:** 1 - 10'
+    assert fake.fake_measurement.fget.__doc__ == \
+           "docs(dynamic)\n\n        **Valid Values:** ``'X'``, ``'Y'``, ``'Z'``"
+    assert fake.no_map_measurement.fget.__doc__ == \
+           "docs(dynamic)\n\n        **Valid Values:** ``'X'``, ``'Y'``, ``'Z'``"
+    assert fake.no_range_ctrl.fget.__doc__ == \
+           "\n        Test ``docstring`` with no range ``validator``\n" \
+           "        \n\n        **Valid Values:** 23, 43, ``'test'``"
+    assert fake.np_arange_ctrl.fget.__doc__ == 'np.arange'
+    assert fake.np_logspace_ctrl.fget.__doc__ == 'np.logspace(dynamic)'
+    assert fake.int_ctrl.fget.__doc__ == 'Single int\n\n        **Valid Value:** 42'
+    assert fake.str_ctrl.fget.__doc__ == "Single str\n\n        **Valid Value:** ``'TEST'``"

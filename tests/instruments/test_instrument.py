@@ -25,7 +25,6 @@
 
 import time
 from unittest import mock
-import numpy as np
 
 import pytest
 
@@ -279,64 +278,3 @@ class TestMultiFunctionality:
                 [("X:Volt 123.456000", None)]
         ) as inst:
             inst.f_X.voltage = 123.456
-
-
-# Test automatic docstring creation
-class DocValuesInstrument(GenericInstrument):
-    no_map_measurement = Instrument.measurement(
-        "", "docs",
-        values={'X': 1, 'Y': 2, 'Z': 3},
-        dynamic=True,
-    )
-
-    no_range_ctrl = Instrument.control(
-        "", "%d",
-        """
-        Test ``docstring`` with no range ``validator``
-        """,
-        values=[23, 43, 'test']
-    )
-
-    np_arange_ctrl = Instrument.control(
-        "", "%d",
-        """np.arange""",
-        values=np.arange(0, 65.1, 0.1)
-    )
-
-    np_logspace_ctrl = Instrument.control(
-        "", "%d",
-        """np.logspace""",
-        values=np.logspace(1, 42, 5),
-        dynamic=True
-    )
-
-    int_ctrl = Instrument.control(
-        "", "%d",
-        """Single int""",
-        values=42
-    )
-
-    str_ctrl = Instrument.control(
-        "", "%d",
-        """Single str""",
-        values='TEST'
-    )
-
-
-def test_doc_values():
-    fake = DocValuesInstrument
-    assert fake.fake_ctrl.fget.__doc__ == \
-           'docs(dynamic)\n\n        **Valid Values in range:** 1 - 10'
-    assert fake.fake_setting.fget.__doc__ == \
-           'docs(dynamic)\n\n        **Valid Values in range:** 1 - 10'
-    assert fake.fake_measurement.fget.__doc__ == \
-           "docs(dynamic)\n\n        **Valid Values:** ``'X'``, ``'Y'``, ``'Z'``"
-    assert fake.no_map_measurement.fget.__doc__ == \
-           "docs(dynamic)\n\n        **Valid Values:** ``'X'``, ``'Y'``, ``'Z'``"
-    assert fake.no_range_ctrl.fget.__doc__ == \
-           "\n        Test ``docstring`` with no range ``validator``\n" \
-           "        \n\n        **Valid Values:** 23, 43, ``'test'``"
-    assert fake.np_arange_ctrl.fget.__doc__ == 'np.arange'
-    assert fake.np_logspace_ctrl.fget.__doc__ == 'np.logspace(dynamic)'
-    assert fake.int_ctrl.fget.__doc__ == 'Single int\n\n        **Valid Value:** 42'
-    assert fake.str_ctrl.fget.__doc__ == "Single str\n\n        **Valid Value:** ``'TEST'``"
