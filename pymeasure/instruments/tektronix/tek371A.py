@@ -179,12 +179,11 @@ class Curve:
             if (i % 4 == 0) and \
                     (i <= (len(self.raw_points_coordinates) - (
                             self.n_bytes_for_x_coordinate + self.n_bytes_for_y_coordinate))):
-
                 coord_x = int.from_bytes(
                     self.raw_points_coordinates[i:i + self.n_bytes_for_x_coordinate],
                     byteorder="big",
                     signed=False
-                    ) - waveform_preamble.horizontal_offset
+                ) - waveform_preamble.horizontal_offset
 
                 coord_x = max(coord_x, 0)
 
@@ -428,7 +427,7 @@ class Tektronix371A(Instrument):
     # # Group of commands for controlling the cursor on the display.
     ###############################################################################
 
-    def set_cursor_mode(self, *args, mode=str):
+    def set_cursor_mode(self, mode="", *args):
         """
         Control the cursor mode of the instrument
         :param mode: string which can be: "OFF", "DOT", "LINE" or "WINDOW"
@@ -647,18 +646,21 @@ class Tektronix371A(Instrument):
         and step generator source. The instrument only will consider increments of the 10%
         of the step size, other values will not have effect on the step generator offset.
         """
-        stepgen_step_size = self.stepgen_step_source_and_size[1]
-        stepgen_step_source = self.stepgen_step_source_and_size[0]
+        stepgen_step_source_and_size = self.stepgen_step_source_and_size
+        stepgen_step_size = stepgen_step_source_and_size[1]
+        stepgen_step_source = stepgen_step_source_and_size[0]
         max_offset = 5.0 * stepgen_step_size
 
         if abs(offset) > max_offset:
-            pass
-            # offset_units = "V" if "VOLTAGE" in stepgen_step_source else "A" raise Exception(
-            # "Setting the step generator offset....\n" + "Step Generator Offset cannot be
-            # greater than the maximum offset done the actual step size.\n" + "Actual step size =
-            # " + str(stepgen_step_size) + offset_units + ". " + "Then maximun offset is " + str(
-            # max_offset) + offset_units + ". " + "You wanted " + str(offset) + offset_units +
-            # "\n" )
+            offset_units = "V" if "VOLTAGE" in stepgen_step_source else "A"
+            raise ValueError(
+                f'Setting the step generator offset....\n'
+                f'Step Generator Offset cannot be greater than the maximum offset done the actual'
+                f' step size.\n'
+                f'Actual step size = " {stepgen_step_size} {offset_units}.\n'
+                f'Then maximun offset is {max_offset} {offset_units}.\n'
+                f'You wanted {offset} {offset_units}\n'
+            )
 
         invert = False
         if offset < 0:
@@ -764,7 +766,7 @@ class Tektronix371A(Instrument):
         bytes_per_y_coordinate_point = 2  # bytes
         points_to_read = \
             waveform_preamble.n_measures_readed * (
-                        bytes_per_y_coordinate_point + bytes_per_x_coordinate_point)
+                    bytes_per_y_coordinate_point + bytes_per_x_coordinate_point)
 
         raw_data = self.curve(curve_head_len +
                               bytes_for_data_len +
@@ -832,6 +834,7 @@ class Tektronix371A(Instrument):
         and creates a function for handling the srq event.
         :return: None
         """
+
         def event_handler(resource, event, user_handle):
             self.srq_called = True
             # print(f"Handled event {event.event_type} on {resource}")
