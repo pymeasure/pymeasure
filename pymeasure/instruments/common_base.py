@@ -542,7 +542,8 @@ class CommonBase:
             else:
                 return str(value)
 
-        if values != ():
+        # Type check required to avoid numpy array elementwise comparison with tuple
+        if not (isinstance(values, tuple) and values == ()):
             valid_values = "\n\n        "
             if isinstance(values, (list, tuple, dict)):
                 # If the validator has "range" in the function name
@@ -559,7 +560,7 @@ class CommonBase:
                 valid_values += "**Valid Values in range:** "
                 valid_values += format_docstring_value(values.start)
                 valid_values += " - " + format_docstring_value(values.stop)
-            elif isinstance(values, (int, float)):
+            elif isinstance(values, (int, float, str, bool)):
                 valid_values += "**Valid Value:** "
                 valid_values += format_docstring_value(values)
             else:
