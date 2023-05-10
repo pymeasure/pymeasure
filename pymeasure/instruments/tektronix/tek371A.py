@@ -533,7 +533,7 @@ class Tektronix371A(Instrument):
         its sensitivity (volt/div) for the horizontal axis on the display.\n
         Use example: instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0)
         Use example: instrument.display_horizontal_source_sensitivity will return ['COLLECT', 1.0]
-        """
+        """,
         # e.g. if we want to configure the horizontal source and sensitivity as 'COLLECT' with
         # sensitivity equals to 1.0 volt/div then we will use the next expression:
         # instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0).\n After that,
@@ -541,7 +541,6 @@ class Tektronix371A(Instrument):
         # the we will use the next expression: instrument.display_horizontal_source_sensitivity
         # and we should obtain a list as follow: ['COLLECT',1.0]. Parameters out ouf range will
         # have no effect.
-        ,
         get_process=lambda r:
         ["".join(r.replace(" ", "")).replace("HORIZ", "").split(":", maxsplit=1)[0],
          float("".join(r.replace(" ", "")).replace("HORIZ", "").split(":")[1])]
@@ -553,7 +552,7 @@ class Tektronix371A(Instrument):
         for the vertical axis on the display.\n
         Use example: instrument.display_vertical_source_sensitivity = ("COLLECT", 1.0)
         Use example: instrument.display_vertical_source_sensitivity will return ['COLLECT', 1.0]
-        """
+        """,
         # e.g. if we want to configure the vertical source and sensitivity as 'COLLECT' with
         # sensitivity equals to 1.0 A/div then we will use the next expression:
         # instrument.display_vertical_source_sensitivity = ("COLLECT", 1.0).\n After that,
@@ -561,7 +560,6 @@ class Tektronix371A(Instrument):
         # the we will use the next expression: instrument.display_vertical_source_sensitivity and
         # we should obtain a list as follow: ['COLLECT',1.0]. Parameters out ouf range will have
         # no effect.
-        ,
         get_process=lambda r:
         ["".join(r.replace(" ", "")).replace("VERT", "").split(":", maxsplit=1)[0],
          float("".join(r.replace(" ", "")).replace("VERT", "").split(":")[1])]
@@ -618,14 +616,13 @@ class Tektronix371A(Instrument):
         """Control the step size and souce for the step generator (Amps or Volts per step).\n
         Use example: instrument.stepgen_step_source_and_size = ("VOLTAGE", 2.0)
         Use example: instrument.stepgen_step_source_and_size will return ['VOLTAGE', 2.0]
-        """
+        """,
         # e.g. if we want to configure the step generator as voltage with step size equals to 2V
         # then we will use the next expression: instrument.stepgen_step_source_and_size = (
         # "VOLTAGE", 2.0).\n After that, if we want to ask the instrument for the step generator
         # source and size then we will use the next expression:
         # instrument.stepgen_step_source_and_size and we should obtain a list as follow:
         # ['VOLTAGE',2.0]. Parameters out ouf range will have no effect.
-        ,
         get_process=lambda r:
         [r[5].split(":")[0], float(r[5].split(":")[1])] if isinstance(r, list)
         else r.split(":")[1]
