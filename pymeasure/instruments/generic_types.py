@@ -72,14 +72,23 @@ class SCPImixin:
         """ Resets the instrument. """
         self.write("*RST")
 
+    def fetch_next_error(self):
+        """Fetch the next error in the error queue.
+
+        If you want to read and log all errors, use :meth:`check_errors` instead.
+
+        :return: Error entry.
+        """
+        return self.values("SYST:ERR?")
+
     def check_errors(self):
         """ Read all errors from the instrument.
 
-        :return: list of error entries
+        :return: List of error entries.
         """
         errors = []
         while True:
-            err = self.values("SYST:ERR?")
+            err = self.fetch_next_error()
             if int(err[0]) != 0:
                 log.error(f"{self.name}: {err[0]}, {err[1]}")
                 errors.append(err)

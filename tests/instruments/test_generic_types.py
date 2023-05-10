@@ -60,6 +60,13 @@ class Test_SCPIMixin:
                 name="test") as instr:
             getattr(instr, method)()
 
+    def test_fetch_next_error(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("SYST:ERR?", '-100,"Command error"')],
+                name="test") as instr:
+            assert instr.fetch_next_error() == [-100, '"Command error"']
+
     def test_check_errors(self):
         with expected_protocol(
                 self.SCPIInstrument,
