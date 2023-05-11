@@ -268,5 +268,3 @@ class Ametek7270(Instrument):
         log.info("Shutting down %s" % self.name)
         self.voltage = 0.
         super().shutdown()
-
-
