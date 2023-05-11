@@ -244,7 +244,7 @@ class ESP300(Instrument):
 
     error = Instrument.measurement(
         "TE?",
-        """ Reads an error code from the motion controller.
+        """ Get an error code from the motion controller.
         """,
         cast=int
     )
@@ -268,7 +268,7 @@ class ESP300(Instrument):
 
     @property
     def errors(self):
-        """ Returns a list of error Exceptions that can be later raised, or
+        """ Get a list of error Exceptions that can be later raised, or
         used to diagnose the situation.
         """
         errors = []
@@ -284,7 +284,7 @@ class ESP300(Instrument):
 
     @property
     def axes(self):
-        """ A list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+        """ Get a list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
         objects that are present. """
         axes = []
         directory = dir(self)

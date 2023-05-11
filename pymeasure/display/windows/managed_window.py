@@ -44,7 +44,6 @@ from ..widgets import (
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure
-from ..curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -389,7 +388,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
 
     def open_experiment(self):
-        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        dialog = ResultsDialog(self.procedure_class,
+                               widget_list=self.widget_list)
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
@@ -464,8 +464,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         curve_color = pg.intColor(0)
         for curve in curve_list:
-            if isinstance(curve, ResultsCurve):
-                curve_color = curve.opts['pen'].color()
+            if hasattr(curve, 'color'):
+                curve_color = curve.color
                 break
 
         browser_item = BrowserItem(results, curve_color)
