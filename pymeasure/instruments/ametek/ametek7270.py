@@ -212,7 +212,11 @@ class Ametek7270(Instrument):
                                 cast=str
                                 )
 
-    def __init__(self, adapter, name="Ametek DSP 7270", read_termination='\x00', write_termination='\x00', **kwargs):
+    def __init__(self, adapter, name="Ametek DSP 7270",
+                 read_termination='\x00',
+                 write_termination='\x00',
+                 **kwargs):
+
         super().__init__(
             adapter,
             name,
