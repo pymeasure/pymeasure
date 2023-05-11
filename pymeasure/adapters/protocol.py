@@ -68,13 +68,15 @@ class ProtocolAdapter(Adapter):
     :param connection_methods: Dictionary of method names of the connection and their return values.
     """
 
-    def __init__(self, comm_pairs=[], preprocess_reply=None,
-                 connection_attributes={},
-                 connection_methods={},
+    def __init__(self, comm_pairs=None, preprocess_reply=None,
+                 connection_attributes=None,
+                 connection_methods=None,
                  **kwargs):
         """Generate the adapter and initialize internal buffers."""
         super().__init__(preprocess_reply=preprocess_reply, **kwargs)
         # Setup communication
+        if comm_pairs is None:
+            comm_pairs = []
         assert isinstance(comm_pairs, (list, tuple)), (
             "Parameter comm_pairs has to be a list or tuple.")
         for pair in comm_pairs:
@@ -89,10 +91,12 @@ class ProtocolAdapter(Adapter):
 
     def _setup_connection(self, connection_attributes, connection_methods):
         self.connection = MagicMock()
-        for key, value in connection_attributes.items():
-            setattr(self.connection, key, value)
-        for key, value in connection_methods.items():
-            getattr(self.connection, key).return_value = value
+        if connection_attributes is not None:
+            for key, value in connection_attributes.items():
+                setattr(self.connection, key, value)
+        if connection_methods is not None:
+            for key, value in connection_methods.items():
+                getattr(self.connection, key).return_value = value
 
     def _write(self, command, **kwargs):
         """Compare the command with the expected one and fill the read."""

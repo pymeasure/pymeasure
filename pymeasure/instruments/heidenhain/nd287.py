@@ -37,7 +37,7 @@ class ND287(Instrument):
     """
 
     status = Instrument.measurement(
-        "\x1BA0800", "Read the encoder's status bar"
+        "\x1BA0800", "Get the encoder's status bar"
     )
 
     # get_process lambda functions used in the position property
@@ -47,7 +47,7 @@ class ND287(Instrument):
     }
 
     position = Instrument.measurement(
-        "\x1BA0200", """Float property representing the encoder's current position.
+        "\x1BA0200", """Measure the encoder's current position (float).
                         Note that the get_process performs a mapping from the returned
                         value to a float measured in the units specified by :attr:`.ND287.units`.
                         The get_process is modified dynamically as this mapping changes slightly
@@ -74,7 +74,7 @@ class ND287(Instrument):
 
     @property
     def id(self):
-        """ String identification property for the device.
+        """ Get the string identification property for the device.
         """
         self.write("\x1BA0000")
         id_str = self.read_bytes(37).decode("utf-8")
@@ -82,7 +82,7 @@ class ND287(Instrument):
 
     @property
     def units(self):
-        """ String property representing the unit of measure set on the device.
+        """ Control the unit of measure set on the device.
             Valid values are 'mm' and 'inch' Note that this parameter can only be set
             manually on the device. So this argument only ensures that the instance units
             and physical device settings match. I.e., this property does not change any

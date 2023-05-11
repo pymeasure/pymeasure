@@ -120,7 +120,7 @@ Below we adapt our previous example to use a ManagedWindow. ::
 
     class RandomProcedure(Procedure):
 
-        iterations = IntegerParameter('Loop Iterations')
+        iterations = IntegerParameter('Loop Iterations', default=100)
         delay = FloatParameter('Delay Time', units='s', default=0.2)
         seed = Parameter('Random Seed', default='12345')
 
@@ -225,6 +225,104 @@ For :class:`~pymeasure.display.plotter.Plotter`, you can make a sub-class that o
 
 For :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, the mechanism to customize plots is much more flexible by using specialization via inheritance. Indeed :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` is the base class for :class:`~pymeasure.display.windows.managed_window.ManagedWindow` and :class:`~pymeasure.display.windows.managed_image_window.ManagedImageWindow` which are subclasses ready to use for GUI.
 
+Using tabular format
+~~~~~~~~~~~~~~~~~~~~
+
+In some experiments, data in tabular format may be useful in addition or in alternative to graphical plot.
+:class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` allows adding a :class:`~pymeasure.display.widgets.table_widget.TableWidget` to show
+experiments data, the widget supports also exporting data in some popular format like CSV, HTML, etc.
+Below an example on how to customize :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase` to use tabular format,
+it derived from example above and changed lines are marked.
+
+.. code-block:: python
+   :emphasize-lines: 11, 12, 18, 44, 47, 48, 49, 50, 51, 52, 57, 59, 60, 61
+
+    import logging
+    log = logging.getLogger(__name__)
+    log.addHandler(logging.NullHandler())
+
+    import sys
+    import tempfile
+    import random
+    from time import sleep
+    from pymeasure.log import console_log
+    from pymeasure.display.Qt import QtWidgets
+    from pymeasure.display.windows import ManagedWindowBase
+    from pymeasure.display.widgets import TableWidget, LogWidget
+    from pymeasure.experiment import Procedure, Results
+    from pymeasure.experiment import IntegerParameter, FloatParameter, Parameter
+
+    class RandomProcedure(Procedure):
+
+        iterations = IntegerParameter('Loop Iterations', default=10)
+        delay = FloatParameter('Delay Time', units='s', default=0.2)
+        seed = Parameter('Random Seed', default='12345')
+
+        DATA_COLUMNS = ['Iteration', 'Random Number']
+
+        def startup(self):
+            log.info("Setting the seed of the random number generator")
+            random.seed(self.seed)
+
+        def execute(self):
+            log.info("Starting the loop of %d iterations" % self.iterations)
+            for i in range(self.iterations):
+                data = {
+                    'Iteration': i,
+                    'Random Number': random.random()
+                }
+                self.emit('results', data)
+                log.debug("Emitting results: %s" % data)
+                self.emit('progress', 100 * i / self.iterations)
+                sleep(self.delay)
+                if self.should_stop():
+                    log.warning("Caught the stop flag in the procedure")
+                    break
+
+
+    class MainWindow(ManagedWindowBase):
+
+        def __init__(self):
+            widget_list = (TableWidget("Experiment Table",
+                                       RandomProcedure.DATA_COLUMNS,
+                                       by_column=True,
+                                       ),
+                           LogWidget("Experiment Log"),
+                           )
+            super().__init__(
+                procedure_class=RandomProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                widget_list=widget_list,
+            )
+            logging.getLogger().addHandler(widget_list[1].handler)
+            log.setLevel(self.log_level)
+            log.info("ManagedWindow connected to logging")
+            self.setWindowTitle('GUI Example')
+
+        def queue(self):
+            filename = tempfile.mktemp()
+
+            procedure = self.make_procedure()
+            results = Results(procedure, filename)
+            experiment = self.new_experiment(results)
+
+            self.manager.queue(experiment)
+
+
+    if __name__ == "__main__":
+        app = QtWidgets.QApplication(sys.argv)
+        window = MainWindow()
+        window.show()
+        sys.exit(app.exec())
+
+
+This results in the following graphical display.
+
+.. image:: pymeasure-tablewidget.png
+    :alt: TableWidget Example
+
+
 Defining your own ManagedWindow's widgets
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -236,6 +334,7 @@ In order to get familiar with the mechanism, users can check the following widge
 - :class:`~pymeasure.display.widgets.plot_widget.PlotWidget`
 - :class:`~pymeasure.display.widgets.image_widget.ImageWidget`
 - :class:`~pymeasure.display.widgets.image_widget.DockWidget`
+- :class:`~pymeasure.display.widgets.table_widget.TableWidget`
 
 Using the sequencer
 ~~~~~~~~~~~~~~~~~~~
