@@ -25,6 +25,8 @@
 import logging
 from warnings import warn
 
+from .instrument import Instrument
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -62,6 +64,13 @@ class SCPImixin:
         """ Get the identification of the instrument. """
         return self.ask("*IDN?").strip()
 
+    next_error = Instrument.measurement(
+        "SYST:ERR?",
+        """Get the next error in the queue.
+        If you want to read and log all errors, use :meth:`check_errors` instead.
+        """,
+    )
+
     # SCPI default methods
     def clear(self):
         """ Clears the instrument status byte
@@ -72,15 +81,6 @@ class SCPImixin:
         """ Resets the instrument. """
         self.write("*RST")
 
-    def fetch_next_error(self):
-        """Fetch the next error in the error queue.
-
-        If you want to read and log all errors, use :meth:`check_errors` instead.
-
-        :return: Error entry.
-        """
-        return self.values("SYST:ERR?")
-
     def check_errors(self):
         """ Read all errors from the instrument.
 
@@ -88,7 +88,7 @@ class SCPImixin:
         """
         errors = []
         while True:
-            err = self.fetch_next_error()
+            err = self.next_error
             if int(err[0]) != 0:
                 log.error(f"{self.name}: {err[0]}, {err[1]}")
                 errors.append(err)

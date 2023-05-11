@@ -38,17 +38,25 @@ class Test_SCPIMixin:
         inst = self.SCPIInstrument(ProtocolAdapter(), "test")
         assert inst.SCPI is False  # should not be set by the new init
 
-    @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),
-                                                      ("complete", "*OPC?", "1"),
-                                                      ("status", "*STB?", "189"),
-                                                      ("options", "*OPT?", "a9"),
-                                                      ))
+    @pytest.mark.parametrize("method, write, reply", (
+        ("id", "*IDN?", "xyz"),
+        ("complete", "*OPC?", "1"),
+        ("status", "*STB?", "189"),
+        ("options", "*OPT?", "a9"),
+    ))
     def test_SCPI_properties(self, method, write, reply):
         with expected_protocol(
                 self.SCPIInstrument,
                 [(write, reply)],
-                name="test") as instr:
-            assert getattr(instr, method) == reply
+                name="test") as inst:
+            assert getattr(inst, method) == reply
+
+    def test_next_error(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("SYST:ERR?", '-100,"Command error"')],
+                name="test") as inst:
+            assert inst.next_error == [-100, '"Command error"']
 
     @pytest.mark.parametrize("method, write", (("clear", "*CLS"),
                                                ("reset", "*RST"),
@@ -57,15 +65,8 @@ class Test_SCPIMixin:
         with expected_protocol(
                 self.SCPIInstrument,
                 [(write, None)],
-                name="test") as instr:
-            getattr(instr, method)()
-
-    def test_fetch_next_error(self):
-        with expected_protocol(
-                self.SCPIInstrument,
-                [("SYST:ERR?", '-100,"Command error"')],
-                name="test") as instr:
-            assert instr.fetch_next_error() == [-100, '"Command error"']
+                name="test") as inst:
+            getattr(inst, method)()
 
     def test_check_errors(self):
         with expected_protocol(
@@ -74,9 +75,9 @@ class Test_SCPIMixin:
                  ("SYST:ERR?", '-222,"Data out of range"'),
                  ("SYST:ERR?", '0,"No error"'),
                  ],
-                name="test") as instr:
-            assert instr.check_errors() == [[-100, '"Command error"'],
-                                            [-222, '"Data out of range"']]
+                name="test") as inst:
+            assert inst.check_errors() == [[-100, '"Command error"'],
+                                           [-222, '"Data out of range"']]
 
 
 def test_SCPIunknownMixin():
