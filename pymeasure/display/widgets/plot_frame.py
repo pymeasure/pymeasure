@@ -70,7 +70,7 @@ class PlotFrame(QtWidgets.QFrame):
 
         self.plot = self.plot_widget.getPlotItem()
 
-        style = dict(self.LABEL_STYLE | {'justify': 'right'})
+        style = dict({'justify': 'right'}, **self.LABEL_STYLE)
         if "font-size" in style:  # LabelItem wants the size as 'size' rather than 'font-size'
             style["size"] = style.pop("font-size")
         self.coordinates = pg.LabelItem("", parent=self.plot, **style)
