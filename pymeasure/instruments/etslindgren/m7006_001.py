@@ -43,9 +43,19 @@ class M7006_001(Instrument):
     def __init__(self, resource_name, slot=1, device="A", **kwargs):
 
         kwargs.setdefault("write_termination", "\n")
+        kwargs.setdefault("read_termination", "\n")
         super().__init__(resource_name, "test", **kwargs)
         self._slot = slot
         self._device = device
+       
+        type = self.values("TYPE?", separator=" ")
+        type, self._subtype = (type[0], type[1:])
+        self._type = "Tower" if type == "TWR" else ("Turntable" if type == "TT" else "Unknown")
+        if self._type == "Unknown":
+            raise ValueError("Device type not recognized")
+      
+        
+        
 
     def write(self, command):
         super().write(f"{self._slot}{self._device}{command}")
@@ -88,19 +98,35 @@ class M7006_001(Instrument):
         validator=strict_discrete_set,
     )
 
-    rotation = Instrument.setting(
-        "%g",
-        """Rotate the device in the given direction. CW or CCW.""",
-        values=("CW", "CCW"),
-        validator=strict_discrete_set,
-    )
+    
 
-    movement = Instrument.setting(
-        "%g",
-        """Move the tower up or down.""",
-        values={"up": "UP", "down": "DN"},
-        map_values=True,
-    )
+    def rotateCW(self):
+        """Rotate the device clockwise. if device is a turntable else it will error."""
+        if self._type == "Turntable":
+            self.write("CW")
+        else:
+            raise ValueError("Device must be a turntable to rotate")
+        
+    def rotateCCW(self):
+        """Rotate the device counter clockwise. if device is a turntable else it will error."""
+        if self._type == "Turntable":
+            self.write("CCW")
+        else:
+            raise ValueError("Device must be a turntable to rotate")
+     
+    def moveUp(self): 
+        """Move the tower up. if device is an antenna tower else it will error."""
+        if self._type == "Tower":
+            self.write("UP")
+        else:
+            raise ValueError("Device must be a tower to move up")
+    
+    def moveDown(self):
+        """Move the tower down. if device is a antenna tower else it will error."""
+        if self._type == "Tower":
+            self.write("DN")
+        else:
+            raise ValueError("Device must be a tower to move down")
 
     def stop(self):
         """Stop the device."""
@@ -109,28 +135,26 @@ class M7006_001(Instrument):
     polarity = Instrument.control(
         "P?",
         "P %g",
-        """Polarity of the antenna boom. Returns either H or V.""",
+        """Polarity of the antenna tower. Returns either H or V.""",
         values=("H", "V"),
         validator=strict_discrete_set,
     )
 
-    position = Instrument.control(
+   
+    position= Instrument.control(
         "CP?",
-        "CP %g",
-        """Current position of the device. Settable and gettable.
-        does not move the device.
-        """,
+        "SK %g",
+        """position of the device. settable and gettable.""",
+     
     )
+
 
     direction = Instrument.measurement(
         "DIR?",
         """Direction of the device. Returns either -1,0 , or 1.""",
     )
 
-    target_position = Instrument.setting(
-        "SK %g",
-        """Move the device to the given position, by the shortest distance.""",
-    )
+    
 
     target_negative_positon = Instrument.setting(
         "SKN %g",
