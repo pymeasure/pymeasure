@@ -31,8 +31,23 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def check_read_not_empty(value):
+    """Called by some properties to check if the reply is not an empty string
+    that would mean the properties is currently invalid (probably because the reference mode
+    is on single or dual)"""
+    if value == '':
+        raise ValueError('Invalid response from measurement call, '
+                         'probably because the reference mode is set on single or dual')
+    else:
+        return value
+
+
 class Ametek7270(Instrument):
-    """This is the class for the Ametek DSP 7270 lockin amplifier"""
+    """This is the class for the Ametek DSP 7270 lockin amplifier
+
+    In this instrument, some measurements are defined only for specific modes, called Reference modes,
+    see :meth`set_reference_mode` and will raise errors if called incorrectly
+    """
 
     SENSITIVITIES = [
         0.0, 2.0e-9, 5.0e-9, 10.0e-9, 20.0e-9, 50.0e-9, 100.0e-9,
@@ -91,31 +106,40 @@ class Ametek7270(Instrument):
 
     x = Instrument.measurement("X.",
                                """ Reads the X value in Volts """,
+                               get_process=check_read_not_empty,
                                )
     y = Instrument.measurement("Y.",
                                """ Reads the Y value in Volts """,
+                               get_process=check_read_not_empty,
                                )
     x1 = Instrument.measurement("X1.",
                                 """ Reads the first harmonic X value in Volts """,
+                                get_process=check_read_not_empty,
                                 )
     y1 = Instrument.measurement("Y1.",
                                 """ Reads the first harmonic Y value in Volts """,
+                                get_process=check_read_not_empty,
                                 )
     x2 = Instrument.measurement("X2.",
                                 """ Reads the second harmonic X value in Volts """,
+                                get_process=check_read_not_empty,
                                 )
     y2 = Instrument.measurement("Y2.",
                                 """ Reads the second harmonic Y value in Volts """,
+                                get_process=check_read_not_empty,
                                 )
     xy = Instrument.measurement("XY.",
                                 """ Reads both the X and Y values in Volts """,
+                                get_process=check_read_not_empty,
                                 )
     mag = Instrument.measurement("MAG.",
                                  """ Reads the magnitude in Volts """,
+                                 get_process=check_read_not_empty,
                                  )
 
     theta = Instrument.measurement("PHA.",
                                    """ Reads the signal phase in degrees """,
+                                   get_process=check_read_not_empty,
                                    )
 
     harmonic = Instrument.control(
@@ -185,15 +209,19 @@ class Ametek7270(Instrument):
     )
     adc1 = Instrument.measurement("ADC. 1",
                                   """ Reads the input value of ADC1 in Volts """,
+                                  get_process=check_read_not_empty,
                                   )
     adc2 = Instrument.measurement("ADC. 2",
                                   """ Reads the input value of ADC2 in Volts """,
+                                  get_process=check_read_not_empty,
                                   )
     adc3 = Instrument.measurement("ADC. 3",
                                   """ Reads the input value of ADC3 in Volts """,
+                                  get_process=check_read_not_empty,
                                   )
     adc4 = Instrument.measurement("ADC. 4",
                                   """ Reads the input value of ADC4 in Volts """,
+                                  get_process=check_read_not_empty,
                                   )
     id = Instrument.measurement("ID",
                                 """ Reads the instrument identification """,
@@ -232,6 +260,15 @@ class Ametek7270(Instrument):
         It should therefore also add the strip here
         """
         return super().ask(command, query_delay).strip()
+
+    def set_reference_mode(self, mode: int = 0):
+        """Set the instrument in Single, Dual or harmonic modes
+        :param mode: the integer specifying the mode: 0 for Single, 1 for Dual harmonic and 2 for Dual
+        reference
+        """
+        if mode not in [0, 1, 2]:
+            raise ValueError('Invalid reference mode')
+        self.ask(f'REFMODE {mode}')
 
     def set_voltage_mode(self):
         """ Sets instrument to voltage control mode """
