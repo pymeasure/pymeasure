@@ -256,8 +256,8 @@ class AgilentE4407B(Instrument):
     qp_detector_gain = Instrument.control(
         ":SENS:POW:QPG?",
         ":SENS:POW:QPG %g",
-        """ Turn on or off the linear x10 gain stage in the quasi-peak and emi average detector only valid with the emi detector enabled.
-        This property can be set.
+        """ Turn on or off the linear x10 gain stage in the quasi-peak and emi average detector only 
+        valid with the emi detector enabled. This property can be set.
         """,
         validator=strict_discrete_set,
         values=[0, 1, " ON", "OFF"],
