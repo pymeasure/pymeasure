@@ -31,18 +31,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Instrument(Instrument):
-
-    def check_errors(self):
-        if self.read() == '':
-            return []
-        else:
-            return ['Incorrect return from previously set property']
-
-    def ask(self, command, query_delay=0):
-        return super().ask(command, query_delay).strip()
-
-
 class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier"""
 
@@ -77,7 +65,6 @@ class Ametek7270(Instrument):
         map_values=True,
         check_set_errors=True,
         dynamic=True,
-
     )
 
     slope = Instrument.control(
@@ -88,8 +75,9 @@ class Ametek7270(Instrument):
         validator=truncated_discrete_set,
         values=[6, 12, 18, 24],
         map_values=True,
-        check_set_errors=True
+        check_set_errors=True,
     )
+
     time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
         "TC", "TC %d",
         """ A floating point property that controls the time constant
@@ -98,36 +86,36 @@ class Ametek7270(Instrument):
         validator=truncated_discrete_set,
         values=TIME_CONSTANTS,
         map_values=True,
-        check_set_errors=True
+        check_set_errors=True,
     )
 
     x = Instrument.measurement("X.",
-                               """ Reads the X value in Volts """
+                               """ Reads the X value in Volts """,
                                )
     y = Instrument.measurement("Y.",
-                               """ Reads the Y value in Volts """
+                               """ Reads the Y value in Volts """,
                                )
     x1 = Instrument.measurement("X1.",
-                                """ Reads the first harmonic X value in Volts """
+                                """ Reads the first harmonic X value in Volts """,
                                 )
     y1 = Instrument.measurement("Y1.",
-                                """ Reads the first harmonic Y value in Volts """
+                                """ Reads the first harmonic Y value in Volts """,
                                 )
     x2 = Instrument.measurement("X2.",
-                                """ Reads the second harmonic X value in Volts """
+                                """ Reads the second harmonic X value in Volts """,
                                 )
     y2 = Instrument.measurement("Y2.",
-                                """ Reads the second harmonic Y value in Volts """
+                                """ Reads the second harmonic Y value in Volts """,
                                 )
     xy = Instrument.measurement("XY.",
-                                """ Reads both the X and Y values in Volts """
+                                """ Reads both the X and Y values in Volts """,
                                 )
     mag = Instrument.measurement("MAG.",
-                                 """ Reads the magnitude in Volts """
+                                 """ Reads the magnitude in Volts """,
                                  )
 
     theta = Instrument.measurement("PHA.",
-                                   """ Reads the signal phase in degrees """
+                                   """ Reads the signal phase in degrees """,
                                    )
 
     harmonic = Instrument.control(
@@ -137,7 +125,7 @@ class Ametek7270(Instrument):
         This property can be set. """,
         validator=truncated_discrete_set,
         values=list(range(1, 128)),
-        check_set_errors=True
+        check_set_errors=True,
     )
     phase = Instrument.control(
         "REFP.", "REFP. %g",
@@ -145,7 +133,7 @@ class Ametek7270(Instrument):
         harmonic phase in degrees. This property can be set. """,
         validator=modular_range,
         values=[0, 360],
-        check_set_errors=True
+        check_set_errors=True,
     )
     voltage = Instrument.control(
         "OA.", "OA. %g",
@@ -153,7 +141,7 @@ class Ametek7270(Instrument):
         in Volts. This property can be set. """,
         validator=truncated_range,
         values=[0, 5],
-        check_set_errors=True
+        check_set_errors=True,
     )
     frequency = Instrument.control(
         "OF.", "OF. %g",
@@ -161,7 +149,7 @@ class Ametek7270(Instrument):
         frequency in Hz. This property can be set. """,
         validator=truncated_range,
         values=[0, 2.5e5],
-        check_set_errors=True
+        check_set_errors=True,
     )
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
@@ -169,7 +157,7 @@ class Ametek7270(Instrument):
         value on DAC1 in Volts. This property can be set. """,
         validator=truncated_range,
         values=[-10, 10],
-        check_set_errors=True
+        check_set_errors=True,
     )
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
@@ -177,7 +165,7 @@ class Ametek7270(Instrument):
         value on DAC2 in Volts. This property can be set. """,
         validator=truncated_range,
         values=[-10, 10],
-        check_set_errors=True
+        check_set_errors=True,
     )
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
@@ -185,7 +173,7 @@ class Ametek7270(Instrument):
         value on DAC3 in Volts. This property can be set. """,
         validator=truncated_range,
         values=[-10, 10],
-        check_set_errors=True
+        check_set_errors=True,
     )
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
@@ -193,37 +181,57 @@ class Ametek7270(Instrument):
         value on DAC4 in Volts. This property can be set. """,
         validator=truncated_range,
         values=[-10, 10],
-        check_set_errors=True
+        check_set_errors=True,
     )
     adc1 = Instrument.measurement("ADC. 1",
-                                  """ Reads the input value of ADC1 in Volts """
+                                  """ Reads the input value of ADC1 in Volts """,
                                   )
     adc2 = Instrument.measurement("ADC. 2",
-                                  """ Reads the input value of ADC2 in Volts """
+                                  """ Reads the input value of ADC2 in Volts """,
                                   )
     adc3 = Instrument.measurement("ADC. 3",
-                                  """ Reads the input value of ADC3 in Volts """
+                                  """ Reads the input value of ADC3 in Volts """,
                                   )
     adc4 = Instrument.measurement("ADC. 4",
-                                  """ Reads the input value of ADC4 in Volts """
+                                  """ Reads the input value of ADC4 in Volts """,
                                   )
     id = Instrument.measurement("ID",
                                 """ Reads the instrument identification """,
-                                cast=str
+                                cast=str,
                                 )
 
     def __init__(self, adapter, name="Ametek DSP 7270",
                  read_termination='\x00',
                  write_termination='\x00',
-                 **kwargs):
+                 **kwargs,
+                 ):
 
         super().__init__(
             adapter,
             name,
             read_termination=read_termination,
             write_termination=write_termination,
-            **kwargs
+            **kwargs,
         )
+
+    def check_errors(self):
+        """mandatory to be used for property setter
+
+        The Ametek protocol expect the default null character to be read to check the property
+        has been correctly set. With default termination character set as Null character,
+        this turns out as an empty string to be read.
+        """
+        if self.read() == '':
+            return []
+        else:
+            return ['Incorrect return from previously set property']
+
+    def ask(self, command, query_delay=0):
+        """Usually the properties use the `values` method that adds a strip call,
+        however several methods use directly the result from ask to be casted into some other types.
+        It should therefore also add the strip here
+        """
+        return super().ask(command, query_delay).strip()
 
     def set_voltage_mode(self):
         """ Sets instrument to voltage control mode """
@@ -254,7 +262,7 @@ class Ametek7270(Instrument):
 
     @property
     def auto_gain(self):
-        return (int(self.ask("AUTOMATIC")) == 1)
+        return int(self.ask("AUTOMATIC")) == 1
 
     @auto_gain.setter
     def auto_gain(self, setval):
