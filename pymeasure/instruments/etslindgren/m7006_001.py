@@ -47,15 +47,12 @@ class M7006_001(Instrument):
         super().__init__(resource_name, "test", **kwargs)
         self._slot = slot
         self._device = device
-       
+
         type = self.values("TYPE?", separator=" ")
         type, self._subtype = (type[0], type[1:])
         self._type = "Tower" if type == "TWR" else ("Turntable" if type == "TT" else "Unknown")
         if self._type == "Unknown":
             raise ValueError("Device type not recognized")
-      
-        
-        
 
     def write(self, command):
         super().write(f"{self._slot}{self._device}{command}")
@@ -66,7 +63,7 @@ class M7006_001(Instrument):
     acceleration = Instrument.control(
         "ACC?",
         "ACC %g",
-        """Acceleration of the device in seconds. Settable 0.1 and 30,
+        """Control the acceleration of the device in seconds. Settable 0.1 and 30,
         and gettable.
         """,
         values=(0.1, 30),
@@ -76,7 +73,7 @@ class M7006_001(Instrument):
     speed = Instrument.control(
         "SPEED?",
         "SPEED %g",
-        """Speed of the device, as a percentage of the max speed.
+        """Control  the speed of the device, as a percentage of the max speed.
         Settable 0.0 to 100.0, and gettable.""",
         values=(0.0, 100.0),
         validator=strict_range,
@@ -85,7 +82,7 @@ class M7006_001(Instrument):
     aux1 = Instrument.control(
         "AUX1?",
         "AUX1 %g",
-        """Auxiliary input 1, Settable to ON or OFF, and gettable.""",
+        """Control the auxiliary input 1, Settable to ON or OFF, and gettable.""",
         values=("ON", "OFF"),
         validator=strict_discrete_set,
     )
@@ -93,12 +90,10 @@ class M7006_001(Instrument):
     aux2 = Instrument.control(
         "AUX2?",
         "AUX2 %g",
-        """Auxiliary input 2, Settable to ON or OFF, and gettable.""",
+        """Control the auxiliary input 2, Settable to ON or OFF, and gettable.""",
         values=("ON", "OFF"),
         validator=strict_discrete_set,
     )
-
-    
 
     def rotateCW(self):
         """Rotate the device clockwise. if device is a turntable else it will error."""
@@ -106,21 +101,21 @@ class M7006_001(Instrument):
             self.write("CW")
         else:
             raise ValueError("Device must be a turntable to rotate")
-        
+
     def rotateCCW(self):
         """Rotate the device counter clockwise. if device is a turntable else it will error."""
         if self._type == "Turntable":
             self.write("CCW")
         else:
             raise ValueError("Device must be a turntable to rotate")
-     
+
     def moveUp(self): 
         """Move the tower up. if device is an antenna tower else it will error."""
         if self._type == "Tower":
             self.write("UP")
         else:
             raise ValueError("Device must be a tower to move up")
-    
+
     def moveDown(self):
         """Move the tower down. if device is a antenna tower else it will error."""
         if self._type == "Tower":
@@ -135,44 +130,40 @@ class M7006_001(Instrument):
     polarity = Instrument.control(
         "P?",
         "P %g",
-        """Polarity of the antenna tower. Returns either H or V.""",
+        """Control the polarity of the antenna tower. Returns either H or V.""",
         values=("H", "V"),
         validator=strict_discrete_set,
     )
 
-   
     position= Instrument.control(
         "CP?",
         "SK %g",
-        """position of the device. settable and gettable.""",
+        """Control the position of the device. settable and gettable.""",
      
     )
 
-
     direction = Instrument.measurement(
         "DIR?",
-        """Direction of the device. Returns either -1,0 , or 1.""",
+        """Get the direction of the device. Returns either -1,0 , or 1.""",
     )
-
-    
 
     target_negative_positon = Instrument.setting(
         "SKN %g",
-        """Moves the device to the given position, in the down or
+        """Set the device position to the given position, in the down or
         counter clockwise direction.
         """,
     )
 
     target_positive_position = Instrument.setting(
         "SKP %g",
-        """Moves the device to the given position, in the up or
+        """Set the device position to the given position, in the up or
         clockwise direction.
         """,
     )
 
     target_relative_postion = Instrument.setting(
         "SKR %g",
-        """Moves the device to the given position relative to the current
+        """Set the device position to the given position relative to the current
         position.
         """,
     )
