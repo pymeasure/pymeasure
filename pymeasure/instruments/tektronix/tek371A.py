@@ -21,8 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import ctypes
 import logging
 import time
+
+import pyvisa.errors
 from pyvisa import constants as pyvisa_constants
 
 from pymeasure.instruments import Instrument
@@ -316,8 +319,8 @@ class Tektronix371A(Instrument):
 
     def __init__(self,
                  adapter,
-                 query_delay=0.1,
-                 write_delay=0.4,
+                 query_delay=0.5,
+                 write_delay=0.5,
                  timeout=5000,
                  **kwargs):
         super().__init__(
@@ -326,7 +329,7 @@ class Tektronix371A(Instrument):
             write_termination="\n",
             read_termination="",
             send_end=True,
-            includeSCPI=False,
+            includeSCPI=True,
             timeout=timeout,
             **kwargs
         )
@@ -699,7 +702,13 @@ class Tektronix371A(Instrument):
     waveform_preamble = Instrument.control(
         "WFMpre?", "WFMpre %s",
         """Control the waveform preamble data for the currently displayed waveform (string).""",
-        # Response syntax
+        get_process=lambda r:
+        r
+    )
+
+    waveform_points = Instrument.control(
+        "WFMpre?", "WFMpre NR.PT:%s",
+        """Control the length of the waveform curve.""",
         get_process=lambda r:
         r
     )
@@ -792,11 +801,18 @@ class Tektronix371A(Instrument):
     # # the event code of the latest event.
     #####################################################################################
 
+    set = Instrument.measurement(
+        "SET?",
+        """Return the current front-panel settings of the instrument""",
+        get_process=lambda r:
+        r
+    )
+
     most_recent_event_code = Instrument.measurement(
         "EVEnt?",
         """Return the instrument event code of the most recent event""",
         get_process=lambda r:
-        r
+        int(r.replace("EVENT ", ""))
     )
 
     opc = Instrument.control(
@@ -828,7 +844,19 @@ class Tektronix371A(Instrument):
             time.sleep(0.1)
         self.srq_called = False
 
-    def activate_srq(self):
+    def discard_and_disable_all_events(self):
+        """
+        Discard all events (empty the all events in queue) and disable the notification for
+        all events via all mechanism.
+        :return: None
+        """
+        self.adapter.connection.discard_events(pyvisa_constants.VI_ALL_ENABLED_EVENTS,
+                                               pyvisa_constants.EventMechanism.all)
+        self.adapter.connection.disable_event(
+            pyvisa_constants.VI_ALL_ENABLED_EVENTS,
+            pyvisa_constants.EventMechanism.all)
+
+    def enable_srq_event(self):
         """
         Config the instrument for srq assertion on operation complete
         and creates a function for handling the srq event.
@@ -836,15 +864,13 @@ class Tektronix371A(Instrument):
         """
 
         def event_handler(resource, event, user_handle):
-            self.srq_called = True
             # print(f"Handled event {event.event_type} on {resource}")
-            # self.adapter.connection.disable_event(event.event_type, event.event_mech)
-            # self.adapter.connection.uninstall_handler(event_type, wrapped, user_handle)
+            self.srq_called = True
 
         event_type = pyvisa_constants.VI_EVENT_SERVICE_REQ
         event_mech = pyvisa_constants.EventMechanism.handler
         wrapped = self.adapter.connection.wrap_handler(event_handler)
-        user_handle = self.adapter.connection.install_handler(event_type, wrapped, 42)
+        self.adapter.connection.install_handler(event_type, wrapped, None)
         self.adapter.connection.enable_event(event_type, event_mech, None)
         self.srq = True
         self.opc = True
@@ -857,3 +883,5 @@ class Tektronix371A(Instrument):
         """ Initialize the instrument. Settings are the same as at power-up"""
         log.info("Initializing the instrument.")
         self.write("INIt")
+        self.discard_and_disable_all_events()
+        time.sleep(1)
