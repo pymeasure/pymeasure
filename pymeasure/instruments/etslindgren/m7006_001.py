@@ -37,14 +37,14 @@ class M7006_001(Instrument):
     Comunication happes transparently through the EMCenter mainframe.
     devices share the resource name of the mainframe, and
     are identified by the slot number and the device number
-    (if applicable to the modual).
+    (if applicable to the module).
     """
 
-    def __init__(self, resource_name, slot=1, device="A", **kwargs):
+    def __init__(self, adapter, name= "ETS Lindgren EMCenter Postioning Card", slot=1, device="A", **kwargs):
 
         kwargs.setdefault("write_termination", "\n")
         kwargs.setdefault("read_termination", "\n")
-        super().__init__(resource_name, "test", **kwargs)
+        super().__init__(adapter, "test", **kwargs)
         self._slot = slot
         self._device = device
 
@@ -79,53 +79,23 @@ class M7006_001(Instrument):
         validator=strict_range,
     )
 
-    aux1 = Instrument.control(
+    aux1_enabled = Instrument.control(
         "AUX1?",
         "AUX1 %g",
         """Control the auxiliary input 1, Settable to ON or OFF, and gettable.""",
-        values=("ON", "OFF"),
-        validator=strict_discrete_set,
+        values={True:"ON", False:"OFF"},
+  
+        map_values=True,
     )
 
-    aux2 = Instrument.control(
+    aux2_enabled = Instrument.control(
         "AUX2?",
         "AUX2 %g",
         """Control the auxiliary input 2, Settable to ON or OFF, and gettable.""",
-        values=("ON", "OFF"),
-        validator=strict_discrete_set,
+        values={True:"ON", False:"OFF"},
+        map_values=True,
+        
     )
-
-    def rotateCW(self):
-        """Rotate the device clockwise. if device is a turntable else it will error."""
-        if self._type == "Turntable":
-            self.write("CW")
-        else:
-            raise ValueError("Device must be a turntable to rotate")
-
-    def rotateCCW(self):
-        """Rotate the device counter clockwise. if device is a turntable else it will error."""
-        if self._type == "Turntable":
-            self.write("CCW")
-        else:
-            raise ValueError("Device must be a turntable to rotate")
-
-    def moveUp(self): 
-        """Move the tower up. if device is an antenna tower else it will error."""
-        if self._type == "Tower":
-            self.write("UP")
-        else:
-            raise ValueError("Device must be a tower to move up")
-
-    def moveDown(self):
-        """Move the tower down. if device is a antenna tower else it will error."""
-        if self._type == "Tower":
-            self.write("DN")
-        else:
-            raise ValueError("Device must be a tower to move down")
-
-    def stop(self):
-        """Stop the device."""
-        self.write("ST")
 
     polarity = Instrument.control(
         "P?",
@@ -147,23 +117,46 @@ class M7006_001(Instrument):
         """Get the direction of the device. Returns either -1,0 , or 1.""",
     )
 
-    target_negative_positon = Instrument.setting(
-        "SKN %g",
-        """Set the device position to the given position, in the down or
-        counter clockwise direction.
-        """,
-    )
+    def move_to_negative_position(self, position):
+        """Move the device to the given position in the down or counter clockwise direction."""
+        self.write(f"SKN {position}")
 
-    target_positive_position = Instrument.setting(
-        "SKP %g",
-        """Set the device position to the given position, in the up or
-        clockwise direction.
-        """,
-    )
+    def move_to_positive_position(self, position):
+        """Move the device to the given position in the up or clockwise direction."""
+        self.write(f"SKP {position}")
 
-    target_relative_postion = Instrument.setting(
-        "SKR %g",
-        """Set the device position to the given position relative to the current
-        position.
-        """,
-    )
+    def move_distance(self, distance):
+        """Move the device the given distance. """
+        self.write(f"SKR {distance}")
+
+    def rotate_cw(self):
+        """Rotate the device clockwise. if device is a turntable else it will error."""
+        if self._type == "Turntable":
+            self.write("CW")
+        else:
+            raise ValueError("Device must be a turntable to rotate")
+
+    def rotate_ccw(self):
+        """Rotate the device counter clockwise. if device is a turntable else it will error."""
+        if self._type == "Turntable":
+            self.write("CCW")
+        else:
+            raise ValueError("Device must be a turntable to rotate")
+
+    def move_up(self): 
+        """Move the tower up. if device is an antenna tower else it will error."""
+        if self._type == "Tower":
+            self.write("UP")
+        else:
+            raise ValueError("Device must be a tower to move up")
+
+    def move_down(self):
+        """Move the tower down. if device is a antenna tower else it will error."""
+        if self._type == "Tower":
+            self.write("DN")
+        else:
+            raise ValueError("Device must be a tower to move down")
+
+    def stop(self):
+        """Stop the device."""
+        self.write("ST")

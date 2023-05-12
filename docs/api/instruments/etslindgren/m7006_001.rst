@@ -1,5 +1,5 @@
 ###################################################################
-Ets-lindgren emcenter modualr rf platorm , Postioner control modual
+Ets-lindgren emcenter modular rf platorm , Postioner control module
 ###################################################################
 
 .. autoclass:: pymeasure.instruments.etslindgren.m7006_001

@@ -37,17 +37,17 @@ class EMCenter(Instrument):
     """Represents ETS-Lindgren EMCenter main frame.
     used for direct access to the instrument, does not control sub-modules
     """
+    def __init__(self, resource_name, name="ETS Lindgren EMCenter", **kwargs):
+        kwargs.setdefault("timeout", 2000)
+        kwargs.setdefault("write_termination", "\n")
+        super().__init__(resource_name, name, **kwargs)
 
-    local = Instrument.setting(
-        "LOCAL",
-        """ Set the EMCenter to local mode.""",
-    )
+    def local(self):
+        """Set the EMCenter to local mode."""
+        self.write("LOCAL")
 
     def reboot(self):
         """Reboot the EMCenter"""
         self.write("REBOOT SYSTEM")
 
-    def __init__(self, resource_name, name="EMCenter", **kwargs):
-        kwargs.setdefault("timeout", 2000)
-        kwargs.setdefault("write_termination", "\n")
-        super().__init__(resource_name, "EmCenter", **kwargs)
+  
