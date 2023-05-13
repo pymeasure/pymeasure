@@ -40,8 +40,9 @@ class M7006_001(Instrument):
     (if applicable to the module).
     """
 
-    def __init__(self, adapter, name= "ETS Lindgren EMCenter Postioning Card", slot=1, device="A", **kwargs):
-
+    def __init__(
+        self, adapter, name="ETS Lindgren EMCenter Postioning Card", slot=1, device="A", **kwargs
+    ):
         kwargs.setdefault("write_termination", "\n")
         kwargs.setdefault("read_termination", "\n")
         super().__init__(adapter, "test", **kwargs)
@@ -83,8 +84,7 @@ class M7006_001(Instrument):
         "AUX1?",
         "AUX1 %g",
         """Control the auxiliary input 1, Settable to ON or OFF, and gettable.""",
-        values={True:"ON", False:"OFF"},
-  
+        values={True: "ON", False: "OFF"},
         map_values=True,
     )
 
@@ -92,9 +92,8 @@ class M7006_001(Instrument):
         "AUX2?",
         "AUX2 %g",
         """Control the auxiliary input 2, Settable to ON or OFF, and gettable.""",
-        values={True:"ON", False:"OFF"},
+        values={True: "ON", False: "OFF"},
         map_values=True,
-        
     )
 
     polarity = Instrument.control(
@@ -105,11 +104,10 @@ class M7006_001(Instrument):
         validator=strict_discrete_set,
     )
 
-    position= Instrument.control(
+    position = Instrument.control(
         "CP?",
         "SK %g",
         """Control the position of the device. settable and gettable.""",
-     
     )
 
     direction = Instrument.measurement(
@@ -126,7 +124,7 @@ class M7006_001(Instrument):
         self.write(f"SKP {position}")
 
     def move_distance(self, distance):
-        """Move the device the given distance. """
+        """Move the device the given distance."""
         self.write(f"SKR {distance}")
 
     def rotate_cw(self):
@@ -143,7 +141,7 @@ class M7006_001(Instrument):
         else:
             raise ValueError("Device must be a turntable to rotate")
 
-    def move_up(self): 
+    def move_up(self):
         """Move the tower up. if device is an antenna tower else it will error."""
         if self._type == "Tower":
             self.write("UP")
