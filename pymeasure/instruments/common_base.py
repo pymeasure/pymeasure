@@ -131,7 +131,7 @@ class CommonBase:
         self._create_channels()
         if preprocess_reply is not None:
             warn(("Parameter `preprocess_reply` is deprecated. "
-                 "Implement it in the instrument, e.g. in `read`, instead."),
+                  "Implement it in the instrument, e.g. in `read`, instead."),
                  FutureWarning)
         self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
@@ -353,24 +353,24 @@ class CommonBase:
     # Property creators
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
-        get_command,
-        set_command,
-        docs,
-        validator=lambda v, vs: v,
-        values=(),
-        map_values=False,
-        get_process=lambda v: v,
-        set_process=lambda v: v,
-        command_process=None,
-        check_set_errors=False,
-        check_get_errors=False,
-        dynamic=False,
-        preprocess_reply=None,
-        separator=',',
-        maxsplit=-1,
-        cast=float,
-        values_kwargs=None,
-        **kwargs
+            get_command,
+            set_command,
+            docs,
+            validator=lambda v, vs: v,
+            values=(),
+            map_values=False,
+            get_process=lambda v: v,
+            set_process=lambda v: v,
+            command_process=None,
+            check_set_errors=False,
+            check_get_errors=False,
+            dynamic=False,
+            preprocess_reply=None,
+            separator=',',
+            maxsplit=-1,
+            cast=float,
+            values_kwargs=None,
+            **kwargs
     ):
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
@@ -530,7 +530,6 @@ class CommonBase:
         # Add the specified document string to the getter
         fget.__doc__ = docs
 
-        # If dynamic, add (dynamic) to the docstring
         if dynamic:
             fget.__doc__ += "(dynamic)"
 
