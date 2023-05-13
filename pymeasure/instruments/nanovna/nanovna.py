@@ -23,7 +23,7 @@
 #
 
 from numpy import array as _array
-# from pymeasure.adapters import SerialAdapter
+from pymeasure.adapters import SerialAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
@@ -238,18 +238,18 @@ class NanoVNA(Instrument):
         print('Calibration completed.  ')
 
 
-# if __name__ == "__main__":
-#     port = '/dev/ttyACM0'
+if __name__ == "__main__":
+    port = r'/dev/ttyACM0'
 
-#     case = 1
-#     if case == 1:
-#         adapter = SerialAdapter(port)
-#         unit = NanoVNA(adapter)
-#         print(unit.info)
-#     elif case == 2:
-#         adapter = SerialAdapter(port, timeout=1)
-#         unit = NanoVNA(adapter)
-#         print(unit.info)
-#     elif case == 3:
-#         unit = NanoVNA(port)
-#         print(unit.info)
+    case = 2
+    if case == 1:
+        adapter = SerialAdapter(port)
+        unit = NanoVNA(adapter)
+        print(unit.info)
+    elif case == 2:
+        adapter = SerialAdapter(port, timeout=1)
+        unit = NanoVNA(adapter)
+        print(unit.info)
+    elif case == 3:
+        unit = NanoVNA(port)
+        print(unit.info)
