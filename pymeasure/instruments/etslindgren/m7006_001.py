@@ -41,11 +41,16 @@ class M7006_001(Instrument):
     """
 
     def __init__(
-        self, adapter, name="ETS Lindgren EMCenter Postioning Card", slot=1, device="A", **kwargs
+        self,
+        resource_name,
+        name="ETS Lindgren EMCenter Postioning Card",
+        slot=1,
+        device="A",
+        **kwargs,
     ):
         kwargs.setdefault("write_termination", "\n")
         kwargs.setdefault("read_termination", "\n")
-        super().__init__(adapter, "test", **kwargs)
+        super().__init__(resource_name, name, **kwargs)
         self._slot = slot
         self._device = device
 
