@@ -63,6 +63,10 @@ def find_devices_in_module(module, devices, channels):
         except ModuleNotFoundError:
             # Some dependencies may not be installed on test computer, like pyvirtualbench
             pass
+        except OSError:
+            # On Windows instruments.ni.daqmx can raise an OSError
+            # if non-required dependency NI-DAQmx is tested
+            pass
 
 
 find_devices_in_module(instruments, devices, channels)  # the instruments module itself
