@@ -23,53 +23,53 @@
 #
 
 import importlib
+from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
 
 from pymeasure import instruments
 from pymeasure.instruments import Instrument, Channel
 
-
 # Collect all instruments
-devices = []
-channels = []
+devices = set()
+channels = set()
 
 
 def find_devices_in_module(module, devices, channels):
-    for dev in dir(module):
-        if dev.startswith("__"):
-            continue
-        d = getattr(module, dev)
+    base_dir = Path(module.__path__[0])
+    base_import = module.__package__ + '.'
+    for folder in [i for i in base_dir.iterdir() if i.is_dir() and i.name[0] != '.']:
         try:
-            i = issubclass(d, Instrument)
-            c = issubclass(d, Channel)
-        except TypeError:
-            # d is no class
-            continue
-        else:
-            if i and d not in devices:
-                devices.append(d)
-            elif c and d not in channels:
-                channels.append(d)
+            package = importlib.import_module(base_import + folder.name).__package__ + '.'
+            for mod in [f for f in folder.iterdir() if
+                        f.name[-3:] == '.py' and f.name != '__init__.py']:
+                mod_name = package + mod.name[:-3]
+                submodule = importlib.import_module(mod_name)
+                for dev in dir(submodule):
+                    if dev.startswith("__"):
+                        continue
+                    d = getattr(submodule, dev)
+                    try:
+                        i = issubclass(d, Instrument)
+                        c = issubclass(d, Channel)
+                    except TypeError:
+                        # d is no class
+                        continue
+                    else:
+                        if i and d not in devices:
+                            devices.add(d)
+                        elif c and d not in channels:
+                            channels.add(d)
+        except ModuleNotFoundError:
+            # Some dependencies may not be installed on test computer, like pyvirtualbench
+            pass
 
 
 find_devices_in_module(instruments, devices, channels)  # the instruments module itself
-for manufacturer in dir(instruments):
-    if manufacturer.startswith("__"):
-        continue
-    manu = getattr(instruments, manufacturer)
-    find_devices_in_module(manu, devices, channels)  # module in instruments package
-    for module_name in dir(manu):
-        if module_name.startswith("__"):
-            continue
-        module = getattr(manu, module_name)
-        if type(module).__name__ == "module":
-            find_devices_in_module(module, devices, channels)  # module in manufacturer package
-
 
 # Collect all properties
 properties = []
-for device in devices + channels:
+for device in devices.union(channels):
     for property_name in dir(device):
         prop = getattr(device, property_name)
         if isinstance(prop, property):
