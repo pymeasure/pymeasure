@@ -27,38 +27,53 @@ import pytest
 from unittest.mock import MagicMock
 
 from pymeasure import instruments
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 
 
 # Collect all instruments
 devices = []
-for manufacturer in dir(instruments):
-    if manufacturer.startswith("__"):
-        continue
-    manu = getattr(instruments, manufacturer)
-    for dev in dir(manu):
+channels = []
+
+
+def find_devices_in_module(module, devices, channels):
+    for dev in dir(module):
         if dev.startswith("__"):
             continue
-        d = getattr(manu, dev)
+        d = getattr(module, dev)
         try:
-            b = issubclass(d, Instrument)
+            i = issubclass(d, Instrument)
+            c = issubclass(d, Channel)
         except TypeError:
             # d is no class
             continue
         else:
-            if b:
+            if i and d not in devices:
                 devices.append(d)
+            elif c and d not in channels:
+                channels.append(d)
+
+
+find_devices_in_module(instruments, devices, channels)  # the instruments module itself
+for manufacturer in dir(instruments):
+    if manufacturer.startswith("__"):
+        continue
+    manu = getattr(instruments, manufacturer)
+    find_devices_in_module(manu, devices, channels)  # module in instruments package
+    for module_name in dir(manu):
+        if module_name.startswith("__"):
+            continue
+        module = getattr(manu, module_name)
+        if type(module).__name__ == "module":
+            find_devices_in_module(module, devices, channels)  # module in manufacturer package
 
 
 # Collect all properties
-# TODO add Channel properties as well: How collect all Channel classes?
 properties = []
-for device in devices:
+for device in devices + channels:
     for property_name in dir(device):
         prop = getattr(device, property_name)
         if isinstance(prop, property):
             properties.append((device, property_name, prop))
-
 
 # Instruments unable to accept an Adapter instance.
 proper_adapters = []
@@ -75,20 +90,40 @@ need_init_communication = [
     "IBeamSmart",
     "ANC300Controller",
 ]
+# Channels which are still an Instrument subclass
+channel_as_instrument_subclass = [
+    "SMU",  # agilent/agilent4156
+    "VMU",  # agilent/agilent4156
+    "VSU",  # agilent/agilent4156
+    "VARX",  # agilent/agilent4156
+    "VAR1",  # agilent/agilent4156
+    "VAR2",  # agilent/agilent4156
+    "VARD",  # agilent/agilent4156
+]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
     "AWG401x_AFG",
     "AWG401x_AWG",
     "AdvantestR3767CG",
+    "AdvantestR624X",
+    "SMUChannel",  # AdvantestR624X
     "AdvantestR6245",
     "AdvantestR6246",
     "Agilent33220A",
     "Agilent33500",
+    "Agilent33500Channel",
     "Agilent33521A",
     "Agilent34410A",
     "Agilent34450A",
     "Agilent34450A",
     "Agilent4156",
+    "SMU",  # agilent/agilent4156
+    "VMU",  # agilent/agilent4156
+    "VSU",  # agilent/agilent4156
+    "VARX",  # agilent/agilent4156
+    "VAR1",  # agilent/agilent4156
+    "VAR2",  # agilent/agilent4156
+    "VARD",  # agilent/agilent4156
     "Agilent8257D",
     "Agilent8722ES",
     "Agilent8722ES",
@@ -137,6 +172,8 @@ grandfathered_docstring_instruments = [
     "LakeShore421",
     "LakeShore425",
     "LakeShore425",
+    "LakeShoreTemperatureChannel",
+    "LakeShoreHeaterChannel",
     "LeCroyT3DSO1204",
     "MKS937B",
     "IPS120_10",
@@ -153,6 +190,8 @@ grandfathered_docstring_instruments = [
     "SFM",
     "SPD1168X",
     "SPD1305X",
+    "SPDSingleChannelBase",
+    "SPDBase",
     "DSP7265",
     "DSP7265",
     "DSP7265",
@@ -175,16 +214,25 @@ grandfathered_docstring_instruments = [
     "VellemanK8090",
     "Yokogawa7651",
     "YokogawaGS200",
+    "ScopeChannel",
+    "IonGaugeAndPressureChannel",
+    "PressureChannel",
+    "SequenceEntry",
+    "ChannelBase",
+    "ChannelAWG",
+    "ChannelAFG",
 ]
 
 
 @pytest.mark.parametrize("cls", devices)
 def test_adapter_arg(cls):
-    "Test that every instrument has adapter as their input argument"
+    "Test that every instrument has adapter as their input argument."
     if cls.__name__ in proper_adapters:
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in need_init_communication:
         pytest.skip(f"{cls.__name__} requires communication in init.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
     cls(adapter=MagicMock())
@@ -192,9 +240,11 @@ def test_adapter_arg(cls):
 
 @pytest.mark.parametrize("cls", devices)
 def test_name_argument(cls):
-    "Test that every instrument accepts a name argument"
+    "Test that every instrument accepts a name argument."
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     inst = cls(adapter=MagicMock(), name="Name_Test")
     assert inst.name == "Name_Test"
 
@@ -211,6 +261,8 @@ def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
@@ -232,6 +284,6 @@ def test_property_docstrings(prop_set):
         pytest.skip(f"{device.__name__} is in the codebase and has to be refactored later on.")
     start = prop.__doc__.split(maxsplit=1)[0]
     assert start in ("Control", "Measure", "Set", "Get"), (
-        f"'{device.__name__}.{property_name}' docstrings does start with '{start}', not 'Control', "
+        f"'{device.__name__}.{property_name}' docstring does start with '{start}', not 'Control', "
         "'Measure', 'Get', or 'Set'."
     )
