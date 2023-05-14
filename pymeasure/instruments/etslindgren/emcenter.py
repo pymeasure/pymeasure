@@ -38,10 +38,10 @@ class EMCenter(Instrument):
     used for direct access to the instrument, does not control sub-modules
     """
 
-    def __init__(self, resource_name, name="ETS Lindgren EMCenter", **kwargs):
+    def __init__(self, adapter, name="ETS Lindgren EMCenter", **kwargs):
         kwargs.setdefault("timeout", 2000)
         kwargs.setdefault("write_termination", "\n")
-        super().__init__(resource_name, name, **kwargs)
+        super().__init__(adapter, name, **kwargs)
 
     def local(self):
         """Set the EMCenter to local mode."""
