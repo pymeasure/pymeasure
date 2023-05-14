@@ -269,7 +269,7 @@ class CXN(Instrument):
         "GP\x00\x00\x00\x00",
         """Get power readings for forward/reverse/load power in watts.""",
         preprocess_reply=lambda d: struct.unpack(">HHH", d),
-        get_process=lambda d: (float(d[0])/10, float(d[1])/10, float(d[2])/10),
+        get_process=lambda d: (float(d[0]) / 10, float(d[1]) / 10, float(d[2]) / 10),
     )
 
     status = Instrument.measurement(
@@ -284,7 +284,7 @@ class CXN(Instrument):
         "GS\x00\x00\x00\x00",
         """Get heat sink temperature in deg Celsius.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
     )
 
     tuner = Instrument.measurement(
@@ -300,14 +300,14 @@ class CXN(Instrument):
         "Gp\x00\x00\x00\x00",
         """Get maximum power of the power supply.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
     )
 
     reverse_power_limit = Instrument.measurement(
         "Gp\x00\x00\x00\x00",
         """Get maximum reverse power.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[18:20]),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
     )
 
     dc_voltage = Instrument.measurement(
@@ -326,9 +326,9 @@ class CXN(Instrument):
 
     setpoint = Instrument.control(
         "GL\x00\x00\x00\x00", "SA%c%c\x00\x00",
-        """Contrl the setpoint power level in watts.""",
+        """Control the setpoint power level in watts.""",
         preprocess_reply=lambda d: struct.unpack(">H", d),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
         set_process=int2char,
         validator=strict_discrete_set,
         values=range(4001),
@@ -367,7 +367,7 @@ class CXN(Instrument):
         """Control the percentage of full-scale value of the load capacity.
            It can be set only when manual_mode is True.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[2:4]),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
         validator=strict_discrete_set,
         values=range(101),
     )
@@ -377,7 +377,7 @@ class CXN(Instrument):
         """Control the percentage of full-scale value of the tune capacity.
            It can be set only when manual_mode is True.""",
         preprocess_reply=lambda d: struct.unpack(">H", d[4:6]),
-        get_process=lambda d: float(d)/10,
+        get_process=lambda d: float(d) / 10,
         validator=strict_discrete_set,
         values=range(101),
     )

@@ -135,7 +135,7 @@ class HPLegacyInstrument(Instrument):
     @property
     def status(self):
         """
-        Returns an object representing the current status of the unit.
+        Get an object representing the current status of the unit.
 
         """
         self.write_bytes(b"B")
