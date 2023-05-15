@@ -718,7 +718,7 @@ class Tektronix371A(Instrument):
         Asks the instrument for the curve data for the view curve when in view mode
         or the curve data for the current display when in store mode.
         :param bytes_count: The number of bytes to get (read) from the instrument.
-        :return: The binary data readed with the next structure
+        :return: The binary data read with the next structure
         CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . . . XXYYC
         """
         # Curve data sets are usually much longer than any other kind. Typically a set of curve
