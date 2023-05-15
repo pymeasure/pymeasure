@@ -115,10 +115,11 @@ class TDK_Lambda_Base(Instrument):
         "MDAV?",
         """Get the multi-drop option is available on the power supply.
 
-        If return value is 0, the option is not available, if 1 it is available.
+        If return value is ``False``, the option is not available, if ``True`` it is available.
 
         Property is UNTESTED.
-        """
+        """,
+        cast=bool
     )
 
     master_slave_setting = Instrument.measurement(
@@ -171,7 +172,7 @@ class TDK_Lambda_Base(Instrument):
         """
     )
 
-    voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         "PV?", "PV %g",
         """Control the programmed (set) output voltage.""",
         check_set_errors=True,
@@ -180,12 +181,12 @@ class TDK_Lambda_Base(Instrument):
         dynamic=True
     )
 
-    actual_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "MV?",
         """Measure the the actual output voltage."""
     )
 
-    current = Instrument.control(
+    current_setpoint = Instrument.control(
         "PC?", "PC %g",
         """Control the programmed (set) output current.""",
         check_set_errors=True,
@@ -194,7 +195,7 @@ class TDK_Lambda_Base(Instrument):
         dynamic=True
     )
 
-    actual_current = Instrument.measurement(
+    current = Instrument.measurement(
         "MC?",
         """Measure the actual output current.
 
