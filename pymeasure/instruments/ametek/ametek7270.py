@@ -230,16 +230,14 @@ class Ametek7270(Instrument):
     def __init__(self, adapter, name="Ametek DSP 7270",
                  read_termination='\x00',
                  write_termination='\x00',
-                 **kwargs,
-                 ):
+                 **kwargs):
 
         super().__init__(
             adapter,
             name,
             read_termination=read_termination,
             write_termination=write_termination,
-            **kwargs,
-        )
+            **kwargs)
 
     def check_errors(self):
         """mandatory to be used for property setter
