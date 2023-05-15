@@ -152,13 +152,60 @@ class Curve:
     # XXYY is coordinate point. Thus, we have to translate it for getting electrical values.
 
     def __init__(self,
-                 waveform_preamble: WaveformPreamble,
+                 waveform_preamble,
                  n_bytes_for_head,
                  n_bytes_for_data,
                  n_bytes_for_checksum,
                  n_bytes_for_x_coordinate,
                  n_bytes_for_y_coordinate,
                  raw_curve_data):
+        """
+
+        :param waveform_preamble: Preambles are necessary to interpret the numeric information
+        in the curve data that follows them.
+        Within a preamble, 26 parameters are specified.
+        The first ten are unique to the 371A curve tracer and are included
+        as a sub-string linked to the WFID: label.
+        The other 16 parameters include ten that have fixed values and six that vary
+        with the particular data sent.
+        Within the WFID: sub-string the parameters are separated by slashes,
+        while the entire sub-string is delimited by a pair of double quote marks.
+        Most of the WFID: string is rather strictly defined, with each parameter value
+        being right justified in a fixed length field.
+        An exception is the BGM value, which may vary in field length.
+        The remainder of the preamble uses standard punctuation.
+        A colon links each parameter label with its corresponding value and the individual label
+        and value pairs are separated with commas.
+        A complete preamble might look like this:
+        WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP 5V/OFFSET 0.00V/BGM 100mS/
+        VCS 12.3/TEXT /HSNS VCE”,
+        ENCDG:BIN, NR.PT:3,PT.FMT:XY,XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,
+        YZERO:0,YOFF:12,YUNIT:A,BYT/ NR:2,BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
+        :param n_bytes_for_head: The length (number of bytes) the ASCII header information needs.
+        Typically 25 bytes.
+        :param n_bytes_for_data: The length (number of bytes) the number of data bytes information
+        needs. Typically 2 bytes are needed to indicate the length of the data that follow
+        (normally 4096).
+        :param n_bytes_for_checksum: The length (number of bytes) the checksum information needs.
+        Typically 1 bytes is needed to indicate the length of the data of the checksum.
+        :param n_bytes_for_x_coordinate: The length (number of bytes) a x coordinate point needs
+        to be represented. Typically 2 bytes.
+        :param n_bytes_for_y_coordinate: The length (number of bytes) a y coordinate point needs
+        to be represented. Typically 2 bytes.
+        :param raw_curve_data: The complete curve data set  where an example might look like this:
+        CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . . . XXYYC where:
+        Header = CURVE CURVID:”INDEX 6”,%
+        NN = NUmber of data (number of bytes) that follow the header.
+        XXYYXXYY . . . XXYY = The data of the curve itself (Every XX or YY are 2 bytes).
+        C = The byte for the checksum.
+        :type waveform_preamble: WaveformPreamble
+        :type n_bytes_for_head: int
+        :type n_bytes_for_data: int
+        :type n_bytes_for_checksum: int
+        :type n_bytes_for_x_coordinate: int
+        :type n_bytes_for_y_coordinate: int
+        :type raw_curve_data: bytes.
+        """
 
         self.waveform_preamble = waveform_preamble
         self.n_bytes_for_head = n_bytes_for_head
@@ -319,13 +366,14 @@ class Tektronix371A(Instrument):
 
     def __init__(self,
                  adapter,
+                 name="Tektronix Curve Tracer model 371A",
                  query_delay=0.5,
                  write_delay=0.5,
                  timeout=5000,
                  **kwargs):
         super().__init__(
             adapter,
-            "Tektronix Curve Tracer model 371A",
+            name,
             write_termination="\n",
             read_termination="",
             send_end=True,
@@ -345,7 +393,7 @@ class Tektronix371A(Instrument):
 
     id = Instrument.measurement(
         "ID?",
-        """Return the identification of the instrument (string) """,
+        """Measure the identification of the instrument (string) """,
         get_process=lambda r:
         "".join(r)
     )
@@ -406,14 +454,14 @@ class Tektronix371A(Instrument):
 
     crt_readout_h = Instrument.measurement(
         "REAdout? SCientific",
-        """Return the vertical and horizontal cursor parameters.""",
+        """Measure the horizontal cursor reading in volts.""",
         get_process=lambda r:
         float(r[0].replace(" ", "").replace("READOUT", ""))
     )
 
     crt_readout_v = Instrument.measurement(
         "REAdout? SCientific",
-        """Return the vertical and horizontal cursor parameters.""",
+        """Measure the vertical cursor reading in amperes (ohm or siemens for f line cursor).""",
         get_process=lambda r:
         float(r[1])
     )
