@@ -297,7 +297,7 @@ class Tektronix371A(Instrument):
     DISPLAY_VALID_STORE_MODES = ["NST", "STO", "NSTore", "STOre"]
     VALID_MEASUREMENT_MODES = ["REPeat", "REP", "SINgle", "SIN", "SWEep", "SWE", "SSWeep", "SSW"]
     VALID_CURSOR_MODES = ["OFF", "DOT", "LINE", "WINDOW"]
-    VALID_V_H_COORDINATES_SET = list(range(0, 1025, 1))  # 0 is the beginning
+    VALID_V_H_COORDINATES_SET = list(range(1024))  # 0 is the beginning
     # and 1023 is the end of the valid coordinates set
 
     STEP_GENERATOR_VALID_VOLTAGE_STEP_SELECTIONS_VS_PEAKPOWER = \
@@ -766,7 +766,7 @@ class Tektronix371A(Instrument):
         Asks the instrument for the curve data for the view curve when in view mode
         or the curve data for the current display when in store mode.
         :param bytes_count: The number of bytes to get (read) from the instrument.
-        :return: The binary data readed with the next structure
+        :return: The binary data read with the next structure
         CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . . . XXYYC
         """
         # Curve data sets are usually much longer than any other kind. Typically a set of curve
