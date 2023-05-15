@@ -250,7 +250,7 @@ class Tektronix371A(Instrument):
     DISPLAY_VALID_STORE_MODES = ["NST", "STO", "NSTore", "STOre"]
     VALID_MEASUREMENT_MODES = ["REPeat", "REP", "SINgle", "SIN", "SWEep", "SWE", "SSWeep", "SSW"]
     VALID_CURSOR_MODES = ["OFF", "DOT", "LINE", "WINDOW"]
-    VALID_V_H_COORDINATES_SET = list(range(0, 1025, 1))  # 0 is the beginning
+    VALID_V_H_COORDINATES_SET = list(range(1024))  # 0 is the beginning
     # and 1023 is the end of the valid coordinates set
 
     STEP_GENERATOR_VALID_VOLTAGE_STEP_SELECTIONS_VS_PEAKPOWER = \
