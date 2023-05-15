@@ -86,6 +86,8 @@ for device in devices.union(channels):
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
+    "SwissArmyFake",
+    "FakeInstrument",
     "ThorlabsPM100USB",
     "Keithley2700",
     "TC038",
