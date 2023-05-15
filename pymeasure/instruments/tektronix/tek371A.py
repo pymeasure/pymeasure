@@ -394,22 +394,24 @@ class Tektronix371A(Instrument):
     id = Instrument.measurement(
         "ID?",
         """Measure the identification of the instrument (string) """,
+        maxsplit=2,
         get_process=lambda r:
-        "".join(r)
+        ", ".join(r)
     )
 
     help = Instrument.measurement(
         "HELp?",
         """Return the list of valid commands for the instrument.""",
         get_process=lambda r:
-        ", ".join(r)
+        "VALID COMMANDS AND QUERY HEADERS:\n"+" \n --> ".join(r)
     )
 
     front_panel_settings = Instrument.measurement(
         "SET?",
-        """Return the actual front-panel settings of the instrument.""",
+        """Measures the actual front-panel settings of the instrument.""",
+        separator=";",
         get_process=lambda r:
-        ",".join(r)
+        "FRONT PANEL SETINGS:\n" + "\n --> ".join(r)
     )
 
     #########################################################################
@@ -437,14 +439,17 @@ class Tektronix371A(Instrument):
         validator=strict_discrete_set,
         values=COLLECTOR_SUPPLY_PEAKPOWER_VALUES,
         get_process=lambda r:
-        float("".join(r.replace(" ", "")).replace("PKPOWER", ""))
+        float(r[1]) if isinstance(r, list)
+        else float("".join(r.replace(" ", "")).replace("PKPOWER", ""))
     )
 
     cs_collector_supply = Instrument.control(
         "VCSpply?", "VCSpply %f",
-        """Control the collector supply output level (from 0.0% to 100.0% in 0.1% increments).""",
+        """Control the collector supply output level (from 0.0% to 100.0% in 0.1% increments).\n
+        Values out of range or with more than one decimal will be ignored""",
         get_process=lambda r:
-        float("".join(r.replace(" ", "")).replace("VCSPPLY", ""))
+        float(r[1]) if isinstance(r, list)
+        else float("".join(r.replace(" ", "")).replace("VCSPPLY", ""))
     )
 
     ################################################################################
@@ -678,10 +683,11 @@ class Tektronix371A(Instrument):
         else r.split(":")[1]
     )
 
-    def get_stepgen_offset(self):
+    @property
+    def stepgen_offset(self):
         """
-
-        :return:
+        Get the offset of the step generator of the instrument.
+        :return: float containing the offset (volts or amps).
         """
         mult = self.stepgen_step_size_multiplier
         s_size = self.stepgen_step_source_and_size[1]
@@ -689,7 +695,8 @@ class Tektronix371A(Instrument):
         abs_offset = mult * s_size
         return -abs_offset if invert else abs_offset
 
-    def set_stepgen_offset(self, offset):
+    @stepgen_offset.setter
+    def stepgen_offset(self, offset):
         """
         Configure the offset of the step generator of the instrument
         changing the step size multiplier and invert param.
@@ -848,13 +855,6 @@ class Tektronix371A(Instrument):
     # # requests and operation complete service requests. A query is also included for
     # # the event code of the latest event.
     #####################################################################################
-
-    set = Instrument.measurement(
-        "SET?",
-        """Return the current front-panel settings of the instrument""",
-        get_process=lambda r:
-        r
-    )
 
     most_recent_event_code = Instrument.measurement(
         "EVEnt?",
