@@ -58,38 +58,6 @@ def test_y_getter():
         assert inst.y == 0.0
 
 
-def test_x1_getter():
-    with expected_protocol(
-            Ametek7270,
-            [(b'X1.', b'')],
-    ) as inst:
-        assert inst.x1 == ''
-
-
-def test_y1_getter():
-    with expected_protocol(
-            Ametek7270,
-            [(b'Y1.', b'')],
-    ) as inst:
-        assert inst.y1 == ''
-
-
-def test_x2_getter():
-    with expected_protocol(
-            Ametek7270,
-            [(b'X2.', b'')],
-    ) as inst:
-        assert inst.x2 == ''
-
-
-def test_y2_getter():
-    with expected_protocol(
-            Ametek7270,
-            [(b'Y2.', b'')],
-    ) as inst:
-        assert inst.y2 == ''
-
-
 def test_xy_getter():
     with expected_protocol(
             Ametek7270,
@@ -112,6 +80,20 @@ def test_theta_getter():
             [(b'PHA.', b'-1.8E+02\n')],
     ) as inst:
         assert inst.theta == -180.0
+
+
+@pytest.mark.parametrize("method, command", [('x1', 'X1.'),
+                                             ('y1', 'Y1.'),
+                                             ('x2', 'X2.'),
+                                             ('y2', 'Y2.')])
+def test_failing_properties(method, command):
+    """in standard single reference mode, these tests should raise a ValueError"""
+    with pytest.raises(ValueError):
+        with expected_protocol(
+                Ametek7270,
+                [(f'{command}'.encode(), b'0.0')]
+        ) as inst:
+           getattr(inst, method) == 0.0
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
