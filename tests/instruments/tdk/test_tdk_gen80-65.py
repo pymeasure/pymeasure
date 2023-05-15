@@ -38,32 +38,32 @@ def test_init():
 
 @pytest.mark.parametrize("volt",
                          (b"10", b"20", b"40"))
-def test_voltages(volt):
+def test_voltage_setpoint(volt):
     with expected_protocol(
             TDK_Gen80_65,
             [(b"ADR 6", b"OK"),
              (b"PV " + volt, b"OK"),
              (b"PV?", volt)]
     ) as instr:
-        instr.voltage = float(volt)
-        assert instr.voltage == float(volt)
+        instr.voltage_setpoint = float(volt)
+        assert instr.voltage_setpoint == float(volt)
 
 
-def test_invalid_voltage():
+def test_invalid_voltage_setpoint():
     with pytest.raises(ValueError):
         with expected_protocol(
                 TDK_Gen80_65,
                 [(b"ADR 6", b"OK"),
                  (b"PV 160", b"OK"), ]
         ) as instr:
-            instr.voltage = 160
+            instr.voltage_setpoint = 160
 
 
-def test_invalid_current():
+def test_invalid_current_setpoint():
     with pytest.raises(ValueError):
         with expected_protocol(
                 TDK_Gen80_65,
                 [(b"ADR 6", b"OK"),
                  (b"PC 150", b"OK"), ]
         ) as instr:
-            instr.current = 150
+            instr.current_setpoint = 150

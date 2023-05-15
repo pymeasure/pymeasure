@@ -44,6 +44,15 @@ def test_identity():
         assert instr.version == "REV:1U:4.3"
 
 
+def test_multidrop_capability():
+    with expected_protocol(
+            TDK_Lambda_Base,
+            [(b"ADR 6", b"OK"),
+             (b"MDAV?", b'1')]
+    ) as instr:
+        assert instr.multidrop_capability == True
+
+
 def test_remote():
     with expected_protocol(
             TDK_Lambda_Base,
