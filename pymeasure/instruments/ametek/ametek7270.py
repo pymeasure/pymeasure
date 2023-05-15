@@ -21,7 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
@@ -58,7 +57,7 @@ class Ametek7270(Instrument):
     ]
 
     SENSITIVITIES_IMODE = {0: SENSITIVITIES,
-                           1: list(np.array(SENSITIVITIES) * 1e-6),
+                           1: [sen * 1e-6 for sen in SENSITIVITIES],
                            2: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2e-15, 5e-15, 10e-15,
                                20e-15, 50e-15, 100e-15, 200e-15, 500e-15, 1e-12, 2e-12]}
 
