@@ -56,16 +56,17 @@ def find_devices_in_module(module, devices, channels):
                         # d is no class
                         continue
                     else:
-                        if i and d not in devices:
+                        if i:
                             devices.add(d)
-                        elif c and d not in channels:
+                        elif c:
                             channels.add(d)
         except ModuleNotFoundError:
-            # Some dependencies may not be installed on test computer, like pyvirtualbench
+            # Some non-required driver dependencies may not be installed on test computer,
+            # for example ni.VirtualBench
             pass
         except OSError:
-            # On Windows instruments.ni.daqmx can raise an OSError
-            # if non-required dependency NI-DAQmx is tested
+            # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
+            # when checking installed driver files
             pass
 
 
