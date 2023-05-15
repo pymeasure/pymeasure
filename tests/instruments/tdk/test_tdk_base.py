@@ -50,7 +50,8 @@ def test_multidrop_capability():
             [(b"ADR 6", b"OK"),
              (b"MDAV?", b'1')]
     ) as instr:
-        assert instr.multidrop_capability == True
+        value = instr.multidrop_capability
+        assert isinstance(value, bool) and value
 
 
 def test_remote():
