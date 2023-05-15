@@ -172,8 +172,8 @@ class SwissArmyFake(FakeInstrument):
     def frame_format(self):
         """Control the format for image data returned from the get_frame() method.
         Allowed values are:
-            mono_8: single channel 8-bit image.
-            mono_16: single channel 16-bit image.
+        mono_8: single channel 8-bit image.
+        mono_16: single channel 16-bit image.
         """
         time.sleep(self._wait)
         return self._frame_format
