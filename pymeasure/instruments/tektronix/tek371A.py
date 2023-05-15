@@ -21,11 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import ctypes
 import logging
 import time
+from enum import IntFlag
 
-import pyvisa.errors
 from pyvisa import constants as pyvisa_constants
 
 from pymeasure.instruments import Instrument
@@ -34,231 +33,6 @@ from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-class WaveformPreamble:
-    """ Represents the waveform preamble for a curve data from the Tektronix model 371A.
-    The preamble contains the information needed for interpreting, scaling,
-    and labeling the numeric information of the curve.
-    This preamble is coded in ASCII characters and is readable by the operator
-    without interpretation by the controller.
-    """
-
-    # The preamble and curve are each a string of eight-bit bytes.
-    # The preamble is a string of ASCII letters, numerals, and punctuation.
-    # Each character is represented by one byte.
-
-    # Preambles are necessary to interpret the numeric information in the curve data that follows
-    # them. Within a preamble, 26 parameters are specified. The first ten are unique to the 371B
-    # curve tracer and are included as a sub-string linked to the WFID: label. The other 16
-    # parameters include ten that have fixed values and six that vary with the particular data
-    # sent. Within the WFID: sub-string the parameters are separated by slashes, while the entire
-    # sub-string is delimited by a pair of double quote marks. Most of the WFID: string is rather
-    # strictly defined, with each parameter value being right justified in a fixed length field.
-    # An exception is the BGM value, which may vary in field length. The remainder of the
-    # preamble uses standard punctuation. A colon links each parameter label with its
-    # corresponding value and the individual label and value pairs are separated with commas.
-
-    # A complete preamble might look like this: WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP
-    # 5V/OFFSET 0.00V/BGM 100mS/VCS 12.3/TEXT /HSNS VCE”, ENCDG:BIN, NR.PT:3,PT.FMT:XY,
-    # XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,YZERO:0,YOFF:12, YUNIT:A,BYT/ NR:2,
-    # BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
-
-    def __init__(self, preamble_array):
-
-        wf_id = preamble_array[0].split("/")
-        self.n_measures_readed = int(preamble_array[2].split(":")[1].replace(" ", ""))
-        self.x_scale_factor = float(preamble_array[4].split(":")[1].replace(" ", ""))
-        self.n_horizontal_resolution_points = 1024  # screen points, like horizontal pixels in a
-        # tv screen
-        self.horizontal_range = self.x_scale_factor * self.n_horizontal_resolution_points
-        self.y_scale_factor = float(preamble_array[8].split(":")[1].replace(" ", ""))
-        self.n_vertical_resolution_points = 1024
-        self.vertical_range = self.y_scale_factor * self.n_vertical_resolution_points
-        self.horizontal_offset = int(preamble_array[6].split(":")[1].replace(" ", ""))
-        self.vertical_offset = int(preamble_array[10].split(":")[1].replace(" ", ""))
-        self.horizontal_units = str(preamble_array[7].split(":")[1].replace(" ", ""))
-        self.vertical_units = str(preamble_array[11].split(":")[1].replace(" ", ""))
-
-        self.step_size = wf_id[3].removeprefix("STEP").lstrip(" ")
-        if 'mV' in self.step_size:
-            self.step_size = float(self.step_size.removesuffix("mV")) * 1E-3
-        elif 'V' in self.step_size:
-            self.step_size = float(self.step_size.removesuffix("V"))
-
-        self.step_offset = wf_id[4].removeprefix("OFFSET").lstrip(" ")
-        if 'mV' in self.step_offset:
-            self.step_offset = float(self.step_offset.removesuffix("mV")) * 1E-3
-        elif 'V' in self.step_offset:
-            self.step_offset = float(self.step_offset.removesuffix("V"))
-
-    def __str__(self):
-
-        description = f'The Waveform Preamble is: \n' \
-                      f'Number of Measures Readed from: ' \
-                      f'{self.n_measures_readed} \n' \
-                      f'Horizontal X Scale Factor: ' \
-                      f'{self.x_scale_factor} {self.horizontal_units} \n' \
-                      f'Number Horizontal Range: ' \
-                      f'{self.horizontal_range} \n' \
-                      f'Number Horizontal Resolution Points: ' \
-                      f'{self.n_horizontal_resolution_points}\n' \
-                      f'Horizontal Offset: ' \
-                      f'{self.horizontal_offset} \n' \
-                      f'Horizontal Units: ' \
-                      f'{self.horizontal_units} \n' \
-                      f'Vertical Y Scale Factor: ' \
-                      f'{self.y_scale_factor} {self.vertical_units} \n' \
-                      f'Number Vertical Range: ' \
-                      f'{self.vertical_range} \n' \
-                      f'Number Vertical Resolution Points: ' \
-                      f'{self.n_vertical_resolution_points} \n' \
-                      f'Vertical Offset: ' \
-                      f'{self.vertical_offset} \n' \
-                      f'Vertical Units: ' \
-                      f'{self.vertical_units} \n' \
-                      f'Step Size: ' \
-                      f'{self.step_size} \n' \
-                      f'Step Offset: ' \
-                      f'{self.step_offset} \n\n'
-
-        return description
-
-
-class Curve:
-    """ Represents the Tektronix Curve Data from the Tektronix model 371A
-    and provides a high-level interface for interacting with and translate
-    data to electrical magnitudes.
-    """
-
-    # Curve data sets are usually much longer than any other kind.
-
-    # The major part of a curve is a sequence of binary coded numbers,
-    # which is prefixed by a 25 character ASCII string identifying the curve.
-
-    # Typically a set of curve data will be about 4122 bytes long, with most of the bytes being
-    # binary-coded numbers. Thus, most of the string of data is not directly readable, but must
-    # be interpreted by the controller. An example might look like this. CURVE CURVID:”INDEX 9”,
-    # %NNXXYYXXYY . . . XXYYC This example breaks down as follows. It starts with an ASCII string
-    # of 25 characters: CURVE CURVID:”INDEX 9”,% This is followed by a series of binary bytes.
-    # The first of these is two bytes giving the number of data bytes to follow, plus one (
-    # typically 4097): NN Then come the 4096 data bytes. Each of the 1024 data points on the
-    # curve is represented by four bytes, 2 for the 10 bits of the X coordinate and 2 for the 10
-    # bits of the Y coordinate: XXYYXXYY . . . XXYY And finally there is one byte which is the
-    # checksum for the preceding 4098 data bytes.
-
-    # The first XXYY of the 1024 points is the first point taken whe we execute the sweep.
-    # Last point should be the coordinates 0,0.
-    # XXYY is coordinate point. Thus, we have to translate it for getting electrical values.
-
-    def __init__(self,
-                 waveform_preamble,
-                 n_bytes_for_head,
-                 n_bytes_for_data,
-                 n_bytes_for_checksum,
-                 n_bytes_for_x_coordinate,
-                 n_bytes_for_y_coordinate,
-                 raw_curve_data):
-        """
-
-        :param waveform_preamble: Preambles are necessary to interpret the numeric information
-        in the curve data that follows them.
-        Within a preamble, 26 parameters are specified.
-        The first ten are unique to the 371A curve tracer and are included
-        as a sub-string linked to the WFID: label.
-        The other 16 parameters include ten that have fixed values and six that vary
-        with the particular data sent.
-        Within the WFID: sub-string the parameters are separated by slashes,
-        while the entire sub-string is delimited by a pair of double quote marks.
-        Most of the WFID: string is rather strictly defined, with each parameter value
-        being right justified in a fixed length field.
-        An exception is the BGM value, which may vary in field length.
-        The remainder of the preamble uses standard punctuation.
-        A colon links each parameter label with its corresponding value and the individual label
-        and value pairs are separated with commas.
-        A complete preamble might look like this:
-        WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP 5V/OFFSET 0.00V/BGM 100mS/
-        VCS 12.3/TEXT /HSNS VCE”,
-        ENCDG:BIN, NR.PT:3,PT.FMT:XY,XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,
-        YZERO:0,YOFF:12,YUNIT:A,BYT/ NR:2,BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
-        :param n_bytes_for_head: The length (number of bytes) the ASCII header information needs.
-        Typically 25 bytes.
-        :param n_bytes_for_data: The length (number of bytes) the number of data bytes information
-        needs. Typically 2 bytes are needed to indicate the length of the data that follow
-        (normally 4096).
-        :param n_bytes_for_checksum: The length (number of bytes) the checksum information needs.
-        Typically 1 bytes is needed to indicate the length of the data of the checksum.
-        :param n_bytes_for_x_coordinate: The length (number of bytes) a x coordinate point needs
-        to be represented. Typically 2 bytes.
-        :param n_bytes_for_y_coordinate: The length (number of bytes) a y coordinate point needs
-        to be represented. Typically 2 bytes.
-        :param raw_curve_data: The complete curve data set  where an example might look like this:
-        CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . . . XXYYC where:
-        Header = CURVE CURVID:”INDEX 6”,%
-        NN = NUmber of data (number of bytes) that follow the header.
-        XXYYXXYY . . . XXYY = The data of the curve itself (Every XX or YY are 2 bytes).
-        C = The byte for the checksum.
-        :type waveform_preamble: WaveformPreamble
-        :type n_bytes_for_head: int
-        :type n_bytes_for_data: int
-        :type n_bytes_for_checksum: int
-        :type n_bytes_for_x_coordinate: int
-        :type n_bytes_for_y_coordinate: int
-        :type raw_curve_data: bytes.
-        """
-
-        self.waveform_preamble = waveform_preamble
-        self.n_bytes_for_head = n_bytes_for_head
-        self.n_bytes_for_data = n_bytes_for_data
-        self.raw_curve_data = raw_curve_data
-        self.n_bytes_for_checksum = n_bytes_for_checksum
-        self.n_bytes_for_x_coordinate = n_bytes_for_x_coordinate
-        self.n_bytes_for_y_coordinate = n_bytes_for_y_coordinate
-
-        self.start_points_coordinates_index = self.n_bytes_for_head + self.n_bytes_for_data
-        self.stop_points_coordinates_index = len(self.raw_curve_data) - self.n_bytes_for_checksum
-        self.raw_points_coordinates = self.raw_curve_data[
-                                      self.start_points_coordinates_index:
-                                      self.stop_points_coordinates_index]
-
-        self.points_coordinates = []  # list of tuples --> (coord_x, coord_y)
-        self.points = []  # list of tuples --> (x, y)
-
-        for i in range(len(self.raw_points_coordinates)):
-
-            if (i % 4 == 0) and \
-                    (i <= (len(self.raw_points_coordinates) - (
-                            self.n_bytes_for_x_coordinate + self.n_bytes_for_y_coordinate))):
-                coord_x = int.from_bytes(
-                    self.raw_points_coordinates[i:i + self.n_bytes_for_x_coordinate],
-                    byteorder="big",
-                    signed=False
-                ) - waveform_preamble.horizontal_offset
-
-                coord_x = max(coord_x, 0)
-
-                coord_y = int.from_bytes(self.raw_points_coordinates
-                                         [i + self.n_bytes_for_x_coordinate:
-                                          i + self.n_bytes_for_x_coordinate +
-                                          self.n_bytes_for_y_coordinate],
-                                         byteorder="big",
-                                         signed=False
-                                         ) - waveform_preamble.vertical_offset
-                coord_y = max(coord_y, 0)
-
-                self.points_coordinates.append((coord_x, coord_y))
-                self.points.append((coord_x * waveform_preamble.x_scale_factor,
-                                    coord_y * self.waveform_preamble.y_scale_factor))
-
-    def __str__(self):
-
-        description = f'WAVEFORM DATA \n' \
-                      f'{self.waveform_preamble}' \
-                      f'The Waveform Curve Data is:\n' \
-                      f'Curve Coordinate Points: {self.points_coordinates} \n' \
-                      f'Curve Points: {self.points} \n\n'
-
-        return description
 
 
 class Tektronix371A(Instrument):
@@ -401,14 +175,14 @@ class Tektronix371A(Instrument):
 
     help = Instrument.measurement(
         "HELp?",
-        """Return the list of valid commands for the instrument.""",
+        """Measure the list of valid commands for the instrument.""",
         get_process=lambda r:
-        "VALID COMMANDS AND QUERY HEADERS:\n"+" \n --> ".join(r)
+        "VALID COMMANDS AND QUERY HEADERS:\n" + " \n --> ".join(r)
     )
 
     front_panel_settings = Instrument.measurement(
         "SET?",
-        """Measures the actual front-panel settings of the instrument.""",
+        """Measure the actual front-panel settings of the instrument.""",
         separator=";",
         get_process=lambda r:
         "FRONT PANEL SETINGS:\n" + "\n --> ".join(r)
@@ -420,10 +194,12 @@ class Tektronix371A(Instrument):
 
     cs_breakers = Instrument.measurement(
         "CSOut?",
-        """Return the actual collector HIGH VOLTAGE and HIGH CURRENT breakers settings
+        """Measure the actual collector HIGH VOLTAGE and HIGH CURRENT breakers settings
         of the instrument.""",
+        separator=" ",
+        maxsplit=1,
         get_process=lambda r:
-        "".join(r)
+        r[1]
     )
 
     cs_polarity = Instrument.control(
@@ -548,21 +324,21 @@ class Tektronix371A(Instrument):
 
     cursor_dot = Instrument.measurement(
         "DOT?",
-        """Return the cursor dot position.""",
+        """Measure the cursor dot position.""",
         get_process=lambda r:
         float("".join(r.replace(" ", "")).replace("DOT", ""))
     )
 
     cursor_dot_hvalue = Instrument.measurement(
         "REAdout? SCientific",
-        """Return the vertical and horizontal cursor parameters.""",
+        """Measure the vertical and horizontal cursor parameters.""",
         get_process=lambda r:
         float(r[0].removeprefix("READOUT").strip())
     )
 
     cursor_dot_vvalue = Instrument.measurement(
         "REAdout? SCientific",
-        """Return the vertical and horizontal cursor parameters.""",
+        """Measure the vertical and horizontal cursor parameters.""",
         get_process=lambda r:
         float(r[1])
     )
@@ -768,7 +544,7 @@ class Tektronix371A(Instrument):
         r
     )
 
-    def curve(self, bytes_count):
+    def fetch_curve(self, bytes_count):
         """
         Asks the instrument for the curve data for the view curve when in view mode
         or the curve data for the current display when in store mode.
@@ -798,7 +574,9 @@ class Tektronix371A(Instrument):
 
     def get_curve(self):
         """
-        Asks the instrument for the curve data (use the curve function)
+        Asks the instrument for the curve data (uses the fetch_curve function) and the necessary
+        preamble data (uses the waveform_preamble property) and translate the obtained responses
+        into a curve object.
         :return: A Curve object instance containg the information about the curve
         and the curve points.
         """
@@ -821,7 +599,7 @@ class Tektronix371A(Instrument):
         # Format of the curve data ASCII HEAD (25b) + NN (2b) + XXYYXXYY......XXYY (points to
         # read 1024 points typ) + C (checksum 1b) + EOL
 
-        waveform_preamble = WaveformPreamble(self.waveform_preamble)
+        waveform_preamble = Tektronix371A.WaveformPreamble(self.waveform_preamble)
 
         curve_head_len = 25  # bytes (ASCII HEAD)
         bytes_for_data_len = 2  # bytes (NN)
@@ -832,12 +610,12 @@ class Tektronix371A(Instrument):
             waveform_preamble.n_measures_readed * (
                     bytes_per_y_coordinate_point + bytes_per_x_coordinate_point)
 
-        raw_data = self.curve(curve_head_len +
-                              bytes_for_data_len +
-                              points_to_read +
-                              bytes_for_checksum)
+        raw_data = self.fetch_curve(curve_head_len +
+                                    bytes_for_data_len +
+                                    points_to_read +
+                                    bytes_for_checksum)
 
-        curve = Curve(
+        curve = Tektronix371A.Curve(
             waveform_preamble,
             curve_head_len,
             bytes_for_data_len,
@@ -858,9 +636,14 @@ class Tektronix371A(Instrument):
 
     most_recent_event_code = Instrument.measurement(
         "EVEnt?",
-        """Return the instrument event code of the most recent event""",
+        """Measure the instrument event code of the most recent event""",
         get_process=lambda r:
-        int(r.replace("EVENT ", ""))
+        Tektronix371A.Tek371AEvent(int(r.replace("EVENT ", "")))
+    )
+
+    status_byte = Instrument.measurement(
+        "*STB?",
+        "Measure the instrument status byte"
     )
 
     opc = Instrument.control(
@@ -912,7 +695,8 @@ class Tektronix371A(Instrument):
         """
 
         def event_handler(resource, event, user_handle):
-            # print(f"Handled event {event.event_type} on {resource}")
+            log.info("Handled event %s on %s", event.event_type, resource)
+            log.info("User_Handle %s", user_handle)
             self.srq_called = True
 
         event_type = pyvisa_constants.VI_EVENT_SERVICE_REQ
@@ -923,13 +707,308 @@ class Tektronix371A(Instrument):
         self.srq = True
         self.opc = True
 
-    #########################################################################
-    # #
-    #########################################################################
-
     def initialize(self):
         """ Initialize the instrument. Settings are the same as at power-up"""
         log.info("Initializing the instrument.")
         self.write("INIt")
         self.discard_and_disable_all_events()
         time.sleep(1)
+
+    #########################################################################
+    #  AUXILIARY CLASSES
+    #########################################################################
+
+    class Tek371AEvent(IntFlag):
+        """
+        Auxiliary class create for translating the instrument 8 bits_status_string into
+        an Enum_IntFlag that will help to the user to understand such status.
+        """
+        # Event code from the instrument has to be interpreted as follows:
+        #
+        # response --> 'EVENT code'
+
+        #  SYSTEM EVENT CODES
+        NO_ERROR = 0
+        POWER_ON = 401
+        MEASURE_SIGNAL_OPERATION_COMPLETE = 402
+        USER_REQUEST = 403
+
+        #  COMMAND ERROR CODES
+        COMMAND_HEADER_ERROR = 101
+        COMMAND_ARGUMENT_COUNT_ERROR = 102
+        COMMAND_ARGUMENT_ERROR = 103
+        COMMAND_SYNTAX_ERROR = 106
+        WAVEFORM_CHECKSUM_ERROR = 108
+        BYTE_COUNT_ERROR = 109
+
+        #  EXECUTION_ERROR CODES
+        COMMAND_NOT_EXECUTABLE_IN_LOCAL_MODE = 201
+        BUFFER_OVERFLOW = 203
+        SETTING_CONFLICTS = 204
+        ARGUMENT_OUT_OF_RANGE = 205
+        COLLECTOR_SUPPLY_BREAKER_UNMATCH = 272
+        NR_PT_AND_BYTE_COUNT_UNMATCH = 273
+        NO_WAVEFORM_AVAILABLE = 274
+        STEPGEN_SETTING_IN_STEP_GEN_DISABLED_MODE = 275
+        FORMAT_ERROR = 276
+        NVM_DATA_EMPTY = 277
+        NVM_RED_WRITE_ERROR = 278
+        CHEKSUM_ERROR = 279
+        FD_DATA_EMPTY = 280
+        FD_NOT_READY = 281
+        WRITE_PROTECT = 282
+        DISK_FULL = 283
+        INVALID_DATA = 284
+        FD_FAULT = 285
+        FD_READ_ERROR = 286
+        FD_WRITE_ERROR = 287
+        FD_SEEK_ERROR = 288
+
+        #  INTERNAL ERROR CODES
+        PHASE_LOCK_SYSTEM_FAILED = 353
+        COLLECTOR_SUPPLY_OVERHEATED = 354
+        COLLECTOR_SUPPLY_FUSE_BLOW = 357
+        OUTPUTS_PROTECTED = 350
+        INTERLOCK_SYSTEM_FAILED = 358
+
+        #  DEVICE-DEPENDENT EVENT CODES
+        SINGLE_MEASUREMENT_COMPLETE = 750
+        SWEEP_MEASUREMENT_COMPLETE = 751
+        PRINTER_OUTPUT_COMPLETE = 752
+        COLLECTOR_SUPPLY_RECOVERED = 753
+        COLLECTOR_SUPPLY_BREAKER_CHANGED = 754
+        INTERLOCK_SYSTEM_CHANGED = 755
+        FORMAT_COMPLETE = 756
+        COPY_COMPLETE = 757
+        NVM_ERASE_COMPLETE = 758
+
+    class WaveformPreamble:
+        """ Represents the waveform preamble for a curve data from the Tektronix model 371A.
+        The preamble contains the information needed for interpreting, scaling,
+        and labeling the numeric information of the curve.
+        This preamble is coded in ASCII characters and is readable by the operator
+        without interpretation by the controller.
+        """
+
+        # The preamble and curve are each a string of eight-bit bytes.
+        # The preamble is a string of ASCII letters, numerals, and punctuation.
+        # Each character is represented by one byte.
+
+        # Preambles are necessary to interpret the numeric information in the curve data that
+        # follows them. Within a preamble, 26 parameters are specified.
+        # The first ten are unique to the 371B curve tracer and are included as a sub-string linked
+        # to the WFID: label. The other 16 parameters include ten that have fixed values and
+        # six that vary with the particular data sent.
+        # Within the WFID: sub-string the parameters are separated by slashes, while the entire
+        # sub-string is delimited by a pair of double quote marks.
+        # Most of the WFID: string is rather strictly defined,
+        # with each parameter value being right justified in a fixed length field.
+        # An exception is the BGM value, which may vary in field length. The remainder of the
+        # preamble uses standard punctuation. A colon links each parameter label with its
+        # corresponding value and the individual label and value pairs are separated with commas.
+
+        # A complete preamble might look like this: WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP
+        # 5V/OFFSET 0.00V/BGM 100mS/VCS 12.3/TEXT /HSNS VCE”, ENCDG:BIN, NR.PT:3,PT.FMT:XY,
+        # XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,YZERO:0,YOFF:12, YUNIT:A,BYT/ NR:2,
+        # BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
+
+        def __init__(self, preamble_array):
+
+            wf_id = preamble_array[0].split("/")
+            self.n_measures_readed = int(preamble_array[2].split(":")[1].replace(" ", ""))
+            self.x_scale_factor = float(preamble_array[4].split(":")[1].replace(" ", ""))
+            self.n_horizontal_resolution_points = 1024  # screen points, like horizontal pixels in a
+            # tv screen
+            self.horizontal_range = self.x_scale_factor * self.n_horizontal_resolution_points
+            self.y_scale_factor = float(preamble_array[8].split(":")[1].replace(" ", ""))
+            self.n_vertical_resolution_points = 1024
+            self.vertical_range = self.y_scale_factor * self.n_vertical_resolution_points
+            self.horizontal_offset = int(preamble_array[6].split(":")[1].replace(" ", ""))
+            self.vertical_offset = int(preamble_array[10].split(":")[1].replace(" ", ""))
+            self.horizontal_units = str(preamble_array[7].split(":")[1].replace(" ", ""))
+            self.vertical_units = str(preamble_array[11].split(":")[1].replace(" ", ""))
+
+            self.step_size = wf_id[3].removeprefix("STEP").lstrip(" ")
+            if 'mV' in self.step_size:
+                self.step_size = float(self.step_size.removesuffix("mV")) * 1E-3
+            elif 'V' in self.step_size:
+                self.step_size = float(self.step_size.removesuffix("V"))
+
+            self.step_offset = wf_id[4].removeprefix("OFFSET").lstrip(" ")
+            if 'mV' in self.step_offset:
+                self.step_offset = float(self.step_offset.removesuffix("mV")) * 1E-3
+            elif 'V' in self.step_offset:
+                self.step_offset = float(self.step_offset.removesuffix("V"))
+
+        def __str__(self):
+
+            description = f'The Waveform Preamble is: \n' \
+                          f'Number of Measures Readed from: ' \
+                          f'{self.n_measures_readed} \n' \
+                          f'Horizontal X Scale Factor: ' \
+                          f'{self.x_scale_factor} {self.horizontal_units} \n' \
+                          f'Number Horizontal Range: ' \
+                          f'{self.horizontal_range} \n' \
+                          f'Number Horizontal Resolution Points: ' \
+                          f'{self.n_horizontal_resolution_points}\n' \
+                          f'Horizontal Offset: ' \
+                          f'{self.horizontal_offset} \n' \
+                          f'Horizontal Units: ' \
+                          f'{self.horizontal_units} \n' \
+                          f'Vertical Y Scale Factor: ' \
+                          f'{self.y_scale_factor} {self.vertical_units} \n' \
+                          f'Number Vertical Range: ' \
+                          f'{self.vertical_range} \n' \
+                          f'Number Vertical Resolution Points: ' \
+                          f'{self.n_vertical_resolution_points} \n' \
+                          f'Vertical Offset: ' \
+                          f'{self.vertical_offset} \n' \
+                          f'Vertical Units: ' \
+                          f'{self.vertical_units} \n' \
+                          f'Step Size: ' \
+                          f'{self.step_size} \n' \
+                          f'Step Offset: ' \
+                          f'{self.step_offset} \n\n'
+
+            return description
+
+    class Curve:
+        """ Represents the Tektronix Curve Data from the Tektronix model 371A
+        and provides a high-level interface for interacting with and translate
+        data to electrical magnitudes.
+        """
+
+        # Curve data sets are usually much longer than any other kind.
+
+        # The major part of a curve is a sequence of binary coded numbers,
+        # which is prefixed by a 25 character ASCII string identifying the curve.
+
+        # Typically a set of curve data will be about 4122 bytes long, with most of the bytes being
+        # binary-coded numbers. Thus, most of the string of data is not directly readable, but must
+        # be interpreted by the controller. An example might look like this. CURVE CURVID:”INDEX 9”,
+        # %NNXXYYXXYY . . . XXYYC This example breaks down as follows.
+        # It starts with an ASCII string of 25 characters: CURVE CURVID:”INDEX 9”,%
+        # This is followed by a series of binary bytes.
+        # The first of these is two bytes giving the number of data bytes to follow, plus one (
+        # typically 4097): NN Then come the 4096 data bytes. Each of the 1024 data points on the
+        # curve is represented by four bytes, 2 for the 10 bits of the X coordinate and 2 for the 10
+        # bits of the Y coordinate: XXYYXXYY . . . XXYY And finally there is one byte which is the
+        # checksum for the preceding 4098 data bytes.
+
+        # The first XXYY of the 1024 points is the first point taken whe we execute the sweep.
+        # Last point should be the coordinates 0,0.
+        # XXYY is coordinate point. Thus, we have to translate it for getting electrical values.
+
+        def __init__(self,
+                     waveform_preamble,
+                     n_bytes_for_head,
+                     n_bytes_for_data,
+                     n_bytes_for_checksum,
+                     n_bytes_for_x_coordinate,
+                     n_bytes_for_y_coordinate,
+                     raw_curve_data):
+            """
+
+            :param waveform_preamble: Preambles are necessary to interpret the numeric information
+            in the curve data that follows them.
+            Within a preamble, 26 parameters are specified.
+            The first ten are unique to the 371A curve tracer and are included
+            as a sub-string linked to the WFID: label.
+            The other 16 parameters include ten that have fixed values and six that vary
+            with the particular data sent.
+            Within the WFID: sub-string the parameters are separated by slashes,
+            while the entire sub-string is delimited by a pair of double quote marks.
+            Most of the WFID: string is rather strictly defined, with each parameter value
+            being right justified in a fixed length field.
+            An exception is the BGM value, which may vary in field length.
+            The remainder of the preamble uses standard punctuation.
+            A colon links each parameter label with its corresponding value and the individual label
+            and value pairs are separated with commas.
+            A complete preamble might look like this:
+            WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP 5V/OFFSET 0.00V/BGM 100mS/
+            VCS 12.3/TEXT /HSNS VCE”,
+            ENCDG:BIN, NR.PT:3,PT.FMT:XY,XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,
+            YZERO:0,YOFF:12,YUNIT:A,BYT/ NR:2,BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
+            :param n_bytes_for_head: The length (number of bytes) the ASCII header information
+            needs.
+            Typically 25 bytes.
+            :param n_bytes_for_data: The length (number of bytes) the number of data bytes
+            information needs.
+            Typically 2 bytes are needed to indicate the length of the data that follow
+            (normally 4096).
+            :param n_bytes_for_checksum: The length (number of bytes) the checksum information
+            needs.
+            Typically 1 bytes is needed to indicate the length of the data of the checksum.
+            :param n_bytes_for_x_coordinate: The length (number of bytes) a x coordinate point needs
+            to be represented. Typically 2 bytes.
+            :param n_bytes_for_y_coordinate: The length (number of bytes) a y coordinate point needs
+            to be represented. Typically 2 bytes.
+            :param raw_curve_data: The complete curve data set  where an example might look
+            like this:
+            CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . . . XXYYC where:
+            Header = CURVE CURVID:”INDEX 6”,%
+            NN = NUmber of data (number of bytes) that follow the header.
+            XXYYXXYY . . . XXYY = The data of the curve itself (Every XX or YY are 2 bytes).
+            C = The byte for the checksum.
+            :type waveform_preamble: WaveformPreamble
+            :type n_bytes_for_head: int
+            :type n_bytes_for_data: int
+            :type n_bytes_for_checksum: int
+            :type n_bytes_for_x_coordinate: int
+            :type n_bytes_for_y_coordinate: int
+            :type raw_curve_data: bytes.
+            """
+
+            self.waveform_preamble = waveform_preamble
+            self.n_bytes_for_head = n_bytes_for_head
+            self.n_bytes_for_data = n_bytes_for_data
+            self.raw_curve_data = raw_curve_data
+            self.n_bytes_for_checksum = n_bytes_for_checksum
+            self.n_bytes_for_x_coordinate = n_bytes_for_x_coordinate
+            self.n_bytes_for_y_coordinate = n_bytes_for_y_coordinate
+
+            self.start_points_coordinates_index = self.n_bytes_for_head + self.n_bytes_for_data
+            self.stop_points_coordinates_index = len(
+                self.raw_curve_data) - self.n_bytes_for_checksum
+            self.raw_points_coordinates = self.raw_curve_data[
+                                          self.start_points_coordinates_index:
+                                          self.stop_points_coordinates_index]
+
+            self.points_coordinates = []  # list of tuples --> (coord_x, coord_y)
+            self.points = []  # list of tuples --> (x, y)
+
+            for i in range(len(self.raw_points_coordinates)):
+
+                if (i % 4 == 0) and \
+                        (i <= (len(self.raw_points_coordinates) - (
+                                self.n_bytes_for_x_coordinate + self.n_bytes_for_y_coordinate))):
+                    coord_x = int.from_bytes(
+                        self.raw_points_coordinates[i:i + self.n_bytes_for_x_coordinate],
+                        byteorder="big",
+                        signed=False
+                    ) - waveform_preamble.horizontal_offset
+
+                    coord_x = max(coord_x, 0)
+
+                    coord_y = int.from_bytes(self.raw_points_coordinates
+                                             [i + self.n_bytes_for_x_coordinate:
+                                              i + self.n_bytes_for_x_coordinate +
+                                              self.n_bytes_for_y_coordinate],
+                                             byteorder="big",
+                                             signed=False
+                                             ) - waveform_preamble.vertical_offset
+                    coord_y = max(coord_y, 0)
+
+                    self.points_coordinates.append((coord_x, coord_y))
+                    self.points.append((coord_x * waveform_preamble.x_scale_factor,
+                                        coord_y * self.waveform_preamble.y_scale_factor))
+
+        def __str__(self):
+
+            description = f'WAVEFORM DATA \n' \
+                          f'{self.waveform_preamble}' \
+                          f'The Waveform Curve Data is:\n' \
+                          f'Curve Coordinate Points: {self.points_coordinates} \n' \
+                          f'Curve Points: {self.points} \n\n'
+
+            return description
