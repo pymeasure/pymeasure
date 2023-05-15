@@ -262,9 +262,11 @@ class Ametek7270(Instrument):
         return super().ask(command, query_delay).strip()
 
     def set_reference_mode(self, mode: int = 0):
-        """Set the instrument in Single, Dual or harmonic modes
-        :param mode: the integer specifying the mode: 0 for Single, 1 for Dual harmonic and 2 for Dual
-        reference
+        """Set the instrument in Single, Dual or harmonic mode.
+
+        :param mode: the integer specifying the mode: 0 for Single, 1 for Dual harmonic, and 2 for
+            Dual reference.
+
         """
         if mode not in [0, 1, 2]:
             raise ValueError('Invalid reference mode')
