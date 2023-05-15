@@ -30,36 +30,37 @@ from unittest.mock import MagicMock
 from pymeasure import instruments
 from pymeasure.instruments import Instrument, Channel
 
+
 # Collect all instruments
-devices = set()
-channels = set()
-
-
-def find_devices_in_module(module, devices, channels):
+def find_devices_in_module(module):
+    devices = set()
+    channels = set()
     base_dir = Path(module.__path__[0])
     base_import = module.__package__ + '.'
-    for folder in [i for i in base_dir.iterdir() if i.is_dir() and i.name[0] != '.']:
+    for inst_file in Path(base_dir).rglob('*.py'):
+        relative_path = inst_file.relative_to(base_dir)
+        if inst_file == '__init__.py':
+            # import parent module when filename __init__.py
+            relative_import = '.'.join(relative_path.parts[:-1])[:-3]
+        else:
+            relative_import = '.'.join(relative_path.parts)[:-3]
         try:
-            package = importlib.import_module(base_import + folder.name).__package__ + '.'
-            for mod in [f for f in folder.iterdir() if
-                        f.name[-3:] == '.py' and f.name != '__init__.py']:
-                mod_name = package + mod.name[:-3]
-                submodule = importlib.import_module(mod_name)
-                for dev in dir(submodule):
-                    if dev.startswith("__"):
-                        continue
-                    d = getattr(submodule, dev)
-                    try:
-                        i = issubclass(d, Instrument)
-                        c = issubclass(d, Channel)
-                    except TypeError:
-                        # d is no class
-                        continue
-                    else:
-                        if i:
-                            devices.add(d)
-                        elif c:
-                            channels.add(d)
+            submodule = importlib.import_module(base_import + relative_import)
+            for dev in dir(submodule):
+                if dev.startswith("__"):
+                    continue
+                d = getattr(submodule, dev)
+                try:
+                    i = issubclass(d, Instrument)
+                    c = issubclass(d, Channel)
+                except TypeError:
+                    # d is no class
+                    continue
+                else:
+                    if i:
+                        devices.add(d)
+                    elif c:
+                        channels.add(d)
         except ModuleNotFoundError:
             # Some non-required driver dependencies may not be installed on test computer,
             # for example ni.VirtualBench
@@ -68,9 +69,10 @@ def find_devices_in_module(module, devices, channels):
             # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
             # when checking installed driver files
             pass
+    return devices, channels
 
 
-find_devices_in_module(instruments, devices, channels)  # the instruments module itself
+devices, channels = find_devices_in_module(instruments)  # loop through the instruments module
 
 # Collect all properties
 properties = []
