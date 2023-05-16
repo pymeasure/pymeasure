@@ -72,7 +72,7 @@ def find_devices_in_module(module):
     return devices, channels
 
 
-devices, channels = find_devices_in_module(instruments)  # loop through the instruments module
+devices, channels = find_devices_in_module(instruments)
 
 # Collect all properties
 properties = []
