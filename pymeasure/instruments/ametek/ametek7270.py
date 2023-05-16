@@ -44,8 +44,9 @@ def check_read_not_empty(value):
 class Ametek7270(Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier
 
-    In this instrument, some measurements are defined only for specific modes, called Reference modes,
-    see :meth`set_reference_mode` and will raise errors if called incorrectly
+    In this instrument, some measurements are defined only for specific modes,
+    called Reference modes, see :meth`set_reference_mode` and will raise errors
+    if called incorrectly
     """
 
     SENSITIVITIES = [
