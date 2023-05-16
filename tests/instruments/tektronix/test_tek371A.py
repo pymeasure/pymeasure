@@ -31,7 +31,7 @@ def test_collector_supply_polarity():
     with expected_protocol(
             Tektronix371A,
             [("CSPol?", "CSPOL NPN"),
-             "CSPol NPN"],
+             ("CSPol NPN", None)],
     ) as inst:
         inst.cs_polarity = "NPN"
         assert inst.cs_polarity == "CSPOL NPN"
@@ -42,7 +42,7 @@ def test_collector_supply():
     with expected_protocol(
             Tektronix371A,
             [("VCSpply?", 1.2),
-             "VCSpply 1.2"],
+             ("VCSpply 1.2", None)],
     ) as inst:
         inst.cs_collector_supply = 1.2
         assert inst.cs_collector_supply == 1.2

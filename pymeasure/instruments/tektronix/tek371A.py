@@ -102,7 +102,7 @@ class Tektronix371A(Instrument):
 
     """
 
-    ADC_NBITS = 10 #  The number of bits of the Analog to Digital converter of the instrument
+    ADC_NBITS = 10  # The number of bits of the Analog to Digital converter of the instrument
     COLLECTOR_SUPPLY_POLARITY_MODES = ["NPN", "POSitive", "PNP", "NEGative", "POS", "NEG"]
     COLLECTOR_SUPPLY_PEAKPOWER_VALUES = [3000, 300, 30, 3]  # in watts
     COLLECTOR_SUPLLY_RANGE = [0.0, 100.0]  # in % of max peak power
