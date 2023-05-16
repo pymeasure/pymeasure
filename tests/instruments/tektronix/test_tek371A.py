@@ -51,7 +51,7 @@ def test_cursor_dot():
     """Verify the communication of the cursor dot."""
     with expected_protocol(
             Tektronix371A,
-            [("DOT?", 512)],
+            [("DOT?", "DOT   512")],
     ) as inst:
         assert inst.cursor_dot == 512
 

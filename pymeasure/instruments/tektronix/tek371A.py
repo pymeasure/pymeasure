@@ -367,8 +367,9 @@ class Tektronix371A(Instrument):
     cursor_dot = Instrument.measurement(
         "DOT?",
         """Measure the cursor dot position.""",
+        separator="DOT   ",
         get_process=lambda r:
-        float("".join(r.replace(" ", "")).replace("DOT", ""))
+        int(r[1])
     )
 
     cursor_dot_hvalue = Instrument.measurement(
