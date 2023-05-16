@@ -38,7 +38,48 @@ log.addHandler(logging.NullHandler())
 class Tektronix371A(Instrument):
     """ Represents the Tektronix Curve Tracer model 371A
     and provides a high-level interface for interacting with
-    the instrument using the SCPI command set.
+    the instrument using the SCPI command set for getting the characteristic curves
+    of several power electronics devices like diodes, IGBTs, MOSFETs, etc...
+
+    Typically, a set of curve got from the instrument will be about 4122 bytes long,
+    with most of the bytes being binary-coded numbers.
+    Thus, most of the string of data is not directly readable, but must be interpreted by
+    the controller. An example might look like this. CURVE CURVID:”INDEX 9”,%NNXXYYXXYY . .
+    . XXYYC This example breaks down as follows. It starts with an ASCII string of 25
+    characters: CURVE CURVID:”INDEX 9”,% This is followed by a series of binary bytes. The
+    first of these is two bytes giving the number of data bytes to follow, plus one (
+    typically 4097): NN Then come the 4096 data bytes. Each of the 1024 data points on the
+    curve is represented by four bytes, 2 for the 10 bits of the X coordinate and 2 for the
+    10 bits of the Y coordinate: XXYYXXYY . . . XXYY And finally there is one byte which is
+    the checksum for the preceding 4098 data bytes.
+
+    The first XXYY of the 1024 points is the first point taken whe we execute the sweep.
+    Last point should be the coordinates 0,0.
+    XXYY is coordinate point. Thus, we have to translate it for getting electrical values.
+
+    Format of the curve data ASCII HEAD (25b) + NN (2b) + XXYYXXYY......XXYY (points to
+    read 1024 points typ) + C (checksum 1b) + EOL
+
+    Curves data needs information to be interpreted, in our case that information is called preamble
+    The preamble is a string of ASCII letters, numerals, and punctuation.
+    Each character is represented by one byte.
+    Preambles are necessary to interpret the numeric information in the curve data that
+    follows them. Within a preamble, 26 parameters are specified.
+    The first ten are unique to the 371B curve tracer and are included as a sub-string linked
+    to the WFID: label. The other 16 parameters include ten that have fixed values and
+    six that vary with the particular data sent.
+    Within the WFID: sub-string the parameters are separated by slashes, while the entire
+    sub-string is delimited by a pair of double quote marks.
+    Most of the WFID: string is rather strictly defined,
+    with each parameter value being right justified in a fixed length field.
+    An exception is the BGM value, which may vary in field length. The remainder of the
+    preamble uses standard punctuation. A colon links each parameter label with its
+    corresponding value and the individual label and value pairs are separated with commas.
+
+    A complete preamble might look like this: WFMPRE WFID:”INDEX 3/VERT 500MA/ HORIZ 1V/STEP
+    5V/OFFSET 0.00V/BGM 100mS/VCS 12.3/TEXT /HSNS VCE”, ENCDG:BIN, NR.PT:3,PT.FMT:XY,
+    XMULT:+1.0E–2,XZERO:0,XOFF: 12,XUNIT:V,YMULT:+5.0E–3,YZERO:0,YOFF:12, YUNIT:A,BYT/ NR:2,
+    BN.FMT:RP,BIT/NR:10,CRVCHK:CHKSMO,LN.FMT:DOT
 
     .. code-block:: python
 
@@ -61,7 +102,7 @@ class Tektronix371A(Instrument):
 
     """
 
-    ADC_NBITS = 10
+    ADC_NBITS = 10 #  The number of bits of the Analog to Digital converter of the instrument
     COLLECTOR_SUPPLY_POLARITY_MODES = ["NPN", "POSitive", "PNP", "NEGative", "POS", "NEG"]
     COLLECTOR_SUPPLY_PEAKPOWER_VALUES = [3000, 300, 30, 3]  # in watts
     COLLECTOR_SUPLLY_RANGE = [0.0, 100.0]  # in % of max peak power
@@ -71,8 +112,8 @@ class Tektronix371A(Instrument):
     DISPLAY_VALID_STORE_MODES = ["NST", "STO", "NSTore", "STOre"]
     VALID_MEASUREMENT_MODES = ["REPeat", "REP", "SINgle", "SIN", "SWEep", "SWE", "SSWeep", "SSW"]
     VALID_CURSOR_MODES = ["OFF", "DOT", "LINE", "WINDOW"]
-    VALID_V_H_COORDINATES_SET = list(range(1024))  # 0 is the beginning
-    # and 1023 is the end of the valid coordinates set
+    # 0 is the beginning and 1023 is the end of the valid coordinates set
+    VALID_V_H_COORDINATES_SET = [0, pow(2, ADC_NBITS) - 1]
 
     STEP_GENERATOR_VALID_VOLTAGE_STEP_SELECTIONS_VS_PEAKPOWER = \
         dict.fromkeys(
