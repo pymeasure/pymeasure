@@ -368,10 +368,10 @@ class TDK_Lambda_Base(Instrument):
         :param pause: Pause duration in seconds to wait between steps
         """
 
-        currents = [round(i, 2) for i in np.linspace(self.current,
+        currents = [round(i, 2) for i in np.linspace(self.current_setpoint,
                                                      target_current, steps)]
         for current in currents:
-            self.current = current
+            self.current_setpoint = current
             sleep(pause)
 
     def shutdown(self):
