@@ -418,6 +418,16 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
     )]
 
 
+def test_control_check_get_errors_log_exception(fake, caplog):
+    with pytest.raises(NotImplementedError):
+        fake.fake_ctrl_errors
+    assert caplog.record_tuples == [(
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Exception raised while getting a property with the command 'ge': 'Implement it in a subclass.'."  # noqa: E501
+    )]
+
+
 def test_check_set_errors_not_implemented(fake):
     with pytest.raises(NotImplementedError):
         fake.check_set_errors()
@@ -434,6 +444,16 @@ def test_control_check_set_errors(fake, caplog):
         "pymeasure.instruments.common_base",
         logging.ERROR,
         "Error recieved after trying to set a property with the command 'se 7': '(7, 'Error!')'."
+    )]
+
+
+def test_control_check_set_errors_log_exception(fake, caplog):
+    with pytest.raises(NotImplementedError):
+        fake.fake_ctrl_errors = 7
+    assert caplog.record_tuples == [(
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Exception raised while setting a property with the command 'se 7': 'Implement it in a subclass.'."  # noqa: E501
     )]
 
 

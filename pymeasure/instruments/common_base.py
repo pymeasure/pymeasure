@@ -476,7 +476,13 @@ class CommonBase:
                                maxsplit=maxsplit,
                                **values_kwargs)
             if check_get_errors:
-                errors = [str(error) for error in self.check_get_errors()]
+                try:
+                    error_list = self.check_get_errors()
+                except Exception as exc:
+                    log.error("Exception raised while getting a property with the command "
+                              f"""'{command_process(get_command)}': '{str(exc)}'.""")
+                    raise
+                errors = [str(error) for error in error_list]
                 if errors:
                     log.error("Error recieved after trying to get a property with the command "
                               f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
@@ -528,7 +534,13 @@ class CommonBase:
                 )
             self.write(command_process(set_command) % value)
             if check_set_errors:
-                errors = [str(error) for error in self.check_set_errors()]
+                try:
+                    error_list = self.check_set_errors()
+                except Exception as exc:
+                    log.error("Exception raised while setting a property with the command "
+                              f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
+                    raise
+                errors = [str(error) for error in error_list]
                 if errors:
                     log.error(
                         "Error recieved after trying to set a property with the command "
