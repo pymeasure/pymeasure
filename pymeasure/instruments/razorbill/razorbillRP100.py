@@ -107,8 +107,8 @@ class razorbillRP100(Instrument):
         """Returns the current in amps present at the front panel output of channel 2"""
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Razorbill RP100 Piezo Stack Powersupply", **kwargs):
         super().__init__(
-            adapter, "Razorbill RP100 Piezo Stack Powersupply", **kwargs
+            adapter, name, **kwargs
         )
         self.timeout = 20

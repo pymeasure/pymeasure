@@ -51,10 +51,11 @@ class Keithley2260B(Instrument):
         print(source.applied)
     """
 
-    def __init__(self, adapter, read_termination="\n", **kwargs):
-        kwargs.setdefault('name', "Keithley 2260B DC Power Supply")
+    def __init__(self, adapter, name="Keithley 2260B DC Power Supply",
+                 read_termination="\n", **kwargs):
         super().__init__(
             adapter,
+            name,
             read_termination=read_termination,
             **kwargs
         )

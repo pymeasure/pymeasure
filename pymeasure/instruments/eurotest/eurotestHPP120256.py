@@ -96,6 +96,7 @@ class EurotestHPP120256(Instrument):
 
     def __init__(self,
                  adapter,
+                 name="Euro Test High Voltage DC Source model HPP-120-256",
                  query_delay=0.1,
                  write_delay=0.4,
                  timeout=5000,
@@ -103,7 +104,7 @@ class EurotestHPP120256(Instrument):
 
         super().__init__(
             adapter,
-            "Euro Test High Voltage DC Source model HPP-120-256",
+            name,
             write_termination="\n",
             read_termination="",
             send_end=True,
@@ -226,14 +227,14 @@ class EurotestHPP120256(Instrument):
 
     id = Instrument.measurement(
         "ID",
-        """Return the identification of the instrument (string) """,
+        """Get the identification of the instrument (string) """,
         get_process=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
 
     status = Instrument.measurement(
         "STATUS,DI",
-        """Return the instrument status (EurotestHPP120256Status).""",
+        """Get the instrument status (EurotestHPP120256Status).""",
         # Every bit indicates the state of one subsystem of the HV Source.
         # response DI, b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0,
         #               0                   1
@@ -262,7 +263,7 @@ class EurotestHPP120256(Instrument):
 
     lam_status = Instrument.measurement(
         "STATUS,LAM",
-        """Return the instrument lam status (string).""",
+        """Get the instrument lam status (string).""",
         # LAM status is the status of the unit from the point
         # of view of the process. Fo example, as a response of asking STATUS,LAM, the HV
         # voltage could response one of the messages from the next list:

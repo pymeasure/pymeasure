@@ -154,6 +154,13 @@ class TestReadBytes:
         # `break_on_termchar=False` is default value
         assert adapterR.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
 
+    def test_read_no_break_on_newline(self, adapter):
+        # write twice to have two newline characters in the read buffer
+        adapter.write("*IDN?")
+        adapter.write("*IDN?")
+        # `break_on_termchar=False` is default value
+        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
+
 
 def test_visa_adapter(adapter):
     assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"

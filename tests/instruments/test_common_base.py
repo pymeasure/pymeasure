@@ -35,7 +35,10 @@ class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
     def __init__(self, parent, id=None, *args, **kwargs):
-        super().__init__()
+        print(args, kwargs)
+        if "test" in kwargs:
+            self.test = kwargs.pop("test")
+        super().__init__(*args, **kwargs)
         self.parent = parent
         self.id = id
         self.args = args
@@ -85,7 +88,7 @@ def generic():
 
 class FakeBase(CommonBaseTesting):
     def __init__(self, *args, **kwargs):
-        super().__init__(FakeAdapter())
+        super().__init__(FakeAdapter(), *args, **kwargs)
 
     fake_ctrl = CommonBase.control(
         "", "%d", "docs",
@@ -217,7 +220,7 @@ class TestAddChild:
 
     def test_arguments(self, parent):
         assert parent.channels["A"].id == "A"
-        assert parent.channels["A"].kwargs == {'test': 5}
+        assert parent.channels["A"].test == 5
 
     def test_attribute_access(self, parent):
         assert parent.ch_B == parent.channels["B"]
@@ -334,6 +337,18 @@ def test_ask_writes_and_reads():
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
+
+
+def test_global_preprocess_reply():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
+        assert cb.values("x5x") == [5]
+
+
+def test_values_global_preprocess_reply():
+    cb = CommonBaseTesting(FakeAdapter())
+    cb.preprocess_reply = lambda v: v.strip("x")
+    assert cb.values("x5x") == [5]
 
 
 def test_binary_values(fake):
@@ -539,6 +554,84 @@ def test_control_preprocess_reply_property(dynamic):
     assert type(fake.x) == int
 
 
+def test_control_kwargs_handed_to_values():
+    """Test that kwargs parameters are handed to `values` method."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake(FakeBase):
+            x = CommonBase.control(
+                "", "JUNK%d",
+                "",
+                preprocess_reply=lambda v: v.replace('JUNK', ''),
+                cast=int,
+                testing=True,
+            )
+
+            def values(self, cmd, testing=False, **kwargs):
+                self.testing = testing
+                return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.x = 5
+    fake.x
+    assert fake.testing is True
+
+
+def test_control_warning_at_kwargs():
+    """Test whether a control kwarg raises a warning."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake(CommonBase):
+            x = CommonBase.control("", "", "", testing=True)
+
+
+def test_measurement_warning_at_kwargs():
+    """Test whether a measurement kwarg raises a warning."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake2(CommonBase):
+            x2 = CommonBase.measurement("", "", testing=True)
+
+
+def test_control_parameters_for_values():
+    """Test how to hand a parameter to `values` method."""
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int,
+            values_kwargs={'testing': True},
+        )
+
+        def values(self, cmd, testing=False, **kwargs):
+            self.testing = testing
+            return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.x = 5
+    fake.x
+    assert fake.testing is True
+
+
+def test_measurement_parameters_for_values():
+    """Test how to hand a parameter to `values` method."""
+    class Fake(FakeBase):
+        x = CommonBase.measurement(
+            "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int,
+            values_kwargs={'testing': True},
+        )
+
+        def values(self, cmd, testing=False, **kwargs):
+            self.testing = testing
+            return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.write("5")
+    fake.x
+    assert fake.testing is True
+
+
 @pytest.mark.parametrize("cast, expected", ((float, 5.5),
                                             (ureg.Quantity, ureg.Quantity(5.5)),
                                             (str, "5.5"),
@@ -548,7 +641,7 @@ def test_measurement_cast(cast, expected):
     class Fake(CommonBaseTesting):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
-    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
         assert instr.x == expected
 
 

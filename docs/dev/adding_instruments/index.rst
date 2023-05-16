@@ -24,3 +24,4 @@ The following sections will describe how to lay out your instrument code.
    channels
    advanced_communication
    tests
+   solutions

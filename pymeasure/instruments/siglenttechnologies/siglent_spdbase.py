@@ -157,12 +157,14 @@ class SPDChannel(Channel):
 
 class SPDBase(Instrument):
     """ The base class for Siglent SPDxxxxX instruments.
+
+    Uses :class:`SPDChannel` for measurement channels.
     """
 
-    def __init__(self, adapter, **kwargs):
-        kwargs.setdefault('name', 'Siglent SPDxxxxX instrument Base Class')
+    def __init__(self, adapter, name="Siglent SPDxxxxX instrument Base Class", **kwargs):
         super().__init__(
             adapter,
+            name,
             usb=dict(write_termination='\n',
                      read_termination='\n'),
             tcpip=dict(write_termination='\n',
