@@ -61,10 +61,10 @@ class Tektronix371A(Instrument):
 
     """
 
+    ADC_NBITS = 10
     COLLECTOR_SUPPLY_POLARITY_MODES = ["NPN", "POSitive", "PNP", "NEGative", "POS", "NEG"]
     COLLECTOR_SUPPLY_PEAKPOWER_VALUES = [3000, 300, 30, 3]  # in watts
     COLLECTOR_SUPLLY_RANGE = [0.0, 100.0]  # in % of max peak power
-    CURSOR_DOT_SET = list(range(0, 1025, 1))  # 0 is the beginning and 1024 is the end of the curve
     HORIZONTAL_SOURCE_SET = ["STPgen", "STP", "COLlect", "COL"]
     VERTICAL_SOURCE_SET = ["COLlect", "COL"]
     STEP_GENERATOR_SOURCE_SET = ["VOLtage", "CURrent", "VOL", "CUR"]
@@ -607,8 +607,8 @@ class Tektronix371A(Instrument):
         bytes_per_x_coordinate_point = 2  # bytes
         bytes_per_y_coordinate_point = 2  # bytes
         points_to_read = \
-            waveform_preamble.n_measures_readed * (
-                    bytes_per_y_coordinate_point + bytes_per_x_coordinate_point)
+            waveform_preamble.n_measures_readed * \
+            (bytes_per_y_coordinate_point + bytes_per_x_coordinate_point)
 
         raw_data = self.fetch_curve(curve_head_len +
                                     bytes_for_data_len +
@@ -817,11 +817,11 @@ class Tektronix371A(Instrument):
             wf_id = preamble_array[0].split("/")
             self.n_measures_readed = int(preamble_array[2].split(":")[1].replace(" ", ""))
             self.x_scale_factor = float(preamble_array[4].split(":")[1].replace(" ", ""))
-            self.n_horizontal_resolution_points = 1024  # screen points, like horizontal pixels in a
-            # tv screen
-            self.horizontal_range = self.x_scale_factor * self.n_horizontal_resolution_points
             self.y_scale_factor = float(preamble_array[8].split(":")[1].replace(" ", ""))
-            self.n_vertical_resolution_points = 1024
+            # screen points, like horizontal pixels in a tv screen
+            self.n_horizontal_resolution_points = pow(2, Tektronix371A.ADC_NBITS)
+            self.n_vertical_resolution_points = self.n_horizontal_resolution_points
+            self.horizontal_range = self.x_scale_factor * self.n_horizontal_resolution_points
             self.vertical_range = self.y_scale_factor * self.n_vertical_resolution_points
             self.horizontal_offset = int(preamble_array[6].split(":")[1].replace(" ", ""))
             self.vertical_offset = int(preamble_array[10].split(":")[1].replace(" ", ""))
