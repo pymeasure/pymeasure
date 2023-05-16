@@ -41,7 +41,7 @@ def test_collector_supply():
     with expected_protocol(
             Tektronix371A,
             [("VCSpply 1.2", None),
-             ("VCSpply?", 1.2)],
+             ("VCSpply?", "VCSPPLY 1.2")],
     ) as inst:
         inst.cs_collector_supply = 1.2
         assert inst.cs_collector_supply == 1.2
@@ -60,7 +60,7 @@ def test_cursor_dot_vvalue():
     """Verify the communication of the cursor dot."""
     with expected_protocol(
             Tektronix371A,
-            [("REAdout? SCientific", 10.2)],
+            [("REAdout? SCientific", "READOUT     1.0E-3,   10.2E-0")],
     ) as inst:
         assert inst.cursor_dot_vvalue == 10.2
 
