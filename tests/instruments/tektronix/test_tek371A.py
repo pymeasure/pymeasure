@@ -25,7 +25,6 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.tektronix.tek371A import Tektronix371A
 
-
 def test_collector_supply_polarity():
     """Verify the communication of the collector supply polarity."""
     with expected_protocol(
