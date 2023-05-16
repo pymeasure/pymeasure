@@ -138,23 +138,23 @@ class TC038(Instrument):
         get_process=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
         check_set_errors=True,
-        )
+    )
 
     temperature = Instrument.measurement(
         "WRD" + registers['temperature'] + ",01",
         """Measure the current temperature in °C.""",
         get_process=_data_to_temp
-        )
+    )
 
     monitored_value = Instrument.measurement(
         "WRM",
         """Measure the currently monitored value. For default it is the current
         temperature in °C.""",
         get_process=_data_to_temp
-        )
+    )
 
     information = Instrument.measurement(
         "INF6",
         """Get the information about the device and its capabilites.""",
         get_process=lambda got: got[7:-1],
-        )
+    )

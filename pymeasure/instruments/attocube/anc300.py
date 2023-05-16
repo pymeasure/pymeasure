@@ -73,38 +73,35 @@ class Axis(Channel):
     """
 
     serial_nr = Instrument.measurement("getser",
-                                       "Serial number of the axis")
+                                       "Get the serial number of the axis.")
 
     voltage = Instrument.control(
         "getv", "setv %.3f",
-        """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
-        property can be set. """,
+        """Control the amplitude of the stepping voltage in volts from 0 to 150 V.""",
         validator=strict_range, values=[0, 150], check_set_errors=True)
 
     frequency = Instrument.control(
         "getf", "setf %.3f",
-        """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
-        This property can be set. """,
+        """Control the frequency of the stepping motion in Hertz from 1 to 10000 Hz.""",
         validator=strict_range, values=[1, 10000],
         cast=int, check_set_errors=True)
 
     mode = Instrument.control(
         "getm", "setm %s",
-        """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
-        'stp+', 'stp-'. Available modes depend on the actual axis model""",
+        """Control axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
+        'stp+', 'stp-'. Available modes depend on the actual axis model.""",
         validator=strict_discrete_set,
         values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
         check_set_errors=True)
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
-        """ Offset voltage in Volts from 0 to 150 V.
-        This property can be set. """,
+        """Control offset voltage in Volts from 0 to 150 V.""",
         validator=strict_range, values=[0, 150], check_set_errors=True)
 
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
-        """ step up pattern of the piezo drive. 256 values ranging from 0
+        """Control step up pattern of the piezo drive. 256 values ranging from 0
         to 255 representing the the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
@@ -115,7 +112,7 @@ class Axis(Channel):
 
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
-        """ step down pattern of the piezo drive. 256 values ranging from 0
+        """Control step down pattern of the piezo drive. 256 values ranging from 0
         to 255 representing the the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
@@ -126,21 +123,21 @@ class Axis(Channel):
 
     output_voltage = Instrument.measurement(
         "geto",
-        """ Output voltage in volts.""")
+        """Measure the output voltage in volts.""")
 
     capacity = Instrument.measurement(
         "getc",
-        """ Saved capacity value in nF of the axis.""")
+        """Measure the saved capacity value in nF of the axis.""")
 
     stepu = Instrument.setting(
         "stepu %d",
-        """ Step upwards for N steps. Mode must be 'stp' and N must be
+        """Set the steps upwards for N steps. Mode must be 'stp' and N must be
         positive.""",
         validator=strict_range, values=[0, inf], check_set_errors=True)
 
     stepd = Instrument.setting(
         "stepd %d",
-        """ Step downwards for N steps. Mode must be 'stp' and N must be
+        """Set the steps downwards for N steps. Mode must be 'stp' and N must be
         positive.""",
         validator=strict_range, values=[0, inf], check_set_errors=True)
 
