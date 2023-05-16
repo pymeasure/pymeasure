@@ -67,6 +67,7 @@ from . import signalrecovery
 from . import srs
 from . import tcpowerconversion
 from . import tektronix
+from . import teledyne
 from . import temptronic
 from . import texio
 from . import thermotron
