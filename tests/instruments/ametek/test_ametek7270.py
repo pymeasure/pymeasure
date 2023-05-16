@@ -91,9 +91,9 @@ def test_failing_properties(method, command):
     with pytest.raises(ValueError):
         with expected_protocol(
                 Ametek7270,
-                [(f'{command}'.encode(), b'0.0')]
+                [(f'{command}'.encode(), b'\n')]
         ) as inst:
-           getattr(inst, method) == 0.0
+            getattr(inst, method) == 0.0
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
