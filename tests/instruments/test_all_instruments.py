@@ -23,6 +23,7 @@
 #
 
 import importlib
+from pathlib import Path
 import pytest
 from unittest.mock import MagicMock
 
@@ -31,45 +32,51 @@ from pymeasure.instruments import Instrument, Channel
 
 
 # Collect all instruments
-devices = []
-channels = []
-
-
-def find_devices_in_module(module, devices, channels):
-    for dev in dir(module):
-        if dev.startswith("__"):
-            continue
-        d = getattr(module, dev)
-        try:
-            i = issubclass(d, Instrument)
-            c = issubclass(d, Channel)
-        except TypeError:
-            # d is no class
-            continue
+def find_devices_in_module(module):
+    devices = set()
+    channels = set()
+    base_dir = Path(module.__path__[0])
+    base_import = module.__package__ + '.'
+    for inst_file in Path(base_dir).rglob('*.py'):
+        relative_path = inst_file.relative_to(base_dir)
+        if inst_file == '__init__.py':
+            # import parent module when filename __init__.py
+            relative_import = '.'.join(relative_path.parts[:-1])[:-3]
         else:
-            if i and d not in devices:
-                devices.append(d)
-            elif c and d not in channels:
-                channels.append(d)
+            relative_import = '.'.join(relative_path.parts)[:-3]
+        try:
+            submodule = importlib.import_module(base_import + relative_import)
+            for dev in dir(submodule):
+                if dev.startswith("__"):
+                    continue
+                d = getattr(submodule, dev)
+                try:
+                    i = issubclass(d, Instrument)
+                    c = issubclass(d, Channel)
+                except TypeError:
+                    # d is no class
+                    continue
+                else:
+                    if i:
+                        devices.add(d)
+                    elif c:
+                        channels.add(d)
+        except ModuleNotFoundError:
+            # Some non-required driver dependencies may not be installed on test computer,
+            # for example ni.VirtualBench
+            pass
+        except OSError:
+            # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
+            # when checking installed driver files
+            pass
+    return devices, channels
 
 
-find_devices_in_module(instruments, devices, channels)  # the instruments module itself
-for manufacturer in dir(instruments):
-    if manufacturer.startswith("__"):
-        continue
-    manu = getattr(instruments, manufacturer)
-    find_devices_in_module(manu, devices, channels)  # module in instruments package
-    for module_name in dir(manu):
-        if module_name.startswith("__"):
-            continue
-        module = getattr(manu, module_name)
-        if type(module).__name__ == "module":
-            find_devices_in_module(module, devices, channels)  # module in manufacturer package
-
+devices, channels = find_devices_in_module(instruments)
 
 # Collect all properties
 properties = []
-for device in devices + channels:
+for device in devices.union(channels):
     for property_name in dir(device):
         prop = getattr(device, property_name)
         if isinstance(prop, property):
@@ -79,6 +86,8 @@ for device in devices + channels:
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
+    "SwissArmyFake",
+    "FakeInstrument",
     "ThorlabsPM100USB",
     "Keithley2700",
     "TC038",
