@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import logging
 import re
 from math import inf
 from warnings import warn
@@ -31,6 +32,10 @@ from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def strict_length(value, values):
@@ -273,8 +278,19 @@ class ANC300Controller(Instrument):
         self.ask('echo off')
 
     def check_set_errors(self):
-        """Read after setting a value."""
-        self.read()
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        :return: List of error entries.
+        """
+        try:
+            self.read()
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     def ground_all(self):
         """ Grounds all axis of the controller. """

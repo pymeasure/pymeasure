@@ -22,8 +22,14 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from pymeasure.instruments import Instrument
 from pyvisa.constants import Parity
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def _data_to_temp(data):
@@ -105,7 +111,13 @@ class TC038(Instrument):
 
         Called if :code:`check_set_errors=True` is set for that property.
         """
-        self.read()
+        try:
+            self.read()
+        except ConnectionError as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     def set_monitored_quantity(self, quantity='temperature'):
         """

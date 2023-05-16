@@ -23,10 +23,15 @@
 #
 
 from enum import IntFlag
+import logging
 
 from pyvisa import VisaIOError
 from pymeasure.adapters import SerialAdapter, VISAAdapter
 from pymeasure.instruments import Instrument
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class VellemanK8090Switches(IntFlag):
@@ -255,14 +260,23 @@ class VellemanK8090(Instrument):
         return ",".join(values_str)
 
     def check_set_errors(self):
-        """Called after each set command, normally to look for errors.
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
 
         The K8090 replies with a status after a switch command, but
         **only** after any switch actually changed. In order to guarantee
         the buffer is empty, we attempt to read it fully here.
         No actual error checking is done here!
+
+        :return: List of error entries.
         """
         try:
             self.read()
         except (VisaIOError, ConnectionError):
             pass  # Ignore a timeout
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
