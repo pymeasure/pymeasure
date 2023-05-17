@@ -69,7 +69,7 @@ class TDK_Lambda_Base(Instrument):
         )
         self.address = address
 
-    def check_errors(self):
+    def check_set_errors(self):
         """
         Only use this command for setting commands, i.e. non-querying commands.
 
@@ -82,8 +82,10 @@ class TDK_Lambda_Base(Instrument):
         not the confirmation.
         """
         response = self.read()
+        error_list = []
         if response != "OK":
-            log.error(f"Received error: {response}")
+            error_list.append(f"Received error: {response}")
+        return error_list
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Properties
