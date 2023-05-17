@@ -23,7 +23,7 @@
 #
 import logging
 import time
-from enum import IntFlag
+from enum import IntEnum
 
 from pyvisa import constants as pyvisa_constants
 
@@ -760,10 +760,10 @@ class Tektronix371A(Instrument):
     #  AUXILIARY CLASSES
     #########################################################################
 
-    class Tek371AEvent(IntFlag):
+    class Tek371AEvent(IntEnum):
         """
         Auxiliary class create for translating the instrument 8 bits_status_string into
-        an Enum_IntFlag that will help to the user to understand such status.
+        an Enum_IntEnum that will help to the user to understand such status.
         """
         # Event code from the instrument has to be interpreted as follows:
         #
