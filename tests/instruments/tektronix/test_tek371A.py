@@ -34,8 +34,25 @@ def test_collector_supply_polarity():
              ("CSPol?", "CSPOL NPN")],
     ) as inst:
         inst.cs_polarity = "NPN"
-        assert inst.cs_polarity == "CSPOL NPN"
+        assert inst.cs_polarity == "NPN"
 
+def test_collector_supply_breakers():
+    """Verify the communication of the collector supply breakers."""
+    with expected_protocol(
+            Tektronix371A,
+            [("CSOut?", "CSOUT CURRENT")],
+    ) as inst:
+        assert inst.cs_breakers == "CURRENT"
+
+def test_collector_supply_peakpower():
+    """Verify the communication of the collector peak power."""
+    with expected_protocol(
+            Tektronix371A,
+            [("PKPower 300", None),
+             ("PKPower?", "PKPOWER 3000")],
+    ) as inst:
+        inst.cs_peakpower = 300
+        assert inst.cs_peakpower == 3000
 
 def test_collector_supply():
     """Verify the communication of the collector supply."""

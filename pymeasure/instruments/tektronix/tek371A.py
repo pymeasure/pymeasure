@@ -247,26 +247,32 @@ class Tektronix371A(Instrument):
         "CSPol?", "CSPol %s",
         """Control the collector supply polarity and mode.""",
         validator=strict_discrete_set,
-        values=COLLECTOR_SUPPLY_POLARITY_MODES
+        values=COLLECTOR_SUPPLY_POLARITY_MODES,
+        separator=" ",
+        maxsplit=1,
+        get_process=lambda  r:
+        r[1]
     )
 
     cs_peakpower = Instrument.control(
-        "PKPower?", "PKPower %s",
+        "PKPower?", "PKPower %d",
         """Control the collector supply peak power watts settings.""",
         validator=strict_discrete_set,
         values=COLLECTOR_SUPPLY_PEAKPOWER_VALUES,
+        separator=" ",
+        maxsplit=1,
         get_process=lambda r:
-        float(r[1]) if isinstance(r, list)
-        else float("".join(r.replace(" ", "")).replace("PKPOWER", ""))
+        int(r[1])
     )
 
     cs_collector_supply = Instrument.control(
         "VCSpply?", "VCSpply %.1f",
         """Control the collector supply output level (from 0.0% to 100.0% in 0.1% increments).\n
         Values out of range or with more than one decimal will be ignored""",
+        separator=" ",
+        maxsplit=1,
         get_process=lambda r:
-        float(r[1]) if isinstance(r, list)
-        else float("".join(r.replace(" ", "")).replace("VCSPPLY", ""))
+        float(r[1])
     )
 
     ################################################################################
@@ -291,8 +297,10 @@ class Tektronix371A(Instrument):
     crt_text = Instrument.control(
         "TEXt?", 'TEXt "%s"',
         """Control the writing of a text on the display. No more than 24 characters is possible.""",
+        separator=" ",
+        maxsplit=1,
         get_process=lambda r:
-        "".join(r.replace(" ", ""))
+        r[1]
     )
 
     ###############################################################################
