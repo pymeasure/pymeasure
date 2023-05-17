@@ -34,7 +34,7 @@ init_comm = [
     (None, "Authorization success"),
     ("echo off", "> echo off"),
     (None, "OK"),
-    ]
+]
 
 
 def test_stepu():
