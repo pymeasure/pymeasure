@@ -25,6 +25,7 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.tektronix.tek371A import Tektronix371A
 
+
 def test_collector_supply_polarity():
     """Verify the communication of the collector supply polarity."""
     with expected_protocol(
@@ -57,7 +58,7 @@ def test_cursor_dot():
 
 
 def test_cursor_dot_vvalue():
-    """Verify the communication of the cursor dot."""
+    """Verify the communication of the cursor dot value."""
     with expected_protocol(
             Tektronix371A,
             [("REAdout? SCientific", "READOUT     1.0E-3,   10.2E-0")],
@@ -65,10 +66,23 @@ def test_cursor_dot_vvalue():
         assert inst.cursor_dot_vvalue == 10.2
 
 
-def test_get_curve_points():
-    """Verify the communication of the curve."""
+def test_stepgen_invert():
+    """Verify the communication of the stegen invert command."""
     with expected_protocol(
             Tektronix371A,
-            [(None, [(1.2, 0.1), (1.3, 0.2), (1.4, 0.3), (1.5, 0.4)])],
+            [("STPgen?", "STPGEN OUT:ON,NUMBER:2,OFFSET:0.00,INVERT:OFF,MULT:OFF,CURRENT:1.0E-3"),
+             ("STPgen INVert:ON", None)],
     ) as inst:
-        assert inst.get_curve.points == [(1.2, 0.1), (1.3, 0.2), (1.4, 0.3), (1.5, 0.4)]
+        assert inst.stepgen_invert is False
+        inst.stepgen_invert = True
+
+def test_stepgen_number_steps():
+    """Verify the communication of the stegen number of steps command."""
+    with expected_protocol(
+            Tektronix371A,
+            [("STPgen?", "STPGEN OUT:ON,NUMBER:2,OFFSET:0.00,INVERT:OFF,MULT:OFF,CURRENT:1.0E-3"),
+             ("STPgen NUMber:3", None)],
+    ) as inst:
+        assert inst.stepgen_number_steps == 2
+        inst.stepgen_number_steps = 3
+

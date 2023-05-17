@@ -261,10 +261,9 @@ class Tektronix371A(Instrument):
     )
 
     cs_collector_supply = Instrument.control(
-        "VCSpply?", "VCSpply %f",
+        "VCSpply?", "VCSpply %.1f",
         """Control the collector supply output level (from 0.0% to 100.0% in 0.1% increments).\n
         Values out of range or with more than one decimal will be ignored""",
-        set_process=lambda x: round(x, 1),
         get_process=lambda r:
         float(r[1]) if isinstance(r, list)
         else float("".join(r.replace(" ", "")).replace("VCSPPLY", ""))
