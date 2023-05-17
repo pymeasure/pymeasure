@@ -401,7 +401,7 @@ def test_control_check_get_errors(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error recieved after trying to get a property with the command 'ge': '(7, 'some error')'."
+        "Error received after trying to get a property with the command 'ge': '(7, 'some error')'."
     )
 
 
@@ -414,7 +414,7 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error recieved after trying to get a property with the command 'ge': '15', '(19, 'x')'."
+        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."
     )
 
 
@@ -443,7 +443,7 @@ def test_control_check_set_errors(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error recieved after trying to set a property with the command 'se 7': '(7, 'Error!')'."
+        "Error received after trying to set a property with the command 'se 7': '(7, 'Error!')'."
     )
 
 
