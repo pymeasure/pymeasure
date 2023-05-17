@@ -36,6 +36,7 @@ def test_collector_supply_polarity():
         inst.cs_polarity = "NPN"
         assert inst.cs_polarity == "NPN"
 
+
 def test_collector_supply_breakers():
     """Verify the communication of the collector supply breakers."""
     with expected_protocol(
@@ -43,6 +44,7 @@ def test_collector_supply_breakers():
             [("CSOut?", "CSOUT CURRENT")],
     ) as inst:
         assert inst.cs_breakers == "CURRENT"
+
 
 def test_collector_supply_peakpower():
     """Verify the communication of the collector peak power."""
@@ -53,6 +55,7 @@ def test_collector_supply_peakpower():
     ) as inst:
         inst.cs_peakpower = 300
         assert inst.cs_peakpower == 3000
+
 
 def test_collector_supply():
     """Verify the communication of the collector supply."""
@@ -93,6 +96,7 @@ def test_stepgen_invert():
         assert inst.stepgen_invert is False
         inst.stepgen_invert = True
 
+
 def test_stepgen_number_steps():
     """Verify the communication of the stegen number of steps command."""
     with expected_protocol(
@@ -102,4 +106,3 @@ def test_stepgen_number_steps():
     ) as inst:
         assert inst.stepgen_number_steps == 2
         inst.stepgen_number_steps = 3
-

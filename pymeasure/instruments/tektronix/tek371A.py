@@ -250,7 +250,7 @@ class Tektronix371A(Instrument):
         values=COLLECTOR_SUPPLY_POLARITY_MODES,
         separator=" ",
         maxsplit=1,
-        get_process=lambda  r:
+        get_process=lambda r:
         r[1]
     )
 
