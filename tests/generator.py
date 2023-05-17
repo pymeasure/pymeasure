@@ -238,6 +238,9 @@ class TestInstrument:
             setattr(self._inst, name, value)
             self._generator._store_property_setter_test(self._name + name, value)
 
+    def __dir__(self):
+        return super().__dir__() + dir(self._inst)
+
 
 class Generator:
     """
