@@ -33,7 +33,10 @@ log.addHandler(logging.NullHandler())
 
 class Fpu60(Instrument):
     """Represents a fpu60 power supply unit for the finesse laser series by Laserquantum,
-    a Novanta company."""
+    a Novanta company.
+
+    The instrument responds to every command sent.
+    """
 
     def __init__(self, adapter, name="Laserquantum fpu60 power supply unit", **kwargs):
         super().__init__(adapter,
@@ -127,7 +130,12 @@ class Fpu60(Instrument):
         self.ask("LASER=OFF")
         self.ask("LASER=ON")  # unlocks emission button, does NOT start emission!
 
-    def check_errors(self):
-        """Use check_errors to read the responses of setters."""
-        # TODO change to check_set_errors, once PR #883 is merged.
-        self.read()
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        :return: List of error entries.
+        """
+        response = self.read()
+        return [] if response == "" else [response]
