@@ -9,21 +9,20 @@ Created on Wed May 17 14:13:51 2023
 ## download drivers from here: https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
 
-# import serial
+import serial
 
-from pymeasure.instruments import Instrument #, Channel
+# from pymeasure.instruments import Instrument #, Channel
 # from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     # strict_discrete_range
  
-class AGILTRON_1_16(Instrument):
-    def __init__(self, adapter, name="xyz", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-        # _baudrate = 115200
-        # _parity=serial.PARITY_NONE
-        # _stopbits=serial.STOPBITS_ONE
-        # _bytesize=serial.EIGHTBITS
-        # self.port = port
-        # self.ser = serial.Serial(port='com6',baudrate = _baudrate, parity=_parity, stopbits=_stopbits, bytesize=_bytesize)
+class AGILTRON_1_16():
+    def __init__(self, port = 'com6'):
+        # super().__init__(adapter, name, **kwargs)
+        _baudrate = 115200
+        _parity=serial.PARITY_NONE
+        _stopbits=serial.STOPBITS_ONE
+
+        self.ser = serial.Serial(port='com6',baudrate = _baudrate, parity=_parity, stopbits=_stopbits)
         
     def close_connection(self):
         self.ser.close()
@@ -53,7 +52,7 @@ if __name__ =='__main__':
     switch = AGILTRON_1_16('COM6')
 
     switch.read_partNumber()
-    switch.set_switch(16)
+    switch.set_switch(15)
     switch.close_connection()
 
 
