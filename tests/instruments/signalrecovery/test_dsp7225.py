@@ -22,9 +22,35 @@
 # THE SOFTWARE.
 #
 
-from .anritsuMG3692C import AnritsuMG3692C
-from .anritsuMS9710C import AnritsuMS9710C
-from .anritsuMS9740A import AnritsuMS9740A
-from .anritsuMS2090A import AnritsuMS2090A
-from .anritsuMS464xB import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B,\
-    AnritsuMS4645B, AnritsuMS4647B
+import pytest
+from pytest import raises
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.signalrecovery.dsp7225 import DSP7225
+
+
+@pytest.mark.parametrize("frequency", [
+    .001,
+    1e4,
+    100,
+])
+def test_valid_frequency(frequency):
+    with expected_protocol(
+            DSP7225,
+            [(b"OF. %g" % frequency, None)],
+    ) as instr:
+        instr.frequency = frequency
+
+
+@pytest.mark.parametrize("frequency", [
+    0,
+    1e14,
+])
+def test_invalid_frequency(frequency):
+    with raises(ValueError):
+        with expected_protocol(
+                DSP7225,
+                [(b"OF. %g" % frequency, None)],
+        ) as instr:
+            instr.frequency = frequency
