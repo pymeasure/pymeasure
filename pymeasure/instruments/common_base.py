@@ -484,7 +484,7 @@ class CommonBase:
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
-                    log.error("Error recieved after trying to get a property with the command "
+                    log.error("Error received after trying to get a property with the command "
                               f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
@@ -543,7 +543,7 @@ class CommonBase:
                 errors = [str(error) for error in error_list]
                 if errors:
                     log.error(
-                        "Error recieved after trying to set a property with the command "
+                        "Error received after trying to set a property with the command "
                         f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
                     )
 
