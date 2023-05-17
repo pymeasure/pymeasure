@@ -22,10 +22,15 @@
 # THE SOFTWARE.
 #
 
+import logging
 from enum import IntFlag
 
 from pymeasure.instruments import Instrument, validators
 from pyvisa.constants import Parity, StopBits
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def emission_validator(value, values):
@@ -94,15 +99,22 @@ class YAR(Instrument):
         """Read an instrument answer and check whether it is an error."""
         reply = super().read().split(":")
         if reply[0] == "ERR":
-            raise ConnectionError(f"Reading error {reply}")
+            raise ConnectionError(f"Reading error '{reply}'.")
         else:
             return reply[-1].strip()
 
-    def check_errors(self):
-        """Empty the read buffer."""
-        got = self.read().split(":")
-        if got[0] == "ERR":
-            raise ConnectionError(f"Connection error {got[-1]}.")
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        try:
+            self.read()
+        except ConnectionError as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     # COMMUNICATION FUNCTIONS
 
