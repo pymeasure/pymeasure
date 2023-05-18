@@ -379,20 +379,6 @@ class Tektronix371A(Instrument):
         int(r[1])
     )
 
-    cursor_dot_hvalue = Instrument.measurement(
-        "REAdout? SCientific",
-        """Measure the vertical and horizontal cursor parameters.""",
-        get_process=lambda r:
-        float(r[0].removeprefix("READOUT").strip())
-    )
-
-    cursor_dot_vvalue = Instrument.measurement(
-        "REAdout? SCientific",
-        """Measure the vertical and horizontal cursor parameters.""",
-        get_process=lambda r:
-        float(r[1])
-    )
-
     ###############################################################################
     # # DISPLAY COMMANDS
     # # Group of commands for controlling the status of the display.
@@ -409,7 +395,7 @@ class Tektronix371A(Instrument):
     )
 
     display_horizontal_source_sensitivity = Instrument.control(
-        "HORiz?", "HORiz %s:%s",
+        "HORiz?", "HORiz %s:%.1E",
         """Control the horizontal source (COLLECT O STPGEN) and
         its sensitivity (volt/div) for the horizontal axis on the display.\n
         Use example: instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0)
@@ -422,13 +408,15 @@ class Tektronix371A(Instrument):
         # the we will use the next expression: instrument.display_horizontal_source_sensitivity
         # and we should obtain a list as follow: ['COLLECT',1.0]. Parameters out ouf range will
         # have no effect.
+        # Response model: HORIZ COLLECT:1.0E+0
+        separator=":",
+        maxsplit=1,
         get_process=lambda r:
-        ["".join(r.replace(" ", "")).replace("HORIZ", "").split(":", maxsplit=1)[0],
-         float("".join(r.replace(" ", "")).replace("HORIZ", "").split(":")[1])]
+        [r[0].replace("HORIZ ", ""), float(r[1])]
     )
 
     display_vertical_source_sensitivity = Instrument.control(
-        "VERt?", "VERt %s:%s",
+        "VERt?", "VERt %s:%.1E",
         """Control the vertical source (COLLECT) and its sensitivity (A/div)
         for the vertical axis on the display.\n
         Use example: instrument.display_vertical_source_sensitivity = ("COLLECT", 1.0)
@@ -441,9 +429,11 @@ class Tektronix371A(Instrument):
         # the we will use the next expression: instrument.display_vertical_source_sensitivity and
         # we should obtain a list as follow: ['COLLECT',1.0]. Parameters out ouf range will have
         # no effect.
+        # Response model: VERT COLLECT:1.0E+0
+        separator=":",
+        maxsplit=1,
         get_process=lambda r:
-        ["".join(r.replace(" ", "")).replace("VERT", "").split(":", maxsplit=1)[0],
-         float("".join(r.replace(" ", "")).replace("VERT", "").split(":")[1])]
+        [r[0].replace("VERT ", ""), float(r[1])]
     )
 
     #########################################################################
@@ -566,10 +556,13 @@ class Tektronix371A(Instrument):
     measure_mode = Instrument.control(
         "MEAsure?", "MEAsure %s",
         """Control the measurement mode (string).""",
+        # Responde model: "MEASURE REPEAT"
         validator=strict_discrete_set,
         values=VALID_MEASUREMENT_MODES,
+        maxsplit=1,
+        separator=" ",
         get_process=lambda r:
-        r.replace("MEASURE ", "")
+        r[1]
     )
 
     #########################################################################################

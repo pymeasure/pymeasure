@@ -77,13 +77,13 @@ def test_cursor_dot():
         assert inst.cursor_dot == 512
 
 
-def test_cursor_dot_vvalue():
-    """Verify the communication of the cursor dot value."""
+def test_crt_readout_h():
+    """Verify the communication of the crt horizontal readout."""
     with expected_protocol(
             Tektronix371A,
             [("REAdout? SCientific", "READOUT     1.0E-3,   10.2E-0")],
     ) as inst:
-        assert inst.cursor_dot_vvalue == 10.2
+        assert inst.crt_readout_h == 0.001
 
 
 def test_stepgen_invert():
@@ -106,3 +106,38 @@ def test_stepgen_number_steps():
     ) as inst:
         assert inst.stepgen_number_steps == 2
         inst.stepgen_number_steps = 3
+
+
+def test_display_horizontal_source_sensitivity():
+    """Verify the communication for the control of the horizontal source (COLLECT O STPGEN) and
+        its sensitivity (volt/div) command. For the horizontal axis on the display"""
+    with expected_protocol(
+            Tektronix371A,
+            [("HORiz?", "HORIZ COLLECT:1.0E+0"),
+             ("HORiz COLLECT:2.0E+00", None)],
+    ) as inst:
+        assert inst.display_horizontal_source_sensitivity == ["COLLECT", 1.0]
+        inst.display_horizontal_source_sensitivity = ("COLLECT", 2.0)
+
+
+def test_display_vertical_source_sensitivity():
+    """Verify the communication for the control of the vertical source (COLLECT) and its
+    sensitivity (A/div) command. For the vertical axis on the display"""
+    with expected_protocol(
+            Tektronix371A,
+            [("VERt?", "VERT COLLECT:1.0E+0"),
+             ("VERt COLLECT:2.0E+00", None)],
+    ) as inst:
+        assert inst.display_vertical_source_sensitivity == ["COLLECT", 1.0]
+        inst.display_vertical_source_sensitivity = ("COLLECT", 2.0)
+
+
+def test_measure_mode():
+    """Verify the communication for the control of the measure mode command."""
+    with expected_protocol(
+            Tektronix371A,
+            [("MEAsure?", "MEASURE REPEAT"),
+             ("MEAsure SINgle", None)],
+    ) as inst:
+        assert inst.measure_mode == "REPEAT"
+        inst.measure_mode = "SINgle"
