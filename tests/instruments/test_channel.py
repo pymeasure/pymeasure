@@ -116,6 +116,18 @@ class TestChannelCommunication:
         ch.read_binary_values()
         assert ch.parent.method_calls == [mock.call.read_binary_values()]
 
+    def test_check_errors(self, ch):
+        ch.check_errors()
+        assert ch.parent.method_calls == [mock.call.check_errors()]
+
+    def test_check_get_errors(self, ch):
+        ch.check_get_errors()
+        assert ch.parent.method_calls == [mock.call.check_get_errors()]
+
+    def test_check_set_errors(self, ch):
+        ch.check_set_errors()
+        assert ch.parent.method_calls == [mock.call.check_set_errors()]
+
 
 def test_channel_with_different_prefix():
     c = ChannelWithPlaceholder(None, "A")

@@ -476,7 +476,16 @@ class CommonBase:
                                maxsplit=maxsplit,
                                **values_kwargs)
             if check_get_errors:
-                self.check_errors()
+                try:
+                    error_list = self.check_get_errors()
+                except Exception as exc:
+                    log.error("Exception raised while getting a property with the command "
+                              f"""'{command_process(get_command)}': '{str(exc)}'.""")
+                    raise
+                errors = [str(error) for error in error_list]
+                if errors:
+                    log.error("Error received after trying to get a property with the command "
+                              f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -525,7 +534,18 @@ class CommonBase:
                 )
             self.write(command_process(set_command) % value)
             if check_set_errors:
-                self.check_errors()
+                try:
+                    error_list = self.check_set_errors()
+                except Exception as exc:
+                    log.error("Exception raised while setting a property with the command "
+                              f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
+                    raise
+                errors = [str(error) for error in error_list]
+                if errors:
+                    log.error(
+                        "Error received after trying to set a property with the command "
+                        f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
+                    )
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
@@ -644,3 +664,32 @@ class CommonBase:
                                   check_set_errors=check_set_errors,
                                   dynamic=dynamic,
                                   )
+
+    def check_errors(self):
+        """Read all errors from the instrument and log them.
+
+        :return: List of error entries.
+        """
+        raise NotImplementedError("Implement it in a subclass.")
+
+    def check_get_errors(self):
+        """Check for errors after having gotten a property and log them.
+
+        Called if :code:`check_get_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
+        """
+        raise NotImplementedError("Implement it in a subclass.")
+
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
+        """
+        raise NotImplementedError("Implement it in a subclass.")
