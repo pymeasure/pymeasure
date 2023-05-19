@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -508,3 +508,83 @@ class Measurable:
     @value.setter
     def value(self, value):
         self._value = value
+
+
+class Metadata(object):
+    """ Encapsulates the information for metadata of the experiment with
+    information about the name, the fget function and the units, if supplied.
+    If no fget function is specified, the value property will return the
+    latest set value of the parameter (or default if never set).
+
+    :var value: The value of the parameter. This returns (if a value is set)
+        the value obtained from the `fget` (after evaluation) or a manually
+        set value. Returns `None` if no value has been set
+
+    :param name: The parameter name
+    :param fget: The parameter fget function; can be provided as a callable,
+        or as a string, in which case it is assumed to be the name of a
+        method or attribute of the `Procedure` class in which the Metadata is
+        defined. Passing a string also allows for nested attributes by separating
+        them with a period (e.g. to access an attribute or method of an
+        instrument) where only the last attribute can be a method.
+    :param units: The parameter units
+    :param default: The default value, in case no value is assigned or if no
+        fget method is provided
+    :param fmt: A string used to format the value upon writing it to a file.
+        Default is "%s"
+
+    """
+    def __init__(self, name, fget=None, units=None, default=None, fmt="%s"):
+        self.name = name
+        self.units = units
+
+        self._value = default
+        self.fget = fget
+        self.fmt = fmt
+
+        self.evaluated = False
+
+    @property
+    def value(self):
+        if self.is_set():
+            return self._value
+        else:
+            raise ValueError("Metadata value is not set")
+
+    def is_set(self):
+        """ Returns True if the Parameter value is set
+        """
+        return self._value is not None
+
+    def evaluate(self, parent=None, new_value=None):
+        if new_value is not None and self.fget is not None:
+            raise ValueError("Metadata with a defined fget method"
+                             " cannot be manually assigned a value")
+        elif new_value is not None:
+            self._value = new_value
+        elif self.fget is not None:
+            self._value = self.eval_fget(parent)
+
+        self.evaluated = True
+        return self.value
+
+    def eval_fget(self, parent):
+        fget = self.fget
+        if isinstance(fget, str):
+            obj = parent
+            for obj_name in fget.split('.'):
+                obj = getattr(obj, obj_name)
+            fget = obj
+
+        if callable(fget):
+            return fget()
+        else:
+            return fget
+
+    def __str__(self):
+        result = self.fmt % self.value
+
+        if self.units is not None:
+            result += " %s" % self.units
+
+        return result

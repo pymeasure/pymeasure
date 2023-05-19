@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from .Qt import QtCore
+from .Qt import QtCore, QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -38,12 +38,14 @@ class ResultsCurve(pg.PlotDataItem):
     the full file instead of just appending.
     """
 
-    def __init__(self, results, x, y, force_reload=False, **kwargs):
+    def __init__(self, results, x, y, force_reload=False, wdg=None, **kwargs):
         super().__init__(**kwargs)
         self.results = results
+        self.wdg = wdg
         self.pen = kwargs.get('pen', None)
         self.x, self.y = x, y
         self.force_reload = force_reload
+        self.color = self.opts['pen'].color()
 
     def update_data(self):
         """Updates the data by polling the results"""
@@ -54,15 +56,21 @@ class ResultsCurve(pg.PlotDataItem):
         # Set x-y data
         self.setData(data[self.x], data[self.y])
 
+    def set_color(self, color):
+        self.pen.setColor(color)
+        self.color = self.opts['pen'].color()
+        self.updateItems(styleUpdate=True)
 
 # TODO: Add method for changing x and y
+
 
 class ResultsImage(pg.ImageItem):
     """ Creates an image loaded dynamically from a file through the Results
     object."""
 
-    def __init__(self, results, x, y, z, force_reload=False):
+    def __init__(self, results, x, y, z, force_reload=False, wdg=None, **kwargs):
         self.results = results
+        self.wdg = wdg
         self.x = x
         self.y = y
         self.z = z
@@ -80,11 +88,13 @@ class ResultsImage(pg.ImageItem):
 
         super().__init__(image=self.img_data)
 
-        # Scale and translate image so that the pixels are in the coorect
+        # Scale and translate image so that the pixels are in the correct
         # position in "data coordinates"
-        self.scale(self.xstep, self.ystep)
-        self.translate(int(self.xstart / self.xstep) - 0.5,
-                       int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        tr = QtGui.QTransform()
+        tr.scale(self.xstep, self.ystep)
+        tr.translate(int(self.xstart / self.xstep) - 0.5,
+                     int(self.ystart / self.ystep) - 0.5)  # 0.5 so pixels centered
+        self.setTransform(tr)
 
     def update_data(self):
         if self.force_reload:
@@ -135,7 +145,7 @@ class BufferCurve(pg.PlotDataItem):
     """ Creates a curve based on a predefined buffer size and allows data to be added dynamically.
     """
 
-    data_updated = QtCore.QSignal()
+    data_updated = QtCore.Signal()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -166,13 +176,13 @@ class Crosshairs(QtCore.QObject):
     x and y graph coordinates
     """
 
-    coordinates = QtCore.QSignal(float, float)
+    coordinates = QtCore.Signal(float, float)
 
     def __init__(self, plot, pen=None):
         """ Initiates the crosshars onto a plot given the pen style.
 
         Example pen:
-        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.DashLine)
+        pen=pg.mkPen(color='#AAAAAA', style=QtCore.Qt.PenStyle.DashLine)
         """
         super().__init__()
 

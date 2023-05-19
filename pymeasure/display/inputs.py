@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -114,7 +114,7 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
             self.setSingleStep(parameter.step)
             self.setEnabled(True)
         else:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -124,10 +124,10 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtWidgets.QAbstractSpinBox.StepUpEnabled | \
-                QtWidgets.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
         else:
-            return QtWidgets.QAbstractSpinBox.StepNone
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
 
 
 class BooleanInput(Input, QtWidgets.QCheckBox):
@@ -212,7 +212,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
             self.setSingleStep(parameter.step)
             self.setEnabled(True)
         else:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -226,7 +226,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         self.setDecimals(parameter.decimals)
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
+        self.validator.setNotation(QtGui.QDoubleValidator.Notation.ScientificNotation)
         super().set_parameter(parameter)  # default gets set here, after min/max
 
     def validate(self, text, pos):
@@ -256,7 +256,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
 
     def stepEnabled(self):
         if self.parameter.step:
-            return QtWidgets.QAbstractSpinBox.StepUpEnabled | \
-                QtWidgets.QAbstractSpinBox.StepDownEnabled
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
         else:
-            return QtWidgets.QAbstractSpinBox.StepNone
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone

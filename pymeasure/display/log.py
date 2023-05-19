@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ class LogHandler(Handler):
     # 4. A new utility class Emitter subclass of QObject is
     # introduced to handle record Signal and workaround the problem
     class Emitter(QtCore.QObject):
-        record = QtCore.QSignal(object)
+        record = QtCore.Signal(object)
 
     def __init__(self):
         super().__init__()

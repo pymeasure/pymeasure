@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,10 +39,10 @@ class AnritsuMG3692C(Instrument):
         in Hz. This property can be set. """
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anritsu MG3692C Signal Generator", **kwargs):
         super().__init__(
             adapter,
-            "Anritsu MG3692C Signal Generator",
+            name,
             **kwargs
         )
 
@@ -76,3 +76,4 @@ class AnritsuMG3692C(Instrument):
         # TODO: Implement modulation
         self.modulation = False
         self.disable()
+        super().shutdown()

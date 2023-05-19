@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ class Plotter(StoppableThread):
         self.setup_plot(window.plot)
         app.aboutToQuit.connect(window.quit)
         window.show()
-        app.exec_()
+        app.exec()
 
     def setup_plot(self, plot):
         """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
 
 from pymeasure.test import expected_protocol
 
@@ -36,16 +35,15 @@ def test_init():
     with expected_protocol(
             HP8116A,
             [(b"CST", b"x" * 87 + b' ,\r\n')],
-            ):
+    ):
         pass  # Verify the expected communication.
 
 
-@pytest.mark.xfail
 def test_duty_cycle():
     with expected_protocol(
             HP8116A,
             [(b"CST", b"x" * 87 + b' ,\r\n'), (b"IDTY", b"00000035")],
-            ) as instr:
+    ) as instr:
         assert instr.duty_cycle == 35
 
 
@@ -53,5 +51,5 @@ def test_duty_cycle_setter():
     with expected_protocol(
             HP8116A,
             [(b"CST", b"x" * 87 + b' ,\r\n'), (b"DTY 34.5 %", None)],
-            ) as instr:
+    ) as instr:
         instr.duty_cycle = 34.5

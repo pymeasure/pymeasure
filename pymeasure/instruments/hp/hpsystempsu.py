@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -74,12 +74,12 @@ class HP6632A(HPLegacyInstrument):
     """
     status_desc = Status
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP6632A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            "Hewlett-Packard HP6632A",
+            name,
             **kwargs,
         )
 
@@ -207,8 +207,8 @@ class HP6632A(HPLegacyInstrument):
         Returns an object representing the current status of the unit.
 
         """
-        # overloading the already exisiting propery because of the different command
-        reply = bytearray(int(self.adapter.connection.query("STS?")).to_bytes(
+        # overloading the already exisiting property because of the different command
+        reply = bytearray(int(self.ask("STS?")).to_bytes(
             self.status_bytes_count, "little"))
         return self.status_bits.from_buffer(reply)
 
@@ -314,7 +314,9 @@ class HP6633A(HP6632A):
     with the instrument.
     """
 
-    name = "Hewlett Packard HP6633A"
+    def __init__(self, adapter, name="Hewlett Packard HP6633A", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
     current_values = [0, limits["HP6633A"]["Cur_lim"]]
     OVP_values = [0, limits["HP6633A"]["OVP_lim"]]
     voltage_values = [0, limits["HP6633A"]["Volt_lim"]]
@@ -326,7 +328,9 @@ class HP6634A(HP6632A):
     with the instrument.
     """
 
-    name = "Hewlett Packard HP6634A"
+    def __init__(self, adapter, name="Hewlett Packard HP6634A", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
     current_values = [0, limits["HP6634A"]["Cur_lim"]]
     OVP_values = [0, limits["HP6634A"]["OVP_lim"]]
     voltage_values = [0, limits["HP6634A"]["Volt_lim"]]

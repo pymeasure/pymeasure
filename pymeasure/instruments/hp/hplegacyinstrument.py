@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -121,25 +121,25 @@ class HPLegacyInstrument(Instrument):
 
     def write(self, command):
         if command == "B":
-            self.adapter.connection.write("B", termination="")
+            self.write_bytes(b"B")
         else:
             super().write(command)
 
     def values(self, command, **kwargs):
         if command == "B":
-            self.write(command)
-            return self.adapter.connection.read_raw(**kwargs)
+            self.write_bytes(b"B")
+            return self.read_bytes(-1, **kwargs)
         else:
             return super().values(command, **kwargs)
 
     @property
     def status(self):
         """
-        Returns an object representing the current status of the unit.
+        Get an object representing the current status of the unit.
 
         """
-        self.write("B")
-        reply = bytearray(self.adapter.read_bytes(self.status_bytes_count))
+        self.write_bytes(b"B")
+        reply = bytearray(self.read_bytes(self.status_bytes_count))
         return self.status_bits.from_buffer(reply)
 
     def GPIB_trigger(self):
@@ -162,5 +162,5 @@ class HPLegacyInstrument(Instrument):
 
         """
         self.adapter.connection.clear()
-        self.adapter.connection.close()
+        self.adapter.close()
         super().shutdown()

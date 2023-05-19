@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -130,10 +130,11 @@ class Agilent4156(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent 4155/4156 Semiconductor Parameter Analyzer",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            name,
             **kwargs
         )
 
@@ -624,7 +625,7 @@ class SMU(Instrument):
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
         """
-        if not((self.channel_mode != 'COMM') and (
+        if not ((self.channel_mode != 'COMM') and (
                 self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU function when SMU mode is COMMON, '
@@ -637,7 +638,7 @@ class SMU(Instrument):
     def __validate_compl(self):
         """Validates the instrument compliance for operation in constant mode.
         """
-        if not((self.channel_mode != 'COMM') and (
+        if not ((self.channel_mode != 'COMM') and (
                 self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU parameters when SMU mode is COMMON, '
