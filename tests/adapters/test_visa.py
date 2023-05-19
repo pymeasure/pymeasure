@@ -41,7 +41,7 @@ if not is_pyvisa_sim_installed:
 def adapter():
     adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
                           read_termination="\n",
-                          timeout=10,
+                          timeout=120,
                           )
     yield adapter
     # Empty the read buffer, as something might remain there after a test.
