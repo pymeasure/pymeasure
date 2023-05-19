@@ -115,7 +115,7 @@ class TDK_Lambda_Base(Instrument):
 
     multidrop_capability = Instrument.measurement(
         "MDAV?",
-        """Get the multi-drop option is available on the power supply.
+        """Get whether the multi-drop option is available on the power supply.
 
         If return value is ``False``, the option is not available, if ``True`` it is available.
 
@@ -252,7 +252,8 @@ class TDK_Lambda_Base(Instrument):
         "OUT?", "OUT %s",
         """Control the output of the power supply.
 
-        Valid values are ``True`` and ``False``.
+        Valid values are ``True`` to turn output on and ``False`` to turn output off, shutting down
+        any voltage or current.
         """,
         check_set_errors=True,
         validator=strict_discrete_set,
@@ -260,7 +261,7 @@ class TDK_Lambda_Base(Instrument):
         map_values=True
     )
 
-    foldback = Instrument.control(
+    foldback_enabled = Instrument.control(
         "FLD?", "FLD %s",
         """Control the fold back protection of the power supply.
 
@@ -309,11 +310,13 @@ class TDK_Lambda_Base(Instrument):
         dynamic=True
     )
 
-    auto_restart = Instrument.control(
+    auto_restart_enabled = Instrument.control(
         "AST?", "AST %s",
-        """Control the auto restart mode.
+        """Control the auto restart mode, which restores the power supply to the last
+        output voltage and current settings with output enabled on startup.
 
-        Valid values are ``True`` and ``False``.
+        Valid values are ``True`` to restore output settings with output enabled on startup
+        and ``False`` to disable restoration of settings and output disabled on startup.
         """,
         check_set_errors=True,
         validator=strict_discrete_set,
