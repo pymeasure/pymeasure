@@ -17,6 +17,10 @@ Deprecated features
 - The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
 - The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate.
 
+Dropped Support
+---------------
+- Instrument manufacture modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+
 Version 0.11.1 (2022-12-31)
 ===========================
 Adapter and instrument mechanics
