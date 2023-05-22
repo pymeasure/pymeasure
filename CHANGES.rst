@@ -19,7 +19,7 @@ Deprecated features
 
 Dropped Support
 ---------------
-- Instrument manufacture modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. When importing a single instrument into a procedure all instruments would be imported into memory through the manufacturer modules. This change lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
 
 Version 0.11.1 (2022-12-31)
 ===========================
