@@ -44,7 +44,6 @@ from ..widgets import (
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure
-from ..curves import ResultsCurve
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -386,7 +385,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.manager.clear()
 
     def open_experiment(self):
-        dialog = ResultsDialog(self.procedure_class.DATA_COLUMNS, self.x_axis, self.y_axis)
+        dialog = ResultsDialog(self.procedure_class,
+                               widget_list=self.widget_list)
         if dialog.exec():
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
@@ -461,8 +461,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         curve_color = pg.intColor(0)
         for curve in curve_list:
-            if isinstance(curve, ResultsCurve):
-                curve_color = curve.opts['pen'].color()
+            if hasattr(curve, 'color'):
+                curve_color = curve.color
                 break
 
         browser_item = BrowserItem(results, curve_color)
@@ -592,15 +592,18 @@ class ManagedWindow(ManagedWindowBase):
     :param x_axis: the initial data-column for the x-axis of the plot
     :param y_axis: the initial data-column for the y-axis of the plot
     :param linewidth: linewidth for the displayed curves, default is 1
+    :param log_fmt: formatting string for the log-widget
+    :param log_datefmt: formatting string for the date in the log-widget
     :param \\**kwargs: optional keyword arguments that will be passed to
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
 
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None, linewidth=1,
+                 log_fmt=None, log_datefmt=None, **kwargs):
         self.x_axis = x_axis
         self.y_axis = y_axis
-        self.log_widget = LogWidget("Experiment Log")
+        self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.plot_widget = PlotWidget("Results Graph", procedure_class.DATA_COLUMNS, self.x_axis,
                                       self.y_axis, linewidth=linewidth)
         self.plot_widget.setMinimumSize(100, 200)

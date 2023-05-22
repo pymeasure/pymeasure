@@ -70,7 +70,7 @@ class PlotFrame(QtWidgets.QFrame):
 
         self.plot = self.plot_widget.getPlotItem()
 
-        style = dict(self.LABEL_STYLE | {'justify': 'right'})
+        style = dict(self.LABEL_STYLE, justify='right')
         if "font-size" in style:  # LabelItem wants the size as 'size' rather than 'font-size'
             style["size"] = style.pop("font-size")
         self.coordinates = pg.LabelItem("", parent=self.plot, **style)
@@ -81,7 +81,7 @@ class PlotFrame(QtWidgets.QFrame):
                                                   style=QtCore.Qt.PenStyle.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
         self.timer.timeout.connect(self.crosshairs.update)
         self.timer.timeout.connect(self.updated)

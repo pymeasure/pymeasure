@@ -141,17 +141,17 @@ class MKS937B(Instrument):
 
     def write(self, command):
         """
-        Writes to the instrument including the device address
+        Write to the instrument including the device address.
 
         :param command: command string to be sent to the instrument
         """
         super().write(self._prepend_address(command))
 
-    def check_errors(self):
+    def check_set_errors(self):
         """
-        check reply string for acknowledgement string
+        Check reply string for acknowledgement string.
         """
-        ret = self.adapter.read()  # use adapter read to get raw reply
+        ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)
         if reply:
             if reply.group('ack') == 'ACK':
