@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,27 +65,23 @@ class PlotFrame(QtWidgets.QFrame):
         vbox = QtWidgets.QVBoxLayout(self)
 
         self.plot_widget = pg.PlotWidget(self, background='#ffffff')
-        self.coordinates = QtWidgets.QLabel(self)
-        self.coordinates.setMinimumSize(QtCore.QSize(0, 20))
-        self.coordinates.setStyleSheet("background: #fff")
-        self.coordinates.setText("")
-        self.coordinates.setAlignment(
-            QtCore.Qt.AlignmentFlag.AlignRight |
-            QtCore.Qt.AlignmentFlag.AlignTrailing |
-            QtCore.Qt.AlignmentFlag.AlignVCenter)
-
         vbox.addWidget(self.plot_widget)
-        vbox.addWidget(self.coordinates)
         self.setLayout(vbox)
 
         self.plot = self.plot_widget.getPlotItem()
+
+        style = dict(self.LABEL_STYLE, justify='right')
+        if "font-size" in style:  # LabelItem wants the size as 'size' rather than 'font-size'
+            style["size"] = style.pop("font-size")
+        self.coordinates = pg.LabelItem("", parent=self.plot, **style)
+        self.coordinates.anchor(itemPos=(1, 1), parentPos=(1, 1), offset=(0, 3))
 
         self.crosshairs = Crosshairs(self.plot,
                                      pen=pg.mkPen(color='#AAAAAA',
                                                   style=QtCore.Qt.PenStyle.DashLine))
         self.crosshairs.coordinates.connect(self.update_coordinates)
 
-        self.timer = QtCore.QTimer()
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_curves)
         self.timer.timeout.connect(self.crosshairs.update)
         self.timer.timeout.connect(self.updated)

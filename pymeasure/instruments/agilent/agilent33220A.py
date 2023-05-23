@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,10 +69,10 @@ class Agilent33220A(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent 33220A Arbitrary Waveform generator", **kwargs):
         super().__init__(
             adapter,
-            "Agilent 33220A Arbitrary Waveform generator",
+            name,
             **kwargs
         )
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,12 +28,33 @@ from pymeasure.adapters import PrologixAdapter
 from pymeasure.test import expected_protocol
 
 
+init_comm = [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
+
+
 def test_init():
     with expected_protocol(
             PrologixAdapter,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
+            init_comm,
     ):
         pass
+
+
+def test_init_different_config():
+    with expected_protocol(
+            PrologixAdapter,
+            [("++auto 1", None), ("++eoi 0", None), ("++eos 0", None)],
+            auto=True, eoi=False, eos="\r\n",
+    ):
+        pass
+
+
+@pytest.mark.parametrize("message, value", (("1", True), ("0", False)))
+def test_auto(message, value):
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++auto", message)],
+    ) as adapter:
+        assert adapter.auto is value
 
 
 def test_write():

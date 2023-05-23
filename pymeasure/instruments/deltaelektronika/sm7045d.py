@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -94,10 +94,10 @@ class SM7045D(Instrument):
         output of the power supply is disabled/enabled. """,
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Delta Elektronika SM 70-45 D", **kwargs):
         super().__init__(
             adapter,
-            "Delta Elektronika SM 70-45 D",
+            name,
             **kwargs
         )
 
