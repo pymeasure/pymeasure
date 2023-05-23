@@ -5,6 +5,7 @@ New adapter and instrument mechanics
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
 - Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+- The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
 
 Deprecated features
 -------------------
@@ -14,6 +15,7 @@ Deprecated features
 - TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server.
 - Attocube ANC300: :code:`host` argument, pass a resource string or adapter as :code:`Adapter` passed to :code:`Instrument`. Now communicates through the :code:`VISAAdapter` rather than deprecated :code:`TelnetAdapter`. The initializer now accepts :code:`name` as its second keyword argument so all previous initialization positional arguments (`axisnames`, `passwd`, `query_delay`) should be switched to keyword arguments.
 - The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate.
 
 Version 0.11.1 (2022-12-31)
 ===========================

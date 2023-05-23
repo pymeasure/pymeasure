@@ -9,4 +9,5 @@ This section contains specific documentation on the Signal Recovery instruments 
 .. toctree::
    :maxdepth: 2
 
+   dsp7225
    dsp7265

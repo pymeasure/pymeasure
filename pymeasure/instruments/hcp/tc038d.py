@@ -22,9 +22,15 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def CRC16(data):
@@ -132,9 +138,18 @@ class TC038D(Instrument):
             else:
                 raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
-    def check_errors(self):
-        """To be called from the property setters to read the acknowledgment."""
-        self.read()
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        try:
+            self.read()
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     def ping(self, test_data=0):
         """Test the connection sending an integer up to 65535, checks the response."""
@@ -142,7 +157,7 @@ class TC038D(Instrument):
 
     setpoint = Instrument.control(
         "R,0x106", "W,0x106,%i",
-        """The setpoint of the oven in °C.""",
+        """Control the setpoint of the oven in °C.""",
         check_set_errors=True,
         get_process=lambda v: v / 10,
         set_process=lambda v: int(round(v * 10)),
@@ -150,6 +165,6 @@ class TC038D(Instrument):
 
     temperature = Instrument.measurement(
         "R,0x0",
-        """The current oven temperature in °C.""",
+        """Measure the current oven temperature in °C.""",
         get_process=lambda v: v / 10,
     )

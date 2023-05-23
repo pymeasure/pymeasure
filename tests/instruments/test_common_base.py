@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 import pytest
 
 from pymeasure.units import ureg
@@ -35,7 +37,10 @@ class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
     def __init__(self, parent, id=None, *args, **kwargs):
-        super().__init__()
+        print(args, kwargs)
+        if "test" in kwargs:
+            self.test = kwargs.pop("test")
+        super().__init__(*args, **kwargs)
         self.parent = parent
         self.id = id
         self.args = args
@@ -85,7 +90,7 @@ def generic():
 
 class FakeBase(CommonBaseTesting):
     def __init__(self, *args, **kwargs):
-        super().__init__(FakeAdapter())
+        super().__init__(FakeAdapter(), *args, **kwargs)
 
     fake_ctrl = CommonBase.control(
         "", "%d", "docs",
@@ -104,6 +109,14 @@ class FakeBase(CommonBaseTesting):
         values={'X': 1, 'Y': 2, 'Z': 3},
         map_values=True,
         dynamic=True,
+    )
+    fake_ctrl_errors = CommonBase.control(
+        "ge", "se %d", "Fake control for getting errors after getting/setting values.",
+        validator=truncated_range,
+        values=(1, 10),
+        dynamic=True,
+        check_get_errors=True,
+        check_set_errors=True
     )
 
 
@@ -217,7 +230,7 @@ class TestAddChild:
 
     def test_arguments(self, parent):
         assert parent.channels["A"].id == "A"
-        assert parent.channels["A"].kwargs == {'test': 5}
+        assert parent.channels["A"].test == 5
 
     def test_attribute_access(self, parent):
         assert parent.ch_B == parent.channels["B"]
@@ -336,6 +349,18 @@ def test_values(value, kwargs, result):
     assert cb.values(value, **kwargs) == result
 
 
+def test_global_preprocess_reply():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
+        assert cb.values("x5x") == [5]
+
+
+def test_values_global_preprocess_reply():
+    cb = CommonBaseTesting(FakeAdapter())
+    cb.preprocess_reply = lambda v: v.strip("x")
+    assert cb.values("x5x") == [5]
+
+
 def test_binary_values(fake):
     fake.read_binary_values = fake.read
     assert fake.binary_values("123") == "123"
@@ -356,24 +381,80 @@ def test_control_doc(dynamic):
     assert Fake.x.__doc__ == expected_doc
 
 
-def test_control_check_errors_get(fake):
-    fake.fake_ctrl_check_get_errors = True
+def test_check_errors_not_implemented(fake):
+    with pytest.raises(NotImplementedError):
+        fake.check_errors()
 
+
+def test_check_get_errors_not_implemented(fake):
+    with pytest.raises(NotImplementedError):
+        fake.check_get_errors()
+
+
+def test_control_check_get_errors(fake, caplog):
     def checking():
         fake.error = True
-    fake.check_errors = checking
-    fake.fake_ctrl
+        return [(7, "some error")]
+    fake.check_get_errors = checking
+    fake.fake_ctrl_errors
     assert fake.error is True
+    assert caplog.record_tuples[-1] == (
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error received after trying to get a property with the command 'ge': '(7, 'some error')'."
+    )
 
 
-def test_control_check_errors_set(fake):
-    fake.fake_ctrl_check_set_errors = True
-
+def test_control_check_get_errors_multiple_errors(fake, caplog):
     def checking():
         fake.error = True
-    fake.check_errors = checking
-    fake.fake_ctrl = 7
+        return [15, (19, "x")]
+    fake.check_get_errors = checking
+    fake.fake_ctrl_errors
+    assert caplog.record_tuples[-1] == (
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."
+    )
+
+
+def test_control_check_get_errors_log_exception(fake, caplog):
+    with pytest.raises(NotImplementedError):
+        fake.fake_ctrl_errors
+    assert caplog.record_tuples[-1] == (
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Exception raised while getting a property with the command 'ge': 'Implement it in a subclass.'."  # noqa: E501
+    )
+
+
+def test_check_set_errors_not_implemented(fake):
+    with pytest.raises(NotImplementedError):
+        fake.check_set_errors()
+
+
+def test_control_check_set_errors(fake, caplog):
+    def checking():
+        fake.error = True
+        return [(7, "Error!")]
+    fake.check_set_errors = checking
+    fake.fake_ctrl_errors = 7
     assert fake.error is True
+    assert caplog.record_tuples[-1] == (
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Error received after trying to set a property with the command 'se 7': '(7, 'Error!')'."
+    )
+
+
+def test_control_check_set_errors_log_exception(fake, caplog):
+    with pytest.raises(NotImplementedError):
+        fake.fake_ctrl_errors = 7
+    assert caplog.record_tuples[-1] == (
+        "pymeasure.instruments.common_base",
+        logging.ERROR,
+        "Exception raised while setting a property with the command 'se 7': 'Implement it in a subclass.'."  # noqa: E501
+    )
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -626,7 +707,7 @@ def test_measurement_cast(cast, expected):
     class Fake(CommonBaseTesting):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
-    with expected_protocol(Fake, [("x", "5.5")], name="test") as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:
         assert instr.x == expected
 
 

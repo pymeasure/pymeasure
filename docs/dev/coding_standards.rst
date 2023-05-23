@@ -60,8 +60,9 @@ Most importantly:
 * Optionally, after a blank line, include more detailed information.
 * For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
 
-Specific to our properties, start them with "Control", "Measure" or "Set" to indicate the kind of property (this information is not visible after import).
+Specific to properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property, as it is not visible after import, whether a property is gettable ("Get" or "Measure"), settable ("Set"), or both ("Control").
 In addition, it is useful to add type and information about :ref:`validators` (if applicable) at the end of the summary line, see the docstrings shown in examples throughout the :ref:`adding-instruments` section.
+For example a docstring could be :code:`"""Control the voltage in Volts (float strictly from -1 to 1)."""`.
 
 The docstring is for information that is relevant for *using* a property/method.
 Therefore, do *not* add information about internal/hidden details, like the format of commands exchanged with the device.

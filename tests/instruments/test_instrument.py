@@ -116,6 +116,12 @@ def test_init_visa_fail():
         Instrument("abc", "def", visa_library="@xyz")
 
 
+def test_global_preprocess_reply():
+    with pytest.warns(FutureWarning, match="deprecated"):
+        inst = Instrument(FakeAdapter(), "name", preprocess_reply=lambda v: v.strip("x"))
+        assert inst.values("x5x") == [5]
+
+
 def test_instrument_in_context():
     with Instrument("abc", "def", visa_library="@sim") as instr:
         pass

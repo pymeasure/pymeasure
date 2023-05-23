@@ -70,10 +70,10 @@ class HP34401A(Instrument):
 
     BOOL_MAPPINGS = {True: 1, False: 0}
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="HP 34401A", **kwargs):
         super().__init__(
             adapter,
-            "HP 34401A",
+            name,
             asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
             **kwargs
         )

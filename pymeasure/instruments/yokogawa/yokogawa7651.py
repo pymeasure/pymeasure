@@ -131,9 +131,9 @@ class Yokogawa7651(Instrument):
         set_process=lambda v: v * 1e3,  # converts mA to A
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Yokogawa 7651 Programmable DC Source", **kwargs):
         super().__init__(
-            adapter, "Yokogawa 7651 Programmable DC Source", **kwargs
+            adapter, name, **kwargs
         )
 
         self.write("H0;E")  # Set no header in output data

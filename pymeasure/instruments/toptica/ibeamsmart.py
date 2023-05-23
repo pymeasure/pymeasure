@@ -52,6 +52,11 @@ def _deprecation_warning_channels(property_name):
     return func
 
 
+def deprecated_strict_discrete_set(value, values):
+    warn("This property is deprecated, use channels instead.", FutureWarning)
+    return strict_discrete_set(value, values)
+
+
 class DriverChannel(Channel):
     """A laser diode driver channel for the IBeam Smart laser."""
 
@@ -139,8 +144,7 @@ class IBeamSmart(Instrument):
         reply = super().read()  # read back the LF+CR which is always sent back
         if reply != "":
             raise ValueError(
-                "TopticaAdapter.read(1): Error after command "
-                f"'{self.lastcommand}' with message '{reply}'")
+                f"Error, no empty line at begin of message, instead '{reply}'")
         msg = []
         try:
             while True:
@@ -154,9 +158,7 @@ class IBeamSmart(Instrument):
                 self.adapter.connection.flush_read_buffer()
             except AttributeError:
                 log.warning("Adapter does not have 'flush_read_buffer' method.")
-            raise ValueError(
-                "TopticaAdapter.read(2): Error after command "
-                f"'{self.lastcommand}' with message '{reply}'")
+            raise ValueError(f"Flush buffer failed after '{reply}'")
         reply = '\n'.join(msg)
         r = self._reg_value.search(reply)
         if r:
@@ -164,12 +166,8 @@ class IBeamSmart(Instrument):
         else:
             return reply
 
-    def write(self, command):
-        self.lastcommand = command
-        super().write(command)
-
-    def check_errors(self):
-        """Check communication after setting a value.
+    def check_set_errors(self):
+        """Check for errors after having gotten a property and log them.
 
         Checks if the last reply is only '[OK]', otherwise a ValueError is
         raised and the read buffer is flushed because one has to assume that
@@ -179,9 +177,9 @@ class IBeamSmart(Instrument):
         if reply:
             # anything else than '[OK]'.
             self.adapter.connection.flush_read_buffer()
-            raise ValueError(
-                f"IBeamSmart: Error after command '{self.lastcommand}' with "
-                f"message '{reply}'")
+            log.error(f"Setting a property failed with reply '{reply}'.")
+            raise ValueError(f"Setting a property failed with reply '{reply}'.")
+        return []
 
     version = Instrument.measurement(
         "ver", """Get Firmware version number.""",
@@ -222,12 +220,12 @@ class IBeamSmart(Instrument):
 
         .. deprecated:: 0.12 Use attr:`emission` instead.
         """,
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
-        command_process=_deprecation_warning(
+        preprocess_reply=_deprecation_warning(
             "Property `laser_enabled` is deprecated, use `emission` instead."),
     )
 
@@ -237,12 +235,12 @@ class IBeamSmart(Instrument):
 
         .. deprecated:: 0.12 Use :attr:`ch_1.enabled` instead.
         """,
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 1" if v else "di 1",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel1_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel1_enabled"),
     )
 
     channel2_enabled = Instrument.control(
@@ -250,12 +248,12 @@ class IBeamSmart(Instrument):
         """Control status of Channel 2 of the laser (bool).
 
         .. deprecated:: 0.12 Use :attr:`ch_2.enabled` instead.""",
-        validator=strict_discrete_set,
+        validator=deprecated_strict_discrete_set,
         values=[True, False],
         get_process=lambda s: True if s == 'ON' else False,
         set_process=lambda v: "en 2" if v else "di 2",
         check_set_errors=True,
-        command_process=_deprecation_warning_channels("channel2_enabled"),
+        preprocess_reply=_deprecation_warning_channels("channel2_enabled"),
     )
 
     power = Instrument.control(
@@ -271,7 +269,7 @@ class IBeamSmart(Instrument):
     def enable_continous(self):
         """Enable countinous emmission mode."""
         self.write('di ext')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = True
         self.ch_2.enabled = True
 
@@ -283,12 +281,12 @@ class IBeamSmart(Instrument):
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')
-        self.check_errors()
+        self.check_set_errors()
 
     def disable(self):
         """Shutdown all laser operation."""
         self.write('di 0')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = False
 
     def shutdown(self):

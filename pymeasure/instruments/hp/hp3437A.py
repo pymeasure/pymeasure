@@ -174,13 +174,12 @@ class HP3437A(HPLegacyInstrument):
     status_desc = Status
     pb_desc = PackedBits
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3437A", **kwargs):
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3437A",
+            name,
             **kwargs,
         )
-        log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
     RANGE = {
