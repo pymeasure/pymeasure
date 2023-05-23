@@ -98,7 +98,7 @@ class PSChannel(Channel):
 
 
 class Keithley2200(Instrument):
-    """Represents the Keithley 2230 Power Supply."""
+    """Represents the Keithley 2200 Power Supply."""
 
     def __init__(self, adapter, name="Keithley2200", **kwargs):
         super().__init__(adapter, name, **kwargs)
