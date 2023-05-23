@@ -108,7 +108,7 @@ class Keithley2200(Instrument):
     display_enabled = Instrument.control(
         "DISP?",
         ":DISP %d",
-        """ Controls whether the display is enabled.""",
+        """Control whether the display is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -117,6 +117,6 @@ class Keithley2200(Instrument):
     display_text_data = Instrument.control(
         ":DISP:TEXT:DATA?",
         ":DISP:TEXT:DATA '%s'",
-        """ Controls text to be displayed(32 characters).""",
+        """Control text to be displayed(32 characters).""",
         get_process=lambda v: v.replace('"', ""),
     )
