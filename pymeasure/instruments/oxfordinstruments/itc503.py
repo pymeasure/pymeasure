@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -304,7 +304,7 @@ class ITC503(Instrument):
         'channel 3 freq/4'.
         """,
         validator=strict_discrete_set,
-        map=True,
+        map_values=True,
         values={
             "temperature setpoint": 0,
             "temperature 1": 1,

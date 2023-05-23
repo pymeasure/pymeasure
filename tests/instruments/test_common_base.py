@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -537,6 +537,84 @@ def test_control_preprocess_reply_property(dynamic):
     assert fake.x == 5
     fake.x = 5
     assert type(fake.x) == int
+
+
+def test_control_kwargs_handed_to_values():
+    """Test that kwargs parameters are handed to `values` method."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake(FakeBase):
+            x = CommonBase.control(
+                "", "JUNK%d",
+                "",
+                preprocess_reply=lambda v: v.replace('JUNK', ''),
+                cast=int,
+                testing=True,
+            )
+
+            def values(self, cmd, testing=False, **kwargs):
+                self.testing = testing
+                return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.x = 5
+    fake.x
+    assert fake.testing is True
+
+
+def test_control_warning_at_kwargs():
+    """Test whether a control kwarg raises a warning."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake(CommonBase):
+            x = CommonBase.control("", "", "", testing=True)
+
+
+def test_measurement_warning_at_kwargs():
+    """Test whether a measurement kwarg raises a warning."""
+    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
+        class Fake2(CommonBase):
+            x2 = CommonBase.measurement("", "", testing=True)
+
+
+def test_control_parameters_for_values():
+    """Test how to hand a parameter to `values` method."""
+    class Fake(FakeBase):
+        x = CommonBase.control(
+            "", "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int,
+            values_kwargs={'testing': True},
+        )
+
+        def values(self, cmd, testing=False, **kwargs):
+            self.testing = testing
+            return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.x = 5
+    fake.x
+    assert fake.testing is True
+
+
+def test_measurement_parameters_for_values():
+    """Test how to hand a parameter to `values` method."""
+    class Fake(FakeBase):
+        x = CommonBase.measurement(
+            "JUNK%d",
+            "",
+            preprocess_reply=lambda v: v.replace('JUNK', ''),
+            cast=int,
+            values_kwargs={'testing': True},
+        )
+
+        def values(self, cmd, testing=False, **kwargs):
+            self.testing = testing
+            return super().values(cmd, **kwargs)
+
+    fake = Fake()
+    fake.write("5")
+    fake.x
+    assert fake.testing is True
 
 
 @pytest.mark.parametrize("cast, expected", ((float, 5.5),

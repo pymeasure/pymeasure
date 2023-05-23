@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -689,6 +689,10 @@ class Agilent33500(Instrument):
         will occur if a trace is loaded which already exists in the memory.
         """
         self.write("DATA:VOL:CLE")
+
+    def phase_sync(self):
+        """ Synchronize the phase of all channels."""
+        self.write("PHAS:SYNC")
 
     def data_arb(self, arb_name, data_points, data_format="DAC"):
         """
