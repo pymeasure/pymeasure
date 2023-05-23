@@ -21,9 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+import pytest
 from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.advantest import AdvantestQ8381
 
 
@@ -35,9 +34,99 @@ def test_init():
 def test_wavelength_center():
     with expected_protocol(
         AdvantestQ8381,
-        [("CEN10nm", None),
+        [("CEN 10nm", None),
          ("CEN?", "10")]
     ) as inst:
         instr = inst    # type: AdvantestQ8381
         instr.wavelength_center = 10.0
         assert instr.wavelength_center == 10.0
+
+
+def test_wavelength_span():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("SPA 15.6nm", None),
+         ("SPA?", "15.6")]
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_span = 15.6
+        assert instr.wavelength_span == 15.6
+
+
+def test_wavelength_start():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("STA 15.6nm", None),
+         ("STA?", "15.6")]
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_start = 15.6
+        assert instr.wavelength_start == 15.6
+
+
+def test_wavelength_stop():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("STO 15.6nm", None),
+         ("STO?", "15.6")]
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_stop = 15.6
+        assert instr.wavelength_stop == 15.6
+
+
+def test_wavelength_marker_value():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("MKV WL", None),
+         ("MKV?", "WL"),
+         ("MKV FREQ", None),
+         ("MKV?", "FREQ")]
+
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_marker_value = "WL"
+        assert instr.wavelength_marker_value == "WL"
+        instr.wavelength_marker_value = "FREQ"
+        assert instr.wavelength_marker_value == "FREQ"
+        # test any other value is invalid
+        with pytest.raises(ValueError):
+            instr.wavelength_marker_value = "DUMMY"
+
+
+def test_wavelength_value_in():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("WDP VACUUM", None),
+         ("WDP?", "VACUUM"),
+         ("WDP AIR", None),
+         ("WDP?", "AIR")]
+
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.wavelength_value_in = "VACUUM"
+        assert instr.wavelength_value_in == "VACUUM"
+        instr.wavelength_value_in = "AIR"
+        assert instr.wavelength_value_in == "AIR"
+        # test any other value is invalid
+        with pytest.raises(ValueError):
+            instr.wavelength_value_in = "DUMMY"
+
+
+def test_level_scale():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("LVS LOG", None),
+         ("LVS?", "LOG"),
+         ("LVS LIN", None),
+         ("LVS?", "LIN")]
+
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.level_scale = "LOG"
+        assert instr.level_scale == "LOG"
+        instr.level_scale = "LIN"
+        assert instr.level_scale == "LIN"
+        # test any other value is invalid
+        with pytest.raises(ValueError):
+            instr.level_scale = "DUMMY"

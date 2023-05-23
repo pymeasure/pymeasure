@@ -61,16 +61,16 @@ class AdvantestQ8381(Instrument):
     # Spectrum Parameters - Wavelength #
     ####################################
     wavelength_center = Instrument.control(
-        'CEN?', 'CEN%gnm', "Center Wavelength of Spectrum Scan in nm.")
+        'CEN?', 'CEN %gnm', "Center Wavelength of Spectrum Scan in nm.")
 
     wavelength_span = Instrument.control(
-        'SPA?', 'SPA%gnm', "Wavelength Span of Spectrum Scan in nm.")
+        'SPA?', 'SPA %gnm', "Wavelength Span of Spectrum Scan in nm.")
 
     wavelength_start = Instrument.control(
-        'STA?', 'STA%gnm', "Wavelength Start of Spectrum Scan in nm.")
+        'STA?', 'STA %gnm', "Wavelength Start of Spectrum Scan in nm.")
 
     wavelength_stop = Instrument.control(
-        'STO?', 'STO%gnm', "Wavelength Stop of Spectrum Scan in nm.")
+        'STO?', 'STO %gnm', "Wavelength Stop of Spectrum Scan in nm.")
 
     wavelength_marker_value = Instrument.control(
         'MKV?', 'MKV %s',
@@ -86,8 +86,9 @@ class AdvantestQ8381(Instrument):
         values=["VACUUM", "AIR"]
     )
 
-    level_scale = Instrument.measurement(
-        'LVS?', "Current Level Scale",
+    level_scale = Instrument.control(
+        'LVS?', "LVS %s", 
+        "Current Level Scale",
         values=["LOG", "LIN"]
     )
 
