@@ -38,17 +38,6 @@ def t2(probe_table):
         probe_table.lamp_on = False
     # probe_table.t()
 
-
-def t3(probe_table):
-    """
-    :type probe_table:S200
-    """
-    while True:
-        time.sleep(0.5)
-        probe_table.lamp_on_2 = 'LI0'
-        time.sleep(0.5)
-        probe_table.lamp_on_2 = 'LI1'
-
 ###############################################################################################3
 
 if __name__ == '__main__':
