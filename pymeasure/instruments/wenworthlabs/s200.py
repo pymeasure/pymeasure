@@ -21,8 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import time
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
 class S200(Instrument):
@@ -41,7 +43,7 @@ class S200(Instrument):
             adapter,
             name,
             write_termination="\n",
-            read_termination="",
+            read_termination="\n",
             send_end=True,
             includeSCPI=True,
             timeout=timeout,
@@ -51,11 +53,24 @@ class S200(Instrument):
     chuck_lift = Instrument.control(
         "STA", "%r",
         "Control chuck lift of the probe station",
-        validator=[True, False],
+        validator=strict_discrete_set,
         values={True: 'CUP', False: 'CDW'},
         map_values=True,
         get_process=lambda r:
         r
+    )
+
+    lamp_on = Instrument.setting(
+        "%s",
+        "Control lamp on/off of the probe station",
+        validator=strict_discrete_set,
+        values={True: 'LI1', False: 'LI0'},
+        map_values=True
+    )
+
+    lamp_on_2 = Instrument.setting(
+        "%s",
+        "Control lamp on/off of the probe station"
     )
 
     x_position = Instrument.control(
@@ -63,7 +78,7 @@ class S200(Instrument):
         "Control the x-axis position in microns",
         validator=None,
         get_process=lambda r:
-        int(r.replace("PSX_",""))
+        int(r.replace("PSX_", ""))
     )
 
     y_position = Instrument.control(
@@ -88,3 +103,9 @@ class S200(Instrument):
         r
     )
 
+    def t(self):
+        while(True):
+            print(self.write("LI0"))
+            time.sleep(0.5)
+            print(self.write("LI1"))
+            time.sleep(0.5)
