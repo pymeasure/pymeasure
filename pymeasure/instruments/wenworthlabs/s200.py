@@ -37,6 +37,10 @@ class S200(Instrument):
     and provides a high-level for interacting with the instrument
     """
 
+    Z_OVERTRAVEL_VALID_RANGE = [0, 100]  # in microns
+    Z_FINELIFT_VALID_RANGE = [0, 10000]  # in microns
+    Z_GROSSLIFT_VALID_RANGE = [0, 100000]  # in microns
+
     def __init__(self,
                  adapter,
                  name="Wentworth Labs S200 Probe Table",
@@ -120,6 +124,9 @@ class S200(Instrument):
         check_set_errors=True
     )
 
+    #x_index
+    #y_index
+
     theta_position = Instrument.control(
         "PSTH", "GTTH %d",
         "Control the rotation of the chuck to the Theta-axis position in millidegrees "
@@ -130,6 +137,39 @@ class S200(Instrument):
         check_set_errors=True,
         get_process=lambda r:
         int(r.replace("PSTH ", ""))
+    )
+
+    z_overtravel = Instrument.control(
+        "RZIM", "WZIM %d",
+        "Control the z-axis overtravel (in um) of the chuck of the probe station",
+        # AWP compatible: No
+        validator=strict_range,
+        values=Z_OVERTRAVEL_VALID_RANGE,
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("RZIM ", ""))
+    )
+
+    z_grosslift = Instrument.control(
+        "RKGM", "WKGM %d",
+        "Control the z-axis gross lift (in um) of the chuck of the probe station",
+        # AWP compatible: No
+        validator=strict_range,
+        values=Z_GROSSLIFT_VALID_RANGE,
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("RKGM ", ""))
+    )
+
+    z_finelift = Instrument.control(
+        "RKFM", "WKFM %d",
+        "Control the z-axis fine lift (in um) of the chuck of the probe station",
+        # AWP compatible: No
+        validator=strict_range,
+        values=Z_FINELIFT_VALID_RANGE,
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("RKFM ", ""))
     )
 
     status_byte = Instrument.measurement(

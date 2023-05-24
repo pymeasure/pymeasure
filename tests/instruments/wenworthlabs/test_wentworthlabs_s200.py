@@ -100,3 +100,35 @@ def test_y_position():
     ) as inst:
         assert inst.y_position == 20000
         inst.y_position = 20000
+
+
+def test_z_overtravel():
+    """Verify the z overtravel control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("RZIM", "RZIM 30"),
+             ("WZIM 20", "INF 000")],
+    ) as inst:
+        assert inst.z_overtravel == 30
+        inst.z_overtravel = 20
+
+
+def test_z_finelift():
+    """Verify the z finelift control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("RKFM", "RKFM 100"),
+             ("WKFM 50", "INF 000")],
+    ) as inst:
+        assert inst.z_finelift == 100
+        inst.z_finelift = 50
+
+def test_z_grosslift():
+    """Verify the z grosslift control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("RKGM", "RKGM 10000"),
+             ("WKGM 20000", "INF 000")],
+    ) as inst:
+        assert inst.z_grosslift == 10000
+        inst.z_grosslift = 20000
