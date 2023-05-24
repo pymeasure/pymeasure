@@ -21,11 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import time
+import logging
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class S200(Instrument):
@@ -84,7 +87,7 @@ class S200(Instrument):
         "Control the y-axis position in microns",
         validator=None,
         get_process=lambda r:
-        int(r.replace("PSY_",""))
+        int(r.replace("PSY_", ""))
     )
 
     status_byte = Instrument.measurement(
@@ -102,10 +105,11 @@ class S200(Instrument):
     )
 
     def check_set_errors(self):
-        print("checking set errors")
-        response_code = self.read().replace("INF_", "")
-        self.command_execution_info = S200.ExecutionInfoCode(response_code)
-        print(self.command_execution_info)
+        response_code = self.read().replace("INF ", "")
+        self.command_execution_info = S200.ExecutionInfoCode(int(response_code))
+        log.warning(f"Command execution response '{self.command_execution_info.name}' after "
+                    f"setting a value.")
+        return [self.command_execution_info.name]
 
     class ExecutionInfoCode(IntEnum):
         """

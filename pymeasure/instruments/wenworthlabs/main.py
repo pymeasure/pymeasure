@@ -11,11 +11,11 @@ log.addHandler(logging.NullHandler())
 
 def main() -> int:
     probe_table = S200("GPIB0::28::INSTR")
-    try:
-        t2(probe_table)
-    except Exception:
-        print("Exception", Exception.mro(), Exception.with_traceback())
-
+    # try:
+    #     t2(probe_table)
+    # except Exception:
+    #     print("Exception", Exception.mro(), Exception.with_traceback())
+    t2(probe_table)
     return 0
 
 
@@ -32,9 +32,9 @@ def t2(probe_table):
     :type probe_table:S200
     """
     while True:
-        time.sleep(0.5)
+        time.sleep(1.0)
         probe_table.lamp_on = True
-        time.sleep(0.5)
+        time.sleep(1.0)
         probe_table.lamp_on = False
     # probe_table.t()
 
