@@ -22,12 +22,81 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.wenworthlabs.s200 import S200
 
-def test_lamp():
-    """Verify the communication for on/off lamp."""
+
+def test_theta_position():
+    """Verify the communication of the theta position setter."""
     with expected_protocol(
             S200,
-            [("U,1.200kV", None),
-             ("STATUS,U", "U, RANGE=3.000kV, VALUE=2.458kV")],
+            [("GTTH 0", "INF 000"),
+             ("GTTH 120000", "INF 000"),
+             ("PSTH", "PSTH 10000")],
     ) as inst:
-        inst.voltage_setpoint = 1.200
-        assert inst.voltage_setpoint == 2.458
+        inst.theta_position = 0
+        inst.theta_position = 120000
+        assert inst.theta_position == 10000
+
+
+def test_lamp():
+    """Verify the control on/off of the lamp."""
+    with expected_protocol(
+            S200,
+            [("LI1", "INF 000"),
+             ("LI0", "INF 000")],
+    ) as inst:
+        inst.lamp_on = True
+        inst.lamp_on = False
+
+
+def test_chuck_lift():
+    """Verify the lift's control (up/down) of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("CUP", "INF 000"),
+             ("CDW", "INF 000")],
+    ) as inst:
+        inst.chuck_lift = True
+        inst.chuck_lift = False
+
+
+def test_chuck_gross_lift():
+    """Verify the gross lift's control (up/down) of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("GUP", "INF 000"),
+             ("GDW", "INF 000")],
+    ) as inst:
+        inst.chuck_gross_lift = True
+        inst.chuck_gross_lift = False
+
+
+def test_chuck_override():
+    """Verify the override's control (on/off) of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("CO1", "INF 000"),
+             ("CO0", "INF 000")],
+    ) as inst:
+        inst.chuck_override = True
+        inst.chuck_override = False
+
+
+def test_x_position():
+    """Verify the x's position control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("PSS X", "PSS 20000"),
+             ("GTS X,20000", "INF 000")],
+    ) as inst:
+        assert inst.x_position == 20000
+        inst.x_position = 20000
+
+
+def test_y_position():
+    """Verify the y's position control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("PSS Y", "PSS 20000"),
+             ("GTS Y,20000", "INF 000")],
+    ) as inst:
+        assert inst.y_position == 20000
+        inst.y_position = 20000

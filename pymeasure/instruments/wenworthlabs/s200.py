@@ -25,7 +25,8 @@ import logging
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_discrete_range, \
+    strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -55,14 +56,43 @@ class S200(Instrument):
         )
         self.command_execution_info = S200.ExecutionInfoCode(0)
 
-    chuck_lift = Instrument.control(
-        "STA", "%r",
-        "Control chuck lift of the probe station",
+    chuck_lift = Instrument.setting(
+        "%s",
+        "Control the chuck to the fine down (CDW) or fine up (CUP) position.",
+        # The GDW/GUP command is used to move the chuck to the Gross Up or Gross
+        # Down positions.
+
         validator=strict_discrete_set,
         values={True: 'CUP', False: 'CDW'},
         map_values=True,
-        get_process=lambda r:
-        r
+        check_set_errors=True
+    )
+
+    chuck_gross_lift = Instrument.setting(
+        "%s",
+        "Control the chuck to the gross down (CDW) or fine up (CUP) position.",
+        # The CDW/CUP command is used to move the chuck to the Fine Down or
+        # Fine Up positions. The GUP command may be used to move the chuck to a
+        # safe gross lift height ready for probing the first die. Subsequent Z movements
+        # to move the probes onto and off of the die under test should use the CUP and
+        # CDW command. If edge sensors are being used this will dynamically adjust
+        # the gross lift value to track the wafer surface. Therefore it is advisable not to
+        # use the GUP command during the probing process until the start of the next
+        # wafer. Doing so may cause unexpected results.
+        # AWP compatible: Yes
+        validator=strict_discrete_set,
+        values={True: 'GUP', False: 'GDW'},
+        map_values=True,
+        check_set_errors=True
+    )
+
+    chuck_override = Instrument.setting(
+        "%s",
+        "Control the chuck override of the main chuck of the probe station.",
+        validator=strict_discrete_set,
+        values={True: 'CO1', False: 'CO0'},
+        map_values=True,
+        check_set_errors=True
     )
 
     lamp_on = Instrument.setting(
@@ -75,19 +105,31 @@ class S200(Instrument):
     )
 
     x_position = Instrument.control(
-        "PSX", "GTS X, %d",
+        "PSS X", "GTS X,%d",
         "Control the x-axis position in microns",
-        validator=None,
         get_process=lambda r:
-        int(r.replace("PSX_", ""))
+        int(r.replace("PSS ", "")),
+        check_set_errors=True
     )
 
     y_position = Instrument.control(
-        "PSY", "GTS Y, %d",
+        "PSS Y", "GTS Y,%d",
         "Control the y-axis position in microns",
-        validator=None,
         get_process=lambda r:
-        int(r.replace("PSY_", ""))
+        int(r.replace("PSS ", "")),
+        check_set_errors=True
+    )
+
+    theta_position = Instrument.control(
+        "PSTH", "GTTH %d",
+        "Control the rotation of the chuck to the Theta-axis position in millidegrees "
+        "specified in the parameter",
+        # AWP compatible: No
+        validator=strict_range,
+        values=[0, 359999],
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("PSTH ", ""))
     )
 
     status_byte = Instrument.measurement(
