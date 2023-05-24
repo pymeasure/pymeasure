@@ -124,8 +124,8 @@ def test_current():
         assert inst.current == 12.3
 
 
-def test_serial():
+def test_serial_number():
     with expected_protocol(Fpu60,
                            [("SERIAL?", "1234567")],
                            ) as inst:
-        assert inst.serial == "1234567"
+        assert inst.serial_number == "1234567"

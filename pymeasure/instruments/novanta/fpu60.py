@@ -49,28 +49,28 @@ class Fpu60(Instrument):
 
     interlock_enabled = Instrument.measurement(
         "INTERLOCK?",
-        """Measure the interlock enabled status.""",
+        """Measure the interlock enabled status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
     )
 
     emission_enabled = Instrument.measurement(
         "STATUS?",
-        """Measure the emission status. (bool)""",
+        """Measure the emission status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
     )
 
     power = Instrument.measurement(
         "POWER?",
-        """Measure current output power in Watts. (float)""",
+        """Measure current output power in Watts (float).""",
         # Response is in form:" ##.###W"
         preprocess_reply=lambda r: r.replace("W", ""),
     )
 
     power_setpoint = Instrument.control(
         "SETPOWER?", "POWER=%.3f",
-        """Control the output power setpoint in Watts. (float)""",
+        """Control the output power setpoint in Watts (float).""",
         # Getter response is in form:" ##.###W"
         preprocess_reply=lambda r: r.replace("W", ""),
         check_set_errors=True,
@@ -78,7 +78,7 @@ class Fpu60(Instrument):
 
     shutter_open = Instrument.control(
         "SHUTTER?", "SHUTTER %s",
-        """Control whether the shutter is open. (bool)""",
+        """Control whether the shutter is open (bool).""",
         # set values: OPEN, CLOSE
         # get response: "SHUTTER OPEN", "SHUTTER CLOSED"
         values={True: "OPEN", False: "CLOSE"},
@@ -89,28 +89,29 @@ class Fpu60(Instrument):
 
     current = Instrument.measurement(
         "CURRENT?",
-        """Measure the diode current in percent.""",
+        """Measure the diode current in percent (float).""",
         # Response: " ###.#%"
         preprocess_reply=lambda r: r.replace("%", ""),
     )
 
     psu_temperature = Instrument.measurement(
         "PSUTEMP?",
-        """Measure the power supply unit temperature in °C.""",
+        """Measure the power supply unit temperature in °C (float).""",
         # Response: " ##.###C"
         preprocess_reply=lambda r: r.replace("C", ""),
     )
 
     head_temperature = Instrument.measurement(
         "HTEMP?",
-        """Measure the laser head temperature in °C.""",
+        """Measure the laser head temperature in °C (float).""",
         # Response: " ##.###C"
         preprocess_reply=lambda r: r.replace("C", ""),
     )
 
-    serial = Instrument.measurement("SERIAL?", """Get the serial number""", cast=str)
+    serial_number = Instrument.measurement("SERIAL?", """Get the serial number (str).""", cast=str)
 
-    software_version = Instrument.measurement("SOFTVER?", """Get the software version.""", cast=str)
+    software_version = Instrument.measurement("SOFTVER?", """Get the software version (str).""",
+                                              cast=str)
 
     def get_operation_times(self):
         """Get the operation times in minutes as a dictionary."""
