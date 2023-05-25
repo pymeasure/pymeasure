@@ -40,7 +40,7 @@ class S200(Instrument):
     Z_OVERTRAVEL_VALID_RANGE = [0, 100]  # in microns
     Z_FINELIFT_VALID_RANGE = [0, 10000]  # in microns
     Z_GROSSLIFT_VALID_RANGE = [0, 100000]  # in microns
-    X_Y_INDEX_VALID_RANGE = [0, 10000] #  in tens of microns
+    X_Y_INDEX_VALID_RANGE = [0, 10000]  # in tens of microns
 
     def __init__(self,
                  adapter,
@@ -272,7 +272,7 @@ class S200(Instrument):
         "Measures the hardware build version number of the probe table",
         # AWP compatible: No
         get_process=lambda r:
-        int(r)
+        r
     )
 
     model_id = Instrument.measurement(
@@ -305,6 +305,15 @@ class S200(Instrument):
         :return: None
         """
         self.write("LDB")
+        self.check_set_errors()
+
+    def move_to_manual_load_position(self):
+        """
+        Moves to the manual load position and moves the chuck to the Z reference height (LDM/LDL).
+        AWP compatible: Yes (LDL only)
+        :return: None
+        """
+        self.write("LDM")
         self.check_set_errors()
 
     def move_to_probing_zone_centre_position(self):

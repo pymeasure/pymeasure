@@ -1,7 +1,6 @@
 import logging
 import sys
 import time
-from time import sleep
 
 from pymeasure.instruments.wenworthlabs import S200
 
@@ -11,23 +10,14 @@ log.addHandler(logging.NullHandler())
 
 def main() -> int:
     probe_table = S200("GPIB0::28::INSTR")
-    # try:
-    #     t2(probe_table)
-    # except Exception:
-    #     print("Exception", Exception.mro(), Exception.with_traceback())
-    t2(probe_table)
+    # test_lamp(probe_table)
+    # test_info(probe_table)
+    test_location(probe_table)
+
     return 0
 
 
-def t1(probe_table):
-    """
-    :type probe_table:S200
-    """
-    while True:
-        print(probe_table.status_byte)
-
-
-def t2(probe_table):
+def test_lamp(probe_table):
     """
     :type probe_table:S200
     """
@@ -36,7 +26,25 @@ def t2(probe_table):
         probe_table.lamp_on = True
         time.sleep(1.0)
         probe_table.lamp_on = False
-    # probe_table.t()
+
+def test_info(probe_table):
+    """
+    :type probe_table:S200
+    """
+    print("Model Id: ", probe_table.model_id)
+    print("Serial Number: ", probe_table.serial_number)
+    print("Software Version Number: ", probe_table.software_version_number)
+    print("Hardware Build: ", probe_table.hardware_build)
+
+def test_location(probe_table):
+    """
+    :type probe_table:S200
+    """
+    while True:
+        probe_table.move_to_probing_zone_centre_position()
+        time.sleep(3)
+        probe_table.move_to_manual_load_position()
+        time.sleep(3)
 
 ###############################################################################################3
 
