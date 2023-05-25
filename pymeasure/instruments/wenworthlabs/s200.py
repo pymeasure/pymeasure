@@ -40,6 +40,7 @@ class S200(Instrument):
     Z_OVERTRAVEL_VALID_RANGE = [0, 100]  # in microns
     Z_FINELIFT_VALID_RANGE = [0, 10000]  # in microns
     Z_GROSSLIFT_VALID_RANGE = [0, 100000]  # in microns
+    X_Y_INDEX_VALID_RANGE = [0, 10000] #  in tens of microns
 
     def __init__(self,
                  adapter,
@@ -124,8 +125,34 @@ class S200(Instrument):
         check_set_errors=True
     )
 
-    #x_index
-    #y_index
+    z_position = Instrument.measurement(
+        "PSGM",
+        "Measures the z-axis position in microns",
+        get_process=lambda r:
+        int(r.replace("PSGM ", ""))
+    )
+
+    x_index = Instrument.control(
+        "RXM", "WXM %d",
+        "Control the x index of the chuck in units of 10 microns ",
+        # AWP compatible: Yes
+        validator=strict_range,
+        values=X_Y_INDEX_VALID_RANGE,
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("RXM ", ""))
+    )
+
+    y_index = Instrument.control(
+        "RYM", "WYM %d",
+        "Control the y index of the chuck in units of 10 microns ",
+        # AWP compatible: Yes
+        validator=strict_range,
+        values=X_Y_INDEX_VALID_RANGE,
+        check_set_errors=True,
+        get_process=lambda r:
+        int(r.replace("RYM ", ""))
+    )
 
     theta_position = Instrument.control(
         "PSTH", "GTTH %d",
@@ -172,6 +199,44 @@ class S200(Instrument):
         int(r.replace("RKFM ", ""))
     )
 
+    indexing_mode = Instrument.setting(
+        "%s",
+        "Control the indexing mode."
+        "If True, Enters indexing mode and moves to the first die to be probed, or moves to the "
+        "next die to be probed if already in indexing mode. Indexing mode is exiting "
+        "using the NXF command (above).",
+        # AWP compatible: Yes
+        validator=strict_discrete_set,
+        values={True: 'NXT', False: 'NXF'},
+        map_values=True,
+        check_set_errors=True
+    )
+
+    next_die_down = Instrument.setting(
+        "NXD",
+        "Moves to the die below the current die",
+        # AWP compatible: Yes
+        check_set_errors=True
+    )
+
+    next_die_up = Instrument.setting(
+        "NXU",
+        "Moves to the die above the current die",
+        check_set_errors=True
+    )
+
+    next_die_right = Instrument.setting(
+        "NXR",
+        "Moves to the die right of the current die",
+        check_set_errors=True
+    )
+
+    next_die_left = Instrument.setting(
+        "NXL",
+        "Moves to the die left of the current die",
+        check_set_errors=True
+    )
+
     status_byte = Instrument.measurement(
         "STA",
         "Measures the status byte of the instrument",
@@ -185,6 +250,80 @@ class S200(Instrument):
         get_process=lambda r:
         r
     )
+
+    serial_number = Instrument.measurement(
+        "GSN",
+        "Measures the serial number of the probe table",
+        # AWP compatible: No
+        get_process=lambda r:
+        str(r)
+    )
+
+    software_version_number = Instrument.measurement(
+        "VSN",
+        "Measures the software version number of the probe table",
+        # AWP compatible: Yes
+        get_process=lambda r:
+        str(r)
+    )
+
+    hardware_build = Instrument.measurement(
+        "GHB",
+        "Measures the hardware build version number of the probe table",
+        # AWP compatible: No
+        get_process=lambda r:
+        int(r)
+    )
+
+    model_id = Instrument.measurement(
+        "GID",
+        "Measures the model id of the probe table",
+        # AWP compatible: Yes
+        # Returns model information about the Pegasus unit. The information consists of the
+        # Pegasus model name, followed by a semi - colon, followed by a list of options
+        # separated by commas.
+        # Options can include:
+        # LM – Compatible with LabMaster.
+        # Pins – Optional chuck load pins fitted.
+        # Platform – Optional motorised platform fitted.
+        # PR – Optional PR camera fitted.
+        # PMM – Optional motorised PMM fitted.
+        # CAP – Optional motorised CAPs fitted
+        # Z2 – Front flying arm
+        # Z3 – Right flying arm
+        # Reader – Optional OCR
+        # Robot – Robot loader
+        # Cleaner – Prober cleaner support
+        get_process=lambda r:
+        r
+    )
+
+    def move_to_load_position(self):
+        """
+        Moves the manual load position following a LDS command.
+        AWP compatible: Yes
+        :return: None
+        """
+        self.write("LDB")
+        self.check_set_errors()
+
+    def move_to_probing_zone_centre_position(self):
+        """
+        Moves to the centre of the probing zone and moves the chuck to the gross lift height.
+        AWP compatible: Yes
+        :return: None
+        """
+        self.write("LDC")
+        self.check_set_errors()
+
+    def move_to_change_probecard_position(self):
+        """
+        Moves to the position for changing the Probe Card.
+        AWP compatible: Yes
+        :return: None
+        """
+        self.write("LDS")
+        self.check_set_errors()
 
     def check_set_errors(self):
         response_code = self.read().replace("INF ", "")

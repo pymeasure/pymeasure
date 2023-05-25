@@ -102,6 +102,28 @@ def test_y_position():
         inst.y_position = 20000
 
 
+def test_x_index():
+    """Verify the x's index control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("RXM", "RXM 1000"),
+             ("WXM 100", "INF 000")],
+    ) as inst:
+        assert inst.x_index == 1000
+        inst.x_index = 100
+
+
+def test_y_index():
+    """Verify the y's index control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("RYM", "RYM 1000"),
+             ("WYM 100", "INF 000")],
+    ) as inst:
+        assert inst.y_index == 1000
+        inst.y_index = 100
+
+
 def test_z_overtravel():
     """Verify the z overtravel control of the main chuck of the probe station."""
     with expected_protocol(
@@ -123,6 +145,7 @@ def test_z_finelift():
         assert inst.z_finelift == 100
         inst.z_finelift = 50
 
+
 def test_z_grosslift():
     """Verify the z grosslift control of the main chuck of the probe station."""
     with expected_protocol(
@@ -132,3 +155,12 @@ def test_z_grosslift():
     ) as inst:
         assert inst.z_grosslift == 10000
         inst.z_grosslift = 20000
+
+
+def test_serial_number():
+    """Verify the serial number control of the probe station."""
+    with expected_protocol(
+            S200,
+            [("GSN", "1234567890F")],
+    ) as inst:
+        assert inst.serial_number == "1234567890F"
