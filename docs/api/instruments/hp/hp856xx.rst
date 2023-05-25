@@ -20,36 +20,36 @@ General
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trigger_mode
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.detector_mode
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.coupling
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.auto_couple
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.linear_scale
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_auto_couple
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_linear_scale
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.logarithmic_scale
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.threshold
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.title
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_title
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.status
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.done
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.service_request
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.request_service
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.errors
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.save_state
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.recall_state
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.request_service_conditions
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.maximum_hold
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.minimum_hold
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_maximum_hold
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_minimum_hold
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.reference_level_calibration
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.reference_offset
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.reference_level
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.display_line
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.protect_state
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.protect_state_enabled
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.mixer_level
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_counter_mode
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_counter_mode_enabled
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_counter_resolution
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.adjust_all
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.adjust_if
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.hold
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.annotation
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.crt_adjustment_pattern
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.annotation_enabled
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_crt_adjustment_pattern
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.display_parameters
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.revision
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.graticule
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.firmware_revision
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.graticule_enabled
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.serial_number
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.id
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.elapsed_time
@@ -59,7 +59,7 @@ General
 Demodulation
 ^^^^^^^^^^^^
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.demodulation_mode
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.demodulation_agc
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.demodulation_agc_enabled
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.demodulation_time
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.squelch
 
@@ -70,10 +70,10 @@ Frequency
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.stop_frequency
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.center_frequency
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_offset
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_reference
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_reference_source
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.span
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.full_span
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_display
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_full_span
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.frequency_display_enabled
 
 ^^^^^^^^^^^^^^^^^^^^
 Resolution Bandwidth
@@ -89,19 +89,21 @@ Video
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.video_bandwidth
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.video_average
 
-^^^
+^^^^^^^^^^^^^^^^^^
 FFT & Measurements
-^^^
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.fft_trace_window
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.power_bandwidth
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.fft
+^^^^^^^^^^^^^^^^^^
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.create_fft_trace_window
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.get_power_bandwidth
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.do_fft
 
 ^^^^^
 Trace
 ^^^^^
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.view_trace
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_data_a
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_data_b
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.get_trace_data_a
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.get_trace_data_b
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_trace_data_a
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_trace_data_b
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_data_format
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.save_trace
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.recall_trace
@@ -109,27 +111,27 @@ Trace
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.subtract_display_line_from_trace_b
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.exchange_traces
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.blank_trace
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_a_minus_b_plus_dl
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_a_minus_b
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_a_minus_b_plus_dl_enabled
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trace_a_minus_b_enabled
 
 ^^^^^^
 Marker
 ^^^^^^
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.peak_search
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.search_peak
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_amplitude
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_to_center_frequency
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_marker_to_center_frequency
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_delta
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_frequency
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_minimum
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_noise_mode
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_off
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_marker_minimum
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_noise_mode_enabled
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.deactivate_marker
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_threshold
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.peak_excursion
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_to_reference_level
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_delta_to_span
-.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_to_center_frequency_step_size
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_marker_to_reference_level
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_marker_delta_to_span
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_marker_to_center_frequency_step_size
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_time
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_signal_tracking
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.marker_signal_tracking_enabled
 
 ^^^^^^^^^^^^^^^^^
 Diagnostic Values
@@ -144,17 +146,17 @@ Diagnostic Values
 ^^^^^
 Sweep
 ^^^^^
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.single_sweep
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.sweep_single
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.sweep_time
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.sweep_couple
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.sweep_output
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.continuous_sweep
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_continuous_sweep
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.trigger_sweep
 
 ^^^^^^^^^^^^^
 Normalization
 ^^^^^^^^^^^^^
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.normalize_trace_data
+.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.normalize_trace_data_enabled
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.normalized_reference_level
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.normalized_reference_position
 

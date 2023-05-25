@@ -23,6 +23,7 @@
 #
 
 import logging
+from math import log10
 from enum import Enum, IntFlag
 from numpy import arange
 from datetime import datetime
@@ -617,7 +618,7 @@ class HP856Xx(Instrument):
         """
         self.write("ADJALL")
 
-    def crt_adjustment_pattern(self):
+    def set_crt_adjustment_pattern(self):
         """Activate a CRT adjustment pattern, shown in Figure 5-3. Use the
         X POSN, Y POSN, and TRACE ALIGN adjustments (available from the rear panel) to
         align the display. Use X POSN and Y POSN to move the display horizontally and vertically,
@@ -646,13 +647,14 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    trace_a_minus_b = Instrument.control(
+    trace_a_minus_b_enabled = Instrument.control(
         "AMB?", "AMB %s",
         """
-        Subtract the contents of trace B from trace A and places the result, in
-        dBm (when in log mode), in trace A. When in linear mode, the result is in volts. If trace
-        A is in clear-write or max-hold mode, this function is continuous. When AMB is active, an
-        "M" appears on the left side of the display. :attr:`trace_a_minus_b_plus_dl`  overrides AMB.
+        Control subtraction of the contents of trace B from trace A.
+        It places the result, in dBm (when in log mode), in trace A. When in linear mode,
+        the result is in volts. If trace A is in clear-write or max-hold mode, this function is
+        continuous. When AMB is active, an "M" appears on the left side of the display.
+        :attr:`trace_a_minus_b_plus_dl`  overrides AMB.
 
         Type: :code:`bool`
 
@@ -669,11 +671,11 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    trace_a_minus_b_plus_dl = Instrument.control(
+    trace_a_minus_b_plus_dl_enabled = Instrument.control(
         "AMBPL?", "AMBPL %s",
         """
-        Subtract the contents of trace B from trace A, adds the display line
-        to this value, and stores the result in dBm (when in log mode) in trace A. When in linear
+        Control subtraction of trace B from trace A and addition to the display line,
+        and stores the result in dBm (when in log mode) in trace A. When in linear
         mode, the result is in volts. If trace A is in clear-write or max-hold mode, this function
         is continuous. When this function is active, an "M" appears on the left side of the display.
 
@@ -695,7 +697,7 @@ class HP856Xx(Instrument):
     annotation_enabled = Instrument.control(
         "ANNOT?", "ANNOT %s",
         """
-        Turn the display annotation off or on.
+        Set the display annotation off or on.
 
         Type: :code:`bool`
         """,
@@ -742,14 +744,15 @@ class HP856Xx(Instrument):
         values=[e for e in AmplitudeUnits]
     )
 
-    def auto_couple(self):
+    def set_auto_couple(self):
         """Set the video bandwidth, resolution bandwidth, input attenuation,
         sweep time, and center frequency step-size to coupled mode.
 
         These functions can be recoupled individually or all at once.
         The spectrum analyzer chooses appropriate values for these
         functions. The video bandwidth and resolution bandwidth are set
-        according to the coupled ratios stored under TODO and TODO. If
+        according to the coupled ratios stored under :attr:`resolution_bandwidth_to_span_ratio`
+        and :attr:`video_bandwidth_to_resolution_bandwidth`. If
         no ratios are chosen, default ratios (1.0 and 0.011,
         respectively) are used instead.
         """
@@ -845,7 +848,7 @@ class HP856Xx(Instrument):
 
         self.write("CLRW " + trace)
 
-    def continuous_sweep(self):
+    def set_continuous_sweep(self):
         """Set the instrument to continuous-sweep mode.
 
         This mode enables another sweep at the completion of the current
@@ -907,7 +910,7 @@ class HP856Xx(Instrument):
         values=[e for e in DemodulationMode]
     )
 
-    demodulation_agc = Instrument.control(
+    demodulation_agc_enabled = Instrument.control(
         "DEMODAGC?", "DEMODAGC %s",
         """
         Control the demodulation automatic gain control (AGC).
@@ -985,7 +988,7 @@ class HP856Xx(Instrument):
     display_line = Instrument.control(
         "DL?", "DL %s",
         """
-        Activate a horizontal display line for use as a visual aid or for
+        Control the horizontal display line for use as a visual aid or for
         computational purposes. The default value is 0 dBm.
 
         Type: :code:`float`, :code:`str`
@@ -1009,7 +1012,7 @@ class HP856Xx(Instrument):
     done = Instrument.measurement(
         "DONE?",
         """
-        Returns True to the controller when all commands in a command string
+        Get back (e.g. return) when all commands in a command string
         entered before 'done' has been completed. Sending a :meth:`trigger_sweep` command
         before 'done' ensures that the spectrum analyzer will complete a full sweep before
         continuing on in a program.
@@ -1033,7 +1036,7 @@ class HP856Xx(Instrument):
     errors = Instrument.measurement(
         "ERR?",
         """
-        Outputs a list of errors present (of type :class:`ErrorCode`). An empty list means there
+        Get a list of errors present (of type :class:`ErrorCode`). An empty list means there
         are no errors. Reading 'errors' clears all HP-IB errors. For best results, enter error
         data immediately after querying for errors.
 
@@ -1068,7 +1071,7 @@ class HP856Xx(Instrument):
     elapsed_time = Instrument.measurement(
         "EL?",
         """
-        Returns the elapsed time (in hours) of analyzer operation.
+        Get the elapsed time (in hours) of analyzer operation.
         This value can be reset only by Hewlett-Packard.
 
         Type: :code:`int`
@@ -1085,7 +1088,7 @@ class HP856Xx(Instrument):
     start_frequency = Instrument.control(
         "FA?", "FA %.11E",
         """
-        Constrol the start frequency and set the spectrum analyzer to start-frequency/
+        Control the start frequency and set the spectrum analyzer to start-frequency/
         stop-frequency mode. If the start frequency exceeds the stop frequency, the stop frequency
         increases to equal the start frequency plus 100 Hz. The center frequency and span change
         with changes in the start frequency.
@@ -1129,9 +1132,9 @@ class HP856Xx(Instrument):
     sampling_frequency = Instrument.measurement(
         "FDIAG SMP,?",
         """
-        Diagnostic Attribute
-        Returns the sampling oscillator frequency corresponding to the current start
+        Get the sampling oscillator frequency corresponding to the current start
         frequency.
+        Diagnostic Attribute
 
         Type: :code:`float`
         """
@@ -1140,9 +1143,9 @@ class HP856Xx(Instrument):
     lo_frequency = Instrument.measurement(
         "FDIAG LO,?",
         """
-        Diagnostic Attribute
-        Returns the first local oscillator frequency corresponding to the current start
+        Get the first local oscillator frequency corresponding to the current start
         frequency.
+        Diagnostic Attribute
 
         Type: :code:`float`
         """
@@ -1151,9 +1154,10 @@ class HP856Xx(Instrument):
     mroll_frequency = Instrument.measurement(
         "FDIAG MROLL,?",
         """
-        Diagnostic Attribute
-        Returns the main roller oscillator frequency corresponding to the current start
+        Get the main roller oscillator frequency corresponding to the current start
         frequency, except then the resolution bandwidth is less than or equal to 100 Hz.
+
+        Diagnostic Attribute
 
         Type: :code:`float`
         """
@@ -1162,9 +1166,10 @@ class HP856Xx(Instrument):
     oroll_frequency = Instrument.measurement(
         "FDIAG OROLL,?",
         """
-        Diagnostic Attribute
-        Returns the offset roller oscillator frequency corresponding to the current start
+        Get the offset roller oscillator frequency corresponding to the current start
         frequency, except when the resolution bandwidth is less than or equal to 100 Hz.
+
+        Diagnostic Attribute
 
         Type: :code:`float`
         """
@@ -1173,9 +1178,10 @@ class HP856Xx(Instrument):
     xroll_frequency = Instrument.measurement(
         "FDIAG XROLL,?",
         """
-        Diagnostic Attribute
-        Returns the transfer roller oscillator frequency corresponding to the current start
+        Get the transfer roller oscillator frequency corresponding to the current start
         frequency, except when the resolution bandwidth is less than or equal to 100 Hz.
+
+        Diagnostic Attribute
 
         Type: :code:`float`
         """
@@ -1184,9 +1190,10 @@ class HP856Xx(Instrument):
     sampler_harmonic_number = Instrument.measurement(
         "FDIAG HARM,?",
         """
-        Diagnostic Attribute
-        Returns the sampler harmonic number corresponding to the current start
+        Get the sampler harmonic number corresponding to the current start
         frequency.
+
+        Diagnostic Attribute
 
         Type: :code:`int`
         """,
@@ -1194,12 +1201,12 @@ class HP856Xx(Instrument):
     )
 
     # practically you could also write "OFF" to actively disable it or reset via "IP"
-    frequency_display = Instrument.measurement(
+    frequency_display_enabled = Instrument.measurement(
         "FDSP?",
         """
-        Returns 'False' if all annotations that describes the spectrum analyzer frequency
-        setting are displayed. And vice versa 'True'. This includes the start and stop
-        frequencies, the center frequency, the frequency span, marker readouts, the center
+        Get the state of all annotations that describes the spectrum analyzer frequency.
+        returns 'False' if no annotations are shown and vice versa 'True'. This includes the start
+        and stop frequencies, the center frequency, the frequency span, marker readouts, the center
         frequency step-size, and signal identification to center frequency.  To retrieve the
         frequency data, query the spectrum analyzer.
 
@@ -1216,7 +1223,7 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    def fft(self, source, destination, window):
+    def do_fft(self, source, destination, window):
         """Calculate and show a discrete Fourier transform.
 
         The FFT command performs a discrete Fourier transform on the source
@@ -1279,8 +1286,10 @@ class HP856Xx(Instrument):
     frequency_offset = Instrument.control(
         "FOFFSET?", "FOFFSET %.11E",
         """
-        Add a specified offset to the displayed absolute-frequency values,
-        including marker-frequency values. It does not affect the frequency range of the sweep, nor
+        Control an offset added to the displayed absolute-frequency values,
+        including marker-frequency values.
+
+        It does not affect the frequency range of the sweep, nor
         does it affect relative frequency readouts. When this function is active, an "F" appears on
         the left side of the display.
         Changes all the following frequency measurements.
@@ -1299,7 +1308,7 @@ class HP856Xx(Instrument):
         dynamic=True
     )
 
-    frequency_reference = Instrument.control(
+    frequency_reference_source = Instrument.control(
         "FREF?", "FREF %s",
         """
         Control the frequency reference source.
@@ -1314,18 +1323,18 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.frequency_reference = 'INT'
-            instr.frequency_reference = FrequencyReference.EXT
+            instr.frequency_reference_source = 'INT'
+            instr.frequency_reference_source = FrequencyReference.EXT
 
-            if instr.frequency_reference == FrequencyReference.INT:
-                instr.frequency_reference = FrequencyReference.EXT
+            if instr.frequency_reference_source == FrequencyReference.INT:
+                instr.frequency_reference_source = FrequencyReference.EXT
 
         """,
         validator=strict_discrete_set,
         values=[e for e in FrequencyReference]
     )
 
-    def full_span(self):
+    def set_full_span(self):
         """Set the spectrum analyzer to the full frequency span as defined by
         the instrument.
 
@@ -1334,7 +1343,7 @@ class HP856Xx(Instrument):
         """
         self.write("FS")
 
-    graticule = Instrument.control(
+    graticule_enabled = Instrument.control(
         "GRAT?", "GRAT %s",
         """
         Control the display graticule. Switch it either on or off.
@@ -1365,7 +1374,7 @@ class HP856Xx(Instrument):
     id = Instrument.measurement(
         "ID?",
         """
-        Returns identification of the device with software and hardware revision (e.g. HP8560A,002,
+        Get the identification of the device with software and hardware revision (e.g. HP8560A,002,
         H03)
 
         Type: :class:`str`
@@ -1412,7 +1421,7 @@ class HP856Xx(Instrument):
         values=[0, 1, 2, 5, 10]
     )
 
-    def linear_scale(self):
+    def set_linear_scale(self):
         """Set the spectrum analyzers display to linear amplitude scale.
 
         Measurements made on a linear scale can be read out in any
@@ -1420,7 +1429,7 @@ class HP856Xx(Instrument):
         """
         self.write("LN")
 
-    def minimum_hold(self, trace):
+    def set_minimum_hold(self, trace):
         """Update the chosen trace with the minimum signal level detected at
         each trace-data point from subsequent sweeps. This function employs the
         negative peak detector (refer to the :attr:`detector_mode` command).
@@ -1449,7 +1458,7 @@ class HP856Xx(Instrument):
     marker_amplitude = Instrument.measurement(
         "MKA?",
         """
-        Returns the amplitude of the active marker. If no marker is active, MKA
+        Get the amplitude of the active marker. If no marker is active, MKA
         places a marker at the center of the trace and returns that amplitude value.
         In the :meth:`amplitude_unit` unit.
 
@@ -1464,7 +1473,7 @@ class HP856Xx(Instrument):
         """
     )
 
-    def marker_to_center_frequency(self):
+    def set_marker_to_center_frequency(self):
         """Set the center frequency to the frequency value of an active
         marker."""
         self.write("MKCF")
@@ -1472,9 +1481,9 @@ class HP856Xx(Instrument):
     marker_delta = Instrument.control(
         "MKD?", "MKD %.11E",
         """
-        Place a second marker on the trace. The number specifies the distance
+        Control a second marker on the trace. The parameter value specifies the distance
         in frequency or time (when in zero span) between the two markers.
-        If queried - returns the frequency of the second marker.
+        If queried - returns the frequency or time of the second marker.
 
         Type: :code:`float`
 
@@ -1503,8 +1512,8 @@ class HP856Xx(Instrument):
     marker_frequency = Instrument.control(
         "MKF?", "MKF %.11E",
         """
-        Place an active marker on the chosen frequency or can be queried to
-        return the frequency of the active marker. Default units are in Hertz.
+        Set an active marker on the chosen frequency or get the frequency of the active marker.
+        Default units are in Hertz.
 
         Type: :code:`float`
 
@@ -1520,6 +1529,27 @@ class HP856Xx(Instrument):
         validator=strict_range,
         values=[0, 1],
         dynamic=True
+    )
+
+    frequency_counter_mode_enabled = Instrument.setting(
+        "MKFC %s",
+        """
+        Set the device into a frequency counter mode that counts the frequency of the active
+        marker or the difference in frequency between two markers. If no marker
+        is active, 'frequency_counter_mode_enabled' places a marker at the center of
+        the trace and counts that marker frequency. The frequency counter
+        provides a more accurate frequency reading; it pauses at the marker,
+        counts the value, then continues the sweep. To adjust the frequency
+        counter resolution, use the 'frequency_counter_resolution' command. To
+        return the counter value, use the 'marker_frequency' command.
+
+        .. code-block:: python
+
+            instr.frequency_counter_mode_enabled = True
+        """,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        validator=strict_discrete_set
     )
 
     def frequency_counter_mode(self, activate):
@@ -1575,7 +1605,7 @@ class HP856Xx(Instrument):
         cast=int
     )
 
-    def marker_minimum(self):
+    def set_marker_minimum(self):
         """Place an active marker on the minimum signal detected on a trace."""
         self.write("MKMIN")
 
@@ -1584,23 +1614,23 @@ class HP856Xx(Instrument):
     # places it automagically to the center of the trace (I think there's no sense in
     # implementing it here)
 
-    marker_noise_mode = Instrument.control(
+    marker_noise_mode_enabled = Instrument.control(
         "MKNOISE?", "MKNOISE %s",
         """
         Control the detector mode to sample and compute the average of 32 data points (16 points
         on one side of the marker, the marker itself, and 15 points on the other side of the
         marker). This average is corrected for effects of the log or linear amplifier, bandwidth
         shape factor, IF detector, and resolution bandwidth. If two markers are on (whether in
-        'marker_delta' mode or 1/marker delta mode), 'marker_noise_mode' works on the active marker
-        and not on the anchor marker. This allows you to measure signal-to-noise density directly.
-        To query the value, use the 'marker_amplitude' command.
+        'marker_delta' mode or 1/marker delta mode), 'marker_noise_mode_enabled' works on the active
+        marker and not on the anchor marker. This allows you to measure signal-to-noise density
+        directly. To query the value, use the 'marker_amplitude' command.
 
         Type: :code:`bool`
 
         .. code-block:: python
 
             # activate signal-to-noise density mode
-            instr.marker_noise_mode = True
+            instr.marker_noise_mode_enabled = True
 
             # get noise density by `marker_amplitude`
             print("Signal-to-noise density: %d dbm / Hz" % instr.marker_amplitude)
@@ -1611,7 +1641,7 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    def marker_off(self, all_markers=False):
+    def deactivate_marker(self, all_markers=False):
         """Turn off the active marker or, if specified, turn off all markers.
 
         :param all_markers: If True the call deactivates all markers, if false only the currently
@@ -1627,17 +1657,17 @@ class HP856Xx(Instrument):
             instr.marker_delta = 2e6
 
             # deactivate active marker (delta marker)
-            instr.marker_off()
+            instr.deactivate_marker()
 
             # deactivate all markers
-            instr.marker_off(all_markers=True)
+            instr.deactivate_marker(all_markers=True)
         """
         if all_markers:
             self.write("MKOFF ALL")
         else:
             self.write("MKOFF")
 
-    def peak_search(self, mode):
+    def search_peak(self, mode):
         """Place a marker on the highest point on a trace, the next-highest
         point, the next-left peak, or the next-right peak. The default is 'HI'
         (highest point). The trace peaks must meet the criteria of the marker
@@ -1650,8 +1680,8 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.peak_search('NL')
-            instr.peak_search(PeakSearchMode.NextHigh)
+            instr.search_peak('NL')
+            instr.search_peak(PeakSearchMode.NextHigh)
         """
         if not isinstance(mode, str):
             raise TypeError("Should be of type string but is '%s'" % type(mode))
@@ -1712,7 +1742,7 @@ class HP856Xx(Instrument):
         values=[0.1, 99]
     )
 
-    def marker_to_reference_level(self):
+    def set_marker_to_reference_level(self):
         """Set the reference level to the amplitude of an active marker.
 
         If no marker is active, 'marker_to_reference_level' places a
@@ -1721,7 +1751,7 @@ class HP856Xx(Instrument):
         """
         self.write("MKRL")
 
-    def marker_delta_to_span(self):
+    def set_marker_delta_to_span(self):
         """Set the frequency span equal to the frequency difference between two
         markers on a trace.
 
@@ -1731,7 +1761,7 @@ class HP856Xx(Instrument):
         """
         self.write("MKSP")
 
-    def marker_to_center_frequency_step_size(self):
+    def set_marker_to_center_frequency_step_size(self):
         """Set the center frequency step-size equal to the frequency value of
         the active marker."""
         self.write("MKSS")
@@ -1739,7 +1769,7 @@ class HP856Xx(Instrument):
     marker_time = Instrument.control(
         "MKT?", "MKT %gS",
         """
-        Place a marker at a position that corresponds to a specified point in
+        Control a marker and set it to a position that corresponds to a specified point in
         time during the sweep. Default units are seconds.
 
         Type: :code:`float`
@@ -1755,15 +1785,17 @@ class HP856Xx(Instrument):
         """
     )
 
-    marker_signal_tracking = Instrument.control(
+    marker_signal_tracking_enabled = Instrument.control(
         "MKTRACK?", "MKTRACK %s",
         """
-        Locate the active marker and sets the center frequency to the
-        marker value. This is done after every sweep, thus maintaining the marker value at the
+        Set the active marker activated and sets the center frequency to the
+        marker value.
+
+        This is done after every sweep, thus maintaining the marker value at the
         center frequency. This allows you to “zoom in” quickly from a wide span to a narrow one,
-        without losing the signal from the screen. Or, use 'marker_signal_tracking' to keep a slowly
-        drifting signal centered on the display. When this function is active, a "K" appears on
-        the left edge of the display.
+        without losing the signal from the screen. Or, use 'marker_signal_tracking_enabled' to keep
+        a slowly drifting signal centered on the display. When this function is active,
+        a "K" appears on the left edge of the display.
 
         Type: :code:`bool`
         """,
@@ -1787,7 +1819,7 @@ class HP856Xx(Instrument):
         values=[-80, -10]
     )
 
-    def maximum_hold(self, trace):
+    def set_maximum_hold(self, trace):
         """Set the chosen trace with the maximum signal level detected at each
         trace-data point from subsequent sweeps. This function employs the
         positive peak detector (refer to the :attr:`detector_mode` command).
@@ -1815,16 +1847,16 @@ class HP856Xx(Instrument):
 
         self.write("MXMH %s" % trace)
 
-    normalize_trace_data = Instrument.control(
+    normalize_trace_data_enabled = Instrument.control(
         "NORMLIZE?", "NORMLIZE %s",
         """
-        Activate or deactivate the normalization routine for
+        Control the normalization routine for
         stimulus-response measurements. This function subtracts trace B from trace A, offsets the
         result by the value of the normalized reference position
         (:attr:`normalized_reference_level`), and displays the result in trace A.
-        'normalize_trace_data' is intended for use with the TODO STOREOPEN and
-        TODO STORESHORT or
-        TODO STORETHRU commands. These functions are used to store a reference trace into trace B.
+        'normalize_trace_data_enabled' is intended for use with the :meth:`store_open` and
+        :meth:`store_short` or :meth:`store_thru` commands. These functions are used to store a
+        reference trace into trace B.
         Refer to the respective command descriptions for more information.
         Accurate normalization occurs only if the reference trace and the measured trace are
         on-screen. If any of these traces are off-screen, an error message will be displayed.
@@ -1880,7 +1912,7 @@ class HP856Xx(Instrument):
     normalized_reference_position = Instrument.control(
         "NRPOS?", "NRPOS %f",
         """
-        Adjust the normalized reference-position that corresponds to the
+        Control the normalized reference-position that corresponds to the
         position on the graticule where the difference between the measured and calibrated traces
         resides. The dB value of the normalized reference-position is equal to the normalized
         reference level. The normalized reference-position may be adjusted between 0.0 and 10.0,
@@ -1902,7 +1934,7 @@ class HP856Xx(Instrument):
     display_parameters = Instrument.measurement(
         "OP?",
         """
-        Returns the location of the lower left (P1) and upper right (P2) vertices as a tuple of
+        Get the location of the lower left (P1) and upper right (P2) vertices as a tuple of
         the display window.
 
         Type: :code:`tuple`
@@ -1940,28 +1972,15 @@ class HP856Xx(Instrument):
                 isinstance(p2y, int)):
             raise TypeError("Should be of type int")
 
-        # TODO: Value check
-
         self.write("PLOT %d,%d,%d,%d" % (p1x, p1y, p2x, p2y))
 
-    @property
-    def display_origins(self):
-        raise NotImplementedError()
-
-    @property
-    def plot_source(self):
-        raise NotImplementedError()
-
-    def print(self, active):
-        raise NotImplementedError()
-
-    protect_state = Instrument.control(
+    protect_state_enabled = Instrument.control(
         "PSTATE?", "PSTATE %s",
         """
         Control the storing of any new data in the state or trace registers.
         If set to 'True', the registers are “locked”; the data in them cannot be erased or
         overwritten, although the data can be recalled. To “unlock” the registers, and store new
-        data, set 'protect_state' to off by selecting 'False' as the parameter.
+        data, set 'protect_state_enabled' to off by selecting 'False' as the parameter.
 
         Type: :code:`bool`
         """,
@@ -1971,7 +1990,7 @@ class HP856Xx(Instrument):
         cast=str
     )
 
-    def power_bandwidth(self, trace, percent):
+    def get_power_bandwidth(self, trace, percent):
         """Measure the combined power of all signal responses contained in a
         trace array. The command then computes the bandwidth equal to a
         percentage of the total power. For example, if 100% is specified, the
@@ -1993,7 +2012,7 @@ class HP856Xx(Instrument):
             instr.preset()
 
             # set to single sweep mode
-            instr.single_sweep()
+            instr.sweep_single()
 
             instr.center_frequency = 300e6
             instr.span = 1e6
@@ -2060,20 +2079,25 @@ class HP856Xx(Instrument):
         .. code-block:: python
 
             instr.preset()
-            instr.single_sweep()
+            instr.sweep_single()
             instr.start_frequency = 300e3
             instr.stop_frequency = 1e9
 
-            TODO
-            TODO
-            TODO
+            instr.source_power = "ON"
+            instr.sweep_couple = SweepCoupleMode.StimulusResponse
+            instr.source_peak_tracking()
 
+            input("CONNECT OPEN. PRESS CONTINUE WHEN READY TO STORE.")
             instr.trigger_sweep()
             instr.done()
-            TODO
+            instr.store_open()
+
+            input("CONNECT SHORT. PRESS CONTINUE WHEN READY TO STORE AND AVERAGE.")
             instr.trigger_sweep()
             instr.done()
-            TODO
+            instr.store_short()
+
+            input("RECONNECT DUT. PRESS CONTINUE WHEN READY.")
             instr.trigger_sweep()
             instr.done()
 
@@ -2086,6 +2110,7 @@ class HP856Xx(Instrument):
             instr.trigger_sweep()
 
             instr.preset()
+            # demonstrate recall of open/short average trace
             instr.recall_open_short_average()
             instr.trigger_sweep()
         """
@@ -2164,7 +2189,7 @@ class HP856Xx(Instrument):
     firmware_revision = Instrument.measurement(
         "REV?",
         """
-        Return the revision date code of the spectrum analyzer firmware.
+        Get the revision date code of the spectrum analyzer firmware.
 
         Type: :code:`datetime.date`
         """,
@@ -2189,7 +2214,7 @@ class HP856Xx(Instrument):
     reference_level_calibration = Instrument.control(
         "RLCAL?", "RLCAL %g",
         """
-        Calibrates the reference level remotely or retuns the
+        Control the calibration of the reference level remotely and retuns the
         current calibration. To calibrate the reference level, connect the 300 MHz calibration
         signal to the RF input. Set the center frequency to 300 MHz, the frequency span to 20
         MHz, and the reference level to -10 dBm. Use the RLCAL command to move the input signal
@@ -2222,7 +2247,7 @@ class HP856Xx(Instrument):
     reference_offset = Instrument.control(
         "ROFFSET?", "ROFFSET %d",
         """
-        The ROFFSET command introduces an offset to all amplitude readouts (for example, the
+        Control an offset applied to all amplitude readouts (for example, the
         reference level and marker amplitude). The offset is in dB, regardless of the selected scale
         and units. The offset can be useful to account for gains of losses in accessories connected
         to the input of the analyzer. When this function is active, an "R" appears on the left
@@ -2238,7 +2263,7 @@ class HP856Xx(Instrument):
     request_service_conditions = Instrument.control(
         "RQS?", "RQS %d",
         """
-        Controls a bit mask that specifies which service requests can interrupt
+        Control a bit mask that specifies which service requests can interrupt
         a program sequence.
 
         .. code-block:: python
@@ -2316,12 +2341,12 @@ class HP856Xx(Instrument):
     serial_number = Instrument.measurement(
         "SER?",
         """
-        Returns the spectrum analyzer serial number.
+        Get the spectrum analyzer serial number.
         """,
         cast=str
     )
 
-    def single_sweep(self):
+    def sweep_single(self):
         """Sets the spectrum analyzer into single-sweep mode.
 
         This mode allows only one sweep when trigger conditions are met.
@@ -2372,7 +2397,7 @@ class HP856Xx(Instrument):
         set_process=lambda v: v if isinstance(v, str) else v
     )
 
-    def service_request(self, input):
+    def request_service(self, input):
         """Triggers a service request. This command allows you to force a
         service request and test a program designed to handle service requests.
         However, the service request can be triggered only if it is first
@@ -2461,7 +2486,7 @@ class HP856Xx(Instrument):
     sweep_couple = Instrument.control(
         "SWPCPL?", "SWPCPL %s",
         """
-        Select either a stimulus-response or spectrum-analyzer
+        Control the sweep couple mode which is either a stimulus-response or spectrum-analyzer
         auto-coupled sweep time. In stimulus-response mode, auto-coupled sweep times are usually
         much faster for swept-response measurements. Stimulus-response auto-coupled sweep times
         are typicallly valid in stimulus-response measurements when the system’s frequency span is
@@ -2476,7 +2501,7 @@ class HP856Xx(Instrument):
     sweep_output = Instrument.control(
         "SWPOUT?", "SWPOUT %s",
         """
-        Select the sweep-related signal that is available from J8 on the rear
+        Control the sweep-related signal that is available from J8 on the rear
         panel. FAV provides a dc ramp of 0.5V/GHz. RAMP provides a 0—10 V ramp corresponding
         to the sweep ramp that tunes the first local oscillator (LO). For the HP 8561B, in multiband
         sweeps one ramp is provided for each frequency band.
@@ -2490,7 +2515,7 @@ class HP856Xx(Instrument):
     trace_data_format = Instrument.control(
         "TDF?", "TDF %s",
         """
-        Select the format used to input and output trace data (see the
+        Control the format used to input and output trace data (see the
         TRA/TRB command, You must specify the desired format when
         transferring data from the spectrum analyzer to a computer; this is optional when
         transferring data to the analyzer.
@@ -2522,13 +2547,12 @@ class HP856Xx(Instrument):
         set_process=lambda v: v if isinstance(v, str) else ("%.2E" % v)
     )
 
-    def title(self, string):
+    def set_title(self, string):
         """Sets character data in the title area of the display, which is in
         the upper-right corner.
 
         A title can be up to two rows of sixteen characters each, Carriage
-        return and line feed characters are not recommended.
-        manual.
+        return and line feed characters are not allowed.
         """
         if not isinstance(string, str):
             raise TypeError("Parameter should be of type 'str'")
@@ -2541,46 +2565,93 @@ class HP856Xx(Instrument):
     trigger_mode = Instrument.control(
         "TM?", "TM %s",
         """
-        Select a trigger mode. Selected trigger conditions must be met in order for
-        a sweep to occur. The available trigger modes are listed below. When any trigger mode other
-        than free run is selected, a "T" appears on the left edge of the display.
+        Control the trigger mode. Selected trigger conditions must be met in order for
+        a sweep to occur. For the available modes refer to :class:`TriggerMode`.
+        When any trigger mode other than free run is selected,
+        a "T" appears on the left edge of the display.
         """,
         validator=strict_discrete_set,
         values=[e for e in TriggerMode]
     )
 
-    trace_data_a = Instrument.control(
-        "TRA?", "TRA %s",
+    def __get_trace_data(self, trace):
+        self.write("TDF M")
+
+        amp_units = str(self.ask("AUNITS?"))
+        ref_lvl = float(self.ask("RL?"))
+        log_scale = float(self.ask("LG?"))
+
+        cmd_str = ""
+        if trace is Trace.A:
+            cmd_str += "TRA?"
+        elif trace is Trace.B:
+            cmd_str += "TRB?"
+
+        values = self.values(cmd_str, cast=int)
+
+        if amp_units is AmplitudeUnits.W:
+            # calculate dbm from watts
+            ref_lvl = (10 * log10(ref_lvl)) + 30
+        elif amp_units is AmplitudeUnits.DBUV:
+            # calculate dbm from dbuv in 50 Ohm system
+            ref_lvl = ref_lvl - 107
+        elif amp_units is AmplitudeUnits.V:
+            # calculate dbm from volts in 50 Ohm system
+            ref_lvl = 20 * log10((ref_lvl / 0.05) ** 0.5)
+        elif amp_units is AmplitudeUnits.DBMV:
+            # calculate dbm from dbmv
+            ref_lvl = ref_lvl - 46.9897
+
+        result_values = []
+        for value in values:
+            if log_scale != 0:
+                result_value = round(ref_lvl + (log_scale * ((value - 600) / 60)), 2)
+                result_values.append(result_value)
+            else:
+                raise NotImplementedError("Linear scaling isn't supported by get_trace_data_ ")
+
+        return result_values
+
+    def get_trace_data_a(self):
         """
-        Returns the trace data of trace A also allows to write the data.
+        Get the data of trace A as a list.
+
+        The function returns the 601 data points as a list in the amplitude format.
+        Right now it doesn't support the linear scaling due to the manual just being wrong.
+        """
+        return self.__get_trace_data(Trace.A)
+
+    def get_trace_data_b(self):
+        """
+        Get the data of trace B as a list.
+
+        The function returns the 601 data points as a list in the amplitude format.
+        Right now it doesn't support the linear scaling due to the manual just being wrong.
+        """
+        return self.__get_trace_data(Trace.B)
+
+    set_trace_data_a = Instrument.setting(
+        "TDF P;TRA %s",
+        """
+        Set the trace data of trace A.
 
         .. warning::
 
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
-
-        .. warning::
-
-            Dont't change the trace data format, it is initially 'real-number' format 'P'.
-            If you change it, you have to change it back to Real before using this function.
         """,
-        set_process=lambda v: (','.join([str(i) for i in v]))
+        set_process=lambda v: (','.join([str(i) for i in v])),
     )
 
-    trace_data_b = Instrument.control(
-        "TRB?", "TRB %s",
+    set_trace_data_b = Instrument.setting(
+        "TDF P;TRB %s",
         """
-        Returns the trace data of trace B also allows to write the data.
+        Set the trace data of trace B also allows to write the data.
 
         .. warning::
 
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
-
-        .. warning::
-
-            Dont't change the trace data format, it is initially 'real-number' format 'P'.
-            If you change it, you have to change it back to Real before using this function.
         """,
         set_process=lambda v: (','.join([str(i) for i in v]))
     )
@@ -2593,9 +2664,10 @@ class HP856Xx(Instrument):
         """
         self.write("TS")
 
-    def fft_trace_window(self, trace, window_mode):
-        """creates a window trace array for the fast Fourier transform
-        (FFT) function. The trace-window function creates a trace array according to three built-in
+    def create_fft_trace_window(self, trace, window_mode):
+        """Creates a window trace array for the fast Fourier transform (FFT) function.
+
+        The trace-window function creates a trace array according to three built-in
         algorithms: UNIFORM, HANNING, and FLATTOP. When used with the FFT command,
         the three algorithms give resultant passband shapes that represent a compromise among
         amplitude uncertainty, sensitivity, and frequency resolution. Refer to the FFT command
@@ -2688,7 +2760,7 @@ class HP856Xx(Instrument):
 
     def view_trace(self, trace):
         """Display the current contents of the selected trace, but does not update
-        the contents. View mode may be executed before a sweep is complete when :meth:`single_sweep`
+        the contents. View mode may be executed before a sweep is complete when :meth:`sweep_single`
         and :meth:`trigger_sweep` are not used.
 
         :param trace: A representation of the trace, either from :class:`Trace` or
@@ -2757,7 +2829,7 @@ class HP8560A(HP856Xx):
     source_leveling_control = Instrument.control(
         "SRCALC?", "SRCALC %s",
         """
-        Select internal or external leveling for use with the
+        Control if internal or external leveling is used with the
         built-in tracking generator.
         Takes either 'INT', 'EXT' or members of enumeration :class:`SourceLevelingControlMode`
 
@@ -2766,12 +2838,11 @@ class HP8560A(HP856Xx):
         .. code-block:: python
 
             instr.preset()
-            instr.single_sweep()
+            instr.sweep_single()
             instr.center_frequency = 300e6
             instr.span = 1e6
 
-            # TODO
-            # TODO
+            instr.source_power = -5
 
             instr.trigger_sweep()
             instr.source_leveling_control = SourceLevelingControlMode.External
@@ -2789,10 +2860,10 @@ class HP8560A(HP856Xx):
     tracking_adjust_coarse = Instrument.control(
         "SRCCRSTK?", "SRCCRSTK %d",
         """
-        The SRCCRSTK command controls the coarse adjustment to the frequency of the built-in
+        Control the coarse adjustment to the frequency of the built-in
         tracking-generator oscillator. Once enabled, this adjustment is made in
         digital-to-analogconverter (DAC) values from 0 to 255. For fine adjustment, refer to the
-        SRCFINTK command description.
+        :attr:`tracking_adjust_fine` command description.
 
         Type: :code:`int`
 
@@ -2807,10 +2878,10 @@ class HP8560A(HP856Xx):
     tracking_adjust_fine = Instrument.control(
         "SRCFINTK?", "SRCFINTK %d",
         """
-        The SRCFINTK command controls the fine adjustment of the frequency of the built-in
+        Control the fine adjustment of the frequency of the built-in
         tracking-generator oscillator. Once enabled, this adjustment is made in
         digital-to-analogconverter (DAC) values from 0 to 255. For coarse adjustment, refer to
-        the SRCCRSTK command description.
+        the :attr:`tracking_adjust_coarse` command description.
 
         Type: :code:`int`
 
@@ -2858,7 +2929,7 @@ class HP8560A(HP856Xx):
     source_power_sweep = Instrument.control(
         "SRCPSWP?", "SRCPSWP %s",
         """
-        Activate and deactivate the power-sweep function, where the
+        Control the power-sweep function, where the
         output power of the tracking generator is swept over the power-sweep range chosen. The
         starting source power level is set using the :attr:`source_power` command. The output power
         of the tracking generator is swept according to the sweep rate of the spectrum analyzer.
@@ -2889,7 +2960,7 @@ class HP8560A(HP856Xx):
         set_process=lambda v: v if isinstance(v, str) else ("%.2f" % v)
     )
 
-    def source_peak_tracking(self):
+    def activate_source_peak_tracking(self):
         """Activate a routine which automatically adjusts both the coarse and
         fine-tracking adjustments to obtain the peak response of the tracking
         generator on the spectrum-analyzer display. Tracking peak is not
@@ -2941,7 +3012,7 @@ class HP8561B(HP856Xx):
     conversion_loss = Instrument.control(
         "CNVLOSS?", "CNVLOSS %s",
         """
-        Compensate for losses outside the instrument when in external
+        Control the compensation for losses outside the instrument when in external
         mixer mode (such as losses within connector cables, external mixers, etc.).
         'conversion_loss' specifies the mean conversion loss for the current harmonic band.
         In a full frequency band (such as band K), the mean conversion loss is defined as the
@@ -2956,7 +3027,7 @@ class HP8561B(HP856Xx):
         values=[0, float("inf")]
     )
 
-    def fullband(self, band):
+    def set_fullband(self, band):
         """Select a commonly-used, external-mixer frequency band, as shown in
         the table. The harmonic lock function :attr:`harmonic_number_lock` is
         also set; this locks the harmonic of the chosen band. External-mixing
@@ -3050,21 +3121,22 @@ class HP8561B(HP856Xx):
     harmonic_number_lock = Instrument.control(
         "HNLOCK?", "HNLOCK %s",
         """
-        Lock a chosen harmonic so only that harmonic is used to sweep
+        Control the lock to a chosen harmonic so only that harmonic is used to sweep
         an external frequency band. To select a frequency band, use the 'fullband' command; it
         selects an appropriate harmonic for the desired band. To change the harmonic number, use
         'harmonic_number_lock'.
         Note that 'harmonic_number_lock' also works in internal-mixing modes.
         Once 'fullband' or 'harmonic_number_lock' are set, only center frequencies and spans that
-        fall within the frequency band of the current harmonic may be entered. When the 'full_span'
-        command is activated, the span is limited to the frequency band of the selected harmonic.
+        fall within the frequency band of the current harmonic may be entered. When the
+        'set_full_span' command is activated, the span is limited to the frequency band of the
+        selected harmonic.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[int(1), int(54)], ["ON", "OFF"]],
         cast=int
     )
 
-    def harmonic_number_unlock(self):
+    def unlock_harmonic_number(self):
         """Unlock the harmonic number, allowing you to select frequencies and
         spans outside the range of the locked harmonic number.
 
@@ -3075,7 +3147,7 @@ class HP8561B(HP856Xx):
         """
         self.write("HUNLK")
 
-    def signal_identification_to_center_frequency(self):
+    def set_signal_identification_to_center_frequency(self):
         """Set the center frequency to the frequency obtained from the command
         SIGID.
 
@@ -3089,7 +3161,7 @@ class HP8561B(HP856Xx):
     signal_identification_frequency = Instrument.measurement(
         "IDFREQ?",
         """
-        Returns the frequency of the last identified signal. After an instrument preset or an
+        Measure the frequency of the last identified signal. After an instrument preset or an
         invalid signal identification, IDFREQ returns a “0”.
         """
     )
@@ -3111,14 +3183,14 @@ class HP8561B(HP856Xx):
     mixer_mode = Instrument.control(
         "MXRMODE?", "MXRMODE %s",
         """
-        Specifie the mixer mode. Select either the internal mixer
+        Control the mixer mode. Select either the internal mixer
         or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
         """,
         validator=strict_discrete_set,
         values=[e for e in MixerMode]
     )
 
-    def preselector_peak(self):
+    def peak_preselector(self):
         """Peaks the preselector in the HP 8561B Spectrum Analyzer.
 
         Make sure the entire frequency span is in high band, set the
@@ -3134,7 +3206,7 @@ class HP8561B(HP856Xx):
     preselector_dac_number = Instrument.control(
         "PSDAC?", "PSDAC %d",
         """
-        Adjusts or returns the preselector peak DAC number. For use with an
+        Control the preselector peak DAC number. For use with an
         HP 8561B Spectrum Analyzer.
 
         Type: :code:`int`
@@ -3147,7 +3219,7 @@ class HP8561B(HP856Xx):
     signal_identification = Instrument.control(
         "SIGID?", "SIGID %s",
         """
-        Controls the signal identification for identifying signals for the external
+        Control the signal identification for identifying signals for the external
         mixing frequency bands.
         Two signal identification methods are available. AUTO employs the image response method
         for locating correct mixer responses. Place a marker on the desired signal, then activate

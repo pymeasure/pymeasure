@@ -84,26 +84,26 @@ class TestHP856Xx:
     @pytest.mark.parametrize(
         "function, command",
         [
-            ("auto_couple", "AUTOCPL"),
+            ("set_auto_couple", "AUTOCPL"),
             ("exchange_traces", "AXB"),
             ("subtract_display_line_from_trace_b", "BML"),
-            ("continuous_sweep", "CONTS"),
-            ("full_span", "FS"),
-            ("linear_scale", "LN"),
-            ("marker_to_center_frequency", "MKCF"),
-            ("marker_minimum", "MKMIN"),
-            ("marker_to_reference_level", "MKRL"),
-            ("marker_delta_to_span", "MKSP"),
-            ("marker_to_center_frequency_step_size", "MKSS"),
+            ("set_continuous_sweep", "CONTS"),
+            ("set_full_span", "FS"),
+            ("set_linear_scale", "LN"),
+            ("set_marker_to_center_frequency", "MKCF"),
+            ("set_marker_minimum", "MKMIN"),
+            ("set_marker_to_reference_level", "MKRL"),
+            ("set_marker_delta_to_span", "MKSP"),
+            ("set_marker_to_center_frequency_step_size", "MKSS"),
             ("preset", "IP"),
             ("recall_open_short_average", "RCLOSCAL"),
             ("recall_thru", "RCLTHRU"),
-            ("single_sweep", "SNGLS"),
+            ("sweep_single", "SNGLS"),
             ("store_open", "STOREOPEN"),
             ("store_short", "STORESHORT"),
             ("store_thru", "STORETHRU"),
             ("adjust_all", "ADJALL"),
-            ("crt_adjustment_pattern", "ADJCRT"),
+            ("set_crt_adjustment_pattern", "ADJCRT"),
             ("trigger_sweep", "TS"),
         ]
     )
@@ -193,14 +193,14 @@ class TestHP856Xx:
             assert instr.demodulation_mode == demod_mode
 
     @pytest.mark.parametrize("on_off, boole", [("1", True), ("0", False)])
-    def test_demodulation_agc(self, on_off, boole):
+    def test_demodulation_agc_enabled(self, on_off, boole):
         with expected_protocol(
                 HP856Xx,
                 [("DEMODAGC " + on_off, None),
                  ("DEMODAGC?", on_off)]
         ) as instr:
-            instr.demodulation_agc = boole
-            assert instr.demodulation_agc == boole
+            instr.demodulation_agc_enabled = boole
+            assert instr.demodulation_agc_enabled == boole
 
     def test_demodulation_time(self):
         with expected_protocol(
@@ -280,19 +280,19 @@ class TestHP856Xx:
         ) as instr:
             assert instr.sampler_harmonic_number == 14
 
-    def test_frequency_display(self):
+    def test_frequency_display_enabled(self):
         with expected_protocol(
                 HP856Xx,
                 [("FDSP?", "0")]
         ) as instr:
-            assert instr.frequency_display is False
+            assert instr.frequency_display_enabled is False
 
     def test_fft(self):
         with expected_protocol(
                 HP856Xx,
                 [("FFT TRA,TRB,TRA", None)]
         ) as instr:
-            instr.fft(Trace.A, Trace.B, Trace.A)
+            instr.do_fft(Trace.A, Trace.B, Trace.A)
 
     def test_fft_exceptions(self):
         with expected_protocol(
@@ -300,32 +300,32 @@ class TestHP856Xx:
                 []
         ) as instr:
             with pytest.raises(TypeError):
-                instr.fft(0, 4, 5)
+                instr.do_fft(0, 4, 5)
 
             with pytest.raises(ValueError):
-                instr.fft("TRAZ", "zuo", "TEWST")
+                instr.do_fft("TRAZ", "zuo", "TEWST")
 
     @pytest.mark.parametrize("frequency_reference", [e for e in FrequencyReference])
-    def test_frequecy_reference(self, frequency_reference):
+    def test_frequency_reference_source(self, frequency_reference):
         with expected_protocol(
                 HP856Xx,
                 [("FREF " + frequency_reference, None),
                  ("FREF?", frequency_reference)]
         ) as instr:
-            instr.frequency_reference = frequency_reference
-            assert instr.frequency_reference == frequency_reference
+            instr.frequency_reference_source = frequency_reference
+            assert instr.frequency_reference_source == frequency_reference
 
     @pytest.mark.parametrize(
         "function, command",
         [
-            ("graticule", "GRAT"),
-            ("marker_signal_tracking", "MKTRACK"),
-            ("marker_noise_mode", "MKNOISE"),
-            ("normalize_trace_data", "NORMLIZE"),
-            ("protect_state", "PSTATE"),
-            ("trace_a_minus_b", "AMB"),
-            ("trace_a_minus_b_plus_dl", "AMBPL"),
-            ("annotation", "ANNOT")
+            ("graticule_enabled", "GRAT"),
+            ("marker_signal_tracking_enabled", "MKTRACK"),
+            ("marker_noise_mode_enabled", "MKNOISE"),
+            ("normalize_trace_data_enabled", "NORMLIZE"),
+            ("protect_state_enabled", "PSTATE"),
+            ("trace_a_minus_b_enabled", "AMB"),
+            ("trace_a_minus_b_plus_dl_enabled", "AMBPL"),
+            ("annotation_enabled", "ANNOT")
         ]
     )
     def test_on_off_commands(self, function, command):
@@ -361,8 +361,8 @@ class TestHP856Xx:
     @pytest.mark.parametrize(
         "function, cmdstr",
         [
-            ("minimum_hold", "MINH"),
-            ("maximum_hold", "MXMH")
+            ("set_minimum_hold", "MINH"),
+            ("set_maximum_hold", "MXMH")
         ]
     )
     @pytest.mark.parametrize("trace", [e for e in Trace])
@@ -373,7 +373,7 @@ class TestHP856Xx:
         ) as instr:
             getattr(instr, function)(trace)
 
-    @pytest.mark.parametrize("function", ["minimum_hold", "maximum_hold"])
+    @pytest.mark.parametrize("function", ["set_minimum_hold", "set_maximum_hold"])
     def test_hold_exceptions(self, function):
         with expected_protocol(
                 HP856Xx,
@@ -414,7 +414,7 @@ class TestHP856Xx:
             instr.marker_frequency = 1
             assert instr.marker_frequency == 0.5
 
-    def test_frequency_counter_mode(self):
+    def test_frequency_counter_mode_enabled(self):
         with expected_protocol(
                 HP856Xx,
                 [
@@ -422,8 +422,8 @@ class TestHP856Xx:
                     ("MKFC ON", None)
                 ]
         ) as instr:
-            instr.frequency_counter_mode(False)
-            instr.frequency_counter_mode(True)
+            instr.frequency_counter_mode_enabled = False
+            instr.frequency_counter_mode_enabled = True
 
     def test_frequency_counter_resolution(self):
         with expected_protocol(
@@ -437,14 +437,14 @@ class TestHP856Xx:
             assert instr.frequency_counter_resolution == 1e4
 
     @pytest.mark.parametrize("all_markers, cmdstring", [(True, " ALL"), (False, "")])
-    def test_marker_off(self, all_markers, cmdstring):
+    def test_deactivate_marker(self, all_markers, cmdstring):
         with expected_protocol(
                 HP856Xx,
                 [
                     ("MKOFF%s" % cmdstring, None),
                 ]
         ) as instr:
-            instr.marker_off(all_markers)
+            instr.deactivate_marker(all_markers)
 
     @pytest.mark.parametrize("mode", [e for e in PeakSearchMode])
     def test_minimum_hold(self, mode):
@@ -452,7 +452,7 @@ class TestHP856Xx:
                 HP856Xx,
                 [("MKPK " + mode, None)]
         ) as instr:
-            instr.peak_search(mode)
+            instr.search_peak(mode)
 
     def test_marker_threshold(self):
         with expected_protocol(
@@ -545,7 +545,7 @@ class TestHP856Xx:
                     ("PWRBW TRA,99.2?", "1.0e3")
                 ]
         ) as instr:
-            assert instr.power_bandwidth(Trace.A, 99.2) == 1e3
+            assert instr.get_power_bandwidth(Trace.A, 99.2) == 1e3
 
     def test_resolution_bandwidth(self):
         with expected_protocol(
@@ -591,14 +591,14 @@ class TestHP856Xx:
         ) as instr:
             instr.recall_trace(Trace.A, 6)
 
-    def test_revision(self):
+    def test_firmware_revision(self):
         with expected_protocol(
                 HP856Xx,
                 [
                     ("REV?", "901101")
                 ]
         ) as instr:
-            assert instr.revision == datetime.strptime("11-01-1990", '%m-%d-%Y').date()
+            assert instr.firmware_revision == datetime.strptime("11-01-1990", '%m-%d-%Y').date()
 
     def test_reference_level(self):
         with expected_protocol(
@@ -682,7 +682,7 @@ class TestHP856Xx:
                     ("SRQ 48", None)
                 ]
         ) as instr:
-            instr.service_request(StatusRegister.COMMAND_COMPLETE | StatusRegister.ERROR_PRESENT)
+            instr.request_service(StatusRegister.COMMAND_COMPLETE | StatusRegister.ERROR_PRESENT)
 
     def test_sweep_time(self):
         with expected_protocol(
@@ -741,7 +741,7 @@ class TestHP856Xx:
                 HP856Xx,
                 [("TITLE@%s@" % "TestString", None)]
         ) as instr:
-            instr.title("TestString")
+            instr.set_title("TestString")
 
     @pytest.mark.parametrize("mode", [e for e in TriggerMode])
     def test_trigger_mode(self, mode):
@@ -753,83 +753,125 @@ class TestHP856Xx:
             instr.trigger_mode = mode
             assert instr.trigger_mode == mode
 
-    @pytest.mark.parametrize("function, cmd", [("trace_data_a", "TRA"), ("trace_data_b", "TRB")])
+    @pytest.mark.parametrize("function, cmd", [
+        ("get_trace_data_a", "TRA"),
+        ("get_trace_data_b", "TRB")
+    ])
     def test_trace_data(self, function, cmd):
-        data = [-31.83, -89.16, -66.33, -94.66, -68.16, -88.83, -67.66, -89.33, -67.50, -89.16,
-                -67.66, -87.50, -68.83, -90.16, -68.83, -87.00, -68.16, -90.00, -67.16, -87.33,
-                -68.50, -89.16, -68.00, -91.50, -67.83, -88.00, -68.16, -89.00, -68.00, -89.83,
-                -67.33, -91.33, -68.16, -90.33, -68.83, -92.66, -67.66, -87.83, -70.00, -92.00,
-                -69.33, -89.50, -67.66, -91.33, -66.83, -88.66, -68.00, -90.66, -68.00, -88.33,
-                -68.66, -89.50, -61.00, -91.16, -68.16, -88.50, -65.50, -90.66, -66.16, -88.83,
-                -68.50, -86.16, -10.50, -91.83, -66.83, -93.33, -68.50, -92.16, -68.83, -89.50,
-                -68.50, -89.33, -67.33, -90.50, -68.33, -91.16, -68.16, -89.00, -68.16, -90.16,
-                -67.50, -89.66, -69.00, -89.00, -68.33, -89.16, -68.66, -88.66, -67.00, -91.66,
-                -69.66, -91.00, -68.00, -91.33, -68.16, -91.00, -67.83, -89.16, -67.66, -88.83,
-                -67.50, -89.33, -68.16, -92.66, -66.66, -89.33, -68.83, -89.33, -68.16, -89.83,
-                -67.33, -89.66, -68.83, -90.66, -68.16, -90.16, -68.66, -90.50, -68.33, -89.00,
-                -67.83, -87.83, -68.00, -89.50, -45.16, -92.33, -68.00, -88.33, -66.83, -89.16,
-                -66.83, -90.66, -67.66, -90.66, -67.83, -88.16, -67.33, -87.33, -68.16, -91.16,
-                -67.00, -90.16, -67.66, -88.33, -68.33, -88.66, -68.00, -89.66, -67.50, -89.66,
-                -67.83, -88.16, -68.66, -91.00, -68.00, -90.16, -68.16, -89.00, -68.00, -90.83,
-                -67.00, -92.00, -67.50, -89.33, -67.66, -88.50, -68.33, -89.33, -68.16, -90.50,
-                -68.16, -88.83, -68.50, -89.50, -68.33, -90.83, -67.00, -88.83, -69.00, -92.33,
-                -67.66, -89.00, -68.33, -91.16, -68.33, -90.16, -67.50, -90.00, -59.50, -87.83,
-                -69.00, -90.83, -67.50, -88.50, -68.66, -91.66, -68.16, -90.16, -68.33, -90.66,
-                -68.66, -87.83, -68.00, -89.16, -68.00, -87.66, -68.16, -90.00, -67.66, -89.50,
-                -68.50, -92.16, -67.66, -89.16, -68.16, -89.16, -67.16, -89.50, -68.00, -89.66,
-                -67.50, -87.16, -67.33, -90.66, -68.16, -91.50, -68.16, -90.16, -68.66, -87.66,
-                -68.33, -89.83, -68.83, -90.33, -68.66, -86.33, -68.00, -91.00, -65.66, -92.33,
-                -69.33, -90.66, -67.33, -92.00, -68.16, -90.66, -68.00, -90.33, -68.50, -85.66,
-                -61.33, -88.50, -67.83, -92.16, -67.16, -90.00, -67.16, -87.33, -67.83, -93.00,
-                -67.66, -89.83, -66.00, -91.66, -68.33, -90.83, -69.33, -91.00, -67.33, -88.50,
-                -67.33, -90.00, -67.83, -91.00, -67.16, -93.16, -67.50, -87.00, -67.33, -88.33,
-                -67.66, -88.33, -67.33, -88.33, -66.66, -87.66, -68.33, -90.66, -68.00, -88.83,
-                -68.66, -88.83, -67.66, -88.16, -67.66, -90.66, -67.50, -92.50, -67.83, -90.33,
-                -68.66, -89.16, -66.83, -91.66, -67.83, -87.83, -68.16, -89.16, -67.33, -88.00,
-                -67.33, -89.00, -61.83, -88.00, -68.00, -89.50, -68.50, -90.66, -67.16, -88.83,
-                -67.16, -87.66, -67.83, -92.66, -68.83, -91.16, -68.00, -91.00, -68.16, -90.33,
-                -67.83, -91.16, -67.66, -94.83, -67.00, -91.16, -68.00, -87.83, -67.66, -90.00,
-                -66.66, -90.33, -68.16, -87.66, -67.00, -88.66, -67.66, -87.50, -67.66, -88.66,
-                -67.33, -89.16, -67.00, -91.33, -68.16, -89.66, -67.83, -91.00, -67.83, -89.33,
-                -68.33, -88.33, -67.83, -88.16, -65.50, -86.83, -67.16, -90.33, -68.16, -86.83,
-                -67.83, -89.33, -67.83, -91.33, -63.50, -89.16, -66.83, -93.00, -67.66, -89.83,
-                -68.00, -89.00, -67.50, -90.00, -66.16, -89.33, -66.00, -88.83, -68.00, -88.33,
-                -66.50, -88.16, -67.00, -88.66, -67.66, -91.50, -67.33, -88.83, -68.33, -90.50,
-                -67.66, -88.33, -68.33, -90.66, -68.16, -89.83, -67.33, -89.83, -66.66, -91.33,
-                -68.16, -90.33, -66.33, -89.33, -67.00, -89.00, -68.16, -89.16, -68.50, -90.83,
-                -66.50, -89.83, -66.66, -90.33, -67.16, -90.83, -67.50, -90.16, -65.00, -89.33,
-                -66.16, -86.33, -68.00, -89.50, -66.50, -89.00, -67.50, -88.33, -64.66, -90.83,
-                -67.66, -88.16, -68.66, -89.00, -67.50, -91.16, -67.50, -91.33, -67.66, -92.00,
-                -67.00, -89.16, -66.33, -89.50, -67.16, -89.16, -68.00, -85.83, -67.16, -89.83,
-                -67.33, -89.16, -67.66, -88.83, -67.33, -90.33, -68.33, -87.83, -66.83, -89.33,
-                -69.00, -90.16, -67.16, -90.16, -66.33, -92.16, -67.50, -89.66, -64.83, -90.00,
-                -66.50, -88.83, -66.50, -88.33, -66.66, -89.50, -66.83, -88.83, -66.00, -88.66,
-                -67.66, -89.00, -66.16, -89.00, -67.16, -90.16, -67.16, -90.50, -67.33, -89.50,
-                -66.83, -89.00, -68.00, -89.50, -68.33, -89.50, -66.66, -88.50, -66.33, -89.83,
-                -68.33, -89.16, -68.16, -89.33, -68.33, -88.16, -66.33, -87.50, -67.00, -90.00,
-                -68.50, -86.50, -67.66, -89.00, -66.00, -88.83, -68.33, -88.66, -66.83, -87.00,
-                -68.00, -88.33, -67.50, -93.83, -67.66, -88.83, -67.50, -93.00, -66.50, -89.00,
-                -68.33, -91.66, -67.00, -88.83, -66.00, -92.33, -67.66, -92.66, -67.66, -92.66,
-                -67.66, -88.66, -68.00, -89.83, -69.00, -89.66, -68.00, -90.00, -67.50, -90.33,
-                -67.66, -91.00, -67.00, -88.16, -66.66, -92.00, -67.66, -87.16, -67.83, -89.50,
-                -68.00, -91.33, -67.50, -91.00, -66.66, -86.83, -66.66, -88.50, -66.00, -89.33,
-                -68.16, -90.33, -67.33, -91.83, -67.16, -90.33, -67.50, -89.00, -65.16, -89.66,
-                -67.00, -91.00, -67.83, -87.83, -66.50, -91.00, -67.66, -91.16, -67.00, -88.83,
-                -65.66]
+        data = [48, 61, 31, 73, 90, 82, 56, 48, 87, 78, 59, 103, 78, 76, 92, 52, 57, 72, 48, 82,
+                108, 63, 52, 79, 44, 88, 95, 99, 74, 79, 63, 100, 51, 85, 96, 69, 97, 50, 105, 94,
+                58, 98, 92, 92, 96, 59, 63, 34, 81, 56, 50, 94, 74, 61, 40, 48, 72, 69, 86, 114, 59,
+                70, 83, 53, 67, 111, 110, 99, 112, 72, 100, 44, 80, 81, 65, 34, 56, 62, 55, 78, 86,
+                68, 59, 66, 91, 91, 91, 63, 83, 90, 71, 94, 91, 46, 69, 70, 99, 52, 86, 63, 88, 75,
+                55, 80, 97, 31, 40, 81, 92, 75, 30, 113, 83, 64, 98, 49, 51, 99, 102, 54, 57, 38,
+                67, 84, 75, 59, 75, 78, 93, 47, 89, 107, 77, 42, 63, 98, 45, 81, 81, 98, 39, 39, 44,
+                89, 72, 77, 99, 104, 84, 61, 105, 76, 80, 29, 66, 45, 88, 98, 54, 108, 89, 88, 54,
+                79, 91, 38, 85, 98, 42, 66, 41, 94, 55, 49, 94, 57, 67, 69, 75, 96, 87, 75, 97, 101,
+                52, 85, 76, 47, 53, 108, 61, 82, 61, 61, 64, 56, 88, 62, 54, 91, 54, 38, 37, 91, 65,
+                60, 60, 70, 102, 97, 71, 93, 85, 92, 52, 85, 61, 77, 63, 96, 71, 40, 51, 65, 69, 78,
+                65, 81, 56, 63, 68, 59, 43, 120, 77, 58, 57, 79, 90, 62, 47, 50, 76, 77, 87, 38,
+                102, 72, 66, 74, 84, 73, 70, 64, 88, 86, 73, 83, 82, 98, 98, 93, 100, 114, 111, 116,
+                121, 127, 132, 139, 148, 153, 160, 167, 174, 182, 190, 197, 205, 215, 224, 233, 244,
+                255, 265, 275, 287, 300, 313, 325, 339, 354, 368, 383, 397, 414, 429, 443, 455, 466,
+                472, 475, 474, 468, 458, 447, 434, 417, 402, 388, 373, 357, 343, 329, 316, 303, 291,
+                279, 269, 259, 248, 239, 230, 220, 212, 204, 196, 189, 181, 175, 168, 162, 154, 147,
+                143, 136, 128, 124, 120, 113, 104, 104, 98, 92, 86, 115, 96, 86, 112, 77, 92, 88,
+                82, 79, 104, 49, 97, 73, 58, 68, 80, 84, 68, 78, 46, 74, 88, 81, 110, 80, 82, 89,
+                83, 50, 62, 64, 97, 58, 48, 66, 47, 53, 38, 108, 94, 88, 116, 66, 103, 85, 41, 63,
+                81, 58, 118, 50, 110, 93, 52, 43, 74, 42, 89, 71, 66, 50, 73, 89, 119, 86, 57, 100,
+                55, 79, 71, 75, 90, 47, 86, 79, 110, 99, 87, 79, 87, 63, 76, 73, 62, 98, 107, 89,
+                80, 90, 71, 44, 46, 50, 41, 66, 109, 47, 97, 70, 77, 75, 103, 120, 69, 67, 92, 90,
+                81, 54, 95, 97, 86, 83, 71, 48, 53, 95, 62, 51, 85, 59, 71, 90, 63, 69, 108, 72, 75,
+                25, 116, 60, 51, 90, 84, 74, 43, 88, 83, 60, 99, 86, 61, 72, 82, 77, 80, 64, 84,
+                101, 108, 57, 107, 92, 77, 62, 81, 74, 69, 50, 46, 56, 51, 79, 49, 34, 101, 76, 55,
+                111, 103, 92, 109, 123, 74, 50, 68, 56, 79, 43, 55, 43, 111, 46, 76, 103, 85, 70,
+                53, 70, 88, 54, 117, 78, 85, 57, 72, 88, 89, 58, 98, 55, 68, 77, 71, 56, 75, 44, 53,
+                76, 95, 81, 48, 40, 84, 38, 84, 110, 82, 67, 114, 79, 40, 52, 102, 103, 85, 80, 108,
+                86, 40, 123, 66, 86, 93, 83, 78, 42, 74, 33, 79, 55, 67, 111, 77, 61, 89, 58, 89,
+                103, 77, 77, 62, 57, 61, 54, 30]
+
+        expected_data = [-82.0, -79.83, -84.83, -77.83, -75.0, -76.33, -80.67, -82.0, -75.5, -77.0,
+                         -80.17, -72.83, -77.0, -77.33, -74.67, -81.33, -80.5, -78.0, -82.0, -76.33,
+                         -72.0, -79.5, -81.33, -76.83, -82.67, -75.33, -74.17, -73.5, -77.67,
+                         -76.83, -79.5, -73.33, -81.5, -75.83, -74.0, -78.5, -73.83, -81.67, -72.5,
+                         -74.33, -80.33, -73.67, -74.67, -74.67, -74.0, -80.17, -79.5, -84.33,
+                         -76.5, -80.67, -81.67, -74.33, -77.67, -79.83, -83.33, -82.0, -78.0, -78.5,
+                         -75.67, -71.0, -80.17, -78.33, -76.17, -81.17, -78.83, -71.5, -71.67,
+                         -73.5, -71.33, -78.0, -73.33, -82.67, -76.67, -76.5, -79.17, -84.33,
+                         -80.67, -79.67, -80.83, -77.0, -75.67, -78.67, -80.17, -79.0, -74.83,
+                         -74.83, -74.83, -79.5, -76.17, -75.0, -78.17, -74.33, -74.83, -82.33,
+                         -78.5, -78.33, -73.5, -81.33, -75.67, -79.5, -75.33, -77.5, -80.83, -76.67,
+                         -73.83, -84.83, -83.33, -76.5, -74.67, -77.5, -85.0, -71.17, -76.17,
+                         -79.33, -73.67, -81.83, -81.5, -73.5, -73.0, -81.0, -80.5, -83.67, -78.83,
+                         -76.0, -77.5, -80.17, -77.5, -77.0, -74.5, -82.17, -75.17, -72.17, -77.17,
+                         -83.0, -79.5, -73.67, -82.5, -76.5, -76.5, -73.67, -83.5, -83.5, -82.67,
+                         -75.17, -78.0, -77.17, -73.5, -72.67, -76.0, -79.83, -72.5, -77.33, -76.67,
+                         -85.17, -79.0, -82.5, -75.33, -73.67, -81.0, -72.0, -75.17, -75.33, -81.0,
+                         -76.83, -74.83, -83.67, -75.83, -73.67, -83.0, -79.0, -83.17, -74.33,
+                         -80.83, -81.83, -74.33, -80.5, -78.83, -78.5, -77.5, -74.0, -75.5, -77.5,
+                         -73.83, -73.17, -81.33, -75.83, -77.33, -82.17, -81.17, -72.0, -79.83,
+                         -76.33, -79.83, -79.83, -79.33, -80.67, -75.33, -79.67, -81.0, -74.83,
+                         -81.0, -83.67, -83.83, -74.83, -79.17, -80.0, -80.0, -78.33, -73.0, -73.83,
+                         -78.17, -74.5, -75.83, -74.67, -81.33, -75.83, -79.83, -77.17, -79.5,
+                         -74.0, -78.17, -83.33, -81.5, -79.17, -78.5, -77.0, -79.17, -76.5, -80.67,
+                         -79.5, -78.67, -80.17, -82.83, -70.0, -77.17, -80.33, -80.5, -76.83, -75.0,
+                         -79.67, -82.17, -81.67, -77.33, -77.17, -75.5, -83.67, -73.0, -78.0, -79.0,
+                         -77.67, -76.0, -77.83, -78.33, -79.33, -75.33, -75.67, -77.83, -76.17,
+                         -76.33, -73.67, -73.67, -74.5, -73.33, -71.0, -71.5, -70.67, -69.83,
+                         -68.83, -68.0, -66.83, -65.33, -64.5, -63.33, -62.17, -61.0, -59.67,
+                         -58.33, -57.17, -55.83, -54.17, -52.67, -51.17, -49.33, -47.5, -45.83,
+                         -44.17, -42.17, -40.0, -37.83, -35.83, -33.5, -31.0, -28.67, -26.17,
+                         -23.83, -21.0, -18.5, -16.17, -14.17, -12.33, -11.33, -10.83, -11.0, -12.0,
+                         -13.67, -15.5, -17.67, -20.5, -23.0, -25.33, -27.83, -30.5, -32.83, -35.17,
+                         -37.33, -39.5, -41.5, -43.5, -45.17, -46.83, -48.67, -50.17, -51.67,
+                         -53.33, -54.67, -56.0, -57.33, -58.5, -59.83, -60.83, -62.0, -63.0, -64.33,
+                         -65.5, -66.17, -67.33, -68.67, -69.33, -70.0, -71.17, -72.67, -72.67,
+                         -73.67, -74.67, -75.67, -70.83, -74.0, -75.67, -71.33, -77.17, -74.67,
+                         -75.33, -76.33, -76.83, -72.67, -81.83, -73.83, -77.83, -80.33, -78.67,
+                         -76.67, -76.0, -78.67, -77.0, -82.33, -77.67, -75.33, -76.5, -71.67,
+                         -76.67, -76.33, -75.17, -76.17, -81.67, -79.67, -79.33, -73.83, -80.33,
+                         -82.0, -79.0, -82.17, -81.17, -83.67, -72.0, -74.33, -75.33, -70.67, -79.0,
+                         -72.83, -75.83, -83.17, -79.5, -76.5, -80.33, -70.33, -81.67, -71.67,
+                         -74.5, -81.33, -82.83, -77.67, -83.0, -75.17, -78.17, -79.0, -81.67,
+                         -77.83, -75.17, -70.17, -75.67, -80.5, -73.33, -80.83, -76.83, -78.17,
+                         -77.5, -75.0, -82.17, -75.67, -76.83, -71.67, -73.5, -75.5, -76.83, -75.5,
+                         -79.5, -77.33, -77.83, -79.67, -73.67, -72.17, -75.17, -76.67, -75.0,
+                         -78.17, -82.67, -82.33, -81.67, -83.17, -79.0, -71.83, -82.17, -73.83,
+                         -78.33, -77.17, -77.5, -72.83, -70.0, -78.5, -78.83, -74.67, -75.0, -76.5,
+                         -81.0, -74.17, -73.83, -75.67, -76.17, -78.17, -82.0, -81.17, -74.17,
+                         -79.67, -81.5, -75.83, -80.17, -78.17, -75.0, -79.5, -78.5, -72.0, -78.0,
+                         -77.5, -85.83, -70.67, -80.0, -81.5, -75.0, -76.0, -77.67, -82.83, -75.33,
+                         -76.17, -80.0, -73.5, -75.67, -79.83, -78.0, -76.33, -77.17, -76.67,
+                         -79.33, -76.0, -73.17, -72.0, -80.5, -72.17, -74.67, -77.17, -79.67, -76.5,
+                         -77.67, -78.5, -81.67, -82.33, -80.67, -81.5, -76.83, -81.83, -84.33,
+                         -73.17, -77.33, -80.83, -71.5, -72.83, -74.67, -71.83, -69.5, -77.67,
+                         -81.67, -78.67, -80.67, -76.83, -82.83, -80.83, -82.83, -71.5, -82.33,
+                         -77.33, -72.83, -75.83, -78.33, -81.17, -78.33, -75.33, -81.0, -70.5,
+                         -77.0, -75.83, -80.5, -78.0, -75.33, -75.17, -80.33, -73.67, -80.83,
+                         -78.67, -77.17, -78.17, -80.67, -77.5, -82.67, -81.17, -77.33, -74.17,
+                         -76.5, -82.0, -83.33, -76.0, -83.67, -76.0, -71.67, -76.33, -78.83, -71.0,
+                         -76.83, -83.33, -81.33, -73.0, -72.83, -75.83, -76.67, -72.0, -75.67,
+                         -83.33, -69.5, -79.0, -75.67, -74.5, -76.17, -77.0, -83.0, -77.67, -84.5,
+                         -76.83, -80.83, -78.83, -71.5, -77.17, -79.83, -75.17, -80.33, -75.17,
+                         -72.83, -77.17, -77.17, -79.67, -80.5, -79.83, -81.0, -85.0]
         with expected_protocol(
                 HP856Xx,
-                [(cmd + " %s" % ','.join([str(i) for i in data]), None),
-                 (cmd + "?", ','.join([str(i) for i in data]))]
+                [
+                    ("TDF M", None),
+                    ("AUNITS?", "DBM"),
+                    ("RL?", "10.0"),
+                    ("LG?", "10.0"),
+                    (cmd + "?", ','.join([str(i) for i in data]))
+                ]
         ) as instr:
-            setattr(instr, function, data)
-            assert getattr(instr, function) == data
+            assert getattr(instr, function)() == expected_data
 
     def test_fft_trace_window(self):
         with expected_protocol(
                 HP856Xx,
                 [("TWNDOW TRA,FLATTOP", None)]
         ) as instr:
-            instr.fft_trace_window(Trace.A, WindowType.Flattop)
+            instr.create_fft_trace_window(Trace.A, WindowType.Flattop)
 
     @pytest.mark.parametrize("str_param", ["ON", "OFF"])
     def test_video_average(self, str_param):
@@ -963,7 +1005,7 @@ class TestHP8560A:
                 HP8560A,
                 [("SRCTKPK", None)]
         ) as instr:
-            instr.source_peak_tracking()
+            instr.activate_source_peak_tracking()
 
 
 class TestHP8561B:
@@ -992,7 +1034,7 @@ class TestHP8561B:
                 HP8561B,
                 [("FULLBAND K", None)]
         ) as instr:
-            instr.fullband("K")
+            instr.set_fullband("K")
 
     def test_fullband_exceptions(self):
         with expected_protocol(
@@ -1000,10 +1042,10 @@ class TestHP8561B:
                 []
         ) as instr:
             with pytest.raises(TypeError):
-                instr.fullband(1)
+                instr.set_fullband(1)
 
             with pytest.raises(ValueError):
-                instr.fullband("Z")
+                instr.set_fullband("Z")
 
     @pytest.mark.parametrize("string_params", ["ON", "OFF"])
     def test_harmonic_number_lock(self, string_params):
@@ -1020,9 +1062,9 @@ class TestHP8561B:
     @pytest.mark.parametrize(
         "function, command",
         [
-            ("harmonic_number_unlock", "HUNLK"),
-            ("signal_identification_to_center_frequency", "IDCF"),
-            ("preselector_peak", "PP")
+            ("unlock_harmonic_number", "HUNLK"),
+            ("set_signal_identification_to_center_frequency", "IDCF"),
+            ("peak_preselector", "PP")
         ]
     )
     def test_primitive_commands(self, command, function):
