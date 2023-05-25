@@ -89,6 +89,7 @@ class AdvantestQ8381(Instrument):
     level_scale = Instrument.control(
         'LVS?', "LVS %s", 
         "Current Level Scale",
+        validator=strict_discrete_set,
         values=["LOG", "LIN"]
     )
 

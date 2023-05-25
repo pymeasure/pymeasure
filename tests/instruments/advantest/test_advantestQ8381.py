@@ -130,3 +130,23 @@ def test_level_scale():
         # test any other value is invalid
         with pytest.raises(ValueError):
             instr.level_scale = "DUMMY"
+
+
+def test_level_lin():
+    with expected_protocol(
+        AdvantestQ8381,
+        [("LIN 0.000001", None),
+         ("LIN?", "0.000001"),
+         ("LIN 1.000000", None),
+         ("LIN?", "1.000000"),
+         ("LIN 0.000000", None)]
+
+    ) as inst:
+        instr = inst    # type: AdvantestQ8381
+        instr.level_lin = 1e-6
+        assert instr.level_lin == 1e-6
+        instr.level_lin = 1
+        assert instr.level_lin == 1
+        instr.level_lin = 1e-13
+
+
