@@ -102,6 +102,17 @@ def test_y_position():
         inst.y_position = 20000
 
 
+def test_xy_position():
+    """Verify the xy's position control of the main chuck of the probe station."""
+    with expected_protocol(
+            S200,
+            [("PSS XY", "PSS 20000,30000"),
+             ("GTXY 15000,30000", "INF 000")],
+    ) as inst:
+        assert inst.xy_position == [20000, 30000]
+        inst.xy_position = (15000, 30000)
+
+
 def test_x_index():
     """Verify the x's index control of the main chuck of the probe station."""
     with expected_protocol(

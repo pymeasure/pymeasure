@@ -37,10 +37,18 @@ class S200(Instrument):
     and provides a high-level for interacting with the instrument
     """
 
+    # Movement boundaries of the Pegassus S200 chuck
+    S200_MAX_X = 210000  # in microns
+    S200_MAX_Y = 210000  # in microns
+    S200_MIN_X = 1100  # in microns
+    S200_MIN_Y = 1100  # in microns
+
     Z_OVERTRAVEL_VALID_RANGE = [0, 100]  # in microns
     Z_FINELIFT_VALID_RANGE = [0, 10000]  # in microns
     Z_GROSSLIFT_VALID_RANGE = [0, 100000]  # in microns
     X_Y_INDEX_VALID_RANGE = [0, 10000]  # in tens of microns
+    X_POS_VALID_RANGE = [S200_MIN_X, S200_MAX_X]  # in tens of microns
+    Y_POS_VALID_RANGE = [S200_MIN_Y, S200_MAX_Y]  # in tens of microns
 
     def __init__(self,
                  adapter,
@@ -112,6 +120,8 @@ class S200(Instrument):
     x_position = Instrument.control(
         "PSS X", "GTS X,%d",
         "Control the x-axis position in microns",
+        validator=strict_range,
+        values=X_POS_VALID_RANGE,
         get_process=lambda r:
         int(r.replace("PSS ", "")),
         check_set_errors=True
@@ -120,8 +130,21 @@ class S200(Instrument):
     y_position = Instrument.control(
         "PSS Y", "GTS Y,%d",
         "Control the y-axis position in microns",
+        validator=strict_range,
+        values=Y_POS_VALID_RANGE,
         get_process=lambda r:
         int(r.replace("PSS ", "")),
+        check_set_errors=True
+    )
+
+    xy_position = Instrument.control(
+        "PSS XY", "GTXY %d,%d",
+        "Control the xy-axis position in microns",
+        # validator=strict_range,
+        # values=X_POS_VALID_RANGE,
+        separator=" ",
+        get_process=lambda r:
+        [int(numeric_string) for numeric_string in r[1].split(",", maxsplit=1)],
         check_set_errors=True
     )
 
@@ -249,6 +272,13 @@ class S200(Instrument):
         "Measures the extended status information of the instrument",
         get_process=lambda r:
         r
+    )
+
+    exit_remote = Instrument.setting(
+        "ESC",
+        "Sets the proble table in local mode. Exits remote mode."
+        # This command does not send a reply. However, when remote mode is re-entered,
+        # the Pegasus unit sends an INF_000 message
     )
 
     serial_number = Instrument.measurement(
