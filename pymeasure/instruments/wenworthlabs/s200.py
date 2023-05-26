@@ -26,7 +26,7 @@ from enum import IntEnum
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_discrete_range, \
-    strict_range
+    strict_range, multivalue_strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -140,8 +140,8 @@ class S200(Instrument):
     xy_position = Instrument.control(
         "PSS XY", "GTXY %d,%d",
         "Control the xy-axis position in microns",
-        # validator=strict_range,
-        # values=X_POS_VALID_RANGE,
+        validator=multivalue_strict_range,
+        values=X_POS_VALID_RANGE,
         separator=" ",
         get_process=lambda r:
         [int(numeric_string) for numeric_string in r[1].split(",", maxsplit=1)],
