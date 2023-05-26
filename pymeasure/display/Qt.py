@@ -24,7 +24,7 @@
 
 import logging
 
-from pyqtgraph.Qt import QtGui, QtCore, loadUiType
+from pyqtgraph.Qt import QtWidgets, QtCore, loadUiType, QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,6 +45,6 @@ def fromUi(*args, **kwargs):
     form.retranslateUi(widget)
     for name in dir(form):
         element = getattr(form, name)
-        if isinstance(element, QtGui.QWidget):
+        if isinstance(element, QtWidgets.QWidget):
             setattr(widget, name, element)
     return widget

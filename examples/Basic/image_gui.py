@@ -16,7 +16,7 @@ from pymeasure.experiment import Results, unique_filename
 from pymeasure.experiment import Procedure
 from pymeasure.display.windows import ManagedImageWindow  # new ManagedWindow class
 from pymeasure.experiment import FloatParameter
-from pymeasure.display.Qt import QtGui
+from pymeasure.display.Qt import QtWidgets
 
 import logging
 log = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ class TestImageGUI(ManagedImageWindow):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     window = TestImageGUI()
     window.show()
     sys.exit(app.exec_())

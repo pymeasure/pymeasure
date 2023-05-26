@@ -25,7 +25,7 @@
 # import pytest
 # from unittest import mock
 
-# from pymeasure.display.Qt import QtGui, QtCore
+# from pymeasure.display.Qt import QtWidgets, QtCore
 # from pymeasure.display.windows import ManagedWindow
 # from pymeasure.experiment.procedure import Procedure
 
@@ -38,12 +38,12 @@
 #     @mock.patch('pymeasure.display.windows.InputsWidget')
 #     @mock.patch('pymeasure.display.windows.BrowserWidget')
 #     @mock.patch('pymeasure.display.windows.PlotWidget')
-#     @mock.patch('pymeasure.display.windows.QtGui')
+#     @mock.patch('pymeasure.display.windows.QtWidgets')
 #     @mock.patch.object(ManagedWindow, 'setCentralWidget')
 #     @mock.patch.object(ManagedWindow, 'addDockWidget')
 #     @mock.patch.object(ManagedWindow, 'setup_plot')
 #     def test_setup_plot_called_on_init(self, mock_sp, mock_a, mock_b,
-#             MockQtGui, MockPlotWidget, MockBrowserWidget, MockInputsWidget,
+#             MockQtWidgets, MockPlotWidget, MockBrowserWidget, MockInputsWidget,
 #             MockManager, qtbot):
 #         mock_procedure = mock.MagicMock(spec=Procedure)
 #         w = ManagedWindow(mock_procedure)

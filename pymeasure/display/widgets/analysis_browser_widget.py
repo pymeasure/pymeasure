@@ -25,14 +25,14 @@
 import logging
 
 from ..browser import AnalysisBrowser, AnalysisBrowserItem
-from ..Qt import QtGui, QtCore
+from ..Qt import QtWidgets, QtCore, QtWidgets
 from ..manager import AnalyzerManager, Analysis
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AnalysisBrowserWidget(QtGui.QWidget):
+class AnalysisBrowserWidget(QtWidgets.QWidget):
     """
     Widget wrapper for :class:`AnalysisBrowser<pymeasure.display.browser.AnalysisBrowser>` class
     """
@@ -46,9 +46,9 @@ class AnalysisBrowserWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.analysis_browser = AnalysisBrowser(*self.browser_args, parent=self)
-        self.abort_button = QtGui.QPushButton('Abort Analysis', self)
+        self.abort_button = QtWidgets.QPushButton('Abort Analysis', self)
         self.abort_button.setEnabled(False)
-        self.continue_button = QtGui.QPushButton('Continue Analysis', self)
+        self.continue_button = QtWidgets.QPushButton('Continue Analysis', self)
         self.continue_button.setEnabled(False)
 
         self.abort_button.clicked.connect(self.abort_analysis)
@@ -68,13 +68,13 @@ class AnalysisBrowserWidget(QtGui.QWidget):
         self.analysis_manager.finished_am.connect(self.finished)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
-        label = QtGui.QLabel(self)
+        label = QtWidgets.QLabel(self)
         label.setText("Analysis Queue")
         hbox.addWidget(label)
         hbox.addWidget(self.continue_button)

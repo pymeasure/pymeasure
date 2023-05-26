@@ -25,7 +25,7 @@
 # import pytest
 # from unittest import mock
 
-# from pymeasure.display.Qt import QtGui, QtCore
+# from pymeasure.display.Qt import QtWidgets, QtCore
 # from pymeasure.display.plotter import Plotter
 # from pymeasure.experiment.results import Results
 
@@ -34,9 +34,9 @@
 #     # TODO: More thorough unit (or integration?) tests.
 #
 #     @mock.patch('pymeasure.display.plotter.PlotterWindow')
-#     @mock.patch('pymeasure.display.plotter.QtGui')
+#     @mock.patch('pymeasure.display.plotter.QtWidgets')
 #     @mock.patch.object(Plotter, 'setup_plot')
-#     def test_setup_plot_called_on_init(self, mock_sp, MockQtGui, MockPlotterWindow):
+#     def test_setup_plot_called_on_init(self, mock_sp, MockQtWidgets, MockPlotterWindow):
 #         r = mock.MagicMock(spec=Results)
 #         mockplot = mock.MagicMock()
 #         MockPlotterWindow.return_value = mock.MagicMock(plot=mockplot)

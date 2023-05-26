@@ -27,7 +27,7 @@ import platform
 import os
 
 from ..browser import Browser
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from ..manager import Manager
 from pymeasure.display.widgets.results_dialog import ResultsDialog
 from pymeasure.experiment.results import Results
@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserWidget(QtGui.QWidget):
+class BrowserWidget(QtWidgets.QWidget):
     """
     Widget wrapper for :class:`Browser<pymeasure.display.browser.Browser>` class
     """
@@ -51,15 +51,15 @@ class BrowserWidget(QtGui.QWidget):
 
     def _setup_ui(self):
         self.browser = Browser(*self.browser_args, parent=self)
-        self.clear_button = QtGui.QPushButton('Clear all', self)
+        self.clear_button = QtWidgets.QPushButton('Clear all', self)
         self.clear_button.setEnabled(False)
-        self.clear_unfinished_button = QtGui.QPushButton('Clear unfinished', self)
+        self.clear_unfinished_button = QtWidgets.QPushButton('Clear unfinished', self)
         self.clear_unfinished_button.setEnabled(False)
-        self.hide_button = QtGui.QPushButton('Hide all', self)
+        self.hide_button = QtWidgets.QPushButton('Hide all', self)
         self.hide_button.setEnabled(False)
-        self.show_button = QtGui.QPushButton('Show all', self)
+        self.show_button = QtWidgets.QPushButton('Show all', self)
         self.show_button.setEnabled(False)
-        self.open_button = QtGui.QPushButton('Open', self)
+        self.open_button = QtWidgets.QPushButton('Open', self)
         self.open_button.setEnabled(True)
 
         self.manager = Manager(self._parent.widget_list,
@@ -80,15 +80,15 @@ class BrowserWidget(QtGui.QWidget):
         self.clear_unfinished_button.clicked.connect(self.clear_unfinished)
         self.open_button.clicked.connect(self.open_experiment)
 
-        self.browser.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.browser.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self.browser.itemChanged.connect(self.browser_item_changed)
         self.browser.customContextMenuRequested.connect(self.browser_item_menu)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.show_button)
@@ -124,24 +124,24 @@ class BrowserWidget(QtGui.QWidget):
         if item is not None:
             experiment = self.manager.experiments.with_browser_item(item)
 
-            menu = QtGui.QMenu(self)
+            menu = QtWidgets.QMenu(self)
 
             # Open
-            action_open = QtGui.QAction(menu)
+            action_open = QtWidgets.QAction(menu)
             action_open.setText("Open Data Externally")
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
             # Change Color
-            action_change_color = QtGui.QAction(menu)
+            action_change_color = QtWidgets.QAction(menu)
             action_change_color.setText("Change Color")
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
             menu.addAction(action_change_color)
 
             # Remove
-            action_remove = QtGui.QAction(menu)
+            action_remove = QtWidgets.QAction(menu)
             action_remove.setText("Remove Graph")
             if self.manager.is_running():
                 if self.manager.running_experiment() == experiment:  # Experiment running
@@ -150,7 +150,7 @@ class BrowserWidget(QtGui.QWidget):
             menu.addAction(action_remove)
 
             # Use parameters
-            action_use = QtGui.QAction(menu)
+            action_use = QtWidgets.QAction(menu)
             action_use.setText("Use These Parameters")
             action_use.triggered.connect(
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
@@ -158,21 +158,21 @@ class BrowserWidget(QtGui.QWidget):
             menu.exec_(self.browser.viewport().mapToGlobal(position))
 
     def change_color(self, experiment):
-        color = QtGui.QColorDialog.getColor(
+        color = QtWidgets.QColorDialog.getColor(
             parent=self)
         if color.isValid():
-            pixelmap = QtGui.QPixmap(24, 24)
+            pixelmap = QtWidgets.QPixmap(24, 24)
             pixelmap.fill(color)
-            experiment.browser_item.setIcon(0, QtGui.QIcon(pixelmap))
+            experiment.browser_item.setIcon(0, QtWidgets.QIcon(pixelmap))
             for wdg, curve in zip(self._parent.widget_list, experiment.curve_list):
                 wdg.set_color(curve, color=color)
 
     def remove_experiment(self, experiment):
-        reply = QtGui.QMessageBox.question(self, 'Remove Graph',
+        reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
                                            "Are you sure you want to remove the graph?",
-                                           QtGui.QMessageBox.Yes |
-                                           QtGui.QMessageBox.No, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                           QtWidgets.QMessageBox.Yes |
+                                           QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
             self.manager.remove(experiment)
 
     def open_file_externally(self, filename):
@@ -228,7 +228,7 @@ class BrowserWidget(QtGui.QWidget):
             filenames = dialog.selectedFiles()
             for filename in map(str, filenames):
                 if filename in self.manager.experiments:
-                    QtGui.QMessageBox.warning(
+                    QtWidgets.QMessageBox.warning(
                         self, "Load Error",
                         "The file %s cannot be opened twice." % os.path.basename(filename)
                     )
