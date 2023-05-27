@@ -49,7 +49,7 @@ class Fpu60(Instrument):
 
     interlock_enabled = Instrument.measurement(
         "INTERLOCK?",
-        """Measure the interlock enabled status (bool).""",
+        """Get the interlock enabled status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
     )
