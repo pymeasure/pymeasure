@@ -1512,7 +1512,7 @@ class HP856Xx(Instrument):
     marker_frequency = Instrument.control(
         "MKF?", "MKF %.11E",
         """
-        Set an active marker on the chosen frequency or get the frequency of the active marker.
+        Control the frequency of the active marker.
         Default units are in Hertz.
 
         Type: :code:`float`
