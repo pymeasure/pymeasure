@@ -235,12 +235,12 @@ class TestHP856Xx:
             instr.display_line = string_params
             assert instr.display_line == 10
 
-    def test_done(self):
+    def test_check_done(self):
         with expected_protocol(
                 HP856Xx,
                 [("DONE?", "1")],
         ) as instr:
-            assert instr.done
+            instr.check_done()
 
     def test_errors(self):
         with expected_protocol(

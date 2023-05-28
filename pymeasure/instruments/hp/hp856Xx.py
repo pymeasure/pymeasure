@@ -736,12 +736,13 @@ class HP856Xx(Instrument):
 
         .. code-block:: python
 
-            instr.amplitude_unit = 'DBMV'
-            instr.amplitude_unit = AmplitudeUnits.DBMV
+            instr.amplitude_unit = 'dBmV'
+            instr.amplitude_unit = AmplitudeUnits.dBmV
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in AmplitudeUnits]
+        values=[str(e).upper() for e in AmplitudeUnits],
+        set_process=lambda v: str(v).upper()
     )
 
     def set_auto_couple(self):
@@ -1027,11 +1028,30 @@ class HP856Xx(Instrument):
             if instr.done:
                 do_something()
 
-        """,
-        map_values=True,
-        values={True: "1"},
-        cast=str
+        """
+
     )
+
+    def check_done(self):
+        """
+        Get back (e.g. return) when all commands in a command string
+        entered before 'done' has been completed. Sending a :meth:`trigger_sweep` command
+        before 'done' ensures that the spectrum analyzer will complete a full sweep before
+        continuing on in a program.
+        Depending on the timeout a timeout error from the adapter will raise before the spectrum
+        analyzer can finish due to an extreme long sweep time.
+
+        .. code-block:: python
+
+            instr.trigger_sweep()
+
+            # wait for a full sweep and than 'do_something'
+            instr.check_done()
+            do_something()
+
+        """
+        # no error checking because there is no possibility to return anything else than '1'
+        self.ask("DONE?")
 
     errors = Instrument.measurement(
         "ERR?",
@@ -1769,8 +1789,7 @@ class HP856Xx(Instrument):
     marker_time = Instrument.control(
         "MKT?", "MKT %gS",
         """
-        Control a marker and set it to a position that corresponds to a specified point in
-        time during the sweep. Default units are seconds.
+        Control the marker's time value. Default units are seconds.
 
         Type: :code:`float`
 
@@ -2573,7 +2592,7 @@ class HP856Xx(Instrument):
         values=[e for e in TriggerMode]
     )
 
-    def __get_trace_data(self, trace):
+    def _get_trace_data(self, trace):
         self.write("TDF M")
 
         amp_units = str(self.ask("AUNITS?"))
@@ -2618,7 +2637,7 @@ class HP856Xx(Instrument):
         The function returns the 601 data points as a list in the amplitude format.
         Right now it doesn't support the linear scaling due to the manual just being wrong.
         """
-        return self.__get_trace_data(Trace.A)
+        return self._get_trace_data(Trace.A)
 
     def get_trace_data_b(self):
         """
@@ -2627,7 +2646,7 @@ class HP856Xx(Instrument):
         The function returns the 601 data points as a list in the amplitude format.
         Right now it doesn't support the linear scaling due to the manual just being wrong.
         """
-        return self.__get_trace_data(Trace.B)
+        return self._get_trace_data(Trace.B)
 
     set_trace_data_a = Instrument.setting(
         "TDF P;TRA %s",
