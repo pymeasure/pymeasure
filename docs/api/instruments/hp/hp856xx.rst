@@ -26,7 +26,7 @@ General
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.threshold
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.set_title
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.status
-.. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.done
+.. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.check_done
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.request_service
 .. autoattribute:: pymeasure.instruments.hp.hp856Xx.HP856Xx.errors
 .. automethod:: pymeasure.instruments.hp.hp856Xx.HP856Xx.save_state
