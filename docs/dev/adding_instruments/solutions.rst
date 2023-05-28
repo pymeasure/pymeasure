@@ -16,7 +16,7 @@ General issues
 Communication protocol issues
 *****************************
 
-- The instrument answers every message, even a setting command. You can set the setting's :code:`check_set_errors = True` parameter and redefine :func:`check_errors` to read an answer, see :class:`hcp.TC038D <pymeasure.instruments.hcp.TC038D>`
+- The instrument answers every message, even a setting command. You can set the setting's :code:`check_set_errors = True` parameter and redefine :func:`check_set_errors` to read an answer, see :class:`hcp.TC038D <pymeasure.instruments.hcp.TC038D>`
 - Binary, frame-based communication, see :class:`hcp.TC038D <pymeasure.instruments.hcp.TC038D>`
 - All replies have the same length, see :class:`aja.DCXS <pymeasure.instruments.aja.DCXS>`
 - The device generates garbage messages at startup, cluttering the buffer, see :class:`aja.DCXS <pymeasure.instruments.aja.DCXS>`

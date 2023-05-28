@@ -5,6 +5,7 @@ New adapter and instrument mechanics
 - Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
 - All instruments are required to accept a :code:`name` argument.
 - Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+- The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
 
 Deprecated features
 -------------------
