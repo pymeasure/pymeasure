@@ -1788,8 +1788,7 @@ class HP856Xx(Instrument):
     marker_signal_tracking_enabled = Instrument.control(
         "MKTRACK?", "MKTRACK %s",
         """
-        Set the active marker activated and sets the center frequency to the
-        marker value.
+        Control whether the center frequency follows the active marker.
 
         This is done after every sweep, thus maintaining the marker value at the
         center frequency. This allows you to “zoom in” quickly from a wide span to a narrow one,
