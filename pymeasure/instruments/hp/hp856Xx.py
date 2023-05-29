@@ -36,12 +36,15 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class StrEnum(str, Enum):
-    """Until StrEnum is broadly available / pymeasure relies on python <=
-    3.10.x."""
+try:
+    from enum import StrEnum
+except ImportError:
+    class StrEnum(str, Enum):
+        """Until StrEnum is broadly available / pymeasure relies on python <=
+        3.10.x."""
 
-    def __str__(self):
-        return self.value
+        def __str__(self):
+            return self.value
 
 
 class WindowType(StrEnum):
