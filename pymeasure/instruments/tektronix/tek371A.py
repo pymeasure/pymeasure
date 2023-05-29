@@ -396,7 +396,7 @@ class Tektronix371A(Instrument):
 
     display_horizontal_source_sensitivity = Instrument.control(
         "HORiz?", "HORiz %s:%.1E",
-        """Control the horizontal source (COLLECT O STPGEN) and
+        """Control the horizontal source (COLLECT o STPGEN) and
         its sensitivity (volt/div) for the horizontal axis on the display.\n
         Use example: instrument.display_horizontal_source_sensitivity = ("COLLECT", 1.0)
         Use example: instrument.display_horizontal_source_sensitivity will return ['COLLECT', 1.0]
@@ -536,15 +536,15 @@ class Tektronix371A(Instrument):
                 f'You wanted {offset} {offset_units}\n'
             )
 
-        invert = False
-        if offset < 0:
-            invert = True
+        # invert = False
+        # if offset < 0:
+        #     invert = True
 
         multiplier = abs(offset) / stepgen_step_size
 
         self.stepgen_step_size_multiplier = multiplier
-        if not invert == self.stepgen_invert:
-            self.stepgen_invert = invert
+        # if not invert == self.stepgen_invert:
+        #     self.stepgen_invert = invert
 
     ################################################################################
     # MISCELLANEOUS COMMANDS AND QUERIES
