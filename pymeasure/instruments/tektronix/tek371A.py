@@ -1031,8 +1031,6 @@ class Tektronix371A(Instrument):
                         signed=False
                     ) - waveform_preamble.horizontal_offset
 
-                    coord_x = max(coord_x, 0)
-
                     coord_y = int.from_bytes(self.raw_points_coordinates
                                              [i + self.n_bytes_for_x_coordinate:
                                               i + self.n_bytes_for_x_coordinate +
@@ -1040,7 +1038,6 @@ class Tektronix371A(Instrument):
                                              byteorder="big",
                                              signed=False
                                              ) - waveform_preamble.vertical_offset
-                    coord_y = max(coord_y, 0)
 
                     self.points_coordinates.append((coord_x, coord_y))
                     self.points.append((coord_x * waveform_preamble.x_scale_factor,
