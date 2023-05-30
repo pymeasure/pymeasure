@@ -69,8 +69,9 @@ def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format=
     """
     now = datetime.now()
 
-    parameters = procedure.parameter_objects()
+    parameters = procedure.placeholder_objects()
     placeholders = {param.name: param.value for param in parameters.values()}
+    placeholders.update({varname: param.value for varname, param in parameters.items()})
 
     placeholders["date"] = now.strftime(date_format)
     placeholders["time"] = now.strftime(time_format)

@@ -245,6 +245,21 @@ class Procedure:
         """
         return self._metadata
 
+    def placeholder_objects(self):
+        """ Collect all elegible placeholders (parameters & metadata) with their value into a dictionairy
+        """
+        return {**self.parameter_objects(), **self.metadata_objects()}
+
+    @classmethod
+    def placeholder_names(cls):
+        """ Collect the names of all elegible placeholders (parameters & metadata)"""
+        placeholders = []
+        for name, item in inspect.getmembers(cls):
+            if isinstance(item, Metadata) or isinstance(item, Parameter):
+                placeholders.extend([name, item.name])
+
+        return list(set(placeholders))
+
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
         """
