@@ -536,15 +536,10 @@ class Tektronix371A(Instrument):
                 f'You wanted {offset} {offset_units}\n'
             )
 
-        # invert = False
-        # if offset < 0:
-        #     invert = True
-
         multiplier = abs(offset) / stepgen_step_size
-
         self.stepgen_step_size_multiplier = multiplier
-        # if not invert == self.stepgen_invert:
-        #     self.stepgen_invert = invert
+        if self.stepgen_invert and offset>0:
+            self.stepgen_invert = False
 
     ################################################################################
     # MISCELLANEOUS COMMANDS AND QUERIES
