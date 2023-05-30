@@ -538,7 +538,7 @@ class Tektronix371A(Instrument):
 
         multiplier = abs(offset) / stepgen_step_size
         self.stepgen_step_size_multiplier = multiplier
-        if self.stepgen_invert and offset>0:
+        if self.stepgen_invert and offset > 0:
             self.stepgen_invert = False
 
     ################################################################################
