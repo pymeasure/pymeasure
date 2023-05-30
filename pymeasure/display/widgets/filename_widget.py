@@ -38,3 +38,30 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+
+        placeholders = parent.procedure_class.placeholder_names()
+        completer = PlaceholderCompleter(placeholders)
+        self.setCompleter(completer)
+
+
+class PlaceholderCompleter(QtWidgets.QCompleter):
+
+    def __init__(self, placeholders):
+        super().__init__()
+        self.placeholders = placeholders
+
+        self.setCompletionMode(QtWidgets.QCompleter.CompletionMode.PopupCompletion)
+        self.setModelSorting(QtWidgets.QCompleter.ModelSorting.CaseInsensitivelySortedModel)
+        self.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.setFilterMode(QtCore.Qt.MatchContains)
+
+    def splitPath(self, path):
+        if path.endswith('{'):
+            options = [path + placeholder for placeholder in self.placeholders]
+            model = QtCore.QStringListModel(options)
+            self.setModel(model)
+        elif path.count("{") == path.count("}"):
+            # Clear the autocomplete options
+            self.setModel(QtCore.QStringListModel())
+
+        return [path]
