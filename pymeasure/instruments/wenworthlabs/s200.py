@@ -22,14 +22,15 @@
 # THE SOFTWARE.
 #
 import logging
+import time
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_discrete_range, \
-    strict_range, multivalue_strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import multivalue_strict_range
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+#log.addHandler(logging.NullHandler())
 
 
 class S200(Instrument):
@@ -53,20 +54,25 @@ class S200(Instrument):
     def __init__(self,
                  adapter,
                  name="Wentworth Labs S200 Probe Table",
-                 query_delay=0.1,
-                 write_delay=0.1,
+                 write_termination="\n",
+                 read_termination="\n",
+                 query_delay=0.5,
+                 write_delay=0.5,
                  timeout=5000,
                  **kwargs):
         super().__init__(
             adapter,
             name,
-            write_termination="\n",
-            read_termination="\n",
+            write_termination=write_termination,
+            read_termination=read_termination,
             send_end=True,
             includeSCPI=True,
             timeout=timeout,
             **kwargs
         )
+        self.write_delay = write_delay
+        self.query_delay = query_delay
+        self.last_write_timestamp = 0.0
         self.command_execution_info = S200.ExecutionInfoCode(0)
 
     chuck_lift = Instrument.setting(
@@ -233,6 +239,19 @@ class S200(Instrument):
         values={True: 'NXT', False: 'NXF'},
         map_values=True,
         check_set_errors=True
+    )
+
+    next_die = Instrument.setting(
+        "NX%s",
+        "Moves to the next die",
+        # If probe_table.next_die = "D" then it will go below the current die
+        # If probe_table.next_die = "U" then it will go above the current die
+        # If probe_table.next_die = "L" then it will go to the left of the current die
+        # If probe_table.next_die = "R" then it will go to the right of the current die
+        # AWP compatible: Yes
+        check_set_errors=True,
+        validator=strict_discrete_set,
+        values=['D', 'U', 'L', 'R']
     )
 
     next_die_down = Instrument.setting(
@@ -498,3 +517,21 @@ class S200(Instrument):
         INKER_LIFT_ERROR = 900
         PREVIOUS_DEVICE_FINISH_TEST_SIGNAL_HAS_NOT_ASSERTED = 901
         CURRENT_DEVICE_FINISH_TEST_SIGNAL_HAS_NOT_ASSERTED = 902
+
+    # Wrapper functions for the Adapter object
+    def write(self, command, **kwargs):
+        """Overrides Instrument write method for including write_delay time after the parent call.
+
+        :param command: command string to be sent to the instrument
+        """
+        actual_write_delay = time.time() - self.last_write_timestamp
+        time.sleep(max(0, self.write_delay - actual_write_delay))
+        super().write(command, **kwargs)
+        self.last_write_timestamp = time.time()
+
+    def ask(self, command):
+        """ Overrides Instrument ask method for including query_delay time on parent call.
+        :param command: Command string to be sent to the instrument.
+        :returns: String returned by the device without read_termination.
+        """
+        return super().ask(command, self.query_delay)
