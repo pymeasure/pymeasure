@@ -7,12 +7,6 @@ Main items of this new release:
 - Tests for all instruments have been added
 - Many additions, improvements and bug fixes have been merged
 
-New adapter and instrument mechanics
-------------------------------------
-- Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
-- All instruments are required to accept a :code:`name` argument.
-- Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
-- The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
 
 Deprecated features
 -------------------
@@ -24,30 +18,14 @@ Deprecated features
 - The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
 - The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate.
 
-Instruments
------------
-- New Teledyne (LeCroy) T3DSO1204 Oscilloscope (@LastStartDust, #697, @bilderbuchi, #770)
-- New MKS Instruments 937B vacuum gauge controller (@dkriegner, #637, @bilderbuchi, #772)
-- New Anritus MS2090A (@aruznieto, #787)
-- New Keysight E36312A power supply (@scandey, #785)
-- New Keithley 2200 power supply (@ashokbruno, #806)
-- New Lake Shore 211 Temperature Monitor (@mcdo0486, #889)
-- New Novanta FPU60 laser power supply unit (@bmoneke, #885)
-- New Teledyne T3AFG waveform generator instrument (@scandey, #791)
-- New T&C Power Conversion RF power supply (@dkriegner, #800)
-- New Advantest R624X DC Voltage/Current Sources/Monitors (@wichers, #802)
-- New AJA International DC sputtering power supply (@dkriegner, #778)
-- New Velleman K8090 relay device (@RobertoRoos, #859)
-- New Lakeshore 224 and improves Lakeshore instruments (@samcondon4, #870)
-- New IPG Photonics YAR Amplifier series (@bmoneke, #851)
-- New DSP 7225 and new DSPBase instrument (@mcdo0486, #902)
-- New Anritsu MS4644B (@CasperSchippers, #827)
-- Channels added to instruments (@bmoneke, #718, #852)
-- Improves Siglent SPDxxxxX with the new channels (@AidenDawn 758)
-- Improves Agilent 33500 with the new channels (@JCarl-OS, #763, #773)
-- Improves the Oxford instruments with the new channels (@bmoneke, #844)
-- Improves HP3478A with calibration data related functions (@tomverbeure, #777)
-- Improves HP 34401A (@CodingMarco, #810)
+New adapter and instrument mechanics
+------------------------------------
+- Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
+- All instruments are required to accept a :code:`name` argument.
+- Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+- The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
+
+- Channels added to instruments (@bmoneke, #718, #852, #761)
 - Adds maxsplit parameter to values (@bmoneke, #793)
 - Drops superfluous str conversion in values (@bmoneke, #803)
 - Improves property creator docstrings (@bmoneke, #843)
@@ -73,21 +51,40 @@ Instruments
 - Adds "find all instruments" and channels for testing (@bmoneke, #909)
 - Improves find all instruments by searching files not modules (@mcdo0486, #911, #912)
 - Improves channels test coverage (@bmoneke, #788)
-- Improves Teledyne T3DSO1204 device tests (@LastStarDust, #841)
-- Fixes a frequency limitation in HP 8657B (@LongnoseRob, #769)
 - Fixes query_delay usage in VISAAdapter (@bmoneke, #765)
-- Fixes Keithley 2600 channel calling parent's shutdown (@mcdo0486, #795)
-- Fixes DSP 7265 using erroneously preproces_reply (@mcdo0486, #873)
-- Fixes Fluke bath commands (@bmoneke, #874)
-- Fixes print statement in DSPBase.sensitivity (@mcdo0486, #915)
 - Harmonises instrument name definition pattern, consistently name the instrument connection argument "adapter" (@bmoneke, #659)
 - Improves all instruments with name kwarg (@bmoneke, #877)
 - Removes Toptica adapter (@bmoneke, #819)
 
-
-Additional PRs for the channels
--------------------------------
-- Fixes broken method resolution order of the ChannelCreator (@bmoneke, #761)
+Instruments
+-----------
+- New Advantest R624X DC Voltage/Current Sources/Monitors (@wichers, #802)
+- New AJA International DC sputtering power supply (@dkriegner, #778)
+- New Anritus MS2090A (@aruznieto, #787)
+- New Anritsu MS4644B (@CasperSchippers, #827)
+- New DSP 7225 and new DSPBase instrument (@mcdo0486, #902)
+- New IPG Photonics YAR Amplifier series (@bmoneke, #851)
+- New Keysight E36312A power supply (@scandey, #785)
+- New Keithley 2200 power supply (@ashokbruno, #806)
+- New Lake Shore 211 Temperature Monitor (@mcdo0486, #889)
+- New Lake Shore 224 and improves Lakeshore instruments (@samcondon4, #870)
+- New MKS Instruments 937B vacuum gauge controller (@dkriegner, #637, @bilderbuchi, #772)
+- New Novanta FPU60 laser power supply unit (@bmoneke, #885)
+- New Teledyne T3AFG waveform generator instrument (@scandey, #791)
+- New Teledyne (LeCroy) T3DSO1204 Oscilloscope (@LastStartDust, #697, @bilderbuchi, #770)
+- New T&C Power Conversion RF power supply (@dkriegner, #800)
+- New Velleman K8090 relay device (@RobertoRoos, #859)
+- Improves Agilent 33500 with the new channels (@JCarl-OS, #763, #773)
+- Improves HP 3478A with calibration data related functions (@tomverbeure, #777)
+- Improves HP 34401A (@CodingMarco, #810)
+- Improves the Oxford instruments with the new channels (@bmoneke, #844)
+- Improves Siglent SPDxxxxX with the new channels (@AidenDawn 758)
+- Improves Teledyne T3DSO1204 device tests (@LastStarDust, #841)
+- Fixes a frequency limitation in HP 8657B (@LongnoseRob, #769)
+- Fixes DSP 7265 using erroneously preproces_reply (@mcdo0486, #873)
+- Fixes print statement in DSPBase.sensitivity (@mcdo0486, #915)
+- Fixes Fluke bath commands (@bmoneke, #874)
+- Fixes Keithley 2600 channel calling parent's shutdown (@mcdo0486, #795)
 
 Automation
 ----------
