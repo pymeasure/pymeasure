@@ -98,6 +98,7 @@ need_init_communication = [
     "HP8116A",
     "IBeamSmart",
     "ANC300Controller",
+    "M7006_001",
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [
@@ -240,12 +241,13 @@ def test_name_argument(cls):
 
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
-SIM_RESOURCE = 'ASRL2::INSTR'
-is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec('pyvisa_sim'))
+SIM_RESOURCE = "ASRL2::INSTR"
+is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim"))
 
 
-@pytest.mark.skipif(is_pyvisa_sim_not_installed,
-                    reason='PyVISA tests require the pyvisa-sim library')
+@pytest.mark.skipif(
+    is_pyvisa_sim_not_installed, reason="PyVISA tests require the pyvisa-sim library"
+)
 @pytest.mark.parametrize("cls", devices)
 def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
@@ -256,9 +258,10 @@ def test_kwargs_to_adapter(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    with pytest.raises(ValueError,
-                       match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
-        cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
+    with pytest.raises(
+        ValueError, match="'kwarg_test' is not a valid attribute for type SerialInstrument"
+    ):
+        cls(SIM_RESOURCE, visa_library="@sim", kwarg_test=True)
 
 
 def property_name_to_id(value):

@@ -34,6 +34,7 @@ Instruments by manufacturer:
    danfysik/index
    deltaelektronica/index
    edwards/index
+   etslindgren/index
    eurotest/index
    fluke/index
    fwbell/index

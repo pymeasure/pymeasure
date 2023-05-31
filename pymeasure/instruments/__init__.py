@@ -43,6 +43,7 @@ from . import bkprecision
 from . import danfysik
 from . import deltaelektronika
 from . import edwards
+from . import etslindgren
 from . import eurotest
 from . import fluke
 from . import fwbell
