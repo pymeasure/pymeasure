@@ -20,3 +20,4 @@ This section contains specific documentation on the Agilent instruments that are
    agilent33500
    agilent33521A
    agilentB1500
+   agilentE4407B
