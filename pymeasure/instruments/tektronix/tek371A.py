@@ -752,6 +752,23 @@ class Tektronix371A(Instrument):
         self.discard_and_disable_all_events()
         time.sleep(1)
 
+    # Wrapper functions for the Adapter object
+    def write(self, command, **kwargs):
+        """Overrides Instrument write method for including write_delay time after the parent call.
+        :param command: command string to be sent to the instrument
+        """
+        actual_write_delay = time.time() - self.last_write_timestamp
+        time.sleep(max(0, self.write_delay - actual_write_delay))
+        super().write(command, **kwargs)
+        self.last_write_timestamp = time.time()
+
+    def ask(self, command):
+        """ Overrides Instrument ask method for including query_delay time on parent call.
+        :param command: Command string to be sent to the instrument.
+        :returns: String returned by the device without read_termination.
+        """
+        return super().ask(command, self.query_delay)
+
     #########################################################################
     #  AUXILIARY CLASSES
     #########################################################################
