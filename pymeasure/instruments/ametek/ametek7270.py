@@ -240,7 +240,7 @@ class Ametek7270(Instrument):
             write_termination=write_termination,
             **kwargs)
 
-    def check_errors(self):
+    def check_set_errors(self):
         """mandatory to be used for property setter
 
         The Ametek protocol expect the default null character to be read to check the property
