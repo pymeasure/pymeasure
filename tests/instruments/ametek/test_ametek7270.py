@@ -12,18 +12,12 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'SEN', b'27\n')],
-     1.0),
-    ([(b'SEN', b'27\n')],
-     1.0),
-))
-def test_sensitivity_getter(comm_pairs, value):
+def test_sensitivity_getter():
     with expected_protocol(
             Ametek7270,
-            comm_pairs,
+            [(b'SEN', b'27\n')],
     ) as inst:
-        assert inst.sensitivity == value
+        assert inst.sensitivity == 1.0
 
 
 def test_slope_getter():
@@ -96,26 +90,12 @@ def test_failing_properties(method, command):
             getattr(inst, method) == 0.0
 
 
-@pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'REFN', b'7\n')],
-     7.0),
-    ([(b'REFN', b'7\n')],
-     7.0),
-    ([(b'REFN', b'7\n')],
-     7.0),
-    ([(b'REFN', b'7\n')],
-     7.0),
-    ([(b'REFN', b'7\n')],
-     7.0),
-    ([(b'REFN', b'7\n')],
-     7.0),
-))
-def test_harmonic_getter(comm_pairs, value):
+def test_harmonic_getter():
     with expected_protocol(
             Ametek7270,
-            comm_pairs,
+            [(b'REFN', b'7\n')],
     ) as inst:
-        assert inst.harmonic == value
+        assert inst.harmonic == 7
 
 
 def test_phase_getter():
@@ -204,14 +184,6 @@ def test_adc4_getter():
             [(b'ADC. 4', b'-1.64E-01\n')],
     ) as inst:
         assert inst.adc4 == -0.164
-
-
-def test_id_getter():
-    with expected_protocol(
-            Ametek7270,
-            [(b'ID', b'7270\n')],
-    ) as inst:
-        assert inst.id == '7270'
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
@@ -491,7 +463,7 @@ def test_set_channel_A_mode():
         assert inst.set_channel_A_mode() is None
 
 
-def test_identification():
+def test_id():
     with expected_protocol(
             Ametek7270,
             [(b'ID', b'7270\n'),
