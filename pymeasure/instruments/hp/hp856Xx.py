@@ -1037,9 +1037,9 @@ class HP856Xx(Instrument):
 
     def check_done(self):
         """
-        Get back (e.g. return) when all commands in a command string
-        entered before 'done' has been completed. Sending a :meth:`trigger_sweep` command
-        before 'done' ensures that the spectrum analyzer will complete a full sweep before
+        Return when all commands in a command string
+        entered before :meth:'check_done' has been completed. Sending a :meth:`trigger_sweep` command
+        before 'check_done' ensures that the spectrum analyzer will complete a full sweep before
         continuing on in a program.
         Depending on the timeout a timeout error from the adapter will raise before the spectrum
         analyzer can finish due to an extreme long sweep time.
