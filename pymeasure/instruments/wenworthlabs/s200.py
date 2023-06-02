@@ -191,7 +191,7 @@ class S200(Instrument):
         "specified in the parameter",
         # AWP compatible: No
         validator=strict_range,
-        values=[0, 359999],
+        values=[-359999, 359999],
         check_set_errors=True,
         get_process=lambda r:
         float(r.replace("PSTH ", ""))
@@ -257,31 +257,6 @@ class S200(Instrument):
         check_set_errors=True,
         validator=strict_discrete_set,
         values=['D', 'U', 'L', 'R']
-    )
-
-    next_die_down = Instrument.setting(
-        "NXD",
-        "Moves to the die below the current die",
-        # AWP compatible: Yes
-        check_set_errors=True
-    )
-
-    next_die_up = Instrument.setting(
-        "NXU",
-        "Moves to the die above the current die",
-        check_set_errors=True
-    )
-
-    next_die_right = Instrument.setting(
-        "NXR",
-        "Moves to the die right of the current die",
-        check_set_errors=True
-    )
-
-    next_die_left = Instrument.setting(
-        "NXL",
-        "Moves to the die left of the current die",
-        check_set_errors=True
     )
 
     status_byte = Instrument.measurement(
