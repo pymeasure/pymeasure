@@ -469,7 +469,7 @@ def test_id():
             [(b'ID', b'7270\n'),
              (b'VER', b'2.11\n')],
     ) as inst:
-        assert inst.identification() == '7270/2.11'
+        assert inst.id == '7270/2.11'
 
 
 def test_shutdown():
