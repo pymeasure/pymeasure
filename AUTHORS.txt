@@ -62,4 +62,5 @@ Max Herbold
 Alexander Wichers
 Ashok Bruno
 Robert Roos
+Sebastien Weber
 Sebastian Neusch
