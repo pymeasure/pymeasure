@@ -30,7 +30,9 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pymeasure.instruments.validators import multivalue_strict_range
 
 log = logging.getLogger(__name__)
-#log.addHandler(logging.NullHandler())
+
+
+# log.addHandler(logging.NullHandler())
 
 
 class S200(Instrument):
@@ -129,7 +131,7 @@ class S200(Instrument):
         validator=strict_range,
         values=X_POS_VALID_RANGE,
         get_process=lambda r:
-        int(r.replace("PSS ", "")),
+        float(r[1]),
         check_set_errors=True
     )
 
@@ -139,7 +141,7 @@ class S200(Instrument):
         validator=strict_range,
         values=Y_POS_VALID_RANGE,
         get_process=lambda r:
-        int(r.replace("PSS ", "")),
+        float(r[1]),
         check_set_errors=True
     )
 
@@ -148,17 +150,17 @@ class S200(Instrument):
         "Control the xy-axis position in microns",
         validator=multivalue_strict_range,
         values=X_POS_VALID_RANGE,
-        separator=" ",
         get_process=lambda r:
-        [int(numeric_string) for numeric_string in r[1].split(",", maxsplit=1)],
+        [float(number) for ind, number in enumerate(r) if ind > 0],
         check_set_errors=True
     )
 
     z_position = Instrument.measurement(
         "PSGM",
         "Measures the z-axis position in microns",
+        separator=" ",
         get_process=lambda r:
-        int(r.replace("PSGM ", ""))
+        float(r[1])
     )
 
     x_index = Instrument.control(
@@ -169,7 +171,7 @@ class S200(Instrument):
         values=X_Y_INDEX_VALID_RANGE,
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("RXM ", ""))
+        float(r.replace("RXM ", ""))
     )
 
     y_index = Instrument.control(
@@ -180,7 +182,7 @@ class S200(Instrument):
         values=X_Y_INDEX_VALID_RANGE,
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("RYM ", ""))
+        float(r.replace("RYM ", ""))
     )
 
     theta_position = Instrument.control(
@@ -192,7 +194,7 @@ class S200(Instrument):
         values=[0, 359999],
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("PSTH ", ""))
+        float(r.replace("PSTH ", ""))
     )
 
     z_overtravel = Instrument.control(
@@ -203,7 +205,7 @@ class S200(Instrument):
         values=Z_OVERTRAVEL_VALID_RANGE,
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("RZIM ", ""))
+        float(r.replace("RZIM ", ""))
     )
 
     z_grosslift = Instrument.control(
@@ -214,7 +216,7 @@ class S200(Instrument):
         values=Z_GROSSLIFT_VALID_RANGE,
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("RKGM ", ""))
+        float(r.replace("RKGM ", ""))
     )
 
     z_finelift = Instrument.control(
@@ -225,15 +227,18 @@ class S200(Instrument):
         values=Z_FINELIFT_VALID_RANGE,
         check_set_errors=True,
         get_process=lambda r:
-        int(r.replace("RKFM ", ""))
+        float(r.replace("RKFM ", ""))
     )
 
     indexing_mode = Instrument.setting(
         "%s",
         "Control the indexing mode."
-        "If True, Enters indexing mode and moves to the first die to be probed, or moves to the "
-        "next die to be probed if already in indexing mode. Indexing mode is exiting "
-        "using the NXF command (above).",
+        "If True, Enters indexing mode and moves to the first die to be probed, or moves to the"
+        " next die to be probed if already in indexing mode. Indexing mode is exiting"
+        " using the NXF command (above). Pay attention. When in indexing mode, "
+        " next_die property will be not recognized as a command and will get the state of the table"
+        " out of communication."
+        " All subsequent commands will be ignored and thus we will re-enter in remote mode.",
         # AWP compatible: Yes
         validator=strict_discrete_set,
         values={True: 'NXT', False: 'NXF'},
@@ -385,7 +390,12 @@ class S200(Instrument):
 
     def check_set_errors(self):
         response_code = self.read().replace("INF ", "")
-        self.command_execution_info = S200.ExecutionInfoCode(int(response_code))
+        try:
+            self.command_execution_info = S200.ExecutionInfoCode(int(response_code))
+        except ValueError:
+            # try again in case of aborted process and the unreaded getting response
+            response_code = self.read().replace("INF ", "")
+            self.command_execution_info = S200.ExecutionInfoCode(int(response_code))
         log.warning(f"Command execution response '{self.command_execution_info.name}' after "
                     f"setting a value.")
         return [self.command_execution_info.name]
