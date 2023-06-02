@@ -400,6 +400,24 @@ class S200(Instrument):
                     f"setting a value.")
         return [self.command_execution_info.name]
 
+    # Wrapper functions for the Adapter object
+    def write(self, command, **kwargs):
+        """Overrides Instrument write method for including write_delay time after the parent call.
+
+        :param command: command string to be sent to the instrument
+        """
+        actual_write_delay = time.time() - self.last_write_timestamp
+        time.sleep(max(0, self.write_delay - actual_write_delay))
+        super().write(command, **kwargs)
+        self.last_write_timestamp = time.time()
+
+    def ask(self, command):
+        """ Overrides Instrument ask method for including query_delay time on parent call.
+        :param command: Command string to be sent to the instrument.
+        :returns: String returned by the device without read_termination.
+        """
+        return super().ask(command, self.query_delay)
+
     class ExecutionInfoCode(IntEnum):
         """
         Auxiliary class create for translating the instrument three digits code into
@@ -527,21 +545,3 @@ class S200(Instrument):
         INKER_LIFT_ERROR = 900
         PREVIOUS_DEVICE_FINISH_TEST_SIGNAL_HAS_NOT_ASSERTED = 901
         CURRENT_DEVICE_FINISH_TEST_SIGNAL_HAS_NOT_ASSERTED = 902
-
-    # Wrapper functions for the Adapter object
-    def write(self, command, **kwargs):
-        """Overrides Instrument write method for including write_delay time after the parent call.
-
-        :param command: command string to be sent to the instrument
-        """
-        actual_write_delay = time.time() - self.last_write_timestamp
-        time.sleep(max(0, self.write_delay - actual_write_delay))
-        super().write(command, **kwargs)
-        self.last_write_timestamp = time.time()
-
-    def ask(self, command):
-        """ Overrides Instrument ask method for including query_delay time on parent call.
-        :param command: Command string to be sent to the instrument.
-        :returns: String returned by the device without read_termination.
-        """
-        return super().ask(command, self.query_delay)
