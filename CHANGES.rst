@@ -1,60 +1,52 @@
-Version 0.12.0 (2023-05-22)
+Version 0.12.0 (2023-06-XX)
 ===========================
 Main items of this new release:
 
-- 16 new instrument drivers have been added
-- A Channel base class has been added for better channel handling
-- Tests for all instruments have been added
-- Many additions, improvements and bug fixes have been merged
-
+- A Channel base class has been added for easier implementation of instruments with channels.
+- 19 new instrument drivers have been added.
+- Added tests for some commonalities across all instruments.
+- We continue to clean up our API in preparation for a future version 1.0. Deprecations and subsequent removals are listed below.
 
 Deprecated features
 -------------------
-- HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
-  use :code:`function_` and :code:`reading` properties instead.
-- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
-- TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server.
+- HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties, use :code:`function_` and :code:`reading` properties instead.
+- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (equivalent for channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission` (@bmoneke, #819).
+- TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server (@Max-Herbold, #835).
 - Attocube ANC300: :code:`host` argument, pass a resource string or adapter as :code:`Adapter` passed to :code:`Instrument`. Now communicates through the :code:`VISAAdapter` rather than deprecated :code:`TelnetAdapter`. The initializer now accepts :code:`name` as its second keyword argument so all previous initialization positional arguments (`axisnames`, `passwd`, `query_delay`) should be switched to keyword arguments.
-- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
-- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter for arguments you want to pass on to :code:`values` method, instead.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate (@bmoneke, #878).
+- See also the next section.
 
 New adapter and instrument mechanics
 ------------------------------------
-- Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
-- All instruments are required to accept a :code:`name` argument.
+- All instrument constructors are required to accept a :code:`name` argument.
 - Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+- Channel class added. :code:`Instrument.channels` and :code:`Instrument.ch_X` (:code:`X` is any channel name) are reserved attributes for channel mechanics.
 - The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
 
-- Channels added to instruments (@bmoneke, #718, #852, #761)
-- Adds maxsplit parameter to values (@bmoneke, #793)
-- Drops superfluous str conversion in values (@bmoneke, #803)
-- Improves property creator docstrings (@bmoneke, #843)
-- Improves property creators with not allowing undefined kwargs (@bmoneke, #856)
-- Improves property creators with check_set/get_errors to call methods of the same name (@bmoneke, #883)
-- Deprecates `command_process` parameter of property creators (@bmoneke, #878)
+- Adds Channel feature to instruments (@bmoneke, #718, #852, #761)
+- Adds :code:`maxsplit` parameter to :code:`values` method (@bmoneke, #793)
 - Adds (deprecated) global preprocess reply for backward compatibility (@bmoneke, #876)
-- Improves `read_bytes` of Adapter (@bmoneke, #839)
-- Adds fallback version of discarding the read buffer to VISAAdapter (@dkriegner, #836)
-- Improves the ProtocolAdapter with a mock connection (@bmoneke, #782)
-- Improves ProtocolAdapter to return empty string/bytes (@bmoneke, #818)
-- Fixes ProtocolAdapter has list in signature (@bmoneke, #901)
-- Improves Prologix adapter documentation (@bmoneke, #813)
-- Improves Prologix with configurable settings (@bmoneke, #845)
-- Fixes VISAAdapter's `read_bytes` (@bmoneke, #867)
-- Adds `flush_read_buffer` to SerialAdapter (@RobertoRoos, #865)
-- Improves behavior of `read_bytes(-1)` for `SerialAdapter` (@RobertoRoos, #866)
-- Improves adapters' deprecation warning texts (@bmoneke, #829)
-- Removes dependency on telnetlib and deprecates TelnetAdapter (@Max-Herbold, #835)
+- Adds fallback version for discarding the read buffer to VISAAdapter (@dkriegner, #836)
+- Adds :code:`flush_read_buffer` to SerialAdapter (@RobertoRoos, #865)
+- Adds :code:`gpib_read_timeout` to PrologixAdapter (@neuschs, #927)
 - Adds command line option to pass resource address for instrument tests (@bleykauf, #789)
-- Adds test, that an instrument hands kwargs to the adapter (@bmoneke, #814)
-- Adds property doc check (@bmoneke, #895)
-- Adds "find all instruments" and channels for testing (@bmoneke, #909)
-- Improves find all instruments by searching files not modules (@mcdo0486, #911, #912)
-- Improves channels test coverage (@bmoneke, #788)
-- Fixes query_delay usage in VISAAdapter (@bmoneke, #765)
-- Harmonises instrument name definition pattern, consistently name the instrument connection argument "adapter" (@bmoneke, #659)
+- Adds "find all instruments" and channels for testing (@bmoneke, #909, @mcdo0486, #911, #912)
+- Adds test that an instrument hands kwargs to the adapter (@bmoneke, #814)
+- Adds property docstring check (@bmoneke, #895)
+- Improves property factories' docstrings (@bmoneke, #843)
+- Improves property factories: do not allow undefined kwargs (@bmoneke, #856)
+- Improves property factories: check_set/get_errors argument to call methods of the same name (@bmoneke, #883)
+- Improves :code:`read_bytes` of Adapter (@bmoneke, #839)
+- Improves the ProtocolAdapter with a mock connection (@bmoneke, #782), and enable it to have empty messages in the protocol (@bmoneke, #818)
+- Improves Prologix adapter documentation (@bmoneke, #813) and configurable settings (@bmoneke, #845)
+- Improves behavior of :code:`read_bytes(-1)` for :code:`SerialAdapter` (@RobertoRoos, #866)
 - Improves all instruments with name kwarg (@bmoneke, #877)
-- Removes Toptica adapter (@bmoneke, #819)
+- Improves VisaAdapter: close manager only when using pyvisa-sim (@dkriegner, #900)
+- Harmonises instrument name definition pattern, consistently name the instrument connection argument "adapter" (@bmoneke, #659)
+- Fixes ProtocolAdapter has list in signature (@bmoneke, #901)
+- Fixes VISAAdapter's :code:`read_bytes` (@bmoneke, #867)
+- Fixes query_delay usage in VISAAdapter (@bmoneke, #765)
 
 Instruments
 -----------
@@ -63,6 +55,7 @@ Instruments
 - New Anritus MS2090A (@aruznieto, #787)
 - New Anritsu MS4644B (@CasperSchippers, #827)
 - New DSP 7225 and new DSPBase instrument (@mcdo0486, #902)
+- New HP 8560A / 8561B Spectrum Analyzer (@neuschs, #888)
 - New IPG Photonics YAR Amplifier series (@bmoneke, #851)
 - New Keysight E36312A power supply (@scandey, #785)
 - New Keithley 2200 power supply (@ashokbruno, #806)
@@ -70,45 +63,44 @@ Instruments
 - New Lake Shore 224 and improves Lakeshore instruments (@samcondon4, #870)
 - New MKS Instruments 937B vacuum gauge controller (@dkriegner, #637, @bilderbuchi, #772)
 - New Novanta FPU60 laser power supply unit (@bmoneke, #885)
+- New TDK Lambda Genesys 80-65 DC and 40-38 DC power supplies (@mcdo0486, 906)
 - New Teledyne T3AFG waveform generator instrument (@scandey, #791)
 - New Teledyne (LeCroy) T3DSO1204 Oscilloscope (@LastStartDust, #697, @bilderbuchi, #770)
 - New T&C Power Conversion RF power supply (@dkriegner, #800)
 - New Velleman K8090 relay device (@RobertoRoos, #859)
-- Improves Agilent 33500 with the new channels (@JCarl-OS, #763, #773)
+- Improves Agilent 33500 with the new channel feature (@JCarl-OS, #763, #773)
 - Improves HP 3478A with calibration data related functions (@tomverbeure, #777)
 - Improves HP 34401A (@CodingMarco, #810)
-- Improves the Oxford instruments with the new channels (@bmoneke, #844)
-- Improves Siglent SPDxxxxX with the new channels (@AidenDawn 758)
+- Improves the Oxford instruments with the new channel feature (@bmoneke, #844)
+- Improves Siglent SPDxxxxX with the new channel feature (@AidenDawn 758)
 - Improves Teledyne T3DSO1204 device tests (@LastStarDust, #841)
-- Fixes a frequency limitation in HP 8657B (@LongnoseRob, #769)
-- Fixes DSP 7265 using erroneously preproces_reply (@mcdo0486, #873)
+- Fixes Ametek DSP 7270 lockin amplifier issues (@seb5g, #897)
+- Fixes DSP 7265 erroneously using preprocess_reply (@mcdo0486, #873)
 - Fixes print statement in DSPBase.sensitivity (@mcdo0486, #915)
 - Fixes Fluke bath commands (@bmoneke, #874)
+- Fixes a frequency limitation in HP 8657B (@LongnoseRob, #769)
 - Fixes Keithley 2600 channel calling parent's shutdown (@mcdo0486, #795)
 
 Automation
 ----------
-- Adding tolerance for opening result files with missing parameters (@msmttchr, #780)
+- Adds tolerance for opening result files with missing parameters (@msmttchr, #780)
+- Validate DATA_COLUMNS entries earlier, avoid exceptions in a running procedure (@mcdo0486, #796)
 
 GUI
 ---
 - Adds docking windows (@mcdo0486, #722, #762)
-- New sequencer architecture: decouples it from the graphical tree, adapts it for further expansions(@msmttchr, #518)
-- Moves coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
-- Fix crashing ImageWidget at new measurement (@CasperSchippers, #790)
 - Adds save plot settings in addition to dock layout (@mcdo0486, #850)
-- Fixes checkboxes not working for groups in inputs-widget (@CasperSchippers, #794)
 - Adds log widget colouring and format option (@CasperSchippers, #890)
 - Adds table widget (@msmttchr, #771)
+- New sequencer architecture: decouples it from the graphical tree, adapts it for further expansions (@msmttchr, #518)
+- Moves coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
+- Fixes crashing ImageWidget at new measurement (@CasperSchippers, #790)
+- Fixes checkboxes not working for groups in inputs-widget (@CasperSchippers, #794)
 
 Miscellaneous
 -------------
-- Updates Tutorials/Making_a_measurement/ example_codes (@sansanda, #749)
-- Recommends the use of darker instead of black (@bilderbuchi, #767)
-- Change copyright from 2022 to 2023 (@LongnoseRob, #812, #820)
-- Updates Flake8 version to 5.0.4 (@CasperSchippers, #799)
-- Splits the adding instruments documentation into several files (@bmoneke, #826)
 - Adds a collection of solutions for instrument implementation challenges (@bmoneke, #853, #861)
+- Updates Tutorials/Making_a_measurement/ example_codes (@sansanda, #749)
 
 New Contributors
 ----------------
