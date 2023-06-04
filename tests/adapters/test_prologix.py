@@ -56,6 +56,16 @@ def test_auto(message, value):
     ) as adapter:
         assert adapter.auto is value
 
+def test_read_tmo_ms():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [
+                ("++read_tmo_ms 700", None),
+                ("++read_tmo_ms", 700)
+            ],
+    ) as adapter:
+        adapter.read_tmo_ms = 700
+        assert adapter.read_tmo_ms == 700
 
 def test_write():
     with expected_protocol(
