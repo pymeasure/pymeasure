@@ -57,7 +57,7 @@ def test_auto(message, value):
         assert adapter.auto is value
 
 
-def test_read_tmo_ms():
+def test_gpib_read_timeout():
     with expected_protocol(
             PrologixAdapter,
             init_comm + [
@@ -65,8 +65,8 @@ def test_read_tmo_ms():
                 ("++read_tmo_ms", 700)
             ],
     ) as adapter:
-        adapter.read_tmo_ms = 700
-        assert adapter.read_tmo_ms == 700
+        adapter.gpib_read_timeout = 700
+        assert adapter.gpib_read_timeout == 700
 
 
 def test_write():
