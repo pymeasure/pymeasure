@@ -126,7 +126,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                  sequencer_inputs=None,
                  sequence_file=None,
                  inputs_in_scrollarea=False,
-                 directory_input=False,
+                 directory_input=True,
                  filename_input=True,
                  hide_groups=True,
                  ):
@@ -161,6 +161,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     def _setup_ui(self):
         if self.filename_input:
+            self.writefile_toggle = QtWidgets.QCheckBox('Write file', self)
+            self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
+            self.writefile_toggle.setChecked(True)
+            self.writefile_toggle.stateChanged.connect(self.toggle_file_dir_input_active)
+
             self.filename_label = QtWidgets.QLabel(self)
             self.filename_label.setText('Filename')
             self.filename_line = FilenameLineEdit(parent=self)
@@ -237,7 +242,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         vbox = QtWidgets.QVBoxLayout()
 
         if self.filename_input:
-            vbox.addWidget(self.filename_label)
+            filename_box = QtWidgets.QHBoxLayout()
+            vbox.addLayout(filename_box)
+            filename_box.addWidget(self.filename_label)
+            filename_box.addWidget(self.writefile_toggle)
             vbox.addWidget(self.filename_line)
         if self.directory_input:
             vbox.addWidget(self.directory_label)
@@ -593,8 +601,32 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     @property
     def filename(self):
         if not self.filename_input:
-            raise ValueError("No directory input in the ManagedWindow")
+            raise ValueError("No filename input in the ManagedWindow")
         return self.filename_line.text()
+
+    @filename.setter
+    def filename(self, value):
+        if not self.filename_input:
+            raise ValueError("No filename input in the ManagedWindow")
+        self.filename_line.setText(str(value))
+
+    @property
+    def store_measurement(self):
+        if not self.writefile_toggle:
+            raise ValueError("No write-file checkbox in the ManagedWindow")
+        return self.writefile_toggle.isChecked()
+
+    @store_measurement.setter
+    def store_measurement(self, value):
+        if not self.writefile_toggle:
+            raise ValueError("No write-file checkbox in the ManagedWindow")
+        self.writefile_toggle.setChecked(bool(value))
+
+    def toggle_file_dir_input_active(self, state):
+        if self.filename_input:
+            self.filename_line.setEnabled(bool(state))
+        if self.directory_input:
+            self.directory_line.setEnabled(bool(state))
 
 
 class ManagedWindow(ManagedWindowBase):
