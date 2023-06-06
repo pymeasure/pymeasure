@@ -562,7 +562,8 @@ class CommonBase:
                 return str(value)
 
         # Type check required to avoid numpy array elementwise comparison with tuple
-        if not (isinstance(values, tuple) and values == ()):
+        if not (isinstance(values,
+                           tuple) and values == ()) and 'joint_validate' not in validator.__name__:
             valid_values = "\n\n        "
             if isinstance(values, (list, tuple, dict)):
                 # If the validator has "range" in the function name
