@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from .lakeshore211 import LakeShore211
 from .lakeshore224 import LakeShore224
 from .lakeshore331 import LakeShore331
 from .lakeshore421 import LakeShore421

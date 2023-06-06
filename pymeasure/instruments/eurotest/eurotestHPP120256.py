@@ -83,7 +83,6 @@ class EurotestHPP120256(Instrument):
         inst.output_enabled = False
 
         # Now the HV voltage source is in safe state
-
     """
 
     VOLTAGE_RANGE = [0.0, 12.0]  # kVolts
