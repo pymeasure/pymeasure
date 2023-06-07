@@ -20,7 +20,7 @@
 #
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.wenworthlabs.s200 import S200
+from pymeasure.instruments.wentworthlabs.s200 import S200
 
 
 def test_theta_position():
