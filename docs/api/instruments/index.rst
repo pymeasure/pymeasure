@@ -66,4 +66,5 @@ Instruments by manufacturer:
    thorlabs/index
    toptica/index
    velleman/index
+   wentworthlabs/index
    yokogawa/index
