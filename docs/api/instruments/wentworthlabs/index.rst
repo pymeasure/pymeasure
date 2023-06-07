@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.wenworthlabs
+.. module:: pymeasure.instruments.wentworthlabs
 
 ############
 Wenworthlabs
