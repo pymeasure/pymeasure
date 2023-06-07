@@ -21,16 +21,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.tdk.tdk_base import TDK_Lambda_Base
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp3437A import HP3437A
-from .hp8116a import HP8116A
-from .hp8657b import HP8657B
-from .hp856Xx import HP8560A
-from .hp856Xx import HP8561B
-from .hpsystempsu import HP6632A
-from .hpsystempsu import HP6633A
-from .hpsystempsu import HP6634A
-from .hplegacyinstrument import HPLegacyInstrument
+
+def test_init():
+    with expected_protocol(
+            TDK_Lambda_Base,
+            [(b"ADR 6", b"OK")],
+    ):
+        pass  # Verify the expected communication.
+
+
+def test_identity():
+    with expected_protocol(
+            TDK_Lambda_Base,
+            [(b"ADR 6", b"OK"),
+             (b"IDN?", b'LAMBDA,GENX-Y'),
+             (b"REV?", b"REV:1U:4.3")]
+    ) as instr:
+        assert instr.id == ["LAMBDA", "GENX-Y"]
+        assert instr.version == "REV:1U:4.3"
+
+
+def test_multidrop_capability():
+    with expected_protocol(
+            TDK_Lambda_Base,
+            [(b"ADR 6", b"OK"),
+             (b"MDAV?", b'1')]
+    ) as instr:
+        assert instr.multidrop_capability is True
+
+
+def test_remote():
+    with expected_protocol(
+            TDK_Lambda_Base,
+            [(b"ADR 6", b"OK"),
+             (b"RMT?", b"REM"),
+             (b"RMT LOC", b"OK"),
+             (b"RMT?", b"LOC"), ]
+    ) as instr:
+        assert instr.remote == "REM"
+        instr.remote = 'LOC'
+        assert instr.remote == "LOC"

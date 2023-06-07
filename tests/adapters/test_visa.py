@@ -41,7 +41,8 @@ if not is_pyvisa_sim_installed:
 def adapter():
     adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
                           read_termination="\n",
-                          timeout=10,
+                          # Large timeout allows very slow GitHub action runners to complete.
+                          timeout=60,
                           )
     yield adapter
     # Empty the read buffer, as something might remain there after a test.
