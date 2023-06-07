@@ -121,7 +121,7 @@ class AgilentL4534A(Instrument):
         config = Instrument.control(
             "CONF:CHAN:ATTR? (@{ch})",
             "CONF:CHAN:ATTR (@{ch}),%s",
-            """Control Channel configuration (<range>,<coupling>,<filter>)""",
+            """Control Channel configuration with dict containing range (in V), coupling, and filter""",
             set_process=lambda v: '{:.3g},{},{}'.format(
                 v['range'].m_as(ureg.V), v['coupling'], v['filter']),
             get_process=_get_channel_config_process,
@@ -131,7 +131,9 @@ class AgilentL4534A(Instrument):
         range = Instrument.control(
             "CONF:CHAN:RANG? (@{ch})",
             "CONF:CHAN:RANG (@{ch}),%s",
-            """Control Voltage range for this channel""",
+            """Control Voltage range for this channel
+            Ranges: 0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256
+            """,
             set_process=lambda v: Decimal(v.m_as(ureg.V)).to_eng_string(
             ),  # send the value as V to the device
             get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
@@ -177,7 +179,7 @@ class AgilentL4534A(Instrument):
 
         @property
         def adc(self) -> typing.NDArray[np.int16]:
-            """Get raw ADC measurements for this channel"""
+            """Get raw ADC measurements for this channel in counts (-32,767,+32,767) in current voltage range"""
             self.write(f'FETC:WAV:ADC? (@{self.id})')
             data = self._read_data_block()
             return np.frombuffer(data, dtype=np.int16)
@@ -221,7 +223,7 @@ class AgilentL4534A(Instrument):
     sample_rate = Instrument.control(
         "CONF:ACQ:SRAT?",
         "CONF:ACQ:SRAT %d",
-        """Set the sample rate:
+        """Set the sample rate in samples/s (Hz):
         1000
         2000
         5000
@@ -301,9 +303,19 @@ class AgilentL4534A(Instrument):
     )
 
     def arm(self) -> None:
+        """
+        Trigger ARM condition in software
+        """
         self.write('ARM')
 
     def init(self) -> None:
+        """
+        Initialize measurement with current configuration.\n
+        This puts the instrument in acquisition state and waits for arm condition.\n
+        If arm is immediate, it will wait for trigger.\n
+        If both arm and trigger are immediate, it will immediately start capturing data.\n
+        Instrument will singal complete once capture is finished
+        """
         self.write('INIT')
 
     channels = Instrument.ChannelCreator(Channel, (1, 2, 3, 4))
@@ -312,17 +324,3 @@ class AgilentL4534A(Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
-        # Detect number of supported channels using IDN?
-        # id = self.id.split(',')
-
-        # if len(id) < 2:
-        #     raise Error('Wrong instrument type')
-        # if id[1].startswith('L453') and id[5] == 'A':
-        #     channel_count = int(id[4])
-        # else:
-        #     raise Error('Wrong instrument type')
-        # self.name = id[0] + ' ' + id[1]
-
-        # # Add channels
-        # for ch in range(1, channel_count):
-        #     self.add_child(Channel, ch)
