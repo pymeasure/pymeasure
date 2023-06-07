@@ -60,4 +60,7 @@ Scott Candey
 Tom Verbeure
 Max Herbold
 Alexander Wichers
+Ashok Bruno
 Robert Roos
+Sebastien Weber
+Sebastian Neusch
