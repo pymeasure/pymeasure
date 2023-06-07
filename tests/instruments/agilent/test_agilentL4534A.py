@@ -24,6 +24,7 @@
 import math
 import numpy as np
 
+from decimal import Decimal
 
 import pytest
 from pymeasure.test import expected_protocol
@@ -68,7 +69,7 @@ def test_set_samples(samples):
         inst.samples_per_record = samples
 
 
-@pytest.mark.parametrize("filter", ['LP_20_MHZ', 'LP_2_MHZ', 'LP_200_KHZ'])
+@pytest.mark.parametrize("filter", AgilentL4534A.Channel.FILTER_VALUES)
 def test_set_filter(filter):
     """
     Test Agilent L4534A set filter property
@@ -83,24 +84,20 @@ def test_set_filter(filter):
         assert inst.channels[1].filter == filter
         inst.channels[1].filter = filter
 
-
-@pytest.mark.parametrize("length", [5, 1024, 1000000])
-def test_get_voltage(length):
+@pytest.mark.parametrize('source', AgilentL4534A.TRIGGER_SOURCE_VALUES)
+def test_trigger_source(source):
     """
-    Test Agilent L4534A get voltage property
+    Test Agilent L4534A trigger_source property
     """
-
-    data = np.arange(length, dtype=np.float32)
-    bytes = data.tobytes()
-    count = len(bytes)
-    digits = int(math.log10(count))+1
     with expected_protocol(
         AgilentL4534A,
         [
-            ("FETC:WAV:VOLT? (@1)", f'#{digits}{count}'.encode() + bytes)
+            ("CONF:TRIG:SOUR?", source),
+            (f"CONF:TRIG:SOUR {source}", None)
         ],
     ) as inst:
-        assert np.array_equal(inst.channels[1].voltage.m, data)
+        assert inst.trigger_source == source
+        inst.trigger_source = source
 
 
 @pytest.mark.parametrize("length", [5, 1024])
@@ -116,13 +113,13 @@ def test_get_adc(length):
     with expected_protocol(
         AgilentL4534A,
         [
-            ("FETC:WAV:ADC? (@1)", f'#{digits}{count}'.encode() + bytes)
+            ("FETC:WAV:ADC? (@1)", f'#{digits}{count}'.encode() + bytes + b'\n')
         ],
     ) as inst:
         assert np.array_equal(inst.channels[1].adc, data)
 
 
-@pytest.mark.parametrize("rate", [1000, 20000000] * ureg.Hz)
+@pytest.mark.parametrize("rate", AgilentL4534A.SAMPLE_RATE_VALUES)
 def test_sample_rate(rate):
     """
     Test Agilent L4534A set samples property
@@ -138,7 +135,7 @@ def test_sample_rate(rate):
         inst.sample_rate = rate
 
 
-@pytest.mark.parametrize("range", [0.25, 256] * ureg.V)
+@pytest.mark.parametrize("range", AgilentL4534A.Channel.VOLTAGE_RANGE_VALUES)
 def test_voltage_range(range):
     """
     Test Agilent L4534A channel voltage range property

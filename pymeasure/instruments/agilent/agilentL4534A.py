@@ -33,38 +33,14 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 from pymeasure.units import ureg
 
 
-VOLTAGE_RANGE_VALUES = ureg.Quantity(np.asarray([0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256]), ureg.V)
-COUPLING_VALUES = ['DC', 'AC']
-FILTER_VALUES = ['LP_20_MHZ', 'LP_2_MHZ', 'LP_200_KHZ']
-
-SAMPLE_RATE_VALUES = np.asarray([1000, 2000, 5000, 10000, 20000, 50000,
-                                100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000])
-
-
-def SAMPLE_COUNT_FUNCTION(value, values): return strict_discrete_range(value, values, 4)
-
+def sample_count_function(value, values): return strict_discrete_range(value, values, 4)
 
 SAMPLE_COUNT_VALUES = [8, 128e6]
 PRE_TRIG_VALUES = [0, 128e6]
 RECORD_COUNT_VALUES = [1, 1024]
 
-TRIGGER_HOLDOFF_VALUES = [0, 10]
-TRIGGER_DELAY_VALUES = [0, 3600]
-
-
-def _validate_channel_config(value, values):
-    if not 'range' in value:
-        raise ValueError('Requires \'range\'')
-    if not 'coupling' in value:
-        raise ValueError('Requires \'coupling\'')
-    if not 'filter' in value:
-        raise ValueError('Requires \'filter\'')
-
-    strict_discrete_set(value['range'], VOLTAGE_RANGE_VALUES)
-    strict_discrete_set(value['coupling'], COUPLING_VALUES)
-    strict_discrete_set(value['filter'], FILTER_VALUES)
-    return value
-
+TRIGGER_HOLDOFF_VALUES = ureg.Quantity(np.asarray([0, 10]), ureg.s)
+TRIGGER_DELAY_VALUES = ureg.Quantity([0, 3600], ureg.s)
 
 def _get_channel_config_process(values):
     result = {
@@ -73,17 +49,6 @@ def _get_channel_config_process(values):
         'filter': values[2]
     }
     return result
-
-
-def _validate_acq_config(value, values):
-    strict_discrete_set(value['sample_rate'].m_as(ureg.Hz), SAMPLE_RATE_VALUES)
-    strict_discrete_range(value['samples_per_record'], SAMPLE_COUNT_VALUES, 4)
-    strict_discrete_range(value['pre_trig_samples'], PRE_TRIG_VALUES, 4)
-    strict_range(value['num_records'], RECORD_COUNT_VALUES)
-    strict_range(value['trigger_holdoff'].m_as(ureg.s), TRIGGER_HOLDOFF_VALUES)
-    strict_range(value['trigger_delay'].m_as(ureg.s), TRIGGER_DELAY_VALUES)
-    return value
-
 
 def _get_acq_config_process(values):
     return {
@@ -106,10 +71,28 @@ def _set_acq_config_process(value):
         value['trigger_delay'].m_as(ureg.s))
 
 
+VOLTAGE_RANGE_VALUES = ureg.Quantity(np.asarray([0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256]), ureg.V)
+
+COUPLING_VALUES = ['DC', 'AC']
+FILTER_VALUES = ['LP_20_MHZ', 'LP_2_MHZ', 'LP_200_KHZ']
+    
 class AgilentL4534A(Instrument):
     """
     Represents the Agilent L4532A/L4534A digitizers.
     """
+
+    SAMPLE_RATE_VALUES = ureg.Quantity(np.asarray([1000, 2000, 5000, 10000, 20000, 50000,
+                                    100000, 200000, 500000, 1000000, 2000000, 5000000, 10000000, 20000000]), ureg.Hz)
+
+    @staticmethod
+    def _validate_acq_config(value, values):
+        strict_discrete_set(value['sample_rate'], AgilentL4534A.SAMPLE_RATE_VALUES)
+        strict_discrete_range(value['samples_per_record'], SAMPLE_COUNT_VALUES, 4)
+        strict_discrete_range(value['pre_trig_samples'], PRE_TRIG_VALUES, 4)
+        strict_range(value['num_records'], RECORD_COUNT_VALUES)
+        strict_range(value['trigger_holdoff'], TRIGGER_HOLDOFF_VALUES)
+        strict_range(value['trigger_delay'], TRIGGER_DELAY_VALUES)
+        return value
 
     class Channel(Channel):
         """Implementation of an Agilent L4532A/L4534A channel."""
@@ -117,6 +100,24 @@ class AgilentL4534A(Instrument):
         def __init__(self, instrument, id):
             super().__init__(instrument, id)
 
+        VOLTAGE_RANGE_VALUES = VOLTAGE_RANGE_VALUES
+        COUPLING_VALUES = COUPLING_VALUES
+        FILTER_VALUES = FILTER_VALUES
+
+        @staticmethod
+        def _validate_channel_config(value, values):
+            if not 'range' in value:
+                raise ValueError('Requires \'range\'')
+            if not 'coupling' in value:
+                raise ValueError('Requires \'coupling\'')
+            if not 'filter' in value:
+                raise ValueError('Requires \'filter\'')
+
+            strict_discrete_set(value['range'], VOLTAGE_RANGE_VALUES)
+            strict_discrete_set(value['coupling'], COUPLING_VALUES)
+            strict_discrete_set(value['filter'], FILTER_VALUES)
+            return value
+    
         config = Instrument.control(
             "CONF:CHAN:ATTR? (@{ch})",
             "CONF:CHAN:ATTR (@{ch}),%s",
@@ -162,7 +163,10 @@ class AgilentL4534A(Instrument):
             if not digits.startswith('#'):
                 raise Error()
             bytes = int(self.read_bytes(int(digits[1])).decode())
-            return self.read_bytes(bytes)
+            # Read specified number of bytes + newline terminator
+            buf = memoryview(self.read_bytes(bytes+1))
+            # Return view that strips off newline to contain only desired bytes
+            return buf[:-1]
 
         @property
         def voltage(self) -> typing.NDArray[np.float32]:
@@ -179,13 +183,14 @@ class AgilentL4534A(Instrument):
             return np.frombuffer(data, dtype=np.int16)
 
     display = Instrument.control(
-        'DISPL:TEXT?',
-        'DISPL:TEXT \"%s\"',
-        """Control Display text on screen, up to 12 characters"""
+        'DISP:TEXT?',
+        'DISP:TEXT \"%s\"',
+        """Control Display text on screen, up to 12 characters""",
+        get_process=lambda v: v.strip('\"')
     )
 
     def clear_display(self):
-        return self.write('DISPL:TEXT:CLE')
+        return self.write('DISP:TEXT:CLE')
 
     arm_source = Instrument.control(
         "CONF:ARM:SOUR?",
@@ -203,12 +208,14 @@ class AgilentL4534A(Instrument):
         values=['NEG', 'POS']
     )
 
+    TRIGGER_SOURCE_VALUES = ['IMM', 'SOFT', 'EXT', 'CHAN', 'OR']
+
     trigger_source = Instrument.control(
         "CONF:TRIG:SOUR?",
         "CONF:TRIG:SOUR %s",
         """Set the trigger source {IMMediate|SOFTware|EXTernal|CHANnel|OR}""",
         validator=strict_discrete_set,
-        values=['IMM', 'SOFT', 'EXT', 'CHAN', 'OR']
+        values=TRIGGER_SOURCE_VALUES
     )
 
     sample_rate = Instrument.control(
@@ -240,7 +247,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SCO?",
         "CONF:ACQ:SCO %d",
         """Control number of samples that will be captured for each trigger, in multiples of 4 (8-128,000,000)""",
-        validator=SAMPLE_COUNT_FUNCTION,
+        validator=sample_count_function,
         values=SAMPLE_COUNT_VALUES
     )
 
@@ -248,7 +255,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SPR?",
         "CONF:ACQ:SPR %d",
         """Control number of samples that will captured pre-trigger, in multiples of 4 (8-128,000,000)""",
-        validator=SAMPLE_COUNT_FUNCTION,
+        validator=sample_count_function,
         values=PRE_TRIG_VALUES
     )
 
