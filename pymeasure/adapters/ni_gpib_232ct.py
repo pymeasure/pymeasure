@@ -97,10 +97,10 @@ class NI_GPIB_232(VISAAdapter):
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
-        if not isinstance(resource_name, NI_GPIB_232):
-            self.auto = auto
-            self.eoi = eoi
-            self.eos = eos
+        # if not isinstance(resource_name, NI_GPIB_232):
+            # self.auto = auto
+            # self.eoi = eoi
+            # self.eos = eos
 
     # @property
     # def auto(self):
@@ -146,7 +146,7 @@ class NI_GPIB_232(VISAAdapter):
 
         When data from host is received, all non-escaped LF, CR and ESC characters are
         removed and GPIB terminators, as specified by this command, are appended before
-        sending the data to instruments. This command does not affect data from
+        sending the data to instruments. This command does not affect data fromMHz
         instruments received over GPIB port.
         """
         values = {0: "\r\n", 1: "\r", 2: "\n", 3: ""}
@@ -195,9 +195,9 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         # Overrides write instead of _write in order to ensure proper logging
-        if self.address is not None and not command.startswith("++"):
+        if self.address is not None:
             super().write(f"wrt {self.address}  {command} \n", **kwargs)
-        super().write(command, **kwargs)
+        super().write(f"wrt {self.address}  {command} \n", **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
