@@ -386,12 +386,14 @@ class S200(Instrument):
         super().write(command, **kwargs)
         self.last_write_timestamp = time.time()
 
-    def ask(self, command):
+    def ask(self, command, query_delay=0):
         """ Overrides Instrument ask method for including query_delay time on parent call.
         :param command: Command string to be sent to the instrument.
+        :param query_delay: Delay between writing and reading in seconds.
         :returns: String returned by the device without read_termination.
         """
-        return super().ask(command, self.query_delay)
+
+        return super().ask(command, query_delay if query_delay else self.query_delay)
 
     class ExecutionInfoCode(IntEnum):
         """
