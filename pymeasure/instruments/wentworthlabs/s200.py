@@ -181,7 +181,7 @@ class S200(Instrument):
 
     z_position = Instrument.measurement(
         "PSGM",
-        "Measures the z-axis position in microns",
+        "Measure the z-axis position in microns",
         separator=" ",
         get_process=lambda r:
         float(r[1])
@@ -272,7 +272,7 @@ class S200(Instrument):
 
     next_die = Instrument.setting(
         "NX%s",
-        "Moves to the next die",
+        "Control the movement of the chuck to the next die",
         # If probe_table.next_die = "D" then it will go below the current die
         # If probe_table.next_die = "U" then it will go above the current die
         # If probe_table.next_die = "L" then it will go to the left of the current die
@@ -285,28 +285,28 @@ class S200(Instrument):
 
     status_byte = Instrument.measurement(
         "STA",
-        "Measures the status byte of the instrument",
+        "Measure the status byte of the instrument",
         get_process=lambda r:
         r
     )
 
     extended_status_info = Instrument.measurement(
         "STP",
-        "Measures the extended status information of the instrument",
+        "Measure the extended status information of the instrument",
         get_process=lambda r:
         r
     )
 
     exit_remote = Instrument.setting(
         "ESC",
-        "Sets the proble table in local mode. Exits remote mode."
+        "Set the proble table in local mode. Exits remote mode."
         # This command does not send a reply. However, when remote mode is re-entered,
         # the Pegasus unit sends an INF_000 message
     )
 
     serial_number = Instrument.measurement(
         "GSN",
-        "Measures the serial number of the probe table",
+        "Measure the serial number of the probe table",
         # AWP compatible: No
         get_process=lambda r:
         str(r)
@@ -314,7 +314,7 @@ class S200(Instrument):
 
     software_version_number = Instrument.measurement(
         "VSN",
-        "Measures the software version number of the probe table",
+        "Measure the software version number of the probe table",
         # AWP compatible: Yes
         get_process=lambda r:
         str(r)
@@ -322,7 +322,7 @@ class S200(Instrument):
 
     hardware_build = Instrument.measurement(
         "GHB",
-        "Measures the hardware build version number of the probe table",
+        "Measure the hardware build version number of the probe table",
         # AWP compatible: No
         get_process=lambda r:
         r
@@ -330,7 +330,7 @@ class S200(Instrument):
 
     model_id = Instrument.measurement(
         "GID",
-        "Measures the model id of the probe table",
+        "Measure the model id of the probe table",
         # AWP compatible: Yes
         # Returns model information about the Pegasus unit. The information consists of the
         # Pegasus model name, followed by a semi - colon, followed by a list of options
