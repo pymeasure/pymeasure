@@ -27,34 +27,38 @@ import numpy as np
 
 import pytest
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.agilent.agilentL4532A import AgilentL4532A
+from pymeasure.instruments.agilent.agilentL4534A import AgilentL4534A
+from pymeasure.units import ureg
+
 
 def test_init():
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [],
     ) as instr:
-        assert len(instr.channels) == 2
+        assert len(instr.channels) == 4
+
 
 def test_instr_init():
     """
-    Test Agilent L4532A init function
+    Test Agilent L4534A init function
     """
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [
             ("INIT", None),
         ],
     ) as inst:
         inst.init()
 
+
 @pytest.mark.parametrize("samples", [8, 120000000])
 def test_set_samples(samples):
     """
-    Test Agilent L4532A set samples property
+    Test Agilent L4534A set samples property
     """
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [
             ("CONF:ACQ:SCO?", samples),
             (f"CONF:ACQ:SCO {samples}", None)
@@ -63,13 +67,14 @@ def test_set_samples(samples):
         assert inst.samples_per_record == samples
         inst.samples_per_record = samples
 
-@pytest.mark.parametrize("filter", [ 'LP_20_MHZ', 'LP_2_MHZ', 'LP_200_KHZ' ])
+
+@pytest.mark.parametrize("filter", ['LP_20_MHZ', 'LP_2_MHZ', 'LP_200_KHZ'])
 def test_set_filter(filter):
     """
-    Test Agilent L4532A set filter property
+    Test Agilent L4534A set filter property
     """
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [
             ("CONF:CHAN:FILT? (@1)", filter),
             (f"CONF:CHAN:FILT (@1),{filter}", None)
@@ -79,10 +84,10 @@ def test_set_filter(filter):
         inst.channels[1].filter = filter
 
 
-@pytest.mark.parametrize("length", [ 5, 1024, 1000000 ])
+@pytest.mark.parametrize("length", [5, 1024, 1000000])
 def test_get_voltage(length):
     """
-    Test Agilent L4532A get voltage property
+    Test Agilent L4534A get voltage property
     """
 
     data = np.arange(length, dtype=np.float32)
@@ -90,18 +95,18 @@ def test_get_voltage(length):
     count = len(bytes)
     digits = int(math.log10(count))+1
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [
             ("FETC:WAV:VOLT? (@1)", f'#{digits}{count}'.encode() + bytes)
         ],
     ) as inst:
-        assert np.array_equal(inst.channels[1].voltage, data)
+        assert np.array_equal(inst.channels[1].voltage.m, data)
 
 
-@pytest.mark.parametrize("length", [ 5, 1024 ])
+@pytest.mark.parametrize("length", [5, 1024])
 def test_get_adc(length):
     """
-    Test Agilent L4532A get ADC property
+    Test Agilent L4534A get ADC property
     """
 
     data = np.arange(length, dtype=np.int16)
@@ -109,9 +114,83 @@ def test_get_adc(length):
     count = len(bytes)
     digits = int(math.log10(count))+1
     with expected_protocol(
-        AgilentL4532A,
+        AgilentL4534A,
         [
             ("FETC:WAV:ADC? (@1)", f'#{digits}{count}'.encode() + bytes)
         ],
     ) as inst:
         assert np.array_equal(inst.channels[1].adc, data)
+
+
+@pytest.mark.parametrize("rate", [1000, 20000000] * ureg.Hz)
+def test_sample_rate(rate):
+    """
+    Test Agilent L4534A set samples property
+    """
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("CONF:ACQ:SRAT?", int(rate.m)),
+            (f"CONF:ACQ:SRAT {rate.m}", None)
+        ],
+    ) as inst:
+        assert inst.sample_rate == rate
+        inst.sample_rate = rate
+
+
+@pytest.mark.parametrize("range", [0.25, 256] * ureg.V)
+def test_voltage_range(range):
+    """
+    Test Agilent L4534A channel voltage range property
+    """
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("CONF:CHAN:RANG? (@1)", float(range.m)),
+            (f"CONF:CHAN:RANG (@1),{range.m:.3g}", None)
+        ],
+    ) as inst:
+        assert inst.channels[1].range == range
+        inst.channels[1].range = range
+
+
+def test_acquisition_config():
+    """
+    Test Agilent L4534A acquisition config
+    """
+    settings = {
+        'sample_rate': ureg.Quantity(1000000, ureg.Hz),
+        'samples_per_record': int(1024),
+        'pre_trig_samples': int(4),
+        'num_records': int(1),
+        'trigger_holdoff': ureg.Quantity(0.1, ureg.s),
+        'trigger_delay': ureg.Quantity(0, ureg.s)
+    }
+
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("CONF:ACQ:ATTR?", '1000000,1024,4,1,0.1,0'),
+            ("CONF:ACQ:ATTR 1000000,1024,4,1,0.1,0", None)
+        ],
+    ) as inst:
+        assert inst.acquisition == settings
+        inst.acquisition = settings
+
+
+def test_channel_config():
+    settings = {
+        'range': 0.5 * ureg.V,
+        'coupling': 'DC',
+        'filter': 'LP_2_MHZ'
+    }
+
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("CONF:CHAN:ATTR? (@1)", '0.5,DC,LP_2_MHZ'),
+            ("CONF:CHAN:ATTR (@1),0.5,DC,LP_2_MHZ", None)
+        ],
+    ) as inst:
+        assert inst.channels[1].config == settings
+        inst.channels[1].config = settings
