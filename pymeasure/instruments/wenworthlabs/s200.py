@@ -37,7 +37,31 @@ log = logging.getLogger(__name__)
 
 class S200(Instrument):
     """ Represents the Wenthworth Labs S200 Probe Table
-    and provides a high-level for interacting with the instrument
+    and provides a high-level for interacting with the instrument.
+
+    .. code-block:: python
+
+    s200 = S200("GPIB0::28::INSTR", query_delay=0.5, write_delay=0.5)
+    # test probe table lamp
+    s200.lamp_on = True
+    s200.lamp_on = False
+    # test chuck lift
+    s200.chuck_lift = True
+    s200.chuck_lift = False
+    # configure x and y index
+    s200.x_index = 2000
+    s200.y_index = 2000
+    # test the moving of the chuck by x_index and y_index increment
+    s200.next_die = 'U'
+    s200.next_die = 'D'
+    s200.next_die = 'L'
+    s200.next_die = 'R'
+    # test the theta rotation of the chuck
+    s200.chuck_lift = False
+    s200.move_to_probing_zone_centre_position()
+    for i in range(0, 100):
+        s200.theta_position = -(i * 100)
+    s200.move_to_manual_load_position()
     """
 
     # Movement boundaries of the Pegassus S200 chuck
