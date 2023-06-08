@@ -24,8 +24,6 @@
 import math
 import numpy as np
 
-from decimal import Decimal
-
 import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilentL4534A import AgilentL4534A
@@ -83,6 +81,7 @@ def test_set_filter(filter):
     ) as inst:
         assert inst.channels[1].filter == filter
         inst.channels[1].filter = filter
+
 
 @pytest.mark.parametrize('source', AgilentL4534A.TRIGGER_SOURCE_VALUES)
 def test_trigger_source(source):

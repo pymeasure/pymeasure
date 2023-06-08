@@ -140,7 +140,7 @@ class Instrument(CommonBase):
             return self.ask("*TST?", delay).strip()
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-        
+
     # Wrapper functions for the Adapter object
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
