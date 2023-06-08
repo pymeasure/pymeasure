@@ -39,9 +39,13 @@ except ImportError:
 
 try:
     from pymeasure.adapters.serial import SerialAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")
+
+try:
+    from pymeasure.adapters.prologix import PrologixAdapter
+except ImportError:
+    log.warning("Prologix library could not be loaded")
 
 try:
     from pymeasure.adapters.vxi11 import VXI11Adapter
