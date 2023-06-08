@@ -138,7 +138,7 @@ class AgilentL4534A(Instrument):
             "CONF:CHAN:ATTR? (@{ch})",
             "CONF:CHAN:ATTR (@{ch}),%s",
             """
-            Control Channel configuration with dict containing range (in V), coupling, and filter
+            Control Channel configuration with dict containing range (in V), coupling, and filter.
             """,
             set_process=lambda v: '{:.3g},{},{}'.format(
                 v['range'].m_as(ureg.V), v['coupling'], v['filter']),
@@ -149,8 +149,8 @@ class AgilentL4534A(Instrument):
         range = Instrument.control(
             "CONF:CHAN:RANG? (@{ch})",
             "CONF:CHAN:RANG (@{ch}),%s",
-            """Control Voltage range for this channel
-            Ranges: 0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256
+            """
+            Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
             """,
             set_process=lambda v: Decimal(v.m_as(ureg.V)).to_eng_string(
             ),  # send the value as V to the device
@@ -162,7 +162,7 @@ class AgilentL4534A(Instrument):
         coupling = Instrument.control(
             "CONF:CHAN:COUP? (@{ch})",
             "CONF:CHAN:COUP (@{ch}),%s",
-            """Comtrol channel coupling {AC|DC}""",
+            """Comtrol channel coupling (AC|DC).""",
             validator=strict_discrete_set,
             values=COUPLING_VALUES
         )
@@ -170,7 +170,7 @@ class AgilentL4534A(Instrument):
         filter = Instrument.control(
             "CONF:CHAN:FILT? (@{ch})",
             "CONF:CHAN:FILT (@{ch}),%s",
-            """Control Filter for this channel (LP_20_MHZ, LP_2_MHZ, LP_200_KHZ)""",
+            """Control Filter for this channel (LP_20_MHZ, LP_2_MHZ, LP_200_KHZ).""",
             validator=strict_discrete_set,
             values=FILTER_VALUES
         )
@@ -189,17 +189,17 @@ class AgilentL4534A(Instrument):
             return buf[:-1]
 
         @property
-        def voltage(self) -> typing.NDArray[np.float32]:
-            """Get voltage measurements for this channel"""
+        def voltage(self):
+            """Get voltage measurements for this channel (array of float in V)."""
             self.write(f'FETC:WAV:VOLT? (@{self.id})')
             data = self._read_data_block()
             return ureg.Quantity(np.frombuffer(data, dtype='>f4'), ureg.V)
 
         @property
-        def adc(self) -> typing.NDArray[np.int16]:
+        def adc(self):
             """
-            Get raw ADC measurements for this channel in counts (-32,767,+32,767)
-            in current voltage range
+            Get raw ADC measurements for this channel in counts (int from -32767 to +32767)
+            in current voltage range.
             """
             self.write(f'FETC:WAV:ADC? (@{self.id})')
             data = self._read_data_block()
@@ -210,7 +210,7 @@ class AgilentL4534A(Instrument):
     display = Instrument.control(
         'DISP:TEXT?',
         'DISP:TEXT \"%s\"',
-        """Control Display text on screen, up to 12 characters""",
+        """Control Display text on screen, up to 12 characters.""",
         get_process=lambda v: v.strip('\"')
     )
 
@@ -220,7 +220,7 @@ class AgilentL4534A(Instrument):
     arm_source = Instrument.control(
         "CONF:ARM:SOUR?",
         "CONF:ARM:SOUR %s",
-        """Set the source used to arm the digitizer (IMMediate|EXTernal|SOFTware|TIMer)""",
+        """Set the source used to arm the digitizer (IMMediate|EXTernal|SOFTware|TIMer).""",
         validator=strict_discrete_set,
         values=['IMM', 'SOFT', 'EXT', 'TIM']
     )
@@ -228,7 +228,7 @@ class AgilentL4534A(Instrument):
     ext_slope = Instrument.control(
         "CONF:EXT:INP?",
         "CONF:EXT:INP %s",
-        """Set the edge to be used for the external trigger input, NEGative or POSitive""",
+        """Set the edge to be used for the external trigger input (NEGative or POSitive).""",
         validator=strict_discrete_set,
         values=['NEG', 'POS']
     )
@@ -238,7 +238,7 @@ class AgilentL4534A(Instrument):
     trigger_source = Instrument.control(
         "CONF:TRIG:SOUR?",
         "CONF:TRIG:SOUR %s",
-        """Set the trigger source {IMMediate|SOFTware|EXTernal|CHANnel|OR}""",
+        """Set the trigger source (IMMediate|SOFTware|EXTernal|CHANnel|OR).""",
         validator=strict_discrete_set,
         values=TRIGGER_SOURCE_VALUES
     )
@@ -272,8 +272,8 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SCO?",
         "CONF:ACQ:SCO %d",
         """
-        Control number of samples that will be captured for each trigger,
-        in multiples of 4 (8-128,000,000)
+        Control number of samples that will be captured for each trigger
+        (int from 8 to maximum_samples in multiples of 4).
         """,
         validator=sample_count_function,
         values=SAMPLE_COUNT_VALUES
@@ -283,8 +283,8 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SPR?",
         "CONF:ACQ:SPR %d",
         """
-        Control number of samples that will captured pre-trigger,
-        in multiples of 4 (8-128,000,000)
+        Control number of samples that will captured pre-trigger
+        (int from 0 to samples_per_record-4 in multiples of 4).
         """,
         validator=sample_count_function,
         values=PRE_TRIG_VALUES
@@ -293,7 +293,10 @@ class AgilentL4534A(Instrument):
     number_of_records = Instrument.control(
         "CONF:ACQ:REC?",
         "CONF:ACQ:REQ %d",
-        """Control number of of records that will be captured before arming is disabled (1-1024)""",
+        """
+        Control number of of records that will be captured before arming is disabled
+        (int from 1 to 1024).
+        """,
         validator=strict_range,
         values=RECORD_COUNT_VALUES
     )
@@ -302,7 +305,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:THOL?",
         "CONF:ACQ:THOL %e",
         """Control minimum time between triggers, during which trigger inputs are ignored,
-          in decimal seconds (0-10s)""",
+          in seconds (float from 0 to 10).""",
         validator=strict_range,
         values=TRIGGER_HOLDOFF_VALUES
     )
@@ -312,7 +315,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:TDEL %e",
         """
         Control delay time after trigger before acquistion starts,
-        in decimal seconds (0-3600s)
+        in seconds (float from 0 to 3600).
         """,
         validator=strict_range,
         values=TRIGGER_DELAY_VALUES
@@ -326,8 +329,9 @@ class AgilentL4534A(Instrument):
     acquisition = Instrument.control(
         "CONF:ACQ:ATTR?",
         "CONF:ACQ:ATTR %s",
-        """Control Acquistion settings
-        returns:
+        """
+        Control Acquistion settings
+        Represented as dictionary containing:
             sample_rate,
             samples_per_record,
             pre_trig_samples_per_record,
@@ -352,7 +356,7 @@ class AgilentL4534A(Instrument):
         This puts the instrument in acquisition state and waits for arm condition.\n
         If arm is immediate, it will wait for trigger.\n
         If both arm and trigger are immediate, it will immediately start capturing data.\n
-        Instrument will singal complete once capture is finished
+        Instrument will singal complete once capture is finished.
         """
         self.write('INIT')
 
