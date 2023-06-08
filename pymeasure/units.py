@@ -25,3 +25,27 @@
 import pint
 
 ureg = pint.get_application_registry()
+
+
+def assume_units(value, units):
+    """
+    If units are not provided for ``value`` (that is, if it is a raw
+    `float`), then returns a `~pint.Quantity` with magnitude
+    given by ``value`` and units given by ``units``.
+
+    :param value: A value that may or may not be unitful.
+    :param units: Units to be assumed for ``value`` if it does not already
+        have units.
+
+    :return: A unitful quantity that has either the units of ``value`` or
+        ``units``, depending on if ``value`` is unitful.
+    :rtype: `Quantity`
+    """
+    if isinstance(value, ureg.Quantity):
+        return value
+    elif isinstance(value, str):
+        value = ureg.Quantity(value)
+        if value.dimensionless:
+            return ureg.Quantity(value.magnitude, units)
+        return value
+    return ureg.Quantity(value, units)
