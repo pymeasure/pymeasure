@@ -175,14 +175,14 @@ class AgilentL4534A(Instrument):
             """Get voltage measurements for this channel"""
             self.write(f'FETC:WAV:VOLT? (@{self.id})')
             data = self._read_data_block()
-            return ureg.Quantity(np.frombuffer(data, dtype=np.float32), ureg.V)
+            return ureg.Quantity(np.frombuffer(data, dtype='>f4'), ureg.V)
 
         @property
         def adc(self) -> typing.NDArray[np.int16]:
             """Get raw ADC measurements for this channel in counts (-32,767,+32,767) in current voltage range"""
             self.write(f'FETC:WAV:ADC? (@{self.id})')
             data = self._read_data_block()
-            return np.frombuffer(data, dtype=np.int16)
+            return np.frombuffer(data, dtype='>i2')
 
     display = Instrument.control(
         'DISP:TEXT?',

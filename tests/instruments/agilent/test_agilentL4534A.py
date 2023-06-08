@@ -106,7 +106,7 @@ def test_get_adc(length):
     Test Agilent L4534A get ADC property
     """
 
-    data = np.arange(length, dtype=np.int16)
+    data = np.arange(length, dtype='>i2')
     bytes = data.tobytes()
     count = len(bytes)
     digits = int(math.log10(count))+1
