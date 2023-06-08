@@ -263,7 +263,7 @@ class AgilentL4534A(Instrument):
         """,
         validator=strict_discrete_set,
         values=SAMPLE_RATE_VALUES,
-        set_process=lambda v: assume_units(v, ureg.Hz).m_as(ureg.Hz),  # send the value as Hz to the device
+        set_process=lambda v: assume_units(v, ureg.Hz).m_as(ureg.Hz),  # send the value as Hz
         get_process=lambda v: ureg.Quantity(v, ureg.Hz)  # convert to quantity
     )
 
