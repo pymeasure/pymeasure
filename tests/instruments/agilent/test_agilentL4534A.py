@@ -67,7 +67,7 @@ def test_set_samples(samples):
         inst.samples_per_record = samples
 
 
-@pytest.mark.parametrize("filter", AgilentL4534A.Channel.FILTER_VALUES)
+@pytest.mark.parametrize("filter", AgilentL4534A.DigitizerChannel.FILTER_VALUES)
 def test_set_filter(filter):
     """
     Test Agilent L4534A set filter property
@@ -134,7 +134,7 @@ def test_sample_rate(rate):
         inst.sample_rate = rate
 
 
-@pytest.mark.parametrize("range", AgilentL4534A.Channel.VOLTAGE_RANGE_VALUES)
+@pytest.mark.parametrize("range", AgilentL4534A.DigitizerChannel.VOLTAGE_RANGE_VALUES)
 def test_voltage_range(range):
     """
     Test Agilent L4534A channel voltage range property

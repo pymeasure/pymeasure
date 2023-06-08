@@ -117,10 +117,14 @@ class AgilentL4534A(Instrument):
     """
     Represents the Agilent L4532A/L4534A digitizers.
     """
+    def __init__(self, adapter, name="Agilent L4534A Digitizer", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs
+        )
 
     SAMPLE_RATE_VALUES = SAMPLE_RATE_VALUES
 
-    class Channel(Channel):
+    class DigitizerChannel(Channel):
         """Implementation of an Agilent L4532A/L4534A channel."""
 
         def __init__(self, instrument, id):
@@ -200,6 +204,8 @@ class AgilentL4534A(Instrument):
             self.write(f'FETC:WAV:ADC? (@{self.id})')
             data = self._read_data_block()
             return np.frombuffer(data, dtype='>i2')
+
+    channels = Instrument.ChannelCreator(DigitizerChannel, (1, 2, 3, 4))
 
     display = Instrument.control(
         'DISP:TEXT?',
@@ -356,10 +362,3 @@ class AgilentL4534A(Instrument):
         Offsets will be cleared when instrument is reset or settings are changed.
         """
         return int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip())
-
-    channels = Instrument.ChannelCreator(Channel, (1, 2, 3, 4))
-
-    def __init__(self, adapter, name="Agilent L4534A Digitizer", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
