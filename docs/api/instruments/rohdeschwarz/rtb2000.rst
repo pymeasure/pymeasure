@@ -1,0 +1,11 @@
+######################################
+RTB2000 Series Oscilloscopes
+######################################
+
+.. autoclass:: pymeasure.instruments.rohdeschwarz.rtb2000.RTB2002
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rohdeschwarz.rtb2000.RTB200XAnalogChannel
+    :members:
+    :show-inheritance:
