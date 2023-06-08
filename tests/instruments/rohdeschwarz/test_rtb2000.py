@@ -25,7 +25,8 @@ import pytest
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.rohdeschwarz.rtb2000 import RTB200X, RTB2004, Coupling, Bandwidth
+from pymeasure.instruments.rohdeschwarz.rtb2000 import RTB200X, RTB2004, Coupling, Bandwidth, \
+    WaveformColor, ThresholdHysteresis
 
 from pymeasure.instruments.rohdeschwarz.rtb2000 import AcquisitionState
 
@@ -74,7 +75,9 @@ class TestRTB200XAnalogChannel:
         ("range", 2.0, "RANGe"),
         ("position", 5, "POSition"),
         ("offset", 2, "OFFSet"),
-        ("skew", 2, "SKEW")
+        ("skew", 2, "SKEW"),
+        ("zero_offset", 2, "ZOFFset"),
+        ("threshold", 2, "THReshold")
     ])
     def test_value_control(self, attr, value, command):
         with expected_protocol(
@@ -89,7 +92,9 @@ class TestRTB200XAnalogChannel:
 
     @pytest.mark.parametrize("enum,attr,command", [
         (Coupling, "coupling", "COUPling"),
-        (Bandwidth, "bandwidth", "BANDwidth")
+        (Bandwidth, "bandwidth", "BANDwidth"),
+        (WaveformColor, "waveform_color", "WCOLor"),
+        (ThresholdHysteresis, "threshold_hysteresis", "THReshold:HYSTeresis")
     ])
     def test_enumeration_attributes(self, enum, attr, command):
         value = [e for e in enum][0]
@@ -115,6 +120,23 @@ class TestRTB200XAnalogChannel:
             instr.ch1.polarity_inversion_active = state
             assert instr.ch1.polarity_inversion_active == state
 
+    def test_find_threshold(self):
+        with expected_protocol(
+                self.DUT,
+                [
+                    ("CHANnel1:THReshold:FINDlevel", None)
+                ],
+        ) as instr:
+            instr.ch1.find_threshold()
+
+    def test_label(self):
+        with expected_protocol(
+                self.DUT,
+                [
+                    ("CHANnel1:LABel ABCDEFGH", None)
+                ],
+        ) as instr:
+            instr.ch1.label = "ABCDEFGH"
 
 class TestGeneral:
     @pytest.mark.parametrize("channel", ["ch1", "ch2", "ch3", "ch4"])

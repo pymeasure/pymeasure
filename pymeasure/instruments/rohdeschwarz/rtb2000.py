@@ -85,6 +85,33 @@ class Bandwidth(StrEnum):
     B20_MHz = "B20"
 
 
+class WaveformColor(StrEnum):
+    """Enumeration to represent the different waveform colors"""
+
+    #: Temperature colors. Blue corresponds to rare occurrences of the samples, while white
+    # indicates frequent ones.
+    Temperature = "TEMP"
+
+    #: Rainbow colors. Blue corresponds to rare occurrences of the
+    # samples, while red indicates frequent ones.
+    Rainbow = "RAIN"
+
+    #: Fire colors. Yellow corresponds to rare occurrences of the samples,
+    # while red indicates frequent ones.
+    Fire = "FIRE"
+
+    #: Default monochrome color.
+    Default = "DEF"
+
+
+class ThresholdHysteresis(StrEnum):
+    """Enumeration to represent the different threshold hysteresis settings """
+
+    Small = "SMAL"
+    Medium = "MED"
+    Large = "LARG"
+
+
 class RTB200XAnalogChannel(Channel):
     """
     One RTB2000 series oscilloscope channel
@@ -180,6 +207,67 @@ class RTB200XAnalogChannel(Channel):
         """
     )
 
+    zero_offset = Channel.control(
+        "CHANnel{ch}:ZOFFset?", "CHANnel{ch}:ZOFFset %g",
+        """
+        Control the zero offset.
+        
+        Differences in DUT and oscilloscope ground levels may cause larger zero errors affecting
+        the waveform. If the DUT is ground-referenced, the "Zero Offset" corrects the zero
+        error and sets the probe to the zero level.
+        You can assess the zero error by measuring the mean value of a signal that should
+        return zero.
+        """
+    )
+
+    waveform_color = Channel.control(
+        "CHANnel{ch}:WCOLor?", "CHANnel{ch}:WCOLor %s",
+        """
+        Control the color scale for the waveform color. Each scale comprises a set of colors,
+        where each color represents a certain frequency of occurrence.
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in WaveformColor]
+    )
+
+    threshold = Channel.control(
+        "CHANnel{ch}:THReshold?", "CHANnel{ch}:THReshold %g",
+        """
+        Control the Threshold value for digitization of analog signals. 
+    
+        If the signal value is higher than the threshold, the signal state is high (1 or true for 
+        the Boolean logic). Otherwise, the signal state is considered low (0 or false) if the 
+        signal value is below the threshold.
+
+        Often used values are:
+        - TTL: 1.4 V
+        - ECL: -1.3 V
+        - CMOS: 2.5 V
+        Default unit: V
+        """
+    )
+
+    def find_threshold(self):
+        """
+        The instrument analyzes the channel and sets the threshold for digitization.
+        """
+        self.write("CHANnel%s:THReshold:FINDlevel" % self.id)
+
+    threshold_hysteresis = Channel.control(
+        "CHANnel{ch}:THReshold:HYSTeresis?", "CHANnel{ch}:THReshold:HYSTeresis %s",
+        """
+       Defines the size of the hysteresis to avoid the change of signal states due to noise.
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in ThresholdHysteresis]
+    )
+
+    label = Channel.setting(
+        "CHANnel{ch}:LABel %s",
+        """
+        Set a name for the selected channel.
+        """
+    )
 
 class RTB200X(Instrument):
     """
@@ -205,7 +293,7 @@ class RTB200X(Instrument):
 
     acquisition_state = Instrument.control(
         "ACQuire:STATe?", "ACQuire:STATe %s",
-        """
+    """
         Control the acquisition state of the instrument
         """,
         validator=strict_discrete_set,
