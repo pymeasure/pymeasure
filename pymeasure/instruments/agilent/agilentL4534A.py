@@ -35,7 +35,8 @@ from pymeasure.instruments.validators import (
 from pymeasure.units import ureg
 
 
-def sample_count_function(value, values): return strict_discrete_range(value, values, 4)
+def sample_count_function(value, values):
+    return strict_discrete_range(value, values, 4)
 
 
 SAMPLE_COUNT_VALUES = [8, 128e6]
