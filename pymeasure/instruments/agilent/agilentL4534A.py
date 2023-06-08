@@ -318,6 +318,13 @@ class AgilentL4534A(Instrument):
         """
         self.write('INIT')
 
+    def auto_zero(self, channels=[1,2,3,4]):
+        """ 
+        Auto-zero the inputs, temporarily loading new offsets for the current config.
+        Offsets will be cleared when instrument is reset or settings are changed.
+        """
+        return int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip())
+    
     channels = Instrument.ChannelCreator(Channel, (1, 2, 3, 4))
 
     def __init__(self, adapter, name="Agilent L4534A Digitizer", **kwargs):
