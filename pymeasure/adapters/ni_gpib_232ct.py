@@ -92,11 +92,14 @@ class NI_GPIB_232(VISAAdapter):
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
-                             'write_termination': "\n",
+                             'write_termination': "",
                          },
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
+        super().write("EOS R 10\r")
+        super().write("EOS X 10\r")
+        
         # if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
             # self.eoi = eoi
@@ -126,7 +129,7 @@ class NI_GPIB_232(VISAAdapter):
         Some instruments require EOI signal to be
         asserted in order to properly detect the end of a command.
         """
-        super._write("EOT")
+        super().write("EOT ")
         return bool(int(self.read(prologix=True)))
         self.read(prologix=True)
 
@@ -185,6 +188,33 @@ class NI_GPIB_232(VISAAdapter):
         self.write(command)
         return self.read()
 
+    def send_command(self,  data: bytes):
+        """
+        Write GPIB command bytes on the bus.
+
+        """
+        super().write(f"cmd  #{data.length}\n" + data + "\r")
+
+    def pass_control(self, primary_address: int, secondary_address: int):
+        """
+        Pass control to drevice with primary_address and optional secondary_address
+
+        """
+        super().write(f"pct  {primary_address}+{secondary_address}")
+
+    def set_rsc(self):
+        """
+        set the NI-GPIB232ct to become teh GOIB system controller
+
+        """
+        super().write("rsc  1 \n")
+
+    def send_ifc(self):
+        """Pulse the interface clear line (IFC) for at least 100 microseconds.
+
+        """
+        super().write("sic 0.0002 /n")
+
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
@@ -195,9 +225,9 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         # Overrides write instead of _write in order to ensure proper logging
-        if self.address is not None:
-            super().write(f"wrt {self.address}  {command} \n", **kwargs)
-        super().write(f"wrt {self.address}  {command} \n", **kwargs)
+        # if self.address is not None:
+        #     super().write(f"wrt {self.address}  {command} \n", **kwargs)
+        super().write(f"wrt {self.address} \n  {command}\n", **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
@@ -237,7 +267,7 @@ class NI_GPIB_232(VISAAdapter):
         :returns: number of bytes written
         """
         if self.address is not None:
-            address_command = "++addr %d\n" % self.address
+            address_command = f"wrt { self.address}"
             self.write(address_command)
         super().write_binary_values(command, values, "\n", **kwargs)
 
@@ -249,7 +279,7 @@ class NI_GPIB_232(VISAAdapter):
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
         if not prologix:
-            self.write("rd %d\n" % self.address)
+            super().write(f"rd {self.address}\r")
         return super()._read()
 
     def gpib(self, address, **kwargs):
