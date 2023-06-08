@@ -304,7 +304,8 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:THOL?",
         "CONF:ACQ:THOL %e",
         """Control minimum time between triggers, during which trigger inputs are ignored,
-          in seconds (float from 0 to 10).""",
+          in seconds (float from 0 to 10).
+        """,
         validator=strict_range,
         values=TRIGGER_HOLDOFF_VALUES
     )
@@ -322,7 +323,7 @@ class AgilentL4534A(Instrument):
 
     maximum_samples = Instrument.measurement(
         "CONF:ACQ:SCO:MAX?",
-        """Get Maximum number of samples that can be used in a record"""
+        """Get Maximum number of samples that can be used in a record."""
     )
 
     acquisition = Instrument.control(
@@ -351,10 +352,14 @@ class AgilentL4534A(Instrument):
 
     def init(self) -> None:
         """
-        Initialize measurement with current configuration.\n
-        This puts the instrument in acquisition state and waits for arm condition.\n
-        If arm is immediate, it will wait for trigger.\n
-        If both arm and trigger are immediate, it will immediately start capturing data.\n
+        Initialize measurement with current configuration.
+        
+        Note
+        ----
+        This puts the instrument in acquisition state and waits for arm condition.
+        - If arm is immediate, it will wait for trigger.
+        - If both arm and trigger are immediate, it will immediately start capturing data.
+
         Instrument will singal complete once capture is finished.
         """
         self.write('INIT')
@@ -362,6 +367,18 @@ class AgilentL4534A(Instrument):
     def auto_zero(self, channels=[1, 2, 3, 4]):
         """
         Auto-zero the inputs, temporarily loading new offsets for the current config.
+
+        Parameters
+        ----------
+        channels: list of channels to auto-zero
+
+        Returns
+        -------
+        - +0 if auto-zero completed successfully
+        - Otherwise, an error ocurred
+
+        Note
+        ----
         Offsets will be cleared when instrument is reset or settings are changed.
         """
         return int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip())
