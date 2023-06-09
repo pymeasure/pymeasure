@@ -186,6 +186,7 @@ class _ChunkResizer:
         Instrument::adapter attribute.
     :param int chunk_size: new chunk size
     """
+
     def __init__(self, adapter, chunk_size):
         """ Just initialize the object attributes.
         :param: adapter of the instrument. This is usually accessed through the
@@ -491,7 +492,17 @@ class LeCroyT3DSO1204(Instrument):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
-    channels = Instrument.ChannelCreator(ScopeChannel, (1, 2, 3, 4))
+    ch_1 = Instrument.ChannelCreator(ScopeChannel, 1,
+                                     docstring="ScopeChannel for channel 1")
+
+    ch_2 = Instrument.ChannelCreator(ScopeChannel, 2,
+                                     docstring="ScopeChannel for channel 2")
+
+    ch_3 = Instrument.ChannelCreator(ScopeChannel, 3,
+                                     docstring="ScopeChannel for channel 3")
+
+    ch_4 = Instrument.ChannelCreator(ScopeChannel, 4,
+                                     docstring="ScopeChannel for channel 4")
 
     def __init__(self, adapter, name="LeCroy T3DSO1204 Oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)
