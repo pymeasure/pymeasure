@@ -296,16 +296,20 @@ class TestInitWithMixChannelCreator:
 
     def test_channel_creation_works_more_than_once(self):
         """A zipper object works just once, ensure that a class may be used more often."""
-        p1 = MultiChannelParent(ProtocolAdapter())  # first instance of that class
+        p1 = MixChannelParent(ProtocolAdapter())  # first instance of that class
         assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
-        p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
+        assert isinstance(p1.output_Z, GenericBase)
+        p2 = MixChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
+        assert isinstance(p2.output_Z, GenericBase)
 
     def test_channel_pairs_length(self, parent):
         assert len(parent.get_channel_pairs(parent.__class__)) == 15
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
+        assert isinstance(parent.__class__.analog, CommonBase.MultiChannelCreator)
+        assert isinstance(parent.__class__.output_Z, CommonBase.ChannelCreator)
 
 
 class TestAddChild:
