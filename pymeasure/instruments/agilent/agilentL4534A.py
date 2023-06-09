@@ -331,13 +331,14 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:ATTR %s",
         """
         Control Acquistion settings
+
         Represented as dictionary containing:
-            sample_rate,
-            samples_per_record,
-            pre_trig_samples_per_record,
-            num_records,
-            trigger_holdoff,
-            trigger_delay
+        - sample_rate
+        - samples_per_record
+        - pre_trig_samples_per_record
+        - num_records
+        - trigger_holdoff
+        - trigger_delay
         """,
         set_process=_set_acq_config_process,
         get_process=_get_acq_config_process,
@@ -353,7 +354,7 @@ class AgilentL4534A(Instrument):
     def init(self) -> None:
         """
         Initialize measurement with current configuration.
-        
+
         Note
         ----
         This puts the instrument in acquisition state and waits for arm condition.

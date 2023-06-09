@@ -28,6 +28,7 @@ import pytest
 from pymeasure.instruments.agilent.agilentL4534A import AgilentL4534A
 from pymeasure.units import ureg
 
+
 @pytest.fixture(scope="module")
 def make_resetted_dig(connected_device_address):
     dig = AgilentL4534A(connected_device_address)
@@ -77,7 +78,7 @@ def test_channel_config(make_resetted_dig: AgilentL4534A):
         'coupling': 'DC',
         'filter': 'LP_2_MHZ'
     }
-    for ch in range(1,5):
+    for ch in range(1, 5):
         dig.channels[ch].config = settings
         assert dig.channels[ch].config == settings
 
@@ -98,8 +99,9 @@ def test_measure(make_resetted_dig: AgilentL4534A):
     dig.init()
     # Wait for capture to complete
     assert int(dig.complete) == 1
-    # Read back both processed and raw results for each channel and check the data looks as is expected
-    for ch in range(1,5):
+    # Read back both processed and raw results for each channel
+    # and check the data looks as is expected
+    for ch in range(1, 5):
         result = dig.channels[ch].voltage
         assert result.m.dtype == np.dtype('>f4')
         assert result.size == 1024
