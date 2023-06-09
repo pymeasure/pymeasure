@@ -37,7 +37,6 @@ class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
     def __init__(self, parent, id=None, *args, **kwargs):
-        print(args, kwargs)
         if "test" in kwargs:
             self.test = kwargs.pop("test")
         super().__init__(*args, **kwargs)
@@ -222,7 +221,7 @@ class TestInitWithMultipleChannelCreator:
         p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs(self, parent):
+    def test_channel_pairs_length(self, parent):
         assert len(parent.get_channel_pairs(parent.__class__)) == 5
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
@@ -263,7 +262,7 @@ class TestInitWithChannelCreator:
         p2 = SingleChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs(self, parent):
+    def test_channel_pairs_length(self, parent):
         assert len(parent.get_channel_pairs(parent.__class__)) == 6
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
@@ -302,7 +301,7 @@ class TestInitWithMixChannelCreator:
         p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs(self, parent):
+    def test_channel_pairs_length(self, parent):
         assert len(parent.get_channel_pairs(parent.__class__)) == 15
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
@@ -509,8 +508,7 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error received after trying to get a property"
-        "with the command 'ge': '15', '(19, 'x')'."
+        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."  # noqa: E501
     )
 
 
@@ -520,8 +518,7 @@ def test_control_check_get_errors_log_exception(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Exception raised while getting a property with"
-        "the command 'ge': 'Implement it in a subclass.'."  # noqa: E501
+        "Exception raised while getting a property with the command 'ge': 'Implement it in a subclass.'."  # noqa: E501
     )
 
 
@@ -551,8 +548,7 @@ def test_control_check_set_errors_log_exception(fake, caplog):
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Exception raised while setting a property"
-        "with the command 'se 7': 'Implement it in a subclass.'."  # noqa: E501
+        "Exception raised while setting a property with the command 'se 7': 'Implement it in a subclass.'."  # noqa: E501
     )
 
 

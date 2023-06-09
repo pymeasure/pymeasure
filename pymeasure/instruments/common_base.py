@@ -265,7 +265,7 @@ class CommonBase:
 
     @staticmethod
     def get_channel_pairs(cls):
-        """Return channels for any BaseChannelCreator channel"""
+        """Return all channel pairs for any BaseChannelCreator channel"""
         channel_pairs = []
         for name, creator in CommonBase.get_channels(cls):
             for pair in creator.pairs:
