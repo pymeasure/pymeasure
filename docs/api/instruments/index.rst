@@ -58,6 +58,7 @@ Instruments by manufacturer:
    signalrecovery/index
    srs/index
    tcpowerconversion/index
+   tdk/index
    tektronix/index
    teledyne/index
    temptronic/index
