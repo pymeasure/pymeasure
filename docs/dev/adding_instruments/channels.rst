@@ -59,7 +59,7 @@ In order to add or remove programatically channels, use the parent's :meth:`~pym
 
     class InstrumentWithChannels(Instrument):
         """An instrument with channels."""
-        channels = Instrument.ChannelCreator(VoltageChannel, ("A", "B"))
+        channels = Instrument.MultiChannelCreator(VoltageChannel, ("A", "B"))
 
 .. testcode:: with-protocol-tests
     :hide:
@@ -99,7 +99,7 @@ That is especially useful, if you have only one channel of that type, e.g. becau
 
     class InstrumentWithChannelsPrefix(Instrument):
         """An instrument with a channel, just for the test."""
-        channels = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
+        ch_A = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
 
     with expected_protocol(InstrumentWithChannelsPrefix,
         [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")],
@@ -126,11 +126,11 @@ Some devices have different types of channels. In this case, you can specify a d
 
     class MultiChannelTypeInstrument(Instrument):
         """An instrument with two different channel types."""
-        analog = Instrument.ChannelCreator(
+        analog = Instrument.MultiChannelCreator(
             (VoltageChannel, VoltageChannelPrefix),
             ("A", "B"),
             prefix="an_")
-        digital = Instrument.ChannelCreator(VoltageChannel, (0, 1, 2), prefix="di_")
+        digital = Instrument.MultiChannelCreator(VoltageChannel, (0, 1, 2), prefix="di_")
         power = Instrument.ChannelCreator(PowerChannel, prefix=None)
 
 
