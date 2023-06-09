@@ -83,6 +83,16 @@ def test_channel_config(make_resetted_dig: AgilentL4534A):
         assert dig.channels[ch].config == settings
 
 
+def test_trigger_output(make_resetted_dig: AgilentL4534A):
+    dig = make_resetted_dig
+    output_config = {
+        'event': 'TRIG',
+        'drive_mode': 'POS_50'
+    }
+    dig.trigger_output = output_config
+    assert dig.trigger_output == output_config
+
+
 def test_measure(make_resetted_dig: AgilentL4534A):
     dig = make_resetted_dig
     # Set acquisition settings

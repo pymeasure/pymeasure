@@ -76,6 +76,20 @@ def _set_acq_config_process(value):
         assume_units(value['trigger_delay'], ureg.s).m_as(ureg.s))
 
 
+TRIGGER_OUT_EVENT_VALUES = ['TRIG', 'REC', 'ACQ', 'NONE']
+TRIGGER_OUT_DRIVE_MODE_VALUES = ['POS_50', 'NEG_50', 'POS_25_W_OR', 'OFF']
+
+
+def _validate_trigger_out(value, values):
+    if 'event' not in value:
+        raise ValueError('Requires \'event\'')
+    if 'drive_mode' not in value:
+        raise ValueError('Requires \'drive_mode\'')
+    strict_discrete_set(value['event'], TRIGGER_OUT_EVENT_VALUES)
+    strict_discrete_set(value['drive_mode'], TRIGGER_OUT_DRIVE_MODE_VALUES)
+    return value
+
+
 VOLTAGE_RANGE_VALUES = ureg.Quantity(np.asarray([0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256]), ureg.V)
 
 COUPLING_VALUES = ['DC', 'AC']
@@ -230,6 +244,22 @@ class AgilentL4534A(Instrument):
         """Set the edge to be used for the external trigger input (NEGative or POSitive).""",
         validator=strict_discrete_set,
         values=['NEG', 'POS']
+    )
+
+    TRIGGER_OUT_EVENT_VALUES = TRIGGER_OUT_EVENT_VALUES
+    TRIGGER_OUT_DRIVE_MODE_VALUES = TRIGGER_OUT_DRIVE_MODE_VALUES
+
+    trigger_output = Instrument.control(
+        'CONF:EXT:TRIG:OUTP?',
+        'CONF:EXT:TRIG:OUTP %s',
+        """
+        Control the trigger output with a dictionary
+        containing event: TRIGger|RECord|ACQuisition|NONE
+        and drive_mode: POS_50|NEG_50|POS_25_W_OR|OFF
+        """,
+        validator=_validate_trigger_out,
+        set_process=lambda v: f"{v['event']},{v['drive_mode']}",
+        get_process=lambda v: {'event': v[0], 'drive_mode': v[1]}
     )
 
     TRIGGER_SOURCE_VALUES = ['IMM', 'SOFT', 'EXT', 'CHAN', 'OR']

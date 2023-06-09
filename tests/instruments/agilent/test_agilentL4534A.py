@@ -190,3 +190,19 @@ def test_channel_config():
     ) as inst:
         assert inst.channels[1].config == settings
         inst.channels[1].config = settings
+
+
+def test_trigger_output():
+    output_config = {
+        'event': 'TRIG',
+        'drive_mode': 'POS_50'
+    }
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("CONF:EXT:TRIG:OUTP?", 'TRIG,POS_50'),
+            ("CONF:EXT:TRIG:OUTP TRIG,POS_50", None)
+        ],
+    ) as inst:
+        assert inst.trigger_output == output_config
+        inst.trigger_output = output_config
