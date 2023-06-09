@@ -141,7 +141,7 @@ class CXN(Instrument):
                                          docstring="PresetChannel for channel 4")
 
     preset_5 = Instrument.ChannelCreator(PresetChannel, 5,
-                                         docstring="PresetChannel for channel 6")
+                                         docstring="PresetChannel for channel 5")
 
     preset_6 = Instrument.ChannelCreator(PresetChannel, 6,
                                          docstring="PresetChannel for channel 6")

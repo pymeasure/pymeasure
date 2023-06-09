@@ -283,7 +283,7 @@ class CommonBase:
                 # If channel pair was created with ChannelCreator
                 # name channel interface with passed attribute name
                 elif isinstance(creator, CommonBase.ChannelCreator):
-                    child = self.add_child(cls, id, name=name, **creator.kwargs)
+                    child = self.add_child(cls, id, attr_name=name, **creator.kwargs)
                 else:
                     raise ValueError("Invalid class '{creator}' for channel creation.")
                 child._protected = True
@@ -307,7 +307,7 @@ class CommonBase:
         return super().__getattribute__(name)
 
     # Channel management
-    def add_child(self, cls, id=None, collection="channels", prefix="ch_", name="", **kwargs):
+    def add_child(self, cls, id=None, collection="channels", prefix="ch_", attr_name="", **kwargs):
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the id in the
@@ -328,7 +328,7 @@ class CommonBase:
         :param prefix: For creating multiple channel interfaces, the prefix e.g. `"ch_"`
             is prepended to the attribute name of the channel interface `self.ch_A`.
             If prefix evaluates False, the child will be added directly under the collection name.
-        :param name: For creating a single channel interface, the name argument is used
+        :param attr_name: For creating a single channel interface, the attr_name argument is used
             when setting the attribute name of the channel interface.
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
@@ -338,23 +338,25 @@ class CommonBase:
         if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
         # Create channel interface if prefix or name is present
-        if (prefix or name) and id is not None:
+        if (prefix or attr_name) and id is not None:
             if not collection_data:
                 # Add a grouplist to the parent.
                 setattr(self, collection, collection_data)
             collection_data[id] = child
             child._collection = collection
-            if name:
-                setattr(self, name, child)
-                child._name = name
+            if attr_name:
+                setattr(self, attr_name, child)
+                child._name = attr_name
             else:
                 setattr(self, f"{prefix}{id}", child)
                 child._name = f"{prefix}{id}"
-        elif name and id is None:
-            setattr(self, name, child)
-            child._name = name
+        elif attr_name and id is None:
+            # If attribute name is passed with no channel id
+            # set the child to the attribute name.
+            setattr(self, attr_name, child)
+            child._name = attr_name
         else:
-            if collection_data and not name:
+            if collection_data:
                 raise ValueError(f"An attribute '{collection}' already exists.")
             setattr(self, collection, child)
             child._name = collection
