@@ -166,11 +166,14 @@ class CommonBase:
         .. code::
 
             class Extreme5000(Instrument):
-                # Two output channels
+                # Two output channels, accessible by their property names
+                # and both are accessible through the 'channels' collection
                 output_A = Instrument.ChannelCreator(Extreme5000Channel, "A",
                            docstring="Extreme5000Channel to control channel A output")
                 output_B = Instrument.ChannelCreator(Extreme5000Channel, "B",
                            docstring="Extreme5000Channel to control channel B output")
+                # A channel without a channel accessible through the 'motor' collection
+                motor = Instrument.ChannelCreator(MotorControl)
 
             inst = SomeInstrument()
             # Set the extreme_temp for channel A of Extreme5000 instrument
@@ -208,9 +211,6 @@ class CommonBase:
                 # and add them to the 'functions' collection
                 functions = Instrument.MultiChannelCreator((PowerChannel, VoltageChannel),
                                                 ["power", "voltage"], prefix="fn_")
-                # A channel without a prefixed attribute name
-                # accessible through the 'motor' collection
-                motor = Instrument.MultiChannelCreator(MotorControl, prefix=None)
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
         :param id: tuple/list of ids of the channels on the instrument.
@@ -353,8 +353,13 @@ class CommonBase:
         else:
             if collection_data:
                 raise ValueError(f"An attribute '{collection}' already exists.")
-            setattr(self, collection, child)
-            child._name = collection
+            # If created with ChannelCreator, set child to attribute name
+            if name:
+                setattr(self, name, child)
+                child._name = collection
+            else:
+                setattr(self, collection, child)
+                child._name = collection
         return child
 
     def remove_child(self, child):
