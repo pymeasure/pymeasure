@@ -118,7 +118,7 @@ def test_get_adc(length):
         assert np.array_equal(inst.channels[1].adc, data)
 
 
-@pytest.mark.parametrize("rate", AgilentL4534A.SAMPLE_RATE_VALUES)
+@pytest.mark.parametrize("rate", AgilentL4534A.SAMPLE_RATE_VALUES.magnitude.tolist())
 def test_sample_rate(rate):
     """
     Test Agilent L4534A set samples property
@@ -126,15 +126,19 @@ def test_sample_rate(rate):
     with expected_protocol(
         AgilentL4534A,
         [
-            ("CONF:ACQ:SRAT?", int(rate.m)),
-            (f"CONF:ACQ:SRAT {rate.m}", None)
+            ("CONF:ACQ:SRAT?", int(rate)),
+            (f"CONF:ACQ:SRAT {rate}", None),
+            ("CONF:ACQ:SRAT?", int(rate)),
+            (f"CONF:ACQ:SRAT {rate}", None)
         ],
     ) as inst:
-        assert inst.sample_rate == rate
+        assert inst.sample_rate.m == rate
         inst.sample_rate = rate
+        assert inst.sample_rate == rate * ureg.Hz
+        inst.sample_rate = rate * ureg.Hz
 
 
-@pytest.mark.parametrize("range", AgilentL4534A.DigitizerChannel.VOLTAGE_RANGE_VALUES)
+@pytest.mark.parametrize("range", AgilentL4534A.DigitizerChannel.VOLTAGE_RANGE_VALUES.m.tolist())
 def test_voltage_range(range):
     """
     Test Agilent L4534A channel voltage range property
@@ -142,12 +146,16 @@ def test_voltage_range(range):
     with expected_protocol(
         AgilentL4534A,
         [
-            ("CONF:CHAN:RANG? (@1)", float(range.m)),
-            (f"CONF:CHAN:RANG (@1),{range.m:.3g}", None)
+            ("CONF:CHAN:RANG? (@1)", float(range)),
+            (f"CONF:CHAN:RANG (@1),{range:.3g}", None),
+            ("CONF:CHAN:RANG? (@1)", float(range)),
+            (f"CONF:CHAN:RANG (@1),{range:.3g}", None)
         ],
     ) as inst:
-        assert inst.channels[1].range == range
+        assert inst.channels[1].range.m == range
         inst.channels[1].range = range
+        assert inst.channels[1].range == range * ureg.V
+        inst.channels[1].range = range * ureg.V
 
 
 def test_acquisition_config():

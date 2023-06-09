@@ -49,3 +49,26 @@ def assume_units(value, units):
             return ureg.Quantity(value.magnitude, units)
         return value
     return ureg.Quantity(value, units)
+
+
+def assume_or_convert_units(value, units):
+    """
+    If units are not provided for ``value`` (that is, if it is a raw
+    `float`), then pass through the given magnitude, otherwise convert to
+    the specified units and return the resulting magnitude
+
+    :param value: A value that may or may not be unitful.
+    :param units: Units to be assumed for ``value`` if it does not already
+        have units, or to be converted to if it does
+
+    :return: Magnitude resulting from conversion to specified units,
+        or assuming input has specified units, if input has no units specified
+    """
+    if isinstance(value, ureg.Quantity):
+        return value.m_as(units)
+    elif isinstance(value, str):
+        value = ureg.Quantity(value)
+        if value.dimensionless:
+            return value.magnitude
+        return value.m_as(units)
+    return value
