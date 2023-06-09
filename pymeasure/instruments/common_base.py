@@ -350,16 +350,14 @@ class CommonBase:
             else:
                 setattr(self, f"{prefix}{id}", child)
                 child._name = f"{prefix}{id}"
+        elif name and id is None:
+            setattr(self, name, child)
+            child._name = name
         else:
-            if collection_data:
+            if collection_data and not name:
                 raise ValueError(f"An attribute '{collection}' already exists.")
-            # If created with ChannelCreator, set child to attribute name
-            if name:
-                setattr(self, name, child)
-                child._name = collection
-            else:
-                setattr(self, collection, child)
-                child._name = collection
+            setattr(self, collection, child)
+            child._name = collection
         return child
 
     def remove_child(self, child):

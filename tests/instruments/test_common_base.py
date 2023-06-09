@@ -169,7 +169,7 @@ class SingleChannelParent(CommonBaseTesting):
     ch_C = CommonBase.ChannelCreator(GenericBase, "C")
     an_1 = CommonBase.ChannelCreator(GenericBase, 1, collection="analog", test=True)
     an_2 = CommonBase.ChannelCreator(GenericBase, 2, collection="analog", test=True)
-    function = CommonBase.ChannelCreator(Child, prefix=None, collection="function")
+    function = CommonBase.ChannelCreator(Child)
 
 
 class MixChannelParent(CommonBaseTesting):
