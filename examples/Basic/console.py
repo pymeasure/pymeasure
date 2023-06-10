@@ -24,12 +24,12 @@ from pymeasure.display.console import ManagedConsole
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 import logging
+
 log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
-
     iterations = IntegerParameter('Loop Iterations', default=100)
     delay = FloatParameter('Delay Time', units='s', default=0.2)
     seed = Parameter('Random Seed', default='12345')
@@ -49,7 +49,7 @@ class TestProcedure(Procedure):
             }
             log.debug("Produced numbers: %s" % data)
             self.emit('results', data)
-            self.emit('progress', 100*i/self.iterations)
+            self.emit('progress', 100 * (i + 1) / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
