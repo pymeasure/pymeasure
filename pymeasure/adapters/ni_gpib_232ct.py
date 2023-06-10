@@ -21,10 +21,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import time
+import logging
 from warnings import warn
-
+from time import sleep
 from pymeasure.adapters import VISAAdapter
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 class NI_GPIB_232(VISAAdapter):
@@ -80,30 +84,33 @@ class NI_GPIB_232(VISAAdapter):
     def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
                  preprocess_reply=None, auto=False, eoi=True, eos="\n", **kwargs):
         # for legacy rw_delay: prefer new style over old one.
-        if rw_delay:
-            warn(("Parameter `rw_delay` is deprecated. "
-                  "Implement in Instrument's `wait_for` instead."),
-                 FutureWarning)
-            kwargs['query_delay'] = rw_delay
-        if serial_timeout:
-            warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
-                 FutureWarning)
-            kwargs['timeout'] = serial_timeout
+        # if rw_delay:
+        #     warn(("Parameter `rw_delay` is deprecated. "
+        #           "Implement in Instrument's `wait_for` instead."),
+        #          FutureWarning)
+        #     kwargs['query_delay'] = rw_delay
+        # if serial_timeout:
+        #     warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
+        #          FutureWarning)
+        #     kwargs['timeout'] = serial_timeout
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
                              'write_termination': "",
+                             'chunk_size': 512,
+
                          },
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
-        super().write("EOS R 10\r")
-        super().write("EOS X 10\r")
-        
-        # if not isinstance(resource_name, NI_GPIB_232):
+        super().write("EOS RB 13\r")
+        super().write("EOS XB 13\r")
+        super().flush_read_buffer()
+
+        if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
-            # self.eoi = eoi
-            # self.eos = eos
+            self.eoi = eoi
+            self.eos = eos
 
     # @property
     # def auto(self):
@@ -129,9 +136,8 @@ class NI_GPIB_232(VISAAdapter):
         Some instruments require EOI signal to be
         asserted in order to properly detect the end of a command.
         """
-        super().write("EOT ")
-        return bool(int(self.read(prologix=True)))
-        self.read(prologix=True)
+        super().write("EOT \r")
+        return bool(int(super().read()))
 
     @eoi.setter
     def eoi(self, value):
@@ -158,6 +164,7 @@ class NI_GPIB_232(VISAAdapter):
 
     @eos.setter
     def eos(self, value):
+        # TODO needs adaptopn to 232ct
         values = {"\r\n": 0, "\r": 1, "\n": 2, "": 3}
         super().write(f"s {values[value]}")
 
@@ -167,14 +174,6 @@ class NI_GPIB_232(VISAAdapter):
         """
         super().write('id')
         return self.read(prologix=True)
-
-    # def reset(self):
-    #     """Perform a power-on reset of the controller.
-
-    #     The process takes about 5 seconds. All input received during this time
-    #     is ignored and the connection is closed.
-    #     """
-    #     self.write('++rst')
 
     def ask(self, command):
         """ Ask the Prologix controller.
@@ -200,14 +199,14 @@ class NI_GPIB_232(VISAAdapter):
         Pass control to drevice with primary_address and optional secondary_address
 
         """
-        super().write(f"pct  {primary_address}+{secondary_address}")
+        super().write(f"pct  {primary_address}+{secondary_address} \r")
 
     def set_rsc(self):
         """
         set the NI-GPIB232ct to become teh GOIB system controller
 
         """
-        super().write("rsc  1 \n")
+        super().write("rsc  1 \r")
 
     def send_ifc(self):
         """Pulse the interface clear line (IFC) for at least 100 microseconds.
@@ -224,63 +223,83 @@ class NI_GPIB_232(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        # Overrides write instead of _write in order to ensure proper logging
-        # if self.address is not None:
-        #     super().write(f"wrt {self.address}  {command} \n", **kwargs)
-        super().write(f"wrt {self.address} \n  {command}\n", **kwargs)
+        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
 
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
-        """Format values in binary format, used internally in :meth:`.write_binary_values`.
+    def write_bytes(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param values: data to be writen to the device.
-        :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
-        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
-        :return: binary string.
-        :rtype: bytes
+        If the GPIB address in :attr:`.address` is defined, it is sent first.
+
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
         """
-        block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
-        # Prologix needs certian characters to be escaped.
-        # Special care must be taken when sending binary data to instruments. If any of the
-        # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
-        # (ASCII 27), '+' (ASCII 43) - they must be escaped by preceding them with an ESC
-        # character.
-        special_chars = b'\x0d\x0a\x1b\x2b'
-        new_block = b''
-        for b in block:
-            escape = b''
-            if b in special_chars:
-                escape = b'\x1b'
-            new_block += (escape + bytes((b,)))
+        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
 
-        return new_block
+    # def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
+    #     """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
-    def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators.
+    #     :param values: data to be writen to the device.
+    #     :param datatype: the format string for a single element. See struct module.
+    #     :param is_big_endian: boolean indicating endianess.
+    #     :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
+    #     :return: binary string.
+    #     :rtype: bytes
+    #     """
+    #     block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
+    #     # Prologix needs certian characters to be escaped.
+    #     # Special care must be taken when sending binary data to instruments. If any of the
+    #     # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
+    #     # (ASCII 27), '+' (ASCII 43) - they must be escaped by preceding them with an ESC
+    #     # character.
+    #     special_chars = b'\x0d\x0a\x1b\x2b'
+    #     new_block = b''
+    #     for b in block:
+    #         escape = b''
+    #         if b in special_chars:
+    #             escape = b'\x1b'
+    #         new_block += (escape + bytes((b,)))
 
-        values are encoded in a binary format according to
-        IEEE 488.2 Definite Length Arbitrary Block Response Data block.
+    #     return new_block
 
-        :param command: SCPI command to be sent to the instrument
-        :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
-        :returns: number of bytes written
-        """
-        if self.address is not None:
-            address_command = f"wrt { self.address}"
-            self.write(address_command)
-        super().write_binary_values(command, values, "\n", **kwargs)
+    # def write_binary_values(self, command, values, **kwargs):
+    #     """ Write binary data to the instrument, e.g. waveform for signal generators.
 
-    def _read(self, prologix=False, **kwargs):
+    #     values are encoded in a binary format according to
+    #     IEEE 488.2 Definite Length Arbitrary Block Response Data block.
+
+    #     :param command: SCPI command to be sent to the instrument
+    #     :param values: iterable representing the binary values
+    #     :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
+    #     :returns: number of bytes written
+    #     """
+    #     if self.address is not None:
+    #         address_command = f"wrt { self.address}"
+    #         self.write(address_command)
+    #     super().write_binary_values(command, values, "\n", **kwargs)
+
+    def read(self,  **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param prologix: Read the prologix adapter itself.
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        if not prologix:
-            super().write(f"rd {self.address}\r")
+        log.debug("read..")
+        super().flush_read_buffer()
+        super().write(f"rd {self.address}\r")
+        sleep(0.02)
         return super()._read()
+
+    def read_bytes(self, count, **kwargs):
+        """
+        # TODO
+        do something great if ount -1 is received
+        """
+        log.debug("read bytes..")
+        super().flush_read_buffer()
+        super().write(f"rd #{count} {self.address}\r")
+        sleep(0.02)
+        return super()._read_bytes(count, kwargs)
 
     def gpib(self, address, **kwargs):
         """ Return a NI_GPIB_232 object that references the GPIB
@@ -293,23 +312,23 @@ class NI_GPIB_232(VISAAdapter):
         """
         return NI_GPIB_232(self, address, **kwargs)
 
-    def _check_for_srq(self):
-        # it was int(self.ask("++srq"))
-        self.write("++srq")
-        return int(self.read())
+    # def _check_for_srq(self):
+    #     # it was int(self.ask("++srq"))
+    #     self.write("++srq")
+    #     return int(self.read())
 
-    def wait_for_srq(self, timeout=25, delay=0.1):
-        """ Blocks until a SRQ, and leaves the bit high
+    # def wait_for_srq(self, timeout=25, delay=0.1):
+    #     """ Blocks until a SRQ, and leaves the bit high
 
-        :param timeout: Timeout duration in seconds.
-        :param delay: Time delay between checking SRQ in seconds.
-        :raises TimeoutError: "Waiting for SRQ timed out."
-        """
-        stop = time.perf_counter() + timeout
-        while self._check_for_srq() != 1:
-            if time.perf_counter() > stop:
-                raise TimeoutError("Waiting for SRQ timed out.")
-            time.sleep(delay)
+    #     :param timeout: Timeout duration in seconds.
+    #     :param delay: Time delay between checking SRQ in seconds.
+    #     :raises TimeoutError: "Waiting for SRQ timed out."
+    #     """
+    #     stop = time.perf_counter() + timeout
+    #     while self._check_for_srq() != 1:
+    #         if time.perf_counter() > stop:
+    #             raise TimeoutError("Waiting for SRQ timed out.")
+    #         time.sleep(delay)
 
     def __repr__(self):
         if self.address is not None:
