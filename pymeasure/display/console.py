@@ -180,13 +180,12 @@ class ManagedConsole(QtCore.QCoreApplication):
         if self.use_estimator:
             log.warning("Estimator not yet implemented")
 
-        parser = ConsoleArgumentParser(procedure_class)
         # Handle Ctrl+C nicely
         signal.signal(signal.SIGINT, lambda sig, _: self.abort())
 
         # Parse command line arguments
+        parser = ConsoleArgumentParser(procedure_class)
         args = vars(parser.parse_args())
-        procedure = self.procedure_class()
 
         self.directory = args['result_directory']
         self.filename = args['result_file']
@@ -203,20 +202,19 @@ class ManagedConsole(QtCore.QCoreApplication):
             raise NotImplementedError("Sequencer not yet implemented")
 
         # Set procedure parameters
-        parameter_values = {}
+        self.parameter_values = {}
 
         if args['use_result_file'] is not None:
             # Special case set parameters from log file
             results = Results.load(args['use_result_file'])
             for name in results.parameters:
-                parameter_values[name] = results.parameters[name].value
+                self.parameter_values[name] = results.parameters[name].value
         else:
             for name in args:
                 opt_name = name.replace("_", "-")
                 if not (opt_name in parser.special_options):
-                    parameter_values[name] = args[name]
+                    self.parameter_values[name] = args[name]
 
-        procedure.set_parameters(parameter_values)
         if (progressbar and not args['no_progressbar']):
             progressbar.streams.wrap_stderr()
             self.bar = progressbar.ProgressBar(max_value=100,
@@ -236,44 +234,8 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.manager.finished.connect(self._terminate)
         self.manager.log.connect(self.log.handle)
 
-        if progressbar and not args['no_progressbar']:
-            progressbar.streams.wrap_stderr()
-            self.bar = progressbar.ProgressBar(max_value=100,
-                                               prefix='{variables.status}: ',
-                                               variables={'status': "Unknown"})
-        else:
-            self.bar = None
-
-        self.directory = args['result_directory']
-        self.filename = args['result_file']
-        try:
-            log_level = int(args['log_level'])
-        except ValueError:
-            # Ignore and assume it is a valid level string
-            log_level = args['log_level']
-        self.log_level = log_level
-        log.setLevel(self.log_level)
-        self.log.setLevel(self.log_level)
-
-        if args['sequence_file'] is not None:
-            raise NotImplementedError("Sequencer not yet implemented")
-
-        # Set procedure parameters
-        parameter_values = {}
-
-        if args['use_result_file'] is not None:
-            # Special case set parameters from log file
-            results = Results.load(args['use_result_file'])
-            for name in results.parameters:
-                parameter_values[name] = results.parameters[name].value
-        else:
-            for name in args:
-                opt_name = name.replace("_", "-")
-                if not (opt_name in parser.special_options):
-                    parameter_values[name] = args[name]
-
     def get_filename(self, directory):
-        """ Return filename for saving results file 
+        """ Return filename for saving results file
 
         :param directory: directory of the returned filename.
 
@@ -286,6 +248,7 @@ class ManagedConsole(QtCore.QCoreApplication):
     def queue(self):
         filename = self.get_filename(self.directory)
         procedure = self.procedure_class()
+        procedure.set_parameters(self.parameter_values)
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
 
