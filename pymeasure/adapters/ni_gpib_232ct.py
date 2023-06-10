@@ -97,36 +97,25 @@ class NI_GPIB_232(VISAAdapter):
                          asrl={
                              'timeout': 500,
                              'write_termination': "",
-                             'chunk_size': 512,
+                             'read_termination': "\r\n",
+                             'chunk_size': 256,
 
                          },
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
-        super().write("EOS RB 13\r")
-        super().write("EOS XB 13\r")
+        super().write("EOS D\r")
         super().flush_read_buffer()
 
         if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
             self.eoi = eoi
-            self.eos = eos
 
-    # @property
-    # def auto(self):
-    #     """Control whether to address instruments to talk after sending them a command (bool).
-
-    #     Configure Prologix GPIB controller to automatically address instruments
-    #     to talk after sending them a command in order to read their response. The
-    #     feature called, Read-After-Write, saves the user from having to issue read commands
-    #     repeatedly. This property enables (True) or disables (False) this feature.
-    #     """
-    #     self.write("++auto")
-    #     return bool(int(self.read(prologix=True)))
-
-    # @auto.setter
-    # def auto(self, value):
-    #     self.write(f"++auto {int(value)}")
+    def _assert_trigger(self):
+        """
+        Initiate a GPIB trigger-event
+        """
+        super().write(f"trg {self.address} \r")
 
     @property
     def eoi(self):
@@ -144,38 +133,15 @@ class NI_GPIB_232(VISAAdapter):
         super().write(f"EOT {int(value)}")
 
     @property
-    def eos(self):
-        """Control GPIB termination characters (str).
-
-        possible values:
-            - CR+LF
-            - CR
-            - LF
-            - empty string
-
-        When data from host is received, all non-escaped LF, CR and ESC characters are
-        removed and GPIB terminators, as specified by this command, are appended before
-        sending the data to instruments. This command does not affect data fromMHz
-        instruments received over GPIB port.
-        """
-        values = {0: "\r\n", 1: "\r", 2: "\n", 3: ""}
-        super().write("EOS")
-        return values[int(self.read(prologix=True))]
-
-    @eos.setter
-    def eos(self, value):
-        # TODO needs adaptopn to 232ct
-        values = {"\r\n": 0, "\r": 1, "\n": 2, "": 3}
-        super().write(f"s {values[value]}")
-
-    @property
     def version(self):
         """Get the version string of the Prologix controller.
         """
-        super().write('id')
-        return self.read(prologix=True)
+        super().flush_read_buffer()
+        super().write('id \r')
+        sleep(0.02)
+        return super().read_bytes(71).decode()
 
-    def ask(self, command):
+    def ask(self, command, kwargs):
         """ Ask the Prologix controller.
 
         .. deprecated:: 0.11
@@ -183,9 +149,18 @@ class NI_GPIB_232(VISAAdapter):
 
         :param command: SCPI command string to be sent to instrument
         """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        self.write(command)
+        log.warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
+        super().flush_read_buffer()
+        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
+        sleep(0.0)
         return self.read()
+
+    def clear(self):
+        """
+        Clear specified device.
+
+        """
+        super().write(f"clr  {self.address} \r")
 
     def send_command(self,  data: bytes):
         """
@@ -209,7 +184,7 @@ class NI_GPIB_232(VISAAdapter):
         super().write("rsc  1 \r")
 
     def send_ifc(self):
-        """Pulse the interface clear line (IFC) for at least 100 microseconds.
+        """Pulse the interface clear line (IFC) for at least 200 microseconds.
 
         """
         super().write("sic 0.0002 /n")
@@ -284,9 +259,9 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        log.debug("read..")
+        log.debug("read..\r\n")
         super().flush_read_buffer()
-        super().write(f"rd {self.address}\r")
+        super().write(f"rd #255 {self.address}\r")
         sleep(0.02)
         return super()._read()
 
@@ -295,7 +270,7 @@ class NI_GPIB_232(VISAAdapter):
         # TODO
         do something great if ount -1 is received
         """
-        log.debug("read bytes..")
+        log.debug("read bytes..\r\n")
         super().flush_read_buffer()
         super().write(f"rd #{count} {self.address}\r")
         sleep(0.02)
