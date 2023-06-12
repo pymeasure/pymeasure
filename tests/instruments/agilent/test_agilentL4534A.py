@@ -115,8 +115,30 @@ def test_get_adc(length):
             ("FETC:WAV:ADC? (@1)", f'#{digits}{count}'.encode() + bytes + b'\n')
         ],
     ) as inst:
-        assert np.array_equal(inst.channels[1].adc, data)
+        resp = inst.channels[1].adc
+        assert resp.dtype == np.int16
+        assert np.array_equal(resp, data)
 
+
+@pytest.mark.parametrize("length", [5, 1024])
+def test_get_voltage(length):
+    """
+    Test Agilent L4534A get Voltage property
+    """
+
+    data = np.arange(length, dtype='>f4')
+    bytes = data.tobytes()
+    count = len(bytes)
+    digits = int(math.log10(count))+1
+    with expected_protocol(
+        AgilentL4534A,
+        [
+            ("FETC:WAV:VOLT? (@1)", f'#{digits}{count}'.encode() + bytes + b'\n')
+        ],
+    ) as inst:
+        resp = inst.channels[1].voltage
+        assert resp.dtype == np.float32
+        assert np.array_equal(resp.m, data)
 
 @pytest.mark.parametrize("rate", AgilentL4534A.SAMPLE_RATE_VALUES.magnitude.tolist())
 def test_sample_rate(rate):

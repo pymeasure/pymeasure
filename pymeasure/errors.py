@@ -31,5 +31,9 @@ class RangeError(Error):
     pass
 
 
+class InstrumentError(RuntimeError):
+    pass
+
+
 # TODO should be deprecated someday
 RangeException = RangeError

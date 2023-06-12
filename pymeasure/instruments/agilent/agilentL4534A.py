@@ -24,7 +24,7 @@
 
 import numpy as np
 
-from pymeasure.errors import Error
+from pymeasure.errors import InstrumentError
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, strict_discrete_range
@@ -190,25 +190,42 @@ class AgilentL4534A(Instrument):
             values=FILTER_VALUES
         )
 
-        def _read_data_block(self):
+        def _read_data_block(self, dtype):
+            """
+            Read data block header response that some FETCh commands return by default
+            :param dtype: Numpy data type expected for this data block
+            :return: numpy array of specified type
+            """
             # Data block has header of form '#<n><n digits>',
             # where <n>specifies the number of digits used to indicate the size of the block,
             # and the <n digits> indicate the block size in bytes.
             digits = self.read_bytes(2).decode()
-            if not digits.startswith('#'):
-                raise Error()
-            bytes = int(self.read_bytes(int(digits[1])).decode())
-            # Read specified number of bytes + newline terminator
-            buf = memoryview(self.read_bytes(bytes+1))
-            # Return view that strips off newline to contain only desired bytes
-            return buf[:-1]
+            if digits.startswith('#'):
+                try:
+                    bytes = int(self.read_bytes(int(digits[1])).decode())
+                    # Read specified number of bytes + newline terminator
+                    buf = memoryview(self.read_bytes(bytes+1))
+                    # Return view that strips off newline to contain only desired bytes
+                    return np.frombuffer(buf[:-1], dtype)
+                except ValueError:
+                    InstrumentError(
+                        """
+                        Unable to parse data block header returned by instrument.
+                        """
+                    )
+            else:
+                raise InstrumentError(
+                    """
+                    Data block header character "#" not found in response.
+                    Is device in ASCII mode?
+                    """
+                    )
 
         @property
         def voltage(self):
             """Get voltage measurements for this channel (array of float in V)."""
             self.write(f'FETC:WAV:VOLT? (@{self.id})')
-            data = self._read_data_block()
-            return ureg.Quantity(np.frombuffer(data, dtype='>f4'), ureg.V)
+            return ureg.Quantity(self._read_data_block('>f4').astype(np.float32), ureg.V)
 
         @property
         def adc(self):
@@ -217,8 +234,7 @@ class AgilentL4534A(Instrument):
             in current voltage range.
             """
             self.write(f'FETC:WAV:ADC? (@{self.id})')
-            data = self._read_data_block()
-            return np.frombuffer(data, dtype='>i2')
+            return self._read_data_block('>i2').astype(np.int16)
 
     channels = Instrument.ChannelCreator(DigitizerChannel, (1, 2, 3, 4))
 
@@ -401,7 +417,7 @@ class AgilentL4534A(Instrument):
         Auto-zero the inputs, temporarily loading new offsets for the current config.
 
         :param channels: list of channels to auto-zero
-        :return +0 if auto-zero completed successfully, Otherwise, an error ocurred
+        :return: 0 if auto-zero completed successfully, Otherwise, an error ocurred
 
         note::
         Offsets will be cleared when instrument is reset or settings are changed.
