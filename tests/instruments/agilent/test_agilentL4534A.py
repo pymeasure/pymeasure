@@ -140,6 +140,7 @@ def test_get_voltage(length):
         assert resp.dtype == np.float32
         assert np.array_equal(resp.m, data)
 
+
 @pytest.mark.parametrize("rate", AgilentL4534A.SAMPLE_RATE_VALUES.magnitude.tolist())
 def test_sample_rate(rate):
     """
