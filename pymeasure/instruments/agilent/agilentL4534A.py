@@ -389,8 +389,7 @@ class AgilentL4534A(Instrument):
         """
         Initialize measurement with current configuration.
 
-        Note
-        ----
+        note::
         This puts the instrument in acquisition state and waits for arm condition.
         - If arm is immediate, it will wait for trigger.
         - If both arm and trigger are immediate, it will immediately start capturing data.
@@ -403,17 +402,10 @@ class AgilentL4534A(Instrument):
         """
         Auto-zero the inputs, temporarily loading new offsets for the current config.
 
-        Parameters
-        ----------
-        channels: list of channels to auto-zero
+        :param channels: list of channels to auto-zero
+        :return +0 if auto-zero completed successfully, Otherwise, an error ocurred
 
-        Returns
-        -------
-        - +0 if auto-zero completed successfully
-        - Otherwise, an error ocurred
-
-        Note
-        ----
+        note::
         Offsets will be cleared when instrument is reset or settings are changed.
         """
         return int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip())
