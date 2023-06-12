@@ -466,7 +466,7 @@ class BN675_AWG(Instrument):
         self.write('MMEM:DOWN:DATA ' + to_transferstr)
         #sleep(.01)
 
-    def delete_all_user(self, key):
+    def delete_all_user(self, key=''):
         self.write('WLIST:WAV:DEL ALL')
 
 
