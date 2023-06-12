@@ -147,9 +147,9 @@ def test_voltage_range(range):
         AgilentL4534A,
         [
             ("CONF:CHAN:RANG? (@1)", float(range)),
-            (f"CONF:CHAN:RANG (@1),{range:.3g}", None),
+            (f"CONF:CHAN:RANG (@1),{range:g}", None),
             ("CONF:CHAN:RANG? (@1)", float(range)),
-            (f"CONF:CHAN:RANG (@1),{range:.3g}", None)
+            (f"CONF:CHAN:RANG (@1),{range:g}", None)
         ],
     ) as inst:
         assert inst.channels[1].range.m == range

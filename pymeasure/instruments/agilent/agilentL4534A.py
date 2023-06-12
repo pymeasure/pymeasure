@@ -24,8 +24,6 @@
 
 import numpy as np
 
-from decimal import Decimal
-
 from pymeasure.errors import Error
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (
@@ -48,7 +46,7 @@ TRIGGER_DELAY_VALUES = ureg.Quantity([0, 3600], ureg.s)
 
 def _get_channel_config_process(values):
     result = {
-        'range': ureg.Quantity(Decimal(values[0]), ureg.V),
+        'range': ureg.Quantity(float(values[0]), ureg.V),
         'coupling': values[1],
         'filter': values[2]
     }
@@ -164,12 +162,12 @@ class AgilentL4534A(Instrument):
 
         range = Instrument.control(
             "CONF:CHAN:RANG? (@{ch})",
-            "CONF:CHAN:RANG (@{ch}),%s",
+            "CONF:CHAN:RANG (@{ch}),%g",
             """
             Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
             """,
-            set_process=lambda v: Decimal(assume_or_convert_units(v, ureg.V)).to_eng_string(
-            ),  # send the value as V to the device
+            set_process=lambda v: assume_or_convert_units(v, ureg.V),
+            # send the value as V to the device
             get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
             validator=lambda value, values:
                 strict_discrete_set(assume_units(value, ureg.V), values),
