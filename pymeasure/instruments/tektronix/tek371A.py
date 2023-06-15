@@ -83,22 +83,22 @@ class Tektronix371A(Instrument):
 
     .. code-block:: python
 
-    ct371A = Tektronix371A("GPIB0::23::INSTR")
-    # COLLECTOR SUPPLY
-    ct371A.cs_peakpower = 300
-    ct371A.cs_polarity = "POS"
-    ct371A.cs_collector_supply = 0
-    # STEP GEN
-    ct371A.stepgen_step_source_and_size = ("VOLTAGE", 5.0)
-    ct371A.stepgen_number_steps = 0
-    ct371A.set_stepgen_offset(0)
-    # DISPLAY
-    ct371A.diplay_store_mode = "STO"
-    ct371A.display_horizontal_source_sensitivity = ("COLLECT", 1.0E-1)
-    ct371A.display_vertical_source_sensitivity = ("COLLECT", 500.0E-3)
-    ct371A.set_cursor_mode("DOT", 1)
-    # MEASUREMENT
-    ct371A.measure_mode = "REP"
+        ct371A = Tektronix371A("GPIB0::23::INSTR")
+        # COLLECTOR SUPPLY
+        ct371A.cs_peakpower = 300
+        ct371A.cs_polarity = "POS"
+        ct371A.cs_collector_supply = 0
+        # STEP GEN
+        ct371A.stepgen_step_source_and_size = ("VOLTAGE", 5.0)
+        ct371A.stepgen_number_steps = 0
+        ct371A.set_stepgen_offset(0)
+        # DISPLAY
+        ct371A.diplay_store_mode = "STO"
+        ct371A.display_horizontal_source_sensitivity = ("COLLECT", 1.0E-1)
+        ct371A.display_vertical_source_sensitivity = ("COLLECT", 500.0E-3)
+        ct371A.set_cursor_mode("DOT", 1)
+        # MEASUREMENT
+        ct371A.measure_mode = "REP"
 
     """
 
