@@ -43,8 +43,8 @@ def test_lamp():
             [("LI1", "INF 000"),
              ("LI0", "INF 000")],
     ) as inst:
-        inst.lamp_on = True
-        inst.lamp_on = False
+        inst.lamp_enabled = True
+        inst.lamp_enabled = False
 
 
 def test_chuck_lift():
@@ -54,8 +54,8 @@ def test_chuck_lift():
             [("CUP", "INF 000"),
              ("CDW", "INF 000")],
     ) as inst:
-        inst.chuck_lift = True
-        inst.chuck_lift = False
+        inst.chuck_lift = 'up'
+        inst.chuck_lift = 'down'
 
 
 def test_chuck_gross_lift():
@@ -65,8 +65,8 @@ def test_chuck_gross_lift():
             [("GUP", "INF 000"),
              ("GDW", "INF 000")],
     ) as inst:
-        inst.chuck_gross_lift = True
-        inst.chuck_gross_lift = False
+        inst.chuck_gross_lift = 'up'
+        inst.chuck_gross_lift = 'down'
 
 
 def test_chuck_override():
@@ -76,8 +76,8 @@ def test_chuck_override():
             [("CO1", "INF 000"),
              ("CO0", "INF 000")],
     ) as inst:
-        inst.chuck_override = True
-        inst.chuck_override = False
+        inst.chuck_override_enabled = True
+        inst.chuck_override_enabled = False
 
 
 def test_x_position():

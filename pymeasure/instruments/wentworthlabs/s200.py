@@ -41,27 +41,27 @@ class S200(Instrument):
 
     .. code-block:: python
 
-    s200 = S200("GPIB0::28::INSTR", query_delay=0.5, write_delay=0.5)
-    # test probe table lamp
-    s200.lamp_on = True
-    s200.lamp_on = False
-    # test chuck lift
-    s200.chuck_lift = True
-    s200.chuck_lift = False
-    # configure x and y index
-    s200.x_index = 2000
-    s200.y_index = 2000
-    # test the moving of the chuck by x_index and y_index increment
-    s200.next_die = 'U'
-    s200.next_die = 'D'
-    s200.next_die = 'L'
-    s200.next_die = 'R'
-    # test the theta rotation of the chuck
-    s200.chuck_lift = False
-    s200.move_to_probing_zone_centre_position()
-    for i in range(0, 100):
-        s200.theta_position = -(i * 100)
-    s200.move_to_manual_load_position()
+        s200 = S200("GPIB0::28::INSTR", query_delay=0.5, write_delay=0.5)
+        # test probe table lamp
+        s200.lamp_enabled = True
+        s200.lamp_enabled = False
+        # test chuck lift
+        s200.chuck_lift = 'up'
+        s200.chuck_lift = 'down'
+        # configure x and y index
+        s200.x_index = 2000
+        s200.y_index = 2000
+        # test the moving of the chuck by x_index and y_index increment
+        s200.next_die = 'up'
+        s200.next_die = 'down'
+        s200.next_die = 'left'
+        s200.next_die = 'right'
+        # test the theta rotation of the chuck
+        s200.chuck_lift = 'down'
+        s200.move_to_probing_zone_centre_position()
+        for i in range(0, 100):
+            s200.theta_position = -(i * 100)
+        s200.move_to_manual_load_position()
     """
 
     # Movement boundaries of the Pegassus S200 chuck
@@ -103,46 +103,40 @@ class S200(Instrument):
 
     chuck_lift = Instrument.setting(
         "%s",
-        "Control the chuck to the fine down (CDW) or fine up (CUP) position.",
-        # The GDW/GUP command is used to move the chuck to the Gross Up or Gross
-        # Down positions.
-
+        """Control the chuck to the fine down (CDW) or fine up (CUP) position.
+        See chuck_gross_lift controls up and down gross movement of the chuck.""",
         validator=strict_discrete_set,
-        values={True: 'CUP', False: 'CDW'},
+        values={'up': 'CUP', 'down': 'CDW'},
         map_values=True,
         check_set_errors=True
     )
 
     chuck_gross_lift = Instrument.setting(
         "%s",
-        "Control the chuck to the gross down (CDW) or fine up (CUP) position.",
-        # The CDW/CUP command is used to move the chuck to the Fine Down or
-        # Fine Up positions. The GUP command may be used to move the chuck to a
-        # safe gross lift height ready for probing the first die. Subsequent Z movements
-        # to move the probes onto and off of the die under test should use the CUP and
-        # CDW command. If edge sensors are being used this will dynamically adjust
-        # the gross lift value to track the wafer surface. Therefore it is advisable not to
-        # use the GUP command during the probing process until the start of the next
-        # wafer. Doing so may cause unexpected results.
+        """Control the chuck to the gross down (GDW) or fine up (GUP) position.
+        The CDW/CUP command is used to move the chuck to the Fine Down or Fine Up positions.
+        The GUP command may be used to move the chuck to a safe gross lift height ready for 
+        probing the first die. Subsequent Z movements to move the probes onto and off of the die 
+        under test should use the CUP and CDW command.""",
         # AWP compatible: Yes
         validator=strict_discrete_set,
-        values={True: 'GUP', False: 'GDW'},
+        values={'up': 'GUP', 'down': 'GDW'},
         map_values=True,
         check_set_errors=True
     )
 
-    chuck_override = Instrument.setting(
+    chuck_override_enabled = Instrument.setting(
         "%s",
-        "Control the chuck override of the main chuck of the probe station.",
+        """Control the chuck override of the main chuck of the probe station.""",
         validator=strict_discrete_set,
         values={True: 'CO1', False: 'CO0'},
         map_values=True,
         check_set_errors=True
     )
 
-    lamp_on = Instrument.setting(
+    lamp_enabled = Instrument.setting(
         "%s",
-        "Control lamp on/off of the probe station",
+        """Control lamp on/off of the probe station""",
         validator=strict_discrete_set,
         values={True: 'LI1', False: 'LI0'},
         map_values=True,
@@ -151,45 +145,45 @@ class S200(Instrument):
 
     x_position = Instrument.control(
         "PSS X", "GTS X,%d",
-        "Control the x-axis position in microns",
+        """Control the x-axis position in microns""",
+        # AWP compatible: No
         validator=strict_range,
         values=X_POS_VALID_RANGE,
-        get_process=lambda r:
-        float(r[1]),
+        preprocess_reply=lambda r: r[r.index(',')+1:],
         check_set_errors=True
     )
 
     y_position = Instrument.control(
         "PSS Y", "GTS Y,%d",
-        "Control the y-axis position in microns",
+        """Control the y-axis position in microns""",
+        # AWP compatible: No
         validator=strict_range,
         values=Y_POS_VALID_RANGE,
-        get_process=lambda r:
-        float(r[1]),
+        preprocess_reply=lambda r: r[r.index(',')+1:],
         check_set_errors=True
     )
 
     xy_position = Instrument.control(
         "PSS XY", "GTXY %d,%d",
-        "Control the xy-axis position in microns",
+        """Control the xy-axis position in microns""",
+        # AWP compatible: No
         validator=multivalue_strict_range,
         values=X_POS_VALID_RANGE,
-        get_process=lambda r:
-        [float(number) for ind, number in enumerate(r) if ind > 0],
+        preprocess_reply=lambda r: r[r.index(',')+1:],
         check_set_errors=True
     )
 
     z_position = Instrument.measurement(
-        "PSGM",
-        "Measure the z-axis position in microns",
-        separator=" ",
-        get_process=lambda r:
-        float(r[1])
+        "PSS Z",
+        """Measure the z-axis position in microns""",
+        # AWP compatible: No
+        preprocess_reply=lambda r: r[r.index(',')+1:],
+        check_set_errors=True
     )
 
     x_index = Instrument.control(
         "RXM", "WXM %d",
-        "Control the x index of the chuck in units of 10 microns ",
+        """Control the x index of the chuck in units of 10 microns.""",
         # AWP compatible: Yes
         validator=strict_range,
         values=X_Y_INDEX_VALID_RANGE,
@@ -200,69 +194,64 @@ class S200(Instrument):
 
     y_index = Instrument.control(
         "RYM", "WYM %d",
-        "Control the y index of the chuck in units of 10 microns ",
+        """Control the y index of the chuck in units of 10 microns.""",
         # AWP compatible: Yes
         validator=strict_range,
         values=X_Y_INDEX_VALID_RANGE,
         check_set_errors=True,
-        get_process=lambda r:
-        float(r.replace("RYM ", ""))
+        preprocess_reply=lambda r: r.replace("RYM ", "")
     )
 
     theta_position = Instrument.control(
         "PSTH", "GTTH %d",
-        "Control the rotation of the chuck to the Theta-axis position in millidegrees "
-        "specified in the parameter",
+        """Control the rotation of the chuck to the Theta-axis position in millidegrees specified 
+        in the parameter""",
         # AWP compatible: No
         validator=strict_range,
         values=[-359999, 359999],
         check_set_errors=True,
-        get_process=lambda r:
-        float(r.replace("PSTH ", ""))
+        preprocess_reply=lambda r: r.replace("PSTH ", "")
     )
 
     z_overtravel = Instrument.control(
         "RZIM", "WZIM %d",
-        "Control the z-axis overtravel (in um) of the chuck of the probe station",
+        """Control the z-axis overtravel (in um) of the chuck of the probe station.""",
         # AWP compatible: No
         validator=strict_range,
         values=Z_OVERTRAVEL_VALID_RANGE,
         check_set_errors=True,
-        get_process=lambda r:
-        float(r.replace("RZIM ", ""))
+        preprocess_reply=lambda r: r.replace("RZIM ", "")
     )
 
     z_grosslift = Instrument.control(
         "RKGM", "WKGM %d",
-        "Control the z-axis gross lift (in um) of the chuck of the probe station",
+        """Control the z-axis gross lift (in um) of the chuck of the probe station.""",
         # AWP compatible: No
         validator=strict_range,
         values=Z_GROSSLIFT_VALID_RANGE,
         check_set_errors=True,
-        get_process=lambda r:
-        float(r.replace("RKGM ", ""))
+        preprocess_reply=lambda r: r.replace("RKGM ", "")
     )
 
     z_finelift = Instrument.control(
         "RKFM", "WKFM %d",
-        "Control the z-axis fine lift (in um) of the chuck of the probe station",
+        """Control the z-axis fine lift (in um) of the chuck of the probe station.""",
         # AWP compatible: No
         validator=strict_range,
         values=Z_FINELIFT_VALID_RANGE,
         check_set_errors=True,
-        get_process=lambda r:
-        float(r.replace("RKFM ", ""))
+        preprocess_reply=lambda r: r.replace("RKFM ", "")
     )
 
-    indexing_mode = Instrument.setting(
+    indexing_mode_enabled = Instrument.setting(
         "%s",
-        "Control the indexing mode."
-        "If True, Enters indexing mode and moves to the first die to be probed, or moves to the"
-        " next die to be probed if already in indexing mode. Indexing mode is exiting"
-        " using the NXF command (above). Pay attention. When in indexing mode, "
-        " next_die property will be not recognized as a command and will get the state of the table"
-        " out of communication."
-        " All subsequent commands will be ignored and thus we will re-enter in remote mode.",
+        """Control the indexing mode.
+        If True, Enters indexing mode and moves to the first die to be probed, or moves to the
+        next die to be probed if already in indexing mode. Indexing mode is exiting
+        using the NXF command (above). Pay attention. When in indexing mode,
+        next_die property will be not recognized as a command and will get the state of the table 
+        out of communication.
+        All subsequent commands will be ignored and thus we will re-enter in remote mode.""",
         # AWP compatible: Yes
         validator=strict_discrete_set,
         values={True: 'NXT', False: 'NXF'},
@@ -272,7 +261,7 @@ class S200(Instrument):
 
     next_die = Instrument.setting(
         "NX%s",
-        "Control the movement of the chuck to the next die",
+        """Control the movement of the chuck to the next die.""",
         # If probe_table.next_die = "D" then it will go below the current die
         # If probe_table.next_die = "U" then it will go above the current die
         # If probe_table.next_die = "L" then it will go to the left of the current die
@@ -280,57 +269,50 @@ class S200(Instrument):
         # AWP compatible: Yes
         check_set_errors=True,
         validator=strict_discrete_set,
-        values=['D', 'U', 'L', 'R']
+        values={'down': 'D', 'up': 'U', 'left': 'L', 'right': 'R'},
+        map_values=True
     )
 
     status_byte = Instrument.measurement(
         "STA",
-        "Measure the status byte of the instrument",
-        get_process=lambda r:
-        r
+        """Measure the status byte of the instrument."""
     )
 
     extended_status_info = Instrument.measurement(
         "STP",
-        "Measure the extended status information of the instrument",
-        get_process=lambda r:
-        r
+        """Measure the extended status information of the instrument."""
     )
 
     exit_remote = Instrument.setting(
         "ESC",
-        "Set the proble table in local mode. Exits remote mode."
-        # This command does not send a reply. However, when remote mode is re-entered,
-        # the Pegasus unit sends an INF_000 message
+        """Set the proble table in local mode. Exits remote mode.
+        This command does not send a reply. However, when remote mode is re-entered, 
+        the Pegasus unit sends an INF_000 message."""
     )
 
     serial_number = Instrument.measurement(
         "GSN",
-        "Measure the serial number of the probe table",
-        # AWP compatible: No
-        get_process=lambda r:
-        str(r)
+        """Measure the serial number of the probe table.""",
+        # AWP compatible: No,
+        cast=str
     )
 
     software_version_number = Instrument.measurement(
         "VSN",
-        "Measure the software version number of the probe table",
-        # AWP compatible: Yes
-        get_process=lambda r:
-        str(r)
+        """Measure the software version number of the probe table.""",
+        # AWP compatible: Yes,
+        cast=str
     )
 
     hardware_build = Instrument.measurement(
         "GHB",
-        "Measure the hardware build version number of the probe table",
+        """Measure the hardware build version number of the probe table."""
         # AWP compatible: No
-        get_process=lambda r:
-        r
     )
 
     model_id = Instrument.measurement(
         "GID",
-        "Measure the model id of the probe table",
+        """Measure the model id of the probe table."""
         # AWP compatible: Yes
         # Returns model information about the Pegasus unit. The information consists of the
         # Pegasus model name, followed by a semi - colon, followed by a list of options
@@ -347,8 +329,6 @@ class S200(Instrument):
         # Reader – Optional OCR
         # Robot – Robot loader
         # Cleaner – Prober cleaner support
-        get_process=lambda r:
-        r
     )
 
     def move_to_load_position(self):
@@ -402,7 +382,6 @@ class S200(Instrument):
     # Wrapper functions for the Adapter object
     def write(self, command, **kwargs):
         """Overrides Instrument write method for including write_delay time after the parent call.
-
         :param command: command string to be sent to the instrument
         """
         actual_write_delay = time.time() - self.last_write_timestamp
@@ -416,7 +395,6 @@ class S200(Instrument):
         :param query_delay: Delay between writing and reading in seconds.
         :returns: String returned by the device without read_termination.
         """
-
         return super().ask(command, query_delay if query_delay else self.query_delay)
 
     class ExecutionInfoCode(IntEnum):
