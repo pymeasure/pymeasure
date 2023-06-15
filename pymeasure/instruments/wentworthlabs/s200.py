@@ -115,8 +115,8 @@ class S200(Instrument):
         "%s",
         """Control the chuck to the gross down (GDW) or fine up (GUP) position.
         The CDW/CUP command is used to move the chuck to the Fine Down or Fine Up positions.
-        The GUP command may be used to move the chuck to a safe gross lift height ready for 
-        probing the first die. Subsequent Z movements to move the probes onto and off of the die 
+        The GUP command may be used to move the chuck to a safe gross lift height ready for
+        probing the first die. Subsequent Z movements to move the probes onto and off of the die
         under test should use the CUP and CDW command.""",
         # AWP compatible: Yes
         validator=strict_discrete_set,
@@ -204,7 +204,7 @@ class S200(Instrument):
 
     theta_position = Instrument.control(
         "PSTH", "GTTH %d",
-        """Control the rotation of the chuck to the Theta-axis position in millidegrees specified 
+        """Control the rotation of the chuck to the Theta-axis position in millidegrees specified
         in the parameter""",
         # AWP compatible: No
         validator=strict_range,
@@ -249,7 +249,7 @@ class S200(Instrument):
         If True, Enters indexing mode and moves to the first die to be probed, or moves to the
         next die to be probed if already in indexing mode. Indexing mode is exiting
         using the NXF command (above). Pay attention. When in indexing mode,
-        next_die property will be not recognized as a command and will get the state of the table 
+        next_die property will be not recognized as a command and will get the state of the table
         out of communication.
         All subsequent commands will be ignored and thus we will re-enter in remote mode.""",
         # AWP compatible: Yes
@@ -286,7 +286,7 @@ class S200(Instrument):
     exit_remote = Instrument.setting(
         "ESC",
         """Set the proble table in local mode. Exits remote mode.
-        This command does not send a reply. However, when remote mode is re-entered, 
+        This command does not send a reply. However, when remote mode is re-entered,
         the Pegasus unit sends an INF_000 message."""
     )
 
