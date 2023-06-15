@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 
 class Tektronix371A(Instrument):
-    """ Represents the Tektronix Curve Tracer model 371A
+    """Represents the Tektronix Curve Tracer model 371A
     and provides a high-level interface for interacting with
     the instrument using the SCPI command set for getting the characteristic curves
     of several power electronics devices like diodes, IGBTs, MOSFETs, etc...
