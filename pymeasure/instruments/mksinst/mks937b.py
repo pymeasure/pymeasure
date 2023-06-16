@@ -86,23 +86,17 @@ class MKS937B(Instrument):
     """
 
     # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
-    ch_1 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 1,
-                                     docstring="IonGaugeAndPressureChannel for channel 1")
+    ch_1 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 1)
 
-    ch_2 = Instrument.ChannelCreator(PressureChannel, 2,
-                                     docstring="PressureChannel for channel 2")
+    ch_2 = Instrument.ChannelCreator(PressureChannel, 2)
 
-    ch_3 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 3,
-                                     docstring="IonGaugeAndPressureChannel for channel 3")
+    ch_3 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 3)
 
-    ch_4 = Instrument.ChannelCreator(PressureChannel, 4,
-                                     docstring="PressureChannel for channel 4")
+    ch_4 = Instrument.ChannelCreator(PressureChannel, 4)
 
-    ch_5 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 5,
-                                     docstring="IonGaugeAndPressureChannel for channel 5")
+    ch_5 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 5)
 
-    ch_6 = Instrument.ChannelCreator(PressureChannel, 6,
-                                     docstring="PressureChannel for channel 6")
+    ch_6 = Instrument.ChannelCreator(PressureChannel, 6)
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         super().__init__(

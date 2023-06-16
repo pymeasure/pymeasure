@@ -34,8 +34,7 @@ class SPD1305X(SPDSingleChannelBase):
     current_range = [0, 5]
     ch_1 = Instrument.ChannelCreator(SPDChannel, 1,
                                      voltage_range=voltage_range,
-                                     current_range=current_range,
-                                     docstring="SPDChannel for channel 1")
+                                     current_range=current_range)
 
     def __init__(self, adapter, name="Siglent Technologies SPD1305X Power Supply", **kwargs):
         super().__init__(

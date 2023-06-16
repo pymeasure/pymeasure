@@ -128,32 +128,23 @@ class CXN(Instrument):
     # use predefined values method to allow reusing in the Channels
     values = values
 
-    preset_1 = Instrument.ChannelCreator(PresetChannel, 1,
-                                         docstring="PresetChannel for channel 1")
+    preset_1 = Instrument.ChannelCreator(PresetChannel, 1)
 
-    preset_2 = Instrument.ChannelCreator(PresetChannel, 2,
-                                         docstring="PresetChannel for channel 2")
+    preset_2 = Instrument.ChannelCreator(PresetChannel, 2)
 
-    preset_3 = Instrument.ChannelCreator(PresetChannel, 3,
-                                         docstring="PresetChannel for channel 3")
+    preset_3 = Instrument.ChannelCreator(PresetChannel, 3)
 
-    preset_4 = Instrument.ChannelCreator(PresetChannel, 4,
-                                         docstring="PresetChannel for channel 4")
+    preset_4 = Instrument.ChannelCreator(PresetChannel, 4)
 
-    preset_5 = Instrument.ChannelCreator(PresetChannel, 5,
-                                         docstring="PresetChannel for channel 5")
+    preset_5 = Instrument.ChannelCreator(PresetChannel, 5)
 
-    preset_6 = Instrument.ChannelCreator(PresetChannel, 6,
-                                         docstring="PresetChannel for channel 6")
+    preset_6 = Instrument.ChannelCreator(PresetChannel, 6)
 
-    preset_7 = Instrument.ChannelCreator(PresetChannel, 7,
-                                         docstring="PresetChannel for channel 7")
+    preset_7 = Instrument.ChannelCreator(PresetChannel, 7)
 
-    preset_8 = Instrument.ChannelCreator(PresetChannel, 8,
-                                         docstring="PresetChannel for channel 8")
+    preset_8 = Instrument.ChannelCreator(PresetChannel, 8)
 
-    preset_9 = Instrument.ChannelCreator(PresetChannel, 9,
-                                         docstring="PresetChannel for channel 9")
+    preset_9 = Instrument.ChannelCreator(PresetChannel, 9)
 
     def __init__(self, adapter, name="T&C RF sputtering power supply", address=0, **kwargs):
         self.address = address

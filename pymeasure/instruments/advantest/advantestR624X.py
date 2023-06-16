@@ -2072,12 +2072,10 @@ class AdvantestR6245(AdvantestR624X):
     current_range = {'A': [-2.0, 2.0], 'B': [-2.0, 2.0]}
 
     ch_A = Instrument.ChannelCreator(SMUChannel, 'A',
-                                     docstring="SMUChannel for channel A",
                                      voltage_range=voltage_range,
                                      current_range=current_range)
 
     ch_B = Instrument.ChannelCreator(SMUChannel, 'B',
-                                     docstring="SMUChannel for channel B",
                                      voltage_range=voltage_range,
                                      current_range=current_range)
 
@@ -2097,12 +2095,10 @@ class AdvantestR6246(AdvantestR624X):
     current_range = {'A': [-20.0, 20.0], 'B': [-2.0, 2.0]}
 
     ch_A = Instrument.ChannelCreator(SMUChannel, 'A',
-                                     docstring="SMUChannel for channel A",
                                      voltage_range=voltage_range,
                                      current_range=current_range)
 
     ch_B = Instrument.ChannelCreator(SMUChannel, 'B',
-                                     docstring="SMUChannel for channel B",
                                      voltage_range=voltage_range,
                                      current_range=current_range)
 

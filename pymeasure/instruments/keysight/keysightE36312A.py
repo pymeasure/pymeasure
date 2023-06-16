@@ -83,14 +83,11 @@ class KeysightE36312A(Instrument):
     print(supply.ch_1.voltage)
     """
 
-    ch_1 = Instrument.ChannelCreator(VoltageChannel, 1,
-                                     docstring="VoltageChannel for channel 1")
+    ch_1 = Instrument.ChannelCreator(VoltageChannel, 1)
 
-    ch_2 = Instrument.ChannelCreator(VoltageChannel, 2,
-                                     docstring="VoltageChannel for channel 2")
+    ch_2 = Instrument.ChannelCreator(VoltageChannel, 2)
 
-    ch_3 = Instrument.ChannelCreator(VoltageChannel, 3,
-                                     docstring="VoltageChannel for channel 3")
+    ch_3 = Instrument.ChannelCreator(VoltageChannel, 3)
 
     def __init__(self, adapter, name="Keysight E36312A", **kwargs):
         super().__init__(

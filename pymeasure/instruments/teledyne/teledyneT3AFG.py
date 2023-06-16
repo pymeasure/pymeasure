@@ -145,11 +145,9 @@ class TeledyneT3AFG(Instrument):
     generator.ch_1.output_enabled=True
     """
 
-    ch_1 = Instrument.ChannelCreator(SignalChannel, 1,
-                                     docstring="SignalChannel for channel 1")
+    ch_1 = Instrument.ChannelCreator(SignalChannel, 1)
 
-    ch_2 = Instrument.ChannelCreator(SignalChannel, 2,
-                                     docstring="SignalChannel for channel 2")
+    ch_2 = Instrument.ChannelCreator(SignalChannel, 2)
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(

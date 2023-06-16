@@ -100,20 +100,15 @@ class IBeamSmart(Instrument):
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
-    ch_1 = Instrument.ChannelCreator(DriverChannel, 1,
-                                     docstring="DriverChannel for channel 1")
+    ch_1 = Instrument.ChannelCreator(DriverChannel, 1)
 
-    ch_2 = Instrument.ChannelCreator(DriverChannel, 2,
-                                     docstring="DriverChannel for channel 2")
+    ch_2 = Instrument.ChannelCreator(DriverChannel, 2)
 
-    ch_3 = Instrument.ChannelCreator(DriverChannel, 3,
-                                     docstring="DriverChannel for channel 3")
+    ch_3 = Instrument.ChannelCreator(DriverChannel, 3)
 
-    ch_4 = Instrument.ChannelCreator(DriverChannel, 4,
-                                     docstring="DriverChannel for channel 4")
+    ch_4 = Instrument.ChannelCreator(DriverChannel, 4)
 
-    ch_5 = Instrument.ChannelCreator(DriverChannel, 5,
-                                     docstring="DriverChannel for channel 5")
+    ch_5 = Instrument.ChannelCreator(DriverChannel, 5)
 
     def __init__(self, adapter, name="Toptica IBeam Smart laser diode",
                  baud_rate=115200,

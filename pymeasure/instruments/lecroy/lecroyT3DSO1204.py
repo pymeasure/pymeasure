@@ -492,17 +492,13 @@ class LeCroyT3DSO1204(Instrument):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
-    ch_1 = Instrument.ChannelCreator(ScopeChannel, 1,
-                                     docstring="ScopeChannel for channel 1")
+    ch_1 = Instrument.ChannelCreator(ScopeChannel, 1)
 
-    ch_2 = Instrument.ChannelCreator(ScopeChannel, 2,
-                                     docstring="ScopeChannel for channel 2")
+    ch_2 = Instrument.ChannelCreator(ScopeChannel, 2)
 
-    ch_3 = Instrument.ChannelCreator(ScopeChannel, 3,
-                                     docstring="ScopeChannel for channel 3")
+    ch_3 = Instrument.ChannelCreator(ScopeChannel, 3)
 
-    ch_4 = Instrument.ChannelCreator(ScopeChannel, 4,
-                                     docstring="ScopeChannel for channel 4")
+    ch_4 = Instrument.ChannelCreator(ScopeChannel, 4)
 
     def __init__(self, adapter, name="LeCroy T3DSO1204 Oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)

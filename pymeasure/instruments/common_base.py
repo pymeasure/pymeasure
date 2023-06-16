@@ -140,21 +140,16 @@ class CommonBase:
         """Base class for ChannelCreator and MultiChannelCreator.
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
-        :param: docstring: Docstring for the channel. Required for singular channels.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, docstring="", **kwargs):
+        def __init__(self, cls, **kwargs):
             try:
                 self.valid_class = issubclass(cls, CommonBase)
             except TypeError:
                 self.valid_class = False
             self.pairs = ()
             self.kwargs = kwargs
-            self.__doc__ = docstring
-
-        def __repr__(self):
-            return self.__doc__
 
     class ChannelCreator(BaseChannelCreator):
         """Add a single channel to the parent class.
@@ -168,10 +163,8 @@ class CommonBase:
             class Extreme5000(Instrument):
                 # Two output channels, accessible by their property names
                 # and both are accessible through the 'channels' collection
-                output_A = Instrument.ChannelCreator(Extreme5000Channel, "A",
-                           docstring="Extreme5000Channel to control channel A output")
-                output_B = Instrument.ChannelCreator(Extreme5000Channel, "B",
-                           docstring="Extreme5000Channel to control channel B output")
+                output_A = Instrument.ChannelCreator(Extreme5000Channel, "A")
+                output_B = Instrument.ChannelCreator(Extreme5000Channel, "B")
                 # A channel without a channel accessible through the 'motor' collection
                 motor = Instrument.ChannelCreator(MotorControl)
 
@@ -181,12 +174,11 @@ class CommonBase:
 
         :param cls: Channel class for channel interface
         :param id: The id of the channel on the instrument, integer or string.
-        :param docstring: Docstring for the channel.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, id=None, docstring="ChannelCreator", **kwargs):
-            super().__init__(cls=cls, docstring=docstring, **kwargs)
+        def __init__(self, cls, id=None, **kwargs):
+            super().__init__(cls=cls, **kwargs)
             if (isinstance(id, (str, int)) or id is None) and self.valid_class:
                 self.pairs = ((cls, id),)
             else:
@@ -217,12 +209,11 @@ class CommonBase:
         :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
             creates attribute `self.ch_A`. If prefix evaluates False,
             the child will be added directly under the variable name. Required if id is tuple/list.
-        :param docstring: Docstring for the channel.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, id=None, docstring="MultiChannelCreator", prefix="ch_", **kwargs):
-            super().__init__(cls=cls, docstring=docstring, **kwargs)
+        def __init__(self, cls, id=None, prefix="ch_", **kwargs):
+            super().__init__(cls=cls, **kwargs)
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
