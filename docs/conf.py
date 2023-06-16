@@ -277,10 +277,6 @@ def setup(app):
     app.connect('autodoc-process-docstring', gen_channel_docs)
 
 
-from pymeasure.instruments.common_base import CommonBase
-from pymeasure.instruments.instrument import Instrument
-
-
 def get_class_name(cls):
     cls_str = str(cls)
     first_idx = cls_str.index("'")
@@ -292,13 +288,16 @@ def gen_channel_docs(app, what, name, obj, options, lines):
     """
     Generate channel documentation for instruments with channels
     """
-    if hasattr(obj, '__bases__') and Instrument in obj.__bases__:
+    inst_class = 'pymeasure.instruments.instrument.Instrument'
+    creator_class = 'pymeasure.instruments.common_base.CommonBase.ChannelCreator'
+    multi_class = 'pymeasure.instruments.common_base.CommonBase.MultiChannelCreator'
+    if hasattr(obj, '__bases__') and inst_class in [get_class_name(i) for i in obj.__bases__]:
         for attr, channel_class in obj.get_channels(obj):
-            if isinstance(channel_class, CommonBase.ChannelCreator):
+            if get_class_name(channel_class.__class__) == creator_class:
                 channel_name = get_class_name(channel_class.pairs[0][0])
                 lines += ['.. py:attribute:: ' + attr, '', ]
                 lines += ['   :channel: :class:`~' + channel_name + '`', '']
-            elif isinstance(channel_class, CommonBase.MultiChannelCreator):
+            elif get_class_name(channel_class.__class__) == multi_class:
                 prefix = channel_class.kwargs['prefix']
                 # Generate list of channels from prefix and channel pairs
                 channels = ['``' + prefix + str(id) + '``: :class:`~' + get_class_name(cls) + '`'
