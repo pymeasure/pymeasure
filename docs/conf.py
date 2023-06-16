@@ -14,8 +14,6 @@
 import sys
 import os
 
-import pymeasure.instruments.common_base
-
 sys.path.insert(0, os.path.abspath('..'))  # Allow modules to be found
 from pymeasure import __version__
 
