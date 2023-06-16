@@ -16,6 +16,8 @@ import os
 
 sys.path.insert(0, os.path.abspath('..'))  # Allow modules to be found
 from pymeasure import __version__
+from pymeasure.instruments.common_base import CommonBase
+from pymeasure.instruments.instrument import Instrument
 
 # Include Read the Docs formatting
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -286,16 +288,13 @@ def gen_channel_docs(app, what, name, obj, options, lines):
     """
     Generate channel documentation for instruments with channels
     """
-    inst_class = 'pymeasure.instruments.instrument.Instrument'
-    creator_class = 'pymeasure.instruments.common_base.CommonBase.ChannelCreator'
-    multi_class = 'pymeasure.instruments.common_base.CommonBase.MultiChannelCreator'
-    if hasattr(obj, '__bases__') and inst_class in [get_class_name(i) for i in obj.__bases__]:
+    if hasattr(obj, '__bases__') and Instrument in obj.__bases__:
         for attr, channel_class in obj.get_channels(obj):
-            if get_class_name(channel_class.__class__) == creator_class:
+            if isinstance(channel_class, CommonBase.ChannelCreator):
                 channel_name = get_class_name(channel_class.pairs[0][0])
                 lines += ['.. py:attribute:: ' + attr, '', ]
                 lines += ['   :channel: :class:`~' + channel_name + '`', '']
-            elif get_class_name(channel_class.__class__) == multi_class:
+            elif isinstance(channel_class, CommonBase.MultiChannelCreator):
                 prefix = channel_class.kwargs['prefix']
                 # Generate list of channels from prefix and channel pairs
                 channels = ['``' + prefix + str(id) + '``: :class:`~' + get_class_name(cls) + '`'
