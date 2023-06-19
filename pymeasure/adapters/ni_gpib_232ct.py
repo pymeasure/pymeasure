@@ -22,13 +22,15 @@
 # THE SOFTWARE.
 #
 import logging
-from warnings import warn
+from enum import IntFlag
 from time import sleep
 from pymeasure.adapters import VISAAdapter
 
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
 
 
 class NI_GPIB_232(VISAAdapter):
@@ -96,7 +98,7 @@ class NI_GPIB_232(VISAAdapter):
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
-                             'write_termination': "",
+                             'write_termination': "\r",
                              'read_termination': "\r\n",
                              'chunk_size': 256,
 
@@ -104,18 +106,77 @@ class NI_GPIB_232(VISAAdapter):
                          preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
-        super().write("EOS D\r")
+        super().write("EOS D")
         super().flush_read_buffer()
 
         if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
             self.eoi = eoi
 
+    class GPIB_STATUS(IntFlag):
+        """Enum element for GIBP  status bit decoding
+
+        """
+        ERR = 32768   # Error detected
+        TIMO = 13684  # Time out
+        END = 8192  # EOI or EOS detected
+        SRQI = 4096  # SRQ detected while CIC
+        # 2048, 1024,  & 512 are reserved
+        CMPL = 256  # Operation completed
+        LOK = 128  # Lockout state
+        REM = 64  # remote status
+        CIC = 32   # CIC (Controller in Charge) status
+        ATN = 16  # ATN asserted
+        TACS = 8  # Talker active
+        LACS = 4  # Listener active
+        DTAS = 2  # Device triggeer active state
+        SCAS = 1  # Device Clear active status
+
+    class GPIB_ERR(IntFlag):
+        """Enum element for GIBP  error bit decoding
+
+        """
+        ECMD = 17   # unregcognized command
+        # 15-16 servered
+        EBUS = 14  # Command bytes could not be sent
+        # 12-13 servered
+        ECAP = 11  # No capability for operation
+        # 7-10 reserved
+        EABO = 6  # IO aborted
+        ESAC = 5  # Command requires GPIB-232CT-A to be system controller
+        EARG = 4  # invaild argument(s)
+        EADR = 3  # GPIBN-232CT-A not adressed correctly
+        ENOL = 2  # Write detected, no listeners
+        ECIC = 1  # Command requires GPIB-232CT-A to be CIC
+        NGER = 0  # No error condition
+
+    class SERIAL_ERR(IntFlag):
+        """Enum element for serial  error bit decoding
+
+        """
+        EFRM = 4  # Serial port framing error
+        EOFL = 3  # Serial port receive buffer overflow
+        EORN = 2  # Serial port overrrun error
+        EPAR = 1  # Serial port parity error
+        NSER = 0  # No error condition
+
+    def _check_errors(self):
+        super().flush_read_buffer()
+        super().write("stat n")
+        gpib_stat = self.GPIB_STATUS(int(super().read()))
+        gpib_err = self.GPIB_ERR(int(super().read()))
+        ser_err = self.SERIAL_ERR(int(super().read()))
+        count = int(super().read())
+        log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
+        if bool(gpib_stat & self.GPIB_STATUS.ERR) is True:
+            log.warning(f"eror detected {self.GPIB_ERR(gpib_err)!a} {self.SERIAL_ERR(ser_err)!a}")
+        super().write("stat")
+
     def _assert_trigger(self):
         """
         Initiate a GPIB trigger-event
         """
-        super().write(f"trg {self.address} \r")
+        super().write(f"trg {self.address}")
 
     @property
     def eoi(self):
@@ -125,7 +186,7 @@ class NI_GPIB_232(VISAAdapter):
         Some instruments require EOI signal to be
         asserted in order to properly detect the end of a command.
         """
-        super().write("EOT \r")
+        super().write("EOT")
         return bool(int(super().read()))
 
     @eoi.setter
@@ -141,6 +202,7 @@ class NI_GPIB_232(VISAAdapter):
         sleep(0.02)
         return super().read_bytes(71).decode()
 
+    # TODO: remove?
     def ask(self, command, kwargs):
         """ Ask the Prologix controller.
 
@@ -151,7 +213,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         log.warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
         super().flush_read_buffer()
-        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
+        super().write(f"wrt {self.address} \n  {command}", **kwargs)
         sleep(0.0)
         return self.read()
 
@@ -160,34 +222,35 @@ class NI_GPIB_232(VISAAdapter):
         Clear specified device.
 
         """
-        super().write(f"clr  {self.address} \r")
+        super().write(f"clr  {self.address}")
 
     def send_command(self,  data: bytes):
         """
         Write GPIB command bytes on the bus.
 
         """
-        super().write(f"cmd  #{data.length}\n" + data + "\r")
+        super().write(f"cmd  #{len(data)}\n {data}")
+        self._check_errors()
 
     def pass_control(self, primary_address: int, secondary_address: int):
         """
         Pass control to drevice with primary_address and optional secondary_address
 
         """
-        super().write(f"pct  {primary_address}+{secondary_address} \r")
+        super().write(f"pct  {primary_address}+{secondary_address}")
 
     def set_rsc(self):
         """
         set the NI-GPIB232ct to become teh GOIB system controller
 
         """
-        super().write("rsc  1 \r")
+        super().write("rsc  1")
 
     def send_ifc(self):
         """Pulse the interface clear line (IFC) for at least 200 microseconds.
 
         """
-        super().write("sic 0.0002 /n")
+        super().write("sic 0.0002")
 
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
@@ -198,7 +261,9 @@ class NI_GPIB_232(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
+        super().write(f"wrt {self.address} \n  {command}", **kwargs)
+        self._check_errors()
+
 
     def write_bytes(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
@@ -209,7 +274,8 @@ class NI_GPIB_232(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
-        super().write(f"wrt {self.address} \n  {command} \r", **kwargs)
+        super().write(f"wrt {self.address} \n  {command}", **kwargs)
+        self._check_errors()
 
     # def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
     #     """Format values in binary format, used internally in :meth:`.write_binary_values`.
@@ -259,22 +325,29 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        log.debug("read..\r\n")
+        log.debug("redaing bytes")
         super().flush_read_buffer()
-        super().write(f"rd #255 {self.address}\r")
+        # super().write(f"rd #255 {self.address}")
+        super().write(f"rd {self.address}")
         sleep(0.02)
-        return super()._read()
+        ret_val = super().read()
+        self._check_errors()
+        return ret_val
 
     def read_bytes(self, count, **kwargs):
         """
-        # TODO
-        do something great if ount -1 is received
+        # TODO:    Fix this docstring
+        
         """
-        log.debug("read bytes..\r\n")
+        log.debug("read bytes..")
+        if count == -1:
+            count = 255
         super().flush_read_buffer()
-        super().write(f"rd #{count} {self.address}\r")
+        super().write(f"rd #{count} {self.address}")
         sleep(0.02)
-        return super()._read_bytes(count, kwargs)
+        ret_val = super().read_bytes(count, kwargs)
+        self._check_errors()
+        return ret_val
 
     def gpib(self, address, **kwargs):
         """ Return a NI_GPIB_232 object that references the GPIB
