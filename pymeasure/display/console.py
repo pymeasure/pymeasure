@@ -241,7 +241,7 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         """
         if self.filename is not None:
-            return os.path.join(directory, self.filename)
+            return unique_filename(directory, prefix=self.filename)
         else:
             return unique_filename(directory)
 
