@@ -44,7 +44,7 @@ from ..widgets import (
     FilenameLineEdit,
     EstimatorWidget,
 )
-from ...experiment import Results, Procedure
+from ...experiment import Results, Procedure, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -510,9 +510,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.queue()
 
     def queue(self, procedure=None):
-        """
+        """ Queue a measurement based on the parameters in the input-widget.
 
-        Abstract method, which must be overridden by the child class.
+        Semi-abstract method, which must be overridden by the child class if the filename- and
+        directory-inputs are disabled. when filename- and directory inputs are enabled, overwriting
+        is not required, but can be done for custom naming, input processing, or other features.
 
         Implementations must call ``self.manager.queue(experiment)`` and pass
         an ``experiment``
@@ -539,8 +541,26 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 self.manager.queue(experiment)
 
         """
-        raise NotImplementedError(
-            "Abstract method ManagedWindow.queue not implemented")
+
+        # Check if the filename and the directory inputs are available
+        if not (self.filename_input and self.directory_input):
+            raise NotImplementedError("Queue method must be overwritten if the filename- and"
+                                      "directory-inputs are disabled.")
+
+        if procedure is None:
+            procedure = self.make_procedure()
+
+        # TODO: use toggle for saving data
+        filename = unique_filename(
+            self.directory,
+            prefix=self.filename,
+            procedure=procedure
+        )
+
+        results = Results(procedure, filename)
+
+        experiment = self.new_experiment(results)
+        self.manager.queue(experiment)
 
     def abort(self):
         self.abort_button.setEnabled(False)
