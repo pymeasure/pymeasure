@@ -6,6 +6,8 @@ Created the 19/06/2023
 Taken and adapted from the elliptec package by David Roesel (with his permission): https://david.roesel.cz/en/
 """
 
+from typing import Union
+
 error_codes = {
     '0': 'Status OK',
     '1': 'Communication Timeout',
@@ -24,14 +26,22 @@ error_codes = {
 }
 
 
-def is_null_or_empty(msg):
+def is_null_or_empty(msg: str) -> bool:
+    """ Check the length of the message
+    """
     if len(msg) == 0:
         return True
     else:
         return False
 
 
-def parse(msg, debug=True):
+def parse(msg, debug=True) -> Union[tuple, dict]:
+    """ Parse the string response from the motor and returns dedicated info depending on the initial command
+
+    :param msg:
+    :param debug:
+    :return:
+    """
     if is_null_or_empty(msg):
         if debug:
             print('Parse: Status/Response may be incomplete!')
@@ -89,7 +99,8 @@ def parse(msg, debug=True):
         return addr, code, msg[3:]
 
 
-def is_metric(num):
+def is_metric(num: str) -> bool:
+    """ Check if the thread of the motor is metric or imperial """
     if num == '0':
         thread_type = 'Metric'
     elif num == '1':
@@ -100,34 +111,16 @@ def is_metric(num):
     return thread_type
 
 
-def s32(value):  # Convert 32bit signed hex to int
+def s32(value):
+    """ Convert 32bit signed hex to int """
     return -(value & 0x80000000) | (value & 0x7fffffff)
 
 
-def error_check(status):
-    if not status:
-        print('Status is None')
-    elif isinstance(status, dict):
-        print('Status is a dictionary.')
-    elif status[1] == "GS":
-        if status[2] != '0':  # is there an error?
-            err = error_codes[status[2]]
-            print('ERROR: %s' % err)
-        else:
-            print('Status OK')
-    elif status[1] == "PO":
-        print('Status OK (position)')
-    else:
-        print('Other status:', status)
+def int_to_hex(number: int):
+    """ Convert integer to uppercase hexadecimal character """
+    return number.to_bytes(4, "big", signed=True).hex().upper()
 
 
-def move_check(status):
-    if not status:
-        print('Status is None')
-    elif status[1] == 'GS':
-        error_check(status)
-    elif (status[1] == "PO") or (status[1] == "BO"):
-        pass
-        print('Move Successful.')
-    else:
-        print('Unknown response code %s' % status[1])
+
+
+
