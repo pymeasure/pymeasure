@@ -241,7 +241,7 @@ class ManagedConsole(QtCore.QCoreApplication):
 
         """
         if self.filename is not None:
-            return unique_filename(directory, prefix=self.filename)
+            return unique_filename(directory, prefix=self.filename, procedure=procedure)
         else:
             return unique_filename(directory)
 
