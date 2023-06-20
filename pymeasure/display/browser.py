@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BaseBrowserItem(object):
+class BaseBrowserItem:
     """ Base class for an experiment's browser item. BaseBrowerItem outlines core functionality
     for displaying progress of an experiment to the user.
     """
