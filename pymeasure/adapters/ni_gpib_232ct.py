@@ -107,11 +107,13 @@ class NI_GPIB_232(VISAAdapter):
                          **kwargs)
         self.address = address
         super().write("EOS D")
-        super().flush_read_buffer()
+        super().write("STAT C N")
+        # self._check_errors()
 
         if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
             self.eoi = eoi
+        super().flush_read_buffer()
 
     class GPIB_STATUS(IntFlag):
         """Enum element for GIBP  status bit decoding
@@ -161,16 +163,30 @@ class NI_GPIB_232(VISAAdapter):
         NSER = 0  # No error condition
 
     def _check_errors(self):
-        super().flush_read_buffer()
-        super().write("stat n")
-        gpib_stat = self.GPIB_STATUS(int(super().read()))
-        gpib_err = self.GPIB_ERR(int(super().read()))
-        ser_err = self.SERIAL_ERR(int(super().read()))
-        count = int(super().read())
+        """
+        TODO: fine docstring
+
+        """
+        if self.connection.bytes_in_buffer == 0:
+            sleep(0.5)
+            log.debug("Wait 1")
+        log.debug(f"buf len: {self.connection.bytes_in_buffer}")
+        ret_val = super().read_bytes(self.connection.bytes_in_buffer)
+        if len(ret_val) < 12:
+            log.debug(f"only {len(ret_val)} bytes received, content: {ret_val}")
+        ret_val = ret_val.lstrip(b"\x00")            
+        try:
+             [g_s, g_e, s_e, c, dummy] = ret_val.split(b'\r\n')
+        finally:
+            pass
+        gpib_stat = self.GPIB_STATUS(int(g_s))
+        gpib_err = self.GPIB_ERR(int(g_e))
+        ser_err = self.SERIAL_ERR(int(s_e))
+        count = int(c)
         log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
         if bool(gpib_stat & self.GPIB_STATUS.ERR) is True:
             log.warning(f"eror detected {self.GPIB_ERR(gpib_err)!a} {self.SERIAL_ERR(ser_err)!a}")
-        super().write("stat")
+            # TODO: add exception
 
     def _assert_trigger(self):
         """
@@ -241,7 +257,7 @@ class NI_GPIB_232(VISAAdapter):
 
     def set_rsc(self):
         """
-        set the NI-GPIB232ct to become teh GOIB system controller
+        set the NI-GPIB232ct to become the GPIB system controller
 
         """
         super().write("rsc  1")
@@ -261,8 +277,14 @@ class NI_GPIB_232(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
+        super().flush_read_buffer()
         super().write(f"wrt {self.address} \n  {command}", **kwargs)
+        sleep(0.050)
+        # bytes_written = super().read()
+        # if bytes_written != len(command):
+        #     log.warning("Supicious (bytes)")
         self._check_errors()
+        super().flush_read_buffer()
 
 
     def write_bytes(self, command, **kwargs):
@@ -274,50 +296,14 @@ class NI_GPIB_232(VISAAdapter):
             (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
+        super().flush_read_buffer()
         super().write(f"wrt {self.address} \n  {command}", **kwargs)
+        sleep(0.050)
+        # bytes_written = super().read()
+        # if bytes_written != len(command):
+        #     log.warning("Supicious (bytes)")
         self._check_errors()
-
-    # def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
-    #     """Format values in binary format, used internally in :meth:`.write_binary_values`.
-
-    #     :param values: data to be writen to the device.
-    #     :param datatype: the format string for a single element. See struct module.
-    #     :param is_big_endian: boolean indicating endianess.
-    #     :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
-    #     :return: binary string.
-    #     :rtype: bytes
-    #     """
-    #     block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
-    #     # Prologix needs certian characters to be escaped.
-    #     # Special care must be taken when sending binary data to instruments. If any of the
-    #     # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
-    #     # (ASCII 27), '+' (ASCII 43) - they must be escaped by preceding them with an ESC
-    #     # character.
-    #     special_chars = b'\x0d\x0a\x1b\x2b'
-    #     new_block = b''
-    #     for b in block:
-    #         escape = b''
-    #         if b in special_chars:
-    #             escape = b'\x1b'
-    #         new_block += (escape + bytes((b,)))
-
-    #     return new_block
-
-    # def write_binary_values(self, command, values, **kwargs):
-    #     """ Write binary data to the instrument, e.g. waveform for signal generators.
-
-    #     values are encoded in a binary format according to
-    #     IEEE 488.2 Definite Length Arbitrary Block Response Data block.
-
-    #     :param command: SCPI command to be sent to the instrument
-    #     :param values: iterable representing the binary values
-    #     :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
-    #     :returns: number of bytes written
-    #     """
-    #     if self.address is not None:
-    #         address_command = f"wrt { self.address}"
-    #         self.write(address_command)
-    #     super().write_binary_values(command, values, "\n", **kwargs)
+        super().flush_read_buffer()
 
     def read(self,  **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
@@ -325,27 +311,30 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        log.debug("redaing bytes")
+        log.debug("reading")
         super().flush_read_buffer()
-        # super().write(f"rd #255 {self.address}")
-        super().write(f"rd {self.address}")
-        sleep(0.02)
+        super().write(f"rd #255 {self.address}")
+        # super().write(f"rd {self.address}")
+        sleep(0.050)
         ret_val = super().read()
-        self._check_errors()
+        if ret_val != "0":
+            ret_len = super().read()
+            self._check_errors()
         return ret_val
 
     def read_bytes(self, count, **kwargs):
         """
         # TODO:    Fix this docstring
-        
+
         """
         log.debug("read bytes..")
         if count == -1:
-            count = 255
+            count = self.chunk_size - 1
         super().flush_read_buffer()
         super().write(f"rd #{count} {self.address}")
-        sleep(0.02)
+        sleep(0.050)
         ret_val = super().read_bytes(count, kwargs)
+        ret_len = super().read()
         self._check_errors()
         return ret_val
 
