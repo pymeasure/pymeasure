@@ -233,7 +233,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         self.manager.finished.connect(self._terminate)
         self.manager.log.connect(self.log.handle)
 
-    def get_filename(self, directory):
+    def get_filename(self, directory, procedure=None):
         """ Return filename for saving results file
 
         :param directory: directory of the returned filename.
@@ -245,9 +245,9 @@ class ManagedConsole(QtCore.QCoreApplication):
             return unique_filename(directory)
 
     def queue(self):
-        filename = self.get_filename(self.directory)
         procedure = self.procedure_class()
         procedure.set_parameters(self.parameter_values)
+        filename = self.get_filename(self.directory, procedure)
         results = Results(procedure, filename)
         experiment = self.new_experiment(results)
 
