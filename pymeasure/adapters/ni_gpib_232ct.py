@@ -84,7 +84,7 @@ class NI_GPIB_232(VISAAdapter):
     """
 
     def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None, auto=False, eoi=True, eos="\n", **kwargs):
+                 preprocess_reply=None,  eoi=True, **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         # if rw_delay:
         #     warn(("Parameter `rw_delay` is deprecated. "
@@ -100,6 +100,7 @@ class NI_GPIB_232(VISAAdapter):
                              'timeout': 500,
                              'write_termination': "\r",
                              'read_termination': "\r\n",
+                             'flow_control': 2,
                              'chunk_size': 256,
 
                          },
@@ -172,18 +173,25 @@ class NI_GPIB_232(VISAAdapter):
             log.debug("Wait 1")
         log.debug(f"buf len: {self.connection.bytes_in_buffer}")
         ret_val = super().read_bytes(self.connection.bytes_in_buffer)
+        if len(ret_val) <= 3:
+            log.warning(f"something is very fishy , only {len(ret_val)} bytes received, content: {ret_val}")
+            return
         if len(ret_val) < 12:
-            log.debug(f"only {len(ret_val)} bytes received, content: {ret_val}")
-        ret_val = ret_val.lstrip(b"\x00")            
+            log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
+        ret_val = ret_val.lstrip(b"\x00")
+        # _s, g_e, s_e, c, dummy] = ret_val.split(b'\r\n')
         try:
-             [g_s, g_e, s_e, c, dummy] = ret_val.split(b'\r\n')
-        finally:
-            pass
-        gpib_stat = self.GPIB_STATUS(int(g_s))
-        gpib_err = self.GPIB_ERR(int(g_e))
-        ser_err = self.SERIAL_ERR(int(s_e))
-        count = int(c)
-        log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
+            [g_s, g_e, s_e, c] = ret_val.splitlines()
+            gpib_stat = self.GPIB_STATUS(int(g_s))
+            gpib_err = self.GPIB_ERR(int(g_e))
+            ser_err = self.SERIAL_ERR(int(s_e))
+            count = int(c)
+            log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
+        except ValueError:
+            g_s = ret_val[:ret_val.find(b'\r')]
+            gpib_stat = self.GPIB_STATUS(int(g_s))
+            log.warning(f" ACHTUNG! {gpib_stat!a}  \r\n")
+        # Error handling
         if bool(gpib_stat & self.GPIB_STATUS.ERR) is True:
             log.warning(f"eror detected {self.GPIB_ERR(gpib_err)!a} {self.SERIAL_ERR(ser_err)!a}")
             # TODO: add exception
@@ -334,6 +342,7 @@ class NI_GPIB_232(VISAAdapter):
         super().write(f"rd #{count} {self.address}")
         sleep(0.050)
         ret_val = super().read_bytes(count, kwargs)
+        sleep(0.050)
         ret_len = super().read()
         self._check_errors()
         return ret_val
