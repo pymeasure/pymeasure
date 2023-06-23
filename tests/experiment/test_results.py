@@ -70,7 +70,8 @@ class Test_csv_formatter_format:
                               ('magnetic (T)', 7, "7"),
                               ('string', "abcdef", "abcdef"),
                               ('count', 9 * ureg.dimensionless, "9"),
-                              ('boolean', True, "True")
+                              ('boolean', True, "True"),
+                              ('numpy (V)', np.float64(1.1), "1.1")
                               ))
     def test_unitful(self, head, value, result):
         """Test, whether units are appended correctly"""
