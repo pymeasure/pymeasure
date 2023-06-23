@@ -23,3 +23,4 @@
 #
 
 from .ami430 import AMI430
+from .amiPL303QMDP import PL303QMDP
