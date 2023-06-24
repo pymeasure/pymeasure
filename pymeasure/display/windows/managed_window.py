@@ -27,6 +27,7 @@ import logging
 import os
 import platform
 import subprocess
+import tempfile
 
 import pyqtgraph as pg
 
@@ -550,12 +551,14 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         if procedure is None:
             procedure = self.make_procedure()
 
-        # TODO: use toggle for saving data
-        filename = unique_filename(
-            self.directory,
-            prefix=self.filename,
-            procedure=procedure
-        )
+        if self.store_measurement:
+            filename = unique_filename(
+                self.directory,
+                prefix=self.filename,
+                procedure=procedure
+            )
+        else:
+            filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
 
         results = Results(procedure, filename)
 
