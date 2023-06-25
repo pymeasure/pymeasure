@@ -28,6 +28,7 @@ import os
 import platform
 import subprocess
 import tempfile
+import shutil
 
 import pyqtgraph as pg
 
@@ -109,7 +110,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
     :param directory_input: specify, if present, where the experiment's result will be saved.
-    :param filename_input: specify, if present, the base of the filename where the results will be saved.
+    :param filename_input: specify, if present, the base of the filename where the results will be
+        saved.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
 
@@ -340,6 +342,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
+            # Save a copy of the datafile
+            action_save = QtGui.QAction(menu)
+            action_save.setText("Save Data File Copy")
+            action_save.triggered.connect(
+                lambda: self.save_experiment_copy(experiment.results.data_filename))
+            menu.addAction(action_save)
+
             # Change Color
             action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
@@ -429,6 +438,21 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
+
+    def save_experiment_copy(self, source_filename):
+        """Save a copy of the datafile to a selected folder and file.
+        Primarily useful for experiments that are stored in a temporary file.
+        """
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dialog.setDefaultSuffix('.csv')
+
+        if dialog.exec():
+            filename = dialog.selectedFiles()[0]
+            shutil.copy2(source_filename, filename)
+
+            log.info(f"Copied data from '{source_filename}' to '{filename}'.")
 
     def change_color(self, experiment):
         color = QtWidgets.QColorDialog.getColor(
