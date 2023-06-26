@@ -163,13 +163,13 @@ class DigitizerChannel(Channel):
         values=VOLTAGE_RANGE_VALUES
     )
 
-        coupling = Instrument.control(
-            "CONF:CHAN:COUP? (@{ch})",
-            "CONF:CHAN:COUP (@{ch}),%s",
-            """Control channel coupling (AC|DC).""",
-            validator=strict_discrete_set,
-            values=COUPLING_VALUES
-        )
+    coupling = Instrument.control(
+        "CONF:CHAN:COUP? (@{ch})",
+        "CONF:CHAN:COUP (@{ch}),%s",
+        """Control channel coupling (AC|DC).""",
+        validator=strict_discrete_set,
+        values=COUPLING_VALUES
+    )
 
     filter = Instrument.control(
         "CONF:CHAN:FILT? (@{ch})",
