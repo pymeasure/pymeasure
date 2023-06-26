@@ -332,7 +332,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SPR?",
         "CONF:ACQ:SPR %d",
         """
-        Control number of samples that will captured pre-trigger
+        Control number of samples that will captured before the trigger
         (int from 0 to samples_per_record-4 in multiples of 4).
         """,
         validator=sample_count_function,
