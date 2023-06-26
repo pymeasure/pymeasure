@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .ami430 import AMI430
+from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303MQDP, PL303MQTP
