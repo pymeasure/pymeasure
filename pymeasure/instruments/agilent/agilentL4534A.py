@@ -140,8 +140,10 @@ class DigitizerChannel(Channel):
     config = Instrument.control(
         "CONF:CHAN:ATTR? (@{ch})",
         "CONF:CHAN:ATTR (@{ch}),%s",
-        """
-        Control Channel configuration with dict containing range (in V), coupling, and filter.
+        """Control Channel configuration with dict containing:
+         - 'range':  (in V) (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256)
+         - 'coupling': (AC,DC)
+         - 'filter': (LP_20_MHZ, LP_2_MHZ, LP_200_KHZ)
         """,
         set_process=lambda v: '{:.3g},{},{}'.format(
             ureg.Quantity(v['range'], ureg.V).m, v['coupling'], v['filter']),
@@ -152,9 +154,7 @@ class DigitizerChannel(Channel):
     range = Instrument.control(
         "CONF:CHAN:RANG? (@{ch})",
         "CONF:CHAN:RANG (@{ch}),%g",
-        """
-        Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
-        """,
+        """Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).""",
         set_process=lambda v: ureg.Quantity(v, ureg.V).m,
         # send the value as V to the device
         get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
@@ -197,18 +197,11 @@ class DigitizerChannel(Channel):
                 # Return view that strips off newline to contain only desired bytes
                 return np.frombuffer(buf[:-1], dtype)
             except ValueError:
-                UnexpectedResponse(
-                    """
-                    Unable to parse data block header returned by instrument.
-                    """
-                )
+                UnexpectedResponse("""Unable to parse data block header returned by instrument.""")
         else:
-            raise UnexpectedResponse(
-                """
-                Data block header character "#" not found in response.
+            raise UnexpectedResponse("""Data block header character "#" not found in response.
                 Is device in ASCII mode?
-                """
-                )
+                """)
 
     @property
     def voltage(self):
@@ -277,10 +270,9 @@ class AgilentL4534A(Instrument):
     trigger_output = Instrument.control(
         'CONF:EXT:TRIG:OUTP?',
         'CONF:EXT:TRIG:OUTP %s',
-        """
-        Control the trigger output with a dictionary
-        containing event: TRIGger|RECord|ACQuisition|NONE
-        and drive_mode: POS_50|NEG_50|POS_25_W_OR|OFF
+        """Control the trigger output with a dictionary containing:
+         - 'event': TRIGger|RECord|ACQuisition|NONE
+         - 'drive_mode': POS_50|NEG_50|POS_25_W_OR|OFF
         """,
         validator=_validate_trigger_out,
         set_process=lambda v: f"{v['event']},{v['drive_mode']}",
@@ -325,8 +317,7 @@ class AgilentL4534A(Instrument):
     samples_per_record = Instrument.control(
         "CONF:ACQ:SCO?",
         "CONF:ACQ:SCO %d",
-        """
-        Control number of samples that will be captured for each trigger
+        """Control number of samples that will be captured for each trigger
         (int from 8 to maximum_samples in multiples of 4).
         """,
         validator=sample_count_function,
@@ -336,8 +327,7 @@ class AgilentL4534A(Instrument):
     pre_trigger_samples = Instrument.control(
         "CONF:ACQ:SPR?",
         "CONF:ACQ:SPR %d",
-        """
-        Control number of samples that will captured before the trigger
+        """Control number of samples that will captured before the trigger
         (int from 0 to samples_per_record-4 in multiples of 4).
         """,
         validator=sample_count_function,
@@ -347,8 +337,7 @@ class AgilentL4534A(Instrument):
     number_of_records = Instrument.control(
         "CONF:ACQ:REC?",
         "CONF:ACQ:REQ %d",
-        """
-        Control number of of records that will be captured before arming is disabled
+        """Control number of of records that will be captured before arming is disabled
         (int from 1 to 1024).
         """,
         validator=strict_range,
@@ -368,8 +357,7 @@ class AgilentL4534A(Instrument):
     trigger_delay = Instrument.control(
         "CONF:ACQ:TDEL?",
         "CONF:ACQ:TDEL %e",
-        """
-        Control delay time after trigger before acquistion starts,
+        """Control delay time after trigger before acquistion starts,
         in seconds (float from 0 to 3600).
         """,
         validator=strict_range,
@@ -384,16 +372,15 @@ class AgilentL4534A(Instrument):
     acquisition = Instrument.control(
         "CONF:ACQ:ATTR?",
         "CONF:ACQ:ATTR %s",
-        """
-        Control Acquistion settings
+        """Control Acquistion settings
 
         Represented as dictionary containing:
-        - sample_rate
-        - samples_per_record
-        - pre_trig_samples_per_record
-        - num_records
-        - trigger_holdoff
-        - trigger_delay
+        - 'sample_rate'
+        - 'samples_per_record'
+        - 'pre_trig_samples_per_record'
+        - 'num_records'
+        - 'trigger_holdoff'
+        - 'trigger_delay'
         """,
         set_process=_set_acq_config_process,
         get_process=_get_acq_config_process,
@@ -401,14 +388,11 @@ class AgilentL4534A(Instrument):
     )
 
     def arm(self) -> None:
-        """
-        Trigger ARM condition in software.
-        """
+        """Trigger ARM condition in software."""
         self.write('ARM')
 
     def initialize(self) -> None:
-        """
-        Initialize measurement with current configuration.
+        """Initialize measurement with current configuration.
 
         note::
         This puts the instrument in acquisition state and waits for arm condition.
@@ -420,8 +404,7 @@ class AgilentL4534A(Instrument):
         self.write('INIT')
 
     def auto_zero(self, channels=[1, 2, 3, 4]):
-        """
-        Auto-zero the inputs, temporarily loading new offsets for the current config.
+        """Auto-zero the inputs, temporarily loading new offsets for the current config.
 
         :param channels: list of channels to auto-zero
         :return: 0 if auto-zero completed successfully, Otherwise, an error ocurred
