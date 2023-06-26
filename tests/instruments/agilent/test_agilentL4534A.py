@@ -38,7 +38,7 @@ def test_init():
         assert len(instr.channels) == 4
 
 
-def test_instr_init():
+def test_instr_initialize():
     """
     Test Agilent L4534A init function
     """
@@ -48,7 +48,7 @@ def test_instr_init():
             ("INIT", None),
         ],
     ) as inst:
-        inst.init()
+        inst.initialize()
 
 
 @pytest.mark.parametrize("samples", [8, 120000000])

@@ -29,9 +29,7 @@ ureg = pint.get_application_registry()
 
 def assume_units(value, units):
     """
-    If units are not provided for ``value`` (that is, if it is a raw
-    `float`), then returns a `~pint.Quantity` with magnitude
-    given by ``value`` and units given by ``units``.
+    If ``value`` is not a ``~pint.Quantity``, assume it has speciied units
 
     :param value: A value that may or may not be unitful.
     :param units: Units to be assumed for ``value`` if it does not already
@@ -51,11 +49,9 @@ def assume_units(value, units):
     return ureg.Quantity(value, units)
 
 
-def assume_or_convert_units(value, units):
+def magnitude_of_assumed_units(value, units):
     """
-    If units are not provided for ``value`` (that is, if it is a raw
-    `float`), then pass through the given magnitude, otherwise convert to
-    the specified units and return the resulting magnitude
+    If ``value`` is not a ``~pint.Quantity``, assume it has speciied units, otherwise convert it.
 
     :param value: A value that may or may not be unitful.
     :param units: Units to be assumed for ``value`` if it does not already

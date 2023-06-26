@@ -24,12 +24,12 @@
 
 import numpy as np
 
-from pymeasure.errors import InstrumentError
+from pymeasure.errors import OperationFailed, UnexpectedResponse
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, strict_discrete_range
 )
-from pymeasure.units import ureg, assume_units, assume_or_convert_units
+from pymeasure.units import ureg, assume_units, magnitude_of_assumed_units
 
 
 def sample_count_function(value, values):
@@ -66,12 +66,12 @@ def _get_acq_config_process(values):
 
 def _set_acq_config_process(value):
     return '{},{},{},{},{},{}'.format(
-        assume_or_convert_units(value['sample_rate'], ureg.Hz),
+        magnitude_of_assumed_units(value['sample_rate'], ureg.Hz),
         value['samples_per_record'],
         value['pre_trig_samples'],
         value['num_records'],
-        assume_or_convert_units(value['trigger_holdoff'], ureg.s),
-        assume_or_convert_units(value['trigger_delay'], ureg.s)
+        magnitude_of_assumed_units(value['trigger_holdoff'], ureg.s),
+        magnitude_of_assumed_units(value['trigger_delay'], ureg.s)
     )
 
 
@@ -130,6 +130,8 @@ def _validate_channel_config(value, values):
 class AgilentL4534A(Instrument):
     """
     Represents the Agilent L4532A/L4534A digitizers.
+
+    Properties are pint.Quantity for values with units (voltage, frequency, etc.)
     """
     def __init__(self, adapter, name="Agilent L4534A Digitizer", **kwargs):
         super().__init__(
@@ -155,7 +157,7 @@ class AgilentL4534A(Instrument):
             Control Channel configuration with dict containing range (in V), coupling, and filter.
             """,
             set_process=lambda v: '{:.3g},{},{}'.format(
-                assume_or_convert_units(v['range'], ureg.V), v['coupling'], v['filter']),
+                magnitude_of_assumed_units(v['range'], ureg.V), v['coupling'], v['filter']),
             get_process=_get_channel_config_process,
             validator=_validate_channel_config
         )
@@ -166,7 +168,7 @@ class AgilentL4534A(Instrument):
             """
             Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
             """,
-            set_process=lambda v: assume_or_convert_units(v, ureg.V),
+            set_process=lambda v: magnitude_of_assumed_units(v, ureg.V),
             # send the value as V to the device
             get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
             validator=lambda value, values:
@@ -208,13 +210,13 @@ class AgilentL4534A(Instrument):
                     # Return view that strips off newline to contain only desired bytes
                     return np.frombuffer(buf[:-1], dtype)
                 except ValueError:
-                    InstrumentError(
+                    UnexpectedResponse(
                         """
                         Unable to parse data block header returned by instrument.
                         """
                     )
             else:
-                raise InstrumentError(
+                raise UnexpectedResponse(
                     """
                     Data block header character "#" not found in response.
                     Is device in ASCII mode?
@@ -311,7 +313,7 @@ class AgilentL4534A(Instrument):
         """,
         validator=lambda value, values: strict_discrete_set(assume_units(value, ureg.Hz), values),
         values=SAMPLE_RATE_VALUES,
-        set_process=lambda v: assume_or_convert_units(v, ureg.Hz),  # send the value as Hz
+        set_process=lambda v: magnitude_of_assumed_units(v, ureg.Hz),  # send the value as Hz
         get_process=lambda v: ureg.Quantity(v, ureg.Hz)  # convert to quantity
     )
 
@@ -395,11 +397,11 @@ class AgilentL4534A(Instrument):
 
     def arm(self) -> None:
         """
-        Trigger ARM condition in software
+        Trigger ARM condition in software.
         """
         self.write('ARM')
 
-    def init(self) -> None:
+    def initialize(self) -> None:
         """
         Initialize measurement with current configuration.
 
@@ -408,7 +410,7 @@ class AgilentL4534A(Instrument):
         - If arm is immediate, it will wait for trigger.
         - If both arm and trigger are immediate, it will immediately start capturing data.
 
-        Instrument will singal complete once capture is finished.
+        Instrument will signal complete once capture is finished.
         """
         self.write('INIT')
 
@@ -422,4 +424,5 @@ class AgilentL4534A(Instrument):
         note::
         Offsets will be cleared when instrument is reset or settings are changed.
         """
-        return int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip())
+        if int(self.ask('CAL:ZERO:AUTO? (@{})'.format(','.join(channels)), 5).strip()) != 0:
+            raise OperationFailed('Auto-zero failed.')

@@ -106,7 +106,7 @@ def test_measure(make_resetted_dig: AgilentL4534A):
     }
     dig.acquisition = settings
     # Prepare to capture
-    dig.init()
+    dig.initialize()
     # Wait for capture to complete
     assert int(dig.complete) == 1
     # Read back both processed and raw results for each channel

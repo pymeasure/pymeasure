@@ -28,6 +28,8 @@ import time
 from .common_base import CommonBase
 from ..adapters import VISAAdapter
 
+from ..errors import OperationFailed
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -134,10 +136,17 @@ class Instrument(CommonBase):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    def tst(self, delay=10):
-        """ Run instrument self-test """
+    def self_test(self, delay=10):
+        """Run instrument self-test.
+
+        :param delay: Time to wait for test to complete in seconds.
+            Should be at least the minimum time required to complete.
+        :raises OperationFailed: Self-test failed,
+            call check_errors() to get more detailed error information.
+        """
         if self.SCPI:
-            return self.ask("*TST?", delay).strip()
+            if int(self.ask("*TST?", delay).strip()) != 0:
+                raise OperationFailed('Auto-zero failed')
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 

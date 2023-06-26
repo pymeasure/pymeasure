@@ -31,7 +31,11 @@ class RangeError(Error):
     pass
 
 
-class InstrumentError(RuntimeError):
+class OperationFailed(RuntimeError):
+    pass
+
+
+class UnexpectedResponse(RuntimeError):
     pass
 
 
