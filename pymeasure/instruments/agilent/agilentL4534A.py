@@ -253,7 +253,7 @@ class AgilentL4534A(Instrument):
     arm_source = Instrument.control(
         "CONF:ARM:SOUR?",
         "CONF:ARM:SOUR %s",
-        """Set the source used to arm the digitizer (IMMediate|EXTernal|SOFTware|TIMer).""",
+        """Control the source used to arm the digitizer (IMMediate|EXTernal|SOFTware|TIMer).""",
         validator=strict_discrete_set,
         values=['IMM', 'SOFT', 'EXT', 'TIM']
     )
@@ -261,7 +261,7 @@ class AgilentL4534A(Instrument):
     ext_slope = Instrument.control(
         "CONF:EXT:INP?",
         "CONF:EXT:INP %s",
-        """Set the edge to be used for the external trigger input (NEGative or POSitive).""",
+        """Control the edge to be used for the external trigger input (NEGative or POSitive).""",
         validator=strict_discrete_set,
         values=['NEG', 'POS']
     )
@@ -287,7 +287,7 @@ class AgilentL4534A(Instrument):
     trigger_source = Instrument.control(
         "CONF:TRIG:SOUR?",
         "CONF:TRIG:SOUR %s",
-        """Set the trigger source (IMMediate|SOFTware|EXTernal|CHANnel|OR).""",
+        """Control the trigger source (IMMediate|SOFTware|EXTernal|CHANnel|OR).""",
         validator=strict_discrete_set,
         values=TRIGGER_SOURCE_VALUES
     )
@@ -295,7 +295,7 @@ class AgilentL4534A(Instrument):
     sample_rate = Instrument.control(
         "CONF:ACQ:SRAT?",
         "CONF:ACQ:SRAT %d",
-        """Set the sample rate in samples/s (Hz):
+        """Control the sample rate in samples/s (Hz):
         1000
         2000
         5000
