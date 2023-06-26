@@ -29,7 +29,7 @@ from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, strict_discrete_range
 )
-from pymeasure.units import ureg, assume_units, magnitude_of_assumed_units
+from pymeasure.units import ureg
 
 
 def sample_count_function(value, values):
@@ -66,12 +66,12 @@ def _get_acq_config_process(values):
 
 def _set_acq_config_process(value):
     return '{},{},{},{},{},{}'.format(
-        magnitude_of_assumed_units(value['sample_rate'], ureg.Hz),
+        ureg.Quantity(value['sample_rate'], ureg.Hz).m,
         value['samples_per_record'],
         value['pre_trig_samples'],
         value['num_records'],
-        magnitude_of_assumed_units(value['trigger_holdoff'], ureg.s),
-        magnitude_of_assumed_units(value['trigger_delay'], ureg.s)
+        ureg.Quantity(value['trigger_holdoff'], ureg.s).m,
+        ureg.Quantity(value['trigger_delay'], ureg.s).m
     )
 
 
@@ -157,7 +157,7 @@ class AgilentL4534A(Instrument):
             Control Channel configuration with dict containing range (in V), coupling, and filter.
             """,
             set_process=lambda v: '{:.3g},{},{}'.format(
-                magnitude_of_assumed_units(v['range'], ureg.V), v['coupling'], v['filter']),
+                ureg.Quantity(v['range'], ureg.V).m, v['coupling'], v['filter']),
             get_process=_get_channel_config_process,
             validator=_validate_channel_config
         )
@@ -168,11 +168,11 @@ class AgilentL4534A(Instrument):
             """
             Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
             """,
-            set_process=lambda v: magnitude_of_assumed_units(v, ureg.V),
+            set_process=lambda v: ureg.Quantity(v, ureg.V).m,
             # send the value as V to the device
             get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
             validator=lambda value, values:
-                strict_discrete_set(assume_units(value, ureg.V), values),
+                strict_discrete_set(ureg.Quantity(value, ureg.V), values),
             values=VOLTAGE_RANGE_VALUES
         )
 
@@ -311,9 +311,9 @@ class AgilentL4534A(Instrument):
         10000000
         20000000
         """,
-        validator=lambda value, values: strict_discrete_set(assume_units(value, ureg.Hz), values),
+        validator=lambda value, values: strict_discrete_set(ureg.Quantity(value, ureg.Hz), values),
         values=SAMPLE_RATE_VALUES,
-        set_process=lambda v: magnitude_of_assumed_units(v, ureg.Hz),  # send the value as Hz
+        set_process=lambda v: ureg.Quantity(v, ureg.Hz).m,  # send the value as Hz
         get_process=lambda v: ureg.Quantity(v, ureg.Hz)  # convert to quantity
     )
 
