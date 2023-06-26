@@ -163,13 +163,13 @@ class DigitizerChannel(Channel):
         values=VOLTAGE_RANGE_VALUES
     )
 
-    coupling = Instrument.control(
-        "CONF:CHAN:COUP? (@{ch})",
-        "CONF:CHAN:COUP (@{ch}),%s",
-        """Comtrol channel coupling (AC|DC).""",
-        validator=strict_discrete_set,
-        values=COUPLING_VALUES
-    )
+        coupling = Instrument.control(
+            "CONF:CHAN:COUP? (@{ch})",
+            "CONF:CHAN:COUP (@{ch}),%s",
+            """Control channel coupling (AC|DC).""",
+            validator=strict_discrete_set,
+            values=COUPLING_VALUES
+        )
 
     filter = Instrument.control(
         "CONF:CHAN:FILT? (@{ch})",
@@ -337,7 +337,7 @@ class AgilentL4534A(Instrument):
         "CONF:ACQ:SPR?",
         "CONF:ACQ:SPR %d",
         """
-        Control number of samples that will captured pre-trigger
+        Control number of samples that will captured before the trigger
         (int from 0 to samples_per_record-4 in multiples of 4).
         """,
         validator=sample_count_function,
