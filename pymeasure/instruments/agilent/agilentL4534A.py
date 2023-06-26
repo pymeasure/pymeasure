@@ -179,7 +179,7 @@ class AgilentL4534A(Instrument):
         coupling = Instrument.control(
             "CONF:CHAN:COUP? (@{ch})",
             "CONF:CHAN:COUP (@{ch}),%s",
-            """Comtrol channel coupling (AC|DC).""",
+            """Control channel coupling (AC|DC).""",
             validator=strict_discrete_set,
             values=COUPLING_VALUES
         )
