@@ -71,7 +71,8 @@ class Test_csv_formatter_format:
                               ('string', "abcdef", "abcdef"),
                               ('count', 9 * ureg.dimensionless, "9"),
                               ('boolean', True, "True"),
-                              ('numpy (V)', np.float64(1.1), "1.1")
+                              ('numpy (V)', np.float64(1.1), "1.1"),
+                              ('boolean nan (V)', True, "nan"),
                               ))
     def test_unitful(self, head, value, result):
         """Test, whether units are appended correctly"""
