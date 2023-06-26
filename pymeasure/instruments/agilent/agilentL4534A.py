@@ -127,6 +127,106 @@ def _validate_channel_config(value, values):
     return value
 
 
+class DigitizerChannel(Channel):
+    """Implementation of an Agilent L4532A/L4534A channel."""
+
+    def __init__(self, instrument, id):
+        super().__init__(instrument, id)
+
+    VOLTAGE_RANGE_VALUES = VOLTAGE_RANGE_VALUES
+    COUPLING_VALUES = COUPLING_VALUES
+    FILTER_VALUES = FILTER_VALUES
+
+    config = Instrument.control(
+        "CONF:CHAN:ATTR? (@{ch})",
+        "CONF:CHAN:ATTR (@{ch}),%s",
+        """
+        Control Channel configuration with dict containing range (in V), coupling, and filter.
+        """,
+        set_process=lambda v: '{:.3g},{},{}'.format(
+            ureg.Quantity(v['range'], ureg.V).m, v['coupling'], v['filter']),
+        get_process=_get_channel_config_process,
+        validator=_validate_channel_config
+    )
+
+    range = Instrument.control(
+        "CONF:CHAN:RANG? (@{ch})",
+        "CONF:CHAN:RANG (@{ch}),%g",
+        """
+        Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
+        """,
+        set_process=lambda v: ureg.Quantity(v, ureg.V).m,
+        # send the value as V to the device
+        get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
+        validator=lambda value, values:
+            strict_discrete_set(ureg.Quantity(value, ureg.V), values),
+        values=VOLTAGE_RANGE_VALUES
+    )
+
+    coupling = Instrument.control(
+        "CONF:CHAN:COUP? (@{ch})",
+        "CONF:CHAN:COUP (@{ch}),%s",
+        """Comtrol channel coupling (AC|DC).""",
+        validator=strict_discrete_set,
+        values=COUPLING_VALUES
+    )
+
+    filter = Instrument.control(
+        "CONF:CHAN:FILT? (@{ch})",
+        "CONF:CHAN:FILT (@{ch}),%s",
+        """Control Filter for this channel (LP_20_MHZ, LP_2_MHZ, LP_200_KHZ).""",
+        validator=strict_discrete_set,
+        values=FILTER_VALUES
+    )
+
+    def _read_data_block(self, dtype):
+        """
+        Read data block header response that some FETCh commands return by default
+        :param dtype: Numpy data type expected for this data block
+        :return: numpy array of specified type
+        """
+        # Data block has header of form '#<n><n digits>',
+        # where <n>specifies the number of digits used to indicate the size of the block,
+        # and the <n digits> indicate the block size in bytes.
+        digits = self.read_bytes(2).decode()
+        if digits.startswith('#'):
+            try:
+                data = int(self.read_bytes(int(digits[1])).decode())
+                # Read specified number of bytes + newline terminator
+                buf = memoryview(self.read_bytes(data+1))
+                # Return view that strips off newline to contain only desired bytes
+                return np.frombuffer(buf[:-1], dtype)
+            except ValueError:
+                UnexpectedResponse(
+                    """
+                    Unable to parse data block header returned by instrument.
+                    """
+                )
+        else:
+            raise UnexpectedResponse(
+                """
+                Data block header character "#" not found in response.
+                Is device in ASCII mode?
+                """
+                )
+
+    @property
+    def voltage(self):
+        """Get voltage measurements for this channel (array of float in V)."""
+        self.write(f'FETC:WAV:VOLT? (@{self.id})')
+        return ureg.Quantity(self._read_data_block('>f4').astype(np.float32), ureg.V)
+
+    @property
+    def adc(self):
+        """Get raw analog-to-digital measurements in counts (int from -32767 to +32767)
+        in current voltage range.
+
+        To convert to voltage, divide these values by the current voltage range.
+        """
+        self.write(f'FETC:WAV:ADC? (@{self.id})')
+        return self._read_data_block('>i2').astype(np.int16)
+
+
 class AgilentL4534A(Instrument):
     """
     Represents the Agilent L4532A/L4534A digitizers.
@@ -138,112 +238,17 @@ class AgilentL4534A(Instrument):
             adapter, name, **kwargs
         )
 
-    SAMPLE_RATE_VALUES = SAMPLE_RATE_VALUES
-
-    class DigitizerChannel(Channel):
-        """Implementation of an Agilent L4532A/L4534A channel."""
-
-        def __init__(self, instrument, id):
-            super().__init__(instrument, id)
-
-        VOLTAGE_RANGE_VALUES = VOLTAGE_RANGE_VALUES
-        COUPLING_VALUES = COUPLING_VALUES
-        FILTER_VALUES = FILTER_VALUES
-
-        config = Instrument.control(
-            "CONF:CHAN:ATTR? (@{ch})",
-            "CONF:CHAN:ATTR (@{ch}),%s",
-            """
-            Control Channel configuration with dict containing range (in V), coupling, and filter.
-            """,
-            set_process=lambda v: '{:.3g},{},{}'.format(
-                ureg.Quantity(v['range'], ureg.V).m, v['coupling'], v['filter']),
-            get_process=_get_channel_config_process,
-            validator=_validate_channel_config
-        )
-
-        range = Instrument.control(
-            "CONF:CHAN:RANG? (@{ch})",
-            "CONF:CHAN:RANG (@{ch}),%g",
-            """
-            Control Voltage range for this channel (0.25, 0.5, 1, 2, 4, 8, 16, 32, 128, 256).
-            """,
-            set_process=lambda v: ureg.Quantity(v, ureg.V).m,
-            # send the value as V to the device
-            get_process=lambda v: ureg.Quantity(v, ureg.V),  # convert to quantity
-            validator=lambda value, values:
-                strict_discrete_set(ureg.Quantity(value, ureg.V), values),
-            values=VOLTAGE_RANGE_VALUES
-        )
-
-        coupling = Instrument.control(
-            "CONF:CHAN:COUP? (@{ch})",
-            "CONF:CHAN:COUP (@{ch}),%s",
-            """Comtrol channel coupling (AC|DC).""",
-            validator=strict_discrete_set,
-            values=COUPLING_VALUES
-        )
-
-        filter = Instrument.control(
-            "CONF:CHAN:FILT? (@{ch})",
-            "CONF:CHAN:FILT (@{ch}),%s",
-            """Control Filter for this channel (LP_20_MHZ, LP_2_MHZ, LP_200_KHZ).""",
-            validator=strict_discrete_set,
-            values=FILTER_VALUES
-        )
-
-        def _read_data_block(self, dtype):
-            """
-            Read data block header response that some FETCh commands return by default
-            :param dtype: Numpy data type expected for this data block
-            :return: numpy array of specified type
-            """
-            # Data block has header of form '#<n><n digits>',
-            # where <n>specifies the number of digits used to indicate the size of the block,
-            # and the <n digits> indicate the block size in bytes.
-            digits = self.read_bytes(2).decode()
-            if digits.startswith('#'):
-                try:
-                    bytes = int(self.read_bytes(int(digits[1])).decode())
-                    # Read specified number of bytes + newline terminator
-                    buf = memoryview(self.read_bytes(bytes+1))
-                    # Return view that strips off newline to contain only desired bytes
-                    return np.frombuffer(buf[:-1], dtype)
-                except ValueError:
-                    UnexpectedResponse(
-                        """
-                        Unable to parse data block header returned by instrument.
-                        """
-                    )
-            else:
-                raise UnexpectedResponse(
-                    """
-                    Data block header character "#" not found in response.
-                    Is device in ASCII mode?
-                    """
-                    )
-
-        @property
-        def voltage(self):
-            """Get voltage measurements for this channel (array of float in V)."""
-            self.write(f'FETC:WAV:VOLT? (@{self.id})')
-            return ureg.Quantity(self._read_data_block('>f4').astype(np.float32), ureg.V)
-
-        @property
-        def adc(self):
-            """
-            Get raw ADC measurements for this channel in counts (int from -32767 to +32767)
-            in current voltage range.
-            """
-            self.write(f'FETC:WAV:ADC? (@{self.id})')
-            return self._read_data_block('>i2').astype(np.int16)
-
     channels = Instrument.ChannelCreator(DigitizerChannel, (1, 2, 3, 4))
+
+    SAMPLE_RATE_VALUES = SAMPLE_RATE_VALUES
+    VOLTAGE_RANGE_VALUES = VOLTAGE_RANGE_VALUES
+    COUPLING_VALUES = COUPLING_VALUES
+    FILTER_VALUES = FILTER_VALUES
 
     display = Instrument.control(
         'DISP:TEXT?',
         'DISP:TEXT \"%s\"',
-        """Control Display text on screen, up to 12 characters.""",
+        """Control display text, up to 12 characters.""",
         get_process=lambda v: v.strip('\"')
     )
 
