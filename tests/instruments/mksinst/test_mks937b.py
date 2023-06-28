@@ -57,8 +57,18 @@ def test_ion_gauge_status_invalid_channel():
             inst.ch_2.ion_gauge_status
 
 
-def test_unit():
-    """Verify the communication of the voltage getter."""
+def test_unit_setter():
+    """Verify the communication of the unit setter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253U!TORR", "@253ACKTORR"),
+         (None, b"FF")],
+    ) as inst:
+        inst.unit = "Torr"
+
+
+def test_unit_getter():
+    """Verify the communication of the unit getter."""
     with expected_protocol(
         MKS937B,
         [("@253U?", "@253ACKTORR"),
@@ -68,7 +78,7 @@ def test_unit():
 
 
 def test_power_enabled():
-    """Verify the communication of the voltage getter."""
+    """Verify the communication of the channel power getter."""
     with expected_protocol(
         MKS937B,
         [("@253CP1?", "@253ACKON"),
