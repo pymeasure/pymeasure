@@ -126,15 +126,15 @@ To modify our example, we will use :class:`~pymeasure.instruments.common_base.Co
             """Control the output voltage of this channel.""",
         )
 
-    class ExtremeVoltage5000(Instrument):
+    class MultiExtremeVoltage5000(Instrument):
         """An instrument with channels."""
-        channels = Instrument.ChannelCreator(VoltageChannel, list(range(1,25)))
+        channels = Instrument.MultiChannelCreator(VoltageChannel, list(range(1,25)))
 
 
 .. testcode:: with-protocol-tests
     :hide:
 
-    with expected_protocol(ExtremeVoltage5000,
+    with expected_protocol(MultiExtremeVoltage5000,
         [("SOURce5:VOLT 1.23", None), ("SOURce16:VOLT?", "4.56")],
         name="Instrument with Channels",
     ) as inst:
@@ -145,7 +145,7 @@ We can now access the channel interfaces through the generated class attributes:
 
 .. code-block:: python
 
-    extreme_inst = ExtremeVoltage5000('COM3')
+    extreme_inst = MultiExtremeVoltage5000('COM3')
     # Set channel 5 voltage
     extreme_inst.ch_5.voltage = 50
     # Read channel 16 voltage
