@@ -26,7 +26,7 @@ import logging
 
 from os.path import basename
 
-from .Qt import QtCore, QtWidgets, QtWidgets
+from .Qt import QtCore, QtWidgets, QtGui
 from ..experiment import Procedure
 
 log = logging.getLogger(__name__)
@@ -40,9 +40,9 @@ class BrowserItem(QtWidgets.QTreeWidgetItem):
         super().__init__(parent)
 
         self.color = color
-        pixelmap = QtWidgets.QPixmap(24, 24)
+        pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(self.color)
-        self.setIcon(0, QtWidgets.QIcon(pixelmap))
+        self.setIcon(0, QtGui.QIcon(pixelmap))
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)
         self.setText(1, basename(results.data_filename))
