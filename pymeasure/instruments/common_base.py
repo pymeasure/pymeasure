@@ -245,7 +245,7 @@ class CommonBase:
 
     @staticmethod
     def get_channels(cls):
-        """Return channels for any BaseChannelCreator channel"""
+        """Return a list of all the Instrument's ChannelCreator and MultiChannelCreator instances"""
         class_members = getmembers(cls)
 
         channels = []
@@ -256,7 +256,7 @@ class CommonBase:
 
     @staticmethod
     def get_channel_pairs(cls):
-        """Return all channel pairs for any BaseChannelCreator channel"""
+        """Return a list of all the Instrument's channel pairs"""
         channel_pairs = []
         for name, creator in CommonBase.get_channels(cls):
             for pair in creator.pairs:
@@ -264,7 +264,7 @@ class CommonBase:
         return channel_pairs
 
     def _create_channels(self):
-        """Create channels for any BaseChannelCreator channel pairs."""
+        """Create channel interfaces for all the Instrument's channel pairs."""
         for name, creator in CommonBase.get_channels(self.__class__):
             for cls, id in creator.pairs:
                 # If channel pair was created with MultiChannelCreator
