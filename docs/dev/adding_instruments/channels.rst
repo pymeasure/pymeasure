@@ -23,7 +23,7 @@ Some instruments, like oscilloscopes and voltage sources, have channels whose co
 For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :class:`~pymeasure.instruments.Instrument` instance (i.e., a parent instrument) instead of an :class:`~pymeasure.adapters.Adapter` as parameter.
 All the channel communication is routed through the instrument's methods (`write`, `read`, etc.).
 However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses ``str.format`` to insert the channel's id at any occurrence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
-For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the instrument, if the channel's id is "3".
+For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the device, if the channel's id is "3".
 
 Please add any created channel classes to the documentation. In the instrument's documentation file, you may add
 
@@ -44,14 +44,11 @@ to explicitly declare each individual channel. For instruments with more than 16
 Adding a channel with :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`
 *******************************************************************************************
 
-For instruments with fewer than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`
-should be used to assign each channel interface to a class attribute. :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` constructor accepts two parameters,
-the channel class for this channel interface, and the instrument's channel id for the channel interface.
+For instruments with fewer than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` should be used to assign each channel interface to a class attribute.
+:class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` constructor accepts two parameters, the channel class for this channel interface, and the instrument's channel id for the channel interface.
 
-In this example, we are defining a channel class and an instrument driver class. The ``VoltageChannel`` channel class
-will be used for controlling two channels in our ``ExtremeVoltage5000`` instrument. In the ``ExtremeVoltage5000`` class
-we declare two class attributes with :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`, ``output_A``
-and ``output_B``, which will become our channel interfaces.
+In this example, we are defining a channel class and an instrument driver class. The ``VoltageChannel`` channel class will be used for controlling two channels in our ``ExtremeVoltage5000`` instrument.
+In the ``ExtremeVoltage5000`` class we declare two class attributes with :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`, ``output_A`` and ``output_B``, which will become our channel interfaces.
 
 .. testcode:: with-protocol-tests
 
@@ -78,8 +75,8 @@ and ``output_B``, which will become our channel interfaces.
         inst.output_A.voltage = 1.23
         assert inst.channels['B'].voltage == 4.56
 
-At instrument class instantiation, the instrument class will create an instance of the channel class and assign it to the
-class attribute name. Additionally the channels will be collected in a dictionary, by default named :code:`channels`.
+At instrument class instantiation, the instrument class will create an instance of the channel class and assign it to the class attribute name.
+Additionally the channels will be collected in a dictionary, by default named :code:`channels`.
 We can access the channel interface through that class name:
 
 .. code-block:: python
@@ -102,16 +99,13 @@ Or we can access the channel interfaces through the :code:`channels` collection:
 Adding multiple channels with :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator`
 ********************************************************************************************************
 
-For instruments greater than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator`
-can be used to easily generate a list of channels from one class attribute declaration.
+For instruments greater than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` can be used to easily generate a list of channels from one class attribute declaration.
 
-The :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` constructor accepts a single channel class or list of channel classes,
-and a list of corresponding channel ids. Instead of lists, you may also use tuples. If you give a single class and a list of ids, all channels will be of the same class.
+The :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` constructor accepts a single channel class or list of channel classes, and a list of corresponding channel ids. Instead of lists, you may also use tuples.
+If you give a single class and a list of ids, all channels will be of the same class.
 
-At instrument instantiation, the instrument will generate channel interfaces as class attribute names composing of the prefix (default :code:`"ch_"`) and channel id,
-e.g. the channel with id "A" will be added as attribute :code:`ch_A`.
-While :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` creates a channel interface for each class attribute,
-:class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` creates a channel collection for the assigned class attribute.
+At instrument instantiation, the instrument will generate channel interfaces as class attribute names composing of the prefix (default :code:`"ch_"`) and channel id, e.g. the channel with id "A" will be added as attribute :code:`ch_A`.
+While :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` creates a channel interface for each class attribute, :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` creates a channel collection for the assigned class attribute.
 It is recommended you use the class attribute name ``channels`` to keep the codebase homogenous.
 
 To modify our example, we will use :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` to generate 24 channels of the ``VoltageChannel`` class.
@@ -151,8 +145,7 @@ We can now access the channel interfaces through the generated class attributes:
     # Read channel 16 voltage
     chan_16_voltage = extreme_inst.ch_16.voltage
 
-Because we use `channels` as the class attribute for ``MultiChannelCreator``, we can access the channel interfaces
-through the :code:`channels` collection:
+Because we use `channels` as the class attribute for ``MultiChannelCreator``, we can access the channel interfaces through the :code:`channels` collection:
 
 .. code-block:: python
 
