@@ -13,18 +13,17 @@ import serial
 
 # from pymeasure.instruments import Instrument #, Channel
 # from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
-# strict_discrete_range
-
-
-class AGILTRON_1_16:
-    def __init__(self, port="com6"):
+    # strict_discrete_range
+ 
+class AGILTRON_1_16():
+    def __init__(self, port = 'com7'):
         # super().__init__(adapter, name, **kwargs)
         _baudrate = 115200
         _parity = serial.PARITY_NONE
         _stopbits = serial.STOPBITS_ONE
 
-        self.ser = serial.Serial(port="com6", baudrate=_baudrate, parity=_parity, stopbits=_stopbits)
-
+        self.ser = serial.Serial(port='com7',baudrate = _baudrate, parity=_parity, stopbits=_stopbits, timeout = 2, write_timeout = 2)
+        
     def close_connection(self):
         self.ser.close()
 
@@ -48,14 +47,16 @@ class AGILTRON_1_16:
             self.ser.write(bytes(command, encoding="utf8"))
         self.ser.readline()
         print(self.ser.readline())
-
-
-if __name__ == "__main__":
-    switch = AGILTRON_1_16("COM6")
+            
+if __name__ =='__main__':
+    switch = AGILTRON_1_16('COM7')
 
     switch.read_partNumber()
     switch.set_switch(15)
     switch.close_connection()
+
+
+
 
 
 # _baudrate = 115200
