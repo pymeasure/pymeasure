@@ -34,7 +34,7 @@ class maiman_laser_driver:
         self.ser.close()
 
     def set_current(self, current):
-        if current >= self.read_max_current_limit():
+        if current >= self.get_max_current_limit():
             print('ERROR: desired current larger than HW limit')
             return
         current = current * 10
@@ -50,7 +50,7 @@ class maiman_laser_driver:
         self.ser.write(("P0300 "+str(current)+"\r").encode())
         time.sleep(0.4)
 
-    def read_max_current_limit(self):
+    def get_max_current_limit(self):
         self.ser.write("J0308\r".encode())
         read_value = self.read()
         read_value = read_value.split()
@@ -58,7 +58,7 @@ class maiman_laser_driver:
         print(str(round(int(str(current),16) * .1,2))+'mA')
         return round(int(str(current),16) * .1,2)
 
-    def read_current_value(self):
+    def get_current_value(self):
         self.ser.write("J0300\r".encode())
         read_value = self.read()
         read_value = read_value.split()
@@ -80,7 +80,7 @@ class maiman_laser_driver:
         self.ser.write(("P0A10 "+str(temp)+"\r").encode())
         time.sleep(0.3)
 
-    def read_TEC_temp(self):
+    def get_TEC_temp(self):
         self.ser.write("J0A10\r".encode())
         time.sleep(0.3)
         read_value = self.read()
@@ -99,7 +99,7 @@ class maiman_laser_driver:
             line += c
         return line.strip()
     
-    def read_driver_state(self):
+    def get_driver_state(self):
         self.ser.write("J0700\r".encode())
         time.sleep(0.2)
         read_value = self.read()
@@ -122,7 +122,7 @@ class maiman_laser_driver:
         self.ser.write("P0A1A 0010\r".encode())
         time.sleep(0.3)
 
-    def read_serial_number(self):
+    def get_serial_number(self):
         self.ser.write("J0701\r".encode())
         read_value = self.read()
         read_value = read_value.split()
@@ -137,11 +137,11 @@ class maiman_laser_driver:
 # driver1 = maiman_laser_driver("1214",None) # connect to driver 
 # driver = maiman_laser_driver('1214',None) # connect to driver, second argument can be a com port
 
-# driver.read_max_current_limit() # return & prints current limit set by HW
+# driver.get_max_current_limit() # return & prints current limit set by HW
 
 # driver.set_TEC_on() 
 # driver.set_TEC_temp(28) # in C
-# driver.read_TEC_temp()
+# driver.get_TEC_temp()
 
 # driver.set_driver_on()
 # time.sleep(0.2)
@@ -149,8 +149,8 @@ class maiman_laser_driver:
 # time.sleep(0.2)
 # driver.set_current(750) # in mA; function checks if current exceed max set by HW, if yes, ERROR message --> to avoid HW restart
 # time.sleep(0.2)
-# driver.read_current_value()
+# driver.get_current_value()
 
-# print(driver.read_serial_number())
+# print(driver.get_serial_number())
 
 # driver.close_connection()

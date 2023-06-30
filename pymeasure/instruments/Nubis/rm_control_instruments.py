@@ -274,3 +274,87 @@ class Thorlabs_TEC(object):
         print(command)
         n = self.inst.write(command.encode())
         return n
+
+
+class Thorlabs_101PM():
+    def __init__(self, device_name):
+        self.inst = rm.open_resource(device_name)
+        return
+    
+    def get_ID(self):
+        return self.inst.query('*IDN?')
+
+    def set_units(self, unit):
+        if unit.upper() != 'W' and unit.upper() != 'DBM':
+            print("wrong units")
+            return
+        else: 
+            self.inst.write("SENSE:POW:UNIT "+unit)
+
+    def set_wavelength(self, wavelength):
+        if 800 <= wavelength <= 1700:
+            self.inst.write("SENSE:CORR:WAV " + str(wavelength))
+        else:
+            print("wavelength not in the range")
+            return
+        
+    def get_power(self):
+        return self.inst.query("MEAS:POW?")
+    
+    def get_wavelength(self):
+        return self.inst.query("SENSE:CORR:WAV?")
+
+    def set_averaging(self,count):
+        if 0 <= count <= 40:
+            self.inst.write("SENSE:AVERage " + str(count))
+        else:
+            print("averaging value not it range")
+            return
+
+    def set_autorange(self):
+        self.inst.query("CURRent:RANGe:AUTO 1")
+
+    def close_connection(self):
+        self.inst.close()
+
+
+
+
+opm = Thorlabs_101PM('USB0::0x1313::0x8076::M00935805::INSTR')
+opm.set_units('dBm')
+opm.set_averaging(7)
+opm.set_wavelength(1299)
+print(opm.get_power())
+print(opm.get_wavelength())
+
+opm.close_connection()
+
+# import pyvisa as visa
+
+# rm = visa.ResourceManager()
+# print(rm.list_resources())
+
+
+# inst = rm.open_resource('USB0::0x1313::0x8076::M00935805::INSTR')
+# inst.timeout = 2000
+# # inst.write_termination = "\n"
+# # inst.read_termination = "\n"
+# print(inst.query('*IDN?'))
+
+
+# print(inst.write("SENSE:POW:UNIT DBM"))
+
+
+# print(inst.query("MEAS:POW?"))
+# print(inst.write("SENSE:CORR:WAV 1315"))
+
+# print(inst.query("SENSE:CORR:WAV?"))
+# # print(inst.read())
+
+
+
+
+
+# inst.write('SENS:CORR:wavelength 1310')   #set the operating wavelength to 1310nm
+# print(inst.query('SENS:CORR:wavelength?'))
+# print(inst.read_bytes(1000, break_on_termchar='\r\n'))
