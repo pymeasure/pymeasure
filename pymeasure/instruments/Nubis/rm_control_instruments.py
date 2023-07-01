@@ -317,17 +317,88 @@ class Thorlabs_101PM():
     def close_connection(self):
         self.inst.close()
 
+    def set_upper_range_dBm(self, power):
+        power_W = 10**(power/10)*.001
+        self.inst.write("SENSe:POWer:RANGe "+str(power_W))
+
+class Keithley_2230G():
+    
+    def __init__(self, address) -> None:
+        # address = "USB0::0x05E6::0x2230::9208672::INSTR"
+        # identification = 'Keithley Instruments, 2230G-30-1, 9208672, 1.16-1.05'
+
+        # Initialize equipment
+        self.inst = None
+        self.rm = visa.ResourceManager()
+        for n in range(3):
+            try:
+                self.inst = self.rm.open_resource(address)
+                break
+            except(visa.VisaIOError):
+                time.sleep(0.5)
+        if self.inst is None:
+            raise Exception("Cannot connect to Keithley 2230G")
+        self.inst.read_termination = '\n'
+        self.inst.write_termination = '\n'
+        self.inst.send_end = True
+        
+        # Verify the identification
+    def get_ID(self):
+        return self.inst.query("*IDN?")
+        # msg = self.inst.query("*IDN?")
+        # if msg != identification:
+        #     raise Exception("Identification of Keithley 2230G is '%s', which should be '%s'." % (msg, identification))
+    
+    def reset(self):
+        del self.inst
+        self.__init__()
+        self.inst.write('*RST')
+    
+    def configure(self, channel: int, voltage: float, compliance: float, enable: bool) -> None:
+        assert channel in [1, 2, 3]
+        self.inst.write(f'INST:SEL CH{channel}')
+        self.inst.write(f"SOURCE:VOLT {voltage}V")
+        self.inst.write(f"SOURCE:CURR {compliance}A")
+        if enable:
+            self.inst.write("SOURCE:OUTP:ENAB ON")
+        else:
+            self.inst.write("SOURCE:OUTP:ENAB OFF")
+    
+    def set_output(self, state: bool):
+        if state:
+            self.inst.write("SOURCE:OUTP ON")
+        else:
+            self.inst.write("SOURCE:OUTP OFF")
+
+    def measure_voltage(self, channel: int) -> float:
+        assert channel in [1, 2, 3]
+        self.inst.write(f'INST:SEL CH{channel}')
+        return float(self.inst.query(f"MEAS:VOLT? CH{channel}"))
+
+    def measure_current(self, channel: int) -> float:
+        assert channel in [1, 2, 3]
+        self.inst.write(f'INST:SEL CH{channel}')
+        return float(self.inst.query(f"MEAS:CURR? CH{channel}"))
+
+    def enable_front_panel_keys(self):
+        self.inst.write("SYST:LOC")
+        del self.inst
+        print("Please reconnect or reset next time")
+
+    def close_connection(self):
+        self.inst.close()
 
 
+# opm = Thorlabs_101PM('USB0::0x1313::0x8076::M00935805::INSTR')
 
-opm = Thorlabs_101PM('USB0::0x1313::0x8076::M00935805::INSTR')
-opm.set_units('dBm')
-opm.set_averaging(7)
-opm.set_wavelength(1299)
-print(opm.get_power())
-print(opm.get_wavelength())
 
-opm.close_connection()
+# opm.set_units('dBm')
+# opm.set_averaging(7)
+# opm.set_wavelength(1299)
+# print(opm.get_power())
+# print(opm.get_wavelength())
+
+# opm.close_connection()
 
 # import pyvisa as visa
 

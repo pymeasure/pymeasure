@@ -1,3 +1,5 @@
+# datasheet: https://www.maimanelectronics.com/product-page/laser-diode-driver-with-tec-for-butterfly-ld-14-pin-750-ma-sf8075a-14
+
 import serial, serial.tools.list_ports
 import time
 
@@ -19,7 +21,7 @@ class maiman_laser_driver:
 
             for port in correct_ports:
                 self.ser = serial.Serial(port, baudrate=_baudrate, parity=_parity, stopbits=_stopbits)
-                serial_number = self.read_serial_number()
+                serial_number = self.get_serial_number()
                 if serial_number == requested_SN:
                     print(port)
                     break
@@ -143,11 +145,10 @@ class maiman_laser_driver:
 # driver.set_TEC_temp(28) # in C
 # driver.get_TEC_temp()
 
-# driver.set_driver_on()
-# time.sleep(0.2)
+# driver.set_driver_on() 
 # driver.set_driver_on() 
 # time.sleep(0.2)
-# driver.set_current(750) # in mA; function checks if current exceed max set by HW, if yes, ERROR message --> to avoid HW restart
+# driver.set_current(350) # in mA; function checks if current exceed max set by HW, if yes, ERROR message --> to avoid HW restart
 # time.sleep(0.2)
 # driver.get_current_value()
 
