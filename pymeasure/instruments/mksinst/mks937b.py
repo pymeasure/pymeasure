@@ -163,7 +163,8 @@ class MKS937B(Instrument):
         reply = self._re_response.search(ret)
         if reply:
             if reply.group('ack') == 'ACK':
-                return
+                self._check_extra_termination()
+                return []
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
