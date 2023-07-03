@@ -69,10 +69,10 @@ In the ``ExtremeVoltage5000`` class we declare two class attributes with :class:
     :hide:
 
     with expected_protocol(ExtremeVoltage5000,
-        [("SOURceA:VOLT 1.23", None), ("SOURceB:VOLT?", "4.56")],
+        [("SOURceA:VOLT 1.25", None), ("SOURceB:VOLT?", "4.56")],
         name="Instrument with Channels",
     ) as inst:
-        inst.output_A.voltage = 1.23
+        inst.output_A.voltage = 1.25
         assert inst.channels['B'].voltage == 4.56
 
 At instrument class instantiation, the instrument class will create an instance of the channel class and assign it to the class attribute name.
@@ -87,6 +87,16 @@ We can access the channel interface through that class name:
     # Read channel B voltage
     chan_b_voltage = extreme_inst.output_B.voltage
 
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(ExtremeVoltage5000,
+        [("SOURceA:VOLT 50", None), ("SOURceB:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.output_A.voltage = 50
+        assert inst.output_B.voltage == 4.56
+
 Or we can access the channel interfaces through the :code:`channels` collection:
 
 .. code-block:: python
@@ -95,6 +105,16 @@ Or we can access the channel interfaces through the :code:`channels` collection:
     extreme_inst.channels['A'].voltage = 50
     # Read channel B voltage
     chan_b_voltage = extreme_inst.channels['B'].voltage
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(ExtremeVoltage5000,
+        [("SOURceA:VOLT 50", None), ("SOURceB:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.channels['A'].voltage = 50
+        assert inst.channels['B'].voltage == 4.56
 
 Adding multiple channels with :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator`
 ********************************************************************************************************
@@ -145,6 +165,16 @@ We can now access the channel interfaces through the generated class attributes:
     # Read channel 16 voltage
     chan_16_voltage = extreme_inst.ch_16.voltage
 
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiExtremeVoltage5000,
+        [("SOURce5:VOLT 50", None), ("SOURce16:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.ch_5.voltage = 50
+        assert inst.ch_16.voltage == 4.56
+
 Because we use `channels` as the class attribute for ``MultiChannelCreator``, we can access the channel interfaces through the :code:`channels` collection:
 
 .. code-block:: python
@@ -154,6 +184,15 @@ Because we use `channels` as the class attribute for ``MultiChannelCreator``, we
     # Read channel 22 voltage
     chan_b_voltage = extreme_inst.channels[22].voltage
 
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiExtremeVoltage5000,
+        [("SOURce10:VOLT 50", None), ("SOURce22:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.channels[10].voltage = 50
+        assert inst.channels[22].voltage == 4.56
 
 Advanced channel management
 ***************************
