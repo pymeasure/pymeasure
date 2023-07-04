@@ -96,7 +96,9 @@ class PLChannel(Channel):
 
 
 class PLBase(Instrument):
-    """ Control AimTTI PL series power supplies. Model number ending with -P or P(G) support this remote interface."""
+    """ Control AimTTI PL series power supplies. Model number ending with -P or P(G) support this remote interface.
+    Documentation: https://resources.aimtti.com/manuals/New_PL+PL-P_Series_Instruction_Manual-Iss18.pdf
+    PL-series devices: https://www.aimtti.com/product-category/dc-power-supplies/aim-plseries"""
 
     chs = Instrument.ChannelCreator(PLChannel, ("1", "2"), prefix="ch", voltage_range=[0, 30], current_range=[0, 3])
     """ Channels of the power supply. The channels are number from right-to-left, starting at 1. 
