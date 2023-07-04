@@ -102,6 +102,7 @@ class PLBase(Instrument):
     Default values are for the voltage and current range are for the PL303MQD-P."""
 
     def __init__(self, adapter, name="AimTTI PL", **kwargs):
+        kwargs.setdefault('timeout', 5000)
         super().__init__(adapter, name, **kwargs)
 
     def enable(self):
