@@ -91,9 +91,6 @@ class PLChannel(Channel):
         """ Disables the output."""
         self.write("OP{ch} 0")
 
-    def voltage_range(self):
-        return self.voltage_range
-
 
 class PLBase(Instrument):
     """ Control AimTTI PL series power supplies. Model number ending with -P or P(G) support this remote interface.
