@@ -22,9 +22,6 @@
 # THE SOFTWARE.
 #
 
-import enum
-import struct
-
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Instrument
 
@@ -39,7 +36,7 @@ class SmartlineV1(Instrument):
     A communication packages is structured as follows:
 
     Characters 0-2: Address for communication
-    Character 3: Letter describing the command, uppercase letter for reading and lowercase for writing
+    Character 3: Command character, uppercase letter for reading and lowercase for writing
     Characters 4-n: Data for the command, can be empty.
     Character n+1: Checksum calculated by: (sum of the decimal value of bytes 0-n) mod 64 + 64
     Character n+2: Carriage return
