@@ -49,6 +49,18 @@ def test_stepu():
         instr.a.stepu = 15
 
 
+def test_continuous_move():
+    """Test a continous move setting."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [("setm 3 stp", "OK"), ("stepd 3 c", "OK"), ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.c.mode = "stp"
+        instr.c.continuous_move = "down"
+
+
 def test_capacity():
     """Test a float measurement."""
     with expected_protocol(
@@ -87,6 +99,19 @@ def test_measure_capacity():
         passwd=passwd,
     ) as instr:
         assert instr.a.measure_capacity() == 1020.173401
+
+
+def test_move_raw():
+    """Test a raw movement."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [
+            ("stepd 2 18", "OK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.b.move_raw(-18)
 
 
 def test_move():

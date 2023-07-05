@@ -38,6 +38,12 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def deprecated_strict_range(value, values):
+    warn("This property is deprecated, use attr:`continuous_move` or meth:`move_raw` instead.",
+         FutureWarning)
+    return strict_range(value, values)
+
+
 def strict_length(value, values):
     if len(value) != values:
         raise ValueError(
@@ -129,17 +135,40 @@ class Axis(Channel):
         "getc",
         """Measure the saved capacity value in nF of the axis.""")
 
+    continuous_move = Instrument.setting(
+        "%s",
+        """Set a continous movement in 'up' or 'down' direction. Mode must be
+        'stp'. The axis can be halted by the stop method.
+        """,
+        validator=strict_discrete_set,
+        values={"up": "stepu c", "down": "stepd c"},
+        map_values=True,
+        check_set_errors=True,
+    )
+
     stepu = Instrument.setting(
         "stepu %d",
         """Set the steps upwards for N steps. Mode must be 'stp' and N must be
-        positive.""",
-        validator=strict_range, values=[0, inf], check_set_errors=True)
+        positive. 0 causes a continous movement until stop is called.
+
+        .. deprecated:: Use attr:`continuous_move` or meth:`move_raw` instead.
+        """,
+        validator=deprecated_strict_range,
+        values=[0, inf],
+        check_set_errors=True,
+    )
 
     stepd = Instrument.setting(
         "stepd %d",
         """Set the steps downwards for N steps. Mode must be 'stp' and N must be
-        positive.""",
-        validator=strict_range, values=[0, inf], check_set_errors=True)
+        positive. 0 causes a continous movement until stop is called.
+
+        .. deprecated:: Use attr:`continuous_move` or meth:`move_raw` instead.
+        """,
+        validator=deprecated_strict_range,
+        values=[0, inf],
+        check_set_errors=True,
+    )
 
     def insert_id(self, command):
         """Insert the channel id in a command replacing `placeholder`.
@@ -156,11 +185,29 @@ class Axis(Channel):
         self.write('stop')
         self.check_set_errors()
 
+    def move_raw(self, steps):
+        """Move 'steps' steps in the direction given by the sign of the
+        argument. This method assumes the mode of the axis is set to 'stp' and
+        it is non-blocking, i.e. it will return immediately after sending the
+        command.
+
+        :param steps: finite integer value of steps to be performed. A positive
+            sign corresponds to upwards steps, a negative sign to downwards
+            steps.
+        """
+        if steps > 0:
+            self.write(f"stepu {steps:d}")
+        elif steps < 0:
+            self.write(f"stepd {abs(steps):d}")
+        else:
+            pass  # avoid "stepu/d {ch} 0" since it triggers a continous move
+        self.check_set_errors()
+
     def move(self, steps, gnd=True):
-        """ Move 'steps' steps in the direction given by the sign of the
+        """Move 'steps' steps in the direction given by the sign of the
         argument. This method will change the mode of the axis automatically
-        and ground the axis on the end if 'gnd' is True. The method returns
-        only when the movement is finished.
+        and ground the axis on the end if 'gnd' is True. The method is blocking
+        and returns only when the movement is finished.
 
         :param steps: finite integer value of steps to be performed. A positive
             sign corresponds to upwards steps, a negative sign to downwards
@@ -170,12 +217,7 @@ class Axis(Channel):
         """
         self.mode = 'stp'
         # perform the movement
-        if steps > 0:
-            self.stepu = steps
-        elif steps < 0:
-            self.stepd = abs(steps)
-        else:
-            pass  # do not set stepu/d to 0 since it triggers a continous move
+        self.move_raw(steps)
         # wait for the move to finish
         self.parent.wait_for(abs(steps) / self.frequency)
         # ask if movement finished
