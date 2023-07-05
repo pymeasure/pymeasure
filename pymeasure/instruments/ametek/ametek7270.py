@@ -144,12 +144,13 @@ class Ametek7270(Instrument):
 
     harmonic = Instrument.control(
         "REFN", "REFN %d",
-        """ An integer property that represents the reference
+        """An integer property that represents the reference
         harmonic mode control, taking values from 1 to 127.
-        This property can be set. """,
+        This property can be set.
+        """,
         validator=truncated_discrete_set,
-        values=list(range(1, 128)),
-        check_set_errors=True,
+        values=range(1, 128),
+        check_set_errors=True
     )
     phase = Instrument.control(
         "REFP.", "REFP. %g",

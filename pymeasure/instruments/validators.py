@@ -167,7 +167,7 @@ def joined_validators(*validators):
     :param validators: an iterable of other validators
     """
 
-    def validate(value, values):
+    def joint_validate(value, values):
         for validator, vals in zip(validators, values):
             try:
                 return validator(value, vals)
@@ -175,7 +175,7 @@ def joined_validators(*validators):
                 pass
         raise ValueError(f"Value of {value} does not match any of the joined validators")
 
-    return validate
+    return joint_validate
 
 
 def discreteTruncate(number, discreteSet):

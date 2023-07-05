@@ -174,6 +174,7 @@ class TestWaiting:
         class Faked(Instrument):
             def wait_for(self, query_delay=0):
                 self.waited = query_delay
+
         return Faked(ProtocolAdapter(), name="faked")
 
     def test_waiting(self):
@@ -242,6 +243,7 @@ def test_SCPI_false_raises_errors(method):
 # Channel
 class TestMultiFunctionality:
     """Test the usage of children for different functionalities."""
+
     class SomeFunctionality(Channel):
         """This Functionality needs a prepended `id`."""
 

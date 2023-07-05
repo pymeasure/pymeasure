@@ -131,7 +131,7 @@ class CommonBase:
         self._create_channels()
         if preprocess_reply is not None:
             warn(("Parameter `preprocess_reply` is deprecated. "
-                 "Implement it in the instrument, e.g. in `read`, instead."),
+                  "Implement it in the instrument, e.g. in `read`, instead."),
                  FutureWarning)
         self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
@@ -353,24 +353,24 @@ class CommonBase:
     # Property creators
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
-        get_command,
-        set_command,
-        docs,
-        validator=lambda v, vs: v,
-        values=(),
-        map_values=False,
-        get_process=lambda v: v,
-        set_process=lambda v: v,
-        command_process=None,
-        check_set_errors=False,
-        check_get_errors=False,
-        dynamic=False,
-        preprocess_reply=None,
-        separator=',',
-        maxsplit=-1,
-        cast=float,
-        values_kwargs=None,
-        **kwargs
+            get_command,
+            set_command,
+            docs,
+            validator=lambda v, vs: v,
+            values=(),
+            map_values=False,
+            get_process=lambda v: v,
+            set_process=lambda v: v,
+            command_process=None,
+            check_set_errors=False,
+            check_get_errors=False,
+            dynamic=False,
+            preprocess_reply=None,
+            separator=',',
+            maxsplit=-1,
+            cast=float,
+            values_kwargs=None,
+            **kwargs
     ):
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
@@ -552,6 +552,44 @@ class CommonBase:
 
         if dynamic:
             fget.__doc__ += "(dynamic)"
+
+        def format_docstring_value(value):
+            if isinstance(value, str):
+                return "``'" + value + "'``"
+            elif isinstance(value, bool):
+                return "``" + str(value) + "``"
+            else:
+                return str(value)
+
+        # Type check required to avoid numpy array elementwise comparison with tuple
+        if not (isinstance(values,
+                           tuple) and values == ()) and 'joint_validate' not in validator.__name__:
+            valid_values = "\n\n        "
+            if isinstance(values, (list, tuple, dict)):
+                # If the validator has "range" in the function name
+                # format values as a range string: "value - value"
+                if isinstance(values, (list, tuple)) and 'range' in validator.__name__:
+                    valid_values += "**Valid Values in range:** "
+                    valid_values += format_docstring_value(values[0])
+                    valid_values += " - " + format_docstring_value(values[-1])
+                else:
+                    valid_values += "**Valid Values:** "
+                    valid_values += ", ".join(
+                        [format_docstring_value(i) for i in values]).strip()
+            elif isinstance(values, range):
+                valid_values += "**Valid Values in range:** "
+                valid_values += format_docstring_value(values.start)
+                valid_values += " - " + format_docstring_value(values.stop)
+            elif isinstance(values, (int, float, str, bool)):
+                valid_values += "**Valid Value:** "
+                valid_values += format_docstring_value(values)
+            else:
+                # If values is another type, like np.arange, don't add values into docstring
+                valid_values = ""
+
+            fget.__doc__ += valid_values
+
+        if dynamic:
             return DynamicProperty(fget=fget, fset=fset,
                                    fget_params_list=CommonBase._fget_params_list,
                                    fset_params_list=CommonBase._fset_params_list,
