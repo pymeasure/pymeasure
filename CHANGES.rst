@@ -1,8 +1,8 @@
-Version 0.12.0 (2023-06-XX)
+Version 0.12.0 (2023-07-05)
 ===========================
 Main items of this new release:
 
-- A Channel base class has been added for easier implementation of instruments with channels.
+- A :code:`Channel` base class has been added for easier implementation of instruments with channels.
 - 19 new instrument drivers have been added.
 - Added tests for some commonalities across all instruments.
 - We continue to clean up our API in preparation for a future version 1.0. Deprecations and subsequent removals are listed below.
@@ -24,7 +24,7 @@ New adapter and instrument mechanics
 - Channel class added. :code:`Instrument.channels` and :code:`Instrument.ch_X` (:code:`X` is any channel name) are reserved attributes for channel mechanics.
 - The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
 
-- Adds Channel feature to instruments (@bmoneke, #718, #852, #761)
+- Adds Channel feature to instruments (@bmoneke, mcdo0486, #718, #761, #852, #931)
 - Adds :code:`maxsplit` parameter to :code:`values` method (@bmoneke, #793)
 - Adds (deprecated) global preprocess reply for backward compatibility (@bmoneke, #876)
 - Adds fallback version for discarding the read buffer to VISAAdapter (@dkriegner, #836)
@@ -47,6 +47,7 @@ New adapter and instrument mechanics
 - Fixes ProtocolAdapter has list in signature (@bmoneke, #901)
 - Fixes VISAAdapter's :code:`read_bytes` (@bmoneke, #867)
 - Fixes query_delay usage in VISAAdapter (@bmoneke, #765)
+- Fixes VisaAdapter: close resource manager only when using pyvisa-sim (@dkriegner, #900)
 
 Instruments
 -----------
@@ -61,7 +62,7 @@ Instruments
 - New Keithley 2200 power supply (@ashokbruno, #806)
 - New Lake Shore 211 Temperature Monitor (@mcdo0486, #889)
 - New Lake Shore 224 and improves Lakeshore instruments (@samcondon4, #870)
-- New MKS Instruments 937B vacuum gauge controller (@dkriegner, #637, @bilderbuchi, #772)
+- New MKS Instruments 937B vacuum gauge controller (@dkriegner, @bilderbuchi, #637, #772, #936)
 - New Novanta FPU60 laser power supply unit (@bmoneke, #885)
 - New TDK Lambda Genesys 80-65 DC and 40-38 DC power supplies (@mcdo0486, 906)
 - New Teledyne T3AFG waveform generator instrument (@scandey, #791)
@@ -84,7 +85,7 @@ Instruments
 Automation
 ----------
 - Adds tolerance for opening result files with missing parameters (@msmttchr, #780)
-- Validate DATA_COLUMNS entries earlier, avoid exceptions in a running procedure (@mcdo0486, #796)
+- Validate DATA_COLUMNS entries earlier, avoid exceptions in a running procedure (@mcdo0486, #796, #934)
 
 GUI
 ---
