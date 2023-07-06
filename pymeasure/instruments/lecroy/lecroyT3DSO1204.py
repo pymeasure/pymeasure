@@ -293,12 +293,13 @@ class ScopeChannel(Channel):
     trigger_coupling = Instrument.control(
         "TRCP?", "TRCP %s",
         """ A string parameter that specifies the input coupling for the selected trigger sources.
-        • ac    — AC coupling block DC component in the trigger path, removing dc offset voltage
-                  from the trigger waveform. Use AC coupling to get a stable edge trigger when
-                  your waveform has a large dc offset.
-        • dc    — DC coupling allows dc and ac signals into the trigger path.
-        • lowpass  — HFREJ coupling places a lowpass filter in the trigger path.
-        • highpass — LFREJ coupling places a highpass filter in the trigger path.
+
+        - ac: AC coupling block DC component in the trigger path, removing dc offset voltage
+          from the trigger waveform. Use AC coupling to get a stable edge trigger when
+          your waveform has a large dc offset.
+        - dc: DC coupling allows dc and ac signals into the trigger path.
+        - lowpass: HFREJ coupling places a lowpass filter in the trigger path.
+        - highpass: LFREJ coupling places a highpass filter in the trigger path.
         """,
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ"},
@@ -332,6 +333,16 @@ class ScopeChannel(Channel):
         """ A string parameter that sets the trigger slope of the specified trigger source.
         <trig_slope>:={NEG,POS,WINDOW} for edge trigger.
         <trig_slope>:={NEG,POS} for other trigger
+
+        +------------+--------------------------------------------------+
+        | parameter  | trigger slope                                    |
+        +------------+--------------------------------------------------+
+        | negative   | Negative slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | positive   | Positive slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | window     | Window slope for edge trigger                    |
+        +------------+--------------------------------------------------+
         """,
         validator=strict_discrete_set,
         values={"negative": "NEG", "positive": "POS", "window": "WINDOW"},
@@ -346,31 +357,59 @@ class ScopeChannel(Channel):
         "PACU %s",
         """Set the waveform processing of this channel with the specified algorithm and the result
         is displayed on the front panel. The command accepts the following parameters:
-        Parameter   Description
-        PKPK        vertical peak-to-peak
-        MAX         maximum vertical value
-        MIN         minimum vertical value
-        AMPL        vertical amplitude
-        TOP         waveform top value
-        BASE        waveform base value
-        CMEAN       average value in the first cycle
-        MEAN        average value
-        RMS         RMS value
-        CRMS        RMS value in the first cycle
-        OVSN        overshoot of a falling edge
-        FPRE        preshoot of a falling edge
-        OVSP        overshoot of a rising edge
-        RPRE        preshoot of a rising edge
-        PER         period
-        FREQ        frequency
-        PWID        positive pulse width
-        NWID        negative pulse width
-        RISE        rise-time
-        FALL        fall-time
-        WID         Burst width
-        DUTY        positive duty cycle
-        NDUTY       negative duty cycle
-        ALL         All measurement """,
+
+        +------------+----------------------------------+
+        | Parameter  | Description                      |
+        +============+==================================+
+        | PKPK       | vertical peak-to-peak            |
+        +------------+----------------------------------+
+        | MAX        | maximum vertical value           |
+        +------------+----------------------------------+
+        | MIN        | minimum vertical value           |
+        +------------+----------------------------------+
+        | AMPL       | vertical amplitude               |
+        +------------+----------------------------------+
+        | TOP        | waveform top value               |
+        +------------+----------------------------------+
+        | BASE       | waveform base value              |
+        +------------+----------------------------------+
+        | CMEAN      | average value in the first cycle |
+        +------------+----------------------------------+
+        | MEAN       |  average value                   |
+        +------------+----------------------------------+
+        | RMS        | RMS value                        |
+        +------------+----------------------------------+
+        | CRMS       | RMS value in the first cycle     |
+        +------------+----------------------------------+
+        | OVSN       | overshoot of a falling edge      |
+        +------------+----------------------------------+
+        | FPRE       | preshoot of a falling edge       |
+        +------------+----------------------------------+
+        | OVSP       | overshoot of a rising edge       |
+        +------------+----------------------------------+
+        | RPRE       | preshoot of a rising edge        |
+        +------------+----------------------------------+
+        | PER        | period                           |
+        +------------+----------------------------------+
+        | FREQ       | frequency                        |
+        +------------+----------------------------------+
+        | PWID       | positive pulse width             |
+        +------------+----------------------------------+
+        | NWID       | negative pulse width             |
+        +------------+----------------------------------+
+        | RISE       | rise-time                        |
+        +------------+----------------------------------+
+        | FALL       | fall-time                        |
+        +------------+----------------------------------+
+        | WID        | Burst width                      |
+        +------------+----------------------------------+
+        | DUTY       | positive duty cycle              |
+        +------------+----------------------------------+
+        | NDUTY      | negative duty cycle              |
+        +------------+----------------------------------+
+        | ALL        | all measurement                  |
+        +------------+----------------------------------+
+        """,
         validator=strict_discrete_set,
         values=_measurable_parameters
     )
@@ -427,20 +466,21 @@ class ScopeChannel(Channel):
     @property
     def current_configuration(self):
         """ Read channel configuration as a dict containing the following keys:
-            - "channel": channel number (int)
-            - "attenuation": probe attenuation (float)
-            - "bandwidth_limit": bandwidth limiting enabled (bool)
-            - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
-            - "offset": vertical offset (float)
-            - "skew_factor": channel-tochannel skew factor (float)
-            - "display": currently displayed (bool)
-            - "unit": "A" or "V" units (str)
-            - "volts_div": vertical divisions (float)
-            - "inverted": inverted (bool)
-            - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
-            - "trigger_level": trigger level (float)
-            - "trigger_level2": trigger lower level for SLEW or RUNT trigger (float)
-            - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
+
+        - "channel": channel number (int)
+        - "attenuation": probe attenuation (float)
+        - "bandwidth_limit": bandwidth limiting enabled (bool)
+        - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
+        - "offset": vertical offset (float)
+        - "skew_factor": channel-tochannel skew factor (float)
+        - "display": currently displayed (bool)
+        - "unit": "A" or "V" units (str)
+        - "volts_div": vertical divisions (float)
+        - "inverted": inverted (bool)
+        - "trigger_coupling": trigger coupling can be "dc" "ac" "highpass" "lowpass" (str)
+        - "trigger_level": trigger level (float)
+        - "trigger_level2": trigger lower level for SLEW or RUNT trigger (float)
+        - "trigger_slope": trigger slope can be "negative" "positive" "window" (str)
         """
 
         ch_setup = {
@@ -469,10 +509,11 @@ class LeCroyT3DSO1204(Instrument):
     using the lower-level methods to interact directly with the scope.
 
     Attributes:
+
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
         WRITE_INTERVAL_S after the previous one, the code blocks until at least WRITE_INTERVAL_S
         seconds have passed.
-        Because the oscilloscope takes a non neglibile time to perform some operations, it might
+        Because the oscilloscope takes a non-negligible time to perform some operations, it might
         be needed for the user to tweak the sleep time between commands.
         The WRITE_INTERVAL_S is set to 10ms as default however its optimal value heavily depends
         on the actual commands and on the connection type, so it is impossible to give a unique
@@ -612,12 +653,13 @@ class LeCroyT3DSO1204(Instrument):
     @property
     def timebase(self):
         """ Read timebase setup as a dict containing the following keys:
+
             - "timebase_scale": horizontal scale in seconds/div (float)
             - "timebase_offset": interval in seconds between the trigger and the reference
-            position (float)
+              position (float)
             - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
             - "timebase_hor_position": horizontal position in the zoomed window in seconds
-            (float)"""
+              (float)"""
         tb_setup = {
             "timebase_scale": self.timebase_scale,
             "timebase_offset": self.timebase_offset,
@@ -785,10 +827,13 @@ class LeCroyT3DSO1204(Instrument):
     memory_size = Instrument.control(
         "MSIZ?", "MSIZ %s",
         """ A float parameter that selects the maximum depth of memory.
+
         <size>:={7K,70K,700K,7M} for non-interleaved mode. Non-interleaved means a single channel is
         active per A/D converter. Most oscilloscopes feature two channels per A/D converter.
+
         <size>:={14K,140K,1.4M,14M} for interleave mode. Interleave mode means multiple active
-        channels per A/D converter. """,
+        channels per A/D converter.
+        """,
         validator=strict_discrete_set,
         values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
                 14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
@@ -799,6 +844,7 @@ class LeCroyT3DSO1204(Instrument):
     def waveform_preamble(self):
         """ Get preamble information for the selected waveform source as a dict with the
         following keys:
+
         - "type": normal, peak detect, average, high resolution (str)
         - "requested_points": number of data points requested by the user (int)
         - "sampled_points": number of data points sampled by the oscilloscope (int)
@@ -813,7 +859,7 @@ class LeCroyT3DSO1204(Instrument):
         - "sampling_rate": sampling rate (it is a read-only property)
         - "grid_number": number of horizontal grids (it is a read-only property)
         - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
-        "auto", "armed"
+          "auto", "armed"
         - "xdiv": horizontal scale (units per division) in seconds
         - "xoffset": time interval in seconds between the trigger event and the reference position
         - "ydiv": vertical scale (units per division) in Volts
@@ -992,16 +1038,18 @@ class LeCroyT3DSO1204(Instrument):
         """ Get data points from the specified source of the oscilloscope. The returned objects are
         two np.ndarray of data and time points and a dict with the waveform preamble, that contains
         metadata about the waveform.
-        Note.
+
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
         :param requested_points: number of points to acquire. If None the number of points
-        requested in the previous call will be assumed, i.e. the value of the number of points
-        stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
+               requested in the previous call will be assumed, i.e. the value of the number of
+               points stored in the oscilloscope memory. If 0 the maximum number of points will be
+               returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
-        point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
-        i.e. the value of the sparsing stored in the oscilloscope memory.
+               point every 4 points is read. If 0 or None the sparsing of the previous call is
+               assumed, i.e. the value of the sparsing stored in the oscilloscope memory.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
-        property for dict format. """
+                 property for dict format.
+        """
         # Sanitize the input arguments
         if not sparsing:
             sparsing = self.waveform_sparsing
@@ -1026,29 +1074,31 @@ class LeCroyT3DSO1204(Instrument):
         "TRMD?", "TRMD %s",
         """ A string parameter that selects the trigger sweep mode.
         <mode>:= {AUTO,NORM,SINGLE,STOP}
-        • auto : When AUTO sweep mode is selected, the oscilloscope begins to search for the
-        trigger signal that meets the conditions.
-        If the trigger signal is satisfied, the running state on the top left corner of
-        the user interface shows Trig'd, and the interface shows stable waveform.
-        Otherwise, the running state always shows Auto, and the interface shows unstable
-        waveform.
-        • normal : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
-        state and begins to search for trigger signals that meet the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
-        shows stable waveform.
-        Otherwise, the running state shows Ready, and the interface displays the last
-        triggered waveform (previous trigger) or does not display the waveform (no
-        previous trigger).
-        • single : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
-        the oscilloscope enters the waiting trigger state and begins to search for the
-        trigger signal that meets the conditions.
-        If the trigger signal is satisfied, the running state shows Trig'd, and the interface
-        shows stable waveform.
-        Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
-        and the running status shows Stop.
-        Otherwise, the running state shows Ready, and the interface does not display the waveform.
-        • stopped : STOP is a part of the option of this command, but not a trigger mode of the
-        oscilloscope.""",
+
+        - auto : When AUTO sweep mode is selected, the oscilloscope begins to search for the
+          trigger signal that meets the conditions.
+          If the trigger signal is satisfied, the running state on the top left corner of
+          the user interface shows Trig'd, and the interface shows stable waveform.
+          Otherwise, the running state always shows Auto, and the interface shows unstable
+          waveform.
+        - normal : When NORMAL sweep mode is selected, the oscilloscope enters the wait trigger
+          state and begins to search for trigger signals that meet the conditions.
+          If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+          shows stable waveform.
+          Otherwise, the running state shows Ready, and the interface displays the last
+          triggered waveform (previous trigger) or does not display the waveform (no
+          previous trigger).
+        - single : When SINGLE sweep mode is selected, the backlight of SINGLE key lights up,
+          the oscilloscope enters the waiting trigger state and begins to search for the
+          trigger signal that meets the conditions.
+          If the trigger signal is satisfied, the running state shows Trig'd, and the interface
+          shows stable waveform.
+          Then, the oscilloscope stops scanning, the RUN/STOP key is red light,
+          and the running status shows Stop.
+          Otherwise, the running state shows Ready, and the interface does not display the waveform.
+        - stopped : STOP is a part of the option of this command, but not a trigger mode of the
+          oscilloscope.
+        """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
         map_values=True
@@ -1091,22 +1141,26 @@ class LeCroyT3DSO1204(Instrument):
         restricted to those variables to be changed.
         There are five parameters that can be specified. Parameters 1. 2. 3. are always mandatory.
         Parameters 4. 5. are required only for certain combinations of the previous parameters.
+
         1. <trig_type>:={edge, slew, glit, intv, runt, drop}
         2. <source>:={c1, c2, c3, c4, line}
         3. - <hold_type>:={ti, off} for edge trigger.
-        - <hold_type>:={ti} for drop trigger.
-        - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
-        - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
+           - <hold_type>:={ti} for drop trigger.
+           - <hold_type>:={ps, pl, p2, p1} for glit/runt trigger.
+           - <hold_type>:={is, il, i2, i1} for slew/intv trigger.
         4. <hold_value1>:= a time value with unit.
         5. <hold_value2>:= a time value with unit.
+
         Note:
-        • "line" can only be selected when the trigger type is "edge".
-        • All time arguments should be given in multiples of seconds. Use the scientific notation
-        if necessary.
-        • The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
-        and [2nS, 4.2S] for others.
-        • The trigger_select command is switched automatically between the short, normal and
-        extended version depending on the number of expected parameters. """
+
+        - "line" can only be selected when the trigger type is "edge".
+        - All time arguments should be given in multiples of seconds. Use the scientific notation
+          if necessary.
+        - The range of hold_values varies from trigger types. [80nS, 1.5S] for "edge" trigger,
+          and [2nS, 4.2S] for others.
+        - The trigger_select command is switched automatically between the short, normal and
+          extended version depending on the number of expected parameters.
+        """
         return self._trigger_select
 
     # noinspection PyAttributeOutsideInit
@@ -1127,18 +1181,20 @@ class LeCroyT3DSO1204(Instrument):
         """ Set up trigger. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to trigger_setup and channel_setup if needed.
+
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
-        [edge,slew,glit,intv,runt,drop]
+               [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
-        trigger)
-        :param slope: trigger slope of the specified trigger source"""
+               trigger)
+        :param slope: trigger slope of the specified trigger source
+        """
         if mode is not None:
             self.trigger_mode = mode
         if all(i is not None for i in [source, trigger_type, hold_type]):
@@ -1166,18 +1222,19 @@ class LeCroyT3DSO1204(Instrument):
     @property
     def trigger(self):
         """ Read trigger setup as a dict containing the following keys:
-            - "mode": trigger sweep mode [auto, normal, single, stop]
-            - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
-            slew,glit,intv,runt,drop]
-            - "source": trigger source [c1,c2,c3,c4]
-            - "hold_type": hold type (refer to page 172 of programing guide)
-            - "hold_value1": hold value1 (refer to page 172 of programing guide)
-            - "hold_value2": hold value2 (refer to page 172 of programing guide)
-            - "coupling": input coupling for the selected trigger sources
-            - "level": trigger level voltage for the active trigger source
-            - "level2": trigger lower level voltage for the active trigger source (only slew/runt
-            trigger)
-            - "slope": trigger slope of the specified trigger source
+
+        - "mode": trigger sweep mode [auto, normal, single, stop]
+        - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
+          slew,glit,intv,runt,drop]
+        - "source": trigger source [c1,c2,c3,c4]
+        - "hold_type": hold type (refer to page 172 of programing guide)
+        - "hold_value1": hold value1 (refer to page 172 of programing guide)
+        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "coupling": input coupling for the selected trigger sources
+        - "level": trigger level voltage for the active trigger source
+        - "level2": trigger lower level voltage for the active trigger source (only slew/runt
+          trigger)
+        - "slope": trigger slope of the specified trigger source
         """
         trigger_select = self.trigger_select
         ch = self.ch(trigger_select[1])
@@ -1242,20 +1299,37 @@ class LeCroyT3DSO1204(Instrument):
         starts a type of delay measurement.
         The MEASURE_DELY? query returns the measured value of delay type.
         The command accepts three arguments with the following syntax:
-        measure_delay = (<type>,<sourceA>,<sourceB>)
-        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
-        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
-        Type      Description
-        PHA       The phase difference between two channels. (rising edge - rising edge)
-        FRR       Delay between two channels. (first rising edge - first rising edge)
-        FRF       Delay between two channels. (first rising edge - first falling edge)
-        FFR       Delay between two channels. (first falling edge - first rising edge)
-        FFF       Delay between two channels. (first falling edge - first falling edge)
-        LRR       Delay between two channels. (first rising edge - last rising edge)
-        LRF       Delay between two channels. (first rising edge - last falling edge)
-        LFR       Delay between two channels. (first falling edge - last rising edge)
-        LFF       Delay between two channels. (first falling edge - last falling edge)
-        Skew      Delay between two channels. (edge – edge of the same type) """,
+
+            measure_delay = (<type>,<sourceA>,<sourceB>)
+
+            <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
+
+            <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+
+        +------------+-----------------------------------------------------------------------+
+        | Type       | Description                                                           |
+        +============+=======================================================================+
+        | PHA        | The phase difference between two channels. (rising edge - rising edge)|
+        +------------+-----------------------------------------------------------------------+
+        | FRR        |Delay between two channels. (first rising edge - first rising edge)    |
+        +------------+-----------------------------------------------------------------------+
+        | FRF        | Delay between two channels. (first rising edge - first falling edge)  |
+        +------------+-----------------------------------------------------------------------+
+        | FFR        | Delay between two channels. (first falling edge - first rising edge)  |
+        +------------+-----------------------------------------------------------------------+
+        | FFF        | Delay between two channels. (first falling edge - first falling edge) |
+        +------------+-----------------------------------------------------------------------+
+        | LRR        | Delay between two channels. (first rising edge - last rising edge)    |
+        +------------+-----------------------------------------------------------------------+
+        | LRF        | Delay between two channels. (first rising edge - last falling edge)   |
+        +------------+-----------------------------------------------------------------------+
+        | LFR        |  Delay between two channels. (first falling edge - last rising edge)  |
+        +------------+-----------------------------------------------------------------------+
+        | LFF        | Delay between two channels. (first falling edge - last falling edge)  |
+        +------------+-----------------------------------------------------------------------+
+        | Skew       | Delay between two channels. (edge – edge of the same type)            |
+        +------------+-----------------------------------------------------------------------+
+        """,
         validator=_measure_delay_validator,
         values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]

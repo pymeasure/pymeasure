@@ -303,7 +303,7 @@ class Agilent33500Channel(Channel):
 
         This should be done if the same name is used continuously to load
         different arbitrary signals into the memory, since an error will occur
-         if a trace is loaded which already exists in memory.
+        if a trace is loaded which already exists in memory.
         """
         self.write("SOUR{ch}:DATA:VOL:CLE")
 
