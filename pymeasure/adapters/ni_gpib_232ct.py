@@ -26,11 +26,8 @@ from enum import IntFlag, Flag
 import time
 from pymeasure.adapters import VISAAdapter
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
 
 
 class NI_GPIB_232(VISAAdapter):
@@ -324,7 +321,7 @@ class NI_GPIB_232(VISAAdapter):
         time.sleep(0.050)
         ret_val = super().read_bytes(count, kwargs)
         time.sleep(0.050)
-        _ret_len = super().read()
+        ret_len = super().read()
         self._check_errors()
         return ret_val
 
@@ -347,7 +344,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         # old_tm = self.time_out
         # self.time_out = timeout
-        stop = time.perf_counter () + timeout
+        stop = time.perf_counter() + timeout
         super().write(f"rsp {self.address}")
         while time.perf_counter() < stop:
             if self.connection.bytes_in_buffer == 0:
