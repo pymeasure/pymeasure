@@ -35,8 +35,8 @@ def test_voltage_setpoint():
          ("V2?", "V2 1.2")
          ],
     ) as inst:
-        inst.ch2.voltage_setpoint = 1.2
-        assert inst.ch2.voltage_setpoint == 1.2
+        inst.ch_2.voltage_setpoint = 1.2
+        assert inst.ch_2.voltage_setpoint == 1.2
 
 
 def test_voltage():
@@ -45,7 +45,7 @@ def test_voltage():
         [("V2O?", "1.2V")
          ],
     ) as inst:
-        assert inst.ch2.voltage == 1.2
+        assert inst.ch_2.voltage == 1.2
 
 
 def test_current_limit():
@@ -55,8 +55,8 @@ def test_current_limit():
          ("I2?", "I2 0.1")
          ],
     ) as inst:
-        inst.ch2.current_limit = 0.1
-        assert inst.ch2.current_limit == 0.1
+        inst.ch_2.current_limit = 0.1
+        assert inst.ch_2.current_limit == 0.1
 
 
 def test_current():
@@ -65,7 +65,7 @@ def test_current():
         [("I2O?", "0.123A")
          ],
     ) as inst:
-        assert inst.ch2.current == 0.123
+        assert inst.ch_2.current == 0.123
 
 
 def test_current_range():
@@ -77,10 +77,10 @@ def test_current_range():
          ("IRANGE2?", "1")
          ],
     ) as inst:
-        inst.ch2.current_range = "HIGH"
-        assert inst.ch2.current_range == "HIGH"
-        inst.ch2.current_range = "LOW"
-        assert inst.ch2.current_range == "LOW"
+        inst.ch_2.current_range = "HIGH"
+        assert inst.ch_2.current_range == "HIGH"
+        inst.ch_2.current_range = "LOW"
+        assert inst.ch_2.current_range == "LOW"
 
 
 def test_enable():
@@ -92,8 +92,8 @@ def test_enable():
          ("OPALL 0", None)
          ],
     ) as inst:
-        inst.ch2.enable()
-        inst.ch2.disable()
+        inst.ch_2.enable()
+        inst.ch_2.disable()
         inst.enable()
         inst.disable()
 
@@ -103,7 +103,7 @@ def test_triple():
         PL303MQTP,
         [("V3O?", "1.2V")],
     ) as inst:
-        assert inst.ch3.voltage == 1.2
+        assert inst.ch_3.voltage == 1.2
 
 
 def test_voltage_range():
@@ -113,8 +113,8 @@ def test_voltage_range():
          ("V1?", "V1 60")
          ],
     ) as inst:
-        inst.ch1.voltage_setpoint = 60
-        assert inst.ch1.voltage_setpoint == 60
+        inst.ch_1.voltage_setpoint = 60
+        assert inst.ch_1.voltage_setpoint == 60
 
 
 def test_strict_range_error():
@@ -123,5 +123,5 @@ def test_strict_range_error():
         [],
     ) as inst:
         with pytest.raises(ValueError):
-            inst.ch1.voltage_setpoint = 31
+            inst.ch_1.voltage_setpoint = 31
 
