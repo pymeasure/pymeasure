@@ -22,8 +22,8 @@
 # THE SOFTWARE.
 #
 import logging
-from enum import IntFlag
-from time import sleep
+from enum import IntFlag, Flag
+import time
 from pymeasure.adapters import VISAAdapter
 
 
@@ -82,45 +82,34 @@ class NI_GPIB_232(VISAAdapter):
 
     """
 
-    def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None,  eoi=True, **kwargs):
-        # for legacy rw_delay: prefer new style over old one.
-        # if rw_delay:
-        #     warn(("Parameter `rw_delay` is deprecated. "
-        #           "Implement in Instrument's `wait_for` instead."),
-        #          FutureWarning)
-        #     kwargs['query_delay'] = rw_delay
-        # if serial_timeout:
-        #     warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
-        #          FutureWarning)
-        #     kwargs['timeout'] = serial_timeout
+    def __init__(self, resource_name, address=None,  serial_timeout=1000,
+                 eoi=True, **kwargs):
         super().__init__(resource_name,
                          asrl={
-                             'timeout': 1000,
+                             'timeout': serial_timeout,
                              'write_termination': "\r",
                              'read_termination': "\r\n",
                              'flow_control': 2,
                              'chunk_size': 256,
 
                          },
-                         preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
         super().write("EOS D")
-        super().write("STAT C N")
-        # self._check_errors()
+        super().write("STAT")
+        self._check_errors()
 
         if not isinstance(resource_name, NI_GPIB_232):
             # self.auto = auto
             self.eoi = eoi
         super().flush_read_buffer()
 
-    class GPIB_STATUS(IntFlag):
+    class GPIBStatus(IntFlag):
         """Enum element for GIBP  status bit decoding
 
         """
         ERR = 32768   # Error detected
-        TIMO = 13684  # Time out
+        TIMO = 16384  # Time out
         END = 8192  # EOI or EOS detected
         SRQI = 4096  # SRQ detected while CIC
         # 2048, 1024,  & 512 are reserved
@@ -134,7 +123,7 @@ class NI_GPIB_232(VISAAdapter):
         DTAS = 2  # Device triggeer active state
         SCAS = 1  # Device Clear active status
 
-    class GPIB_ERR(IntFlag):
+    class GPIBError(Flag):
         """Enum element for GIBP  error bit decoding
 
         """
@@ -152,7 +141,7 @@ class NI_GPIB_232(VISAAdapter):
         ECIC = 1  # Command requires GPIB-232CT-A to be CIC
         NGER = 0  # No error condition
 
-    class SERIAL_ERR(IntFlag):
+    class SERIALError(Flag):
         """Enum element for serial  error bit decoding
 
         """
@@ -167,33 +156,32 @@ class NI_GPIB_232(VISAAdapter):
         Method to decode the status datareported from the device.
 
         """
+        super().write("stat n")
         if self.connection.bytes_in_buffer == 0:
-            sleep(0.125)
+            time.sleep(0.125)
             log.debug("Wait 0.125")
         log.debug(f"buf len: {self.connection.bytes_in_buffer}")
         ret_val = super().read_bytes(self.connection.bytes_in_buffer)
         if len(ret_val) <= 3:
-            log.warning(f"something is very fishy , only {len(ret_val)} bytes received, content: {ret_val}")
+            log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
             return
         if len(ret_val) < 12:
             log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
         ret_val = ret_val.lstrip(b"\x00")
-        # _s, g_e, s_e, c, dummy] = ret_val.split(b'\r\n')
         try:
-            [g_s, g_e, s_e, c] = ret_val.splitlines()
-            gpib_stat = self.GPIB_STATUS(int(g_s))
-            gpib_err = self.GPIB_ERR(int(g_e))
-            ser_err = self.SERIAL_ERR(int(s_e))
-            count = int(c)
+            [g_s, g_e, s_e, cnt_raw] = ret_val.splitlines()
+            gpib_stat = self.GPIBStatus(int(g_s))
+            gpib_err = self.GPIBError(int(g_e))
+            ser_err = self.SERIALError(int(s_e))
+            count = int(cnt_raw)
             log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
         except ValueError:
             g_s = ret_val[:ret_val.find(b'\r')]
-            gpib_stat = self.GPIB_STATUS(int(g_s))
+            gpib_stat = self.GPIBStatus(int(g_s))
             log.warning(f" ACHTUNG! {gpib_stat!a}  \r\n")
         # Error handling
-        if bool(gpib_stat & self.GPIB_STATUS.ERR) is True:
-            log.warning(f"eror detected {self.GPIB_ERR(gpib_err)!a} {self.SERIAL_ERR(ser_err)!a}")
-            # TODO: add exception
+        if bool(gpib_stat & self.GPIBStatus.ERR) is True:
+            log.critical(f"Error {self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
 
     def assert_trigger(self):
         """
@@ -216,24 +204,22 @@ class NI_GPIB_232(VISAAdapter):
     def eoi(self, value):
         super().write(f"EOT {int(value)}")
 
+    # TODO: verification needed
     @property
     def time_out(self):
-        """Control whether to assert the EOI signal with the last character
-        of any command sent over GPIB port (bool).
-
-        Some instruments require EOI signal to be
-        asserted in order to properly detect the end of a command.
+        """Control control the GPIB timeout.
+             Valid value range 0.0001 to 3600s
         """
         super().write("tmo")
         ret_val = super().read().split(",")
-        return bool(float(ret_val[0]))
+        return float(ret_val[0])
 
     @time_out.setter
     def time_out(self, value):
         if value >= 0.0001 and value <= 3600:
             super().write(f"tmo {int(value)}")
         else:
-            ValueError(f"timeout value out of range! {value}")
+            raise ValueError(f"timeout value out of range! {value}")
 
     @property
     def version(self):
@@ -241,23 +227,8 @@ class NI_GPIB_232(VISAAdapter):
         """
         super().flush_read_buffer()
         super().write('id \r')
-        sleep(0.02)
+        time.sleep(0.02)
         return super().read_bytes(71).decode()
-
-    # TODO: remove?
-    def ask(self, command, kwargs):
-        """ Ask the Prologix controller.
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to instrument
-        """
-        log.warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        super().flush_read_buffer()
-        super().write(f"wrt {self.address} \n  {command}", **kwargs)
-        sleep(0.0)
-        return self.read()
 
     def clear(self):
         """
@@ -305,11 +276,11 @@ class NI_GPIB_232(VISAAdapter):
         """
         super().flush_read_buffer()
         super().write(f"wrt {self.address} \n  {command}", **kwargs)
-        sleep(0.050)
+        time.sleep(0.050)
         self._check_errors()
         super().flush_read_buffer()
 
-    def write_bytes(self, command, **kwargs):
+    def write_bytes(self, content, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
         If the GPIB address in :attr:`.address` is defined, it is sent first.
@@ -319,8 +290,8 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         super().flush_read_buffer()
-        super().write(f"wrt {self.address} \n  {command}", **kwargs)
-        sleep(0.050)
+        super().write(f"wrt {self.address} \n  {content}", **kwargs)
+        time.sleep(0.050)
         self._check_errors()
         super().flush_read_buffer()
 
@@ -333,7 +304,7 @@ class NI_GPIB_232(VISAAdapter):
         log.debug("reading")
         super().flush_read_buffer()
         super().write(f"rd #255 {self.address}")
-        sleep(0.050)
+        time.sleep(0.050)
         ret_val = super().read()
         if ret_val != "0":
             ret_len = super().read()
@@ -347,13 +318,13 @@ class NI_GPIB_232(VISAAdapter):
         """
         log.debug("read bytes..")
         if count == -1:
-            count = self.chunk_size - 1
+            count = self.connection.chunk_size - 1
         super().flush_read_buffer()
         super().write(f"rd #{count} {self.address}")
-        sleep(0.050)
+        time.sleep(0.050)
         ret_val = super().read_bytes(count, kwargs)
-        sleep(0.050)
-        ret_len = super().read()
+        time.sleep(0.050)
+        _ret_len = super().read()
         self._check_errors()
         return ret_val
 
@@ -368,29 +339,30 @@ class NI_GPIB_232(VISAAdapter):
         """
         return NI_GPIB_232(self, address, **kwargs)
 
-    def wait_for_srq(self, address,  timeout=251):
+    def wait_for_srq(self,  timeout=20, delay=0.1):
         """ Blocks until a SRQ, and leaves the bit high
 
         :param timeout: Timeout duration in seconds.
         :raises TimeoutError: "Waiting for SRQ timed out."
         """
-        old_tm = self.time_out
-        self.time_out = timeout
-        super().write(f"rsp {address}")
-        if self.connection.bytes_in_buffer == 0:
-            sleep(0.125)
-            log.debug("Wait 0.125")
-        log.debug(f"buf len: {self.connection.bytes_in_buffer}")
-        ret_val = super().read_bytes(self.connection.bytes_in_buffer)
-        self.time_out = old_tm
+        # old_tm = self.time_out
+        # self.time_out = timeout
+        stop = time.perf_counter () + timeout
+        super().write(f"rsp {self.address}")
+        while time.perf_counter() < stop:
+            if self.connection.bytes_in_buffer == 0:
+                time.sleep(0.125)
+                log.debug("Wait 0.125")
+                log.debug(f"buf len: {self.connection.bytes_in_buffer}")
+                ret_val = super().read_bytes(self.connection.bytes_in_buffer)
+                log.debug(f"returned value: {ret_val}")
+        # self.time_out = old_tm
         if int(ret_val) & 0x40 is True:
             return 1
-        else:
-            TimeoutError(f"Waiting for SRQ timed out.")
+        raise TimeoutError(f"Waiting for SRQ timed out.")
 
     def __repr__(self):
         if self.address is not None:
             return (f"<NI_GPIB_232(resource_name='{self.connection.resource_name}', "
                     f"address={self.address:d})>")
-        else:
-            return f"<NI_GPIB_232(resource_name='{self.connection.resource_name}')>"
+        return f"<NI_GPIB_232(resource_name='{self.connection.resource_name}')>"
