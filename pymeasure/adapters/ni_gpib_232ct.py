@@ -156,8 +156,8 @@ class NI_GPIB_232(VISAAdapter):
         super().write("stat n")
         if self.connection.bytes_in_buffer == 0:
             time.sleep(0.125)
-            log.debug("Wait 0.125")
-        log.debug(f"buf len: {self.connection.bytes_in_buffer}")
+            # log.debug("Wait 0.125")
+        # log.debug(f"buf len: {self.connection.bytes_in_buffer}")
         ret_val = super().read_bytes(self.connection.bytes_in_buffer)
         if len(ret_val) <= 3:
             log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
@@ -171,7 +171,7 @@ class NI_GPIB_232(VISAAdapter):
             gpib_err = self.GPIBError(int(g_e))
             ser_err = self.SERIALError(int(s_e))
             count = int(cnt_raw)
-            log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
+            # log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
         except ValueError:
             g_s = ret_val[:ret_val.find(b'\r')]
             gpib_stat = self.GPIBStatus(int(g_s))
@@ -213,9 +213,12 @@ class NI_GPIB_232(VISAAdapter):
 
     @time_out.setter
     def time_out(self, value):
-        if value >= 0.0001 and value <= 3600:
-            super().write(f"tmo {int(value)}")
-        else:
+        if value >= 0.0001:
+            if value < 1:
+                super().write(f"tmo {value}")
+            elseif value <= 3600:
+                super().write(f"tmo {int(value)}")
+            else:
             raise ValueError(f"timeout value out of range! {value}")
 
     @property
@@ -263,9 +266,7 @@ class NI_GPIB_232(VISAAdapter):
         super().write("sic 0.0002")
 
     def write(self, command, **kwargs):
-        """Write a string command to the instrument appending `write_termination`.
-
-        If the GPIB address in :attr:`.address` is defined, it is sent first.
+        """Write a string to the instrument appending `write_termination`.
 
         :param str command: Command string to be sent to the instrument
             (without termination).
@@ -278,9 +279,7 @@ class NI_GPIB_232(VISAAdapter):
         super().flush_read_buffer()
 
     def write_bytes(self, content, **kwargs):
-        """Write a string command to the instrument appending `write_termination`.
-
-        If the GPIB address in :attr:`.address` is defined, it is sent first.
+        """Write byte to the instrument appending `write_termination`.
 
         :param str command: Command string to be sent to the instrument
             (without termination).
@@ -298,7 +297,7 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         :returns str: ASCII response of the instrument (excluding read_termination).
         """
-        log.debug("reading")
+        # log.debug("reading")
         super().flush_read_buffer()
         super().write(f"rd #255 {self.address}")
         time.sleep(0.050)
@@ -309,11 +308,13 @@ class NI_GPIB_232(VISAAdapter):
         return ret_val
 
     def read_bytes(self, count, **kwargs):
-        """
-        # TODO:    Fix this docstring
+        """Read bytes from the instrument.
 
+        :param count:  number of bytes to be read.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: response of the instrument.
         """
-        log.debug("read bytes..")
+        # log.debug("read bytes..")
         if count == -1:
             count = self.connection.chunk_size - 1
         super().flush_read_buffer()
@@ -345,18 +346,20 @@ class NI_GPIB_232(VISAAdapter):
         # old_tm = self.time_out
         # self.time_out = timeout
         stop = time.perf_counter() + timeout
-        super().write(f"rsp {self.address}")
         while time.perf_counter() < stop:
+            super().write(f"rsp {self.address}")
             if self.connection.bytes_in_buffer == 0:
-                time.sleep(0.125)
-                log.debug("Wait 0.125")
+                time.sleep(delay)
+                log.debug("Waited")
+            if self.connection.bytes_in_buffer >= 1:
                 log.debug(f"buf len: {self.connection.bytes_in_buffer}")
                 ret_val = super().read_bytes(self.connection.bytes_in_buffer)
                 log.debug(f"returned value: {ret_val}")
         # self.time_out = old_tm
-        if int(ret_val) & 0x40 is True:
-            return 1
-        raise TimeoutError(f"Waiting for SRQ timed out.")
+                if int(ret_val) > 0:
+                    return int(ret_val)
+                if int(ret_val) == -1:
+                    raise TimeoutError(f"Waiting for SRQ timed out after {timeout}")
 
     def __repr__(self):
         if self.address is not None:
