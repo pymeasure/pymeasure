@@ -97,7 +97,6 @@ class NI_GPIB_232(VISAAdapter):
         self._check_errors()
 
         if not isinstance(resource_name, NI_GPIB_232):
-            # self.auto = auto
             self.eoi = eoi
         super().flush_read_buffer()
 
@@ -150,14 +149,12 @@ class NI_GPIB_232(VISAAdapter):
 
     def _check_errors(self):
         """
-        Method to decode the status datareported from the device.
+        Method to decode the status data reported from the device.
 
         """
         super().write("stat n")
         if self.connection.bytes_in_buffer == 0:
             time.sleep(0.125)
-            # log.debug("Wait 0.125")
-        # log.debug(f"buf len: {self.connection.bytes_in_buffer}")
         ret_val = super().read_bytes(self.connection.bytes_in_buffer)
         if len(ret_val) <= 3:
             log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
@@ -171,7 +168,7 @@ class NI_GPIB_232(VISAAdapter):
             gpib_err = self.GPIBError(int(g_e))
             ser_err = self.SERIALError(int(s_e))
             count = int(cnt_raw)
-            # log.debug(f"{gpib_stat!a} || {gpib_err!a} || {ser_err!a} || count: {count} \r\n")
+            log.debug(f"count {count}")
         except ValueError:
             g_s = ret_val[:ret_val.find(b'\r')]
             gpib_stat = self.GPIBStatus(int(g_s))
@@ -215,15 +212,15 @@ class NI_GPIB_232(VISAAdapter):
     def time_out(self, value):
         if value >= 0.0001:
             if value < 1:
-                super().write(f"tmo {value}")
-            elseif value <= 3600:
+                super().write(f"tmo {value:.4f}")
+            elif value <= 3600:
                 super().write(f"tmo {int(value)}")
             else:
-            raise ValueError(f"timeout value out of range! {value}")
+                raise ValueError(f"timeout value out of range! {value}")
 
     @property
     def version(self):
-        """Get the version string of the Prologix controller.
+        """Get the version string of the NI GPIB-232-CT.
         """
         super().flush_read_buffer()
         super().write('id \r')
@@ -281,8 +278,7 @@ class NI_GPIB_232(VISAAdapter):
     def write_bytes(self, content, **kwargs):
         """Write byte to the instrument appending `write_termination`.
 
-        :param str command: Command string to be sent to the instrument
-            (without termination).
+        :param str content: string to be sent to the instrument (without termination).
         :param kwargs: Keyword arguments for the connection itself.
         """
         super().flush_read_buffer()
@@ -304,6 +300,7 @@ class NI_GPIB_232(VISAAdapter):
         ret_val = super().read()
         if ret_val != "0":
             ret_len = super().read()
+            log.debug(f"length of read {ret_len}")
             self._check_errors()
         return ret_val
 
@@ -323,6 +320,7 @@ class NI_GPIB_232(VISAAdapter):
         ret_val = super().read_bytes(count, kwargs)
         time.sleep(0.050)
         ret_len = super().read()
+        log.debug(f"length of bytes read {ret_len}")
         self._check_errors()
         return ret_val
 
@@ -343,19 +341,13 @@ class NI_GPIB_232(VISAAdapter):
         :param timeout: Timeout duration in seconds.
         :raises TimeoutError: "Waiting for SRQ timed out."
         """
-        # old_tm = self.time_out
-        # self.time_out = timeout
         stop = time.perf_counter() + timeout
         while time.perf_counter() < stop:
             super().write(f"rsp {self.address}")
             if self.connection.bytes_in_buffer == 0:
                 time.sleep(delay)
-                log.debug("Waited")
             if self.connection.bytes_in_buffer >= 1:
-                log.debug(f"buf len: {self.connection.bytes_in_buffer}")
                 ret_val = super().read_bytes(self.connection.bytes_in_buffer)
-                log.debug(f"returned value: {ret_val}")
-        # self.time_out = old_tm
                 if int(ret_val) > 0:
                     return int(ret_val)
                 if int(ret_val) == -1:
