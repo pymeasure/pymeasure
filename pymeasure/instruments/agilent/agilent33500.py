@@ -389,7 +389,9 @@ class Agilent33500(Instrument):
 
     """
 
-    ch = Instrument.ChannelCreator(Agilent33500Channel, (1, 2))
+    ch_1 = Instrument.ChannelCreator(Agilent33500Channel, 1)
+
+    ch_2 = Instrument.ChannelCreator(Agilent33500Channel, 2)
 
     def __init__(self, adapter, name="Agilent 33500 Function/Arbitrary Waveform generator family",
                  **kwargs):
