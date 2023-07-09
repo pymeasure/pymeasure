@@ -1,3 +1,8 @@
+Upcoming version
+================
+- Added a test generator, which observes the communication with an actual device and writes protocol tests accordingly.
+
+
 Version 0.12.0 (2023-07-05)
 ===========================
 Main items of this new release:
@@ -23,7 +28,6 @@ New adapter and instrument mechanics
 - Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
 - Channel class added. :code:`Instrument.channels` and :code:`Instrument.ch_X` (:code:`X` is any channel name) are reserved attributes for channel mechanics.
 - The parameters :code:`check_get_errors` and :code:`check_set_errors` enable calling methods of the same name. This enables more systematically dealing with instruments that acknowledge every "set" command.
-- Added a test Generator, which observes the communication with an actual device and writes tests accordingly.
 
 - Adds Channel feature to instruments (@bmoneke, mcdo0486, #718, #761, #852, #931)
 - Adds :code:`maxsplit` parameter to :code:`values` method (@bmoneke, #793)
