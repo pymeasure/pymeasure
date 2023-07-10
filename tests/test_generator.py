@@ -53,7 +53,7 @@ class FakeChannel(Channel):
 
 class FakeInstrument(Instrument):
 
-    channels = Instrument.ChannelCreator(FakeChannel, id="A")
+    ch_A = Instrument.ChannelCreator(FakeChannel, id="A")
 
     def __init__(self, adapter, name="Fake"):
         super().__init__(adapter, name)
@@ -653,6 +653,6 @@ def test_ch_A_channel_control_getter():
     def test_child_channel(self, inst):
         """Whether the child of a channel can be accessed as expected."""
         inst.adapter.comm_pairs.extend([("GA.1", "7")])
-        assert inst.ch_A.ch_1.channel_control == 7
-        assert inst._generator._getters == {'ch_A.ch_1.channel_control':
+        assert inst.ch_A.port.channel_control == 7
+        assert inst._generator._getters == {'ch_A.port.channel_control':
                                             ([[(b"GA.1", b"7")]], [7])}
