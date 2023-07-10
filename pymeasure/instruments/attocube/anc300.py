@@ -24,7 +24,7 @@
 
 import logging
 import re
-from math import inf
+from math import inf, isfinite, isinf
 from warnings import warn
 
 from pymeasure.adapters import Adapter
@@ -135,23 +135,12 @@ class Axis(Channel):
         "getc",
         """Measure the saved capacity value in nF of the axis.""")
 
-    continuous_move = Instrument.setting(
-        "%s",
-        """Set a continous movement in 'up' or 'down' direction. Mode must be
-        'stp'. The axis can be halted by the stop method.
-        """,
-        validator=strict_discrete_set,
-        values={"up": "stepu c", "down": "stepd c"},
-        map_values=True,
-        check_set_errors=True,
-    )
-
     stepu = Instrument.setting(
         "stepu %d",
         """Set the steps upwards for N steps. Mode must be 'stp' and N must be
         positive. 0 causes a continous movement until stop is called.
 
-        .. deprecated:: Use attr:`continuous_move` or meth:`move_raw` instead.
+        .. deprecated:: 0.13.0 Use attr:`continuous_move` or meth:`move_raw` instead.
         """,
         validator=deprecated_strict_range,
         values=[0, inf],
@@ -163,7 +152,7 @@ class Axis(Channel):
         """Set the steps downwards for N steps. Mode must be 'stp' and N must be
         positive. 0 causes a continous movement until stop is called.
 
-        .. deprecated:: Use attr:`continuous_move` or meth:`move_raw` instead.
+        .. deprecated:: 0.13.0 Use attr:`continuous_move` or meth:`move_raw` instead.
         """,
         validator=deprecated_strict_range,
         values=[0, inf],
@@ -191,16 +180,23 @@ class Axis(Channel):
         it is non-blocking, i.e. it will return immediately after sending the
         command.
 
-        :param steps: finite integer value of steps to be performed. A positive
+        :param steps: integer value of steps to be performed. A positive
             sign corresponds to upwards steps, a negative sign to downwards
-            steps.
+            steps. The values of +/-inf trigger a continuous movement. The axis
+            can be halted by the stop method.
         """
-        if steps > 0:
-            self.write(f"stepu {steps:d}")
-        elif steps < 0:
-            self.write(f"stepd {abs(steps):d}")
-        else:
-            pass  # avoid "stepu/d {ch} 0" since it triggers a continous move
+        if isfinite(steps) and abs(steps) > 0:
+            if steps > 0:
+                self.write(f"stepu {steps:d}")
+            else:
+                self.write(f"stepd {abs(steps):d}")
+        elif isinf(steps):
+            if steps > 0:
+                self.write("stepu c")
+            else:
+                self.write("stepd c")
+        else:  # ignore zero and nan values
+            return
         self.check_set_errors()
 
     def move(self, steps, gnd=True):
@@ -215,6 +211,8 @@ class Axis(Channel):
         :param gnd: bool, flag to decide if the axis should be grounded after
             completion of the movement
         """
+        if not isfinite(steps):
+            raise ValueError("Only finite number of steps are allowed.")
         self.mode = 'stp'
         # perform the movement
         self.move_raw(steps)

@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.attocube import ANC300Controller
@@ -46,7 +48,8 @@ def test_stepu():
         passwd=passwd,
     ) as instr:
         instr.a.mode = "stp"
-        instr.a.stepu = 15
+        with pytest.warns(FutureWarning):
+            instr.a.stepu = 15
 
 
 def test_continuous_move():
@@ -58,7 +61,7 @@ def test_continuous_move():
         passwd=passwd,
     ) as instr:
         instr.c.mode = "stp"
-        instr.c.continuous_move = "down"
+        instr.c.move_raw(float('-inf'))
 
 
 def test_capacity():
