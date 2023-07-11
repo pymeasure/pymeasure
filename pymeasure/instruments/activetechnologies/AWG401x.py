@@ -430,8 +430,8 @@ class AWG401x_AFG(AWG401x_base):
         print(wfg.check_errors())       # Get the error queue
 
     """
-    ch_1 = Instrument.ChannelCreator(ChannelAFG, 1)
-    ch_2 = Instrument.ChannelCreator(ChannelAFG, 2)
+    ch_1 = Instrument.ChannelCreator(ChannelAFG, 1, collection="ch")
+    ch_2 = Instrument.ChannelCreator(ChannelAFG, 2, collection="ch")
 
     enabled = Instrument.control(
         "AFGControl:STATus?", "AFGControl:%s",

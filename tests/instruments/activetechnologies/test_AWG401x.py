@@ -82,7 +82,7 @@ def test_AFG_init():
             AWG401x_AFG,
             AFG_init_comm,
     ) as inst:
-        assert len(inst.channels) == 2
+        assert len(inst.ch) == 2
         assert isinstance(inst.ch_1, ChannelAFG)
 
 
