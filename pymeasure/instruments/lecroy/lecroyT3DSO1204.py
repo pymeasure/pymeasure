@@ -1311,7 +1311,7 @@ class LeCroyT3DSO1204(Instrument):
         +============+=======================================================================+
         | PHA        | The phase difference between two channels. (rising edge - rising edge)|
         +------------+-----------------------------------------------------------------------+
-        | FRR        |Delay between two channels. (first rising edge - first rising edge)    |
+        | FRR        | Delay between two channels. (first rising edge - first rising edge)   |
         +------------+-----------------------------------------------------------------------+
         | FRF        | Delay between two channels. (first rising edge - first falling edge)  |
         +------------+-----------------------------------------------------------------------+
@@ -1323,7 +1323,7 @@ class LeCroyT3DSO1204(Instrument):
         +------------+-----------------------------------------------------------------------+
         | LRF        | Delay between two channels. (first rising edge - last falling edge)   |
         +------------+-----------------------------------------------------------------------+
-        | LFR        |  Delay between two channels. (first falling edge - last rising edge)  |
+        | LFR        | Delay between two channels. (first falling edge - last rising edge)   |
         +------------+-----------------------------------------------------------------------+
         | LFF        | Delay between two channels. (first falling edge - last falling edge)  |
         +------------+-----------------------------------------------------------------------+

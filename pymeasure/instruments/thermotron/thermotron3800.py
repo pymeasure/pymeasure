@@ -88,6 +88,7 @@ class Thermotron3800(Instrument):
     def run(self):
         '''
         Starts temperature forcing. The oven will ramp to the setpoint.
+
         :return: None
         '''
         self.write("RUNM")
@@ -95,6 +96,7 @@ class Thermotron3800(Instrument):
     def stop(self):
         '''
         Stops temperature forcing on the oven.
+
         :return: None
         '''
         self.write("STOP")
@@ -104,8 +106,8 @@ class Thermotron3800(Instrument):
         The manufacturer recommends a 3 second wait time after after initializing the oven.
         The optional "wait" variable should remain true, unless the 3 second wait time is
         taken care of on the user end. The wait time is split up in the following way:
-            1 second (built into the write function) +
-            2 seconds (optional wait time from this function (initialize_oven)).
+        1 second (built into the write function) +
+        2 seconds (optional wait time from this function (initialize_oven)).
 
         :return: None
         '''
@@ -114,16 +116,27 @@ class Thermotron3800(Instrument):
             sleep(2)
 
     class Thermotron3800Mode(IntFlag):
-        '''
-        Bit 0 = Program mode
-        Bit 1 = Edit mode (controller in stop mode)
-        Bit 2 = View program mode
-        Bit 3 = Edit mode (controller in hold mode)
-        Bit 4 = Manual mode
-        Bit 5 = Delayed start mode
-        Bit 6 = Unused
-        Bit 7 = Calibration mode
-        '''
+        """
+        +--------+--------------------------------------+
+        | Bit    | Mode                                 |
+        +========+======================================+
+        | 0      | Program mode                         |
+        +--------+--------------------------------------+
+        | 1      | Edit mode (controller in stop mode)  |
+        +--------+--------------------------------------+
+        | 2      | View program mode                    |
+        +--------+--------------------------------------+
+        | 3      | Edit mode (controller in hold mode)  |
+        +--------+--------------------------------------+
+        | 4      | Manual mode                          |
+        +--------+--------------------------------------+
+        | 5      | Delayed start mode                   |
+        +--------+--------------------------------------+
+        | 6      | Unused                               |
+        +--------+--------------------------------------+
+        | 7      | Calibration mode                     |
+        +--------+--------------------------------------+
+        """
         PROGRAM_MODE = 1
         EDIT_MODE_STOP = 2
         VIEW_PROGRAM_MODE = 4
