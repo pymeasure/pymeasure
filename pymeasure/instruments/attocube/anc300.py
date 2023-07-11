@@ -39,7 +39,7 @@ log.addHandler(logging.NullHandler())
 
 
 def deprecated_strict_range(value, values):
-    warn("This property is deprecated, use attr:`continuous_move` or meth:`move_raw` instead.",
+    warn("This property is deprecated, use meth:`move_raw` instead.",
          FutureWarning)
     return strict_range(value, values)
 
@@ -140,7 +140,7 @@ class Axis(Channel):
         """Set the steps upwards for N steps. Mode must be 'stp' and N must be
         positive. 0 causes a continous movement until stop is called.
 
-        .. deprecated:: 0.13.0 Use attr:`continuous_move` or meth:`move_raw` instead.
+        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
         """,
         validator=deprecated_strict_range,
         values=[0, inf],
@@ -152,7 +152,7 @@ class Axis(Channel):
         """Set the steps downwards for N steps. Mode must be 'stp' and N must be
         positive. 0 causes a continous movement until stop is called.
 
-        .. deprecated:: 0.13.0 Use attr:`continuous_move` or meth:`move_raw` instead.
+        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
         """,
         validator=deprecated_strict_range,
         values=[0, inf],
