@@ -226,7 +226,7 @@ class DPSeriesMotorController(Instrument):
         by the motor controller or, if encoder_enabled is set, the steps counted by an
         externally connected encoder. Note that in the DP series motor controller instrument
         manuals, this property would be referred to as the 'absolute position' while this
-        driver implements a conversion between steps and absolute units for the ``absolute
+        driver implements a conversion between steps and absolute units for the ``absolute_
         position`` property. This property can be set.
         """
         if self._encoder_enabled:
