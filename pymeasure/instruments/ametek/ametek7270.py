@@ -251,8 +251,10 @@ class Ametek7270(Instrument):
     def ask(self, command, query_delay=0):
         """Send a command and read the response, stripping white spaces.
 
-        Usually the properties use the ``values()`` method that adds a strip call,
-        however several methods use directly the result from ask to be casted into some other types.
+        Usually the properties use the
+        :meth:`values() <pymeasure.instruments.common_base.CommonBase.values>`
+        method that adds a strip call,
+        however several methods use directly the result from ask to be cast into some other types.
         It should therefore also add the strip here, as all responses end with a newline character.
         """
         return super().ask(command, query_delay).strip()
