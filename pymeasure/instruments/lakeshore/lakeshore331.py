@@ -48,8 +48,13 @@ class LakeShore331(Instrument):
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
         print(controller.input_A.temperature)       # Print the temperature at sensor A.
     """
-    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel, ('A', 'B'), prefix='input_')
-    o_ch = Instrument.ChannelCreator(LakeShoreHeaterChannel, (1, 2), prefix='output_')
+    input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
+
+    input_B = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'B')
+
+    output_1 = Instrument.ChannelCreator(LakeShoreHeaterChannel, 1)
+
+    output_2 = Instrument.ChannelCreator(LakeShoreHeaterChannel, 2)
 
     def __init__(self, adapter, name="Lakeshore Model 336 Temperature Controller", **kwargs):
         kwargs.setdefault('read_termination', "\r\n")

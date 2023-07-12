@@ -103,7 +103,11 @@ class Keithley2200(Instrument):
     def __init__(self, adapter, name="Keithley2200", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    channels = Instrument.ChannelCreator(PSChannel, ("1", "2", "3"))
+    ch_1 = Instrument.ChannelCreator(PSChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(PSChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(PSChannel, 3)
 
     display_enabled = Instrument.control(
         "DISP?",
