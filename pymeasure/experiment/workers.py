@@ -29,7 +29,7 @@ from queue import Queue
 
 from .listeners import Recorder
 from .procedure import Procedure
-from .results import Results
+from .results import ResultsBase
 from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ class Worker(StoppableThread):
         super().__init__()
 
         self.port = port
-        if not isinstance(results, Results):
+        if not isinstance(results, ResultsBase):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()

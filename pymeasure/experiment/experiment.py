@@ -102,7 +102,7 @@ class Experiment:
     :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
     """
 
-    def __init__(self, title, procedure, analyse=(lambda x: x)):
+    def __init__(self, title, procedure, results=None, analyse=(lambda x: x)):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -124,7 +124,10 @@ class Experiment:
         self.filename = create_filename(self.title)
         log.info("Using data file: %s" % self.filename)
 
-        self.results = Results(self.procedure, self.filename)
+        if results is not None:
+            self.results = Results
+        else:
+            self.results = Results(self.procedure, self.filename)
         log.info("Set up Results")
 
         self.worker = Worker(self.results, self.scribe.queue, logging.DEBUG)

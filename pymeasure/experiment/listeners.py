@@ -102,23 +102,32 @@ class Recorder(QueueListener):
     """ Recorder loads the initial Results for a filepath and
     appends data by listening for it over a queue. The queue
     ensures that no data is lost between the Recorder and Worker.
+
+     Queue listeners work by calling self.handle(record) when they get a record
+    handle is roughly defined as:
+    def handle(self, record):
+        record = self.prepare(record)
+        for handler in self.handlers:
+            handler.handle(record)
+    handle, however, wraps the io in a lock. so what should really be changed is emit
+    the handler.handles do something like
+    record = self.format(record)
+    self.emit(record)
+    Modern python has things about respecting propagation, but that is beyond what is needed here
     """
 
     def __init__(self, results, queue, **kwargs):
         """ Constructs a Recorder to record the Procedure data into
         the file path, by waiting for data on the subscription port
         """
-        self.results = results
-        handlers = []
-
-        if self.results.output_format == 'JSON':
-            self.handle = self._json_handle
-        else:
-            for filename in results.data_filenames:
-                fh = FileHandler(filename=filename, **kwargs)
-                fh.setFormatter(results.formatter)
-                fh.setLevel(logging.NOTSET)
-                handlers.append(fh)
+        # change to handlers = results.construct_handlers(**kwargs)
+        # handlers = []
+        # for filename in results.data_filenames:
+        #    fh = FileHandler(filename=filename, **kwargs)
+        #    fh.setFormatter(results.formatter)
+        #    fh.setLevel(logging.NOTSET)
+        #    handlers.append(fh)
+        handlers = results.create_handlers(**kwargs)
 
         super().__init__(queue, *handlers)
 
