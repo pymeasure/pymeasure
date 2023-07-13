@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,12 @@
 # THE SOFTWARE.
 #
 
+import re
 from math import inf
+from warnings import warn
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.attocube.adapters import AttocubeConsoleAdapter
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
@@ -72,27 +74,28 @@ class Axis:
         "getv", "setv %.3f",
         """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
         property can be set. """,
-        validator=strict_range, values=[0, 150])
+        validator=strict_range, values=[0, 150], check_set_errors=True)
 
     frequency = Instrument.control(
         "getf", "setf %.3f",
         """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
         This property can be set. """,
         validator=strict_range, values=[1, 10000],
-        cast=int)
+        cast=int, check_set_errors=True)
 
     mode = Instrument.control(
         "getm", "setm %s",
         """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
         'stp+', 'stp-'. Available modes depend on the actual axis model""",
         validator=strict_discrete_set,
-        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'])
+        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
+        check_set_errors=True)
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
         """ Offset voltage in Volts from 0 to 150 V.
         This property can be set. """,
-        validator=strict_range, values=[0, 150])
+        validator=strict_range, values=[0, 150], check_set_errors=True)
 
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
@@ -103,7 +106,7 @@ class Axis:
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join("%d" % v for v in a),
-        separator='\r\n', cast=int)
+        separator='\r\n', cast=int, check_set_errors=True)
 
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
@@ -114,7 +117,7 @@ class Axis:
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
         set_process=lambda a: " ".join("%d" % v for v in a),
-        separator='\r\n', cast=int)
+        separator='\r\n', cast=int, check_set_errors=True)
 
     output_voltage = Instrument.measurement(
         "geto",
@@ -128,13 +131,13 @@ class Axis:
         "stepu %d",
         """ Step upwards for N steps. Mode must be 'stp' and N must be
         positive.""",
-        validator=strict_range, values=[0, inf])
+        validator=strict_range, values=[0, inf], check_set_errors=True)
 
     stepd = Instrument.setting(
         "stepd %d",
         """ Step downwards for N steps. Mode must be 'stp' and N must be
         positive.""",
-        validator=strict_range, values=[0, inf])
+        validator=strict_range, values=[0, inf], check_set_errors=True)
 
     def __init__(self, controller, axis):
         self.axis = str(axis)
@@ -144,7 +147,7 @@ class Axis:
         """ add axis id to a command string at the correct position after the
         initial command, but before a potential value
 
-        :param command: command string
+        :param str command: command string
         :returns: command string with added axis id
         """
         cmdparts = command.split()
@@ -163,6 +166,7 @@ class Axis:
     def stop(self):
         """ Stop any motion of the axis """
         self.write('stop')
+        self.check_errors()
 
     def move(self, steps, gnd=True):
         """ Move 'steps' steps in the direction given by the sign of the
@@ -185,7 +189,9 @@ class Axis:
         else:
             pass  # do not set stepu/d to 0 since it triggers a continous move
         # wait for the move to finish
-        self.write('stepw')
+        self.controller.wait_for(abs(steps) / self.frequency)
+        # ask if movement finished
+        self.ask('stepw')
         if gnd:
             self.mode = 'gnd'
 
@@ -197,39 +203,96 @@ class Axis:
         """
         self.mode = 'cap'
         # wait for the measurement to finish
+        self.controller.wait_for(1)
+        # ask if really finished
         self.ask('capw')
         return self.capacity
+
+    def check_errors(self):
+        """Read after setting a setting or control."""
+        self.controller.check_errors()
 
 
 class ANC300Controller(Instrument):
     """ Attocube ANC300 Piezo stage controller with several axes
 
-    :param host: host address of the instrument
+    :param adapter: The VISA resource name of the controller
+        (e.g. "TCPIP::<address>::<port>::SOCKET") or a created Adapter.
+        The instruments default communication port is 7230.
     :param axisnames: a list of axis names which will be used to create
-                      properties with these names
+        properties with these names
     :param passwd: password for the attocube standard console
     :param query_delay: delay between sending and reading (default 0.05 sec)
-    :param kwargs: Any valid key-word argument for TelnetAdapter
+    :param host: host address of the instrument (e.g. 169.254.0.1)
+
+        .. deprecated:: 0.11.2
+            The 'host' argument is deprecated. Use 'adapter' argument instead.
+
+    :param kwargs: Any valid key-word argument for VISAAdapter
     """
     version = Instrument.measurement(
-        "ver", """ Version number and instrument identification """
+        "ver", """ Get the version number and instrument identification. """
     )
 
     controllerBoardVersion = Instrument.measurement(
-        "getcser", """ Serial number of the controller board """
+        "getcser", """ Get the serial number of the controller board. """
     )
 
-    def __init__(self, host, axisnames, passwd, query_delay=0.05, **kwargs):
-        kwargs['query_delay'] = query_delay
+    _reg_value = re.compile(r"\w+\s+=\s+([\w\.]+)")
+
+    def __init__(
+        self,
+        adapter=None,
+        name="attocube ANC300 Piezo Controller",
+        axisnames="",
+        passwd="",
+        query_delay=0.05,
+        **kwargs,
+    ):
+        adapter = self.handle_deprecated_host_arg(adapter, kwargs)
+
+        if not isinstance(name, str):
+            warn(
+                f"ANC300Controller.__init__: `name` was provided was {type(name)} but should be a "
+                + "string. This is likely because `name` was added as a keyword argument. "
+                + "All positional arguments after `adapter` should be provided as keyword argument"
+                + " (i.e. `axisnames=['x', 'y']`).",
+                FutureWarning
+            )
+
+        self.query_delay = query_delay
+        self.termination_str = "\r\n"
+
         super().__init__(
-            AttocubeConsoleAdapter(host, 7230, passwd, **kwargs),
-            "attocube ANC300 Piezo Controller",
+            adapter,
+            name,
             includeSCPI=False,
+            read_termination=self.termination_str,
+            write_termination=self.termination_str,
             **kwargs
         )
+
         self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
             setattr(self, axis, Axis(self, i + 1))
+
+        self.wait_for()
+        # clear messages sent upon opening the connection,
+        # this contains some non-ascii characters!
+        self.adapter.flush_read_buffer()
+        # send password and check authorization
+        self.write(passwd)
+        self.wait_for()
+        super().read()  # ignore echo of password
+        auth_msg = super().read()
+        if auth_msg != 'Authorization success':
+            raise Exception(f"Attocube authorization failed '{auth_msg}'")
+        # switch console echo off
+        self.ask('echo off')
+
+    def check_errors(self):
+        """Read after setting a value."""
+        self.read()
 
     def ground_all(self):
         """ Grounds all axis of the controller. """
@@ -244,3 +307,75 @@ class ANC300Controller(Instrument):
             attribute = getattr(self, attr)
             if isinstance(attribute, Axis):
                 attribute.stop()
+
+    def handle_deprecated_host_arg(self, adapter, kwargs):
+        """
+        This function formats user input to the __init__ function to be compatible with the
+        current definition of the __init__ function. This is used to support outdated (deprecated)
+        code. and separated out to make it easier to remove in the future. To whoever removes this:
+        This function should be removed and the `adapter` argument in the __init__ method should
+        be made non-optional.
+
+        :param dict kwargs: keyword arguments passed to the __init__ function,
+            including the deprecated `host` argument.
+        :return str: resource string for the VISAAdapter
+        """
+        host = kwargs.pop("host", None)
+        if not (host or adapter):
+            raise TypeError("ANC300Controller: missing 'adapter' argument")
+
+        if not adapter:
+            # because the host argument is deprecated, prompt for the desired
+            # argument which is the adapter argument.
+            warn("The 'host' argument is deprecated. Use 'adapter' instead.", FutureWarning)
+            adapter = host
+
+        if isinstance(adapter, str):
+            if adapter.find("::") > -1:
+                # adapter is a resource string, so use it
+                return adapter
+            # otherwise, `adapter` can only be a (deprecated) hostname, so display a
+            # deprecation warning and create the resource string
+            warn(
+                "Using a hostname is deprecated. Use a full VISA resource string instead.",
+                FutureWarning,
+            )
+            return f"TCPIP::{adapter}::7230::SOCKET"
+        elif isinstance(adapter, Adapter):
+            return adapter
+        raise TypeError("ANC300Controller: 'adapter' argument must be a string or Adapter")
+
+    def _extract_value(self, reply):
+        """ preprocess_reply function for the Attocube console. This function
+        tries to extract <value> from 'name = <value> [unit]'. If <value> can
+        not be identified the original string is returned.
+
+        :param reply: reply string
+        :returns: string with only the numerical value, or the original string
+        """
+        r = self._reg_value.search(reply)
+        if r:
+            return r.groups()[0]
+        else:
+            return reply
+
+    def read(self):
+        """Read after setting a value."""
+        lines = []
+        while True:
+            lines.append(super().read())
+            if lines[-1] in ["OK", "ERROR"]:
+                break
+        msg = self.termination_str.join(lines[:-1])
+        if lines[-1] != 'OK':
+            self.adapter.flush_read_buffer()
+            raise ValueError("ANC300Controller: Error after previous "
+                             f"command with message {msg}")
+        return self._extract_value(msg)
+
+    def wait_for(self, query_delay=0):
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds.
+        """
+        super().wait_for(query_delay or self.query_delay)

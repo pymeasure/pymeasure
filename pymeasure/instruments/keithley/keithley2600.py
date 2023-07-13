@@ -1,6 +1,6 @@
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,10 +35,10 @@ log.addHandler(logging.NullHandler())
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
         super().__init__(
             adapter,
-            "Keithley 2600 SourceMeter",
+            name,
             **kwargs
         )
         self.ChA = Channel(self, 'a')
@@ -122,7 +122,6 @@ class Channel:
         """ Property controlling the nplc value """,
         validator=truncated_range,
         values=[0.001, 25],
-        map_values=True
     )
 
     ###############
@@ -216,6 +215,16 @@ class Channel:
     #######################
     # Measurement Methods #
     #######################
+
+    def beep(self, frequency, duration):
+        """ Sounds a system beep.
+
+        :param frequency: A frequency in Hz in [453, 621,987,2400]. Any other number
+        gets set to closest value in that range
+        :param duration: A time in seconds between 0 and 100 seconds
+        """
+        self.write("beeper.enable = 1")
+        self.write(f"beeper.beep({duration:g},{frequency:g})")
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
         """ Configures the measurement of voltage.

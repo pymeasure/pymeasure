@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -540,6 +540,13 @@ class BatteryChannel(Channel):
     )
 
     def pulse_current_step(self, step_number):
+        """Create a new current step point for this instrument.
+
+        :param: step_number:
+            int: the number of the step to be created
+        :type: :class:`.Step`
+
+        """
         return Step(self.instrument, step_number)
 
 
@@ -595,10 +602,10 @@ class Keithley2306(Instrument):
     """ Represents the Keithley 2306 Dual Channel Battery/Charger Simulator.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2306", **kwargs):
         super().__init__(
             adapter,
-            "Keithley 2306",
+            name,
             **kwargs
         )
         self.ch1 = BatteryChannel(self, 1)
@@ -663,6 +670,13 @@ class Keithley2306(Instrument):
     )
 
     def ch(self, channel_number):
+        """Get a channel from this instrument.
+
+        :param: channel_number:
+            int: the number of the channel to be selected
+        :type: :class:`.Channel`
+
+        """
         if channel_number == 1:
             return self.ch1
         elif channel_number == 2:
@@ -671,6 +685,13 @@ class Keithley2306(Instrument):
             raise ValueError("Invalid channel number. Must be 1 or 2.")
 
     def relay(self, relay_number):
+        """Get a relay channel from this instrument.
+
+        :param: relay_number:
+            int: the number of the relay to be selected
+        :type: :class:`.Relay`
+
+        """
         if relay_number == 1:
             return self.relay1
         elif relay_number == 2:

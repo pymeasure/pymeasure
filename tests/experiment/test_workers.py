@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,23 @@ from data.procedure_for_testing import RandomProcedure
 
 tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
                           and importlib.util.find_spec('zmq'))
+
+<<<<<<< HEAD
+# Load the procedure, without it being in a module
+data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
+RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+# from data.procedure_for_testing import RandomProcedure
+
+
+def test_procedure():
+    """ Ensure that the loaded test procedure is properly functioning
+    """
+    procedure = RandomProcedure()
+    assert procedure.iterations == 100
+    assert procedure.delay == 0.001
+    assert hasattr(procedure, 'execute')
+=======
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 
 def test_worker_stop():

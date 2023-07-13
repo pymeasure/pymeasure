@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,9 @@ import json
 import pandas as pd
 import numpy as np
 import pint
+
+import json
+from time import sleep
 
 from .procedure import Procedure, UnknownProcedure
 from pymeasure.units import ureg
@@ -417,13 +420,7 @@ class CSVFormatter(logging.Formatter): #change to logging.Filehandler as suggest
                 units[column] = ureg.Quantity(match.groupdict()['units']).units
         return units
 
-    def format(self, record):
-        """Formats a record as csv.
-
-        :param record: record to format.
-        :type record: dict
-        :return: a string
-        """
+    def parse_through_pint(self, record):
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
@@ -548,6 +545,36 @@ class CSVResults(FileBasedResults):
                 f.write(self.labels())
         self._data = None
 
+    def metadata(self):
+        """ Returns a text header for the metadata to write into the datafile """
+        if not self.procedure.metadata_objects():
+            return
+
+        m = ["Metadata:"]
+        for _, metadata in self.procedure.metadata_objects().items():
+            value = str(metadata).encode("unicode_escape").decode("utf-8")
+            m.append(f"\t{metadata.name}: {value}")
+
+        self._metadata_count = len(m)
+        m = [Results.COMMENT + line for line in m]  # Comment each line
+        return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
+
+    def store_metadata(self):
+        """ Inserts the metadata header (if any) into the datafile """
+        c_header = self.metadata()
+        if c_header is None:
+            return
+
+        for filename in self.data_filenames:
+            with open(filename, 'r+') as f:
+                contents = f.readlines()
+                contents.insert(self._header_count - 1, c_header)
+
+                f.seek(0)
+                f.writelines(contents)
+
+        self._header_count += self._metadata_count
+
     @staticmethod
     def get_params_from_header(header, procedure_class=None):
         """ Returns a Procedure object with the parameters as defined in the
@@ -584,6 +611,7 @@ class CSVResults(FileBasedResults):
         """
         header = ""
         header_read = False
+        is_json = False
         header_count = 0
         with open(data_filename) as f:
             while not header_read:
@@ -608,9 +636,10 @@ class CSVResults(FileBasedResults):
             # Data has not been read
             try:
                 self.reload()
-            except Exception:
-                # Empty dataframe
+            except Exception as e:
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+                # Empty dataframe
+
         else:  # Concatenate additional data, if any, to already loaded data
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
@@ -654,7 +683,6 @@ class CSVResults(FileBasedResults):
             self.procedure.__class__.__name__,
             self.data.shape
         )
-
 
 class Results(CSVResults):
     def __init__(self,*args, **kwargs):

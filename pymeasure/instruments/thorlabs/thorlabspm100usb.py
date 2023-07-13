@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,24 +34,23 @@ log.addHandler(logging.NullHandler())
 class ThorlabsPM100USB(Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
         super().__init__(
-            adapter, "ThorlabsPM100USB powermeter", **kwargs
+            adapter, name, **kwargs
         )
-        self.timout = 3000
         self._set_flags()
 
     wavelength_min = Instrument.measurement(
-        "SENS:CORR:WAV? MIN", "Minimum wavelength, in nm"
+        "SENS:CORR:WAV? MIN", "Measure minimum wavelength, in nm"
     )
 
     wavelength_max = Instrument.measurement(
-        "SENS:CORR:WAV? MAX", "Maximum wavelength, in nm"
+        "SENS:CORR:WAV? MAX", "Measure maximum wavelength, in nm"
     )
 
     @property
     def wavelength(self):
-        """Wavelength in nm."""
+        """Control the wavelength in nm."""
         value = self.values("SENSE:CORR:WAV?")[0]
         return value
 
@@ -76,7 +75,7 @@ class ThorlabsPM100USB(Instrument):
 
     @property
     def power(self):
-        """Power in W."""
+        """Measure the power in W."""
         if self.is_power_sensor:
             return self.values("MEAS:POW?")[0]
         else:
@@ -84,7 +83,7 @@ class ThorlabsPM100USB(Instrument):
 
     @property
     def energy(self):
-        """Energy in J."""
+        """Measure the energy in J."""
         if self.is_energy_sensor:
             return self.values("MEAS:ENER?")[0]
         else:

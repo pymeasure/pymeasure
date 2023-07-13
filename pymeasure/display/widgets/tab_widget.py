@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@ class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
         When defining a widget to be used in subclasses of
-        :class:`ManagedWindowBase<pymeasure.display.windows.ManagedWindowBase>`,
+        :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`,
         users should inherit from this class and provide an
         implementation of these methods
     """
@@ -56,3 +56,41 @@ class TabWidget:
     def set_color(self, curve, color):
         """ Set color for widget """
         pass
+<<<<<<< HEAD
+    def __init__(self, port):
+        super().__init__(
+            port,
+            baudrate=57600,
+            timeout=0.5,
+            parity='O',
+            bytesize=7
+        )
+
+    def write(self, command):
+        """ Overwrites the :func:`SerialAdapter.write <pymeasure.adapters.SerialAdapter.write>`
+        method to automatically append a Unix-style linebreak at the end
+        of the command.
+
+        :param command: SCPI command string to be sent to the instrument
+        """
+        super().write(command + "\n")
+=======
+
+    def preview_widget(self, parent=None):
+        """ Return a Qt widget suitable for preview during loading
+
+        See also :class:`ResultsDialog<pymeasure.display.widgets.results_dialog.ResultsDialog>`
+        If the object returned is not None, then it should have also an
+        attribute `name`.
+        """
+
+        return None
+
+    def clear_widget(self):
+        """ Clear widget content
+
+        Behaviour is widget specific and it is currently used in preview mode
+        """
+
+        return None
+>>>>>>> upstream/master

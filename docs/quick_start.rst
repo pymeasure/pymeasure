@@ -40,13 +40,20 @@ PyMeasure can also be installed with :code:`pip`.
 
     pip install pymeasure
  
-Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libaries.
+Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libraries.
 
-    
+Installing VISA
+---------------
+Typically, communication with your instrument will happen using PyVISA, which is installed automatically.
+However, this needs a VISA implementation installed to handle device communication.
+If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
+If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
+
 Checking the version
 --------------------
 
-Now that you have Python and PyMeasure installed, open up a "Jupyter Notebook" to test which version you have installed. Execute the following code into a notebook cell.
+Now that you have Python and PyMeasure installed, open your python environment (e.g. a REPL or Jupyter notebook) to test which version you have installed.
+Execute the following Python code.
 
 .. code-block:: python
 

@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset the cache
         with:
@@ -67,11 +67,15 @@ jobs:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
         python-version: ["3.7", "3.8", "3.9", "3.10"]
     steps:
+<<<<<<< HEAD
+      - uses: actions/checkout@v2
+=======
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
       - name: Cache conda
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           CACHE_NUMBER: 0  # Increase to reset the cache
         with:
@@ -98,9 +102,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
+<<<<<<< HEAD
+          xvfb-run -a python setup.py test
+=======
           xvfb-run -a pytest
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
       - name: Run pytest
         if: runner.os != 'Linux'
         run: |
           echo "::add-matcher::.github/pytest.json"
+<<<<<<< HEAD
+          python setup.py test
+=======
           pytest
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

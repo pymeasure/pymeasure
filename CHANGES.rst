@@ -1,3 +1,130 @@
+Upcoming version
+================
+New adapter and instrument mechanics
+------------------------------------
+- Channel class added. Instrument.channels and Instrument.ch_X (X is any channel name) are reserved for channel implementations.
+- All instruments are required to accept a :code:`name` argument.
+- Changed: :code:`read_bytes` of all Adapters by default does not stop reading on a termination character, unless the new argument :code:`break_on_termchar` is set to `True`.
+
+Deprecated features
+-------------------
+- HP 34401A: :code:`voltage_ac`, :code:`current_dc`, :code:`current_ac`, :code:`resistance`, :code:`resistance_4w` properties,
+  use :code:`function_` and :code:`reading` properties instead.
+- Toptica IBeamSmart: :code:`channel1_enabled`, use :code:`ch_1.enabled` property instead (similar channel2). Also :code:`laser_enabled` is deprecated in favor of :code:`emission`.
+- TelnetAdapter: use :code:`VISAAdapter` instead. VISA supports TCPIP connections. Use the resource_name :code:`TCPIP[board]::<hostname>::<port>::SOCKET` to connect to a server.
+- Attocube ANC300: :code:`host` argument, pass a resource string or adapter as :code:`Adapter` passed to :code:`Instrument`. Now communicates through the :code:`VISAAdapter` rather than deprecated :code:`TelnetAdapter`. The initializer now accepts :code:`name` as its second keyword argument so all previous initialization positional arguments (`axisnames`, `passwd`, `query_delay`) should be switched to keyword arguments.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept arbitrary keyword arguments anymore. Use the :code:`v_kwargs` parameter to give further arguments to :code:`values` method.
+- The property creators :code:`control`, :code:`measurement`, and :code:`setting` do not accept `command_process` anymore. Use a dynamic property or a `Channel` instead, as appropriate.
+
+Version 0.11.1 (2022-12-31)
+===========================
+Adapter and instrument mechanics
+--------------------------------
+- Fix broken `PrologixAdapter.gpib`. Due to a bug in `VISAAdapter`, you could not get a second adapter with that connection (#765).
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.0...v0.11.1
+
+Dependency updates
+------------------
+- Required version of `PyQtGraph <https://www.pyqtgraph.org/>`__ is increased from :code:`pyqtgraph >= 0.9.10` to :code:`pyqtgraph >= 0.12` to support new PyMeasure display widgets.
+
+GUI
+---
+- Added `ManagedDockWindow <https://pymeasure.readthedocs.io/en/latest/tutorial/graphical.html#using-the-manageddockwindow>`__ to allow multiple dockable plots (@mcdo0486, @CasperSchippers, #722)
+- Move coordinates label to the pyqtgraph PlotItem (@CasperSchippers, #822)
+- New sequencer architecture (@msmttchr, @CasperSchippers, @mcdo0486, #518)
+- Added "Save Dock Layout" functionality to DockWidget context menu. (@mcdo0486, #762)
+
+Version 0.11.0 (2022-11-19)
+===========================
+Main items of this new release:
+
+- 11 new instrument drivers have been added
+- A method for testing instrument communication **without** hardware present has been added, see `the documentation <https://pymeasure.readthedocs.io/en/latest/dev/adding_instruments.html#protocol-tests>`__.
+- The separation between :code:`Instrument` and :code:`Adapter` has been improved to make future modifications easier. Adapters now focus on the hardware communication, and the communication *protocol* should be defined in the Instruments. Details in a section below.
+- The GUI is now compatible with Qt6.
+- We have started to clean up our API in preparation for a future version 1.0. There will be deprecations and subsequent removals, which will be prominently listed in the changelog.
+
+Deprecated features
+-------------------
+In preparation for a stable 1.0 release and a more consistent API, we have now started formally deprecating some features.
+You should get warnings if those features are used.
+
+- Adapter methods :code:`ask`, :code:`values`, :code:`binary_values`, use :code:`Instrument` methods of the same name instead.
+- Adapter parameter :code:`preprocess_reply`, override :code:`Instrument.read` instead.
+- :code:`Adapter.query_delay` in favor of :code:`Instrument.wait_for()`.
+- Keithley 2260B: :code:`enabled` property, use :code:`output_enabled` instead.
+
+New adapter and instrument mechanics
+------------------------------------
+- Nothing should have changed for users, this section is mainly interesting for instrument implementors.
+- Documentation in 'Advanced communication protocols' in 'Adding instruments'.
+- Adapter logs written and read messages.
+- Particular adapters (`VISAAdapter` etc.) implement the actual communication.
+- :code:`Instrument.control` getter calls :code:`Instrument.values`.
+- :code:`Instrument.values` calls :code:`Instrument.ask`, which calls :code:`Instrument.write`, :code:`wait_for`, and :code:`read`.
+- All protocol quirks of an instrument should be implemented overriding :code:`Instrument.write` and :code:`read`.
+- :code:`Instrument.wait_until_read` implements waiting between writing and reading.
+- reading/writing binary values is in the :code:`Adapter` class itself.
+- :code:`PrologixAdapter` is now based on :code:`VISAAdapter`.
+- :code:`SerialAdapter` improved to be more similar to :code:`VISAAdapter`: :code:`read`/:code:`write` use strings, :code:`read/write_bytes` bytes. - Support for termination characters added.
+
+Instruments
+-----------
+- New Active Technologies AWG-401x (@garzetti, #649)
+- New Eurotest hpp_120_256_ieee (@sansanda, #701)
+- New HC Photonics crystal ovens TC038, TC038D (@bmoneke, #621, #706)
+- New HP 6632A/6633A/6634A power supplies (@LongnoseRob, #651)
+- New HP 8657B RF signal generator (@LongnoseRob, #732)
+- New Rohde&Schwarz HMP4040 power supply. (@bleykauf, #582)
+- New Siglent SPDxxxxX series Power Supplies (@AidenDawn, #719)
+- New Temptronic Thermostream devices (@mroeleke, #368)
+- New TEXIO PSW-360L30 Power Supply (@LastStarDust, #698)
+- New Thermostream ECO-560 (@AidenDawn, #679)
+- New Thermotron 3800 Oven (@jcarbelbide, #606)
+- Harmonize instruments' adapter argument (@bmoneke, #674)
+- Harmonize usage of :code:`shutdown` method (@LongnoseRob, #739)
+- Rework Adapter structure (@bmoneke, #660)
+- Add Protocol tests without hardware present (@bilderbuchi, #634, @bmoneke, #628, #635)
+- Add Instruments and adapter protocol tests for adapter rework (@bmoneke, #665)
+- Add SR830 sync filter and reference source trigger (@AsafYagoda, #630)
+- Add Keithley6221 phase marker phase and line (@AsafYagoda, #629)
+- Add missing docstrings to Keithley 2306 battery simulator (@AidenDawn, #720)
+- Fix hcp instruments documentation (@bmoneke, #671)
+- Fix HPLegacyInstrument initializer API (@bilderbuchi, #684)
+- Fix Fwbell 5080 implementation (@mcdo0486, #714)
+- Fix broken documentation example. (@bmoneke, #738)
+- Fix typo in Keithley 2600 driver (@mcdo0486, #615)
+- Remove dynamic use of docstring from ATS545 and make more generic (@AidenDawn, #685)
+
+Automation
+----------
+- Add storing unitful experiment results (@bmoneke, #642)
+- Add storing conditions in file (@CasperSchippers, #503)
+
+GUI
+---
+- Add compatibility with Qt 6 (@CasperSchippers, #688)
+- Add spinbox functionality for IntegerParameter and FloatParameter (@jarvas24, #656)
+- Add "delete data file" button to the browser_item_menu (@jarvas24, #654)
+- Split windows.py into a folder with separate modules (@mcdo0486, #593)
+- Remove dependency on matplotlib (@msmttchr, #622)
+- Remove deprecated access to QtWidgets through QtGui (@maederan201, #695)
+
+Miscellaneous
+-------------
+- Update and extend documentation (@bilderbuchi, #712, @bmoneke, #655)
+- Add PEP517 compatibility & dynamically obtaining a version number (@bilderbuchi, #613)
+- Add an example and documentation regarding using a foreign instrument (@bmoneke, #647)
+- Add black configuration (@bleykauf, #683)
+- Remove VISAAdapter.has_supported_version() as it is not needed anymore.
+
+New Contributors
+----------------
+@jcarbelbide, @mroeleke, @bmoneke, @garzetti, @AsafYagoda, @AidenDawn, @LastStarDust, @sansanda
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.10.0...v0.11.0
+
 Version 0.10.0 (2022-04-09)
 ===========================
 Main items of this new release:
@@ -175,7 +302,7 @@ Version 0.5.1 -- released 4/14/18
 =================================
 - Minor versions of PyVISA are now properly handled
 - Documentation improvements (@Laogeodritt and @ederag)
-- Instruments now have `set_process` capability (@bilderbuchi)
+- Instruments now have :code:`set_process` capability (@bilderbuchi)
 - Plotter now uses threads (@dvspirito)
 - Display inputs and PlotItem improvements (@Laogeodritt)
 
@@ -210,7 +337,7 @@ Version 0.4.4 -- released 6/4/17
 
 Version 0.4.3 -- released 3/30/17
 =================================
-- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and 
+- Added Agilent E4980, AMI 430, Agilent 34410A, Thorlabs PM100, and
   Anritsu MS9710C instruments (@TvBMcMaster, @dvspirito, and @mhdg)
 - Updates to PyVISA support (@minhhaiphys)
 - Initial work on resource manager (@dvspirito)

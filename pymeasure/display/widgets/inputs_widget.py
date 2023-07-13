@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,14 +27,14 @@ import logging
 from functools import partial
 
 from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
-from ..Qt import QtCore, QtGui
+from ..Qt import QtWidgets
 from ...experiment import parameters
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class InputsWidget(QtGui.QWidget):
+class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
@@ -77,14 +77,14 @@ class InputsWidget(QtGui.QWidget):
             setattr(self, name, element)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
 
         self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
-                label = QtGui.QLabel(self)
+                label = QtWidgets.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
                 self.labels[name] = label
@@ -107,7 +107,7 @@ class InputsWidget(QtGui.QWidget):
 
                 if isinstance(getattr(self, group_name), BooleanInput):
                     # Adjust the boolean condition to a condition suitable for a checkbox
-                    condition = QtCore.Qt.CheckState.Checked if condition else QtCore.Qt.CheckState.Unchecked  # noqa: E501
+                    condition = bool(condition)
 
                 if group_name not in groups:
                     groups[group_name] = []
@@ -118,8 +118,8 @@ class InputsWidget(QtGui.QWidget):
             toggle = partial(self.toggle_group, group_name=group_name, group=group)
             group_el = getattr(self, group_name)
             if isinstance(group_el, BooleanInput):
-                group_el.stateChanged.connect(toggle)
-                toggle(group_el.checkState())
+                group_el.toggled.connect(toggle)
+                toggle(group_el.isChecked())
             elif isinstance(group_el, StringInput):
                 group_el.textChanged.connect(toggle)
                 toggle(group_el.text())

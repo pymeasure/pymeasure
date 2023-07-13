@@ -4,7 +4,7 @@
 Agilent
 #######
 
-This section contains specific documentation on the Agilent instruments that are implemented. If you are interested in an instrument not included, please consider :doc:`adding the instrument </dev/adding_instruments>`.
+This section contains specific documentation on the Agilent instruments that are implemented. If you are interested in an instrument not included, please consider :doc:`adding the instrument </dev/adding_instruments/index>`.
 
 .. toctree::
    :maxdepth: 2
@@ -17,6 +17,7 @@ This section contains specific documentation on the Agilent instruments that are
    agilent34450A
    agilent4156
    agilent33220A
+   agilent33250A
    agilent33500
    agilent33521A
    agilentB1500

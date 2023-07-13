@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import logging
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
-from ..Qt import QtCore, QtGui
+from ..Qt import QtCore, QtWidgets
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
 
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class PlotWidget(TabWidget, QtGui.QWidget):
+class PlotWidget(TabWidget, QtWidgets.QWidget):
     """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
@@ -57,15 +57,15 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.plot_frame.change_y_axis(y_axis)
 
     def _setup_ui(self):
-        self.columns_x_label = QtGui.QLabel(self)
+        self.columns_x_label = QtWidgets.QLabel(self)
         self.columns_x_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_x_label.setText('X Axis:')
-        self.columns_y_label = QtGui.QLabel(self)
+        self.columns_y_label = QtWidgets.QLabel(self)
         self.columns_y_label.setMaximumSize(QtCore.QSize(45, 16777215))
         self.columns_y_label.setText('Y Axis:')
 
-        self.columns_x = QtGui.QComboBox(self)
-        self.columns_y = QtGui.QComboBox(self)
+        self.columns_x = QtWidgets.QComboBox(self)
+        self.columns_y = QtWidgets.QComboBox(self)
         for column in self.columns:
             self.columns_x.addItem(column)
             self.columns_y.addItem(column)
@@ -76,7 +76,8 @@ class PlotWidget(TabWidget, QtGui.QWidget):
             self.columns[0],
             self.columns[1],
             self.refresh_time,
-            self.check_status
+            self.check_status,
+            parent=self,
         )
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
@@ -84,10 +85,10 @@ class PlotWidget(TabWidget, QtGui.QWidget):
         self.columns_y.setCurrentIndex(1)
 
     def _layout(self):
-        vbox = QtGui.QVBoxLayout(self)
+        vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         hbox.setSpacing(10)
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_x_label)
@@ -102,18 +103,24 @@ class PlotWidget(TabWidget, QtGui.QWidget):
     def sizeHint(self):
         return QtCore.QSize(300, 600)
 
-    def new_curve(self, results, color=pg.intColor(0), **kwargs):
+    def new_curve(self, results, color=pg.intColor(0), marker=None, **kwargs):
         if 'pen' not in kwargs:
             kwargs['pen'] = pg.mkPen(color=color, width=self.linewidth)
         if 'antialias' not in kwargs:
             kwargs['antialias'] = False
         curve = ResultsCurve(results,
+                             wdg=self,
                              x=self.plot_frame.x_axis,
                              y=self.plot_frame.y_axis,
-                             **kwargs
+                             **kwargs,
                              )
-        curve.setSymbol(None)
-        curve.setSymbolBrush(None)
+        if marker is not None:
+            curve.setSymbol(marker)
+            curve.setSymbolBrush(pg.mkBrush(color=color))
+            curve.setSymbolPen(kwargs['pen'])
+        else:
+            curve.setSymbol(None)
+            curve.setSymbolBrush(None)
         return curve
 
     def update_x_column(self, index):
@@ -135,5 +142,24 @@ class PlotWidget(TabWidget, QtGui.QWidget):
 
     def set_color(self, curve, color):
         """ Change the color of the pen of the curve """
+<<<<<<< HEAD
         curve.pen.setColor(color)
+        if curve.opts['symbol'] is not None:
+            curve.setSymbolBrush(pg.mkBrush(color=color))
+            curve.setSymbolPen(curve.pen.color())
         curve.updateItems(styleUpdate=True)
+=======
+        curve.set_color(color)
+
+    def preview_widget(self, parent=None):
+        """ Return a widget suitable for preview during loading """
+        return PlotWidget("Plot preview",
+                          self.columns,
+                          self.plot_frame.x_axis,
+                          self.plot_frame.y_axis,
+                          parent=parent,
+                          )
+
+    def clear_widget(self):
+        self.plot.clear()
+>>>>>>> upstream/master

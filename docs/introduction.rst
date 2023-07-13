@@ -24,7 +24,7 @@ The package includes a number of :doc:`instruments already defined<api/instrumen
 
   from pymeasure.instruments.keithley import Keithley2400
 
-The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
+The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments/index>`.
 
 
 Graphical displays
@@ -36,6 +36,9 @@ These features are explored in the :doc:`Using a graphical interface <tutorial/g
 
 .. image:: tutorial/pymeasure-managedwindow-running.png
     :alt: ManagedWindow Running Example
+<<<<<<< HEAD
+=======
 
 The GUIs are not restricted to the instruments included in this package. Any python instrument may be used.
 For example,  `this script <https://github.com/pymeasure/pymeasure/tree/master/examples/Basic/gui_foreign_instrument.py>`_ demonstrates how to use an `InstrumentKit <instrumentkit.readthedocs.io/>`_ instrument.
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,11 @@
 
 import logging
 from logging import StreamHandler, FileHandler
+
+from os import stat
+import json
+import pandas as pd
+import numpy as np
 
 from ..log import QueueListener
 from ..thread import StoppableThread
@@ -137,3 +142,61 @@ class Recorder(QueueListener):
             handler.close()
 
         super().stop()
+
+    def _json_handle(self, record):
+        """Method to override the normal logging FileHandler when the record is json.
+        The json formatter returns a string for compatibility with filehandling, so the first
+        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
+        single (possibly updated) dictionary of dictionaries"""
+
+        record = json.loads(self.results.formatter.format(record))
+        key = list(record.keys())[0]
+        item = record[key]
+
+        for file in self.results.data_filenames:
+            if stat(file).st_size == 0:
+                # this case is deprecated, new files have header in them
+                with open(file, 'w') as f:
+                    extant = {key: {}}
+                    for column, value in item.items():
+                        if not isinstance(value, (list,tuple)):
+                            extant[key][column] = [value, ]
+                        else:
+                            extant[key] = item
+                    json.dump(extant, f)
+
+            else:
+                with open(file, 'r') as f:
+                    extant = json.load(f)
+
+                keys = list(extant.keys())
+                if len(keys) != 1:
+                    raise ValueError(f'got more than one key for json, {len(keys)}')
+                data = extant[keys[0]]
+                for column, array in data.items():
+                    if isinstance(data[column], (list,tuple)):
+                        if isinstance(data[column], tuple):
+                            data[column] = list(data[column])
+                        if isinstance(item[column], (list,tuple,np.ndarray)):
+                            data[column] = list(np.concatenate([array,item[column]]))
+                        elif isinstance(item[column], (float, int)):
+                            data[column].append(item[column])
+                        else:
+                            raise TypeError(f'got {item[column]} to append but it is type {type(item[column])}')
+                    elif isinstance(data[column], (float,int)):
+                        if isinstance(item[column], (float,int)):
+                            data[column] = [data[column], item[column]]
+                        elif isinstance(item[column], (list, tuple, np.ndarray)):
+                            data[column] = [data[column], *item[column]]
+                        else:
+                            TypeError(f'got {item[column]} to add but it is type {type(item[column])}')
+                    else:
+                        raise TypeError(f'got unexpected type for the old data {data[column]}, {type(data[column])}')
+
+                with open(file, 'w') as f:
+                    json.dump(extant, f)
+
+
+
+
+

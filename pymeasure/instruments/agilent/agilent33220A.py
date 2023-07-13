@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,10 +69,10 @@ class Agilent33220A(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent 33220A Arbitrary Waveform generator", **kwargs):
         super().__init__(
             adapter,
-            "Agilent 33220A Arbitrary Waveform generator",
+            name,
             **kwargs
         )
 
@@ -93,15 +93,15 @@ class Agilent33220A(Instrument):
         waveform in Hz, from 1e-6 (1 uHz) to 20e+6 (20 MHz), depending on the
         specified function. Can be set. """,
         validator=strict_range,
-        values=[1e-6, 5e+6],
+        values=[1e-6, 20e+6],
     )
 
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 10e-3 V to 10 V. Can be set. """,
+        output waveform in V, from 10e-3 V to 10 V (20 in High Z mode) . Can be set. """,
         validator=strict_range,
-        values=[10e-3, 10],
+        values=[10e-3, 20],
     )
 
     amplitude_unit = Instrument.control(
@@ -121,7 +121,7 @@ class Agilent33220A(Instrument):
         voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
         """,
         validator=strict_range,
-        values=[-4.995, +4.995],
+        values=[-9.999, +9.999],
     )
 
     voltage_high = Instrument.control(
@@ -130,7 +130,7 @@ class Agilent33220A(Instrument):
         output waveform in V, from -4.990 V to 5 V (must be higher than low
         voltage). Can be set. """,
         validator=strict_range,
-        values=[-4.99, 5],
+        values=[-9.98, 10],
     )
 
     voltage_low = Instrument.control(
@@ -139,7 +139,7 @@ class Agilent33220A(Instrument):
         output waveform in V, from -5 V to 4.990 V (must be lower than high
         voltage). Can be set. """,
         validator=strict_range,
-        values=[-5, 4.99],
+        values=[-10, 9.98],
     )
 
     square_dutycycle = Instrument.control(
@@ -215,6 +215,13 @@ class Agilent33220A(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+    )
+    
+    output_impedance = Instrument.control(
+        "OUTP:LOAD?", "OUTP:LOAD %s",
+        """A mixed property that sets the impedance correction for the AWG, only takes strings. Turn you impedance into
+         a string before sending"""
+
     )
 
     burst_state = Instrument.control(

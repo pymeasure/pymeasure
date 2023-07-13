@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,20 @@ import pandas as pd
 import pytest
 import numpy as np
 
+<<<<<<< HEAD
+from pymeasure.experiment.results import Results, CSVFormatter
+from pymeasure.experiment.procedure import Procedure, Parameter
+from pymeasure.experiment import BooleanParameter
+
+# Load the procedure, without it being in a module
+# data_path = os.path.join(os.path.dirname(__file__), 'data/procedure_for_testing.py')
+# RandomProcedure = SourceFileLoader('procedure', data_path).load_module().RandomProcedure
+=======
 from pymeasure.units import ureg
 from pymeasure.experiment.results import Results, CSVFormatter
 from pymeasure.experiment.procedure import Procedure, Parameter
 from pymeasure.experiment import BooleanParameter
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 from data.procedure_for_testing import RandomProcedure
 
 

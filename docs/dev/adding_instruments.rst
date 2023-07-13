@@ -105,7 +105,7 @@ This is a minimal instrument definition:
 
 Make sure to include the PyMeasure license to each file, and add yourself as an author to the :code:`AUTHORS.txt` file.
 
-In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue command instead of calling the adapter directly.
+In principle you are free to write any functions that are necessary for interacting with the instrument. When doing so, make sure to use the :code:`self.ask(command)`, :code:`self.write(command)`, and :code:`self.read()` methods to issue commands instead of calling the adapter directly. If the communication requires changes to the commands sent/received, you can override these methods in your instrument, for further information see advanced_communication_protocols_.
 
 In practice, we have developed a number of convenience functions for making instruments easy to write and maintain. The following sections detail these conveniences and are highly encouraged.
 
@@ -122,6 +122,15 @@ The :py:class:`~pymeasure.adapters.VISAAdapter` class offers a flexible way of d
 Single interface
 ****************
 
+<<<<<<< HEAD
+The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``resourceName`` is a string or integer.
+
+.. code-block:: python
+
+    def __init__(self, resourceName, **kwargs):
+        super().__init__(
+            resourceName,
+=======
 The simplest version, suitable when the instrument connection needs default settings, just passes all keywords through to the ``Instrument`` initializer, which hands them over to :py:class:`~pymeasure.adapters.VISAAdapter` if ``adapter`` is a string or integer.
 
 .. code-block:: python
@@ -129,6 +138,7 @@ The simplest version, suitable when the instrument connection needs default sett
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Extreme 5000",
             **kwargs
         )
@@ -138,9 +148,15 @@ This is suitable when the instrument has one type of interface, or any defaults 
 
 .. code-block:: python
 
+<<<<<<< HEAD
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        super().__init__(
+            resourceName,
+=======
     def __init__(self, adapter, baud_rate=2400, **kwargs):
         super().__init__(
             adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Extreme 5000",
             baud_rate=baud_rate,
             **kwargs
@@ -150,10 +166,17 @@ If you want to set defaults, but they don't need to be prominently exposed for r
 
 .. code-block:: python
 
+<<<<<<< HEAD
+    def __init__(self, resourceName, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+=======
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Extreme 5000",
             **kwargs
         )
@@ -169,10 +192,17 @@ These then contain a *dictionary* with the settings specific to the respective i
 
 .. code-block:: python
 
+<<<<<<< HEAD
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
+        kwargs.setdefault('timeout', 1500)
+        super().__init__(
+            resourceName,
+=======
     def __init__(self, adapter, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 1500)
         super().__init__(
             adapter,
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
             "Extreme 5000",
             gpib=dict(enable_repeat_addressing=False,
                       read_termination='\r'),
@@ -185,6 +215,7 @@ When the instrument instance is created, the interface-specific settings for the
 This way, we always pass on a valid set of arguments.
 In addition, any entries in ``**kwargs**`` take precedence, so if they need to, it is *still* possible for users to override any defaults you set in the instrument definition.
 
+<<<<<<< HEAD
 For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, pymeasure has your back!
 
 Non-VISA Adapters
@@ -196,10 +227,10 @@ If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapte
 
 .. code-block:: python
 
-    def __init__(self, adapter, baud_rate=2400, **kwargs):
+    def __init__(self, resourceName, baud_rate=2400, **kwargs):
         kwargs.setdefault('timeout', 0.5)
         kwargs.setdefault('xonxoff', True)
-        adapter = SerialAdapter(adapter, 
+        adapter = SerialAdapter(resourceName, 
                                 baudrate=baud_rate,  # different arg name!
                                 **kwargs)
         super().__init__(
@@ -209,6 +240,10 @@ If, however, you are unable to use the :py:class:`~pymeasure.adapters.VISAAdapte
 
 Follow the user interface patterns presented above as closely as feasible (the code example shows how) so there is the least surprise for users used to other instruments.
 Please document well what kind of arguments may be passed into your instrument.
+=======
+For many instruments, the simple way presented first is enough, but in case you have a more complex arrangement to implement, see whether advanced_communication_protocols_ fits your bill. If, for some exotic reason, you need a special connection type, which you cannot model with PyVISA, you can write your own Adapter.
+
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
 
 Writing properties
 ==================
@@ -559,72 +594,6 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
-The real purpose of `preprocess_reply` is, however, for instruments where many/all properties need similar reply processing. `preprocess_reply` can be applied to all :func:`Instrument.control <pymeasure.instruments.Instrument.control>` or :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` properties, for example if all quantities are returned with a unit as in the example above. To avoid running into troubles for other properties this `preprocess_reply` should be clever enough to skip the processing in case it is not appropriate, for example if some identification string is returned. Typically this can be achieved by regular expression matching. In case of no match the reply is returned unchanged:
-
-.. testcode::
-
-    import re
-    _reg_value = re.compile(r"([-+]?[0-9]*\.?[0-9]+)\s+\w+")
-
-    def extract_value(reply):
-        """ extract numerical value from reply. If none can be found the reply
-        is returned unchanged.
-
-        :param reply: reply string
-        :returns: string with only the numerical value
-        """
-        r = _reg_value.search(reply)
-        if r:
-            return r.groups()[0]
-        else:
-            return reply
-
-    class Extreme5001(Instrument):
-        """ Represents the imaginary Extreme 5001 instrument. This instrument
-        sends numerical values including their units in an format "<value>
-        <unit>".
-        """
-        capacity = Instrument.measurement(
-            ":CAP?",
-            """ A measurement returning a capacity in nF in the format '<cap> nF'
-            """
-        )
-
-        voltage = Instrument.measurement(
-            ":VOLT?",
-            """ A measurement returning a voltage in V in the format '<volt> V'
-            """
-        )
-
-        id = Instrument.measurement(
-            "*idn?",
-            """ The identification of the instrument.
-            """
-        )
-
-        def __init__(self, adapter, **kwargs):
-            super().__init__(
-                adapter,
-                "Extreme 5000",
-                preprocess_reply=extract_value,
-                **kwargs,
-            )
-
-In cases where the general `preprocess_reply` function should not run it can be also overwritten in the property definition:
-
-.. testcode::
-
-    Extreme5001.channel = Instrument.control(
-        ":CHAN?", ":CHAN %d",
-        """ A string property that controls the measurement channel,
-        which can take the values X, Y, or Z.
-        """,
-        validator=strict_discrete_set,
-        values=[1,2,3],
-        preprocess_reply=lambda v: v,
-    )
-
-Using a combination of the described abilities also complex communication schemes can be achieved.
 
 Dynamic properties
 ===================
@@ -732,6 +701,131 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
 
 
+.. _advanced_communication_protocols:
+
+Advanced communication protocols
+================================
+
+Some devices require a more advanced communication protocol, e.g. due to checksums or device addresses. In most cases, it is sufficient to subclass :meth:`Instrument.write <pymeasure.instruments.Instrument.write>` and :meth:`Instrument.read <pymeasure.instruments.Instrument.read>`.
+
+
+Instrument's inner workings
+***************************
+
+In order to adjust an instrument for more complicated protocols, it is key to understand the different parts.
+
+The :class:`~pymeasure.adapters.Adapter` exposes :meth:`~pymeasure.adapters.Adapter.write` and :meth:`~pymeasure.adapters.Adapter.read` for strings, :meth:`~pymeasure.adapters.Adapter.write_bytes` and :meth:`~pymeasure.adapters.Adapter.read_bytes` for bytes messages. These are the most basic methods, which log all the traffic going through them. For the actual communication, they call private methods of the Adapter in use, e.g. :meth:`VISAAdapter._read <pymeasure.adapters.VISAAdapter._read>`.
+For binary data, like waveforms, the adapter provides also :meth:`~pymeasure.adapters.Adapter.write_binary_values` and :meth:`~pymeasure.adapters.Adapter.read_binary_values`, which use the aforementioned methods.
+You do not need to call all these methods directly, instead, you should use the methods of :class:`~pymeasure.instruments.Instrument` with the same name. They call the Adapter for you and keep the code tidy.
+
+Now to :class:`~pymeasure.instruments.Instrument`. The most important methods are :meth:`~pymeasure.instruments.Instrument.write` and :meth:`~pymeasure.instruments.Instrument.read`, as they are the most basic building blocks for the communication. The pymeasure properties (:meth:`Instrument.control <pymeasure.instruments.Instrument.control>` and its derivatives :meth:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>` and :meth:`Instrument.setting <pymeasure.instruments.Instrument.setting>`) and probably most of your methods and properties will call them. In any instrument, :meth:`write` should write a general string command to the device in such a way, that it understands it. Similarly, :meth:`read` should return a string in a general fashion in order to process it further.
+
+The getter of :meth:`Instrument.control <pymeasure.instruments.Instrument.control>` does not call them directly, but via a chain of methods. It calls :meth:`~pymeasure.instruments.Instrument.values` which in turn calls :meth:`~pymeasure.instruments.Instrument.ask` and processes the returned string into understandable values. :meth:`~pymeasure.instruments.Instrument.ask` sends the readout command via :meth:`write`, waits some time if necessary via :meth:`wait_for`, and reads the device response via :meth:`read`.
+
+Similarly, :meth:`Instrument.binary_values <pymeasure.instruments.Instrument.binary_values>` sends a command via :meth:`write`, waits with :meth:`wait_till_read`, but reads the response via :meth:`Adapter.read_binary_values <pymeasure.adapters.Adapter.read_binary_values>`.
+
+
+Adding a device address and adding delay
+****************************************
+
+Let's look at a simple example for a device, which requires its address as the first three characters and returns the same style. This is straightforward, as :meth:`write` just prepends the device address to the command, and :meth:`read` has to strip it again doing some error checking. Similarly, a checksum could be added.
+Additionally, the device needs some time after it received a command, before it responds, therefore :meth:`wait_for` waits always a certain time span.
+
+.. testcode::
+    :hide:
+
+    # Behind the scene, load the real Instrument
+    from pymeasure.instruments import Instrument
+    from pymeasure.test import expected_protocol
+
+.. testcode::
+
+    class ExtremeCommunication(Instrument):
+        """The great ExtremeCommunication instrument.
+        :param address: The device address for the communication.
+        :param query_delay: Wait time after writing and before reading in seconds.
+        """
+        def __init__(self, adapter, address=0, query_delay=0.1):
+            super().__init__(adapter, "ExtremeCommunication")
+            self.address = f"{address:03}"
+            self.query_delay = query_delay
+    
+        def write(self, command):
+            """Add the device address in front of every command and send it to the device."""
+            super().write(self.address + command)
+    
+        def wait_for(self, query_delay=0):
+            """Wait always some time after writing a command.
+            :param query_delay: override the global query_delay.
+            """
+            super().wait_for(query_delay or self.query_delay)
+    
+        def read(self):
+            """Read from the device and assert, that the response starts with the device address."""
+            got = super().read()
+            if got.startswith(self.address):
+                return got[3:]
+            else:
+                raise ConnectionError(f"Expected message address '{self.address}', but read '{got[3:]}' for wrong address '{got[:3]}'.")
+    
+        voltage = Instrument.measurement(
+            ":VOLT:?", "The measured voltage in Volts.")
+
+.. testcode:: :hide:
+
+    with expected_protocol(ExtremeCommunication, [("012:VOLT:?", "01215.5")], address=12
+        ) as inst:
+        assert inst.voltage == 15.5
+
+If the device is initialized with :code:`address=12`, a request for the voltage would send :code:`"012:VOLT:?"` to the device and expect a response beginning with :code:`"012"`.
+
+
+Bytes communication
+*******************
+
+Some devices do not expect ASCII strings but raw bytes. In those cases, you can call the :meth:`write_bytes` and :meth:`read_bytes` in your :meth:`write` and :meth:`read` methods. The following example shows an instrument, which has registers to be written and read via bytes sent.
+
+.. testcode::
+
+    class ExtremeBytes(Instrument):
+        """The ExtremeBytes instrument with bytes communication."""
+        def __init__(self, adapter):
+            super().__init__(adapter, "ExtremeBytes")
+    
+        def write(self, command):
+            """Write to the device according to the comma separated command.
+    
+            :param command: R or W for read or write, hexadecimal address, and data.
+            """
+            function, address, data = command.split(",")
+            b = [0x03] if function == "R" else [0x10]
+            b.extend(int(address, 16).to_bytes(2, byteorder="big"))
+            b.extend(int(data).to_bytes(length=8, byteorder="big", signed=True))
+            self.write_bytes(bytes(b))
+    
+        def read(self):
+            """Read the response and return the data as an integer, if applicable."""
+            response = self.read_bytes(2)  # return type and payload
+            if response[0] == 0x00:
+                raise ConnectionError(f"Device error of type {response[1]} occurred.")
+            if response[0] == 0x03:
+                # read that many bytes and return them as an integer
+                data = self.read_bytes(response[1])
+                return int.from_bytes(data, byteorder="big", signed=True)
+            if response[0] == 0x10 and response[1] != 0x00:
+                raise ConnectionError(f"Writing to the device failed with error {response[1]}")
+    
+        voltage = Instrument.control(
+            "R,0x106,1", "W,0x106,%i",
+            """The output voltage in mV.""",
+        )
+
+.. testcode:: :hide:
+
+    with expected_protocol(ExtremeBytes, [(b"\x03\x01\x06\x00\x00\x00\x00\x00\x00\x00\x01", b"\x03\x01\x0f")]) as inst:
+        assert inst.voltage == 15
+
+
 Writing tests
 =============
 
@@ -814,5 +908,114 @@ If only some test functions in a module need hardware, decorate those with
     def test_something():
         ...
 
+<<<<<<< HEAD
+Using a combination of the decribed abilities also complex communication schemes can be achieved.
+
+Dynamic properties
+===================
+
+As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
+One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
+This feature allows accomodating some interesting use cases with a very compact syntax.
+
+Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
+
+Afterwards, creating specifically-named attributes (either in class definitions or on instances) allows modifying the parameters used at the time of property definition.
+You need to define an attribute whose name is `<property name>_<property_parameter>` and assign to it the desired value.
+Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
+
+.. note::
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
+
+The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.Instrument.control>`, :func:`Instrument.measurement <pymeasure.instruments.Instrument.measurement>`, :func:`Instrument.setting <pymeasure.instruments.Instrument.setting>`.
+
+Let us now consider a couple of common use cases for this functionality:
+
+Dynamic validity range
+**********************
+Let's assume we have an instrument with a command that accepts a different valid range of values depending on its current state.
+The code below shows how this can be accomplished with dynamic properties.
+
+.. testcode::
+  
+    Extreme5000.voltage = Instrument.control(
+        ":VOLT?", ":VOLT %g",
+        """ A floating point property that controls the voltage
+        in Volts, from -1 to 1 V. This property can be set. """,
+        validator=strict_range,
+        values=[-1, 1],
+        dynamic = True,
+    )
+    def set_bipolar_mode(self, enabled = True):
+        """Safely switch between bipolar/unipolar mode."""
+
+        # some code to switch off the output first
+        # ...
+
+        if enabled:
+            self.mode = "BIPOLAR"
+            # set valid range of "voltage" property
+            self.voltage_values = [-1, 1]
+        else:
+            self.mode = "UNIPOLAR"
+            # note the "propertyname_parametername" form of the attribute
+            self.voltage_values = [0, 1]
+
+
+Now our voltage property has a dynamic validity range, either [-1, 1] or [0, 1].
+In this example, the property name was :code:`voltage` and the parameter to adjust was :code:`values`, so we used :code:`self.voltage_values` to set our desired values.
+
+Family of instruments with similar features
+*******************************************
+
+A common case is to have a family of similar instruments with some parameter range different for each family member.
+In this case you would update the specific class parameter range without rewriting the entire property:
+
+.. testcode::
+
+    class FictionalInstrumentFamily(Instrument):
+        frequency = Instrument.setting(
+            "FREQ %g",
+            """ Command docstring""",
+            validator=strict_range,
+            values=[0, 1e9],
+            # ... other possible parameters follow
+        )
+        #
+        # ... complete class implementation here
+        #
+
+    class FictionalInstrument_1GHz(FictionalInstrumentFamily):
+        pass
+
+    class FictionalInstrument_3GHz(FictionalInstrumentFamily):
+        frequency_values = [0, 3e9]
+
+    class FictionalInstrument_9GHz(FictionalInstrumentFamily):
+        frequency_values = [0, 9e9]
+
+Notice how easily you can derive the different family members from a common class, and the fact that the attribute is now defined at class level and not at instance level.
+
+Compatibility of instruments with similar features
+**************************************************
+
+Another use case involves maintaining compatibility between instruments with commands having different syntax.
+
+.. code-block:: python
+
+    class MultimeterA(Instrument):
+        voltage = Instrument.measurement(get_command="VOLT?",...)
+
+        # ...full class definition code here
+
+    class MultimeterB(MultimeterA):
+        # Same as brand A multimeter, but the command to read voltage 
+        # is slightly different
+        voltage_get_command = "VOLTAGE?"
+
+In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
+:code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
+=======
 If you want to run these tests with a connected device, select those tests and ignore the skip marker.
 For example, if your tests are in a file called :code:`test_extreme5000.py`, invoke pytest with :code:`pytest -k extreme5000 --no-skip`.
+>>>>>>> 9f50e169fa62bb4bbfa1ab0256045a314bfb6e59
