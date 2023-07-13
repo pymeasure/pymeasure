@@ -45,10 +45,10 @@ def generator():
 
     yield generator
     for channel in 1, 2:
-        generator.ch[channel].output = "off"
-        generator.ch[channel].amplitude = 0.1
-        generator.ch[channel].offset = 0.1
-        generator.ch[channel].frequency = 60
+        generator.channels[channel].output = "off"
+        generator.channels[channel].amplitude = 0.1
+        generator.channels[channel].offset = 0.1
+        generator.channels[channel].frequency = 60
 
 
 ########
@@ -279,177 +279,177 @@ def test_uploaded_arb_file(generator):
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_turn_on_channel(generator, channel):
-    generator.ch[channel].output = "on"
-    assert generator.ch[channel].output
+    generator.channels[channel].output = "on"
+    assert generator.channels[channel].output
 
 
 @pytest.mark.parametrize("shape", WF_SHAPES)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_shape_channel(generator, shape, channel):
-    generator.ch[channel].shape = shape
-    assert shape == generator.ch[channel].shape
+    generator.channels[channel].shape = shape
+    assert shape == generator.channels[channel].shape
 
 
 @pytest.mark.parametrize("frequency", [0.1, 1, 10, 100, 1000])
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_frequency_channel(generator, frequency, channel):
-    generator.ch[channel].frequency = frequency
-    assert frequency == pytest.approx(generator.ch[channel].frequency, 0.01)
+    generator.channels[channel].frequency = frequency
+    assert frequency == pytest.approx(generator.channels[channel].frequency, 0.01)
 
 
 @pytest.mark.parametrize("amplitude", AMPLITUDE_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_amplitude_channel(generator, amplitude, channel):
-    generator.ch[channel].amplitude = amplitude
-    assert amplitude == pytest.approx(generator.ch[channel].amplitude, 0.01)
+    generator.channels[channel].amplitude = amplitude
+    assert amplitude == pytest.approx(generator.channels[channel].amplitude, 0.01)
 
 
 @pytest.mark.xfail
 @pytest.mark.parametrize("amplitude_unit", AMPLITUDE_UNIT)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_amplitude_unit_channel(generator, amplitude_unit, channel):
-    generator.ch[channel].amplitude_unit = amplitude_unit
-    assert amplitude_unit == generator.ch[channel].amplitude_unit
+    generator.channels[channel].amplitude_unit = amplitude_unit
+    assert amplitude_unit == generator.channels[channel].amplitude_unit
 
 
 @pytest.mark.parametrize("offset", OFFSET_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_offset_channel(generator, offset, channel):
-    generator.ch[channel].offset = offset
-    assert offset == pytest.approx(generator.ch[channel].offset, 0.01)
+    generator.channels[channel].offset = offset
+    assert offset == pytest.approx(generator.channels[channel].offset, 0.01)
 
 
 @pytest.mark.parametrize("voltage_high", VOLTAGE_HIGH_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_voltage_high_channel(generator, voltage_high, channel):
-    generator.ch[channel].voltage_high = voltage_high
-    assert voltage_high == pytest.approx(generator.ch[channel].voltage_high, 0.01)
+    generator.channels[channel].voltage_high = voltage_high
+    assert voltage_high == pytest.approx(generator.channels[channel].voltage_high, 0.01)
 
 
 @pytest.mark.parametrize("voltage_low", VOLTAGE_LOW_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_voltage_low_channel(generator, voltage_low, channel):
-    generator.ch[channel].voltage_low = voltage_low
-    assert voltage_low == pytest.approx(generator.ch[channel].voltage_low, 0.01)
+    generator.channels[channel].voltage_low = voltage_low
+    assert voltage_low == pytest.approx(generator.channels[channel].voltage_low, 0.01)
 
 
 @pytest.mark.parametrize("phase", range(PHASE_RANGE[0], PHASE_RANGE[1], 10))
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_phase_channel(generator, phase, channel):
-    generator.ch[channel].phase = phase
-    assert phase == pytest.approx(generator.ch[channel].phase, 0.01)
+    generator.channels[channel].phase = phase
+    assert phase == pytest.approx(generator.channels[channel].phase, 0.01)
 
 
 @pytest.mark.parametrize("square_dutycycle", SQUARE_DUTYCYCLE_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_square_dutycycle_channel(generator, square_dutycycle, channel):
-    generator.ch[channel].square_dutycycle = square_dutycycle
-    assert square_dutycycle == pytest.approx(generator.ch[channel].square_dutycycle, 0.01)
+    generator.channels[channel].square_dutycycle = square_dutycycle
+    assert square_dutycycle == pytest.approx(generator.channels[channel].square_dutycycle, 0.01)
 
 
 @pytest.mark.parametrize("ramp_symmetry", RAMP_SYMMETRY_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_ramp_symmetry_channel(generator, ramp_symmetry, channel):
-    generator.ch[channel].ramp_symmetry = ramp_symmetry
-    assert ramp_symmetry == pytest.approx(generator.ch[channel].ramp_symmetry, 0.01)
+    generator.channels[channel].ramp_symmetry = ramp_symmetry
+    assert ramp_symmetry == pytest.approx(generator.channels[channel].ramp_symmetry, 0.01)
 
 
 @pytest.mark.xfail  # seems like my device 33500B only supports a min of 5e-08 range period
 @pytest.mark.parametrize("pulse_period", PULSE_PERIOD_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_pulse_period_channel(generator, pulse_period, channel):
-    generator.ch[channel].pulse_period = pulse_period
-    assert pulse_period == pytest.approx(generator.ch[channel].pulse_period, 0.01)
+    generator.channels[channel].pulse_period = pulse_period
+    assert pulse_period == pytest.approx(generator.channels[channel].pulse_period, 0.01)
 
 
 @pytest.mark.parametrize("pulse_hold, expected", PULSE_HOLD_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_pulse_hold_channel(generator, pulse_hold, expected, channel):
-    generator.ch[channel].pulse_hold = pulse_hold
-    assert expected == generator.ch[channel].pulse_hold
+    generator.channels[channel].pulse_hold = pulse_hold
+    assert expected == generator.channels[channel].pulse_hold
 
 
 @pytest.mark.parametrize("pulse_width", PULSE_WIDTH_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_pulse_width_channel(generator, pulse_width, channel):
-    generator.ch[channel].pulse_width = pulse_width
-    assert pulse_width == pytest.approx(generator.ch[channel].pulse_width, 0.01)
+    generator.channels[channel].pulse_width = pulse_width
+    assert pulse_width == pytest.approx(generator.channels[channel].pulse_width, 0.01)
 
 
 # 33500B minimum dutycycle seems to be 0.1
 @pytest.mark.parametrize("pulse_dutycycle", PULSE_DUTYCYCLE_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_pulse_dutycycle_channel(generator, pulse_dutycycle, channel):
-    generator.ch[channel].pulse_dutycycle = pulse_dutycycle
-    assert pulse_dutycycle == pytest.approx(generator.ch[channel].pulse_dutycycle, 0.1)
+    generator.channels[channel].pulse_dutycycle = pulse_dutycycle
+    assert pulse_dutycycle == pytest.approx(generator.channels[channel].pulse_dutycycle, 0.1)
 
 
 @pytest.mark.parametrize("pulse_transition", PULSE_TRANSITION_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_pulse_transition_channel(generator, pulse_transition, channel):
-    generator.ch[channel].pulse_transition = pulse_transition
-    assert pulse_transition == pytest.approx(generator.ch[channel].pulse_transition, 0.1)
+    generator.channels[channel].pulse_transition = pulse_transition
+    assert pulse_transition == pytest.approx(generator.channels[channel].pulse_transition, 0.1)
 
 
 @pytest.mark.parametrize("output_load", [1, 10000, "INF"])
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_output_load_channel(generator, channel, output_load):
-    generator.ch[channel].output_load = output_load
+    generator.channels[channel].output_load = output_load
     if output_load == "INF":
-        assert generator.ch[channel].output_load == 9.9e37
+        assert generator.channels[channel].output_load == 9.9e37
     else:
-        assert output_load == generator.ch[channel].output_load
+        assert output_load == generator.channels[channel].output_load
 
 
 @pytest.mark.xfail
 @pytest.mark.parametrize("boolean", BOOLEANS)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_state_channel(generator, boolean, channel):
-    generator.ch[channel].burst_state = boolean
-    assert boolean == generator.ch[channel].burst_state
+    generator.channels[channel].burst_state = boolean
+    assert boolean == generator.channels[channel].burst_state
 
 
 @pytest.mark.parametrize("burst_mode, expected", BURST_MODES)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_mode_channel(generator, burst_mode, expected, channel):
-    generator.ch[channel].burst_mode = burst_mode
-    assert expected == generator.ch[channel].burst_mode
+    generator.channels[channel].burst_mode = burst_mode
+    assert expected == generator.channels[channel].burst_mode
 
 
 @pytest.mark.parametrize("burst_period", BURST_PERIOD)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_period_channel(generator, burst_period, channel):
-    generator.ch[channel].burst_period = burst_period
-    assert burst_period == generator.ch[channel].burst_period
+    generator.channels[channel].burst_period = burst_period
+    assert burst_period == generator.channels[channel].burst_period
 
 
 @pytest.mark.parametrize("burst_ncycles", BURST_NCYCLES)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_ncycles_channel(generator, burst_ncycles, channel):
-    generator.ch[channel].burst_ncycles = burst_ncycles
-    assert burst_ncycles == generator.ch[channel].burst_ncycles
+    generator.channels[channel].burst_ncycles = burst_ncycles
+    assert burst_ncycles == generator.channels[channel].burst_ncycles
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_arb_file_channel(generator, channel):
-    file = generator.ch[channel].arb_file
+    file = generator.channels[channel].arb_file
     assert file != ""
 
 
 @pytest.mark.parametrize("srate", SRATE)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_arb_srate_channel(generator, channel, srate):
-    generator.ch[channel].arb_srate = srate
-    assert srate == generator.ch[channel].arb_srate
+    generator.channels[channel].arb_srate = srate
+    assert srate == generator.channels[channel].arb_srate
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_uploaded_arb_file_channel(generator, channel):
     waveform = generate_simple_harmonic_waveform(3, 10)
-    generator.ch[channel].shape = "ARB"
-    generator.ch[channel].data_arb("test", waveform, data_format="float")
-    generator.ch[channel].arb_file = "test"
-    assert '"TEST"' == generator.ch[channel].arb_file
+    generator.channels[channel].shape = "ARB"
+    generator.channels[channel].data_arb("test", waveform, data_format="float")
+    generator.channels[channel].arb_file = "test"
+    assert '"TEST"' == generator.channels[channel].arb_file
 
 
 def test_phase_sync(generator):
