@@ -56,14 +56,11 @@ class LakeShore421(Instrument):
     UNITS = ['G', 'T']
     WRITE_DELAY = 0.05
 
-    def __init__(self, adapter, baud_rate=9600, **kwargs):
-        super(LakeShore421, self).__init__(
+    def __init__(self, adapter, name="Lake Shore 421 Gaussmeter", baud_rate=9600, **kwargs):
+        super().__init__(
             adapter,
-            "Lake Shore 421 Gaussmeter",
-            baud_rate=baud_rate,
-            data_bits=7,
-            stop_bits=10,
-            parity=1,
+            name,
+            asrl={'baud_rate': baud_rate, 'data_bits': 7, 'stop_bits': 10, 'parity': 1},
             read_termination='\r',
             write_termination='\n',
             **kwargs

@@ -82,8 +82,8 @@ def test_AFG_init():
             AWG401x_AFG,
             AFG_init_comm,
     ) as inst:
-        assert len(inst.ch) == 2
-        assert isinstance(inst.ch[1], ChannelAFG)
+        assert len(inst.channels) == 2
+        assert isinstance(inst.ch_1, ChannelAFG)
 
 
 def test_AFG_frequency_setter():
@@ -93,8 +93,7 @@ def test_AFG_frequency_setter():
              ("SOURce2:FREQuency 1.5", None),
              ],
     ) as inst:
-        print(AWG401x_AFG.ch, inst.ch)
-        inst.ch[2].frequency = 1.5
+        inst.ch_2.frequency = 1.5
 
 
 def test_AFG_frequency_getter():
@@ -104,7 +103,7 @@ def test_AFG_frequency_getter():
              ("SOURce2:FREQuency?", "1.5"),
              ],
     ) as inst:
-        assert inst.ch[2].frequency == 1.5
+        assert inst.ch_2.frequency == 1.5
 
 
 # SequenceEntry Tests
@@ -138,7 +137,7 @@ def test_SequenceEntry_voltage_amplitude_setter():
             [*Sequence_init_comm,
              ("SEQuence:ELEM7:AMPlitude1 1.5", None)],
     ) as inst:
-        inst.se.ch[1].voltage_amplitude = 1.5
+        inst.se.ch_1.voltage_amplitude = 1.5
 
 
 def test_SequenceEntry_voltage_amplitude_getter():
@@ -147,4 +146,4 @@ def test_SequenceEntry_voltage_amplitude_getter():
             [*Sequence_init_comm,
              ("SEQuence:ELEM7:AMPlitude1?", "1.5")],
     ) as inst:
-        assert inst.se.ch[1].voltage_amplitude == 1.5
+        assert inst.se.ch_1.voltage_amplitude == 1.5

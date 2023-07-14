@@ -138,9 +138,13 @@ class VISAAdapter(Adapter):
         """
         super().close()
         try:
-            self.manager.close()
+            if self.manager.visalib.library_path == "unset":
+                # if using the pyvisa-sim library the manager has to be also closed.
+                # this works around https://github.com/pyvisa/pyvisa-sim/issues/82
+                self.manager.close()
         except AttributeError:
-            pass  # Closed from another adapter using the same connection.
+            # AttributeError can occur during __del__ calling close
+            pass
 
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
@@ -171,7 +175,7 @@ class VISAAdapter(Adapter):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
-            read from the whole read buffer.
+            read from the whole read buffer until timeout.
         :param bool break_on_termchar: Stop reading at a termination character.
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
@@ -181,13 +185,17 @@ class VISAAdapter(Adapter):
         elif break_on_termchar:
             return self.connection.read_raw(None, **kwargs)
         else:
-            read_termination = self.connection.read_termination
-            self.connection.read_termination = None
-            # Try except allows to set the read_termination even after an error.
-            try:
-                return self.connection.read_raw(**kwargs)
-            finally:
-                self.connection.read_termination = read_termination
+            # pyvisa's `read_raw` reads until newline, if no termination_character defined
+            # and if not configured to stop at a termination lane etc.
+            # see https://github.com/pyvisa/pyvisa/issues/728
+            result = bytearray()
+            while True:
+                try:
+                    result.extend(self.connection.read_bytes(1))
+                except pyvisa.errors.VisaIOError as exc:
+                    if exc.error_code == pyvisa.constants.StatusCode.error_timeout:
+                        return bytes(result)
+                    raise
 
     def ask(self, command):
         """ Writes the command to the instrument and returns the resulting

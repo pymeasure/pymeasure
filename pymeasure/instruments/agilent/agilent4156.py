@@ -130,10 +130,11 @@ class Agilent4156(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent 4155/4156 Semiconductor Parameter Analyzer",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            name,
             **kwargs
         )
 

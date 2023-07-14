@@ -32,28 +32,30 @@ class ThorlabsPro8000(Instrument):
     LDC_POLARITIES = ['AG', 'CG']
     STATUS = ['ON', 'OFF']
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Thorlabs Pro 8000", **kwargs):
         super().__init__(
             adapter,
-            "Thorlabs Pro 8000",
+            name,
             **kwargs
         )
         self.write(':SYST:ANSW VALUE')
 
     # Code for general purpose commands (mother board related)
     slot = Instrument.control(":SLOT?", ":SLOT %d",
-                              "Slot selection. Allowed values are: {}""".format(SLOTS),
+                              "Control slot selection. Allowed values are: {}""".format(SLOTS),
                               validator=strict_discrete_set,
                               values=SLOTS,
                               map_values=False)
 
     # Code for LDC-xxxx daughter boards (laser driver)
     LDCCurrent = Instrument.control(":ILD:SET?", ":ILD:SET %g",
-                                    """Laser current.""")
+                                    """Control laser current.""")
+
     LDCCurrentLimit = Instrument.control(
         ":LIMC:SET?", ":LIMC:SET %g",
         """Set Software current Limit (value must be lower than hardware current limit)."""
     )
+
     LDCPolarity = Instrument.control(
         ":LIMC:SET?", ":LIMC:SET %s",
         f"""Set laser diode polarity. Allowed values are: {LDC_POLARITIES}""",
@@ -61,6 +63,7 @@ class ThorlabsPro8000(Instrument):
         values=LDC_POLARITIES,
         map_values=False
     )
+
     LDCStatus = Instrument.control(
         ":LASER?", ":LASER %s",
         """Set laser diode status. Allowed values are: {}""".format(
@@ -72,9 +75,10 @@ class ThorlabsPro8000(Instrument):
 
     # Code for TED-xxxx daughter boards (TEC driver)
     TEDStatus = Instrument.control(":TEC?", ":TEC %s",
-                                   f"""Set TEC status. Allowed values are: {STATUS}""",
+                                   f"""Control TEC status. Allowed values are: {STATUS}""",
                                    validator=strict_discrete_set,
                                    values=STATUS,
                                    map_values=False)
+
     TEDSetTemperature = Instrument.control(":TEMP:SET?", ":TEMP:SET %g",
-                                           """Set TEC temperature""")
+                                           """Control TEC temperature""")

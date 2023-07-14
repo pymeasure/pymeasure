@@ -48,32 +48,34 @@ class FWBell5080(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="F.W. Bell 5080 Handheld Gaussmeter", **kwargs):
         kwargs.setdefault('timeout', 500)
         kwargs.setdefault('baudrate', 2400)
         super().__init__(
             adapter,
-            "F.W. Bell 5080 Handheld Gaussmeter",
+            name,
             includeSCPI=True,
             **kwargs
         )
 
     field = Instrument.measurement(
         ":MEASure:FLUX?",
-        """ Reads a floating point value of the field in the appropriate units.
+        """ Measure the field in the appropriate units (float).
         """,
         # Remove units
         get_process=lambda v: float(v.replace('T', '').replace('G', '').replace('Am', ''))
 
     )
+
     UNITS = {
         'gauss': 'DC:GAUSS', 'gauss ac': 'AC:GAUSS',
         'tesla': 'DC:TESLA', 'tesla ac': 'AC:TESLA',
         'amp-meter': 'DC:AM', 'amp-meter ac': 'AC:AM'
     }
+
     units = Instrument.control(
         ":UNIT:FLUX?", ":UNIT:FLUX:%s",
-        """ A string property that controls the field units, which can take the
+        """ Get the field units (str), which can take the
         values: 'gauss', 'gauss ac', 'tesla', 'tesla ac', 'amp-meter', and
         'amp-meter ac'. The AC versions configure the instrument to measure AC.
         """,
@@ -84,7 +86,7 @@ class FWBell5080(Instrument):
 
     range = Instrument.control(
         ":SENS:FLUX:RANG?", ":SENS:FLUX:RANG %d",
-        """ An integer property that controls the maximum field range in the active units.
+        """ Control the maximum field range in the active units (int).
         The range unit is dependent on the current units mode (gauss, tesla, amp-meter). Value
         sets an equivalent range across units that increases in magnitude (1, 10, 100).
 

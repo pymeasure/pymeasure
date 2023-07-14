@@ -49,6 +49,7 @@ from . import fwbell
 from . import hcp
 from . import heidenhain
 from . import hp
+from . import ipgphotonics
 from . import keithley
 from . import keysight
 from . import lakeshore
@@ -56,6 +57,7 @@ from . import lecroy
 from . import mksinst
 from . import newport
 from . import ni
+from . import novanta
 from . import oxfordinstruments
 from . import parker
 from . import pendulum
@@ -66,6 +68,7 @@ from . import signalrecovery
 from . import srs
 from . import tcpowerconversion
 from . import tektronix
+from . import teledyne
 from . import temptronic
 from . import texio
 from . import thermotron

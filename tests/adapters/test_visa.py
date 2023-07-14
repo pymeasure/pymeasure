@@ -41,7 +41,8 @@ if not is_pyvisa_sim_installed:
 def adapter():
     adapter = VISAAdapter(SIM_RESOURCE, visa_library='@sim',
                           read_termination="\n",
-                          timeout=10,
+                          # Large timeout allows very slow GitHub action runners to complete.
+                          timeout=60,
                           )
     yield adapter
     # Empty the read buffer, as something might remain there after a test.
@@ -153,6 +154,13 @@ class TestReadBytes:
         adapterR.connection.read_termination = ","
         # `break_on_termchar=False` is default value
         assert adapterR.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\n"
+
+    def test_read_no_break_on_newline(self, adapter):
+        # write twice to have two newline characters in the read buffer
+        adapter.write("*IDN?")
+        adapter.write("*IDN?")
+        # `break_on_termchar=False` is default value
+        assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
 
 
 def test_visa_adapter(adapter):

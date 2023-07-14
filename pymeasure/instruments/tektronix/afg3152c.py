@@ -197,10 +197,10 @@ class AFG3152C(Instrument):
         afg.ch1.enable()               # Enables the output from CH1
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Tektronix AFG3152C arbitrary function generator", **kwargs):
         super().__init__(
             adapter,
-            "Tektronix AFG3152C arbitrary function generator",
+            name,
             **kwargs
         )
         self.ch1 = Channel(self, 1)

@@ -70,7 +70,9 @@ class Test_csv_formatter_format:
                               ('magnetic (T)', 7, "7"),
                               ('string', "abcdef", "abcdef"),
                               ('count', 9 * ureg.dimensionless, "9"),
-                              ('boolean', True, "True")
+                              ('boolean', True, "True"),
+                              ('numpy (V)', np.float64(1.1), "1.1"),
+                              ('boolean nan (V)', True, "nan"),
                               ))
     def test_unitful(self, head, value, result):
         """Test, whether units are appended correctly"""
@@ -94,15 +96,6 @@ class Test_csv_formatter_format:
         formatter.units['index'] = ureg.km
         data = {'index': "10 stupid", 'length (m)': "50 cV", 'voltage (V)': True}
         assert formatter.format(data) == "nan,nan,nan"
-
-
-@pytest.mark.parametrize("header, units", (
-    ("x (m)", ureg.m),
-    ("x (m/s)", ureg.m/ureg.s),
-    ("x (V/(m*s))", ureg.V / ureg.m / ureg.s),
-    ))
-def test_csv_formatter_parse_columns(header, units):
-    assert CSVFormatter._parse_columns([header])[header] == ureg.Quantity(1, units)
 
 
 def test_procedure_filestorage():

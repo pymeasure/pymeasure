@@ -32,7 +32,7 @@ from collections import abc, namedtuple
 import pprint
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set,\
+from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range
 
 
@@ -352,7 +352,9 @@ class ChannelAWG(ChannelBase):
 class AWG401x_base(Instrument):
     """AWG-401x base class"""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter,
+                 name="Active Technologies AWG-4014 1.2GS/s Arbitrary Waveform Generator",
+                 **kwargs):
 
         # Insert an higher timeout because, often, when starting the
         # instrument, can pass some time and the adapted goes in timeout
@@ -360,8 +362,7 @@ class AWG401x_base(Instrument):
 
         super().__init__(
             adapter,
-            """Active Technologies AWG-4014 1.2GS/s Arbitrary Waveform
-            Generator""",
+            name,
             **kwargs
         )
 
@@ -429,7 +430,8 @@ class AWG401x_AFG(AWG401x_base):
         print(wfg.check_errors())       # Get the error queue
 
     """
-    ch = Instrument.ChannelCreator(ChannelAFG, (1, 2))
+    ch_1 = Instrument.ChannelCreator(ChannelAFG, 1)
+    ch_2 = Instrument.ChannelCreator(ChannelAFG, 2)
 
     enabled = Instrument.control(
         "AFGControl:STATus?", "AFGControl:%s",

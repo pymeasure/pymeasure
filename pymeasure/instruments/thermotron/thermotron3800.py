@@ -33,10 +33,10 @@ class Thermotron3800(Instrument):
     There is a 1000ms built in wait time after all write commands.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Thermotron 3800", **kwargs):
         super().__init__(
             adapter,
-            "Thermotron 3800",
+            name,
             includeSCPI=False,
             **kwargs
         )
