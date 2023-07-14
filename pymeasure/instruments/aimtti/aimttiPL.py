@@ -27,12 +27,10 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class PLChannel(Channel):
-    """ A channel of AimTTI PL series power supplies. """
+    """ A channel of AimTTI PL series power supplies.
 
-    CURRENT_RANGE = {
-        "LOW": 1,
-        "HIGH": 2
-    }
+    Channels of the power supply. The channels are number from right-to-left, starting at 1.
+    """
 
     def __init__(self, parent, id,
                  voltage_range: list = None,
@@ -79,17 +77,18 @@ class PLChannel(Channel):
         Low (500/800mA) range, or High range. 
         Output must be switched off before changing range.""",
         validator=strict_discrete_set,
-        values=CURRENT_RANGE,
+        values={"LOW": 1, "HIGH": 2},
         map_values=True
         )
 
-    def enable(self):
-        """ Enables the output."""
-        self.write("OP{ch} 1")
-
-    def disable(self):
-        """ Disables the output."""
-        self.write("OP{ch} 0")
+    output_enabled = Channel.control(
+        "OP{ch}?", "OP{ch} %i",
+        """A boolean property that controls whether the source is enabled, takes
+        values True or False.""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
 
 class PLBase(Instrument):
@@ -103,34 +102,34 @@ class PLBase(Instrument):
         psu = PL303MQDP("ASRL7::INSTR")
         psu.reset()
         psu.ch_2.voltage = 1.2
-        psu.ch_2.enable()
+        psu.ch_2.output_enabled = True
+        ...
+        psu.ch_2.output_enabled = False
+        psu.local()
 
     """
-
-    chs = Instrument.ChannelCreator(PLChannel, ("1", "2"), voltage_range=[0, 30], current_range=[0, 3])
-    """ Channels of the power supply. The channels are number from right-to-left, starting at 1. 
-    Default values are for the voltage and current range are for the PL303MQD-P."""
 
     def __init__(self, adapter, name="AimTTI PL", **kwargs):
         kwargs.setdefault('timeout', 5000)
         super().__init__(adapter, name, **kwargs)
 
-    def enable(self):
-        """ Simultaneously sets all outputs on."""
-        self.write("OPALL 1")
-
-    def disable(self):
-        """ Simultaneously sets all outputs off."""
-        self.write("OPALL 0")
+    all_outputs_enabled = Instrument.setting(
+        "OPALL %d",
+        """A boolean property that controls whether all sources are enabled simultaneously, takes
+        values True or False.""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
     def local(self):
-        """ Go to local."""
+        """ Go to local. Make sure all output are disabled first."""
         self.write("LOCAL")
 
 
 class PL068P(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8])
 
     def __init__(self, adapter, name="AimTTI PL068-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -138,7 +137,7 @@ class PL068P(PLBase):
 
 class PL155P(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5])
 
     def __init__(self, adapter, name="AimTTI PL145-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -146,7 +145,7 @@ class PL155P(PLBase):
 
 class PL303P(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
 
     def __init__(self, adapter, name="AimTTI PL303-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -154,7 +153,7 @@ class PL303P(PLBase):
 
 class PL601P(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5])
 
     def __init__(self, adapter, name="AimTTI PL303MQT-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -162,7 +161,8 @@ class PL601P(PLBase):
 
 class PL303MQDP(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, ("1", "2"), voltage_range=[0, 30], current_range=[0, 3])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
+    ch_2 = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
 
     def __init__(self, adapter, name="AimTTI PL303MQD-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -170,7 +170,9 @@ class PL303MQDP(PLBase):
 
 class PL303MQTP(PLBase):
 
-    chs = Instrument.ChannelCreator(PLChannel, ("1", "2", "3"), voltage_range=[0, 30], current_range=[0, 3])
+    ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
+    ch_2 = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
+    ch_3 = Instrument.ChannelCreator(PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3])
 
     def __init__(self, adapter, name="AimTTI PL303MQT-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
