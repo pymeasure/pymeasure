@@ -52,7 +52,7 @@ class PLChannel(Channel):
 
     current_limit = Channel.control(
         "I{ch}?", "I{ch} %g",
-        """ A floating point property that controls the current limit in Amps.""",
+        """ Control the current limit in Amps.""",
         validator=strict_range,
         values=[0, 1.5],
         dynamic=True,
@@ -61,19 +61,19 @@ class PLChannel(Channel):
 
     voltage = Channel.measurement(
         "V{ch}O?",
-        """ Read the output readback voltage for this output channel in Volts.""",
+        """ Measure the output readback voltage for this output channel in Volts.""",
         get_process=lambda x: float(x[:-1])
         )
 
     current = Channel.measurement(
         "I{ch}O?",
-        """ Read the output readback current for this output channel in Amps.""",
+        """ Measure the output readback current for this output channel in Amps.""",
         get_process=lambda x: float(x[:-1])
         )
 
     current_range = Channel.control(
         "IRANGE{ch}?", "IRANGE{ch} %g",
-        """ A string property that sets the current range of the channel. 
+        """ Control the current range of the channel. 
         Low (500/800mA) range, or High range. 
         Output must be switched off before changing range.""",
         validator=strict_discrete_set,
@@ -83,8 +83,7 @@ class PLChannel(Channel):
 
     output_enabled = Channel.control(
         "OP{ch}?", "OP{ch} %i",
-        """A boolean property that controls whether the source is enabled, takes
-        values True or False.""",
+        """ Control whether the source is enabled, takes values True or False.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,

@@ -22,20 +22,19 @@
 # THE SOFTWARE.
 #
 import time
+import pytest
 
-import pymeasure.instruments
 from pymeasure.instruments.aimtti.aimttiPL import PL303MQDP
 
-ADAPTER = "ASRL8::INSTR"
+
+@pytest.fixture(scope="module")
+def psu(connected_device_address):
+    instr = PL303MQDP(connected_device_address)
+    instr.reset()
+    return instr
 
 
-def test_list():
-    pymeasure.instruments.list_resources()
-
-
-def test_voltage():
-    psu = PL303MQDP(ADAPTER)
-    psu.reset()
+def test_voltage(psu):
     psu.ch_2.voltage_setpoint = 1.2
     psu.ch_2.current_limit = 1.0
     psu.ch_2.current_range = "HIGH"
@@ -50,10 +49,7 @@ def test_voltage():
     psu.ch_2.output_enabled = False
 
 
-def test_voltage_all():
-    psu = PL303MQDP(ADAPTER)
-    psu.reset()
-
+def test_voltage_all(psu):
     psu.ch_2.voltage_setpoint = 1.2
     psu.ch_2.current_limit = 1.0
 
