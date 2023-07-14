@@ -128,7 +128,6 @@ class Recorder(QueueListener):
         #    fh.setLevel(logging.NOTSET)
         #    handlers.append(fh)
         handlers = results.create_handlers(**kwargs)
-
         super().__init__(queue, *handlers)
 
     def stop(self):

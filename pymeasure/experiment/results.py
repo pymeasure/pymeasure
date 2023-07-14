@@ -43,6 +43,12 @@ from .procedure import Procedure, UnknownProcedure
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+try:
+    import pyarrow as pa
+    from pyarrow import feather
+except:
+    log.info('Pyarrow not installed, feather not available')
+
 
 def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
     """Replace placeholders in string with values from procedure parameters.
@@ -279,116 +285,6 @@ class FileBasedResults(ResultsBase):
             return False
 
 
-class JSONFileHandler(logging.FileHandler):
-
-    def emit(self, record):
-        """Method to override the normal logging FileHandler when the record is json.
-        The json formatter returns a dictionary of dictionaries, so the first
-        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
-        single (possibly updated) dictionary of dictionaries. Because it is json we can't just append, we have
-        to rewrite the whole file. There may be a reason you want this so it is included."""
-
-
-        with open(self.baseFilename, 'r') as f:
-            extant = json.load(f)
-        data = extant[list(extant.keys())[0]]
-
-        for key in record.keys():
-            if key in data.keys():
-                for column, array in data.items():
-                    if isinstance(record[column], (list, tuple)):
-                        data[column] = list(np.concatenate([array, record[column]]))
-                    elif isinstance(record[column], (float, int, str, bool,)):
-                        array.append(record[column])
-                    else:
-                        raise TypeError(f'got unexpected type for {record[column]}, {type(record[column])}')
-            else:
-                datum = record[key]
-                if not isinstance(datum, list):
-                    datum = [datum,]
-                data[key] = datum
-
-        extant[list(extant.keys())[0]] = data
-        with open(self.baseFilename, 'w') as f:
-            json.dump(extant, f)
-
-
-class JSONResults(FileBasedResults):
-    """The JSONResults class provides an interface to read an write data
-    in JSON format in connection with a :class: `.Procedure` object."""
-
-    HANDLER = JSONFileHandler
-
-    def create_header(self):
-        """Returns a JSON string to accompany datafile so that the procedure can be
-        reconstructed.
-        """
-        param_dict = {}
-        for name, parameter in self.parameters.items():
-            param_dict[name] = parameter.value
-        return json.dumps(param_dict)
-
-    def create_resources(self):
-        header = self.create_header()
-        for filename in self.data_filenames:
-            with open(filename, 'w') as f:
-                json.dump({header : {}}, f)
-        self._data = None
-
-    @staticmethod
-    def get_params_from_header(header, procedure_class=None):
-        parameters = json.loads(header)
-
-        regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
-        search = re.search(regex, parameters['Procedure'])
-        procedure_module = search.group("module")
-        procedure_class = search.group("class")
-
-        return parameters, procedure_module, procedure_class
-
-    def reload(self):
-        """ Performs a full reloading of the file data, neglecting
-        any changes in the comments
-        """
-
-        with open(self.data_filename, 'r') as f:
-            data = json.load(f)
-        raw = data[list(data.keys())[0]]
-        if raw == {}:
-            self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
-        else:
-            self._data = pd.DataFrame(raw)
-
-    @staticmethod
-    def load(data_filename, procedure_class=None):
-        """ Returns a Results object with the associated Procedure object and
-        data
-        """
-        with open(data_filename, 'r') as f:
-            data = json.load(f)
-        header = json.loads(list(data.keys())[0])
-        data = pd.DataFrame(data[list(data.keys())[0]])
-
-        procedure = ResultsBase.parse_header(header, procedure_class)
-        results = JSONResults(procedure, data_filename)
-        return results
-
-    @property
-    def data(self):
-        if self._data is None or len(self._data) == 0:
-            # Data has not been read
-            try:
-                self.reload()
-            except Exception:
-                # Something went wrong when opening the data
-                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
-        else:  # JSON has to be read all at once, no good choices to be made here unfortunately
-            with open(self.data_filename, 'r') as f:
-                data = json.load(f)
-            self._data = pd.DataFrame(data[list(data.keys())[0]])  # The json should have only one entry.
-
-        return self._data
-
 class CSVFormatter(logging.Formatter):
     """ Formatter of data results """
 
@@ -422,7 +318,7 @@ class CSVFormatter(logging.Formatter):
         elif isinstance(record, dict):
             return self.delimiter.join(f'{record[x]}' for x in self.columns)
 
-    def format_header(self):
+    def format_column_header(self):
         return self.delimiter.join(self.columns)
 
 
@@ -699,3 +595,298 @@ class CSVPandas_Results(CSVResults):
 class Results(CSVResults):
     def __init__(self,*args, **kwargs):
         super(Results, self).__init__(*args, **kwargs)
+
+class JSONFileHandler(logging.FileHandler):
+
+    def emit(self, record):
+        """Method to override the normal logging FileHandler when the record is json.
+        The record expected is a dictionary of dictionaries, so the first
+        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
+        single (possibly updated) dictionary of dictionaries. Because it is json we can't just append, we have
+        to rewrite the whole file. There may be a reason you want this so it is included."""
+
+        with open(self.baseFilename, 'r') as f:
+            extant = json.load(f)
+        data = extant[list(extant.keys())[0]]
+
+        for key in record.keys():
+            if key in data.keys():
+                for column, array in data.items():
+                    if isinstance(record[column], (list, tuple)):
+                        data[column] = list(np.concatenate([array, record[column]]))
+                    elif isinstance(record[column], (float, int, str, bool,)):
+                        array.append(record[column])
+                    else:
+                        raise TypeError(f'got unexpected type for {record[column]}, {type(record[column])}')
+            else:
+                datum = record[key]
+                if not isinstance(datum, list):
+                    datum = [datum,]
+                data[key] = datum
+
+        extant[list(extant.keys())[0]] = data
+        with open(self.baseFilename, 'w') as f:
+            json.dump(extant, f)
+
+class JSONFormatter(logging.Formatter):
+    """ Formatter of data results """
+
+    def __init__(self, procedure=None, parameters=None):
+        """
+        """
+        # the default encoder doesn't understand FloatParameter, etc.
+        # we could write our own encoder, but this one is easy enough.
+        super().__init__()
+        self.procedure = procedure
+        self.parameters = parameters
+        if (self.procedure is None) and (self.parameters is None):
+            raise ValueError('Neither procedure nor parameters specified/both are None')
+
+
+
+    def format(self, record):
+        """Formats a record as json.
+
+        :param record: record to format.
+        :type record: dict
+        :return: a string
+        """
+        if self.procedure is not None:
+            parameters = self.procedure.parameter_objects()
+        else:
+            parameters = self.parameters
+        base_types = {}
+        for key, item in parameters.items():
+            base_types[key] = item.value
+        self.key = json.dumps(base_types)
+        return json.dumps({self.key: record}, indent=1)
+
+
+class JSONResults(FileBasedResults):
+    """The JSONResults class provides an interface to read an write data
+    in JSON format in connection with a :class: `.Procedure` object."""
+
+    HANDLER = JSONFileHandler
+    FORMATTER = None
+
+    def __init__(self, procedure, data_filename,**kwargs):
+        if not isinstance(procedure, Procedure):
+            raise ValueError("Results require a Procedure object")
+        self.procedure = procedure
+        self.FORMATTER = None
+        super().__init__(procedure, data_filename)
+
+    def create_header(self):
+        """Returns a JSON string to accompany datafile so that the procedure can be
+        reconstructed.
+        """
+        param_dict = {}
+        for name, parameter in self.parameters.items():
+            param_dict[name] = parameter.value
+        return json.dumps(param_dict)
+
+    def create_resources(self):
+        header = self.create_header()
+        for filename in self.data_filenames:
+            with open(filename, 'w') as f:
+                json.dump({header : {}}, f)
+        self._data = None
+
+    @staticmethod
+    def get_params_from_header(header, procedure_class=None):
+        parameters = json.loads(header)
+
+        regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
+        search = re.search(regex, parameters['Procedure'])
+        procedure_module = search.group("module")
+        procedure_class = search.group("class")
+
+        return parameters, procedure_module, procedure_class
+
+    def reload(self):
+        """ Performs a full reloading of the file data, neglecting
+        any changes in the comments
+        """
+
+        with open(self.data_filename, 'r') as f:
+            data = json.load(f)
+        raw = data[list(data.keys())[0]]
+        if raw == {}:
+            self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+        else:
+            self._data = pd.DataFrame(raw)
+
+    @staticmethod
+    def load(data_filename, procedure_class=None):
+        """ Returns a Results object with the associated Procedure object and
+        data
+        """
+        with open(data_filename, 'r') as f:
+            data = json.load(f)
+        header = json.loads(list(data.keys())[0])
+        data = pd.DataFrame(data[list(data.keys())[0]])
+
+        procedure = ResultsBase.parse_header(header, procedure_class)
+        results = JSONResults(procedure, data_filename)
+        return results
+
+    @property
+    def data(self):
+        if self._data is None or len(self._data) == 0:
+            # Data has not been read
+            try:
+                self.reload()
+            except Exception:
+                # Something went wrong when opening the data
+                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+        else:  # JSON has to be read all at once, no good choices to be made here unfortunately
+            with open(self.data_filename, 'r') as f:
+                data = json.load(f)
+            self._data = pd.DataFrame(data[list(data.keys())[0]])  # The json should have only one entry.
+
+        return self._data
+
+
+class FeatherFormatter(logging.Formatter):
+    """ Formatter of data results to make something that is easy to dump to Feather"""
+
+    def __init__(self, procedure=None, parameters=None):
+        """
+        """
+        # the default encoder doesn't understand FloatParameter, etc.
+        # we could write our own encoder, but this one is easy enough.
+        self.procedure = procedure
+        self.parameters = parameters
+        if (self.procedure is None) and (self.parameters is None):
+            raise ValueError('Neither procedure nor parameters specified/both are None')
+        super().__init__()
+
+
+    def format(self, record):
+        """Formats a record as json.
+
+        :param record: record to format.
+        :type record: dict
+        :return: a string
+        """
+        if self.procedure is not None:
+            parameters = self.procedure.parameter_objects()
+        else:
+            parameters = self.parameters
+        base_types = {}
+        for key, item in parameters.items():
+            base_types[key] = item.value
+        self.key = json.dumps(base_types)
+        return {'header': self.key, 'data': record}
+
+
+class FeatherFileHandler(logging.FileHandler):
+
+    def emit(self, record):
+        """Method to override the normal logging FileHandler when the record is feather.
+        The record expected is a dictionary of dictionaries, so the first
+        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
+        single (possibly updated) dictionary of dictionaries. Because it is json we can't just append, we have
+        to rewrite the whole file. There may be a reason you want this so it is included."""
+        arrow_table = feather.read_table(self.baseFilename)
+        header = arrow_table.schema.metadata[b'header']
+
+
+        olddata = arrow_table.to_pandas()
+
+        one_record = record[list(record.keys())[0]]
+        if not isinstance(one_record, (list, tuple, np.ndarray)):
+            newdata = pd.DataFrame(record,index=[0])
+        else:
+
+            newdata = pd.DataFrame(record)
+        data = pd.concat([olddata,newdata], ignore_index=True)
+        newtable = pa.Table.from_pandas(data, preserve_index=False)
+
+        existing_metadata = newtable.schema.metadata
+        new_metadata = {**existing_metadata, **{'header': header}}
+        newtable = newtable.replace_schema_metadata(new_metadata)
+        feather.write_feather(newtable, self.baseFilename)
+
+
+class FeatherResults(FileBasedResults):
+    """The FeatherResults class provides an interface to read an write data
+    in Feather format in connection with a :class: `.Procedure` object."""
+
+    HANDLER = FeatherFileHandler
+    FORMATTER = FeatherFormatter
+
+    def __init__(self, procedure, data_filename,**kwargs):
+        if not isinstance(procedure, Procedure):
+            raise ValueError("Results require a Procedure object")
+        self.procedure = procedure
+        self.FORMATTER = None#self.FORMATTER(procedure=self.procedure)
+        super().__init__(procedure, data_filename)
+
+    def create_header(self):
+        """Returns a JSON string to accompany datafile so that the procedure can be
+        reconstructed.
+        """
+        param_dict = {}
+        for name, parameter in self.parameters.items():
+            param_dict[name] = parameter.value
+        return json.dumps(param_dict)
+
+    def create_resources(self):
+        header = self.create_header()
+        data = pd.DataFrame({col:[] for col in self.procedure.DATA_COLUMNS})
+        newtable = pa.Table.from_pandas(data, preserve_index=False)
+
+        existing_metadata = newtable.schema.metadata
+        new_metadata = {**existing_metadata, **{'header': header}}
+        newtable = newtable.replace_schema_metadata(new_metadata)
+
+        for filename in self.data_filenames:
+            pa.feather.write_feather(newtable, filename)
+        self._data = None
+
+    @staticmethod
+    def get_params_from_header(header, procedure_class=None):
+        parameters = json.loads(header)
+
+        regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
+        search = re.search(regex, parameters['Procedure'])
+        procedure_module = search.group("module")
+        procedure_class = search.group("class")
+
+        return parameters, procedure_module, procedure_class
+
+    def reload(self):
+        """ Performs a full reloading of the file data, neglecting
+        any changes in the comments
+        """
+        data = feather.read_feather(self.data_filename)
+        self._data = data
+
+    @staticmethod
+    def load(data_filename, procedure_class=None):
+        """ Returns a Results object with the associated Procedure object and
+        data
+        """
+        table = feather.read_table(data_filename)
+        header = table.schema.metadata[b'header']
+
+        procedure = ResultsBase.parse_header(header, procedure_class)
+        results = FeatherResults(procedure, data_filename)
+        return results
+
+    @property
+    def data(self):
+        if self._data is None or len(self._data) == 0:
+            # Data has not been read
+            try:
+                self.reload()
+            except Exception:
+                # Something went wrong when opening the data
+                self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
+        else:  # JSON has to be read all at once, no good choices to be made here unfortunately
+            data = feather.read_feather(self.data_filename)
+            self._data = data
+
+        return self._data
+
