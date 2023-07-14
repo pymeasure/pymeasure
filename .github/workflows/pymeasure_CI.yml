@@ -20,10 +20,13 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: "3.10"
           environment-file: requirements/pymeasure.yml
-          cache-environment-key: py3.10-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
+      - name: Python and Mamba version
+        run: |
+          python --version
+          micromamba info
       - name: Set up flake8 annotations
         uses: rbialon/flake8-annotations@v1
       - name: Lint with flake8
@@ -61,10 +64,12 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          python-version: ${{ matrix.python-version }}
           environment-file: requirements/pymeasure.yml
+          create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
+      - name: Python version
+        run: python --version
       - name: Install Pymeasure
         # If the pytest problem matcher stops working because of bad paths, do an editable install
         run: pip install .[tests]
