@@ -42,7 +42,7 @@ class PLChannel(Channel):
     voltage_setpoint = Channel.control(
         "V{ch}?", "V{ch}V %g",
         """ Control the output voltage of this channel.
-        With verify: the operation is completed when the parameter being adjusted 
+        With verify: the operation is completed when the parameter being adjusted
         reaches the required value to within ±5% or ±10 counts.""",
         validator=strict_range,
         values=[0, 6],
@@ -73,8 +73,8 @@ class PLChannel(Channel):
 
     current_range = Channel.control(
         "IRANGE{ch}?", "IRANGE{ch} %g",
-        """ Control the current range of the channel. 
-        Low (500/800mA) range, or High range. 
+        """ Control the current range of the channel.
+        Low (500/800mA) range, or High range.
         Output must be switched off before changing range.""",
         validator=strict_discrete_set,
         values={"LOW": 1, "HIGH": 2},
@@ -91,10 +91,13 @@ class PLChannel(Channel):
 
 
 class PLBase(Instrument):
-    """ Control AimTTI PL series power supplies. Model number ending with -P or P(G) support this remote interface.
+    """ Control AimTTI PL series power supplies.
+    Model number ending with -P or P(G) support this remote interface.
 
-    Documentation: https://resources.aimtti.com/manuals/New_PL+PL-P_Series_Instruction_Manual-Iss18.pdf
-    PL-series devices: https://www.aimtti.com/product-category/dc-power-supplies/aim-plseries
+    Documentation:
+        https://resources.aimtti.com/manuals/New_PL+PL-P_Series_Instruction_Manual-Iss18.pdf
+    PL-series devices:
+        https://www.aimtti.com/product-category/dc-power-supplies/aim-plseries
 
     .. code-block:: python
 

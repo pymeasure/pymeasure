@@ -126,4 +126,3 @@ def test_strict_range_error():
     ) as inst:
         with pytest.raises(ValueError):
             inst.ch_1.voltage_setpoint = 31
-
