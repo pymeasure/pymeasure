@@ -114,7 +114,7 @@ class PLBase(Instrument):
 
     all_outputs_enabled = Instrument.setting(
         "OPALL %d",
-        """A boolean property that controls whether all sources are enabled simultaneously, takes
+        """ Control whether all sources are enabled simultaneously, takes
         values True or False.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
