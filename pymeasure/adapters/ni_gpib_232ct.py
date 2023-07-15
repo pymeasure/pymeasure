@@ -25,9 +25,12 @@ import logging
 from enum import IntFlag, Flag
 import time
 from pymeasure.adapters import VISAAdapter
+from pymeasure.instruments.validators import strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+# pylint: disable=W1203
 
 
 class NI_GPIB_232(VISAAdapter):
@@ -36,14 +39,12 @@ class NI_GPIB_232(VISAAdapter):
        using the :class:`VISAAdapter`.
 
        Each Adapter is constructed based on a connection to the device
-       itself and the GPIB address of the instrument to be communicated to.
+       itself and the GPIB address of the instrument to be communicated with.
        Connection sharing is achieved by using the :meth:`.gpib`
        method to spawn new NI_GPIB_232s for different GPIB addresses.
 
        :param resource_name: A
-        `VISA resource string
-        <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>`
-        that identifies the connection to the  device itself, for example
+        `VISA resource string that identifies the connection to the  device itself, for example
         "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
        :param eoi: Enable or disable EOI assertion.
@@ -61,8 +62,6 @@ class NI_GPIB_232(VISAAdapter):
          adapter2 = adapter.gpib(9)
          multimeter = Keithley2000(adapter2)  # at GPIB address 9
 
-       TODO:
-         add specifics on the RS232 parameter settings
 
     """
 
@@ -79,17 +78,18 @@ class NI_GPIB_232(VISAAdapter):
             **kwargs,
         )
         self.address = address
-        super().write("EOS D")
-        super().write("STAT")
+        self.connection.write("EOS D")
+        self.connection.write("STAT")
         self._check_errors()
 
         if not isinstance(resource_name, NI_GPIB_232):
             self.eoi = eoi
-        super().flush_read_buffer()
+        self.flush_read_buffer()
 
     class GPIBStatus(IntFlag):
-        """Enum element for GIBP  status bit decoding"""
+        """Enum element for GIBP status bit decoding
 
+        """
         ERR = 32768  # Error detected
         TIMO = 16384  # Time out
         END = 8192  # EOI or EOS detected
@@ -106,8 +106,9 @@ class NI_GPIB_232(VISAAdapter):
         SCAS = 1  # Device Clear active status
 
     class GPIBError(Flag):
-        """Enum element for GIBP  error bit decoding"""
+        """Enum element for GIBP error bit decoding
 
+        """
         ECMD = 17  # unregcognized command
         # 15-16 servered
         EBUS = 14  # Command bytes could not be sent
@@ -123,8 +124,9 @@ class NI_GPIB_232(VISAAdapter):
         NGER = 0  # No error condition
 
     class SERIALError(Flag):
-        """Enum element for serial  error bit decoding"""
+        """Enum element for serial error bit decoding
 
+        """
         EFRM = 4  # Serial port framing error
         EOFL = 3  # Serial port receive buffer overflow
         EORN = 2  # Serial port overrrun error
@@ -136,10 +138,10 @@ class NI_GPIB_232(VISAAdapter):
         Method to decode the status data reported from the device.
 
         """
-        super().write("stat n")
+        self.connection.write("stat n")
         if self.connection.bytes_in_buffer == 0:
             time.sleep(0.125)
-        ret_val = super().read_bytes(self.connection.bytes_in_buffer)
+        ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
         if len(ret_val) <= 3:
             log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
             return
@@ -161,11 +163,82 @@ class NI_GPIB_232(VISAAdapter):
         if bool(gpib_stat & self.GPIBStatus.ERR) is True:
             log.critical(f"Error {self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
 
+    def _read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
+
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (excluding read_termination).
+        """
+        # log.debug("reading")
+        self.flush_read_buffer()
+        self.connection.write(f"rd #255 {self.address}")
+        time.sleep(0.050)
+        ret_val = self.connection.read()
+        if ret_val != "0":
+            ret_len = self.connection.read()
+            log.debug(f"length of read {ret_len}")
+            self._check_errors()
+        return ret_val
+
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
+        """Read bytes from the instrument.
+
+        :param count: number of bytes to be read. A value of -1 indicates to
+            read from the whole read buffer (defined with the chunk_size).
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param kwargs: Keyword arguments for the connection itself.
+        :returns bytes: response of the instrument.
+        """
+        # log.debug("read bytes..")
+        if count == -1:
+            count = self.connection.chunk_size - 1
+        self.flush_read_buffer()
+        self.connection.write(f"rd #{count} {self.address}")
+        time.sleep(0.050)
+        ret_val = self.connection.read_bytes(count, break_on_termchar, **kwargs)
+        time.sleep(0.050)
+        ret_len = self.connection.read()
+        log.debug(f"length of bytes read {ret_len}")
+        self._check_errors()
+        return ret_val
+
+    def _write(self, command, **kwargs):
+        """Write a string to the instrument appending `write_termination`.
+
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        self.flush_read_buffer()
+        self.connection.write(f"wrt {self.address} \n  {command}", **kwargs)
+        time.sleep(0.050)
+        self._check_errors()
+        self.flush_read_buffer()
+
+    def _write_bytes(self, content, **kwargs):
+        """Write byte to the instrument appending `write_termination`.
+
+        :param str content: string to be sent to the instrument (without termination).
+        :param kwargs: Keyword arguments for the connection itself.
+        """
+        self.flush_read_buffer()
+        self.connection.write(f"wrt {self.address} \n  {content}", **kwargs)
+        time.sleep(0.050)
+        self._check_errors()
+        self.flush_read_buffer()
+
     def assert_trigger(self):
         """
         Initiate a GPIB trigger-event
         """
-        super().write(f"trg {self.address}")
+        self.connection.write(f"trg {self.address}")
+
+    def clear(self):
+        """
+        Clear specified device.
+
+        """
+        self.connection.write(f"clr  {self.address}")
 
     @property
     def eoi(self):
@@ -175,135 +248,12 @@ class NI_GPIB_232(VISAAdapter):
         Some instruments require EOI signal to be
         asserted in order to properly detect the end of a command.
         """
-        super().write("EOT")
-        return bool(int(super().read()))
+        self.connection.write("EOT")
+        return bool(int(self.connection.read()))
 
     @eoi.setter
     def eoi(self, value):
-        super().write(f"EOT {int(value)}")
-
-    # TODO: verification needed
-    @property
-    def time_out(self):
-        """Control control the GPIB timeout.
-        Valid value range 0.0001 to 3600s
-        """
-        super().write("tmo")
-        ret_val = super().read().split(",")
-        return float(ret_val[0])
-
-    @time_out.setter
-    def time_out(self, value):
-        if value >= 0.0001:
-            if value < 1:
-                super().write(f"tmo {value:.4f}")
-            elif value <= 3600:
-                super().write(f"tmo {int(value)}")
-            else:
-                raise ValueError(f"timeout value out of range! {value}")
-
-    @property
-    def version(self):
-        """Get the version string of the NI GPIB-232-CT."""
-        super().flush_read_buffer()
-        super().write("id \r")
-        time.sleep(0.02)
-        return super().read_bytes(71).decode()
-
-    def clear(self):
-        """
-        Clear specified device.
-
-        """
-        super().write(f"clr  {self.address}")
-
-    def send_command(self, data: bytes):
-        """
-        Write GPIB command bytes on the bus.
-
-        """
-        super().write(f"cmd  #{len(data)}\n {data}")
-        self._check_errors()
-
-    def pass_control(self, primary_address: int, secondary_address: int):
-        """
-        Pass control to drevice with primary_address and optional secondary_address
-
-        """
-        super().write(f"pct  {primary_address}+{secondary_address}")
-
-    def set_rsc(self):
-        """
-        set the NI-GPIB232ct to become the GPIB system controller
-
-        """
-        super().write("rsc  1")
-
-    def send_ifc(self):
-        """Pulse the interface clear line (IFC) for at least 200 microseconds."""
-        super().write("sic 0.0002")
-
-    def write(self, command, **kwargs):
-        """Write a string to the instrument appending `write_termination`.
-
-        :param str command: Command string to be sent to the instrument
-            (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
-        """
-        super().flush_read_buffer()
-        super().write(f"wrt {self.address} \n  {command}", **kwargs)
-        time.sleep(0.050)
-        self._check_errors()
-        super().flush_read_buffer()
-
-    def write_bytes(self, content, **kwargs):
-        """Write byte to the instrument appending `write_termination`.
-
-        :param str content: string to be sent to the instrument (without termination).
-        :param kwargs: Keyword arguments for the connection itself.
-        """
-        super().flush_read_buffer()
-        super().write(f"wrt {self.address} \n  {content}", **kwargs)
-        time.sleep(0.050)
-        self._check_errors()
-        super().flush_read_buffer()
-
-    def read(self, **kwargs):
-        """Read up to (excluding) `read_termination` or the whole read buffer.
-
-        :param kwargs: Keyword arguments for the connection itself.
-        :returns str: ASCII response of the instrument (excluding read_termination).
-        """
-        # log.debug("reading")
-        super().flush_read_buffer()
-        super().write(f"rd #255 {self.address}")
-        time.sleep(0.050)
-        ret_val = super().read()
-        if ret_val != "0":
-            ret_len = super().read()
-            log.debug(f"length of read {ret_len}")
-            self._check_errors()
-        return ret_val
-
-    def read_bytes(self, count, **kwargs):
-        """Read bytes from the instrument.
-
-        :param count:  number of bytes to be read.
-        :param kwargs: Keyword arguments for the connection itself.
-        :returns bytes: response of the instrument.
-        """
-        # log.debug("read bytes..")
-        if count == -1:
-            count = self.connection.chunk_size - 1
-        super().flush_read_buffer()
-        super().write(f"rd #{count} {self.address}")
-        time.sleep(0.050)
-        ret_val = super().read_bytes(count, kwargs)
-        time.sleep(0.050)
-        ret_len = super().read()
-        log.debug(f"length of bytes read {ret_len}")
-        self._check_errors()
-        return ret_val
+        self.connection.write(f"EOT {int(value)}")
 
     def gpib(self, address, **kwargs):
         """Return a NI_GPIB_232 object that references the GPIB
@@ -316,6 +266,57 @@ class NI_GPIB_232(VISAAdapter):
         """
         return NI_GPIB_232(self, address, **kwargs)
 
+    def pass_control(self, primary_address: int, secondary_address: int):
+        """
+        Pass control to drevice with primary_address and optional secondary_address
+
+        """
+        self.connection.write(f"pct  {primary_address}+{secondary_address}")
+
+    def send_command(self, data: bytes):
+        """
+        Write GPIB command bytes on the bus.
+
+        """
+        self.connection.write(f"cmd  #{len(data)}\n {data}")
+        self._check_errors()
+
+    def set_rsc(self):
+        """
+        set the NI-GPIB232ct to become the GPIB system controller
+
+        """
+        self.connection.write("rsc  1")
+
+    def send_ifc(self):
+        """Pulse the interface clear line (IFC) for at least 200 microseconds."""
+        self.connection.write("sic 0.0002")
+
+    @property
+    def time_out(self):
+        """Control control the GPIB timeout.
+        Valid value range 0.0001 to 3600s
+        """
+        self.connection.write("tmo")
+        ret_val = self.connection.read().split(",")
+        return float(ret_val[0])
+
+    @time_out.setter
+    def time_out(self, value):
+        value = strict_range(value, [0.0001, 3600])
+        if value < 1:
+            self.connection.write(f"tmo {value:.4f}")
+        elif value <= 3600:
+            self.connection.write(f"tmo {int(value)}")
+
+    @property
+    def version(self):
+        """Get the version string of the NI GPIB-232-CT."""
+        self.flush_read_buffer()
+        self.connection.write("id \r")
+        time.sleep(0.02)
+        return self.connection.read_bytes(71).decode()
+
     def wait_for_srq(self, timeout=20, delay=0.1):
         """Blocks until a SRQ, and leaves the bit high
 
@@ -324,15 +325,16 @@ class NI_GPIB_232(VISAAdapter):
         """
         stop = time.perf_counter() + timeout
         while time.perf_counter() < stop:
-            super().write(f"rsp {self.address}")
+            self.connection.write(f"rsp {self.address}")
             if self.connection.bytes_in_buffer == 0:
                 time.sleep(delay)
             if self.connection.bytes_in_buffer >= 1:
-                ret_val = super().read_bytes(self.connection.bytes_in_buffer)
+                ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
                 if int(ret_val) > 0:
                     return int(ret_val)
                 if int(ret_val) == -1:
                     raise TimeoutError(f"Waiting for SRQ timed out after {timeout}")
+        return None
 
     def __repr__(self):
         if self.address is not None:
