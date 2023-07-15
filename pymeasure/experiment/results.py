@@ -145,12 +145,17 @@ class ResultsBase:
     HANDLER = None
     FORMATTER = None
 
-    def __init__(self, procedure, resource_specifier):
+    def __init__(self, procedure, resource_specifier, **kwargs):
 
         self.procedure = procedure
         self.procedure_class = procedure.__class__
         self.parameters = procedure.parameter_objects()
         self._data = None
+
+        if 'routine' in kwargs.keys():
+            self.routine = kwargs.pop('routine')
+        else:
+            self.routine = None
 
     def __getstate__(self):
         # Get all information needed to reconstruct procedure
@@ -246,11 +251,11 @@ class FileBasedResults(ResultsBase):
 
     """
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure, data_filename, **kwargs):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
 
-        super().__init__(procedure, data_filename)
+        super().__init__(procedure, data_filename, **kwargs)
 
         if isinstance(data_filename, (list, tuple)):
             data_filenames, data_filename = data_filename, data_filename[0]
@@ -387,7 +392,7 @@ class CSVResults(FileBasedResults):
 
         self._header_count = -1
         self.FORMATTER = CSVFormatter(columns=procedure.DATA_COLUMNS)
-        super().__init__(procedure, data_filename)
+        super().__init__(procedure, data_filename, **kwargs)
 
 
 
@@ -669,12 +674,12 @@ class JSONResults(FileBasedResults):
     HANDLER = JSONFileHandler
     FORMATTER = None
 
-    def __init__(self, procedure, data_filename,**kwargs):
+    def __init__(self, procedure, data_filename, **kwargs):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
         self.FORMATTER = None
-        super().__init__(procedure, data_filename)
+        super().__init__(procedure, data_filename, **kwargs)
 
     def create_header(self):
         """Returns a JSON string to accompany datafile so that the procedure can be
@@ -816,12 +821,12 @@ class FeatherResults(FileBasedResults):
     HANDLER = FeatherFileHandler
     FORMATTER = FeatherFormatter
 
-    def __init__(self, procedure, data_filename,**kwargs):
+    def __init__(self, procedure, data_filename, **kwargs):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
         self.FORMATTER = None#self.FORMATTER(procedure=self.procedure)
-        super().__init__(procedure, data_filename)
+        super().__init__(procedure, data_filename, **kwargs)
 
     def create_header(self):
         """Returns a JSON string to accompany datafile so that the procedure can be
