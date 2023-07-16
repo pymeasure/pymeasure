@@ -141,6 +141,7 @@ class NI_GPIB_232(VISAAdapter):
         if self.connection.bytes_in_buffer == 0:
             time.sleep(0.125)
         ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
+        log.debug(f"read: {ret_val}")
         if len(ret_val) <= 3:
             log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
             return
@@ -195,6 +196,7 @@ class NI_GPIB_232(VISAAdapter):
         self.connection.write(f"rd #{count} {self.address}")
         time.sleep(0.050)
         ret_val = self.connection.read_bytes(count, break_on_termchar, **kwargs)
+        log.debug(f"read: {ret_val}")
         time.sleep(0.050)
         ret_len = self.connection.read()
         log.debug(f"length of bytes read {ret_len}")

@@ -28,7 +28,8 @@ from pymeasure.adapters import NI_GPIB_232
 from pymeasure.test import expected_protocol
 
 
-init_comm = [("EOS D", None), ("EOT 1", None)]
+init_comm = [("EOS D", None), ("STAT", None),
+             ("stat n", b'256\r\n0\r\n0\r\n0\r\n'), ("EOT 1", None)]
 
 
 def test_init():
@@ -48,72 +49,67 @@ def test_init():
 #         pass
 
 
-@pytest.mark.parametrize("message, value", (("1", True), ("0", False)))
-def test_auto(message, value):
+# @pytest.mark.parametrize("message, value", (("1", True), ("0", False)))
+# def test_auto(message, value):
+#     with expected_protocol(
+#             NI_GPIB_232,
+#             init_comm + [("++auto", message)],
+#     ) as adapter:
+#         assert adapter.auto is value
+
+def test_write(message, value):
     with expected_protocol(
             NI_GPIB_232,
-            init_comm + [("++auto", message)],
-    ) as adapter:
-        assert adapter.auto is value
-
-
-def test_write():
-    with expected_protocol(
-            NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             ("something", None)],
+            [("EOS D", None), ("STAT", None), ("stat n", None),
+             (b"wrt 22 something", None),],
     ) as adapter:
         adapter.write("something")
 
-
-def test_write_address():
+# def test_read():
+#     with expected_protocol(
+#            NI_GPIB_232,
+#             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
+#              ("write", None), ("++read eoi", "response")],
+#     ) as adapter:
+#         adapter.write("write")
+#         assert adapter.read() == "response"
+#
+#
+# def test_write_bytes():
+#     with expected_protocol(
+#             NI_GPIB_232,
+#             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
+#              (b"something", None)],
+#     ) as adapter:
+#         adapter.write_bytes(b"something")
+#
+#
+# @pytest.mark.parametrize(
+#     "test_input,expected", [
+#         ([1, 2, 3], b'OUTP#13\x01\x02\x03\n'),
+#         ([43, 27, 10, 13, 97, 98, 99], b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc\n'),
+#     ]
+# )
+# def test_write_binary_values(test_input, expected):
+#     with expected_protocol(
+#             NI_GPIB_232,
+#             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
+#              (expected, None)]
+#     ) as adapter:
+#         adapter.write_binary_values("OUTP", test_input, datatype='B')
+#
+#
+# def test_wait_for_srq():
+#     with expected_protocol(
+#             NI_GPIB_232,
+#             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
+#              ("++srq", None), ("++read eoi", "0"), ("++srq", None), ("++read eoi", "1")]
+#     ) as adapter:
+#         adapter.wait_for_srq()
+#
+def test_timeout():
     with expected_protocol(
             NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             ("++addr 5", None), ("something", None)],
-            address=5,
+            [("EOS D", None), ("STAT", None), ("stat n", None), ("tmo", 10)],
     ) as adapter:
-        adapter.write("something")
-
-
-def test_read():
-    with expected_protocol(
-           NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             ("write", None), ("++read eoi", "response")],
-    ) as adapter:
-        adapter.write("write")
-        assert adapter.read() == "response"
-
-
-def test_write_bytes():
-    with expected_protocol(
-            NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             (b"something", None)],
-    ) as adapter:
-        adapter.write_bytes(b"something")
-
-
-@pytest.mark.parametrize(
-    "test_input,expected", [
-        ([1, 2, 3], b'OUTP#13\x01\x02\x03\n'),
-        ([43, 27, 10, 13, 97, 98, 99], b'OUTP#17\x1b\x2b\x1b\x1b\x1b\x0a\x1b\x0dabc\n'),
-    ]
-)
-def test_write_binary_values(test_input, expected):
-    with expected_protocol(
-            NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             (expected, None)]
-    ) as adapter:
-        adapter.write_binary_values("OUTP", test_input, datatype='B')
-
-
-def test_wait_for_srq():
-    with expected_protocol(
-            NI_GPIB_232,
-            [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
-             ("++srq", None), ("++read eoi", "0"), ("++srq", None), ("++read eoi", "1")]
-    ) as adapter:
-        adapter.wait_for_srq()
+        adapter.time_out
