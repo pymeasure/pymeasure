@@ -36,4 +36,10 @@ class TeledyneHDO6xxx(TeledyneMAUI):
     All functionality is inherited from the base class.
     """
 
-    channels = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, (1, 2, 3, 4))
+    ch_1 = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(TeledyneHDO6xxxChannel, 4)

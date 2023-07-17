@@ -106,7 +106,13 @@ class TeledyneMAUI(TeledyneOscilloscope):
               maui-remote-control-automation_27jul22.pdf
     """
 
-    channels = Instrument.ChannelCreator(TeledyneMAUIChannel, (1, 2, 3, 4))
+    ch_1 = Instrument.ChannelCreator(TeledyneMAUIChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(TeledyneMAUIChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(TeledyneMAUIChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(TeledyneMAUIChannel, 4)
 
     # Change listed values for existing commands:
     bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS

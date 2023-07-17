@@ -462,7 +462,13 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     WRITE_INTERVAL_S = 0.02  # seconds
 
-    channels = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, (1, 2, 3, 4))
+    ch_1 = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(TeledyneOscilloscopeChannel, 4)
 
     def __init__(self, adapter, name="Teledyne Oscilloscope", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
