@@ -43,8 +43,7 @@ class NI_GPIB_232(VISAAdapter):
        Connection sharing is achieved by using the :meth:`.gpib`
        method to spawn new NI_GPIB_232s for different GPIB addresses.
 
-       :param resource_name: A VISA resource string that identifies the connection
-       to the  device itself, for example "ASRL5" for the 5th COM port.
+       :param resource_name: A VISA resource string that identifies the connection to the device itself, for example "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
        :param eoi: Enable or disable EOI assertion.
        :param kwargs: Key-word arguments if constructing a new serial object
@@ -158,7 +157,7 @@ class NI_GPIB_232(VISAAdapter):
         except ValueError:
             g_s = ret_val[: ret_val.find(b"\r")]
             gpib_stat = self.GPIBStatus(int(g_s))
-            log.warning(f" ACHTUNG! {gpib_stat!a}  \r\n")
+            log.warning(f"ACHTUNG! {gpib_stat!a} \r\n")
         # Error handling
         if bool(gpib_stat & self.GPIBStatus.ERR) is True:
             log.critical(f"Error {self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
@@ -211,7 +210,7 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         self.flush_read_buffer()
-        self.connection.write(f"wrt {self.address} \n  {command}", **kwargs)
+        self.connection.write(f"wrt {self.address} \n {command}", **kwargs)
         time.sleep(0.050)
         self._check_errors()
         self.flush_read_buffer()
@@ -223,14 +222,14 @@ class NI_GPIB_232(VISAAdapter):
         :param kwargs: Keyword arguments for the connection itself.
         """
         self.flush_read_buffer()
-        self.connection.write(f"wrt {self.address} \n  {content}", **kwargs)
+        self.connection.write(f"wrt {self.address} \n {content}", **kwargs)
         time.sleep(0.050)
         self._check_errors()
         self.flush_read_buffer()
 
     def assert_trigger(self):
         """
-        Initiate a GPIB trigger-event
+        Initiate a GPIB trigger-event.
         """
         self.connection.write(f"trg {self.address}")
 
@@ -239,7 +238,7 @@ class NI_GPIB_232(VISAAdapter):
         Clear specified device.
 
         """
-        self.connection.write(f"clr  {self.address}")
+        self.connection.write(f"clr {self.address}")
 
     @property
     def eoi(self):
@@ -259,7 +258,7 @@ class NI_GPIB_232(VISAAdapter):
     def gpib(self, address, **kwargs):
         """Return a NI_GPIB_232 object that references the GPIB
         address specified, while sharing the Serial connection with other
-        calls of this function
+        calls of this function.
 
         :param address: Integer GPIB address of the desired instrument
         :param kwargs: Arguments for the initialization
@@ -269,41 +268,41 @@ class NI_GPIB_232(VISAAdapter):
 
     def pass_control(self, primary_address: int, secondary_address: int):
         """
-        Pass control to drevice with primary_address and optional secondary_address
+        Pass control to device with primary_address and optional secondary_address.
 
         """
-        self.connection.write(f"pct  {primary_address}+{secondary_address}")
+        self.connection.write(f"pct {primary_address}+{secondary_address}")
 
     def send_command(self, data: bytes):
         """
         Write GPIB command bytes on the bus.
 
         """
-        self.connection.write(f"cmd  #{len(data)}\n {data}")
+        self.connection.write(f"cmd #{len(data)}\n {data}")
         self._check_errors()
 
     def set_rsc(self):
         """
-        set the NI-GPIB232ct to become the GPIB system controller
+        Set the NI-GPIB232ct to become the GPIB system controller.
 
         """
-        self.connection.write("rsc  1")
+        self.connection.write("rsc 1")
 
     def send_ifc(self):
         """Pulse the interface clear line (IFC) for at least 200 microseconds."""
         self.connection.write("sic 0.0002")
 
     @property
-    def time_out(self):
-        """Control control the GPIB timeout.
+    def timeout(self):
+        """Control the GPIB timeout.
         Valid value range 0.0001 to 3600s
         """
         self.connection.write("tmo")
         ret_val = self.connection.read().split(",")
         return float(ret_val[0])
 
-    @time_out.setter
-    def time_out(self, value):
+    @timeout.setter
+    def timeout(self, value):
         value = strict_range(value, [0.0001, 3600])
         if value < 1:
             self.connection.write(f"tmo {value:.4f}")

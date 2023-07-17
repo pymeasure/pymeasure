@@ -21,7 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
 import pytest
 
 from pymeasure.adapters import NI_GPIB_232
@@ -107,9 +106,11 @@ def test_write(message, value):
 #     ) as adapter:
 #         adapter.wait_for_srq()
 #
-def test_timeout():
+
+
+def test_timeout_get():
     with expected_protocol(
             NI_GPIB_232,
             [("EOS D", None), ("STAT", None), ("stat n", None), ("tmo", 10)],
     ) as adapter:
-        adapter.time_out
+        adapter.timeout
