@@ -346,12 +346,54 @@ class BN675_AWG(Instrument):
         """ Integer atrribute to control the length of the sequence table for all channels""",
     )
 
+    digital_n = Instrument.control(
+        "DIG:NUM?", "DIG:NUM %d",
+        """ Integer value number of digital channels enabled""",
+    )
 
+    digital_v_1 = Instrument.control(
+        "DIG:LEV1?", "DIG:LEV1 %f",
+        """Output level of Digital Pod A""",
+    )
+
+    digital_v_2 = Instrument.control(
+        "DIG:LEV2?", "DIG:LEV2 %f",
+        """Output level of Digital Pod B""",
+    )
+
+    digital_v_3 = Instrument.control(
+        "DIG:LEV3?", "DIG:LEV3 %f",
+        """Output level of Digital Pod C""",
+    )
+
+    digital_v_4 = Instrument.control(
+        "DIG:LEV4?", "DIG:LEV4 %f",
+        """Output level of Digital Pod D""",
+    )
+
+    digital_skew_1 = Instrument.control(
+        "DIG:SKEW1?", "DIG:SKEW1 %f",
+        """Clock skew of Digital Pod A""",
+    )
+
+    digital_skew_2 = Instrument.control(
+        "DIG:SKEW2?", "DIG:SKEW2 %f",
+        """Clock skew of Digital Pod B""",
+    )
+
+    digital_skew_3 = Instrument.control(
+        "DIG:SKEW3?", "DIG:SKEW3 %f",
+        """Clock skew of Digital Pod C""",
+    )
+
+    digital_skew_4 = Instrument.control(
+        "DIG:SKEW4?", "DIG:SKEW1 %4",
+        """Clock skew of Digital Pod D""",
+    )
 
     @property
     def waveform_list(self):
         return self.ask('WLIST:LIST?').split(',')
-
 
 
     def __init__(self, adapter, **kwargs):
@@ -470,7 +512,8 @@ class BN675_AWG(Instrument):
         self.write('WLIST:WAV:DEL ALL')
 
 
-    def transfer_and_load(self, array, wfname, efficient=False,cautious=True):
+    # todo add digital flag to the end of it
+    def transfer_and_load(self, array, wfname, efficient=False,cautious=True, wftype='analog'):
         """
         Creates a file in the 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\' directory
          with the filename wfname + '.txt' out of the input array (must be a single column).
@@ -486,16 +529,19 @@ class BN675_AWG(Instrument):
                 self.delete_waveform(wfname)
                 self.delete_waveform_file(wfname)
         self.transfer_array(array, wfname)
-        self.load_waveform_from_file(wfname, self.default_dir+wfname)
+        self.load_waveform_from_file(wfname, self.default_dir+wfname, wftype)
 
 
-    def load_waveform_from_file(self, name, pathtofile):
+    def load_waveform_from_file(self, name, pathtofile, wftype):
         #todo implement analog, digital specification
 
         """
         Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
         """
-        self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt"))
+        if wftype == 'digital':
+            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt"))
+        else:
+            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name, pathtofile + ".txt,DIG"))
 
     def change_directory(self, directory):
         self.write('MMEM:CDIR \"%s\"' % directory)
