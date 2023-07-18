@@ -2,6 +2,10 @@ Upcoming version
 ================
 - Added a test generator, which observes the communication with an actual device and writes protocol tests accordingly.
 
+Deprecated features
+-------------------
+- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead.
+
 
 Version 0.12.0 (2023-07-05)
 ===========================
