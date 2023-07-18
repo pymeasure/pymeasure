@@ -793,10 +793,9 @@ class FeatherFileHandler(logging.FileHandler):
         step is to re-extract the dict. Then we check various conditions. The end result is a file with a
         single (possibly updated) dictionary of dictionaries. Because it is json we can't just append, we have
         to rewrite the whole file. There may be a reason you want this so it is included."""
+
         arrow_table = feather.read_table(self.baseFilename)
         header = arrow_table.schema.metadata[b'header']
-
-
         olddata = arrow_table.to_pandas()
 
         one_record = record[list(record.keys())[0]]
@@ -821,9 +820,11 @@ class FeatherResults(FileBasedResults):
     HANDLER = FeatherFileHandler
     FORMATTER = FeatherFormatter
 
-    def __init__(self, procedure, data_filename, **kwargs):
+    def __init__(self, procedure, data_filename, handler=None, **kwargs):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
+        if handler is not None:
+            self.HANDLER = handler
         self.procedure = procedure
         self.FORMATTER = None#self.FORMATTER(procedure=self.procedure)
         super().__init__(procedure, data_filename, **kwargs)
