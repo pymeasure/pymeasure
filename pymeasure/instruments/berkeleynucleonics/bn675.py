@@ -391,6 +391,14 @@ class BN675_AWG(Instrument):
         """Clock skew of Digital Pod D""",
     )
 
+    digital_state = Instrument.control(
+        "DIG:STAT?", "DIG:STAT %s",
+        """ Digital State
+        """,
+        validator=strict_discrete_set,
+        values=['OFF', 'ON'],
+    )
+
     @property
     def waveform_list(self):
         return self.ask('WLIST:LIST?').split(',')
@@ -470,7 +478,6 @@ class BN675_AWG(Instrument):
                 return
 
 
-
     def opc(self):
         return int(self.ask("*OPC?"))
 
@@ -512,7 +519,6 @@ class BN675_AWG(Instrument):
         self.write('WLIST:WAV:DEL ALL')
 
 
-    # todo add digital flag to the end of it
     def transfer_and_load(self, array, wfname, efficient=False,cautious=True, wftype='analog'):
         """
         Creates a file in the 'C:\\Users\\AWG3000\\Pictures\\Saved Pictures\\' directory
@@ -539,9 +545,9 @@ class BN675_AWG(Instrument):
         Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
         """
         if wftype == 'digital':
-            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt"))
+            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt,DIG"))
         else:
-            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name, pathtofile + ".txt,DIG"))
+            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name, pathtofile + ".txt"))
 
     def change_directory(self, directory):
         self.write('MMEM:CDIR \"%s\"' % directory)
