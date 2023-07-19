@@ -214,7 +214,7 @@ class ManagedConsole(QtCore.QCoreApplication):
                 if not (opt_name in parser.special_options):
                     self.parameter_values[name] = args[name]
 
-        if (progressbar and not args['no_progressbar']):
+        if progressbar and not args['no_progressbar']:
             progressbar.streams.wrap_stderr()
             self.bar = progressbar.ProgressBar(max_value=100,
                                                prefix='{variables.status}: ',
