@@ -21,29 +21,35 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
+import clr
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericMotorCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\ThorLabs.MotionControl.KCube.PiezoCLI.dll")
+from Thorlabs.MotionControl.DeviceManagerCLI import *
+from Thorlabs.MotionControl.GenericMotorCLI import *
+from Thorlabs.MotionControl.KCube.PiezoCLI import *
+from System import Decimal  # necessary for real world units
+
 import logging
-
-from .adapter import Adapter, FakeAdapter
-
-from .protocol import ProtocolAdapter
-
-from pymeasure.adapters.telnet import TelnetAdapter
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
 
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
+class ThorlabsKPZ101(Instrument):
 
-try:
-    from pymeasure.adapters.vxi11 import VXI11Adapter
-except ImportError:
-    log.warning("VXI-11 library could not be loaded")
+    def __init__(self, adapter, name="Thorlabs KPZ101", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+        print(adapter)
+        DeviceManagerCLI.BuildDeviceList()
+
+        device = KCubePiezo.CreateKCubePiezo(adapter['serial_number'])
+        device.Connect(adapter['serial_number'])
+        device_info = device.GetDeviceInfo()
