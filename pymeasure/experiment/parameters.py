@@ -48,7 +48,7 @@ class Parameter:
         self.name = name
         self._value = None
         if default is not None:
-            self._value = self.convert(default)
+            self.value = default
         self.default = default
         self.ui_class = ui_class
         self._help_fields = [('units are', 'units'), 'default']
