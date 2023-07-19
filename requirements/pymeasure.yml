@@ -18,8 +18,8 @@ dependencies:
   - pytest=7.2.0
   - flake8=6.0.0
   - setuptools_scm # don't pin, to get newest features
-  - sphinx=4.3.1
-  - sphinx_rtd_theme=1.0.0
+  - sphinx=6.2.1
+  - sphinx_rtd_theme=1.2.2
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
     - pyvisa-sim==0.4.0
