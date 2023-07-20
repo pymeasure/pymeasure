@@ -424,6 +424,10 @@ class BN675_AWG(Instrument):
         for i in range(num_chan//2):
             setattr(self, f'marker{i+1}', Marker(self, i+1))
 
+        # n_dig = int(self.ask("AWGControl:CONFigure:DNUMber?"))
+        # if n_dig > 0:
+        #     setattr(self, f'dig', Digital(self)) # todo maybe just use regular channel? or wrap Channel with Digital
+
     def beep(self):
         self.write("system:beep")
 
@@ -545,7 +549,7 @@ class BN675_AWG(Instrument):
         Loads a waveform at pathtofile to the waveform list with name. The default behavior assumes analog data
         """
         if wftype == 'digital':
-            self.write("wlist:waveform:import \"%s\",\"%s\"" % (name,pathtofile+".txt,DIG"))
+            self.write("wlist:waveform:import \"%s\",\"%s\", DIG" % (name,pathtofile+".txt"))
         else:
             self.write("wlist:waveform:import \"%s\",\"%s\"" % (name, pathtofile + ".txt"))
 
