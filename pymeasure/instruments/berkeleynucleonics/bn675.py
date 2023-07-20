@@ -424,9 +424,14 @@ class BN675_AWG(Instrument):
         for i in range(num_chan//2):
             setattr(self, f'marker{i+1}', Marker(self, i+1))
 
-        # n_dig = int(self.ask("AWGControl:CONFigure:DNUMber?"))
-        # if n_dig > 0:
-        #     setattr(self, f'dig', Digital(self)) # todo maybe just use regular channel? or wrap Channel with Digital
+        n_dig = int(self.ask("AWGControl:CONFigure:DNUMber?"))
+        if n_dig > 0:
+            setattr(self, f'ch9', Channel(self, 9,
+                                             trigger=self.trigger,
+                                             wait_for_trigger=self.wait_for_trigger,
+                                              start_awg = self.start_awg,
+                                              stop_awg = self.stop_awg))
+            self.mapper[9] = getattr(self, f'ch9')
 
     def beep(self):
         self.write("system:beep")
