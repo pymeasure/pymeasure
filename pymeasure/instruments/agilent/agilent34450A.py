@@ -161,7 +161,7 @@ class Agilent34450A(Instrument):
         can take values 100E-3, 1, 10, 100, 1000, as well as "MIN", "MAX", or
         "DEF" (10 V). Auto-range is disabled when this property is set. """,
         validator=strict_discrete_set,
-        values=[100E-3, 1, 10, 100, 1000, "MAX", "MIN", "DEF"]
+        values=[0.1, 1, 10, 100, 1000, "MAX", "MIN", "DEF"]
     )
     voltage_auto_range = Instrument.control(
         ":SENS:VOLT:RANG:AUTO?", ":SENS:VOLT:RANG:AUTO %d",
@@ -172,11 +172,11 @@ class Agilent34450A(Instrument):
     )
     voltage_resolution = Instrument.control(
         ":SENS:VOLT:RES?", ":SENS:VOLT:RES %s",
-        """ A property that controls the resolution in the DC voltage
-        readings, which can take values 3.00E-5, 2.00E-5, 1.50E-6 (5 1/2 digits),
-        as well as "MIN", "MAX", or "DEF" (1.50E-6). """,
+        """ A property that controls the speed and resolution in the DC voltage
+        readings. Can take the values , which can take values MIN|SLOW|DEF (~1Hz, 5.5 digits), 
+        MED (~50Hz, 4.5 digits), MAX|FAST (~100Hz, 4.5 digits).  """,
         validator=strict_discrete_set,
-        values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
+        values=["MIN", "SLOW", "DEF", "MED", "MAX", "FAST"]
     )
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
