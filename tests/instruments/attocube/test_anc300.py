@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import pytest
+
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.attocube import ANC300Controller
@@ -46,7 +48,20 @@ def test_stepu():
         passwd=passwd,
     ) as instr:
         instr.a.mode = "stp"
-        instr.a.stepu = 15
+        with pytest.warns(FutureWarning):
+            instr.a.stepu = 15
+
+
+def test_continuous_move():
+    """Test a continous move setting."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [("setm 3 stp", "OK"), ("stepd 3 c", "OK"), ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.c.mode = "stp"
+        instr.c.move_raw(float('-inf'))
 
 
 def test_capacity():
@@ -87,6 +102,19 @@ def test_measure_capacity():
         passwd=passwd,
     ) as instr:
         assert instr.a.measure_capacity() == 1020.173401
+
+
+def test_move_raw():
+    """Test a raw movement."""
+    with expected_protocol(
+        ANC300Controller,
+        init_comm + [
+            ("stepd 2 18", "OK"),
+        ],
+        axisnames=["a", "b", "c"],
+        passwd=passwd,
+    ) as instr:
+        instr.b.move_raw(-18)
 
 
 def test_move():
