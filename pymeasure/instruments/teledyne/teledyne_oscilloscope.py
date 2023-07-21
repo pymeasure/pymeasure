@@ -170,6 +170,7 @@ class _ChunkResizer:
         Instrument::adapter attribute.
     :param int chunk_size: new chunk size
     """
+
     def __init__(self, adapter, chunk_size):
         """ Just initialize the object attributes.
         :param: adapter of the instrument. This is usually accessed through the
@@ -264,12 +265,12 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         "TRCP?", "TRCP %s",
         """A string parameter that specifies the input coupling for the selected trigger sources.
 
-        - ``ac``       — AC coupling block DC component in the trigger path, removing dc offset
+        - ac: AC coupling block DC component in the trigger path, removing dc offset
           voltage from the trigger waveform. Use AC coupling to get a stable edge trigger when
           your waveform has a large dc offset.
-        - ``dc``       — DC coupling allows dc and ac signals into the trigger path.
-        - ``lowpass``  — HFREJ coupling places a lowpass filter in the trigger path.
-        - ``highpass`` — LFREJ coupling places a highpass filter in the trigger path.
+        - dc: DC coupling allows dc and ac signals into the trigger path.
+        - lowpass: HFREJ coupling places a lowpass filter in the trigger path.
+        - highpass: LFREJ coupling places a highpass filter in the trigger path.
 
         """,
         validator=strict_discrete_set,
@@ -297,8 +298,17 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """A string parameter that sets the trigger slope of the specified trigger source.
 
         <trig_slope>:={NEG,POS,WINDOW} for edge trigger
-
         <trig_slope>:={NEG,POS} for other trigger
+        
+        +------------+--------------------------------------------------+
+        | parameter  | trigger slope                                    |
+        +------------+--------------------------------------------------+
+        | negative   | Negative slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | positive   | Positive slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | window     | Window slope for edge trigger                    |
+        +------------+--------------------------------------------------+
         """,
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
@@ -859,14 +869,13 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
         :param requested_points: number of points to acquire. If None the number of points
-            requested in the previous call will be assumed, i.e. the value of the number of points
-            stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
+               requested in the previous call will be assumed, i.e. the value of the number of points
+               stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
-            point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
-            i.e. the value of the sparsing stored in the oscilloscope memory.
+               point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
+               i.e. the value of the sparsing stored in the oscilloscope memory.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
-            property for dict format.
-
+                 property for dict format.
         """
         # Sanitize the input arguments
         if not sparsing:
@@ -917,7 +926,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
           Otherwise, the running state shows Ready, and the interface does not display the waveform.
         - stopped : STOP is a part of the option of this command, but not a trigger mode of the
           oscilloscope.
-
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
@@ -985,7 +993,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
           and [2nS, 4.2S] for others.
         - The trigger_select command is switched automatically between the short, normal and
           extended version depending on the number of expected parameters.
-
         """
         return self._trigger_select
 
@@ -1013,14 +1020,14 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
-            [edge,slew,glit,intv,runt,drop]
+               [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
-            trigger)
+               trigger)
         :param slope: trigger slope of the specified trigger source
         """
         if mode is not None:

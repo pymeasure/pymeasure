@@ -133,10 +133,11 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     This implementation is based on the shared base class :class:`TeledyneOscilloscope`.
 
     Attributes:
+
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
         WRITE_INTERVAL_S after the previous one, the code blocks until at least WRITE_INTERVAL_S
         seconds have passed.
-        Because the oscilloscope takes a non neglibile time to perform some operations, it might
+        Because the oscilloscope takes a non-negligible time to perform some operations, it might
         be needed for the user to tweak the sleep time between commands.
         The WRITE_INTERVAL_S is set to 10ms as default however its optimal value heavily depends
         on the actual commands and on the connection type, so it is impossible to give a unique
@@ -190,12 +191,13 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     @property
     def timebase(self):
         """ Read timebase setup as a dict containing the following keys:
+
             - "timebase_scale": horizontal scale in seconds/div (float)
             - "timebase_offset": interval in seconds between the trigger and the reference
-            position (float)
+              position (float)
             - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
             - "timebase_hor_position": horizontal position in the zoomed window in seconds
-            (float)"""
+              (float)"""
         tb_setup = {
             "timebase_scale": self.timebase_scale,
             "timebase_offset": self.timebase_offset,
@@ -316,10 +318,13 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     memory_size = Instrument.control(
         "MSIZ?", "MSIZ %s",
         """ A float parameter that selects the maximum depth of memory.
+        
         <size>:={7K,70K,700K,7M} for non-interleaved mode. Non-interleaved means a single channel is
         active per A/D converter. Most oscilloscopes feature two channels per A/D converter.
+        
         <size>:={14K,140K,1.4M,14M} for interleave mode. Interleave mode means multiple active
-        channels per A/D converter. """,
+        channels per A/D converter.
+        """,
         validator=strict_discrete_set,
         values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
                 14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
@@ -330,6 +335,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     def waveform_preamble(self):
         """ Get preamble information for the selected waveform source as a dict with the
         following keys:
+
         - "type": normal, peak detect, average, high resolution (str)
         - "requested_points": number of data points requested by the user (int)
         - "sampled_points": number of data points sampled by the oscilloscope (int)
@@ -344,7 +350,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         - "sampling_rate": sampling rate (it is a read-only property)
         - "grid_number": number of horizontal grids (it is a read-only property)
         - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
-        "auto", "armed"
+          "auto", "armed"
         - "xdiv": horizontal scale (units per division) in seconds
         - "xoffset": time interval in seconds between the trigger event and the reference position
         - "ydiv": vertical scale (units per division) in Volts
@@ -434,10 +440,16 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         starts a type of delay measurement.
         The MEASURE_DELY? query returns the measured value of delay type.
         The command accepts three arguments with the following syntax:
-        measure_delay = (<type>,<sourceA>,<sourceB>)
-        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
-        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+        
+            measure_delay = (<type>,<sourceA>,<sourceB>)
+            
+            <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
+            
+            <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+
+        ========= ======================================================================
         Type      Description
+        ========= ======================================================================
         PHA       The phase difference between two channels. (rising edge - rising edge)
         FRR       Delay between two channels. (first rising edge - first rising edge)
         FRF       Delay between two channels. (first rising edge - first falling edge)
@@ -447,7 +459,9 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         LRF       Delay between two channels. (first rising edge - last falling edge)
         LFR       Delay between two channels. (first falling edge - last rising edge)
         LFF       Delay between two channels. (first falling edge - last falling edge)
-        Skew      Delay between two channels. (edge – edge of the same type) """,
+        Skew      Delay between two channels. (edge – edge of the same type)
+        ========= ======================================================================
+        """,
         validator=_measure_delay_validator,
         values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
