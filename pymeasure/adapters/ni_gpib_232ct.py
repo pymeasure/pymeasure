@@ -43,7 +43,8 @@ class NI_GPIB_232(VISAAdapter):
        Connection sharing is achieved by using the :meth:`.gpib`
        method to spawn new NI_GPIB_232s for different GPIB addresses.
 
-       :param resource_name: A VISA resource string that identifies the connection to the device itself, for example "ASRL5" for the 5th COM port.
+       :param resource_name: A VISA resource string that identifies the
+       connection to the device itself, for example "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
        :param eoi: Enable or disable EOI assertion.
        :param kwargs: Key-word arguments if constructing a new serial object
