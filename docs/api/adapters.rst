@@ -55,7 +55,8 @@ NI GPIB-232CT adapter
     :undoc-members:
     :inherited-members:
     :show-inheritance:
-
+    :private-members: _format_binary_values
+    
 ==============
 VXI-11 adapter
 ==============
