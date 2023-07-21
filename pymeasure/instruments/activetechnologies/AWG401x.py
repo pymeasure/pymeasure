@@ -32,7 +32,7 @@ from collections import abc, namedtuple
 import pprint
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set,\
+from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range
 
 
@@ -430,7 +430,8 @@ class AWG401x_AFG(AWG401x_base):
         print(wfg.check_errors())       # Get the error queue
 
     """
-    ch = Instrument.ChannelCreator(ChannelAFG, (1, 2))
+    ch_1 = Instrument.ChannelCreator(ChannelAFG, 1)
+    ch_2 = Instrument.ChannelCreator(ChannelAFG, 2)
 
     enabled = Instrument.control(
         "AFGControl:STATus?", "AFGControl:%s",

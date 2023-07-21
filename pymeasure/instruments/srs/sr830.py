@@ -121,14 +121,26 @@ class SR830(Instrument):
         "LIAS?",
         """ Reads the value of the lockin amplifier (LIA) status byte. Returns a binary string with
             positions within the string corresponding to different status flags:
-            bit 0: Input/Amplifier overload
-            bit 1: Time constant filter overload
-            bit 2: Output overload
-            bit 3: Reference unlock
-            bit 4: Detection frequency range switched
-            bit 5: Time constant changed indirectly
-            bit 6: Data storage triggered
-            bit 7: unused
+
+            +----+--------------------------------------+
+            |Bit | Status                               |
+            +====+======================================+
+            | 0  | Input/Amplifier overload             |
+            +----+--------------------------------------+
+            | 1  | Time constant filter overload        |
+            +----+--------------------------------------+
+            | 2  | Output overload                      |
+            +----+--------------------------------------+
+            | 3  | Reference unlock                     |
+            +----+--------------------------------------+
+            | 4  | Detection frequency range switched   |
+            +----+--------------------------------------+
+            | 5  | Time constant changed indirectly     |
+            +----+--------------------------------------+
+            | 6  | Data storage triggered               |
+            +----+--------------------------------------+
+            | 7  | unused                               |
+            +----+--------------------------------------+
             """,
         get_process=lambda s: LIAStatus(int(s)),
     )
@@ -136,16 +148,28 @@ class SR830(Instrument):
     err_status = Instrument.measurement(
         "ERRS?",
         """Reads the value of the lockin error (ERR) status byte. Returns an IntFlag type with
-           positions within the string corresponding to different error flags:
-           bit 0: unused
-           bit 1: backup error
-           bit 2: RAM error
-           bit 3: unused
-           bit 4: ROM error
-           bit 5: GPIB error
-           bit 6: DSP error
-           bit 7: Math error
-           """,
+        positions within the string corresponding to different error flags:
+
+        +----+--------------------------------------+
+        |Bit | Status                               |
+        +====+======================================+
+        | 0  | unused                               |
+        +----+--------------------------------------+
+        | 1  | backup error                         |
+        +----+--------------------------------------+
+        | 2  | RAM error                            |
+        +----+--------------------------------------+
+        | 3  | unused                               |
+        +----+--------------------------------------+
+        | 4  | ROM error                            |
+        +----+--------------------------------------+
+        | 5  | GPIB error                           |
+        +----+--------------------------------------+
+        | 6  | DSP error                            |
+        +----+--------------------------------------+
+        | 7  | DSP error                            |
+        +----+--------------------------------------+
+        """,
         get_process=lambda s: ERRStatus(int(s)),
     )
 

@@ -37,7 +37,6 @@ class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
     def __init__(self, parent, id=None, *args, **kwargs):
-        print(args, kwargs)
         if "test" in kwargs:
             self.test = kwargs.pop("test")
         super().__init__(*args, **kwargs)
@@ -157,11 +156,29 @@ class Child(CommonBase):
         super().__init__()
 
 
-class Parent(CommonBaseTesting):
+class MultiChannelParent(CommonBaseTesting):
     """A Base as a parent"""
-    channels = CommonBase.ChannelCreator(GenericBase, ("A", "B", "C"))
-    analog = CommonBase.ChannelCreator(GenericBase, [1, 2], prefix="an_", test=True)
-    function = CommonBase.ChannelCreator(Child, prefix=None)
+    channels = CommonBase.MultiChannelCreator(GenericBase, ("A", "B", "C"))
+    analog = CommonBase.MultiChannelCreator(GenericBase, [1, 2], prefix="an_", test=True)
+
+
+class SingleChannelParent(CommonBaseTesting):
+    """A Base as a parent"""
+    ch_A = CommonBase.ChannelCreator(GenericBase, "A")
+    ch_B = CommonBase.ChannelCreator(GenericBase, "B")
+    ch_C = CommonBase.ChannelCreator(GenericBase, "C")
+    an_1 = CommonBase.ChannelCreator(GenericBase, 1, collection="analog", test=True)
+    an_2 = CommonBase.ChannelCreator(GenericBase, 2, collection="analog", test=True)
+    function = CommonBase.ChannelCreator(Child)
+
+
+class MixChannelParent(CommonBaseTesting):
+    """A Base as a parent"""
+    channels = CommonBase.MultiChannelCreator(GenericBase, ("A", "B", "C"))
+    ch_D = CommonBase.ChannelCreator(GenericBase, "D")
+    output_Z = CommonBase.ChannelCreator(GenericBase, "Z")
+    analog = CommonBase.MultiChannelCreator(GenericBase, list(range(0, 10)), prefix="an_",
+                                            test=True)
 
 
 # Test dynamic properties
@@ -177,11 +194,45 @@ def test_dynamic_property_fset_unset():
         d.__set__(5, 7)
 
 
-# Test CommonBase Children management
-class TestInitWithChildren:
+# Test CommonBase.MultipleChannelCreator child management
+class TestInitWithMultipleChannelCreator:
     @pytest.fixture()
     def parent(self):
-        return Parent(ProtocolAdapter())
+        return MultiChannelParent(ProtocolAdapter())
+
+    def test_channels(self, parent):
+        assert len(parent.channels) == 3
+        assert parent.ch_A == parent.channels['A']
+        assert isinstance(parent.ch_A, GenericBase)
+
+    def test_analog(self, parent):
+        assert len(parent.analog) == 2
+        assert parent.an_1 == parent.analog[1]
+        assert isinstance(parent.analog[1], GenericBase)
+
+    def test_removal_of_protected_children_fails(self, parent):
+        with pytest.raises(TypeError, match="cannot remove channels defined at class"):
+            parent.remove_child(parent.ch_A)
+
+    def test_channel_creation_works_more_than_once(self):
+        """A zipper object works just once, ensure that a class may be used more often."""
+        p1 = MultiChannelParent(ProtocolAdapter())  # first instance of that class
+        assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
+        p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
+        assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
+
+    def test_channel_pairs_length(self, parent):
+        assert len(parent.get_channel_pairs(parent.__class__)) == 5
+
+    def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
+        assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
+
+
+# Test CommonBase.ChannelCreator child management
+class TestInitWithChannelCreator:
+    @pytest.fixture()
+    def parent(self):
+        return SingleChannelParent(ProtocolAdapter())
 
     def test_channels(self, parent):
         assert len(parent.channels) == 3
@@ -206,17 +257,64 @@ class TestInitWithChildren:
 
     def test_channel_creation_works_more_than_once(self):
         """A zipper object works just once, ensure that a class may be used more often."""
-        p1 = Parent(ProtocolAdapter())  # first instance of that class
+        p1 = SingleChannelParent(ProtocolAdapter())  # first instance of that class
         assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
-        p2 = Parent(ProtocolAdapter())  # second instance of that class
+        p2 = SingleChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
+    def test_channel_pairs_length(self, parent):
+        assert len(parent.get_channel_pairs(parent.__class__)) == 6
+
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
-        assert isinstance(parent.__class__.channels, CommonBase.ChannelCreator)
+        assert isinstance(parent.__class__.ch_A, CommonBase.ChannelCreator)
+        assert isinstance(parent.__class__.an_1, CommonBase.ChannelCreator)
+        assert isinstance(parent.__class__.function, CommonBase.ChannelCreator)
+
+
+# Test combination CommonBase.MultipleChannelCreator and CommonBase.ChannelCreator
+# child management
+class TestInitWithMixChannelCreator:
+    @pytest.fixture()
+    def parent(self):
+        return MixChannelParent(ProtocolAdapter())
+
+    def test_channels(self, parent):
+        assert len(parent.channels) == 5
+        assert parent.ch_A == parent.channels['A']
+        assert parent.output_Z == parent.channels['Z']
+        assert isinstance(parent.ch_A, GenericBase)
+        assert isinstance(parent.output_Z, GenericBase)
+
+    def test_analog(self, parent):
+        assert len(parent.analog) == 10
+        assert parent.an_1 == parent.analog[1]
+        assert isinstance(parent.analog[1], GenericBase)
+
+    def test_removal_of_protected_children_fails(self, parent):
+        with pytest.raises(TypeError, match="cannot remove channels defined at class"):
+            parent.remove_child(parent.ch_A)
+
+    def test_channel_creation_works_more_than_once(self):
+        """A zipper object works just once, ensure that a class may be used more often."""
+        p1 = MixChannelParent(ProtocolAdapter())  # first instance of that class
+        assert isinstance(p1.analog[1], GenericBase)  # verify that it worked once
+        assert isinstance(p1.output_Z, GenericBase)
+        p2 = MixChannelParent(ProtocolAdapter())  # second instance of that class
+        assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
+        assert isinstance(p2.output_Z, GenericBase)
+
+    def test_channel_pairs_length(self, parent):
+        assert len(parent.get_channel_pairs(parent.__class__)) == 15
+
+    def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
+        assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
+        assert isinstance(parent.__class__.analog, CommonBase.MultiChannelCreator)
+        assert isinstance(parent.__class__.output_Z, CommonBase.ChannelCreator)
 
 
 class TestAddChild:
     """Test the `add_child` method"""
+
     @pytest.fixture()
     def parent(self):
         parent = CommonBaseTesting(ProtocolAdapter())
@@ -280,7 +378,7 @@ class TestRemoveChild:
 
 
 class TestInheritanceWithChildren:
-    class InstrumentSubclass(Parent):
+    class InstrumentSubclass(MultiChannelParent):
         """Override one channel group, inherit other groups."""
         function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
 
@@ -298,17 +396,15 @@ class TestInheritanceWithChildren:
         assert parent.function.id == "overridden"
 
 
-# Test ChannelCreator
+# Test MultiChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
-    ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-    (((Child, GenericBase, Child), (1, 2, 3)),
-     [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
-    ((Child, "mm", None), [(Child, "mm")], {'prefix': None}),
-    ((Child, None, None), [(Child, None)], {'prefix': None}),
+        ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
+        (((Child, GenericBase, Child), (1, 2, 3)),
+         [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
 ))
-def test_ChannelCreator(args, pairs, kwargs):
+def test_MultiChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""
-    d = CommonBase.ChannelCreator(*args)
+    d = CommonBase.MultiChannelCreator(*args)
     i = 0
     for pair in d.pairs:
         assert pair == pairs[i]
@@ -316,9 +412,9 @@ def test_ChannelCreator(args, pairs, kwargs):
     assert d.kwargs == kwargs
 
 
-def test_ChannelCreator_different_list_lengths():
+def test_MultiChannelCreator_different_list_lengths():
     with pytest.raises(AssertionError, match="Lengths"):
-        CommonBase.ChannelCreator(("A", "B", "C"), (Child,) * 2)
+        CommonBase.MultiChannelCreator(("A", "B", "C"), (Child,) * 2)
 
 
 def test_ChannelCreator_invalid_input():
@@ -395,6 +491,7 @@ def test_control_check_get_errors(fake, caplog):
     def checking():
         fake.error = True
         return [(7, "some error")]
+
     fake.check_get_errors = checking
     fake.fake_ctrl_errors
     assert fake.error is True
@@ -409,12 +506,13 @@ def test_control_check_get_errors_multiple_errors(fake, caplog):
     def checking():
         fake.error = True
         return [15, (19, "x")]
+
     fake.check_get_errors = checking
     fake.fake_ctrl_errors
     assert caplog.record_tuples[-1] == (
         "pymeasure.instruments.common_base",
         logging.ERROR,
-        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."
+        "Error received after trying to get a property with the command 'ge': '15', '(19, 'x')'."  # noqa: E501
     )
 
 
@@ -437,6 +535,7 @@ def test_control_check_set_errors(fake, caplog):
     def checking():
         fake.error = True
         return [(7, "Error!")]
+
     fake.check_set_errors = checking
     fake.fake_ctrl_errors = 7
     assert fake.error is True
@@ -547,6 +646,7 @@ def test_control_invalid_values_get():
         x = CommonBase.control(
             "", "%d", "",
             values=b"abasdfe", map_values=True)
+
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x
 
@@ -556,6 +656,7 @@ def test_control_invalid_values_set():
         x = CommonBase.control(
             "", "%d", "",
             values=b"abasdfe", map_values=True)
+
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x = 7
 
@@ -658,6 +759,7 @@ def test_measurement_warning_at_kwargs():
 
 def test_control_parameters_for_values():
     """Test how to hand a parameter to `values` method."""
+
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "JUNK%d",
@@ -679,6 +781,7 @@ def test_control_parameters_for_values():
 
 def test_measurement_parameters_for_values():
     """Test how to hand a parameter to `values` method."""
+
     class Fake(FakeBase):
         x = CommonBase.measurement(
             "JUNK%d",
@@ -707,6 +810,7 @@ def test_measurement_cast(cast, expected):
     class Fake(CommonBaseTesting):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
+
     with expected_protocol(Fake, [("x", "5.5")]) as instr:
         assert instr.x == expected
 
@@ -715,8 +819,10 @@ def test_measurement_cast_int():
     class Fake(CommonBaseTesting):
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, "test", **kwargs)
+
         x = CommonBase.measurement(
             "x", "doc", cast=int)
+
     with expected_protocol(Fake, [("x", "5")]) as instr:
         y = instr.x
         assert y == 5
@@ -727,8 +833,10 @@ def test_measurement_unitful_property():
     class Fake(CommonBaseTesting):
         def __init__(self, adapter, **kwargs):
             super().__init__(adapter, "test", **kwargs)
+
         x = CommonBase.measurement(
             "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
+
     with expected_protocol(Fake, [("x", "5.5")]) as instr:
         y = instr.x
         assert y.m_as(ureg.m) == 5.5
@@ -802,6 +910,7 @@ def test_control_multivalue(dynamic):
 def test_FakeBase_control(set_command, given, expected, dynamic):
     """FakeBase's custom simple control needs to process values correctly.
     """
+
     class Fake(FakeBase):
         x = FakeBase.control(
             "", set_command, "",

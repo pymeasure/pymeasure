@@ -138,9 +138,13 @@ class VISAAdapter(Adapter):
         """
         super().close()
         try:
-            self.manager.close()
+            if self.manager.visalib.library_path == "unset":
+                # if using the pyvisa-sim library the manager has to be also closed.
+                # this works around https://github.com/pyvisa/pyvisa-sim/issues/82
+                self.manager.close()
         except AttributeError:
-            pass  # Closed from another adapter using the same connection.
+            # AttributeError can occur during __del__ calling close
+            pass
 
     def _write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.

@@ -30,7 +30,7 @@ class SPD1168X(SPDSingleChannelBase):
     """Represent the Siglent SPD1168X Power Supply.
     """
 
-    channels = Instrument.ChannelCreator(SPDChannel, 1)
+    ch_1 = Instrument.ChannelCreator(SPDChannel, 1)
 
     def __init__(self, adapter, name="Siglent Technologies SPD1168X Power Supply", **kwargs):
         super().__init__(
