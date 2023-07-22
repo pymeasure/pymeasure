@@ -269,7 +269,7 @@ class FakeAdapter(Adapter):
     which bounces back the command so that arbitrary values
     testing is possible.
 
-    read/write automatically append a message terminator on write and strip it on read. 
+    read/write automatically append a message terminator on write and strip it on read.
     This enables reading messages out of a buffer one-by-one.
     read_bytes/write_bytes don't do that.
 

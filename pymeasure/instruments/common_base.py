@@ -632,7 +632,7 @@ class CommonBase:
                     if errors:
                         log.error(
                             "Error received after trying to set a property with the command "
-                            f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
+                            f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""  # noqa: E501
                         )
 
         # Add the specified document string to the getter
