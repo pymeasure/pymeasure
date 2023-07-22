@@ -44,12 +44,12 @@ class NI_GPIB_232(VISAAdapter):
        method to spawn new NI_GPIB_232s for different GPIB addresses.
 
        :param resource_name: A VISA resource string that identifies the
-       connection to the device itself, for example "ASRL5" for the 5th COM port.
+           connection to the device itself, for example "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
        :param eoi: Enable or disable EOI assertion.
        :param kwargs: Key-word arguments if constructing a new serial object
-
        :ivar address: Integer GPIB address of the desired instrument.
+
 
        Usage example:
 
@@ -101,22 +101,22 @@ class NI_GPIB_232(VISAAdapter):
         ATN = 16  # ATN asserted
         TACS = 8  # Talker active
         LACS = 4  # Listener active
-        DTAS = 2  # Device triggeer active state
+        DTAS = 2  # Device trigger active state
         SCAS = 1  # Device Clear active status
 
     class GPIBError(Flag):
-        """Enum element for GIBP error bit decoding
+        """Enum element for GPIB error bit decoding
 
         """
-        ECMD = 17  # unregcognized command
-        # 15-16 servered
+        ECMD = 17  # unrecognized command
+        # 15-16 reseved
         EBUS = 14  # Command bytes could not be sent
-        # 12-13 servered
+        # 12-13 reserved
         ECAP = 11  # No capability for operation
         # 7-10 reserved
         EABO = 6  # IO aborted
         ESAC = 5  # Command requires GPIB-232CT-A to be system controller
-        EARG = 4  # invaild argument(s)
+        EARG = 4  # invalid argument(s)
         EADR = 3  # GPIBN-232CT-A not adressed correctly
         ENOL = 2  # Write detected, no listeners
         ECIC = 1  # Command requires GPIB-232CT-A to be CIC
@@ -158,7 +158,7 @@ class NI_GPIB_232(VISAAdapter):
         except ValueError:
             g_s = ret_val[: ret_val.find(b"\r")]
             gpib_stat = self.GPIBStatus(int(g_s))
-            log.warning(f"ACHTUNG! {gpib_stat!a} \r\n")
+            log.warning(f"Warning {gpib_stat!a}")
         # Error handling
         if bool(gpib_stat & self.GPIBStatus.ERR) is True:
             log.critical(f"Error {self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
@@ -321,7 +321,7 @@ class NI_GPIB_232(VISAAdapter):
     def wait_for_srq(self, timeout=20, delay=0.1):
         """Blocks until a SRQ, and leaves the bit high
 
-        :param timeout: Timeout duration in seconds.
+        :param timeout: Timeout (for SRQ) in seconds.
         :raises TimeoutError: "Waiting for SRQ timed out."
         """
         stop = time.perf_counter() + timeout
