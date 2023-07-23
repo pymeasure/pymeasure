@@ -162,9 +162,9 @@ grandfathered_docstring_instruments = [
     "Keithley2260B",
     "Keithley2306",
     "Keithley2306Channel",
-    "BatteryChannel",
-    "Step",
-    "Relay",
+    "BatteryChannel",  # Keithley2306
+    "Step",  # Keithley2306
+    "Relay",  # Keithley2306
     "Keithley2400",
     "Keithley2450",
     "Keithley2600",
