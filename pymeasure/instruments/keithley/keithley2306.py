@@ -551,8 +551,8 @@ class Step(Channel):
         values=[0, 5],
     )
 
-    def __init__(self, instrument, number):
-        super().__init__(instrument, number)
+    def __init__(self, instrument, number, **kwargs):
+        super().__init__(instrument, number, **kwargs)
 
 
 class Relay(Channel):
