@@ -161,6 +161,7 @@ class NI_GPIB_232(VISAAdapter):
         # Error handling
         if bool(gpib_stat & self.GPIBStatus.ERR) is True:
             log.critical(f"Error {self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
+            raise ConnectionError(f"{self.GPIBError(gpib_err)!a} {self.SERIALError(ser_err)!a}")
 
     def _read(self, **kwargs):
         """Read up to (excluding) `read_termination` or the whole read buffer.
