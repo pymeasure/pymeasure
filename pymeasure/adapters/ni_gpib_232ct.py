@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from enum import IntFlag, Flag
+from enum import Flag
 import time
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments.validators import strict_range
@@ -89,7 +89,7 @@ class NI_GPIB_232(VISAAdapter):
             self.eoi = eoi
         self.flush_read_buffer()
 
-    class GPIBStatus(IntFlag):
+    class GPIBStatus(int, Flag):
         """Enum element for GIBP status bit decoding
 
         """
