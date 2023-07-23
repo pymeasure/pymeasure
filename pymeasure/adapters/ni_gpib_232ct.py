@@ -80,6 +80,7 @@ class NI_GPIB_232(VISAAdapter):
             **kwargs,
         )
         self.address = address
+        self.rw_delay = rw_delay
         self.connection.write("EOS D")
         self.connection.write("STAT")
         self._check_errors()
@@ -142,7 +143,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         self.connection.write("stat n")
         if self.connection.bytes_in_buffer == 0:
-            time.sleep(0.125)
+            time.sleep(2.5 * self.rw_delay/1000)
         ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
         log.debug(f"read: {ret_val}")
         ret_val = ret_val.lstrip(b"\x00")
@@ -170,7 +171,7 @@ class NI_GPIB_232(VISAAdapter):
         # log.debug("reading")
         self.flush_read_buffer()
         self.connection.write(f"rd #255 {self.address}")
-        time.sleep(0.050)
+        time.sleep(self.rw_delay/1000)
         ret_val = self.connection.read()
         if ret_val != "0":
             ret_len = self.connection.read()
@@ -192,10 +193,10 @@ class NI_GPIB_232(VISAAdapter):
             count = self.connection.chunk_size - 1
         self.flush_read_buffer()
         self.connection.write(f"rd #{count} {self.address}")
-        time.sleep(0.050)
+        time.sleep(self.rw_delay/1000)
         ret_val = self.connection.read_bytes(count, break_on_termchar, **kwargs)
         log.debug(f"read: {ret_val}")
-        time.sleep(0.050)
+        time.sleep(self.rw_delay/1000)
         ret_len = self.connection.read()
         log.debug(f"length of bytes read {ret_len}")
         self._check_errors()
@@ -210,7 +211,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         self.flush_read_buffer()
         self.connection.write(f"wrt {self.address} \n {command}", **kwargs)
-        time.sleep(0.050)
+        time.sleep(self.rw_delay/1000)
         self._check_errors()
         self.flush_read_buffer()
 
@@ -222,7 +223,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         self.flush_read_buffer()
         self.connection.write(f"wrt {self.address} \n {content}", **kwargs)
-        time.sleep(0.050)
+        time.sleep(self.rw_delay/1000)
         self._check_errors()
         self.flush_read_buffer()
 
@@ -313,7 +314,7 @@ class NI_GPIB_232(VISAAdapter):
         """Get the version string of the NI GPIB-232-CT."""
         self.flush_read_buffer()
         self.connection.write("id \r")
-        time.sleep(0.02)
+        time.sleep(self.rw_delay/1000)
         return self.connection.read_bytes(71).decode()
 
     def wait_for_srq(self, timeout=20, delay=0.1):
