@@ -46,6 +46,8 @@ class NI_GPIB_232(VISAAdapter):
        :param resource_name: A VISA resource string that identifies the
            connection to the device itself, for example "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
+       :param serial_timeout: Timeout value for the serial communication
+       :param rw_delay: delay value defining the internal waiting time
        :param eoi: Enable or disable EOI assertion.
        :param kwargs: Key-word arguments if constructing a new serial object
        :ivar address: Integer GPIB address of the desired instrument.
@@ -64,7 +66,8 @@ class NI_GPIB_232(VISAAdapter):
 
     """
 
-    def __init__(self, resource_name, address=None, serial_timeout=1000, eoi=True, **kwargs):
+    def __init__(self, resource_name, address=None, serial_timeout=1000, rw_delay=50,
+                 eoi=True, **kwargs):
         super().__init__(
             resource_name,
             asrl={
@@ -142,11 +145,6 @@ class NI_GPIB_232(VISAAdapter):
             time.sleep(0.125)
         ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
         log.debug(f"read: {ret_val}")
-        if len(ret_val) <= 3:
-            log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
-            return
-        if len(ret_val) < 12:
-            log.warning(f"only {len(ret_val)} bytes received, content: {ret_val}")
         ret_val = ret_val.lstrip(b"\x00")
         try:
             [g_s, g_e, s_e, cnt_raw] = ret_val.splitlines()
@@ -267,7 +265,7 @@ class NI_GPIB_232(VISAAdapter):
         """
         return NI_GPIB_232(self, address, **kwargs)
 
-    def pass_control(self, primary_address: int, secondary_address: int):
+    def pass_control(self, primary_address: int, secondary_address: int = 0):
         """
         Pass control to device with primary_address and optional secondary_address.
 
