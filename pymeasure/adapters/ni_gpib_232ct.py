@@ -46,8 +46,8 @@ class NI_GPIB_232(VISAAdapter):
        :param resource_name: A VISA resource string that identifies the
            connection to the device itself, for example "ASRL5" for the 5th COM port.
        :param address: Integer GPIB address of the desired instrument.
-       :param serial_timeout: Timeout value for the serial communication
-       :param rw_delay: delay value defining the internal waiting time
+       :param serial_timeout: Timeout value for the serial communication, unit: ms
+       :param rw_delay: internal delay, unit: ms, default 50 ms
        :param eoi: Enable or disable EOI assertion.
        :param kwargs: Key-word arguments if constructing a new serial object
        :ivar address: Integer GPIB address of the desired instrument.
