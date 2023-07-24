@@ -221,7 +221,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """Set the internal low-pass filter for all channels.
+        """Control the internal low-pass filter for this channel.
 
         The current bandwidths can only be read back for all channels at once!
         """,
@@ -461,8 +461,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     """A base abstract class for any Teledyne Lecroy oscilloscope.
 
-    All Teledyne oscilloscopes have a very similar interface, hence this basic base class to combine
-    them.
+    All Teledyne oscilloscopes have a very similar interface, hence this base class to combine
+    them. Note that specific models will likely have conflicts in their interface.
 
     Attributes:
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
@@ -538,9 +538,9 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         self.write("ASET")
 
     def write(self, command, **kwargs):
-        """ Writes the command to the instrument through the adapter.
-        Note.
-        If the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
+        """Write the command to the instrument through the adapter.
+
+        Note: if the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
         the remaining time so that commands are never sent with rate more than 1/WRITE_INTERVAL_S
         Hz.
 

@@ -80,7 +80,10 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """Control (toggle) the 20 MHz internal low-pass filter (strict bool).""",
+        """Control the 20 MHz internal low-pass filter (strict bool).
+
+        This oscilloscope only has one frequency available for this filter.
+        """,
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
         map_values=True
@@ -88,7 +91,7 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     invert = Instrument.control(
         "INVS?", "INVS %s",
-        """Control (toggle) the inversion of the input signal (strict bool).""",
+        """Control the inversion of the input signal (strict bool).""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
         map_values=True
