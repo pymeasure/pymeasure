@@ -21,4 +21,5 @@ dependencies:
   - setuptools_scm # don't pin, to get newest features
   - sphinx=5.3.0
   - sphinx_rtd_theme=1.2.2
-  - pip  # don't pin, to gain newest conda compatibility fixes
+#  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required
+#  - pip  # don't pin, to gain newest conda compatibility fixes
