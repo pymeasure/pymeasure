@@ -284,6 +284,7 @@ class TestInstrument:
             self._generator._store_property_setter_test(self._name + name, value)
 
     def __dir__(self):
+        # To get autocompletion support for instrument members.
         return super().__dir__() + dir(self._inst)
 
 
@@ -394,7 +395,7 @@ class Generator:
         If getter and setter exist, the setter is the first test.
         """
         # Get a sorted list of all properties, without repeating them
-        property_names = sorted(set(list(self._getters.keys()) + list(self._setters.keys())))
+        property_names = sorted(set(self._getters.keys() | set(self._setters.keys())))
         for property in property_names:
             if property in self._setters:
                 self.write_setter_test(file, property, self._setters[property])

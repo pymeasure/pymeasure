@@ -640,7 +640,7 @@ class TestTestInstrument:
 
 def test_ch_A_channel_control_getter():
     with expected_protocol(
-            FakeInstrument,
+            FakeTestInstrument,
             [(b'GA', b'123.5')],
     ) as inst:
         assert inst.ch_A.channel_control == 123.5
