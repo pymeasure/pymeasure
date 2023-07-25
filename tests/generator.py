@@ -24,7 +24,6 @@
 
 import io
 import logging
-from typing import Any, BinaryIO, Optional, TextIO, List, Tuple, Dict
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel
@@ -33,17 +32,17 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def write_generic_test(file: TextIO, header_text: List[str], cls_name: str, comm_text: List[str],
-                       test: str,
-                       inkwargs: Optional[Dict[str, Any]] = None) -> None:
+def write_generic_test(file, header_text, cls_name, comm_text,
+                       test,
+                       inkwargs=None):
     """Write a generic test.
 
-    :param file: File to write to.
-    :param list header_text: Text of the header (parametrization, test name etc.)
-    :param cls_name: Name of the instrument class.
-    :param list comm_text: List of str of communication pairs
+    :param fileLike file: File to write to.
+    :param list[str] header_text: Text of the header (parametrization, test name etc.)
+    :param str cls_name: Name of the instrument class.
+    :param list[str] comm_text: List of str of communication pairs
     :param str test: Test to assert for.
-    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
+    :param dict[str, Any] inkwargs: Dictionary of instrument instantiation kwargs.
     """
     if inkwargs is None:
         args_text = "",
@@ -73,21 +72,21 @@ def write_generic_test(file: TextIO, header_text: List[str], cls_name: str, comm
     )
 
 
-def write_test(file: TextIO,
-               test_name: str,
-               cls_name: str,
-               comm_pairs: List[Tuple[bytes | None, bytes | None]],
-               test: str,
-               inkwargs: Optional[Dict[str, Any]] = None,
-               ) -> None:
+def write_test(file,
+               test_name,
+               cls_name,
+               comm_pairs,
+               test,
+               inkwargs=None,
+               ):
     """Write a single test.
 
     :param file: File to write to.
     :param str test_name: Name of the test.
-    :param cls_name: Name of the instrument class.
-    :param list comm_pairs_list: List of communication pairs.
+    :param str cls_name: Name of the instrument class.
+    :param list[tuple[bytes | None, bytes | None]] comm_pairs_list: List of communication pairs.
     :param str test: Test to assert for.
-    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
+    :param dict[str, Any] inkwargs: Dictionary of instrument instantiation kwargs.
     """
     write_generic_test(
         file=file,
@@ -99,21 +98,22 @@ def write_test(file: TextIO,
     )
 
 
-def write_parametrized_test(file: TextIO,
-                            test_name: str,
-                            cls_name: str,
-                            comm_pairs_list: List[List[Tuple[None | bytes, None | bytes]]],
-                            values_list: List[Any],
-                            test: str,
-                            inkwargs: Optional[Dict[str, Any]] = None,
-                            ) -> None:
+def write_parametrized_test(file,
+                            test_name,
+                            cls_name,
+                            comm_pairs_list,
+                            values_list,
+                            test,
+                            inkwargs=None,
+                            ):
     """Write a parametrized test for properties.
 
     :param file: File to write to.
     :param str test_name: Name of the test.
-    :param cls_name: Name of the instrument class.
-    :param list comm_pairs_list: List of communication pairs list for each test
-    :param list values_list: List of expected values.
+    :param str cls_name: Name of the instrument class.
+    :param list[list[tuple[bytes | None, bytes | None]]] comm_pairs_list: List of communication
+        pairs list for each test.
+    :param list[Any] values_list: List of expected values.
     :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
     :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
@@ -133,24 +133,26 @@ def write_parametrized_test(file: TextIO,
                        )
 
 
-def write_parametrized_method_test(file: TextIO,
-                                   test_name: str,
-                                   cls_name: str,
-                                   comm_pairs_list: List[List[tuple[None | bytes, None | bytes]]],
-                                   args_list: List[Tuple[Any, ...]],
-                                   kwargs_list: List[Dict[str, Any]],
-                                   values_list: List[Any], test: str,
-                                   inkwargs: Optional[Dict[str, Any]] = None,
-                                   ) -> None:
+def write_parametrized_method_test(file,
+                                   test_name,
+                                   cls_name,
+                                   comm_pairs_list,
+                                   args_list,
+                                   kwargs_list,
+                                   values_list,
+                                   test,
+                                   inkwargs=None,
+                                   ):
     """Write a parametrized test for a method, taking in account additional arguments.
 
     :param file: File to write to.
     :param str name: Name of the test.
-    :param cls_name: Name of the instrument class.
-    :param list comm_pairs_list: List of communication pairs list for each test
-    :param list args_list: List of arguments lists for the method.
-    :param list kwargs_list: List of keyword dictionaries for the method.
-    :param list values_list: List of expected values.
+    :param str cls_name: Name of the instrument class.
+    :param list[list[tuple[bytes | None, bytes | None]]] comm_pairs_list: List of communication
+        pairs list for each test.
+    :param list[tuple[Any, ...]] args_list: List of arguments lists for the method.
+    :param list[dict[str, Any]] kwargs_list: List of keyword dictionaries for the method.
+    :param list[Any] values_list: List of expected values.
     :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
     :param dict inkwargs: Dictionary of instrument instantiation kwargs.
     """
@@ -172,12 +174,14 @@ def write_parametrized_method_test(file: TextIO,
     )
 
 
-def parse_stream(stream: BinaryIO) -> List[Tuple[None | bytes, None | bytes]]:
+def parse_stream(stream):
     """
     Parse the data stream.
 
     It is expected, that a message is always written in one write, while
     reading may extend over several reads, e.g. reading bytes.
+
+    :return list[tuple[bytes | None, bytes | None]]: List of communication pairs
     """
     comm = []
     lines = stream.readlines()
