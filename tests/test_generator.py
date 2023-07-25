@@ -51,7 +51,7 @@ class FakeChannel(Channel):
         return float(self.ask("M{ch} " + str(value)))
 
 
-class FakeInstrument(Instrument):
+class FakeTestInstrument(Instrument):
 
     ch_A = Instrument.ChannelCreator(FakeChannel, id="A")
 
@@ -250,13 +250,14 @@ class Test_generator:
         generator = Generator()
         adapter = ProtocolAdapter(
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
-        TC038.string_test = TC038.control("test?", "test %s", "Control some string.", cast=str,
+        TC038.string_test = TC038.control("test?", "test %s",  # type: ignore
+                                          "Control some string.", cast=str,  # type: ignore
                                           get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp")
         return generator
 
     def test_instantiate(self, generator):
-        assert generator._incomm == [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")]
+        assert generator._init_comm_pairs == [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")]
 
     def test_write_init_test(self, generator, file):
         generator.write_init_test(file)
@@ -279,7 +280,8 @@ def test_init():
         adapter = ProtocolAdapter(
             [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")])
         # add a control with a str for test purposes.
-        TC038.string_test = TC038.control("test?", "test %s", "Control some string.", cast=str,
+        TC038.string_test = TC038.control("test?", "test %s",  # type: ignore
+                                          "Control some string.",  cast=str,  # type: ignore
                                           get_process=lambda v: v[7:-1])
         generator.instantiate(TC038, adapter, "hcp", some_kwarg=5.7, other_kwarg=True,
                               str_kwarg="abc")
@@ -614,7 +616,7 @@ class TestTestInstrument:
     def inst(self):
         generator = Generator()
         adapter = ProtocolAdapter()
-        inst = generator.instantiate(FakeInstrument, adapter, "fake")
+        inst = generator.instantiate(FakeTestInstrument, adapter, "fake")
         return inst
 
     def test_channel_setter(self, inst):
