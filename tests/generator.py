@@ -24,7 +24,7 @@
 
 import io
 import logging
-from typing import Any, BinaryIO, TextIO
+from typing import Any, BinaryIO, Optional, TextIO, List, Tuple, Dict
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel
@@ -33,9 +33,9 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def write_generic_test(file: TextIO, header_text: list[str], cls_name: str, comm_text: list[str],
+def write_generic_test(file: TextIO, header_text: List[str], cls_name: str, comm_text: List[str],
                        test: str,
-                       inkwargs: None | dict[str, Any] = None) -> None:
+                       inkwargs: Optional[Dict[str, Any]] = None) -> None:
     """Write a generic test.
 
     :param file: File to write to.
@@ -76,9 +76,9 @@ def write_generic_test(file: TextIO, header_text: list[str], cls_name: str, comm
 def write_test(file: TextIO,
                test_name: str,
                cls_name: str,
-               comm_pairs: list[tuple[bytes | None, bytes | None]],
+               comm_pairs: List[Tuple[bytes | None, bytes | None]],
                test: str,
-               inkwargs: None | dict[str, Any] = None,
+               inkwargs: Optional[Dict[str, Any]] = None,
                ) -> None:
     """Write a single test.
 
@@ -102,10 +102,10 @@ def write_test(file: TextIO,
 def write_parametrized_test(file: TextIO,
                             test_name: str,
                             cls_name: str,
-                            comm_pairs_list: list[list[tuple[None | bytes, None | bytes]]],
-                            values_list: list[Any],
+                            comm_pairs_list: List[List[Tuple[None | bytes, None | bytes]]],
+                            values_list: List[Any],
                             test: str,
-                            inkwargs: None | dict[str, Any] = None,
+                            inkwargs: Optional[Dict[str, Any]] = None,
                             ) -> None:
     """Write a parametrized test for properties.
 
@@ -136,11 +136,11 @@ def write_parametrized_test(file: TextIO,
 def write_parametrized_method_test(file: TextIO,
                                    test_name: str,
                                    cls_name: str,
-                                   comm_pairs_list: list[list[tuple[None | bytes, None | bytes]]],
-                                   args_list: list[tuple[Any, ...]],
-                                   kwargs_list: list[dict[str, Any]],
-                                   values_list: list[Any], test: str,
-                                   inkwargs: None | dict[str, Any] = None,
+                                   comm_pairs_list: List[List[tuple[None | bytes, None | bytes]]],
+                                   args_list: List[Tuple[Any, ...]],
+                                   kwargs_list: List[Dict[str, Any]],
+                                   values_list: List[Any], test: str,
+                                   inkwargs: Optional[Dict[str, Any]] = None,
                                    ) -> None:
     """Write a parametrized test for a method, taking in account additional arguments.
 
@@ -172,7 +172,7 @@ def write_parametrized_method_test(file: TextIO,
     )
 
 
-def parse_stream(stream: BinaryIO) -> list[tuple[None | bytes, None | bytes]]:
+def parse_stream(stream: BinaryIO) -> List[Tuple[None | bytes, None | bytes]]:
     """
     Parse the data stream.
 
