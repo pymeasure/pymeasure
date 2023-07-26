@@ -138,8 +138,26 @@ class HotCathode(SensorChannel):
         check_set_errors=True,
     )
 
+    degas = Instrument.control(
+        "0DG00", "2DG01%i",
+        """Control the degas mode.""",
+        values={True: 1, False: 0},
+        map_values=True,
+        validator=validators.strict_discrete_set,
+        check_set_errors=True,
+    )
+
+    sensor_enabled = Instrument.control(
+        "0CC00", "2CC01%i",
+        """Control the state of the cathode.""",
+        values={True: 1, False: 0},
+        map_values=True,
+        validator=validators.strict_discrete_set,
+        check_set_errors=True,
+    )
     active_filament = Instrument.measurement(
-        "0FN00", "Get the current filament number."
+        "0FN00", "Get the current filament number.",
+        cast=int,
     )
 
     filament_status = Instrument.measurement(
@@ -489,3 +507,10 @@ class VSR(Transmitter):
 
     piezo = Instrument.ChannelCreator(Piezo, prefix=None)
     pirani = Instrument.ChannelCreator(Pirani, prefix=None)
+
+
+class VSH(Transmitter):
+    """Vacuum transmitter of VSH series with both a pirani and a hot cathode sensor."""
+
+    pirani = Instrument.ChannelCreator(Pirani, prefix=None)
+    hotcathode = Instrument.ChannelCreator(HotCathode, prefix=None)
