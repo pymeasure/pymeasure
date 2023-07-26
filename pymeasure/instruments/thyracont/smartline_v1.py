@@ -81,7 +81,7 @@ class SmartlineV1(Instrument):
         :raises ValueError: if a checksum error is detected
         """
         msg = super().read()
-        chksum = calculateChecksu(msg[:-1])
+        chksum = calculateChecksum(msg[:-1])
         if msg[-1] == chksum:
             return msg[:-1]
         else:
@@ -97,7 +97,7 @@ class SmartlineV1(Instrument):
         :param str command: command to be sent to the instrument
         """
         fullcmd = f"{self.address:03d}" + command
-        super().write(fullcmd + calculateChecksu(fullcmd))
+        super().write(fullcmd + calculateChecksum(fullcmd))
 
     def check_errors(self):
         reply = self.read()
