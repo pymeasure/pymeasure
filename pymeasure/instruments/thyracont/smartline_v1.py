@@ -26,6 +26,19 @@ from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Instrument
 
 
+def calculateChecksum(msg):
+    """Calculate a 1 bytes checksum mapped to a printable ASCII character.
+
+    The checksum is calculated by the sum of the decimal values of each message
+    character modulo 64 + 64.
+
+    :param string msg: message content
+    :returns: calculated checksum
+    :rtype: string
+    """
+    return chr(sum(map(ord, msg)) % 64 + 64)
+
+
 class SmartlineV1(Instrument):
     """Thyracont Vacuum Instruments Smartline gauges with Communication Protocol V1.
 
@@ -58,19 +71,6 @@ class SmartlineV1(Instrument):
                          **kwargs)
         self.address = address
 
-    @staticmethod
-    def _checksum(msg):
-        """Calculate a 1 bytes checksum.
-
-        The checksum is calculated by the sum of the decimal values of each message
-        character modulo 64 + 64.
-
-        :param string msg: message content
-        :returns: calculated checksum
-        :rtype: string
-        """
-        return chr(sum(map(ord, msg)) % 64 + 64)
-
     def read(self):
         """Reads a response message from the instrument.
 
@@ -81,7 +81,7 @@ class SmartlineV1(Instrument):
         :raises ValueError: if a checksum error is detected
         """
         msg = super().read()
-        chksum = self._checksum(msg[:-1])
+        chksum = calculateChecksu(msg[:-1])
         if msg[-1] == chksum:
             return msg[:-1]
         else:
@@ -97,7 +97,7 @@ class SmartlineV1(Instrument):
         :param str command: command to be sent to the instrument
         """
         fullcmd = f"{self.address:03d}" + command
-        super().write(fullcmd + self._checksum(fullcmd))
+        super().write(fullcmd + calculateChecksu(fullcmd))
 
     def check_errors(self):
         reply = self.read()
