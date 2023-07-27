@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .smartline_v2 import SmartlineV2, VSR
+from .smartline_v2 import SmartlineV2, VSR, VSH

@@ -30,6 +30,15 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.thyracont.smartline_v2 import (SmartlineV2, HotCathode, Pirani,
                                                           calculateChecksum, Piezo)
 
+r"""
+Attention
+=========
+
+Contrary to normal tests, the ansers read MUST have the termination `\r` added, as the
+`SmartlineV2.read` method reads manually until it finds that char!
+"""
+
+
 SmartlineV2.hot_cathode = Instrument.ChannelCreator(cls=HotCathode)
 SmartlineV2.pirani = Instrument.ChannelCreator(cls=Pirani)
 SmartlineV2.piezo = Instrument.ChannelCreator(cls=Piezo)

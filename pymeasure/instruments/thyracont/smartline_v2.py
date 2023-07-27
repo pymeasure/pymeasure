@@ -79,6 +79,7 @@ gas_factor = Channel.control(
 
 class SensorChannel(Channel):
     """Generic channel for individual pressure sensors of a Transmitter."""
+
     _id = -1  # obligatory channel number, define in channel types
 
     def __init__(self, parent, id):
@@ -180,7 +181,7 @@ class HotCathode(SensorChannel):
         get_process=lambda vals: [v / 4 for v in vals],
     )
 
-    # cathode status CA, cathode control CC, cathode control mode CM
+    # cathode status CA, cathode control mode CM
 
 
 class ColdCathode(SensorChannel):
@@ -204,7 +205,7 @@ class Relative(SensorChannel):
 class SmartlineV2(Instrument):
     """A Thyracont vacuum sensor transmitter of the Smartline V2 series.
 
-    You may subclass this Instrument and add the appropriate channels, for example:
+    You may subclass this Instrument and add the appropriate channels, see the following example.
 
     .. doctest::
 
@@ -512,15 +513,15 @@ class SmartlineV2(Instrument):
     )
 
 
-class VSR(SmartlineV2):
-    """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
-
-    piezo = Instrument.ChannelCreator(Piezo)
-    pirani = Instrument.ChannelCreator(Pirani)
-
-
 class VSH(SmartlineV2):
     """Vacuum transmitter of VSH series with both a pirani and a hot cathode sensor."""
 
     pirani = Instrument.ChannelCreator(Pirani)
     hotcathode = Instrument.ChannelCreator(HotCathode)
+
+
+class VSR(SmartlineV2):
+    """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)
+    pirani = Instrument.ChannelCreator(Pirani)
