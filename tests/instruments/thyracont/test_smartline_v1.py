@@ -42,7 +42,7 @@ def test_type():
         SmartlineV1,
         [("001Te", "001TVSM207t"), ],
     ) as inst:
-        assert inst.type == "VSM207"
+        assert inst.device_type == "VSM207"
 
 
 def test_cathode_enable():
