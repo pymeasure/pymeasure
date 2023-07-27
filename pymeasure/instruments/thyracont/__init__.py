@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .transmitter import Transmitter, VSR
+from .smartline_v2 import SmartlineV2, VSR

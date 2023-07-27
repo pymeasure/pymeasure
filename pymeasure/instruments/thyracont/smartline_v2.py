@@ -201,8 +201,19 @@ class Relative(SensorChannel):
     _id = 7
 
 
-class Transmitter(Instrument):
-    """A Thyracont vacuum sensor transmitter.
+class SmartlineV2(Instrument):
+    """A Thyracont vacuum sensor transmitter of the Smartline V2 series.
+
+    You may subclass this Instrument and add the appropriate channels, for example:
+
+    .. doctest::
+
+        from pymeasure.instruments import Instrument
+        from pymeasure.instruments.thyractont import SmartlineV2
+
+        PiezoAndPiraniInstrument(SmartlineV2):
+            piezo = Instrument.ChannelCreator(Piezo)
+            pirani = Instrument.ChannelCreator(Pirani)
 
     Communication Protocol v2 via rs485.
 
@@ -224,8 +235,9 @@ class Transmitter(Instrument):
               '_UNSUP': "Unsupported Data for that command.",
               '_SEDIS': "Sensor element disabled."}
 
-    def __init__(self, adapter, name="Thyracont", baud_rate=115200,
-                 address=1, timeout=250, **kwargs):
+    def __init__(self, adapter, name="Thyracont SmartlineV2 Transmitter", baud_rate=115200,
+                 address=1, timeout=250,
+                 **kwargs):
         super().__init__(adapter, name=name, includeSCPI=False,
                          write_termination="\r",
                          read_termination="\r",
@@ -500,14 +512,14 @@ class Transmitter(Instrument):
     )
 
 
-class VSR(Transmitter):
+class VSR(SmartlineV2):
     """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
 
     piezo = Instrument.ChannelCreator(Piezo)
     pirani = Instrument.ChannelCreator(Pirani)
 
 
-class VSH(Transmitter):
+class VSH(SmartlineV2):
     """Vacuum transmitter of VSH series with both a pirani and a hot cathode sensor."""
 
     pirani = Instrument.ChannelCreator(Pirani)
