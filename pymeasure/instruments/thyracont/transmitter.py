@@ -109,9 +109,10 @@ class Pirani(SensorChannel):
         "0PM011",
         """Get the sensor statistics: wear in percent (negative: corrosion,
             positive: contamination), time since last adjustment in hours.""",
+        preprocess_reply=lambda msg: msg.strip("W"),
         separator="A",
         cast=int,
-        get_process=lambda vals: [v / 4 for v in vals],
+        get_process=lambda vals: (vals[0], vals[1] / 4),
     )
 
 
@@ -437,21 +438,18 @@ class Transmitter(Instrument):
             The lower transition value and the higher transition value, if
             applicable.
         """
-        match (mode, *values):  # noqa
-            case "continuous":
+        if mode == "continuous":
+            if not values:
                 command = "1"
-            case "continuous", low, high:
+            elif len(values) == 2:
+                low, high = values
                 command = f"F{low}T{high}"
-            case "continuous", *_:
-                raise AssertionError("Invalid values for continuous mode.")
-            case "direct":
-                command = "0"
-            case "direct", value:
-                command = f"D{value}"
-            case "direct", *_:
-                raise AssertionError("Invalid value for direct mode.")
-            case _:
-                raise AssertionError("Unknown mode.")
+            else:
+                raise ValueError("Invalid values for continuous mode.")
+        elif mode == "direct" and len(values) == 1:
+            command = f"D{values[0]}"
+        else:
+            raise ValueError("Invalid mode combination.")
         self.query(2, "ST", command)
 
     " Device Information"
@@ -505,12 +503,12 @@ class Transmitter(Instrument):
 class VSR(Transmitter):
     """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
 
-    piezo = Instrument.ChannelCreator(Piezo, prefix=None)
-    pirani = Instrument.ChannelCreator(Pirani, prefix=None)
+    piezo = Instrument.ChannelCreator(Piezo)
+    pirani = Instrument.ChannelCreator(Pirani)
 
 
 class VSH(Transmitter):
     """Vacuum transmitter of VSH series with both a pirani and a hot cathode sensor."""
 
-    pirani = Instrument.ChannelCreator(Pirani, prefix=None)
-    hotcathode = Instrument.ChannelCreator(HotCathode, prefix=None)
+    pirani = Instrument.ChannelCreator(Pirani)
+    hotcathode = Instrument.ChannelCreator(HotCathode)
