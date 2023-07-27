@@ -54,9 +54,9 @@ SmartlineV2.piezo = Instrument.ChannelCreator(cls=Piezo)
         (1, (2, "AH", 981.5), "0012AH05981.5v\r", "0013AH00m\r"),
     ],
 )
-def test_query(address, pars, message, answer):
+def test_ask_manually(address, pars, message, answer):
     with expected_protocol(SmartlineV2, [(message.rstrip("\r"), answer)], address=address) as inst:
-        inst.query(*pars)
+        inst.ask_manually(*pars)
 
 
 def test_calculateChecksum():
@@ -172,6 +172,27 @@ def test_operating_hours_cathod():
 
 
 # Test methods
+def test_set_default_sensor_transition():
+    with expected_protocol(SmartlineV2,
+                           [(b'0012ST011|', "0013ST00K\r")],
+                           ) as inst:
+        inst.set_default_sensor_transition()
+
+
+def test_set_direct_sensor_transition():
+    with expected_protocol(SmartlineV2,
+                           [(b'0012ST02D5E', "0013ST00K\r")],
+                           ) as inst:
+        inst.set_direct_sensor_transition(5)
+
+
+def test_set_continuous_sensor_transition():
+    with expected_protocol(SmartlineV2,
+                           [(b'0012ST04F1T2K', "0013ST00K\r")],
+                           ) as inst:
+        inst.set_continuous_sensor_transition(1, 2)
+
+
 @pytest.mark.parametrize("mode, values, comm_pairs", (
         ("continuous", (), [(b'0012ST011|', "0013ST00K\r")]),
         ("continuous", (1, 2), [(b'0012ST04F1T2K', "0013ST00K\r")]),
@@ -182,7 +203,7 @@ def test_set_sensor_transition_success(mode, values, comm_pairs):
                            comm_pairs,
                            ) as inst:
         print(comm_pairs)
-        inst.setSensorTransition(mode, *values)
+        inst.set_sensor_transition(mode, *values)
 
 
 @pytest.mark.parametrize("mode, values", (
@@ -196,7 +217,7 @@ def test_set_sensor_transition_fail(mode, values):
                            [],
                            ) as inst:
         with pytest.raises(ValueError):
-            inst.setSensorTransition(mode, *values)
+            inst.set_sensor_transition(mode, *values)
 
 
 # Pirani tests

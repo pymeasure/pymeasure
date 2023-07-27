@@ -275,7 +275,7 @@ class SmartlineV2(Instrument):
         """Write a command with an accessCode and optional data to the device.
 
         :param accessCode: How to access the device.
-        :param command: Command to send to the device.
+        :param command: Two char command string to send to the device.
         :param data: Data for the command.
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")
@@ -289,6 +289,20 @@ class SmartlineV2(Instrument):
         self.write(command_message)
         self.wait_for(query_delay)
         return self.read(command_message[1:3])
+
+    def ask_manually(self, accessCode, command, data="", query_delay=0):
+        """
+        Send a message to the transmitter and return its answer.
+
+        :param accessCode: How to access the device.
+        :param command: Command to send to the device.
+        :param data: Data for the command.
+        :param int query_delay: Time to wait between writing and reading.
+        :return str: Response from the device after error checking.
+        """
+        self.write(f"{accessCode}{command}{compose_data(data)}")
+        self.wait_for(query_delay)
+        return self.read(command)
 
     def read(self, command=None):
         """Read from the device and do error checking.
@@ -333,22 +347,6 @@ class SmartlineV2(Instrument):
         self.read()
         return []  # no error happened
 
-    def check_errors(self):
-        # TODO remove after update to pymeasure 0.12
-        return self.check_set_errors()
-
-    def query(self, accessCode, command, data=""):
-        """
-        Send a message to the transmitter and return its answer.
-
-        :param accessCode: How to access the device.
-        :param command: Command to send to the device.
-        :param data: Data for the command.
-        :return str: Response from the device after error checking.
-        """
-        self.write_composition(accessCode, command, data)
-        return self.read(command)
-
     " Main commands"
 
     range = Instrument.measurement(
@@ -359,20 +357,6 @@ class SmartlineV2(Instrument):
         "0MV00", """Get the current pressure of the default sensor in mbar""",
         preprocess_reply=lambda r: r.replace("UR", "0").replace("OR", "inf"),
     )
-
-    def getPressure(self, sensor='combination'):
-        """
-        Get the current pressure of the `sensor` in mbar.
-
-        The display unit does not affect this value. Under range (UR) is
-        returned as 0, over range (OR) as inf.
-        """
-        # TODO replace with channels
-        # The general command is MV for the combined value.
-        command = f"M{self.source.get(sensor, 0)}".replace('0', 'V')
-        # response is "OR", "UR" or a float as a string "1.54"
-        got = self.query(0, command).replace("UR", "0").replace("OR", "inf")
-        return float(got)
 
     # def Relays
 
@@ -405,15 +389,15 @@ class SmartlineV2(Instrument):
 
     def setHigh(self, high=""):
         """Set the high pressure to `high` pressure in mbar."""
-        self.query(2, "AH", high)
+        self.ask_manually(2, "AH", high)
 
     def setLow(self, low=""):
         """Set the low pressure to `low` pressure in mbar."""
-        self.query(2, "AL", low)
+        self.ask_manually(2, "AL", low)
 
     " Sensor parameters"
 
-    def getSensorTransition(self):
+    def get_sensor_transition(self):
         """
         Get the current sensor transition between sensors.
 
@@ -428,7 +412,7 @@ class SmartlineV2(Instrument):
         D[float]
             switch at value.
         """
-        got = self.query(0, "ST")
+        got = self.ask_manually(0, "ST")
         # VSR/VSL: 0 direct switch at 1 mbar, 1 continuios between 5 to 15 mbar
         if got == "0":
             return "direct"
@@ -437,7 +421,22 @@ class SmartlineV2(Instrument):
         else:
             return got
 
-    def setSensorTransition(self, mode, *values):
+    def set_default_sensor_transition(self):
+        """Set the senstor transition mode to the default value, depends on the device."""
+        self.ask_manually(2, "ST", "1")
+
+    def set_continuous_sensor_transition(self, low, high):
+        """Set the sensor transition mode to "continuous" mode between `low` and `high` (floats)."""
+        self.ask_manually(2, "ST", f"F{low}T{high}")
+
+    def set_direct_sensor_transition(self, transition_point):
+        """Set the sensor transition to "direct" mode.
+
+        :param float transition_point: Switch between the sensors at that value.
+        """
+        self.ask_manually(2, "ST", f"D{transition_point}")
+
+    def set_sensor_transition(self, mode, *values):
         """
         Set the sensor transition to `mode` with optional `values`.
 
@@ -463,7 +462,7 @@ class SmartlineV2(Instrument):
             command = f"D{values[0]}"
         else:
             raise ValueError("Invalid mode combination.")
-        self.query(2, "ST", command)
+        self.ask_manually(2, "ST", command)
 
     " Device Information"
     # def response delay
