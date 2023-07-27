@@ -220,24 +220,20 @@ class SmartlineV2(Instrument):
             piezo = Instrument.ChannelCreator(Piezo)
             pirani = Instrument.ChannelCreator(Pirani)
 
-    Communication Protocol v2 via rs485.
-
-    Everything is sent as ASCII characters.
-
-    Package (bytes and usage):
-        0-2 address, 3 access code, 4-5 command, 6-7 data length.
-        if data: 8-n data to be sent, n+1 checksum, n+2 carriage return
-        if no data: 8 checksum, 9 carriage return
-
-    Access codes (request: master->transmitter, response: transmitter->master):
-        read: 0, 1
-        write: 2, 3
-        factory default: 4,5
-        error: -, 7
-        binary 8, 9
-
-    Data length is number of data in bytes (padding with zeroes on left)
-    Checksum: Add the decimal numbers of the characters before, mod 64, add 64, show as ASCII.
+    Communication Protocol v2 via rs485:
+        - Everything is sent as ASCII characters
+        - Package (bytes and usage):
+            - 0-2 address, 3 access code, 4-5 command, 6-7 data length.
+            - if data: 8-n data to be sent, n+1 checksum, n+2 carriage return
+            - if no data: 8 checksum, 9 carriage return
+        - Access codes (request: master->transmitter, response: transmitter->master):
+            - read: 0, 1
+            - write: 2, 3
+            - factory default: 4,5
+            - error: -, 7
+            - binary 8, 9
+        - Data length is number of data in bytes (padding with zeroes on left)
+        - Checksum: Add the decimal numbers of the characters before, mod 64, add 64, show as ASCII.
 
     :param adress: The device address in the range 1-16.
     """
@@ -410,7 +406,7 @@ class SmartlineV2(Instrument):
         Get the current sensor transition between sensors.
 
         return interpretation
-        -------
+        ---------------------
         direct
             switch at 1 mbar.
         continuos
@@ -448,15 +444,11 @@ class SmartlineV2(Instrument):
         """
         Set the sensor transition to `mode` with optional `values`.
 
-        parameters
-        ----------
-        mode : "continuous", "direct"
+        :param mode: "continuous", "direct"
             Switch continuously from one sensor to another in the interval of
             low and high. They can be set in values and default to 5, 15 for
             VCR. Alternatively switch directly at a single piezo pressure.
-        values
-            The lower transition value and the higher transition value, if
-            applicable.
+        :param values: The lower transition value and the higher transition value, if applicable.
         """
         if mode == "continuous":
             if not values:
