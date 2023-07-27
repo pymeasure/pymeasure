@@ -107,7 +107,7 @@ class SmartlineV1(Instrument):
             raise ValueError(f"Reply from Instrument indicates an error '{reply}'")
         return []
 
-    type = Instrument.measurement(
+    device_type = Instrument.measurement(
         "T",
         """Get the device type.""",
         cast=str,
