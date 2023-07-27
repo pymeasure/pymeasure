@@ -405,16 +405,15 @@ class SmartlineV2(Instrument):
         """
         Get the current sensor transition between sensors.
 
-        return interpretation
-        ---------------------
-        direct
-            switch at 1 mbar.
-        continuos
-            switch between 5 and 15 mbar.
-        F[float]T[float]
-            switch between low and high value.
-        D[float]
-            switch at value.
+        return interpretation:
+            - direct
+                switch at 1 mbar.
+            - continuos
+                switch between 5 and 15 mbar.
+            - F[float]T[float]
+                switch between low and high value.
+            - D[float]
+                switch at value.
         """
         got = self.ask_manually(0, "ST")
         # VSR/VSL: 0 direct switch at 1 mbar, 1 continuios between 5 to 15 mbar
