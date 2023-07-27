@@ -59,8 +59,13 @@ def test_ask_manually(address, pars, message, answer):
         inst.ask_manually(*pars)
 
 
-def test_calculateChecksum():
-    assert calculateChecksum("0010MV00") == "D"
+@pytest.mark.parametrize("message, result", (
+        ("0010MV00", "D"),
+        ("0022DU04mbar", "c"),
+        ("0012AH05981.5", "v"),
+))
+def test_calculateChecksum(message, result):
+    assert calculateChecksum(message) == result
 
 
 # Test communication

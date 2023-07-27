@@ -206,7 +206,8 @@ class Relative(SensorChannel):
 
 
 class SmartlineV2(Instrument):
-    """A Thyracont vacuum sensor transmitter of the Smartline V2 series.
+    """
+    A Thyracont vacuum sensor transmitter of the Smartline V2 series.
 
     You may subclass this Instrument and add the appropriate channels, see the following example.
 
@@ -220,6 +221,23 @@ class SmartlineV2(Instrument):
             pirani = Instrument.ChannelCreator(Pirani)
 
     Communication Protocol v2 via rs485.
+
+    Everything is sent as ASCII characters.
+
+    Package (bytes and usage):
+        0-2 address, 3 access code, 4-5 command, 6-7 data length.
+        if data: 8-n data to be sent, n+1 checksum, n+2 carriage return
+        if no data: 8 checksum, 9 carriage return
+
+    Access codes (request: master->transmitter, response: transmitter->master):
+        read: 0, 1
+        write: 2, 3
+        factory default: 4,5
+        error: -, 7
+        binary 8, 9
+
+    Data length is number of data in bytes (padding with zeroes on left)
+    Checksum: Add the decimal numbers of the characters before, mod 64, add 64, show as ASCII.
 
     :param adress: The device address in the range 1-16.
     """
@@ -253,21 +271,6 @@ class SmartlineV2(Instrument):
                          **kwargs
                          )
         self.address = address  # 1-16
-        """
-        Everything is sent as ASCII characters.
-        Package (bytes and usage): 0-2 address, 3 access code, 4-5 command, 6-7
-            data length.
-            if data: 8-n data to be sent, n+1 checksum, n+2 carriage return
-            if no data: 8 checksum, 9 carriage return
-        Access code for read access: 0 (master->transmitter), 1 response
-            write: 2, 3
-            factory default: 4,5
-            error: -, 7
-            binary 8, 9
-        Data length is number of data in bytes (padding with zeroes on left)
-        Checksum: Add the decimal numbers of the characters before, mod 64, add
-        64, show as ASCII.
-        """
 
     def write(self, command):
         """Write a command to the device."""
