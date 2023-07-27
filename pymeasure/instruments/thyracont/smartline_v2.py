@@ -129,7 +129,10 @@ class HotCathode(SensorChannel):
     _id = 3
 
     filament_mode = Instrument.control(
-        "0FC00", "2FC01%i", """The hot cathode filament control setting.""",
+        "0FC00", "2FC01%i",
+        docs="""Control which hot cathode filament to use.
+        ("2 if 1 defect", "Filament1", "Filament2", "toggle>1mbar")
+        """,
         values={"2 if 1 defect": 0,
                 "Filament1": 1,
                 "Filament2": 2,
@@ -361,7 +364,9 @@ class SmartlineV2(Instrument):
     # def Relays
 
     display_unit = Instrument.control(
-        "0DU00", "2DU%s", """Unit shown in the display.""",
+        get_command="0DU00",
+        set_command="2DU%s",
+        docs="""Control the unit shown in the display. ('mbar', 'Torr', 'hPa')""",
         values=['mbar', 'Torr', 'hPa'],
         validator=validators.strict_discrete_set,
         set_process=compose_data,
@@ -370,7 +375,7 @@ class SmartlineV2(Instrument):
 
     display_orientation = Instrument.control(
         "0DO00", "2DO01%i",
-        """Orientation of the display in relation to the pipe.""",
+        """Control the orientation of the display in relation to the pipe ('top', 'bottom').""",
         values={"top": 0, "bottom": 1},
         map_values=True,
         validator=validators.strict_discrete_set,
@@ -379,7 +384,7 @@ class SmartlineV2(Instrument):
 
     display_data = Instrument.control(
         "0DD00", "2DD01%i",
-        """Position of the display in relation to the pipe.""",
+        """Control the display data source (strict SOURCES).""",
         values=source,
         cast=int,
         map_values=True,
@@ -480,7 +485,7 @@ class SmartlineV2(Instrument):
         "0SH00", """Get the sensor head serial number.""", cast=str)
 
     baud_rate = Instrument.setting(
-        "2BR%s", """The device baud rate.""",
+        "2BR%s", """Set the device baud rate.""",
         set_process=compose_data,
         check_set_errors=True,
     )
@@ -501,7 +506,7 @@ class SmartlineV2(Instrument):
         "0VB00", """Get the bootloader version.""", cast=str)
 
     analog_output_setting = Instrument.measurement(
-        "0OC00", "Current analog output setting. See manual.", cast=str)
+        "0OC00", "Get current analog output setting. See manual.", cast=str)
 
     operating_hours = Instrument.measurement(
         "0OH00", "Measure the operating hours.",
