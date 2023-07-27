@@ -43,7 +43,7 @@ class SmartlineV1(Instrument):
     """Thyracont Vacuum Instruments Smartline gauges with Communication Protocol V1.
 
     Connection to the device is made through an RS485 serial connection.
-    The communication settings are baudrate 9600, 8 data bits, 1 stop bit,
+    The default communication settings are baudrate 9600, 8 data bits, 1 stop bit,
     no parity, no handshake.
 
     A communication packages is structured as follows:
@@ -57,17 +57,19 @@ class SmartlineV1(Instrument):
     :param adapter: pyvisa resource name of the instrument or adapter instance
     :param string name: Name of the instrument.
     :param int address: RS485 adddress of the instrument 1-15.
+    :param int baud_rate: baudrate used for the communication with the device.
     :param kwargs: Any valid key-word argument for Instrument
 
     """
 
-    def __init__(self, adapter, name="Thyracont Vacuum Gauge V1", address=1, **kwargs):
+    def __init__(self, adapter, name="Thyracont Vacuum Gauge V1", address=1,
+                 baud_rate=9600, **kwargs):
         super().__init__(adapter,
                          name,
                          includeSCPI=False,
                          write_termination="\r",
                          read_termination="\r",
-                         asrl=dict(baud_rate=9600),
+                         asrl=dict(baud_rate=baud_rate),
                          **kwargs)
         self.address = address
 
@@ -116,15 +118,15 @@ class SmartlineV1(Instrument):
 
     pressure = Instrument.measurement(
         "M",
-        """Get the pressure measurement in the set unit.""",
+        """Get the pressure measurement in mbar.""",
         cast=str,
         preprocess_reply=lambda s: s[4:],
         get_process=lambda s: float(s[:4])/1000*10**(int(s[4:])-20),
     )
 
-    unit = Instrument.control(
+    display_unit = Instrument.control(
         "U", "u%06d",
-        """Control the pressure unit.""",
+        """Control the display's pressure unit.""",
         cast=int,
         preprocess_reply=lambda s: s[4:],
         values={"mbar": 0, "Torr": 1, "hPa": 2},
