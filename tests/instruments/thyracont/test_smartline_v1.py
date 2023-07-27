@@ -70,4 +70,4 @@ def test_unit():
         SmartlineV1,
         [("001Uf", "001U000000F"), ],
     ) as inst:
-        assert inst.unit == "mbar"
+        assert inst.display_unit == "mbar"
