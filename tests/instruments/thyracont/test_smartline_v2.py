@@ -34,7 +34,7 @@ r"""
 Attention
 =========
 
-Contrary to normal tests, the ansers read MUST have the termination `\r` added, as the
+Contrary to normal tests, the answers read MUST have the termination `\r` added, as the
 `SmartlineV2.read` method reads manually until it finds that char!
 """
 
@@ -246,8 +246,8 @@ def test_pressure_piezo():
 
 # Hot Cathode tests
 def test_pressure_hot_cathode():
-    with expected_protocol(SmartlineV2, [("0010M300a", "0011M3079.734e2E\r")]) as inst:
-        assert inst.hot_cathode.pressure == 973.4
+    with expected_protocol(SmartlineV2, [("0010M300a", "0011M3089.274e-8x\r")]) as inst:
+        assert inst.hot_cathode.pressure == 9.274e-8
 
 
 def test_filament_mode_getter():

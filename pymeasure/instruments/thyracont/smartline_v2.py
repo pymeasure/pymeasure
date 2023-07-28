@@ -179,9 +179,9 @@ class HotCathode(SensorChannel):
     statistics = Channel.measurement(
         "0PM013",
         """Get the wear in percent: of filament 1, of filament 2.""",
-        separator="A",
+        preprocess_reply=lambda msg: msg.strip("F"),
+        separator="S",
         cast=int,
-        get_process=lambda vals: [v / 4 for v in vals],
     )
 
     # cathode status CA, cathode control mode CM
@@ -408,7 +408,7 @@ class SmartlineV2(Instrument):
         return interpretation:
             - direct
                 switch at 1 mbar.
-            - continuos
+            - continuous
                 switch between 5 and 15 mbar.
             - F[float]T[float]
                 switch between low and high value.
@@ -416,7 +416,9 @@ class SmartlineV2(Instrument):
                 switch at value.
         """
         got = self.ask_manually(0, "ST")
-        # VSR/VSL: 0 direct switch at 1 mbar, 1 continuios between 5 to 15 mbar
+        # VSR/VSL: 0 direct switch at 1 mbar, 1 continuous between 5 to 15 mbar
+        # VSH: 0 direct switch at 4e-4 mbar, 1 continuous between 1e-3 to 2e-3 mbar,
+        #      2 continuous between 2e-3 to 5e-3 mbar
         if got == "0":
             return "direct"
         elif got == "1":
