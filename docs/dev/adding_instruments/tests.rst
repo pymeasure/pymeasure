@@ -66,16 +66,39 @@ Some protocol tests in the test suite can serve as examples:
 Test generator
 --------------
 
-In order to facilitate writing tests, if you already have working code and a device at hand, we have a :class:`Generator` for tests.
+In order to facilitate writing tests, if you already have working code and a device at hand, we have a :class:`~pymeasure.generator.Generator` for tests.
 You can control your instrument with the TestGenerator as a middle man.
 It logs the method calls, the device communication and the return values, if any, and writes tests according to these log entries.
 
-.. code-block:: python
+.. testsetup:: generator
 
-    from generator import Generator
+    import io
+    from pymeasure.adapters.protocol import ProtocolAdapter
+
+    adapter = ProtocolAdapter(comm_pairs=[
+        (b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),  # init
+        (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03'),  # info
+        (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03'),  # setpoint = 20
+        (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03'),  # setpoint == 20
+        (b'\x0201010WWRD0120,01,0258\x03', b'\x020101OK\x03'),  # setpoint = 60
+    ])
+
+    class FakeIO(io.StringIO):
+        def close(self):
+            pass
+
+        def really_close(self):
+            super().close()
+
+    file = FakeIO()
+
+.. testcode:: generator
+
+    from pymeasure.generator import Generator
+    from pymeasure.instruments.hcp import TC038
 
     generator = Generator()
-    inst = generator.instantiate(TC038, "COM5", 'hcp', adapter_kwargs={'baud_rate': 9600})
+    inst = generator.instantiate(TC038, adapter, 'hcp', adapter_kwargs={'baud_rate': 9600})
 
 As a first step, this code imports the Generator and generates a middle man instrument.
 The :meth:`instantiate` method creates an instrument instance and logs the communication at startup.
@@ -89,23 +112,17 @@ These additional keyword arguments are included in the tests.
 Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038("COM5")`.
 Having gotten and set some properties, and called some methods, we can write the tests to a file.
 
-.. code-block:: python
+.. testcode:: generator
 
     inst.information  # returns the 'information' property, e.g. 'UT150333 V01.R001111222233334444'
-    inst.setpoint  # returns some value, e.g. 60
     inst.setpoint = 20
-    inst.setpoint == 20
+    assert inst.setpoint == 20
+    inst.setpoint = 60
 
-    generator.write_file("test_tc038.py")
+    generator.write_file(file)
 
-
-This is the resulting file:
-
-.. code-block:: python
-
-    # test_tc038.py
-
-    import pytest
+    # The following data will be written to `file`:
+    expected = r"""import pytest
 
     from pymeasure.test import expected_protocol
     from pymeasure.instruments.hcp import TC038
@@ -120,21 +137,21 @@ This is the resulting file:
 
 
     def test_information_getter():
-    with expected_protocol(
-            TC038,
-            [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-             (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03')],
-    ) as inst:
-        assert inst.information == 'UT150333 V01.R001111222233334444'
+        with expected_protocol(
+                TC038,
+                [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+                 (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03')],
+        ) as inst:
+            assert inst.information == 'UT150333 V01.R001111222233334444'
 
 
     @pytest.mark.parametrize("comm_pairs, value", (
         ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-        (b'\x0201010WWRD0120,01,0258\x03', b'\x020101OK\x03')],
-        60),
+          (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')],
+         20),
         ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-        (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')],
-        20),
+          (b'\x0201010WWRD0120,01,0258\x03', b'\x020101OK\x03')],
+         60),
     ))
     def test_setpoint_setter(comm_pairs, value):
         with expected_protocol(
@@ -148,10 +165,23 @@ This is the resulting file:
         with expected_protocol(
                 TC038,
                 [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
-                (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03')],
+                 (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03')],
         ) as inst:
             assert inst.setpoint == 20.0
+    """
 
+.. testcode:: generator
+    :hide:
+
+    result = file.getvalue()
+    result_splitted = result.split("\n")
+    expected_splitted = expected.split("\n")
+    for i in range(len(expected_splitted)):
+        assert (result_splitted[i] == expected_splitted[i],
+                f"Discrepancy in line: {i}, r: '{result_splitted[i]}', e:'{expected_splitted[i]}'")
+
+    assert result == expected, f"really:\n{result}"
+    file.really_close()
 
 .. _device_tests:
 
