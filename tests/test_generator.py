@@ -30,8 +30,9 @@ from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.hcp import TC038, TC038D
 
-from generator import (write_test, write_parametrized_test, write_parametrized_method_test,
-                       parse_stream, Generator, ByteStreamHandler)
+from pymeasure.generator import (write_test, write_parametrized_test,
+                                 write_parametrized_method_test,
+                                 parse_stream, Generator, ByteStreamHandler)
 
 
 class FakeChildChannel(Channel):
