@@ -109,7 +109,7 @@ These adapter arguments are not written to tests.
 If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
 These additional keyword arguments are included in the tests.
 
-Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038("COM5")`.
+Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038(adapter)`, where ``adapter`` is some resource string.
 Having gotten and set some properties, and called some methods, we can write the tests to a file.
 
 .. testcode:: generator
@@ -121,8 +121,17 @@ Having gotten and set some properties, and called some methods, we can write the
 
     generator.write_file(file)
 
-    # The following data will be written to `file`:
-    expected = r"""import pytest
+The following data will be written to :code:`file`:
+
+.. testcode:: generator
+    :hide:
+
+    print(file.getvalue()[:-1])  # to strip the last newline char.
+    file.really_close()
+
+.. testoutput:: generator
+
+    import pytest
 
     from pymeasure.test import expected_protocol
     from pymeasure.instruments.hcp import TC038
@@ -168,20 +177,7 @@ Having gotten and set some properties, and called some methods, we can write the
                  (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03')],
         ) as inst:
             assert inst.setpoint == 20.0
-    """
 
-.. testcode:: generator
-    :hide:
-
-    result = file.getvalue()
-    result_splitted = result.split("\n")
-    expected_splitted = expected.split("\n")
-    for i in range(len(expected_splitted)):
-        assert (result_splitted[i] == expected_splitted[i],
-                f"Discrepancy in line: {i}, r: '{result_splitted[i]}', e:'{expected_splitted[i]}'")
-
-    assert result == expected, f"really:\n{result}"
-    file.really_close()
 
 .. _device_tests:
 
