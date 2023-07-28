@@ -64,9 +64,12 @@ def write_generic_test(file, header_text, cls_name, comm_text,
     file.write(
         f"""
 
-{''.join(header_text)}    with expected_protocol(
+{''.join(header_text)}\
+    with expected_protocol(
             {cls_name},
-{''.join(comm_text)}{''.join(args_text)}    ){inst}:
+{''.join(comm_text)}\
+{''.join(args_text)}\
+    ){inst}:
         {test}
 """
     )
@@ -297,6 +300,7 @@ class Generator:
     Generates tests from the communication with an instrument.
 
     Example usage:
+
     .. code::
 
         g = Generator()
@@ -417,7 +421,7 @@ class Generator:
 
         :param filename: Name to save the tests to, may contain the path, e.g. "/tests/test_abc.py".
         """
-        file = open(filename, "w")
+        file = filename if isinstance(filename, io.StringIO) else open(filename, "w")
         self.write_init_test(file)
         self.write_property_tests(file)
         self.write_method_tests(file)

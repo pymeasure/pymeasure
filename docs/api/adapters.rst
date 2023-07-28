@@ -87,3 +87,6 @@ These pieces are useful when writing tests.
     :undoc-members:
     :inherited-members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.generator.Generator
+    :members:
