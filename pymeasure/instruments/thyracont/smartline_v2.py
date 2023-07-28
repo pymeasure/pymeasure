@@ -423,6 +423,8 @@ class SmartlineV2(Instrument):
             return "direct"
         elif got == "1":
             return "continuous"
+        elif got == "2":
+            return "continuous 2"
         else:
             return got
 
@@ -440,30 +442,6 @@ class SmartlineV2(Instrument):
         :param float transition_point: Switch between the sensors at that value.
         """
         self.ask_manually(2, "ST", f"D{transition_point}")
-
-    def set_sensor_transition(self, mode, *values):
-        """
-        Set the sensor transition to `mode` with optional `values`.
-
-        :param mode: "continuous", "direct"
-            Switch continuously from one sensor to another in the interval of
-            low and high. They can be set in values and default to 5, 15 for
-            VCR. Alternatively switch directly at a single piezo pressure.
-        :param values: The lower transition value and the higher transition value, if applicable.
-        """
-        if mode == "continuous":
-            if not values:
-                command = "1"
-            elif len(values) == 2:
-                low, high = values
-                command = f"F{low}T{high}"
-            else:
-                raise ValueError("Invalid values for continuous mode.")
-        elif mode == "direct" and len(values) == 1:
-            command = f"D{values[0]}"
-        else:
-            raise ValueError("Invalid mode combination.")
-        self.ask_manually(2, "ST", command)
 
     " Device Information"
     # def response delay

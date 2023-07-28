@@ -198,33 +198,6 @@ def test_set_continuous_sensor_transition():
         inst.set_continuous_sensor_transition(1, 2)
 
 
-@pytest.mark.parametrize("mode, values, comm_pairs", (
-        ("continuous", (), [(b'0012ST011|', "0013ST00K\r")]),
-        ("continuous", (1, 2), [(b'0012ST04F1T2K', "0013ST00K\r")]),
-        ("direct", (5,), [(b'0012ST02D5E', "0013ST00K\r")]),
-))
-def test_set_sensor_transition_success(mode, values, comm_pairs):
-    with expected_protocol(SmartlineV2,
-                           comm_pairs,
-                           ) as inst:
-        print(comm_pairs)
-        inst.set_sensor_transition(mode, *values)
-
-
-@pytest.mark.parametrize("mode, values", (
-        ("continuous", (5,)),
-        ("continuous", (5, 6, 7)),
-        ("direct", ()),
-        ("direct", (1, 2)),
-))
-def test_set_sensor_transition_fail(mode, values):
-    with expected_protocol(SmartlineV2,
-                           [],
-                           ) as inst:
-        with pytest.raises(ValueError):
-            inst.set_sensor_transition(mode, *values)
-
-
 # Pirani tests
 def test_pressure_pirani():
     with expected_protocol(SmartlineV2, [("0010M100_", "0011M1079.734e2C\r")]) as inst:
