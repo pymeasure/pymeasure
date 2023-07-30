@@ -1,5 +1,6 @@
 Upcoming version
 ================
+- Dropped support for Python 3.7, added support for Python 3.11
 
 Deprecated features
 -------------------
