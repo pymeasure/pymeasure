@@ -200,6 +200,8 @@ class NI_GPIB_232(VISAAdapter):
         time.sleep(self.rw_delay/1000)
         ret_len = self.connection.read()
         log.debug(f"length of bytes read {ret_len}")
+        if len(ret_val) is not int(ret_len):
+            raise ConnectionError(f"len(ret_val): {len(ret_val)} vs. ret_len: {ret_len}")
         self._check_errors()
         return ret_val
 
