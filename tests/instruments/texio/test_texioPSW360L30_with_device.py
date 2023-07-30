@@ -40,7 +40,7 @@ class TestTexioPSW360L30:
     """
 
     ##################################################
-    # Keithley2306 device address goes here:
+    # TEXIO PSW-360L30 device address goes here:
     RESOURCE = "TCPIP::192.168.10.119::2268::SOCKET"
     ##################################################
 
