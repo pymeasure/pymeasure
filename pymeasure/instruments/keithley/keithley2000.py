@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(Instrument, KeithleyBuffer):
+class Keithley2000(KeithleyBuffer, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 
