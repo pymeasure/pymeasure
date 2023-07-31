@@ -31,7 +31,14 @@ import pyvisa as pv
 from pyvisa import VisaIOError  # noqa: F401 for dependencies
 
 
-def calculateChecksum(message):
+def generate_enum_validator(validator):
+    """Generate a modified validator, which returns the enum's value."""
+    def enum_vaildator(value, values):
+        return validator(value, values).value
+    return enum_vaildator
+
+
+def calculate_checksum(message):
     """Calculate the checksum for string `message`."""
     value = 0
     for i in range(len(message)):
@@ -48,17 +55,6 @@ def compose_data(value):
     return f"{len(value):02}{value}"
 
 
-source = {
-    'combination': 0,
-    'pirani': 1,
-    'piezo': 2,
-    'hotCathode': 3,
-    'coldCathode': 4,
-    'ambient': 6,
-    'relative': 7,
-}
-
-
 class Sources(IntEnum):
     COMBINATION = 0
     PIRANI = 1
@@ -67,6 +63,11 @@ class Sources(IntEnum):
     COLD_CATHODE = 4
     AMBIENT = 6
     RELATIVE = 7
+
+
+def str_to_source(source_string):
+    """Turn a string with a source number to a `Sources` enum. Useful for `cast` parameter."""
+    return Sources(int(source_string))
 
 
 gas_factor = Channel.control(
@@ -102,13 +103,13 @@ class Pirani(SensorChannel):
     You may control a gas factor with :attr:`gas_factor`.
     """
 
-    _id = 1
+    _id = Sources.PIRANI
 
     gas_factor = gas_factor
 
     statistics = Channel.measurement(
         "0PM011",
-        """Get the sensor statistics: wear in percent (negative: corrosion,
+        """Get the sensor statistics as a tuple: wear in percent (negative: corrosion,
             positive: contamination), time since last adjustment in hours.""",
         preprocess_reply=lambda msg: msg.strip("W"),
         separator="A",
@@ -120,13 +121,13 @@ class Pirani(SensorChannel):
 class Piezo(SensorChannel):
     """Piezo sensor channel. A piezo sensor is independent of the gas present."""
 
-    _id = 2
+    _id = Sources.PIEZO
 
 
 class HotCathode(SensorChannel):
     """Hot cathode sensor channel."""
 
-    _id = 3
+    _id = Sources.HOT_CATHODE
 
     filament_mode = Instrument.control(
         "0FC00", "2FC01%i",
@@ -178,7 +179,7 @@ class HotCathode(SensorChannel):
 
     statistics = Channel.measurement(
         "0PM013",
-        """Get the wear in percent: of filament 1, of filament 2.""",
+        """Get the wear levels in percent as a tuple: filament 1, filament 2.""",
         preprocess_reply=lambda msg: msg.strip("F"),
         separator="S",
         cast=int,
@@ -190,19 +191,19 @@ class HotCathode(SensorChannel):
 class ColdCathode(SensorChannel):
     """Cold cathode sensor channel."""
 
-    _id = 4
+    _id = Sources.COLD_CATHODE
 
     gas_factor = gas_factor
 
 
 class Ambient(SensorChannel):
 
-    _id = 6
+    _id = Sources.AMBIENT
 
 
 class Relative(SensorChannel):
 
-    _id = 7
+    _id = Sources.RELATIVE
 
 
 class SmartlineV2(Instrument):
@@ -238,8 +239,6 @@ class SmartlineV2(Instrument):
     :param adress: The device address in the range 1-16.
     """
 
-    source = source
-
     Sources = Sources
 
     errors = {'NO_DEF': "Invalid command for this device.",
@@ -271,7 +270,7 @@ class SmartlineV2(Instrument):
     def write(self, command):
         """Write a command to the device."""
         message = f"{self.address:03}{command}"
-        super().write(f"{message}{calculateChecksum(message)}")
+        super().write(f"{message}{calculate_checksum(message)}")
 
     def write_composition(self, accessCode, command, data=""):
         """Write a command with an accessCode and optional data to the device.
@@ -314,33 +313,18 @@ class SmartlineV2(Instrument):
         """
         # Sometimes the answer contains 0x00 or values above 127, such that
         # decoding fails.
-        answer = b''
-        i = 0
-        while True:
-            try:
-                got = self.adapter.read_bytes(1)
-            except pv.VisaIOError as exc:
-                if exc.abbreviation == 'VI_ERROR_TMO':
-                    raise ConnectionResetError("Timeout.")
-                i += 1
-                if i > 2:
-                    raise ConnectionResetError(f"Timeout at {i} tries.")
-                continue
-            if got == b'\r':
-                break
-            elif int.from_bytes(got, 'little') > 127:
-                pass  # Ignore those values.
-            elif got == b'\x00':
-                pass  # Ignore 0 byte value.
-            else:
-                answer += got
-        got = answer.decode('ascii')
-        # Raises from time to time an UnicodeDecodeError or pyvisa.VisaIOError
+        response = self.read_bytes(-1, break_on_termchar=True)
+        if b"\x00" in response:
+            response = response.replace(b"\x00", b"")
+
+        # b"\r" is the termination character
+        got = response.rstrip(b"\r").decode('ascii', errors="ignore")
+        # Error checking
         if got[3] == "7":
             raise ConnectionError(self.errors[got[8:-1]])
         if command is not None and got[4:6] != command:
             raise ConnectionError(f"Wrong response to {command}: '{got}'.")
-        if calculateChecksum(got[:-1]) != got[-1]:
+        if calculate_checksum(got[:-1]) != got[-1]:
             raise ConnectionError("Response checksum is wrong.")
         return got[8:-1]
 
@@ -384,9 +368,8 @@ class SmartlineV2(Instrument):
     display_data = Instrument.control(
         "0DD00", "2DD01%i",
         """Control the display data source (strict SOURCES).""",
-        values=source,
-        cast=int,
-        map_values=True,
+        values=Sources,
+        cast=str_to_source,
         validator=validators.strict_discrete_set,
         check_set_errors=True,
     )
