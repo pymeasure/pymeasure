@@ -11,3 +11,4 @@ LeCroy T3DSO1204 Oscilloscope
 .. autoclass:: pymeasure.instruments.lecroy.lecroyT3DSO1204.ScopeChannel
     :members:
     :show-inheritance:
+

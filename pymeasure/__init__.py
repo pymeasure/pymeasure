@@ -36,10 +36,8 @@ try:
     del setuptools_scm
 except (ImportError, LookupError):
     # Setuptools_scm was not found, or it could not find a version, so use installation metadata.
-    try:
-        from importlib.metadata import version, PackageNotFoundError
-    except ImportError:  # TODO: Remove this when Python 3.7 support is dropped
-        from importlib_metadata import version, PackageNotFoundError
+    from importlib.metadata import version, PackageNotFoundError
+
     try:
         __version__ = version("pymeasure")
         # Alternatively, if the current approach is too slow, we could add

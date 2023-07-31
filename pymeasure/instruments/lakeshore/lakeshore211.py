@@ -27,7 +27,7 @@ import logging
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 from pyvisa.constants import Parity
-from enum import IntFlag
+from enum import IntEnum
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -47,11 +47,11 @@ class LakeShore211(Instrument):
 
     """
 
-    class AnalogMode(IntFlag):
+    class AnalogMode(IntEnum):
         VOLTAGE = 0
         CURRENT = 1
 
-    class AnalogRange(IntFlag):
+    class AnalogRange(IntEnum):
         RANGE_20K = 0
         RANGE_100K = 1
         RANGE_200K = 2
@@ -59,11 +59,11 @@ class LakeShore211(Instrument):
         RANGE_475K = 4
         RANGE_1000K = 5
 
-    class RelayNumber(IntFlag):
+    class RelayNumber(IntEnum):
         RELAY_ONE = 1
         RELAY_TWO = 2
 
-    class RelayMode(IntFlag):
+    class RelayMode(IntEnum):
         OFF = 0
         ON = 1
         ALARMS = 2
