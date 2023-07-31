@@ -27,9 +27,6 @@ from enum import IntEnum
 from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
-import pyvisa as pv
-from pyvisa import VisaIOError  # noqa: F401 for dependencies
-
 
 def generate_enum_validator(validator):
     """Generate a modified validator, which returns the enum's value."""
