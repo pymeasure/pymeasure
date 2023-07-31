@@ -235,9 +235,9 @@ class Test_parse_stream:
             (b"WRITE:abc\nREAD:def\nWRITE:ghi\nREAD:jkl\n",
              [(b"abc", b"def"), (b"ghi", b"jkl")]),
             (b"WRITE:abc\nWRITE:def\n", [(b"abc", None), (b"def", None)]),
-            (b"WRITE:\x03ab\x04\nREAD:super\x05\n",
+            (b"WRITE:\x03ab\x04\nREAD:super\x05\n",  # test for non ASCII byte values
              [(b'\x03ab\x04', b'super\x05')]),
-            (b"WRITE:ho\n 9\nWRITE:\n hey\nREAD:7\n9\n",
+            (b"WRITE:ho\n 9\nWRITE:\n hey\nREAD:7\n9\n",  # test for additional newline chars
              [(b"ho\n 9", None), (b"\n hey", b"7\n9")]),
         ))
     def test_parsing(self, text, comms):
