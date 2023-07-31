@@ -448,39 +448,33 @@ class AgilentE4407B(Instrument):
         values=["A:", "C:"],
     )
 
-    def copy_file(self, source, destination):
-        """
-        A command that copies a file to another.
-        """
-        self.write(":MMEM:COPY %s,%s" % (source, destination))
+    def capture_screenshot(self, file="C:temp.gif"):
+        tout = self.adapter.connection.timeout
+        self.adapter.connection.timeout = 30000
+        self.write(f':MMEM:STOR:SCR "C:temp.gif";')
+        self.adapter.connection.timeout = tout
+    
+    def delet_file(self, file):
+        self.write(f':MMEM:DEL "{file}";')
 
-    def send_file(self, filename, data_block):
-        """
-        A command that sends a file to the instrument.
-        """
-        self.write(f":MMEM:DATA {filename},{data_block}")
-
-    recive_file = Instrument.measurement(
-        ":MMEM:DATA? %g",
-        """A command that returns the contents of a file.""",
-    )
-    delet_file = Instrument.setting(
-        ":MMEM:DEL %g",
-        """A command that deletes a file from the mass memory.""",
+    def recive_file(self, file):
+        pic = self.adapter.connection.query_binary_values(
+        f':MMEM:DATA? {file};',
+        datatype="s",
+        container=bytes,
     )
 
-    save_screen = Instrument.setting(
-        ":MMEM:STOR:SCR %g",
-        """Save the current screen to the specified mass memory. eg C:myscreen.gif""",
-    )
 
-    def get_screen(self):
+    def save_screenshot(self):
         """
-        A command that returns the contents of the screen.
+        A command that captures the screen of the instrument and returns it as a gif.
+        temporarily sets the timeout to 30000 ms as part of saving the screen.
         """
-        self.save_screen("C:tempScreen.gif")
-        data = self.recive_file("C:tempScreen.gif")
-        self.delet_file("C:tempScreen.gif")
+        
+        self.delet_file("C:temp.gif")
+        self.capture_screenshot()
+        data = self.recive_file("C:temp.gif")
+        self.delet_file("C:temp.gif")
         return data
 
     # Format commands
@@ -540,15 +534,7 @@ class AgilentE4407B(Instrument):
 
     #     self.write(f":TRAC TRACE{source})
 
-    def get_trace(self, trace):
-        """Get a trace from the instrument."""
-        trace = strict_discrete_set(trace, [1, 2, 3])
-        return self.ask(f":TRAC? TRACE{trace}")
 
-    get_raw_trace = Instrument.measurement(
-        ":TRAC? rawtrace",
-        """Get raw trace from the instrument.""",
-    )
     peaks = Instrument.measurement(
         ":TRAC:MATH:PEAK?",
         """Get peaks from the instrument.""",
@@ -599,6 +585,11 @@ class AgilentE4407B(Instrument):
         validator=strict_discrete_set,
         values=["PEAK", "RMS"],
     )
+    def trace_mode(self, trace, mode):
+
+        trace = strict_discrete_set(trace, [1, 2, 3])
+        mode = strict_discrete_set(mode, ["WRIT", "MAXH", "MINH", "VIEW", "BLAN"])
+        self.write(f":DISP:TRAC{trace}:MODE {mode}")
 
     @property
     def frequencies(self):
@@ -635,3 +626,5 @@ class AgilentE4407B(Instrument):
                 "Peak (dB)": self.trace(number),
             }
         )
+
+   
