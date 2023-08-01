@@ -34,34 +34,34 @@ log.addHandler(logging.NullHandler())
 
 
 class NI_GPIB_232(VISAAdapter):
-    """Encapsulates the additional commands necessary
-       to communicate over a National Instruments GPIB-232CT Adapter,
+    """Encapsulates the additional commands necessary\
+       to communicate over a National Instruments GPIB-232CT Adapter,\
        using the :class:``VISAAdapter`` .
 
-       Each Adapter is constructed based on a connection to the device
-       itself and the GPIB address of the instrument to be communicated with.
-       Connection sharing is achieved by using the :meth:``.gpib`` 
-       method to spawn new NI_GPIB_232s for different GPIB addresses.
+    Each Adapter is constructed based on a connection to the device
+    itself and the GPIB address of the instrument to be communicated with.
+    Connection sharing is achieved by using the :meth:``.gpib``
+    method to spawn new NI_GPIB_232s for different GPIB addresses.
 
-       :param resource_name: A VISA resource string that identifies the
-           connection to the device itself, for example "ASRL5" for the 5th COM port.
-       :param address: Integer GPIB address of the desired instrument.
-       :param serial_timeout: Timeout value for the serial communication, unit: ms
-       :param rw_delay: internal delay, unit: ms, default 50 ms
-       :param eoi: Enable or disable EOI assertion.
-       :param kwargs: Key-word arguments if constructing a new serial object
-       :ivar address: Integer GPIB address of the desired instrument.
+    :param resource_name: A VISA resource string that identifies the\
+    connection to the device itself, for example "ASRL5" for the 5th COM port.
+    :param address: Integer GPIB address of the desired instrument.
+    :param serial_timeout: Timeout value for the serial communication, unit: ms
+    :param rw_delay: internal delay, unit: ms, default 50 ms
+    :param eoi: Enable or disable EOI assertion.
+    :param kwargs: Key-word arguments if constructing a new serial object
+    :ivar address: Integer GPIB address of the desired instrument.
 
 
-       Usage example:
+    Usage example:
 
-       .. code::
+    .. code::
 
-         adapter = NI_GPIB_232("ASRL5::INSTR", 7)
-         sourcemeter = Keithley2400(adapter)  # at GPIB address 7
-         # generate another instance with a different GPIB address:
-         adapter2 = adapter.gpib(9)
-         multimeter = Keithley2000(adapter2)  # at GPIB address 9
+    adapter = NI_GPIB_232("ASRL5::INSTR", 7)
+    sourcemeter = Keithley2400(adapter)  # at GPIB address 7
+    # generate another instance with a different GPIB address:
+    adapter2 = adapter.gpib(9)
+    multimeter = Keithley2000(adapter2)  # at GPIB address 9
 
 
     """
@@ -90,9 +90,8 @@ class NI_GPIB_232(VISAAdapter):
         self.flush_read_buffer()
 
     class GPIBStatus(IntFlag):
-        """Enum element for GIBP status bit decoding
+        """Enum element for GIBP status bit decoding."""
 
-        """
         ERR = 32768  # Error detected
         TIMO = 16384  # Time out
         END = 8192  # EOI or EOS detected
@@ -109,9 +108,8 @@ class NI_GPIB_232(VISAAdapter):
         SCAS = 1  # Device Clear active status
 
     class GPIBError(Flag):
-        """Enum element for GPIB error bit decoding
+        """Enum element for GPIB error bit decoding."""
 
-        """
         ECMD = 17  # unrecognized command
         # 15-16 reseved
         EBUS = 14  # Command bytes could not be sent
@@ -127,9 +125,8 @@ class NI_GPIB_232(VISAAdapter):
         NGER = 0  # No error condition
 
     class SERIALError(Flag):
-        """Enum element for serial error bit decoding
+        """Enum element for serial error bit decoding."""
 
-        """
         EFRM = 4  # Serial port framing error
         EOFL = 3  # Serial port receive buffer overflow
         EORN = 2  # Serial port overrrun error
@@ -137,10 +134,7 @@ class NI_GPIB_232(VISAAdapter):
         NSER = 0  # No error condition
 
     def _check_errors(self):
-        """
-        Method to decode the status data reported from the device.
-
-        """
+        """Decode the status data reported from the device."""
         self.connection.write("stat n")
         if self.connection.bytes_in_buffer == 0:
             time.sleep(2.5 * self.rw_delay/1000)
@@ -231,22 +225,16 @@ class NI_GPIB_232(VISAAdapter):
         self.flush_read_buffer()
 
     def assert_trigger(self):
-        """
-        Initiate a GPIB trigger-event.
-        """
+        """Initiate a GPIB trigger-event."""
         self.connection.write(f"trg {self.address}")
 
     def clear(self):
-        """
-        Clear specified device.
-
-        """
+        """Clear specified device."""
         self.connection.write(f"clr {self.address}")
 
     @property
     def eoi(self):
-        """Control whether to assert the EOI signal with the last character
-        of any command sent over GPIB port (bool).
+        """Control whether to assert the EOI signal with the last character.
 
         Some instruments require EOI signal to be
         asserted in order to properly detect the end of a command.
@@ -259,9 +247,10 @@ class NI_GPIB_232(VISAAdapter):
         self.connection.write(f"EOT {int(value)}")
 
     def gpib(self, address, **kwargs):
-        """Return a NI_GPIB_232 object that references the GPIB
-        address specified, while sharing the Serial connection with other
-        calls of this function.
+        """Return a NI_GPIB_232 object that references the GPIB address specified.
+
+        The NI GPIB-232CT supports more then one GPIB device, so this can be sued to share
+        the serial connection with other calls of this function.
 
         :param address: Integer GPIB address of the desired instrument
         :param kwargs: Arguments for the initialization
@@ -270,25 +259,16 @@ class NI_GPIB_232(VISAAdapter):
         return NI_GPIB_232(self, address, **kwargs)
 
     def pass_control(self, primary_address: int, secondary_address: int = 0):
-        """
-        Pass control to device with primary_address and optional secondary_address.
-
-        """
+        """Pass control to device with primary_address and optional secondary_address."""
         self.connection.write(f"pct {primary_address}+{secondary_address}")
 
     def send_command(self, data: bytes):
-        """
-        Write GPIB command bytes on the bus.
-
-        """
+        """Write GPIB command bytes on the bus."""
         self.connection.write(f"cmd #{len(data)}\n {data}")
         self._check_errors()
 
     def set_rsc(self):
-        """
-        Set the NI-GPIB232ct to become the GPIB system controller.
-
-        """
+        """Set the NI-GPIB232ct to become the GPIB system controller."""
         self.connection.write("rsc 1")
 
     def send_ifc(self):
@@ -298,6 +278,7 @@ class NI_GPIB_232(VISAAdapter):
     @property
     def timeout(self):
         """Control the GPIB timeout.
+
         Valid value range 0.0001 to 3600s
         """
         self.connection.write("tmo")
@@ -321,7 +302,7 @@ class NI_GPIB_232(VISAAdapter):
         return self.connection.read_bytes(71).decode()
 
     def wait_for_srq(self, timeout=20, delay=0.1):
-        """Blocks until a SRQ, and leaves the bit high
+        """Blocks until a SRQ and return status byte(s) if applicable.
 
         :param timeout: Timeout (for SRQ) in seconds.
         :raises TimeoutError: "Waiting for SRQ timed out."
