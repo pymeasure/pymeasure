@@ -57,11 +57,11 @@ class NI_GPIB_232(VISAAdapter):
 
     .. code::
 
-    adapter = NI_GPIB_232("ASRL5::INSTR", 7)
-    sourcemeter = Keithley2400(adapter)  # at GPIB address 7
-    # generate another instance with a different GPIB address:
-    adapter2 = adapter.gpib(9)
-    multimeter = Keithley2000(adapter2)  # at GPIB address 9
+        adapter = NI_GPIB_232("ASRL5::INSTR", 7)
+        sourcemeter = Keithley2400(adapter)  # at GPIB address 7
+        # generate another instance with a different GPIB address:
+        adapter2 = adapter.gpib(9)
+        multimeter = Keithley2000(adapter2)  # at GPIB address 9
 
 
     """
