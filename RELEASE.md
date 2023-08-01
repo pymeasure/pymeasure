@@ -23,7 +23,7 @@
     - `python -m build`
     - Check the distributions (`twine check dist/*`)
 10. Push the Git tag
-11. Create a tagged [release on GitHub](https://github.com/pymeasure/pymeasure/releases). You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST.
+11. Create a tagged [release on GitHub](https://github.com/pymeasure/pymeasure/releases). You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
 
 ## PyPI release
 
