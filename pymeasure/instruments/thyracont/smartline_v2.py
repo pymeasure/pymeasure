@@ -28,13 +28,6 @@ from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
 
-def generate_enum_validator(validator):
-    """Generate a modified validator, which returns the enum's value."""
-    def enum_vaildator(value, values):
-        return validator(value, values).value
-    return enum_vaildator
-
-
 def calculate_checksum(message):
     """Calculate the checksum for string `message`."""
     value = 0
@@ -80,11 +73,12 @@ class SensorChannel(Channel):
 
     _id = -1  # obligatory channel number, define in channel types
 
-    def __init__(self, parent, id):
-        if id is None:
-            id = self._id
-        assert id == self._id, f"Pirani ID has to be {self._id}."
-        super().__init__(parent, id=self._id)
+    def __init__(self, parent, id=None, **kwargs):
+        # id parameter is necessary for usage with `ChannelCreator`.
+        if id is None or id == self._id:
+            super().__init__(parent, id=self._id, **kwargs)
+        else:
+            raise ValueError(f"Pirani ID has to be {self._id} for that channel type.")
 
     pressure = Channel.measurement(
         "0M{ch}00", """Get the current pressure in mbar.""",
@@ -311,8 +305,7 @@ class SmartlineV2(Instrument):
         # Sometimes the answer contains 0x00 or values above 127, such that
         # decoding fails.
         response = self.read_bytes(-1, break_on_termchar=True)
-        if b"\x00" in response:
-            response = response.replace(b"\x00", b"")
+        response = response.replace(b"\x00", b"")
 
         # b"\r" is the termination character
         got = response.rstrip(b"\r").decode('ascii', errors="ignore")
@@ -371,11 +364,11 @@ class SmartlineV2(Instrument):
         check_set_errors=True,
     )
 
-    def setHigh(self, high=""):
+    def set_high(self, high=""):
         """Set the high pressure to `high` pressure in mbar."""
         self.ask_manually(2, "AH", high)
 
-    def setLow(self, low=""):
+    def set_low(self, low=""):
         """Set the low pressure to `low` pressure in mbar."""
         self.ask_manually(2, "AL", low)
 
@@ -399,14 +392,12 @@ class SmartlineV2(Instrument):
         # VSR/VSL: 0 direct switch at 1 mbar, 1 continuous between 5 to 15 mbar
         # VSH: 0 direct switch at 4e-4 mbar, 1 continuous between 1e-3 to 2e-3 mbar,
         #      2 continuous between 2e-3 to 5e-3 mbar
-        if got == "0":
-            return "direct"
-        elif got == "1":
-            return "continuous"
-        elif got == "2":
-            return "continuous 2"
-        else:
-            return got
+        mapping = {
+            "0": "direct",
+            "1": "continuous",
+            "2": "continuous 2",
+        }
+        return mapping.get(got, got)
 
     def set_default_sensor_transition(self):
         """Set the senstor transition mode to the default value, depends on the device."""

@@ -151,14 +151,14 @@ def test_display_data_setter():
         inst.display_data = Sources.RELATIVE
 
 
-def test_setHigh():
+def test_set_high():
     with expected_protocol(SmartlineV2, [("0012AH041000q", "0013AH00m")]) as inst:
-        inst.setHigh(1000)
+        inst.set_high(1000)
 
 
-def test_setLow():
+def test_set_low():
     with expected_protocol(SmartlineV2, [("0012AL0250W", "0013AL00q")]) as inst:
-        inst.setLow(50)
+        inst.set_low(50)
 
 
 def test_device_type():
