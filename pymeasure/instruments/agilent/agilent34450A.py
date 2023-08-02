@@ -172,7 +172,7 @@ class Agilent34450A(Instrument):
     )
     voltage_resolution = Instrument.control(
         ":SENS:VOLT:RES?", ":SENS:VOLT:RES %s",
-        """ A property that controls the speed and resolution in the DC voltage
+        """ A property that controls the speed and resolution of the DC voltage
         readings. Can take the values , which can take values MIN|SLOW|DEF (~1Hz, 5.5 digits), 
         MED (~50Hz, 4.5 digits), MAX|FAST (~100Hz, 4.5 digits).  """,
         validator=strict_discrete_set,
