@@ -10,4 +10,5 @@ If you are interested in an instrument not included, please consider :doc:`addin
 .. toctree::
    :maxdepth: 2
 
+   smartline_v1
    smartline_v2

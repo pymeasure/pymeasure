@@ -27,13 +27,7 @@ from enum import IntEnum
 from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
-
-def calculate_checksum(message):
-    """Calculate the checksum for string `message`."""
-    value = 0
-    for i in range(len(message)):
-        value += ord(message[i])
-    return chr(value % 64 + 64)
+from .smartline_v1 import calculate_checksum
 
 
 def compose_data(value):
@@ -212,7 +206,7 @@ class SmartlineV2(Instrument):
             piezo = Instrument.ChannelCreator(Piezo)
             pirani = Instrument.ChannelCreator(Pirani)
 
-    Communication Protocol v2 via rs485:
+    Communication Protocol v2 via RS485:
         - Everything is sent as ASCII characters
         - Package (bytes and usage):
             - 0-2 address, 3 access code, 4-5 command, 6-7 data length.
