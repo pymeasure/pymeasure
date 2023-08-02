@@ -27,13 +27,7 @@ from enum import IntEnum
 from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
-
-def calculate_checksum(message):
-    """Calculate the checksum for string `message`."""
-    value = 0
-    for i in range(len(message)):
-        value += ord(message[i])
-    return chr(value % 64 + 64)
+from .smartline_v1 import calculate_checksum
 
 
 def compose_data(value):
