@@ -1,3 +1,10 @@
+Upcoming version
+================
+
+Deprecated features
+-------------------
+- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead.
+
 Version 0.12.0 (2023-07-05)
 ===========================
 Main items of this new release:

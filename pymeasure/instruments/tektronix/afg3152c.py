@@ -188,6 +188,8 @@ class AFG3152C(Instrument):
     arbitrary function generator and provides a high-level for
     interacting with the instrument.
 
+    .. code-block:: python
+
         afg=AFG3152C("GPIB::1")        # AFG on GPIB 1
         afg.reset()                    # Reset to default
         afg.ch1.shape='sinusoidal'     # Sinusoidal shape
