@@ -26,7 +26,7 @@ from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Instrument
 
 
-def calculateChecksum(msg):
+def calculate_checksum(msg):
     """Calculate a 1 bytes checksum mapped to a printable ASCII character.
 
     The checksum is calculated by the sum of the decimal values of each message
@@ -36,7 +36,8 @@ def calculateChecksum(msg):
     :returns: calculated checksum
     :rtype: string
     """
-    return chr(sum(map(ord, msg)) % 64 + 64)
+    chksum = sum(map(ord, msg)) % 64 + 64
+    return chr(chksum)
 
 
 class SmartlineV1(Instrument):
@@ -83,7 +84,7 @@ class SmartlineV1(Instrument):
         :raises ValueError: if a checksum error is detected
         """
         msg = super().read()
-        chksum = calculateChecksum(msg[:-1])
+        chksum = calculate_checksum(msg[:-1])
         if msg[-1] == chksum:
             return msg[:-1]
         else:
@@ -99,7 +100,7 @@ class SmartlineV1(Instrument):
         :param str command: command to be sent to the instrument
         """
         fullcmd = f"{self.address:03d}" + command
-        super().write(fullcmd + calculateChecksum(fullcmd))
+        super().write(fullcmd + calculate_checksum(fullcmd))
 
     def check_errors(self):
         reply = self.read()
