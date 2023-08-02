@@ -7,3 +7,7 @@ Keithley 2200 Series Power Supplies
     :show-inheritance:
     :inherited-members:
     :exclude-members: ask, control, clear, measurement, read, setting, values, write
+
+.. autoclass:: pymeasure.instruments.keithley.keithley2200.PSChannel
+    :members:
+    :show-inheritance:

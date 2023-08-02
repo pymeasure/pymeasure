@@ -36,8 +36,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6221(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 6221 AC and DC current source and provides a
+class Keithley6221(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python

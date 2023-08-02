@@ -288,7 +288,7 @@ def gen_channel_docs(app, what, name, obj, options, lines):
     """
     Generate channel documentation for instruments with channels
     """
-    if hasattr(obj, '__bases__') and Instrument in obj.__bases__:
+    if hasattr(obj, '__bases__') and issubclass(obj, Instrument):
         for attr, channel_class in obj.get_channels(obj):
             if isinstance(channel_class, CommonBase.ChannelCreator):
                 channel_name = get_class_name(channel_class.pairs[0][0])
