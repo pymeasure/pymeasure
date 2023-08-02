@@ -206,7 +206,7 @@ class SmartlineV2(Instrument):
             piezo = Instrument.ChannelCreator(Piezo)
             pirani = Instrument.ChannelCreator(Pirani)
 
-    Communication Protocol v2 via rs485:
+    Communication Protocol v2 via RS485:
         - Everything is sent as ASCII characters
         - Package (bytes and usage):
             - 0-2 address, 3 access code, 4-5 command, 6-7 data length.
