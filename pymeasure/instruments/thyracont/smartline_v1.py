@@ -43,6 +43,8 @@ def calculate_checksum(msg):
 class SmartlineV1(Instrument):
     """Thyracont Vacuum Instruments Smartline gauges with Communication Protocol V1.
 
+    Devices using Protocol V1 were manufactured until 2017.
+
     Connection to the device is made through an RS485 serial connection.
     The default communication settings are baudrate 9600, 8 data bits, 1 stop bit,
     no parity, no handshake.
@@ -62,6 +64,8 @@ class SmartlineV1(Instrument):
     :param kwargs: Any valid key-word argument for Instrument
 
     """
+    # API is described in detail in this link:
+    # https://wiki.kern.phys.au.dk/Interface_protokoll_Thyracont_eng5.pdf
 
     def __init__(self, adapter, name="Thyracont Vacuum Gauge V1", address=1,
                  baud_rate=9600, **kwargs):
@@ -88,7 +92,7 @@ class SmartlineV1(Instrument):
         if msg[-1] == chksum:
             return msg[:-1]
         else:
-            raise ValueError(
+            raise ConnectionError(
                 f"checksum error in received message {msg} "
                 f"with checksum {chksum} but received {msg[-1]}")
 
@@ -102,12 +106,12 @@ class SmartlineV1(Instrument):
         fullcmd = f"{self.address:03d}" + command
         super().write(fullcmd + calculate_checksum(fullcmd))
 
-    def check_errors(self):
+    def check_set_errors(self):
         reply = self.read()
         if len(reply) < 4:
-            raise ValueError(f"Reply of instrument ('{reply}') too short.")
+            raise ConnectionError(f"Reply of instrument ('{reply}') too short.")
         if reply[3] in ["N", "X"]:
-            raise ValueError(f"Reply from Instrument indicates an error '{reply}'")
+            raise ConnectionError(f"Reply from Instrument indicates an error '{reply}'")
         return []
 
     device_type = Instrument.measurement(
