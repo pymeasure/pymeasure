@@ -90,6 +90,24 @@ def test_enable_channel():
         assert inst.ch_2.enabled is False
 
 
+def test_channel1_enabled_getter():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("sta ch 1", ""), (None, "ON"), (None, "[OK]")],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            assert inst.channel1_enabled is True
+
+
+def test_channel1_enabled_setter():
+    with expected_protocol(
+            IBeamSmart,
+            init_comm + [("en 1", ""), (None, "[OK]")],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.channel1_enabled = True
+
+
 def test_channel_power():
     with expected_protocol(
             IBeamSmart,

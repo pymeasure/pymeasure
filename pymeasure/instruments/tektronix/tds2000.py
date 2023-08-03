@@ -85,10 +85,10 @@ class TDS2000(Instrument):
                 raise ValueError("Invalid unit ('{}') provided to {}".format(
                                  self.parent, value))
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Tektronix TDS 2000 Oscilliscope", **kwargs):
         super().__init__(
             adapter,
-            "Tektronix TDS 2000 Oscilliscope",
+            name,
             **kwargs
         )
         self.measurement = TDS2000.Measurement(self)

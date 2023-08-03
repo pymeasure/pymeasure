@@ -36,8 +36,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6221(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 6221 AC and DC current source and provides a
+class Keithley6221(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -283,9 +283,9 @@ class Keithley6221(Instrument, KeithleyBuffer):
         # Select the newly made arbitrary waveform as waveform function
         self.waveform_function = "arbitrary%d" % location
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 6221 SourceMeter", **kwargs):
         super().__init__(
-            adapter, "Keithley 6221 SourceMeter", **kwargs
+            adapter, name, **kwargs
         )
 
     def enable_source(self):

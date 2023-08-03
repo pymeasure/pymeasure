@@ -37,9 +37,6 @@ log.addHandler(logging.NullHandler())
 class KeysightN5767A(Instrument):
     """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
-
-    .. code-block:: python
-
     """
     ###############
     # Current (A) #
@@ -95,9 +92,9 @@ class KeysightN5767A(Instrument):
         """
         return bool(self._status)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight N5767A power supply", **kwargs):
         super().__init__(
-            adapter, "Keysight N5767A power supply", **kwargs
+            adapter, name, **kwargs
         )
         # Set up data transfer format
         if isinstance(self.adapter, VISAAdapter):

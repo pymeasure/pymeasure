@@ -57,11 +57,11 @@ class AMI430(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="AMI superconducting magnet power supply.", **kwargs):
         kwargs.setdefault('read_termination', '\n')
         super().__init__(
             adapter,
-            "AMI superconducting magnet power supply.",
+            name,
             includeSCPI=True,
             **kwargs
         )

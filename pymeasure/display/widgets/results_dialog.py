@@ -25,12 +25,9 @@
 import logging
 
 import os
-import pyqtgraph as pg
 
-from ..curves import ResultsCurve
 from ..Qt import QtCore, QtWidgets
 from ...experiment.results import Results
-from .plot_widget import PlotWidget
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -45,25 +42,31 @@ class ResultsDialog(QtWidgets.QFileDialog):
     :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>` class
     """
 
-    def __init__(self, columns, x_axis=None, y_axis=None, parent=None):
+    def __init__(self, procedure_class, widget_list=(), parent=None):
         super().__init__(parent)
-        self.columns = columns
-        self.x_axis, self.y_axis = x_axis, y_axis
+        self.procedure_class = procedure_class
+        self.widget_list = widget_list
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
         self._setup_ui()
 
     def _setup_ui(self):
         preview_tab = QtWidgets.QTabWidget()
-        vbox = QtWidgets.QVBoxLayout()
         param_vbox = QtWidgets.QVBoxLayout()
         metadata_vbox = QtWidgets.QVBoxLayout()
-        vbox_widget = QtWidgets.QWidget()
         param_vbox_widget = QtWidgets.QWidget()
         metadata_vbox_widget = QtWidgets.QWidget()
 
-        self.plot_widget = PlotWidget("Results", self.columns,
-                                      self.x_axis, self.y_axis, parent=self)
-        self.plot = self.plot_widget.plot
+        self.preview_widget_list = []
+        # Add preview tabs as appropriate
+        for widget in self.widget_list:
+            preview_widget = widget.preview_widget(parent=self)
+            if preview_widget:
+                self.preview_widget_list.append(preview_widget)
+                vbox = QtWidgets.QVBoxLayout()
+                vbox_widget = QtWidgets.QWidget()
+                vbox.addWidget(preview_widget)
+                vbox_widget.setLayout(vbox)
+                preview_tab.addTab(vbox_widget, preview_widget.name)
         self.preview_param = QtWidgets.QTreeWidget()
         param_header = QtWidgets.QTreeWidgetItem(["Name", "Value"])
         self.preview_param.setHeaderItem(param_header)
@@ -76,13 +79,10 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.preview_metadata.setColumnWidth(0, 150)
         self.preview_metadata.setAlternatingRowColors(True)
 
-        vbox.addWidget(self.plot_widget)
         param_vbox.addWidget(self.preview_param)
         metadata_vbox.addWidget(self.preview_metadata)
-        vbox_widget.setLayout(vbox)
         param_vbox_widget.setLayout(param_vbox)
         metadata_vbox_widget.setLayout(metadata_vbox)
-        preview_tab.addTab(vbox_widget, "Plot Preview")
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
         preview_tab.addTab(metadata_vbox_widget, "Metadata")
         self.layout().addWidget(preview_tab, 0, 5, 4, 1)
@@ -91,10 +91,10 @@ class ResultsDialog(QtWidgets.QFileDialog):
         self.resize(900, 500)
 
         self.setFileMode(QtWidgets.QFileDialog.FileMode.ExistingFiles)
-        self.currentChanged.connect(self.update_plot)
+        self.currentChanged.connect(self.update_preview)
 
-    def update_plot(self, filename):
-        self.plot.clear()
+    def update_preview(self, filename):
+        # Add preview tabs as appropriate
         if not os.path.isdir(filename) and filename != '':
             try:
                 results = Results.load(str(filename))
@@ -102,20 +102,9 @@ class ResultsDialog(QtWidgets.QFileDialog):
                 return
             except Exception as e:
                 raise e
-
-            curve = ResultsCurve(results,
-                                 x=self.plot_widget.plot_frame.x_axis,
-                                 y=self.plot_widget.plot_frame.y_axis,
-                                 # The pyqtgraph pen width was changed to 1 (originally: 1.75) to
-                                 # circumvent plotting slowdown. Once the issue
-                                 # (https://github.com/pyqtgraph/pyqtgraph/issues/533) is resolved
-                                 # it can be reverted
-                                 pen=pg.mkPen(color=(255, 0, 0), width=1),
-                                 antialias=True
-                                 )
-            curve.update_data()
-
-            self.plot.addItem(curve)
+            for widget in self.preview_widget_list:
+                widget.clear_widget()
+                widget.load(widget.new_curve(results))
 
             self.preview_param.clear()
             for key, param in results.procedure.parameter_objects().items():

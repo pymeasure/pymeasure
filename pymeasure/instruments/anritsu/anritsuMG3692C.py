@@ -39,10 +39,10 @@ class AnritsuMG3692C(Instrument):
         in Hz. This property can be set. """
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anritsu MG3692C Signal Generator", **kwargs):
         super().__init__(
             adapter,
-            "Anritsu MG3692C Signal Generator",
+            name,
             **kwargs
         )
 

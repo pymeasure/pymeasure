@@ -36,8 +36,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6517B(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 6517B ElectroMeter and provides a
+class Keithley6517B(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 6517B ElectroMeter and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -192,9 +192,9 @@ class Keithley6517B(Instrument, KeithleyBuffer):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
-            adapter, "Keithley 6517B Electrometer/High Resistance Meter",
+            adapter, name,
             **kwargs
         )
 

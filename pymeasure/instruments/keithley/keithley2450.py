@@ -36,8 +36,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2450(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 2450 SourceMeter and provides a
+class Keithley2450(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -365,9 +365,9 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
         super().__init__(
-            adapter, "Keithley 2450 SourceMeter", **kwargs
+            adapter, name, **kwargs
         )
 
     def enable_source(self):
