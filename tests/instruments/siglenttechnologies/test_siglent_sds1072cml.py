@@ -22,7 +22,12 @@
 # THE SOFTWARE.
 #
 
-from .siglent_spd1168x import SPD1168X
-from .siglent_spd1305x import SPD1305X
-from .siglent_sds1072cml import SDS1072CML
+from time import sleep
+import logging
+#from pymeasure.instruments import list_resources
+import numpy as np
+from pymeasure.instruments.siglenttechnologies.siglent_sds1072cml import SDS1072CML
+from pyvisa.errors import VisaIOError
 
+list_resources()
+scp.setCoupling(channel=1,mode='DC')
