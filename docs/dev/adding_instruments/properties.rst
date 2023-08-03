@@ -574,7 +574,7 @@ If you read a property (e.g. :code:`some_value = inst.power`), pymeasure execute
 5. Otherwise, :code:`get_process` is applied to that single value.
 6. If :code:`map_values is True`, the value is mapped according to the :code:`values` parameter. If it is a dictionary, the value is looked up in the dictionary's values and the corresponding key is returned. If it is a list, the value is considered the index of that list and :code:`values[int(value)]` is returned.
 
-For example
+For example (here we use :meth:`~pymeasure.instruments.common_base.CommonBase.measurement` to focus on the getter)
 
 .. testcode::
     :hide:
@@ -583,7 +583,7 @@ For example
 
 .. testcode:: 
 
-    class PropertyInstrument(Instrument):
+    class PropertyGetterInstrument(Instrument):
 
         modify_get_command = Instrument.measurement(
             get_command="command",  # original command
@@ -613,11 +613,67 @@ will lead to the following:
 
 .. doctest::
 
-    >>> inst = PropertyInstrument()
+    >>> inst = PropertyGetterInstrument()
     >>> inst.modify_get_command
     'command modified'
     >>> inst.value_options
     [0, 1, '2,3']
     >>> inst.mapping_options
     'fourth'
+
+Setting a Value
+***************
+
+Similarly, setting a property to some ``value`` uses several steps:
+
+1. The property creator calculates a new ``value`` calling ``validator(value, values)``. A validator might truncate the value to an allowed range of values.
+2. It applies the callable ``set_process`` to the modified ``value``.
+3. If ``map_values is True``, it maps the ``value`` via ``values`` to some new ``value``.
+4. It modifies the ``set_command`` by calling the callable ``command_process``. This feature is deprecated, use `dynamic properties`_ instead.
+5. It formats ``set_command`` with ``%`` string formatting and the ``value`` to generate a ``command`` string.
+6. It calls :func:`write` with the ``command`` string, such that the command is sent to the device.
+7. If ``check_set_errors is True``, it calls the :func:`check_set_errors` method.
+
+For example (here we use :meth:`~pymeasure.instruments.common_base.CommonBase.setting` to focus on the setter)
+
+
+.. testcode::
+
+    class PropertySetterInstrument(Instrument):
+
+        validated_setting = Instrument.setting(
+            set_command="validated: %f",  # write a float after validation and processing
+            docs="Validate input values",
+            values=[0, 20],
+            validator=truncated_range,  # cuts the value to be inside the range indicated by values.
+        )
+
+        processed_setting = Instrument.setting(
+            set_command="processed: %i",  # write an integer after validation and processing
+            docs="Set some value after processing it.",
+            set_process=lambda value: int(value * 3),
+        )
+
+        mapping_setting = Instrument.setting(
+            set_command="mapped command: %s",  # write a string after validation and processing
+            docs="Map a python value to a string for the device.",
+            values={True: "On",
+                    False: "Off"},
+            map_values=True,
+        )
+
+
+.. doctest::
+
+    >>> inst = PropertySetterInstrument()
+    >>> inst.validated_setting = 30
+    >>> inst.read()  # returns in this example the written command
+    'validated: 20.000000'
+    >>> inst.processed_setting = 1.5
+    >>> inst.read()  # returns in this example the written command
+    'processed: 4'
+    >>> inst.mapping_setting = True
+    >>> inst.read()  # returns in this example the written command
+    'mapped command: On'
+
 
