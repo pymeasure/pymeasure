@@ -377,10 +377,7 @@ If you need to tweak
 * the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
 * the :code:`get_command` string before sending it to the device,
 
-use the :code:`command_process` parameter of :func:`~pymeasure.instruments.common_base.CommonBase.control`.
-
-Note that there is only one parameter for both setting and getting, so the utility of this is probably limited.
-Note also that for adding e.g. channel identifiers, there are other, more preferable methods.
+use the `dynamic properties`_.
 
 Checking the instrument for errors
 **********************************
@@ -549,25 +546,78 @@ In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a differen
 
 
 Property creator parameters and their execution
-***********************************************
+===============================================
 
-The property creators call :func:`~pymeasure.instruments.common_base.CommonBase.values`, which in turn calls :func:`ask` and this other methods. The following enumerations and examples illuminate the whole process.
+The property creators call :func:`~pymeasure.instruments.common_base.CommonBase.values`, which in turn calls :func:`ask`.
+The :func:`ask` method again calls other functions, among them :func:`write` and :func:`read`.
+The following enumerations and examples illuminate the whole process.
 
 Getting a value
----------------
+***************
 
 If you read a property (e.g. :code:`some_value = inst.power`), pymeasure executes the following steps according to the different arguments to :func:`~pymeasure.instruments.common_base.CommonBase.control`:
 
-1. The callable :code:`command_process` modifies the string :code:`get_command` and calls :func:`~pymeasure.instruments.common_base.CommonBase.values` with :code:`values_kwargs` as keyword arguments.
-2. :func:`~pymeasure.instruments.common_base.CommonBase.values` calls in turn :func:`~pymeasure.instruments.common_base.CommonBase.ask`, handing it all further arguments.
-3. This modified command string is sent to the device via the instruments :func:`write` method, which calls the Adapter's `write` method.
-4. :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls :func:`~pymeasure.instruments.Instrument.wait_for` waiting for some time, if :code:`"query_delay"` was in the :code:`values_kwargs`.
-5. :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls the instrument's :func:`read` method, reading the response string of the device.
-6. The callable :code:`preprocess_reply` modifies the response received.
-7. The preprocessed string is split at the :code:`separator`, at most :code:`maxsplit` times.
-8. Each element of that splitted string is casted with :code:`cast`, typically to :code:`float`.
-9. Now, :func:`~pymeasure.instruments.common_base.CommonBase.values` hands that list of casted values to the property creator.
-10. If :code:`check_get_errors is True`, :func:`~pymeasure.instruments.Instrument.check_errors` is called.
-11. If :func:`~pymeasure.instruments.common_base.CommonBase.values` returned more than one value, the callable :code:`get_process` is applied to the whole list and the result is returned.
-12. Otherwise, :code:`get_process` is applied to that single value.
-13. If :code:`map_values is True`, the value is mapped according to the :code:`values` parameter. If it is a dictionary, the value is looked up in the dictionary's values and the corresponding key is returned. If it is a list, the value is considered the index of that list and :code:`values[int(value)]` is returned.
+1. The callable :code:`command_process` modifies the string :code:`get_command`. This feature is deprecated, use `dynamic properties`_ instead.
+2. The property creator calls :func:`~pymeasure.instruments.common_base.CommonBase.values` with the modified :code:`get_command` and :code:`values_kwargs` as keyword arguments.
+    A. :func:`~pymeasure.instruments.common_base.CommonBase.values` calls in turn :func:`~pymeasure.instruments.common_base.CommonBase.ask`, handing it all further arguments.
+        * This modified command string is sent to the device via the instruments :func:`write` method, which calls the Adapter's `write` method.
+        * :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls :func:`~pymeasure.instruments.Instrument.wait_for` waiting for some time, if :code:`"query_delay"` was in the :code:`values_kwargs`.
+        * :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls the instrument's :func:`read` method, reading the response string of the device.
+        * It returns the response string to :func:`~pymeasure.instruments.common_base.CommonBase.values`.
+    B. The callable :code:`preprocess_reply` modifies the response received.
+    C. The preprocessed string is split at the :code:`separator`, at most :code:`maxsplit` times.
+    D. Each element of that splitted string is casted with :code:`cast`, typically to :code:`float`.
+    E. Now, :func:`~pymeasure.instruments.common_base.CommonBase.values` returns that list of casted values to the property creator.
+
+3. If :code:`check_get_errors is True`, :func:`~pymeasure.instruments.Instrument.check_get_errors` is called.
+4. If :func:`~pymeasure.instruments.common_base.CommonBase.values` returned more than one value, the callable :code:`get_process` is applied to the whole list and the result is returned.
+5. Otherwise, :code:`get_process` is applied to that single value.
+6. If :code:`map_values is True`, the value is mapped according to the :code:`values` parameter. If it is a dictionary, the value is looked up in the dictionary's values and the corresponding key is returned. If it is a list, the value is considered the index of that list and :code:`values[int(value)]` is returned.
+
+For example
+
+.. testcode::
+    :hide:
+
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument  # load again the fake
+
+.. testcode:: 
+
+    class PropertyInstrument(Instrument):
+
+        modify_get_command = Instrument.measurement(
+            get_command="command",  # original command
+            docs="Get the modified command string. This is deprecated in favor of dynamic properties.",
+            command_process=lambda c: c + " modified",
+        )
+
+        value_options = Instrument.measurement(
+            get_command="0,1,2,3rem",  # this is the response of the device in this example
+            docs="Remove the last three elements and split at comma, but at most two times",
+            preprocess_reply=lambda reply: reply[:-3],
+            separator=",",
+            maxsplit=2,
+            cast=int,
+        )
+
+        mapping_options = Instrument.measurement(
+            get_command="2",  # this is the response of the device in this example
+            docs="Cast to int, double the value and use that as an index for a list",
+            values=["zero", "first", "second", "third", "fourth"],
+            cast=int,
+            get_process=lambda value: 2 * value,
+            map_values=True,
+        )
+
+will lead to the following:
+
+.. doctest::
+
+    >>> inst = PropertyInstrument()
+    >>> inst.modify_get_command
+    'command modified'
+    >>> inst.value_options
+    [0, 1, '2,3']
+    >>> inst.mapping_options
+    'fourth'
+
