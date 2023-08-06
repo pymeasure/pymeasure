@@ -35,12 +35,12 @@ log.addHandler(logging.NullHandler())
 
 class NI_GPIB_232(VISAAdapter):
     """Encapsulates the additional commands necessary to communicate over\
-    a National Instruments GPIB-232CT Adapter, using the :class:`VISAAdapter`.
+    a National Instruments GPIB-232CT Adapter, using the :class: `VISAAdapter` .
 
     Each Adapter is constructed based on a connection to the device
     itself and the GPIB address of the instrument to be communicated with.
-    Connection sharing is achieved by using the :meth:`.gpib`
-    method to spawn new NI_GPIB_232s for different GPIB addresses.
+    Connection sharing is achieved by using the :meth: `.gpib` method
+    to spawn new NI_GPIB_232s for different GPIB addresses.
 
     :param resource_name: A VISA resource string that identifies the\
     connection to the device itself, for example "ASRL5" for the 5th COM port.
