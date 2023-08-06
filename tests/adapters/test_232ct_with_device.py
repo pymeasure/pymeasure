@@ -28,12 +28,7 @@ import time
 from pymeasure.adapters import NI_GPIB_232
 from pymeasure.instruments.hp import HP3478A
 
-from pymeasure.test import expected_protocol
-
-# THis test is for testing the NI GPIB-232CT with a HP 3478A connected on GPIB (at ID 23)
-
-
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only works with connected hardware', allow_module_level=True)
 
 
 class Test_NI232CT_3478A:
@@ -62,12 +57,26 @@ class Test_NI232CT_3478A:
 
     @pytest.mark.parametrize('res', RESO)
     def test_resolution(self, make_clean_instrument, res):
-        m = make_clean_instrument
-        m.resolution = res
-        assert m.resolution == res
+        dmm = make_clean_instrument
+        dmm.resolution = res
+        assert dmm.resolution == res
 
     @pytest.mark.parametrize('mode', MODES)
     def test_mode(self, make_clean_instrument, mode):
-        m = make_clean_instrument
-        m.mode = mode
-        assert m.mode == mode
+        dmm = make_clean_instrument
+        dmm.mode = mode
+        assert dmm.mode == mode
+
+    def test_voltage_reading(self, make_clean_instrument):
+        dmm = make_clean_instrument
+        dmm.resolution = 3
+        dmm.mode = "DCV"
+        value = dmm.measure_DCV
+        assert type(value) is float
+
+    def test_current_reading(self, make_clean_instrument):
+        dmm = make_clean_instrument
+        dmm.resolution = 3
+        dmm.mode = "DCI"
+        value = dmm.measure_DCI
+        assert type(value) is float
