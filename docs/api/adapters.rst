@@ -54,6 +54,7 @@ NI GPIB-232CT adapter
     :members:
     :undoc-members:
     :inherited-members:
+    :no-inherited-members: pymeasure.adapters.NI_GPIB_232.GPIBStatus, pymeasure.adapters.NI_GPIB_232.GPIBError, pymeasure.adapters.NI_GPIB_232.SERIALError
     :show-inheritance:
     :private-members: _format_binary_values
     
