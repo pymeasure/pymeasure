@@ -200,7 +200,7 @@ class Analyzer(StoppableThread):
         super().__init__()
 
         self.port = port
-        if not isinstance(results, Results):
+        if not isinstance(results, ResultsBase):
             raise ValueError("Invalid Results object during Analyzer construction")
         self.results = results
         #if self.procedure.status != Procedure.FINISHED:
