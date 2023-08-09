@@ -150,12 +150,12 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
 
 class ManagedConsole(QtCore.QCoreApplication):
     """
-    Base class for console experiment management .
+    Base class for console experiment management.
 
     Parameters for :code:`__init__` constructor.
 
     :param procedure_class: procedure class describing the experiment
-    (see :class:`~pymeasure.experiment.procedure.Procedure`)
+            (see :class:`~pymeasure.experiment.procedure.Procedure`)
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
     """
