@@ -42,11 +42,12 @@ class Experiment(QtCore.QObject):
 
     :param results: :class:`.Results` object
     :param curve_list: :class:`.ResultsCurve` list. List of curves associated with
-        an experiment. They could represent different views of the same experiment.
-    :param browser_item: :class:`.BrowserItem` object
+        an experiment. They could represent different views of the same experiment. Not required
+        for `.ManagedConsole` displayed experiments.
+    :param browser_item: :class:`.BaseBrowserItem` based object
     """
 
-    def __init__(self, results, curve_list, browser_item, parent=None):
+    def __init__(self, results, curve_list=None, browser_item=None, parent=None):
         super().__init__(parent)
         self.results = results
         self.data_filename = self.results.data_filename
@@ -56,8 +57,8 @@ class Experiment(QtCore.QObject):
 
 
 class ExperimentQueue(QtCore.QObject):
-    """ Represents a Queue of Experiments and allows queries to
-    be easily preformed
+    """ Represents a queue of Experiments and allows queries to
+    be easily preformed.
     """
 
     def __init__(self):
@@ -115,12 +116,10 @@ class ExperimentQueue(QtCore.QObject):
         return None
 
 
-class Manager(QtCore.QObject):
+class BaseManager(QtCore.QObject):
     """Controls the execution of :class:`.Experiment` classes by implementing
     a queue system in which Experiments are added, removed, executed, or
-    aborted. When instantiated, the Manager is linked to a :class:`.Browser`
-    and a PyQtGraph `PlotItem` within the user interface, which are updated
-    in accordance with the execution status of the Experiments.
+    aborted.
     """
     _is_continuous = True
     _start_on_add = True
@@ -132,7 +131,7 @@ class Manager(QtCore.QObject):
     abort_returned = QtCore.Signal(object)
     log = QtCore.Signal(object)
 
-    def __init__(self, widget_list, browser, port=5888, log_level=logging.INFO, parent=None):
+    def __init__(self, port=5888, log_level=logging.INFO, parent=None):
         super().__init__(parent)
 
         self.experiments = ExperimentQueue()
@@ -140,9 +139,6 @@ class Manager(QtCore.QObject):
         self._running_experiment = None
         self._monitor = None
         self.log_level = log_level
-
-        self.widget_list = widget_list
-        self.browser = browser
 
         self.port = port
 
@@ -172,11 +168,6 @@ class Manager(QtCore.QObject):
     def load(self, experiment):
         """ Load a previously executed Experiment
         """
-        for curve in experiment.curve_list:
-            if curve:
-                curve.wdg.load(curve)
-
-        self.browser.add(experiment)
         self.experiments.append(experiment)
 
     def queue(self, experiment):
@@ -191,11 +182,6 @@ class Manager(QtCore.QObject):
         """ Removes an Experiment
         """
         self.experiments.remove(experiment)
-        self.browser.takeTopLevelItem(
-            self.browser.indexOfTopLevelItem(experiment.browser_item))
-        for curve in experiment.curve_list:
-            if curve:
-                curve.wdg.remove(curve)
 
     def clear(self):
         """ Remove all Experiments
@@ -260,9 +246,6 @@ class Manager(QtCore.QObject):
         experiment = self._running_experiment
         self._clean_up()
         experiment.browser_item.setProgress(100)
-        for curve in experiment.curve_list:
-            if curve:
-                curve.update_data()
         self.finished.emit(experiment)
         if self._is_continuous:  # Continue running procedures
             self.next()
@@ -288,3 +271,60 @@ class Manager(QtCore.QObject):
             self._worker.stop()
 
             self.aborted.emit(self._running_experiment)
+
+
+class Manager(BaseManager):
+    """Controls the execution of :class:`.Experiment` classes by implementing
+        a queue system in which Experiments are added, removed, executed, or
+        aborted. When instantiated, the Manager is linked to a :class:`.Browser`
+        and a PyQtGraph `PlotItem` within the user interface, which are updated
+        in accordance with the execution status of the Experiments.
+        """
+
+    def __init__(self, widget_list, browser, port=5888, log_level=logging.INFO, parent=None):
+        super().__init__(parent)
+
+        self.experiments = ExperimentQueue()
+        self._worker = None
+        self._running_experiment = None
+        self._monitor = None
+        self.log_level = log_level
+
+        self.widget_list = widget_list
+        self.browser = browser
+
+        self.port = port
+
+    def load(self, experiment):
+        """ Load a previously executed Experiment
+        """
+
+        super().load(experiment)
+        self.browser.add(experiment)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.load(curve)
+
+    def remove(self, experiment):
+        """ Removes an Experiment
+        """
+        super().remove(experiment)
+
+        self.browser.takeTopLevelItem(
+            self.browser.indexOfTopLevelItem(experiment.browser_item))
+
+        for curve in experiment.curve_list:
+            if curve:
+                curve.wdg.remove(curve)
+
+    def _finish(self):
+        log.debug("Manager's running experiment has finished")
+        experiment = self._running_experiment
+        self._clean_up()
+        experiment.browser_item.setProgress(100)
+        for curve in experiment.curve_list:
+            if curve:
+                curve.update_data()
+        self.finished.emit(experiment)
+        if self._is_continuous:  # Continue running procedures
+            self.next()
