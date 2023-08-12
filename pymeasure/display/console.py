@@ -71,13 +71,17 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
                              "desc": "Set log level (logging module values)",
                              "help_fields": ["default"]},
         "sequence-file":    {"default": None,
-                             "desc": "Sequencer file",
+                             "desc": "Sequencer file as used/defined by the sequencer widget to "
+                                     "execute a sequence of measurements",
                              "help_fields": ["default"]},
         "result-directory": {"default": ".",
-                             "desc": "directory where experiment's result are saved",
+                             "desc": "Directory where experiment's result are saved",
                              "help_fields": ["default"]},
         "result-file":      {"default": None,
-                             "desc": "File name where results are stored",
+                             "desc": "File name where results are stored; this string is handled "
+                                     "by the `unique_filename` function and hence allows for "
+                                     "filling in parameter values and is suffixed by the date "
+                                     "(`YYYY-MM-DD`) and an index number",
                              "help_fields": ["default"]},
         "use-result-file":  {"default": None,
                              "desc": "Result file to retrieve params from",
