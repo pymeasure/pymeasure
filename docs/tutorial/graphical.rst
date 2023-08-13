@@ -705,3 +705,130 @@ You can drag the blue "Dock #" title bar to the middle of another plot to reposi
 
 .. image:: managed_dock_window_tab_after.png
     :alt: Tab position managed dock window
+
+Using the ManagedConsole
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :class:`~pymeasure.display.console.ManagedConsole` is the most convenient tool for running measurements with your Procedure using a command line interface. The :class:`~pymeasure.display.console.ManagedConsole` allows to run an experiment with the same set of parameters available in the :class:`~pymeasure.display.windows.managed_window.ManagedWindow`, but they are defined using a set of command line switches.
+
+It is also possible to define a test that uses both :class:`~pymeasure.display.console.ManagedConsole` or :class:`~pymeasure.display.windows.managed_window.ManagedWindow` according to user selection in the command line.
+
+Enabling console mode is easy and straightforward and the following example demonstrates how to do it.
+
+The following example is a variant of the code example from `Using the ManagedWindow`_ where some parts have been highlighted:
+
+1. On line 8 we now import :class:`~pymeasure.display.console.ManagedConsole`
+2. On line 73, we add the support for console mode
+
+
+.. code-block:: python
+   :emphasize-lines: 8,71,72,73
+
+   import sys
+   import random
+   import tempfile
+   from time import sleep
+   
+   from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+   from pymeasure.experiment import Results
+   from pymeasure.display.console import ManagedConsole
+   from pymeasure.display.Qt import QtWidgets
+   from pymeasure.display.windows import ManagedWindow
+   import logging
+   
+   log = logging.getLogger('')
+   log.addHandler(logging.NullHandler())
+   
+   
+   class TestProcedure(Procedure):
+       iterations = IntegerParameter('Loop Iterations', default=100)
+       delay = FloatParameter('Delay Time', units='s', default=0.2)
+       seed = Parameter('Random Seed', default='12345')
+   
+       DATA_COLUMNS = ['Iteration', 'Random Number']
+   
+       def startup(self):
+           log.info("Setting up random number generator")
+           random.seed(self.seed)
+   
+       def execute(self):
+           log.info("Starting to generate numbers")
+           for i in range(self.iterations):
+               data = {
+                   'Iteration': i,
+                   'Random Number': random.random()
+               }
+               log.debug("Produced numbers: %s" % data)
+               self.emit('results', data)
+               self.emit('progress', 100 * (i + 1) / self.iterations)
+               sleep(self.delay)
+               if self.should_stop():
+                   log.warning("Catch stop command in procedure")
+                   break
+   
+       def shutdown(self):
+           log.info("Finished")
+   
+   
+   class MainWindow(ManagedWindow):
+   
+       def __init__(self):
+           super(MainWindow, self).__init__(
+               procedure_class=TestProcedure,
+               inputs=['iterations', 'delay', 'seed'],
+               displays=['iterations', 'delay', 'seed'],
+               x_axis='Iteration',
+               y_axis='Random Number'
+           )
+           self.setWindowTitle('GUI Example')
+   
+       def queue(self):
+           filename = tempfile.mktemp()
+   
+           procedure = self.make_procedure()
+           results = Results(procedure, filename)
+           experiment = self.new_experiment(results)
+   
+           self.manager.queue(experiment)
+   
+   
+   if __name__ == "__main__":
+       if len(sys.argv) > 1:
+           # If any parameter is passed, the console mode is run
+           # This criteria can be changed at user discretion
+           app = ManagedConsole(procedure_class=TestProcedure)
+       else:
+           app = QtWidgets.QApplication(sys.argv)
+           window = MainWindow()
+           window.show()
+   
+       sys.exit(app.exec())
+
+If we run the script above without any paramater, you will have the graphical user interface example.
+If you run as follow, you will use the command line mode:
+
+.. code-block:: bash
+
+    python console.py --iterations 10 --result-file console_test
+
+Console output is as follow (to show the progress bar, you need to install the optional module  `progressbar2 <https://pypi.org/project/progressbar2/>`_):
+
+.. image:: console_output.png
+    :alt: Console mode output
+
+Other useful commands
+#####################
+
+To show all the command line switches:
+
+.. code-block:: bash
+
+    python console.py --help
+
+To run an experiment with parameters retrieved from an existing result file.
+
+.. code-block:: bash
+
+    python console.py --use-result-file console_test2023-08-09_1.csv
+
+
