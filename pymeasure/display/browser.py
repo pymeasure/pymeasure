@@ -43,7 +43,10 @@ class BrowserItem(QtWidgets.QTreeWidgetItem):
         pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(self.color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+        try:
+            self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+        except AttributeError:
+            self.setFlags(self.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
         self.setCheckState(0, QtCore.Qt.Checked)
         self.setText(1, basename(results.data_filename))
 
