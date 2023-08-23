@@ -197,13 +197,20 @@ class BrowserWidget(QtWidgets.QWidget):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.Checked)
+            try:
+                item.setCheckState(0, QtCore.Qt.Checked)
+            except AttributeError:
+                item.setCheckState(0, QtCore.Qt.CheckState.Checked)
 
     def hide_experiments(self):
         root = self.browser.invisibleRootItem()
         for i in range(root.childCount()):
             item = root.child(i)
-            item.setCheckState(0, QtCore.Qt.Unchecked)
+            try:
+                item.setCheckState(0, QtCore.Qt.Unchecked)
+            except AttributeError:
+                item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+
 
     def clear_experiments(self):
         self.manager.clear()
