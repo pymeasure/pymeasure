@@ -246,7 +246,7 @@ class Procedure:
         return self._metadata
 
     def placeholder_objects(self):
-        """ Collect all elegible placeholders (parameters & metadata) with their value into a dictionairy
+        """ Collect all eligible placeholders (parameters & metadata) with their value in a dict.
         """
         return {**self.parameter_objects(), **self.metadata_objects()}
 
