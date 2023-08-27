@@ -91,15 +91,6 @@ class MainWindow(ManagedWindow):
         )
         self.setWindowTitle('GUI Example')
 
-    def queue(self):
-        filename = tempfile.mktemp()
-
-        procedure = self.make_procedure()
-        results = Results(procedure, filename)
-        experiment = self.new_experiment(results)
-
-        self.manager.queue(experiment)
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
