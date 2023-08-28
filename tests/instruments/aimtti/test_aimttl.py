@@ -25,12 +25,12 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.aimtti.aimttiPL import PL303MQTP, PL303MQDP, PL601P
+from pymeasure.instruments.aimtti.aimttiPL import PL303QMTP, PL303QMDP, PL601P
 
 
 def test_voltage_setpoint():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("V2V 1.2", None),
          ("V2?", "V2 1.2")
          ],
@@ -41,7 +41,7 @@ def test_voltage_setpoint():
 
 def test_voltage():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("V2O?", "1.2V")
          ],
     ) as inst:
@@ -50,7 +50,7 @@ def test_voltage():
 
 def test_current_limit():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("I2 0.1", None),
          ("I2?", "I2 0.1")
          ],
@@ -61,7 +61,7 @@ def test_current_limit():
 
 def test_current():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("I2O?", "0.123A")
          ],
     ) as inst:
@@ -70,7 +70,7 @@ def test_current():
 
 def test_current_range():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("IRANGE2 2", None),
          ("IRANGE2?", "2"),
          ("IRANGE2 1", None),
@@ -85,7 +85,7 @@ def test_current_range():
 
 def test_enable():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("OP2 1", None),
          ("OP2?", "1"),
          ("OP2 0", None),
@@ -102,7 +102,7 @@ def test_enable():
 
 def test_triple():
     with expected_protocol(
-        PL303MQTP,
+        PL303QMTP,
         [("V3O?", "1.2V")],
     ) as inst:
         assert inst.ch_3.voltage == 1.2
@@ -121,7 +121,7 @@ def test_voltage_range():
 
 def test_strict_range_error():
     with expected_protocol(
-        PL303MQDP,
+        PL303QMDP,
         [],
     ) as inst:
         with pytest.raises(ValueError):

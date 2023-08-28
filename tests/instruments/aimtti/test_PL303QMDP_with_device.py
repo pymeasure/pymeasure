@@ -24,12 +24,12 @@
 import time
 import pytest
 
-from pymeasure.instruments.aimtti.aimttiPL import PL303MQDP
+from pymeasure.instruments.aimtti.aimttiPL import PL303QMDP
 
 
 @pytest.fixture(scope="module")
 def psu(connected_device_address):
-    instr = PL303MQDP(connected_device_address)
+    instr = PL303QMDP(connected_device_address)
     instr.reset()
     return instr
 

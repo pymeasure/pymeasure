@@ -101,7 +101,7 @@ class PLBase(Instrument):
 
     .. code-block:: python
 
-        psu = PL303MQDP("ASRL7::INSTR")
+        psu = PL303QMDP("ASRL7::INSTR")
         psu.reset()
         psu.ch_2.voltage = 1.2
         psu.ch_2.output_enabled = True
@@ -141,7 +141,7 @@ class PL155P(PLBase):
 
     ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5])
 
-    def __init__(self, adapter, name="AimTTI PL145-P", **kwargs):
+    def __init__(self, adapter, name="AimTTI PL155-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
@@ -157,24 +157,24 @@ class PL601P(PLBase):
 
     ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5])
 
-    def __init__(self, adapter, name="AimTTI PL303MQT-P", **kwargs):
+    def __init__(self, adapter, name="AimTTI PL601-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
-class PL303MQDP(PLBase):
+class PL303QMDP(PLBase):
 
     ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
     ch_2 = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
 
-    def __init__(self, adapter, name="AimTTI PL303MQD-P", **kwargs):
+    def __init__(self, adapter, name="AimTTI PL303QMD-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
-class PL303MQTP(PLBase):
+class PL303QMTP(PLBase):
 
     ch_1 = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
     ch_2 = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
     ch_3 = Instrument.ChannelCreator(PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3])
 
-    def __init__(self, adapter, name="AimTTI PL303MQT-P", **kwargs):
+    def __init__(self, adapter, name="AimTTI PL303QMT-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
