@@ -106,7 +106,7 @@ class TestImageGUI(ManagedImageWindow):
             z_axis='pixel_data',
             inputs=['X_start', 'X_end', 'X_step', 'Y_start', 'Y_end', 'Y_step',
                     'delay'],
-            displays=['X_start', 'X_end', 'Y_start', 'Y_end', 'delay']
+            displays=['X_start', 'X_end', 'Y_start', 'Y_end', 'delay'],
             filename_input=False,
             directory_input=False,
         )

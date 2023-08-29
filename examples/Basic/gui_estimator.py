@@ -35,13 +35,11 @@ python gui.py
 
 import sys
 import random
-import tempfile
 from time import sleep
 
 from datetime import datetime, timedelta
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
