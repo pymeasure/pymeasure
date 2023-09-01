@@ -393,7 +393,7 @@ As an example, :code:`arange(0, 10, 1)` generates a list increasing with steps o
 This way complex sequences can be entered easily.
 
 The sequences can be extended and shortened using the buttons :code:`Add root item`, :code:`Add item`, and :code:`Remove item`.
-The later two either add an item as a child of the currently selected item or remove the selected item, respectively.
+The latter two either add an item as a child of the currently selected item or remove the selected item, respectively.
 To queue the entered sequence the button :code:`Queue` sequence can be used.
 If an error occurs in evaluating the sequence text-boxes, this is mentioned in the logger, and nothing is queued.
 
