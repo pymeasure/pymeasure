@@ -2,7 +2,7 @@
 Using a graphical interface
 ###########################
 
-In the previous tutorial we measured the IV characteristic of a sample to show how we can set up a simple experiment in PyMeasure. The real power of PyMeasure comes when we also use the graphical tools that are included to turn our simple example into a full-flegged user interface.
+In the previous tutorial we measured the IV characteristic of a sample to show how we can set up a simple experiment in PyMeasure. The real power of PyMeasure comes when we also use the graphical tools that are included to turn our simple example into a full-fleged user interface.
 
 .. _tutorial-plotterwindow:
 
@@ -203,7 +203,7 @@ Now that you have learned about the ManagedWindow, you have all of the basics to
 .. note::
    For performance reasons, the default linewidth of all the graphs has been set to 1.
    If performance is not an issue, the linewidth can be changed to 2 (or any other value) for better visibility by using the `linewidth` keyword-argument in the `Plotter` or the `ManagedWindow`.
-   Whenever a linewidth of 2 is prefered and a better performance is required, it is possible to enable using OpenGL in the import section of the file: ::
+   Whenever a linewidth of 2 is preferred and a better performance is required, it is possible to enable using OpenGL in the import section of the file: ::
 
       import pyqtgraph as pg
       pg.setConfigOption("useOpenGL", True)
@@ -376,7 +376,7 @@ In order to implement the sequencer into the previous example, only the :class:`
 
             self.manager.queue(experiment)
 
-This adds the sequencer underneath the the input panel.
+This adds the sequencer underneath the input panel.
 
 .. image:: pymeasure-sequencer.png
     :alt: Example of the sequencer widget
@@ -393,7 +393,7 @@ As an example, :code:`arange(0, 10, 1)` generates a list increasing with steps o
 This way complex sequences can be entered easily.
 
 The sequences can be extended and shortened using the buttons :code:`Add root item`, :code:`Add item`, and :code:`Remove item`.
-The later two either add a item as a child of the currently selected item or remove the selected item, respectively.
+The later two either add an item as a child of the currently selected item or remove the selected item, respectively.
 To queue the entered sequence the button :code:`Queue` sequence can be used.
 If an error occurs in evaluating the sequence text-boxes, this is mentioned in the logger, and nothing is queued.
 
@@ -804,7 +804,7 @@ The following example is a variant of the code example from `Using the ManagedWi
    
        sys.exit(app.exec())
 
-If we run the script above without any paramater, you will have the graphical user interface example.
+If we run the script above without any parameter, you will have the graphical user interface example.
 If you run as follow, you will use the command line mode:
 
 .. code-block:: bash
