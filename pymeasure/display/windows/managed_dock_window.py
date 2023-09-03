@@ -81,7 +81,7 @@ class ManagedDockWindow(ManagedWindowBase):
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         dock_widget_kwargs = {}
         if 'linewidth' in kwargs:
-            dock_widget_kwargs['linewidth'] = kwargs['linewidth]
+            dock_widget_kwargs['linewidth'] = kwargs['linewidth']
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
                                       self.y_axis_labels, **dock_widget_kwargs)
 
