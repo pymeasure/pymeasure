@@ -53,8 +53,7 @@ NI GPIB-232CT adapter
 .. autoclass:: pymeasure.adapters.NI_GPIB_232
     :members:
     :undoc-members:
-    :inherited-members:
-    :no-inherited-members: pymeasure.adapters.NI_GPIB_232.GPIBStatus, pymeasure.adapters.NI_GPIB_232.GPIBError, pymeasure.adapters.NI_GPIB_232.SERIALError
+    :inherited-members: pymeasure.adapters.NI_GPIB_232.GPIBStatus, pymeasure.adapters.NI_GPIB_232.GPIBError, pymeasure.adapters.NI_GPIB_232.SERIALError, IntFlag
     :show-inheritance:
     :private-members: _format_binary_values
     
