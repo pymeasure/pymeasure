@@ -79,8 +79,11 @@ class ManagedDockWindow(ManagedWindowBase):
             measure_quantities.append(self.y_axis)
 
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
+        dock_widget_kwargs = {}
+        if 'linewidth' in kwargs:
+            dock_widget_kwargs['linewidth'] = kwargs['linewidth]
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
-                                      self.y_axis_labels, linewidth=linewidth)
+                                      self.y_axis_labels, **dock_widget_kwargs)
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
