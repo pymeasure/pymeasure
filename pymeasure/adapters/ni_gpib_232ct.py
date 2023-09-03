@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from enum import IntFlag, Flag
+from enum import Flag, IntFlag
 import time
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments.validators import strict_range
@@ -46,7 +46,7 @@ class NI_GPIB_232(VISAAdapter):
     connection to the device itself, for example "ASRL5" for the 5th COM port.
     :param address: Integer GPIB address of the desired instrument.
     :param serial_timeout: Timeout value for the serial communication, unit: ms
-    :param rw_delay: internal delay, unit: ms, default 50 ms
+    :param rw_delay: internal delay between read and write operations, unit: ms, default 50 ms
     :param eoi: Enable or disable EOI assertion.
     :param kwargs: Key-word arguments if constructing a new serial object
     :ivar address: Integer GPIB address of the desired instrument.
@@ -89,7 +89,7 @@ class NI_GPIB_232(VISAAdapter):
         self.flush_read_buffer()
 
     class GPIBStatus(IntFlag):
-        """Enum element for GIBP status bit decoding."""
+        """Enum element for GPIB status bit decoding."""
 
         ERR = 32768  # Error detected
         TIMO = 16384  # Time out
@@ -300,24 +300,23 @@ class NI_GPIB_232(VISAAdapter):
         time.sleep(self.rw_delay/1000)
         return self.connection.read_bytes(71).decode()
 
-    def wait_for_srq(self, timeout=20, delay=0.1):
+    def wait_for_srq(self, timeout=25000, delay=100):
         """Blocks until a SRQ and return status byte(s) if applicable.
 
-        :param timeout: Timeout (for SRQ) in seconds.
+        :param timeout: Timeout (for SRQ) in ms.
+        :param delay: delay in ms to wait before checking for status.
         :raises TimeoutError: "Waiting for SRQ timed out."
         """
-        stop = time.perf_counter() + timeout
+        stop = time.perf_counter() + timeout/1000
         while time.perf_counter() < stop:
             self.connection.write(f"rsp {self.address}")
             if self.connection.bytes_in_buffer == 0:
-                time.sleep(delay)
+                time.sleep(delay/1000)
             if self.connection.bytes_in_buffer >= 1:
                 ret_val = self.connection.read_bytes(self.connection.bytes_in_buffer)
                 if int(ret_val) > 0:
                     return int(ret_val)
-                if int(ret_val) == -1:
-                    raise TimeoutError(f"Waiting for SRQ timed out after {timeout}")
-        return None
+        return 0
 
     def __repr__(self):
         if self.address is not None:
