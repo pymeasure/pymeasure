@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .teledyneT3AFG import TeledyneT3AFG
-from .teledyne_oscilloscope import TeledyneOscilloscope
+from .smartline_v1 import SmartlineV1
+from .smartline_v2 import SmartlineV2, VSR, VSH
