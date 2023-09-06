@@ -45,6 +45,7 @@ class ManagedDockWindow(ManagedWindowBase):
     :param y_axis: the data column(s) for the y-axis of the plot. This may be a string or a list
         of strings from the data columns of the procedure. The list length determines the number of
         plots
+    :param linewidth: linewidth for the displayed curves, default is 1
     :param log_fmt: formatting string for the log-widget
     :param log_datefmt: formatting string for the date in the log-widget
     :param \\**kwargs: optional keyword arguments that will be passed to
@@ -52,7 +53,7 @@ class ManagedDockWindow(ManagedWindowBase):
     """
 
     def __init__(self, procedure_class, x_axis=None, y_axis=None,
-                 log_fmt=None, log_datefmt=None, **kwargs):
+                 linewidth=1, log_fmt=None, log_datefmt=None, **kwargs):
 
         self.x_axis = x_axis
         self.y_axis = y_axis
@@ -80,7 +81,7 @@ class ManagedDockWindow(ManagedWindowBase):
 
         self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
-                                      self.y_axis_labels)
+                                      self.y_axis_labels, linewidth=linewidth)
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
