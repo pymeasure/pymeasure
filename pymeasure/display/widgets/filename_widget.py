@@ -57,7 +57,7 @@ class PlaceholderCompleter(QtWidgets.QCompleter):
 
     def splitPath(self, path):
         if path.endswith('{'):
-            options = [path + placeholder for placeholder in self.placeholders]
+            options = [path + placeholder + "}" for placeholder in self.placeholders]
             model = QtCore.QStringListModel(options)
             self.setModel(model)
         elif path.count("{") == path.count("}"):
