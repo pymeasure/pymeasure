@@ -252,11 +252,11 @@ class Procedure:
 
     @classmethod
     def placeholder_names(cls):
-        """ Collect the names of all elegible placeholders (parameters & metadata)"""
+        """ Collect the names of all eligible placeholders (parameters & metadata)"""
         placeholders = []
-        for name, item in inspect.getmembers(cls):
+        for _, item in inspect.getmembers(cls):
             if isinstance(item, Metadata) or isinstance(item, Parameter):
-                placeholders.extend([name, item.name])
+                placeholders.append(item.name)
 
         return list(set(placeholders))
 
