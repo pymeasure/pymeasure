@@ -63,6 +63,121 @@ Some protocol tests in the test suite can serve as examples:
 * Testing a multi-channel instrument: :code:`tests/instruments/tektronix/test_afg3152.py`
 * Testing instruments using frame-based communication: :code:`tests/instruments/hcp/tc038.py`
 
+Test generator
+--------------
+
+In order to facilitate writing tests, if you already have working code and a device at hand, we have a :class:`~pymeasure.generator.Generator` for tests.
+You can control your instrument with the TestGenerator as a middle man.
+It logs the method calls, the device communication and the return values, if any, and writes tests according to these log entries.
+
+.. testsetup:: generator
+
+    import io
+    from pymeasure.adapters.protocol import ProtocolAdapter
+
+    adapter = ProtocolAdapter(comm_pairs=[
+        (b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),  # init
+        (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03'),  # info
+        (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03'),  # setpoint = 20
+        (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03'),  # setpoint == 20
+        (b'\x0201010WWRD0120,01,0258\x03', b'\x020101OK\x03'),  # setpoint = 60
+    ])
+
+    class FakeIO(io.StringIO):
+        def close(self):
+            pass
+
+        def really_close(self):
+            super().close()
+
+    file = FakeIO()
+
+.. testcode:: generator
+
+    from pymeasure.generator import Generator
+    from pymeasure.instruments.hcp import TC038
+
+    generator = Generator()
+    inst = generator.instantiate(TC038, adapter, 'hcp', adapter_kwargs={'baud_rate': 9600})
+
+As a first step, this code imports the Generator and generates a middle man instrument.
+The :meth:`instantiate` method creates an instrument instance and logs the communication at startup.
+The Generator creates a special adapter for the communication with the device.
+It cannot inspect the instrument's :meth:`__init__`, however.
+Therefore you have to specify the **all** connection settings via the :code:`adapter_kwargs` dictionary, even those, which are defined in :meth:`__init__`.
+These adapter arguments are not written to tests.
+If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
+These additional keyword arguments are included in the tests.
+
+Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038(adapter)`, where ``adapter`` is some resource string.
+Having gotten and set some properties, and called some methods, we can write the tests to a file.
+
+.. testcode:: generator
+
+    inst.information  # returns the 'information' property, e.g. 'UT150333 V01.R001111222233334444'
+    inst.setpoint = 20
+    assert inst.setpoint == 20
+    inst.setpoint = 60
+
+    generator.write_file(file)
+
+The following data will be written to :code:`file`:
+
+.. testcode:: generator
+    :hide:
+
+    print(file.getvalue()[:-1])  # to strip the last newline char.
+    file.really_close()
+
+.. testoutput:: generator
+
+    import pytest
+
+    from pymeasure.test import expected_protocol
+    from pymeasure.instruments.hcp import TC038
+
+
+    def test_init():
+        with expected_protocol(
+                TC038,
+                [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03')],
+        ):
+            pass  # Verify the expected communication.
+
+
+    def test_information_getter():
+        with expected_protocol(
+                TC038,
+                [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+                 (b'\x0201010INF6\x03', b'\x020101OKUT150333 V01.R001111222233334444\x03')],
+        ) as inst:
+            assert inst.information == 'UT150333 V01.R001111222233334444'
+
+
+    @pytest.mark.parametrize("comm_pairs, value", (
+        ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+          (b'\x0201010WWRD0120,01,00C8\x03', b'\x020101OK\x03')],
+         20),
+        ([(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+          (b'\x0201010WWRD0120,01,0258\x03', b'\x020101OK\x03')],
+         60),
+    ))
+    def test_setpoint_setter(comm_pairs, value):
+        with expected_protocol(
+                TC038,
+                comm_pairs,
+        ) as inst:
+            inst.setpoint = value
+
+
+    def test_setpoint_getter():
+        with expected_protocol(
+                TC038,
+                [(b'\x0201010WRS01D0002\x03', b'\x020101OK\x03'),
+                 (b'\x0201010WRDD0120,01\x03', b'\x020101OK00C8\x03')],
+        ) as inst:
+            assert inst.setpoint == 20.0
+
 
 .. _device_tests:
 
