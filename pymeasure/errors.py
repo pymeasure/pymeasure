@@ -31,5 +31,13 @@ class RangeError(Error):
     pass
 
 
+class OperationFailed(RuntimeError):
+    pass
+
+
+class UnexpectedResponse(RuntimeError):
+    pass
+
+
 # TODO should be deprecated someday
 RangeException = RangeError
