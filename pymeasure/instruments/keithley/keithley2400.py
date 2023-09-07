@@ -37,8 +37,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2400(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 2400 SourceMeter and provides a
+class Keithley2400(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 2400 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python

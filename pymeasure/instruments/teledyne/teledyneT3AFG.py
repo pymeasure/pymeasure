@@ -139,13 +139,12 @@ class TeledyneT3AFG(Instrument):
 
     .. code-block: python
 
-       # Example assumes Ethernet (TCPIP) interface
-       generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
-       generator.reset()
-       generator.ch_1.wavetype='SINE'
-       generator.ch_1.amplitude=2
-       generator.ch_1.output_enabled=True
-
+        # Example assumes Ethernet (TCPIP) interface
+        generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
+        generator.reset()
+        generator.ch_1.wavetype='SINE'
+        generator.ch_1.amplitude=2
+        generator.ch_1.output_enabled=True
     """
 
     ch_1 = Instrument.ChannelCreator(SignalChannel, 1)

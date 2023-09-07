@@ -80,7 +80,10 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """ Toggles the 20 MHz internal low-pass filter. (strict bool)""",
+        """Control the 20 MHz internal low-pass filter (strict bool).
+
+        This oscilloscope only has one frequency available for this filter.
+        """,
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
         map_values=True
@@ -88,7 +91,7 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     invert = Instrument.control(
         "INVS?", "INVS %s",
-        """ Toggles the inversion of the input signal. (strict bool)""",
+        """Control the inversion of the input signal (strict bool).""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
         map_values=True
@@ -96,9 +99,10 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     skew_factor = Instrument.control(
         "SKEW?", "SKEW %.2ES",
-        """ Channel-to-channel skew factor for the specified channel. Each analog channel can be
-        adjusted + or -100 ns for a total of 200 ns difference between channels. You can use
-        the oscilloscope's skew control to remove cable-delay errors between channels.
+        """Control the channel-to-channel skew factor for the specified channel.
+        Each analog channel can be adjusted + or -100 ns for a total of 200 ns difference
+        between channels. You can use the oscilloscope's skew control to remove cable-delay
+        errors between channels.
         """,
         validator=strict_range,
         values=[-1e-7, 1e-7],
@@ -107,7 +111,7 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     trigger_level2 = Instrument.control(
         "TRLV2?", "TRLV2 %.2EV",
-        """ A float parameter that sets the lower trigger level voltage for the specified source.
+        """Control the lower trigger level voltage for the specified source (float).
         Higher and lower trigger levels are used with runt/slope triggers.
         When setting the trigger level it must be divided by the probe attenuation. This is
         not documented in the datasheet and it is probably a bug of the scope firmware.
@@ -117,8 +121,10 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
-        """ Unit of the specified trace. Measurement results, channel sensitivity, and trigger
-        level will reflect the measurement units you select. ("A" for Amperes, "V" for Volts).""",
+        """Control the unit of the specified trace. Measurement results, channel sensitivity, and
+        trigger level will reflect the measurement units you select. ("A" for Amperes, "V" for
+        Volts).
+        """,
         validator=strict_discrete_set,
         values=["A", "V"]
     )
@@ -133,10 +139,11 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     This implementation is based on the shared base class :class:`TeledyneOscilloscope`.
 
     Attributes:
+
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
         WRITE_INTERVAL_S after the previous one, the code blocks until at least WRITE_INTERVAL_S
         seconds have passed.
-        Because the oscilloscope takes a non neglibile time to perform some operations, it might
+        Because the oscilloscope takes a non-negligible time to perform some operations, it might
         be needed for the user to tweak the sleep time between commands.
         The WRITE_INTERVAL_S is set to 10ms as default however its optimal value heavily depends
         on the actual commands and on the connection type, so it is impossible to give a unique
@@ -173,29 +180,36 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     timebase_hor_magnify = Instrument.control(
         "HMAG?", "HMAG %.2ES",
-        """ A float parameter that sets the zoomed (delayed) window horizontal scale (
-        seconds/div). The main sweep scale determines the range for this command. """,
+        """Control the zoomed (delayed) window horizontal scale (seconds/div).
+
+        The main sweep scale determines the range for this command.
+        """,
         validator=strict_range,
         values=[1e-9, 20e-3]
     )
 
     timebase_hor_position = Instrument.control(
         "HPOS?", "HPOS %.2ES",
-        """ A string parameter that sets the horizontal position in the zoomed (delayed) view of
-        the main sweep. The main sweep range and the main sweep horizontal position determine
+        """Control the horizontal position in the zoomed (delayed) view of the main sweep.
+
+        The main sweep range and the main sweep horizontal position determine
         the range for this command. The value for this command must keep the zoomed view window
-        within the main sweep range.""",
+        within the main sweep range.
+        """,
     )
 
     @property
     def timebase(self):
-        """ Read timebase setup as a dict containing the following keys:
+        """Get timebase setup as a dict containing the following keys:
+
             - "timebase_scale": horizontal scale in seconds/div (float)
             - "timebase_offset": interval in seconds between the trigger and the reference
-            position (float)
+              position (float)
             - "timebase_hor_magnify": horizontal scale in the zoomed window in seconds/div (float)
             - "timebase_hor_position": horizontal position in the zoomed window in seconds
-            (float)"""
+              (float)
+
+        """
         tb_setup = {
             "timebase_scale": self.timebase_scale,
             "timebase_offset": self.timebase_offset,
@@ -205,7 +219,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         return tb_setup
 
     def timebase_setup(self, scale=None, offset=None, hor_magnify=None, hor_position=None):
-        """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
+        """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
 
@@ -229,8 +243,10 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     acquisition_type = Instrument.control(
         "ACQW?", "ACQW %s",
-        """ A string parameter that sets the type of data acquisition. Can be "normal", "peak",
-         "average", "highres".""",
+        """Control the type of data acquisition.
+
+        Can be 'normal', 'peak', 'average', 'highres'.
+        """,
         validator=strict_discrete_set,
         values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
                 "highres": "HIGH_RES"},
@@ -240,29 +256,30 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     acquisition_average = Instrument.control(
         "AVGA?", "AVGA %d",
-        """ A integer parameter that selects the average times of average acquisition.""",
+        """Control the averaging times of average acquisition.""",
         validator=strict_discrete_set,
         values=[4, 16, 32, 64, 128, 256, 512, 1024]
     )
 
     acquisition_status = Instrument.measurement(
-        "SAST?", """A string parameter that defines the acquisition status of the scope.""",
+        "SAST?", """Get the acquisition status of the scope.""",
         values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
                 "armed": "Arm"},
         map_values=True
     )
 
     acquisition_sampling_rate = Instrument.measurement(
-        "SARA?", """A integer parameter that returns the sample rate of the scope."""
+        "SARA?", """Get the sample rate of the scope."""
     )
 
     def acquisition_sample_size(self, source):
-        """ Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
+        """Get acquisition sample size for a certain channel. Used mainly for waveform acquisition.
         If the source is MATH, the SANU? MATH query does not seem to work, so I return the memory
         size instead.
 
         :param source: channel number of channel name.
-        :return: acquisition sample size of that channel. """
+        :return: acquisition sample size of that channel.
+        """
         if isinstance(source, str):
             source = sanitize_source(source)
         if source in [1, "C1"]:
@@ -282,31 +299,35 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
             raise ValueError("Invalid source: must be 1, 2, 3, 4 or C1, C2, C3, C4, MATH.")
 
     acquisition_sample_size_c1 = Instrument.measurement(
-        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        "SANU? C1", """Get the number of data points that the hardware
         will acquire from the input signal of channel 1.
         Note.
-        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too.
+        """
     )
 
     acquisition_sample_size_c2 = Instrument.measurement(
-        "SANU? C1", """A integer parameter that returns the number of data points that the hardware
+        "SANU? C1", """Get the number of data points that the hardware
         will acquire from the input signal of channel 2.
         Note.
-        Channel 2 and channel 1 share the same ADC, so the sample is the same too. """
+        Channel 2 and channel 1 share the same ADC, so the sample is the same too.
+        """
     )
 
     acquisition_sample_size_c3 = Instrument.measurement(
-        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        "SANU? C3", """Get the number of data points that the hardware
         will acquire from the input signal of channel 3.
         Note.
-        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too.
+        """
     )
 
     acquisition_sample_size_c4 = Instrument.measurement(
-        "SANU? C3", """A integer parameter that returns the number of data points that the hardware
+        "SANU? C3", """Get the number of data points that the hardware
         will acquire from the input signal of channel 4.
         Note.
-        Channel 3 and channel 4 share the same ADC, so the sample is the same too. """
+        Channel 3 and channel 4 share the same ADC, so the sample is the same too.
+        """
     )
 
     ##################
@@ -315,11 +336,14 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     memory_size = Instrument.control(
         "MSIZ?", "MSIZ %s",
-        """ A float parameter that selects the maximum depth of memory.
+        """Control the maximum depth of memory.
+
         <size>:={7K,70K,700K,7M} for non-interleaved mode. Non-interleaved means a single channel is
         active per A/D converter. Most oscilloscopes feature two channels per A/D converter.
+
         <size>:={14K,140K,1.4M,14M} for interleave mode. Interleave mode means multiple active
-        channels per A/D converter. """,
+        channels per A/D converter.
+        """,
         validator=strict_discrete_set,
         values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
                 14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
@@ -328,8 +352,9 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     @property
     def waveform_preamble(self):
-        """ Get preamble information for the selected waveform source as a dict with the
+        """Get preamble information for the selected waveform source as a dict with the
         following keys:
+
         - "type": normal, peak detect, average, high resolution (str)
         - "requested_points": number of data points requested by the user (int)
         - "sampled_points": number of data points sampled by the oscilloscope (int)
@@ -344,7 +369,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         - "sampling_rate": sampling rate (it is a read-only property)
         - "grid_number": number of horizontal grids (it is a read-only property)
         - "status": acquisition status of the scope. Can be "stopped", "triggered", "ready",
-        "auto", "armed"
+          "auto", "armed"
         - "xdiv": horizontal scale (units per division) in seconds
         - "xoffset": time interval in seconds between the trigger event and the reference position
         - "ydiv": vertical scale (units per division) in Volts
@@ -371,7 +396,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         return self._fill_yaxis_preamble(preamble)
 
     def _fill_yaxis_preamble(self, preamble=None):
-        """ Fill waveform preamble section concerning the Y-axis.
+        """Fill waveform preamble section concerning the Y-axis.
         :param preamble: waveform preamble to be filled
         :return: filled preamble
         """
@@ -393,33 +418,38 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     math_define = Instrument.control(
         "DEF?", "DEF EQN,'%s%s%s'",
-        """ A string parameter that sets the desired waveform math operation between two channels.
+        """Control the desired waveform math operation between two channels.
+
         Three parameters must be passed as a tuple:
-        1. source1 : source channel on the left
-        2. operation : operator must be "*", "/", "+", "-"
-        3. source2 : source channel on the right """,
+
+        #. source1 : source channel on the left
+        #. operation : operator must be "*", "/", "+", "-"
+        #. source2 : source channel on the right
+
+        """,
         validator=_math_define_validator,
         values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]]
     )
 
     math_vdiv = Instrument.control(
         "MTVD?", "MTVD %.2EV",
-        """ A float parameter that sets the vertical scale of the selected math operation. This
-        command is only valid in add, subtract, multiply and divide operation.
-        Note:
-        Legal values for the scale depend on the selected operation.""",
+        """Control the vertical scale of the selected math operation.
+
+        This command is only valid in add, subtract, multiply and divide operation.
+        Note: legal values for the scale depend on the selected operation.
+        """,
         validator=strict_discrete_set,
         values=[5e-4, 1e-3, 2e-3, 5e-3, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100]
     )
 
     math_vpos = Instrument.control(
         "MTVP?", "MTVP %d",
-        """ A integer parameter that sets the vertical position of the math waveform with
-        specified source.
-        Note:
-        The point represents the screen pixels and is related to the screen center. For example,
-        if the point is 50. The math waveform will be displayed 1 grid above the vertical center
-        of the screen. Namely one grid is 50. """,
+        """Control the vertical position of the math waveform with specified source.
+
+        Note: the point represents the screen pixels and is related to the screen center. For
+        example, if the point is 50. The math waveform will be displayed 1 grid above the vertical
+        center of the screen. Namely one grid is 50.
+        """,
         validator=strict_range,
         values=[-255, 255]
     )
@@ -430,14 +460,22 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     measure_delay = Instrument.control(
         "MEAD?", "MEAD %s,%s-%s",
-        """ The MEASURE_DELY command places the instrument in the continuous measurement mode and
+        """Control measurement delay.
+
+        The MEASURE_DELY command places the instrument in the continuous measurement mode and
         starts a type of delay measurement.
         The MEASURE_DELY? query returns the measured value of delay type.
         The command accepts three arguments with the following syntax:
-        measure_delay = (<type>,<sourceA>,<sourceB>)
-        <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
-        <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+
+            measure_delay = (<type>,<sourceA>,<sourceB>)
+
+            <type> := {PHA,FRR,FRF,FFR,FFF,LRR,LRF,LFR,LFF,SKEW}
+
+            <sourceA>,<sourceB> := {C1,C2,C3,C4} where if sourceA=CX and sourceB=CY, then X < Y
+
+        ========= ======================================================================
         Type      Description
+        ========= ======================================================================
         PHA       The phase difference between two channels. (rising edge - rising edge)
         FRR       Delay between two channels. (first rising edge - first rising edge)
         FRF       Delay between two channels. (first rising edge - first falling edge)
@@ -447,7 +485,9 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         LRF       Delay between two channels. (first rising edge - last falling edge)
         LFR       Delay between two channels. (first falling edge - last rising edge)
         LFF       Delay between two channels. (first falling edge - last falling edge)
-        Skew      Delay between two channels. (edge – edge of the same type) """,
+        Skew      Delay between two channels. (edge – edge of the same type)
+        ========= ======================================================================
+        """,
         validator=_measure_delay_validator,
         values=[["PHA", "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "Skey"],
                 ["C1", "C2", "C3", "C4"], ["C1", "C2", "C3", "C4"]]
@@ -459,7 +499,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     menu = Instrument.control(
         "MENU?", "MENU %s",
-        """ Control the bottom menu enabled state. (strict bool) """,
+        """Control the bottom menu enabled state (strict bool).""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscope._BOOLS,
         map_values=True
@@ -467,7 +507,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
     grid_display = Instrument.control(
         "GRDS?", "GRDS %s",
-        """ Select the type of the grid which is used to display (FULL, HALF, OFF) """,
+        """Control the type of the grid which is used to display (FULL, HALF, OFF).""",
         validator=strict_discrete_set,
         values={"full": "FULL", "half": "HALF", "off": "OFF"},
         map_values=True

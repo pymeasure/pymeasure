@@ -35,11 +35,12 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 
 
 def sanitize_source(source):
-    """ Parse source string
+    """Parse source string.
 
-    :param source can be "cX", "ch X", "chan X", "channel X", "math" or "line", where X is
+    :param source: can be "cX", "ch X", "chan X", "channel X", "math" or "line", where X is
     a single digit integer. The parser is case and white space insensitive.
-    :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE. """
+    :return: can be "C1", "C2", "C3", "C4", "MATH" or "LINE.
+    """
 
     match = re.match(r"^\s*(C|CH|CHAN|CHANNEL)\s*(?P<number>\d)\s*$|"
                      r"^\s*(?P<name_only>MATH|LINE)\s*$", source, re.IGNORECASE)
@@ -55,8 +56,8 @@ def sanitize_source(source):
 
 
 def _trigger_select_num_pars(value):
-    """
-    Find the expected number of parameters for the trigger_select property.
+    """Find the expected number of parameters for the trigger_select property.
+
     :param value: input parameters as a tuple
     """
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
@@ -76,8 +77,8 @@ def _trigger_select_num_pars(value):
 
 
 def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num_pars):
-    """
-    Validate the input of the trigger_select property
+    """Validate the input of the trigger_select property.
+
     :param value: input parameters as a tuple
     :param values: allowed space for each parameter
     :param num_pars_finder: function to find the number of expected parameters
@@ -104,12 +105,16 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
 
 
 def _trigger_select_get_process(value):
-    """
-    Process the output of the trigger_select property.
+    """Process the output of the trigger_select property.
+
     The format of the input list is
+
         <trig_type>, SR, <source>, HT, <hold_type>[, HV, <hold_value1>S][, HV2, <hold_value2>S]
+
     The format of the output list is
+
         <trig_type>, <source>, <hold_type>[, <hold_value1>][, <hold_value2>]
+
     :param value: output parameters as a list
     """
     output = []
@@ -127,7 +132,7 @@ def _trigger_select_get_process(value):
 
 
 def _results_list_to_dict(results):
-    """Turn a list into a dict, using the uneven indices as keys
+    """Turn a list into a dict, using the uneven indices as keys.
 
     E.g. turn ['C1', 'OFF', 'C2', 'OFF'] into {'C1': 'OFF', 'C2': 'OFF'}
     """
@@ -148,9 +153,11 @@ def _remove_unit(value):
 
 
 def _intensity_validator(value, values):
-    """ Validate the input of the intensity property (grid intensity and trace intensity)
+    """Validate the input of the intensity property (grid intensity and trace intensity).
+
     :param value: input parameters as a 2-element tuple
-    :param values: allowed space for each parameter """
+    :param values: allowed space for each parameter
+    """
     if not isinstance(value, tuple):
         raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
     if len(value) != 2:
@@ -161,27 +168,29 @@ def _intensity_validator(value, values):
 
 
 class _ChunkResizer:
-    """ The only purpose of this class is to resize the chunk size of the instrument adapter.
+    """The only purpose of this class is to resize the chunk size of the instrument adapter.
+
     This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
     waveforms.
+
     .. Note::
         Only if the new chunk size is bigger than the current chunk size, it is resized.
-    :param adapter: adapter attribute of the instrument. This is usually accessed through the
-        Instrument::adapter attribute.
-    :param int chunk_size: new chunk size
+
     """
+
     def __init__(self, adapter, chunk_size):
-        """ Just initialize the object attributes.
-        :param: adapter of the instrument. This is usually accessed through the
-        Instrument::adapter attribute.
-        :chunk_size: new chunk size (int).
+        """Just initialize the object attributes.
+
+        :param adapter: Adapter of the instrument. This is usually accessed through the
+                        Instrument::adapter attribute.
+        :param chunk_size: new chunk size (int).
         """
         self.adapter = adapter
         self.old_chunk_size = None
         self.new_chunk_size = int(chunk_size) if chunk_size else 0
 
     def __enter__(self):
-        """ Only resize the chunk size if the adapter support this feature"""
+        """Only resize the chunk size if the adapter support this feature."""
         if (self.adapter.connection is not None
                 and hasattr(self.adapter.connection, "chunk_size")):
             if self.new_chunk_size > self.adapter.connection.chunk_size:
@@ -212,7 +221,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """Sets the internal low-pass filter for all channels.
+        """Control the internal low-pass filter for this channel.
 
         The current bandwidths can only be read back for all channels at once!
         """,
@@ -224,7 +233,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     coupling = Instrument.control(
         "CPL?", "CPL %s",
-        """ A string parameter that determines the coupling ("ac 1M", "dc 1M", "ground").""",
+        """Control the coupling with a string parameter ("ac 1M", "dc 1M", "ground").""",
         validator=strict_discrete_set,
         values={"ac 1M": "A1M", "dc 1M": "D1M", "ground": "GND"},
         map_values=True
@@ -240,8 +249,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     offset = Instrument.control(
         "OFST?", "OFST %.2EV",
-        """ A float parameter to set value that is represented at center of screen in
-        Volts. The range of legal values varies depending on range and scale. If the specified
+        """Control the center of the screen in Volts by a a float parameter.
+        The range of legal values varies depending on range and scale. If the specified
         value is outside of the legal range, the offset value is automatically set to the nearest
         legal value.
         """
@@ -249,27 +258,26 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     probe_attenuation = Instrument.control(
         "ATTN?", "ATTN %g",
-        """ A float parameter that specifies the probe attenuation. The probe attenuation
-        may be from 0.1 to 10000.""",
+        """Control the probe attenuation. The probe attenuation may be from 0.1 to 10000.""",
         validator=strict_discrete_set,
         values={0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000}
     )
 
     scale = Instrument.control(
         "VDIV?", "VDIV %.2EV",
-        """ A float parameter that specifies the vertical scale (units per division) in Volts."""
+        """Control the vertical scale (units per division) in Volts."""
     )
 
     trigger_coupling = Instrument.control(
         "TRCP?", "TRCP %s",
-        """A string parameter that specifies the input coupling for the selected trigger sources.
+        """Control the input coupling for the selected trigger sources (string).
 
-        - ``ac``       — AC coupling block DC component in the trigger path, removing dc offset
+        - ac: AC coupling block DC component in the trigger path, removing dc offset
           voltage from the trigger waveform. Use AC coupling to get a stable edge trigger when
           your waveform has a large dc offset.
-        - ``dc``       — DC coupling allows dc and ac signals into the trigger path.
-        - ``lowpass``  — HFREJ coupling places a lowpass filter in the trigger path.
-        - ``highpass`` — LFREJ coupling places a highpass filter in the trigger path.
+        - dc: DC coupling allows dc and ac signals into the trigger path.
+        - lowpass: HFREJ coupling places a lowpass filter in the trigger path.
+        - highpass: LFREJ coupling places a highpass filter in the trigger path.
 
         """,
         validator=strict_discrete_set,
@@ -279,7 +287,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     trigger_level = Instrument.control(
         "TRLV?", "TRLV %.2EV",
-        """A float parameter that sets the trigger level voltage for the active trigger source.
+        """Control the trigger level voltage for the active trigger source (float).
 
         When there are two trigger levels to set, this command is used to set the higher
         trigger level voltage for the specified source. :attr:`trigger_level2` is used to set
@@ -294,11 +302,21 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     trigger_slope = Instrument.control(
         "TRSL?", "TRSL %s",
-        """A string parameter that sets the trigger slope of the specified trigger source.
+        """Control the trigger slope of the specified trigger source (string).
 
         <trig_slope>:={NEG,POS,WINDOW} for edge trigger
-
         <trig_slope>:={NEG,POS} for other trigger
+
+        +------------+--------------------------------------------------+
+        | parameter  | trigger slope                                    |
+        +------------+--------------------------------------------------+
+        | negative   | Negative slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | positive   | Positive slope for edge trigger or other trigger |
+        +------------+--------------------------------------------------+
+        | window     | Window slope for edge trigger                    |
+        +------------+--------------------------------------------------+
+
         """,
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
@@ -403,7 +421,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 
     @property
     def current_configuration(self):
-        """Read channel configuration as a dict containing the following keys:
+        """Get channel configuration as a dict containing the following keys:
 
         - "channel": channel number (int)
         - "attenuation": probe attenuation (float)
@@ -443,8 +461,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
 class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     """A base abstract class for any Teledyne Lecroy oscilloscope.
 
-    All Teledyne oscilloscopes have a very similar interface, hence this basic base class to combine
-    them.
+    All Teledyne oscilloscopes have a very similar interface, hence this base class to combine
+    them. Note that specific models will likely have conflicts in their interface.
 
     Attributes:
         WRITE_INTERVAL_S: minimum time between two commands. If a command is received less than
@@ -504,7 +522,8 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         scope object.
 
         :param source: can be 1, 2, 3, 4 or C1, C2, C3, C4, MATH
-        :return: handle to the selected source. """
+        :return: handle to the selected source.
+        """
         if isinstance(source, str):
             source = sanitize_source(source)
         if source == "MATH":
@@ -515,13 +534,13 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
             return getattr(self, f"ch_{source if isinstance(source, int) else source[-1]}")
 
     def autoscale(self):
-        """ Autoscale displayed channels. """
+        """ Autoscale displayed channels."""
         self.write("ASET")
 
     def write(self, command, **kwargs):
-        """ Writes the command to the instrument through the adapter.
-        Note.
-        If the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
+        """Write the command to the instrument through the adapter.
+
+        Note: if the last command was sent less than WRITE_INTERVAL_S before, this method blocks for
         the remaining time so that commands are never sent with rate more than 1/WRITE_INTERVAL_S
         Hz.
 
@@ -535,7 +554,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     _comm_header = Instrument.control(
         "CHDR?", "CHDR %s",
-        """ Controls the way the oscilloscope formats response to queries.
+        """Control the way the oscilloscope formats response to queries.
         The user should not be fiddling with the COMM_HEADER during operation, because
         if the communication header is anything other than OFF, the whole driver breaks down.
         • SHORT — response starts with the short form of the header word.
@@ -551,7 +570,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     bwlimit = Instrument.control(
         "BWL?", "BWL %s",
-        """Sets the internal low-pass filter for all channels.""",
+        """Set the internal low-pass filter for all channels.""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
         get_process=_results_list_to_dict,
@@ -564,24 +583,25 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     timebase_offset = Instrument.control(
         "TRDL?", "TRDL %.2ES",
-        """ A float parameter that sets the time interval in seconds between the trigger
-        event and the reference position (at center of screen by default)."""
+        """Control the time interval in seconds between the trigger event and the reference
+        position (at center of screen by default)."""
     )
 
     timebase_scale = Instrument.control(
         "TDIV?", "TDIV %.2ES",
-        """ A float parameter that sets the horizontal scale (units per division) in seconds (S),
-        for the main window.""",
+        """Control the horizontal scale (units per division) in seconds for the main
+        window (float).""",
         validator=strict_range,
         values=[1e-9, 100]
     )
 
     @property
     def timebase(self):
-        """ Read timebase setup as a dict containing the following keys:
+        """Get timebase setup as a dict containing the following keys:
+
             - "timebase_scale": horizontal scale in seconds/div (float)
             - "timebase_offset": interval in seconds between the trigger and the reference
-            position (float)
+              position (float)
         """
         tb_setup = {
             "timebase_scale": self.timebase_scale,
@@ -590,7 +610,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return tb_setup
 
     def timebase_setup(self, scale=None, offset=None):
-        """ Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
+        """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
 
@@ -608,19 +628,21 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     ###############
 
     def run(self):
-        """ Starts repetitive acquisitions.
+        """Starts repetitive acquisitions.
 
         This is the same as pressing the Run key on the front panel.
         """
         self.trigger_mode = "normal"
 
     def stop(self):
-        """  Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
+        """ Stops the acquisition. This is the same as pressing the Stop key on the front panel."""
         self.write("STOP")
 
     def single(self):
-        """ Causes the instrument to acquire a single trigger of data.
-        This is the same as pressing the Single key on the front panel. """
+        """Causes the instrument to acquire a single trigger of data.
+
+        This is the same as pressing the Single key on the front panel.
+        """
         self.write("ARM")
 
     ##################
@@ -629,10 +651,11 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     waveform_points = Instrument.control(
         "WFSU?", "WFSU NP,%d",
-        """ An integer parameter that sets the number of waveform points to be transferred with
-        the digitize method. NP = 0 sends all data points.
+        """Control the number of waveform points to be transferred with
+        the digitize method (int). NP = 0 sends all data points.
 
-        Note that the oscilloscope may provide less than the specified nb of points. """,
+        Note that the oscilloscope may provide less than the specified nb of points.
+        """,
         validator=strict_range,
         get_process=lambda vals: vals[vals.index("NP") + 1],
         values=[0, sys.maxsize]
@@ -640,9 +663,11 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     waveform_sparsing = Instrument.control(
         "WFSU?", "WFSU SP,%d",
-        """ An integer parameter that defines the interval between data points. For example:
-            SP = 0 sends all data points.
-            SP = 4 sends 1 point every 4 data points.""",
+        """Control the interval between data points (integer). For example:
+
+               SP = 0 sends all data points.
+               SP = 4 sends 1 point every 4 data points.
+        """,
         validator=strict_range,
         get_process=lambda vals: vals[vals.index("SP") + 1],
         values=[0, sys.maxsize]
@@ -650,7 +675,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     waveform_first_point = Instrument.control(
         "WFSU?", "WFSU FP,%d",
-        """ An integer parameter that specifies the address of the first data point to be sent.
+        """Control the address of the first data point to be sent (int).
         For waveforms acquired in sequence mode, this refers to the relative address in the
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
@@ -664,7 +689,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     memory_size = Instrument.control(
         "MSIZ?", "MSIZ %s",
-        """A float parameter or string that selects the maximum depth of memory.
+        """Control the maximum depth of memory (float or string).
         Assign for example 500, 100e6, "100K", "25MA".
 
         The reply will always be a float.
@@ -705,7 +730,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return self._fill_yaxis_preamble(preamble)
 
     def _fill_yaxis_preamble(self, preamble=None):
-        """ Fill waveform preamble section concerning the Y-axis.
+        """Fill waveform preamble section concerning the Y-axis.
         :param preamble: waveform preamble to be filled
         :return: filled preamble
         """
@@ -720,14 +745,16 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return preamble
 
     def _digitize(self, src, num_bytes=None):
-        """ Acquire waveforms according to the settings of the acquire commands.
+        """Acquire waveforms according to the settings of the acquire commands.
         Note.
         If the requested number of bytes is not specified, the default chunk size is used,
         but in such a case it cannot be quaranteed that the message is received in its entirety.
+
         :param src: source of data: "C1", "C2", "C3", "C4", "MATH".
         :param: num_bytes: number of bytes expected from the scope (including the header and
         footer).
-        :return: bytearray with raw data. """
+        :return: bytearray with raw data.
+        """
         with _ChunkResizer(self.adapter, num_bytes):
             binary_values = self.binary_values(f"{src}:WF? DAT2", dtype=np.uint8)
         if num_bytes is not None and len(binary_values) != num_bytes:
@@ -735,7 +762,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return binary_values
 
     def _header_footer_sanity_checks(self, message):
-        """ Check that the header follows the predefined format.
+        """Check that the header follows the predefined format.
         The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
         points, and it is zero padded.
         Then check that the footer is present. The footer is a double line-carriage \n\n
@@ -749,7 +776,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
             raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
 
     def _npoints_sanity_checks(self, message):
-        """ Check that the number of transmitted points is consistent with the message length.
+        """Check that the number of transmitted points is consistent with the message length.
         :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         transmitted_points = int(message_header[-9:])
@@ -759,7 +786,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
                              f"number of received points ({received_points})")
 
     def _acquire_data(self, requested_points=0, sparsing=1):
-        """ Acquire raw data points from the scope. The header, footer and number of points are
+        """Acquire raw data points from the scope. The header, footer and number of points are
         sanity-checked, but they are not processed otherwise. For a description of the input
         arguments refer to the download_waveform method.
         If the number of expected points is big enough, the transmission is split in smaller
@@ -816,7 +843,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     #################
 
     def download_image(self):
-        """ Get a BMP image of oscilloscope screen in bytearray of specified file format.
+        """Get a BMP image of oscilloscope screen in bytearray of specified file format.
         """
         # Using binary_values query because default interface does not support binary transfer
         with _ChunkResizer(self.adapter, 20 * 1024 * 1024):
@@ -824,7 +851,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         return bytearray(img)
 
     def _process_data(self, ydata, preamble):
-        """ Apply scale and offset to the data points acquired from the scope.
+        """Apply scale and offset to the data points acquired from the scope.
         - Y axis : the scale is ydiv / 25 and the offset -yoffset. the
         offset is not applied for the MATH source.
         - X axis : the scale is sparsing / sampling_rate and the offset is -xdiv * 7. The
@@ -859,14 +886,14 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
         :param source: measurement source. It can be "C1", "C2", "C3", "C4", "MATH".
         :param requested_points: number of points to acquire. If None the number of points
-            requested in the previous call will be assumed, i.e. the value of the number of points
-            stored in the oscilloscope memory. If 0 the maximum number of points will be returned.
+               requested in the previous call will be assumed, i.e. the value of the number of
+               points stored in the oscilloscope memory. If 0 the maximum number of points will
+               be returned.
         :param sparsing: interval between data points. For example if sparsing = 4, only one
-            point every 4 points is read. If 0 or None the sparsing of the previous call is assumed,
-            i.e. the value of the sparsing stored in the oscilloscope memory.
+               point every 4 points is read. If 0 or None the sparsing of the previous call is
+               assumed, i.e. the value of the sparsing stored in the oscilloscope memory.
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
-            property for dict format.
-
+                 property for dict format.
         """
         # Sanitize the input arguments
         if not sparsing:
@@ -890,7 +917,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     trigger_mode = Instrument.control(
         "TRMD?", "TRMD %s",
-        """A string parameter that selects the trigger sweep mode.
+        """Control the trigger sweep mode (string).
 
         <mode>:= {AUTO,NORM,SINGLE,STOP}
 
@@ -917,7 +944,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
           Otherwise, the running state shows Ready, and the interface does not display the waveform.
         - stopped : STOP is a part of the option of this command, but not a trigger mode of the
           oscilloscope.
-
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
@@ -939,7 +965,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
-        """ Refer to the self.trigger_select documentation. """,
+        """Control the trigger, see :meth:`~trigger_select()` documentation.""",
         get_process=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_vals,
@@ -947,14 +973,12 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
     )
 
     def center_trigger(self):
-        """ This command automatically sets the trigger levels to center of the trigger source
-        waveform. """
+        """Set the trigger levels to center of the trigger source waveform."""
         self.write("SET50")
 
     @property
     def trigger_select(self):
-        """A string parameter that selects the condition that will trigger the acquisition of
-        waveforms.
+        """Control the condition that will trigger the acquisition of waveforms (string).
 
         Depending on the trigger type, additional parameters must be specified. These additional
         parameters are grouped in pairs. The first in the pair names the variable to be modified,
@@ -985,7 +1009,6 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
           and [2nS, 4.2S] for others.
         - The trigger_select command is switched automatically between the short, normal and
           extended version depending on the number of expected parameters.
-
         """
         return self._trigger_select
 
@@ -1013,14 +1036,14 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
         :param mode: trigger sweep mode [auto, normal, single, stop]
         :param source: trigger source [c1, c2, c3, c4, line]
         :param trigger_type: condition that will trigger the acquisition of waveforms
-            [edge,slew,glit,intv,runt,drop]
+               [edge,slew,glit,intv,runt,drop]
         :param hold_type: hold type (refer to page 172 of programing guide)
         :param hold_value1: hold value1 (refer to page 172 of programing guide)
         :param hold_value2: hold value2 (refer to page 172 of programing guide)
         :param coupling: input coupling for the selected trigger sources
         :param level: trigger level voltage for the active trigger source
         :param level2: trigger lower level voltage for the active trigger source (only slew/runt
-            trigger)
+               trigger)
         :param slope: trigger slope of the specified trigger source
         """
         if mode is not None:
@@ -1049,7 +1072,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     @property
     def trigger(self):
-        """Read trigger setup as a dict containing the following keys:
+        """Get trigger setup as a dict containing the following keys:
 
         - "mode": trigger sweep mode [auto, normal, single, stop]
         - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
@@ -1106,7 +1129,7 @@ class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
 
     intensity = Instrument.control(
         "INTS?", "INTS GRID,%d,TRACE,%d",
-        """ Sets the intensity level of the grid or the trace in percent """,
+        """Set the intensity level of the grid or the trace in percent """,
         validator=_intensity_validator,
         values=[[0, 100], [0, 100]],
         get_process=lambda v: {v[0]: v[1], v[2]: v[3]}

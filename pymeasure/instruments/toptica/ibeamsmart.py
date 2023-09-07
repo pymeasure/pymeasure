@@ -119,7 +119,7 @@ class IBeamSmart(Instrument):
             includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
-            asrl={'baud_rate', baud_rate},
+            asrl={'baud_rate': baud_rate},
             **kwargs
         )
         # configure communication mode: no repeating and no command prompt

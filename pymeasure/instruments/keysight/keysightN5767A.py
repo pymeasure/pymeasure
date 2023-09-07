@@ -37,9 +37,6 @@ log.addHandler(logging.NullHandler())
 class KeysightN5767A(Instrument):
     """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
-
-    .. code-block:: python
-
     """
     ###############
     # Current (A) #

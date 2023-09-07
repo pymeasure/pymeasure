@@ -34,6 +34,7 @@ class LakeShore421(Instrument):
     """
     Represents the Lake Shore 421 Gaussmeter and provides a high-level interface for interacting
     with the instrument.
+
     .. code-block:: python
 
         gaussmeter = LakeShore421("COM1")
