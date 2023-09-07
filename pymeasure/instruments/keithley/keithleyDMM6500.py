@@ -74,19 +74,20 @@ class ScannerCard2000Channel(Channel):
     nplc = Channel.control(
         "{function}:NPLC? (@{ch})",
         "{function}:NPLC %s, (@{ch})",
-        """Control the integration time in number of power line cycles (NPLC).
+        """ Control the integration time in number of power line cycles (NPLC).
 
             Valid values: 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz)
-            This command is valid only for ``voltage``, 
+            This command is valid only for ``voltage``,
             2-wire ohms, and 4-wire ohms.
 
             .. note::
 
-                Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``, ``temperature``,
-                and ``voltage ratio`` mode support NPLC setting. If current active mode doesn't support NPLC,
-                this command will hang till adapter's timeout and cause -113 "Undefined header" error.
+                Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``,
+                ``temperature``, and ``voltage ratio`` mode support NPLC setting. If current
+                active mode doesn't support NPLC, this command will hang till adapter's
+                timeout and cause -113 "Undefined header" error.
 
-            """,
+        """,
         validator=truncated_range,
         values=[0.0005, 15],
     )
@@ -94,7 +95,7 @@ class ScannerCard2000Channel(Channel):
     range_ = Instrument.control(
         "{function}:RANG? (@{ch})",
         "{function}:RANG %s, (@{ch})",
-        """Control the range for the currently active mode.
+        """ Control the range for the currently active mode.
 
         For frequency and period measurements, ranging applies to
         the signal's input voltage, not its frequency""",
@@ -107,9 +108,9 @@ class ScannerCard2000Channel(Channel):
 
         .. note::
 
-            If current active mode doesn't support autorange, this command will hang 
+            If current active mode doesn't support autorange, this command will hang
             till adapter's timeout and cause -113 "Undefined header" error.
-        
+
         """,
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -117,13 +118,13 @@ class ScannerCard2000Channel(Channel):
     )
 
     def _mode_command(self, mode=None):
-        """Gets SCPI's function name from mode"""
+        """ Gets SCPI's function name from mode"""
         if mode is None:
             mode = self.mode
         return self.MODES[mode]
 
     def enable_filter(self, mode=None, type="repeat", count=1):
-        """Enables the averaging filter for the active mode,
+        """ Enables the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -139,7 +140,7 @@ class ScannerCard2000Channel(Channel):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT? (@{self.id})")
 
     def disable_filter(self, mode=None):
-        """Disables the averaging filter for the active mode,
+        """ Disables the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -151,14 +152,14 @@ class ScannerCard2000Channel(Channel):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT? (@{self.id})")
 
     def write(self, command):
-        """Write a command to the instrument."""
+        """ Write a command to the instrument."""
         if "{function}" in command:
             command = command.replace("{function}", ScannerCard2000Channel.MODES[self.mode])
         super().write(command)
 
 
 class KeithleyDMM6500(Instrument):
-    """Represents the Keithely DMM6500 6½-Digit Multimeter and provides a
+    """ Represents the Keithely DMM6500 6½-Digit Multimeter and provides a
     high-level interface for interacting with the instrument.
     This class only uses "SCPI" command set (see also :attr:`command_set`) to
     communicate with the instrument.
@@ -228,11 +229,11 @@ class KeithleyDMM6500(Instrument):
         self.adapter.connection.read_termination = "\n"
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """With context manager, this will fully close the connection."""
+        """ With context manager, this will fully close the connection."""
         self.adapter.close()
 
     def close(self):
-        """Fully closes the connection"""
+        """ Fully closes the connection"""
         self.adapter.close()
 
     ###########
@@ -269,13 +270,14 @@ class KeithleyDMM6500(Instrument):
 
     line_frequency = Instrument.measurement(
         ":SYST:LFR?",
-        """ Reads the power line frequency which automatically detected while the instrument is powered on.""",
+        """ Reads the power line frequency which automatically detected while the instrument is
+        powered on.""",
     )
 
     range_ = Instrument.control(
         "{function}:RANG?",
         "{function}:RANG %s",
-        """Control the range for the currently active mode.
+        """ Control the range for the currently active mode.
 
         For frequency and period measurements, ranging applies to
         the signal's input voltage, not its frequency""",
@@ -288,9 +290,9 @@ class KeithleyDMM6500(Instrument):
 
         .. note::
 
-            If current active mode doesn't support autorange, this command will hang 
+            If current active mode doesn't support autorange, this command will hang
             till adapter's timeout and cause -113 "Undefined header" error.
-        
+
         """,
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -300,17 +302,18 @@ class KeithleyDMM6500(Instrument):
     nplc = Instrument.control(
         "{function}:NPLC?",
         "{function}:NPLC %s",
-        """Control the integration time in number of power line cycles (NPLC).
+        """ Control the integration time in number of power line cycles (NPLC).
 
         Valid values: 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz)
-        This command is valid only for ``voltage``, 
+        This command is valid only for ``voltage``,
         2-wire ohms, and 4-wire ohms.
 
         .. note::
 
-            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``, ``temperature``,
-            and ``voltage ratio`` mode support NPLC setting. If current active mode doesn't support NPLC,
-            this command will hang till adapter's timeout and cause -113 "Undefined header" error.
+            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``,
+            ``temperature``, and ``voltage ratio`` mode support NPLC setting. If current
+            active mode doesn't support NPLC, this command will hang till adapter's timeout
+            and cause -113 "Undefined header" error.
 
         """,
         validator=truncated_range,
@@ -320,16 +323,16 @@ class KeithleyDMM6500(Instrument):
     aperture = Instrument.control(
         "{function}:APER?",
         "{function}:APER %s",
-        """Control the aperture time of currently active mode.
+        """ Control the aperture time of currently active mode.
 
         Valid values: ``MIN``, ``DEF``, ``MAX``, or number between 8.333u and 0.25 s.
 
         .. note::
 
-            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``, ``temperature``,
-            ``frequency``, ``period``, and ``voltage ratio`` mode support aperture setting. If current 
-            active mode doesn't support aperture, this command will hang till adapter's timeout and
-            cause -113 "Undefined header" error.
+            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``,
+            ``temperature``, ``frequency``, ``period``, and ``voltage ratio`` mode support
+            aperture setting. If current active mode doesn't support aperture, this command
+            will hang till adapter's timeout and cause -113 "Undefined header" error.
 
         """,
     )
@@ -337,8 +340,8 @@ class KeithleyDMM6500(Instrument):
     detector_bandwidth = Instrument.control(
         "{function}:DET:BAND?",
         "{function}:DET:BAND %s",
-        """Control the lowest frequency expected in the input signal in Hz 
-        for AC voltage and AC current measurement, 
+        """ Control the lowest frequency expected in the input signal in Hz
+        for AC voltage and AC current measurement,
 
         Valid values: 3, 30, 300, ``MIN``, ``DEF``, ``MAX``.""",
         validator=strict_discrete_set,
@@ -348,7 +351,7 @@ class KeithleyDMM6500(Instrument):
     autozero = Instrument.control(
         "{function}:AZER?",
         "{function}:AZER %s",
-        """Enable or disable automatic updates to the internal reference measurements (autozero) 
+        """ Enable or disable automatic updates to the internal reference measurements (autozero)
         of the instrument.
         """,
         validator=strict_discrete_set,
@@ -359,21 +362,21 @@ class KeithleyDMM6500(Instrument):
     system_time = Instrument.control(
         ":SYST:TIME? 1",
         ":SYST:TIME %s",
-        """Set or query system time. Set format is: "year, month, day, hour, minute, second"
+        """ Set or query system time. Set format is: "year, month, day, hour, minute, second"
         or "hour, minute, second". Example: Using ``time`` package to set instrument's clock:
         ``dmm.system_time = time.strftime("%Y, %m, %d, %H, %M, %S")``
         """,
     )
 
     def trigger_single_autozero(self):
-        """Cause the instrument to refresh the reference and zero measurements once.
+        """ Cause the instrument to refresh the reference and zero measurements once.
 
         Consequent autozero measurements are disabled."""
         self.write("AZER:ONCE")
 
     terminals_used = Instrument.measurement(
         "ROUT:TERM?",
-        """Query the multimeter to determine if the front or rear input terminals
+        """ Query the multimeter to determine if the front or rear input terminals
             are selected.
 
             Returns ``FRONT`` or ``REAR``.""",
@@ -421,7 +424,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def displayed_text(self, top_line=None, bot_line=None):
-        """Displays text messages on the front-panel USER swipe screen. If no messages
+        """ Displays text messages on the front-panel USER swipe screen. If no messages
         were defined, screen will be cleared.
 
         :param top_line: 1st line message
@@ -458,9 +461,9 @@ class KeithleyDMM6500(Instrument):
         ":SENS:CURR:REL?",
         ":SENS:CURR:REL %g",
         """ A floating point property that controls the DC current relative value in Amps,
-        which can take values from -3.0 to 3.0 A. When relative offset is enabled, all 
+        which can take values from -3.0 to 3.0 A. When relative offset is enabled, all
         subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that 
+        If the instrument acquires the value, read this setting to return the value that
         was measured internally. """,
         validator=truncated_range,
         values=[-3.0, 3.0],
@@ -468,7 +471,7 @@ class KeithleyDMM6500(Instrument):
     current_relative_status = Instrument.control(
         ":SENS:CURR:REL:STAT?",
         ":SENS:CURR:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -493,7 +496,7 @@ class KeithleyDMM6500(Instrument):
         cast=int,
     )
 
-    ## Current (AC)
+    # Current (AC)
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?",
         ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
@@ -507,9 +510,9 @@ class KeithleyDMM6500(Instrument):
         ":SENS:CURR:AC:REL?",
         ":SENS:CURR:AC:REL %g",
         """ A floating point property that controls the DC current relative value in Amps,
-        which can take values from -3.0 to 3.0 A. When relative offset is enabled, all 
+        which can take values from -3.0 to 3.0 A. When relative offset is enabled, all
         subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that 
+        If the instrument acquires the value, read this setting to return the value that
         was measured internally. """,
         validator=truncated_range,
         values=[-3.0, 3.0],
@@ -517,7 +520,7 @@ class KeithleyDMM6500(Instrument):
     current_ac_relative_status = Instrument.control(
         ":SENS:CURR:AC:REL:STAT?",
         ":SENS:CURR:AC:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -550,7 +553,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_current(self, max_current=10e-3, ac=False):
-        """Configures the instrument to measure current,
+        """ Configures the instrument to measure current,
         based on a maximum current to set the range, and
         a boolean flag to determine if DC or AC is required.
 
@@ -568,7 +571,7 @@ class KeithleyDMM6500(Instrument):
     # Voltage (V) #
     ###############
 
-    ## DC
+    # DC
     voltage = Instrument.measurement(
         ":READ?",
         """ Reads a DC or AC voltage measurement in Volts, based on the
@@ -587,9 +590,9 @@ class KeithleyDMM6500(Instrument):
         ":SENS:VOLT:REL?",
         ":SENS:VOLT:REL %g",
         """ A floating point property that controls the DC voltage relative value in Volts,
-        which can take values from -1000 to 1000 V. When relative offset is enabled, all 
+        which can take values from -1000 to 1000 V. When relative offset is enabled, all
         subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that 
+        If the instrument acquires the value, read this setting to return the value that
         was measured internally. """,
         validator=truncated_range,
         values=[-1000, 1000],
@@ -597,7 +600,7 @@ class KeithleyDMM6500(Instrument):
     voltage_relative_status = Instrument.control(
         ":SENS:VOLT:REL:STAT?",
         ":SENS:VOLT:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -621,7 +624,7 @@ class KeithleyDMM6500(Instrument):
         values=[3, 4, 5, 6],
         cast=int,
     )
-    ## AC
+    # AC
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?",
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %g",
@@ -635,9 +638,9 @@ class KeithleyDMM6500(Instrument):
         ":SENS:VOLT:AC:REL?",
         ":SENS:VOLT:AC:REL %g",
         """ A floating point property that controls the AC voltage relative value in Volts,
-        which can take values from -750 to 750 V. When relative offset is enabled, all 
+        which can take values from -750 to 750 V. When relative offset is enabled, all
         subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that 
+        If the instrument acquires the value, read this setting to return the value that
         was measured internally. """,
         validator=truncated_range,
         values=[-750, 750],
@@ -645,7 +648,7 @@ class KeithleyDMM6500(Instrument):
     voltage_ac_relative_status = Instrument.control(
         ":SENS:VOLT:AC:REL:STAT?",
         ":SENS:VOLT:AC:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -679,7 +682,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_voltage(self, max_voltage=1, ac=False):
-        """Configures the instrument to measure voltage,
+        """ Configures the instrument to measure voltage,
         based on a maximum voltage to set the range, and
         a boolean flag to determine if DC or AC is required.
 
@@ -722,7 +725,7 @@ class KeithleyDMM6500(Instrument):
     resistance_relative_status = Instrument.control(
         ":SENS:RES:REL:STAT?",
         ":SENS:RES:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -741,7 +744,8 @@ class KeithleyDMM6500(Instrument):
         ":DISP:RES:DIG?",
         ":DISP:RES:DIG %d",
         """ An integer property that controls the number of digits in the 2-wire
-        resistance readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        resistance readings, which can take values from 3 to 6 representing dispaly
+        digits from 3.5 to 6.5.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -766,7 +770,7 @@ class KeithleyDMM6500(Instrument):
     resistance_4W_relative_status = Instrument.control(
         ":SENS:FRES:REL:STAT?",
         ":SENS:FRES:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -785,14 +789,15 @@ class KeithleyDMM6500(Instrument):
         ":DISP:FRES:DIG?",
         ":DISP:FRES:DIG %d",
         """ An integer property that controls the number of digits in the 4-wire
-        resistance readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        resistance readings, which can take values from 3 to 6 representing dispaly
+        digits from 3.5 to 6.5.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
     )
 
     def measure_resistance(self, max_resistance=10e6, wires=2):
-        """Configures the instrument to measure resistance,
+        """ Configures the instrument to measure resistance,
         based on a maximum resistance to set the range.
 
         :param max_resistance: A resistance in Ohms to set the resistance range
@@ -829,7 +834,7 @@ class KeithleyDMM6500(Instrument):
     frequency_relative_status = Instrument.control(
         ":SENS:FREQ:REL:STAT?",
         ":SENS:FREQ:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -847,15 +852,15 @@ class KeithleyDMM6500(Instrument):
     frequency_threshold = Instrument.control(
         ":SENS:FREQ:THR:RANG?",
         ":SENS:FREQ:THR:RANG %g",
-        """ A floating point property that controls the expected input level in Volts for the frequency measurement, which can take values
-        from 0.1 to 750 V. """,
+        """ A floating point property that controls the expected input level in Volts
+        for the frequency measurement, which can take values from 0.1 to 750 V. """,
         validator=truncated_range,
         values=[0.1, 750],
     )
     frequency_threshold_auto = Instrument.control(
         ":SENS:FREQ:THR:RANG:AUTO?",
         ":SENS:FREQ:THR:RANG:AUTO %g",
-        """ A property that determines if the threshold range is set manually or automatically, 
+        """ A property that determines if the threshold range is set manually or automatically,
         which takes string :code:`on`, bool :code:`True`, or number :code:`1` for enabling;
         string :code:`off`, bool :code:`False`, or :code:`0` for disabling.""",
         validator=strict_discrete_set,
@@ -873,7 +878,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_frequency(self):
-        """Configures the instrument to measure the frequency."""
+        """ Configures the instrument to measure the frequency."""
         self.mode = "frequency"
 
     ##############
@@ -896,7 +901,7 @@ class KeithleyDMM6500(Instrument):
     period_relative_status = Instrument.control(
         ":SENS:PER:REL:STAT?",
         ":SENS:PER:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -923,7 +928,7 @@ class KeithleyDMM6500(Instrument):
     period_threshold_auto = Instrument.control(
         ":SENS:PER:THR:RANG:AUTO?",
         ":SENS:PER:THR:RANG:AUTO %g",
-        """ A property that determines if the threshold range is set manually or automatically, 
+        """ A property that determines if the threshold range is set manually or automatically,
         which takes string :code:`"on"`, bool :code:`True`, or number :code:`1` for enabling;
         string :code:`"off"`, bool :code:`False`, or :code:`0` for disabling.""",
         validator=strict_discrete_set,
@@ -941,7 +946,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_period(self):
-        """Configures the instrument to measure the period."""
+        """ Configures the instrument to measure the period."""
         self.mode = "period"
 
     ###################
@@ -964,7 +969,7 @@ class KeithleyDMM6500(Instrument):
     temperature_relative_status = Instrument.control(
         ":SENS:TEMP:REL:STAT?",
         ":SENS:TEMP:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -990,7 +995,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_temperature(self):
-        """Configures the instrument to measure the temperature."""
+        """ Configures the instrument to measure the temperature."""
         self.mode = "temperature"
 
     ###############
@@ -1013,7 +1018,7 @@ class KeithleyDMM6500(Instrument):
     capacitance_relative_status = Instrument.control(
         ":SENS:CAP:REL:STAT?",
         ":SENS:CAP:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value 
+        """ A property queries, enables or disables the application of a relative offset value
         to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
         validator=strict_discrete_set,
         values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
@@ -1039,7 +1044,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_capacitance(self, max_capacitance=1e-3):
-        """Configures the instrument to perform capacitance testing.
+        """ Configures the instrument to perform capacitance testing.
 
         :param max_capacitance: Set :attr:`capacitance_range` after changing mode
         :return: None
@@ -1076,7 +1081,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_diode(self):
-        """Configures the instrument to perform diode testing.
+        """ Configures the instrument to perform diode testing.
 
         :return: None
         """
@@ -1087,7 +1092,7 @@ class KeithleyDMM6500(Instrument):
     ##############
 
     def measure_continuity(self):
-        """Configures the instrument to perform continuity testing.
+        """ Configures the instrument to perform continuity testing.
 
         :return: None
         """
@@ -1112,7 +1117,7 @@ class KeithleyDMM6500(Instrument):
 
     points_in_buffer = Instrument.measurement(
         "TRAC:ACT?",
-        """Query the number of readings stored in the buffer.""",
+        """ Query the number of readings stored in the buffer.""",
         cast=int,
     )
 
@@ -1123,7 +1128,7 @@ class KeithleyDMM6500(Instrument):
     data_format = Instrument.control(
         "FORMAT:DATA?",
         "FORMAT:DATA %s",
-        """A string property that specify data format: ``ASC``, ``REAL``, or ``SRE``""",
+        """ A string property that specify data format: ``ASC``, ``REAL``, or ``SRE``""",
         validator=strict_discrete_set,
         values=("asc", "ASC", "real", "REAL", "sre", "SRE"),
     )
@@ -1134,24 +1139,24 @@ class KeithleyDMM6500(Instrument):
 
     scan_id = Instrument.measurement(
         ":SYST:CARD1:IDN?",
-        """Return a string that contains information about the scanner card""",
+        """ Return a string that contains information about the scanner card""",
         separator="|",
     )
 
     scan_vch_start = Instrument.measurement(
         "SYST:CARD1:VCH:STAR?",
-        """Return the first channel in the slot that supports voltage or 2-wire measurements""",
+        """ Return the first channel in the slot that supports voltage or 2-wire measurements""",
         cast=int,
     )
 
     scan_vch_end = Instrument.measurement(
         "SYST:CARD1:VCH:END?",
-        """Return the last channel in the slot that supports voltage or 2-wire measurements""",
+        """ Return the last channel in the slot that supports voltage or 2-wire measurements""",
         cast=int,
     )
 
     scan_card_vmax = Instrument.measurement(
-        "SYST:CARD1:VMAX?", """Return the maximum voltage of all channels""", cast=int
+        "SYST:CARD1:VMAX?", """ Return the maximum voltage of all channels""", cast=int
     )
 
     enable_pseudo_scanner = Instrument.setting(
@@ -1179,7 +1184,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_channels_list(self):
-        """Expands :attr:`scan_channels` string to a list of integers.
+        """ Expands :attr:`scan_channels` string to a list of integers.
 
         For example, when :attr:`scan_channels` is ``1,3:5,7:8,10``,
         this attribute will return ``[1,3,4,5,7,8,10]``. If ``scan_channels_list=[1,2,3,4,6]``,
@@ -1195,12 +1200,12 @@ class KeithleyDMM6500(Instrument):
                 # process string "a:b" -> a, a+1, ..., b
                 ch = list(map(int, ch.split(":")))
                 ch[-1] += 1
-                chn_list[idx : idx + 1] = list(range(*ch))
+                chn_list[idx: idx+1] = list(range(*ch))
         return chn_list
 
     @scan_channels_list.setter
     def scan_channels_list(self, new_channels):
-        """Set scan channels by a list or tuple"""
+        """ Set scan channels by a list or tuple"""
         if isinstance(new_channels, (list, tuple)):
             self.scan_channels = ",".join(map(str, new_channels))
         else:
@@ -1216,18 +1221,19 @@ class KeithleyDMM6500(Instrument):
     scan_interval = Instrument.control(
         ":ROUT:SCAN:INT?",
         ":ROUT:SCAN:INT %d",
-        """The interval time (0s to 100ks) between scan starts when the scan count is more than one.""",
+        """ The interval time (0s to 100ks) between scan starts when the scan count
+        is more than one.""",
         validator=truncated_range,
         values=[0, 100e3],
         cast=int,
     )
 
     def scanned_data(self, start_idx=None, end_idx=None, raw=False):
-        """Returns a list of scanning values from the buffer.
+        """ Returns a list of scanning values from the buffer.
 
         :param start_idx: A bool value which controls communication state while scanning.
-            Default is ``True`` and the communication waits until the commands are complete to accept new
-            commands
+            Default is ``True`` and the communication waits until the commands are complete
+            to accept new commands
         :param end_idx: An alternative way to set :attr:`scan_count`
         :param raw: An alternative way to set :attr:`scan_interval` in second
         :return: A list of scan channels' measuredh
@@ -1248,7 +1254,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_modes(self):
-        """Returns a dictionary of every channel's mode."""
+        """ Returns a dictionary of every channel's mode."""
         res = dict()
         for i in range(self.scan_vch_start, self.scan_vch_end + 1):
             res[i] = self.channels[i].mode
@@ -1256,12 +1262,12 @@ class KeithleyDMM6500(Instrument):
 
     @scan_modes.setter
     def scan_modes(self, new_mode):
-        """Set all channles to the new mode. Ex: ``scan_modes = "voltage"``"""
+        """ Set all channles to the new mode. Ex: ``scan_modes = "voltage"``"""
         self.write(f':SENS:FUNC "{self._mode_command(new_mode)}", (@1:10)')
 
     @property
     def scan_iscomplete(self):
-        """Read Event Status Register (ESR) bit 0 to determine if previous works were
+        """ Read Event Status Register (ESR) bit 0 to determine if previous works were
         completed. This properity is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
         if res == 1:
@@ -1270,19 +1276,20 @@ class KeithleyDMM6500(Instrument):
             return False
 
     def scan_start(self, block_communication=True, count=None, interval=None):
-        """Scanner card starts to close each channel of :attr:`scan_channels` sequentially and
-        to do measurements.
+        """ Scanner card starts to close each channel of :attr:`scan_channels` sequentially
+        and to do measurements.
 
         If :attr:`scan_count` is larger than 1, the next scanning will start again
-        after :attr:`scan_interval` seceond. Running large counts or long interval scanning is a time-consuming
-        operation. It's better to set ``block_communication=False`` and use :attr:`scan_iscomplete` to
-        check if the measurement is completed.
+        after :attr:`scan_interval` seceond. Running large counts or long interval scanning
+        is a time-consuming operation. It's better to set ``block_communication=False`` and
+        use :attr:`scan_iscomplete` to check if the measurement is completed.
 
-        :param block_communication: A bool value which controls communication state while scanning.
-            Default is ``True`` and the communication waits until the commands are complete to accept new
-            commands
+        :param block_communication: A bool value which controls communication state while
+            scanning. Default is ``True`` and the communication waits until the commands
+            are complete to accept new commands
         :param count: An alternative way to set :attr:`scan_count` before scanning.
-        :param interval: An alternative way to set :attr:`scan_interval` in second before scanning.
+        :param interval: An alternative way to set :attr:`scan_interval` in second before
+            scanning.
         :return: None
         """
         if count:
@@ -1300,7 +1307,8 @@ class KeithleyDMM6500(Instrument):
             log.info("Use `scan_iscomplete` to know the status.")
 
     def scan_stop(self):
-        """Aborts the scanning measurement, by stopping the measurement arming and triggering sequence.
+        """ Aborts the scanning measurement, by stopping the measurement arming and
+        triggering sequence.
 
         :return: None
         """
@@ -1316,7 +1324,7 @@ class KeithleyDMM6500(Instrument):
         return self.MODES[mode]
 
     def auto_range_status(self, mode=None):
-        """Gets the status of auto-range of active mode or another mode by its name.
+        """ Gets the status of auto-range of active mode or another mode by its name.
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
         ``resistance`` (2-wire), ``resistance 4W`` (4-wire), ``capacitance``,
         and ``voltage ratio`` support autorange. If chosen mode is not in these
@@ -1339,7 +1347,7 @@ class KeithleyDMM6500(Instrument):
             return False
 
     def auto_range(self, mode=None):
-        """Sets the active mode to use auto-range, or can set another mode by its name.
+        """ Sets the active mode to use auto-range, or can set another mode by its name.
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
         ``resistance`` (2-wire), ``resistance 4W`` (4-wire), ``capacitance``,
         and ``voltage ratio`` support autorange. If chosen mode is not in these
@@ -1354,7 +1362,7 @@ class KeithleyDMM6500(Instrument):
             self.write(f":SENS:{self._mode_command(mode)}:RANG:AUTO 1")
 
     def enable_relative(self, mode=None):
-        """Enables the application of a relative offset value to the measurement
+        """ Enables the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1362,7 +1370,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 1")
 
     def disable_relative(self, mode=None):
-        """Disables the application of a relative offset value to the measurement
+        """ Disables the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1370,7 +1378,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 0")
 
     def acquire_relative(self, mode=None):
-        """Sets the active value as the relative for the active mode,
+        """ Sets the active value as the relative for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1384,7 +1392,7 @@ class KeithleyDMM6500(Instrument):
         return rel
 
     def enable_filter(self, mode=None, type="repeat", count=1):
-        """Enables the averaging filter for the active mode,
+        """ Enables the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1400,7 +1408,7 @@ class KeithleyDMM6500(Instrument):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
     def disable_filter(self, mode=None):
-        """Disables the averaging filter for the active mode,
+        """ Disables the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1412,7 +1420,7 @@ class KeithleyDMM6500(Instrument):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
     def beep(self, frequency, duration):
-        """Sounds a system beep.
+        """ Sounds a system beep.
 
         :param frequency: A frequency in Hz between 20 Hz and 8000 Hz
         :param duration: The amount of time to play the tone between 0.001 s to 100 s
@@ -1421,7 +1429,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def write(self, command):
-        """Write a command to the instrument.
+        """ Write a command to the instrument.
 
         :param command: A command
         :param type: str
