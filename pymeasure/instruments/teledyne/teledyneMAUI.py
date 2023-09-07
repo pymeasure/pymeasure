@@ -65,7 +65,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
 
     @property
     def current_configuration(self):
-        """Read channel configuration as a dict containing the following keys:
+        """Get channel configuration as a dict containing the following keys:
 
         - "channel": channel number (int)
         - "attenuation": probe attenuation (float)
@@ -123,7 +123,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     @property
     def trigger(self):
-        """Read trigger setup as a dict containing the following keys:
+        """Get trigger setup as a dict containing the following keys:
 
         - "mode": trigger sweep mode [auto, normal, single, stop]
         - "trigger_type": condition that will trigger the acquisition of waveforms
