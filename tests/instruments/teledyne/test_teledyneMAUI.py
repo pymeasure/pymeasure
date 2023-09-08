@@ -25,7 +25,7 @@
 import pytest
 
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import sanitize_source
-from pymeasure.instruments.teledyne.teledyneHDO6xxx import TeledyneHDO6xxx
+from pymeasure.instruments.teledyne.teledyneMAUI import TeledyneMAUI
 from pymeasure.test import expected_protocol
 
 INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]
@@ -35,15 +35,18 @@ VALID_CHANNELS = [('C1', 'C1'), ('CHANNEL2', 'C2'), ('ch 3', 'C3'), ('chan 4', '
 
 def test_init():
     with expected_protocol(
-            TeledyneHDO6xxx,
+            TeledyneMAUI,
             [(b"CHDR OFF", None)]
     ):
         pass  # Verify the expected communication.
 
 
 def test_removed_property():
-    """Verify the behaviour of a property belonging to a cousin device."""
-    with expected_protocol(TeledyneHDO6xxx, [(b'CHDR OFF', None)]) as instr:
+    """Verify that certain inherited properties are removed successfully.
+
+    Some actions from the base class are not valid for this one.
+    """
+    with expected_protocol(TeledyneMAUI, [(b'CHDR OFF', None)]) as instr:
         props = ["timebase_hor_magnify"]
         for prop in props:
             with pytest.raises(AttributeError):
@@ -68,7 +71,7 @@ def test_sanitize_valid_source(channel):
 
 def test_bwlimit():
     with expected_protocol(
-            TeledyneHDO6xxx,
+            TeledyneMAUI,
             [(b"CHDR OFF", None),
              (b"BWL C1,OFF", None),
              (b"BWL?", b"C1,OFF"),
@@ -88,7 +91,7 @@ def test_bwlimit():
 
 def test_offset():
     with expected_protocol(
-            TeledyneHDO6xxx,
+            TeledyneMAUI,
             [(b"CHDR OFF", None),
              (b"C1:OFST 1.00E+00V", None),
              (b"C1:OFST?", b"1.00E+00")
@@ -100,7 +103,7 @@ def test_offset():
 
 def test_attenuation():
     with expected_protocol(
-            TeledyneHDO6xxx,
+            TeledyneMAUI,
             [(b"CHDR OFF", None),
              (b"C1:ATTN 100", None),
              (b"C1:ATTN?", b"100"),

@@ -26,17 +26,15 @@ import pytest
 
 from time import sleep
 
-from pymeasure.instruments.teledyne import TeledyneHDO6xxx
+from pymeasure.instruments.teledyne import TeledyneMAUI
 
 
-class TestTeledyneHDO6xxx:
+class TestTeledyneMAUI:
     """
-    Unit tests for TeledyneHDO6xxx class.
+    Unit tests for TeledyneMAUI class.
 
-    This test suite, needs the following setup to work properly:
-        - A TeledyneHDO6xxx device should be connected to the computer;
-        - The device's address must be set in the RESOURCE constant;
-        - A probe on Channel 1 must be connected to the Demo output of the oscilloscope.
+    This test suite needs an actual device connected, compatible with the MAUI interface.
+    Use the ``--device-address`` flag for pytest to define your device.
     """
 
     #########################
@@ -60,7 +58,7 @@ class TestTeledyneHDO6xxx:
 
     @pytest.fixture(scope="module")
     def instrument(self, connected_device_address):
-        return TeledyneHDO6xxx(connected_device_address)
+        return TeledyneMAUI(connected_device_address)
 
     @pytest.fixture
     def resetted_instrument(self, instrument):
@@ -81,7 +79,7 @@ class TestTeledyneHDO6xxx:
     #########
 
     def test_instrument_connection(self, connected_device_address):
-        instrument = TeledyneHDO6xxx(connected_device_address)
+        instrument = TeledyneMAUI(connected_device_address)
         channel = instrument.ch(1)
         assert channel is not None
 
@@ -115,7 +113,7 @@ class TestTeledyneHDO6xxx:
     @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
     def test_ch_bwlimit(self, instrument, case):
         instrument.bwlimit = case
-        expected = {ch: case for ch in TestTeledyneHDO6xxx.WAVEFORM_SOURCES}
+        expected = {ch: case for ch in self.WAVEFORM_SOURCES}
         assert instrument.bwlimit == expected
 
     @pytest.mark.parametrize("ch_number", CHANNELS)

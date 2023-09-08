@@ -128,7 +128,7 @@ class TeledyneT3AFG(Instrument):
 
     Initially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
-    included here initially.
+    included here yet.
 
     Future improvements (help welcomed):
 

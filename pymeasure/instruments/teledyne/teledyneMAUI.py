@@ -30,7 +30,7 @@ from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscillo
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
     """Base class for channels on a :class:`TeledyneMAUI` device."""
 
-    # For some reason "20MHZ" is registered as "ON"
+    # Probably for historic reasons, "20MHZ" is registered as "ON"
     BANDWIDTH_LIMITS = ["OFF", "ON", "200MHZ"]
 
     TRIGGER_SLOPES = {"negative": "NEG", "positive": "POS"}
@@ -96,8 +96,8 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
 class TeledyneMAUI(TeledyneOscilloscope):
     """A base class for the MAUI-type of Teledyne oscilloscopes.
 
-    This class is not exactly device specific. Nonetheless, it might already work out of the box and
-    therefore this class not abstract.
+    This base class works out of the box. Some properties, especially the number of channels,
+    might have to be adjusted to the actual device.
 
     The manual detailing the API is "MAUI Oscilloscopes Remote Control and Automation Manual"
     (`link`_).
@@ -202,10 +202,13 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
         self.write("HCSU " + ",".join(arg_strs))
 
-    def download_image(self):
+    def download_image(self, **kwargs):
         """Get a BMP image of oscilloscope screen in bytearray of specified file format.
 
-        This will first set the hardcopy destination to "REMOTE".
+        The hardcopy destination is set to "REMOTE" by default.
+
+        :param \\**kwargs: Keyword arguments for :meth:`hardcopy_setup`
         """
-        self.hardcopy_setup(destination="REMOTE")
+        kwargs.setdefault("destination", "REMOTE")
+        self.hardcopy_setup(**kwargs)
         return super().download_image()
