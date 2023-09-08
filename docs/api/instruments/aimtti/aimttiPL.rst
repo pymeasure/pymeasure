@@ -15,28 +15,34 @@ Aim-TTI PL Series Power Supplies
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL155P
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303P
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL601P
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303QMDP
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303QMTP
     :members:
     :undoc-members:
     :show-inheritance:
+    :noindex:
