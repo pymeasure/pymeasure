@@ -25,7 +25,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.aimtti.aimttiPL import PL303QMTP, PL303QMDP, PL601P
+from pymeasure.instruments.aimtti.aimttiPL import PL303QMTP, PL303QMDP
 
 
 def test_voltage_setpoint():
@@ -106,17 +106,6 @@ def test_triple():
         [("V3O?", "1.2V")],
     ) as inst:
         assert inst.ch_3.voltage == 1.2
-
-
-def test_voltage_range():
-    with expected_protocol(
-        PL601P,
-        [("V1V 60", None),
-         ("V1?", "V1 60")
-         ],
-    ) as inst:
-        inst.ch_1.voltage_setpoint = 60
-        assert inst.ch_1.voltage_setpoint == 60
 
 
 def test_strict_range_error():

@@ -112,6 +112,7 @@ class PLBase(Instrument):
     """
 
     def __init__(self, adapter, name="AimTTI PL", **kwargs):
+        """ The default value for the timeout keyword argument is set to 5000ms. """
         kwargs.setdefault('timeout', 5000)
         super().__init__(adapter, name, **kwargs)
 
