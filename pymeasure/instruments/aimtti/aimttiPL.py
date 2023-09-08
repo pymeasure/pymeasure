@@ -27,14 +27,12 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class PLChannel(Channel):
-    """ A channel of AimTTI PL series power supplies.
+    """A channel of AimTTI PL series power supplies.
 
     Channels of the power supply. The channels are number from right-to-left, starting at 1.
     """
 
-    def __init__(self, parent, id,
-                 voltage_range: list = None,
-                 current_range: list = None):
+    def __init__(self, parent, id, voltage_range: list = None, current_range: list = None):
         super().__init__(parent, id)
         self.voltage_setpoint_values = voltage_range
         self.current_limit_values = current_range
@@ -47,8 +45,8 @@ class PLChannel(Channel):
         validator=strict_range,
         values=[0, 6],
         dynamic=True,
-        get_process=lambda x: float(x[3:])
-        )
+        get_process=lambda x: float(x[3:]),
+    )
 
     current_limit = Channel.control(
         "I{ch}?", "I{ch} %g",
@@ -56,20 +54,20 @@ class PLChannel(Channel):
         validator=strict_range,
         values=[0, 1.5],
         dynamic=True,
-        get_process=lambda x: float(x[3:])
-        )
+        get_process=lambda x: float(x[3:]),
+    )
 
     voltage = Channel.measurement(
         "V{ch}O?",
         """ Measure the output readback voltage for this output channel in Volts.""",
-        get_process=lambda x: float(x[:-1])
-        )
+        get_process=lambda x: float(x[:-1]),
+    )
 
     current = Channel.measurement(
         "I{ch}O?",
         """ Measure the output readback current for this output channel in Amps.""",
-        get_process=lambda x: float(x[:-1])
-        )
+        get_process=lambda x: float(x[:-1]),
+    )
 
     current_range = Channel.control(
         "IRANGE{ch}?", "IRANGE{ch} %g",
@@ -78,8 +76,8 @@ class PLChannel(Channel):
         Output must be switched off before changing range.""",
         validator=strict_discrete_set,
         values={"LOW": 1, "HIGH": 2},
-        map_values=True
-        )
+        map_values=True,
+    )
 
     output_enabled = Channel.control(
         "OP{ch}?", "OP{ch} %i",
@@ -91,7 +89,7 @@ class PLChannel(Channel):
 
 
 class PLBase(Instrument):
-    """ Control AimTTI PL series power supplies.
+    """Control AimTTI PL series power supplies.
     Model number ending with -P or P(G) support this remote interface.
 
     Documentation:
@@ -112,8 +110,8 @@ class PLBase(Instrument):
     """
 
     def __init__(self, adapter, name="AimTTI PL", **kwargs):
-        """ The default value for the timeout keyword argument is set to 5000ms. """
-        kwargs.setdefault('timeout', 5000)
+        """The default value for the timeout keyword argument is set to 5000ms."""
+        kwargs.setdefault("timeout", 5000)
         super().__init__(adapter, name, **kwargs)
 
     all_outputs_enabled = Instrument.setting(
@@ -126,56 +124,68 @@ class PLBase(Instrument):
     )
 
     def local(self):
-        """ Go to local. Make sure all output are disabled first."""
+        """Go to local. Make sure all output are disabled first."""
         self.write("LOCAL")
 
 
 class PL068P(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8]
+    )
 
     def __init__(self, adapter, name="AimTTI PL068-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
 class PL155P(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5]
+    )
 
     def __init__(self, adapter, name="AimTTI PL155-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
 class PL303P(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
+    )
 
     def __init__(self, adapter, name="AimTTI PL303-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
 class PL601P(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5]
+    )
 
     def __init__(self, adapter, name="AimTTI PL601-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
 class PL303QMDP(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
-    ch_2: PLChannel = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
+    )
+    ch_2: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
+    )
 
     def __init__(self, adapter, name="AimTTI PL303QMD-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
 class PL303QMTP(PLBase):
-
-    ch_1: PLChannel = Instrument.ChannelCreator(PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3])
-    ch_2: PLChannel = Instrument.ChannelCreator(PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3])
-    ch_3: PLChannel = Instrument.ChannelCreator(PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3])
+    ch_1: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
+    )
+    ch_2: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
+    )
+    ch_3: PLChannel = Instrument.ChannelCreator(
+        PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3]
+    )
 
     def __init__(self, adapter, name="AimTTI PL303QMT-P", **kwargs):
         super().__init__(adapter, name, **kwargs)
