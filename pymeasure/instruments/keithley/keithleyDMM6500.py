@@ -225,8 +225,7 @@ class KeithleyDMM6500(Instrument):
     channels = Instrument.MultiChannelCreator(ScannerCard2000Channel, list(range(1, 11)))
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Keithley DMM6500 6½-Digit Multimeter", **kwargs)
-        self.adapter.connection.read_termination = "\n"
+        super().__init__(adapter, "Keithley DMM6500 6½-Digit Multimeter", read_termination="\n", **kwargs)
 
     def __exit__(self, exc_type, exc_value, traceback):
         """ With context manager, this will fully close the connection."""
