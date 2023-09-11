@@ -325,6 +325,16 @@ class KeithleyDMM6500(Instrument):
         """,
     )
 
+    relative_enabled = Instrument.control(
+        "{function}:REL:STAT?",
+        "{function}:REL:STAT %g",
+        """ Control the relative offset value applied to new measurements of currently
+        active mode.""",
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True,
+    )
+
     detector_bandwidth = Instrument.control(
         "{function}:DET:BAND?",
         "{function}:DET:BAND %s",
@@ -458,10 +468,8 @@ class KeithleyDMM6500(Instrument):
     current_relative_enabled = Instrument.control(
         ":SENS:CURR:REL:STAT?",
         ":SENS:CURR:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to current measurement.""",
         validator=strict_discrete_set,
-        #values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
         values=BOOL_MAPPINGS,
         map_values=True,
     )
