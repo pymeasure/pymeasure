@@ -316,7 +316,7 @@ class KeithleyDMM6500(Instrument):
         When relative offset is enabled, all subsequent measured readings are offset by
         the value that is set for this command.
         If the instrument acquires the value, read this setting to return the value that
-        was measured internally. """,
+        was measured internally. See also the :attr:`relative_enabled`.""",
         validator=truncated_range,
         values=[-3.0, 3.0],
     )
@@ -467,7 +467,7 @@ class KeithleyDMM6500(Instrument):
 
     current = Instrument.measurement(
         ":READ?",
-        """ Measure a DC or AC current measurement in Amps, based on the active :attr:`mode`. """,
+        """ Measure a DC or AC current measurement in Amps, based on the active :attr:`mode`.""",
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
@@ -519,7 +519,7 @@ class KeithleyDMM6500(Instrument):
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?",
         ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
-        """ Control the AC current full-scale measure range in Amps.
+        """ Control the AC current positive full-scale measure range in Amps.
         Available ranges are 1e-3, 10e-3, 100e-3, 1, 3 Amps (for front terminals),
         and 10 Amps (for rear terminals). See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
@@ -584,52 +584,47 @@ class KeithleyDMM6500(Instrument):
     # DC
     voltage = Instrument.measurement(
         ":READ?",
-        """ Reads a DC or AC voltage measurement in Volts, based on the
-        active :attr:`mode`. """,
+        """ Measure a DC or AC voltage measurement in Volts, based on the active :attr:`mode`.""",
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
-        """ A floating point property that controls the DC voltage range in
-        Volts, which can take values from 0 to 1000 V.
-        Auto-range is disabled when this property is set. """,
+        """ Control the DC voltage full-scale measure range in Volts.
+        Available ranges are 0.1, 1, 10, 100, 1000.
+        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
         values=[0.1, 1, 10, 100, 1000],
     )
     voltage_relative = Instrument.control(
         ":SENS:VOLT:REL?",
         ":SENS:VOLT:REL %g",
-        """ A floating point property that controls the DC voltage relative value in Volts,
-        which can take values from -1000 to 1000 V. When relative offset is enabled, all
-        subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that
-        was measured internally. """,
+        """ Control the DC voltage relative value in Volts (float strictly from -1000 to 1000).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1000, 1000],
     )
-    voltage_relative_status = Instrument.control(
+    voltage_relative_enabled = Instrument.control(
         ":SENS:VOLT:REL:STAT?",
         ":SENS:VOLT:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to DC voltage measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?",
         ":SENS:VOLT:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period
-        and measurement speed. Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the DC voltage measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
     voltage_digits = Instrument.control(
         ":DISP:VOLT:DIG?",
         ":DISP:VOLT:DIG %d",
-        """ An integer property that controls the number of digits in the DC voltage
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the DC voltage readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -638,46 +633,38 @@ class KeithleyDMM6500(Instrument):
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?",
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %g",
-        """ A floating point property that controls the AC voltage range in
-        Volts, which can take values from 0 to 750 V.
-        Auto-range is disabled when this property is set. """,
+        """ Control the AC voltage positive full-scale measure range in Volts.
+        Available ranges are 0.1, 1, 10, 100, 750.
+        Auto-range is disabled when this property is set. See also the :attr:`range_`.
+        """,
         validator=truncated_discrete_set,
         values=[0.1, 1, 10, 100, 750],
     )
     voltage_ac_relative = Instrument.control(
         ":SENS:VOLT:AC:REL?",
         ":SENS:VOLT:AC:REL %g",
-        """ A floating point property that controls the AC voltage relative value in Volts,
-        which can take values from -750 to 750 V. When relative offset is enabled, all
-        subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that
-        was measured internally. """,
+        """ Control the AC voltage relative value in Volts (float strictly from -750 to 750).
+        See also the :attr:`relative`.
+        """,
         validator=truncated_range,
         values=[-750, 750],
     )
-    voltage_ac_relative_status = Instrument.control(
+    voltage_ac_relative_enabled = Instrument.control(
         ":SENS:VOLT:AC:REL:STAT?",
         ":SENS:VOLT:AC:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to AC voltage measurement.
+        See also the :attr:`relative_enabled`.
+        """,
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
-    )
-    voltage_ac_nplc = Instrument.control(
-        ":SENS:VOLT:AC:NPLC?",
-        ":SENS:VOLT:AC:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period
-        and measurement speed. Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
-        validator=truncated_range,
-        values=[0.0005, 15],
     )
     voltage_ac_digits = Instrument.control(
         ":DISP:VOLT:AC:DIG?",
         ":DISP:VOLT:AC:DIG %d",
-        """ An integer property that controls the number of digits in the DC voltage
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the AC voltage readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.
+        """,
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -685,8 +672,9 @@ class KeithleyDMM6500(Instrument):
     voltage_ac_bandwidth = Instrument.control(
         ":SENS:VOLT:AC:DET:BAND?",
         ":SENS:VOLT:AC:DET:BAND %g",
-        """ A floating point property that sets the AC voltage detector
-        bandwidth in Hz, which can take the values  3, 30, and 300 Hz. """,
+        """ Control the detector bandwidth in Hz for AC voltage measurement
+        (integer strictly among 3, 30, and 300).
+        """,
         validator=truncated_discrete_set,
         values=[3, 30, 300],
     )
