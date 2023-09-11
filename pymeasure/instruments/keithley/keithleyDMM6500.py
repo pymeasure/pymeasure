@@ -467,7 +467,7 @@ class KeithleyDMM6500(Instrument):
 
     current = Instrument.measurement(
         ":READ?",
-        """ Measure a DC or AC current measurement in Amps, based on the active :attr:`mode`.""",
+        """ Measure a DC or AC current in Amps, based on the active :attr:`mode`.""",
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
@@ -584,7 +584,7 @@ class KeithleyDMM6500(Instrument):
     # DC
     voltage = Instrument.measurement(
         ":READ?",
-        """ Measure a DC or AC voltage measurement in Volts, based on the active :attr:`mode`.""",
+        """ Measure a DC or AC voltage in Volts, based on the active :attr:`mode`.""",
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
@@ -700,50 +700,48 @@ class KeithleyDMM6500(Instrument):
 
     resistance = Instrument.measurement(
         ":READ?",
-        """ Reads a resistance measurement in Ohms for both 2-wire and 4-wire
+        """ Measure a resistance in Ohms for both 2-wire and 4-wire
         configurations, based on the active :attr:`mode`. """,
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
         ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """ A floating point property that controls the 2-wire resistance range
-        in Ohms, which can take values from 10 to 100 MOhms.
-        Auto-range is disabled when this property is set. """,
+        """ Control the 2-wire reistance full-scale measure range in Ohms.
+        Available ranges are: 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
+        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
         values=[10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6],
     )
     resistance_relative = Instrument.control(
         ":SENS:RES:REL?",
         ":SENS:RES:REL %g",
-        """ A floating point property that controls the 2-wire resistance
-        relative value in Ohms, which can take values from -100M to 100 MOhms. """,
+        """ Control the 2-wire resistance relative value in Ohms (float strictly from -100M to 100M).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1e8, 1e8],
     )
-    resistance_relative_status = Instrument.control(
+    resistance_relative_enabled = Instrument.control(
         ":SENS:RES:REL:STAT?",
         ":SENS:RES:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to 2-wire resistance measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?",
         ":SENS:RES:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period
-        and measurement speed.  Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the 2-wire resistance measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
     resistance_digits = Instrument.control(
         ":DISP:RES:DIG?",
         ":DISP:RES:DIG %d",
-        """ An integer property that controls the number of digits in the 2-wire
-        resistance readings, which can take values from 3 to 6 representing dispaly
-        digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the 2-wire resistance readings
+        (integer strictly from 3 to 6).  See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -751,44 +749,42 @@ class KeithleyDMM6500(Instrument):
     resistance_4W_range = Instrument.control(
         ":SENS:FRES:RANG?",
         ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %g",
-        """ A floating point property that controls the 4-wire resistance range
-        in Ohms, which can take values from 1 to 120 MOhms.
-        Auto-range is disabled when this property is set. """,
+        """ Control the 4-wire reistance full-scale measure range in Ohms.
+        Available ranges are: 1, 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
+        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
         values=[1, 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6],
     )
     resistance_4W_relative = Instrument.control(
         ":SENS:FRES:REL?",
         ":SENS:FRES:REL %g",
-        """ A floating point property that controls the 4-wire resistance
-        reference value in Ohms, which can take values from -100M to 100 MOhms. """,
+        """ Control the 4-wire resistance relative value in Ohms (float strictly from -100M to 100M).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1e8, 1e8],
     )
-    resistance_4W_relative_status = Instrument.control(
+    resistance_4W_relative_enabled = Instrument.control(
         ":SENS:FRES:REL:STAT?",
         ":SENS:FRES:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to 4-wire resistance measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     resistance_4W_nplc = Instrument.control(
         ":SENS:FRES:NPLC?",
         ":SENS:FRES:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 4-wire resistance measurements, which sets the integration period
-        and measurement speed.  Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the 4-wire resistance measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
     resistance_4W_digits = Instrument.control(
         ":DISP:FRES:DIG?",
         ":DISP:FRES:DIG %d",
-        """ An integer property that controls the number of digits in the 4-wire
-        resistance readings, which can take values from 3 to 6 representing dispaly
-        digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the 4-wire resistance readings
+        (integer strictly from 3 to 6).  See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -802,6 +798,8 @@ class KeithleyDMM6500(Instrument):
         :type max_resistance: float
         :param wires: ``2`` for normal resistance, and ``4`` for 4-wires resistance
         :type wires: int
+
+        :return: None
         """
         if wires == 2:
             self.mode = "resistance"
