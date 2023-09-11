@@ -1435,6 +1435,6 @@ class KeithleyDMM6500(Instrument):
         :return: None
         """
         if "{function}" in command:
-            super().write(command.format(function = ScannerCard2000Channel.MODES[self.mode]))
+            super().write(command.format(function = KeithleyDMM6500.MODES[self.mode]))
         else:
             super().write(command)
