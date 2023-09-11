@@ -60,8 +60,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
         :param trigger_level:
         :param trigger_slope:
         """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        super().setup(**kwargs)
 
     @property
     def current_configuration(self):
