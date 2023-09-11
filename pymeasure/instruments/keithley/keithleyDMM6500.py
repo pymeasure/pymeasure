@@ -36,6 +36,7 @@ log.addHandler(logging.NullHandler())
 
 BOOL_MAPPINGS = {True: 1, False: 0}
 
+
 class ScannerCard2000Channel(Channel):
 
     MODES = {
@@ -148,7 +149,7 @@ class ScannerCard2000Channel(Channel):
     def write(self, command):
         """ Write a command to the instrument."""
         if "{function}" in command:
-            super().write(command.format(function = ScannerCard2000Channel.MODES[self.mode]))
+            super().write(command.format(function=ScannerCard2000Channel.MODES[self.mode]))
         else:
             super().write(command)
 
@@ -219,7 +220,7 @@ class KeithleyDMM6500(Instrument):
 
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "Keithley DMM6500 6½-Digit Multimeter",
-                         read_termination = "\n", **kwargs)
+                         read_termination="\n", **kwargs)
 
     def __exit__(self, exc_type, exc_value, traceback):
         """ Fully close the connection when the `with` code block finishes."""
@@ -265,53 +266,10 @@ class KeithleyDMM6500(Instrument):
         powered on.""",
     )
 
-    range_ = Instrument.control(
-        "{function}:RANG?",
-        "{function}:RANG %s",
-        """ Control the positive full-scale measure range for currently active mode.
-
-        For frequency and period measurements, ranging applies to
-        the signal's input voltage, not its frequency""",
-    )
-
-    autorange_enabled = Instrument.control(
-        "{function}:RANG:AUTO?",
-        "{function}:RANG:AUTO %d",
-        """ Control the autorange state for currently active mode.
-
-        .. note::
-
-            If currently active mode doesn't support autorange, this command will hang
-            till adapter's timeout and cause -113 "Undefined header" error.
-
-        """,
-        validator=strict_discrete_set,
-        values=BOOL_MAPPINGS,
-        map_values=True,
-    )
-
-    nplc = Instrument.control(
-        "{function}:NPLC?",
-        "{function}:NPLC %s",
-        """ Control the integration time in number of power line cycles (NPLC).
-        Valid values are: 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz)
-
-        .. note::
-
-            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``,
-            ``temperature``, and ``voltage ratio`` mode support NPLC setting. If current
-            active mode doesn't support NPLC, this command will hang till adapter's timeout
-            and cause -113 "Undefined header" error.
-
-        """,
-        validator=truncated_range,
-        values=[0.0005, 15],
-    )
-
     aperture = Instrument.control(
         "{function}:APER?",
         "{function}:APER %s",
-        """ Control the aperture time of currently active mode.
+        """ Control the aperture time of currently active :attr:`mode`.
 
         Valid values: ``MIN``, ``DEF``, ``MAX``, or number between 8.333u and 0.25 s.
 
@@ -325,14 +283,81 @@ class KeithleyDMM6500(Instrument):
         """,
     )
 
-    relative_enabled = Instrument.control(
-        "{function}:REL:STAT?",
-        "{function}:REL:STAT %g",
-        """ Control the relative offset value applied to new measurements of currently
-        active mode.""",
+    range_ = Instrument.control(
+        "{function}:RANG?",
+        "{function}:RANG:AUTO 0;{function}:RANG %s",
+        """ Control the positive full-scale measure range for currently active :attr:`mode`.
+        Auto-range is disabled when this property is set.
+
+        For frequency and period measurements, ranging applies to the signal's input voltage,
+        not its frequency""",
+    )
+
+    autorange_enabled = Instrument.control(
+        "{function}:RANG:AUTO?",
+        "{function}:RANG:AUTO %d",
+        """ Control the autorange state for currently active :attr:`mode`.
+
+        .. note::
+
+            If currently active mode doesn't support autorange, this command will hang
+            till adapter's timeout and cause -113 "Undefined header" error.
+
+        """,
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True,
+    )
+
+    relative = Instrument.control(
+        "{function}:REL?",
+        "{function}:REL %g",
+        """ Control the relative offset value of currently active :attr:`mode`.
+        When relative offset is enabled, all subsequent measured readings are offset by
+        the value that is set for this command.
+        If the instrument acquires the value, read this setting to return the value that
+        was measured internally. """,
+        validator=truncated_range,
+        values=[-3.0, 3.0],
+    )
+
+    relative_enabled = Instrument.control(
+        "{function}:REL:STAT?",
+        "{function}:REL:STAT %g",
+        """ Control the relative offset value applied to new measurements for currently
+        active :attr:`mode`.""",
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True,
+    )
+
+    nplc = Instrument.control(
+        "{function}:NPLC?",
+        "{function}:NPLC %s",
+        """ Control the integration time in number of power line cycles (NPLC) of currently
+        active :attr:`mode`. This value sets the amount of time that the input signal is measured.
+        Valid values are: 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).
+
+        .. note::
+
+            Only ``voltage``, ``current``, ``resistance``, ``resistance 4W``, ``diode``,
+            ``temperature``, and ``voltage ratio`` mode support NPLC setting. If current
+            active mode doesn't support NPLC, this command will hang till adapter's timeout
+            and cause -113 "Undefined header" error.
+
+        """,
+        validator=truncated_range,
+        values=[0.0005, 15],
+    )
+
+    digits = Instrument.control(
+        ":DISP:{function}:DIG?",
+        ":DISP:{function}:DIG %d",
+        """ Control the displaying number of digits for currently active :attr:`mode`.
+        Available values are from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        validator=truncated_discrete_set,
+        values=[3, 4, 5, 6],
+        cast=int,
     )
 
     detector_bandwidth = Instrument.control(
@@ -442,15 +467,15 @@ class KeithleyDMM6500(Instrument):
 
     current = Instrument.measurement(
         ":READ?",
-        """ Measure a DC or AC current measurement in Amps, based on the
-        active :attr:`mode`. """,
+        """ Measure a DC or AC current measurement in Amps, based on the active :attr:`mode`. """,
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
         ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ Control the DC current full-scale measure range in Amps.
         Available ranges are 10e-6, 100e-6, 1e-3, 10e-3, 100e-3, 1, 3 Amps (for front terminals),
-        and 10 Amps (for rear terminals). Auto-range is disabled when this property is set. """,
+        and 10 Amps (for rear terminals). Auto-range is disabled when this property is set.
+        See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
         values=[10e-6, 100e-6, 1e-3, 10e-3, 100e-3, 1, 3, 10],
     )
@@ -458,17 +483,15 @@ class KeithleyDMM6500(Instrument):
         ":SENS:CURR:REL?",
         ":SENS:CURR:REL %g",
         """ Control the DC current relative value in Amps (float strictly from -3 to 3).
-        When relative offset is enabled, all subsequent measured readings are offset by
-        the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that
-        was measured internally. """,
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-3.0, 3.0],
     )
     current_relative_enabled = Instrument.control(
         ":SENS:CURR:REL:STAT?",
         ":SENS:CURR:REL:STAT %g",
-        """ Control a relative offset value applied to current measurement.""",
+        """ Control a relative offset value applied to DC current measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True,
@@ -476,17 +499,17 @@ class KeithleyDMM6500(Instrument):
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?",
         ":SENS:CURR:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period
-        and measurement speed. Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the DC current measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
     current_digits = Instrument.control(
         ":DISP:CURR:DIG?",
         ":DISP:CURR:DIG %d",
-        """ An integer property that determines the number of digits in the DC current
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the DC current readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.
+        """,
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -496,54 +519,45 @@ class KeithleyDMM6500(Instrument):
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?",
         ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
-        """ A floating point property that controls the AC current range in
-        Amps, which can take values from 0 to 3 A, and 10 A (available for rear terminals).
-        Auto-range is disabled when this property is set. """,
-        validator=truncated_range,
-        values=[0, 10],
+        """ Control the AC current full-scale measure range in Amps.
+        Available ranges are 1e-3, 10e-3, 100e-3, 1, 3 Amps (for front terminals),
+        and 10 Amps (for rear terminals). See also the :attr:`range_`.""",
+        validator=truncated_discrete_set,
+        values=[1e-3, 10e-3, 100e-3, 1, 3, 10],
     )
     current_ac_relative = Instrument.control(
         ":SENS:CURR:AC:REL?",
         ":SENS:CURR:AC:REL %g",
-        """ A floating point property that controls the DC current relative value in Amps,
-        which can take values from -3.0 to 3.0 A. When relative offset is enabled, all
-        subsequent measured readings are offset by the value that is set for this command.
-        If the instrument acquires the value, read this setting to return the value that
-        was measured internally. """,
+        """ Control the AC current relative value in Amps (float strictly from -3 to 3).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-3.0, 3.0],
     )
-    current_ac_relative_status = Instrument.control(
+    current_ac_relative_enabled = Instrument.control(
         ":SENS:CURR:AC:REL:STAT?",
         ":SENS:CURR:AC:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to AC current measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
-    )
-    current_ac_nplc = Instrument.control(
-        ":SENS:CURR:AC:NPLC?",
-        ":SENS:CURR:AC:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the AC current measurements, which sets the integration period
-        and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
-        Fast, Medium, and Slow respectively. """,
     )
     current_ac_digits = Instrument.control(
         ":DISP:CURR:AC:DIG?",
         ":DISP:CURR:AC:DIG %d",
-        """ An integer property that determines the number of digits in the AC current
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the AC current readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.
+        """,
         validator=truncated_discrete_set,
-        values=[4, 5, 6, 7],
+        values=[3, 4, 5, 6],
         cast=int,
     )
     current_ac_bandwidth = Instrument.control(
         ":SENS:CURR:AC:DET:BAND?",
         ":SENS:CURR:AC:DET:BAND %g",
-        """ A floating point property that sets the AC current detector
-        bandwidth in Hz, which can take the values 3, 30, and 300 Hz. """,
+        """ Control the detector bandwidth in Hz for AC current measurement
+        (integer strictly among 3, 30, and 300).
+        """,
         validator=truncated_discrete_set,
         values=[3, 30, 300],
     )
@@ -1435,6 +1449,6 @@ class KeithleyDMM6500(Instrument):
         :return: None
         """
         if "{function}" in command:
-            super().write(command.format(function = KeithleyDMM6500.MODES[self.mode]))
+            super().write(command.format(function=KeithleyDMM6500.MODES[self.mode]))
         else:
             super().write(command)
