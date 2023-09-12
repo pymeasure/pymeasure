@@ -989,40 +989,39 @@ class KeithleyDMM6500(Instrument):
 
     capacitance = Instrument.measurement(
         ":READ?",
-        """ Reads a capacitance value in Farad,
-        based on the active :attr:`mode`. """,
+        """ Measure a capacitance in Farad, based on the active :attr:`mode`.""",
     )
     capacitance_relative = Instrument.control(
         ":SENS:CAP:REL?",
         ":SENS:CAP:REL %g",
-        """ A floating point property that controls the temperature relative value
-        in Farad, which can take values from -0.001 to 0.001 F. """,
+        """ Control the capacitance relative value in Farad (float strictly
+        from -0.001 to 0.001 F). See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-0.001, 0.001],
     )
     capacitance_relative_status = Instrument.control(
         ":SENS:CAP:REL:STAT?",
         ":SENS:CAP:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to capacitance measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     capacitance_range = Instrument.control(
         ":SENS:CAP:RANG?",
         ":SENS:CAP:RANG:AUTO 0;:SENS:CURR:RANG %g",
-        """ A floating point property that controls the capacitance range in
-        Farad, which can take values from 1n to 1m F.
-        Auto-range is disabled when this property is set. """,
+        """ Control the capacitance full-scale measure range in Farad.
+        Available ranges are 1e-9, 10e-9, 100e-9, 1e-6, 10e-6, 100e-6, 1e-3.
+        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
         validator=truncated_discrete_set,
         values=[1e-9, 10e-9, 100e-9, 1e-6, 10e-6, 100e-6, 1e-3],
     )
     capacitance_digits = Instrument.control(
         ":DISP:CAP:DIG?",
         ":DISP:CAP:DIG %d",
-        """ An integer property that determines the number of digits in the capacitance
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the capacitance readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -1031,7 +1030,8 @@ class KeithleyDMM6500(Instrument):
     def measure_capacitance(self, max_capacitance=1e-3):
         """ Configure the instrument to measure capacitance.
 
-        :param max_capacitance: Set :attr:`capacitance_range` after changing mode
+        :param max_capacitance: Set :attr:`capacitance_range` after changing :attr:`mode`
+
         :return: None
         """
         self.mode = "capacitance"
