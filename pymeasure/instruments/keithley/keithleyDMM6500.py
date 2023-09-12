@@ -829,7 +829,7 @@ class KeithleyDMM6500(Instrument):
     frequency_relative_enabled = Instrument.control(
         ":SENS:FREQ:REL:STAT?",
         ":SENS:FREQ:REL:STAT %g",
-        """ Control a relative offset value applied to frequency  measurement.
+        """ Control a relative offset value applied to frequency measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -855,7 +855,7 @@ class KeithleyDMM6500(Instrument):
     frequency_threshold_auto_enabled = Instrument.control(
         ":SENS:FREQ:THR:RANG:AUTO?",
         ":SENS:FREQ:THR:RANG:AUTO %g",
-        """ Control the auto threshold range enabled or not.""",
+        """ Control the auto threshold range for frequency measurement enabled or not.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True,
@@ -864,7 +864,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:FREQ:APER?",
         ":SENS:FREQ:APER %g",
         """ Control the aperture time in seconds for frequency measurement
-        (float strictly from 2 ms to 273 ms).""",
+        (float strictly from 2 ms to 273 ms). See also :attr:`aperture`.""",
         validator=truncated_range,
         values=[0.002, 0.273],
     )
@@ -879,31 +879,30 @@ class KeithleyDMM6500(Instrument):
 
     period = Instrument.measurement(
         ":READ?",
-        """ Reads a period measurement in seconds, based on the
-        active :attr:`mode`. """,
+        """ Measure a period in seconds, based on the active :attr:`mode`. """,
     )
     period_relative = Instrument.control(
         ":SENS:PER:REL?",
         ":SENS:PER:REL %g",
-        """ A floating point property that controls the period relative value
-        in seconds, which can take values from -1 to 1 s. """,
+        """ Control the period relative value in seconds (float strictly from -1 s to 1 s).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1, 1],
     )
-    period_relative_status = Instrument.control(
+    period_relative_enabled = Instrument.control(
         ":SENS:PER:REL:STAT?",
         ":SENS:PER:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to period measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     period_digits = Instrument.control(
         ":DISP:PER:DIG?",
         ":DISP:PER:DIG %d",
-        """ An integer property that controls the number of digits in the period
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the period readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -911,28 +910,24 @@ class KeithleyDMM6500(Instrument):
     period_threshold = Instrument.control(
         ":SENS:PER:THR:RANG?",
         ":SENS:PRE:THR:RANG %g",
-        """ A floating point property that controls the voltage signal threshold
-        level in Volts for the period measurement, which can take values
-        from 0.1 to 750 V. """,
+        """ Control the expected input level in Volts for the period measurement
+        (float strictly from 0.1 to 750V).""",
         validator=truncated_range,
         values=[0.1, 750],
     )
-    period_threshold_auto = Instrument.control(
+    period_threshold_auto_enabled = Instrument.control(
         ":SENS:PER:THR:RANG:AUTO?",
         ":SENS:PER:THR:RANG:AUTO %g",
-        """ A property that determines if the threshold range is set manually or automatically,
-        which takes string :code:`"on"`, bool :code:`True`, or number :code:`1` for enabling;
-        string :code:`"off"`, bool :code:`False`, or :code:`0` for disabling.""",
+        """ Control the auto threshold range for period measurement enabled or not.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     period_aperature = Instrument.control(
         ":SENS:PER:APER?",
         ":SENS:PER:APER %g",
-        """ A floating point property that controls the period aperature in seconds,
-        which sets the integration period and measurement speed. Takes values
-        from 2 ms to 273 ms.""",
+        """ Control the aperture time in seconds for period measurement
+        (float strictly from 2 ms to 273 ms). See also :attr:`aperture`""",
         validator=truncated_range,
         values=[0.002, 0.273],
     )
@@ -947,40 +942,38 @@ class KeithleyDMM6500(Instrument):
 
     temperature = Instrument.measurement(
         ":READ?",
-        """ Reads a temperature measurement in Celsius, based on the
-        active :attr:`mode`. """,
+        """ Measure a temperature in Celsius, based on the active :attr:`mode`. """,
     )
     temperature_relative = Instrument.control(
         ":SENS:TEMP:REL?",
         ":SENS:TEMP:REL %g",
-        """ A floating point property that controls the temperature relative value
-        in Celsius, which can take values from -3310 to 3310 C. """,
+        """ Control the temperature relative value in Celsius (float strictly from -3310 C to
+        3310 C). See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-3310, 3310],
     )
-    temperature_relative_status = Instrument.control(
+    temperature_relative_enabled = Instrument.control(
         ":SENS:TEMP:REL:STAT?",
         ":SENS:TEMP:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to temperature measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     temperature_nplc = Instrument.control(
         ":SENS:TEMP:NPLC?",
         ":SENS:TEMP:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the temperature measurements, which sets the integration period
-        and measurement speed.  Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the temperature measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
     temperature_digits = Instrument.control(
         ":DISP:TEMP:DIG?",
         ":DISP:TEMP:DIG %d",
-        """ An integer property that controls the number of digits in the temperature
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the temperature readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
