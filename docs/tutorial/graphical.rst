@@ -387,7 +387,6 @@ A default directory can be defined by setting the :code:`directory` property in 
 Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
 
 .. code-block:: python
-   :emphasize-lines: 13
 
     class MainWindow(ManagedWindow):
 
