@@ -816,31 +816,30 @@ class KeithleyDMM6500(Instrument):
 
     frequency = Instrument.measurement(
         ":READ?",
-        """ Reads a frequency measurement in Hz, based on the
-        active :attr:`mode`. """,
+        """ Measure a frequency in Hz, based on the active :attr:`mode`. """,
     )
     frequency_relative = Instrument.control(
         ":SENS:FREQ:REL?",
         ":SENS:FREQ:REL %g",
-        """ A floating point property that controls the frequency relative
-        value in Hz, which can take values from -1 MHz to 1 MHz. """,
+        """ Control the frequency relative value in Hz (float strictly from -1 MHz to 1 MHz).
+        See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1e6, 1e6],
     )
-    frequency_relative_status = Instrument.control(
+    frequency_relative_enabled = Instrument.control(
         ":SENS:FREQ:REL:STAT?",
         ":SENS:FREQ:REL:STAT %g",
-        """ A property queries, enables or disables the application of a relative offset value
-        to the measurement. Takes string :code:`on|True|1` or :code:`off|False|0`. """,
+        """ Control a relative offset value applied to frequency  measurement.
+        See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     frequency_digits = Instrument.control(
         ":DISP:FREQ:DIG?",
         ":DISP:FREQ:DIG %d",
-        """ An integer property that controls the number of digits in the frequency
-        readings, which can take values from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        """ Control the number of digits in the frequency readings (integer strictly from 3 to 6).
+        See also the :attr:`digits`.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -848,27 +847,24 @@ class KeithleyDMM6500(Instrument):
     frequency_threshold = Instrument.control(
         ":SENS:FREQ:THR:RANG?",
         ":SENS:FREQ:THR:RANG %g",
-        """ A floating point property that controls the expected input level in Volts
-        for the frequency measurement, which can take values from 0.1 to 750 V. """,
+        """ Control the expected input level in Volts for the frequency measurement
+        (float strictly from 0.1 to 750V).""",
         validator=truncated_range,
         values=[0.1, 750],
     )
-    frequency_threshold_auto = Instrument.control(
+    frequency_threshold_auto_enabled = Instrument.control(
         ":SENS:FREQ:THR:RANG:AUTO?",
         ":SENS:FREQ:THR:RANG:AUTO %g",
-        """ A property that determines if the threshold range is set manually or automatically,
-        which takes string :code:`on`, bool :code:`True`, or number :code:`1` for enabling;
-        string :code:`off`, bool :code:`False`, or :code:`0` for disabling.""",
+        """ Control the auto threshold range enabled or not.""",
         validator=strict_discrete_set,
-        values={"on": 1, "off": 0, True: 1, False: 0, 1: 1, 0: 0},
+        values=BOOL_MAPPINGS,
         map_values=True,
     )
     frequency_aperature = Instrument.control(
         ":SENS:FREQ:APER?",
         ":SENS:FREQ:APER %g",
-        """ A floating point property that controls the frequency aperature in seconds,
-        which sets the integration period and measurement speed. Takes values
-        from 2 ms to 273 ms.""",
+        """ Control the aperture time in seconds for frequency measurement
+        (float strictly from 2 ms to 273 ms).""",
         validator=truncated_range,
         values=[0.002, 0.273],
     )
