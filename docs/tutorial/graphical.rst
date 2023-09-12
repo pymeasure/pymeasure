@@ -158,15 +158,6 @@ Below we adapt our previous example to use a ManagedWindow. ::
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self):
-            filename = tempfile.mktemp()
-
-            procedure = self.make_procedure()
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
-
 
     if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
@@ -300,16 +291,6 @@ it derived from example above and changed lines are marked.
             log.info("ManagedWindow connected to logging")
             self.setWindowTitle('GUI Example')
 
-        def queue(self):
-            filename = tempfile.mktemp()
-
-            procedure = self.make_procedure()
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
-
-
     if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
@@ -348,7 +329,7 @@ In order to be able to use the sequencer, the :class:`~pymeasure.display.windows
 In order to implement the sequencer into the previous example, only the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has to be modified slightly (where modified lines are marked):
 
 .. code-block:: python
-   :emphasize-lines: 10,11,12,16,19,20
+   :emphasize-lines: 10,11,12
 
     class MainWindow(ManagedWindow):
 
@@ -364,17 +345,6 @@ In order to implement the sequencer into the previous example, only the :class:`
                 sequence_file="gui_sequencer_example_sequence.txt",  # Added line, optional
             )
             self.setWindowTitle('GUI Example')
-
-        def queue(self, procedure=None):                             # Modified line
-            filename = tempfile.mktemp()
-
-            if procedure is None:                                    # Added line
-                procedure = self.make_procedure()                    # Indented
-
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
 
 This adds the sequencer underneath the input panel.
 
@@ -408,8 +378,8 @@ An example of such a sequence file is given below, resulting in the sequence sho
 
 This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super().__init__` call, as was done in the example.
 
-Using the directory input
-~~~~~~~~~~~~~~~~~~~~~~~~~
+The filename and directory input
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init. The value of the directory can be retrieved and set using the property :code:`directory`.
 A default directory can be defined by setting the :code:`directory` property in the MainWindow init.
@@ -417,7 +387,7 @@ A default directory can be defined by setting the :code:`directory` property in 
 Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
 
 .. code-block:: python
-   :emphasize-lines: 10,13,16,17
+   :emphasize-lines: 13
 
     class MainWindow(ManagedWindow):
 
@@ -428,19 +398,9 @@ Only the MainWindow needs to be modified in order to use this option (modified l
                 displays=['iterations', 'delay', 'seed'],
                 x_axis='Iteration',
                 y_axis='Random Number',
-                directory_input=True,                                # Added line, enables directory widget
             )
             self.setWindowTitle('GUI Example')
             self.directory = r'C:/Path/to/default/directory'         # Added line, sets default directory for GUI load
-
-        def queue(self):
-            directory = self.directory                               # Added line
-            filename = unique_filename(directory)                    # Modified line
-
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
 
 This adds the input line above the Queue and Abort buttons.
 
@@ -632,15 +592,6 @@ To start with, let's make the following highlighted edits to the code example fr
            )
            self.setWindowTitle('GUI Example')
 
-       def queue(self):
-           filename = tempfile.mktemp()
-
-           procedure = self.make_procedure()
-           results = Results(procedure, filename)
-           experiment = self.new_experiment(results)
-
-           self.manager.queue(experiment)
-
 
    if __name__ == "__main__":
        app = QtWidgets.QApplication(sys.argv)
@@ -722,7 +673,7 @@ The following example is a variant of the code example from `Using the ManagedWi
 
 
 .. code-block:: python
-   :emphasize-lines: 8,71,72,73
+   :emphasize-lines: 8,62,63,64
 
    import sys
    import random
@@ -781,15 +732,6 @@ The following example is a variant of the code example from `Using the ManagedWi
                y_axis='Random Number'
            )
            self.setWindowTitle('GUI Example')
-   
-       def queue(self):
-           filename = tempfile.mktemp()
-   
-           procedure = self.make_procedure()
-           results = Results(procedure, filename)
-           experiment = self.new_experiment(results)
-   
-           self.manager.queue(experiment)
    
    
    if __name__ == "__main__":
