@@ -221,6 +221,7 @@ class KeithleyDMM6500(Instrument):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, "Keithley DMM6500 6½-Digit Multimeter",
                          read_termination="\n", **kwargs)
+        self.command_set = "SCPI"
 
     def __exit__(self, exc_type, exc_value, traceback):
         """ Fully close the connection when the `with` code block finishes."""
