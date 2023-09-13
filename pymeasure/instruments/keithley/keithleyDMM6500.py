@@ -1043,24 +1043,23 @@ class KeithleyDMM6500(Instrument):
 
     diode = Instrument.measurement(
         ":READ?",
-        """ Reads a diode's forward voltage drop of general-purpose diodes and the
+        """ Measure a diode's forward voltage drop of general-purpose diodes and the
         Zener voltage of Zener diodes on the 10V range with a constant test current (bias level),
         based on the active :attr:`mode`. """,
     )
     diode_bias = Instrument.control(
         ":SENS:DIOD:BIAS:LEV?",
         ":SENS:DIOD:BIAS:LEV %g",
-        """ A integer property that controls the amount of current the instrument sources
-        when it makes measurements, which can take values from 1e-5 (10uA) to 0.01 (10mA).""",
+        """ Controll the amount of current in Amps the instrument sources while making
+        measurement. Available bias levels are 1e-5, 0.0001, 0.001, 0.01.""",
         validator=truncated_discrete_set,
         values=[1e-5, 0.0001, 0.001, 0.01],
     )
     diode_nplc = Instrument.control(
         ":SENS:DIOD:NPLC?",
         ":SENS:DIOD:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the diode measurements, which sets the integration period
-        and measurement speed. Takes values from 0.0005 to 15 (60Hz) or 12 (50Hz or 400Hz).""",
+        """ Control the number of power line cycles (NPLC) for the diode measurement
+        (float strictly from 0.0005 to 15). See also the :attr:`nplc`.""",
         validator=truncated_range,
         values=[0.0005, 15],
     )
@@ -1091,9 +1090,9 @@ class KeithleyDMM6500(Instrument):
     buffer_points = buffer_size = Instrument.control(
         ":TRAC:POIN?",
         ":TRAC:POIN %d",
-        """ An integer property that controls the number of buffer points. This
-        does not represent actual points in the buffer, but the configuration
-        value instead. `0` means the largest buffer possib based on the available
+        """ Control the number of buffer points.
+        This does not represent actual points in the buffer, but the configuration
+        value instead. `0` means the largest buffer possibe based on the available
         memory when the bufer is created.""",
         validator=truncated_range,
         values=[0, 6_000_000],
@@ -1113,9 +1112,11 @@ class KeithleyDMM6500(Instrument):
     data_format = Instrument.control(
         "FORMAT:DATA?",
         "FORMAT:DATA %s",
-        """ A string property that specify data format: ``ASC``, ``REAL``, or ``SRE``""",
+        """ Control data format that is used when transferring readings over the remote
+        interface.  Available values are ``ASC``(ASCII), ``REAL``(double-precision),
+        or ``SRE``(single-precision)""",
         validator=strict_discrete_set,
-        values=("asc", "ASC", "real", "REAL", "sre", "SRE"),
+        values=("ASC", "REAL", "SRE"),
     )
 
     ################
@@ -1124,31 +1125,31 @@ class KeithleyDMM6500(Instrument):
 
     scan_id = Instrument.measurement(
         ":SYST:CARD1:IDN?",
-        """ Return a string that contains information about the scanner card""",
+        """ Get scanner card's ID.""",
         separator="|",
     )
 
     scan_vch_start = Instrument.measurement(
         "SYST:CARD1:VCH:STAR?",
-        """ Return the first channel in the slot that supports voltage or 2-wire measurements""",
+        """ Get the first channel in the slot that supports voltage or 2-wire measurements.""",
         cast=int,
     )
 
     scan_vch_end = Instrument.measurement(
         "SYST:CARD1:VCH:END?",
-        """ Return the last channel in the slot that supports voltage or 2-wire measurements""",
+        """ Get the last channel in the slot that supports voltage or 2-wire measurements.""",
         cast=int,
     )
 
     scan_card_vmax = Instrument.measurement(
-        "SYST:CARD1:VMAX?", """ Return the maximum voltage of all channels.""", cast=int
+        "SYST:CARD1:VMAX?", """ Get the maximum voltage of all channels.""", cast=int
     )
 
-    enable_pseudo_scanner = Instrument.setting(
+    pseudo_scanner_enabled = Instrument.setting(
         ":SYST:PCAR1 %d",
-        """ Enable or disable pseudo scanner card. After setting, user can check
-        current scanner card by :attr:`scan_id`. If a scanner card is installed,
-        this setting won't have any effect.""",
+        """ Set pseudo scanner card if there's no scanner card in the instrument.
+        After setting, user can check current scanner card by :attr:`scan_id`.
+        If a scanner card is installed, this setting won't have any effect.""",
         validator=strict_discrete_set,
         values={True: 2000, False: 0},
         map_values=True,
@@ -1157,8 +1158,7 @@ class KeithleyDMM6500(Instrument):
     scan_channels = Instrument.control(
         ":ROUT:SCAN:CRE?",
         ":ROUT:SCAN:CRE (@%s)",
-        """ A channel list string property that deletes the existing scan list and
-        creates a new list of channels to scan. An empty string will clear the list.
+        """ Control the channel list of scanning. An empty string will clear the list.
         Use comma to separate single channel and use a colon to separate the first
         and last channel in the list.
         Examples: ``1``, ``1,3,5``, ``1:2, 7:8``, or ``1:10``.
@@ -1199,15 +1199,16 @@ class KeithleyDMM6500(Instrument):
     scan_count = Instrument.control(
         ":ROUT:SCAN:COUN:SCAN?",
         ":ROUT:SCAN:COUN:SCAN %d",
-        """ An int property that sets the number of times the scan is repeated.""",
+        """ Control the number of times the scan is repeated. Set to ``0`` set the scan
+        to repeat until aborted.""",
         cast=int,
     )
 
     scan_interval = Instrument.control(
         ":ROUT:SCAN:INT?",
         ":ROUT:SCAN:INT %d",
-        """ The interval time (0s to 100ks) between scan starts when the scan count
-        is more than one.""",
+        """ Control the interval time (0s to 100ks) between scan starts when the
+        :attr:`scan_count` is more than one.""",
         validator=truncated_range,
         values=[0, 100e3],
         cast=int,
@@ -1239,7 +1240,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_modes(self):
-        """ Return a dictionary of every channel's mode."""
+        """ Get a dictionary of every channel's mode."""
         res = dict()
         for i in range(self.scan_vch_start, self.scan_vch_end + 1):
             res[i] = self.channels[i].mode
@@ -1252,7 +1253,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_iscomplete(self):
-        """ Read Event Status Register (ESR) bit 0 to determine if previous works were
+        """ Get Event Status Register (ESR) bit 0 to determine if previous works were
         completed.
         This properity is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
