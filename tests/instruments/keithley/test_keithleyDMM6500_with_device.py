@@ -121,17 +121,10 @@ SCREEN_DISPLAY_SELS = (
 #    "ACI": [1, 3], "R2W": [100, 1e3, 10e3], "R4W": [100, 1e3, 10e3],
 #    "FREQ": [0.1, 1, 10], "PERIOD": [0.1, 1, 10]}
 
-##################################################
-# Keithley2306 device address goes here:
-# RESOURCE = "TCPIP::10.1.15.138::inst0::INSTR"
-RESOURCES = ("USB0::1510::25856::04401613::0::INSTR",)
-
-##################################################
-
 
 @pytest.fixture(scope="module")
 def dmm6500():
-    instr = KeithleyDMM6500(RESOURCES[0])
+    instr = KeithleyDMM6500(connected_device_address)
     instr.adapter.connection.timeout = 10000
     return instr
 
