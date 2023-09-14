@@ -242,6 +242,12 @@ class KeithleyDMM6500(Instrument):
         after changing the command set. Available values are:
         :code:`SCPI`, :code:`TSP`, :code:`SCPI2000`, and :code:`SCPI34401`.
         The :attr:`KeithleyDMM6500` class was designed to use :code:`SCPI` command set only.
+
+        .. note::
+
+            If you want to use TSP command set, you can use :attr:`write()` and :attr:`ask()`
+            to send TSP command instead.
+
         """,
         validator=strict_discrete_set,
         values=["TSP", "SCPI", "SCPI2000", "SCPI34401"],
