@@ -206,19 +206,23 @@ def test_given_function_set_then_autorange_enabled(resetted_dmm6500, key):
 def test_given_function_set_then_autorange(resetted_dmm6500, function_):
     resetted_dmm6500.mode = function_
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.autorange == True
-    resetted_dmm6500.autorange = False
-    assert resetted_dmm6500.autorange == False
+    assert resetted_dmm6500.autorange_enabled == True
+    resetted_dmm6500.autorange_enabled = False
+    assert resetted_dmm6500.autorange_enabled == False
+    assert len(resetted_dmm6500.check_errors()) == 0
 
 
 def test_dcv_range_min_def_max(resetted_dmm6500):
     resetted_dmm6500.mode = "voltage"
+    assert len(resetted_dmm6500.check_errors()) == 0
     resetted_dmm6500.range_ = "MIN"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 0.1
+
     resetted_dmm6500.range_ = "MAX"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 1000
+
     resetted_dmm6500.range_ = "DEF"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 1000
@@ -266,16 +270,16 @@ def test_detector_bandwidth(resetted_dmm6500, function_, detector_bandwidth):
 @pytest.mark.parametrize("enable", [True, False])
 def test_autozero(resetted_dmm6500, function_, enable):
     resetted_dmm6500.mode = function_
-    resetted_dmm6500.autozero = enable
+    resetted_dmm6500.autozero_enabled = enable
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.autozero == enable
+    assert resetted_dmm6500.autozero_enabled == enable
 
 
 def test_single_autozero(resetted_dmm6500):
     resetted_dmm6500.autozero = True
     resetted_dmm6500.trigger_single_autozero()
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.autozero == False
+    assert resetted_dmm6500.autozero_enabled == False
 
 
 def test_terminals_used(resetted_dmm6500):
