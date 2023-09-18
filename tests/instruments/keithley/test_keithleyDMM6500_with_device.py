@@ -23,7 +23,6 @@
 #
 
 import pytest
-import time
 import logging
 from pymeasure.instruments.keithley import KeithleyDMM6500
 
@@ -115,13 +114,6 @@ SCREEN_DISPLAY_SELS = (
     "PROC",
 )
 
-#
-# TEST_RANGES = {
-#    "DCV": [0.1, 1, 10], "ACV": [0.1, 1, 10], "DCI": [0.1, 1, 3],
-#    "ACI": [1, 3], "R2W": [100, 1e3, 10e3], "R4W": [100, 1e3, 10e3],
-#    "FREQ": [0.1, 1, 10], "PERIOD": [0.1, 1, 10]}
-
-
 @pytest.fixture(scope="module")
 def dmm6500(connected_device_address):
     instr = KeithleyDMM6500(connected_device_address)
@@ -149,12 +141,14 @@ def test_given_function_when_set_then_function_is_set(resetted_dmm6500, function
 
 @pytest.mark.parametrize("key", FUNCTION_METHODS)
 def test_given_function_when_set_then_function_is_set(resetted_dmm6500, key):
+    measure_xxx = getattr(resetted_dmm6500, FUNCTION_METHODS[key] )
     if key[-2:] == "ac":
-        getattr(resetted_dmm6500, FUNCTION_METHODS[key])(ac=True)
+        measure_xxx(ac=True)
     elif key[-2:] == "4W":
-        getattr(resetted_dmm6500, FUNCTION_METHODS[key])(wires=4)
+        measure_xxx(wires = 4)
     else:
-        getattr(resetted_dmm6500, FUNCTION_METHODS[key])()
+        measure_xxx()
+
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.mode == key
 
@@ -194,27 +188,28 @@ def test_given_function_set_then_autorange_enabled(resetted_dmm6500, key):
 
     # resetted_dmm6500.mode = function_
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.auto_range_status() == False
+    assert resetted_dmm6500.auto_range_status() is False
     resetted_dmm6500.auto_range()
     if key in FUNCTIONS_HAVE_AUTORANGE:
-        assert resetted_dmm6500.auto_range_status() == True
+        assert resetted_dmm6500.auto_range_status() is True
     else:
-        assert resetted_dmm6500.auto_range_status() == False
+        assert resetted_dmm6500.auto_range_status() is False
 
 
 @pytest.mark.parametrize("function_", FUNCTIONS_HAVE_AUTORANGE)
 def test_given_function_set_then_autorange(resetted_dmm6500, function_):
     resetted_dmm6500.mode = function_
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.autorange_enabled == True
+    assert resetted_dmm6500.autorange_enabled
     resetted_dmm6500.autorange_enabled = False
-    assert resetted_dmm6500.autorange_enabled == False
+    assert not resetted_dmm6500.autorange_enabled
     assert len(resetted_dmm6500.check_errors()) == 0
 
 
 def test_dcv_range_min_def_max(resetted_dmm6500):
-    resetted_dmm6500.mode = "voltage"
+    resetted_dmm6500.measure_voltage()
     assert len(resetted_dmm6500.check_errors()) == 0
+
     resetted_dmm6500.range_ = "MIN"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 0.1
@@ -226,6 +221,7 @@ def test_dcv_range_min_def_max(resetted_dmm6500):
     resetted_dmm6500.range_ = "DEF"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 1000
+
 
 
 @pytest.mark.parametrize("function_", FUNCTIONS_HAVE_NPLC)
@@ -279,7 +275,7 @@ def test_single_autozero(resetted_dmm6500):
     resetted_dmm6500.autozero = True
     resetted_dmm6500.trigger_single_autozero()
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.autozero_enabled == False
+    assert not resetted_dmm6500.autozero_enabled
 
 
 def test_terminals_used(resetted_dmm6500):
