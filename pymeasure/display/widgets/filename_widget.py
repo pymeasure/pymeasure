@@ -52,6 +52,9 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
         completer = PlaceholderCompleter(placeholders)
         self.setCompleter(completer)
 
+        validator = FilenameValidator(placeholders)
+        self.setValidator(validator)
+
 
 class PlaceholderCompleter(QtWidgets.QCompleter):
 
@@ -74,3 +77,48 @@ class PlaceholderCompleter(QtWidgets.QCompleter):
             self.setModel(QtCore.QStringListModel())
 
         return [path]
+
+
+class FilenameValidator(QtGui.QValidator):
+    def __init__(self, placeholders):
+        self.placeholders = placeholders
+
+        self.full_placeholder = re.compile(r"{([^{}]*)(:[^{}]+)?}")
+        self.half_placeholder = re.compile(r"{([^{}]*)(:[^{}]+)?$")
+        self.valid_filename = re.compile(r"^[^<>:\"/\\|?*{}]*$")
+        super().__init__()
+
+    def fixup(self, input):
+        half_placeholder = self.half_placeholder.findall(input)
+
+        if half_placeholder:
+            input = input + "}"
+
+        return input
+
+    def validate(self, input, pos):
+        test_input = input
+
+        full_placeholders = self.full_placeholder.findall(input)
+        half_placeholder = self.half_placeholder.findall(input)
+
+        test_input = self.full_placeholder.sub("_plchldr_", test_input)
+        test_input = self.half_placeholder.sub("_plchldr", test_input)
+
+        valid_filename = self.valid_filename.fullmatch(test_input)
+
+        # Determine state of input
+        if not valid_filename:
+            state = QtGui.QValidator.Invalid
+        elif half_placeholder:
+            state = QtGui.QValidator.Intermediate
+        else:
+            state = QtGui.QValidator.Acceptable
+
+        # Control the warning for the invalid placeholders
+        if full_placeholders and not all([p[0] in self.placeholders for p in full_placeholders]):
+            pass  # TODO: Set warning flag
+        else:
+            pass  # TODO: Clear warning flag
+
+        return state, input, pos
