@@ -330,7 +330,7 @@ class KeithleyDMM6500(Instrument):
 
     relative_enabled = Instrument.control(
         "{function}:REL:STAT?",
-        "{function}:REL:STAT %g",
+        "{function}:REL:STAT %d",
         """ Control the relative offset value applied to new measurements for currently
         active :attr:`mode`.""",
         validator=strict_discrete_set,
@@ -380,7 +380,7 @@ class KeithleyDMM6500(Instrument):
 
     autozero_enabled = Instrument.control(
         "{function}:AZER?",
-        "{function}:AZER %s",
+        "{function}:AZER %d",
         """ Control automatic updates to the internal reference measurements (autozero)
         of the instrument.
         """,
@@ -496,7 +496,7 @@ class KeithleyDMM6500(Instrument):
     )
     current_relative_enabled = Instrument.control(
         ":SENS:CURR:REL:STAT?",
-        ":SENS:CURR:REL:STAT %g",
+        ":SENS:CURR:REL:STAT %d",
         """ Control a relative offset value applied to DC current measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -542,7 +542,7 @@ class KeithleyDMM6500(Instrument):
     )
     current_ac_relative_enabled = Instrument.control(
         ":SENS:CURR:AC:REL:STAT?",
-        ":SENS:CURR:AC:REL:STAT %g",
+        ":SENS:CURR:AC:REL:STAT %d",
         """ Control a relative offset value applied to AC current measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -612,7 +612,7 @@ class KeithleyDMM6500(Instrument):
     )
     voltage_relative_enabled = Instrument.control(
         ":SENS:VOLT:REL:STAT?",
-        ":SENS:VOLT:REL:STAT %g",
+        ":SENS:VOLT:REL:STAT %d",
         """ Control a relative offset value applied to DC voltage measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -658,7 +658,7 @@ class KeithleyDMM6500(Instrument):
     )
     voltage_ac_relative_enabled = Instrument.control(
         ":SENS:VOLT:AC:REL:STAT?",
-        ":SENS:VOLT:AC:REL:STAT %g",
+        ":SENS:VOLT:AC:REL:STAT %d",
         """ Control a relative offset value applied to AC voltage measurement.
         See also the :attr:`relative_enabled`.
         """,
@@ -729,7 +729,7 @@ class KeithleyDMM6500(Instrument):
     )
     resistance_relative_enabled = Instrument.control(
         ":SENS:RES:REL:STAT?",
-        ":SENS:RES:REL:STAT %g",
+        ":SENS:RES:REL:STAT %d",
         """ Control a relative offset value applied to 2-wire resistance measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -772,7 +772,7 @@ class KeithleyDMM6500(Instrument):
     )
     resistance_4W_relative_enabled = Instrument.control(
         ":SENS:FRES:REL:STAT?",
-        ":SENS:FRES:REL:STAT %g",
+        ":SENS:FRES:REL:STAT %d",
         """ Control a relative offset value applied to 4-wire resistance measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -835,7 +835,7 @@ class KeithleyDMM6500(Instrument):
     )
     frequency_relative_enabled = Instrument.control(
         ":SENS:FREQ:REL:STAT?",
-        ":SENS:FREQ:REL:STAT %g",
+        ":SENS:FREQ:REL:STAT %d",
         """ Control a relative offset value applied to frequency measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -861,7 +861,7 @@ class KeithleyDMM6500(Instrument):
     )
     frequency_threshold_auto_enabled = Instrument.control(
         ":SENS:FREQ:THR:RANG:AUTO?",
-        ":SENS:FREQ:THR:RANG:AUTO %g",
+        ":SENS:FREQ:THR:RANG:AUTO %d",
         """ Control the auto threshold range for frequency measurement enabled or not.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -898,7 +898,7 @@ class KeithleyDMM6500(Instrument):
     )
     period_relative_enabled = Instrument.control(
         ":SENS:PER:REL:STAT?",
-        ":SENS:PER:REL:STAT %g",
+        ":SENS:PER:REL:STAT %d",
         """ Control a relative offset value applied to period measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -924,7 +924,7 @@ class KeithleyDMM6500(Instrument):
     )
     period_threshold_auto_enabled = Instrument.control(
         ":SENS:PER:THR:RANG:AUTO?",
-        ":SENS:PER:THR:RANG:AUTO %g",
+        ":SENS:PER:THR:RANG:AUTO %d",
         """ Control the auto threshold range for period measurement enabled or not.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
@@ -961,7 +961,7 @@ class KeithleyDMM6500(Instrument):
     )
     temperature_relative_enabled = Instrument.control(
         ":SENS:TEMP:REL:STAT?",
-        ":SENS:TEMP:REL:STAT %g",
+        ":SENS:TEMP:REL:STAT %d",
         """ Control a relative offset value applied to temperature measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -1008,7 +1008,7 @@ class KeithleyDMM6500(Instrument):
     )
     capacitance_relative_status = Instrument.control(
         ":SENS:CAP:REL:STAT?",
-        ":SENS:CAP:REL:STAT %g",
+        ":SENS:CAP:REL:STAT %d",
         """ Control a relative offset value applied to capacitance measurement.
         See also the :attr:`relative_enabled`.""",
         validator=strict_discrete_set,
@@ -1120,8 +1120,8 @@ class KeithleyDMM6500(Instrument):
         "FORMAT:DATA?",
         "FORMAT:DATA %s",
         """ Control data format that is used when transferring readings over the remote
-        interface.  Available values are ``ASC``(ASCII), ``REAL``(double-precision),
-        or ``SRE``(single-precision)""",
+        interface.  Available values are ``ASC`` (ASCII), ``REAL`` (double-precision),
+        or ``SRE`` (single-precision).""",
         validator=strict_discrete_set,
         values=("ASC", "REAL", "SRE"),
     )
