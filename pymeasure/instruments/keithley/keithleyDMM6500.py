@@ -38,7 +38,6 @@ BOOL_MAPPINGS = {True: 1, False: 0}
 
 
 class ScannerCard2000Channel(Channel):
-
     MODES = {
         "voltage": "VOLT:DC",
         "voltage ac": "VOLT:AC",
@@ -115,13 +114,13 @@ class ScannerCard2000Channel(Channel):
     )
 
     def _mode_command(self, mode=None):
-        """ Get SCPI's function name from mode."""
+        """Get SCPI's function name from mode."""
         if mode is None:
             mode = self.mode
         return self.MODES[mode]
 
     def enable_filter(self, mode=None, type="repeat", count=1):
-        """ Enable the averaging filter for the active mode, or can set another mode by its name.
+        """Enable the averaging filter for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
         :param type: The type of averaging filter, could be ``REPeat``, ``MOVing``, or ``HYBRid``.
@@ -136,7 +135,7 @@ class ScannerCard2000Channel(Channel):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT? (@{self.id})")
 
     def disable_filter(self, mode=None):
-        """ Disable the averaging filter for the active mode, or can set another mode by its name.
+        """Disable the averaging filter for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
 
@@ -147,7 +146,7 @@ class ScannerCard2000Channel(Channel):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT? (@{self.id})")
 
     def write(self, command):
-        """ Write a command to the instrument."""
+        """Write a command to the instrument."""
         if "{function}" in command:
             super().write(command.format(function=ScannerCard2000Channel.MODES[self.mode]))
         else:
@@ -155,7 +154,7 @@ class ScannerCard2000Channel(Channel):
 
 
 class KeithleyDMM6500(Instrument):
-    """ Represent the Keithely DMM6500 6½-Digit Multimeter and provide a
+    """Represent the Keithely DMM6500 6½-Digit Multimeter and provide a
     high-level interface for interacting with the instrument.
     This class only uses "SCPI" command set (see also :attr:`command_set`) to
     communicate with the instrument.
@@ -219,16 +218,17 @@ class KeithleyDMM6500(Instrument):
     channels = Instrument.MultiChannelCreator(ScannerCard2000Channel, list(range(1, 11)))
 
     def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Keithley DMM6500 6½-Digit Multimeter",
-                         read_termination="\n", **kwargs)
+        super().__init__(
+            adapter, "Keithley DMM6500 6½-Digit Multimeter", read_termination="\n", **kwargs
+        )
         self.command_set = "SCPI"
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """ Fully close the connection when the `with` code block finishes."""
+        """Fully close the connection when the `with` code block finishes."""
         self.adapter.close()
 
     def close(self):
-        """ Close the connection"""
+        """Close the connection"""
         self.adapter.close()
 
     ###########
@@ -400,7 +400,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def trigger_single_autozero(self):
-        """ Cause the instrument to refresh the reference and zero measurements once.
+        """Cause the instrument to refresh the reference and zero measurements once.
 
         Consequent autozero measurements are disabled."""
         self.write("AZER:ONCE")
@@ -453,7 +453,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def displayed_text(self, top_line=None, bot_line=None):
-        """ Display text messages on the front-panel USER swipe screen.
+        """Display text messages on the front-panel USER swipe screen.
         If no messages were defined, screen will be cleared.
 
         :param top_line: 1st line message
@@ -570,7 +570,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_current(self, max_current=10e-3, ac=False):
-        """ Configure the instrument to measure current,
+        """Configure the instrument to measure current,
         based on a maximum current to set the range, and
         a boolean flag to determine if DC or AC is required.
 
@@ -687,7 +687,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_voltage(self, max_voltage=1, ac=False):
-        """ Configure the instrument to measure voltage,
+        """Configure the instrument to measure voltage,
         based on a maximum voltage to set the range, and
         a boolean flag to determine if DC or AC is required.
 
@@ -722,8 +722,8 @@ class KeithleyDMM6500(Instrument):
     resistance_relative = Instrument.control(
         ":SENS:RES:REL?",
         ":SENS:RES:REL %g",
-        """ Control the 2-wire resistance relative value in Ohms (float strictly from -100M to 100M).
-        See also the :attr:`relative`.""",
+        """ Control the 2-wire resistance relative value in Ohms (float strictly
+        from -100M to 100M). See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1e8, 1e8],
     )
@@ -765,8 +765,8 @@ class KeithleyDMM6500(Instrument):
     resistance_4W_relative = Instrument.control(
         ":SENS:FRES:REL?",
         ":SENS:FRES:REL %g",
-        """ Control the 4-wire resistance relative value in Ohms (float strictly from -100M to 100M).
-        See also the :attr:`relative`.""",
+        """ Control the 4-wire resistance relative value in Ohms (float strictly
+        from -100M to 100M). See also the :attr:`relative`.""",
         validator=truncated_range,
         values=[-1e8, 1e8],
     )
@@ -798,7 +798,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_resistance(self, max_resistance=10e6, wires=2):
-        """ Configure the instrument to measure resistance,
+        """Configure the instrument to measure resistance,
         based on a maximum resistance to set the range.
 
         :param max_resistance: A resistance in Ohms to set the resistance range
@@ -877,7 +877,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_frequency(self):
-        """ Configure the instrument to measure frequency."""
+        """Configure the instrument to measure frequency."""
         self.mode = "frequency"
 
     ##############
@@ -940,7 +940,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_period(self):
-        """ Configure the instrument to measure period."""
+        """Configure the instrument to measure period."""
         self.mode = "period"
 
     ###################
@@ -987,7 +987,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_temperature(self):
-        """ Configure the instrument to measure temperature."""
+        """Configure the instrument to measure temperature."""
         self.mode = "temperature"
 
     ###############
@@ -1035,7 +1035,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_capacitance(self, max_capacitance=1e-3):
-        """ Configure the instrument to measure capacitance.
+        """Configure the instrument to measure capacitance.
 
         :param max_capacitance: Set :attr:`capacitance_range` after changing :attr:`mode`
 
@@ -1072,7 +1072,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def measure_diode(self):
-        """ Configure the instrument to perform diode testing.
+        """Configure the instrument to perform diode testing.
 
         :return: None
         """
@@ -1083,7 +1083,7 @@ class KeithleyDMM6500(Instrument):
     ##############
 
     def measure_continuity(self):
-        """ Configure the instrument to perform continuity testing.
+        """Configure the instrument to perform continuity testing.
 
         :return: None
         """
@@ -1176,7 +1176,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_channels_list(self):
-        """ Expand :attr:`scan_channels` string to a list of integers.
+        """Expand :attr:`scan_channels` string to a list of integers.
 
         For example, when :attr:`scan_channels` is ``1,3:5,7:8,10``,
         this attribute will return ``[1,3,4,5,7,8,10]``. If ``scan_channels_list=[1,2,3,4,6]``,
@@ -1192,12 +1192,12 @@ class KeithleyDMM6500(Instrument):
                 # process string "a:b" -> a, a+1, ..., b
                 ch = list(map(int, ch.split(":")))
                 ch[-1] += 1
-                chn_list[idx: idx+1] = list(range(*ch))
+                chn_list[idx: idx + 1] = list(range(*ch))
         return chn_list
 
     @scan_channels_list.setter
     def scan_channels_list(self, new_channels):
-        """ Set scan channels by a list or tuple."""
+        """Set scan channels by a list or tuple."""
         if isinstance(new_channels, (list, tuple)):
             self.scan_channels = ",".join(map(str, new_channels))
         else:
@@ -1222,7 +1222,7 @@ class KeithleyDMM6500(Instrument):
     )
 
     def scanned_data(self, start_idx=None, end_idx=None, raw=False):
-        """ Return a list of scanning values from the buffer.
+        """Return a list of scanning values from the buffer.
 
         :param start_idx: A bool value which controls communication state while scanning.
             Default is ``True`` and the communication waits until the commands are complete
@@ -1247,7 +1247,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_modes(self):
-        """ Get a dictionary of every channel's mode."""
+        """Get a dictionary of every channel's mode."""
         res = dict()
         for i in range(self.scan_vch_start, self.scan_vch_end + 1):
             res[i] = self.channels[i].mode
@@ -1255,12 +1255,12 @@ class KeithleyDMM6500(Instrument):
 
     @scan_modes.setter
     def scan_modes(self, new_mode):
-        """ Set all channles to the new mode. Ex: ``scan_modes = "voltage"``"""
+        """Set all channles to the new mode. Ex: ``scan_modes = "voltage"``"""
         self.write(f':SENS:FUNC "{self._mode_command(new_mode)}", (@1:10)')
 
     @property
     def scan_iscomplete(self):
-        """ Get Event Status Register (ESR) bit 0 to determine if previous works were
+        """Get Event Status Register (ESR) bit 0 to determine if previous works were
         completed.
         This properity is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
@@ -1270,7 +1270,7 @@ class KeithleyDMM6500(Instrument):
             return False
 
     def scan_start(self, block_communication=True, count=None, interval=None):
-        """ Start the scanner card to close each channel of :attr:`scan_channels` sequentially
+        """Start the scanner card to close each channel of :attr:`scan_channels` sequentially
         and to do measurements.
 
         If :attr:`scan_count` is larger than 1, the next scanning will start again
@@ -1301,7 +1301,7 @@ class KeithleyDMM6500(Instrument):
             log.info("Use `scan_iscomplete` to know the status.")
 
     def scan_stop(self):
-        """ Abort the scanning measurement by stopping the measurement arming and
+        """Abort the scanning measurement by stopping the measurement arming and
         triggering sequence.
 
         :return: None
@@ -1313,13 +1313,13 @@ class KeithleyDMM6500(Instrument):
     ##########
 
     def _mode_command(self, mode=None):
-        """ Get SCPI's function name from mode."""
+        """Get SCPI's function name from mode."""
         if mode is None:
             mode = self.mode
         return self.MODES[mode]
 
     def auto_range_status(self, mode=None):
-        """ Get the status of auto-range of active mode or another mode by its name.
+        """Get the status of auto-range of active mode or another mode by its name.
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
         ``resistance`` (2-wire), ``resistance 4W`` (4-wire), ``capacitance``,
         and ``voltage ratio`` support autorange. If chosen mode is not in these
@@ -1342,7 +1342,7 @@ class KeithleyDMM6500(Instrument):
             return False
 
     def auto_range(self, mode=None):
-        """ Set the active mode to use auto-range, or can set another mode by its name.
+        """Set the active mode to use auto-range, or can set another mode by its name.
 
         Only ``current`` (DC), ``current ac``, ``voltage`` (DC),  ``voltage ac``,
         ``resistance`` (2-wire), ``resistance 4W`` (4-wire), ``capacitance``,
@@ -1358,7 +1358,7 @@ class KeithleyDMM6500(Instrument):
             self.write(f":SENS:{self._mode_command(mode)}:RANG:AUTO 1")
 
     def enable_relative(self, mode=None):
-        """ Enable the application of a relative offset value to the measurement
+        """Enable the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1366,7 +1366,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 1")
 
     def disable_relative(self, mode=None):
-        """ Disable the application of a relative offset value to the measurement
+        """Disable the application of a relative offset value to the measurement
         for the active mode, or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1374,7 +1374,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SENS:{self._mode_command(mode)}:REL:STAT 0")
 
     def acquire_relative(self, mode=None):
-        """ Set the active value as the relative for the active mode,
+        """Set the active value as the relative for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1388,7 +1388,7 @@ class KeithleyDMM6500(Instrument):
         return rel
 
     def enable_filter(self, mode=None, type="repeat", count=1):
-        """ Enable the averaging filter for the active mode,
+        """Enable the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1404,7 +1404,7 @@ class KeithleyDMM6500(Instrument):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
     def disable_filter(self, mode=None):
-        """ Disable the averaging filter for the active mode,
+        """Disable the averaging filter for the active mode,
         or can set another mode by its name.
 
         :param mode: A valid :attr:`mode` name, or `None` for the active mode
@@ -1416,7 +1416,7 @@ class KeithleyDMM6500(Instrument):
         return self.ask(f":SENS:{mode_cmd}:AVER:STAT?")
 
     def beep(self, frequency, duration):
-        """ Sound a system beep.
+        """Sound a system beep.
 
         :param frequency: A frequency in Hz between 20 Hz and 8000 Hz
         :param duration: The amount of time to play the tone between 0.001 s to 100 s
@@ -1425,7 +1425,7 @@ class KeithleyDMM6500(Instrument):
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
     def write(self, command):
-        """ Write a command to the instrument.
+        """Write a command to the instrument.
 
         :param command: A command
         :param type: str

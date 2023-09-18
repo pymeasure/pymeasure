@@ -28,49 +28,48 @@ from pymeasure.instruments.keithley.keithleyDMM6500 import KeithleyDMM6500
 
 def test_init():
     with expected_protocol(
-            KeithleyDMM6500,
-            [
-                ("*LANG SCPI", None),
-                ],
-            ):
+        KeithleyDMM6500,
+        [
+            ("*LANG SCPI", None),
+        ],
+    ):
         pass  # Verify the expected communication.
+
 
 def test_terminals_used():
     with expected_protocol(
-            KeithleyDMM6500,
-            [
-                ("*LANG SCPI", None),
-                ("ROUT:TERM?", "FRON"),
-            ],
+        KeithleyDMM6500,
+        [
+            ("*LANG SCPI", None),
+            ("ROUT:TERM?", "FRON"),
+        ],
     ) as inst:
         assert "FRONT" == inst.terminals_used
 
+
 def test_voltage_nplc():
     with expected_protocol(
-            KeithleyDMM6500,
-            [
-                ("*LANG SCPI", None),
-                (":SENS:VOLT:NPLC 1.234", None),
-                (":SENS:VOLT:NPLC?", "1.234"),
-            ],
-        ) as instr:
+        KeithleyDMM6500,
+        [
+            ("*LANG SCPI", None),
+            (":SENS:VOLT:NPLC 1.234", None),
+            (":SENS:VOLT:NPLC?", "1.234"),
+        ],
+    ) as instr:
         instr.voltage_nplc = 1.234
         assert instr.voltage_nplc == 1.234
 
 
 def test_nplc_setter():
     with expected_protocol(
-            KeithleyDMM6500,
-            [
-                ("*LANG SCPI", None),
-                (":SENS:FUNC?", "VOLT:DC"),
-                ("VOLT:DC:NPLC 1.345", None),
-                (":SENS:FUNC?", "VOLT:DC"),
-                ("VOLT:DC:NPLC?", "1.345"),
-            ],
-            ) as instr:
+        KeithleyDMM6500,
+        [
+            ("*LANG SCPI", None),
+            (":SENS:FUNC?", "VOLT:DC"),
+            ("VOLT:DC:NPLC 1.345", None),
+            (":SENS:FUNC?", "VOLT:DC"),
+            ("VOLT:DC:NPLC?", "1.345"),
+        ],
+    ) as instr:
         instr.nplc = 1.345
         assert 1.345 == instr.nplc
-
-
-
