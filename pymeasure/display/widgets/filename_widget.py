@@ -23,8 +23,9 @@
 #
 
 import logging
+import re
 
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtCore, QtWidgets, QtGui
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -40,6 +41,14 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
         super().__init__(parent=parent)
 
         placeholders = parent.procedure_class.placeholder_names()
+
+        self.setToolTip(
+            "The filename of the file to which the measurement will be stored. Placeholders (in \n"
+            "standard python format, i.e.: '{variablename:formatspec}') will be replaced by \n"
+            "the respective value. If the filename does not contain an extension, \".csv\" will\n"
+            "be append.\n\nValid placeholders are:\n- '" + "';\n- '".join(placeholders) + "'."
+        )
+
         completer = PlaceholderCompleter(placeholders)
         self.setCompleter(completer)
 

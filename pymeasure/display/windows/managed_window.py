@@ -168,6 +168,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
             self.writefile_toggle.setChecked(True)
             self.writefile_toggle.stateChanged.connect(self.toggle_file_dir_input_active)
+            self.writefile_toggle.setToolTip(
+                "Control whether the measurement is saved to a file with the filename that is\n"
+                "specified in the field below (checked) or not (unchecked; the data is stored\n"
+                "in a temporary file)."
+            )
 
             self.filename_label = QtWidgets.QLabel(self)
             self.filename_label.setText('Filename')
