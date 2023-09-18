@@ -114,6 +114,7 @@ SCREEN_DISPLAY_SELS = (
     "PROC",
 )
 
+
 @pytest.fixture(scope="module")
 def dmm6500(connected_device_address):
     instr = KeithleyDMM6500(connected_device_address)
@@ -140,12 +141,12 @@ def test_given_function_when_set_then_function_is_set(resetted_dmm6500, function
 
 
 @pytest.mark.parametrize("key", FUNCTION_METHODS)
-def test_given_function_when_set_then_function_is_set(resetted_dmm6500, key):
-    measure_xxx = getattr(resetted_dmm6500, FUNCTION_METHODS[key] )
+def test_given_function_by_measure_xxx(resetted_dmm6500, key):
+    measure_xxx = getattr(resetted_dmm6500, FUNCTION_METHODS[key])
     if key[-2:] == "ac":
         measure_xxx(ac=True)
     elif key[-2:] == "4W":
-        measure_xxx(wires = 4)
+        measure_xxx(wires=4)
     else:
         measure_xxx()
 
@@ -221,7 +222,6 @@ def test_dcv_range_min_def_max(resetted_dmm6500):
     resetted_dmm6500.range_ = "DEF"
     assert len(resetted_dmm6500.check_errors()) == 0
     assert resetted_dmm6500.range_ == 1000
-
 
 
 @pytest.mark.parametrize("function_", FUNCTIONS_HAVE_NPLC)

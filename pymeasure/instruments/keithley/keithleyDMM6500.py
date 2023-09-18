@@ -1057,7 +1057,7 @@ class KeithleyDMM6500(Instrument):
     diode_bias = Instrument.control(
         ":SENS:DIOD:BIAS:LEV?",
         ":SENS:DIOD:BIAS:LEV %g",
-        """ Controll the amount of current in Amps the instrument sources while making
+        """ Control the amount of current in Amps the instrument sources while making
         measurement. Available bias levels are 1e-5, 0.0001, 0.001, 0.01.""",
         validator=truncated_discrete_set,
         values=[1e-5, 0.0001, 0.001, 0.01],
@@ -1108,7 +1108,7 @@ class KeithleyDMM6500(Instrument):
 
     points_in_buffer = Instrument.measurement(
         "TRAC:ACT?",
-        """ Query the number of readings stored in the buffer.""",
+        """ Get the number of readings stored in the buffer.""",
         cast=int,
     )
 
@@ -1176,7 +1176,7 @@ class KeithleyDMM6500(Instrument):
 
     @property
     def scan_channels_list(self):
-        """Expand :attr:`scan_channels` string to a list of integers.
+        """Get :attr:`scan_channels` string to a list of integers.
 
         For example, when :attr:`scan_channels` is ``1,3:5,7:8,10``,
         this attribute will return ``[1,3,4,5,7,8,10]``. If ``scan_channels_list=[1,2,3,4,6]``,
