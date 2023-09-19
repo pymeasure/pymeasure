@@ -263,4 +263,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         return string
 
     def stepEnabled(self):
-        return QtWidgets.QAbstractSpinBox.StepNone
+        if hasattr(QtWidgets.QAbstractSpinBox, 'StepNone'):
+            return QtWidgets.QAbstractSpinBox.StepNone
+        else:
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
