@@ -292,7 +292,7 @@ class KeithleyDMM6500(Instrument):
 
     range_ = Instrument.control(
         "{function}:RANG?",
-        "{function}:RANG:AUTO 0;{function}:RANG %s",
+        "{function}:RANG:AUTO 0;UPP %s",
         """ Control the positive full-scale measure range for currently active :attr:`mode`.
         Auto-range is disabled when this property is set.
 
