@@ -103,10 +103,14 @@ class BrowserWidget(QtWidgets.QWidget):
         self.setLayout(vbox)
 
     def browser_item_changed(self, item, column):
+        try:
+            comp_state = QtCore.Qt.CheckState.Unchecked
+        except AttributeError:
+            comp_state = 0
         if column == 0:
             state = item.checkState(0)
             experiment = self.manager.experiments.with_browser_item(item)
-            if state == 0:
+            if state == comp_state:
                 for wdg, curve in zip(self._parent.widget_list, experiment.curve_list):
                     wdg.remove(curve)
             else:
