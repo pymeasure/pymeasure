@@ -52,7 +52,7 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
         completer = PlaceholderCompleter(placeholders)
         self.setCompleter(completer)
 
-        validator = FilenameValidator(placeholders)
+        validator = FilenameValidator(placeholders, self)
         self.setValidator(validator)
 
 
@@ -80,11 +80,12 @@ class PlaceholderCompleter(QtWidgets.QCompleter):
 
 
 class FilenameValidator(QtGui.QValidator):
-    def __init__(self, placeholders):
+    def __init__(self, placeholders, parent):
+        self.parent = parent
         self.placeholders = placeholders
 
-        self.full_placeholder = re.compile(r"{([^{}]*)(:[^{}]+)?}")
-        self.half_placeholder = re.compile(r"{([^{}]*)(:[^{}]+)?$")
+        self.full_placeholder = re.compile(r"{([^{}:]*)(:[^{}]*)?}")
+        self.half_placeholder = re.compile(r"{([^{}:]*)(:[^{}]*)?$")
         self.valid_filename = re.compile(r"^[^<>:\"/\\|?*{}]*$")
         super().__init__()
 
@@ -116,9 +117,28 @@ class FilenameValidator(QtGui.QValidator):
             state = QtGui.QValidator.Acceptable
 
         # Control the warning for the invalid placeholders
-        if full_placeholders and not all([p[0] in self.placeholders for p in full_placeholders]):
-            pass  # TODO: Set warning flag
+        incorrect_placeholders = [p for p in full_placeholders if p[0] not in self.placeholders]
+        if incorrect_placeholders:
+            if not self.parent.actions():
+                pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxWarning
+                icon = self.parent.style().standardIcon(pixmapi)
+                self.parent.addAction(icon, self.parent.ActionPosition.TrailingPosition)
+
+            # Add tooltip to show which placeholders are not valid
+            act = self.parent.actions()[0]
+
+            marked_input = input
+            for placeholder in [f"{{{p[0] + p[1]}}}" for p in incorrect_placeholders]:
+                marked_input = marked_input.replace(placeholder, f"<b>{placeholder}</b>")
+
+            act.setToolTip(
+                "The input filename contains placeholders with invalid variable names:\n"
+                " - '" + "', \n - '".join([p[0] for p in incorrect_placeholders]) + "'."
+            )
         else:
-            pass  # TODO: Clear warning flag
+            # Remove action, if it exists
+            if self.parent.actions():
+                assert len(self.parent.actions()) == 1, "More than 1 action defined, not sure which to remove."
+                self.parent.removeAction(self.parent.actions()[0])
 
         return state, input, pos
