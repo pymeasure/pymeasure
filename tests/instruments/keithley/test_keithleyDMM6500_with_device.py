@@ -211,17 +211,17 @@ def test_dcv_range_min_def_max(resetted_dmm6500):
     resetted_dmm6500.measure_voltage()
     assert len(resetted_dmm6500.check_errors()) == 0
 
-    resetted_dmm6500.range_ = "MIN"
+    resetted_dmm6500.range = "MIN"
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.range_ == 0.1
+    assert resetted_dmm6500.range == 0.1
 
-    resetted_dmm6500.range_ = "MAX"
+    resetted_dmm6500.range = "MAX"
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.range_ == 1000
+    assert resetted_dmm6500.range == 1000
 
-    resetted_dmm6500.range_ = "DEF"
+    resetted_dmm6500.range = "DEF"
     assert len(resetted_dmm6500.check_errors()) == 0
-    assert resetted_dmm6500.range_ == 1000
+    assert resetted_dmm6500.range == 1000
 
 
 @pytest.mark.parametrize("function_", FUNCTIONS_HAVE_NPLC)

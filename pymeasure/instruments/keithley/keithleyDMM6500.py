@@ -90,11 +90,11 @@ class ScannerCard2000Channel(Channel):
         values=[0.0005, 15],
     )
 
-    range_ = Instrument.control(
+    range = Instrument.control(
         "{function}:RANG? (@{ch})",
         "{function}:RANG %s, (@{ch})",
         """ Control measuring range for currently active mode. For ``frequency`` and ``period``
-        measurements, :attr:`range_` applies to the signal's input voltage, not its frequency""",
+        measurements, :attr:`range` applies to the signal's input voltage, not its frequency""",
     )
 
     autorange_enabled = Instrument.control(
@@ -290,7 +290,7 @@ class KeithleyDMM6500(Instrument):
         """,
     )
 
-    range_ = Instrument.control(
+    range = Instrument.control(
         "{function}:RANG?",
         "{function}:RANG:AUTO 0;UPP %s",
         """ Control the positive full-scale measure range for currently active :attr:`mode`.
@@ -324,8 +324,6 @@ class KeithleyDMM6500(Instrument):
         the value that is set for this command.
         If the instrument acquires the value, read this setting to return the value that
         was measured internally. See also the :attr:`relative_enabled`.""",
-        validator=truncated_range,
-        values=[-3.0, 3.0],
     )
 
     relative_enabled = Instrument.control(
@@ -482,7 +480,7 @@ class KeithleyDMM6500(Instrument):
         """ Control the DC current full-scale measure range in Amps.
         Available ranges are 10e-6, 100e-6, 1e-3, 10e-3, 100e-3, 1, 3 Amps (for front terminals),
         and 10 Amps (for rear terminals). Auto-range is disabled when this property is set.
-        See also the :attr:`range_`.""",
+        See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[10e-6, 100e-6, 1e-3, 10e-3, 100e-3, 1, 3, 10],
     )
@@ -528,7 +526,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
         """ Control the AC current positive full-scale measure range in Amps.
         Available ranges are 1e-3, 10e-3, 100e-3, 1, 3 Amps (for front terminals),
-        and 10 Amps (for rear terminals). See also the :attr:`range_`.""",
+        and 10 Amps (for rear terminals). See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[1e-3, 10e-3, 100e-3, 1, 3, 10],
     )
@@ -598,7 +596,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
         """ Control the DC voltage full-scale measure range in Volts.
         Available ranges are 0.1, 1, 10, 100, 1000.
-        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
+        Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[0.1, 1, 10, 100, 1000],
     )
@@ -642,7 +640,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %g",
         """ Control the AC voltage positive full-scale measure range in Volts.
         Available ranges are 0.1, 1, 10, 100, 750.
-        Auto-range is disabled when this property is set. See also the :attr:`range_`.
+        Auto-range is disabled when this property is set. See also the :attr:`range`.
         """,
         validator=truncated_discrete_set,
         values=[0.1, 1, 10, 100, 750],
@@ -715,7 +713,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ Control the 2-wire reistance full-scale measure range in Ohms.
         Available ranges are: 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
-        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
+        Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6],
     )
@@ -758,7 +756,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %g",
         """ Control the 4-wire reistance full-scale measure range in Ohms.
         Available ranges are: 1, 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
-        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
+        Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[1, 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, 100e6],
     )
@@ -1020,7 +1018,7 @@ class KeithleyDMM6500(Instrument):
         ":SENS:CAP:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ Control the capacitance full-scale measure range in Farad.
         Available ranges are 1e-9, 10e-9, 100e-9, 1e-6, 10e-6, 100e-6, 1e-3.
-        Auto-range is disabled when this property is set. See also the :attr:`range_`.""",
+        Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
         values=[1e-9, 10e-9, 100e-9, 1e-6, 10e-6, 100e-6, 1e-3],
     )
@@ -1431,6 +1429,8 @@ class KeithleyDMM6500(Instrument):
         :param type: str
         :return: None
         """
+        # Using if statement can prevent RecursionError because `self.mode`
+        # will query instrument and call `write()` function again.
         if "{function}" in command:
             super().write(command.format(function=KeithleyDMM6500.MODES[self.mode]))
         else:
