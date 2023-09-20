@@ -138,7 +138,8 @@ class FilenameValidator(QtGui.QValidator):
         else:
             # Remove action, if it exists
             if self.parent.actions():
-                assert len(self.parent.actions()) == 1, "More than 1 action defined, not sure which to remove."
+                assert len(self.parent.actions()) == 1, ("More than 1 action defined, not sure "
+                                                         "which to remove.")
                 self.parent.removeAction(self.parent.actions()[0])
 
         return state, input, pos
