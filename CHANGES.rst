@@ -1,4 +1,4 @@
-Version 0.13.0 (2023-09-19)
+Version 0.13.0 (2023-09-23)
 ===========================
 Main items of this new release:
 
@@ -14,10 +14,11 @@ Instruments
 -----------
 - Adds a test generator (@bmoneke, #882)
 - Adds Thyracont Smartline v2 vacuum sensor transmitter (@bmoneke, #940)
-- Adds Instrument: Thyracont Smartline v1 vacuum gauge (@dkriegner, #937)
+- Adds Thyracont Smartline v1 vacuum gauge (@dkriegner, #937)
 - AddsTeledyne base classes with most of `LeCroyT3DSO1204` functionality (@RobertoRoos, #951)
 - Fixes instrument documentation (@mcdo0486, #941, #903, @omahs, #960)
 - Fixes Toptica Ibeamsmart's __init__ (@waveman68, #959)
+- Fixes VISAAdapter flush_read_buffer() (@ileu, #968)
 - Updates Keithley2306 and AFG3152C to Channels (@bilderbuchi, #953)
 
 GUI
@@ -32,7 +33,7 @@ Miscellaneous
 
 New Contributors
 ----------------
-@waveman68 , @omahs 
+@waveman68, @omahs, @ileu
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.12.0...v0.13.0
 
