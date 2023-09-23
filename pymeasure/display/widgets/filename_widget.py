@@ -46,7 +46,7 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
             "The filename of the file to which the measurement will be stored. Placeholders (in \n"
             "standard python format, i.e.: '{variablename:formatspec}') will be replaced by \n"
             "the respective value. If the filename does not contain an extension, \".csv\" will\n"
-            "be append.\n\nValid placeholders are:\n- '" + "';\n- '".join(placeholders) + "'."
+            "be appended.\n\nValid placeholders are:\n- '" + "';\n- '".join(placeholders) + "'."
         )
 
         completer = PlaceholderCompleter(placeholders)
