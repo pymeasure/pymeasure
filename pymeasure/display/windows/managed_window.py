@@ -145,8 +145,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
-        self.directory_input = directory_input
-        self.filename_input = filename_input
+        self.enable_directory_input = directory_input
+        self.enable_filename_input = filename_input
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -163,7 +163,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._layout()
 
     def _setup_ui(self):
-        if self.filename_input:
+        if self.enable_filename_input:
             self.writefile_toggle = QtWidgets.QCheckBox('Write file', self)
             self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
             self.writefile_toggle.setChecked(True)
@@ -176,11 +176,12 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
             self.filename_label = QtWidgets.QLabel(self)
             self.filename_label.setText('Filename')
-            self.filename_line = FilenameLineEdit(parent=self)
-        if self.directory_input:
+            self.filename_input = FilenameLineEdit(parent=self)
+            self.filename_label.setToolTip(self.filename_input.toolTip())
+        if self.enable_directory_input:
             self.directory_label = QtWidgets.QLabel(self)
             self.directory_label.setText('Directory')
-            self.directory_line = DirectoryLineEdit(parent=self)
+            self.directory_input = DirectoryLineEdit(parent=self)
 
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
@@ -249,15 +250,15 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         vbox = QtWidgets.QVBoxLayout()
 
-        if self.filename_input:
+        if self.enable_filename_input:
             filename_box = QtWidgets.QHBoxLayout()
             vbox.addLayout(filename_box)
             filename_box.addWidget(self.filename_label)
             filename_box.addWidget(self.writefile_toggle)
-            vbox.addWidget(self.filename_line)
-        if self.directory_input:
+            vbox.addWidget(self.filename_input)
+        if self.enable_directory_input:
             vbox.addWidget(self.directory_label)
-            vbox.addWidget(self.directory_line)
+            vbox.addWidget(self.directory_input)
 
         vbox.addLayout(hbox)
 
@@ -573,7 +574,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         """
 
         # Check if the filename and the directory inputs are available
-        if not (self.filename_input and self.directory_input):
+        if not (self.enable_filename_input and self.enable_directory_input):
             raise NotImplementedError("Queue method must be overwritten if the filename- and"
                                       "directory-inputs are disabled.")
 
@@ -639,28 +640,28 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     @property
     def directory(self):
-        if not self.directory_input:
+        if not self.enable_directory_input:
             raise ValueError("No directory input in the ManagedWindow")
-        return self.directory_line.text()
+        return self.directory_input.text()
 
     @directory.setter
     def directory(self, value):
-        if not self.directory_input:
+        if not self.enable_directory_input:
             raise ValueError("No directory input in the ManagedWindow")
 
-        self.directory_line.setText(str(value))
+        self.directory_input.setText(str(value))
 
     @property
     def filename(self):
-        if not self.filename_input:
+        if not self.enable_filename_input:
             raise ValueError("No filename input in the ManagedWindow")
-        return self.filename_line.text()
+        return self.filename_input.text()
 
     @filename.setter
     def filename(self, value):
-        if not self.filename_input:
+        if not self.enable_filename_input:
             raise ValueError("No filename input in the ManagedWindow")
-        self.filename_line.setText(str(value))
+        self.filename_input.setText(str(value))
 
     @property
     def store_measurement(self):
@@ -675,10 +676,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.writefile_toggle.setChecked(bool(value))
 
     def toggle_file_dir_input_active(self, state):
-        if self.filename_input:
-            self.filename_line.setEnabled(bool(state))
-        if self.directory_input:
-            self.directory_line.setEnabled(bool(state))
+        if self.enable_filename_input:
+            self.filename_input.setEnabled(bool(state))
+        if self.enable_directory_input:
+            self.directory_input.setEnabled(bool(state))
 
 
 class ManagedWindow(ManagedWindowBase):
