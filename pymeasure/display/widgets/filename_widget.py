@@ -44,8 +44,8 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
 
         self.setToolTip(
             "The filename of the file to which the measurement will be stored. Placeholders (in \n"
-            "standard python format, i.e.: '{variablename:formatspec}') will be replaced by \n"
-            "the respective value. If the filename does not contain an extension, \".csv\" will\n"
+            "standard python format, i.e.: '{variable name:formatspec}') will be replaced by \n"
+            "the respective value. If the filename does not contain an extension ('.csv') will\n"
             "be appended.\n\nValid placeholders are:\n- '" + "';\n- '".join(placeholders) + "'."
         )
 
@@ -57,7 +57,6 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
 
 
 class PlaceholderCompleter(QtWidgets.QCompleter):
-
     def __init__(self, placeholders):
         super().__init__()
         self.placeholders = placeholders
@@ -68,7 +67,7 @@ class PlaceholderCompleter(QtWidgets.QCompleter):
         self.setFilterMode(QtCore.Qt.MatchContains)
 
     def splitPath(self, path):
-        if path.endswith('{'):
+        if path.endswith("{"):
             options = [path + placeholder + "}" for placeholder in self.placeholders]
             model = QtCore.QStringListModel(options)
             self.setModel(model)
@@ -129,17 +128,22 @@ class FilenameValidator(QtGui.QValidator):
 
             marked_input = input
             for placeholder in [f"{{{p[0] + p[1]}}}" for p in incorrect_placeholders]:
-                marked_input = marked_input.replace(placeholder, f"<b>{placeholder}</b>")
+                marked_input = marked_input.replace(
+                    placeholder, f"<b><font color='red'>{placeholder}</font></b>"
+                )
 
             act.setToolTip(
-                "The input filename contains placeholders with invalid variable names:\n"
-                " - '" + "', \n - '".join([p[0] for p in incorrect_placeholders]) + "'."
+                "<p style='white-space:pre'>"
+                "The input filename contains placeholders with<br/>invalid variable names:<br/>"
+                " - '" + "',<br/> - '".join([p[0] for p in incorrect_placeholders]) + "'."
+                "<br/><br/>Received input:<br/>" + marked_input + "</p>"
             )
         else:
             # Remove action, if it exists
             if self.parent.actions():
-                assert len(self.parent.actions()) == 1, ("More than 1 action defined, not sure "
-                                                         "which to remove.")
+                assert len(self.parent.actions()) == 1, (
+                    "More than 1 action defined, not sure " "which to remove."
+                )
                 self.parent.removeAction(self.parent.actions()[0])
 
         return state, input, pos
