@@ -40,19 +40,22 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
-        placeholders = parent.procedure_class.placeholder_names()
+        self.placeholders = parent.procedure_class.placeholder_names()
+        self.placeholders.extend(["date", "time"])
 
         self.setToolTip(
             "The filename of the file to which the measurement will be stored. Placeholders (in \n"
             "standard python format, i.e.: '{variable name:formatspec}') will be replaced by \n"
-            "the respective value. If the filename does not contain an extension ('.csv') will\n"
-            "be appended.\n\nValid placeholders are:\n- '" + "';\n- '".join(placeholders) + "'."
+            "the respective value. If the filename does not contain an extension, '.csv' will\n"
+            "be appended. Additionally, an index number ('_#') is added to ensure the uniqueness\n"
+            "of the filename.\n"
+            "\nValid placeholders are:\n- '" + "';\n- '".join(self.placeholders) + "'."
         )
 
-        completer = PlaceholderCompleter(placeholders)
+        completer = PlaceholderCompleter(self.placeholders)
         self.setCompleter(completer)
 
-        validator = FilenameValidator(placeholders, self)
+        validator = FilenameValidator(self.placeholders, self)
         self.setValidator(validator)
 
 
@@ -119,7 +122,7 @@ class FilenameValidator(QtGui.QValidator):
         incorrect_placeholders = [p for p in full_placeholders if p[0] not in self.placeholders]
         if incorrect_placeholders:
             if not self.parent.actions():
-                pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxWarning
+                pixmapi = QtWidgets.QStyle.StandardPixmap.SP_MessageBoxCritical
                 icon = self.parent.style().standardIcon(pixmapi)
                 self.parent.addAction(icon, self.parent.ActionPosition.TrailingPosition)
 

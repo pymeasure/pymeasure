@@ -582,11 +582,18 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             procedure = self.make_procedure()
 
         if self.store_measurement:
-            filename = unique_filename(
-                self.directory,
-                prefix=self.filename,
-                procedure=procedure
-            )
+            try:
+                filename = unique_filename(
+                    self.directory,
+                    prefix=self.filename,
+                    datetimeformat="",
+                    procedure=procedure,
+                )
+            except KeyError as E:
+                if not E.args[0].startswith("The following placeholder-keys are not valid:"):
+                    raise E from None
+                log.error(f"Invalid filename provided: {E.args[0]}")
+                return
         else:
             filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
 
