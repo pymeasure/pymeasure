@@ -200,7 +200,7 @@ class RTB200XAnalogChannel(Channel):
         "CHANnel{ch}:RANGe?", "CHANnel{ch}:RANGe %g",
         """
         Control the voltage range across the all vertical divisions of the diagram. Use the command
-        alternatively instead :attr:`scale`
+        alternatively instead :attr:`vertical_scale`
         """,
         validator=strict_range,
         values=[8e-3, 80],
@@ -413,6 +413,19 @@ class RTB200XAnalogChannel(Channel):
         validator=strict_discrete_set,
         values=[e for e in ArithmeticMethod]
     )
+
+    raise NotImplementedError("Write test for this sucker !")
+    waveform = Channel.measurement(
+        "FORMat:DATA ASCii;CHANnel{ch}:DATA?",
+        """
+        Get the data of the analog channel waveform for transmission from the instrument
+        to the controlling computer.
+        """,
+        check_set_errors=True,
+        cast=float
+    )
+
+
 
 
 class RTB200X(Instrument):
