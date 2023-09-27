@@ -28,12 +28,14 @@ import time
 import logging
 
 import clr
+import os
 try:
     clr.AddReference('mcl_RUDAT_NET45')
     from mcl_RUDAT_NET45 import USB_RUDAT
 except:
-    print('Failed to add mcl_RUDAT_NET45 DLL ref. File in wrong location?')
 
+    print('Failed to add mcl_RUDAT_NET45 DLL ref. File in wrong location?')
+    print(os.listdir())
 
 from .adapter import Adapter
 
