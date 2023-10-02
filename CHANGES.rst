@@ -1,9 +1,42 @@
-Upcoming version
-================
+Version 0.13.0 (2023-09-23)
+===========================
+Main items of this new release:
+
+- Dropped support for Python 3.7, added support for Python 3.11.
+- Adds a test generator, which observes the communication with an actual device and writes protocol tests accordingly.
+- 2 new instrument drivers have been added.
 
 Deprecated features
 -------------------
-- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead.
+- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead. (@dkriegner, #938)
+
+Instruments
+-----------
+- Adds a test generator (@bmoneke, #882)
+- Adds Thyracont Smartline v2 vacuum sensor transmitter (@bmoneke, #940)
+- Adds Thyracont Smartline v1 vacuum gauge (@dkriegner, #937)
+- AddsTeledyne base classes with most of `LeCroyT3DSO1204` functionality (@RobertoRoos, #951)
+- Fixes instrument documentation (@mcdo0486, #941, #903, @omahs, #960)
+- Fixes Toptica Ibeamsmart's __init__ (@waveman68, #959)
+- Fixes VISAAdapter flush_read_buffer() (@ileu, #968)
+- Updates Keithley2306 and AFG3152C to Channels (@bilderbuchi, #953)
+
+GUI
+---
+- Adds console mode (@msmttchr, #500)
+- Fixes Dock widget (@msmttchr, #961)
+
+Miscellaneous
+-------------
+- Change CI from conda to mamba (@bmoneke, #947)
+- Add support for python 3.11 (@CasperSchippers, #896)
+
+New Contributors
+----------------
+@waveman68, @omahs, @ileu
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.12.0...v0.13.0
+
 
 Version 0.12.0 (2023-07-05)
 ===========================

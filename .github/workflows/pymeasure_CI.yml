@@ -20,7 +20,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: requirements/pymeasure.yml
+          environment-file: .github/pymeasure.yml
           cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
       - name: Python and Mamba version
@@ -56,7 +56,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -64,7 +64,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: requirements/pymeasure.yml
+          environment-file: .github/pymeasure.yml
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false

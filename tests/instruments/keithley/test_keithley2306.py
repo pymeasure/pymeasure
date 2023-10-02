@@ -65,3 +65,12 @@ def test_relay_setter():
             [(b":OUTP:REL2 ONE", None)],
             ) as instr:
         instr.relay2.closed = True
+
+
+def test_step():
+    with expected_protocol(
+            Keithley2306,
+            [(b":SENS:PCUR:STEP:TLEV3?", 4)],
+            ) as instr:
+        step = instr.ch1.pulse_current_step(3)
+        assert step.trigger_level == 4

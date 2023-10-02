@@ -66,6 +66,7 @@ Instruments by manufacturer:
    texio/index
    thermotron/index
    thorlabs/index
+   thyracont/index
    toptica/index
    velleman/index
    yokogawa/index

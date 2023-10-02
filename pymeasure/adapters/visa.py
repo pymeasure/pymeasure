@@ -257,12 +257,13 @@ class VISAAdapter(Adapter):
     def flush_read_buffer(self):
         """ Flush and discard the input buffer
 
-        As detailed by pyvisa, discard the read buffer contents and if data was present
-        in the read buffer and no END-indicator was present, read from the device until
-        encountering an END indicator (which causes loss of data).
+        As detailed by pyvisa, discard the read and receivee buffer contents
+        and if data was present in the read buffer and no END-indicator was present,
+        read from the device until encountering an END indicator (which causes loss of data).
         """
         try:
             self.connection.flush(pyvisa.constants.BufferOperation.discard_read_buffer)
+            self.connection.flush(pyvisa.constants.BufferOperation.discard_receive_buffer)
         except NotImplementedError:
             # NotImplementedError is raised when using resource types other than `asrl`
             # in conjunction with pyvisa-py.

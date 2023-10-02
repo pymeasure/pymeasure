@@ -46,9 +46,12 @@ class Parameter:
 
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
-        self._value = default
+        self._value = None
+        if default is not None:
+            self.value = default
         self.default = default
         self.ui_class = ui_class
+        self._help_fields = [('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -73,12 +76,39 @@ class Parameter:
 
     @value.setter
     def value(self, value):
-        self._value = value
+        self._value = self.convert(value)
+
+    @property
+    def cli_args(self):
+        """ helper for command line interface parsing of parameters
+
+        This property returns a list of data to help formatting a command line
+        interface interpreter, the list is composed of the following elements:
+        - index 0: default value
+        - index 1: List of value to format an help string, that is either,
+        the name of the fields to be documented or a tuple with (helps_string,
+        field)
+        - index 2: type
+        """
+        return (self.default, self._help_fields, self.convert)
 
     def is_set(self):
         """ Returns True if the Parameter value is set
         """
         return self._value is not None
+
+    def convert(self, value):
+        """ Convert user input to python data format
+
+        Subclasses are exptected to customize this method.
+        Default implementation is the identity function
+
+        :param value: value to be converted
+
+        :return: converted value
+        """
+
+        return value
 
     def __str__(self):
         return str(self._value) if self.is_set() else ''
@@ -104,21 +134,15 @@ class IntegerParameter(Parameter):
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
-        super().__init__(name, **kwargs)
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
+        super().__init__(name, **kwargs)
         self.step = int(step) if step else None
+        self._help_fields.append('minimum')
+        self._help_fields.append('maximum')
 
-    @property
-    def value(self):
-        if self.is_set():
-            return int(self._value)
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
@@ -134,8 +158,8 @@ class IntegerParameter(Parameter):
             raise ValueError("IntegerParameter value is below the minimum")
         elif value > self.maximum:
             raise ValueError("IntegerParameter value is above the maximum")
-        else:
-            self._value = value
+
+        return value
 
     def __str__(self):
         if not self.is_set():
@@ -161,29 +185,22 @@ class BooleanParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     """
 
-    @property
-    def value(self):
-        if self.is_set():
-            return self._value
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if isinstance(value, str):
             if value.lower() == "true":
-                self._value = True
+                value = True
             elif value.lower() == "false":
-                self._value = False
+                value = False
             else:
                 raise ValueError("BooleanParameter given string value of '%s'" % value)
         elif isinstance(value, (int, float)) and value in [0, 1]:
-            self._value = bool(value)
+            value = bool(value)
         elif isinstance(value, bool):
-            self._value = value
+            value = value
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
+        return value
 
 
 class FloatParameter(Parameter):
@@ -204,22 +221,15 @@ class FloatParameter(Parameter):
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
                  decimals=15, step=None, **kwargs):
-        super().__init__(name, **kwargs)
         self.units = units
         self.minimum = minimum
         self.maximum = maximum
+        super().__init__(name, **kwargs)
         self.decimals = decimals
         self.step = step
+        self._help_fields.append('decimals')
 
-    @property
-    def value(self):
-        if self.is_set():
-            return float(self._value)
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
@@ -235,8 +245,8 @@ class FloatParameter(Parameter):
             raise ValueError("FloatParameter value is below the minimum")
         elif value > self.maximum:
             raise ValueError("FloatParameter value is above the maximum")
-        else:
-            self._value = value
+
+        return value
 
     def __str__(self):
         if not self.is_set():
@@ -265,19 +275,12 @@ class VectorParameter(Parameter):
     """
 
     def __init__(self, name, length=3, units=None, **kwargs):
-        super().__init__(name, **kwargs)
         self._length = length
         self.units = units
+        super().__init__(name, **kwargs)
+        self._help_fields.append('_length')
 
-    @property
-    def value(self):
-        if self.is_set():
-            return [float(ve) for ve in self._value]
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if isinstance(value, str):
             # strip units if included
             if self.units is not None and value.endswith(" " + self.units):
@@ -298,11 +301,13 @@ class VectorParameter(Parameter):
             raise ValueError("VectorParameter given value of length "
                              "%d instead of %d" % (len(raw_list), self._length))
         try:
-            self._value = [float(ve) for ve in raw_list]
+            value = [float(ve) for ve in raw_list]
 
         except ValueError:
             raise ValueError("VectorParameter given input '%s' that could "
                              "not be converted to floats." % str(value))
+
+        return value
 
     def __str__(self):
         """If we eliminate spaces within the list __repr__ then the
@@ -331,7 +336,7 @@ class ListParameter(Parameter):
     """
 
     def __init__(self, name, choices=None, units=None, **kwargs):
-        super().__init__(name, **kwargs)
+        self.units = units
         if choices is not None:
             keys = [str(c) for c in choices]
             # check that string representation is unique
@@ -341,17 +346,10 @@ class ListParameter(Parameter):
             self._choices = {k: c for k, c in zip(keys, choices)}
         else:
             self._choices = None
-        self.units = units
+        super().__init__(name, **kwargs)
+        self._help_fields.append(('choices are', 'choices'))
 
-    @property
-    def value(self):
-        if self.is_set():
-            return self._value
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if self._choices is None:
             raise ValueError("ListParameter cannot be set since "
                              "allowed choices are set to None.")
@@ -362,10 +360,12 @@ class ListParameter(Parameter):
                 value = value[:-len(self.units)].strip()
 
         if str(value) in self._choices.keys():
-            self._value = self._choices[str(value)]
+            value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
+
+        return value
 
     @property
     def choices(self):
@@ -393,15 +393,7 @@ class PhysicalParameter(VectorParameter):
                                     default=None)
         self._utype.value = uncertaintyType
 
-    @property
-    def value(self):
-        if self.is_set():
-            return [float(ve) for ve in self._value]
-        else:
-            raise ValueError("Parameter value is not set")
-
-    @value.setter
-    def value(self, value):
+    def convert(self, value):
         if isinstance(value, str):
             # strip units if included
             if self.units is not None and value.endswith(" " + self.units):
@@ -422,12 +414,14 @@ class PhysicalParameter(VectorParameter):
             raise ValueError("VectorParameter given value of length "
                              "%d instead of %d" % (len(raw_list), self._length))
         try:
-            self._value = [float(ve) for ve in raw_list]
+            value = [float(ve) for ve in raw_list]
         except ValueError:
             raise ValueError("VectorParameter given input '%s' that could "
                              "not be converted to floats." % str(value))
         # Uncertainty must be non-negative
-        self._value[1] = abs(self._value[1])
+        value[1] = abs(value[1])
+
+        return value
 
     @property
     def uncertainty_type(self):
