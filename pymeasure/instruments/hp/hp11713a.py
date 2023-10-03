@@ -140,6 +140,7 @@ class HP11713A(Instrument):
         A attenuation mapping has to be set in before e.g.
 
         .. code-block:: python
+
             from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
 
             instr.ATTENUATOR_X = Attenuator_110dB
@@ -157,6 +158,7 @@ class HP11713A(Instrument):
         A attenuation mapping has to be set in before e.g.
 
         .. code-block:: python
+
             from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
 
             instr.ATTENUATOR_X = Attenuator_110dB
