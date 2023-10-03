@@ -91,3 +91,13 @@ class TestHP11713A:
             instr.ATTENUATOR_Y = Attenuator_110dB
             instr.attenuation_y(10)
             instr.attenuation_y(110)
+
+    def test_attenuation_x_rounding(self):
+        with expected_protocol(
+                HP11713A,
+                [("A1B234", None),
+                 ("A1234", None)],
+        ) as instr:
+            instr.ATTENUATOR_X = Attenuator_110dB
+            instr.attenuation_x(12.5)
+            instr.attenuation_x(109)

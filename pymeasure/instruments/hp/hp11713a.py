@@ -72,6 +72,18 @@ Attenuator_70dB_3_Section = {
 }
 """ Mapping of logical values for use with 0 - 70 dB attenuators with 3 switching sections """
 
+Attenuator_70dB_4_Section = {
+    0: (False, False, False, False),
+    10: (True, False, False, False),
+    20: (False, False, False, True),
+    30: (True, False, False, True),
+    40: (False, True, False, True),
+    50: (True, True, False, True),
+    60: (False, True, True, True),
+    70: (True, True, True, True),
+}
+""" Mapping of logical values for use with 0 - 70 dB attenuators with 4 switching sections """
+
 
 class HP11713A(Instrument):
     """
@@ -132,7 +144,11 @@ class HP11713A(Instrument):
 
             instr.ATTENUATOR_X = Attenuator_110dB
         """
-        i, j, k, m = self.ATTENUATOR_X[attenuation]
+        rounding = 0
+        if list(self.ATTENUATOR_X.keys())[1] == 10:
+            rounding = -1
+
+        i, j, k, m = self.ATTENUATOR_X[int(round(attenuation, rounding))]
         self.x(i, j, k, m)
 
     def attenuation_y(self, attenuation):
@@ -145,13 +161,17 @@ class HP11713A(Instrument):
 
             instr.ATTENUATOR_X = Attenuator_110dB
         """
-        i, j, k, m = self.ATTENUATOR_Y[attenuation]
+        rounding = 0
+        if list(self.ATTENUATOR_Y.keys())[1] == 10:
+            rounding = -1
+
+        i, j, k, m = self.ATTENUATOR_Y[int(round(attenuation, rounding))]
         self.y(i, j, k, m)
 
     s9 = Instrument.setting(
         "%s",
-        """Turn on S9 A/B
-        
+        """Set switch on S9 A/B
+
         The switch is always alternating between A 24V and B 24V.
         """,
         validator=strict_discrete_set,
@@ -161,8 +181,8 @@ class HP11713A(Instrument):
 
     s0 = Instrument.setting(
         "%s",
-        """Turn on S0 A/B
-        
+        """Set switch on S0 A/B
+
         The switch is always alternating between A 24V and B 24V.
         """,
         validator=strict_discrete_set,
