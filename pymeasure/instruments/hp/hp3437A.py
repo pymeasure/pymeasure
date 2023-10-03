@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -174,13 +174,12 @@ class HP3437A(HPLegacyInstrument):
     status_desc = Status
     pb_desc = PackedBits
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3437A", **kwargs):
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3437A",
+            name,
             **kwargs,
         )
-        log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
     RANGE = {
@@ -234,7 +233,7 @@ class HP3437A(HPLegacyInstrument):
                 log.info("HP3437A: timeout deactivated")
             self.adapter.connection.timeout = new_timeout
             log.info("HP3437A: timeout changed to %g", new_timeout)
-        read_data = self.adapter.connection.read_raw()
+        read_data = self.read_bytes(-1)
         # check if data is in packed format format
         if self.talk_ascii:
             return_value = np.array(read_data[:-2].decode("ASCII").split(","),

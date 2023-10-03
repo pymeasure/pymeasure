@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
-from .adapters import LakeShoreUSBAdapter
 
 from time import sleep
 import numpy as np
@@ -74,10 +73,17 @@ class LakeShore425(Instrument):
         map_values=True
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="LakeShore 425 Gaussmeter", **kwargs):
         super().__init__(
-            LakeShoreUSBAdapter(adapter),
-            "LakeShore 425 Gaussmeter",
+            adapter,
+            name,
+            asrl={'write_termination': "\n",
+                  'read_termination': "\n",  # from manual
+                  'baud_rate': 57600,
+                  'timeout': 500,
+                  'parity': 1,  # odd
+                  'data_bits': 7
+                  },
             **kwargs
         )
 

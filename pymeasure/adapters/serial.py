@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,6 @@
 import logging
 
 import serial
-import numpy as np
-from pyvisa.util import to_ieee_block, to_hp_block, to_binary_block
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)
@@ -38,80 +36,96 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
-    :param preprocess_reply: optional callable used to preprocess strings
+    :param preprocess_reply: An optional callable used to preprocess strings
         received from the instrument. The callable returns the processed string.
-    :param kwargs: Any valid key-word argument for serial.Serial
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
+
+    :param write_termination: String appended to messages before writing them.
+    :param read_termination: String expected at end of read message and removed.
+    :param \\**kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, preprocess_reply=None, **kwargs):
+    def __init__(self, port, preprocess_reply=None,
+                 write_termination="", read_termination="",
+                 **kwargs):
         super().__init__(preprocess_reply=preprocess_reply)
         if isinstance(port, serial.SerialBase):
             self.connection = port
         else:
             self.connection = serial.Serial(port, **kwargs)
+        self.write_termination = write_termination
+        self.read_termination = read_termination
 
-    def write(self, command):
-        """ Writes a command to the instrument
+    def _write(self, command, **kwargs):
+        """Write a string command to the instrument appending `write_termination`.
 
-        :param command: SCPI command string to be sent to the instrument
+        :param str command: Command string to be sent to the instrument
+            (without termination).
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
-        self.connection.write(command.encode())  # encode added for Python 3
+        command += self.write_termination
+        self._write_bytes(command.encode(), **kwargs)
 
-    def read(self):
-        """ Reads until the buffer is empty and returns the resulting
-        ASCII response
+    def _write_bytes(self, content, **kwargs):
+        """Write the bytes `content` to the instrument.
 
-        :returns: String ASCII response of the instrument.
+        :param bytes content: The bytes to write to the instrument.
+        :param \\**kwargs: Keyword arguments for the connection itself.
         """
-        return b"\n".join(self.connection.readlines()).decode()
+        self.connection.write(content, **kwargs)
 
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
+    def _read(self, **kwargs):
+        """Read up to (excluding) `read_termination` or the whole read buffer.
 
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
+        :param \\**kwargs: Keyword arguments for the connection itself.
+        :returns str: ASCII response of the instrument (read_termination is removed first).
         """
-        self.connection.write(command.encode())
-        binary = self.connection.read().decode()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
-
-    def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
-        """Format values in binary format, used internally in :meth:`.write_binary_values`.
-
-        :param values: data to be written to the device.
-        :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
-        :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
-        :return: binary string.
-        :rtype: bytes
-        """
-
-        if header_fmt == "ieee":
-            block = to_ieee_block(values, datatype, is_big_endian)
-        elif header_fmt == "hp":
-            block = to_hp_block(values, datatype, is_big_endian)
-        elif header_fmt == "empty":
-            block = to_binary_block(values, b"", datatype, is_big_endian)
+        read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
+        # Python>3.8 this shorter form is possible:
+        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
+        if self.read_termination:
+            return read.split(self.read_termination)[0]
         else:
-            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
+            return read
 
-        return block
+    def _read_bytes(self, count, break_on_termchar, **kwargs):
+        """Read a certain number of bytes from the instrument.
 
-    def write_binary_values(self, command, values, **kwargs):
-        """ Write binary data to the instrument, e.g. waveform for signal generators
-
-        :param command: SCPI command to be sent to the instrument
-        :param values: iterable representing the binary values
-        :param kwargs: Key-word arguments to pass onto :meth:`._format_binary_values`
-        :returns: number of bytes written
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read from the whole read buffer (waits for timeout).
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
         """
+        if break_on_termchar and self.read_termination:
+            return self.connection.read_until(self.read_termination.encode(),
+                                              count if count > 0 else None,
+                                              **kwargs)
+        elif count >= 0:
+            return self.connection.read(count, **kwargs)
+        else:
+            # For -1 we empty the buffer completely
+            return self._read_bytes_until_timeout()
 
-        block = self._format_binary_values(values, **kwargs)
-        return self.connection.write(command.encode() + block)
+    def _read_bytes_until_timeout(self, chunk_size=256, **kwargs):
+        """Read from the serial until a timeout occurs, regardless of the number of bytes.
+
+        :chunk_size: The number of bytes attempted to in a single transaction.
+            Multiple of these transactions will occur.
+        """
+        # `Serial.readlines()` has an unpredictable timeout, see PR #866
+        data = bytes()
+        while True:
+            chunk = self.connection.read(chunk_size, **kwargs)
+            data += chunk
+            if len(chunk) < chunk_size:  # If fewer bytes got returned, we had a timeout
+                return data
+
+    def flush_read_buffer(self):
+        """Flush and discard the input buffer."""
+        self.connection.reset_input_buffer()
 
     def __repr__(self):
         return "<SerialAdapter(port='%s')>" % self.connection.port

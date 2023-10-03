@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,11 @@ import sys
 import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
+import re
+from pint import UndefinedUnitError
 
-from .parameters import Parameter, Measurable
+from .parameters import Parameter, Measurable, Metadata
+from pymeasure.units import ureg
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -68,11 +71,39 @@ class Procedure:
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
         self._update_parameters()
+        self._update_metadata()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
                 log.info(f'Setting parameter {key} to {kwargs[key]}')
         self.gen_measurement()
+
+    @staticmethod
+    def parse_columns(columns):
+        """Get columns with any units in parentheses.
+        For each column, if there are matching parentheses containing text
+        with no spaces, parse the value between the parentheses as a Pint unit. For example,
+        "Source Voltage (V)" will be parsed and matched to :code:`Unit('volt')`.
+        Raises an error if a parsed value is undefined in Pint unit registry.
+        Return a dictionary of matched columns with their units.
+
+        :param columns: List of columns to be parsed.
+        :type record: dict
+        :return: Dictionary of columns with Pint units.
+        """
+        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
+        units = {}
+        for column in columns:
+            match = re.search(units_pattern, column)
+            if match:
+                try:
+                    units[column] = ureg.Quantity(match.groupdict()['units']).units
+                except UndefinedUnitError:
+                    raise ValueError(
+                        f"Column \"{column}\" with unit \"{match.groupdict()['units']}\""
+                        " is not defined in Pint registry. Check procedure "
+                        "DATA_COLUMNS contains valid Pint units.")
+        return units
 
     def gen_measurement(self):
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
@@ -86,6 +117,9 @@ class Procedure:
 
         if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
+
+        # Validate DATA_COLUMNS fit pymeasure column header format
+        self.parse_columns(self.DATA_COLUMNS)
 
     def get_datapoint(self):
         data = {key: getattr(self, self.MEASURE[key]).value for key in self.MEASURE}
@@ -179,6 +213,37 @@ class Procedure:
                 if except_missing:
                     raise NameError("Parameter '{}' does not belong to '{}'".format(
                         name, repr(self)))
+
+    def _update_metadata(self):
+        """ Collects all the Metadata objects for the procedure and stores
+        them in a meta dictionary so that the actual values can be set and used
+        in their stead
+        """
+        self._metadata = {}
+
+        for item, metadata in inspect.getmembers(self.__class__):
+            if isinstance(metadata, Metadata):
+                self._metadata[item] = deepcopy(metadata)
+
+                if metadata.is_set():
+                    setattr(self, item, metadata.value)
+                else:
+                    setattr(self, item, None)
+
+    def evaluate_metadata(self):
+        """ Evaluates all Metadata objects, fixing their values to the current value
+        """
+        for item, metadata in self._metadata.items():
+            # Evaluate the metadata, fixing its value
+            value = metadata.evaluate(parent=self, new_value=getattr(self, item))
+
+            # Make the value of the metadata easily accessible
+            setattr(self, item, value)
+
+    def metadata_objects(self):
+        """ Returns a dictionary of all the Metadata objects
+        """
+        return self._metadata
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

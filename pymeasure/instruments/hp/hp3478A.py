@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -113,12 +113,12 @@ class HP3478A(HPLegacyInstrument):
     """
     status_desc = Status
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3478A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3478A",
+            name,
             **kwargs,
         )
 
@@ -237,7 +237,7 @@ class HP3478A(HPLegacyInstrument):
         :return error_status: one byte with the error status register content
         :rtype error_status: int
         """
-        # Read the error status reigster only one time for this method, as
+        # Read the error status register only one time for this method, as
         # the manual states that reading the error status register also clears it.
         current_errors = self.error_status
         if current_errors != 0:
@@ -463,3 +463,108 @@ class HP3478A(HPLegacyInstrument):
     def trigger(self, value):
         trig_set = self.TRIGGERS[strict_discrete_set(value, self.TRIGGERS)]
         self.write(trig_set)
+
+    @property
+    def calibration_data(self):
+        """Read or write the calibration data as an array of 256 values between 0 and 15.
+
+        The calibration data of an HP 3478A is stored in a 256x4 SRAM that is
+        permanently powered by a 3v Lithium battery. When the battery runs
+        out, the calibration data is lost, and recalibration is required.
+
+        When read, this property fetches and returns the calibration data so that it can be
+        backed up.
+
+        When assigned a value, it similarly expects an array of 256 values between 0 and 15,
+        and writes the values back to the instrument.
+
+        When writing, exceptions are raised for the following conditions:
+
+        * The CAL ENABLE switch at the front of the instrument is not set to ON.
+        * The array with values does not contain exactly 256 elements.
+        * The array with values does not pass a verification check.
+
+        IMPORTANT: changing the calibration data results in permanent loss of
+        the previous data. Use with care!
+
+        """
+        cal_data = []
+        for addr in range(0, 256):
+            # To fetch one nibble: 'W<address>', where address is a raw 8-bit number.
+            cmd = bytes([ord('W'), addr])
+            self.write_bytes(cmd)
+            rvalue = self.read_bytes(1)[0]
+            # 'W' command reads a nibble from the SRAM, but then adds a value of 64 to return
+            # it as an ASCII value.
+            if rvalue < 64 or rvalue >= 80:
+                raise Exception("calibration nibble out of range")
+            cal_data.append(rvalue-64)
+
+        return cal_data
+
+    @calibration_data.setter
+    def calibration_data(self, cal_data):
+        """Setter to write the calibration data.
+
+        """
+
+        if not self.calibration_enabled:
+            raise Exception("CAL ENABLE switch not set to ON")
+
+        self.write_calibration_data(cal_data, True)
+
+    def write_calibration_data(self, cal_data, verify_calibration_data=True):
+        """Method to write calibration data.
+
+        The cal_data parameter format is the same as the ``calibration_data`` property.
+
+        Verification of the cal_data array can be bypassed by setting
+        ``verify_calibration_data`` to ``False``.
+
+        """
+        if verify_calibration_data and not self.verify_calibration_data(cal_data):
+            raise ValueError("cal_data verification fail.")
+
+        for addr in range(0, 256):
+            # To write one nibble: 'X<address><byte>', where address and byte are raw 8-bit numbers.
+            cmd = bytes([ord('X'), addr, cal_data[addr]])
+            self.write_bytes(cmd)
+        pass
+
+    def verify_calibration_entry(self, cal_data, entry_nr):
+        """Verify the checksum of one calibration entry.
+
+        Expects an array of 256 values with calibration data, and an entry
+        number from 0 to 18.
+
+        Returns True when the checksum of the specified calibration entry
+        is correct.
+
+        """
+        if len(cal_data) != 256:
+            raise Exception("cal_data must contain 256 values")
+
+        sum = 0
+        for idx in range(0, 13):
+            val = cal_data[entry_nr*13 + idx + 1]
+            if idx != 11:
+                sum += val
+            else:
+                sum += val*16
+        return sum == 255
+
+    def verify_calibration_data(self, cal_data):
+        """Verify the checksums of all calibration entries.
+
+        Expects an array of 256 values with calibration data.
+
+        :return calibration_correct: True when all checksums are correct.
+        :rtype calibration_correct: boolean
+
+        """
+        for entry_nr in range(0, 19):
+            if entry_nr in [5, 16, 18]:
+                continue
+            if not self.verify_calibration_entry(cal_data, entry_nr):
+                return False
+        return True

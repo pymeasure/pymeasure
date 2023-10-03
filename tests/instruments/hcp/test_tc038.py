@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,16 @@ def test_setpoint_setter():
         inst.setpoint = 20
 
 
+def test_setpoint_error():
+    with expected_protocol(
+        TC038,
+        [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03"),
+         (b"\x0201010WWRD0120,01,00C8\x03", b"\x020101ER0401\x03")]
+    ) as inst:
+        with pytest.raises(ConnectionError, match="Out of setpoint range"):
+            inst.setpoint = 20
+
+
 def test_temperature():
     # Communication from manual.
     with expected_protocol(
@@ -67,6 +77,16 @@ def test_monitored():
          (b"\x0201010WRM\x03", b"\x020101OK00C8\x03")]
     ) as inst:
         assert 20 == inst.monitored_value
+
+
+def test_monitored_error():
+    with expected_protocol(
+        TC038,
+        [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03"),
+         (b"\x0201010WRM\x03", b"\x020101ER0600\x03")]
+    ) as inst:
+        with pytest.raises(ConnectionError, match="monitor"):
+            inst.monitored_value
 
 
 def test_set_monitored():

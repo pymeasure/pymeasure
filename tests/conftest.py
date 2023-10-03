@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,4 +22,30 @@
 # THE SOFTWARE.
 #
 
-import pytest  # noqa
+import pytest
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--device-address",
+        action="store",
+        default=None,
+        dest="adapter",
+        help=(
+            "Pass an adapter string for connection to an instrument needed for a test, e.g. "
+            "--device-address ASRL1::INSTR or --device-address TCPIP::192.168.0.123::INSTR"
+        ),
+    )
+
+
+@pytest.fixture(scope="session")
+def connected_device_address(pytestconfig):
+    """
+    Fixture to pass the address to a device for tests that require a connection to an instrument.
+
+    Using this fixture in a test function will skip it when running pytest by default. The test will
+    only run if a device address is provided with the --device-address option when invoking pytest.
+    To run only relevant tests, use the -k option to select the desired tests.
+    """
+    address = pytestconfig.getoption("--device-address", skip=True)
+    return address

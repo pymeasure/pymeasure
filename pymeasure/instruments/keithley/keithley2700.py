@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,8 +86,8 @@ def text_length_validator(value, values):
     return value[:values]
 
 
-class Keithley2700(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 2700 Multimeter/Switch System and provides a
+class Keithley2700(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 2700 Multimeter/Switch System and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -139,9 +139,9 @@ class Keithley2700(Instrument, KeithleyBuffer):
         """
         self.write(":ROUTe:OPEN:ALL")
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
         super().__init__(
-            adapter, "Keithley 2700 MultiMeter/Switch System", **kwargs
+            adapter, name, **kwargs
         )
 
         self.check_errors()

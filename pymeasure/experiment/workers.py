@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -171,6 +171,8 @@ class Worker(StoppableThread):
 
         try:
             self.procedure.startup()
+            self.procedure.evaluate_metadata()
+            self.results.store_metadata()
             self.procedure.execute()
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
