@@ -23,17 +23,11 @@ Aim-TTI PL Series Power Supplies
     :undoc-members:
     :show-inheritance:
 
-    .. autoattribute:: ch_1
-       :no-value:
-
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL155P
     :members:
     :exclude-members: ch_1
     :undoc-members:
     :show-inheritance:
-
-    .. autoattribute:: ch_1
-       :no-value:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303P
     :members:
@@ -41,17 +35,11 @@ Aim-TTI PL Series Power Supplies
     :undoc-members:
     :show-inheritance:
 
-    .. autoattribute:: ch_1
-       :no-value:
-
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL601P
     :members:
     :exclude-members: ch_1
     :undoc-members:
     :show-inheritance:
-
-    .. autoattribute:: ch_1
-       :no-value:
 
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303QMDP
     :members:
@@ -59,23 +47,8 @@ Aim-TTI PL Series Power Supplies
     :undoc-members:
     :show-inheritance:
 
-    .. autoattribute:: ch_1
-       :no-value:
-
-    .. autoattribute:: ch_2
-       :no-value:
-
 .. autoclass:: pymeasure.instruments.aimtti.aimttiPL.PL303QMTP
     :members:
     :exclude-members: ch_1, ch_2, ch_3
     :undoc-members:
     :show-inheritance:
-
-    .. autoattribute:: ch_1
-       :no-value:
-
-    .. autoattribute:: ch_2
-       :no-value:
-
-    .. autoattribute:: ch_3
-       :no-value:
