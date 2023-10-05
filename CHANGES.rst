@@ -1,3 +1,7 @@
+Version 0.13.0-1 (2023-10-05)
+=============================
+Post-release to fix incorrect python version restriction in the project metadata.
+
 Version 0.13.0 (2023-09-23)
 ===========================
 Main items of this new release:
