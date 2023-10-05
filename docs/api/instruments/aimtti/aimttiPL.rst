@@ -12,8 +12,6 @@ Aim-TTI PL Series Power Supplies
     :members:
     :show-inheritance:
 
-.. For instruments with channels, we explicitly add an autoattribute with no-value
-.. to avoid "= <...ChannelCreator object>" in the rendered documentation
 .. All explicitly documented members are excluded so that there is no duplication,
 .. but we still get docs for all members that are not explicitly enumerated.
 
