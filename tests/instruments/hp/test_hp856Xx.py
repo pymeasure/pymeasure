@@ -147,7 +147,7 @@ class TestHP856Xx:
     def test_frequencies(self, function, command, hp_derivat, max_freq):
         with expected_protocol(
                 hp_derivat,
-                [("%s %.11E" % (command, max_freq), None),
+                [("%s %.11E Hz" % (command, max_freq), None),
                  ("%s?" % command, '%.11E' % max_freq)]
         ) as instr:
             setattr(instr, function, max_freq)
@@ -226,7 +226,8 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("DL 1.00000000000E+01", None),
+                    ("AUNITS?", "DBM"),
+                    ("DL 1.00000000000E+01 DBM", None),
                     ("DL " + string_params, None),
                     ("DL?", "1.00000000000E+01")
                 ]
@@ -352,7 +353,7 @@ class TestHP856Xx:
     def test_logarithmic_scale(self):
         with expected_protocol(
                 HP856Xx,
-                [("LG 1", None),
+                [("LG 1 DB", None),
                  ("LG?", "10")]
         ) as instr:
             instr.logarithmic_scale = 1
@@ -396,7 +397,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("MKD %.11E" % 28, None),
+                    ("MKD %.11E Hz" % 28, None),
                     ("MKD?", 2.8e7)
                 ]
         ) as instr:
@@ -407,7 +408,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("MKF %.11E" % 1, None),
+                    ("MKF %.11E Hz" % 1, None),
                     ("MKF?", 0.5)
                 ]
         ) as instr:
@@ -429,7 +430,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("MKFCR %d" % 1e3, None),
+                    ("MKFCR %d Hz" % 1e3, None),
                     ("MKFCR?", 1e4)
                 ]
         ) as instr:
@@ -458,7 +459,8 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("MKPT %d" % -30, None),
+                    ("AUNITS?", "DBM"),
+                    ("MKPT %d DBM" % -30, None),
                     ("MKPT?", -70)
                 ]
         ) as instr:
@@ -469,7 +471,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("MKPX %g" % 10.3, None),
+                    ("MKPX %g DB" % 10.3, None),
                     ("MKPX?", 10.3)
                 ]
         ) as instr:
@@ -491,7 +493,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("ML -30", None),
+                    ("ML -30 DB", None),
                     ("ML?", "-30")
                 ]
         ) as instr:
@@ -502,7 +504,8 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("NRL -30", None),
+                    ("AUNITS?", "DBM"),
+                    ("NRL -30 DBM", None),
                     ("NRL?", "-30")
                 ]
         ) as instr:
@@ -513,7 +516,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("NRPOS 8.000000", None),
+                    ("NRPOS 8.000000 DB", None),
                     ("NRPOS?", "8")
                 ]
         ) as instr:
@@ -551,7 +554,7 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("RB 30", None),
+                    ("RB 30 Hz", None),
                     ("RB AUTO", None),
                     ("RB?", "30")
                 ]
@@ -604,7 +607,8 @@ class TestHP856Xx:
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("RL 10", None),
+                    ("AUNITS?", "DBM"),
+                    ("RL 10 DBM", None),
                     ("RL?", "10")
                 ]
         ) as instr:
@@ -667,7 +671,8 @@ class TestHP856Xx:
     def test_squelch(self, string_params):
         with expected_protocol(
                 HP856Xx,
-                [("SQUELCH 10", None),
+                [("AUNITS?", "DBM"),
+                 ("SQUELCH 10 DBM", None),
                  ("SQUELCH %s" % string_params, None),
                  ("SQUELCH?", "10")]
         ) as instr:
@@ -687,7 +692,7 @@ class TestHP856Xx:
     def test_sweep_time(self):
         with expected_protocol(
                 HP856Xx,
-                [("ST 1.000E+01", None),
+                [("ST 1.000E+01 S", None),
                  ("ST AUTO", None),
                  ("ST?", "10.00")]
         ) as instr:
@@ -728,7 +733,8 @@ class TestHP856Xx:
     def test_threshold(self):
         with expected_protocol(
                 HP856Xx,
-                [("TH 1.00E+01", None),
+                [("AUNITS?", "DBM"),
+                 ("TH 1.00E+01 DBM", None),
                  ("TH ON", None),
                  ("TH?", "10.00")]
         ) as instr:
@@ -888,7 +894,7 @@ class TestHP856Xx:
     def test_video_bandwidth(self):
         with expected_protocol(
                 HP856Xx,
-                [("VB 70", None),
+                [("VB 70 Hz", None),
                  ("VB?", "70")],
         ) as instr:
             instr.video_bandwidth = 70
@@ -923,7 +929,8 @@ class TestHP856Xx:
     def test_video_trigger_level(self):
         with expected_protocol(
                 HP856Xx,
-                [("VTL -200.780", None),
+                [("AUNITS?", "DBM"),
+                 ("VTL -200.780 DBM", None),
                  ("VTL?", "0.005")],
         ) as instr:
             instr.video_trigger_level = -200.78
@@ -963,7 +970,8 @@ class TestHP8560A:
     def test_source_power_offset(self):
         with expected_protocol(
                 HP8560A,
-                [("SRCPOFS 10", None),
+                [("AUNITS?", "DBM"),
+                 ("SRCPOFS 10 DBM", None),
                  ("SRCPOFS?", "10")]
         ) as instr:
             instr.source_power_offset = 10
@@ -972,7 +980,7 @@ class TestHP8560A:
     def test_source_power_step(self):
         with expected_protocol(
                 HP8560A,
-                [("SRCPSTP 10.10", None),
+                [("SRCPSTP 10.10 DB", None),
                  ("SRCPSTP?", "10.10")]
         ) as instr:
             instr.source_power_step = 10.1
@@ -981,7 +989,7 @@ class TestHP8560A:
     def test_source_power_sweep(self):
         with expected_protocol(
                 HP8560A,
-                [("SRCPSWP 10.00", None),
+                [("SRCPSWP 10.00 DB", None),
                  ("SRCPSWP OFF", None),
                  ("SRCPSWP?", "10.00")]
         ) as instr:
@@ -992,7 +1000,8 @@ class TestHP8560A:
     def test_source_power(self):
         with expected_protocol(
                 HP8560A,
-                [("SRCPWR 2.00", None),
+                [("AUNITS?", "DBM"),
+                 ("SRCPWR 2.00 DBM", None),
                  ("SRCPWR ON", None),
                  ("SRCPWR?", "2.00")]
         ) as instr:
@@ -1023,7 +1032,7 @@ class TestHP8561B:
     def test_conversion_loss(self):
         with expected_protocol(
                 HP8561B,
-                [("CNVLOSS 10.2", None),
+                [("CNVLOSS 10.2 DB", None),
                  ("CNVLOSS?", "10.3")]
         ) as instr:
             instr.conversion_loss = 10.2

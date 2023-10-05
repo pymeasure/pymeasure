@@ -748,6 +748,11 @@ class HP856Xx(Instrument):
         set_process=lambda v: str(v).upper()
     )
 
+    def write(self, command, **kwargs):
+        if "{amplitude_unit}" in command:
+            command = command.format(amplitude_unit=self.amplitude_unit)
+        super(HP856Xx, self).write(command, **kwargs)
+
     def set_auto_couple(self):
         """Set the video bandwidth, resolution bandwidth, input attenuation,
         sweep time, and center frequency step-size to coupled mode.
@@ -804,7 +809,7 @@ class HP856Xx(Instrument):
         self.write("BML")
 
     center_frequency = Instrument.control(
-        "CF?", "CF %.11E",
+        "CF?", "CF %.11E Hz",
         """
         Control the center frequency in hertz and sets the spectrum analyzer to center
         frequency / span mode.
@@ -1010,7 +1015,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[float("-inf"), float("inf")], ["ON", "OFF"]],
-        set_process=lambda v: v if isinstance(v, str) else '%.11E' % v
+        set_process=lambda v: v if isinstance(v, str) else '%.11E {amplitude_unit}' % v
     )
 
     done = Instrument.measurement(
@@ -1109,7 +1114,7 @@ class HP856Xx(Instrument):
     )
 
     start_frequency = Instrument.control(
-        "FA?", "FA %.11E",
+        "FA?", "FA %.11E Hz",
         """
         Control the start frequency and set the spectrum analyzer to start-frequency/
         stop-frequency mode. If the start frequency exceeds the stop frequency, the stop frequency
@@ -1131,7 +1136,7 @@ class HP856Xx(Instrument):
     )
 
     stop_frequency = Instrument.control(
-        "FB?", "FB %.11E",
+        "FB?", "FB %.11E Hz",
         """
         Control the stop frequency and set the spectrum analyzer to start-frequency/
         stop-frequency mode. If the stop frequency is less than the start frequency, the start
@@ -1307,7 +1312,7 @@ class HP856Xx(Instrument):
         self.write("FFT %s,%s,%s" % (source, destination, window))
 
     frequency_offset = Instrument.control(
-        "FOFFSET?", "FOFFSET %.11E",
+        "FOFFSET?", "FOFFSET %.11E Hz",
         """
         Control an offset added to the displayed absolute-frequency values,
         including marker-frequency values.
@@ -1422,7 +1427,7 @@ class HP856Xx(Instrument):
         self.write("IP")
 
     logarithmic_scale = Instrument.control(
-        "LG?", "LG %d",
+        "LG?", "LG %d DB",
         """
         Control the logarithmic amplitude scale. When in linear
         mode, querying 'logarithmic_scale' returns a “0”.
@@ -1502,7 +1507,7 @@ class HP856Xx(Instrument):
         self.write("MKCF")
 
     marker_delta = Instrument.control(
-        "MKD?", "MKD %.11E",
+        "MKD?", "MKD %.11E Hz",
         """
         Control a second marker on the trace. The parameter value specifies the distance
         in frequency or time (when in zero span) between the two markers.
@@ -1533,7 +1538,7 @@ class HP856Xx(Instrument):
     # )
 
     marker_frequency = Instrument.control(
-        "MKF?", "MKF %.11E",
+        "MKF?", "MKF %.11E Hz",
         """
         Control the frequency of the active marker.
         Default units are in Hertz.
@@ -1602,7 +1607,7 @@ class HP856Xx(Instrument):
         self.write("MKFC %s" % parameter)
 
     frequency_counter_resolution = Instrument.control(
-        "MKFCR?", "MKFCR %d",
+        "MKFCR?", "MKFCR %d Hz",
         """
         Control the resolution of the frequency counter. Refer to the 'frequency_counter_mode'
         command. The default value is 10 kHz.
@@ -1716,7 +1721,7 @@ class HP856Xx(Instrument):
         self.write("MKPK %s" % mode)
 
     marker_threshold = Instrument.control(
-        "MKPT?", "MKPT %g",
+        "MKPT?", "MKPT %g {amplitude_unit}",
         """
         Control the minimum amplitude level from which a peak on the trace can
         be detected. The default value is -130 dBm. See also the :attr:`peak_excursion` command.
@@ -1739,7 +1744,7 @@ class HP856Xx(Instrument):
     )
 
     peak_excursion = Instrument.control(
-        "MKPX?", "MKPX %g",
+        "MKPX?", "MKPX %g DB",
         """
         Control what constitutes a peak on a trace. The chosen value specifies
         the amount that a trace must increase monotonically, then decrease monotonically, in order
@@ -1827,7 +1832,7 @@ class HP856Xx(Instrument):
     )
 
     mixer_level = Instrument.control(
-        "ML?", "ML %d",
+        "ML?", "ML %d DB",
         """
         Control the maximum signal level that is at the input mixer. The
         attenuator automatically adjusts to ensure that this level is not exceeded for signals less
@@ -1897,7 +1902,7 @@ class HP856Xx(Instrument):
     )
 
     normalized_reference_level = Instrument.control(
-        "NRL?", "NRL %d",
+        "NRL?", "NRL %d {amplitude_unit}",
         """
         Control the normalized reference level. It is intended to be used with the
         :attr:`normalize_trace_data` command. When using 'normalized_reference_level', the input
@@ -1931,7 +1936,7 @@ class HP856Xx(Instrument):
     )
 
     normalized_reference_position = Instrument.control(
-        "NRPOS?", "NRPOS %f",
+        "NRPOS?", "NRPOS %f DB",
         """
         Control the normalized reference-position that corresponds to the
         position on the graticule where the difference between the measured and calibrated traces
@@ -2076,7 +2081,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["AUTO", "MAN"], arange(10, 2e6)],
-        set_process=lambda v: v if isinstance(v, str) else int(v),
+        set_process=lambda v: v if isinstance(v, str) else str(int(v)) + " Hz",
         get_process=lambda v: v if isinstance(v, str) else int(v)
     )
 
@@ -2219,7 +2224,7 @@ class HP856Xx(Instrument):
     )
 
     reference_level = Instrument.control(
-        "RL?", "RL %g",
+        "RL?", "RL %g {amplitude_unit}",
         """
         Control the reference level, or range level when in normalized mode. (Range level
         functions the same as reference level.) The reference level is the top horizontal line on
@@ -2266,7 +2271,7 @@ class HP856Xx(Instrument):
     )
 
     reference_offset = Instrument.control(
-        "ROFFSET?", "ROFFSET %d",
+        "ROFFSET?", "ROFFSET %d DB",
         """
         Control an offset applied to all amplitude readouts (for example, the
         reference level and marker amplitude). The offset is in dB, regardless of the selected scale
@@ -2387,7 +2392,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
-        set_process=lambda v: v if isinstance(v, str) else "%.11E" % v,
+        set_process=lambda v: v if isinstance(v, str) else "%.11E Hz" % v,
         get_process=lambda v: v if isinstance(v, str) else v
     )
 
@@ -2415,7 +2420,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["ON", "OFF"], range(-220, 30)],
-        set_process=lambda v: v if isinstance(v, str) else v
+        set_process=lambda v: v if isinstance(v, str) else str(v) + " {amplitude_unit}"
     )
 
     def request_service(self, input):
@@ -2452,7 +2457,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["AUTO", "MAN"], arange(50E-6, 100)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.3E" % v)
+        set_process=lambda v: v if isinstance(v, str) else ("%.3E S" % v)
     )
 
     status = Instrument.measurement(
@@ -2565,7 +2570,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["ON", "OFF"], arange(-200, 30)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.2E" % v)
+        set_process=lambda v: v if isinstance(v, str) else ("%.2E {amplitude_unit}" % v)
     )
 
     def set_title(self, string):
@@ -2763,7 +2768,8 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["AUTO", "MAN"], arange(1, 3e6)],
-        cast=int
+        cast=int,
+        set_process=lambda v: v if isinstance(v, str) else str(v) + " Hz"
     )
 
     video_bandwidth_to_resolution_bandwidth = Instrument.control(
@@ -2799,7 +2805,7 @@ class HP856Xx(Instrument):
         self.write("VIEW " + trace)
 
     video_trigger_level = Instrument.control(
-        "VTL?", "VTL %.3f",
+        "VTL?", "VTL %.3f {amplitude_unit}",
         """
         Control the video trigger level when the trigger mode is set to VIDEO (refer
         to the :attr:`trigger_mode` command). A dashed line appears on the display to indicate the
@@ -2915,7 +2921,7 @@ class HP8560A(HP856Xx):
     )
 
     source_power_offset = Instrument.control(
-        "SRCPOFS?", "SRCPOFS %g",
+        "SRCPOFS?", "SRCPOFS %g {amplitude_unit}",
         """
         Control the offset of the displayed power of the built-in tracking generator so that
         it is equal to the measured power at the input of the spectrum analyzer. This function may
@@ -2933,7 +2939,7 @@ class HP8560A(HP856Xx):
     )
 
     source_power_step = Instrument.control(
-        "SRCPSTP?", "SRCPSTP %.2f",
+        "SRCPSTP?", "SRCPSTP %.2f DB",
         """
         Control the step size of the source power level, source power offset, and
         power-sweep range functions. Range: 0.1 ... 12.75 DB with 0.05 steps.
@@ -2962,7 +2968,7 @@ class HP8560A(HP856Xx):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["OFF", "ON"], arange(0.1, 12.75, 0.05)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.2f" % v)
+        set_process=lambda v: v if isinstance(v, str) else ("%.2f DB" % v)
     )
 
     source_power = Instrument.control(
@@ -2978,7 +2984,7 @@ class HP8560A(HP856Xx):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["OFF", "ON"], arange(-10, 2.8, 0.05)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.2f" % v)
+        set_process=lambda v: v if isinstance(v, str) else ("%.2f {amplitude_unit}" % v)
     )
 
     def activate_source_peak_tracking(self):
@@ -3031,7 +3037,7 @@ class HP8561B(HP856Xx):
         self.span_values = [["FULL", "ZERO"], [0, self.MAX_FREQUENCY]]
 
     conversion_loss = Instrument.control(
-        "CNVLOSS?", "CNVLOSS %s",
+        "CNVLOSS?", "CNVLOSS %s DB",
         """
         Control the compensation for losses outside the instrument when in external
         mixer mode (such as losses within connector cables, external mixers, etc.).
