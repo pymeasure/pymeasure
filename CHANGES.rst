@@ -1,6 +1,6 @@
-Version 0.13.0-1 (2023-10-05)
-=============================
-Post-release to fix incorrect python version restriction in the project metadata.
+Version 0.13.1 (2023-10-05)
+===========================
+New release to fix ineffective python version restriction in the project metadata (only affected Python<=3.7 environments installing via pip).
 
 Version 0.13.0 (2023-09-23)
 ===========================
