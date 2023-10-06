@@ -22,8 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments import Instrument, Channel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -85,15 +84,41 @@ Attenuator_70dB_4_Section = {
 """ Mapping of logical values for use with 0 - 70 dB attenuators with 4 switching sections """
 
 
+class SwitchDriverChannel(Channel):
+    enabled = Instrument.setting(
+        "%s{ch}",
+        """
+        Set this channel to the polarity 'A' for True and 'B' for False.
+        """,
+        map_values=True,
+        values={True: "A", False: "B"}
+    )
+
+
 class HP11713A(Instrument):
     """
-    A switch driver
+    Represents the HP 11713A Switch and Attenuator Driver and provides a high-level
+    interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        from pymeasure.instruments.hp import HP11713A
+        from pymeasure.instruments.hp.hp11713a import Attenuator_110dB
+
+        sd = HP11713A("GPIB::1")
+
+        sd.ATTENUATOR_Y = Attenuator_110dB
+        sd.attenuation_y(10)
+        sd.ch_0.enabled = True
+
     """
 
     ATTENUATOR_X = {}
     ATTENUATOR_Y = {}
 
-    def __init__(self, adapter, name="Hewlett-Packard HP11713A", deactivate_string="B1234567890",
+    channels = Instrument.MultiChannelCreator(SwitchDriverChannel, list(range(0, 9)))
+
+    def __init__(self, adapter, name="Hewlett-Packard HP11713A",
                  **kwargs):
         super().__init__(
             adapter,
@@ -102,37 +127,6 @@ class HP11713A(Instrument):
             send_end=True,
             **kwargs,
         )
-        self.deactivate_string = deactivate_string
-
-    def x(self, one, two, three, four):
-        """ Set switches according to the booleans """
-        cmd_str = ""
-        cmd_str += "A" if any([one, two, three, four]) else ""
-        cmd_str += "1" if one else ""
-        cmd_str += "2" if two else ""
-        cmd_str += "3" if three else ""
-        cmd_str += "4" if four else ""
-        cmd_str += "B" if not all([one, two, three, four]) else ""
-        cmd_str += "1" if not one else ""
-        cmd_str += "2" if not two else ""
-        cmd_str += "3" if not three else ""
-        cmd_str += "4" if not four else ""
-        self.write(cmd_str)
-
-    def y(self, five, six, seven, eight):
-        """ Set switches according to the booleans """
-        cmd_str = ""
-        cmd_str += "A" if any([five, six, seven, eight]) else ""
-        cmd_str += "5" if five else ""
-        cmd_str += "6" if six else ""
-        cmd_str += "7" if seven else ""
-        cmd_str += "8" if eight else ""
-        cmd_str += "B" if not all([five, six, seven, eight]) else ""
-        cmd_str += "5" if not five else ""
-        cmd_str += "6" if not six else ""
-        cmd_str += "7" if not seven else ""
-        cmd_str += "8" if not eight else ""
-        self.write(cmd_str)
 
     def attenuation_x(self, attenuation):
         """ Set switches according to the attenuation in dB for X
@@ -144,13 +138,14 @@ class HP11713A(Instrument):
             from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
 
             instr.ATTENUATOR_X = Attenuator_110dB
+            instr.attenuation_x(10)
         """
         rounding = 0
         if list(self.ATTENUATOR_X.keys())[1] == 10:
             rounding = -1
 
-        i, j, k, m = self.ATTENUATOR_X[int(round(attenuation, rounding))]
-        self.x(i, j, k, m)
+        self.ch_1.enabled, self.ch_2.enabled, self.ch_3.enabled, self.ch_4.enabled = \
+            self.ATTENUATOR_X[int(round(attenuation, rounding))]
 
     def attenuation_y(self, attenuation):
         """ Set switches according to the attenuation in dB for Y
@@ -161,40 +156,18 @@ class HP11713A(Instrument):
 
             from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
 
-            instr.ATTENUATOR_X = Attenuator_110dB
+            instr.ATTENUATOR_Y = Attenuator_110dB
+            instr.attenuation_y(10)
         """
         rounding = 0
         if list(self.ATTENUATOR_Y.keys())[1] == 10:
             rounding = -1
 
-        i, j, k, m = self.ATTENUATOR_Y[int(round(attenuation, rounding))]
-        self.y(i, j, k, m)
-
-    s9 = Instrument.setting(
-        "%s",
-        """Set switch on S9 A/B
-
-        The switch is always alternating between A 24V and B 24V.
-        """,
-        validator=strict_discrete_set,
-        values={True: "A9", False: "B9"},
-        map_values=True
-    )
-
-    s0 = Instrument.setting(
-        "%s",
-        """Set switch on S0 A/B
-
-        The switch is always alternating between A 24V and B 24V.
-        """,
-        validator=strict_discrete_set,
-        values={True: "A0", False: "B0"},
-        map_values=True
-    )
+        self.ch_5.enabled, self.ch_6.enabled, self.ch_7.enabled, self.ch_8.enabled = \
+            self.ATTENUATOR_Y[int(round(attenuation, rounding))]
 
     def deactivate_all(self):
         """
-        Deactivate all switches to 'B' per default or any other deactivation string given per
-        constructor.
+        Deactivate all switches to polarity 'B'.
         """
-        self.write(self.deactivate_string)
+        self.write("B1234567890")

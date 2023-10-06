@@ -25,58 +25,32 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp.hp11713a import HP11713A, Attenuator_110dB
 
+import pytest
+
 
 class TestHP11713A:
-    def test_s9(self):
+    @pytest.mark.parametrize("channel", list(range(0, 9)))
+    def test_channels(self, channel):
         with expected_protocol(
                 HP11713A,
-                [("A9", None),
-                 ("B9", None)],
+                [("A{channel}".format(channel=channel), None),
+                 ("B{channel}".format(channel=channel), None)],
         ) as instr:
-            instr.s9 = True
-            instr.s9 = False
-
-    def test_s0(self):
-        with expected_protocol(
-                HP11713A,
-                [("A0", None),
-                 ("B0", None)],
-        ) as instr:
-            instr.s0 = True
-            instr.s0 = False
-
-    def test_x(self):
-        with expected_protocol(
-                HP11713A,
-                [("A1234", None),
-                 ("B1234", None),
-                 ("A12B34", None),
-                 ("A34B12", None)],
-        ) as instr:
-            instr.x(True, True, True, True)
-            instr.x(False, False, False, False)
-            instr.x(True, True, False, False)
-            instr.x(False, False, True, True)
-
-    def test_y(self):
-        with expected_protocol(
-                HP11713A,
-                [("A5678", None),
-                 ("B5678", None),
-                 ("A56B78", None),
-                 ("A78B56", None)
-                 ],
-        ) as instr:
-            instr.y(True, True, True, True)
-            instr.y(False, False, False, False)
-            instr.y(True, True, False, False)
-            instr.y(False, False, True, True)
+            ch = getattr(instr, "ch_{channel}".format(channel=channel))
+            ch.enabled = True
+            ch.enabled = False
 
     def test_attenuation_x(self):
         with expected_protocol(
                 HP11713A,
-                [("A1B234", None),
-                 ("A1234", None)],
+                [("A1", None),
+                 ("B2", None),
+                 ("B3", None),
+                 ("B4", None),
+                 ("A1", None),
+                 ("A2", None),
+                 ("A3", None),
+                 ("A4", None)],
         ) as instr:
             instr.ATTENUATOR_X = Attenuator_110dB
             instr.attenuation_x(10)
@@ -85,8 +59,14 @@ class TestHP11713A:
     def test_attenuation_y(self):
         with expected_protocol(
                 HP11713A,
-                [("A5B678", None),
-                 ("A5678", None)],
+                [("A5", None),
+                 ("B6", None),
+                 ("B7", None),
+                 ("B8", None),
+                 ("A5", None),
+                 ("A6", None),
+                 ("A7", None),
+                 ("A8", None)],
         ) as instr:
             instr.ATTENUATOR_Y = Attenuator_110dB
             instr.attenuation_y(10)
@@ -95,9 +75,22 @@ class TestHP11713A:
     def test_attenuation_x_rounding(self):
         with expected_protocol(
                 HP11713A,
-                [("A1B234", None),
-                 ("A1234", None)],
+                [("A1", None),
+                 ("B2", None),
+                 ("B3", None),
+                 ("B4", None),
+                 ("A1", None),
+                 ("A2", None),
+                 ("A3", None),
+                 ("A4", None)],
         ) as instr:
             instr.ATTENUATOR_X = Attenuator_110dB
             instr.attenuation_x(12.5)
             instr.attenuation_x(109)
+
+    def test_deactivate_all(self):
+        with expected_protocol(
+                HP11713A,
+                [("B1234567890", None)],
+        ) as instr:
+            instr.deactivate_all()
