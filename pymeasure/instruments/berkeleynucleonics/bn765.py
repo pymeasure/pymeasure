@@ -237,7 +237,7 @@ class BN765(Instrument):
 
         for i in range(0, 4):
             try:
-                ret = self.ask("OUT{:}:PULSE:MODE?".format(str(i+1)))
+                ret = self.ask("OUTP{:}:PULS:MODE?".format(str(i+1)))
             except VisaIOError:
                 break
 
