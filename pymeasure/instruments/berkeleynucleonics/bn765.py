@@ -42,13 +42,13 @@ class Pulse():
     BOOLS = {True: 1, False: 0}
 
     width = Instrument.control(
-        'width?', 'width %.9F',
+        'width?', 'width %.10F',
         """Float parameter that contols the width of the pulse represented by this instance, on this
          instance of channel. Width must be less than pulse period"""
     )
 
     delay = Instrument.control(
-        'delay?', 'delay %.9F',
+        'delay?', 'delay %.10F',
         """Float paramer which controls the delay for the specified pulse relative
         to the selected output channel"""
     )
