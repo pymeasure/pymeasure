@@ -24,3 +24,4 @@
 
 from .teledyneT3AFG import TeledyneT3AFG
 from .teledyne_oscilloscope import TeledyneOscilloscope
+from .teledyneMAUI import TeledyneMAUI
