@@ -46,9 +46,9 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
         self.setToolTip(
             "The filename of the file to which the measurement will be stored. Placeholders (in \n"
             "standard python format, i.e.: '{variable name:formatspec}') will be replaced by \n"
-            "the respective value. If the filename does not contain an extension, '.csv' will\n"
-            "be appended. Additionally, an index number ('_#') is added to ensure the uniqueness\n"
-            "of the filename.\n"
+            "the respective value. The extension '.csv' will be appended, unless an extension\n"
+            "(one of '.txt', or '.csv') is recognized. Additionally, an index number ('_#') is\n"
+            "added to ensure the uniqueness of the filename.\n"
             "\nValid placeholders are:\n- '" + "';\n- '".join(self.placeholders) + "'."
         )
 
