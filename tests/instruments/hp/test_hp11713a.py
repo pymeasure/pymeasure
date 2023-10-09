@@ -33,10 +33,10 @@ class TestHP11713A:
     def test_channels(self, channel):
         with expected_protocol(
                 HP11713A,
-                [("A{channel}".format(channel=channel), None),
-                 ("B{channel}".format(channel=channel), None)],
+                [(f"A{channel}", None),
+                 (f"B{channel}", None)],
         ) as instr:
-            ch = getattr(instr, "ch_{channel}".format(channel=channel))
+            ch = getattr(instr, f"ch_{channel}")
             ch.enabled = True
             ch.enabled = False
 

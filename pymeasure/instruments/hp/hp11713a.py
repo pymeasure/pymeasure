@@ -100,6 +100,13 @@ class HP11713A(Instrument):
     Represents the HP 11713A Switch and Attenuator Driver and provides a high-level
     interface for interacting with the instrument.
 
+    Usually an attenuator is hooked to either X or Y or X and Y. To ease the control
+    of the attenuator driver you have the possibility to set an attenuator type via
+    the attribute 'ATTENUATOR_X' or 'ATTENUATOR_Y'. The hp11713a keeps different default attenuator
+    mappings. After setting the attenuator type you are able to use the methods 'attenuation_x'
+    and/or 'attenuation_y' to set the switch driver to the correct value for the specified
+    attenuation. The attenuation values are rounded.
+
     .. code-block:: python
 
         from pymeasure.instruments.hp import HP11713A
@@ -131,7 +138,8 @@ class HP11713A(Instrument):
     def attenuation_x(self, attenuation):
         """ Set switches according to the attenuation in dB for X
 
-        A attenuation mapping has to be set in before e.g.
+        The set attenuation will be rounded to the next available step.
+        An attenuation mapping has to be set in before e.g.
 
         .. code-block:: python
 
@@ -150,7 +158,8 @@ class HP11713A(Instrument):
     def attenuation_y(self, attenuation):
         """ Set switches according to the attenuation in dB for Y
 
-        A attenuation mapping has to be set in before e.g.
+        The set attenuation will be rounded to the next available step.
+        An attenuation mapping has to be set in before e.g.
 
         .. code-block:: python
 
