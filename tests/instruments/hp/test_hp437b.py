@@ -22,16 +22,23 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp3437A import HP3437A
-from .hp8116a import HP8116A
-from .hp8657b import HP8657B
-from .hp856Xx import HP8560A
-from .hp856Xx import HP8561B
-from .hp437b import HP437B
-from .hpsystempsu import HP6632A
-from .hpsystempsu import HP6633A
-from .hpsystempsu import HP6634A
-from .hplegacyinstrument import HPLegacyInstrument
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.hp import HP437B
+from pymeasure.instruments.hp.hp437b import EventStatusRegister
+
+
+def test_calibrate():
+    with expected_protocol(
+            HP437B,
+            [("CL99.9PCT", None)],
+    ) as instr:
+        instr.calibrate(99.9)
+
+def test_calibration_factor():
+    with expected_protocol(
+            HP437B,
+            [("CL99.9PCT", None)],
+    ) as instr:
+        instr.calibrate(99.9)
