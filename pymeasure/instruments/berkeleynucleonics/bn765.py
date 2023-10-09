@@ -42,13 +42,13 @@ class Pulse():
     BOOLS = {True: 1, False: 0}
 
     width = Instrument.control(
-        'width?', 'width %.4E',
+        'width?', 'width %.9E',
         """Float parameter that contols the width of the pulse represented by this instance, on this
          instance of channel. Width must be less than pulse period"""
     )
 
     delay = Instrument.control(
-        'delay?', 'delay %.4E',
+        'delay?', 'delay %.9E',
         """Float paramer which controls the delay for the specified pulse relative
         to the selected output channel"""
     )
@@ -101,7 +101,7 @@ class Channel():
     )
 
     period = Instrument.control(
-        "PERiod?", "PERiod %.4E",
+        "PERiod?", "PERiod %.9E",
         """ A floating point property that controls the period of the output1
         waveform function in seconds, ranging from 3e-5 s to 8 s. Can be set
         and overwrites the frequency for *all* waveforms. If the period is
