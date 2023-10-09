@@ -126,11 +126,12 @@ class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
-    Intially targeting T3AFG80, some features may not be available on
+    Initially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
-    included here intially.
+    included here yet.
 
     Future improvements (help welcomed):
+
     - Add other OUTPut related controls like Load and Polarity
     - Add other Basic Waveform related controls like Period
     - Add frequency ranges per model

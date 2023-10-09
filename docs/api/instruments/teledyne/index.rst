@@ -15,7 +15,13 @@ If the instrument you are looking for is not here, also check :doc:`LeCroy<../le
 
 
 There are shared base classes for Teledyne oscilloscopes.
-If your device is missing, the base class might already work well enough.
+These base classes already work directly for some devices, the following are confirmed:
+
+* :class:`~pymeasure.instruments.teledyne.TeledyneMAUI`
+
+  * Teledyne LeCroy HDO6xxx series (e.g. HDO6054B)
+
+If your device is not listed, the base class might already work well enough anyway.
 If adding a new device, these base classes should limit the amount of new code necessary.
 
 .. toctree::
