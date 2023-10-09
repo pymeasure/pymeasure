@@ -222,19 +222,14 @@ class TestHP856Xx:
             assert instr.detector_mode == detector_mode
 
     @pytest.mark.parametrize("string_params", ["ON", "OFF"])
-    def test_display_line_strings(self, string_params):
+    def test_display_line_enabled(self, string_params):
         with expected_protocol(
                 HP856Xx,
                 [
-                    ("AUNITS?", "DBM"),
-                    ("DL 1.00000000000E+01 DBM", None),
-                    ("DL " + string_params, None),
-                    ("DL?", "1.00000000000E+01")
+                    ("DL " + string_params, None)
                 ]
         ) as instr:
-            instr.display_line = 1.0e01
-            instr.display_line = string_params
-            assert instr.display_line == 10
+            instr.display_line_enabled = True if string_params == "ON" else False
 
     def test_check_done(self):
         with expected_protocol(
@@ -692,7 +687,7 @@ class TestHP856Xx:
     def test_sweep_time(self):
         with expected_protocol(
                 HP856Xx,
-                [("ST 1.000E+01 S", None),
+                [("ST 10.000 S", None),
                  ("ST AUTO", None),
                  ("ST?", "10.00")]
         ) as instr:
@@ -735,12 +730,17 @@ class TestHP856Xx:
                 HP856Xx,
                 [("AUNITS?", "DBM"),
                  ("TH 1.00E+01 DBM", None),
-                 ("TH ON", None),
                  ("TH?", "10.00")]
         ) as instr:
             instr.threshold = 10
-            instr.threshold = "ON"
             assert instr.threshold == 10
+
+    def test_threshold_enabled(self):
+        with expected_protocol(
+                HP856Xx,
+                [("TH ON", None)]
+        ) as instr:
+            instr.threshold_enabled = True
 
     def test_title(self):
         with expected_protocol(
@@ -879,17 +879,14 @@ class TestHP856Xx:
         ) as instr:
             instr.create_fft_trace_window(Trace.A, WindowType.Flattop)
 
-    @pytest.mark.parametrize("str_param", ["ON", "OFF"])
-    def test_video_average(self, str_param):
+    @pytest.mark.parametrize("param", [("ON", True), ("OFF", False)])
+    def test_video_average_enabled(self, param):
+        str_param, boolean = param
         with expected_protocol(
                 HP856Xx,
-                [("VAVG 89", None),
-                 ("VAVG " + str_param, None),
-                 ("VAVG?", "89")]
+                [("VAVG " + str_param, None)]
         ) as instr:
-            instr.video_average = 89
-            instr.video_average = str_param
-            assert instr.video_average == 89
+            instr.video_average_enabled = boolean
 
     def test_video_bandwidth(self):
         with expected_protocol(
@@ -912,7 +909,7 @@ class TestHP856Xx:
     def test_video_bandwidth_to_resolution_bandwidth(self):
         with expected_protocol(
                 HP856Xx,
-                [("VBR 5.000E-03", None),
+                [("VBR 0.005", None),
                  ("VBR?", "0.005")],
         ) as instr:
             instr.video_bandwidth_to_resolution_bandwidth = 0.005
@@ -990,12 +987,17 @@ class TestHP8560A:
         with expected_protocol(
                 HP8560A,
                 [("SRCPSWP 10.00 DB", None),
-                 ("SRCPSWP OFF", None),
                  ("SRCPSWP?", "10.00")]
         ) as instr:
             instr.source_power_sweep = 10
-            instr.source_power_sweep = "OFF"
             assert instr.source_power_sweep == 10
+
+    def test_source_power_sweep_enabled(self):
+        with expected_protocol(
+                HP8560A,
+                [("SRCPSWP OFF", None)]
+        ) as instr:
+            instr.source_power_sweep_enabled = False
 
     def test_source_power(self):
         with expected_protocol(
@@ -1056,17 +1058,23 @@ class TestHP8561B:
             with pytest.raises(ValueError):
                 instr.set_fullband("Z")
 
-    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
-    def test_harmonic_number_lock(self, string_params):
+    def test_harmonic_number_lock(self):
         with expected_protocol(
                 HP8561B,
                 [("HNLOCK 10", None),
-                 ("HNLOCK %s" % string_params, None),
                  ("HNLOCK?", "10")]
         ) as instr:
             instr.harmonic_number_lock = 10
-            instr.harmonic_number_lock = string_params
             assert instr.harmonic_number_lock == 10
+
+    @pytest.mark.parametrize("params", [("ON", True), ("OFF", False)])
+    def test_harmonic_number_lock_enabled(self, params):
+        str_param, boolean = params
+        with expected_protocol(
+                HP8561B,
+                [("HNLOCK %s" % str_param, None)]
+        ) as instr:
+            instr.harmonic_number_lock_enabled = boolean
 
     @pytest.mark.parametrize(
         "function, command",
@@ -1093,17 +1101,23 @@ class TestHP8561B:
         ) as instr:
             assert instr.signal_identification_frequency == 2.7897e9
 
-    @pytest.mark.parametrize("string_params", ["ON", "OFF"])
-    def test_mixer_bias(self, string_params):
+    def test_mixer_bias(self):
         with expected_protocol(
                 HP8561B,
-                [("MBIAS -9.9", None),
-                 ("MBIAS %s" % string_params, None),
+                [("MBIAS -9.900 MA", None),
                  ("MBIAS?", "5.5")]
         ) as instr:
             instr.mixer_bias = -9.9
-            instr.mixer_bias = string_params
             assert instr.mixer_bias == 5.5
+
+    @pytest.mark.parametrize("params", [("ON", True), ("OFF", False)])
+    def test_mixer_bias_enabled(self, params):
+        str_param, boolean = params
+        with expected_protocol(
+                HP8561B,
+                [("MBIAS %s" % str_param, None)]
+        ) as instr:
+            instr.mixer_bias_enabled = boolean
 
     def test_preselector_dac_number(self):
         with expected_protocol(
