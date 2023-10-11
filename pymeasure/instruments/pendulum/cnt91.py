@@ -44,7 +44,7 @@ class CNT91(Instrument):
     """Represents a Pendulum CNT-91 frequency counter."""
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
-    MAX_BUFFER_SIZE = 32000  # User Manual 8-38
+    MAX_BUFFER_SIZE = 10000  # User Manual 8-39
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
         kwargs.setdefault("timeout", 120000)
