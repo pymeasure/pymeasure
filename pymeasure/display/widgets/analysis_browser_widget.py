@@ -66,7 +66,9 @@ class AnalysisBrowserWidget(QtWidgets.QWidget):
                                                 parent=self._parent)
 
         self.analysis_manager.finished_am.connect(self.finished)
-        self.analysis_manager.log.connect(self._parent.log.handle)
+        self.analysis_manager.log_am.connect(self._parent.log.handle)
+
+
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(0)
