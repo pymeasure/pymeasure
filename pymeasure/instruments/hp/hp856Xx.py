@@ -1011,9 +1011,7 @@ class HP856Xx(Instrument):
             if instr.display_line == 0:
                 pass
 
-        """,
-        validator=strict_range,
-        values=[float("-inf"), float("inf")]
+        """
     )
 
     display_line_enabled = Instrument.setting(
@@ -3191,7 +3189,7 @@ class HP8561B(HP856Xx):
         selected harmonic.
         """,
         validator=strict_range,
-        values=[int(1), int(54)],
+        values=[1, 54],
         cast=int
     )
 
