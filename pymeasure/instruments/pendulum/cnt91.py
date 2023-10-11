@@ -47,8 +47,8 @@ class CNT91(Instrument):
     MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
-        kwargs.setdefault('timeout', 120000)
-        kwargs.setdefault('read_termination', '\n')
+        kwargs.setdefault("timeout", 120000)
+        kwargs.setdefault("read_termination", "\n")
         super().__init__(
             adapter,
             name,
@@ -156,9 +156,7 @@ class CNT91(Instrument):
         channel = self.CHANNELS[channel]
         self.write(f":CONF:ARR:FREQ {n_samples},(@{channel})")
 
-    def buffer_frequency_time_series(
-        self, channel, n_samples, sample_rate, trigger_source=None
-    ):
+    def buffer_frequency_time_series(self, channel, n_samples, sample_rate, trigger_source=None):
         """
         Record a time series to the buffer and read it out after completion.
 
@@ -173,9 +171,7 @@ class CNT91(Instrument):
         else:
             max_sample_rate = 250e3
         # Minimum sample rate is 1 sample in the maximum measurement time.
-        sample_rate = strict_range(
-            sample_rate, [1 / MAX_MEASUREMENT_TIME, max_sample_rate]
-        )
+        sample_rate = strict_range(sample_rate, [1 / MAX_MEASUREMENT_TIME, max_sample_rate])
         measurement_time = 1 / sample_rate
 
         self.clear()
