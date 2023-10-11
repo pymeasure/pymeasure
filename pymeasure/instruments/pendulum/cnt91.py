@@ -35,16 +35,16 @@ from pymeasure.instruments.validators import (
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Programmer's guide 8-92, defined outside of the class, since it is used by `Instrument.control`
-# without access to `self`.
-MAX_GATE_TIME = 1000
+# Defined outside of the class, since it is used by `Instrument.control` without access to `self`.
+MAX_GATE_TIME = 1000  # Programmer's guide 8-92
+MIN_BUFFER_SIZE = 4  # Programmer's guide 8-39
+MAX_BUFFER_SIZE = 10000  # Programmer's guide 8-39
 
 
 class CNT91(Instrument):
     """Represents a Pendulum CNT-91 frequency counter."""
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
-    MAX_BUFFER_SIZE = 10000  # User Manual 8-39
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
         kwargs.setdefault("timeout", 120000)
@@ -63,32 +63,19 @@ class CNT91(Instrument):
             self._batch_size = int(self.ask("FORM:SMAX?"))
         return self._batch_size
 
-    def read_buffer(self, expected_length=0):
+    def read_buffer(self, n=MAX_BUFFER_SIZE):
         """
-        Read out the entire buffer.
+        Read out n samples from the buffer.
 
-        :param expected_length: The expected length of the buffer. If more data is read, values at
-        the end are removed. Defaults to 0, which means that the entire buffer is returned
-        independent of its length.
+        :param n: Number of samples that should be read from the buffer. The maximum number of
+            10000 samples is read out by default.
         :return: Frequency values from the buffer.
         """
+        n = truncated_range(n, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])  # Programmer's guide 8-39
         while not self.complete:
             # Wait until the buffer is filled.
             sleep(0.01)
-        data = []
-        # Loop until the buffer is completely read out.
-        while True:
-            # Get maximum number of buffer values.
-            new = self.values(":FETC:ARR? MAX")
-            data += new
-            # Last values have been read from buffer.
-            if len(new) < self.batch_size:
-                # Remove the last values if the buffer is too long.
-                if expected_length and len(data) > expected_length:
-                    data = data[:expected_length]
-                    log.info("Buffer was too long, truncated.")
-                break
-        return data
+        return self.values(f":FETC:ARR? {'MAX' if n == MAX_BUFFER_SIZE else n}")
 
     external_start_arming_source = Instrument.control(
         "ARM:SOUR?",
@@ -151,7 +138,7 @@ class CNT91(Instrument):
         :param n_samples: The number of samples
         :param channel: Measurment channel (A, B, C, E, INTREF)
         """
-        n_samples = truncated_range(n_samples, [1, self.MAX_BUFFER_SIZE])
+        n_samples = truncated_range(n_samples, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)
         channel = self.CHANNELS[channel]
         self.write(f":CONF:ARR:FREQ {n_samples},(@{channel})")
