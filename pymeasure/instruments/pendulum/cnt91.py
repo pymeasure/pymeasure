@@ -131,19 +131,22 @@ class CNT91(Instrument):
         map_values=True,
     )
 
-    def configure_frequency_array_measurement(self, n_samples, channel):
+    def configure_frequency_array_measurement(self, n_samples, channel, back_to_back=True):
         """
         Configure the counter for an array of measurements.
 
         :param n_samples: The number of samples
         :param channel: Measurment channel (A, B, C, E, INTREF)
+        :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
         n_samples = truncated_range(n_samples, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)
         channel = self.CHANNELS[channel]
-        self.write(f":CONF:ARR:FREQ {n_samples},(@{channel})")
+        self.write(f":CONF:ARR:FREQ{':BTB' if back_to_back else ''} {n_samples},(@{channel})")
 
-    def buffer_frequency_time_series(self, channel, n_samples, gate_time, trigger_source=None):
+    def buffer_frequency_time_series(
+        self, channel, n_samples, gate_time, back_to_back=True, trigger_source=None
+    ):
         """
         Record a time series to the buffer and read it out after completion.
 
@@ -151,10 +154,11 @@ class CNT91(Instrument):
         :param n_samples: The number of samples
         :param gate_time: Gate time in s
         :param trigger_source: Optionally specify a trigger source to start the measurement
+        :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
         self.clear()
         self.format = "ASCII"
-        self.configure_frequency_array_measurement(n_samples, channel)
+        self.configure_frequency_array_measurement(n_samples, channel, back_to_back=back_to_back)
         self.continuous = False
         self.gate_time = gate_time
 
