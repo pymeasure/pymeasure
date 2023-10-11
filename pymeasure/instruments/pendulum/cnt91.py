@@ -47,7 +47,8 @@ class CNT91(Instrument):
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
-        kwargs.setdefault("timeout", 120000)
+        # allow long-term measurements, add 30 s for data transfer
+        kwargs.setdefault("timeout", (MAX_GATE_TIME * MAX_BUFFER_SIZE + 30) * 1000)
         kwargs.setdefault("read_termination", "\n")
         kwargs.setdefault("baud_rate", 256000)
         super().__init__(
