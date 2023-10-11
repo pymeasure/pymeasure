@@ -35,8 +35,8 @@ from pymeasure.instruments.validators import (
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Programmer's guide 8-92, defined outside of the class, since it is used by
-# `Instrument.control` without access to `self`.
+# Programmer's guide 8-92, defined outside of the class, since it is used by `Instrument.control`
+# without access to `self`.
 MAX_MEASUREMENT_TIME = 1000
 
 
@@ -67,10 +67,9 @@ class CNT91(Instrument):
         """
         Read out the entire buffer.
 
-        :param expected_length: The expected length of the buffer. If more
-            data is read, values at the end are removed. Defaults to 0,
-            which means that the entire buffer is returned independent of its
-            length.
+        :param expected_length: The expected length of the buffer. If more data is read, values at
+        the end are removed. Defaults to 0, which means that the entire buffer is returned
+        independent of its length.
         :return: Frequency values from the buffer.
         """
         while not self.complete:
@@ -95,8 +94,8 @@ class CNT91(Instrument):
         "ARM:SOUR?",
         "ARM:SOUR %s",
         """
-        Select arming input or switch off the start arming function.
-        Options are 'A', 'B' and 'E' (rear). 'IMM' turns trigger off.
+        Select arming input or switch off the start arming function. Options are 'A', 'B' and 'E'
+        (rear). 'IMM' turns trigger off.
         """,
         validator=strict_discrete_set,
         values={"A": "EXT1", "B": "EXT2", "E": "EXT4", "IMM": "IMM"},
@@ -164,8 +163,7 @@ class CNT91(Instrument):
         :param channel: Channel that should be used
         :param n_samples: The number of samples
         :param sample_rate: Sample rate in Hz
-        :param trigger_source: Optionally specify a trigger source to start the
-            measurement
+        :param trigger_source: Optionally specify a trigger source to start the measurement
         """
         if self.interpolator_autocalibrated:
             max_sample_rate = 125e3
