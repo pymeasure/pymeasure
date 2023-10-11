@@ -37,7 +37,7 @@ log.addHandler(logging.NullHandler())
 
 # Programmer's guide 8-92, defined outside of the class, since it is used by `Instrument.control`
 # without access to `self`.
-MAX_MEASUREMENT_TIME = 1000
+MAX_GATE_TIME = 1000
 
 
 class CNT91(Instrument):
@@ -119,12 +119,12 @@ class CNT91(Instrument):
         map_values=True,
     )
 
-    measurement_time = Instrument.control(
+    gate_time = Instrument.control(
         ":ACQ:APER?",
         ":ACQ:APER %f",
         "Gate time for one measurement in s.",
         validator=strict_range,
-        values=[2e-9, MAX_MEASUREMENT_TIME],  # Programmer's guide 8-92
+        values=[2e-9, MAX_GATE_TIME],  # Programmer's guide 8-92
     )
 
     format = Instrument.control(
@@ -156,28 +156,20 @@ class CNT91(Instrument):
         channel = self.CHANNELS[channel]
         self.write(f":CONF:ARR:FREQ {n_samples},(@{channel})")
 
-    def buffer_frequency_time_series(self, channel, n_samples, sample_rate, trigger_source=None):
+    def buffer_frequency_time_series(self, channel, n_samples, gate_time, trigger_source=None):
         """
         Record a time series to the buffer and read it out after completion.
 
         :param channel: Channel that should be used
         :param n_samples: The number of samples
-        :param sample_rate: Sample rate in Hz
+        :param gate_time: Gate time in s
         :param trigger_source: Optionally specify a trigger source to start the measurement
         """
-        if self.interpolator_autocalibrated:
-            max_sample_rate = 125e3
-        else:
-            max_sample_rate = 250e3
-        # Minimum sample rate is 1 sample in the maximum measurement time.
-        sample_rate = strict_range(sample_rate, [1 / MAX_MEASUREMENT_TIME, max_sample_rate])
-        measurement_time = 1 / sample_rate
-
         self.clear()
         self.format = "ASCII"
         self.configure_frequency_array_measurement(n_samples, channel)
         self.continuous = False
-        self.measurement_time = measurement_time
+        self.gate_time = gate_time
 
         if trigger_source:
             self.external_start_arming_source = trigger_source
