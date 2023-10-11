@@ -49,6 +49,7 @@ class CNT91(Instrument):
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
         kwargs.setdefault("timeout", 120000)
         kwargs.setdefault("read_termination", "\n")
+        kwargs.setdefault("baud_rate", 256000)
         super().__init__(
             adapter,
             name,
