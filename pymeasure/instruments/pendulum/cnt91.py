@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 # Defined outside of the class, since it is used by `Instrument.control` without access to `self`.
+MIN_GATE_TIME = 2e-9  # Programmer's guide 8-92
 MAX_GATE_TIME = 1000  # Programmer's guide 8-92
 MIN_BUFFER_SIZE = 4  # Programmer's guide 8-39
 MAX_BUFFER_SIZE = 10000  # Programmer's guide 8-39
@@ -112,7 +113,7 @@ class CNT91(Instrument):
         ":ACQ:APER %f",
         "Gate time for one measurement in s.",
         validator=strict_range,
-        values=[2e-9, MAX_GATE_TIME],  # Programmer's guide 8-92
+        values=[MIN_GATE_TIME, MAX_GATE_TIME],  # Programmer's guide 8-92
     )
 
     format = Instrument.control(
