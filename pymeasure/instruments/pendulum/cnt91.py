@@ -25,6 +25,7 @@
 import logging
 from time import sleep
 
+from pymeasure.adapters.visa import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -49,9 +50,12 @@ class CNT91(Instrument):
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
         # allow long-term measurements, add 30 s for data transfer
-        kwargs.setdefault("timeout", (MAX_GATE_TIME * MAX_BUFFER_SIZE + 30) * 1000)
+        kwargs.setdefault("timeout", 24 * 60 * 60 * 1000 + 30)
         kwargs.setdefault("read_termination", "\n")
-        kwargs.setdefault("baud_rate", 256000)
+        adapter = VISAAdapter(adapter, **kwargs)
+        # could not pass this to VISAAdapter, raises ValueError: 'baud_rate' is not a valid
+        # attribute for type USBInstrument
+        adapter.connection.baud_rate = 256000
         super().__init__(
             adapter,
             name,
