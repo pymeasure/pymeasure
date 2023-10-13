@@ -23,3 +23,5 @@
 #
 
 from .wm845zi_a import LecroyWM845Zi_A
+from .mda8000 import LecroyWR8000
+from .hdo4000 import LecroyHDO4000
