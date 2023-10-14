@@ -36,9 +36,36 @@ def test_calibrate():
     ) as instr:
         instr.calibrate(99.9)
 
+
 def test_calibration_factor():
     with expected_protocol(
             HP437B,
-            [("CL99.9PCT", None)],
+            [("KB99.9PCT", None)],
     ) as instr:
-        instr.calibrate(99.9)
+        instr.calibration_factor = 99.9
+
+
+def test_display_user_message():
+    with expected_protocol(
+            HP437B,
+            [("DU TEST        ", None)],
+    ) as instr:
+        instr.display_user_message = "TEST"
+
+
+def test_duty_cycle_enabled():
+    with expected_protocol(
+            HP437B,
+            [("DC1", None),
+             ("SM", "AAaaBBCCccDDddEFGHIJKLMN1P")],
+    ) as instr:
+        instr.duty_cycle_enabled = True
+        assert instr.duty_cycle_enabled == True
+
+
+def test_duty_cycle():
+    with expected_protocol(
+            HP437B,
+            [("DY99.999PCT", None)],
+    ) as instr:
+        instr.duty_cycle = 99.999
