@@ -2562,7 +2562,7 @@ class HP856Xx(Instrument):
             When a trace is in max-hold mode, if the threshold is raised above any of the
             trace data, the data below the threshold will be permanently lost.
         """,
-        validator=strict_range,
+        validator=strict_discrete_set,
         values=arange(-200, 30),
     )
 
