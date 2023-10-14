@@ -16,6 +16,7 @@ This section contains specific documentation on the Hewlett Packard instruments 
    hp8116A
    hp856xx
    hp8657B
+   hp11713A
    hp437B
    hplegacyinstrument
    hpsystempsu
