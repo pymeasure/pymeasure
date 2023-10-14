@@ -57,6 +57,7 @@ def test_duty_cycle_enabled():
     with expected_protocol(
             HP437B,
             [("DC1", None),
+             ("ERR?", "000"),
              ("SM", "AAaaBBCCccDDddEFGHIJKLMN1P")],
     ) as instr:
         instr.duty_cycle_enabled = True
@@ -66,6 +67,16 @@ def test_duty_cycle_enabled():
 def test_duty_cycle():
     with expected_protocol(
             HP437B,
-            [("DY99.999PCT", None)],
+            [("DY99.999PCT", None),
+             ("ERR?", "000")],
     ) as instr:
         instr.duty_cycle = 99.999
+
+
+def test_frequency():
+    with expected_protocol(
+            HP437B,
+            [("FR099.9000GZ", None),
+             ("ERR?", "000")],
+    ) as instr:
+        instr.frequency = 99.9e9

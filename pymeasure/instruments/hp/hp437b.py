@@ -66,7 +66,8 @@ class StatusMessage:
     OperatingMode = (4, 2)
     Range = (6, 2)
     # 8, 9 unused
-    Filter = (10, 2)
+    AutoFilterStatus = (10, 1)
+    Filter = (11, 1)
     # 12, 13 unused
     LinearLogStatus = (14, 1)
     # A
@@ -111,9 +112,9 @@ class HP437B(Instrument):
             **kwargs,
         )
 
-    def __getstatus(status_type: StatusMessage):
+    def __getstatus(status_type: StatusMessage, modifier=lambda v: v):
         start_index, stop_offset = status_type
-        return lambda v: int(v[start_index:start_index + stop_offset])
+        return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
 
     @property
     def options(self):
@@ -123,8 +124,9 @@ class HP437B(Instrument):
         errors = []
         while True:
             err = self.values("ERR?")
-            if int(err[0]) != 0:
-                log.error(f"{self.name}: {err[0]}, {Errors[0]}")
+            # exclude upper limit and lower limit hit from real errors
+            if int(err[0]) != 0 and int(err[0]) != 21 and int(err[0]) != 23:
+                log.error(f"{self.name}: {err[0]}, {Errors[err[0]]}")
                 errors.append(err)
             else:
                 break
@@ -161,10 +163,10 @@ class HP437B(Instrument):
         """
         self.write("CL%.1fPCT" % calibration_factor)
 
-    calibration_factor = Instrument.control(
-        "KB?", "KB%3.1fPCT",
+    calibration_factor = Instrument.setting(
+        "KB%3.1fPCT",
         """
-        Control the calibration factor of a specific power sensor at a specific input frequency. 
+        Set the calibration factor of a specific power sensor at a specific input frequency. 
         (A chart or table of CAL FACTOR % versus Frequency is printed on each sensor and an 
         accompanying data sheet.) Calibration factor is entered in percent. 
         Valid entries for 'calibration_factor' range from 1.0 to 150.0%.
@@ -209,11 +211,12 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.DutyCycleStatus)
+        get_process=__getstatus(StatusMessage.DutyCycleStatus),
+        check_set_errors=True
     )
 
     duty_cycle = Instrument.setting(
-        "DY%2.3fPCT",
+        "DY%02.3fPCT",
         """
         Set the duty cycle for calculation of a pulsed input signal. This function will cause the
         power meter to report the pulse power of a rectangular pulsed input signal. The
@@ -227,14 +230,207 @@ class HP437B(Instrument):
         """,
         validator=lambda v, vs: strict_discrete_range(v, vs, 0.001),
         values=[0.001, 99.999],
+        check_set_errors=True
     )
 
-    status_message = Instrument.measurement(
-        "SM",
-        """
-        """
-    )
+    # status_message = Instrument.measurement(
+    #     "SM", "",
+    #     """
+    #     """
+    # )
 
     filter_automatic_enabled = Instrument.control(
+        "SM", "%s",
+        """
+        Control the filter mode. By switching over from automatic to manual (true to false)
+        the instrument implicitly keeps (holds) the filter value from the automatic selection.
+        """,
+        cast=bool,
+        get_process=__getstatus(StatusMessage.AutoFilterStatus),
+        set_process=lambda v: "FA" if v else "FH",
+        check_set_errors=True
+    )
+
+    filter = Instrument.control(
+        "SM", "FM%dEN",
+        """
+        Control the filter number for averaging. Setting a value implicitly enables the manual 
+        filter mode.
+        """,
+        values=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
+        validator=strict_discrete_set,
+        get_process=__getstatus(StatusMessage.Filter, (lambda x: 2 ** x)),
+        check_set_errors=True
+    )
+
+    frequency = Instrument.setting(
+        "FR%08.4fGZ",
+        """
+        Setthe frequency of the input signal. Entering a frequency causes the power meter to select
+        a sensor-specific calibration factor. The allowable range of 'frequency'
+        values is from 0.0001 to 999.9999 GHz with a 100 kHz resolution.
+        """,
+        set_process=lambda v: v / 1e9,
+        check_set_errors=True
+    )
+
+    limits_enabled = Instrument.control(
+        "SM", "LM%d",
+        """
+        Control the limits checking function to allow the power meter to monitor the
+        power level at the sensor and to indicate when that power is outside
+        preset limits.
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.LimitsCheckingStatus),
+        check_set_errors=True
+    )
+
+    limit_high = Instrument.setting(
+        "LH%5.2fEN",
+        """
+        Set the upper limit for the builtin limit checking.
+        """,
+        check_set_errors=True
+    )
+
+    limit_low = Instrument.setting(
+        "LL%5.2fEN",
+        """
+        Set the lower limit for the builtin limit checking.
+        """,
+        check_set_errors=True
+    )
+
+    limit_high_hit = Instrument.measurement(
+        "SM",
+        """
+        Check if the upper limit check got triggered.
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.LimitsStatus),
+    )
+
+    limit_low_hit = Instrument.measurement(
+        "SM",
+        """
+        Check if the lower limit check got triggered.
+        """,
+        map_values=True,
+        values={True: 2, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.LimitsStatus),
+    )
+
+    power = Instrument.measurement(
+        "",
+        """
+        Measure the power at the power sensor attached to the power meter in the corresponding unit.
+        """
+    )
+
+    power_reference_enabled = Instrument.control(
+        "SM", "OC%d",
+        """
+        Control the builtin reference power source 1mW @ 50 MHz.
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.PowerRefStatus),
+        check_set_errors=True
+    )
+
+    offset_enabled = Instrument.control(
+        "SM", "OF%d",
+        """
+        Control the offset being applied.
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.OffsetStatus),
+        check_set_errors=True
+    )
+
+    offset = Instrument.setting(
+        "OS%5.2fEN",
+        """
+        Set the offset applied to the measured value to compensate for
+        signal gain or loss (for example, to compensate for the loss of a 10 dB
+        directional coupler). Offsets are entered in dB.
+        """,
+        values=[-99.99, 99.99],
+        validator=strict_range
+    )
+
+    def reset(self):
+        self.write("*RST")
+
+    def clear_status_registers(self):
+        self.write("*CLS")
+
+    def preset(self):
+        """
+        Sets the power meter to a known state. Preset
+        conditions are shown in the following table.
+
+        .. list-table:: Preset values
+            :widths: 25 25
+            :header-rows: 1
+
+            * - Parameter
+              - Value/Condition
+            * - Frequency
+              - 50 MHz
+            * - Resolution
+              - 0.01 dB
+            * - Duty Cylce
+              - 1.000%, Off
+            * - Relative
+              - 0 dB, Off
+            * - Power Reference
+              - Off
+            * - Range
+              - Auto
+            * - Unit
+              - dBm
+            * - Low Limit
+              - -90.000 dBm
+            * - High Limit
+              - +90.000 dBm
+            * - Limit Checking
+              - Off
+            * - Trigger Mode
+              - Free Run
+            * - Group Trigger Mode
+              - Trigger with Delay
+            * - Display Function
+              - Display Enable
+        """
+        self.write("PR")
+
+    relative_mode_enabled = Instrument.control(
+        "SM", "RL%d",
+        """
+        Control the relative mode. In the relative mode the current measured power value will be
+        used as reference and any further reported value from :attr:`power` will refere to this.
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+        cast=int,
+        get_process=__getstatus(StatusMessage.RelativeModeStatus),
+        check_set_errors=True
+    )
+
+    resolution = Instrument.control(
+        "SM", "RES%d",
+        """
+        """,
+
 
     )
