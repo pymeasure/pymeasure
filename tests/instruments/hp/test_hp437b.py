@@ -21,12 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
+import pytest
 
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import EventStatusRegister
+from pymeasure.instruments.hp.hp437b import EventStatusRegister, SensorType
 
 
 def test_calibrate():
@@ -80,3 +80,34 @@ def test_frequency():
              ("ERR?", "000")],
     ) as instr:
         instr.frequency = 99.9e9
+
+@pytest.mark.parametrize('resolution', [(1, 1), (0.1, 2), (0.01, 3)])
+def test_resolution_linear(resolution):
+    value, code = resolution
+    with expected_protocol(
+            HP437B,
+            [("SM", "000000110017000A0002000000"),
+             ("RE%dEN" % code, None),
+             ("ERR?", "000")],
+    ) as instr:
+        instr.resolution = value
+
+@pytest.mark.parametrize('resolution', [(0.1, 1), (0.01, 2), (0.001, 3)])
+def test_resolution_logarithmic(resolution):
+    value, code = resolution
+    with expected_protocol(
+            HP437B,
+            [("SM", "000000110017001A0002000001"),
+             ("RE%dEN" % code, None),
+             ("ERR?", "000")],
+    ) as instr:
+        instr.resolution = value
+
+@pytest.mark.parametrize('sensor_type', [e for e in SensorType])
+def test_sensor_type(sensor_type):
+    with expected_protocol(
+            HP437B,
+            [("SE%dEN" % int(sensor_type.value), None),
+             ("ERR?", "000")],
+    ) as instr:
+        instr.sensor_type = sensor_type

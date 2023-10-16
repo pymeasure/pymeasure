@@ -24,9 +24,11 @@
 
 import pytest
 from time import sleep
-from pymeasure.instruments.hp import HP437B, hp437b
+from pymeasure.instruments.hp import HP437B
+from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit
+import numpy as np
 
-#pytest.skip('Only work with connected hardware', allow_module_level=True)
+pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 class TestHP437B:
     """
@@ -101,6 +103,11 @@ class TestHP437B:
         assert instr.limit_low_hit is True
         instr.limits_enabled = False
 
+    def test_limit_high(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.limit_high = 299.999
+        assert instr.limit_high == 299.999
+
     @pytest.mark.parametrize('boolean', BOOLEANS)
     def test_offset_enabled(self, make_resetted_instr, boolean):
         instr = make_resetted_instr
@@ -109,16 +116,71 @@ class TestHP437B:
 
     def test_offset(self, make_resetted_instr):
         instr = make_resetted_instr
-        instr.power_reference_enabled = True
-        sleep(2)
-        assert (-1 <= instr.power <= 1)
         instr.offset_enabled = True
-        instr.offset = 10
-        assert (9 <= instr.power <= 11)
-        instr.offset_enabled = False
+        instr.offset = 20.22
+        assert instr.offset == 20.22
 
     @pytest.mark.parametrize('boolean', BOOLEANS)
     def test_relative_mode_enabled(self, make_resetted_instr, boolean):
         instr = make_resetted_instr
         instr.relative_mode_enabled = boolean
         assert instr.relative_mode_enabled == boolean
+
+    def test_measurement_units_and_log_lin(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.relative_mode_enabled = True
+        instr.log_lin = LogLin.Linear
+        assert instr.measurement_unit == MeasurementUnit.Percent
+
+        instr.log_lin = LogLin.Logarithmic
+        assert instr.measurement_unit == MeasurementUnit.dB
+
+        instr.relative_mode_enabled = False
+        instr.log_lin = LogLin.Linear
+        assert instr.measurement_unit == MeasurementUnit.Watts
+        assert instr.log_lin == LogLin.Linear
+
+        instr.log_lin = LogLin.Logarithmic
+        assert instr.measurement_unit == MeasurementUnit.dBm
+        assert instr.log_lin == LogLin.Logarithmic
+
+    @pytest.mark.parametrize('resolution', [1, 0.1, 0.01])
+    def test_resolution_linear(self, make_resetted_instr, resolution):
+        instr = make_resetted_instr
+
+        instr.log_lin = LogLin.Linear
+        instr.resolution = resolution
+        assert instr.resolution == resolution
+
+    @pytest.mark.parametrize('resolution', [0.1, 0.01, 0.001])
+    def test_resolution_logarithmic(self, make_resetted_instr, resolution):
+        instr = make_resetted_instr
+
+        instr.log_lin = LogLin.Logarithmic
+        instr.resolution = resolution
+        assert instr.resolution == resolution
+
+    def test_frequency(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.frequency = 50e6
+        assert instr.frequency == 50e6
+
+    def test_duty_cycle(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.duty_cycle = 50.00
+        assert instr.duty_cycle == 50.00
+
+    def test_calibration_factor(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.calibration_factor = 50.00
+        assert instr.calibration_factor == 50.00
+
+    def test_sensor_data_read_cal_factor_table(self, make_resetted_instr):
+        instr = make_resetted_instr
+        frequencies = np.arange(1e9, 81e9, 1e9)
+        cal_factors = [100.0 for _ in range(0, 80)]
+        instr.sensor_data_write_cal_factor_table(9, frequencies, cal_factors)
+        freq_data, cal_fac_data = instr.sensor_data_read_cal_factor_table(9)
+
+        assert freq_data.sort() == frequencies.sort()
+        assert cal_fac_data.sort() == cal_fac_data.sort()

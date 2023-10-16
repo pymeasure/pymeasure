@@ -8,6 +8,51 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class MeasurementUnit(Enum):
+    """Enumeration to represent the measurement unit the power meter will measure in"""
+
+    Watts = 0
+
+    dBm = 1
+
+    Percent = 2
+
+    dB = 3
+
+
+class LogLin(Enum):
+    """Enumeration to represent if the power meter measures in logarithmic or linear units"""
+    Linear = 0
+
+    Logarithmic = 1
+
+
+class SensorType(Enum):
+    """Enumeration to represent the selected sensor type for the power meter"""
+
+    #: Default (100% for all frequencies)
+    Default = 0
+
+    HP_8481A = 1
+
+    #: HP 8482A, 8482B, 8482H
+    HP_8482X = 2
+
+    HP_8483A = 3
+
+    HP_8481D = 4
+
+    HP_8485A = 5
+
+    HP_R8486A = 6
+
+    HP_Q8486A = 7
+
+    HP_R8486D = 8
+
+    HP_8487A = 9
+
+
 class EventStatusRegister(IntFlag):
     """Enumeration to represent the Event Status Register."""
 
@@ -83,20 +128,8 @@ class StatusMessage:
     MeasurementUnits = (25, 1)
 
 
-class MeasurementUnit(Enum):
-    Watts = 0
-
-    dBm = 1
-
-    Percent = 2
-
-    dB = 3
-
-
 class HP437B(Instrument):
-    """Represents the HP856XX series spectrum analyzers.
-
-    Don't use this class directly - use their derivative classes
+    """Represents the HP437B Power Meters.
 
     .. note::
         Most command descriptions are taken from the document:
@@ -163,17 +196,28 @@ class HP437B(Instrument):
         """
         self.write("CL%.1fPCT" % calibration_factor)
 
-    calibration_factor = Instrument.setting(
-        "KB%3.1fPCT",
+    @property
+    def calibration_factor(self):
         """
-        Set the calibration factor of a specific power sensor at a specific input frequency. 
-        (A chart or table of CAL FACTOR % versus Frequency is printed on each sensor and an 
-        accompanying data sheet.) Calibration factor is entered in percent. 
+        Control the calibration factor of a specific power sensor at a specific input frequency.
+        (A chart or table of CAL FACTOR % versus Frequency is printed on each sensor and an
+        accompanying data sheet.) Calibration factor is entered in percent.
         Valid entries for 'calibration_factor' range from 1.0 to 150.0%.
-        """,
-        validator=lambda v, vs: strict_discrete_range(v, vs, 0.1),
-        values=[1.0, 150.0]
-    )
+        """
+        self.write("KB")
+        # returns CALFAC 097.9%
+        display_content = self.display_output
+        assert display_content[0:6] == "CALFAC"
+        self.write("EX")
+        return float(display_content[7:12])
+
+    @calibration_factor.setter
+    def calibration_factor(self, calibration_factor):
+        values = [1.0, 150.0]
+        strict_range(float(calibration_factor), values)
+
+        self.write("KB%3.1fPCT" % float(calibration_factor))
+        self.check_errors()
 
     display_enabled = Instrument.setting(
         "%s",
@@ -203,6 +247,20 @@ class HP437B(Instrument):
         set_process=lambda v: str(v).upper().ljust(12)
     )
 
+    display_output = Instrument.measurement(
+        "OD",
+        """
+        Get the current displayed string of values of the power meter.
+        
+        .. code-block:: python
+            
+            print(instr.display_output)
+            -0.23  dB REL
+
+        """,
+        cast=str
+    )
+
     duty_cycle_enabled = Instrument.control(
         "SM", "DC%d",
         """
@@ -215,10 +273,10 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    duty_cycle = Instrument.setting(
-        "DY%02.3fPCT",
+    @property
+    def duty_cycle(self):
         """
-        Set the duty cycle for calculation of a pulsed input signal. This function will cause the
+        Control the duty cycle for calculation of a pulsed input signal. This function will cause the
         power meter to report the pulse power of a rectangular pulsed input signal. The
         allowable range of values for 'duty_cycle' is 0.001 to 99.999%.
 
@@ -227,17 +285,21 @@ class HP437B(Instrument):
         The power meter measures the average power of the pulsed input
         signal and then divides the measurement by the duty cycle value to
         obtain a pulse power reading.
-        """,
-        validator=lambda v, vs: strict_discrete_range(v, vs, 0.001),
-        values=[0.001, 99.999],
-        check_set_errors=True
-    )
+        """
+        self.write("DY")
+        # returns DTYCY 01.000%
+        display_content = self.display_output
+        assert display_content[0:5] == "DTYCY"
+        self.write("EX")
+        return float(display_content[6:12])
 
-    # status_message = Instrument.measurement(
-    #     "SM", "",
-    #     """
-    #     """
-    # )
+    @duty_cycle.setter
+    def duty_cycle(self, duty_cycle):
+        values = [0.001, 99.999]
+        strict_range(float(duty_cycle), values)
+
+        self.write("DY%02.3fPCT" % float(duty_cycle))
+        self.check_errors()
 
     filter_automatic_enabled = Instrument.control(
         "SM", "%s",
@@ -263,16 +325,31 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    frequency = Instrument.setting(
-        "FR%08.4fGZ",
+    @property
+    def frequency(self):
         """
-        Setthe frequency of the input signal. Entering a frequency causes the power meter to select
-        a sensor-specific calibration factor. The allowable range of 'frequency'
+        Control the frequency of the input signal. Entering a frequency causes the power meter to
+        select a sensor-specific calibration factor. The allowable range of 'frequency'
         values is from 0.0001 to 999.9999 GHz with a 100 kHz resolution.
-        """,
-        set_process=lambda v: v / 1e9,
-        check_set_errors=True
-    )
+        """
+        self.write("FR")
+        # returns FR 000.0500GZ
+        display_content = self.display_output
+        assert display_content[0:2] == "FR"
+        self.write("EX")
+
+        return_value = float(display_content[3:11])
+        if display_content[11:13] == "GZ":
+            return_value *= 1e9
+        else:
+            return_value *= 1e6
+
+        return return_value
+
+    @frequency.setter
+    def frequency(self, frequency):
+        self.write("FR%08.4fGZ" % (float(frequency) / 1e9))
+        self.check_errors()
 
     limits_enabled = Instrument.control(
         "SM", "LM%d",
@@ -288,21 +365,45 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    limit_high = Instrument.setting(
-        "LH%5.2fEN",
+    @property
+    def limit_high(self):
         """
-        Set the upper limit for the builtin limit checking.
-        """,
-        check_set_errors=True
-    )
+        Control the upper limit for the builtin limit checking.
+        """
+        self.write("LH")
+        # returns HI +299.999dB
+        display_content = self.display_output
+        assert display_content[0:2] == "HI"
+        self.write("EX")
+        return float(display_content[3:11])
 
-    limit_low = Instrument.setting(
-        "LL%5.2fEN",
+    @limit_high.setter
+    def limit_high(self, limit):
+        values = [-299.999, 299.999]
+        strict_range(limit, values)
+
+        self.write("LH%7.3fEN" % limit)
+        self.check_errors()
+
+    @property
+    def limit_low(self):
         """
-        Set the lower limit for the builtin limit checking.
-        """,
-        check_set_errors=True
-    )
+        Control the lower limit for the builtin limit checking.
+        """
+        self.write("LL")
+        # returns HI +299.999dB
+        display_content = self.display_output
+        assert display_content[0:2] == "LO"
+        self.write("EX")
+        return float(display_content[3:11])
+
+    @limit_low.setter
+    def limit_low(self, limit):
+        values = [-299.999, 299.999]
+        strict_range(limit, values)
+
+        self.write("LL%7.3fEN" % limit)
+        self.check_errors()
 
     limit_high_hit = Instrument.measurement(
         "SM",
@@ -357,16 +458,29 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    offset = Instrument.setting(
-        "OS%5.2fEN",
+    @property
+    def offset(self):
         """
-        Set the offset applied to the measured value to compensate for
+        Control the offset applied to the measured value to compensate for
         signal gain or loss (for example, to compensate for the loss of a 10 dB
         directional coupler). Offsets are entered in dB.
-        """,
-        values=[-99.99, 99.99],
-        validator=strict_range
-    )
+        In case the :attr:`offset_enabled` is false this returns automatically 0.0
+        """
+        if self.offset_enabled:
+            self.write("OS")
+            # returns OFS +00.00 dB
+            display_content = self.display_output
+            assert display_content[0:3] == "OFS"
+            self.write("EX")
+            return float(display_content[4:10])
+        else:
+            return 0.0
+
+    @offset.setter
+    def offset(self, offset):
+        values = [-99.99, 99.99]
+        strict_range(offset, values)
+        self.write("OS%5.2fEN" % offset)
 
     def reset(self):
         self.write("*RST")
@@ -418,7 +532,7 @@ class HP437B(Instrument):
         "SM", "RL%d",
         """
         Control the relative mode. In the relative mode the current measured power value will be
-        used as reference and any further reported value from :attr:`power` will refere to this.
+        used as reference and any further reported value from :attr:`power` will refer to this.
         """,
         map_values=True,
         values={True: 1, False: 0},
@@ -427,10 +541,235 @@ class HP437B(Instrument):
         check_set_errors=True
     )
 
-    resolution = Instrument.control(
-        "SM", "RES%d",
+    measurement_unit = Instrument.measurement(
+        "SM",
         """
+        Get the measurement unit the power meter is currently reporting the power values in.
+
+        Depends on: :attr:`relative_mode_enabled` and attr:`log_lin`
+
+        .. code-block:: python
+            
+            instr.relative_mode_enabled = False
+            instr.log_lin = LogLin.Linear
+
+            print(instr.measurement_unit)
+            MeasurementUnit.Watts
+
         """,
-
-
+        values={e: int(f.value) for (e, f) in zip(MeasurementUnit, MeasurementUnit)},
+        map_values=True,
+        get_process=__getstatus(StatusMessage.MeasurementUnits),
     )
+
+    log_lin = Instrument.control(
+        "SM", "%s",
+        """
+        Control if the power meter displays or reports the power values in logarithmic or linear
+        units. See :attr:`measurement_unit` for further information.
+
+        .. code-block:: python
+        
+            from pymeasure.instruments.hp.hp437b import LogLin
+            
+            instr.relative_mode_enabled = False
+            instr.log_lin = LogLin.Linear
+        """,
+        validator=strict_discrete_set,
+        values=[e for e in LogLin],
+        set_process=lambda v: "LN" if int(v.value) == 0 else "LG",
+        get_process=__getstatus(StatusMessage.LinearLogStatus, lambda v: {int(f.value): e for (
+            e, f) in zip(LogLin, LogLin)}[v])
+    )
+
+    @property
+    def resolution(self):
+        log_lin = self.log_lin
+        mapping = {}
+        if log_lin == LogLin.Logarithmic:
+            mapping = {1: 0.1, 2: 0.01, 3: 0.001}
+        else:
+            mapping = {1: 1, 2: 0.1, 3: 0.01}
+
+        self.write("RE")
+        self.check_errors()
+        display_content = self.display_output
+        self.check_errors()
+        self.write("EX")
+        assert display_content[0:3] == "RES"
+
+        return mapping[int(display_content[3])]
+
+    @resolution.setter
+    def resolution(self, resolution):
+        """
+        Set the resolution of the power meter's measured value. Three levels of resolution can be
+        set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
+        """
+
+        log_lin = self.log_lin
+        allowed_values = {}
+        if log_lin == LogLin.Logarithmic:
+            allowed_values = {0.1: 1, 0.01: 2, 0.001: 3}
+        else:
+            allowed_values = {1: 1, 0.1: 2, 0.01: 3}
+
+        strict_discrete_set(resolution, allowed_values.keys())
+
+        self.write(f"RE{allowed_values[resolution]}EN")
+        self.check_errors()
+
+    sensor_type = Instrument.setting(
+        "SE%dEN",
+        """
+        Set the sensor type connected to the power meter to select the corresponding calibration
+        factor.
+        
+        .. code-block:: python
+            
+            from pymeasure.instruments.hp.hp437b import SensorType
+            
+            instr.sensor_type = SensorType.HP_8481A
+        
+        """,
+        validator=strict_discrete_set,
+        values={e: int(f.value) for (e, f) in zip(SensorType, SensorType)},
+        set_process=lambda v: SensorType(v) if isinstance(v, int) else v,
+        map_values=True,
+        check_set_errors=True
+    )
+
+    def sensor_data_clear(self, sensor_id):
+        """
+        Clear the Sensor Data table of 'sensor_id' previous to entering new values.
+        """
+        values = [0, 9]
+        strict_range(sensor_id, values)
+
+        self.write(f"CT{sensor_id}")
+
+    def sensor_data_ref_cal_factor(self, sensor_id, ref_cal_factor):
+        """
+        Set the power sensor's reference calibration factor to the Sensor Data table.
+        """
+        values = [0, 9]
+        strict_range(sensor_id, values)
+
+        self.write(f"RF{sensor_id}{ref_cal_factor:4.1f}")
+        self.check_errors()
+
+    def sensor_data_write_cal_factor_table(self, sensor_id, frequency_table, cal_fac_table):
+        """
+        Write the 'calibration_table' for 'sensor_id' to the Sensor Data
+        table. And write the reference calibration factor for the 'sensor_id'.
+        Frequency is given in Hz. Calibration factor as percentage.
+
+        The power meter’s memory contains space for 10 tables, numbered
+        0—9. Tables 0-7 each contain space for 40 frequency /calibration
+        factor pairs. Tables 8 and 9 each contain space for 80
+        frequency/calibration factor pairs.
+
+        This function clears the sensor table before writing.
+
+        Example table:
+
+        .. code-block:: python
+
+            calibration_table = {
+                10e6: 100.0,
+                1e9: 96.5,
+                2e9: 97.0
+            }
+
+            instr.sensor_data_cal_factor_table(0, calibration_table)
+        """
+        values = [0, 9]
+        strict_range(sensor_id, values)
+
+        if sensor_id in range(0, 7) and (len(cal_fac_table) > 40 or len(frequency_table)):
+            raise ValueError(f"For sensor id {sensor_id} there aren't more than 40 frequency "
+                             f"pairs allowed")
+        if sensor_id in range(8, 9) and (len(cal_fac_table) > 80 or len(frequency_table)):
+            raise ValueError(f"For sensor id {sensor_id} there aren't more than 80 frequency "
+                             f"pairs allowed")
+        if len(cal_fac_table) != len(frequency_table):
+            raise ValueError(f"Frequency table and calibration factor table must have the same "
+                             f"length {len(cal_fac_table)}!={len(frequency_table)}")
+
+        self.sensor_data_clear(sensor_id)
+        for frequency, cal_factor in zip(frequency_table, cal_fac_table):
+            if frequency > 99.9e3:
+                freq_suffix = "MZ"
+                frequency /= 1e6
+            elif frequency > 99.9e6:
+                freq_suffix = "GZ"
+                frequency /= 1e9
+            else:
+                freq_suffix = "KZ"
+                frequency /= 1e3
+
+            self.write(f"ET{sensor_id} {frequency:5.2}{freq_suffix} {cal_factor}% EN")
+            self.check_errors()
+        self.write("EX")
+        self.check_errors()
+
+    def sensor_data_read_cal_factor_table(self, sensor_id):
+        """
+        Read the Sensor Data calibration table. See :meth:`sensor_data_write_cal_factor_table
+        Returns a tuple frequencies as list and calibration factors as list.
+        """
+        allowed_values = [0, 9]
+        strict_range(sensor_id, allowed_values)
+
+        pairs = 80
+        if sensor_id < 8:
+            pairs = 40
+
+        frequency_data = []
+        cal_fac_data = []
+        self.write(f"ET{sensor_id}")
+        self.check_errors()
+        for i in range(0, pairs):
+            # outputs something like 38.00GZ 100.2%
+            display_content = self.display_output
+
+            frequency = float(display_content[0:5])
+            if frequency == 0:
+                break
+            if display_content[5:7] == "GZ":
+                frequency *= 1e9
+            else:
+                frequency *= 1e6
+
+            calibration_factor = float(display_content[8:13])
+            cal_fac_data.append(calibration_factor)
+            frequency_data.append(frequency)
+
+            self.write("EN")
+            self.check_errors()
+
+        self.write("EX")
+        return frequency_data, cal_fac_data
+
+    def sensor_data_write_id_label(self, sensor_id, label):
+        """
+        Set a particular power sensor’s ID label. table to be modified. The sensor ID label must not
+        exceed 7 characters. For example, to identify Sensor Data table #2
+        with an ID number of 1234567:
+
+        .. code-block:: python
+
+            instr.sensor_data_id_label(2, "1234567")
+
+        """
+
+        values = [0, 9]
+        strict_range(sensor_id, values)
+
+        if len(label) > 7:
+            raise ValueError(f"Sensor id label must not exceed length of 7")
+
+        if not str(label).upper().isalnum():
+            raise ValueError(f"Sensor id label only allows 0-9, A-Z")
+
+        self.write(f"SN{sensor_id}{label}")
