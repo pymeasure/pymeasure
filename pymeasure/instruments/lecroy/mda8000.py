@@ -407,7 +407,7 @@ class LecroyWR8000(Instrument):
     )
 
     @property
-    def waveform_preamble(self):
+    def waveform_preamble(self, channel=None):
         #good
         """ Get preamble information for the selected waveform source as a dict with the following keys:
             - "format": byte, word, or ascii (str)
@@ -420,7 +420,7 @@ class LecroyWR8000(Instrument):
             - "yincrement": voltage difference between data points (float)
             - "yorigin": voltage at center of screen (float)
             - "yreference": data point associated with yorigin (int)"""
-        return self._waveform_preamble()
+        return self._waveform_preamble(channel=channel)
 
 
 
@@ -489,13 +489,16 @@ class LecroyWR8000(Instrument):
         if scale is not None: self.timebase_scale = scale
 
 
-    def _waveform_preamble(self):
+    def _waveform_preamble(self, channel=None):
         #good
         """
         Reads waveform preamble and converts it to a more convenient dict of values.
         """
         wfdata = {}
-        out = self.ask('INSPECT? "WAVEDESC"').split('\r\n')[1:-1]
+        if channel is not None:
+            out = self.ask(f'C{channel}:INSPECT? "WAVEDESC"').split('\r\n')[1:-1]
+        else:
+            out = self.ask('INSPECT? "WAVEDESC"').split('\r\n')[1:-1]
         for elem in out:
             key = elem.split(':')[0].strip()
             value = elem.split(':')[1].strip()
