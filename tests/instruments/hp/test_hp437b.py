@@ -40,7 +40,8 @@ def test_calibrate():
 def test_calibration_factor():
     with expected_protocol(
             HP437B,
-            [("KB99.9PCT", None)],
+            [("KB99.9PCT", None),
+             ("ERR?", "000")],
     ) as instr:
         instr.calibration_factor = 99.9
 
@@ -111,3 +112,8 @@ def test_sensor_type(sensor_type):
              ("ERR?", "000")],
     ) as instr:
         instr.sensor_type = sensor_type
+
+
+def test_range():
+
+    "000000050010001A1002000001"

@@ -25,7 +25,8 @@
 import pytest
 from time import sleep
 from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit
+from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit, OperatingMode, TriggerMode,\
+    GroupTriggerMode
 import numpy as np
 
 pytest.skip('Only work with connected hardware', allow_module_level=True)
@@ -44,15 +45,47 @@ class TestHP437B:
 
     instr = HP437B(RESOURCE)
 
-    BOOLEANS = [True]
+    BOOLEANS = [True, False]
 
     FILTER_VALUES = reversed([1, 2, 4, 8, 16, 32, 64, 128, 256, 512])
+
+    GROUP_TRIGGER_MODES = [e for e in GroupTriggerMode]
 
     @pytest.fixture
     def make_resetted_instr(self):
         self.instr.reset()
         self.instr.clear_status_registers()
         return self.instr
+
+    def test_range(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.range = 5
+        assert instr.range == 5
+        assert instr.automatic_range_enabled is False
+
+    def test_operating_mode(self, make_resetted_instr):
+        instr = make_resetted_instr
+        assert instr.operating_mode == OperatingMode.Normal
+
+    def test_trigger_mode(self, make_resetted_instr):
+        instr = make_resetted_instr
+        instr.trigger_mode = TriggerMode.Hold
+        assert instr.trigger_mode == TriggerMode.Hold
+
+        instr.trigger_mode = TriggerMode.FreeRunning
+        assert instr.trigger_mode == TriggerMode.FreeRunning
+
+    @pytest.mark.parametrize('boolean', BOOLEANS)
+    def test_automatic_range_enabled(self, make_resetted_instr, boolean):
+        instr = make_resetted_instr
+        instr.automatic_range_enabled = boolean
+        assert instr.automatic_range_enabled == boolean
+
+    @pytest.mark.parametrize('gtmode', GROUP_TRIGGER_MODES)
+    def test_group_trigger_mode(self, make_resetted_instr, gtmode):
+        instr = make_resetted_instr
+        instr.group_trigger_mode = gtmode
+        assert instr.group_trigger_mode == gtmode
 
     @pytest.mark.parametrize('boolean', BOOLEANS)
     def test_duty_cycle_enabled(self, make_resetted_instr, boolean):

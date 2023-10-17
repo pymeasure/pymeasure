@@ -1,5 +1,5 @@
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import *
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from enum import Enum, IntFlag
 
 import logging
@@ -51,6 +51,34 @@ class SensorType(Enum):
     HP_R8486D = 8
 
     HP_8487A = 9
+
+
+class OperatingMode(Enum):
+    """Enumeration to represent the operating mode the power meter is currently in"""
+
+    Normal = 0
+
+    Zeroing = 6
+
+    Calibration = 8
+
+
+class TriggerMode(Enum):
+    """Enumeration to represent the trigger mode the power meter is currently in"""
+
+    Hold = 0
+
+    FreeRunning = 3
+
+
+class GroupTriggerMode(Enum):
+    """Enumeration to represent the group execute trigger mode the power meter is currently in"""
+
+    Ignore = 0
+
+    TriggerImmediate = 1
+
+    TriggerDelay = 2
 
 
 class EventStatusRegister(IntFlag):
@@ -109,7 +137,8 @@ class StatusMessage:
     MeasurementErrorCode = (0, 1)
     EntryErrorCode = (2, 2)
     OperatingMode = (4, 2)
-    Range = (6, 2)
+    AutomaticRangeStatus = (6, 1)
+    Range = (7, 1)
     # 8, 9 unused
     AutoFilterStatus = (10, 1)
     Filter = (11, 1)
@@ -133,14 +162,14 @@ class HP437B(Instrument):
 
     .. note::
         Most command descriptions are taken from the document:
-        'HP 8560A, 8561B Operating & Programming'
+        'Operating Manual 437B Power Meter'
     """
 
     def __init__(self, adapter, name="Hewlett-Packard HP437B", **kwargs):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
+            includeSCPI=False,
             send_end=True,
             **kwargs,
         )
@@ -148,10 +177,6 @@ class HP437B(Instrument):
     def __getstatus(status_type: StatusMessage, modifier=lambda v: v):
         start_index, stop_offset = status_type
         return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
-
-    @property
-    def options(self):
-        raise NotImplementedError("This instrument is only partial SCPI conformant")
 
     def check_errors(self):
         errors = []
@@ -169,9 +194,9 @@ class HP437B(Instrument):
         "*ESR?",
         """
         Get the status byte and Master Summary Status bit.
-        
+
         .. code-block:: python
-            
+
             print(instr.request_service_conditions)
             StatusRegister.PowerOn|CommandError
         """,
@@ -251,9 +276,9 @@ class HP437B(Instrument):
         "OD",
         """
         Get the current displayed string of values of the power meter.
-        
+
         .. code-block:: python
-            
+
             print(instr.display_output)
             -0.23  dB REL
 
@@ -276,8 +301,8 @@ class HP437B(Instrument):
     @property
     def duty_cycle(self):
         """
-        Control the duty cycle for calculation of a pulsed input signal. This function will cause the
-        power meter to report the pulse power of a rectangular pulsed input signal. The
+        Control the duty cycle for calculation of a pulsed input signal. This function will cause
+        the power meter to report the pulse power of a rectangular pulsed input signal. The
         allowable range of values for 'duty_cycle' is 0.001 to 99.999%.
 
         Pulse power, as reported by the power meter, is a mathematical
@@ -316,7 +341,7 @@ class HP437B(Instrument):
     filter = Instrument.control(
         "SM", "FM%dEN",
         """
-        Control the filter number for averaging. Setting a value implicitly enables the manual 
+        Control the filter number for averaging. Setting a value implicitly enables the manual
         filter mode.
         """,
         values=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
@@ -379,6 +404,9 @@ class HP437B(Instrument):
 
     @limit_high.setter
     def limit_high(self, limit):
+        """
+        Control the upper limit for the builtin limit checking.
+        """
         values = [-299.999, 299.999]
         strict_range(limit, values)
 
@@ -399,6 +427,9 @@ class HP437B(Instrument):
 
     @limit_low.setter
     def limit_low(self, limit):
+        """
+        Control the lower limit for the builtin limit checking.
+        """
         values = [-299.999, 299.999]
         strict_range(limit, values)
 
@@ -408,7 +439,7 @@ class HP437B(Instrument):
     limit_high_hit = Instrument.measurement(
         "SM",
         """
-        Check if the upper limit check got triggered.
+        Get if the upper limit check got triggered.
         """,
         map_values=True,
         values={True: 1, False: 0},
@@ -419,7 +450,7 @@ class HP437B(Instrument):
     limit_low_hit = Instrument.measurement(
         "SM",
         """
-        Check if the lower limit check got triggered.
+        Get if the lower limit check got triggered.
         """,
         map_values=True,
         values={True: 2, False: 0},
@@ -431,6 +462,7 @@ class HP437B(Instrument):
         "",
         """
         Measure the power at the power sensor attached to the power meter in the corresponding unit.
+        In case a measurement would be invalid the power meter responds with the value +9.0200e+40.
         """
     )
 
@@ -549,7 +581,7 @@ class HP437B(Instrument):
         Depends on: :attr:`relative_mode_enabled` and attr:`log_lin`
 
         .. code-block:: python
-            
+
             instr.relative_mode_enabled = False
             instr.log_lin = LogLin.Linear
 
@@ -569,9 +601,9 @@ class HP437B(Instrument):
         units. See :attr:`measurement_unit` for further information.
 
         .. code-block:: python
-        
+
             from pymeasure.instruments.hp.hp437b import LogLin
-            
+
             instr.relative_mode_enabled = False
             instr.log_lin = LogLin.Linear
         """,
@@ -584,6 +616,11 @@ class HP437B(Instrument):
 
     @property
     def resolution(self):
+        """
+        Control the resolution of the power meter's measured value. Three levels of resolution
+        can be
+        set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
+        """
         log_lin = self.log_lin
         mapping = {}
         if log_lin == LogLin.Logarithmic:
@@ -603,8 +640,8 @@ class HP437B(Instrument):
     @resolution.setter
     def resolution(self, resolution):
         """
-        Set the resolution of the power meter's measured value. Three levels of resolution can be
-        set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
+        Control the resolution of the power meter's measured value. Three levels of resolution can
+        be set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
         """
 
         log_lin = self.log_lin
@@ -624,13 +661,13 @@ class HP437B(Instrument):
         """
         Set the sensor type connected to the power meter to select the corresponding calibration
         factor.
-        
+
         .. code-block:: python
-            
+
             from pymeasure.instruments.hp.hp437b import SensorType
-            
+
             instr.sensor_type = SensorType.HP_8481A
-        
+
         """,
         validator=strict_discrete_set,
         values={e: int(f.value) for (e, f) in zip(SensorType, SensorType)},
@@ -681,7 +718,8 @@ class HP437B(Instrument):
                 2e9: 97.0
             }
 
-            instr.sensor_data_cal_factor_table(0, calibration_table)
+            instr.sensor_data_cal_factor_table(0, calibration_table.keys(),
+            calibration_table.values())
         """
         values = [0, 9]
         strict_range(sensor_id, values)
@@ -715,8 +753,8 @@ class HP437B(Instrument):
 
     def sensor_data_read_cal_factor_table(self, sensor_id):
         """
-        Read the Sensor Data calibration table. See :meth:`sensor_data_write_cal_factor_table
-        Returns a tuple frequencies as list and calibration factors as list.
+        Read the Sensor Data calibration table. See :meth:`sensor_data_write_cal_factor_table`
+        Returns a tuple of frequencies as list and calibration factors as list.
         """
         allowed_values = [0, 9]
         strict_range(sensor_id, allowed_values)
@@ -767,9 +805,145 @@ class HP437B(Instrument):
         strict_range(sensor_id, values)
 
         if len(label) > 7:
-            raise ValueError(f"Sensor id label must not exceed length of 7")
+            raise ValueError("Sensor id label must not exceed length of 7")
 
         if not str(label).upper().isalnum():
-            raise ValueError(f"Sensor id label only allows 0-9, A-Z")
+            raise ValueError("Sensor id label only allows 0-9, A-Z")
 
         self.write(f"SN{sensor_id}{label}")
+
+    automatic_range_enabled = Instrument.control(
+        "SM", "%s",
+        """
+        Control the automatic range.
+        The power meter divides each sensor’s power range into 5 ranges of 10 dB each. Range 1
+        is the most sensitive (lowest power levels), and Range 5 is the least sensitive (highest
+        power levels). The range can be set either automatically or manually.
+        """,
+        get_process=__getstatus(StatusMessage.AutomaticRangeStatus, lambda v: bool(v)),
+        set_process=lambda v: "RM0EN" if v is True else "RH"
+    )
+
+    range = Instrument.control(
+        "SM", "RM%dEN",
+        """
+        Control the range to be selected manually. Valid range numbers are 1 through 5.
+        See :attr:`automatic_range_enabled` for further information.
+        """,
+        values=[1, 5],
+        validator=strict_range,
+        get_process=__getstatus(StatusMessage.Range)
+    )
+
+    def store(self, register):
+        """
+        The power meter can store instrument configurations for recall at a
+        later time. The following information can be stored in the power
+        meter’s internal registers:
+
+        - reference calibration factor value
+        - Measurement units (dBm or watts)
+        - relative value and status (on or off)
+        - power reference status (on or off)
+        - calibration factor value
+        - SENSOR ID (sensor data table selection)
+        - offset value and status (on or off)
+        - range (Auto or Set)
+        - frequency value
+        - resolution
+        - duty cycle value and status (on or off)
+        - Filter (number of readings averaged, auto or manual)
+        - Limits value and status (on or off)
+
+        Registers 1 through 10 are available for storing instrument
+        configurations.
+        """
+        values = [1, 10]
+        strict_range(register, values)
+        self.write(f"ST{register}EN")
+
+    operating_mode = Instrument.measurement(
+        "SM",
+        """
+        Get the operating mode the power meter is currently in.
+        """,
+        get_process=__getstatus(StatusMessage.OperatingMode, lambda v: OperatingMode(v))
+    )
+
+    def zero(self):
+        """
+        Adjust the power meter’s internal circuitry for a zero power indication when no power is
+        applied to the sensor.
+
+        .. note::
+
+            Ensure that no power is applied to the sensor while the power meter
+            is zeroing. Any applied RF input power will cause an erroneous
+            reading.
+
+        """
+        self.write("ZE")
+
+    trigger_mode = Instrument.control(
+        "SM", "TR%d",
+        """
+        Control the trigger mode.
+
+        The power meter has two modes of triggered operation; standby mode and free run mode.
+        Standby mode means the power meter is making measurements, but the display and HP-IB are
+        not updated until a trigger command is received. Free run means that Meter takes
+        measurements and updates the display and HP-IB continuously.
+        """,
+        values=[e for e in TriggerMode],
+        validator=strict_discrete_set,
+        get_process=__getstatus(StatusMessage.TriggerMode, lambda v: {0: TriggerMode.FreeRunning,
+                                                                      1: TriggerMode.Hold}[v]),
+        set_process=lambda v: v.value
+    )
+
+    def trigger_immediate(self):
+        """
+        Trigger immediate.
+
+        When the power meter receives the trigger immediate program code, it inputs one more data
+        point into the digital filter, measures the reading from the filter, and then updates
+        the display and HP-IB. (When the trigger immediate command is executed, the internal
+        digital filter is not cleared.) The power meter then waits for the measurement results to
+        be read by the controller. While waiting, the power meter can process most bus commands
+        without losing the measurement results. If the power meter receives a trigger immediate
+        command and then receives the GET (Group Execute Trigger) command, the trigger immediate
+        command will be aborted and a new measurement cycle will be executed. Once the
+        measurement results are read onto the bus, the power meter always reverts to standby/hold
+        mode. Measurement results obtained via trigger immediate are normally valid only when the
+        power meter is in a steady, settled state.
+        """
+        self.write("TR1")
+
+    def trigger_delay(self):
+        """
+        Trigger with delay.
+
+        Triggering with delay is identical to :meth:`trigger_immediate` except the power meter
+        inserts a settling-time delay before taking the requested measurement.
+        This settling time allows the internal digital filter to be updated with new values to
+        produce valid, accurate measurement results. The trigger with delay command allows time
+        for settling of the internal amplifiers and filters. It does not allow time for power
+        sensor delay. In cases of large power changes, the delay may not be sufficient for
+        complete settling. Accurate readings can be assured by taking two successive measurements
+        for comparison. Once the measurement results are displayed and read onto the bus,
+        the power meter reverts to standby mode.
+        """
+        self.trigger_delay()
+
+    group_trigger_mode = Instrument.control(
+        "SM", "GT%d",
+        """
+        Control the group execute trigger mode.
+        When in remote and addressed to listen, the power meter responds to a Trigger message (
+        the Group Execute Trigger bus command [GET]) according to the programmed mode.
+        """,
+        values=[e for e in GroupTriggerMode],
+        validator=strict_discrete_set,
+        get_process=__getstatus(StatusMessage.GroupTriggerMode, lambda v: GroupTriggerMode(v)),
+        set_process=lambda v: v.value
+    )
