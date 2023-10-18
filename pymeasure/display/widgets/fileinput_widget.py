@@ -24,7 +24,7 @@
 
 import logging
 
-from ..Qt import QtCore, QtGui, QtWidgets
+from ..Qt import QtCore, QtWidgets
 from .filename_widget import FilenameLineEdit
 from .directory_widget import DirectoryLineEdit
 
@@ -59,6 +59,7 @@ class FileInputWidget(QtWidgets.QWidget):
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout()
+        vbox.setContentsMargins(0, 0, 0, 0)
 
         if hasattr(self, 'filename_input'):
             filename_label = QtWidgets.QLabel(self)
@@ -84,37 +85,37 @@ class FileInputWidget(QtWidgets.QWidget):
     @property
     def directory(self):
         if not hasattr(self, 'directory_input'):
-            raise ValueError("No directory input in the ManagedWindow")
+            raise ValueError("No directory input in the FileInputWidget")
         return self.directory_input.text()
 
     @directory.setter
     def directory(self, value):
         if not hasattr(self, 'directory_input'):
-            raise ValueError("No directory input in the ManagedWindow")
+            raise ValueError("No directory input in the FileInputWidget")
         self.directory_input.setText(str(value))
 
     @property
     def filename(self):
         if not hasattr(self, 'filename_input'):
-            raise ValueError("No filename input in the ManagedWindow")
+            raise ValueError("No filename input in the FileInputWidget")
         return self.filename_input.text()
 
     @filename.setter
     def filename(self, value):
         if not hasattr(self, 'filename_input'):
-            raise ValueError("No filename input in the ManagedWindow")
+            raise ValueError("No filename input in the FileInputWidget")
         self.filename_input.setText(str(value))
 
     @property
     def store_measurement(self):
         if not hasattr(self, 'writefile_toggle'):
-            raise ValueError("No write-file checkbox in the ManagedWindow")
+            raise ValueError("No write-file checkbox in the FileInputWidget")
         return self.writefile_toggle.isChecked()
 
     @store_measurement.setter
     def store_measurement(self, value):
         if not hasattr(self, 'writefile_toggle'):
-            raise ValueError("No write-file checkbox in the ManagedWindow")
+            raise ValueError("No write-file checkbox in the FileInputWidget")
         self.writefile_toggle.setChecked(bool(value))
 
     def toggle_file_dir_input_active(self, state):

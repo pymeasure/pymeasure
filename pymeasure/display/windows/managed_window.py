@@ -164,8 +164,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._layout()
 
     def _setup_ui(self):
-        if self.enable_filename_input or self.enable_directory_input:
-            self.file_input = FileInputWidget(self.enable_filename_input, self.enable_directory_input, self)
+
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
 
@@ -194,7 +193,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.inputs,
             parent=self,
             hide_groups=self.hide_groups,
+            inputs_in_scrollarea=self.inputs_in_scrollarea,
         )
+        self.file_input = FileInputWidget(self.enable_filename_input,
+                                          self.enable_directory_input, self)
 
         self.manager = Manager(self.widget_list,
                                self.browser,
@@ -224,28 +226,20 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
 
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(-1, 6, -1, 6)
-        hbox.addWidget(self.queue_button)
-        hbox.addWidget(self.abort_button)
-        hbox.addStretch()
+        queue_abort_hbox = QtWidgets.QHBoxLayout()
+        queue_abort_hbox.setSpacing(10)
+        queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
+        queue_abort_hbox.addWidget(self.queue_button)
+        queue_abort_hbox.addWidget(self.abort_button)
+        queue_abort_hbox.addStretch()
 
-        if self.inputs_in_scrollarea:
-            inputs_scroll = QtWidgets.QScrollArea()
-            inputs_scroll.setWidgetResizable(True)
-            inputs_scroll.setFrameStyle(QtWidgets.QScrollArea.Shape.NoFrame)
-
-            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
-                                      QtWidgets.QSizePolicy.Policy.Fixed)
-            inputs_scroll.setWidget(self.inputs)
-            inputs_vbox.addWidget(inputs_scroll, 1)
-
-        else:
-            inputs_vbox.addWidget(self.inputs)
-
+        inputs_vbox.addWidget(self.inputs)
+        inputs_vbox.addSpacing(15)
         inputs_vbox.addWidget(self.file_input)
-        inputs_vbox.addLayout(hbox)
+        if self.enable_filename_input or self.enable_directory_input:
+            # If neither is enabled, two subsequent spacings is unnecessary
+            inputs_vbox.addSpacing(15)
+        inputs_vbox.addLayout(queue_abort_hbox)
 
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
@@ -617,38 +611,26 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     @property
     def directory(self):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         return self.file_input.directory
 
     @directory.setter
     def directory(self, value):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         self.file_input.directory = value
 
     @property
     def filename(self):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         return self.file_input.filename
 
     @filename.setter
     def filename(self, value):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         self.file_input.filename = value
 
     @property
     def store_measurement(self):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         return self.file_input.store_measurement
 
     @store_measurement.setter
     def store_measurement(self, value):
-        if not hasattr(self, "file_input"):
-            raise AttributeError("ManagedWindow has no FileInputWidget")
         self.file_input.store_measurement = value
 
 
