@@ -37,10 +37,10 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
     A completer is implemented for quick completion of placeholders
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, procedure_class, parent=None):
         super().__init__(parent=parent)
 
-        self.placeholders = parent.procedure_class.placeholder_names()
+        self.placeholders = procedure_class.placeholder_names()
         self.placeholders.extend(["date", "time"])
 
         self.setToolTip(

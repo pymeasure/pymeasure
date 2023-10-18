@@ -42,8 +42,9 @@ from ..widgets import (
     LogWidget,
     ResultsDialog,
     SequencerWidget,
-    DirectoryLineEdit,
-    FilenameLineEdit,
+    FileInputWidget,
+    # DirectoryLineEdit,
+    # FilenameLineEdit,
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure, unique_filename
@@ -163,26 +164,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._layout()
 
     def _setup_ui(self):
-        if self.enable_filename_input:
-            self.writefile_toggle = QtWidgets.QCheckBox('Write file', self)
-            self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
-            self.writefile_toggle.setChecked(True)
-            self.writefile_toggle.stateChanged.connect(self.toggle_file_dir_input_active)
-            self.writefile_toggle.setToolTip(
-                "Control whether the measurement is saved to a file with the filename that is\n"
-                "specified in the field below (checked) or not (unchecked; the data is stored\n"
-                "in a temporary file)."
-            )
-
-            self.filename_label = QtWidgets.QLabel(self)
-            self.filename_label.setText('Filename')
-            self.filename_input = FilenameLineEdit(parent=self)
-            self.filename_label.setToolTip(self.filename_input.toolTip())
-        if self.enable_directory_input:
-            self.directory_label = QtWidgets.QLabel(self)
-            self.directory_label.setText('Directory')
-            self.directory_input = DirectoryLineEdit(parent=self)
-
+        if self.enable_filename_input or self.enable_directory_input:
+            self.file_input = FileInputWidget(self.enable_filename_input, self.enable_directory_input, self)
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
 
@@ -248,20 +231,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         hbox.addWidget(self.abort_button)
         hbox.addStretch()
 
-        vbox = QtWidgets.QVBoxLayout()
-
-        if self.enable_filename_input:
-            filename_box = QtWidgets.QHBoxLayout()
-            vbox.addLayout(filename_box)
-            filename_box.addWidget(self.filename_label)
-            filename_box.addWidget(self.writefile_toggle)
-            vbox.addWidget(self.filename_input)
-        if self.enable_directory_input:
-            vbox.addWidget(self.directory_label)
-            vbox.addWidget(self.directory_input)
-
-        vbox.addLayout(hbox)
-
         if self.inputs_in_scrollarea:
             inputs_scroll = QtWidgets.QScrollArea()
             inputs_scroll.setWidgetResizable(True)
@@ -275,7 +244,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         else:
             inputs_vbox.addWidget(self.inputs)
 
-        inputs_vbox.addLayout(vbox)
+        inputs_vbox.addWidget(self.file_input)
+        inputs_vbox.addLayout(hbox)
 
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
@@ -647,46 +617,39 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     @property
     def directory(self):
-        if not self.enable_directory_input:
-            raise ValueError("No directory input in the ManagedWindow")
-        return self.directory_input.text()
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        return self.file_input.directory
 
     @directory.setter
     def directory(self, value):
-        if not self.enable_directory_input:
-            raise ValueError("No directory input in the ManagedWindow")
-
-        self.directory_input.setText(str(value))
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        self.file_input.directory = value
 
     @property
     def filename(self):
-        if not self.enable_filename_input:
-            raise ValueError("No filename input in the ManagedWindow")
-        return self.filename_input.text()
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        return self.file_input.filename
 
     @filename.setter
     def filename(self, value):
-        if not self.enable_filename_input:
-            raise ValueError("No filename input in the ManagedWindow")
-        self.filename_input.setText(str(value))
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        self.file_input.filename = value
 
     @property
     def store_measurement(self):
-        if not self.writefile_toggle:
-            raise ValueError("No write-file checkbox in the ManagedWindow")
-        return self.writefile_toggle.isChecked()
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        return self.file_input.store_measurement
 
     @store_measurement.setter
     def store_measurement(self, value):
-        if not self.writefile_toggle:
-            raise ValueError("No write-file checkbox in the ManagedWindow")
-        self.writefile_toggle.setChecked(bool(value))
-
-    def toggle_file_dir_input_active(self, state):
-        if self.enable_filename_input:
-            self.filename_input.setEnabled(bool(state))
-        if self.enable_directory_input:
-            self.directory_input.setEnabled(bool(state))
+        if not hasattr(self, "file_input"):
+            raise AttributeError("ManagedWindow has no FileInputWidget")
+        self.file_input.store_measurement = value
 
 
 class ManagedWindow(ManagedWindowBase):
