@@ -724,10 +724,10 @@ class HP437B(Instrument):
         values = [0, 9]
         strict_range(sensor_id, values)
 
-        if sensor_id in range(0, 7) and (len(cal_fac_table) > 40 or len(frequency_table)):
+        if sensor_id in range(0, 7) and (len(cal_fac_table) > 40 or len(frequency_table)) > 40:
             raise ValueError(f"For sensor id {sensor_id} there aren't more than 40 frequency "
                              f"pairs allowed")
-        if sensor_id in range(8, 9) and (len(cal_fac_table) > 80 or len(frequency_table)):
+        if sensor_id in range(8, 9) and (len(cal_fac_table) > 80 or len(frequency_table)) > 80:
             raise ValueError(f"For sensor id {sensor_id} there aren't more than 80 frequency "
                              f"pairs allowed")
         if len(cal_fac_table) != len(frequency_table):
