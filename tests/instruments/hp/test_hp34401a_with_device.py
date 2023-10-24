@@ -43,8 +43,8 @@ TEST_RANGES = {
 
 
 @pytest.fixture(scope="module")
-def hp34401a():
-    instr = HP34401A('USB0::0x03EB::0x2065::HEWLETT-PACKARD_34401A_0_7-5-2::0::INSTR')
+def hp34401a(connected_device_address):
+    instr = HP34401A(connected_device_address)
     return instr
 
 
