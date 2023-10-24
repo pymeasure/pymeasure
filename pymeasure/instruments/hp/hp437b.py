@@ -736,17 +736,17 @@ class HP437B(Instrument):
 
         self.sensor_data_clear(sensor_id)
         for frequency, cal_factor in zip(frequency_table, cal_fac_table):
-            if frequency > 99.9e3:
-                freq_suffix = "MZ"
-                frequency /= 1e6
-            elif frequency > 99.9e6:
+            if frequency > 99.9e6:
                 freq_suffix = "GZ"
                 frequency /= 1e9
+            elif frequency > 99.9e3:
+                freq_suffix = "MZ"
+                frequency /= 1e6
             else:
                 freq_suffix = "KZ"
                 frequency /= 1e3
 
-            self.write(f"ET{sensor_id} {frequency:5.2}{freq_suffix} {cal_factor}% EN")
+            self.write(f"ET{sensor_id} {frequency:5.2f}{freq_suffix} {cal_factor}% EN")
             self.check_errors()
         self.write("EX")
         self.check_errors()

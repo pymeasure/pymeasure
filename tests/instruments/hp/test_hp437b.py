@@ -26,7 +26,7 @@ import pytest
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import EventStatusRegister, SensorType
+from pymeasure.instruments.hp.hp437b import SensorType
 
 
 def test_calibrate():
@@ -62,7 +62,7 @@ def test_duty_cycle_enabled():
              ("SM", "AAaaBBCCccDDddEFGHIJKLMN1P")],
     ) as instr:
         instr.duty_cycle_enabled = True
-        assert instr.duty_cycle_enabled == True
+        assert instr.duty_cycle_enabled is True
 
 
 def test_duty_cycle():
@@ -82,6 +82,7 @@ def test_frequency():
     ) as instr:
         instr.frequency = 99.9e9
 
+
 @pytest.mark.parametrize('resolution', [(1, 1), (0.1, 2), (0.01, 3)])
 def test_resolution_linear(resolution):
     value, code = resolution
@@ -92,6 +93,7 @@ def test_resolution_linear(resolution):
              ("ERR?", "000")],
     ) as instr:
         instr.resolution = value
+
 
 @pytest.mark.parametrize('resolution', [(0.1, 1), (0.01, 2), (0.001, 3)])
 def test_resolution_logarithmic(resolution):
@@ -104,6 +106,7 @@ def test_resolution_logarithmic(resolution):
     ) as instr:
         instr.resolution = value
 
+
 @pytest.mark.parametrize('sensor_type', [e for e in SensorType])
 def test_sensor_type(sensor_type):
     with expected_protocol(
@@ -115,5 +118,4 @@ def test_sensor_type(sensor_type):
 
 
 def test_range():
-
     "000000050010001A1002000001"
