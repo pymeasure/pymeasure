@@ -25,11 +25,12 @@
 import pytest
 from time import sleep
 from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit, OperatingMode, TriggerMode,\
+from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit, OperatingMode, TriggerMode, \
     GroupTriggerMode
 import numpy as np
 
 pytest.skip('Only work with connected hardware', allow_module_level=True)
+
 
 class TestHP437B:
     """
