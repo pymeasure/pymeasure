@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-from typing import Optional
-
 import pyvisa
 from serial.tools import list_ports
 
@@ -63,11 +61,10 @@ def list_resources():
     return instrs
 
 
-def find_serial_port(vendor_id: Optional[int] = None, product_id: Optional[int] = None,
-                     serial_number: Optional[str] = None) -> str:
+def find_serial_port(vendor_id=None, product_id=None, serial_number=None):
     """Find the VISA port name of the first serial device with the given USB information.
 
-    Use `None` if you do not want to check for that property.
+    Use `None` as a value if you do not want to check for that parameter.
 
     .. code-block:: python
 
@@ -77,7 +74,7 @@ def find_serial_port(vendor_id: Optional[int] = None, product_id: Optional[int] 
     :param int vid: Vendor ID.
     :param int pid: Product ID.
     :param str sn: Serial number.
-    :return: Port as a VISA string for a serial device (e.g. "ASRL5" or "ASRL/dev/ttyACM5").
+    :return str: Port as a VISA string for a serial device (e.g. "ASRL5" or "ASRL/dev/ttyACM5").
     """
     for port in sorted(list_ports.comports()):
         if ((vendor_id is None or port.vid == vendor_id)
