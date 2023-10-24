@@ -69,10 +69,15 @@ def find_serial_port(vendor_id: Optional[int] = None, product_id: Optional[int] 
 
     Use `None` if you do not want to check for that property.
 
+    .. code-block:: python
+
+        resource_name = find_serial_port(vendor_id=1256, serial_number="SN12345")
+        dmm = Agilent34410(resource_name)
+
     :param int vid: Vendor ID.
     :param int pid: Product ID.
     :param str sn: Serial number.
-    :return: Port as a VISA string for a serial device (e.g. "ASRL5" or "ASRL/dev/ACMO5").
+    :return: Port as a VISA string for a serial device (e.g. "ASRL5" or "ASRL/dev/ttyACM5").
     """
     for port in sorted(list_ports.comports()):
         if ((vendor_id is None or port.vid == vendor_id)
