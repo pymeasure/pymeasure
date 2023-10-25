@@ -82,10 +82,12 @@ class PM6669(Instrument):
             includeSCPI=False,
             **kwargs
         )
+        self.adapter.connection.timeout = 10000
         self.write("EOI ON")
         self.freerun = False
         self.backlog = Queue()
 
+    KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI", "MTI", "TOU", "MSR"]
     MULTILINE_REPLIES = ["MTI", "MSR"]
 
     def spoll(self):
