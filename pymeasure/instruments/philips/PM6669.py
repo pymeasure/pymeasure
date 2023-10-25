@@ -86,7 +86,7 @@ class PM6669(Instrument):
         self.freerun = False
         self.backlog = Queue()
 
-    KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI"]
+    MULTILINE_REPLIES = ["MTI", "MSR"]
 
     def spoll(self):
         """Read the status of the device."""
@@ -123,13 +123,18 @@ class PM6669(Instrument):
         measurement are returned. The measurement is filtered out and put in a backlog Queue.
         """
         reply = ''
-        result = None
+        result = ""
         while reply == '':
             reply = super().read()
             reply = reply.strip('\x00')
             for line in reply.splitlines():
                 if line[:3] in self.KEYWORDS:
-                    result = line
+                    result += line
+                if line[:3] in self.MULTILINE_REPLIES:
+                    result += ","
+                    reply = ''
+                    self.wait_for(0.1)
+            
         return result
 
     def reset_to_defaults(self):
@@ -187,7 +192,7 @@ PM6669.timeout = Instrument.control(
         freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process=lambda x: float(x[1].split("\n")[2][5:]) if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.SRQMask = Instrument.control(
