@@ -38,7 +38,7 @@ class TestPhilipsPM6669:
         - The device's address must be set in the RESOURCE constant.
     """
 
-    RESOURCE = prologix.PrologixAdapter("/dev/tty.usbmodem1421301", 7)
+    RESOURCE = prologix.PrologixAdapter("ASRL/dev/cu.usbmodem23201::INSTR",7, visa_library="@py", gpib_read_timeout=1000)
 
     FUNCTION_STRINGS = [
         ("FREQ A", Functions.FREQUENCY_A),
