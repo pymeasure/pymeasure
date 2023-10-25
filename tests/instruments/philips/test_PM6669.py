@@ -66,8 +66,8 @@ class TestPhilipsPM6669:
     @pytest.mark.parametrize('case', TIMEOUT_TIMES)
     def test_timeout_times(self, make_resetted_instr, case):
         instr = make_resetted_instr
-        instr.timeout = case
-        assert instr.timeout == case
+        instr.measurement_timeout = case
+        assert instr.measurement_timeout == case
 
     @pytest.mark.parametrize('case', MEASUREMENT_TIMES)
     def test_measurement_times(self, make_resetted_instr, case):

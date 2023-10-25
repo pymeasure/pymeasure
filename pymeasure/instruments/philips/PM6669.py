@@ -186,7 +186,7 @@ PM6669.freerun = Instrument.control(
     (x[1].split("\n")[0][5:] == " ON") if x[0].startswith("MTIME") is True else 0
 )
 
-PM6669.timeout = Instrument.control(
+PM6669.measurement_timeout = Instrument.control(
     "MEAC?", "TOUT %s",
     """ A float property that controls the measurement timeout, this timeout only has meaning when
         freerun is off.""",
