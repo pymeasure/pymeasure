@@ -438,7 +438,8 @@ class BN675_AWG(Instrument):
 
     def all_off(self):
         for key, item in self.mapper.items():
-            item.output = False
+            if item.output != False:
+                item.output = False
 
     def set_voltage_format(self, format):
         """
