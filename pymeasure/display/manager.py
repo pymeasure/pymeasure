@@ -522,14 +522,14 @@ class AnalyzerManager(QtCore.QObject):
         self._analyzer.join()
         self._monitor.stop = True
         print(f'did monitor get stop? {self._monitor.stop}')
-        success = self._monitor.wait(100)
+        success = self._monitor.wait(10)
         if not success:
             log.debug('Analyzer monitor did not properly exit')
             raise ValueError('Analyzer monitor did not exit properly')
         else:
             self._monitor.terminate()
         del self._analyzer
-        self._monitor.wait()
+        self._monitor.wait(10)
         del self._monitor
         self._worker = None
         self._running_analysis = None
