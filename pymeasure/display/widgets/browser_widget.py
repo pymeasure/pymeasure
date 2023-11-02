@@ -27,7 +27,7 @@ import platform
 import os
 
 from ..browser import Browser
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtCore, QtWidgets, QtGui
 from ..manager import Manager
 from pymeasure.display.widgets.results_dialog import ResultsDialog
 from pymeasure.experiment.results import Results
@@ -131,21 +131,30 @@ class BrowserWidget(QtWidgets.QWidget):
             menu = QtWidgets.QMenu(self)
 
             # Open
-            action_open = QtWidgets.QAction(menu)
+            try:
+                action_open = QtWidgets.QAction(menu)
+            except AttributeError:
+                action_open = QtGui.QAction(menu)
             action_open.setText("Open Data Externally")
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
             # Change Color
-            action_change_color = QtWidgets.QAction(menu)
+            try:
+                action_change_color = QtWidgets.QAction(menu)
+            except AttributeError:
+                action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
             menu.addAction(action_change_color)
 
             # Remove
-            action_remove = QtWidgets.QAction(menu)
+            try:
+                action_remove = QtWidgets.QAction(menu)
+            except AttributeError:
+                action_remove = QtGui.QAction(menu)
             action_remove.setText("Remove Graph")
             if self.manager.is_running():
                 if self.manager.running_experiment() == experiment:  # Experiment running
@@ -154,12 +163,18 @@ class BrowserWidget(QtWidgets.QWidget):
             menu.addAction(action_remove)
 
             # Use parameters
-            action_use = QtWidgets.QAction(menu)
+            try:
+                action_use = QtWidgets.QAction(menu)
+            except AttributeError:
+                action_use = QtGui.QAction(menu)
             action_use.setText("Use These Parameters")
             action_use.triggered.connect(
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
-            menu.exec_(self.browser.viewport().mapToGlobal(position))
+            try:
+                menu.exec_(self.browser.viewport().mapToGlobal(position))
+            except AttributeError:
+                menu.exec(self.browser.viewport().mapToGlobal(position))
 
     def change_color(self, experiment):
         color = QtWidgets.QColorDialog.getColor(
@@ -172,11 +187,17 @@ class BrowserWidget(QtWidgets.QWidget):
                 wdg.set_color(curve, color=color)
 
     def remove_experiment(self, experiment):
+        try:
+            yes = QtWidgets.QMessageBox.Yes
+            no = QtWidgets.QMessageBox.No
+        except AttributeError:
+            yes = QtWidgets.QMessageBox.StandardButton.Yes
+            no = QtWidgets.QMessageBox.StandardButton.No
         reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
                                            "Are you sure you want to remove the graph?",
-                                           QtWidgets.QMessageBox.Yes |
-                                           QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
+                                               yes |
+                                               no, no)
+        if reply == yes:
             self.manager.remove(experiment)
 
     def open_file_externally(self, filename):
