@@ -26,6 +26,8 @@ import logging
 import time
 import traceback
 from queue import Queue
+from time import sleep
+import traceback
 
 from .listeners import Recorder
 from .procedure import Procedure
@@ -207,7 +209,7 @@ class Analyzer(StoppableThread):
         #    raise ValueError("Trying to analyze procedure not marked as finished")
         if self.results.routine is None:
             raise ValueError('No analyzer routine instanced to results object')
-
+        self.routine = self.results.routine
         self.monitor_queue = Queue()
         if log_queue is None:
             log_queue = Queue()
@@ -297,11 +299,26 @@ class Analyzer(StoppableThread):
             self.context.term()
 
     def run(self):
+        retries = 3
         log.info("Analyzer thread started")
 
         self.routine = self.results.routine
         self.routine.procedure = self.results.procedure
-        self.routine.data = self.results.data
+        for i in range(retries):
+            try:
+                log.info(
+                    f'about to attempt to feather reload from {self.results.data_filename}')
+                self.routine.data = self.results.data
+                success = True
+            except Exception as e:
+                msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                log.info(f'Error detected {e}'
+                         )
+                log.info(f'{msg}')
+                success = False
+            if success:
+                break
+            sleep(.1)
 
         self.routine.should_stop = self.should_stop
         self.routine.emit = self.emit
