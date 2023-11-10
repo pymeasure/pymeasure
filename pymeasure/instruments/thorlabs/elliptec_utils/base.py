@@ -3,6 +3,7 @@
 Created the 19/06/2023
 
 @author: Sebastien Weber
+Taken and adapted from the elliptec package by David Roesel (with his permission): https://github.com/roesel/elliptec
 
 Set Of base class to interact with elliptec Thorlabs Motor Controller and any piezo motors. The basic MotorChannel
 (with units as steps)
@@ -151,6 +152,10 @@ class ElliptecController(Instrument):
         if address is not None:
             self.add_motor_channel(klass, address)
 
+    def get_channel(self, channel_as_int: int = 0):
+        """ Utility method to access MotorChannels by their index as integer """
+        return self.channels[str(channel_as_int)]
+
     def add_motor_channel(self, klass=MotorChannel, address: Union[int, List] = 0):
         """ Add one or several MotorChannel instance (or subclassed) with a given address to the Motor channels
 
@@ -163,7 +168,7 @@ class ElliptecController(Instrument):
         for ad in address:
             self.add_child(klass, str(ad))
             try:
-                self.load_motor_info()
+                self.load_motor_info(ad)
             except VisaIOError:
                 raise ExternalDeviceNotFound
 
@@ -179,23 +184,24 @@ class ElliptecController(Instrument):
             pass
 
 
-def scan_for_devices(adapter, start_address=0, stop_address=0):
+def scan_for_devices(adapter, start_address=0, stop_address=0) -> list:
     """ Scan for valid addresses at the given ElliptecController
 
     :param adapter: Visa Adapter
     :param start_address: scan from an address integer
     :param stop_address: scan up to an address integer
     """
-    channels = []
+    info = []
     motor = ElliptecController(adapter, address=None)
-    for address in range(start_address, stop_address+1):
+    motor.adapter.connection.timeout = 100
+    for address in range(start_address, stop_address):
         try:
             motor.add_motor_channel(address=address)
-            channels.append(address)
+            info.append(motor.channels[str(address)].idn)
         except ExternalDeviceNotFound:
             pass
     motor.adapter.close()
-    return channels
+    return info
 
 
 if __name__ == '__main__':

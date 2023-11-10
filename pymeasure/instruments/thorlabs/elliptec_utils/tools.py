@@ -3,7 +3,7 @@
 Created the 19/06/2023
 
 @author: Sebastien Weber
-Taken and adapted from the elliptec package by David Roesel (with his permission): https://david.roesel.cz/en/
+Taken and adapted from the elliptec package by David Roesel (with his permission): https://github.com/roesel/elliptec
 """
 
 from typing import Union

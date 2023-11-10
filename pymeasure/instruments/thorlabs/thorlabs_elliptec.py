@@ -3,6 +3,7 @@
 Created the 15/06/2023
 
 @author: Sebastien Weber
+Taken and adapted from the elliptec package by David Roesel (with his permission): https://github.com/roesel/elliptec
 """
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.thorlabs.elliptec_utils.tools import parse
