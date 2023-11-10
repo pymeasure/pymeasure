@@ -25,7 +25,7 @@
 from ..errors import RangeError, RangeException
 from .channel import Channel
 from .instrument import Instrument
-from .resources import list_resources
+from .resources import find_serial_port, list_resources
 from .validators import discreteTruncate
 
 from . import activetechnologies
@@ -73,6 +73,7 @@ from . import temptronic
 from . import texio
 from . import thermotron
 from . import thorlabs
+from . import thyracont
 from . import toptica
 from . import velleman
 from . import yokogawa

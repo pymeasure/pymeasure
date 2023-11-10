@@ -6,7 +6,7 @@ build:
     python: "mambaforge-4.10"
 
 conda:
-    environment: requirements/pymeasure.yml
+    environment: .github/pymeasure.yml
 
 sphinx:
     configuration: docs/conf.py
