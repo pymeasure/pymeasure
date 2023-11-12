@@ -54,7 +54,8 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
 
     def set_tool_tip(self):
         ext = self.parent().extensions[0]
-        extensions = "'." + "', '.".join(self.parent().extensions[1:]) + f"', or '.{ext}'"
+        extensions = ("'." + "', '.".join(self.parent().extensions[:-1]) +
+                      f"', or '.{self.parent().extensions[-1]}'")
         placeholders = "'" + "';\n- '".join(self.placeholders) + "'"
         self.setToolTip("\n".join(textwrap.wrap(
             "The filename of the file to which the measurement will be stored. Placeholders (in "

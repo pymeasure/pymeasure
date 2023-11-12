@@ -109,19 +109,19 @@ class FileInputWidget(QtWidgets.QWidget):
 
     @property
     def filename_base(self):
-        filename_base, ext = self.filename.rsplit('.')
+        filename_split = self.filename.rsplit('.', 1)
 
-        if ext in self.extensions:
-            return filename_base
+        if len(filename_split) > 1 and filename_split[1] in self.extensions:
+            return filename_split[0]
         else:
             return self.filename
 
     @property
     def filename_extension(self):
-        _, ext = self.filename.rsplit('.')
+        filename_split = self.filename.rsplit('.', 1)
 
-        if ext in self.extensions:
-            return ext
+        if len(filename_split) > 1 and filename_split[1] in self.extensions:
+            return filename_split[1]
         else:
             return self.extensions[0]
 
