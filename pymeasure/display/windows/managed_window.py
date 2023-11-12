@@ -110,9 +110,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     :param sequence_file: simple text file to quickly load a pre-defined sequence with the
         code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
-    :param directory_input: specify, if present, where the experiment's result will be saved.
-    :param filename_input: specify, if present, the base of the filename where the results will be
-        saved.
+    :param directory_input: a boolean controlling whether an input-field to specify where the
+        experiment's result will be saved is displayed (True, default) or not (False).
+    :param filename_input: a boolean controlling whether an input-field to specify the filename
+        where the results will be saved is displayed (True, default) or not (False). In this field,
+        the base of the filename (with or without extension) can be entered; if absent, the
+        extension will be appended. This field also allows for placeholders to use parameter-values
+        in the filename.
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
 
