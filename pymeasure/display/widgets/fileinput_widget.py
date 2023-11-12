@@ -33,6 +33,7 @@ log.addHandler(logging.NullHandler())
 
 
 class FileInputWidget(QtWidgets.QWidget):
+    _extensions = ["csv", "txt"]
 
     def __init__(self, filename_input=True, directory_input=True, parent=None):
         super().__init__(parent)
@@ -105,6 +106,33 @@ class FileInputWidget(QtWidgets.QWidget):
         if not hasattr(self, 'filename_input'):
             raise ValueError("No filename input in the FileInputWidget")
         self.filename_input.setText(str(value))
+
+    @property
+    def filename_base(self):
+        filename_base, ext = self.filename.rsplit('.')
+
+        if ext in self.extensions:
+            return filename_base
+        else:
+            return self.filename
+
+    @property
+    def filename_extension(self):
+        _, ext = self.filename.rsplit('.')
+
+        if ext in self.extensions:
+            return ext
+        else:
+            return self.extensions[0]
+
+    @property
+    def extensions(self):
+        return self._extensions
+
+    @extensions.setter
+    def extensions(self, value):
+        self._extensions = [ext.lstrip('.') for ext in value]
+        self.filename_input.set_tool_tip()
 
     @property
     def store_measurement(self):

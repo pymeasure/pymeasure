@@ -195,8 +195,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             hide_groups=self.hide_groups,
             inputs_in_scrollarea=self.inputs_in_scrollarea,
         )
-        self.file_input = FileInputWidget(self.enable_filename_input,
-                                          self.enable_directory_input, self)
+        self.file_input = FileInputWidget(
+            filename_input=self.enable_filename_input,
+            directory_input=self.enable_directory_input,
+            parent=self,
+        )
 
         self.manager = Manager(self.widget_list,
                                self.browser,
@@ -508,7 +511,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         """ Queue a measurement based on the parameters in the input-widget.
 
         Semi-abstract method, which must be overridden by the child class if the filename- and
-        directory-inputs are disabled. when filename- and directory inputs are enabled, overwriting
+        directory-inputs are disabled. When filename- and directory inputs are enabled, overwriting
         is not required, but can be done for custom naming, input processing, or other features.
 
         Implementations must call ``self.manager.queue(experiment)`` and pass
@@ -549,9 +552,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             try:
                 filename = unique_filename(
                     self.directory,
-                    prefix=self.filename,
+                    prefix=self.file_input.filename_base,
                     datetimeformat="",
                     procedure=procedure,
+                    ext=self.file_input.filename_extension,
                 )
             except KeyError as E:
                 if not E.args[0].startswith("The following placeholder-keys are not valid:"):

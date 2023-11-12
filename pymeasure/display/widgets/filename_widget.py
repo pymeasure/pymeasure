@@ -24,6 +24,7 @@
 
 import logging
 import re
+import textwrap
 
 from ..Qt import QtCore, QtWidgets, QtGui
 
@@ -43,20 +44,26 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
         self.placeholders = procedure_class.placeholder_names()
         self.placeholders.extend(["date", "time"])
 
-        self.setToolTip(
-            "The filename of the file to which the measurement will be stored. Placeholders (in \n"
-            "standard python format, i.e.: '{variable name:formatspec}') will be replaced by \n"
-            "the respective value. The extension '.csv' will be appended, unless an extension\n"
-            "(one of '.txt', or '.csv') is recognized. Additionally, an index number ('_#') is\n"
-            "added to ensure the uniqueness of the filename.\n"
-            "\nValid placeholders are:\n- '" + "';\n- '".join(self.placeholders) + "'."
-        )
-
         completer = PlaceholderCompleter(self.placeholders)
         self.setCompleter(completer)
 
         validator = FilenameValidator(self.placeholders, self)
         self.setValidator(validator)
+
+        self.set_tool_tip()
+
+    def set_tool_tip(self):
+        ext = self.parent().extensions[0]
+        extensions = "'." + "', '.".join(self.parent().extensions[1:]) + f"', or '.{ext}'"
+        placeholders = "'" + "';\n- '".join(self.placeholders) + "'"
+        self.setToolTip("\n".join(textwrap.wrap(
+            "The filename of the file to which the measurement will be stored. Placeholders (in "
+            "standard python format, i.e.: '{variable name:formatspec}') will be replaced by "
+            f"the respective value. The extension '.{ext}' will be appended, unless an extension "
+            f"(one of {extensions}) is recognized. Additionally, an index number ('_#') is "
+            "added to ensure the uniqueness of the filename.", width=100)) +
+            f"\nValid placeholders are:\n- {placeholders}."
+        )
 
 
 class PlaceholderCompleter(QtWidgets.QCompleter):
