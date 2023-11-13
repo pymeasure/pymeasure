@@ -71,7 +71,7 @@ def test_duty_cycle():
             [("DY99.999PCT", None),
              ("ERR?", "000")],
     ) as instr:
-        instr.duty_cycle = 99.999
+        instr.duty_cycle = 0.99999
 
 
 def test_frequency():

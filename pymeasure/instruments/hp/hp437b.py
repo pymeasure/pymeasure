@@ -303,7 +303,7 @@ class HP437B(Instrument):
         """
         Control the duty cycle for calculation of a pulsed input signal. This function will cause
         the power meter to report the pulse power of a rectangular pulsed input signal. The
-        allowable range of values for 'duty_cycle' is 0.001 to 99.999%.
+        allowable range of values for 'duty_cycle' is 0.00001 to 0.99999.
 
         Pulse power, as reported by the power meter, is a mathematical
         representation of the pulse power rather than an actual measurement.
@@ -316,14 +316,14 @@ class HP437B(Instrument):
         display_content = self.display_output
         assert display_content[0:5] == "DTYCY"
         self.write("EX")
-        return float(display_content[6:12])
+        return float(display_content[6:12])/100.0
 
     @duty_cycle.setter
     def duty_cycle(self, duty_cycle):
-        values = [0.001, 99.999]
+        values = [0.00001, 0.99999]
         strict_range(float(duty_cycle), values)
 
-        self.write("DY%02.3fPCT" % float(duty_cycle))
+        self.write("DY%02.3fPCT" % (float(duty_cycle) * 100.0))
         self.check_errors()
 
     filter_automatic_enabled = Instrument.control(
@@ -342,7 +342,7 @@ class HP437B(Instrument):
         "SM", "FM%dEN",
         """
         Control the filter number for averaging. Setting a value implicitly enables the manual
-        filter mode.
+        filter mode. Setting a value of 1 basically disables the averaging.
         """,
         values=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
         validator=strict_discrete_set,
@@ -354,8 +354,8 @@ class HP437B(Instrument):
     def frequency(self):
         """
         Control the frequency of the input signal. Entering a frequency causes the power meter to
-        select a sensor-specific calibration factor. The allowable range of 'frequency'
-        values is from 0.0001 to 999.9999 GHz with a 100 kHz resolution.
+        select a sensor-specific calibration factor. The allowed range of 'frequency'
+        values is from 0.0001 to 999.9999 GHz with a 100 kHz resolution. The unit is Hz.
         """
         self.write("FR")
         # returns FR 000.0500GZ

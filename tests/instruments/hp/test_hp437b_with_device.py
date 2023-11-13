@@ -201,8 +201,8 @@ class TestHP437B:
 
     def test_duty_cycle(self, make_resetted_instr):
         instr = make_resetted_instr
-        instr.duty_cycle = 50.00
-        assert instr.duty_cycle == 50.00
+        instr.duty_cycle = 0.500
+        assert instr.duty_cycle == 0.500
 
     def test_calibration_factor(self, make_resetted_instr):
         instr = make_resetted_instr
