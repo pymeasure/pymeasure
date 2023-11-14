@@ -69,7 +69,7 @@ def test_write_multiple_handle_wrong_start_address():
     with expected_protocol(
         TC038D,
         [(b"\x01\x10\x01\x06\x00\x02\x04\x00\x00\x01A\xbf\xb5",
-          b"\x01\x90\x02\x06\x00")],
+          b"\x01\x90\x02\xcd\xc1")],
     ) as inst:
         with pytest.raises(ValueError, match="Wrong start address"):
             inst.setpoint = 32.1
@@ -92,7 +92,7 @@ def test_read_address_error():
     with expected_protocol(
         TC038D,
         [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
-          b"\x01\x83\x02\01\02")],
+          b"\x01\x83\x02\xc0\xf1")],
     ) as inst:
         with pytest.raises(ValueError, match="start address"):
             inst.temperature
@@ -103,7 +103,7 @@ def test_read_elements_error():
     with expected_protocol(
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
-              b"\x01\x83\x03\01\02")],
+              b"\x01\x83\x03\x011")],
     ) as inst:
         with pytest.raises(ValueError, match="Variable data"):
             inst.temperature
@@ -114,7 +114,7 @@ def test_read_any_error():
     with expected_protocol(
             TC038D,
             [(b"\x01\x03\x00\x00\x00\x02\xC4\x0B",
-              b"\x01\x43\x05\01\02")],
+              b"\x01\x43\x05\xd13")],
     ) as inst:
         with pytest.raises(ConnectionError):
             inst.temperature
