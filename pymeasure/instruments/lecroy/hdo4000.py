@@ -403,6 +403,17 @@ class LecroyHDO4000(Instrument):
     )
 
     @property
+    def waveform_sparsing(self):
+        full = self.ask('WAVEFORM_SETUP?')
+        full.split(',')
+        return int(full[0])
+
+    @waveform_sparsing.setter
+    def waveform_sparsing(self, val):
+        self.write(f'WAVEFORM_SETUP SP,{int(val)}')
+
+
+    @property
     def waveform_preamble(self, channel=None):
         #good
         """ Get preamble information for the selected waveform source as a dict with the following keys:
@@ -420,7 +431,7 @@ class LecroyHDO4000(Instrument):
 
 
 
-    def waveform_data_word(self, source):
+    def waveform_data_word(self, source, sparsing = 0):
         #good
         """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format. valid sources are C1, C2, C3, C4, F1-4, M1-4"""

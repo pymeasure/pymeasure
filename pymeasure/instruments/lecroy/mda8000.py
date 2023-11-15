@@ -407,6 +407,16 @@ class LecroyWR8000(Instrument):
     )
 
     @property
+    def waveform_sparsing(self):
+        full = self.ask('WAVEFORM_SETUP?')
+        full = full.split(',')
+        return int(full[1])
+
+    @waveform_sparsing.setter
+    def waveform_sparsing(self, val):
+        self.write(f'WAVEFORM_SETUP SP,{int(val)}')
+
+    @property
     def waveform_preamble(self, channel=None):
         #good
         """ Get preamble information for the selected waveform source as a dict with the following keys:
@@ -424,16 +434,20 @@ class LecroyWR8000(Instrument):
 
 
 
-    def waveform_data_word(self, source):
+    def waveform_data_word(self, source, sparsing=0):
         #good
         """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format. valid sources are C1, C2, C3, C4, F1-4, M1-4"""
         # Other waveform formats raise UnicodeDecodeError
+        self.waveform_sparsing = sparsing
         self.waveform_format = "WORD"
         self.waveform_byteorder = 'little'
         preamble = self.waveform_preamble
         data = self.adapter.connection.query_binary_values(f"{source}:WAVEFORM? ", datatype='h')
-        data = data[-preamble['points']:]
+        sparsing_factor = 1
+        if preamble['SPARSING_FACTOR'] > 0:
+            sparsing_factor = int(preamble['SPARSING_FACTOR'])
+        data = data[-preamble['points']//sparsing_factor:]
 
         return data
 
@@ -513,7 +527,10 @@ class LecroyWR8000(Instrument):
 
         wfdata["format"] = wfdata['COMM_TYPE']
         wfdata['points'] = wfdata['PNTS_PER_SCREEN']
-        wfdata['xincrement'] = wfdata['HORIZ_INTERVAL']
+        if wfdata['SPARSING_FACTOR'] > 0:
+            wfdata['xincrement'] = wfdata['HORIZ_INTERVAL'] * wfdata['SPARSING_FACTOR']
+        else:
+            wfdata['xincrement'] = wfdata['HORIZ_INTERVAL']
         wfdata['xorigin'] = wfdata['HORIZ_OFFSET']
         wfdata['yincrement'] = wfdata['VERTICAL_GAIN']
         wfdata['yorigin'] = wfdata['VERTICAL_OFFSET']
