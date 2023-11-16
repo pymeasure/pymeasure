@@ -99,12 +99,13 @@ class PM6669(Instrument):
         """Trigger the device when not in freerun mode."""
         self.write("X")
 
-    def read_measurement(self):
+    def read_measurement(self, wait_for_srq=False):
         """Wait for an SRQ from the device and then reads the result.
 
-        Require MSR to be set to MSRFlag.MEASUREMENT_READY
+        If `wait_for_srq` is set, MSR to be set to MSRFlag.MEASUREMENT_READY
         """
-        self.adapter.wait_for_srq(delay=0)
+        if wait_for_srq:
+            self.adapter.wait_for_srq(delay=0)
         reply = super().read()
         if reply[:3] in self.KEYWORDS:
             return float(reply.split(" ")[-1])
@@ -187,7 +188,7 @@ PM6669.timeout = Instrument.control(
         freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process=lambda x: float(x[1].split("\n")[2][5:]) if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: float(x[1].split("\n")[1][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.SRQMask = Instrument.control(
