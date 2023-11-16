@@ -82,11 +82,13 @@ class PM6669(Instrument):
             includeSCPI=False,
             **kwargs
         )
+        self.adapter.connection.timeout = 10000
         self.write("EOI ON")
         self.freerun = False
         self.backlog = Queue()
 
-    KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI"]
+    KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI", "MTI", "TOU", "MSR", "TOT"]
+    MULTILINE_REPLIES = ["MTI", "MSR"]
 
     def spoll(self):
         """Read the status of the device."""
@@ -124,13 +126,18 @@ class PM6669(Instrument):
         measurement are returned. The measurement is filtered out and put in a backlog Queue.
         """
         reply = ''
-        result = None
+        result = ""
         while reply == '':
             reply = super().read()
             reply = reply.strip('\x00')
             for line in reply.splitlines():
                 if line[:3] in self.KEYWORDS:
+                    result += line
+                if line[:3] in self.MULTILINE_REPLIES:
+                    result += ","
+                if line.startswith("PM"):
                     result = line
+            
         return result
 
     def reset_to_defaults(self):
@@ -182,13 +189,13 @@ PM6669.freerun = Instrument.control(
     (x[1].split("\n")[0][5:] == " ON") if x[0].startswith("MTIME") is True else 0
 )
 
-PM6669.timeout = Instrument.control(
+PM6669.measurement_timeout = Instrument.control(
     "MEAC?", "TOUT %s",
     """ A float property that controls the measurement timeout, this timeout only has meaning when
         freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process=lambda x: float(x[1].split("\n")[1][5:]) if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.SRQMask = Instrument.control(
