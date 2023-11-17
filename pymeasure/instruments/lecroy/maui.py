@@ -130,7 +130,7 @@ class LecroyMAUIBase(Instrument):
 
     BOOLS = {True: 1, False: 0}
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, *args, **kwargs):
         super(LecroyMAUIBase, self).__init__(
             adapter, "Lecroy MAUI Base", **kwargs
         )
