@@ -436,7 +436,7 @@ class LecroyMAUIBase(Instrument):
         sparsing_factor = 1
         if preamble['SPARSING_FACTOR'] > 0:
             sparsing_factor = int(preamble['SPARSING_FACTOR'])
-        data = data[-preamble['points']//(sparsing_factor+1):]
+        data = data[-preamble['points']//(sparsing_factor):]
 
         return data
 
