@@ -137,14 +137,14 @@ class LecroyMAUIBase(Instrument):
         # Account for setup time for timebase_mode, waveform_points_mode
         self.adapter.connection.timeout = 6000
         self.system_headers = False
-        self.ch1 = Channel(self, 1)
-        self.ch2 = Channel(self, 2)
-        self.ch3 = Channel(self, 3)
-        self.ch4 = Channel(self, 4)
-        self.ch5 = Channel(self, 5)
-        self.ch6 = Channel(self, 6)
-        self.ch7 = Channel(self, 7)
-        self.ch8 = Channel(self, 8)
+        self.ch1 = ChannelBase(self, 1)
+        self.ch2 = ChannelBase(self, 2)
+        self.ch3 = ChannelBase(self, 3)
+        self.ch4 = ChannelBase(self, 4)
+        self.ch5 = ChannelBase(self, 5)
+        self.ch6 = ChannelBase(self, 6)
+        self.ch7 = ChannelBase(self, 7)
+        self.ch8 = ChannelBase(self, 8)
 
 
     system_headers = Instrument.control(
