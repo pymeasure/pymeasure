@@ -43,8 +43,6 @@ from ..widgets import (
     ResultsDialog,
     SequencerWidget,
     FileInputWidget,
-    # DirectoryLineEdit,
-    # FilenameLineEdit,
     EstimatorWidget,
 )
 from ...experiment import Results, Procedure, unique_filename

@@ -221,11 +221,12 @@ By default, a ManagedWindow instance contains fields for the filename and the di
     :alt: The filename and directory input widget showing the auto-complete for the directory
     :width: 24%
 
-With the filename input, additionally a toggle (named :guilabel:`Write file` controlling whether the measurement is save at all, or should be stored in a temporary file, is displayed.
-When the toggle is ticked, the measurement is stored to a temporary file, and the other input fields are disabled.
+If the checkbox named :guilabel:`Write file` is enabled, the measurement is written to a file.
+Otherwise, it is stored in a temporary file.
 
 When the measurement is to be stored in to a certain file, ensure that the :guilabel:`Write file` is disabled.
-The filename in the designated field can be entered with or without extension; if the entered extension is recognized (by default :code:`.csv` and :code:`.txt`) are recognized, that extension is used.
+The filename in the designated field can be entered with or without extension.
+If the entered extension is recognized (by default :code:`.csv` and :code:`.txt` are recognized), that extension is used.
 If the extension is not recognized, the first of the available extensions will be used (default is :code:`.csv`).
 Additionally, a sequence number is added just before the extension to ensure the uniqueness of the filename.
 
@@ -260,7 +261,7 @@ The default values can be easily set after the :class:`~pymeasure.display.window
 
 
 The fields for the filename and the directory can be disabled using the boolean keyword arguments :code:`filename_input` and :code:`directory_input`, respectively, in the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init.
-Note that when a either of these values is set to :code:`False`, the default :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class will no longer work, and a new, custom, method needs to be implemented; a basic implementation is shown in the documentation of the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method.
+Note that when either of these values is set to :code:`False`, the default :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class will no longer work, and a new, custom, method needs to be implemented; a basic implementation is shown in the documentation of the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method.
 
 Customising the plot options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
