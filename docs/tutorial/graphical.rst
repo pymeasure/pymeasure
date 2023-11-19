@@ -206,7 +206,7 @@ Now that you have learned about the ManagedWindow, you have all of the basics to
 The filename and directory input
 ################################
 
-By default, a ManagedWindow instance contains fields for the filename and the directory to control where the results of an experiment are saved.
+By default, a ManagedWindow instance contains fields for the filename and the directory (as part of the :class:`~pymeasure.display.widgets.fileinput_widget.FileInputWidget`) to control where the results of an experiment are saved.
 
 .. image:: pymeasure-fileinput.png
     :alt: The filename and directory input widget
@@ -236,10 +236,10 @@ As the standard :code:`format` functionality is used, the placeholders can be fo
 Both the filename and the directory field are provided with auto-completion to help with filling in these fields.
 The directory field contains a button on the right side to open a folder-selection window.
 
-The default values can be easily set after the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has been initialized; this allows setting a default location and a default filename, changing the default recognized extensions, or control the default toggle-value for the :guilabel:`Save data` option.
+The default values can be easily set after the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has been initialized; this allows setting a default location and a default filename, changing the default recognized extensions, control the default toggle-value for the :guilabel:`Save data` option, and control whether the filename input field is frozen.
 
 .. code-block:: python
-   :emphasize-lines: 13, 14, 15, 16
+   :emphasize-lines: 13, 14, 15, 16, 17
 
     class MainWindow(ManagedWindow):
 
@@ -257,10 +257,11 @@ The default values can be easily set after the :class:`~pymeasure.display.window
             self.directory = r'C:/Path/to/default/directory'            # Sets default directory
             self.store_measurement = False                              # Controls the 'Save data' toggle
             self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
+            self.file_input.filename_fixed = False                      # Controls whether the filename-field is frozen (but still displayed)
 
 
-The fields for the filename and the directory can be disabled using the boolean keyword arguments :code:`filename_input` and :code:`directory_input`, respectively, in the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init.
-Note that when either of these values is set to :code:`False`, the default :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class will no longer work, and a new, custom, method needs to be implemented; a basic implementation is shown in the documentation of the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method.
+The presence of the widget is controlled by the boolean argument :code:`enabled_file_input` of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init.
+Note that when this is set to :code:`False`, the default :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class will no longer work, and a new, custom, method needs to be implemented; a basic implementation is shown in the documentation of the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method.
 
 Customising the plot options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

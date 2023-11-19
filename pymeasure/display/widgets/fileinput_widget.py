@@ -33,82 +33,84 @@ log.addHandler(logging.NullHandler())
 
 
 class FileInputWidget(QtWidgets.QWidget):
-    _extensions = ["csv", "txt"]
+    """
+    Widget for controlling where the data of an experiment will be stored.
 
-    def __init__(self, filename_input=True, directory_input=True, parent=None):
+    The widget consists of a field for the filename
+    (:class:`~pymeasure.display.widgets.filename_widget.FilenameLineEdit`), a field for the
+    directory (:class:`~pymeasure.display.widgets.directory_widget.DirectoryLineEdit`), and a
+    checkbox to control whether the measurement is stored.
+    """
+    _extensions = ["csv", "txt"]
+    _filename_fixed = False
+
+    def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._setup_ui(filename_input, directory_input)
+        self._setup_ui()
         self._layout()
 
-    def _setup_ui(self, enable_filename, enable_directory):
-        if enable_filename:
-            self.writefile_toggle = QtWidgets.QCheckBox('Save data', self)
-            self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
-            self.writefile_toggle.setChecked(True)
-            self.writefile_toggle.stateChanged.connect(self.toggle_file_dir_input_active)
-            self.writefile_toggle.setToolTip(
-                "Control whether the measurement is saved to a file with the filename that is\n"
-                "specified in the field below (checked) or not (unchecked; the data is stored\n"
-                "in a temporary file)."
-            )
+    def _setup_ui(self):
+        self.writefile_toggle = QtWidgets.QCheckBox('Save data', self)
+        self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.writefile_toggle.setChecked(True)
+        self.writefile_toggle.stateChanged.connect(self.set_input_fields_enabled)
+        self.writefile_toggle.setToolTip(
+            "Control whether the measurement is saved to a file with the filename that is\n"
+            "specified in the field below (checked) or not (unchecked; the data is stored\n"
+            "in a temporary file)."
+        )
 
-            self.filename_input = FilenameLineEdit(self.parent().procedure_class, parent=self)
+        self.filename_input = FilenameLineEdit(self.parent().procedure_class, parent=self)
 
-        if enable_directory:
-            self.directory_input = DirectoryLineEdit(parent=self)
+        self.directory_input = DirectoryLineEdit(parent=self)
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout()
         vbox.setContentsMargins(0, 0, 0, 0)
 
-        if hasattr(self, 'filename_input'):
-            filename_label = QtWidgets.QLabel(self)
-            filename_label.setText('Filename')
-            filename_label.setToolTip(self.filename_input.toolTip())
+        filename_label = QtWidgets.QLabel(self)
+        filename_label.setText('Filename')
+        filename_label.setToolTip(self.filename_input.toolTip())
 
-            filename_box = QtWidgets.QHBoxLayout()
-            filename_box.addWidget(filename_label)
-            filename_box.addWidget(self.writefile_toggle)
+        filename_box = QtWidgets.QHBoxLayout()
+        filename_box.addWidget(filename_label)
+        filename_box.addWidget(self.writefile_toggle)
 
-            vbox.addLayout(filename_box)
-            vbox.addWidget(self.filename_input)
+        vbox.addLayout(filename_box)
+        vbox.addWidget(self.filename_input)
 
-        if hasattr(self, 'directory_input'):
-            directory_label = QtWidgets.QLabel(self)
-            directory_label.setText('Directory')
+        directory_label = QtWidgets.QLabel(self)
+        directory_label.setText('Directory')
 
-            vbox.addWidget(directory_label)
-            vbox.addWidget(self.directory_input)
+        vbox.addWidget(directory_label)
+        vbox.addWidget(self.directory_input)
 
         self.setLayout(vbox)
 
     @property
     def directory(self):
-        if not hasattr(self, 'directory_input'):
-            raise ValueError("No directory input in the FileInputWidget")
+        """String controlling the directory where the file will be stored."""
         return self.directory_input.text()
 
     @directory.setter
     def directory(self, value):
-        if not hasattr(self, 'directory_input'):
-            raise ValueError("No directory input in the FileInputWidget")
         self.directory_input.setText(str(value))
 
     @property
     def filename(self):
-        if not hasattr(self, 'filename_input'):
-            raise ValueError("No filename input in the FileInputWidget")
+        """String controlling the filename that is shown in the filename input field."""
         return self.filename_input.text()
 
     @filename.setter
     def filename(self, value):
-        if not hasattr(self, 'filename_input'):
-            raise ValueError("No filename input in the FileInputWidget")
         self.filename_input.setText(str(value))
 
     @property
     def filename_base(self):
+        """String containing the base of the filename with which the file will be stored.
+        Can only be read.
+        """
         filename_split = self.filename.rsplit('.', 1)
 
         if len(filename_split) > 1 and filename_split[1] in self.extensions:
@@ -118,6 +120,10 @@ class FileInputWidget(QtWidgets.QWidget):
 
     @property
     def filename_extension(self):
+        """String containing the file extension with which the file will be stored.
+
+        Can only be read.
+        """
         filename_split = self.filename.rsplit('.', 1)
 
         if len(filename_split) > 1 and filename_split[1] in self.extensions:
@@ -127,6 +133,11 @@ class FileInputWidget(QtWidgets.QWidget):
 
     @property
     def extensions(self):
+        """List of extensions that are recognized by the widget.
+
+        The first value of this list will be used as default value in case no extension is provided
+        in the filename input field.
+        """
         return self._extensions
 
     @extensions.setter
@@ -136,18 +147,26 @@ class FileInputWidget(QtWidgets.QWidget):
 
     @property
     def store_measurement(self):
-        if not hasattr(self, 'writefile_toggle'):
-            raise ValueError("No write-file checkbox in the FileInputWidget")
+        """Boolean controlling whether the measurement will be stored."""
         return self.writefile_toggle.isChecked()
 
     @store_measurement.setter
     def store_measurement(self, value):
-        if not hasattr(self, 'writefile_toggle'):
-            raise ValueError("No write-file checkbox in the FileInputWidget")
         self.writefile_toggle.setChecked(bool(value))
 
-    def toggle_file_dir_input_active(self, state):
-        if hasattr(self, 'directory_input'):
-            self.filename_input.setEnabled(bool(state))
-        if hasattr(self, 'filename_input'):
-            self.directory_input.setEnabled(bool(state))
+    @property
+    def filename_fixed(self):
+        """Boolean controlling whether the filename input field is frozen.
+        If `True`, the filename field will be visible but disabled (i.e., grayed out)."""
+        return self._filename_fixed
+
+    @filename_fixed.setter
+    def filename_fixed(self, value):
+        self._filename_fixed = value
+
+        # Reassess if the input fields should be enabled or disabled
+        self.set_input_fields_enabled(self.store_measurement)
+
+    def set_input_fields_enabled(self, state):
+        self.filename_input.setEnabled(bool(state) and not self.filename_fixed)
+        self.directory_input.setEnabled(bool(state))
