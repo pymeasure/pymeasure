@@ -221,10 +221,9 @@ By default, a ManagedWindow instance contains fields for the filename and the di
     :alt: The filename and directory input widget showing the auto-complete for the directory
     :width: 24%
 
-If the checkbox named :guilabel:`Write file` is enabled, the measurement is written to a file.
+If the checkbox named :guilabel:`Save data` is enabled, the measurement is written to a file.
 Otherwise, it is stored in a temporary file.
 
-When the measurement is to be stored in to a certain file, ensure that the :guilabel:`Write file` is disabled.
 The filename in the designated field can be entered with or without extension.
 If the entered extension is recognized (by default :code:`.csv` and :code:`.txt` are recognized), that extension is used.
 If the extension is not recognized, the first of the available extensions will be used (default is :code:`.csv`).
@@ -237,7 +236,7 @@ As the standard :code:`format` functionality is used, the placeholders can be fo
 Both the filename and the directory field are provided with auto-completion to help with filling in these fields.
 The directory field contains a button on the right side to open a folder-selection window.
 
-The default values can be easily set after the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has been initialized; this allows setting a default location and a default filename, changing the default recognized extensions, or control the default toggle-value for the :guilabel:`Write file` option.
+The default values can be easily set after the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has been initialized; this allows setting a default location and a default filename, changing the default recognized extensions, or control the default toggle-value for the :guilabel:`Save data` option.
 
 .. code-block:: python
    :emphasize-lines: 13, 14, 15, 16
@@ -256,7 +255,7 @@ The default values can be easily set after the :class:`~pymeasure.display.window
 
             self.filename = r'default_filename_delay{Delay Time:4f}s'   # Sets default filename
             self.directory = r'C:/Path/to/default/directory'            # Sets default directory
-            self.store_measurement = False                              # Controls the 'write-file' togge
+            self.store_measurement = False                              # Controls the 'Save data' toggle
             self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
 
 

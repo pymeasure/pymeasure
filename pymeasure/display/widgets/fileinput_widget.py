@@ -43,7 +43,7 @@ class FileInputWidget(QtWidgets.QWidget):
 
     def _setup_ui(self, enable_filename, enable_directory):
         if enable_filename:
-            self.writefile_toggle = QtWidgets.QCheckBox('Write file', self)
+            self.writefile_toggle = QtWidgets.QCheckBox('Save data', self)
             self.writefile_toggle.setLayoutDirection(QtCore.Qt.RightToLeft)
             self.writefile_toggle.setChecked(True)
             self.writefile_toggle.stateChanged.connect(self.toggle_file_dir_input_active)
