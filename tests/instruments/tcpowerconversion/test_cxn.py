@@ -130,4 +130,4 @@ def test_load_capacity_preset(channel):
             (cmd, b"\x2a" + response),
         ],
     ) as inst:
-        assert inst.presets[channel].load_capacity == 50
+        assert inst.channels[channel].load_capacity == 50

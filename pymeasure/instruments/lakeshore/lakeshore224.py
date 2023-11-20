@@ -43,11 +43,31 @@ class LakeShore224(Instrument):
         monitor.input_A.wait_for_temperature()  # Wait for the temperature on sensor A to stabilize.
     """
 
-    i_ch = Instrument.ChannelCreator(LakeShoreTemperatureChannel,
-                                     ['0', 'A', 'B',
-                                      'C1', 'C2', 'C3', 'C4', 'C5',
-                                      'D1', 'D2', 'D3', 'D4', 'D5'],
-                                     prefix='input_')
+    input_0 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 0)
+
+    input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
+
+    input_B = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'B')
+
+    input_C1 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'C1')
+
+    input_C2 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'C2')
+
+    input_C3 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'C3')
+
+    input_C4 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'C4')
+
+    input_C5 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'C5')
+
+    input_D1 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'D1')
+
+    input_D2 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'D2')
+
+    input_D3 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'D3')
+
+    input_D4 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'D4')
+
+    input_D5 = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'D5')
 
     def __init__(self, adapter, name="Lakeshore Model 224 Temperature Controller", **kwargs):
         kwargs.setdefault('read_termination', "\r\n")

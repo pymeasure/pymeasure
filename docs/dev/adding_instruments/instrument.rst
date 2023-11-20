@@ -155,6 +155,7 @@ To cite the `Python documentation <https://docs.python.org/3.11/howto/enum.html>
 As our signal values are often integers, the most appropriate enum types are :code:`IntEnum` and :code:`IntFlag`.
 
 :code:`IntEnum` is the same as :code:`Enum`, but its members are also integers and can be used anywhere that an integer can be used (so their use for composing commands is transparent), but logic/code they appear in is much more legible.
+Note that starting from Python version 3.11, the printed format of the :code:`IntEnum` and :code:`IntFlag` has been changed to return numeric value; however, the symbolic name can be obtained by printing its :code:`repr` or the :code:`.name` property, or returning the value in a REPL.
 
 .. doctest::
 
@@ -169,10 +170,12 @@ As our signal values are often integers, the most appropriate enum types are :co
     >>> if current_mode == InstrMode.WAITING:
     ...     print('Idle')
     ... else:
-    ...     print(current_mode)
+    ...     current_mode
+    ...     print(repr(current_mode))
     ...     print(f'Mode value: {current_mode}')
     ...
-    InstrMode.HEATING
+    <InstrMode.HEATING: 1>
+    <InstrMode.HEATING: 1>
     Mode value: 1
 
 :code:`IntFlag` has the added benefit that it supports bitwise operators and combinations, and as such is a good fit for status bitmasks or error codes that can represent multiple values:
@@ -188,8 +191,8 @@ As our signal values are often integers, the most appropriate enum types are :co
     ...     OK = 0
     ...
     >>> received_from_device = 7
-    >>> print(ErrorCode(received_from_device))
-    ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE
+    >>> ErrorCode(received_from_device)
+    <ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE: 7>
 
 :code:`IntFlags` are used by many instruments for the purpose just demonstrated.
 

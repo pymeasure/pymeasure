@@ -22,10 +22,10 @@ Instruments with channels
 Some instruments, like oscilloscopes and voltage sources, have channels whose commands differ only in the channel name.
 For this case, we have :class:`~pymeasure.instruments.Channel`, which is similar to :class:`~pymeasure.instruments.Instrument` and its property factories, but does expect an :class:`~pymeasure.instruments.Instrument` instance (i.e., a parent instrument) instead of an :class:`~pymeasure.adapters.Adapter` as parameter.
 All the channel communication is routed through the instrument's methods (`write`, `read`, etc.).
-However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses `str.format` to insert the channel's id at any occurence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
+However, :meth:`Channel.insert_id <pymeasure.instruments.Channel.insert_id>` uses ``str.format`` to insert the channel's id at any occurrence of the class attribute :attr:`Channel.placeholder`, which defaults to :code:`"ch"`, in the written commands.
 For example :code:`"Ch{ch}:VOLT?"` will be sent as :code:`"Ch3:VOLT?"` to the device, if the channel's id is "3".
 
-Please add the channel to the documentation. In the instrument's documentation file, you may add
+Please add any created channel classes to the documentation. In the instrument's documentation file, you may add
 
 .. code::
 
@@ -34,18 +34,21 @@ Please add the channel to the documentation. In the instrument's documentation f
         :show-inheritance:
 
 `MANUFACTURER` is the folder name of the manufacturer and `INSTRUMENT` the file name of the instrument definition, which contains the `CHANNEL` class.
-You may link in the instrument's docstring to the channel with :code:`:class:\`CHANNEL\``
+You may link in the instrument's docstring to the channel with :code:`:class:`CHANNEL``
 
-In order to add a channel to an instrument or to another channel (nesting channels is possible), create the channels with the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` as class attributes.
-Its constructor accepts a single channel class or list of classes and a list of corresponding ids.
-Instead of lists, you may also use tuples.
-If you give a single class and a list of ids, all channels will be of the same class.
+To simplify and standardize the creation of channels in an ``Instrument`` class, there are two classes that can be used.
+For instruments with fewer than 16 channels, :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` should be used
+to explicitly declare each individual channel. For instruments with more than 16 channels, the
+:class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` can create multiple channels in a single declaration.
 
-At instrument instantiation, the instrument will add the channels accordingly with the attribute names as a composition of the prefix (default :code:`"ch_"`) and channel id, e.g. the channel with id "A" will be added as attribute :code:`ch_A`.
-Additionally, the channels will be collected in a dictionary with the same name as you used for the `ChannelCreator`.
-Without pressing reasons, call the dictionary :code:`channels` and do not change the default prefix in order to keep the code base homogeneous.
+Adding a channel with :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`
+*******************************************************************************************
 
-In order to add or remove programatically channels, use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, :meth:`~pymeasure.instruments.common_base.CommonBase.remove_child` methods.
+For instruments with fewer than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` should be used to assign each channel interface to a class attribute.
+:class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` constructor accepts two parameters, the channel class for this channel interface, and the instrument's channel id for the channel interface.
+
+In this example, we are defining a channel class and an instrument driver class. The ``VoltageChannel`` channel class will be used for controlling two channels in our ``ExtremeVoltage5000`` instrument.
+In the ``ExtremeVoltage5000`` class we declare two class attributes with :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator`, ``output_A`` and ``output_B``, which will become our channel interfaces.
 
 .. testcode:: with-protocol-tests
 
@@ -57,26 +60,150 @@ In order to add or remove programatically channels, use the parent's :meth:`~pym
             """Control the output voltage of this channel.""",
         )
 
-    class InstrumentWithChannels(Instrument):
+    class ExtremeVoltage5000(Instrument):
         """An instrument with channels."""
-        channels = Instrument.ChannelCreator(VoltageChannel, ("A", "B"))
+        output_A = Instrument.ChannelCreator(VoltageChannel, "A")
+        output_B = Instrument.ChannelCreator(VoltageChannel, "B")
 
 .. testcode:: with-protocol-tests
     :hide:
 
-    with expected_protocol(InstrumentWithChannels,
-        [("SOURceA:VOLT 1.23", None), ("SOURceB:VOLT?", "4.56")],
+    with expected_protocol(ExtremeVoltage5000,
+        [("SOURceA:VOLT 1.25", None), ("SOURceB:VOLT?", "4.56")],
         name="Instrument with Channels",
     ) as inst:
-        inst.ch_A.voltage = 1.23
-        assert inst.ch_B.voltage == 4.56
+        inst.output_A.voltage = 1.25
+        assert inst.channels['B'].voltage == 4.56
 
-If you set the voltage of the first channel of above :class:`ExtremeChannel` instrument with :code:`inst.chA.voltage = 1.23`, the driver sends :code:`"SOURceA:VOLT 1.23"` to the device, supplying the "A" of the channel name.
-The same channel could be addressed with :code:`inst.channels["A"].voltage = 1.23` as well.
+At instrument class instantiation, the instrument class will create an instance of the channel class and assign it to the class attribute name.
+Additionally the channels will be collected in a dictionary, by default named :code:`channels`.
+We can access the channel interface through that class name:
 
+.. code-block:: python
+
+    extreme_inst = ExtremeVoltage5000('COM3')
+    # Set channel A voltage
+    extreme_inst.output_A.voltage = 50
+    # Read channel B voltage
+    chan_b_voltage = extreme_inst.output_B.voltage
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(ExtremeVoltage5000,
+        [("SOURceA:VOLT 50", None), ("SOURceB:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.output_A.voltage = 50
+        assert inst.output_B.voltage == 4.56
+
+Or we can access the channel interfaces through the :code:`channels` collection:
+
+.. code-block:: python
+
+    # Set channel A voltage
+    extreme_inst.channels['A'].voltage = 50
+    # Read channel B voltage
+    chan_b_voltage = extreme_inst.channels['B'].voltage
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(ExtremeVoltage5000,
+        [("SOURceA:VOLT 50", None), ("SOURceB:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.channels['A'].voltage = 50
+        assert inst.channels['B'].voltage == 4.56
+
+Adding multiple channels with :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator`
+********************************************************************************************************
+
+For instruments greater than 16 channels the class :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` can be used to easily generate a list of channels from one class attribute declaration.
+
+The :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` constructor accepts a single channel class or list of channel classes, and a list of corresponding channel ids. Instead of lists, you may also use tuples.
+If you give a single class and a list of ids, all channels will be of the same class.
+
+At instrument instantiation, the instrument will generate channel interfaces as class attribute names composing of the prefix (default :code:`"ch_"`) and channel id, e.g. the channel with id "A" will be added as attribute :code:`ch_A`.
+While :class:`~pymeasure.instruments.common_base.CommonBase.ChannelCreator` creates a channel interface for each class attribute, :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` creates a channel collection for the assigned class attribute.
+It is recommended you use the class attribute name ``channels`` to keep the codebase homogenous.
+
+To modify our example, we will use :class:`~pymeasure.instruments.common_base.CommonBase.MultiChannelCreator` to generate 24 channels of the ``VoltageChannel`` class.
+
+.. testcode:: with-protocol-tests
+
+    class VoltageChannel(Channel):
+        """A channel of the voltage source."""
+
+        voltage = Channel.control(
+            "SOURce{ch}:VOLT?", "SOURce{ch}:VOLT %g",
+            """Control the output voltage of this channel.""",
+        )
+
+    class MultiExtremeVoltage5000(Instrument):
+        """An instrument with channels."""
+        channels = Instrument.MultiChannelCreator(VoltageChannel, list(range(1,25)))
+
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiExtremeVoltage5000,
+        [("SOURce5:VOLT 1.23", None), ("SOURce16:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.ch_5.voltage = 1.23
+        assert inst.channels[16].voltage == 4.56
+
+We can now access the channel interfaces through the generated class attributes:
+
+.. code-block:: python
+
+    extreme_inst = MultiExtremeVoltage5000('COM3')
+    # Set channel 5 voltage
+    extreme_inst.ch_5.voltage = 50
+    # Read channel 16 voltage
+    chan_16_voltage = extreme_inst.ch_16.voltage
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiExtremeVoltage5000,
+        [("SOURce5:VOLT 50", None), ("SOURce16:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.ch_5.voltage = 50
+        assert inst.ch_16.voltage == 4.56
+
+Because we use `channels` as the class attribute for ``MultiChannelCreator``, we can access the channel interfaces through the :code:`channels` collection:
+
+.. code-block:: python
+
+    # Set channel 10 voltage
+    extreme_inst.channels[10].voltage = 50
+    # Read channel 22 voltage
+    chan_b_voltage = extreme_inst.channels[22].voltage
+
+.. testcode:: with-protocol-tests
+    :hide:
+
+    with expected_protocol(MultiExtremeVoltage5000,
+        [("SOURce10:VOLT 50", None), ("SOURce22:VOLT?", "4.56")],
+        name="Instrument with Channels",
+    ) as inst:
+        inst.channels[10].voltage = 50
+        assert inst.channels[22].voltage == 4.56
+
+Advanced channel management
+***************************
+
+Adding / removing channels
+--------------------------
+
+In order to add or remove programmatically channels, use the parent's :meth:`~pymeasure.instruments.common_base.CommonBase.add_child`, :meth:`~pymeasure.instruments.common_base.CommonBase.remove_child` methods.
 
 Channels with fixed prefix
-**************************
+--------------------------
 
 If all channel communication is prefixed by a specific command, e.g. :code:`"SOURceA:"` for channel A, you can override the channel's :meth:`insert_id` method.
 That is especially useful, if you have only one channel of that type, e.g. because it defines one function of the instrument vs. another one.
@@ -99,7 +226,7 @@ That is especially useful, if you have only one channel of that type, e.g. becau
 
     class InstrumentWithChannelsPrefix(Instrument):
         """An instrument with a channel, just for the test."""
-        channels = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
+        ch_A = Instrument.ChannelCreator(VoltageChannelPrefix, "A")
 
     with expected_protocol(InstrumentWithChannelsPrefix,
         [("SOURceA:VOLT 1.23", None), ("SOURceA:VOLT?", "1.23")],
@@ -110,28 +237,26 @@ That is especially useful, if you have only one channel of that type, e.g. becau
 
 This channel class implements the same communication as the previous example, but implements the channel prefix in the :meth:`insert_id` method and not in the individual property (created by :meth:`control`).
 
-
 Collections of different channel types
-**************************************
+--------------------------------------
 
-Some devices have different types of channels. In this case, you can specify a different `collection` and `prefix` parameter.
+Some devices have different types of channels. In this case, you can specify a different ``collection`` and ``prefix`` parameter.
 
 .. testcode:: with-protocol-tests
 
     class PowerChannel(Channel):
         """A channel controlling the power."""
-
         power = Channel.measurement(
             "POWER?", """Measure the currently consumed power.""")
 
     class MultiChannelTypeInstrument(Instrument):
         """An instrument with two different channel types."""
-        analog = Instrument.ChannelCreator(
+        analog = Instrument.MultiChannelCreator(
             (VoltageChannel, VoltageChannelPrefix),
             ("A", "B"),
             prefix="an_")
-        digital = Instrument.ChannelCreator(VoltageChannel, (0, 1, 2), prefix="di_")
-        power = Instrument.ChannelCreator(PowerChannel, prefix=None)
+        digital = Instrument.MultiChannelCreator(VoltageChannel, (0, 1, 2), prefix="di_")
+        power = Instrument.ChannelCreator(PowerChannel)
 
 
 .. testcode:: with-protocol-tests
@@ -143,7 +268,6 @@ Some devices have different types of channels. In this case, you can specify a d
     ) as inst:
         inst.an_B.voltage = 1.23
         assert inst.di_2.voltage == 4.56
-
 
 This instrument has two collections of channels and one single channel.
 The first collection in the dictionary :code:`analog` contains an instance of :class:`VoltageChannel` with the name :code:`an_A` and an instance of :class:`VoltageChannelPrefix` with the name :code:`an_B`.
