@@ -8,7 +8,7 @@ Deprecated features
 GUI
 ---
 - Add a :code:`FileInputWidget` to choose if and where the experiment data is stored. (@CasperSchippers, #964)
-- A default :code:`Queueu` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
+- A default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
 
 Version 0.13.1 (2023-10-05)
 ===========================
