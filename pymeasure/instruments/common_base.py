@@ -131,55 +131,97 @@ class CommonBase:
         self._create_channels()
         if preprocess_reply is not None:
             warn(("Parameter `preprocess_reply` is deprecated. "
-                 "Implement it in the instrument, e.g. in `read`, instead."),
+                  "Implement it in the instrument, e.g. in `read`, instead."),
                  FutureWarning)
         self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
 
-    class ChannelCreator:
+    class BaseChannelCreator:
+        """Base class for ChannelCreator and MultiChannelCreator.
+
+        :param cls: Class for all children or tuple/list of classes, one for each child.
+        :param \\**kwargs: Keyword arguments for all children.
+        """
+
+        def __init__(self, cls, **kwargs):
+            try:
+                self.valid_class = issubclass(cls, CommonBase)
+            except TypeError:
+                self.valid_class = False
+            self.pairs = ()
+            self.kwargs = kwargs
+
+    class ChannelCreator(BaseChannelCreator):
+        """Add a single channel to the parent class.
+
+        The child will be added to the parent instance at instantiation with
+        :func:`CommonBase.add_child`. The attribute name that ChannelCreator was assigned
+        to in the `Instrument` class will be the name of the channel interface.
+
+        .. code::
+
+            class Extreme5000(Instrument):
+                # Two output channels, accessible by their property names
+                # and both are accessible through the 'channels' collection
+                output_A = Instrument.ChannelCreator(Extreme5000Channel, "A")
+                output_B = Instrument.ChannelCreator(Extreme5000Channel, "B")
+                # A channel without a channel accessible through the 'motor' collection
+                motor = Instrument.ChannelCreator(MotorControl)
+
+            inst = SomeInstrument()
+            # Set the extreme_temp for channel A of Extreme5000 instrument
+            inst.output_A.extreme_temp = 42
+
+        :param cls: Channel class for channel interface
+        :param id: The id of the channel on the instrument, integer or string.
+        :param \\**kwargs: Keyword arguments for all children.
+        """
+
+        def __init__(self, cls, id=None, **kwargs):
+            super().__init__(cls=cls, **kwargs)
+            if (isinstance(id, (str, int)) or id is None) and self.valid_class:
+                self.pairs = ((cls, id),)
+            else:
+                raise ValueError("Invalid definition of class '{cls}' and id '{id}'.")
+
+    class MultiChannelCreator(BaseChannelCreator):
         """Add channels to the parent class.
 
         The children will be added to the parent instance at instantiation with
-        :func:`CommonBase.add_child`. The variable name (e.g. :code:`channels`) will be
+        :func:`CommonBase.add_child`. The attribute name (e.g. :code:`channels`) will be
         used as the `collection` of the children. You may define the attribute
-        prefix. If there are no other pressing reasons, use :code:`channels` as variable
+        prefix. If there are no other pressing reasons, use :code:`channels` as the attribute name
         and leave the prefix at the default :code:`"ch_"`.
 
         .. code::
 
-            class SomeInstrument(Instrument):
-                # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C' in 'channels'
-                channels = Instrument.ChannelCreator(ChildClass, ["A", "B", "C"])
-                # Two functions of different types: 'fn_power', 'fn_voltage' in 'functions'
-                functions = Instrument.ChannelCreator((PowerChannel, VoltageChannel),
+            class Extreme5000(Instrument):
+                # Three channels of the same type: 'ch_A', 'ch_B', 'ch_C'
+                # and add them to the 'channels' collection
+                channels = Instrument.MultiChannelCreator(Extreme5000Channel, ["A", "B", "C"])
+                # Two channel interfaces of different types: 'fn_power', 'fn_voltage'
+                # and add them to the 'functions' collection
+                functions = Instrument.MultiChannelCreator((PowerChannel, VoltageChannel),
                                                 ["power", "voltage"], prefix="fn_")
-                # A channel without a prefixed attribute name, simply: 'motor'
-                motor = Instrument.ChannelCreator(MotorControl, prefix=None)
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
-        :param id: Single value or tuple/list of ids of the children.
+        :param id: tuple/list of ids of the channels on the instrument.
         :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
             creates attribute `self.ch_A`. If prefix evaluates False,
-            the child will be added directly under the variable name.
+            the child will be added directly under the variable name. Required if id is tuple/list.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
         def __init__(self, cls, id=None, prefix="ch_", **kwargs):
-            try:
-                valid_class = issubclass(cls, CommonBase)
-            except TypeError:
-                valid_class = False
+            super().__init__(cls=cls, **kwargs)
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
-            elif isinstance(id, (list, tuple)) and valid_class:
+            elif isinstance(id, (list, tuple)) and self.valid_class:
                 self.pairs = list(zip((cls,) * len(id), id))
-            elif (isinstance(id, (str, int)) or id is None) and valid_class:
-                self.pairs = ((cls, id),)
             else:
                 raise ValueError("Invalid definition of classes '{cls}' and ids '{id}'.")
-            kwargs.setdefault("prefix", prefix)
-            self.kwargs = kwargs
+            self.kwargs.setdefault("prefix", prefix)
 
     def _setup_special_names(self):
         """ Return list of class/instance special names.
@@ -201,13 +243,41 @@ class CommonBase:
                 setattr(self, self.__reserved_prefix + attr, value)
         return special_names
 
+    @staticmethod
+    def get_channels(cls):
+        """Return a list of all the Instrument's ChannelCreator and MultiChannelCreator instances"""
+        class_members = getmembers(cls)
+
+        channels = []
+        for name, member in class_members:
+            if isinstance(member, CommonBase.BaseChannelCreator):
+                channels.append((name, member))
+        return channels
+
+    @staticmethod
+    def get_channel_pairs(cls):
+        """Return a list of all the Instrument's channel pairs"""
+        channel_pairs = []
+        for name, creator in CommonBase.get_channels(cls):
+            for pair in creator.pairs:
+                channel_pairs.append(pair)
+        return channel_pairs
+
     def _create_channels(self):
-        """Create channels according to the ChannelCreator objects."""
-        for name, creator in getmembers(self.__class__):
-            if isinstance(creator, CommonBase.ChannelCreator):
-                for cls, id in creator.pairs:
+        """Create channel interfaces for all the Instrument's channel pairs."""
+        for name, creator in CommonBase.get_channels(self.__class__):
+            for cls, id in creator.pairs:
+                # If channel pair was created with MultiChannelCreator
+                # add channel interface to collection with passed attribute name
+                if isinstance(creator, CommonBase.MultiChannelCreator):
                     child = self.add_child(cls, id, collection=name, **creator.kwargs)
-                    child._protected = True
+                # If channel pair was created with ChannelCreator
+                # name channel interface with passed attribute name
+                elif isinstance(creator, CommonBase.ChannelCreator):
+                    child = self.add_child(cls, id, attr_name=name, **creator.kwargs)
+                else:
+                    raise ValueError("Invalid class '{creator}' for channel creation.")
+                child._protected = True
 
     def __setattr__(self, name, value):
         """ Add reserved_prefix in front of special variables."""
@@ -228,12 +298,12 @@ class CommonBase:
         return super().__getattribute__(name)
 
     # Channel management
-    def add_child(self, cls, id=None, collection="channels", prefix="ch_", **kwargs):
+    def add_child(self, cls, id=None, collection="channels", prefix="ch_", attr_name="", **kwargs):
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the id in the
-        children dictionary or by the created attribute.
-        The fifth channel of `instrument` with id "F" has two access options:
+        children dictionary or by the created attribute, e.g. the fifth channel of `instrument`
+        with id "F" has two access options:
         :code:`instrument.channels["F"] == instrument.ch_F`
 
         .. note::
@@ -244,25 +314,38 @@ class CommonBase:
 
         :param cls: Class of the channel.
         :param id: Child id how it is used in communication, e.g. `"A"`.
-        :param collection: Name of the collection of children, used for the dictionary.
-        :param prefix: Collection prefix for the attributes, e.g. `"ch_"`
-            creates attribute `self.ch_A`. If prefix evaluates False,
-            the child will be added directly under the collection name.
+        :param collection: Name of the collection of children, used for dictionary access to the
+            channel interfaces.
+        :param prefix: For creating multiple channel interfaces, the prefix e.g. `"ch_"`
+            is prepended to the attribute name of the channel interface `self.ch_A`.
+            If prefix evaluates False, the child will be added directly under the collection name.
+        :param attr_name: For creating a single channel interface, the attr_name argument is used
+            when setting the attribute name of the channel interface.
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
         """
         child = cls(self, id, **kwargs)
         collection_data = getattr(self, collection, {})
-        if isinstance(collection_data, CommonBase.ChannelCreator):
+        if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
-        if prefix:
+        # Create channel interface if prefix or name is present
+        if (prefix or attr_name) and id is not None:
             if not collection_data:
                 # Add a grouplist to the parent.
                 setattr(self, collection, collection_data)
             collection_data[id] = child
             child._collection = collection
-            setattr(self, f"{prefix}{id}", child)
-            child._name = f"{prefix}{id}"
+            if attr_name:
+                setattr(self, attr_name, child)
+                child._name = attr_name
+            else:
+                setattr(self, f"{prefix}{id}", child)
+                child._name = f"{prefix}{id}"
+        elif attr_name and id is None:
+            # If attribute name is passed with no channel id
+            # set the child to the attribute name.
+            setattr(self, attr_name, child)
+            child._name = attr_name
         else:
             if collection_data:
                 raise ValueError(f"An attribute '{collection}' already exists.")

@@ -34,7 +34,24 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserItem(QtWidgets.QTreeWidgetItem):
+class BaseBrowserItem:
+    """ Base class for an experiment's browser item. BaseBrowerItem outlines core functionality
+    for displaying progress of an experiment to the user.
+    """
+
+    status_label = {
+        Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
+        Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
+        Procedure.FINISHED: 'Finished'}
+
+    def setStatus(self, status):
+        raise NotImplementedError('Must be reimplemented by subclasses')
+
+    def setProgress(self, status):
+        raise NotImplementedError('Must be reimplemented by subclasses')
+
+
+class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
     def __init__(self, results, color, parent=None):
@@ -54,11 +71,7 @@ class BrowserItem(QtWidgets.QTreeWidgetItem):
         self.progressbar.setValue(0)
 
     def setStatus(self, status):
-        status_label = {
-            Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
-            Procedure.FINISHED: 'Finished'}
-        self.setText(3, status_label[status])
+        self.setText(3, self.status_label[status])
 
         if status == Procedure.FAILED or status == Procedure.ABORTED:
             # Set progress bar color to red

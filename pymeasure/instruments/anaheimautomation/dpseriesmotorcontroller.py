@@ -212,7 +212,7 @@ class DPSeriesMotorController(Instrument):
     @property
     def encoder_enabled(self):
         """ A boolean property to represent whether an external encoder is connected and should be
-        used to set the step_position property.
+        used to set the :attr:`step_position` property.
         """
         return self._encoder_enabled
 
@@ -223,11 +223,11 @@ class DPSeriesMotorController(Instrument):
     @property
     def step_position(self):
         """ Integer property representing the value of the motor position measured in steps counted
-        by the motor controller or, if encoder_enabled is set, the steps counted by an
+        by the motor controller or, if :attr:`encoder_enabled` is set, the steps counted by an
         externally connected encoder. Note that in the DP series motor controller instrument
         manuals, this property would be referred to as the 'absolute position' while this
-        driver implements a conversion between steps and absolute units for the `absolute
-        position` property. This property can be set.
+        driver implements a conversion between steps and absolute units for the
+        :attr:`absolute_position` property. This property can be set.
         """
         if self._encoder_enabled:
             pos = self.ask("VEP")
@@ -244,12 +244,13 @@ class DPSeriesMotorController(Instrument):
     @property
     def absolute_position(self):
         """ Float property representing the value of the motor position measured in absolute units.
-        Note that in DP series motor controller instrument manuals, `absolute position` refers to
-        the 'step_position' property rather than this property. Also note that use of this property
-        relies on steps_to_absolute() and absolute_to_steps() being implemented in a subclass. In
-        this way, the user can define the conversion from a motor step position into any desired
-        absolute unit. Absolute units could be the position in meters of a linear stage or the
-        angular position of a gimbal mount, etc. This property can be set.
+        Note that in DP series motor controller instrument manuals, 'absolute position' refers to
+        the :attr:`step_position` property rather than this property. Also note that use of this
+        property relies on :meth:`steps_to_absolute()` and :meth:`absolute_to_steps()`
+        being implemented in a subclass. In this way, the user can define the conversion from a
+        motor step position into any desired absolute unit. Absolute units could be the position in
+        meters of a linear stage or the angular position of a gimbal mount, etc. This property can
+        be set.
         """
         step_pos = self.step_position
         return self.steps_to_absolute(step_pos)
@@ -263,8 +264,8 @@ class DPSeriesMotorController(Instrument):
         """ Convert an absolute position to a number of steps to move. This must be implemented in
         subclasses.
 
-        :param pos: Absolute position in the units determined by the subclassed absolute_to_steps()
-            method.
+        :param pos: Absolute position in the units determined by the subclassed
+               :meth:`absolute_to_steps()` method.
         """
         raise NotImplementedError("absolute_to_steps() must be implemented in subclasses!")
 
@@ -301,7 +302,7 @@ class DPSeriesMotorController(Instrument):
     def home(self, home_mode):
         """ Send command to the motor controller to 'home' the motor.
 
-        :param home_mode: 0 or 1 specifying which homing mode to run.
+        :param home_mode: ``0`` or ``1`` specifying which homing mode to run.
 
             0 will perform a homing operation where the controller moves the motor until a soft
             limit is reached, then will ramp down to base speed and continue motion until a home

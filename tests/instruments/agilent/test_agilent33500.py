@@ -45,11 +45,11 @@ def test_shape(shape):
             (f"FUNC {shape}", None),
         ],
     ) as inst:
-        assert shape == inst.ch[1].shape
-        assert shape == inst.ch[2].shape
+        assert shape == inst.ch_1.shape
+        assert shape == inst.ch_2.shape
         assert shape == inst.shape
-        inst.ch[1].shape = shape
-        inst.ch[2].shape = shape
+        inst.ch_1.shape = shape
+        inst.ch_2.shape = shape
         inst.shape = shape
 
 
@@ -69,11 +69,11 @@ def test_frequency(frequency):
             (f"FREQ {frequency:.6f}", None),
         ],
     ) as inst:
-        assert frequency == inst.ch[1].frequency
-        assert frequency == inst.ch[2].frequency
+        assert frequency == inst.ch_1.frequency
+        assert frequency == inst.ch_2.frequency
         assert frequency == inst.frequency
-        inst.ch[1].frequency = frequency
-        inst.ch[2].frequency = frequency
+        inst.ch_1.frequency = frequency
+        inst.ch_2.frequency = frequency
         inst.frequency = frequency
 
 
@@ -93,11 +93,11 @@ def test_amplitude(amplitude):
             (f"VOLT {amplitude:.6f}", None),
         ],
     ) as inst:
-        assert amplitude == inst.ch[1].amplitude
-        assert amplitude == inst.ch[2].amplitude
+        assert amplitude == inst.ch_1.amplitude
+        assert amplitude == inst.ch_2.amplitude
         assert amplitude == inst.amplitude
-        inst.ch[1].amplitude = amplitude
-        inst.ch[2].amplitude = amplitude
+        inst.ch_1.amplitude = amplitude
+        inst.ch_2.amplitude = amplitude
         inst.amplitude = amplitude
 
 
@@ -117,11 +117,11 @@ def test_amplitude_unit(amplitude_unit):
             (f"VOLT:UNIT {amplitude_unit}", None),
         ],
     ) as inst:
-        assert amplitude_unit == inst.ch[1].amplitude_unit
-        assert amplitude_unit == inst.ch[2].amplitude_unit
+        assert amplitude_unit == inst.ch_1.amplitude_unit
+        assert amplitude_unit == inst.ch_2.amplitude_unit
         assert amplitude_unit == inst.amplitude_unit
-        inst.ch[1].amplitude_unit = amplitude_unit
-        inst.ch[2].amplitude_unit = amplitude_unit
+        inst.ch_1.amplitude_unit = amplitude_unit
+        inst.ch_2.amplitude_unit = amplitude_unit
         inst.amplitude_unit = amplitude_unit
 
 
@@ -141,11 +141,11 @@ def test_output(state):
             (f"OUTP {state}", None),
         ],
     ) as inst:
-        assert state == inst.ch[1].output
-        assert state == inst.ch[2].output
+        assert state == inst.ch_1.output
+        assert state == inst.ch_2.output
         assert state == inst.output
-        inst.ch[1].output = state
-        inst.ch[2].output = state
+        inst.ch_1.output = state
+        inst.ch_2.output = state
         inst.output = state
 
 
@@ -165,11 +165,11 @@ def test_offset(offset):
             (f"VOLT:OFFS {offset:.6f}", None),
         ],
     ) as inst:
-        assert offset == inst.ch[1].offset
-        assert offset == inst.ch[2].offset
+        assert offset == inst.ch_1.offset
+        assert offset == inst.ch_2.offset
         assert offset == inst.offset
-        inst.ch[1].offset = offset
-        inst.ch[2].offset = offset
+        inst.ch_1.offset = offset
+        inst.ch_2.offset = offset
         inst.offset = offset
 
 
@@ -189,11 +189,11 @@ def test_voltage_high(voltage_high):
             (f"VOLT:HIGH {voltage_high:.6f}", None),
         ],
     ) as inst:
-        assert voltage_high == inst.ch[1].voltage_high
-        assert voltage_high == inst.ch[2].voltage_high
+        assert voltage_high == inst.ch_1.voltage_high
+        assert voltage_high == inst.ch_2.voltage_high
         assert voltage_high == inst.voltage_high
-        inst.ch[1].voltage_high = voltage_high
-        inst.ch[2].voltage_high = voltage_high
+        inst.ch_1.voltage_high = voltage_high
+        inst.ch_2.voltage_high = voltage_high
         inst.voltage_high = voltage_high
 
 
@@ -213,11 +213,11 @@ def test_voltage_low(voltage_low):
             (f"VOLT:LOW {voltage_low:.6f}", None),
         ],
     ) as inst:
-        assert voltage_low == inst.ch[1].voltage_low
-        assert voltage_low == inst.ch[2].voltage_low
+        assert voltage_low == inst.ch_1.voltage_low
+        assert voltage_low == inst.ch_2.voltage_low
         assert voltage_low == inst.voltage_low
-        inst.ch[1].voltage_low = voltage_low
-        inst.ch[2].voltage_low = voltage_low
+        inst.ch_1.voltage_low = voltage_low
+        inst.ch_2.voltage_low = voltage_low
         inst.voltage_low = voltage_low
 
 
@@ -237,11 +237,11 @@ def test_phase(phase):
             (f"PHAS {phase:.6f}", None),
         ],
     ) as inst:
-        assert phase == inst.ch[1].phase
-        assert phase == inst.ch[2].phase
+        assert phase == inst.ch_1.phase
+        assert phase == inst.ch_2.phase
         assert phase == inst.phase
-        inst.ch[1].phase = phase
-        inst.ch[2].phase = phase
+        inst.ch_1.phase = phase
+        inst.ch_2.phase = phase
         inst.phase = phase
 
 
@@ -261,11 +261,11 @@ def test_square_dutycycle(square_dutycycle):
             (f"FUNC:SQU:DCYC {square_dutycycle:.6f}", None),
         ],
     ) as inst:
-        assert square_dutycycle == inst.ch[1].square_dutycycle
-        assert square_dutycycle == inst.ch[2].square_dutycycle
+        assert square_dutycycle == inst.ch_1.square_dutycycle
+        assert square_dutycycle == inst.ch_2.square_dutycycle
         assert square_dutycycle == inst.square_dutycycle
-        inst.ch[1].square_dutycycle = square_dutycycle
-        inst.ch[2].square_dutycycle = square_dutycycle
+        inst.ch_1.square_dutycycle = square_dutycycle
+        inst.ch_2.square_dutycycle = square_dutycycle
         inst.square_dutycycle = square_dutycycle
 
 
@@ -285,11 +285,11 @@ def test_ramp_symmetry(ramp_symmetry):
             (f"FUNC:RAMP:SYMM {ramp_symmetry:.6f}", None),
         ],
     ) as inst:
-        assert ramp_symmetry == inst.ch[1].ramp_symmetry
-        assert ramp_symmetry == inst.ch[2].ramp_symmetry
+        assert ramp_symmetry == inst.ch_1.ramp_symmetry
+        assert ramp_symmetry == inst.ch_2.ramp_symmetry
         assert ramp_symmetry == inst.ramp_symmetry
-        inst.ch[1].ramp_symmetry = ramp_symmetry
-        inst.ch[2].ramp_symmetry = ramp_symmetry
+        inst.ch_1.ramp_symmetry = ramp_symmetry
+        inst.ch_2.ramp_symmetry = ramp_symmetry
         inst.ramp_symmetry = ramp_symmetry
 
 

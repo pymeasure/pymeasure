@@ -32,7 +32,6 @@ from pyvisa.errors import VisaIOError
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -41,6 +40,7 @@ def _deprecation_warning(text):
     def func(x):
         warn(text, FutureWarning)
         return x
+
     return func
 
 
@@ -49,6 +49,7 @@ def _deprecation_warning_channels(property_name):
         warn(f'Deprecated property name "{property_name}", use the channels '
              '"enabled" property instead.', FutureWarning)
         return x
+
     return func
 
 
@@ -99,7 +100,15 @@ class IBeamSmart(Instrument):
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
-    channels = Instrument.ChannelCreator(DriverChannel, (1, 2, 3, 4, 5))
+    ch_1 = Instrument.ChannelCreator(DriverChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(DriverChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(DriverChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(DriverChannel, 4)
+
+    ch_5 = Instrument.ChannelCreator(DriverChannel, 5)
 
     def __init__(self, adapter, name="Toptica IBeam Smart laser diode",
                  baud_rate=115200,
@@ -110,7 +119,7 @@ class IBeamSmart(Instrument):
             includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
-            asrl={'baud_rate', baud_rate},
+            asrl={'baud_rate': baud_rate},
             **kwargs
         )
         # configure communication mode: no repeating and no command prompt

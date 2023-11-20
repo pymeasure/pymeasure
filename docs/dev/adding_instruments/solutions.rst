@@ -30,3 +30,4 @@ Channels
 - Not all channels have the same features, see :class:`MKS937B <pymeasure.instruments.mksinst.mks937b.MKS937B>`
 - Channel names in the communication (1, 2, 3) differ from front panel (A, B, C), see :class:`AdvantestR624X <pymeasure.instruments.advantest.advantestR624X.AdvantestR624X>`
 - A family of instruments in which a property of the channels is different for different members of the family , see :class:`AnritsuMS464xB <pymeasure.instruments.anritsu.AnritsuMS464xB>`
+- If you want to document the type of your instrument's channels (with a clickable link), check out the source of the :ref:`aimtti-landing-page` page.
