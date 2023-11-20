@@ -25,4 +25,3 @@
 from .channel import Channel
 from .instrument import Instrument
 from .resources import find_serial_port, list_resources
-
