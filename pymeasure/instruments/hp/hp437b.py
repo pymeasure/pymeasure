@@ -11,27 +11,20 @@ log.addHandler(logging.NullHandler())
 class MeasurementUnit(Enum):
     """Enumeration to represent the measurement unit the power meter will measure in"""
 
-    Watts = 0
+    WATTS = 0
 
-    dBm = 1
+    DBM = 1
 
-    Percent = 2
+    PERCENT = 2
 
-    dB = 3
-
-
-class LogLin(Enum):
-    """Enumeration to represent if the power meter measures in logarithmic or linear units"""
-    Linear = 0
-
-    Logarithmic = 1
+    DB = 3
 
 
 class SensorType(Enum):
     """Enumeration to represent the selected sensor type for the power meter"""
 
     #: Default (100% for all frequencies)
-    Default = 0
+    DEFAULT = 0
 
     HP_8481A = 1
 
@@ -56,47 +49,47 @@ class SensorType(Enum):
 class OperatingMode(Enum):
     """Enumeration to represent the operating mode the power meter is currently in"""
 
-    Normal = 0
+    NORMAL = 0
 
-    Zeroing = 6
+    ZEROING = 6
 
-    Calibration = 8
+    CALIBRATION = 8
 
 
 class TriggerMode(Enum):
     """Enumeration to represent the trigger mode the power meter is currently in"""
 
-    Hold = 0
+    HOLD = 0
 
-    FreeRunning = 3
+    FREE_RUNNING = 3
 
 
 class GroupTriggerMode(Enum):
     """Enumeration to represent the group execute trigger mode the power meter is currently in"""
 
-    Ignore = 0
+    IGNORE = 0
 
-    TriggerImmediate = 1
+    TRIGGER_IMMEDIATE = 1
 
-    TriggerDelay = 2
+    TRIGGER_DELAY = 2
 
 
 class EventStatusRegister(IntFlag):
     """Enumeration to represent the Event Status Register."""
 
     #: The bit is set when the power meter's LINE switch is set from STDBY to ON
-    PowerOn = 128
+    POWER_ON = 128
 
     #: This bit is set when an incorrect HP-IB code is sent to the power meter. For example,
     # the command “QX” is a command error.
-    CommandError = 32
+    COMMAND_ERROR = 32
 
     #: This bit is set when incorrect data is sent to the power meter. For example, the command
     # “FR-3GZ” is an execution error.
-    ExecutionError = 16
+    EXECUTION_ERROR = 16
 
     #: This bit is set true whenever a measurement error (error 1-49) occurs.
-    DeviceDependentError = 8
+    DEVICE_DEPENDENT_ERROR = 8
 
 
 Errors = {
@@ -316,7 +309,7 @@ class HP437B(Instrument):
         display_content = self.display_output
         assert display_content[0:5] == "DTYCY"
         self.write("EX")
-        return float(display_content[6:12])/100.0
+        return float(display_content[6:12]) / 100.0
 
     @duty_cycle.setter
     def duty_cycle(self, duty_cycle):
@@ -458,12 +451,16 @@ class HP437B(Instrument):
         get_process=__getstatus(StatusMessage.LimitsStatus),
     )
 
+    # just addressing the instrument to talk (without a query string) and read until EOI results
+    # in only reading the RF power level
     power = Instrument.measurement(
         "",
         """
         Measure the power at the power sensor attached to the power meter in the corresponding unit.
-        In case a measurement would be invalid the power meter responds with the value +9.0200e+40.
-        """
+        In case a measurement would be invalid the power meter responds with the value float('nan').
+        """,
+        get_process=lambda v: float("nan") if v == 9.0200e+40 else v
+
     )
 
     power_reference_enabled = Instrument.control(
@@ -578,12 +575,12 @@ class HP437B(Instrument):
         """
         Get the measurement unit the power meter is currently reporting the power values in.
 
-        Depends on: :attr:`relative_mode_enabled` and attr:`log_lin`
+        Depends on: :attr:`relative_mode_enabled` and attr:`linear_display_enabled`
 
         .. code-block:: python
 
             instr.relative_mode_enabled = False
-            instr.log_lin = LogLin.Linear
+            instr.linear_display_enabled = True
 
             print(instr.measurement_unit)
             MeasurementUnit.Watts
@@ -594,24 +591,25 @@ class HP437B(Instrument):
         get_process=__getstatus(StatusMessage.MeasurementUnits),
     )
 
-    log_lin = Instrument.control(
+    linear_display_enabled = Instrument.control(
         "SM", "%s",
         """
         Control if the power meter displays or reports the power values in logarithmic or linear
-        units. See :attr:`measurement_unit` for further information.
+        units. Set `linear_display_enabled` to 'True' to activate linear value readout.
 
         .. code-block:: python
 
             from pymeasure.instruments.hp.hp437b import LogLin
 
             instr.relative_mode_enabled = False
-            instr.log_lin = LogLin.Linear
+            instr.linear_display_enabled = True
         """,
         validator=strict_discrete_set,
-        values=[e for e in LogLin],
-        set_process=lambda v: "LN" if int(v.value) == 0 else "LG",
-        get_process=__getstatus(StatusMessage.LinearLogStatus, lambda v: {int(f.value): e for (
-            e, f) in zip(LogLin, LogLin)}[v])
+        values={True: "LN", False: "LG"},
+        cast=bool,
+        map_values=True,
+        get_process=__getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN",
+                                                                          1: "LG"}[v])
     )
 
     @property
@@ -621,9 +619,9 @@ class HP437B(Instrument):
         can be
         set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
         """
-        log_lin = self.log_lin
+        linear_display_enabled = self.linear_display_enabled
         mapping = {}
-        if log_lin == LogLin.Logarithmic:
+        if not linear_display_enabled:
             mapping = {1: 0.1, 2: 0.01, 3: 0.001}
         else:
             mapping = {1: 1, 2: 0.1, 3: 0.01}
@@ -644,9 +642,9 @@ class HP437B(Instrument):
         be set: 0.1 dB, 0.01 dB and 0.001 dB or if the selected unit is Watts 1%, 0.1% and 0.001%.
         """
 
-        log_lin = self.log_lin
+        linear_display_enabled = self.linear_display_enabled
         allowed_values = {}
-        if log_lin == LogLin.Logarithmic:
+        if not linear_display_enabled:
             allowed_values = {0.1: 1, 0.01: 2, 0.001: 3}
         else:
             allowed_values = {1: 1, 0.1: 2, 0.01: 3}
@@ -791,7 +789,7 @@ class HP437B(Instrument):
 
     def sensor_data_write_id_label(self, sensor_id, label):
         """
-        Set a particular power sensor’s ID label. table to be modified. The sensor ID label must not
+        Set a particular power sensor’s ID label table to be modified. The sensor ID label must not
         exceed 7 characters. For example, to identify Sensor Data table #2
         with an ID number of 1234567:
 

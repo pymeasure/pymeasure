@@ -115,7 +115,3 @@ def test_sensor_type(sensor_type):
              ("ERR?", "000")],
     ) as instr:
         instr.sensor_type = sensor_type
-
-
-def test_range():
-    "000000050010001A1002000001"

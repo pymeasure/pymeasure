@@ -25,11 +25,9 @@
 import pytest
 from time import sleep
 from pymeasure.instruments.hp import HP437B
-from pymeasure.instruments.hp.hp437b import LogLin, MeasurementUnit, OperatingMode, TriggerMode, \
+from pymeasure.instruments.hp.hp437b import MeasurementUnit, OperatingMode, TriggerMode, \
     GroupTriggerMode
 import numpy as np
-
-pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestHP437B:
@@ -42,10 +40,6 @@ class TestHP437B:
         - Some power sensor connected to the power reference reading around 0 dBm (+/- 1 dBm)
     """
 
-    RESOURCE = 'USB0::0x03EB::0x2065::HEWLETT-PACKARD_437B__2.0::0::INSTR'
-
-    instr = HP437B(RESOURCE)
-
     BOOLEANS = [True, False]
 
     FILTER_VALUES = reversed([1, 2, 4, 8, 16, 32, 64, 128, 256, 512])
@@ -53,10 +47,14 @@ class TestHP437B:
     GROUP_TRIGGER_MODES = [e for e in GroupTriggerMode]
 
     @pytest.fixture
-    def make_resetted_instr(self):
-        self.instr.reset()
-        self.instr.clear_status_registers()
-        return self.instr
+    def makeHp437b(self, connected_device_address):
+        return HP437B(connected_device_address)
+
+    @pytest.fixture
+    def make_resetted_instr(self, makeHp437b):
+        makeHp437b.reset()
+        makeHp437b.clear_status_registers()
+        return makeHp437b
 
     def test_range(self, make_resetted_instr):
         instr = make_resetted_instr
@@ -66,15 +64,15 @@ class TestHP437B:
 
     def test_operating_mode(self, make_resetted_instr):
         instr = make_resetted_instr
-        assert instr.operating_mode == OperatingMode.Normal
+        assert instr.operating_mode == OperatingMode.NORMAL
 
     def test_trigger_mode(self, make_resetted_instr):
         instr = make_resetted_instr
-        instr.trigger_mode = TriggerMode.Hold
-        assert instr.trigger_mode == TriggerMode.Hold
+        instr.trigger_mode = TriggerMode.HOLD
+        assert instr.trigger_mode == TriggerMode.HOLD
 
-        instr.trigger_mode = TriggerMode.FreeRunning
-        assert instr.trigger_mode == TriggerMode.FreeRunning
+        instr.trigger_mode = TriggerMode.FREE_RUNNING
+        assert instr.trigger_mode == TriggerMode.FREE_RUNNING
 
     @pytest.mark.parametrize('boolean', BOOLEANS)
     def test_automatic_range_enabled(self, make_resetted_instr, boolean):
@@ -160,29 +158,29 @@ class TestHP437B:
         instr.relative_mode_enabled = boolean
         assert instr.relative_mode_enabled == boolean
 
-    def test_measurement_units_and_log_lin(self, make_resetted_instr):
+    def test_measurement_units_and_linear_display_enabled(self, make_resetted_instr):
         instr = make_resetted_instr
         instr.relative_mode_enabled = True
-        instr.log_lin = LogLin.Linear
-        assert instr.measurement_unit == MeasurementUnit.Percent
+        instr.linear_display_enabled = True
+        assert instr.measurement_unit == MeasurementUnit.PERCENT
 
-        instr.log_lin = LogLin.Logarithmic
-        assert instr.measurement_unit == MeasurementUnit.dB
+        instr.linear_display_enabled = False
+        assert instr.measurement_unit == MeasurementUnit.DB
 
         instr.relative_mode_enabled = False
-        instr.log_lin = LogLin.Linear
-        assert instr.measurement_unit == MeasurementUnit.Watts
-        assert instr.log_lin == LogLin.Linear
+        instr.linear_display_enabled = True
+        assert instr.measurement_unit == MeasurementUnit.WATTS
+        assert instr.linear_display_enabled is True
 
-        instr.log_lin = LogLin.Logarithmic
-        assert instr.measurement_unit == MeasurementUnit.dBm
-        assert instr.log_lin == LogLin.Logarithmic
+        instr.linear_display_enabled = False
+        assert instr.measurement_unit == MeasurementUnit.DBM
+        assert instr.linear_display_enabled is False
 
     @pytest.mark.parametrize('resolution', [1, 0.1, 0.01])
     def test_resolution_linear(self, make_resetted_instr, resolution):
         instr = make_resetted_instr
 
-        instr.log_lin = LogLin.Linear
+        instr.linear_display_enabled = True
         instr.resolution = resolution
         assert instr.resolution == resolution
 
@@ -190,7 +188,7 @@ class TestHP437B:
     def test_resolution_logarithmic(self, make_resetted_instr, resolution):
         instr = make_resetted_instr
 
-        instr.log_lin = LogLin.Logarithmic
+        instr.linear_display_enabled = False
         instr.resolution = resolution
         assert instr.resolution == resolution
 
