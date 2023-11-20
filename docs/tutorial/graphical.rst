@@ -158,15 +158,6 @@ Below we adapt our previous example to use a ManagedWindow. ::
             )
             self.setWindowTitle('GUI Example')
 
-        def queue(self):
-            filename = tempfile.mktemp()
-
-            procedure = self.make_procedure()
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
-
 
     if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
@@ -181,9 +172,13 @@ This results in the following graphical display.
 .. image:: pymeasure-managedwindow.png
     :alt: ManagedWindow Example
 
-In the code, the MainWindow class is a sub-class of the ManagedWindow class. We override the constructor to provide information about the procedure class and its options. The :code:`inputs` are a list of Parameters class-variable names, which the display will generate graphical fields for. When the list of inputs is long, a boolean key-word argument :code:`inputs_in_scrollarea` is provided that adds a scrollbar to the input area. The :code:`displays` is a list similar to the :code:`inputs` list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
+In the code, the :class:`MainWindow` class is a sub-class of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class. We override the constructor to provide information about the procedure class and its options. The :code:`inputs` are a list of :class:`Parameters` class-variable names, which the display will generate graphical fields for. When the list of inputs is long, a boolean key-word argument :code:`inputs_in_scrollarea` is provided that adds a scrollbar to the input area. The :code:`displays` is a list similar to the :code:`inputs` list, which instead defines the parameters to display in the browser window. This browser keeps track of the experiments being run in the sequential queue.
 
-The :code:`queue` method establishes how the Procedure object is constructed. We use the :code:`self.make_procedure` method to create a Procedure based on the graphical input fields. Here we are free to modify the procedure before putting it on the queue. In this context, the Manager uses an Experiment object to keep track of the Procedure, Results, and its associated graphical representations in the browser and live-graph. This is then given to the Manager to queue the experiment.
+As a bit of background information (for basic usage this needs not be known): the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method establishes how the :class:`~pymeasure.experiment.procedure.Procedure` object is constructed.
+The :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.make_procedure` method is used to create a :class:`~pymeasure.experiment.procedure.Procedure` based on the graphical input fields.
+Here we are free to modify the procedure before putting it on the queue.
+In this context, the :class:`~pymeasure.display.manager.Manager` uses an :class:`~pymeasure.display.manager.Experiment` object to keep track of the :class:`~pymeasure.experiment.procedure.Procedure`, :class:`~pymeasure.experiment.results.Results`, and its associated graphical representations in the browser and live-graph.
+This is then given to the :class:`~pymeasure.display.manager.Manager` to queue the experiment.
 
 .. image:: pymeasure-managedwindow-queued.png
     :alt: ManagedWindow Queue Example
@@ -207,6 +202,66 @@ Now that you have learned about the ManagedWindow, you have all of the basics to
 
       import pyqtgraph as pg
       pg.setConfigOption("useOpenGL", True)
+
+The filename and directory input
+################################
+
+By default, a ManagedWindow instance contains fields for the filename and the directory (as part of the :class:`~pymeasure.display.widgets.fileinput_widget.FileInputWidget`) to control where the results of an experiment are saved.
+
+.. image:: pymeasure-fileinput.png
+    :alt: The filename and directory input widget
+    :width: 24%
+.. image:: pymeasure-fileinput_disabled.png
+    :alt: The filename and directory input widget, disabled to store the measurement to a temporary file
+    :width: 24%
+.. image:: pymeasure-fileinput_complete_filename.png
+    :alt: The filename and directory input widget showing the auto-complete for the filename
+    :width: 24%
+.. image:: pymeasure-fileinput_complete_directory.png
+    :alt: The filename and directory input widget showing the auto-complete for the directory
+    :width: 24%
+
+If the checkbox named :guilabel:`Save data` is enabled, the measurement is written to a file.
+Otherwise, it is stored in a temporary file.
+
+The filename in the designated field can be entered with or without extension.
+If the entered extension is recognized (by default :code:`.csv` and :code:`.txt` are recognized), that extension is used.
+If the extension is not recognized, the first of the available extensions will be used (default is :code:`.csv`).
+Additionally, a sequence number is added just before the extension to ensure the uniqueness of the filename.
+
+The filename can also contain placeholders, which are filled in using the standard python :code:`format` function (i.e., placeholders can be entered as :code:`'{placeholder name:formatspec}'`).
+Valid placeholders are the names of the all the input parameters or metadata of the measurement procedure; the valid placeholders are listed in the tooltip of the input field.
+As the standard :code:`format` functionality is used, the placeholders can be formatted as such; for example, the filename :code:`'DATA_delay{Delay Time:08.3f}s'` gets formatted into :code:`'DATA_delay0000.010s'`.
+
+Both the filename and the directory field are provided with auto-completion to help with filling in these fields.
+The directory field contains a button on the right side to open a folder-selection window.
+
+The default values can be easily set after the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has been initialized; this allows setting a default location and a default filename, changing the default recognized extensions, control the default toggle-value for the :guilabel:`Save data` option, and control whether the filename input field is frozen.
+
+.. code-block:: python
+   :emphasize-lines: 13, 14, 15, 16, 17
+
+    class MainWindow(ManagedWindow):
+
+        def __init__(self):
+            super().__init__(
+                procedure_class=TestProcedure,
+                inputs=['iterations', 'delay', 'seed'],
+                displays=['iterations', 'delay', 'seed'],
+                x_axis='Iteration',
+                y_axis='Random Number',
+            )
+            self.setWindowTitle('GUI Example')
+
+            self.filename = r'default_filename_delay{Delay Time:4f}s'   # Sets default filename
+            self.directory = r'C:/Path/to/default/directory'            # Sets default directory
+            self.store_measurement = False                              # Controls the 'Save data' toggle
+            self.file_input.extensions = ["csv", "txt", "data"]         # Sets recognized extensions, first entry is the default extension
+            self.file_input.filename_fixed = False                      # Controls whether the filename-field is frozen (but still displayed)
+
+
+The presence of the widget is controlled by the boolean argument :code:`enabled_file_input` of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init.
+Note that when this is set to :code:`False`, the default :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method of the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` class will no longer work, and a new, custom, method needs to be implemented; a basic implementation is shown in the documentation of the :meth:`~pymeasure.display.windows.managed_window.ManagedWindowBase.queue` method.
 
 Customising the plot options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -300,16 +355,6 @@ it derived from example above and changed lines are marked.
             log.info("ManagedWindow connected to logging")
             self.setWindowTitle('GUI Example')
 
-        def queue(self):
-            filename = tempfile.mktemp()
-
-            procedure = self.make_procedure()
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
-
-
     if __name__ == "__main__":
         app = QtWidgets.QApplication(sys.argv)
         window = MainWindow()
@@ -348,7 +393,7 @@ In order to be able to use the sequencer, the :class:`~pymeasure.display.windows
 In order to implement the sequencer into the previous example, only the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` has to be modified slightly (where modified lines are marked):
 
 .. code-block:: python
-   :emphasize-lines: 10,11,12,16,19,20
+   :emphasize-lines: 10,11,12
 
     class MainWindow(ManagedWindow):
 
@@ -364,17 +409,6 @@ In order to implement the sequencer into the previous example, only the :class:`
                 sequence_file="gui_sequencer_example_sequence.txt",  # Added line, optional
             )
             self.setWindowTitle('GUI Example')
-
-        def queue(self, procedure=None):                             # Modified line
-            filename = tempfile.mktemp()
-
-            if procedure is None:                                    # Added line
-                procedure = self.make_procedure()                    # Indented
-
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
 
 This adds the sequencer underneath the input panel.
 
@@ -407,47 +441,6 @@ An example of such a sequence file is given below, resulting in the sequence sho
 .. literalinclude:: gui_sequencer_example_sequence.txt
 
 This file can also be automatically loaded at the start of the program by adding the key-word argument :code:`sequence_file="filename.txt"` to the :code:`super().__init__` call, as was done in the example.
-
-Using the directory input
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It is possible to add a directory input in order to choose where the experiment's result will be saved. This option is activated by passing a boolean key-word argument :code:`directory_input` during the :class:`~pymeasure.display.windows.managed_window.ManagedWindow` init. The value of the directory can be retrieved and set using the property :code:`directory`.
-A default directory can be defined by setting the :code:`directory` property in the MainWindow init.
-
-Only the MainWindow needs to be modified in order to use this option (modified lines are marked).
-
-.. code-block:: python
-   :emphasize-lines: 10,13,16,17
-
-    class MainWindow(ManagedWindow):
-
-        def __init__(self):
-            super().__init__(
-                procedure_class=TestProcedure,
-                inputs=['iterations', 'delay', 'seed'],
-                displays=['iterations', 'delay', 'seed'],
-                x_axis='Iteration',
-                y_axis='Random Number',
-                directory_input=True,                                # Added line, enables directory widget
-            )
-            self.setWindowTitle('GUI Example')
-            self.directory = r'C:/Path/to/default/directory'         # Added line, sets default directory for GUI load
-
-        def queue(self):
-            directory = self.directory                               # Added line
-            filename = unique_filename(directory)                    # Modified line
-
-            results = Results(procedure, filename)
-            experiment = self.new_experiment(results)
-
-            self.manager.queue(experiment)
-
-This adds the input line above the Queue and Abort buttons.
-
-.. image:: pymeasure-directoryinput.png
-    :alt: Example of the directory input widget
-
-A completer is implemented allowing to quickly select an existing folder, and a button on the right side of the input widget opens a browse dialog.
 
 Using the estimator widget
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -632,15 +625,6 @@ To start with, let's make the following highlighted edits to the code example fr
            )
            self.setWindowTitle('GUI Example')
 
-       def queue(self):
-           filename = tempfile.mktemp()
-
-           procedure = self.make_procedure()
-           results = Results(procedure, filename)
-           experiment = self.new_experiment(results)
-
-           self.manager.queue(experiment)
-
 
    if __name__ == "__main__":
        app = QtWidgets.QApplication(sys.argv)
@@ -722,7 +706,7 @@ The following example is a variant of the code example from `Using the ManagedWi
 
 
 .. code-block:: python
-   :emphasize-lines: 8,71,72,73
+   :emphasize-lines: 8,62,63,64
 
    import sys
    import random
@@ -782,15 +766,6 @@ The following example is a variant of the code example from `Using the ManagedWi
            )
            self.setWindowTitle('GUI Example')
    
-       def queue(self):
-           filename = tempfile.mktemp()
-   
-           procedure = self.make_procedure()
-           results = Results(procedure, filename)
-           experiment = self.new_experiment(results)
-   
-           self.manager.queue(experiment)
-   
    
    if __name__ == "__main__":
        if len(sys.argv) > 1:
@@ -830,5 +805,3 @@ To run an experiment with parameters retrieved from an existing result file.
 .. code-block:: bash
 
     python console.py --use-result-file console_test2023-08-09_1.csv
-
-
