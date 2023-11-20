@@ -243,7 +243,8 @@ class LecroyMAUIBase(Instrument):
         values=[-0.82, 0.82]
     )
 
-    def setup_sequence(self, sequence_on, n_sequences=1):
+    def setup_sequence(self, sequence_on, n_sequences=1, maximize=1, srate=5e8):
+        #other option is "2=FixedSampleRate", 1="SetMaximumMemory"
         """
         Turn sequence mode on or off with sequence_on = [True, False] and
         if True, specify the number of sequences to record. Memory depth is left
@@ -252,7 +253,14 @@ class LecroyMAUIBase(Instrument):
         """
         if sequence_on:
             self.write(f'SEQ ON, {n_sequences}')
+            self.write(f"""vbs 'app.acquisition.horizontal.Maximize = {maximize}'""")
+            if maximize ==2:
+                self.write(
+                    f"""vbs 'app.acquisition.horizontal.SampleRate = {int(srate)}'""")
+
+
         else:
+            self.write("""vbs 'app.acquisition.horizontal.Maximize = 1'""")
             self.write('SEQ OFF')
 
     def sequence_status(self):
