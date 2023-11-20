@@ -35,11 +35,9 @@ python gui.py
 
 import sys
 import random
-import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
@@ -90,15 +88,6 @@ class MainWindow(ManagedWindow):
             y_axis='Random Number'
         )
         self.setWindowTitle('GUI Example')
-
-    def queue(self):
-        filename = tempfile.mktemp()
-
-        procedure = self.make_procedure()
-        results = Results(procedure, filename)
-        experiment = self.new_experiment(results)
-
-        self.manager.queue(experiment)
 
 
 if __name__ == "__main__":
