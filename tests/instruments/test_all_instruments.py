@@ -111,6 +111,7 @@ channel_as_instrument_subclass = [
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
+    "AFG3152CChannel",
     "AWG401x_AFG",
     "AWG401x_AWG",
     "AdvantestR3767CG",
@@ -160,6 +161,10 @@ grandfathered_docstring_instruments = [
     "Keithley2000",
     "Keithley2260B",
     "Keithley2306",
+    "Keithley2306Channel",
+    "BatteryChannel",  # Keithley2306
+    "Step",  # Keithley2306
+    "Relay",  # Keithley2306
     "Keithley2400",
     "Keithley2450",
     "Keithley2600",
@@ -174,7 +179,6 @@ grandfathered_docstring_instruments = [
     "LakeShore425",
     "LakeShoreTemperatureChannel",
     "LakeShoreHeaterChannel",
-    "LeCroyT3DSO1204",
     "MKS937B",
     "IPS120_10",
     "ITC503",
@@ -204,7 +208,6 @@ grandfathered_docstring_instruments = [
     "VellemanK8090",
     "Yokogawa7651",
     "YokogawaGS200",
-    "ScopeChannel",
     "IonGaugeAndPressureChannel",
     "PressureChannel",
     "SequenceEntry",

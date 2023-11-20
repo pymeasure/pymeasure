@@ -24,7 +24,8 @@
 
 import pytest
 
-from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204, sanitize_source
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import sanitize_source
+from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 from pymeasure.test import expected_protocol
 
 INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]
