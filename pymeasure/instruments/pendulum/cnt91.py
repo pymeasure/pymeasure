@@ -25,7 +25,6 @@
 import logging
 from time import sleep
 
-from pymeasure.adapters.visa import VISAAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
