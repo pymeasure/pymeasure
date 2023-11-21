@@ -36,7 +36,7 @@ class Test_NI232CT_3478A:
 
     To run this test the follow8ing reuirements need to be fulfilled:
         - A NI GPIB-232CT connected via a serial port to the computer running this test,
-        - A HP 3748A connected  by GPIB to the NI GPIB-232CT
+        - A HP 3748A connected by GPIB to the NI GPIB-232CT
     """
 
     Serial_Port = "ASRL/dev/ttyUSB2::INSTR"  # VISA resource string for the serial port
@@ -48,6 +48,8 @@ class Test_NI232CT_3478A:
 
     RESO = [3, 4, 5]
     MODES = ['DCV', 'ACV', 'DCI', 'ACI', 'R2W', 'R4W']
+
+
 
     @pytest.fixture
     def make_clean_instrument(self):
