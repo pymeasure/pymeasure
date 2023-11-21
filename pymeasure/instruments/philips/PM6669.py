@@ -171,7 +171,7 @@ PM6669.gate = Instrument.control(
 
        In the totalize function, set this to True to open the gate and to False
        to close the gate. The count can then be read with read_measurement(). For
-       most purposes you want to be in freerun mode. 
+       most purposes you want to be in freerun mode.
     """,
     validator=strict_discrete_set,
     values={True: "OPEN", False: "CLOSE"},
@@ -204,7 +204,7 @@ PM6669.measurement_timeout = Instrument.control(
     "MEAC?",
     "TOUT %s",
     """ Control the measurement timeout
-    
+
         this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
