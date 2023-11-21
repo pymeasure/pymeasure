@@ -141,13 +141,13 @@ class PM6669(Instrument):
         return result
 
     def reset_to_defaults(self):
-        """ Resets the instruments to default settings
+        """ Reset the instruments to default settings
         """
         self.write("DCL")
 
 
 PM6669.id = Instrument.measurement(
-    "ID?", """ Reads the instrument identification """
+    "ID?", """Read the instrument identification """
 )
 
 PM6669.function = Instrument.control(
@@ -174,14 +174,14 @@ PM6669.gate_close = Instrument.measurement(
 )
 
 PM6669.measurement_time = Instrument.control(
-    "MEAC?", "MTIME %g", """ A float property that controls the measurement time""",
+    "MEAC?", "MTIME %g", """Control the measurement time""",
     validator=strict_range,
     values=[0, 10],
     get_process=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0
 )
 
 PM6669.freerun = Instrument.control(
-    "MEAC?", "FRUN %s", """ A boolean property that controls the freerun settings""",
+    "MEAC?", "FRUN %s", """Control the freerun settings""",
     validator=strict_discrete_set,
     values={True: "ON", False: "OFF"},
     map_values=True,
@@ -191,8 +191,9 @@ PM6669.freerun = Instrument.control(
 
 PM6669.measurement_timeout = Instrument.control(
     "MEAC?", "TOUT %s",
-    """ A float property that controls the measurement timeout, this timeout only has meaning when
-        freerun is off.""",
+    """ Control the measurement timeout
+    
+        this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
     get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0
@@ -200,10 +201,10 @@ PM6669.measurement_timeout = Instrument.control(
 
 PM6669.SRQMask = Instrument.control(
     "BUS?", "MSR %i",
-    """A integer property that controls the SRQ mask""",
+    """Control the SRQ mask""",
     get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1]))
 )
 
 PM6669.meac = Instrument.measurement(
-    "MEAC?", """ Reads the measurement settings from the device """
+    "MEAC?", """Read the measurement settings from the device """
 )
