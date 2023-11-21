@@ -151,7 +151,7 @@ PM6669.id = Instrument.measurement(
 )
 
 PM6669.function = Instrument.control(
-    "FNC?", "%s", """A string or keyword property that sets measuring function on the device.""",
+    "FNC?", "%s", """Control the measuring function on the device (str).""",
     validator=strict_discrete_set,
     values={"FREQ A": "FREQ A", "FREQ B": "FREQ B", "RPM A": "RPM A", "PER A": "PER A",
             "WIDTH A": "WIDTH A", "TOTM A": "TOTM A",
