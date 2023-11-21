@@ -48,17 +48,15 @@ class CNT91(Instrument):
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
 
-    def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
+    def __init__(self, adapter, name="Pendulum CNT-91",  **kwargs):
         # allow long-term measurements, add 30 s for data transfer
         kwargs.setdefault("timeout", 24 * 60 * 60 * 1000 + 30)
         kwargs.setdefault("read_termination", "\n")
-        adapter = VISAAdapter(adapter, **kwargs)
-        # could not pass this to VISAAdapter, raises ValueError: 'baud_rate' is not a valid
-        # attribute for type USBInstrument
-        adapter.connection.baud_rate = 256000
+
         super().__init__(
             adapter,
             name,
+            asrl={'baud_rate': 256000},
             **kwargs,
         )
 
