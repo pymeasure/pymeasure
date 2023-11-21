@@ -76,12 +76,7 @@ class PM6669(Instrument):
     """Represents the Philips PM 6669 instrument."""
 
     def __init__(self, adapter, name="Philips PM 6669", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            includeSCPI=False,
-            **kwargs
-        )
+        super().__init__(adapter, name, includeSCPI=False, **kwargs)
         self.adapter.connection.timeout = 10000
         self.write("EOI ON")
         self.freerun = False
@@ -125,11 +120,11 @@ class PM6669(Instrument):
         If a request is made to the device while a measurement is ready, both the reply and the
         measurement are returned. The measurement is filtered out and put in a backlog Queue.
         """
-        reply = ''
+        reply = ""
         result = ""
-        while reply == '':
+        while reply == "":
             reply = super().read()
-            reply = reply.strip('\x00')
+            reply = reply.strip("\x00")
             for line in reply.splitlines():
                 if line[:3] in self.KEYWORDS:
                     result += line
@@ -137,34 +132,41 @@ class PM6669(Instrument):
                     result += ","
                 if line.startswith("PM"):
                     result = line
-            
+
         return result
 
     def reset_to_defaults(self):
-        """ Reset the instruments to default settings
-        """
+        """Reset the instruments to default settings"""
         self.write("DCL")
 
 
-PM6669.id = Instrument.measurement(
-    "ID?", """Get the instrument identification """
-)
+PM6669.id = Instrument.measurement("ID?", """Get the instrument identification """)
 
 PM6669.function = Instrument.control(
-    "FNC?", "%s", """Control the measuring function on the device (str).""",
+    "FNC?",
+    "%s",
+    """Control the measuring function on the device (str).""",
     validator=strict_discrete_set,
-    values={"FREQ A": "FREQ A", "FREQ B": "FREQ B", "RPM A": "RPM A", "PER A": "PER A",
-            "WIDTH A": "WIDTH A", "TOTM A": "TOTM A",
-            Functions.FREQUENCY_A: "FREQ   A",
-            Functions.FREQUENCY_B: "FREQ   B", Functions.PER_A: "PER    A",
-            Functions.RPM_A: "RPM    A",
-            Functions.WIDTH_A: "PWIDTH A", Functions.TOT_A: "TOTM   A"
-            },
-    map_values=True
+    values={
+        "FREQ A": "FREQ A",
+        "FREQ B": "FREQ B",
+        "RPM A": "RPM A",
+        "PER A": "PER A",
+        "WIDTH A": "WIDTH A",
+        "TOTM A": "TOTM A",
+        Functions.FREQUENCY_A: "FREQ   A",
+        Functions.FREQUENCY_B: "FREQ   B",
+        Functions.PER_A: "PER    A",
+        Functions.RPM_A: "RPM    A",
+        Functions.WIDTH_A: "PWIDTH A",
+        Functions.TOT_A: "TOTM   A",
+    },
+    map_values=True,
 )
 
 PM6669.gate = Instrument.control(
-    "", "GATE %s",
+    "",
+    "GATE %s",
     """Control the gate
 
        In the totalize function, set this to True to open the gate and to False
@@ -174,41 +176,46 @@ PM6669.gate = Instrument.control(
     validator=strict_discrete_set,
     values={True: "OPEN", False: "CLOSE"},
     map_values=True,
-    get_process=lambda x: float(x[6:])
+    get_process=lambda x: float(x[6:]),
 )
 
 PM6669.measurement_time = Instrument.control(
-    "MEAC?", "MTIME %g", """Control the measurement time""",
+    "MEAC?",
+    "MTIME %g",
+    """Control the measurement time""",
     validator=strict_range,
     values=[0, 10],
-    get_process=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
 )
 
 PM6669.freerun = Instrument.control(
-    "MEAC?", "FRUN %s", """Control the freerun settings""",
+    "MEAC?",
+    "FRUN %s",
+    """Control the freerun settings""",
     validator=strict_discrete_set,
     values={True: "ON", False: "OFF"},
     map_values=True,
-    get_process=lambda x:
-    (x[1].split("\n")[0][5:] == " ON") if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: (x[1].split("\n")[0][5:] == " ON")
+    if x[0].startswith("MTIME") is True
+    else 0,
 )
 
 PM6669.measurement_timeout = Instrument.control(
-    "MEAC?", "TOUT %s",
+    "MEAC?",
+    "TOUT %s",
     """ Control the measurement timeout
     
         this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0
+    get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0,
 )
 
 PM6669.SRQMask = Instrument.control(
-    "BUS?", "MSR %i",
+    "BUS?",
+    "MSR %i",
     """Control the SRQ mask""",
-    get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1]))
+    get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
 )
 
-PM6669.meac = Instrument.measurement(
-    "MEAC?", """Get the measurement settings from the device """
-)
+PM6669.meac = Instrument.measurement("MEAC?", """Get the measurement settings from the device """)
