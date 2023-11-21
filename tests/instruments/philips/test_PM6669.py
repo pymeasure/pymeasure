@@ -35,9 +35,6 @@ FUNCTION_STRINGS = [
     ("TOTM A", Functions.TOT_A),
     ("WIDTH A", Functions.WIDTH_A)
 ]
-TIMEOUT_TIMES = [0, 0.1, 10, 25.5]
-MEASUREMENT_TIMES = [0.2, 1, 10]
-BOOLEAN_CASES = [True, False]
 
 
 
@@ -93,26 +90,17 @@ def test_function_modes(philips_pm6669, case, expected):
     philips_pm6669.function = case
     assert philips_pm6669.function == expected
 
-@pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
-def test_function_modes(philips_pm6669, case, expected):
-    instr = philips_pm6669
-    instr.function = case
-    assert instr.function == expected
-
-@pytest.mark.parametrize('case', TIMEOUT_TIMES)
+@pytest.mark.parametrize('case', [0, 0.1, 10, 25.5])
 def test_timeout_times(philips_pm6669, case):
-    instr = philips_pm6669
-    instr.measurement_timeout = case
-    assert instr.measurement_timeout == case
+    philips_pm6669.measurement_timeout = case
+    assert philips_pm6669.measurement_timeout == case
 
-@pytest.mark.parametrize('case', MEASUREMENT_TIMES)
+@pytest.mark.parametrize('case', [0.2, 1, 10])
 def test_measurement_times(philips_pm6669, case):
-    instr = philips_pm6669
-    instr.measurement_time = case
-    assert instr.measurement_time == case
+    philips_pm6669.measurement_time = case
+    assert philips_pm6669.measurement_time == case
 
-@pytest.mark.parametrize('case', BOOLEAN_CASES)
+@pytest.mark.parametrize('case', [True, False])
 def test_freerun(philips_pm6669, case):
-    instr = philips_pm6669
-    instr.freerun = case
-    assert instr.freerun == case
+    philips_pm6669.freerun = case
+    assert philips_pm6669.freerun == case

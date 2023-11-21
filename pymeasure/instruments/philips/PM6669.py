@@ -75,10 +75,10 @@ class MSRFlag(IntFlag):
 class PM6669(Instrument):
     """Represents the Philips PM 6669 instrument."""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Philips PM 6669", **kwargs):
         super().__init__(
             adapter,
-            "Philips PM 6669",
+            name,
             includeSCPI=False,
             **kwargs
         )
@@ -147,7 +147,7 @@ class PM6669(Instrument):
 
 
 PM6669.id = Instrument.measurement(
-    "ID?", """Read the instrument identification """
+    "ID?", """Get the instrument identification """
 )
 
 PM6669.function = Instrument.control(
@@ -163,13 +163,17 @@ PM6669.function = Instrument.control(
     map_values=True
 )
 
-PM6669.gate_open = Instrument.measurement(
-    "GATE OPEN", """Open the gate and return the current count""",
-    get_process=lambda x: float(x[6:])
-)
+PM6669.gate = Instrument.control(
+    "", "GATE %s",
+    """Control the gate
 
-PM6669.gate_close = Instrument.measurement(
-    "GATE CLOSE", """Close the gate and return the current count""",
+       In the totalize function, set this to True to open the gate and to False
+       to close the gate. The count can then be read with read_measurement(). For
+       most purposes you want to be in freerun mode. 
+    """,
+    validator=strict_discrete_set,
+    values={True: "OPEN", False: "CLOSE"},
+    map_values=True,
     get_process=lambda x: float(x[6:])
 )
 
@@ -206,5 +210,5 @@ PM6669.SRQMask = Instrument.control(
 )
 
 PM6669.meac = Instrument.measurement(
-    "MEAC?", """Read the measurement settings from the device """
+    "MEAC?", """Get the measurement settings from the device """
 )
