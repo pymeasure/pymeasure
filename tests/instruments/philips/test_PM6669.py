@@ -24,59 +24,95 @@
 
 import pytest
 
+from pymeasure.test import expected_protocol
 from pymeasure.instruments.philips.PM6669 import PM6669, Functions
-from pymeasure.adapters import prologix
 
 
-@pytest.skip('Only work with connected hardware', allow_module_level=True)
-class TestPhilipsPM6669:
-    """
-    Unit tests for PM6669 class.
+FUNCTION_STRINGS = [
+    ("FREQ A", Functions.FREQUENCY_A),
+    ("PER A", Functions.PER_A),
+    ("FREQ B", Functions.FREQUENCY_B),
+    ("TOTM A", Functions.TOT_A),
+    ("WIDTH A", Functions.WIDTH_A)
+]
+TIMEOUT_TIMES = [0, 0.1, 10, 25.5]
+MEASUREMENT_TIMES = [0.2, 1, 10]
+BOOLEAN_CASES = [True, False]
 
-    This test suite, needs the following setup to work properly:
-        - A PM6669 device should be connected to the computer;
-        - The device's address must be set in the RESOURCE constant.
-    """
 
-    RESOURCE = "GPIB0::7::INSTR"
 
-    FUNCTION_STRINGS = [
-        ("FREQ A", Functions.FREQUENCY_A),
-        ("PER A", Functions.PER_A),
-        ("FREQ B", Functions.FREQUENCY_B),
-        ("TOTM A", Functions.TOT_A),
-        ("WIDTH A", Functions.WIDTH_A)
-    ]
-    TIMEOUT_TIMES = [0, 0.1, 10, 25.5]
-    MEASUREMENT_TIMES = [0.2, 1, 10]
-    BOOLEAN_CASES = [True, False]
-    instr = PM6669(RESOURCE)
+@pytest.fixture(scope="module")
+def philips_pm6669(connected_device_address):
+    instr = PM6669(connected_device_address)
+    instr.reset_to_defaults()
+    return instr
 
-    @pytest.fixture
-    def make_resetted_instr(self):
-        self.instr.reset_to_defaults()
-        return self.instr
+def test_init():
+    with expected_protocol(
+            PM6669,
+            [(b'EOI ON', None),
+             (b'FRUN OFF', None)],
+    ):
+        pass  # Verify the expected communication.
 
-    @pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
-    def test_function_modes(self, make_resetted_instr, case, expected):
-        instr = make_resetted_instr
-        instr.function = case
-        assert instr.function == expected
 
-    @pytest.mark.parametrize('case', TIMEOUT_TIMES)
-    def test_timeout_times(self, make_resetted_instr, case):
-        instr = make_resetted_instr
-        instr.measurement_timeout = case
-        assert instr.measurement_timeout == case
+def test_function():
+    with expected_protocol(
+            PM6669,
+            [(b'EOI ON', None),
+             (b'FRUN OFF', None),
+             (b'FREQ   A', None),
+             (b'FNC?', "FREQ   A\n"),
+             (b'FREQ   B', None),
+             (b'FNC?', "FREQ   B\n")
+             ],
+    ) as inst:
+        inst.function = Functions.FREQUENCY_A
+        assert inst.function == Functions.FREQUENCY_A
+        inst.function = Functions.FREQUENCY_B
+        assert inst.function == Functions.FREQUENCY_B
 
-    @pytest.mark.parametrize('case', MEASUREMENT_TIMES)
-    def test_measurement_times(self, make_resetted_instr, case):
-        instr = make_resetted_instr
-        instr.measurement_time = case
-        assert instr.measurement_time == case
+def test_measurement_time():
+    with expected_protocol(
+            PM6669,
+            [(b'EOI ON', None),
+             (b'FRUN OFF', None),
+             (b'MTIME 1', None),
+             (b'MEAC?', b'MTIME 1.00,FRUN OFF\nTOUT 25.5\n'),
+             (b'MTIME 10', None),
+             (b'MEAC?', b'MTIME 10.00,FRUN OFF\nTOUT 25.5\n')],
+    ) as inst:
+        inst.measurement_time = 1
+        assert inst.measurement_time == 1
+        inst.measurement_time = 10
+        assert inst.measurement_time == 10
 
-    @pytest.mark.parametrize('case', BOOLEAN_CASES)
-    def test_freerun(self, make_resetted_instr, case):
-        instr = make_resetted_instr
-        instr.freerun = case
-        assert instr.freerun == case
+
+@pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
+def test_function_modes(philips_pm6669, case, expected):
+    philips_pm6669.function = case
+    assert philips_pm6669.function == expected
+
+@pytest.mark.parametrize('case, expected', FUNCTION_STRINGS)
+def test_function_modes(philips_pm6669, case, expected):
+    instr = philips_pm6669
+    instr.function = case
+    assert instr.function == expected
+
+@pytest.mark.parametrize('case', TIMEOUT_TIMES)
+def test_timeout_times(philips_pm6669, case):
+    instr = philips_pm6669
+    instr.measurement_timeout = case
+    assert instr.measurement_timeout == case
+
+@pytest.mark.parametrize('case', MEASUREMENT_TIMES)
+def test_measurement_times(philips_pm6669, case):
+    instr = philips_pm6669
+    instr.measurement_time = case
+    assert instr.measurement_time == case
+
+@pytest.mark.parametrize('case', BOOLEAN_CASES)
+def test_freerun(philips_pm6669, case):
+    instr = philips_pm6669
+    instr.freerun = case
+    assert instr.freerun == case
