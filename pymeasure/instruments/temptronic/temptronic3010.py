@@ -13,7 +13,6 @@ class Temptronic3010(Instrument):
     """Represents Temptronic3010 Temperature Controller"""
 
     MAX_TEMP = 200
-    val = input() #input from GUI
     temperature_setpoint = Instrument.control("SS", f"Rs%g",
                                     """Set the temperature setpoint. from 20.0 to 200.0 to TMAX""")
     # returns current temp setpoint, and set temp setpoint
