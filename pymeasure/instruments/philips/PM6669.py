@@ -133,7 +133,6 @@ class PM6669(Instrument):
         """Reset the instruments to default settings"""
         self.write("DCL")
 
-
     id = Instrument.measurement("ID?", """Get the instrument identification """)
 
 
@@ -213,4 +212,7 @@ PM6669.SRQMask = Instrument.control(
     get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
 )
 
-PM6669.measurement_settings = Instrument.measurement("MEAC?", """Get the measurement settings from the device """)
+PM6669.measurement_settings = Instrument.measurement(
+    "MEAC?", 
+    """Get the measurement settings from the device """
+)
