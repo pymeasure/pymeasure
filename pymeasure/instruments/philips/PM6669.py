@@ -77,9 +77,8 @@ class PM6669(Instrument):
 
     def __init__(self, adapter, name="Philips PM 6669", **kwargs):
         super().__init__(adapter, name, includeSCPI=False, **kwargs)
-        self.adapter.connection.timeout = 10000
         self.write("EOI ON")
-        self.freerun = False
+        self.freerun_enabled = False
         self.backlog = Queue()
 
     KEYWORDS = ["FRE", "PER", "WID", "RPM", "PWI", "MTI", "TOU", "MSR", "TOT"]
@@ -109,11 +108,6 @@ class PM6669(Instrument):
         else:
             return None
 
-    def ask(self, s):
-        """Override ask method to use our own read function."""
-        self.write(s)
-        return self.read()
-
     def read(self):
         """Read function with instrument bug work around.
 
@@ -140,9 +134,10 @@ class PM6669(Instrument):
         self.write("DCL")
 
 
-PM6669.id = Instrument.measurement("ID?", """Get the instrument identification """)
+    id = Instrument.measurement("ID?", """Get the instrument identification """)
 
-PM6669.function = Instrument.control(
+
+PM6669.measuring_function = Instrument.control(
     "FNC?",
     "%s",
     """Control the measuring function on the device (str).""",
@@ -164,7 +159,7 @@ PM6669.function = Instrument.control(
     map_values=True,
 )
 
-PM6669.gate = Instrument.control(
+PM6669.gate_enabled = Instrument.control(
     "",
     "GATE %s",
     """Control the gate
@@ -182,13 +177,13 @@ PM6669.gate = Instrument.control(
 PM6669.measurement_time = Instrument.control(
     "MEAC?",
     "MTIME %g",
-    """Control the measurement time""",
+    """Control the measurement time in seconds""",
     validator=strict_range,
     values=[0, 10],
     get_process=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
 )
 
-PM6669.freerun = Instrument.control(
+PM6669.freerun_enabled = Instrument.control(
     "MEAC?",
     "FRUN %s",
     """Control the freerun settings""",
@@ -218,4 +213,4 @@ PM6669.SRQMask = Instrument.control(
     get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
 )
 
-PM6669.meac = Instrument.measurement("MEAC?", """Get the measurement settings from the device """)
+PM6669.measurement_settings = Instrument.measurement("MEAC?", """Get the measurement settings from the device """)
