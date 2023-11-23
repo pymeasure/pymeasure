@@ -1,6 +1,6 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
-from enum import Enum, IntFlag
+from enum import IntEnum, IntFlag
 
 import logging
 
@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class MeasurementUnit(Enum):
+class MeasurementUnit(IntEnum):
     """Enumeration to represent the measurement unit the power meter will measure in"""
 
     WATTS = 0
@@ -20,7 +20,7 @@ class MeasurementUnit(Enum):
     DB = 3
 
 
-class SensorType(Enum):
+class SensorType(IntEnum):
     """Enumeration to represent the selected sensor type for the power meter"""
 
     #: Default (100% for all frequencies)
@@ -46,7 +46,7 @@ class SensorType(Enum):
     HP_8487A = 9
 
 
-class OperatingMode(Enum):
+class OperatingMode(IntEnum):
     """Enumeration to represent the operating mode the power meter is currently in"""
 
     NORMAL = 0
@@ -56,7 +56,7 @@ class OperatingMode(Enum):
     CALIBRATION = 8
 
 
-class TriggerMode(Enum):
+class TriggerMode(IntEnum):
     """Enumeration to represent the trigger mode the power meter is currently in"""
 
     HOLD = 0
@@ -64,7 +64,7 @@ class TriggerMode(Enum):
     FREE_RUNNING = 3
 
 
-class GroupTriggerMode(Enum):
+class GroupTriggerMode(IntEnum):
     """Enumeration to represent the group execute trigger mode the power meter is currently in"""
 
     IGNORE = 0
@@ -586,9 +586,9 @@ class HP437B(Instrument):
             MeasurementUnit.Watts
 
         """,
-        values={e: int(f.value) for (e, f) in zip(MeasurementUnit, MeasurementUnit)},
-        map_values=True,
-        get_process=__getstatus(StatusMessage.MeasurementUnits),
+        values=[e for e in MeasurementUnit],
+        cast=int,
+        get_process=__getstatus(StatusMessage.MeasurementUnits, lambda v: MeasurementUnit(v)),
     )
 
     linear_display_enabled = Instrument.control(
@@ -668,9 +668,8 @@ class HP437B(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values={e: int(f.value) for (e, f) in zip(SensorType, SensorType)},
-        set_process=lambda v: SensorType(v) if isinstance(v, int) else v,
-        map_values=True,
+        values=[e for e in SensorType],
+        set_process=lambda v: int(v),
         check_set_errors=True
     )
 
@@ -894,9 +893,8 @@ class HP437B(Instrument):
         """,
         values=[e for e in TriggerMode],
         validator=strict_discrete_set,
-        get_process=__getstatus(StatusMessage.TriggerMode, lambda v: {0: TriggerMode.FreeRunning,
-                                                                      1: TriggerMode.Hold}[v]),
-        set_process=lambda v: v.value
+        get_process=__getstatus(StatusMessage.TriggerMode, lambda v: TriggerMode(v)),
+        set_process=lambda v: int(v)
     )
 
     def trigger_immediate(self):
@@ -943,5 +941,5 @@ class HP437B(Instrument):
         values=[e for e in GroupTriggerMode],
         validator=strict_discrete_set,
         get_process=__getstatus(StatusMessage.GroupTriggerMode, lambda v: GroupTriggerMode(v)),
-        set_process=lambda v: v.value
+        set_process=lambda v: int(v)
     )
