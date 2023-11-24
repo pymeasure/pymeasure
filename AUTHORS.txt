@@ -66,3 +66,5 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Daniel Perales Rios
+Maël Le Blanc
