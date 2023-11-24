@@ -167,7 +167,7 @@ class HP437B(Instrument):
             **kwargs,
         )
 
-    def __getstatus(status_type: StatusMessage, modifier=lambda v: v):
+    def __getstatus(status_type, modifier=lambda v: v):
         start_index, stop_offset = status_type
         return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
 
@@ -193,7 +193,8 @@ class HP437B(Instrument):
             print(instr.request_service_conditions)
             StatusRegister.PowerOn|CommandError
         """,
-        get_process=lambda v: EventStatusRegister(int(v))
+        cast=int,
+        get_process=lambda v: EventStatusRegister(v)
     )
 
     def activate_auto_range(self):
@@ -261,7 +262,7 @@ class HP437B(Instrument):
         Set a custom user message up to 12 alpha-numerical chars. If the string is empty or None
         the user message gets disabled.
         """,
-        validator=lambda x, y: x if str(x).isalnum() and len(str(x)) <= 12 else str(x)[0:11],
+        validator=lambda x, y: x if str(x).isalnum() and len(str(x)) <= 12 else str(x)[0:12],
         set_process=lambda v: str(v).upper().ljust(12)
     )
 
@@ -282,7 +283,7 @@ class HP437B(Instrument):
     duty_cycle_enabled = Instrument.control(
         "SM", "DC%d",
         """
-        Set duty cycle active or inactive. See :attr:`duty_cycle`
+        Control whether the duty cycle is active or inactive. See :attr:`duty_cycle`
         """,
         map_values=True,
         values={True: 1, False: 0},
