@@ -213,6 +213,6 @@ PM6669.SRQMask = Instrument.control(
 )
 
 PM6669.measurement_settings = Instrument.measurement(
-    "MEAC?", 
+    "MEAC?",
     """Get the measurement settings from the device """
 )
