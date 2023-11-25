@@ -22,8 +22,9 @@
 # THE SOFTWARE.
 #
 
-import pytest
 import time
+import pytest
+
 
 from pymeasure.adapters import NI_GPIB_232
 from pymeasure.instruments.hp import HP3478A
@@ -37,25 +38,38 @@ class Test_NI232CT_3478A:
     To run this test the follow8ing reuirements need to be fulfilled:
         - A NI GPIB-232CT connected via a serial port to the computer running this test,
         - A HP 3748A connected by GPIB to the NI GPIB-232CT
+
+    This test expects the RS232 communication speed as 38400 bps and the HP3478A on
+    GPIB address 23.
+
+    Use 'pytest -k test_232ct_with_device --device-address "ASRL/dev/ttyUSB2::INSTR"'
+    to run this test via the serial connection '/dev/ttyUSB2'
+
+
     """
-
-    Serial_Port = "ASRL/dev/ttyUSB2::INSTR"  # VISA resource string for the serial port
-    Baud_Rate = 38400
-    Instr_ID = 23  # GPIB Adress of the HP 3478A on the bus
-
-    adapter = NI_GPIB_232(Serial_Port, address=Instr_ID, baud_rate=Baud_Rate)
-    meter = HP3478A(adapter)
 
     RESO = [3, 4, 5]
     MODES = ['DCV', 'ACV', 'DCI', 'ACI', 'R2W', 'R4W']
 
+    # adapter = NI_GPIB_232(connected_device_address, address=Instr_ID, baud_rate=Baud_Rate)
 
+    @pytest.fixture()
+    def adapter(self, connected_device_address):
+        Baud_Rate = 38400
+        Instr_ID = 23  # GPIB Adress of the HP 3478A on the bus
+        return NI_GPIB_232(connected_device_address,
+                           address=Instr_ID,
+                           baud_rate=Baud_Rate)
+
+    @pytest.fixture()
+    def meter(self, adapter):
+        return HP3478A(adapter)
 
     @pytest.fixture
-    def make_clean_instrument(self):
-        self.adapter.clear()
+    def make_clean_instrument(self, meter):
+        meter.adapter.clear()
         time.sleep(2)  # Wait 2s for the 3478A to collect itself
-        return self.meter
+        return meter
 
     @pytest.mark.parametrize('res', RESO)
     def test_resolution(self, make_clean_instrument, res):
@@ -74,11 +88,11 @@ class Test_NI232CT_3478A:
         dmm.resolution = 3
         dmm.mode = "DCV"
         value = dmm.measure_DCV
-        assert type(value) is float
+        assert isinstance(value, float)
 
     def test_current_reading(self, make_clean_instrument):
         dmm = make_clean_instrument
         dmm.resolution = 3
         dmm.mode = "DCI"
         value = dmm.measure_DCI
-        assert type(value) is float
+        assert isinstance(value, float)
