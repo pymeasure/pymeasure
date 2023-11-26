@@ -28,30 +28,29 @@ import pytest
 
 from pymeasure.adapters import NI_GPIB_232
 from pymeasure.instruments.hp import HP3478A
+from pymeasure.instruments.hp.hpsystempsu import HP6632A
 
 pytest.skip('Only works with connected hardware', allow_module_level=True)
 
 
-class Test_NI232CT_3478A:
-    """Unit test class for NI GPIB-232CT and one deivce connected on GPIB (HP 3478A).
+class Test_NI232CT_3478A_6632A:
+    """Unit test class for NI GPIB-232CT and deivecs connected on GPIB (HP 3478A, HP6332A).
 
     To run this test the follow8ing reuirements need to be fulfilled:
         - A NI GPIB-232CT connected via a serial port to the computer running this test,
         - A HP 3748A connected by GPIB to the NI GPIB-232CT
+        - A HP 6332A connecte by GBIB
+        - test lead connection between the output of the 6332 to the input of 3478
 
-    This test expects the RS232 communication speed as 38400 bps and the HP 3478A on
-    GPIB address 23.
+    This test expects the RS232 communication speed as 38400 bps, the HP 3478A on
+    GPIB address 23 and the HP 6332A on GPIB address 19.
 
-    Use 'pytest -k test_232ct_with_device --device-address "ASRL/dev/ttyUSB2::INSTR"'
+    Use 'pytest -k test_232ct_with_devices --device-address "ASRL/dev/ttyUSB2::INSTR"'
     to run this test via the serial connection '/dev/ttyUSB2'
 
 
     """
-
-    RESO = [3, 4, 5]
-    MODES = ['DCV', 'ACV', 'DCI', 'ACI', 'R2W', 'R4W']
-
-    # adapter = NI_GPIB_232(connected_device_address, address=Instr_ID, baud_rate=Baud_Rate)
+    VOLTS = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8, 10, 15]  # E6 series
 
     @pytest.fixture()
     def adapter(self, connected_device_address):
@@ -62,8 +61,17 @@ class Test_NI232CT_3478A:
                            baud_rate=Baud_Rate)
 
     @pytest.fixture()
+    def adapter2(self, adapter):
+        Instr_ID = 19  # GPIB Adress of the HP 6332A on the bus
+        return adapter.gpib(Instr_ID)
+
+    @pytest.fixture()
     def meter(self, adapter):
         return HP3478A(adapter)
+
+    @pytest.fixture()
+    def source(self, adapter2):
+        return HP6632A(adapter2)
 
     @pytest.fixture
     def make_clean_instrument(self, meter):
@@ -71,28 +79,25 @@ class Test_NI232CT_3478A:
         time.sleep(2)  # Wait 2s for the 3478A to collect itself
         return meter
 
-    @pytest.mark.parametrize('res', RESO)
-    def test_resolution(self, make_clean_instrument, res):
-        dmm = make_clean_instrument
-        dmm.resolution = res
-        assert dmm.resolution == res
+    @pytest.fixture
+    def make_clean_source(self, source):
+        source.adapter.clear()
+        source.output_enabled = False
+        time.sleep(2)  # Wait 2s for the 3478A to collect itself
+        return source
 
-    @pytest.mark.parametrize('mode', MODES)
-    def test_mode(self, make_clean_instrument, mode):
+    @pytest.mark.parametrize('voltage', VOLTS)
+    def test_voltage_reading(self, make_clean_instrument, make_clean_source, voltage):
         dmm = make_clean_instrument
-        dmm.mode = mode
-        assert dmm.mode == mode
-
-    def test_voltage_reading(self, make_clean_instrument):
-        dmm = make_clean_instrument
+        psu = make_clean_source
+        psu.over_voltage_limit = 21  # 21 V over voltage limit
+        psu.current = 0.1  # 100 mA current limit
+        psu.output_enabled = False
         dmm.resolution = 3
         dmm.mode = "DCV"
+        psu.voltage = voltage
+        psu.output_enabled = True
         value = dmm.measure_DCV
-        assert isinstance(value, float)
+        psu.output_enabled = False
 
-    def test_current_reading(self, make_clean_instrument):
-        dmm = make_clean_instrument
-        dmm.resolution = 3
-        dmm.mode = "DCI"
-        value = dmm.measure_DCI
-        assert isinstance(value, float)
+        assert abs(value - voltage) <= 0.5
