@@ -34,12 +34,12 @@ pytest.skip('Only works with connected hardware', allow_module_level=True)
 
 
 class Test_NI232CT_3478A_6632A:
-    """Unit test class for NI GPIB-232CT and deivecs connected on GPIB (HP 3478A, HP6332A).
+    """Unit test class for NI GPIB-232CT and devicws connected on GPIB (HP 3478A, HP6332A).
 
     To run this test the follow8ing reuirements need to be fulfilled:
         - A NI GPIB-232CT connected via a serial port to the computer running this test,
         - A HP 3748A connected by GPIB to the NI GPIB-232CT
-        - A HP 6332A connecte by GBIB
+        - A HP 6332A connected by GBIB
         - test lead connection between the output of the 6332 to the input of 3478
 
     This test expects the RS232 communication speed as 38400 bps, the HP 3478A on
