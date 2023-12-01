@@ -72,16 +72,6 @@ class VoltageChannel(Channel):
         dynamic=True,
     )
 
-    tracking_enabled = Channel.control(
-        "OUTP:TRAC?",
-        "OUTP:TRAC %s",
-        """Control wether the power supply operate in the track mode (string),""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: "ON", False: "OFF"},
-        dynamic=True,
-    )
-
 
 class KeysightE3631A(Instrument):
     """ Represents the Keysight E3631A Triple Output DC Power Supply
@@ -108,3 +98,33 @@ class KeysightE3631A(Instrument):
         )
         self.channels[1].voltage_setpoint_values = [0, 6]
         self.channels[1].current_limit_values = [0, 5]
+
+    display_enabled = Instrument.control(
+        "DISP?", "DISP %s",
+        """A boolean property that controls whether the display is enabled,
+        takes values True or False. """,
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True
+    )
+
+    display_text_data = Instrument.control(
+        "DISP:TEXT?", ":DISP:TEXT \"%s\"",
+        """A string property that control text to be displayed, takes strings
+        up to 32 characters. """,
+        get_process=lambda v: v.replace('"', '')
+    )
+
+    tracking_enabled = Instrument.control(
+        "OUTP:TRAC?",
+        "OUTP:TRAC %s",
+        """Control whether the power supply operate in the track mode (boolean)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: "ON", False: "OFF"},
+        dynamic=True,
+    )
+
+    def reset(self):
+        """ Resets the instrument and clears the queue.  """
+        self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
