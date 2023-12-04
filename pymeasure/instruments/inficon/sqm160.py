@@ -131,7 +131,7 @@ class SQM160(Instrument):
         :raises ConnectionError: if a checksum error is detected or a wrong
                                  response status is detected.
         """
-        header = super().read_bytes(2)
+        header = self.read_bytes(2)
         # check valid header
         if header[0] != 33:  # b"!"
             raise ConnectionError(f"invalid header start byte '{header[0]}' received")
@@ -139,7 +139,7 @@ class SQM160(Instrument):
         if length <= 0:
             raise ConnectionError(f"invalid message length '{header[1]}' -> length {length}")
 
-        response_status = super().read_bytes(1)
+        response_status = self.read_bytes(1)
         if response_status == b"C":
             raise ConnectionError("invalid command response received")
         elif response_status == b"D":
@@ -148,10 +148,10 @@ class SQM160(Instrument):
             raise ConnectionError(f"unknown response status character '{response_status}'")
 
         if length - 1 > 0:
-            data = super().read_bytes(length - 1)
+            data = self.read_bytes(length - 1)
         else:
             data = b""
-        chksum = super().read_bytes(2)
+        chksum = self.read_bytes(2)
         calculated_checksum = calculate_checksum(
             header[1].to_bytes(length=1, byteorder='big') + response_status + data)
         if chksum == calculated_checksum:
@@ -165,7 +165,7 @@ class SQM160(Instrument):
         """Write a command to the device."""
         length = chr(len(command) + 34)
         message = f"{length}{command}".encode()
-        super().write_bytes(b"!" + message + calculate_checksum(message))
+        self.write_bytes(b"!" + message + calculate_checksum(message))
 
     def check_set_errors(self):
         """Check the errors after setting a property."""
