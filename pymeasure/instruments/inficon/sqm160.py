@@ -83,19 +83,19 @@ class SQM160(Instrument):
     a serial connection (RS232) or optionally via USB or Ethernet.
 
     A command packet always consists of the following:
-    - 1 Byte: Sync character ('!' appears only at the start of a message).
-    - 1 Byte: length character obtained from the message length without CRC.
-              A value of 34 is added so that no '!' can occur.
-    - Command message with variable length.
-    - 2 Byte: Cyclic Redundancy Check (CRC) checksum.
+     - 1 Byte: Sync character ('!' appears only at the start of a message).
+     - 1 Byte: length character obtained from the message length without CRC.
+               A value of 34 is added so that no '!' can occur.
+     - Command message with variable length.
+     - 2 Byte: Cyclic Redundancy Check (CRC) checksum.
 
     A response packet always consists of:
-    - 1 Byte: Sync character ('!' appears only at the start of a message).
-    - 1 Byte: length character obtained from the message length without CRC.
-              A value of 35 is added.
-    - 1 Byte: Response status character indicating the status of the command.
-    - Response message with variable length.
-    - 2 Byte: Cyclic Redundancy Check (CRC) checksum.
+     - 1 Byte: Sync character ('!' appears only at the start of a message).
+     - 1 Byte: length character obtained from the message length without CRC.
+               A value of 35 is added.
+     - 1 Byte: Response status character indicating the status of the command.
+     - Response message with variable length.
+     - 2 Byte: Cyclic Redundancy Check (CRC) checksum.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
     :param string name: Name of the instrument.
