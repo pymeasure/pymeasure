@@ -153,7 +153,7 @@ class SQM160(Instrument):
             data = b""
         chksum = super().read_bytes(2)
         calculated_checksum = calculate_checksum(
-            header[1].to_bytes(length=1) + response_status + data)
+            header[1].to_bytes(length=1, byteorder='big') + response_status + data)
         if chksum == calculated_checksum:
             return data.decode()
         else:
