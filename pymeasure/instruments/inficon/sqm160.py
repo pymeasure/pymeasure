@@ -141,9 +141,9 @@ class SQM160(Instrument):
 
         response_status = super().read_bytes(1)
         if response_status == b"C":
-            raise ConnectionError(f"invalid command response received")
+            raise ConnectionError("invalid command response received")
         elif response_status == b"D":
-            raise ConnectionError(f"Problem with data in command")
+            raise ConnectionError("Problem with data in command")
         elif response_status != b"A":
             raise ConnectionError(f"unknown response status character '{response_status}'")
 
@@ -199,7 +199,8 @@ class SQM160(Instrument):
     )
 
     reset_flag = Instrument.measurement(
-        "Y", """Get the power-up reset flag which is True only when read first after a power cycle.""",
+        "Y", """Get the power-up reset flag.
+                It is True only when read first after a power cycle.""",
         cast=int,
         values={True: 1, False: 0},
         map_values=True,
