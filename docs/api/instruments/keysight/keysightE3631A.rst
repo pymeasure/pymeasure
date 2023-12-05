@@ -1,6 +1,6 @@
-##############################################
-Keysight E36312A Triple Output Power Supply
-##############################################
+##########################################
+Keysight E3631A Triple Output Power Supply
+##########################################
 
 .. autoclass:: pymeasure.instruments.keysight.KeysightE3631A
     :members:
