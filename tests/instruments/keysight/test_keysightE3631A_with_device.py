@@ -99,7 +99,7 @@ class TestKeysightE3631A:
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_voltage(self, instr, chn):
-        assert type(instr.ch(chn).voltage) == float
+        assert isinstance(instr.ch(chn).voltage, float)
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_current(self, instr, chn):
