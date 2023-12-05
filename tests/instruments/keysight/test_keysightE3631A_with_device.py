@@ -93,9 +93,8 @@ class TestKeysightE3631A:
 
     @pytest.mark.parametrize("chn, voltage", [(1, -1), (1, 7), (2, -1), (2, 26), (3, 1), (3, -26)], )
     def test_voltage_setpoint_out_of_range(self, instr, chn, voltage):
-        with pytest.raises(ValueError) as not_in_range:
+        with pytest.raises(ValueError, match=f"Value of {voltage} is not in range"):
             instr.ch(chn).voltage_setpoint = voltage
-            assert f"Value of {voltage} is not in range" in not_in_range
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_voltage(self, instr, chn):
