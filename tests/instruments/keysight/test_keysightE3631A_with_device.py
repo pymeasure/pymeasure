@@ -25,7 +25,12 @@
 import pytest
 from pymeasure.instruments.keysight.keysightE3631A import KeysightE3631A
 
-# pytest.skip('Only work with connected hardware', allow_module_level=True)
+
+@pytest.fixture(scope="module")
+def power_supply(connected_device_address):
+    instr = KeysightE3631A(connected_device_address)
+    instr.reset()
+    return instr
 
 
 class TestKeysightE3631A:
@@ -37,11 +42,6 @@ class TestKeysightE3631A:
         - The device's address must be set in the RESOURCE constant;
     """
 
-    ##################################################
-    # KeysightE3631A device address goes here:
-    RESOURCE = "GPIB0::10::INSTR"
-    ##################################################
-
     #########################
     # PARAMETRIZATION CASES #
     #########################
@@ -49,56 +49,45 @@ class TestKeysightE3631A:
     BOOLEANS = [False, True]
     CHANNELS = [1, 2, 3]
 
-    INSTR = KeysightE3631A(RESOURCE)
-
-    ############
-    # FIXTURES #
-    ############
-
-    @pytest.fixture
-    def instr(self):
-        self.INSTR.reset()
-        return self.INSTR
-
     #########
     # TESTS #
     #########
 
     @pytest.mark.parametrize("case", BOOLEANS)
-    def test_output_enabled(self, instr, case):
-        assert not instr.output_enabled
-        instr.output_enabled = case
-        assert instr.output_enabled == case
+    def test_output_enabled(self, power_supply, case):
+        assert not power_supply.output_enabled
+        power_supply.output_enabled = case
+        assert power_supply.output_enabled == case
 
     @pytest.mark.parametrize("case", BOOLEANS)
-    def test_tracking_enabled(self, instr, case):
-        assert not instr.tracking_enabled
-        instr.tracking_enabled = case
-        assert instr.tracking_enabled == case
+    def test_tracking_enabled(self, power_supply, case):
+        assert not power_supply.tracking_enabled
+        power_supply.tracking_enabled = case
+        assert power_supply.tracking_enabled == case
 
     @pytest.mark.parametrize("chn, i_limit", [(1, 0), (1, 5), (2, 0), (2, 1), (3, 0), (3, 1)], )
-    def test_current_limit(self, instr, chn, i_limit):
-        instr.ch(chn).current_limit = i_limit
+    def test_current_limit(self, power_supply, chn, i_limit):
+        power_supply.ch(chn).current_limit = i_limit
 
     @pytest.mark.parametrize("chn, i_limit", [(1, -1), (1, 6), (2, -1), (2, 2), (3, -1), (3, 2)], )
-    def test_current_limit_out_of_range(self, instr, chn, i_limit):
+    def test_current_limit_out_of_range(self, power_supply, chn, i_limit):
         with pytest.raises(ValueError, match=f"Value of {i_limit} is not in range"):
-            instr.ch(chn).current_limit = i_limit
+            power_supply.ch(chn).current_limit = i_limit
 
     @pytest.mark.parametrize("chn, voltage", [(1, 0), (1, 6), (2, 0), (2, 25), (3, 0), (3, -25)], )
-    def test_voltage_setpoint(self, instr, chn, voltage):
-        instr.ch(chn).voltage_setpoint = voltage
-        assert instr.ch(chn).voltage_setpoint == voltage
+    def test_voltage_setpoint(self, power_supply, chn, voltage):
+        power_supply.ch(chn).voltage_setpoint = voltage
+        assert power_supply.ch(chn).voltage_setpoint == voltage
 
     @pytest.mark.parametrize("chn, voltage", [(1, -1), (1, 7), (2, -1), (2, 26), (3, 1), (3, -26)], )
-    def test_voltage_setpoint_out_of_range(self, instr, chn, voltage):
+    def test_voltage_setpoint_out_of_range(self, power_supply, chn, voltage):
         with pytest.raises(ValueError, match=f"Value of {voltage} is not in range"):
-            instr.ch(chn).voltage_setpoint = voltage
+            power_supply.ch(chn).voltage_setpoint = voltage
 
     @pytest.mark.parametrize("chn", CHANNELS)
-    def test_measure_voltage(self, instr, chn):
-        assert isinstance(instr.ch(chn).voltage, float)
+    def test_measure_voltage(self, power_supply, chn):
+        assert isinstance(power_supply.ch(chn).voltage, float)
 
     @pytest.mark.parametrize("chn", CHANNELS)
-    def test_measure_current(self, instr, chn):
-        assert isinstance(instr.ch(chn).current, float)
+    def test_measure_current(self, power_supply, chn):
+        assert isinstance(power_supply.ch(chn).current, float)
