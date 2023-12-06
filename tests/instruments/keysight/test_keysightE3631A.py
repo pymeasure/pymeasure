@@ -66,5 +66,5 @@ def test_output_enabled():
         [("OUTPut 1", None),
          ("OUTPut?", "0")],
     ) as inst:
-        inst.ch_1.output_enabled = True
-        assert inst.ch_1.output_enabled is False
+        inst.output_enabled = True
+        assert inst.output_enabled is False

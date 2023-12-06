@@ -25,7 +25,7 @@
 import pytest
 from pymeasure.instruments.keysight.keysightE3631A import KeysightE3631A
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+# pytest.skip('Only work with connected hardware', allow_module_level=True)
 
 
 class TestKeysightE3631A:
@@ -82,9 +82,8 @@ class TestKeysightE3631A:
 
     @pytest.mark.parametrize("chn, i_limit", [(1, -1), (1, 6), (2, -1), (2, 2), (3, -1), (3, 2)], )
     def test_current_limit_out_of_range(self, instr, chn, i_limit):
-        with pytest.raises(ValueError) as not_in_range:
+        with pytest.raises(ValueError, match=f"Value of {i_limit} is not in range"):
             instr.ch(chn).current_limit = i_limit
-            assert f"Value of {i_limit} is not in range" in not_in_range
 
     @pytest.mark.parametrize("chn, voltage", [(1, 0), (1, 6), (2, 0), (2, 25), (3, 0), (3, -25)], )
     def test_voltage_setpoint(self, instr, chn, voltage):
@@ -102,4 +101,4 @@ class TestKeysightE3631A:
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_current(self, instr, chn):
-        assert type(instr.ch(chn).current) == float
+        assert isinstance(instr.ch(chn).current, float)
