@@ -28,12 +28,12 @@ import pyvisa
 import logging
 
 from pymeasure.adapters import NI_GPIB_232
-from pymeasure.instruments.hp import HP3478A
+from pymeasure.instruments.hp import HP34401A
 from pymeasure.log import console_log
 
 log = logging.getLogger()
-# console_log(log, level=logging.DEBUG)
-console_log(log)
+console_log(log, level=logging.DEBUG)
+# console_log(log)
 
 is_pyvisa_sim_installed = bool(importlib.util.find_spec('pyvisa_sim'))
 if not is_pyvisa_sim_installed:
@@ -47,7 +47,7 @@ SIM_RESOURCE = 'ASRL8::INSTR'
 @pytest.fixture
 def aut():
     aut = NI_GPIB_232(SIM_RESOURCE,
-                      visa_library='/home/robby/builds/pymeasure/tests/adapters/ni232.yaml@sim',
+                      visa_library='tests/adapters/ni232.yaml@sim',
                       # Large timeout allows very slow GitHub action runners to complete.
                       timeout=60,
                       address=23,
@@ -64,14 +64,15 @@ def aut():
     # Close the connection
     aut.close()
 
+
 @pytest.fixture
 def dmm(aut):
-    dmm = HP3478A(aut)
+    dmm = HP34401A(aut)
     dmm.resolution(3)
     assert dmm.resolution == 3
 
-    
-def test_write_read(aut):
+
+def test_write_read(dmm):
     aut.write(":VOLT:IMM:AMPL?")
     assert float(aut.read()) == 1
 
