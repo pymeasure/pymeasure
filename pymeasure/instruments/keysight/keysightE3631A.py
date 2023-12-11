@@ -33,6 +33,8 @@ log.addHandler(logging.NullHandler())
 
 
 class VoltageChannel(Channel):
+    """Implementation of a power supply base class channel"""
+
     voltage_setpoint = Channel.control(
         "INST:NSEL {ch};:VOLT?",
         "INST:NSEL {ch};:VOLT %g",
