@@ -30,17 +30,11 @@ Run the program by changing to the directory containing this file and calling:
 python hp34401a_rs232.py /dev/ttyUSB0
 """
 
-import time
 import logging
-import sys
-from time import sleep
-import numpy as np
+import time
 import serial
 from pymeasure.adapters import SerialAdapter
 from pymeasure.instruments.hp import HP34401A
-from pymeasure.experiment import (
-    Procedure, FloatParameter, unique_filename, Results
-)
 import argparse
 
 parser = argparse.ArgumentParser(description="HP 34401A read voltage")
@@ -52,35 +46,38 @@ logging.getLogger().addHandler(logging.StreamHandler())
 log.setLevel(logging.INFO)
 
 adapter = SerialAdapter(port=args.serial,
-                        baudrate = 1200, # Recommend value
-                        parity = serial.PARITY_NONE,
-                        stopbits = serial.STOPBITS_TWO,
-                        bytesize = serial.EIGHTBITS,
-                        xonxoff=False,
+                        baudrate=1200,  # Recommend value
+                        parity=serial.PARITY_NONE,
+                        stopbits=serial.STOPBITS_TWO,
+                        bytesize=serial.EIGHTBITS,
+                        xonxoff=True,
                         dsrdtr=True,
                         rtscts=False,
-                        write_termination="\n",
-                        read_termination="\n",
+                        write_termination='\n',
+                        read_termination='\n',
                         )
 meter = HP34401A(adapter)
-meter.reset() # wait for reset
-time.sleep(1)
+meter.reset()  # wait for reset
+#time.sleep(1)
 meter.clear()
 meter.write('SYSTem:REMote')
-meter.status # for lush input buffers
-print('meter: {}, SCPI: {}, terminals: {}'.format(meter.id, meter.scpi_version, meter.terminals_used))
+time.sleep(1)
+meter.status  # for flush input buffers
+print('meter: {}, SCPI: {}, terminals: {}'.format(
+    meter.id, meter.scpi_version, meter.terminals_used))
 
 meter.function_ = 'DCV'
 meter.range_ = 100
 meter.resolution = 0.0001
 meter.sample_count = 1
-#meter.nplc = 0.02
-#meter.autozero_enabled = False
-#meter.trigger_count = 1
+# meter.nplc = 0.02
+# meter.autozero_enabled = False
+# meter.trigger_count = 1
 meter.trigger_delay = "MIN"
 
-meter.displayed_text = ''
-#meter.display_enabled = False
+meter.displayed_text = 'TEST'
+# meter.display_enabled = False
 while True:
     voltage = meter.reading
     print("Measuring voltage: {} {}".format(voltage, "V"))
+
