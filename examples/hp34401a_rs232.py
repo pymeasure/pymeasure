@@ -79,4 +79,3 @@ meter.displayed_text = 'TEST'
 while True:
     voltage = meter.reading
     print("Measuring voltage: {} {}".format(voltage, "V"))
-
