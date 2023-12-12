@@ -58,7 +58,6 @@ adapter = SerialAdapter(port=args.serial,
                         )
 meter = HP34401A(adapter)
 meter.reset()  # wait for reset
-#time.sleep(1)
 meter.clear()
 meter.write('SYSTem:REMote')
 time.sleep(1)
