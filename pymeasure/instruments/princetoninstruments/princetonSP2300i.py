@@ -505,7 +505,7 @@ class PrincetonSP2300i(Instrument):
         :grating_num: Grating position on the turret
         """
         self.specify_grating(grating_num)
-        self.ask(f'UNINSTALL')
+        self.ask('UNINSTALL')
 
     # INIT-OFFSET
     def init_offset(self, grating_num, offset):
