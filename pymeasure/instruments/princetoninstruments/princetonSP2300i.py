@@ -174,9 +174,9 @@ class PrincetonSP2300i(Instrument):
         reply = super().read(**kwargs)
 
         # Parse command echo, value, and status
-        # Echo and leading/trailing whitespace (if present): (\s*{re.escape(self._last_command)}\s*)?
-        # Value: (.*?)
-        # Status (if present): (ok)? or (\?)?
+        #  Echo and leading/trailing whitespace (if present): (\s*{re.escape(self._last_command)}\s*)?
+        #  Value: (.*?)
+        #  Status (if present): (ok)? or (\?)?
         match = re.match(f'^\s*({re.escape(self._last_command)})?\s*(.*?)\s*(ok)?(\?)?\s*$', reply)
 
         # Check read is OK
@@ -251,13 +251,13 @@ class PrincetonSP2300i(Instrument):
 
     # ?NM
     wavelength = Instrument.measurement(
-        "?NM", "Returns the current wavelength position [nm].",
+        "?NM", "Measure the current wavelength position [nm].",
         get_process=lambda v: ureg.Quantity(v),  # convert to quantity
     )
 
     # MONO-?DONE
     is_scanning = Instrument.measurement(
-        "MONO-?DONE", "Returns the scanning status.",
+        "MONO-?DONE", "Get the scanning status.",
         map_values=True,
         values={True: 0, False: 1},
     )
@@ -266,7 +266,7 @@ class PrincetonSP2300i(Instrument):
     # ?NM/MIN
     scan_rate = Instrument.control(
         "?NM/MIN", "%0.3f NM/MIN",
-        """The scan rate in wavelength/time.
+        """Control scan rate in wavelength/time.
 
             Set as a pint compatible value.
         """,
@@ -279,7 +279,7 @@ class PrincetonSP2300i(Instrument):
     # ?GRATING
     grating = Instrument.control(
         "?GRATING", "%d GRATING",
-        """The grating being used.
+        """Control grating being used.
 
             Gratings are numbered from 1 to 9. The grating number is found as
             follows: grating_num = 3*(turret_num -1) + turret_position. For
@@ -296,7 +296,7 @@ class PrincetonSP2300i(Instrument):
     # ?GRATINGS
     @property
     def grating_params(self):
-        """A dict of grating parameters.
+        """Get a dict of grating parameters.
 
         Values
             For loaded grating positions: (groves/mm, blaze_wavelength)
@@ -321,7 +321,7 @@ class PrincetonSP2300i(Instrument):
     # ?TURRET
     turret = Instrument.control(
         "?TURRET", "%d TURRET",
-        """The turret being used.
+        """Control turret being used.
 
             Turrets are numbered from 1 to 3.
         """,
@@ -335,7 +335,7 @@ class PrincetonSP2300i(Instrument):
     # EXIT-MIRROR
     @property
     def exit_mirror_pos(self):
-        """The exit diverter mirror position.
+        """Control the exit diverter mirror position.
 
         This property can have the value "front" or "side"
         """
@@ -355,12 +355,12 @@ class PrincetonSP2300i(Instrument):
 
     # MODEL
     model_num = Instrument.measurement(
-        "MODEL", "Returns the model number.",
+        "MODEL", "Get the model number.",
     )
 
     # SERIAL
     serial_num = Instrument.measurement(
-        "Serial", "Returns the serial number.",
+        "Serial", "Get the serial number.",
     )
 
     #############
