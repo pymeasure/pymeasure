@@ -46,18 +46,23 @@ ureg = UnitRegistry()
 #############
 # Constants #
 #############
-RAD_TO_COUNTS = 4_608_000/(2*np.pi)     # Based on default INIT-OFFSET values
-                                        # and three grating positions on a turret.
-MONO_ANGLE_Dv = 0.5432  # [Rad]. monochromator included angle. D_v = (beta - alpha).
-                        # Approximate value from DIY measurement.
-                        # See: https://www.horiba.com/int/scientific/technologies/diffraction-gratings/diffraction-gratings-ruled-and-holographic/
+
+# RAD_TO_COUNTS inferred from default INIT-OFFSET values and three grating
+# positions on a turret.
+RAD_TO_COUNTS = 4_608_000/(2*np.pi)  # [counts/rad]
+
+# MONO_ANGLE_Dv is the monochromator included angle. D_v = (beta - alpha).
+# Approximate value from DIY measurement. See:
+# https://www.horiba.com/int/scientific/technologies/
+# diffraction-gratings/diffraction-gratings-ruled-and-holographic/
+MONO_ANGLE_Dv = 0.5432  # [rad]
 
 
 class PrincetonSP2300i(Instrument):
     """Princeton Instruments SP2300i monochromator-spectrograph.
 
     Mapping of native commands:
-    --------------------
+    -----------------------------------------------
     GOTO        -   > goto (method)
     <GOTO>          x not implemented
     NM              > scanto_locked (method)
@@ -174,10 +179,13 @@ class PrincetonSP2300i(Instrument):
         reply = super().read(**kwargs)
 
         # Parse command echo, value, and status
-        #  Echo and leading/trailing whitespace (if present): (\s*{re.escape(self._last_command)}\s*)?
-        #  Value: (.*?)
-        #  Status (if present): (ok)? or (\?)?
-        match = re.match(f'^\s*({re.escape(self._last_command)})?\s*(.*?)\s*(ok)?(\?)?\s*$', reply)
+        #  Echo = (\s*{re.escape(self._last_command)}\s*)?
+        #  Value = (.*?)
+        #  Status = (ok)? or (\?)?
+        match = re.match(
+            fr'^\s*({re.escape(self._last_command)})?\s*(.*?)\s*(ok)?(\?)?\s*$',
+            reply
+        )
 
         # Check read is OK
         if match[3] == 'ok':
@@ -484,7 +492,7 @@ class PrincetonSP2300i(Instrument):
         :blaze: User-defiled label. String.
         """
         self.specify_grating(grating_num)
-        self.ask(f'BLAZE')
+        self.ask('BLAZE')
         self.ask(f'{blaze}')
 
     # UNINSTALL
@@ -519,7 +527,7 @@ class PrincetonSP2300i(Instrument):
     def _calc_grating_angle(self, grating_num, wl):
         """The current grating angle.
 
-            The angle of the grating in [Rad] away from the lambda=0 position.
+            The angle of the grating in [rad] away from the lambda=0 position.
 
             :grating_num: Grating position on the turret.
             :wl: The wavelength position/setting of the SP2300i [unitful].
@@ -544,11 +552,9 @@ class PrincetonSP2300i(Instrument):
         d_theta_counts = d_theta * RAD_TO_COUNTS
         status = self.read_eestatus()
         offset_match = re.search(
-            r'offset\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)',
+            (r'offset\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)'
+                + r'\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)'),
             status)
-        # adjust_match = re.search(
-        #     r'adjust\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)',
-        #     status)
         return round(int(offset_match[grating_num]) + d_theta_counts)
 
     # INIT-GADJUST
@@ -614,7 +620,8 @@ class PrincetonSP2300i(Instrument):
         r_wl = ureg.Quantity(wl_known).m_as('nm')/ureg.Quantity(wl_position).m_as('nm')
         status = self.read_eestatus()
         adjust_match = re.search(
-            r'adjust\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)',
+            (r'adjust\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)'
+                + r'\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)'),
             status)
         return round(int(adjust_match[grating_num]) * r_wl)
 
