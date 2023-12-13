@@ -48,7 +48,7 @@ ureg = UnitRegistry()
 #############
 RAD_TO_COUNTS = 4_608_000/(2*np.pi)     # Based on default INIT-OFFSET values
                                         # and three grating positions on a turret.
-MONO_ANGLE_Dv = 0.5432  # [Rad]. Monochrometer included angle. D_v = (beta - alpha).
+MONO_ANGLE_Dv = 0.5432  # [Rad]. monochromator included angle. D_v = (beta - alpha).
                         # Approximate value from DIY measurement.
                         # See: https://www.horiba.com/int/scientific/technologies/diffraction-gratings/diffraction-gratings-ruled-and-holographic/
 
@@ -535,7 +535,7 @@ class PrincetonSP2300i(Instrument):
             :grating_num: Grating position on the turret.
             :wl_known: The known wavelength of the calibration source [unitful].
             :wl_position: The required wavelength position/setting of the
-                monochrometer to center the known wavelength on the output
+                monochromator to center the known wavelength on the output
                 slit/array [unitful].
         """
         theta_known = self._calc_grating_angle(grating_num, wl_known)
@@ -601,7 +601,7 @@ class PrincetonSP2300i(Instrument):
             :grating_num: Grating position on the turret.
             :wl_known: The known wavelength of the calibration source [unitful].
             :wl_position: The required wavelength position/setting of the
-                monochrometer to center the known wavelength on the output
+                monochromator to center the known wavelength on the output
                 slit/array [unitful].
         """
         # Find gadjust from a ratio of motor angles/counts
