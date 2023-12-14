@@ -30,6 +30,9 @@ import ctypes
 import numpy as np
 from sys import platform
 
+from pymeasure.adapters import NIAdpater
+from pymeasure.instruments import Instrument
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -57,11 +60,21 @@ DAQmx_Val_FiniteSamps = 10178
 DAQmx_Val_GroupByChannel = 1
 
 
-class DAQmx:
-    """Instrument object for interfacing with NI-DAQmx devices."""
+class DAQmx(Instrument):
+    """Instrument object for interfacing with NI-DAQmx devices.
 
-    def __init__(self, name, *args, **kwargs):
-        super().__init__()
+    :param name: An NI DAQ device name (e.g. 'Dev1'), model number
+        (e.g. 'USB-6212'), or serial number (e.g. 1A3808F).
+    :param \\**kwargs: Keyword arguments for configuring the NI-DAQmx connection.
+    """
+
+    def __init__(self, name="Dev1", **kwargs):
+        super().__init__(
+            adapter=NIAdpater,
+            name=name,
+            **kwargs
+        )
+
         self.resourceName = name  # NOTE: Device number, e.g. Dev1 or PXI1Slot2
         self.numChannels = 0
         self.numSamples = 0
