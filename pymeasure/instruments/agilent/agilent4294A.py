@@ -23,20 +23,18 @@
 #
 
 from pymeasure.instruments import Instrument
-
+from pymeasure.instruments.validators import strict_range
 
 class Agilent4294A(Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
 
     start_frequency = Instrument.control(
-        "STAR?", "STAR %e HZ",
-        """ A property that represents the start frequency in Hz. This property can be set.
-        """
+        "STAR?", "STAR %e HZ", "Set the start frequency in Hz",
+        validator=strict_range, values=[40, 140E6]
     )
     stop_frequency = Instrument.control(
-        "STOP?", "STOP %e HZ",
-        """ A property that represents the stop frequency in Hz. This property can be set.
-        """
+        "STOP?", "STOP %e HZ", "Set the stop frequency in Hz",
+        validator=strict_range, values=[40, 140E6]
     )
 
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
@@ -57,7 +55,6 @@ class Agilent4294A(Instrument):
 
         self.write("STOD MEMO")  # store to internal memory
         self.write("PRIC VARI")  # save a color image
-
         local_filename = filename + ".tiff"
 
         REMOTE_FILE = "agt4294a.tiff"  # Filename of the in-memory file on the device
