@@ -23,7 +23,7 @@
 #
 
 from .browser_widget import BrowserWidget
-from .directory_widget import DirectoryLineEdit
+from .fileinput_widget import FileInputWidget
 from .estimator_widget import EstimatorWidget, EstimatorThread
 from .image_frame import ImageFrame
 from .image_widget import ImageWidget
