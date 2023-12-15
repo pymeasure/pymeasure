@@ -51,11 +51,12 @@ class Agilent4294A(Instrument):
 
     def save_graphics(self, filename=""):
         """ Save graphics on the screen to a file on the local computer.
-        Adapted from https://www.keysight.com/se/en/lib/software-detail/programming-examples/4294a-data-transfer-program-excel-vba-1645196.html
+        Adapted from:
+        https://www.keysight.com/se/en/lib/software-detail/programming-examples/4294a-data-transfer-program-excel-vba-1645196.html
         """
 
-        self.write("STOD MEMO") # store to internal memory
-        self.write("PRIC VARI") # save a color image
+        self.write("STOD MEMO")  # store to internal memory
+        self.write("PRIC VARI")  # save a color image
 
         local_filename = filename + ".tiff"
 
@@ -80,9 +81,9 @@ class Agilent4294A(Instrument):
 
         with open(local_filename, 'wb') as file:
             for _ in range(iBufCnt):
-                data = self.adapter.connection.query_binary_values("READ?", datatype='B', container=bytes)
+                data = self.adapter.connection.query_binary_values("READ?", datatype='B',
+                                                                   container=bytes)
                 file.write(data)
-            
         self.write(f'PURG "{REMOTE_FILE}"')
 
         return local_filename
