@@ -40,45 +40,38 @@ class Agilent4294A(Instrument):
     )
 
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
+        kwargs["read_termination"] = "\n"
+        kwargs["write_termination"] = "\n"
         super().__init__(
             adapter,
             name,
             **kwargs
         )
-        print(self.adapter.connection)
-        print(type(self.adapter.connection))
         self.adapter.connection.timeout = 5000
 
-        self._query = self.adapter.connection.query
-        self._write = self.adapter.connection.write
-
     def save_graphics(self, filename=""):
-        # Adapted from
-        # https://www.keysight.com/se/en/lib/software-detail/programming-examples/4294a-data-transfer-program-excel-vba-1645196.html
-        self._write("STOD MEMO")
-        self._write("PRIC VARI")
+        """ Save graphics on the screen to a file on the local computer.
+        Adapted from https://www.keysight.com/se/en/lib/software-detail/programming-examples/4294a-data-transfer-program-excel-vba-1645196.html
+        """
+
+        self.write("STOD MEMO") # store to internal memory
+        self.write("PRIC VARI") # save a color image
 
         local_filename = filename + ".tiff"
 
         REMOTE_FILE = "agt4294a.tiff"  # Filename of the in-memory file on the device
-        print("got here")
-        result = self._write(f'SAVDTIF "{REMOTE_FILE}"')
-        print(result)
-        print("got here 2")
+        self.write(f'SAVDTIF "{REMOTE_FILE}"')
 
-        # vErr = self.ask("OUTPERRO?").split(",")
-        vErr = self._query("OUTPERRO?")
-        print(vErr)
-        print("got here 3")
+        vErr = self.ask("OUTPERRO?").split(",")
         print(vErr)
         if not int(vErr[0]) == 0:
-            self._write(f'PURG "{REMOTE_FILE}"')
-            self._write(f'SAVDTIF "{REMOTE_FILE}"')
-            vErr = self._query("OUTPERRO?").split(",")
+            self.write(f'PURG "{REMOTE_FILE}"')
+            self.write(f'SAVDTIF "{REMOTE_FILE}"')
+            vErr = self.ask("OUTPERRO?").split(",")
             print(vErr)
 
-        self._write(f'ROPEN "{REMOTE_FILE}"')
-        lngFileSize = int(self.query(f'FSIZE? "{REMOTE_FILE}"'))
+        self.write(f'ROPEN "{REMOTE_FILE}"')
+        lngFileSize = int(self.ask(f'FSIZE? "{REMOTE_FILE}"'))
         print(lngFileSize)
         MAX_BUFF_SIZE = 16384
         iBufCnt = lngFileSize // MAX_BUFF_SIZE
@@ -87,9 +80,9 @@ class Agilent4294A(Instrument):
 
         with open(local_filename, 'wb') as file:
             for _ in range(iBufCnt):
-                data = self.query_binary_values("READ?", datatype='B', container=bytes)
+                data = self.adapter.connection.query_binary_values("READ?", datatype='B', container=bytes)
                 file.write(data)
             
-        self._write(f'PURG "{REMOTE_FILE}"')
+        self.write(f'PURG "{REMOTE_FILE}"')
 
         return local_filename
