@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 
+
 class Agilent4294A(Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
 
