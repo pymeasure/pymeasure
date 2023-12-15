@@ -1,33 +1,138 @@
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
-
+from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range, strict_range
+from pyvisa.constants import ControlFlow, Parity, StopBits
 import time
-import serial
+import pyvisa
+from pyvisa import VisaIOError
 
-if __name__ == '__main__':
-    ser = serial.Serial('COM1', 9600, timeout=0.300, parity=serial.PARITY_NONE,
-        bytesize=8, stopbits=1, xonxoff=0,
-        rtscts=0, dsrdtr=1)
 
+def get_steps_returns(steps_str: str):
+    steps_str = steps_str.lstrip('o')
+    steps_str = steps_str.rstrip('\r')
+    return int(steps_str)
+
+def read_int(string: str):
+    """This function allows to read input and transform it into integer format."""
+    numeric_string = ''.join(char for char in string if char.isdigit())
+    return int(numeric_string)
 
 class JY270M(Instrument):
     """This is a class for the 270M JY spectrometer."""
 
-    def __init__(self, adapter, name = "JY270M", **kwargs):(
+    """Backlash in number of motor steps"""
+    backlash = 320
+    _steps_nm = 32
+    _lambda_max = 1171.68
+    _max_steps = 37494
+
+    def __init__(self, adapter, name = "JY270M", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs)
-    )
 
-    """Backlash in number of motor steps"""
-    backlash = 320
+    def _write_read(self, command: bytes):
+        self.write_bytes(command)
+        read = b''
+        for ind in range(10000):
+            try:
+                read += spectro.read_bytes(1)
+            except VisaIOError:
+                break
+        return read
+
+    def _get_code(self, ans: bytes):
+        if len(ans) > 0:
+            return ans.decode()[0]
+        else:
+            return ''
+
+    def unstuck(self):
+        ans = self._write_read(b'\xF8')
+        ans = self._write_read(b'\xDE')
+
+    def auto_baud(self):
+        """Trying to establish intelligent mode
+
+        Return True if done else False
+        """
+        while True:
+            ans = self._write_read(b' ')
+            if len(ans) != 0:
+                break
+                print(ans)
+
+        code = self._get_code(ans)
+        if code != 'F':
+            if code == "*":
+                ans = self._write_read(b'\xF7')
+                code = self._get_code(ans)
+                if code != '=':
+                    return False
+                ans = self._write_read(b' ')
+                code = self._get_code(ans)
+
+            if code == "B":
+                ans = self._write_read(b'O2000\0')
+                time.sleep(0.5)
+                ans = self._write_read(b' ')
+                code = self._get_code(ans)
+                if code == 'F':
+                    return True
+                elif code == ' ':
+                    ans = self._write_read(b'\xF8')
+                    ans = self._write_read(b' ')
+                    code = self._get_code(ans)
+                    if code == 'F':
+                        return True
+                    else:
+                        self.unstuck()
+                        return False
+                else:
+                    self.unstuck()
+                    return False
+            else:
+                self.unstuck()
+                return False
+        return True
 
 
-    motor_init = Instrument.setting(
-        b'A',
-        """This command is used to initialize the monochromator, only needs to be called once""",
-    )
+    def check_get_errors(self, error):
+        print(error)
+        pass
+
+    def motor_init(self):
+        "This command is used to initialize the monochromator, only needs to be called once",
+        self._write_read(b'A')
+    #
+    # grating_steps = Instrument.control('H0\r',
+    #                                    'G0,%d\r',
+    #                                    """Control the grating motor number of steps""",
+    #                                    validator=strict_range,
+    #                                    values=[0, 37494],
+    #                                    get_process=read_int,
+    #                                    )
+
+    @property
+    def grating_steps(self):
+        return read_int(self._write_read(b'H0\r').decode())
+
+    @grating_steps.setter
+    def grating_steps(self, nsteps: int):
+        """Absolut positioning"""
+        ans = self._write_read(f'F0,{nsteps - self.grating_steps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
+
+    @property
+    def grating_wavelength(self):
+        return self._lambda_max - (self._max_steps - self.grating_steps) / self._steps_nm
+
+    @grating_wavelength.setter
+    def grating_wavelength(self, wavelength: float):
+        """Absolut positioning"""
+        steps = int(self._max_steps - int((self._lambda_max - wavelength) * self._steps_nm))
+        self.grating_steps = steps
 
     motor_busy_check= Instrument.measurement(
         "E\r".encode('utf-8'),
@@ -39,14 +144,14 @@ class JY270M(Instrument):
         """This property asks the instrument for its current position.""",
     )
 
+
+
     def read_int(self):
         """This function allows to read input and transform it into integer format."""
         answer = self.adapter.readall()
         numeric_string = ''.join(char for char in answer.decode('utf-8') if char.isdigit())
         return int(numeric_string)
 
-    def m_init(self):
-        Instrument.write(self, b'A')
 
     def motor_busy_check(self):
         Instrument.write(self, b'E\r')
@@ -58,58 +163,10 @@ class JY270M(Instrument):
             return False
 
 
-
-    def auto_baud(self):
-        """This function allows for setting up the JY270M before measuring."""
-        ser.write(b' ')
-        rep = ser.readall()
-        if len(rep) == 0:
-            while len(rep) == 0:
-                ser.write(b' ')
-                time.sleep(0.5)
-                rep = ser.readall()
-                print(1)
-        while chr(rep[0]) != 'F':
-            if chr(rep[0]) == "*":
-                ser.write(bytes([0xF7]))
-                print(2)
-                ser.write(b' ')
-                rep = ser.readall()
-            elif chr(rep[0]) == "B":
-                ser.write(b'O2000\0')
-                print(3)
-                time.sleep(0.5)
-                ser.write(b' ')
-                rep = ser.readall()
-            elif rep[0] == 27:
-                ser.write(bytes([0xF8]))
-                print(4)
-                time.sleep(0.5)
-                ser.write(b' ')
-                rep = ser.readall()
-                if chr(rep[0]) != "F":
-                    ser.write(bytes([0xF8]))
-                    ser.write(bytes([0xDE]))
-                    print(5)
-                    time.sleep(0.5)
-                    ser.write(b' ')
-                    rep = ser.readall()
-            else:
-                ser.write(b' ')
-                time.sleep(0.5)
-                rep = ser.readall()
-
-    def motor_move_relative(self, motor_step):
+    def motor_move_relative(self, motor_steps: int):
         """we check if the motor is busy before sending the movement command."""
-        while not self.motor_busy_check():
-            pass
-        command = "F0," + str(motor_step) + "\r"
-        Instrument.write(self, command.encode('utf-8'))
-        while not self.motor_busy_check():
-            pass
-
-    def readall(self):
-        ser.readall()
+        code = self._get_code(self._write_read(f'F0,{motor_steps}\r'))
+        assert code == 'o'
 
     def motor_control(self, lamda):
         """32 motor steps / nm"""
@@ -126,14 +183,32 @@ class JY270M(Instrument):
         print("The final motor position is: " + str(position))
         print("The final wavelength is: " + str(position/32))
 
-spectro=JY270M(adapter=ser)
 
-"""spectro.write(b'H0\r')
-print(spectro.read_int())"""
+if __name__ == '__main__':
+    spectro = JY270M('COM1',
+                     baud_rate=9600,
+                     timeout=300,
+                     parity=Parity.none,
+                     data_bits=8,
+                     stop_bits=StopBits.one,
+                     flow_control=ControlFlow.dtr_dsr,
+                     write_termination='',
+                     read_termination='')
 
-spectro.motor_control(900.5)
+    # autobaud_status = spectro.auto_baud()
+    # if autobaud_status:
+    #     spectro.motor_init()
 
-"""spectro.write(b'A')"""
+    spectro.grating_steps
+    """spectro.write(b'H0\r')
+    print(spectro.read_int())"""
 
-"""spectro.motor_move_relative(-10000)"""
-"""control("H0\r", f"G0,{-1000}\r"""
+    #spectro.motor_control(900.5)
+
+    """spectro.write(b'A')"""
+
+    """spectro.motor_move_relative(-10000)"""
+    """c
+    spectro=JY270M(adapter=ser)
+        
+    ontrol("H0\r", f"G0,{-1000}\r"""
