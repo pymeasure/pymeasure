@@ -26,17 +26,16 @@ __version__ = "0.1.1"
 
 import re
 import warnings
-from io import BytesIO
-
 from functools import cached_property
-
-import numpy as np
-from pymeasure.adapters import PrologixAdapter
-from pymeasure.instruments import Instrument, RangeException, discreteTruncate
-from pyvisa import VisaIOError
-
+from io import BytesIO
 from time import sleep
 from time import time as now
+
+import numpy as np
+from pyvisa import VisaIOError
+
+from pymeasure.adapters import PrologixAdapter
+from pymeasure.instruments import Instrument, RangeException, discreteTruncate
 
 
 class HP8753E(Instrument):
@@ -105,23 +104,22 @@ class HP8753E(Instrument):
     )
 
     def __init__(self, adapter, name="Hewlett Packard 8753E Vector Network Analyzer", **kwargs):
+        # this should probably be in __new__
         super().__init__(adapter, name, **kwargs)
-        # self.adapter.flush_read_buffer()
         if isinstance(self.adapter, PrologixAdapter):
             self.adapter.auto = 1
             self.adapter.connection.query_delay = 0
             self.adapter.gpib_read_timeout = 500
             self.adapter.connection.timeout = 700
             self.adapter.eoi = 1
-            self.adapter.eos = '\n'
+            self.adapter.eos = "\n"
             self.adapter.connection.read_termination = self.adapter.eos
-            self.adapter.connection.read_termination = '\r\n'
-            self.adapter.write('++eot_enable 0')
+            self.adapter.connection.read_termination = "\r\n"
+            self.adapter.write("++eot_enable 0")
             self.adapter.flush_read_buffer()
-            self.write('FORM4')
+            self.write("FORM4")
             self.adapter.flush_read_buffer()
 
-    # @property
     @cached_property
     def id(self):
         """Get the identification of the instrument."""
@@ -132,7 +130,6 @@ class HP8753E(Instrument):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    # @property
     @cached_property
     def manu(self):
         """Get the manufacturer of the instrument."""
@@ -142,7 +139,6 @@ class HP8753E(Instrument):
             self.id
             return self._manu
 
-    # @property
     @cached_property
     def model(self):
         """Get the model of the instrument."""
@@ -152,7 +148,6 @@ class HP8753E(Instrument):
             self.id
             return self._model
 
-    # @property
     @cached_property
     def fw(self):
         """Get the firmware of the instrument."""
@@ -162,7 +157,6 @@ class HP8753E(Instrument):
             self.id
             return self._fw
 
-    # @property
     @cached_property
     def sn(self):
         """Get the serial number of the instrument"""
@@ -172,7 +166,6 @@ class HP8753E(Instrument):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    # @property
     @cached_property
     def options(self):
         """Get the options of the instrument"""
@@ -239,7 +232,9 @@ class HP8753E(Instrument):
         if bandwidth:
             self.write("IFBW%d" % bandwidth)
         else:
-            raise RangeException("Maximum IF bandwidth (6000) for Hewlett Packard " "8753E exceeded")
+            raise RangeException(
+                "Maximum IF bandwidth (6000) for Hewlett Packard " "8753E exceeded"
+            )
 
     def set_averaging(self, averages):
         """Sets the number of averages and enables/disables averaging. Should be
@@ -277,20 +272,8 @@ class HP8753E(Instrument):
 
     def reset(self):
         self.write("*RST")
-        #from time import sleep
-        # sleep(0.01)
-        # while self.adapter.connection.bytes_in_buffer > 0:
-        #     self.adapter.flush_read_buffer()
-        #     sleep(0.1)
-        # while True:
-        #     try:
-        #         status = self.ask("*IDN?")
-        #         break
-        #     except VisaIOError as e:
-        #         if e.abbreviation != "VI_ERROR_TMO":
-        #             raise e
-        # self.adapter.flush_read_buffer()
         sleep(0.25)
+
     def scan(self, averages=None, blocking=None, timeout=None, delay=None):
         """Initiates a scan with the number of averages specified and
         blocks until the operation is complete.
@@ -300,12 +283,13 @@ class HP8753E(Instrument):
                 "averages, blocking, timeout, and delay arguments are no longer used by scan()",
                 FutureWarning,
             )
-        # self.write("*CLS")
+
         self.scan_single()
+
         # All queries will block until the scan is done, so use NOOP? to check.
         # These queries will time out after several seconds though,
         # so query repeatedly until the scan finishes.
-        status = '1\r\n'
+        status = "1\r\n"
         while True:
             try:
                 status = self.ask("NOOP?")
@@ -316,10 +300,7 @@ class HP8753E(Instrument):
             finally:
                 if self.adapter.connection.bytes_in_buffer > 0:
                     self.adapter.flush_read_buffer()
-            # if status.replace('\r', '').replace('\n', '') == '0':
-            #    break
-        # sleep(0.1)
-        # while self.adapter.connection.bytes_in_buffer > 0:
+
         self.adapter.flush_read_buffer()
         sleep(0.1)
 
@@ -361,7 +342,7 @@ class HP8753E(Instrument):
         points = self.scan_points
 
         # TODO get data format
-        self.write('FORM4')
+        self.write("FORM4")
 
         self.adapter.flush_read_buffer()
 
@@ -377,80 +358,30 @@ class HP8753E(Instrument):
             # if form4 is the data transfer method
             while len(temp_data) < (points):
                 if self.adapter.connection.bytes_in_buffer >= 50:
-                    temp_data.append(self.read_bytes(50).decode('utf-8').strip('\n').split(','))
+                    temp_data.append(self.read_bytes(50).decode("utf-8").strip("\n").split(","))
                 else:
                     # try not to overwhelm the prologix adapter
                     sleep(0.0001)
 
                 # break the loop if the sweep gets interrupted
-                time_elapsed = now()-start
+                time_elapsed = now() - start
                 if time_elapsed > points * 0.006:
                     if self.adapter.connection.bytes_in_buffer > 0:
                         self.adapter.flush_read_buffer()
                         sleep(0.05)
-                    raise Exception(f'Failed to read data. Data transfer method timed out')
+                    raise Exception(f"Failed to read data. Data transfer method timed out")
 
             # process string data into complex numbers
             preformat_data = [float(point[0]) + float(point[1]) * 1j for point in temp_data]
             data = np.array(preformat_data)
 
-            # return adapter to previous auto state
-            # set adapter to auto
-            #auto_state = self.adapter.auto
+            # return adapter to previous auto state for prologix adapter
             self.adapter.auto = auto_state
 
             # data_complex = data[:, 0] + 1j * data[:, 1]
             return data
         else:
             raise NotImplementedError("Function data_complex only written for PrologixAdapter")
-
-    '''
-    @property
-    def data_log_magnitude(self):
-        """Returns the absolute magnitude values in dB from the last scan"""
-        return 20 * np.log10(self.data_magnitude)
-
-    @property
-    def data_magnitude(self):
-        """Returns the absolute magnitude values from the last scan"""
-        return np.abs(self.data_complex)
-
-    @property
-    def data_phase(self):
-        """Returns the phase in degrees from the last scan"""
-        return np.degrees(np.angle(self.data_complex))
-
-    @property
-    def data(self):
-        """Returns the real and imaginary data from the last scan"""
-        warnings.warn(
-            "Don't use this function, use data_complex instead", FutureWarning
-        )
-        data_complex = self.data_complex
-        return data_complex.real, data_complex.complex
-
-    def log_magnitude(self, real, imaginary):
-        """Returns the magnitude in dB from a real and imaginary
-        number or numpy arrays
-        """
-        warnings.warn(
-            "Don't use log_magnitude(), use data_log_magnitude instead", FutureWarning
-        )
-        return 20 * np.log10(self.magnitude(real, imaginary))
-
-    def magnitude(self, real, imaginary):
-        """Returns the magnitude from a real and imaginary
-        number or numpy arrays
-        """
-        warnings.warn("Don't use magnitude(), use data_magnitude", FutureWarning)
-        return np.sqrt(real**2 + imaginary**2)
-
-    def phase(self, real, imaginary):
-        """Returns the phase in degrees from a real and imaginary
-        number or numpy arrays
-        """
-        warnings.warn("Don't use phase(), use data_phase instead", FutureWarning)
-        return np.arctan2(imaginary, real) * 180 / np.pi'''
 
 
 if __name__ == "__main__":
