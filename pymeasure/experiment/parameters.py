@@ -44,7 +44,9 @@ class Parameter:
         this argument is ignored.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True,
+                 **kwargs):
+        super().__init__(**kwargs)
         self.name = name
         self._value = None
         if default is not None:
@@ -118,7 +120,7 @@ class Parameter:
             self.__class__.__name__, self.name, self._value, self.default)
 
 
-class IntegerParameter(Parameter):
+class IntegerParameter(Parameter, int):
     """ :class:`.Parameter` sub-class that uses the integer type to
     store the value.
 
@@ -203,7 +205,7 @@ class BooleanParameter(Parameter):
         return value
 
 
-class FloatParameter(Parameter):
+class FloatParameter(Parameter, float):
     """ :class:`.Parameter` sub-class that uses the floating point
     type to store the value.
 
