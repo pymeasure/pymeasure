@@ -85,7 +85,7 @@ class KeysightE3631A(Instrument):
 
     def __init__(self, adapter, name="Keysight E3631A", **kwargs):
         super().__init__(
-            adapter, name, **kwargs
+            adapter, name, includeSCPI=True, **kwargs
         )
         self.channels[1].voltage_setpoint_values = [0, 6]
         self.channels[1].current_limit_values = [0, 5]
@@ -97,7 +97,7 @@ class KeysightE3631A(Instrument):
         """Control whether the power supply operates in the track mode (boolean)""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
     output_enabled = Instrument.control(
@@ -127,6 +127,3 @@ class KeysightE3631A(Instrument):
         else:
             raise ValueError("Invalid channel number. Must be 1, 2, 3.")
 
-    def reset(self):
-        """ Resets the instrument and clears the queue.  """
-        self.write("*RST;*CLS")
