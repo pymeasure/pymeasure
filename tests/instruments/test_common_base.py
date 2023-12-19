@@ -222,7 +222,7 @@ class TestInitWithMultipleChannelCreator:
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
     def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 5
+        assert len(parent.get_channel_pairs()) == 5
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -263,7 +263,7 @@ class TestInitWithChannelCreator:
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
     def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 6
+        assert len(parent.get_channel_pairs()) == 6
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.ch_A, CommonBase.ChannelCreator)
@@ -304,7 +304,7 @@ class TestInitWithMixChannelCreator:
         assert isinstance(p2.output_Z, GenericBase)
 
     def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 15
+        assert len(parent.get_channel_pairs()) == 15
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -718,7 +718,7 @@ def test_control_preprocess_reply_property(dynamic):
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
-    assert type(fake.x) == int
+    assert isinstance(fake.x, int)
 
 
 def test_control_kwargs_handed_to_values():
@@ -826,7 +826,7 @@ def test_measurement_cast_int():
     with expected_protocol(Fake, [("x", "5")]) as instr:
         y = instr.x
         assert y == 5
-        assert type(y) is int
+        assert isinstance(y, int)
 
 
 def test_measurement_unitful_property():

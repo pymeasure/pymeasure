@@ -243,7 +243,7 @@ class CommonBase:
                 setattr(self, self.__reserved_prefix + attr, value)
         return special_names
 
-    @staticmethod
+    @classmethod
     def get_channels(cls):
         """Return a list of all the Instrument's ChannelCreator and MultiChannelCreator instances"""
         class_members = getmembers(cls)
@@ -254,18 +254,18 @@ class CommonBase:
                 channels.append((name, member))
         return channels
 
-    @staticmethod
+    @classmethod
     def get_channel_pairs(cls):
         """Return a list of all the Instrument's channel pairs"""
         channel_pairs = []
-        for name, creator in CommonBase.get_channels(cls):
+        for name, creator in cls.get_channels():
             for pair in creator.pairs:
                 channel_pairs.append(pair)
         return channel_pairs
 
     def _create_channels(self):
         """Create channel interfaces for all the Instrument's channel pairs."""
-        for name, creator in CommonBase.get_channels(self.__class__):
+        for name, creator in self.get_channels():
             for cls, id in creator.pairs:
                 # If channel pair was created with MultiChannelCreator
                 # add channel interface to collection with passed attribute name
