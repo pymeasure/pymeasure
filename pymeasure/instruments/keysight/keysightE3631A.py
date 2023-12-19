@@ -56,7 +56,6 @@ class VoltageChannel(Channel):
     voltage = Channel.measurement(
         "INST:NSEL {ch};:MEAS:VOLT?",
         """Measure actual voltage of this channel.""",
-        dynamic=True
     )
 
     current = Channel.measurement(
