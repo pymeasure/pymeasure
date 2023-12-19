@@ -35,7 +35,7 @@ log.addHandler(logging.NullHandler())
 
 class LakeShoreTemperatureChannel(Channel):
     """ Temperature input channel on a lakeshore temperature monitor. Reads the temperature in
-    kelvin, celcius, or sensor units. Also provides a method to block the program until a given
+    kelvin, celsius, or sensor units. Also provides a method to block the program until a given
     stable temperature is reached.
     """
 
@@ -43,9 +43,9 @@ class LakeShoreTemperatureChannel(Channel):
         'KRDG? {ch}',
         """Read the temperature in kelvin from a channel."""
     )
-    celcius = Instrument.measurement(
+    celsius = Instrument.measurement(
         'CRDG? {ch}',
-        """Read the temperature in celcius from a channel."""
+        """Read the temperature in celsius from a channel."""
     )
     sensor = Instrument.measurement(
         'SRDG? {ch}',
@@ -58,8 +58,8 @@ class LakeShoreTemperatureChannel(Channel):
         """ Blocks the program, waiting for the temperature to reach the target
         within the accuracy (%), checking this each interval time in seconds.
 
-        :param target: Target temperature in kelvin, celcius, or sensor units.
-        :param unit: 'kelvin', 'celcius', or 'sensor' specifying the unit
+        :param target: Target temperature in kelvin, celsius, or sensor units.
+        :param unit: 'kelvin', 'celsius', or 'sensor' specifying the unit
                      for queried temperature values.
         :param accuracy: An acceptable percentage deviation between the
                          target and temperature.

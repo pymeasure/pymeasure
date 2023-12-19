@@ -33,7 +33,7 @@ class Parameter:
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     :param group_by: Defines the Parameter(s) that controls the visibility
-        of the associated input; can be a string containting the Parameter
+        of the associated input; can be a string containing the Parameter
         name, a list of strings with multiple Parameter names, or a dict
         containing {"Parameter name": condition} pairs.
     :param group_condition: The condition for the group_by Parameter
@@ -100,7 +100,7 @@ class Parameter:
     def convert(self, value):
         """ Convert user input to python data format
 
-        Subclasses are exptected to customize this method.
+        Subclasses are expected to customize this method.
         Default implementation is the identity function
 
         :param value: value to be converted
