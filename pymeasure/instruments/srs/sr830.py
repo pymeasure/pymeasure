@@ -503,7 +503,8 @@ class SR830(Instrument):
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):
-        """ Start a fast measurement mode and transfers data from buffer to extract mean and std measurements
+        """ Start a fast measurement mode and transfers data from buffer to extract mean
+        and std measurements
 
         Return the mean and std from both channels
         """
@@ -589,7 +590,8 @@ class SR830(Instrument):
         return self.values(command)
 
     def save_setup(self, setup_number: int):
-        """Save the current instrument configuration (all parameters) in a memory referred to by an integer
+        """Save the current instrument configuration (all parameters) in a memory
+        referred to by an integer
 
         The integer must be comprised between 1 and 9 (included)
 
@@ -599,7 +601,8 @@ class SR830(Instrument):
             self.write(f'SSET{setup_number:d};')
 
     def load_setup(self, setup_number: int):
-        """ Load a previously saved instrument configuration from the memory referred to by an integer
+        """ Load a previously saved instrument configuration from the memory referred
+        to by an integer
 
         The integer must be comprised between 1 and 9 (included)
 
