@@ -35,3 +35,4 @@ from .hpsystempsu import HP6632A
 from .hpsystempsu import HP6633A
 from .hpsystempsu import HP6634A
 from .hplegacyinstrument import HPLegacyInstrument
+from .hp8753e import HP8753E
