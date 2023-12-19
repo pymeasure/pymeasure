@@ -95,7 +95,7 @@ class KeysightE3631A(Instrument):
     tracking_enabled = Instrument.control(
         ":OUTP:TRAC?",
         ":OUTP:TRAC %s",
-        """Control whether the power supply operate in the track mode (boolean)""",
+        """Control whether the power supply operates in the track mode (boolean)""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
