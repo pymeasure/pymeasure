@@ -482,7 +482,11 @@ class SR830(Instrument):
         else:
             return int(query)
 
-    def fill_buffer(self, count, has_aborted=lambda: False, delay=0.001):
+    def fill_buffer(self, count: int, has_aborted=lambda: False, delay=0.001):
+        """ Fill two numpy arrays with the content of the instrument buffer
+
+        Eventually waiting until the specified number of recording is done
+        """
         ch1 = np.empty(count, np.float32)
         ch2 = np.empty(count, np.float32)
         currentCount = self.buffer_count
@@ -593,8 +597,6 @@ class SR830(Instrument):
         """Save the current instrument configuration (all parameters) in a memory
         referred to by an integer
 
-        The integer must be comprised between 1 and 9 (included)
-
         :param setup_number: the integer referring to the memory (between 1 and 9 (included))
         """
         if 1 <= setup_number <= 9:
@@ -604,23 +606,17 @@ class SR830(Instrument):
         """ Load a previously saved instrument configuration from the memory referred
         to by an integer
 
-        The integer must be comprised between 1 and 9 (included)
-
         :param setup_number: the integer referring to the memory (between 1 and 9 (included))
         """
         if 1 <= setup_number <= 9:
             self.write(f'RSET{setup_number:d};')
 
     def start_scan(self):
-        """
-
-        :return:
+        """ Start the data recording into the buffer
         """
         self.write('STRT')
 
     def pause_scan(self):
-        """
-
-        :return:
+        """ Pause the data recording
         """
         self.write('PAUS')
