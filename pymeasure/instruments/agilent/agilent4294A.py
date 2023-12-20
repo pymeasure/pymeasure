@@ -35,7 +35,7 @@ class Agilent4294A(Instrument):
     )
     stop_frequency = Instrument.control(
         "STOP?", "STOP %e HZ", "Set the stop frequency in Hz",
-        validator=strict_range, values=[40, 140E6]
+        validator=strict_range, values=[40, 140E6],
     )
 
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
