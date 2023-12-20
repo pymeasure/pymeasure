@@ -11,9 +11,11 @@ def get_steps_returns(steps_str: str):
     steps_str = steps_str.rstrip('\r')
     return int(steps_str)
 
+
 def read_int(string: str):
     numeric_string = ''.join(char for char in string if char.isdigit())
     return int(numeric_string)
+
 
 class JY270M(Instrument):
     """This is a class for the 270M JY spectrometer."""
@@ -21,10 +23,11 @@ class JY270M(Instrument):
     """Backlash in number of motor steps"""
     _backlash = 320
     _steps_nm = 32
-    _slit_steps_mm = 157.48
+    _slit_steps_micron = 0.15748
     _lambda_max = 1171.68
     _max_steps = 37494
     _max_steps_slit = 1102.36
+
 
     def __init__(self, adapter, name = "JY270M", **kwargs):
         super().__init__(
@@ -112,15 +115,6 @@ class JY270M(Instrument):
         self._write_read(b'A')
 
 
-    # grating_steps = Instrument.control('H0\r',
-    #                                    'G0,%d\r',
-    #                                    """Control the grating motor number of steps""",
-    #                                    validator=strict_range,
-    #                                    values=[0, 37494],
-    #                                    get_process=read_int,
-    #                                    )
-
-
     @property
     def grating_steps(self):
         """Reading the number of steps from the grating motor"""
@@ -136,9 +130,22 @@ class JY270M(Instrument):
 
 
     @property
+    def grating_steps_relative(self):
+        return read_int(self._write_read(b'H0\r').decode())
+
+
+    @grating_steps_relative.setter
+    def grating_steps_relative(self, nsteps: int):
+        """Relative positioning of the grating motor in number of steps"""
+        ans = self._write_read(f'F0,{nsteps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
+
+
+    @property
     def grating_wavelength(self):
         """Reading the wavelength from the grating motor"""
-        return self._lambda_max - (self._max_steps - self.grating_steps) / self._steps_nm
+        return self._lambda_max - ((self._max_steps - self.grating_steps) / self._steps_nm)
 
 
     @grating_wavelength.setter
@@ -163,15 +170,15 @@ class JY270M(Instrument):
 
 
     @property
-    def entry_slit_mm(self):
+    def entry_slit_microns(self):
         """Reading of the entry slit absolute position in millimeters"""
-        return self.entry_slit_steps/self._slit_steps_mm
+        return self.entry_slit_steps/self._slit_steps_micron
 
 
-    @entry_slit_mm.setter
-    def entry_slit_mm(self, mm: float):
+    @entry_slit_microns.setter
+    def entry_slit_microns(self, microns: float):
         """Absolute positioning of the entry slit in millimeters"""
-        pos = mm*self._slit_steps_mm
+        pos = microns * self._slit_steps_micron
         ans = self._write_read(f'k0,0,{pos - self.entry_slit_steps}\r'.encode())
         code = self._get_code(ans)
         assert code == 'o'
@@ -192,18 +199,24 @@ class JY270M(Instrument):
 
 
     @property
-    def exit_slit_mm(self):
+    def exit_slit_microns(self):
         """Reading of the exit slit absolute position in millimeters"""
-        return self.exit_slit_steps / self._slit_steps_mm
+        return self.exit_slit_steps / self._slit_steps_micron
 
 
-    @exit_slit_mm.setter
-    def exit_slit_mm(self, mm: float):
+    @exit_slit_microns.setter
+    def exit_slit_microns(self, microns: float):
         """Absolute positioning of the exit slit in millimeters"""
-        pos = mm * self._slit_steps_mm
+        pos = microns * self._slit_steps_micron
         ans = self._write_read(f'k0,2,{pos - self.exit_slit_steps}\r'.encode())
         code = self._get_code(ans)
         assert code == 'o'
+
+
+    def grating_wavelength_relative(self, wavelength: float):
+        """Relative positioning of the grating motor in wavelength"""
+        steps = wavelength*self._steps_nm
+        self.grating_steps_relative = steps
 
 
     def motor_stop(self):
@@ -213,12 +226,15 @@ class JY270M(Instrument):
 
 
     def motor_busy_check(self):
-        Instrument.write(self, b'E\r')
-        ans = self.adapter.readall()
-        char = ans.decode('utf-8')
-        if char == "oz":
+        while not(self.motor_busy_check_test()):
+            pass
+
+
+    def motor_busy_check_test(self):
+        ans = self._write_read(b'E\r').decode()
+        if ans == "oz":
             return True
-        if char == "oq":
+        if ans == "oq":
             return False
 
 
@@ -226,23 +242,6 @@ class JY270M(Instrument):
         """we check if the motor is busy before sending the movement command."""
         code = self._get_code(self._write_read(f'F0,{motor_steps}\r'))
         assert code == 'o'
-
-
-    def motor_control(self, lamda):
-        """32 motor steps / nm"""
-        steps_nm = 32
-        Instrument.write(self, b'H0\r')
-        position = self.read_int()
-        """Wavelength is transformed into motor steps."""
-        motor_final_step = lamda*steps_nm
-        time.sleep(1)
-        while abs(motor_final_step - position) > 1:
-            self.motor_move_relative(motor_final_step-position)
-            Instrument.write(self, b'H0\r')
-            position = self.read_int()
-        print("The final motor position is: " + str(position))
-        print("The final wavelength is: " + str(position/32))
-
 
 
 if __name__ == '__main__':
@@ -256,9 +255,10 @@ if __name__ == '__main__':
                      write_termination='',
                      read_termination='')
 
-    """autobaud_status = spectro.auto_baud()
+    autobaud_status = spectro.auto_baud()
     if autobaud_status:
-        spectro.motor_init()"""
+        spectro.motor_init()
+
 
 
 
