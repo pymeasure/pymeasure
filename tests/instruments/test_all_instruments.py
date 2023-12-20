@@ -207,14 +207,16 @@ grandfathered_docstring_instruments = [
 ]
 
 
-def fake_init_communication(self, *args, **kwargs):
-    pass
+def create_init_communication_less_instrument(cls):
+    class ModifiedCls(cls):
+        def _init_communication(self, *args, **kwargs):
+            pass
+    return ModifiedCls
 
 
 @pytest.mark.parametrize("cls", devices)
 def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument."
-    cls._init_communication = fake_init_communication
     if cls.__name__ in proper_adapters:
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in need_init_communication:
@@ -223,17 +225,20 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
+
+    cls = create_init_communication_less_instrument(cls)
     cls(adapter=ProtocolAdapter())
 
 
 @pytest.mark.parametrize("cls", devices)
 def test_name_argument(cls):
     "Test that every instrument accepts a name argument."
-    cls._init_communication = fake_init_communication
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
+
+    cls = create_init_communication_less_instrument(cls)
     inst = cls(adapter=ProtocolAdapter(), name="Name_Test")
     assert inst.name == "Name_Test"
 
@@ -248,17 +253,19 @@ is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec('pyvisa_sim'))
 @pytest.mark.parametrize("cls", devices)
 def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
-    cls._init_communication = fake_init_communication
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
+    elif cls.__name__ in ("FakeInstrument", "SwissArmyFake"):
+        pytest.skip("Fake instruments replace the adapter.")
 
+    cls = create_init_communication_less_instrument(cls)
     with pytest.raises(ValueError,
                        match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
-        cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
+        cls(adapter=SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
 
 
 def property_name_to_id(value):
