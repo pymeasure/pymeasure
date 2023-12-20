@@ -12,7 +12,6 @@ def get_steps_returns(steps_str: str):
     return int(steps_str)
 
 def read_int(string: str):
-    """This function allows to read input and transform it into integer format."""
     numeric_string = ''.join(char for char in string if char.isdigit())
     return int(numeric_string)
 
@@ -20,16 +19,19 @@ class JY270M(Instrument):
     """This is a class for the 270M JY spectrometer."""
 
     """Backlash in number of motor steps"""
-    backlash = 320
+    _backlash = 320
     _steps_nm = 32
+    _slit_steps_mm = 157.48
     _lambda_max = 1171.68
     _max_steps = 37494
+    _max_steps_slit = 1102.36
 
     def __init__(self, adapter, name = "JY270M", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs)
+
 
     def _write_read(self, command: bytes):
         self.write_bytes(command)
@@ -41,15 +43,18 @@ class JY270M(Instrument):
                 break
         return read
 
+
     def _get_code(self, ans: bytes):
         if len(ans) > 0:
             return ans.decode()[0]
         else:
             return ''
 
+
     def unstuck(self):
         ans = self._write_read(b'\xF8')
         ans = self._write_read(b'\xDE')
+
 
     def auto_baud(self):
         """Trying to establish intelligent mode
@@ -101,10 +106,12 @@ class JY270M(Instrument):
         print(error)
         pass
 
+
     def motor_init(self):
         "This command is used to initialize the monochromator, only needs to be called once",
         self._write_read(b'A')
-    #
+
+
     # grating_steps = Instrument.control('H0\r',
     #                                    'G0,%d\r',
     #                                    """Control the grating motor number of steps""",
@@ -113,44 +120,96 @@ class JY270M(Instrument):
     #                                    get_process=read_int,
     #                                    )
 
+
     @property
     def grating_steps(self):
+        """Reading the number of steps from the grating motor"""
         return read_int(self._write_read(b'H0\r').decode())
+
 
     @grating_steps.setter
     def grating_steps(self, nsteps: int):
-        """Absolut positioning"""
+        """Absolut positioning of the grating motor in number of steps"""
         ans = self._write_read(f'F0,{nsteps - self.grating_steps}\r'.encode())
         code = self._get_code(ans)
         assert code == 'o'
 
+
     @property
     def grating_wavelength(self):
+        """Reading the wavelength from the grating motor"""
         return self._lambda_max - (self._max_steps - self.grating_steps) / self._steps_nm
+
 
     @grating_wavelength.setter
     def grating_wavelength(self, wavelength: float):
-        """Absolut positioning"""
+        """Absolut positioning of the grating motor in wavelength"""
         steps = int(self._max_steps - int((self._lambda_max - wavelength) * self._steps_nm))
         self.grating_steps = steps
 
-    motor_busy_check= Instrument.measurement(
-        "E\r".encode('utf-8'),
-        """it asks the motor if it's busy. If we receive "oq" it's busy and "oz" if it's not """,
-    )
 
-    motor_position = Instrument.measurement(
-        b'H0\r',
-        """This property asks the instrument for its current position.""",
-    )
+    @property
+    def entry_slit_steps(self):
+        """Reading of the entry slit absolute position in number of steps"""
+        return read_int(self._write_read(b'j0,0\r').decode())
 
 
+    @entry_slit_steps.setter
+    def entry_slit_steps(self, nsteps: int):
+        """Absolut positioning of the entry slit motor in number of steps"""
+        ans = self._write_read(f'k0,0,{nsteps - self.entry_slit_steps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
 
-    def read_int(self):
-        """This function allows to read input and transform it into integer format."""
-        answer = self.adapter.readall()
-        numeric_string = ''.join(char for char in answer.decode('utf-8') if char.isdigit())
-        return int(numeric_string)
+
+    @property
+    def entry_slit_mm(self):
+        """Reading of the entry slit absolute position in millimeters"""
+        return self.entry_slit_steps/self._slit_steps_mm
+
+
+    @entry_slit_mm.setter
+    def entry_slit_mm(self, mm: float):
+        """Absolute positioning of the entry slit in millimeters"""
+        pos = mm*self._slit_steps_mm
+        ans = self._write_read(f'k0,0,{pos - self.entry_slit_steps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
+
+
+    @property
+    def exit_slit_steps(self):
+        """Reading of the exit slit absolute position in number of steps"""
+        return read_int(self._write_read(b'j0,2\r').decode())
+
+
+    @exit_slit_steps.setter
+    def exit_slit_steps(self, nsteps: int):
+        """Absolut positioning of the exit slit motor in number of steps"""
+        ans = self._write_read(f'k0,2,{nsteps - self.exit_slit_steps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
+
+
+    @property
+    def exit_slit_mm(self):
+        """Reading of the exit slit absolute position in millimeters"""
+        return self.exit_slit_steps / self._slit_steps_mm
+
+
+    @exit_slit_mm.setter
+    def exit_slit_mm(self, mm: float):
+        """Absolute positioning of the exit slit in millimeters"""
+        pos = mm * self._slit_steps_mm
+        ans = self._write_read(f'k0,2,{pos - self.exit_slit_steps}\r'.encode())
+        code = self._get_code(ans)
+        assert code == 'o'
+
+
+    def motor_stop(self):
+        ans = self._write_read(b'L')
+        code = self._get_code(ans)
+        assert code == 'o'
 
 
     def motor_busy_check(self):
@@ -168,6 +227,7 @@ class JY270M(Instrument):
         code = self._get_code(self._write_read(f'F0,{motor_steps}\r'))
         assert code == 'o'
 
+
     def motor_control(self, lamda):
         """32 motor steps / nm"""
         steps_nm = 32
@@ -184,6 +244,7 @@ class JY270M(Instrument):
         print("The final wavelength is: " + str(position/32))
 
 
+
 if __name__ == '__main__':
     spectro = JY270M('COM1',
                      baud_rate=9600,
@@ -195,20 +256,10 @@ if __name__ == '__main__':
                      write_termination='',
                      read_termination='')
 
-    # autobaud_status = spectro.auto_baud()
-    # if autobaud_status:
-    #     spectro.motor_init()
+    """autobaud_status = spectro.auto_baud()
+    if autobaud_status:
+        spectro.motor_init()"""
 
-    spectro.grating_steps
-    """spectro.write(b'H0\r')
-    print(spectro.read_int())"""
 
-    #spectro.motor_control(900.5)
 
-    """spectro.write(b'A')"""
 
-    """spectro.motor_move_relative(-10000)"""
-    """c
-    spectro=JY270M(adapter=ser)
-        
-    ontrol("H0\r", f"G0,{-1000}\r"""
