@@ -67,28 +67,28 @@ class TestKeysightE3631A:
 
     @pytest.mark.parametrize("chn, i_limit", [(1, 0), (1, 5), (2, 0), (2, 1), (3, 0), (3, 1)],)
     def test_current_limit(self, power_supply, chn, i_limit):
-        power_supply.ch(chn).current_limit = i_limit
+        power_supply.channels[chn].current_limit = i_limit
 
     @pytest.mark.parametrize("chn, i_limit", [(1, -1), (1, 6), (2, -1), (2, 2), (3, -1), (3, 2)],)
     def test_current_limit_out_of_range(self, power_supply, chn, i_limit):
         with pytest.raises(ValueError, match=f"Value of {i_limit} is not in range"):
-            power_supply.ch(chn).current_limit = i_limit
+            power_supply.channels[chn].current_limit = i_limit
 
     @pytest.mark.parametrize("chn, voltage", [(1, 0), (1, 6), (2, 0), (2, 25), (3, 0), (3, -25)],)
     def test_voltage_setpoint(self, power_supply, chn, voltage):
-        power_supply.ch(chn).voltage_setpoint = voltage
-        assert power_supply.ch(chn).voltage_setpoint == voltage
+        power_supply.channels[chn].voltage_setpoint = voltage
+        assert power_supply.channels[chn].voltage_setpoint == voltage
 
     @pytest.mark.parametrize("chn, voltage",
                              [(1, -1), (1, 7), (2, -1), (2, 26), (3, 1), (3, -26)],)
     def test_voltage_setpoint_out_of_range(self, power_supply, chn, voltage):
         with pytest.raises(ValueError, match=f"Value of {voltage} is not in range"):
-            power_supply.ch(chn).voltage_setpoint = voltage
+            power_supply.channels[chn].voltage_setpoint = voltage
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_voltage(self, power_supply, chn):
-        assert isinstance(power_supply.ch(chn).voltage, float)
+        assert isinstance(power_supply.channels[chn].voltage, float)
 
     @pytest.mark.parametrize("chn", CHANNELS)
     def test_measure_current(self, power_supply, chn):
-        assert isinstance(power_supply.ch(chn).current, float)
+        assert isinstance(power_supply.channels[chn].current, float)

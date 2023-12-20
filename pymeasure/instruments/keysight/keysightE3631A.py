@@ -109,21 +109,3 @@ class KeysightE3631A(Instrument):
         values={True: 1, False: 0},
         dynamic=True,
     )
-
-    def ch(self, channel_number):
-        """Get a channel from this instrument.
-
-        :param: channel_number:
-            int: the number of the channel to be selected
-        :type: :class:`.VoltageChannel`
-
-        """
-        if channel_number == 1:
-            return self.ch_1
-        elif channel_number == 2:
-            return self.ch_2
-        elif channel_number == 3:
-            return self.ch_3
-        else:
-            raise ValueError("Invalid channel number. Must be 1, 2, 3.")
-
