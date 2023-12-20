@@ -60,7 +60,7 @@ class VoltageChannel(Channel):
 
     current = Channel.measurement(
         "INST:NSEL {ch};:MEAS:CURR?",
-        """Measure the actual current of this channel."""
+        """Measure the actual current of this channel.""",
     )
 
 
