@@ -29,18 +29,6 @@ from pymeasure.instruments.validators import strict_range
 class Agilent4294A(Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
 
-    start_frequency = Instrument.control(
-        "STAR?", "STAR %e HZ", "Set the start frequency in Hz",
-        validator=strict_range, values=[40, 140E6]
-    )
-    stop_frequency = Instrument.control(
-        "STOP?", "STOP %e HZ", "Set the stop frequency in Hz",
-        validator=strict_range, values=[40, 140E6],
-    )
-    title = Instrument.control(
-        "TITL?", 'TITL "%s"', "Set the title of the plot"
-    )
-
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
         kwargs["read_termination"] = "\n"
         kwargs["write_termination"] = "\n"
@@ -50,6 +38,18 @@ class Agilent4294A(Instrument):
             **kwargs
         )
         self.adapter.connection.timeout = 5000
+
+    start_frequency = Instrument.control(
+        "STAR?", "STAR %e HZ", "Control the start frequency in Hz",
+        validator=strict_range, values=[40, 140E6]
+    )
+    stop_frequency = Instrument.control(
+        "STOP?", "STOP %e HZ", "Control the stop frequency in Hz",
+        validator=strict_range, values=[40, 140E6]
+    )
+    title = Instrument.control(
+        "TITL?", 'TITL "%s"', "Control the title of the active trace"
+    )
 
     def save_graphics(self, filename=""):
         """ Save graphics on the screen to a file on the local computer.
