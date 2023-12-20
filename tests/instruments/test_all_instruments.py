@@ -264,6 +264,20 @@ def test_kwargs_to_adapter(cls):
         cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
 
 
+@pytest.mark.parametrize("cls", devices)
+@pytest.mark.filterwarnings("error:Deprecated to specify `includeSCPI`:FutureWarning")
+def test_includeSCPI_explicitly_set(cls):
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
+
+    cls = create_init_communication_less_instrument(cls)
+    cls(adapter=ProtocolAdapter())
+
+
 def property_name_to_id(value):
     """Create a test id from `value`."""
     device, property_name, prop = value

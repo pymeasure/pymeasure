@@ -70,7 +70,9 @@ class TC038D(Instrument):
     def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
                  **kwargs):
         """Initialize the device."""
-        super().__init__(adapter, name, timeout=timeout, **kwargs)
+        super().__init__(adapter, name, timeout=timeout,
+                         includeSCPI=False,
+                         **kwargs)
         self.address = address
 
     def write(self, command):

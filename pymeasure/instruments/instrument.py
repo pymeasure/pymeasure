@@ -24,6 +24,7 @@
 
 import logging
 import time
+from warnings import warn
 
 from .common_base import CommonBase
 from ..adapters import VISAAdapter
@@ -71,7 +72,7 @@ class Instrument(CommonBase):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True,
+    def __init__(self, adapter, name, includeSCPI=None,
                  preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
@@ -82,6 +83,10 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
+        if includeSCPI is None:
+            warn("Deprecated to specify `includeSCPI` implicitly, declare it explicitly.",
+                 FutureWarning)
+            includeSCPI = True
         self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
