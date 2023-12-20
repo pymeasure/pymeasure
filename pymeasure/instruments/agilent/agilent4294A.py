@@ -29,22 +29,28 @@ from pymeasure.instruments.validators import strict_range
 class Agilent4294A(Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
 
-    def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
-        kwargs["read_termination"] = "\n"
-        kwargs["write_termination"] = "\n"
+    def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer",
+                 read_termination="\n",
+                 write_termination="\n",
+                 timeout=5000,
+                 **kwargs):
+
         super().__init__(
             adapter,
             name,
+            includeSCPI=True,
+            read_termination=read_termination,
+            write_termination=write_termination,
+            timeout=timeout,
             **kwargs
         )
-        self.adapter.connection.timeout = 5000
 
     start_frequency = Instrument.control(
-        "STAR?", "STAR %e HZ", "Control the start frequency in Hz",
+        "STAR?", "STAR %d HZ", "Control the start frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
     stop_frequency = Instrument.control(
-        "STOP?", "STOP %e HZ", "Control the stop frequency in Hz",
+        "STOP?", "STOP %d HZ", "Control the stop frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
     title = Instrument.control(
