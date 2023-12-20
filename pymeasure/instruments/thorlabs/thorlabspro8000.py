@@ -38,6 +38,9 @@ class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         self.write(':SYST:ANSW VALUE')
 
     # Code for general purpose commands (mother board related)

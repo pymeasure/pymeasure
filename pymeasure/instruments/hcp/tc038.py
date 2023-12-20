@@ -95,7 +95,9 @@ class TC038(Instrument):
             **kwargs,
         )
         self.address = address
+        self._init_communication()
 
+    def _init_communication(self):
         self.set_monitored_quantity()  # start to monitor the temperature
 
     def write(self, command):

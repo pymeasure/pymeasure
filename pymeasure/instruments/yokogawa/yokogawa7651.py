@@ -130,7 +130,9 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
+        self._init_communication()
 
+    def _init_communication(self):
         self.write("H0;E")  # Set no header in output data
 
     @property

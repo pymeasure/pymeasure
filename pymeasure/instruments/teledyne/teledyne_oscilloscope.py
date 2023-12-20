@@ -497,6 +497,9 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         self._header_size = 16  # bytes
         self._footer_size = 2  # bytes
         self.waveform_source = "C1"
+        self._init_communication()
+
+    def _init_communication(self):
         self.default_setup()
 
     ################

@@ -122,6 +122,9 @@ class IBeamSmart(Instrument):
             asrl={'baud_rate': baud_rate},
             **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         # configure communication mode: no repeating and no command prompt
         self.write('echo off')
         self.write('prom off')

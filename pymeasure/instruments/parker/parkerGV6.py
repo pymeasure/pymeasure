@@ -45,6 +45,9 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
             write_termination="\r",
             **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         self.set_defaults()
 
     def read(self):

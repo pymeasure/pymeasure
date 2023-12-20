@@ -67,6 +67,9 @@ class TDK_Lambda_Base(Instrument):
             asrl={'read_termination': "\r", 'write_termination': "\r"},
             **kwargs
         )
+        self._init_communication(address)
+
+    def _init_communication(self, address):
         self.address = address
 
     def check_set_errors(self):

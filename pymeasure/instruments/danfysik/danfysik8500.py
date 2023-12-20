@@ -67,6 +67,9 @@ class Danfysik8500(Instrument):
             timeout=500,
             **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         # TODO verify serial connection.
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode

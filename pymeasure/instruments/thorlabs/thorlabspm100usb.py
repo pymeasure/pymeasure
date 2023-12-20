@@ -38,6 +38,9 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         super().__init__(
             adapter, name, **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         self._set_flags()
 
     wavelength_min = Instrument.measurement(
