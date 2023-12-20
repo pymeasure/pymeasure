@@ -445,6 +445,9 @@ class AWG401x_AFG(AWG401x_base):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, **kwargs)
 
+        self._init_communication()
+
+    def _init_communication(self):
         model = self.id.split(",")[1]
         if model == "AWG4012":
             num_ch = 2
@@ -494,16 +497,20 @@ class AWG401x_AWG(AWG401x_base):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, **kwargs)
 
-        for i in range(1, self.num_ch + 1):
-            self.add_child(ChannelAWG, i, collection="setting_ch")
+        self._init_communication()
 
-        self.entries = self.DummyEntriesElements(self, self.num_ch)
         self.burst_count_values = [self.burst_count_min, self.burst_count_max]
 
         self.sampling_rate_values = [self.sampling_rate_min,
                                      self.sampling_rate_max]
 
         self._waveforms = self.WaveformsLazyDict(self)
+
+    def _init_communication(self):
+        for i in range(1, self.num_ch + 1):
+            self.add_child(ChannelAWG, i, collection="setting_ch")
+
+        self.entries = self.DummyEntriesElements(self, self.num_ch)
 
     num_ch = Instrument.measurement(
         "AWGControl:CONFigure:CNUMber?",

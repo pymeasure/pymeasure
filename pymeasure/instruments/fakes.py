@@ -37,9 +37,11 @@ class FakeInstrument(Instrument):
     """
 
     def __init__(self, adapter=None, name="Fake Instrument", includeSCPI=False, **kwargs):
+        if adapter is None:
+            adapter = FakeAdapter()
         super().__init__(
-            FakeAdapter(**kwargs),
-            name,
+            adapter=adapter,
+            name=name,
             includeSCPI=includeSCPI,
             **kwargs
         )

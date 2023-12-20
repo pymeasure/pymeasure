@@ -25,9 +25,9 @@
 import importlib
 from pathlib import Path
 import pytest
-from unittest.mock import MagicMock
 
 from pymeasure import instruments
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments import Instrument, Channel
 
 
@@ -86,18 +86,8 @@ for device in devices.union(channels):
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
-    "SwissArmyFake",
-    "FakeInstrument",
-    "ThorlabsPM100USB",
-    "Keithley2700",
-    "TC038",
-    "Agilent34450A",
     "AWG401x_AWG",
     "AWG401x_AFG",
-    "VARX",
-    "HP8116A",
-    "IBeamSmart",
-    "ANC300Controller",
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [
@@ -217,9 +207,14 @@ grandfathered_docstring_instruments = [
 ]
 
 
+def fake_init_communication(self, *args, **kwargs):
+    pass
+
+
 @pytest.mark.parametrize("cls", devices)
 def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument."
+    cls._init_communication = fake_init_communication
     if cls.__name__ in proper_adapters:
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in need_init_communication:
@@ -228,17 +223,18 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
-    cls(adapter=MagicMock())
+    cls(adapter=ProtocolAdapter())
 
 
 @pytest.mark.parametrize("cls", devices)
 def test_name_argument(cls):
     "Test that every instrument accepts a name argument."
+    cls._init_communication = fake_init_communication
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
-    inst = cls(adapter=MagicMock(), name="Name_Test")
+    inst = cls(adapter=ProtocolAdapter(), name="Name_Test")
     assert inst.name == "Name_Test"
 
 
@@ -252,6 +248,7 @@ is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec('pyvisa_sim'))
 @pytest.mark.parametrize("cls", devices)
 def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
+    cls._init_communication = fake_init_communication
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:

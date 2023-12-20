@@ -111,6 +111,9 @@ class HP33120A(Instrument):
             name,
             **kwargs
         )
+        self._init_communication()
+
+    def _init_communication(self):
         self.amplitude_units = 'Vpp'
 
     def beep(self):
