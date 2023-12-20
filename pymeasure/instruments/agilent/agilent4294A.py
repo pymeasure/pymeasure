@@ -37,6 +37,9 @@ class Agilent4294A(Instrument):
         "STOP?", "STOP %e HZ", "Set the stop frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
+    title = Instrument.control(
+        "TITL?", 'TITL "%s"', "Set the title of the plot"
+    )
 
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer", **kwargs):
         kwargs["read_termination"] = "\n"
