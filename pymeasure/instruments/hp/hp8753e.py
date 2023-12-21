@@ -21,9 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
-__version__ = "0.1.1"
-
 import re
 import warnings
 from functools import cached_property
@@ -35,7 +32,8 @@ import numpy as np
 from pyvisa import VisaIOError
 
 from pymeasure.adapters import PrologixAdapter
-from pymeasure.instruments import Instrument, RangeException, discreteTruncate
+from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments.validators import truncated_range, discreteTruncate, strict_discrete_set
 
 
 class HP8753E(Instrument):
@@ -43,8 +41,13 @@ class HP8753E(Instrument):
     and provides a high-level interface for taking scans of the
     scattering parameters.
 
-    Template copied from Agilent 8722 class in pymeasure
+    Keyword arguements:
+    adapter -- <placeholder for description of pymeasure.adapter>
+    name -- <str> describing the instrument
     """
+
+    def __init__(self, adapter=None, name="Hewlett Packard 8753E Vector Network Analyzer", **kwargs):
+        super().__init__(adapter, name, includeSCPI=False, **kwargs)
 
     SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
     SCATTERING_PARAMETERS = ["S11", "S12", "S21", "S22"]
@@ -53,23 +56,31 @@ class HP8753E(Instrument):
     start_frequency = Instrument.control(
         "STAR?",
         "STAR %e Hz",
-        """ A floating point property that represents the start frequency
-        in Hz. This property can be set.
+        """Control the start frequency in Hz. (float truncated from 30_000.0
+        to 6_000_000_000.0).
         """,
+        validator=truncated_range,
+        cast=float,
+        values=[30E3, 6E9],
     )
     stop_frequency = Instrument.control(
         "STOP?",
         "STOP %e Hz",
-        """ A floating point property that represents the stop frequency
-        in Hz. This property can be set.
+        """Control the stop frequency in Hz. (float truncated from 30_000.0
+        to 6_000_000_000.0).
         """,
+        validator=truncated_range,
+        cast=float,
+        values=[30E3, 6E9],
     )
     sweep_time = Instrument.control(
         "SWET?",
         "SWET%.2e",
-        """ A floating point property that represents the sweep time
-        in seconds. This property can be set.
+        """Control the sweep time in seconds. (float truncated from 0.0 to 999.0)
         """,
+        validator=truncated_range,
+        cast=float,
+        values=[30E3, 6E9]
     )
     averages = Instrument.control(
         "AVERFACT?",
@@ -78,6 +89,8 @@ class HP8753E(Instrument):
         averaging must be enabled for this to take effect. This property can be set.
         """,
         cast=lambda x: int(float(x)),  # need float() to convert scientific notation in strings
+        validator=discreteTruncate,
+        values=[0, 999],
     )
     averaging_enabled = Instrument.control(
         "AVERO?",
@@ -85,6 +98,9 @@ class HP8753E(Instrument):
         """ A bool that indicates whether or not averaging is enabled. This property
         can be set.""",
         cast=bool,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
     )
 
     correction_enabled = Instrument.control(
@@ -93,42 +109,35 @@ class HP8753E(Instrument):
         """ A bool that indicates whether or not correction is enabled. This property
         can be set.""",
         cast=bool,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
     )
 
     power = Instrument.control(
         "POWE?",
         "POWE%.2e",
-        """ A float that can be set from -70 to +10dBm to control output power from the VNA ports. 
-        This property can be set.""",
+        """ A float that can be set from -70 to +10dBm to control output power from
+        the VNA ports. This property can be set.""",
         cast=lambda x: float(x),
+        validator=truncated_range,
+        values=[-70, 10],
     )
 
-    def __init__(self, adapter, name="Hewlett Packard 8753E Vector Network Analyzer", **kwargs):
-        # this should probably be in __new__
-        super().__init__(adapter, name, **kwargs)
-        if isinstance(self.adapter, PrologixAdapter):
-            self.adapter.auto = 1
-            self.adapter.connection.query_delay = 0
-            self.adapter.gpib_read_timeout = 500
-            self.adapter.connection.timeout = 700
-            self.adapter.eoi = 1
-            self.adapter.eos = "\n"
-            self.adapter.connection.read_termination = self.adapter.eos
-            self.adapter.connection.read_termination = "\r\n"
-            self.adapter.write("++eot_enable 0")
-            self.adapter.flush_read_buffer()
-            self.write("FORM4")
-            self.adapter.flush_read_buffer()
+    id = Instrument.measurement(
+        get_command='*IDN?',
+        docs="""Gets the identification of the instrument""",
+    )
 
-    @cached_property
-    def id(self):
-        """Get the identification of the instrument."""
-        if self.SCPI:
-            result = self.ask("*IDN?").strip("\n")
-            self._manu, self._model, _, self._fw = result.strip("\r\n").split(",")
-            return result
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+    sn = Instrument.measurement(
+        'OUTPSERN',
+        """Get the serial number of the HP8753E""",
+    )
+
+    options = Instrument.measurement(
+        'OUTPOPTS',
+        """Get the installed options for the HP8753E""",
+    )
 
     @cached_property
     def manu(self):
@@ -157,26 +166,8 @@ class HP8753E(Instrument):
             self.id
             return self._fw
 
-    @cached_property
-    def sn(self):
-        """Get the serial number of the instrument"""
-        if self.SCPI:
-            result = self.ask("OUTPSERN").strip("\r\n")
-            return result
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    @cached_property
-    def options(self):
-        """Get the options of the instrument"""
-        if self.SCPI:
-            result = self.ask("OUTPOPTS").strip("\r\n").strip()
-            return result
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
     def set_fixed_frequency(self, frequency):
-        """Sets the scan to be of only one frequency in Hz"""
+        """Set the sweep to be a fixed frequency in Hz. (float truncated from 30_000.0 to 6_000_000_000.0)"""
         self.start_frequency = frequency
         self.stop_frequency = frequency
         self.scan_points = 3
@@ -383,12 +374,10 @@ class HP8753E(Instrument):
         else:
             raise NotImplementedError("Function data_complex only written for PrologixAdapter")
 
+    def check_errors(self):
+        pass
 
-if __name__ == "__main__":
-    adapter = PrologixAdapter("ASRL4::INSTR", address=16, visa_library="@py")
-    # adapter = PrologixAdapter("ASRL4::INSTR", address=16)
+    def shutdown(self):
+        pass
 
-    vna = HP8753E(adapter)
 
-    vna.adapter.auto = 1
-    print(vna.id)
