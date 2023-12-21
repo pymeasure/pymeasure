@@ -23,6 +23,7 @@
 #
 
 import logging
+import warnings
 import numpy as np
 from time import sleep, time
 
@@ -51,6 +52,16 @@ class LakeShoreTemperatureChannel(Channel):
         'SRDG? {ch}',
         """Read the temperature in sensor units from a channel."""
     )
+
+    @property
+    def celcius(self):
+        """Access celsius attribute with celcius (sic) property.
+
+        .. deprecated:: 0.14.0
+            Use celsius instead.
+        """
+        warnings.warn("`celcius` is deprecated, use `celsius` instead", FutureWarning)
+        return self.celsius
 
     def wait_for_temperature(self, target, unit='kelvin', accuracy=0.1,
                              interval=1, timeout=360,
