@@ -33,3 +33,4 @@ from .keithley2750 import Keithley2750
 from .keithley6221 import Keithley6221
 from .keithley6517b import Keithley6517B
 from .keithley2200 import Keithley2200
+from .keithleyDMM6500 import KeithleyDMM6500
