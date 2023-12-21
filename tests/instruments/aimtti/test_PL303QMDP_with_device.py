@@ -21,17 +21,44 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import time
+import pytest
 
-from .browser_widget import BrowserWidget
-from .fileinput_widget import FileInputWidget
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
-from .tab_widget import TabWidget
-from .table_widget import TableWidget
+from pymeasure.instruments.aimtti.aimttiPL import PL303QMDP
+
+
+@pytest.fixture(scope="module")
+def psu(connected_device_address):
+    instr = PL303QMDP(connected_device_address)
+    instr.reset()
+    return instr
+
+
+def test_voltage(psu):
+    psu.ch_2.voltage_setpoint = 1.2
+    psu.ch_2.current_limit = 1.0
+    psu.ch_2.current_range = "HIGH"
+    psu.ch_2.output_enabled = True
+
+    time.sleep(1)
+
+    print(psu.ch_2.voltage)
+
+    time.sleep(5)
+
+    psu.ch_2.output_enabled = False
+
+
+def test_voltage_all(psu):
+    psu.ch_2.voltage_setpoint = 1.2
+    psu.ch_2.current_limit = 1.0
+
+    psu.ch_1.voltage_setpoint = 24.0
+    psu.ch_1.current_limit = 1.2
+
+    psu.all_outputs_enabled = True
+
+    time.sleep(5)
+
+    psu.all_outputs_enabled = False
+    psu.local()

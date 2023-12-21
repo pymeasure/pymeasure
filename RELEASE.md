@@ -42,8 +42,8 @@ Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging
 1. Release to PyPI first (the feedstock pulls from there)
 2. Pull the latest `master` branch
 3. `git checkout -b v<version>_release`
-4. Get the SHA256 hash of the PyPI package at https://pypi.org/project/PyMeasure/#files
-5. Update recipe/meta.yml with the checksum and version number
+4. Get the SHA256 hash of the PyPI source package at https://pypi.org/project/PyMeasure/#files
+5. Update recipe/meta.yml with the checksum and version number. Important: Work in your personal fork of the feedstock repo (the conda-forge tooling requires that) and create a PR from there.
 6. Push the changes up as a PR
 7. Verify that the builds complete
 8. Merge the PR

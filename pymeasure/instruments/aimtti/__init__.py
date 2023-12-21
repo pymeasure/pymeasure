@@ -22,16 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .browser_widget import BrowserWidget
-from .fileinput_widget import FileInputWidget
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
-from .tab_widget import TabWidget
-from .table_widget import TableWidget
+from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303QMDP, PL303QMTP
