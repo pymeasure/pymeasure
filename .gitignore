@@ -109,3 +109,6 @@ settings.json
 
 # Vim
 *.swp
+
+# Poetry
+poetry.lock
