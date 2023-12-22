@@ -41,6 +41,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   inficon/index
    ipgphotonics/index
    keithley/index
    keysight/index
