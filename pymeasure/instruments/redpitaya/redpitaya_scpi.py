@@ -1,4 +1,7 @@
 import datetime
+import time
+
+import numpy as np
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range, strict_discrete_set
@@ -8,21 +11,18 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class DigitalChannel(Channel):
-    """A base class for a Digital line on the board"""
-
-    def insert_id(self, command):
-        raise NotImplementedError
+class DigitalChannelP(Channel):
+    """ A digital line of the P type"""
 
     direction = Channel.control(
-        ":DIR?", ":DIR %s",
+        "DIG:PIN:DIR? DIO{ch}_P", "DIG:PIN:DIR %s,DIO{ch}_P",
         """ Control a digital line to the given direction (str either 'IN' or 'OUT')""",
         validator=truncated_discrete_set,
         values=['IN', 'OUT'],
     )
 
     state = Channel.control(
-        "?", " ,%d",
+        "DIG:PIN? DIO{ch}_P", "DIG:PIN DIO{ch}_P,%d",
         """ Control the state of the line (bool)""",
         validator=strict_discrete_set,
         map_values=True,
@@ -30,23 +30,88 @@ class DigitalChannel(Channel):
     )
 
 
-class DigitalChannelN(DigitalChannel):
+class DigitalChannelN(Channel):
     """ A digital line of the N type"""
-    def insert_id(self, command):
-        return f"DIG:PIN{command},DIO{self.id}_N"
+
+    direction = Channel.control(
+        "DIG:PIN:DIR? DIO{ch}_N", "DIG:PIN:DIR %s,DIO{ch}_N",
+        """ Control a digital line to the given direction (str either 'IN' or 'OUT')""",
+        validator=truncated_discrete_set,
+        values=['IN', 'OUT'],
+    )
+
+    state = Channel.control(
+        "DIG:PIN? DIO{ch}_N", "DIG:PIN DIO{ch}_N,%d",
+        """ Control the state of the line (bool)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
 
 
-class DigitalChannelP(DigitalChannel):
-    """ A digital line of the P type"""
-    def insert_id(self, command):
-        return f"DIG:PIN{command},DIO{self.id}_P"
-
-
-class DigitalChannelLed(DigitalChannel):
+class DigitalChannelLed(Channel):
     """ A LED digital line (Output only)"""
 
-    def insert_id(self, command):
-        return f"DIG:PIN{command},LED{self.id}"
+    state = Channel.control(
+        "DIG:PIN? LED{ch}", "DIG:PIN LED{ch},%d",
+        """ Control the state of the led (bool)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+
+class AnalogInputSlowChannel(Channel):
+    """ A slow analog input channel"""
+
+    voltage = Channel.measurement(
+        "ANALOG:PIN? AIN{ch}",
+        """ Measure the voltage on the corresponding analog input channel, range is [0, 3.3]V""",
+    )
+
+
+class AnalogOutputSlowChannel(Channel):
+    """ A slow analog output channel"""
+
+    voltage = Channel.setting(
+        "ANALOG:PIN AOUT{ch}, %f",
+        """ Set the voltage on the corresponding analog input channel, range is [0, 1.8]V""",
+        validator=truncated_range,
+        values=[0, 1.8],
+    )
+
+
+class AnalogInputFastChannel(Channel):
+
+    gain = Instrument.control(
+        "ACQ:SOUR{ch}:GAIN?", "ACQ:SOUR{ch}:GAIN %s",
+        """Control the gain of the selected fast analog input either 'LV' or 'HV' (see jumpers on boards)
+
+        'LV' set the returned values in the range [-1, 1]V and 'HV' in the range [-20, 20]V
+        """,
+        validator=strict_discrete_set,
+        values=['LV', 'HV'],
+    )
+
+    def get_data_from_ascii(self) -> np.ndarray:
+        self.write(f"ACQ:SOUR{self.id}:DATA?")
+        data_str = self.read()
+        return np.fromstring(data_str.strip('{}').encode(), sep=',')
+
+    def get_data_from_binary(self) -> np.ndarray:
+        """ Get the data in """
+        self.write(f"ACQ:SOUR{self.id}:DATA?")
+        self.parent.adapter.read_bytes(1)
+        nint = self.parent.adapter.read_bytes(1)
+        length = int(self.parent.adapter.read_bytes(nint).decode())
+        data = np.frombuffer(self.parent.adapter.read_bytes(length), dtype=int)
+        self.parent.adapter.read_bytes(2)
+        if self.gain == 'LV':
+            max_range = 2 * RedPitayaScpi.LV_MAX
+        else:
+            max_range = 2 * RedPitayaScpi.HV_MAX
+
+        return max_range * data / (2**16 - 1) - max_range / 2
 
 
 class RedPitayaScpi(Instrument):
@@ -59,6 +124,12 @@ class RedPitayaScpi(Instrument):
     :parameter
 
     """
+
+    TRIGGER_SOURCES = ['DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
+                       'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE']
+    LV_MAX = 1
+    HV_MAX = 20
+    CLOCK = 125e6  # Hz
 
     def __init__(self, ip_address: str, port: int = 5000, name="Redpitaya SCPI",
                  read_termination='\r\n',
@@ -75,39 +146,40 @@ class RedPitayaScpi(Instrument):
             **kwargs)
 
     time = Instrument.control("SYST:TIME?",
-                              "SYS:TIME %s",
+                              "SYST:TIME %s",
                               """Control the time on board
                               time should be given as a datetime.time object""",
-                              get_process=lambda tstr: datetime.time(*[int(split) for split in tstr.split(',')]),
+                              get_process=lambda tstr: datetime.time(*[int(split) for split in tstr]),
                               set_process=lambda time: time.strftime('%H,%M,%S'),
                               )
 
     date = Instrument.control("SYST:DATE?",
-                              "SYS:DATE %s",
+                              "SYST:DATE %s",
                               """Control the date on board
                               date should be given as a datetime.date object""",
-                              get_process=lambda dstr: datetime.date(*[int(split) for split in dstr.split(',')]),
+                              get_process=lambda dstr: datetime.date(*[int(split) for split in dstr]),
                               set_process=lambda date: date.strftime('%Y,%m,%d'),
                               )
 
-    name = Instrument.measurement("SYST:BRD:Name?",
-                                  """Get the RedPitaya board name""")
+    board_name = Instrument.measurement("SYST:BRD:Name?",
+                                        """Get the RedPitaya board name""")
 
     def digital_reset(self):
         """Reset the state of all digital lines"""
         self.write("DIG:RST")
 
     digitalN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
-
     digitalP = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
-
-    led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(7)), prefix='led')
+    led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(8)), prefix='led')
 
     # ANALOG SECTION
 
     def analog_reset(self):
         """ Reset the voltage of all analog channels """
         self.write("ANALOG:RST")
+
+    analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)), prefix='ainslow')
+    analog_out_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)), prefix='aoutslow')
 
     # ACQUISITION SECTION
 
@@ -120,8 +192,138 @@ class RedPitayaScpi(Instrument):
     def acquisition_reset(self):
         self.write("ACQ:RST")
 
+    # Acquisition Settings
+
+    decimation = Instrument.control(
+        "ACQ:DEC?", "ACQ:DEC %d",
+        """Control the decimation (int) as 2**n with n in range [0, 16]
+        
+        The sampling rate is given as 125MS/s / decimation
+        """,
+        validator=strict_discrete_set,
+        values=[2**n for n in range(17)]
+    )
+
+    average_skipped_samples = Instrument.control(
+        "ACQ:AVG?", "ACQ:AVG %s",
+        """Control the use of skipped samples (if decimation > 1) to average the returned acquisition array (bool)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 'ON', False: 'OFF'},
+    )
+
+    acq_units = Instrument.control(
+        "ACQ:DATA:Units?", "ACQ:DATA:Units %s",
+        """Control the output data units (str), either 'RAW', or 'VOLTS' (default)""",
+        validator=strict_discrete_set,
+        values=['RAW', 'VOLTS'],
+    )
+
+    acq_size = Instrument.measurement(
+        "ACQ:BUF:SIZE?",
+        """Measure the size of the buffer, that is the number of points of the acquisition""",
+        cast=int,
+    )
+
+    acq_format = Instrument.setting(
+        "ACQ:DATA:FORMAT %s",
+        """Set the format of the retrieved buffer data (str), either 'BIN', or 'ASCII' (default)""",
+        validator=strict_discrete_set,
+        values=['BIN', 'ASCII'],
+    )
+
+    # Acquisition Trigger
+
+    acq_trigger_source = Instrument.setting(
+        "ACQ:TRig %s",
+        """Set the trigger source (str), one of RedPitayaScpi.TRIGGER_SOURCES.
+         
+         PE and NE means respectively Positive and Negative edge
+        """,
+        validator=strict_discrete_set,
+        values=TRIGGER_SOURCES,
+    )
+
+    acq_trigger_status = Instrument.measurement(
+        "ACQ:TRig:STAT?",
+        """Get the trigger status (bool), if True the trigger as been fired (or is disabled)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 'TD', False: 'WAIT'},
+    )
+
+    acq_buffer_filled = Instrument.measurement(
+        "ACQ:TRig:FILL?",
+        """Get the status of the buffer(bool), if True the buffer is full""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    acq_trigger_delay_samples = Instrument.control(
+        "ACQ:TRig:DLY?", "ACQ:TRig:DLY?",
+        """Control the trigger delay in number of samples (int) in the range [-8192, 8192]""",
+        validator=truncated_range,
+        values=[-2**13, 2**13],
+    )
+
+    acq_trigger_delay_ns = Instrument.control(
+        "ACQ:TRig:DLY:NS?", "ACQ:TRig:DLY:NS %d",
+        """Control the trigger delay in nanoseconds (int) multiple of the board clock period (1/RedPitayaSCPI.CLOCK)""",
+        validator=truncated_discrete_set,
+        values=list(np.array(np.array(range(-2**13, 2**13+1)) * 1 / CLOCK * 1e9, dtype=int)),
+        cast=int,
+    )
+
+    acq_trigger_delay = Instrument.control(
+        "ACQ:TRig:LEV?", "ACQ:TRig:LEV %f",
+        """Control the level of the trigger in volts
+        The allowed range should be dynamically set depending on the gain settings
+        """,
+        validator=truncated_range,
+        values=[-LV_MAX, LV_MAX],
+        dynamic=True,
+    )
+
+    analog_in = Instrument.MultiChannelCreator(AnalogInputFastChannel, (1, 2), prefix='ain')
+
 
 if __name__ == '__main__':
     rp = RedPitayaScpi(ip_address='169.254.134.87', port=5000)
-    rp.time
+    print(rp.time)
+    rp.time = datetime.time(13, 7, 20)
+    print(rp.time)
+
+    print(rp.date)
+    rp.date = datetime.date(2023, 12, 22)
+    print(rp.date)
+
+    print(rp.board_name)
+
+    print(rp.led5.state)
+    rp.led5.state = True
+    print(rp.led5.state)
+
+    print(rp.average_skipped_samples)
+    rp.average_skiped_samples = True
+    print(rp.average_skipped_samples)
+
+    print(rp.acq_size)
+    print(rp.acq_units)
+
+    print(rp.ain1.gain)
+    print(rp.ain2.gain)
+
+    rp.acq_trigger_source = 'NOW'
+
+    rp.acquisition_start()
+    time.sleep(1)
+    rp.acquisition_stop()
+
+    rp.acq_format = 'BIN'
+    buffer = rp.ain1.get_data_from_binary()
+
+    rp.acq_format = 'ASCII'
+    buffer = rp.ain1.get_data_from_binary()
+
     rp.clear()
