@@ -32,22 +32,22 @@ from pymeasure.instruments.hp import HP8753E
 def init_prologix_adapter():
     try:
         prologix = PrologixAdapter(resource_name="ASRL4::INSTR", address=16, visa_library="@py")
-        prologix.auto = 1
-        prologix.connection.query_delay = 0
-        prologix.gpib_read_timeout = 500
-        prologix.connection.timeout = 700
-        prologix.eoi = 1
-        prologix.eos = "\n"
-        prologix.connection.read_termination = prologix.eos
-        # prologix.connection.read_termination = "\r\n"
-        prologix.write("++eot_enable 0")
-        prologix.flush_read_buffer()
-        prologix.write("FORM4")
-        prologix.flush_read_buffer()
+        # prologix.auto = 1
+        # prologix.connection.query_delay = 0
+        # prologix.gpib_read_timeout = 500
+        # prologix.connection.timeout = 700
+        # prologix.eoi = 1
+        # prologix.eos = "\n"
+        # prologix.connection.read_termination = prologix.eos
+        # # prologix.connection.read_termination = "\r\n"
+        # prologix.write("++eot_enable 0")
+        # prologix.flush_read_buffer()
+        # prologix.write("FORM4")
+        # prologix.flush_read_buffer()
         yield prologix
 
     finally:
-        del prologix
+        pass # del prologix
 
 
 @contextmanager
@@ -58,53 +58,54 @@ def init_HP8753E():
             yield vna
 
     finally:
-        del vna
+        pass # del vna
 
 
 def test_sanity():
     assert 1 + 1 == 2
 
 def test_init_prologix_adapter():
-    init_prologix_adapter()
+    with init_prologix_adapter() as prologix:
+        test_sanity()
 
 def test_init_HP8753E():
-    init_HP8753E()
+    with init_HP8753E() as hp8753e:
+        test_sanity()
 
 def test_hp8753e_id():
-    assert 1 == 0
-
-def test_hp8753e_sn():
-    assert 1 == 0
-
-def test_hp8753e_options():
-    assert 1 == 0
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.id == ['HEWLETT PACKARD', '8753E', '0', '7.10']
+        assert hp8753e.id == ['HEWLETT PACKARD', '8753E', '0', '7.10']
+        assert hp8753e.id == ['HEWLETT PACKARD', '8753E', '0', '7.10']
+        assert hp8753e.id == ['HEWLETT PACKARD', '8753E', '0', '7.10']
+        assert hp8753e.fw == '7.10'
+        assert hp8753e.manu == 'HEWLETT PACKARD'
 
 def test_hp8753e_fw():
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.fw == '7.10'
+
+def test_hp8753e_manu():
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.manu == 'HEWLETT PACKARD'
+
+def test_hp8753e_model():
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.model == '8753E'
+
+def test_hp8753e_sn():
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.sn == 'US37390178'
+
+def test_hp8753e_options():
+    with init_HP8753E() as hp8753e:
+        assert hp8753e.options == '1D5 002 006 010'
+
+def test_hp8753e_scan_points():
     assert 1 == 0
 
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_id():
-#     assert 1 == 0
-
-# def test_hp8753e_power():
-#     assert 1 == 0
-
-# def test_hp8753e_stop_frequency():
-#     assert 1 == 0
+def test_hp8753e_ifbw():
+    assert 1 == 0
 
 def test_hp8753e_start_frequency():
     with init_HP8753E() as hp8753e:
@@ -114,3 +115,30 @@ def test_hp8753e_start_frequency():
         assert hp8753e.start_frequency == 30_600.0
         hp8753e.start_frequency = 4_000_000.0
         assert hp8753e.start_frequency == 4_000_000.0
+
+def test_hp8753e_stop_frequency():
+    with init_HP8753E() as hp8753e:
+        hp8753e.stop_frequency = 130_000.0
+        assert hp8753e.stop_frequency == 130_000.0
+        hp8753e.stop_frequency = 130_600.0
+        assert hp8753e.stop_frequency == 130_600.0
+        hp8753e.stop_frequency = 14_000_000.0
+        assert hp8753e.stop_frequency == 14_000_000.0
+
+def test_hp8753e_set_fixed_frequency():
+    assert 1=0
+
+def test_hp8753e_scan():
+    with init_HP8753E() as hp8753e:
+        hp8753e.scan_single()
+        assert hp8753e.data_complex.all() == ['1']
+
+def test_hp8753e_reset():
+    assert 1 == 0
+
+def test_hp8753e_averages():
+    assert 1 == 0
+
+def test_hp8753e_averaging_enabled():
+    assert 1 == 0
+

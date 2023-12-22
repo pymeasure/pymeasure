@@ -119,14 +119,15 @@ class HP8753E(Instrument):
         "POWE%.2e",
         """ A float that can be set from -70 to +10dBm to control output power from
         the VNA ports. This property can be set.""",
-        cast=lambda x: float(x),
+        cast=float,
         validator=truncated_range,
         values=[-70, 10],
     )
 
     id = Instrument.measurement(
-        get_command='*IDN?',
-        docs="""Gets the identification of the instrument""",
+        '*IDN?',
+        """Gets the identification of the instrument""",
+        cast=str
     )
 
     sn = Instrument.measurement(
@@ -139,31 +140,31 @@ class HP8753E(Instrument):
         """Get the installed options for the HP8753E""",
     )
 
-    @cached_property
+    @property
     def manu(self):
         """Get the manufacturer of the instrument."""
         try:
             return self._manu
         except AttributeError:
-            self.id
+            self._manu, self._model, _, self._fw = self.id
             return self._manu
 
-    @cached_property
+    @property
     def model(self):
         """Get the model of the instrument."""
         try:
             return self._model
         except AttributeError:
-            self.id
+            self._manu, self._model, _, self._fw = self.id
             return self._model
 
-    @cached_property
+    @property
     def fw(self):
         """Get the firmware of the instrument."""
         try:
             return self._fw
         except AttributeError:
-            self.id
+            self._manu, self._model, _, self._fw = self.id
             return self._fw
 
     def set_fixed_frequency(self, frequency):
@@ -226,40 +227,6 @@ class HP8753E(Instrument):
             raise RangeException(
                 "Maximum IF bandwidth (6000) for Hewlett Packard " "8753E exceeded"
             )
-
-    def set_averaging(self, averages):
-        """Sets the number of averages and enables/disables averaging. Should be
-        between 1 and 999"""
-        averages = int(averages)
-        if not 1 <= averages <= 999:
-            assert RangeException("Set", averages, "must be in the range 1 to 999")
-        self.averages = averages
-        self.averaging_enabled = averages > 1
-
-    def disable_averaging(self):
-        """Disables averaging"""
-        warnings.warn(
-            "Don't use disable_averaging(), use averaging_enabled = False instead",
-            FutureWarning,
-        )
-        self.averaging_enabled = False
-
-    def enable_averaging(self):
-        """Enables averaging"""
-        warnings.warn(
-            "Don't use enable_averaging(), use averaging_enabled = True instead",
-            FutureWarning,
-        )
-        self.averaging_enabled = True
-
-    def is_averaging(self):
-        """Returns True if averaging is enabled"""
-        warnings.warn("Don't use is_averaging(), use averaging_enabled instead", FutureWarning)
-        return self.averaging_enabled
-
-    def restart_averaging(self, averages):
-        warnings.warn("Don't use restart_averaging(), use scan_single() instead", FutureWarning)
-        self.scan_single()
 
     def reset(self):
         self.write("*RST")
