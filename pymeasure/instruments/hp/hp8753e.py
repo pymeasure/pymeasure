@@ -21,19 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import re
-import warnings
-from functools import cached_property
-from io import BytesIO
+
 from time import sleep
 from time import time as now
 
 import numpy as np
 from pyvisa import VisaIOError
 
-from pymeasure.adapters import PrologixAdapter
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import truncated_range, discreteTruncate, strict_discrete_set
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
 class HP8753E(Instrument):
@@ -44,25 +40,45 @@ class HP8753E(Instrument):
     Keyword arguements:
     adapter -- <placeholder for description of pymeasure.adapter>
     name -- <str> describing the instrument
+    allowable_frequency_range -- <list> defines the min and max frequency range of the instrument
     """
 
-    def __init__(self, adapter=None, name="Hewlett Packard 8753E Vector Network Analyzer", **kwargs):
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+    def __init__(
+        self,
+        adapter=None,
+        name=None,
+        **kwargs,
+    ):
+        super().__init__(adapter=adapter, name=name, includeSCPI=False, **kwargs)
 
+        self._manu = ''
+        self._model = ''
+        self._fw = ''
+        self._sn = ''
+        self._options = ''
+
+        if name is None:
+            self._manu, self._model, _, self._fw = self.id
+            self._desc = "Vector Network Analyzer"
+            self.name = f"{self._manu} {self._model} {self._desc}"
+        else:
+            self.name = name
+
+    ALLOWED_BANDWIDTH = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
     SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
     SCATTERING_PARAMETERS = ["S11", "S12", "S21", "S22"]
-    S11, S12, S21, S22 = SCATTERING_PARAMETERS
 
     start_frequency = Instrument.control(
         "STAR?",
         "STAR %e Hz",
-        """Control the start frequency in Hz. (float truncated from 30_000.0
+        f"""Control the start frequency in Hz. (float truncated from 30_000.0
         to 6_000_000_000.0).
         """,
         validator=truncated_range,
         cast=float,
-        values=[30E3, 6E9],
+        values=[30e3, 6e9],
     )
+
     stop_frequency = Instrument.control(
         "STOP?",
         "STOP %e Hz",
@@ -71,8 +87,31 @@ class HP8753E(Instrument):
         """,
         validator=truncated_range,
         cast=float,
-        values=[30E3, 6E9],
+        values=[30e3, 6e9],
     )
+
+    center_frequency = Instrument.control(
+        "CENT?",
+        "CENT %e Hz",
+        """Control the center frequency in Hz (float truncated from 30_000.0
+        to 6_000_000_000.0).
+        """,
+        cast=float,
+        validator=truncated_range,
+        values=[30e3, 6e9],
+    )
+
+    span_frequency = Instrument.control(
+        "SPAN?",
+        "SPAN %e Hz",
+        """Control the span of the sweep frequency in Hz (float truncated from 0.0
+        to 6_000_000_000.0).
+        """,
+        cast=float,
+        validator=truncated_range,
+        values=[0, 6e9],
+    )
+
     sweep_time = Instrument.control(
         "SWET?",
         "SWET%.2e",
@@ -80,92 +119,130 @@ class HP8753E(Instrument):
         """,
         validator=truncated_range,
         cast=float,
-        values=[30E3, 6E9]
+        values=[0.01, 36_400.0],
     )
+
+    def set_sweep_time_fastest(self):
+        """Set instrument scan sweep time to select fastest possible time"""
+        self.write("SWEA")
+
     averages = Instrument.control(
         "AVERFACT?",
         "AVERFACT%d",
-        """ An integer representing the number of averages to take. Note that
-        averaging must be enabled for this to take effect. This property can be set.
+        """Control the number of averages for a scan sweep. (int truncated from 1 to 999).
         """,
         cast=lambda x: int(float(x)),  # need float() to convert scientific notation in strings
-        validator=discreteTruncate,
+        validator=truncated_range,
         values=[0, 999],
     )
+
     averaging_enabled = Instrument.control(
         "AVERO?",
         "AVERO%d",
-        """ A bool that indicates whether or not averaging is enabled. This property
-        can be set.""",
+        """Control whether or not averaging is enabled. (boolean)""",
         cast=bool,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0},
+        values={True: 1, False: 0, "ON": 1, "OFF": 0, "1": True, "0": False},
     )
 
     correction_enabled = Instrument.control(
         "CORR?",
         "CORR%d",
-        """ A bool that indicates whether or not correction is enabled. This property
-        can be set.""",
+        """Control whether or not correction is enabled. (boolean)""",
         cast=bool,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0},
+        values={True: 1, False: 0, "ON": 1, "OFF": 0},
     )
 
     power = Instrument.control(
         "POWE?",
-        "POWE%.2e",
-        """ A float that can be set from -70 to +10dBm to control output power from
-        the VNA ports. This property can be set.""",
+        "POWE%.3e",
+        """Control the output RF power of the instrument's active port. (float truncated from -70.0 to 10.0 in dBm).""",
         cast=float,
         validator=truncated_range,
         values=[-70, 10],
     )
 
+    output_enabled = Instrument.control(
+        "SOUP?",
+        "SOUP%s",
+        """Control RF Output State (boolean)""",
+        cast=bool,
+        map_values=True,
+        validator=strict_discrete_set,
+        values={True: 1, False: 0, "ON": 1, "OFF": 0},
+    )
+
+    trigger_hold = Instrument.control(
+        "HOLD?",
+        "%s",
+        """Control Sweep Scan Trigger State (boolean)""",
+        cast=str,
+        # map_values=True,
+        # validator=strict_discrete_set,
+        set_process=lambda x: "HOLD" if x else "CONT",
+        get_process=lambda x: x == "1",
+    )
+
+    trigger_continuous = Instrument.control(
+        "CONT?",
+        "%s",
+        """Control Sweep Scan Trigger State (boolean)""",
+        cast=str,
+        # map_values=True,
+        # validator=strict_discrete_set,
+        # values={True: "CONT", False: "HOLD"}, # , "1": True, "0": False, 1: True, 0: False},
+        set_process=lambda x: "CONT" if x else "HOLD",
+        get_process=lambda x: x == "1",
+    )
+
+    scan_points = Instrument.control(
+        "POIN?",
+        "POIN%d",
+        f"""Control the number of points used for a scan sweep. From the set [{[f'"{value}"' for value in SCAN_POINT_VALUES]}]""",
+        cast=lambda x: int(float(x)),
+        validator=strict_discrete_set,
+        values=SCAN_POINT_VALUES,
+    )
+
     id = Instrument.measurement(
-        '*IDN?',
-        """Gets the identification of the instrument""",
-        cast=str
+        "*IDN?",
+        """Get the identification of the instrument""",
+        cast=str,
     )
 
     sn = Instrument.measurement(
-        'OUTPSERN',
-        """Get the serial number of the HP8753E""",
+        "OUTPSERN",
+        """Get the serial number for the instrument""",
     )
 
     options = Instrument.measurement(
-        'OUTPOPTS',
-        """Get the installed options for the HP8753E""",
+        "OUTPOPTS",
+        """Get the installed options for the instrument""",
     )
 
     @property
     def manu(self):
         """Get the manufacturer of the instrument."""
-        try:
-            return self._manu
-        except AttributeError:
+        if self._manu == "":
             self._manu, self._model, _, self._fw = self.id
-            return self._manu
+        return self._manu
 
     @property
     def model(self):
         """Get the model of the instrument."""
-        try:
-            return self._model
-        except AttributeError:
+        if self._model == "":
             self._manu, self._model, _, self._fw = self.id
-            return self._model
+        return self._model
 
     @property
     def fw(self):
         """Get the firmware of the instrument."""
-        try:
-            return self._fw
-        except AttributeError:
+        if self._fw == "":
             self._manu, self._model, _, self._fw = self.id
-            return self._fw
+        return self._fw
 
     def set_fixed_frequency(self, frequency):
         """Set the sweep to be a fixed frequency in Hz. (float truncated from 30_000.0 to 6_000_000_000.0)"""
@@ -175,6 +252,7 @@ class HP8753E(Instrument):
 
     @property
     def parameter(self):
+        """Get the active Scattering Parameter being measured. (str from ['S11', 'S21', 'S12', 'S22'])"""
         for parameter in HP8753E.SCATTERING_PARAMETERS:
             if int(self.ask(f"{parameter}?")) == 1:
                 return parameter
@@ -182,169 +260,126 @@ class HP8753E(Instrument):
 
     @parameter.setter
     def parameter(self, value):
+        """Set the active Scattering Parameter to be measured. (str from ['S11', 'S21', 'S12', 'S22'])"""
         if value in HP8753E.SCATTERING_PARAMETERS:
             self.write("%s" % value)
         else:
-            raise Exception("Invalid scattering parameter requested" " for Hewlett Packard 8753E")
-
-    @property
-    def scan_points(self):
-        """Gets the number of scan points"""
-        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("POIN?"), re.MULTILINE)
-        if search:
-            return int(float(search.group()))
-        else:
-            raise Exception("Improper message returned for the" " number of points")
-
-    @scan_points.setter
-    def scan_points(self, points):
-        """Sets the number of scan points, truncating to an allowed
-        value if not properly provided
-        """
-        points = discreteTruncate(points, HP8753E.SCAN_POINT_VALUES)
-        if points:
-            self.write("POIN%d" % points)
-        else:
-            raise RangeException("Maximum scan points (1601) for" " Hewlett Packard 8753E exceeded")
-
-    @property
-    def IFBW(self):
-        """Gets the IF Bandwidth"""
-        search = re.search(r"\d\.\d+E[+-]\d{2}$", self.ask("IFBW?"), re.MULTILINE)
-        if search:
-            return int(float(search.group()))
-        else:
-            raise Exception("Improper message returned for the" " IF Bandwidth")
-
-    @IFBW.setter
-    def IFBW(self, bandwidth):
-        """Sets the resolution bandwidth (IF bandwidth)"""
-        allowedBandwidth = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
-        bandwidth = discreteTruncate(bandwidth, allowedBandwidth)
-        if bandwidth:
-            self.write("IFBW%d" % bandwidth)
-        else:
-            raise RangeException(
-                "Maximum IF bandwidth (6000) for Hewlett Packard " "8753E exceeded"
+            raise Exception(
+                f"Invalid value '{value}' scattering parameter requested for {self._manu} {self._model}. Valid values are: {SCATTERING_PARAMETERS}"
             )
 
+    IFBW = Instrument.control(
+        "IFBW?",
+        "IFBW%d",
+        f"""Control the IF Bandwidth of the instrument for a scan sweep. 
+        (int from the set [{[f'"{value}"' for value in ALLOWED_BANDWIDTH]}]).""",
+        cast=lambda x: int(float(x)),
+        validator=strict_discrete_set,
+        values=ALLOWED_BANDWIDTH,
+    )
+
     def reset(self):
+        """Reset the instrument. May cause RF Output power to be enabled!"""
         self.write("*RST")
         sleep(0.25)
 
-    def scan(self, averages=None, blocking=None, timeout=None, delay=None):
+    def scan(self, timeout=10):
         """Initiates a scan with the number of averages specified and
         blocks until the operation is complete.
+
+        Args:
+        timeout - a value to multiple the sweep time and averages by to timeout the function
         """
-        if averages is not None or blocking is not None or timeout is not None or delay is not None:
-            warnings.warn(
-                "averages, blocking, timeout, and delay arguments are no longer used by scan()",
-                FutureWarning,
-            )
+
+        # get time to perform sweep
+        sweep_time = self.sweep_time * timeout
+
+        # get number of averages if enabled
+        if self.averaging_enabled:
+            sweep_time = sweep_time * self.averages
 
         self.scan_single()
+
+        # create a time limit
+        start = now()
 
         # All queries will block until the scan is done, so use NOOP? to check.
         # These queries will time out after several seconds though,
         # so query repeatedly until the scan finishes.
-        status = "1\r\n"
         while True:
             try:
-                status = self.ask("NOOP?")
+                # status = self.ask("NOOP?")
+                self.ask("NOOP?")
                 break
             except VisaIOError as e:
                 if e.abbreviation != "VI_ERROR_TMO":
                     raise e
-            finally:
-                if self.adapter.connection.bytes_in_buffer > 0:
-                    self.adapter.flush_read_buffer()
-
-        self.adapter.flush_read_buffer()
-        sleep(0.1)
+            # calculate time sweep should be complete by
+            if now() > (start + sweep_time):
+                raise TimeoutError(
+                    f"VNA Scan took longer than {sweep_time} seconds to complete and timed out."
+                )
 
     def scan_single(self):
-        """Initiates a single scan"""
-
-        # sometimes the averaging enabled question trips up the 8753E
-        for i in range(5):
-            try:
-                averaging_enabled = self.averaging_enabled
-                break
-            except VisaIOError as e:
-                sleep(0.2)
-                if e.abbreviation != "VI_ERROR_TMO":
-                    raise e
-                if i == 4:
-                    raise e
-        if averaging_enabled:
+        """Initiates a single scan or N scans averaged based on averaging
+        This function is not blocking
+        """
+        if self.averaging_enabled:
+            self.averaging_restart()
             self.write(f"NUMG{self.averages}")
         else:
             self.write("SING")
 
-    def scan_continuous(self):
-        """Initiates a continuous scan"""
-        self.write("CONT")
-        self.adapter.flush_read_buffer()
-
     @property
     def frequencies(self):
-        """Returns a list of frequencies from the last scan"""
+        """Returns a list of frequencies from the last scan.
+        Does not communicate with instrument. (np.ndarray of
+        frequencys sized by number of points in sweep)"""
         return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
 
     @property
-    def data_complex(self):
-        """Returns the complex power from the last scan"""
-        # TODO: Implement binary transfer instead of ASCII
+    def data_complex(self, timeout=5, points_multiplier=0.1):
+        """Gets the complex s-parameter measurements from the last scan.
+        This function is blocking until it is completed. (returns nparray
+        sized by number of points in sweep)
+        """
 
         # get number of points
         points = self.scan_points
 
-        # TODO get data format
+        # get time to perform sweep
+        sweep_time = self.sweep_time
+
+        # Only written for ASCII data transfer
         self.write("FORM4")
 
-        self.adapter.flush_read_buffer()
+        temp_data = []
+        start = now()
+        self.write("OUTPDATA")
 
-        if isinstance(self.adapter, PrologixAdapter):
-            temp_data = []
+        while len(temp_data) < (points):
+            if self.adapter.connection.bytes_in_buffer >= 50:
+                temp_data.append(self.read_bytes(50).decode("utf-8").strip("\n").split(","))
+            else:
+                sleep(0.001)
 
-            # set adapter to auto
-            auto_state = self.adapter.auto
-            self.adapter.auto = 1
-            start = now()
-            self.write("OUTPDATA")
+            # break the loop if the sweep gets interrupted or takes too long
+            if now() > start + points * points_multiplier + timeout:
+                raise Exception(f"Failed to read data. Data transfer method timed out after {points * points_multiplier + timeout} seconds")
 
-            # if form4 is the data transfer method
-            while len(temp_data) < (points):
-                if self.adapter.connection.bytes_in_buffer >= 50:
-                    temp_data.append(self.read_bytes(50).decode("utf-8").strip("\n").split(","))
-                else:
-                    # try not to overwhelm the prologix adapter
-                    sleep(0.0001)
+        # process string data into complex numbers
+        preformat_data = [float(point[0]) + float(point[1]) * 1j for point in temp_data]
+        data = np.array(preformat_data)
 
-                # break the loop if the sweep gets interrupted
-                time_elapsed = now() - start
-                if time_elapsed > points * 0.006:
-                    if self.adapter.connection.bytes_in_buffer > 0:
-                        self.adapter.flush_read_buffer()
-                        sleep(0.05)
-                    raise Exception(f"Failed to read data. Data transfer method timed out")
-
-            # process string data into complex numbers
-            preformat_data = [float(point[0]) + float(point[1]) * 1j for point in temp_data]
-            data = np.array(preformat_data)
-
-            # return adapter to previous auto state for prologix adapter
-            self.adapter.auto = auto_state
-
-            # data_complex = data[:, 0] + 1j * data[:, 1]
-            return data
-        else:
-            raise NotImplementedError("Function data_complex only written for PrologixAdapter")
-
-    def check_errors(self):
-        pass
+        return data
 
     def shutdown(self):
-        pass
+        """Shutdown - Disables RF Output."""
+        self.output_enabled = False
 
+    def averaging_restart(self):
+        """Restart sweep averaging."""
+        self.write("AVERREST")
 
+    def emit_beep(self):
+        self.write("EMIB")
