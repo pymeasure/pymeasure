@@ -51,11 +51,11 @@ class HP8753E(Instrument):
     ):
         super().__init__(adapter=adapter, name=name, includeSCPI=False, **kwargs)
 
-        self._manu = ''
-        self._model = ''
-        self._fw = ''
-        self._sn = ''
-        self._options = ''
+        self._manu = ""
+        self._model = ""
+        self._fw = ""
+        self._sn = ""
+        self._options = ""
 
         if name is None:
             self._manu, self._model, _, self._fw = self.id
@@ -365,7 +365,9 @@ class HP8753E(Instrument):
 
             # break the loop if the sweep gets interrupted or takes too long
             if now() > start + points * points_multiplier + timeout:
-                raise Exception(f"Failed to read data. Data transfer method timed out after {points * points_multiplier + timeout} seconds")
+                raise Exception(
+                    f"Failed to read data. Data transfer method timed out after {points * points_multiplier + timeout} seconds"
+                )
 
         # process string data into complex numbers
         preformat_data = [float(point[0]) + float(point[1]) * 1j for point in temp_data]
