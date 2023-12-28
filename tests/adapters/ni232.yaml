@@ -11,7 +11,7 @@ devices:
       - q: "EOS D"
       - q: "STAT"
       - q: "stat n"
-        r: !!str "256\r\n0\r\n0\r\n0\r\n"
+        r: "256\r\n0\r\n0\r\n0\r\n"
       - q: "*IDN?"
         r: "SCPI,MOCK,VERSION_1.0"
     error:

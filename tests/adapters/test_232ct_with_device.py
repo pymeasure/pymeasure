@@ -29,6 +29,7 @@ import pytest
 from pymeasure.adapters import NI_GPIB_232
 from pymeasure.instruments.hp import HP3478A
 
+
 pytest.skip('Only works with connected hardware', allow_module_level=True)
 
 
