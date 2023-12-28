@@ -35,7 +35,14 @@ log.addHandler(logging.NullHandler())
 
 class NI_GPIB_232(VISAAdapter):
     """Encapsulates the additional commands necessary to with GPIB device communicate over\
-    a National Instruments GPIB-232CT adapter.
+    a National Instruments GPIB-232CT(-A) adapter.
+
+    Note:
+        1. This implementation requires the GPIB-232CT(-A) to be configured for S-mode.
+           Please refer to the manual for details on jumper settings required.
+        2. The NI GPIB-485CT-A should also work, but was not tested due to missing hardware,
+           if you should have such a device and tested it successfully or not, please provide
+           feedback
 
     Each adapter is constructed based on a connection to the device
     itself and the GPIB address of the instrument to be communicated with.
