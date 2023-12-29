@@ -1,6 +1,6 @@
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2020 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,10 +35,10 @@ log.addHandler(logging.NullHandler())
 class Keithley2600(Instrument):
     """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
         super().__init__(
             adapter,
-            "Keithley 2600 SourceMeter",
+            name,
             **kwargs
         )
         self.ChA = Channel(self, 'a')

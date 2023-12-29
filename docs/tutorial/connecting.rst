@@ -28,6 +28,11 @@ Then construct an object by passing the VISA address. For this example we connec
         from pymeasure.instruments import list_resources
         list_resources()
 
+    If you know the USB properties (vendor id, product id, serial numer) of the serial device, you can query for the VISA resource string::
+
+        from pymeasure.instruments import find_serial_port
+        resource_name = find_serial_port(vendor_id=15, product_id=0x12e5, serial_number="sn56X")
+
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
 
     sourcemeter.id
@@ -72,12 +77,15 @@ Instead of passing a string, you could equally pass an adapter object. ::
     adapter = VISAAdapter("GPIB::4")
     sourcemeter = Keithely2400(adapter)
 
-To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>`), the adapter is constructed in a similar way. Unlike the VISA adapter which is specific to each instrument, the Prologix adapter can be shared by many instruments. Therefore, they are addressed separately based on the GPIB address number when passing the adapter into the instrument construction. ::
+To instead use a Prologix GPIB device connected on :code:`/dev/ttyUSB0` (proper permissions are needed in Linux, see :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>`), the adapter is constructed in a similar way.
+The Prologix adapter can be shared by many instruments.
+Therefore, new :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>` instances with different GPIB addresses can be generated from an already existing instance. ::
 
     from pymeasure.adapters import PrologixAdapter
 
-    adapter = PrologixAdapter('/dev/ttyUSB0')
-    sourcemeter = Keithley2400(adapter.gpib(4))
+    adapter = PrologixAdapter('ASRL/dev/ttyUSB0::INSTR', address=7)
+    sourcemeter = Keithley2400(adapter)  # at GPIB address 7
+    multimeter = Keithley2000(adapter.gpib(9))  # at GPIB address 9
 
 Some equipment may require the vxi-11 protocol for communication. An example would be a Agilent E5810B ethernet to GPIB bridge.
 To use this type equipment the python-vxi11 library has to be installed which is part of the extras package requirements. ::

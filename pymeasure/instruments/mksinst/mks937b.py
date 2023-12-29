@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ import re
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
-
 
 _ion_gauge_status = {"Wait": "W",
                      "Off": "O",
@@ -85,10 +84,19 @@ class MKS937B(Instrument):
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
-    channels = Instrument.ChannelCreator(
-        (IonGaugeAndPressureChannel, PressureChannel) * 3,
-        ("1", "2", "3", "4", "5", "6"),
-    )  # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
+
+    # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
+    ch_1 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(PressureChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(PressureChannel, 4)
+
+    ch_5 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 5)
+
+    ch_6 = Instrument.ChannelCreator(PressureChannel, 6)
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         super().__init__(
@@ -141,21 +149,22 @@ class MKS937B(Instrument):
 
     def write(self, command):
         """
-        Writes to the instrument including the device address
+        Write to the instrument including the device address.
 
         :param command: command string to be sent to the instrument
         """
         super().write(self._prepend_address(command))
 
-    def check_errors(self):
+    def check_set_errors(self):
         """
-        check reply string for acknowledgement string
+        Check reply string for acknowledgement string.
         """
-        ret = self.adapter.read()  # use adapter read to get raw reply
+        ret = super().read()  # use super read to get raw reply
         reply = self._re_response.search(ret)
         if reply:
             if reply.group('ack') == 'ACK':
-                return
+                self._check_extra_termination()
+                return []
         # no valid acknowledgement message found
         raise ValueError(f"invalid reply '{ret}' found in check_errors")
 

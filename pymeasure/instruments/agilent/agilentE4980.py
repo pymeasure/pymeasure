@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,18 +61,18 @@ Select quantities to be measured:
     * CPG: Parallel capacitance [F] and parallel conductance [S]
     * CPRP: Parallel capacitance [F] and parallel resistance [Ohm]
 
-    * CSD: Series capacitance [F] and dissipation factor [number]
-    * CSQ: Series capacitance [F] and quality factor [number]
-    * CSRS: Series capacitance [F] and series resistance [Ohm]
+    - CSD: Series capacitance [F] and dissipation factor [number]
+    - CSQ: Series capacitance [F] and quality factor [number]
+    - CSRS: Series capacitance [F] and series resistance [Ohm]
 
-   * LPD: Parallel inductance [H] and dissipation factor [number]
-   * LPQ: Parallel inductance [H] and quality factor [number]
-   * LPG: Parallel inductance [H] and parallel conductance [S]
-   * LPRP: Parallel inductance [H] and parallel resistance [Ohm]
+    * LPD: Parallel inductance [H] and dissipation factor [number]
+    * LPQ: Parallel inductance [H] and quality factor [number]
+    * LPG: Parallel inductance [H] and parallel conductance [S]
+    * LPRP: Parallel inductance [H] and parallel resistance [Ohm]
 
-    * LSD: Series inductance [H] and dissipation factor [number]
-    * LSQ: Seriesinductance [H] and quality factor [number]
-    * LSRS: Series inductance [H] and series resistance [Ohm]
+    - LSD: Series inductance [H] and dissipation factor [number]
+    - LSQ: Seriesinductance [H] and quality factor [number]
+    - LSRS: Series inductance [H] and series resistance [Ohm]
 
     * RX: Resitance [Ohm] and reactance [Ohm]
     * ZTD: Impedance, magnitude [Ohm] and phase [deg]
@@ -98,9 +98,9 @@ Select trigger source; accept the values:
                                         validator=strict_discrete_set,
                                         values=["HOLD", "INT", "BUS", "EXT"])
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent E4980A/AL LCR meter", **kwargs):
         super().__init__(
-            adapter, "Agilent E4980A/AL LCR meter", **kwargs
+            adapter, name, **kwargs
         )
         self.timeout = 30000
         # format: output ascii

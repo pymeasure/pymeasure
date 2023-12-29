@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #
 
 
-from .adapters import OxfordInstrumentsAdapter
 from .itc503 import ITC503
 from .ips120_10 import IPS120_10
 from .ps120_10 import PS120_10

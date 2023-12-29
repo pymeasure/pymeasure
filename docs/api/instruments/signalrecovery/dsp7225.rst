@@ -1,0 +1,8 @@
+##########################
+DSP 7225 Lock-in Amplifier
+##########################
+
+.. autoclass:: pymeasure.instruments.signalrecovery.DSP7225
+    :members:
+    :show-inheritance:
+    :inherited-members: CommonBase

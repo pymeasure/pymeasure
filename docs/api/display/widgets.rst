@@ -14,6 +14,14 @@ Widget classes
     :members:
     :show-inheritance:
 
+.. automodule:: pymeasure.display.widgets.fileinput_widget
+    :members:
+    :show-inheritance:
+
+.. automodule:: pymeasure.display.widgets.filename_widget
+    :members:
+    :show-inheritance:
+
 .. automodule:: pymeasure.display.widgets.image_frame
     :members:
     :show-inheritance:
@@ -51,5 +59,9 @@ Widget classes
     :show-inheritance:
 
 .. automodule:: pymeasure.display.widgets.dock_widget
+    :members:
+    :show-inheritance:
+
+.. automodule:: pymeasure.display.widgets.table_widget
     :members:
     :show-inheritance:

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,6 @@ BURST_NCYCLES = [1, 99999]
 SRATE = [1e-6, 1.6e8]
 
 
-@pytest.skip('Only works with connected hardware', allow_module_level=True)
 def generate_simple_harmonic_waveform(harmonic, distortion):
     """
     Generates a waveform with onlhy one harmonic
@@ -451,3 +450,7 @@ def test_uploaded_arb_file_channel(generator, channel):
     generator.ch[channel].data_arb("test", waveform, data_format="float")
     generator.ch[channel].arb_file = "test"
     assert '"TEST"' == generator.ch[channel].arb_file
+
+
+def test_phase_sync(generator):
+    generator.phase_sync()

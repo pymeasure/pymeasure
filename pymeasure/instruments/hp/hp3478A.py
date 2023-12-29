@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -113,12 +113,12 @@ class HP3478A(HPLegacyInstrument):
     """
     status_desc = Status
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3478A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3478A",
+            name,
             **kwargs,
         )
 
@@ -516,10 +516,10 @@ class HP3478A(HPLegacyInstrument):
     def write_calibration_data(self, cal_data, verify_calibration_data=True):
         """Method to write calibration data.
 
-        The cal_data parameter format is the same as the 'calibration_data' property.
+        The cal_data parameter format is the same as the ``calibration_data`` property.
 
         Verification of the cal_data array can be bypassed by setting
-        'verify_calibration_data' to False.
+        ``verify_calibration_data`` to ``False``.
 
         """
         if verify_calibration_data and not self.verify_calibration_data(cal_data):

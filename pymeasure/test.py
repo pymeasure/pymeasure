@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ def expected_protocol(instrument_cls, comm_pairs,
     assert protocol._index == len(comm_pairs), (
         "Unprocessed protocol definitions remain: "
         f"{comm_pairs[protocol._index:]}.")
-    assert protocol._write_buffer == b"", (
+    assert protocol._write_buffer is None, (
         f"Non-empty write buffer remains: '{protocol._write_buffer}'.")
-    assert protocol._read_buffer == b"", (
+    assert protocol._read_buffer is None, (
         f"Non-empty read buffer remains: '{protocol._read_buffer}'.")

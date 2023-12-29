@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,10 +36,10 @@ class FakeInstrument(Instrument):
     for testing purposes.
     """
 
-    def __init__(self, adapter=None, name=None, includeSCPI=False, **kwargs):
+    def __init__(self, adapter=None, name="Fake Instrument", includeSCPI=False, **kwargs):
         super().__init__(
             FakeAdapter(**kwargs),
-            name or "Fake Instrument",
+            name,
             includeSCPI=includeSCPI,
             **kwargs
         )
@@ -88,10 +88,9 @@ class SwissArmyFake(FakeInstrument):
     include 'voltages', sinusoidal 'waveforms', and mono channel 'image data'.
     """
 
-    def __init__(self, wait=.1, **kwargs):
+    def __init__(self, name="Mock instrument", wait=.1, **kwargs):
         super().__init__(
-            FakeAdapter,
-            "Mock instrument",
+            name=name,
             includeSCPI=False,
             **kwargs
         )
@@ -112,7 +111,7 @@ class SwissArmyFake(FakeInstrument):
 
     @property
     def time(self):
-        """ Float property for elapsed time. """
+        """Control the elapsed time."""
         if self._tstart == 0:
             self._tstart = time.time()
         self._time = time.time() - self._tstart
@@ -128,28 +127,28 @@ class SwissArmyFake(FakeInstrument):
 
     @property
     def wave(self):
-        """ Return a waveform.  """
+        """Measure a waveform."""
         return float(np.sin(self.time))
 
     @property
     def voltage(self):
-        """ Get the voltage. """
+        """Measure the voltage."""
         time.sleep(self._wait)
         return self._voltage
 
     @property
     def output_voltage(self):
+        """Control the voltage."""
         return self._output_voltage
 
     @output_voltage.setter
     def output_voltage(self, value):
-        """Set the voltage."""
         time.sleep(self._wait)
         self._output_voltage = value
 
     @property
     def frame_width(self):
-        """ Image frame width in pixels."""
+        """Control frame width in pixels."""
         time.sleep(self._wait)
         return self._w
 
@@ -160,7 +159,7 @@ class SwissArmyFake(FakeInstrument):
 
     @property
     def frame_height(self):
-        """ Image frame height in pixels."""
+        """Control frame height in pixels."""
         time.sleep(self._wait)
         return self._h
 
@@ -171,9 +170,10 @@ class SwissArmyFake(FakeInstrument):
 
     @property
     def frame_format(self):
-        """ Format for image data returned from the get_frame() method. Allowed values are:
-                mono_8: single channel 8-bit image.
-                mono_16: single channel 16-bit image.
+        """Control the format for image data returned from the get_frame() method.
+        Allowed values are:
+        mono_8: single channel 8-bit image.
+        mono_16: single channel 16-bit image.
         """
         time.sleep(self._wait)
         return self._frame_format
@@ -186,7 +186,7 @@ class SwissArmyFake(FakeInstrument):
 
     @property
     def frame(self):
-        """ Get a new image frame."""
+        """Get a new image frame."""
         im_format_maxval_dict = {"8": 255, "16": 65535}
         im_format_type_dict = {"8": np.uint8, "16": np.uint16}
         bit_depth = self.frame_format.split("_")[1]

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -303,7 +303,7 @@ class Agilent33500Channel(Channel):
 
         This should be done if the same name is used continuously to load
         different arbitrary signals into the memory, since an error will occur
-         if a trace is loaded which already exists in memory.
+        if a trace is loaded which already exists in memory.
         """
         self.write("SOUR{ch}:DATA:VOL:CLE")
 
@@ -370,30 +370,33 @@ class Agilent33500(Instrument):
         generator = Agilent33500("GPIB::1")
 
         generator.shape = 'SIN'                 # Sets default channel output signal shape to sine
-        generator.ch[1].shape = 'SIN'           # Sets channel 1 output signal shape to sine
+        generator.ch_1.shape = 'SIN'           # Sets channel 1 output signal shape to sine
         generator.frequency = 1e3               # Sets default channel output frequency to 1 kHz
-        generator.ch[1].frequency = 1e3         # Sets channel 1 output frequency to 1 kHz
-        generator.ch[2].amplitude = 5           # Sets channel 2 output amplitude to 5 Vpp
-        generator.ch[2].output = 'on'           # Enables channel 2 output
+        generator.ch_1.frequency = 1e3         # Sets channel 1 output frequency to 1 kHz
+        generator.ch_2.amplitude = 5           # Sets channel 2 output amplitude to 5 Vpp
+        generator.ch_2.output = 'on'           # Enables channel 2 output
 
-        generator.ch[1].shape = 'ARB'           # Set channel 1 shape to arbitrary
-        generator.ch[1].arb_srate = 1e6         # Set channel 1 sample rate to 1MSa/s
+        generator.ch_1.shape = 'ARB'           # Set channel 1 shape to arbitrary
+        generator.ch_1.arb_srate = 1e6         # Set channel 1 sample rate to 1MSa/s
 
-        generator.ch[1].data_volatile_clear()   # Clear channel 1 volatile internal memory
-        generator.ch[1].data_arb(               # Send data of arbitrary waveform to channel 1
+        generator.ch_1.data_volatile_clear()   # Clear channel 1 volatile internal memory
+        generator.ch_1.data_arb(               # Send data of arbitrary waveform to channel 1
             'test',
             range(-10000, 10000, +20),          # In this case a simple ramp
             data_format='DAC'                   # Data format is set to 'DAC'
          )
-        generator.ch[1].arb_file = 'test'       # Select the transmitted waveform 'test'
+        generator.ch_1.arb_file = 'test'       # Select the transmitted waveform 'test'
 
     """
 
-    ch = Instrument.ChannelCreator(Agilent33500Channel, (1, 2))
+    ch_1 = Instrument.ChannelCreator(Agilent33500Channel, 1)
 
-    def __init__(self, adapter, **kwargs):
+    ch_2 = Instrument.ChannelCreator(Agilent33500Channel, 2)
+
+    def __init__(self, adapter, name="Agilent 33500 Function/Arbitrary Waveform generator family",
+                 **kwargs):
         super().__init__(
-            adapter, "Agilent 33500 Function/Arbitrary Waveform generator family", **kwargs
+            adapter, name, **kwargs
         )
 
     def beep(self):
@@ -689,6 +692,10 @@ class Agilent33500(Instrument):
         will occur if a trace is loaded which already exists in the memory.
         """
         self.write("DATA:VOL:CLE")
+
+    def phase_sync(self):
+        """ Synchronize the phase of all channels."""
+        self.write("PHAS:SYNC")
 
     def data_arb(self, arb_name, data_points, data_format="DAC"):
         """

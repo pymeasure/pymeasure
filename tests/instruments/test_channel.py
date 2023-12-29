@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -115,6 +115,18 @@ class TestChannelCommunication:
     def test_read_binary_values(self, ch):
         ch.read_binary_values()
         assert ch.parent.method_calls == [mock.call.read_binary_values()]
+
+    def test_check_errors(self, ch):
+        ch.check_errors()
+        assert ch.parent.method_calls == [mock.call.check_errors()]
+
+    def test_check_get_errors(self, ch):
+        ch.check_get_errors()
+        assert ch.parent.method_calls == [mock.call.check_get_errors()]
+
+    def test_check_set_errors(self, ch):
+        ch.check_set_errors()
+        assert ch.parent.method_calls == [mock.call.check_set_errors()]
 
 
 def test_channel_with_different_prefix():

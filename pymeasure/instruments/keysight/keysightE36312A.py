@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ log.addHandler(logging.NullHandler())
 
 
 class VoltageChannel(Channel):
-
     voltage_setpoint = Channel.control(
         "VOLT? (@{ch})",
         "VOLT %g, (@{ch})",
@@ -77,14 +76,19 @@ class KeysightE36312A(Instrument):
     interface for interacting with the instrument.
 
     .. code-block:: python
-    supply = KeysightE36312A(resource)
-    supply.ch_1.voltage_setpoint=10
-    supply.ch_1.current_setpoint=0.1
-    supply.ch_1.output_enabled=True
-    print(supply.ch_1.voltage)
+
+        supply = KeysightE36312A(resource)
+        supply.ch_1.voltage_setpoint=10
+        supply.ch_1.current_setpoint=0.1
+        supply.ch_1.output_enabled=True
+        print(supply.ch_1.voltage)
     """
 
-    channels = Instrument.ChannelCreator(VoltageChannel, (1, 2, 3))
+    ch_1 = Instrument.ChannelCreator(VoltageChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(VoltageChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(VoltageChannel, 3)
 
     def __init__(self, adapter, name="Keysight E36312A", **kwargs):
         super().__init__(

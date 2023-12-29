@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -124,14 +124,17 @@ def test_non_empty_read_buffer():
 def test_preprocess_reply_on_values():
     class InstrumentWithPreprocessValues(BasicTestInstrument):
         """Workaround to get preprocess_reply working with protocol tests."""
-        def values(self, command, **kwargs):
-            return super().values(command, preprocess_reply=lambda v: v + "2345", **kwargs)
+        simple2 = Instrument.control(
+            "VOLT?", "VOLT %s V",
+            """Simple property replying with plain floats""",
+            preprocess_reply=lambda v: v + "2345"
+        )
 
     with expected_protocol(
         InstrumentWithPreprocessValues,
         [("VOLT?", "3.1")]
     ) as instr:
-        assert instr.simple == 3.12345
+        assert instr.simple2 == 3.12345
 
 
 class TestConnectionCalls:

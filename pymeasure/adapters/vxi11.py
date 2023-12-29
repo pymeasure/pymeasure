@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -125,15 +125,24 @@ class VXI11Adapter(Adapter):
         warn("Use `read_bytes` instead.", FutureWarning)
         return self.read_bytes(-1)
 
-    def _read_bytes(self, count, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
             read the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
         :param kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        return self.connection.read_raw(count, **kwargs)
+        if self.connection.term_char and not break_on_termchar:
+            read_termination = self.connection.term_char
+            self.connection.term_char = None
+            try:
+                return self.connection.read_raw(count, **kwargs)
+            finally:
+                self.connection.term_char = read_termination
+        else:
+            return self.connection.read_raw(count, **kwargs)
 
     def ask_raw(self, command):
         """ Wrapper function for the ask_raw command using the

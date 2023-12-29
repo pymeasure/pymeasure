@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,11 +45,15 @@ class ManagedDockWindow(ManagedWindowBase):
     :param y_axis: the data column(s) for the y-axis of the plot. This may be a string or a list
         of strings from the data columns of the procedure. The list length determines the number of
         plots
+    :param linewidth: linewidth for the displayed curves, default is 1
+    :param log_fmt: formatting string for the log-widget
+    :param log_datefmt: formatting string for the date in the log-widget
     :param \\**kwargs: optional keyword arguments that will be passed to
         :class:`~pymeasure.display.windows.managed_window.ManagedWindowBase`
     """
 
-    def __init__(self, procedure_class, x_axis=None, y_axis=None, **kwargs):
+    def __init__(self, procedure_class, x_axis=None, y_axis=None,
+                 linewidth=1, log_fmt=None, log_datefmt=None, **kwargs):
 
         self.x_axis = x_axis
         self.y_axis = y_axis
@@ -75,9 +79,9 @@ class ManagedDockWindow(ManagedWindowBase):
             self.y_axis_labels = [self.y_axis, ]
             measure_quantities.append(self.y_axis)
 
-        self.log_widget = LogWidget("Experiment Log")
+        self.log_widget = LogWidget("Experiment Log", fmt=log_fmt, datefmt=log_datefmt)
         self.dock_widget = DockWidget("Dock Tab", procedure_class, self.x_axis_labels,
-                                      self.y_axis_labels)
+                                      self.y_axis_labels, linewidth=linewidth)
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
