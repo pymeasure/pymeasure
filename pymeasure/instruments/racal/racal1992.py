@@ -47,6 +47,15 @@ class Racal1992(Instrument):
     channel B.
     """
 
+    def __init__(self, adapter, name="Racal-Dana 1992", **kwargs):
+        kwargs.setdefault('write_termination', '\r\n')
+
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
     int_types = ['SF', 'RS', 'UT', 'MS', 'TA']
     float_types = ['CK', 'FA', 'PA', 'TI', 'PH', 'RA',
                    'MX', 'MZ', 'LA', 'LB', 'FC', 'RC', 'DT', 'GS']
@@ -84,6 +93,7 @@ class Racal1992(Instrument):
         'frequency_c'     : 'FC',    # noqa
     }
 
+    @staticmethod
     def decode(v, allowed_types=None):
         """Decode received message.
 
@@ -222,15 +232,6 @@ class Racal1992(Instrument):
             "SLB %f",
             """ Control trigger level for channel B""",
             get_process=(lambda v: Racal1992.decode(v, "LB"))
-        )
-
-    def __init__(self, adapter, name="Racal-Dana 1992", **kwargs):
-        kwargs.setdefault('write_termination', '\r\n')
-
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
         )
 
     def read(self):
