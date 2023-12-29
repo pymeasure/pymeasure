@@ -35,7 +35,7 @@ class ReturnValueError(Exception):
 
 
 class Racal1992(Instrument):
-    """ Represents the Racal-Dana 1992 Universal counter
+    """Represents the Racal-Dana 1992 Universal counter
 
     .. code-block:: python
 
@@ -120,7 +120,7 @@ class Racal1992(Instrument):
 
     operating_mode = Instrument.setting(
             "%s",
-            """ Set operating mode.
+            """Set operating mode.
 
             Permitted modes are:
                 'self_check',
@@ -139,14 +139,14 @@ class Racal1992(Instrument):
     resolution = Instrument.control(
             "RRS",
             "SRS %d",
-            """ Control the resolution of the counter with an integer from 3 to 10 that
+            """Control the resolution of the counter with an integer from 3 to 10 that
             specifies the number of significant digits. """,
             get_process=(lambda v: Racal1992.decode(v, "RS"))
         )
 
     delay_enable = Instrument.setting(
             "D%s",
-            """ Enable or disable delay. True=enable, False=disable""",
+            """Control delay. True=enable, False=disable""",
             values={True: "E", False: "D"},
             map_values=True
         )
@@ -154,13 +154,13 @@ class Racal1992(Instrument):
     delay_time = Instrument.control(
             "RDT",
             "SDT %f",
-            """ Control delay time.""",
+            """Control delay time.""",
             get_process=(lambda v: Racal1992.decode(v, "DT"))
         )
 
     special_function_enable = Instrument.setting(
             "SF%s",
-            """ Enable or disable special function. True=enable, False=disable""",
+            """Control special function. True=enable, False=disable""",
             values={True: "E", False: "D"},
             map_values=True
         )
@@ -169,39 +169,39 @@ class Racal1992(Instrument):
     special_function_number = Instrument.control(
             "RSF",
             "S%d",
-            """ Control special function.""",
+            """Control special function.""",
             get_process=(lambda v: Racal1992.decode(v, "SF"))
         )
 
     # FIXME: not tested on real instrument!
     total_so_far = Instrument.measurement(
             "RF",
-            """ Total number of events so far.""",
+            """Get total number of events so far.""",
             get_process=(lambda v: Racal1992.decode(v, "RF"))
         )
 
     software_version = Instrument.measurement(
             "RMS",
-            "Instrument software version",
+            "Get instrument software version",
             get_process=(lambda v: Racal1992.decode(v, "MS"))
         )
 
     gpib_software_version = Instrument.measurement(
             "RGS",
-            "GPIB software version",
+            "Get GPIB software version",
             get_process=(lambda v: Racal1992.decode(v, "GS"))
         )
 
     device_type = Instrument.measurement(
             "RUT",
-            """Unit device type. Should return 1992 for a Racal-Dana 1992
+            """Get unit device type. Should return 1992 for a Racal-Dana 1992
             or 1991 for a Racal-Dana 1991.""",
             get_process=(lambda v: Racal1992.decode(v, "UT"))
         )
 
     math_mode = Instrument.setting(
             "M%s",
-            """ Enable or disable math mode. True=enable, False=disable""",
+            """Set math mode. True=enable, False=disable""",
             values={True: "E", False: "D"},
             map_values=True
         )
@@ -209,28 +209,28 @@ class Racal1992(Instrument):
     math_x = Instrument.control(
             "RMX",
             "SMX %f",
-            """ Control math constant X.""",
+            """Control math constant X.""",
             get_process=(lambda v: Racal1992.decode(v, "MX"))
         )
 
     math_z = Instrument.control(
             "RMZ",
             "SMZ %f",
-            """ Control math constant Z.""",
+            """Control math constant Z.""",
             get_process=(lambda v: Racal1992.decode(v, "MZ"))
         )
 
     trigger_level_a = Instrument.control(
             "RLA",
             "SLA %f",
-            """ Control trigger level for channel A""",
+            """Control trigger level for channel A""",
             get_process=(lambda v: Racal1992.decode(v, "LA"))
         )
 
     trigger_level_b = Instrument.control(
             "RLB",
             "SLB %f",
-            """ Control trigger level for channel B""",
+            """Control trigger level for channel B""",
             get_process=(lambda v: Racal1992.decode(v, "LB"))
         )
 
@@ -253,7 +253,7 @@ class Racal1992(Instrument):
     # Channel-specific settings
     # ============================================================
     def channel_settings(self, channel_name, **settings):
-        """ Set channel configuration paramters.
+        """Set channel configuration paramters.
 
         :param channel_name: 'A' or 'B'
         :param settings: one or multiple of the following:
@@ -303,21 +303,21 @@ class Racal1992(Instrument):
     # IP - Instrument Preset
     # ============================================================
     def preset(self):
-        """ Configure instrument with default presets."""
+        """Configure instrument with default presets."""
         self.write('IP')
 
     # ============================================================
     # RE - Reset measurement
     # ============================================================
     def reset_measurement(self):
-        """ Reset ongoing measurement."""
+        """Reset ongoing measurement."""
         self.write('RE')
 
     # ============================================================
     # Wait for measurement value
     # ============================================================
     def wait_for_measurement(self, timeout=None, progressDots=False):
-        """ Wait until a new measurement is available.
+        """Wait until a new measurement is available.
 
         :param timeout: number of seconds to wait before timeout exception.
         :param progressDots: when true, print '.' after each ready-check
@@ -344,7 +344,7 @@ class Racal1992(Instrument):
     # ============================================================
     @property
     def measured_value(self):
-        """Measured value.
+        """Get measured value.
 
         A Racal-Dana 1992 doesn't return measurement data after a request for
         measurement data. Instead, it fills a FIFO with data whenever it completes
