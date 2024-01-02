@@ -174,7 +174,8 @@ class InputsWidget(QtWidgets.QWidget):
     def set_parameters(self, parameter_objects):
         for name in self._inputs:
             element = getattr(self, name)
-            element.set_parameter(parameter_objects[name])
+            if parameter_objects[name].save:
+                element.set_parameter(parameter_objects[name])
 
     def get_procedure(self):
         """ Returns the current procedure """

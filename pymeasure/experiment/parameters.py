@@ -44,7 +44,7 @@ class Parameter:
         this argument is ignored.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True, save=True):
         self.name = name
         self._value = None
         if default is not None:
@@ -52,6 +52,7 @@ class Parameter:
         self.default = default
         self.ui_class = ui_class
         self._help_fields = [('units are', 'units'), 'default']
+        self.save = save
 
         self.group_by = {}
         if isinstance(group_by, dict):

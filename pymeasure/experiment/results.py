@@ -281,8 +281,9 @@ class Results:
         h.append("Procedure: <%s>" % procedure)
         h.append("Parameters:")
         for name, parameter in self.parameters.items():
-            h.append("\t{}: {}".format(parameter.name, str(
-                parameter).encode("unicode_escape").decode("utf-8")))
+            if parameter.save:
+                h.append("\t{}: {}".format(parameter.name, str(
+                    parameter).encode("unicode_escape").decode("utf-8")))
         h.append("Data:")
         self._header_count = len(h)
         h = [Results.COMMENT + line for line in h]  # Comment each line
@@ -383,13 +384,16 @@ class Results:
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
-            if parameter.name in parameters:
-                value = parameters[parameter.name]
-                setattr(procedure, name, value)
+            if parameter.save:
+                if parameter.name in parameters:
+                    value = parameters[parameter.name]
+                    setattr(procedure, name, value)
+                else:
+                    log.warning(
+                        f"Parameter \"{parameter.name}\" not found when loading " +
+                        f"'{procedure_class}', setting default value")
+                    setattr(procedure, name, parameter.default)
             else:
-                log.warning(
-                    f"Parameter \"{parameter.name}\" not found when loading " +
-                    f"'{procedure_class}', setting default value")
                 setattr(procedure, name, parameter.default)
 
         procedure.refresh_parameters()  # Enforce update of meta data
