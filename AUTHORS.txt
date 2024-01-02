@@ -69,3 +69,4 @@ Guus Kuiper
 Armindo Pinto
 Frank Wu
 Heinz-Alexander Fütterer
+Connor Carr
