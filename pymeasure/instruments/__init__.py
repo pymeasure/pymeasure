@@ -63,6 +63,7 @@ from . import oxfordinstruments
 from . import parker
 from . import pendulum
 from . import racal
+from . import proterial
 from . import razorbill
 from . import rohdeschwarz
 from . import siglenttechnologies
