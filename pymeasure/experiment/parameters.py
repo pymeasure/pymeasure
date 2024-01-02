@@ -44,7 +44,8 @@ class Parameter:
         this argument is ignored.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True, save=True):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True,
+                 save=True):
         self.name = name
         self._value = None
         if default is not None:

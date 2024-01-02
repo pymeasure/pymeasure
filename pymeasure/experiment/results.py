@@ -384,18 +384,17 @@ class Results:
 
         # Fill the procedure with the parameters found
         for name, parameter in procedure.parameter_objects().items():
-            if parameter.save:
-                if parameter.name in parameters:
-                    value = parameters[parameter.name]
-                    setattr(procedure, name, value)
-                else:
-                    log.warning(
-                        f"Parameter \"{parameter.name}\" not found when loading " +
-                        f"'{procedure_class}', setting default value")
-                    setattr(procedure, name, parameter.default)
-            else:
+            if not parameter.save:
                 setattr(procedure, name, parameter.default)
-
+            elif parameter.name in parameters:
+                value = parameters[parameter.name]
+                setattr(procedure, name, value)
+            else:
+                log.warning(
+                    f"Parameter \"{parameter.name}\" not found when loading " +
+                    f"'{procedure_class}', setting default value")
+                setattr(procedure, name, parameter.default)
+                
         procedure.refresh_parameters()  # Enforce update of meta data
 
         # Fill the procedure with the metadata found
