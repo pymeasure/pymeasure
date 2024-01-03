@@ -4,6 +4,7 @@ Upcoming version
 Deprecated features
 -------------------
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
+- Deprecated to not specify :code:`incldueSCPI` for an instrument which uses SCPI (@BenediktBurger, #1007)
 
 GUI
 ---

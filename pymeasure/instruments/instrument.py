@@ -59,7 +59,7 @@ class Instrument(CommonBase):
 
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
-    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param includeSCPI: An obligatory boolean, which toggles the inclusion of standard SCPI commands
     :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
