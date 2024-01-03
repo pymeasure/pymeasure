@@ -53,7 +53,7 @@ def test_stepu():
 
 
 def test_continuous_move():
-    """Test a continous move setting."""
+    """Test a continuous move setting."""
     with expected_protocol(
         ANC300Controller,
         init_comm + [("setm 3 stp", "OK"), ("stepd 3 c", "OK"), ],

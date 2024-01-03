@@ -137,7 +137,7 @@ IV measurement with 4 SMUs
 
     # read measurement data all at once
     b1500.check_idle() #wait until measurement is finished
-    data = b1500.read_data(2*nop) #Factor 2 beacuse of double sweep
+    data = b1500.read_data(2*nop) #Factor 2 because of double sweep
 
     #alternatively: read measurement data live
     meas = []

@@ -262,7 +262,7 @@ class ESP300(Instrument):
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
-        recived. """
+        received. """
         while self.error != 0:
             continue
 

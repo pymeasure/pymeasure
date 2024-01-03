@@ -232,7 +232,7 @@ class PrologixAdapter(VISAAdapter):
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
-        :param values: data to be writen to the device.
+        :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
         :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").

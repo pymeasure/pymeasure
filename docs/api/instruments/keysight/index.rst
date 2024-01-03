@@ -13,3 +13,4 @@ This section contains specific documentation on the keysight instruments that ar
    keysightN5767A
    keysightN7776C
    keysightE36312A
+   keysightE3631A

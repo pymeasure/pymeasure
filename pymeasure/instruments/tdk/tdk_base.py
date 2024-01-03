@@ -185,7 +185,7 @@ class TDK_Lambda_Base(Instrument):
 
     voltage = Instrument.measurement(
         "MV?",
-        """Measure the the actual output voltage."""
+        """Measure the actual output voltage."""
     )
 
     current_setpoint = Instrument.control(

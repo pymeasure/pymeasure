@@ -149,7 +149,7 @@ class CNT91(Instrument):
         Configure the counter for an array of measurements.
 
         :param n_samples: The number of samples
-        :param channel: Measurment channel (A, B, C, E, INTREF)
+        :param channel: Measurement channel (A, B, C, E, INTREF)
         """
         n_samples = truncated_range(n_samples, [1, self.MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)

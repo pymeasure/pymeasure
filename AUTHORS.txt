@@ -66,3 +66,6 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Armindo Pinto
+Frank Wu
+Heinz-Alexander Fütterer

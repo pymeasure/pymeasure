@@ -1225,7 +1225,7 @@ class SFM(Instrument):
     status_info_shown = Instrument.control(
         "SYST:DISP:UPDATE:STATE?",
         "SYST:DISP:UPDATE:STATE %s",
-        """ A bool property that controls if the display shows infomation during remote control
+        """ A bool property that controls if the display shows information during remote control
 
         """,
         validator=strict_discrete_set,
@@ -1357,14 +1357,14 @@ class SFM(Instrument):
     basic_info = Instrument.measurement(
         "SYST:INF:BAS?",
         """
-        A String property containing infomation about the hardware modules installed in the unit
+        A String property containing information about the hardware modules installed in the unit
         """,
     )
 
     subsystem_info = Instrument.measurement(
         "SYST:INF:SUBS?",
         """
-        A String property containing infomation about the system configuration
+        A String property containing information about the system configuration
         """,
     )
 
