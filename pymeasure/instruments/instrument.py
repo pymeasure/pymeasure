@@ -84,7 +84,7 @@ class Instrument(CommonBase):
                                 " PyVISA is not present")
         self.adapter = adapter
         if includeSCPI is None:
-            warn("Deprecated to specify `includeSCPI` implicitly, declare it explicitly.",
+            warn("It is deprecated to specify `includeSCPI` implicitly, declare it explicitly.",
                  FutureWarning)
             includeSCPI = True
         self.SCPI = includeSCPI

@@ -350,18 +350,19 @@ def test_kwargs_to_adapter(cls):
 
 
 @pytest.mark.parametrize("cls", devices)
-@pytest.mark.filterwarnings("error:Deprecated to specify `includeSCPI`:FutureWarning")
+@pytest.mark.filterwarnings("error:It is deprecated to specify `includeSCPI`:FutureWarning")
 def test_includeSCPI_explicitly_set(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ in grandfathered_includeSCPI_instruments:
-        pytest.skip(f"{cls.__name__} does not have updated documentation.")
+        pytest.skip(f"{cls.__name__} is in the codebase and needs information about SCPI.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
     cls(adapter=MagicMock())
+    # assert that no error is raised
 
 
 def property_name_to_id(value):

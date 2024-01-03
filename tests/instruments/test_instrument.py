@@ -109,7 +109,7 @@ class Test_includeSCPI_parameter:
         with pytest.warns(FutureWarning) as record:
             Instrument(name="test", adapter=ProtocolAdapter())
         msg = str(record[0].message)
-        assert msg == "Deprecated to specify `includeSCPI` implicitly, declare it explicitly."
+        assert msg == "It is deprecated to specify `includeSCPI` implicitly, declare it explicitly."
 
     def test_not_defined_includeSCPI_is_interpreted_as_true(self):
         inst = Instrument(name="test", adapter=ProtocolAdapter())
