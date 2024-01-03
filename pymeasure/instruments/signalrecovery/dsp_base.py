@@ -413,7 +413,7 @@ class DSPBase(Instrument):
         """Control the time interval between the collection of successive
         points in the curve buffer.
 
-        Valid values to the the time interval are integers in ms with a
+        Valid values to the time interval are integers in ms with a
         resolution of 5 ms; input values are rounded up to a multiple of 5.
         Valid values are values between 0 and 1,000,000,000 (corresponding to
         12 days). The interval may be set to 0, which sets the rate of data

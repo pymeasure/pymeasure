@@ -68,7 +68,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     The ManagedWindowBase allow user to define a set of widget that display information about the
     experiment. The information displayed may include: plots, tabular view, logging information,...
 
-    This class is not intended to be used directy, but it should be subclassed to provide some
+    This class is not intended to be used directly, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
 
     - :class:`~pymeasure.display.widgets.log_widget.LogWidget`

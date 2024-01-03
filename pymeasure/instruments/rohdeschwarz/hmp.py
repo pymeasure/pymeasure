@@ -73,7 +73,7 @@ class HMP4040(Instrument):
         "SYST:%s",
         """
         Enables manual front panel ('LOC'), remote ('REM') or manual/remote
-        control('MIX') control or locks the the front panel control ('RWL').
+        control('MIX') control or locks the front panel control ('RWL').
         """,
         validator=strict_discrete_set,
         values=["LOC", "REM", "MIX", "RWL"],
