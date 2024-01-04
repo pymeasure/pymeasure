@@ -25,7 +25,7 @@
 from ..errors import RangeError, RangeException
 from .channel import Channel
 from .instrument import Instrument
-from .resources import list_resources
+from .resources import find_serial_port, list_resources
 from .validators import discreteTruncate
 
 from . import activetechnologies
@@ -49,6 +49,7 @@ from . import fwbell
 from . import hcp
 from . import heidenhain
 from . import hp
+from . import inficon
 from . import ipgphotonics
 from . import keithley
 from . import keysight
@@ -57,9 +58,11 @@ from . import lecroy
 from . import mksinst
 from . import newport
 from . import ni
+from . import novanta
 from . import oxfordinstruments
 from . import parker
 from . import pendulum
+from . import racal
 from . import razorbill
 from . import rohdeschwarz
 from . import siglenttechnologies
@@ -72,6 +75,7 @@ from . import temptronic
 from . import texio
 from . import thermotron
 from . import thorlabs
+from . import thyracont
 from . import toptica
 from . import velleman
 from . import yokogawa

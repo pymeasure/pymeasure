@@ -327,7 +327,7 @@ class HP3437A(HPLegacyInstrument):
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
-        bit assigment for SRQ:
+        bit assignment for SRQ:
 
         =========  ==========================
         Bit (dec)  Description

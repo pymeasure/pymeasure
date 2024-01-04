@@ -27,8 +27,11 @@ import sys
 import inspect
 from copy import deepcopy
 from importlib.machinery import SourceFileLoader
+import re
+from pint import UndefinedUnitError
 
 from .parameters import Parameter, Measurable, Metadata
+from pymeasure.units import ureg
 
 log = logging.getLogger()
 log.addHandler(logging.NullHandler())
@@ -75,6 +78,33 @@ class Procedure:
                 log.info(f'Setting parameter {key} to {kwargs[key]}')
         self.gen_measurement()
 
+    @staticmethod
+    def parse_columns(columns):
+        """Get columns with any units in parentheses.
+        For each column, if there are matching parentheses containing text
+        with no spaces, parse the value between the parentheses as a Pint unit. For example,
+        "Source Voltage (V)" will be parsed and matched to :code:`Unit('volt')`.
+        Raises an error if a parsed value is undefined in Pint unit registry.
+        Return a dictionary of matched columns with their units.
+
+        :param columns: List of columns to be parsed.
+        :type record: dict
+        :return: Dictionary of columns with Pint units.
+        """
+        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
+        units = {}
+        for column in columns:
+            match = re.search(units_pattern, column)
+            if match:
+                try:
+                    units[column] = ureg.Quantity(match.groupdict()['units']).units
+                except UndefinedUnitError:
+                    raise ValueError(
+                        f"Column \"{column}\" with unit \"{match.groupdict()['units']}\""
+                        " is not defined in Pint registry. Check procedure "
+                        "DATA_COLUMNS contains valid Pint units.")
+        return units
+
     def gen_measurement(self):
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
         # TODO: Refactor measurable-s implementation to be consistent with parameters
@@ -87,6 +117,9 @@ class Procedure:
 
         if not self.DATA_COLUMNS:
             self.DATA_COLUMNS = Measurable.DATA_COLUMNS
+
+        # Validate DATA_COLUMNS fit pymeasure column header format
+        self.parse_columns(self.DATA_COLUMNS)
 
     def get_datapoint(self):
         data = {key: getattr(self, self.MEASURE[key]).value for key in self.MEASURE}
@@ -211,6 +244,21 @@ class Procedure:
         """ Returns a dictionary of all the Metadata objects
         """
         return self._metadata
+
+    def placeholder_objects(self):
+        """ Collect all eligible placeholders (parameters & metadata) with their value in a dict.
+        """
+        return {**self.parameter_objects(), **self.metadata_objects()}
+
+    @classmethod
+    def placeholder_names(cls):
+        """ Collect the names of all eligible placeholders (parameters & metadata)"""
+        placeholders = []
+        for _, item in inspect.getmembers(cls):
+            if isinstance(item, Metadata) or isinstance(item, Parameter):
+                placeholders.append(item.name)
+
+        return list(set(placeholders))
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

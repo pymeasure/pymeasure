@@ -32,7 +32,6 @@ from pyvisa.errors import VisaIOError
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -41,6 +40,7 @@ def _deprecation_warning(text):
     def func(x):
         warn(text, FutureWarning)
         return x
+
     return func
 
 
@@ -49,6 +49,7 @@ def _deprecation_warning_channels(property_name):
         warn(f'Deprecated property name "{property_name}", use the channels '
              '"enabled" property instead.', FutureWarning)
         return x
+
     return func
 
 
@@ -99,7 +100,15 @@ class IBeamSmart(Instrument):
     """
     _reg_value = re.compile(r"\w+\s+=\s+(\w+)")
 
-    channels = Instrument.ChannelCreator(DriverChannel, (1, 2, 3, 4, 5))
+    ch_1 = Instrument.ChannelCreator(DriverChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(DriverChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(DriverChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(DriverChannel, 4)
+
+    ch_5 = Instrument.ChannelCreator(DriverChannel, 5)
 
     def __init__(self, adapter, name="Toptica IBeam Smart laser diode",
                  baud_rate=115200,
@@ -110,7 +119,7 @@ class IBeamSmart(Instrument):
             includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
-            asrl={'baud_rate', baud_rate},
+            asrl={'baud_rate': baud_rate},
             **kwargs
         )
         # configure communication mode: no repeating and no command prompt
@@ -144,8 +153,7 @@ class IBeamSmart(Instrument):
         reply = super().read()  # read back the LF+CR which is always sent back
         if reply != "":
             raise ValueError(
-                "TopticaAdapter.read(1): Error after command "
-                f"'{self.lastcommand}' with message '{reply}'")
+                f"Error, no empty line at begin of message, instead '{reply}'")
         msg = []
         try:
             while True:
@@ -159,9 +167,7 @@ class IBeamSmart(Instrument):
                 self.adapter.connection.flush_read_buffer()
             except AttributeError:
                 log.warning("Adapter does not have 'flush_read_buffer' method.")
-            raise ValueError(
-                "TopticaAdapter.read(2): Error after command "
-                f"'{self.lastcommand}' with message '{reply}'")
+            raise ValueError(f"Flush buffer failed after '{reply}'")
         reply = '\n'.join(msg)
         r = self._reg_value.search(reply)
         if r:
@@ -169,12 +175,8 @@ class IBeamSmart(Instrument):
         else:
             return reply
 
-    def write(self, command):
-        self.lastcommand = command
-        super().write(command)
-
-    def check_errors(self):
-        """Check communication after setting a value.
+    def check_set_errors(self):
+        """Check for errors after having gotten a property and log them.
 
         Checks if the last reply is only '[OK]', otherwise a ValueError is
         raised and the read buffer is flushed because one has to assume that
@@ -184,9 +186,9 @@ class IBeamSmart(Instrument):
         if reply:
             # anything else than '[OK]'.
             self.adapter.connection.flush_read_buffer()
-            raise ValueError(
-                f"IBeamSmart: Error after command '{self.lastcommand}' with "
-                f"message '{reply}'")
+            log.error(f"Setting a property failed with reply '{reply}'.")
+            raise ValueError(f"Setting a property failed with reply '{reply}'.")
+        return []
 
     version = Instrument.measurement(
         "ver", """Get Firmware version number.""",
@@ -276,7 +278,7 @@ class IBeamSmart(Instrument):
     def enable_continous(self):
         """Enable countinous emmission mode."""
         self.write('di ext')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = True
         self.ch_2.enabled = True
 
@@ -288,12 +290,12 @@ class IBeamSmart(Instrument):
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')
-        self.check_errors()
+        self.check_set_errors()
 
     def disable(self):
         """Shutdown all laser operation."""
         self.write('di 0')
-        self.check_errors()
+        self.check_set_errors()
         self.emission = False
 
     def shutdown(self):

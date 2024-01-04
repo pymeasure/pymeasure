@@ -19,3 +19,5 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley6517b
    keithley2750
    keithley2600
+   keithley2200
+   keithleyDMM6500

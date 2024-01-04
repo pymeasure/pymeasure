@@ -140,3 +140,45 @@ def test_binary_values_deprecation_warning():
     a = FakeAdapter()
     with pytest.warns(FutureWarning):
         a.binary_values("abcdefgh")
+
+
+class TestLoggingForTestGenerator:
+    """The test Generator relies on specific logging in the adapter, these tests ensure that."""
+    message = b"some written message"
+
+    @pytest.fixture
+    def adapter(self, caplog):
+        adapter = ProtocolAdapter()
+        caplog.set_level(logging.DEBUG)
+        return adapter
+
+    def test_write(self, adapter, caplog):
+        adapter.comm_pairs = [(self.message, None)]
+        written = self.message.decode()
+        adapter.write(written)
+        record = caplog.records[0]
+        assert record.msg == "WRITE:%s"
+        assert record.args == (written,)
+
+    def test_write_bytes(self, adapter, caplog):
+        adapter.comm_pairs = [(self.message, None)]
+        adapter.write(self.message)
+        record = caplog.records[0]
+        assert record.msg == "WRITE:%s"
+        assert record.args == (self.message,)
+
+    def test_read(self, adapter, caplog):
+        adapter.comm_pairs = [(None, self.message)]
+        read = adapter.read()
+        assert read == self.message.decode()
+        record = caplog.records[0]
+        assert record.msg == "READ:%s"
+        assert record.args == (read,)
+
+    def test_read_bytes(self, adapter, caplog):
+        adapter.comm_pairs = [(None, self.message)]
+        read = adapter.read_bytes(-1)
+        assert read == self.message
+        record = caplog.records[0]
+        assert record.msg == "READ:%s"
+        assert record.args == (read,)

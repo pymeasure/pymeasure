@@ -58,6 +58,7 @@ class PrologixAdapter(VISAAdapter):
     :param auto: Enable or disable read-after-write and address instrument to listen.
     :param eoi: Enable or disable EOI assertion.
     :param eos: Set command termination string (CR+LF, CR, LF, or "")
+    :param gpib_read_timeout: Set read timeout for GPIB communication in milliseconds from 1..3000
     :param kwargs: Key-word arguments if constructing a new serial object
 
     :ivar address: Integer GPIB address of the desired instrument.
@@ -90,7 +91,8 @@ class PrologixAdapter(VISAAdapter):
     """
 
     def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None, auto=False, eoi=True, eos="\n", **kwargs):
+                 preprocess_reply=None, auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
+                 **kwargs):
         # for legacy rw_delay: prefer new style over old one.
         if rw_delay:
             warn(("Parameter `rw_delay` is deprecated. "
@@ -113,6 +115,9 @@ class PrologixAdapter(VISAAdapter):
             self.auto = auto
             self.eoi = eoi
             self.eos = eos
+
+        if gpib_read_timeout is not None:
+            self.gpib_read_timeout = gpib_read_timeout
 
     @property
     def auto(self):
@@ -171,6 +176,19 @@ class PrologixAdapter(VISAAdapter):
         self.write(f"++eos {values[value]}")
 
     @property
+    def gpib_read_timeout(self):
+        """Control the timeout value for the GPIB communication in milliseconds
+
+        possible values: 1 - 3000
+        """
+        self.write("++read_tmo_ms")
+        return int(self.read(prologix=True))
+
+    @gpib_read_timeout.setter
+    def gpib_read_timeout(self, value):
+        self.write(f"++read_tmo_ms {value}")
+
+    @property
     def version(self):
         """Get the version string of the Prologix controller.
         """
@@ -200,7 +218,7 @@ class PrologixAdapter(VISAAdapter):
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
-        If the GPIB address in :attr:`.address` is defined, it is sent first.
+        If the GPIB address in :attr:`address` is defined, it is sent first.
 
         :param str command: Command string to be sent to the instrument
             (without termination).
@@ -214,7 +232,7 @@ class PrologixAdapter(VISAAdapter):
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
-        :param values: data to be writen to the device.
+        :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
         :param is_big_endian: boolean indicating endianess.
         :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").

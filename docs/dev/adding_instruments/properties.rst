@@ -373,12 +373,15 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
 Checking the instrument for errors
 **********************************
 If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
-If those are enabled, the method :meth:`~pymeasure.instruments.Instrument.check_errors` will be called after device communication has concluded.
+If those are enabled, the methods :meth:`~pymeasure.instruments.Instrument.check_get_errors` and :meth:`~pymeasure.instruments.Instrument.check_set_errors`, respectively, will be called be called after device communication has concluded.
+In the default implementation, for simplicity both methods call :meth:`~pymeasure.instruments.Instrument.check_errors`.
+To read the automatic response of instruments that respond to every set command with an acknowledgment or error, override :meth:`~pymeasure.instruments.Instrument.check_set_errors` as needed.
+
 
 Using multiple values
 *********************
 Seldomly, you might need to send/receive multiple values in one command.
-The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be used with multiple values at one time, passed as a tuple. Say, we may set voltages and frequencies in our "Extreme 5000", and the commands for this are :code:`:VOLTFREQ?` and :code:`:VOLTFREQ <float>,<float>`, we could use the following property:
 
 .. testcode::
 
@@ -406,7 +409,7 @@ Dynamic properties
 
 As described in previous sections, Python properties are a very powerful tool to easily code an instrument's programming interface.
 One very interesting feature provided in PyMeasure is the ability to adjust properties' behaviour in subclasses or dynamically in instances.
-This feature allows accomodating some interesting use cases with a very compact syntax.
+This feature allows accommodating some interesting use cases with a very compact syntax.
 
 Dynamic features of a property are enabled by setting its :code:`dynamic` parameter to :code:`True`.
 

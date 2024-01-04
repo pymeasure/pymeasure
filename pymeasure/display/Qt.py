@@ -33,6 +33,8 @@ log.addHandler(logging.NullHandler())
 # is dropped (https://doc.qt.io/qtforpython/porting_from2.html#class-function-deprecations)
 if not hasattr(QtWidgets.QApplication, 'exec'):
     QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
+if not hasattr(QtCore.QCoreApplication, 'exec'):
+    QtCore.QCoreApplication.exec = QtCore.QCoreApplication.exec_
 if not hasattr(QtWidgets.QMenu, 'exec'):
     def exec(self, *args, **kwargs):
         self.exec_(*args, **kwargs)
@@ -43,7 +45,7 @@ def fromUi(*args, **kwargs):
     """ Returns a Qt object constructed using loadUiType
     based on its arguments. All QWidget objects in the
     form class are set in the returned object for easy
-    accessability.
+    accessibility.
     """
     form_class, base_class = loadUiType(*args, **kwargs)
     widget = base_class()

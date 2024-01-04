@@ -118,7 +118,7 @@ def test_manual_mode():
 @pytest.mark.parametrize("channel", range(1, 10))
 def test_load_capacity_preset(channel):
     """Verify processing the load capacity propert via a Channel"""
-    # here we use '%' for formating since encoding from strings makes troubles
+    # here we use '%' for formatting since encoding from strings makes troubles
     # with some values (e.g. \xff)
     cmd = b"C\x00GU\x00%c\x00\x00" % (channel)
     cmd += CXN._checksum(cmd)
@@ -130,4 +130,4 @@ def test_load_capacity_preset(channel):
             (cmd, b"\x2a" + response),
         ],
     ) as inst:
-        assert inst.presets[channel].load_capacity == 50
+        assert inst.channels[channel].load_capacity == 50

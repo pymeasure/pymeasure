@@ -22,15 +22,26 @@
 # THE SOFTWARE.
 #
 
+import logging
 import re
-from math import inf
+from math import inf, isfinite, isinf
 from warnings import warn
 
 from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (joined_validators,
                                               strict_discrete_set,
                                               strict_range)
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+def deprecated_strict_range(value, values):
+    warn("This property is deprecated, use meth:`move_raw` instead.",
+         FutureWarning)
+    return strict_range(value, values)
 
 
 def strict_length(value, values):
@@ -60,7 +71,7 @@ truncated_int_array_strict_length = joined_validators(strict_length,
                                                       truncated_int_array)
 
 
-class Axis:
+class Axis(Channel):
     """ Represents a single open loop axis of the Attocube ANC350
 
     :param axis: axis identifier, integer from 1 to 7
@@ -68,39 +79,36 @@ class Axis:
     """
 
     serial_nr = Instrument.measurement("getser",
-                                       "Serial number of the axis")
+                                       "Get the serial number of the axis.")
 
     voltage = Instrument.control(
         "getv", "setv %.3f",
-        """ Amplitude of the stepping voltage in volts from 0 to 150 V. This
-        property can be set. """,
+        """Control the amplitude of the stepping voltage in volts from 0 to 150 V.""",
         validator=strict_range, values=[0, 150], check_set_errors=True)
 
     frequency = Instrument.control(
         "getf", "setf %.3f",
-        """ Frequency of the stepping motion in Hertz from 1 to 10000 Hz.
-        This property can be set. """,
+        """Control the frequency of the stepping motion in Hertz from 1 to 10000 Hz.""",
         validator=strict_range, values=[1, 10000],
         cast=int, check_set_errors=True)
 
     mode = Instrument.control(
         "getm", "setm %s",
-        """ Axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
-        'stp+', 'stp-'. Available modes depend on the actual axis model""",
+        """Control axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
+        'stp+', 'stp-'. Available modes depend on the actual axis model.""",
         validator=strict_discrete_set,
         values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
         check_set_errors=True)
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
-        """ Offset voltage in Volts from 0 to 150 V.
-        This property can be set. """,
+        """Control offset voltage in Volts from 0 to 150 V.""",
         validator=strict_range, values=[0, 150], check_set_errors=True)
 
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
-        """ step up pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        """Control step up pattern of the piezo drive. 256 values ranging from 0
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
@@ -110,8 +118,8 @@ class Axis:
 
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
-        """ step down pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        """Control step down pattern of the piezo drive. 256 values ranging from 0
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
@@ -121,58 +129,81 @@ class Axis:
 
     output_voltage = Instrument.measurement(
         "geto",
-        """ Output voltage in volts.""")
+        """Measure the output voltage in volts.""")
 
     capacity = Instrument.measurement(
         "getc",
-        """ Saved capacity value in nF of the axis.""")
+        """Measure the saved capacity value in nF of the axis.""")
 
     stepu = Instrument.setting(
         "stepu %d",
-        """ Step upwards for N steps. Mode must be 'stp' and N must be
-        positive.""",
-        validator=strict_range, values=[0, inf], check_set_errors=True)
+        """Set the steps upwards for N steps. Mode must be 'stp' and N must be
+        positive. 0 causes a continous movement until stop is called.
+
+        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
+        """,
+        validator=deprecated_strict_range,
+        values=[0, inf],
+        check_set_errors=True,
+    )
 
     stepd = Instrument.setting(
         "stepd %d",
-        """ Step downwards for N steps. Mode must be 'stp' and N must be
-        positive.""",
-        validator=strict_range, values=[0, inf], check_set_errors=True)
+        """Set the steps downwards for N steps. Mode must be 'stp' and N must be
+        positive. 0 causes a continous movement until stop is called.
 
-    def __init__(self, controller, axis):
-        self.axis = str(axis)
-        self.controller = controller
+        .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
+        """,
+        validator=deprecated_strict_range,
+        values=[0, inf],
+        check_set_errors=True,
+    )
 
-    def _add_axis_id(self, command):
-        """ add axis id to a command string at the correct position after the
-        initial command, but before a potential value
+    def insert_id(self, command):
+        """Insert the channel id in a command replacing `placeholder`.
 
-        :param str command: command string
-        :returns: command string with added axis id
+        Add axis id to a command string at the correct position after the
+        initial command, but before a potential value.
         """
         cmdparts = command.split()
-        cmdparts.insert(1, self.axis)
+        cmdparts.insert(1, self.id)
         return ' '.join(cmdparts)
-
-    def ask(self, command, **kwargs):
-        return self.controller.ask(self._add_axis_id(command), **kwargs)
-
-    def write(self, command, **kwargs):
-        return self.controller.write(self._add_axis_id(command), **kwargs)
-
-    def values(self, command, **kwargs):
-        return self.controller.values(self._add_axis_id(command), **kwargs)
 
     def stop(self):
         """ Stop any motion of the axis """
         self.write('stop')
-        self.check_errors()
+        self.check_set_errors()
+
+    def move_raw(self, steps):
+        """Move 'steps' steps in the direction given by the sign of the
+        argument. This method assumes the mode of the axis is set to 'stp' and
+        it is non-blocking, i.e. it will return immediately after sending the
+        command.
+
+        :param steps: integer value of steps to be performed. A positive
+            sign corresponds to upwards steps, a negative sign to downwards
+            steps. The values of +/-inf trigger a continuous movement. The axis
+            can be halted by the stop method.
+        """
+        if isfinite(steps) and abs(steps) > 0:
+            if steps > 0:
+                self.write(f"stepu {steps:d}")
+            else:
+                self.write(f"stepd {abs(steps):d}")
+        elif isinf(steps):
+            if steps > 0:
+                self.write("stepu c")
+            else:
+                self.write("stepd c")
+        else:  # ignore zero and nan values
+            return
+        self.check_set_errors()
 
     def move(self, steps, gnd=True):
-        """ Move 'steps' steps in the direction given by the sign of the
+        """Move 'steps' steps in the direction given by the sign of the
         argument. This method will change the mode of the axis automatically
-        and ground the axis on the end if 'gnd' is True. The method returns
-        only when the movement is finished.
+        and ground the axis on the end if 'gnd' is True. The method is blocking
+        and returns only when the movement is finished.
 
         :param steps: finite integer value of steps to be performed. A positive
             sign corresponds to upwards steps, a negative sign to downwards
@@ -180,16 +211,13 @@ class Axis:
         :param gnd: bool, flag to decide if the axis should be grounded after
             completion of the movement
         """
+        if not isfinite(steps):
+            raise ValueError("Only finite number of steps are allowed.")
         self.mode = 'stp'
         # perform the movement
-        if steps > 0:
-            self.stepu = steps
-        elif steps < 0:
-            self.stepd = abs(steps)
-        else:
-            pass  # do not set stepu/d to 0 since it triggers a continous move
+        self.move_raw(steps)
         # wait for the move to finish
-        self.controller.wait_for(abs(steps) / self.frequency)
+        self.parent.wait_for(abs(steps) / self.frequency)
         # ask if movement finished
         self.ask('stepw')
         if gnd:
@@ -203,14 +231,10 @@ class Axis:
         """
         self.mode = 'cap'
         # wait for the measurement to finish
-        self.controller.wait_for(1)
+        self.parent.wait_for(1)
         # ask if really finished
         self.ask('capw')
         return self.capacity
-
-    def check_errors(self):
-        """Read after setting a setting or control."""
-        self.controller.check_errors()
 
 
 class ANC300Controller(Instrument):
@@ -274,7 +298,7 @@ class ANC300Controller(Instrument):
 
         self._axisnames = axisnames
         for i, axis in enumerate(axisnames):
-            setattr(self, axis, Axis(self, i + 1))
+            setattr(self, axis, self.add_child(Axis, id=str(i + 1)))
 
         self.wait_for()
         # clear messages sent upon opening the connection,
@@ -290,9 +314,20 @@ class ANC300Controller(Instrument):
         # switch console echo off
         self.ask('echo off')
 
-    def check_errors(self):
-        """Read after setting a value."""
-        self.read()
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        :return: List of error entries.
+        """
+        try:
+            self.read()
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     def ground_all(self):
         """ Grounds all axis of the controller. """

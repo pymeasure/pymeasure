@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(Instrument, KeithleyBuffer):
+class Keithley2000(KeithleyBuffer, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 
@@ -58,10 +58,10 @@ class Keithley2000(Instrument, KeithleyBuffer):
     mode = Instrument.control(
         ":CONF?", ":CONF:%s",
         """ A string property that controls the configuration mode for measurements,
-        which can take the values: :code:'current' (DC), :code:'current ac',
-        :code:'voltage' (DC),  :code:'voltage ac', :code:'resistance' (2-wire),
-        :code:'resistance 4W' (4-wire), :code:'period', :code:'frequency',
-        :code:'temperature', :code:'diode', and :code:'frequency'. """,
+        which can take the values: ``current`` (DC), ``current ac``,
+        ``voltage`` (DC),  ``voltage ac``, ``resistance`` (2-wire),
+        ``resistance 4W`` (4-wire), ``period``,
+        ``temperature``, ``diode``, and ``frequency``.""",
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
@@ -72,7 +72,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         ":SYST:BEEP:STAT?",
         ":SYST:BEEP:STAT %g",
         """ A string property that enables or disables the system status beeper,
-        which can take the values: :code:'enabled' and :code:'disabled'. """,
+        which can take the values: ``enabled`` and ``disabled``. """,
         validator=strict_discrete_set,
         values={'enabled': 1, 'disabled': 0},
         map_values=True

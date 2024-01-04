@@ -24,7 +24,7 @@
 import logging
 from enum import IntEnum, IntFlag
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set,\
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
     strict_range
 
 # Setup logging
@@ -73,7 +73,7 @@ class VoltageRange(IntEnum):
     # selected.
     # It cannot be specified for pulse measurement and pulse sweep.
 
-    AUTO = 0        # ±1μV resolution
+    AUTO = 0  # ±1μV resolution
 
     # Limited auto range
     # It operates in the same way as the auto range except that the specified range is minimized.
@@ -154,8 +154,8 @@ class SweepMode(IntEnum):
 
 
 class OutputType(IntEnum):
-    REAL_TIME_OUTPUT = 1            # there is output every time it is measured
-    BUFFERING_OUTPUT_ALL = 2        # output all at once after sweeping
+    REAL_TIME_OUTPUT = 1  # there is output every time it is measured
+    BUFFERING_OUTPUT_ALL = 2  # output all at once after sweeping
     BUFFERING_OUTPUT_SPECIFIED = 3  # After sweeping, only output the specified data
 
 
@@ -2070,9 +2070,14 @@ class AdvantestR6245(AdvantestR624X):
     """
     voltage_range = {'A': [-220.0, 220.0], 'B': [-220.0, 220.0]}
     current_range = {'A': [-2.0, 2.0], 'B': [-2.0, 2.0]}
-    channels = Instrument.ChannelCreator(SMUChannel, ('A', 'B'),
-                                         voltage_range=voltage_range,
-                                         current_range=current_range)
+
+    ch_A = Instrument.ChannelCreator(SMUChannel, 'A',
+                                     voltage_range=voltage_range,
+                                     current_range=current_range)
+
+    ch_B = Instrument.ChannelCreator(SMUChannel, 'B',
+                                     voltage_range=voltage_range,
+                                     current_range=current_range)
 
     def __init__(self, adapter, name="Advantest R6245 SourceMeter", **kwargs):
         kwargs
@@ -2088,9 +2093,14 @@ class AdvantestR6246(AdvantestR624X):
     """
     voltage_range = {'A': [-62.0, 62.0], 'B': [-220.0, 220.0]}
     current_range = {'A': [-20.0, 20.0], 'B': [-2.0, 2.0]}
-    channels = Instrument.ChannelCreator(SMUChannel, ('A', 'B'),
-                                         voltage_range=voltage_range,
-                                         current_range=current_range)
+
+    ch_A = Instrument.ChannelCreator(SMUChannel, 'A',
+                                     voltage_range=voltage_range,
+                                     current_range=current_range)
+
+    ch_B = Instrument.ChannelCreator(SMUChannel, 'B',
+                                     voltage_range=voltage_range,
+                                     current_range=current_range)
 
     def __init__(self, adapter, name="Advantest R6246 SourceMeter", **kwargs):
         super().__init__(
