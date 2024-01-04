@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class SCPImixin:
+class SCPIMixin:
     """Base class for SCPI instruments with the default implementations of SCPI commands."""
 
     def __init__(self, *args, **kwargs):
@@ -97,8 +97,8 @@ class SCPImixin:
         return errors
 
 
-class SCPIunknownMixin(SCPImixin):
-    """Mixin which adds SCPI commands to an instrument from which it is not knwon, whether it
+class SCPIUnknownMixin(SCPIMixin):
+    """Mixin which adds SCPI commands to an instrument from which it is not known, whether it
     supports SCPI commands or not.
     """
 

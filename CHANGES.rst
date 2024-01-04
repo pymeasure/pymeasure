@@ -5,7 +5,7 @@ Deprecated features
 -------------------
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
 - Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
-- Setting `includeSCPI=True` is deprecated, inherit instead the :code:`SCPImixin` class if the device supports SCPI commands.
+- Setting `includeSCPI=True` is deprecated, inherit instead the :code:`SCPIMixin` class if the device supports SCPI commands.
 
 GUI
 ---

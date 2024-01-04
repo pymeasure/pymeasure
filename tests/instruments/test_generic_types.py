@@ -26,12 +26,12 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.adapters import ProtocolAdapter
-from pymeasure.instruments.generic_types import SCPImixin, SCPIunknownMixin
+from pymeasure.instruments.generic_types import SCPIMixin, SCPIUnknownMixin
 from pymeasure.instruments import Instrument
 
 
 class Test_SCPIMixin:
-    class SCPIInstrument(SCPImixin, Instrument):
+    class SCPIInstrument(SCPIMixin, Instrument):
         pass
 
     def test_init(self):
@@ -81,7 +81,7 @@ class Test_SCPIMixin:
 
 
 def test_SCPIunknownMixin():
-    class SCPIunknownInstrument(SCPIunknownMixin, Instrument):
+    class SCPIunknownInstrument(SCPIUnknownMixin, Instrument):
         pass
 
     with pytest.warns(FutureWarning):

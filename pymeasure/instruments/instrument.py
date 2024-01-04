@@ -61,8 +61,8 @@ class Instrument(CommonBase):
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
 
-        .. deprecated:: 0.12
-            Inherit the :class:`~pymeasure.instruments.generic_types.SCPImixin` class instead.
+        .. deprecated:: 0.14
+            Inherit the :class:`~pymeasure.instruments.generic_types.SCPIMixin` class instead.
 
     :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
