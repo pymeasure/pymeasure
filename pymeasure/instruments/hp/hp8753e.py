@@ -25,6 +25,8 @@
 from time import sleep
 from time import time as now
 
+from io import BytesIO
+
 import numpy as np
 from pyvisa import VisaIOError
 
@@ -40,7 +42,6 @@ class HP8753E(Instrument):
     Keyword arguements:
     adapter -- <placeholder for description of pymeasure.adapter>
     name -- <str> describing the instrument
-    allowable_frequency_range -- <list> defines the min and max frequency range of the instrument
     """
 
     def __init__(
@@ -115,7 +116,7 @@ class HP8753E(Instrument):
     sweep_time = Instrument.control(
         "SWET?",
         "SWET%.2e",
-        """Control the sweep time in seconds. (float truncated from 0.0 to 999.0)
+        """Control the sweep time in seconds. (float truncated from 0.0 to 36_400.0)
         """,
         validator=truncated_range,
         cast=float,
@@ -264,7 +265,7 @@ class HP8753E(Instrument):
         if value in HP8753E.SCATTERING_PARAMETERS:
             self.write("%s" % value)
         else:
-            raise Exception(
+            raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for {self._manu} {self._model}. Valid values are: {SCATTERING_PARAMETERS}"
             )
 
@@ -288,11 +289,11 @@ class HP8753E(Instrument):
         blocks until the operation is complete.
 
         Args:
-        timeout - a value to multiple the sweep time and averages by to timeout the function
+        timeout - a value in seconds to add to the sweep time to timeout the function
         """
 
         # get time to perform sweep
-        sweep_time = self.sweep_time * timeout
+        sweep_time = self.sweep_time + timeout
 
         # get number of averages if enabled
         if self.averaging_enabled:
@@ -325,7 +326,6 @@ class HP8753E(Instrument):
         This function is not blocking
         """
         if self.averaging_enabled:
-            self.averaging_restart()
             self.write(f"NUMG{self.averages}")
         else:
             self.write("SING")
@@ -338,10 +338,13 @@ class HP8753E(Instrument):
         return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
 
     @property
-    def data_complex(self, timeout=5, points_multiplier=0.1):
+    def data_complex(self, timeout=10):
         """Gets the complex s-parameter measurements from the last scan.
         This function is blocking until it is completed. (returns nparray
         sized by number of points in sweep)
+        
+        Args:
+        timeout - a value in seconds to timeout the function
         """
 
         # get number of points
@@ -364,8 +367,8 @@ class HP8753E(Instrument):
                 sleep(0.001)
 
             # break the loop if the sweep gets interrupted or takes too long
-            if now() > start + points * points_multiplier + timeout:
-                raise Exception(
+            if now() > start + timeout:
+                raise TimeoutError(
                     f"Failed to read data. Data transfer method timed out after {points * points_multiplier + timeout} seconds"
                 )
 

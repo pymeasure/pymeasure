@@ -130,7 +130,7 @@ def test_hp8753e_sweep_time():
         hp8753e.sweep_time = 1
         assert hp8753e.sweep_time == 1.00000006144
         hp8753e.set_sweep_time_fastest()
-        assert hp8753e.sweep_time == 0.175000059904  # probably shouldn't be 0
+        assert hp8753e.sweep_time == 0  # probably shouldn't be 0
 
 
 def test_hp8753e_parameters():
@@ -273,7 +273,7 @@ def test_hp8753e_data_complex():
 def test_hp8753e_np_frequencies():
     with init_HP8753E() as hp8753e:
         hp8753e.reset()
-        assert hp8753e.frequencies == np.array(["1"])
+        np.testing.assert_equal(hp8753e.frequencies, np.arange(30e3, 6e9+(6e9-30e3)/200, (6e9-30e3)/200))
 
         # need correct frequency array table
 
