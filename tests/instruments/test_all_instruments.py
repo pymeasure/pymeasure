@@ -114,7 +114,6 @@ grandfathered_docstring_instruments = [
     "AFG3152CChannel",
     "AWG401x_AFG",
     "AWG401x_AWG",
-    "AdvantestR3767CG",
     "AdvantestR624X",
     "SMUChannel",  # AdvantestR624X
     "AdvantestR6245",
