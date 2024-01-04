@@ -181,8 +181,6 @@ grandfathered_docstring_instruments = [
     "ATSBase",
     "ECO560",
     "TexioPSW360L30",
-    "Yokogawa7651",
-    "YokogawaGS200",
     "IonGaugeAndPressureChannel",
     "PressureChannel",
     "SequenceEntry",
