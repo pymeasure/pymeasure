@@ -148,7 +148,7 @@ class VellemanK8090(Instrument):
 
     switch_on = Instrument.setting(
         "0x11,%s",
-        """"
+        """
         Set channels to on state. Other channels are unaffected.
         Pass either a list or set of channel numbers (starting at 1), or pass a bitmask.
 
