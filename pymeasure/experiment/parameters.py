@@ -48,7 +48,7 @@ class Parameter:
         self.name = name
         separator = ": "
         if separator in name:
-            raise ValueError("The provided name argument '%s' contains the sparator '%s')."
+            raise ValueError("The provided name argument '%s' contains the sparator '%s'."
                              % (name, separator))
 
         self._value = None
