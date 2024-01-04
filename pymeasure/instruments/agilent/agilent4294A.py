@@ -23,7 +23,10 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
+import pandas as pd
+import numpy as np
+import os
 
 
 class Agilent4294A(Instrument):
@@ -53,11 +56,49 @@ class Agilent4294A(Instrument):
         "STOP?", "STOP %d HZ", "Control the stop frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
+    num_points = Instrument.control(
+        "POIN?", "POIN %d", "Control the number of points measured at each sweep",
+        validator=strict_discrete_set, values=range(2, 802),
+        cast=int,
+    )
+    measurement = Instrument.control(
+        "MEAS?", "MEAS %d", "Control the measurement type",
+        validator=strict_discrete_set, values=[
+            "IMPH",
+            "IRIM",
+            "LSR",
+            "LSQ",
+            "CSR",
+            "CSQ",
+            "CSD",
+            "AMPH",
+            "ARIM",
+            "LPG",
+            "LPQ",
+            "CPG",
+            "CPQ",
+            "CPD",
+            "COMP",
+            "IMLS",
+            "IMCS",
+            "IMLP",
+            "IMCP",
+            "IMRS",
+            "IMQ",
+            "IMD",
+            "LPR",
+            "CPR",
+        ]
+    )
+    active_trace = Instrument.control(
+        "TRAC?", "TRAC %s", "Control the active trace",
+        validator=strict_discrete_set, values=["A", "B"]
+    )
     title = Instrument.control(
         "TITL?", 'TITL "%s"', "Control the title of the active trace"
     )
 
-    def save_graphics(self, filename=""):
+    def save_graphics(self, path=""):
         """ Save graphics on the screen to a file on the local computer.
         Adapted from:
         https://www.keysight.com/se/en/lib/software-detail/programming-examples/4294a-data-transfer-program-excel-vba-1645196.html
@@ -65,7 +106,14 @@ class Agilent4294A(Instrument):
 
         self.write("STOD MEMO")  # store to internal memory
         self.write("PRIC VARI")  # save a color image
-        local_filename = filename + ".tiff"
+
+        root, ext = os.path.splitext(path)
+        if ext != ".tiff":
+            ext = ".tiff"
+        if not root:
+            root = "graphics"
+
+        path = root + ext
 
         REMOTE_FILE = "agt4294a.tiff"  # Filename of the in-memory file on the device
         self.write(f'SAVDTIF "{REMOTE_FILE}"')
@@ -86,11 +134,44 @@ class Agilent4294A(Instrument):
         if lngFileSize % MAX_BUFF_SIZE > 0:
             iBufCnt += 1
 
-        with open(local_filename, 'wb') as file:
+        with open(path, 'wb') as file:
             for _ in range(iBufCnt):
                 data = self.adapter.connection.query_binary_values("READ?", datatype='B',
                                                                    container=bytes)
                 file.write(data)
         self.write(f'PURG "{REMOTE_FILE}"')
 
-        return local_filename
+        return path
+
+    def get_data(self, path=None):
+        """
+        Get the measurement data from the instrument after completion.
+
+        :param path: Path for optional data export to CSV.
+        :returns: Pandas Dataframe
+        """
+        prev_active_trace = self.active_trace
+
+        num_points = self.num_points
+        freqs = np.array(self.ask("OUTPSWPRM?").split(","), dtype=float)
+        self.active_trace = "A"
+        adata = np.array(self.ask("OUTPDTRC?").split(","), dtype=float).reshape(num_points, 2)
+
+        self.active_trace = "B"
+        bdata = np.array(self.ask("OUTPDTRC?").split(","), dtype=float).reshape(num_points, 2)
+
+        # restore the previous state
+        self.active_trace = prev_active_trace
+
+        df = pd.DataFrame(
+            np.hstack((freqs.reshape(-1, 1), adata, bdata)),
+            columns=["Frequency", "A Real", "A Imag", "B Real", "B Imag"]
+        )
+
+        if path is not None:
+            _, ext = os.path.splitext(path)
+            if ext != ".csv":
+                path = path + ".csv"
+            df.to_csv(path, index=False)
+
+        return df
