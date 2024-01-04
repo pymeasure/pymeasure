@@ -162,7 +162,6 @@ grandfathered_docstring_instruments = [
     "Keithley6517B",
     "KeysightDSOX1102G",
     "KeysightN5767A",
-    "KeysightN7776C",
     "LakeShore421",
     "LakeShore425",
     "LakeShoreTemperatureChannel",
