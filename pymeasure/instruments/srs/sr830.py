@@ -26,7 +26,7 @@ import re
 import time
 import numpy as np
 from enum import IntFlag
-from pymeasure.instruments import Instrument, discreteTruncate
+from pymeasure.instruments import Instrument, discreteTruncate, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
@@ -57,7 +57,7 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
-class SR830(Instrument):
+class SR830(SCPIUnknownMixin, Instrument):
 
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
