@@ -150,6 +150,7 @@ class AMI430(Instrument):
 
     @property
     def magnet_status(self):
+        """Get the magnet status."""
         STATES = {
             1: "RAMPING",
             2: "HOLDING",
