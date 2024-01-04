@@ -363,13 +363,12 @@ class Results:
                 procedure_module = search.group("module")
                 procedure_class = search.group("class")
             elif line.startswith("\t"):
-                line += " "
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
                     raise Exception("Error partitioning header line %s." % line)
                 else:
-                    parameters[partitioned_line[0]] = partitioned_line[2].rstrip()
+                    parameters[partitioned_line[0]] = partitioned_line[2]
 
         if procedure is None:
             if procedure_class is None:
