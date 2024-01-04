@@ -118,10 +118,11 @@ class KeysightN7776C(Instrument):
         values=['DIS', 'STF', 'SWF', 'SWST']
     )
 
-    trigger_in = Instrument.control('TRIG0:INP?', 'TRIG0:INP %s',
-                                    """ Control the incoming trigger response and arms the module. """,
-                                    validator=strict_discrete_set,
-                                    values=['IGN', 'NEXT', 'SWS'])
+    trigger_in = Instrument.control(
+        'TRIG0:INP?', 'TRIG0:INP %s',
+        """Control the incoming trigger response and arm the module.""",
+        validator=strict_discrete_set,
+        values=['IGN', 'NEXT', 'SWS'])
 
     wavelength = Instrument.control(
         'sour0:wav?', 'sour0:wav %fnm',
