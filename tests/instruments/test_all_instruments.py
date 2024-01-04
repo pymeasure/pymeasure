@@ -139,7 +139,6 @@ grandfathered_docstring_instruments = [
     "Ametek7270",
     "DPSeriesMotorController",
     "AnritsuMS2090A",
-    "Danfysik8500",
     "SM7045D",
     "HP33120A",
     "HP3437A",
