@@ -76,7 +76,7 @@ class Instrument(CommonBase):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True,
+    def __init__(self, adapter, name, includeSCPI=None,
                  preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
@@ -87,10 +87,14 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
-        self.SCPI = includeSCPI
-        if includeSCPI:
+        if includeSCPI is True:
             warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
-                 "the `SCPImixin` class instead.", FutureWarning)
+                 "the `SCPIMixin` class instead.", FutureWarning)
+        elif includeSCPI is None:
+            warn("Not defining SCPI base functionalitiy is deprecated, use "
+                 "`includeSCPI=False` or inherit the `SCPIMixin` class instead.", FutureWarning)
+            includeSCPI = True
+        self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
 

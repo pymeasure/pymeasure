@@ -103,7 +103,6 @@ class SCPIUnknownMixin(SCPIMixin):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("includeSCPI", False)  # in order not to trigger the deprecation warning
         warn("It is not known, whether this device support SCPI commands or not. Please inform "
              "the pymeasure maintainers, if you know the answer.", FutureWarning)
         super().__init__(*args, **kwargs)
