@@ -122,7 +122,6 @@ grandfathered_docstring_instruments = [
     "Agilent33500",
     "Agilent33500Channel",
     "Agilent33521A",
-    "Agilent34410A",
     "Agilent34450A",
     "Agilent4156",
     "SMU",  # agilent/agilent4156
