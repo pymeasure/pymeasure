@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import (
     truncated_range,
     truncated_discrete_set,
@@ -153,7 +153,7 @@ class ScannerCard2000Channel(Channel):
             super().write(command)
 
 
-class KeithleyDMM6500(Instrument):
+class KeithleyDMM6500(SCPIMixin, Instrument):
     """Represent the Keithely DMM6500 6½-Digit Multimeter and provide a
     high-level interface for interacting with the instrument.
     This class only uses "SCPI" command set (see also :attr:`command_set`) to

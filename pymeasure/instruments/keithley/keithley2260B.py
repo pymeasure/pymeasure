@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 import logging
@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2260B(Instrument):
+class Keithley2260B(SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2260B Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
 

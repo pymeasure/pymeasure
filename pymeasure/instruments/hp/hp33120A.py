@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 import logging
@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class HP33120A(Instrument):
+class HP33120A(SCPIUnknownMixin, Instrument):
     """ Represents the Hewlett Packard 33120A Arbitrary Waveform
     Generator and provides a high-level interface for interacting
     with the instrument.

@@ -28,7 +28,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, RangeException
+from pymeasure.instruments import Instrument, RangeException, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2400(KeithleyBuffer, Instrument):
+class Keithley2400(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2400 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 

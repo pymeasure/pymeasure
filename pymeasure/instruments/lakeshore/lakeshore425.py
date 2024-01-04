@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
 from time import sleep
 import numpy as np
 
 
-class LakeShore425(Instrument):
+class LakeShore425(SCPIUnknownMixin, Instrument):
     """ Represents the LakeShore 425 Gaussmeter and provides
     a high-level interface for interacting with the instrument
 
