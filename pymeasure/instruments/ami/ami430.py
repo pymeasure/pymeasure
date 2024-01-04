@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from time import sleep, time
 
 import logging
@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AMI430(Instrument):
+class AMI430(SCPIMixin, Instrument):
     """ Represents the AMI 430 Power supply
     and provides a high-level for interacting with the instrument.
 

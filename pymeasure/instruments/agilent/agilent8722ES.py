@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin, discreteTruncate, RangeException
 from pyvisa import VisaIOError
 
 import numpy as np
@@ -31,7 +31,7 @@ from io import BytesIO
 import warnings
 
 
-class Agilent8722ES(Instrument):
+class Agilent8722ES(SCPIUnknownMixin, Instrument):
     """ Represents the Agilent8722ES Vector Network Analyzer
     and provides a high-level interface for taking scans of the
     scattering parameters.

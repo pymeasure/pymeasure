@@ -28,7 +28,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
                                               strict_range)
@@ -42,7 +42,7 @@ log.addHandler(logging.NullHandler())
 ######
 
 
-class Agilent4156(Instrument):
+class Agilent4156(SCPIUnknownMixin, Instrument):
     """ Represents the Agilent 4155/4156 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking current-voltage (I-V) measurements.
 

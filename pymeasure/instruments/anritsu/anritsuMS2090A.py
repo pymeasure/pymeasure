@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_range,
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AnritsuMS2090A(Instrument):
+class AnritsuMS2090A(SCPIUnknownMixin, Instrument):
     """Anritsu MS2090A Handheld Spectrum Analyzer."""
 
     def __init__(self, adapter, name="Anritsu MS2090A Handheld Spectrum Analyzer", **kwargs):
