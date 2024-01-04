@@ -181,7 +181,6 @@ grandfathered_docstring_instruments = [
     "ATSBase",
     "ECO560",
     "TexioPSW360L30",
-    "Thermotron3800",
     "VellemanK8090",
     "Yokogawa7651",
     "YokogawaGS200",
