@@ -170,7 +170,6 @@ grandfathered_docstring_instruments = [
     "ParkerGV6",
     "CNT91",
     "FSL",
-    "HMP4040",
     "SFM",
     "SPD1168X",
     "SPD1305X",
