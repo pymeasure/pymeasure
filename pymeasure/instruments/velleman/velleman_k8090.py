@@ -114,6 +114,7 @@ class VellemanK8090(Instrument):
             write_termination="",
             read_termination="",
             timeout=timeout,
+            includeSCPI=False,
             **kwargs,
         )
 
@@ -148,7 +149,7 @@ class VellemanK8090(Instrument):
     switch_on = Instrument.setting(
         "0x11,%s",
         """"
-        Switch on a set of channels. Other channels are unaffected.
+        Set channels to on state. Other channels are unaffected.
         Pass either a list or set of channel numbers (starting at 1), or pass a bitmask.
 
         After switching this waits for a reply from the device. This is only send when
@@ -163,7 +164,7 @@ class VellemanK8090(Instrument):
     switch_off = Instrument.setting(
         "0x12,%s",
         """
-        Switch off a set of channels. See :attr:`switch_on` for more details.
+        Set channels to off state. See :attr:`switch_on` for more details.
         """,
         set_process=_parse_channels,
         check_set_errors=True,
