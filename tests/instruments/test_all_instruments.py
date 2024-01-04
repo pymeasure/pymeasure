@@ -140,7 +140,6 @@ grandfathered_docstring_instruments = [
     "DPSeriesMotorController",
     "AnritsuMS2090A",
     "SM7045D",
-    "HP33120A",
     "HP3437A",
     "HP34401A",
     "HP3478A",
