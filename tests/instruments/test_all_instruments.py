@@ -148,7 +148,6 @@ grandfathered_docstring_instruments = [
     "HP6634A",
     "HP8116A",
     "Keithley2000",
-    "Keithley2260B",
     "Keithley2306",
     "Keithley2306Channel",
     "BatteryChannel",  # Keithley2306

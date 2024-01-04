@@ -63,8 +63,7 @@ class Keithley2260B(Instrument):
     output_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
-        """A boolean property that controls whether the source is enabled, takes
-        values True or False.""",
+        """Control whether the source is enabled, takes values True or False. (bool)""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -73,43 +72,41 @@ class Keithley2260B(Instrument):
     current_limit = Instrument.control(
         ":SOUR:CURR?",
         ":SOUR:CURR %g",
-        """A floating point property that controls the source current
-        in amps. This is not checked against the allowed range. Depending on
-        whether the instrument is in constant current or constant voltage mode,
-        this might differ from the actual current achieved.""",
+        """Control the source current in amps. This is not checked against the allowed range.
+        Depending on whether the instrument is in constant current or constant voltage mode,
+        this might differ from the actual current achieved. (float)""",
     )
 
     voltage_setpoint = Instrument.control(
         ":SOUR:VOLT?",
         ":SOUR:VOLT %g",
-        """A floating point property that controls the source voltage
-        in volts. This is not checked against the allowed range. Depending on
-        whether the instrument is in constant current or constant voltage mode,
-        this might differ from the actual voltage achieved.""",
+        """Control the source voltage in volts. This is not checked against the allowed range.
+        Depending on whether the instrument is in constant current or constant voltage mode,
+        this might differ from the actual voltage achieved. (float)""",
     )
 
     power = Instrument.measurement(
         ":MEAS:POW?",
-        """Reads the power (in Watt) the dc power supply is putting out.
+        """Get the power (in Watt) the dc power supply is putting out.
         """,
     )
 
     voltage = Instrument.measurement(
         ":MEAS:VOLT?",
-        """Reads the voltage (in Volt) the dc power supply is putting out.
+        """Get the voltage (in Volt) the dc power supply is putting out.
         """,
     )
 
     current = Instrument.measurement(
         ":MEAS:CURR?",
-        """Reads the current (in Ampere) the dc power supply is putting out.
+        """Get the current (in Ampere) the dc power supply is putting out.
         """,
     )
 
     applied = Instrument.control(
         ":APPly?",
         ":APPly %g,%g",
-        """Simultaneous control of voltage (volts) and current (amps).
+        """Control voltage (volts) and current (amps) simultaneously.
         Values need to be supplied as tuple of (voltage, current). Depending on
         whether the instrument is in constant current or constant voltage mode,
         the values achieved by the instrument will differ from the ones set.
@@ -118,6 +115,7 @@ class Keithley2260B(Instrument):
 
     @property
     def enabled(self):
+        """Control whether the output is enabled, see :attr:`output_enabled`."""
         log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
                     'instead.', FutureWarning)
         return self.output_enabled
@@ -130,7 +128,7 @@ class Keithley2260B(Instrument):
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a
+        """ Get a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
         if len(err) < 2:
