@@ -67,4 +67,6 @@ Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
 Armindo Pinto
+Frank Wu
+Heinz-Alexander Fütterer
 Nick James Kirkby

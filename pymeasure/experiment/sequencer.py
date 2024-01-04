@@ -355,7 +355,7 @@ class SequenceHandler:
         """
         Generate a list of parameters from the sequence tree.
 
-        :param names_map: an optional dict to map paramter name
+        :param names_map: an optional dict to map parameter name
         :return: A list of dictionaries. Each dictionary represents a parameters setting
         for running an experiment.
         """
