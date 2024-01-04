@@ -111,7 +111,6 @@ channel_as_instrument_subclass = [
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
-    "AFG3152CChannel",
     "AWG401x_AFG",
     "AWG401x_AWG",
     "AdvantestR624X",
