@@ -164,7 +164,6 @@ grandfathered_docstring_instruments = [
     "LakeShore421",
     "LakeShoreTemperatureChannel",
     "LakeShoreHeaterChannel",
-    "MKS937B",
     "IPS120_10",
     "ITC503",
     "PS120_10",
