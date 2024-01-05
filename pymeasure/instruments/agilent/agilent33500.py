@@ -49,6 +49,178 @@ log.addHandler(logging.NullHandler())
 # string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
+class Channel(object):
+
+
+    ##### BURST control
+    burst_state = Instrument.control(
+        "BURS:STAT?", "BURS:STAT %d",
+        """ A boolean property that controls whether the burst mode is on
+        (True) or off (False). Can be set. """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    burst_mode = Instrument.control(
+        "BURS:MODE?", "BURS:MODE %s",
+        """ A string property that controls the burst mode. Valid values
+        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
+        validator=strict_discrete_set,
+        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+    )
+
+    burst_period = Instrument.control(
+        "BURS:INT:PER?", "BURS:INT:PER %e",
+        """ A floating point property that controls the period of subsequent bursts.
+        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
+        Valid values are 1 µs to 8000 s. Can be set. """,
+        validator=strict_range,
+        values=[1e-6, 8000],
+    )
+
+    burst_ncycles = Instrument.control(
+        "BURS:NCYC?", "BURS:NCYC %d",
+        """ An integer property that sets the number of cycles to be output
+        when a burst is triggered. Valid values are 1 to 100000. This can be
+        set. """,
+        validator=strict_range,
+        values=range(1, 100000000),
+    )
+
+    def data_arb(self, arb_name, data_points, data_format='DAC'):
+        """
+        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
+        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
+        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
+        Check the manual for more information. The storage depends on the device type and ranges
+        from 8 Sa to 16 MSa (maximum).
+        TODO: *Binary is not yet implemented*
+
+        :param arb_name: The name of the trace in the volatile memory. This is used to access the
+                         trace.
+        :param data_points: Individual points of the trace. The format depends on the format
+                            parameter.
+
+                            format = 'DAC' (default): Accepts list of integer values ranging from
+                            -32767 to +32767 (32767 == 2**15-1). Minimum of 8 a maximum of 65536 points.
+                            Transfer is binary
+
+                            format = 'float': Accepts list of floating point values ranging from
+                            -1.0 to +1.0. Minimum of 8 a maximum of 65536 points. Transfer is ASCII
+        """
+        if data_format == 'DAC':
+            ### TODO: Still broken
+            data = np.array(data_points, dtype=int)
+            #endianness = self.is_big_endian
+            self.instrument.adapter.write_binary_values(f"SOURCE{self.number}:DATA:ARB:DAC {arb_name}, ",
+                                             data, is_big_endian=False, datatype='h')
+            return
+        elif data_format == 'float':
+            absmax = max(abs(data_points))
+            if absmax > 1.0:
+                data_points = np.array(data_points)/absmax
+            separator = ', '
+            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
+            data_string = separator.join(data_points_str)  # Join strings with separator
+            print(f"DATA:ARB {arb_name}, {data_string}")
+            self.instrument.adapter.write(f"SOURCE{self.number}:DATA:ARB {arb_name}, {data_string}")
+            return
+        else:
+            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float"')
+
+    arb_srate = Instrument.control(
+        "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
+        """ An floating point property that sets the sample rate of the currently selected
+        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
+        depending on your device). This can be set. """,
+        validator=strict_range,
+        values=[1e-6, 250e6],
+    )
+
+    def send_sequence(self, sequence_string):
+        strlen = len(sequence_string)
+        numlen = len(str(strlen))
+        command = f"SOURCE{self.number}:DATA:SEQ #{numlen}{strlen}{sequence_string}"
+        self.write(command)
+
+    def __init__(self, instrument, number, **kwargs):
+        self.instrument = instrument
+        self.number = number
+
+        for key, item in kwargs.items():
+            setattr(self, key, item)
+
+    def values(self, command, **kwargs):
+        """ Reads a set of values from the instrument through the adapter,
+        passing on any key-word arguments.
+        """
+        return self.instrument.values("SOUR%d:%s" % (
+                                      self.number, command), **kwargs)
+    def ask(self, command):
+        self.instrument.query("SOUR%d:%s" % (self.number, command))
+
+    def write(self, command):
+        self.instrument.write("SOUR%d:%s" % (self.number, command))
+
+    def read(self):
+        self.instrument.read()
+
+    def enable(self):
+        self.instrument.write("SOUR%d:state 1" % self.number)
+
+    def disable(self):
+        self.instrument.write("SOUR%d:state 0" % self.number)
+
+    @property
+    def inverted(self):
+        state = self.instrument.ask(f"OUTP{self.number}:POL?")
+        if state == "NORM":
+            return False
+        if state == "INV":
+            return True
+
+    @inverted.setter
+    def inverted(self, state):
+        if state:
+            self.instrument.write(f"OUTP{self.number}:POL INV")
+        else:
+            self.instrument.write(f"OUTP{self.number}:POL NORM")
+
+    @property
+    def output(self):
+        state = self.instrument.ask(f"OUTP{self.number}?")
+        if state == 1:
+            return True
+        if state == 0:
+            return False
+
+    @output.setter
+    def output(self, state):
+        if state:
+            self.instrument.write(f"OUTP{self.number} 1")
+        else:
+            self.instrument.write(f"OUTP{self.number} 0")
+
+    @property
+    def output_load(self):
+        state = self.instrument.ask(f"OUTP{self.number}:LOAD?")
+        return state
+
+    @output_load.setter
+    def output_load(self, state):
+        self.instrument.write(f"OUTP{self.number}:LOAD {state}")
+
+    @property
+    def output_sync_mode(self):
+        state = self.instrument.ask(f"OUTP{self.number}:SYNC:MODE?")
+        return state
+
+    @output_sync_mode.setter
+    def output_sync_mode(self, state):
+        self.instrument.write(f"OUTP{self.number}:SYNC:MODE {state}")
+
+
 class Agilent33500(Instrument):
     #TODO reimplement with channels
     """Represents the Agilent 33500 Function/Arbitrary Waveform Generator family.
@@ -86,6 +258,14 @@ class Agilent33500(Instrument):
             "Agilent 33500 Function/Arbitrary Waveform generator family",
             **kwargs
         )
+
+        num_chan = 2
+        self.mapper = {}
+        for i in range(num_chan):
+            setattr(self, f'ch{i + 1}', Channel(self, i + 1,
+                                                trigger=self.trigger,
+                                                wait_for_trigger=self.wait_for_trigger))
+        self.mapper[i + 1] = getattr(self, f'ch{i + 1}')
 
     def beep(self):
         """ Causes a system beep. """
@@ -237,42 +417,6 @@ class Agilent33500(Instrument):
         values=[8.4e-9, 1e-6],
     )
 
-    output = Instrument.control(
-        "OUTP?", "OUTP %d",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off')
-        the output of the function generator. Can be set. """,
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: 1, 'on': 1, 'ON': 1, False: 0, 'off': 0, 'OFF': 0},
-    )
-
-    output_load = Instrument.control(
-        "OUTP:LOAD?", "OUTP:LOAD %s",
-        """ Sets the expected load resistance (should be the load impedance connected
-        to the output. The output impedance is always 50 Ohm, this setting can be used
-        to correct the displayed voltage for loads unmatched to 50 Ohm.
-        Valid values are between 1 and 10 kOhm or INF for high impedance.
-        No validator is used since both numeric and string inputs are accepted,
-        thus a value outside the range will not return an error.
-        Can be set. """,
-    )
-
-    burst_state = Instrument.control(
-        "BURS:STAT?", "BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: 1, False: 0},
-    )
-
-    polarity = Instrument.control(
-        "OUTP:POL?", "OUTP:POL %s",
-        """ Sets the output polarity. NORM : output polarity is normal
-        INV: polarity is reversed""",
-        validator=strict_discrete_set,
-        values=['NORM', 'INV']
-    )
 
     sync_polarity = Instrument.control(
         "OUTP:SYNC:POL?", "OUTP:SYNC:POL %s",
@@ -282,40 +426,13 @@ class Agilent33500(Instrument):
         values= ['NORM', 'INV']
     )
 
-    burst_state = Instrument.control(
-        "BURS:STAT?", "BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
+    sync_source = Instrument.control(
+        "OUTP:SYNC:SOURCE?", "OUTP:SYNC:SOURCE %s",
+        """ Sets the Sync output source""",
         validator=strict_discrete_set,
-        map_values=True,
-        values={True: 1, False: 0},
+        values=['CH1', 'CH2']
     )
 
-    burst_mode = Instrument.control(
-        "BURS:MODE?", "BURS:MODE %s",
-        """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
-        validator=strict_discrete_set,
-        values=["TRIG", "TRIGGERED", "GAT", "GATED"],
-    )
-
-    burst_period = Instrument.control(
-        "BURS:INT:PER?", "BURS:INT:PER %e",
-        """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s. Can be set. """,
-        validator=strict_range,
-        values=[1e-6, 8000],
-    )
-
-    burst_ncycles = Instrument.control(
-        "BURS:NCYC?", "BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 100000. This can be
-        set. """,
-        validator=strict_range,
-        values=range(1, 100000000),
-    )
 
     arb_file = Instrument.control(
         "FUNC:ARB?", "FUNC:ARB %s",
@@ -373,14 +490,28 @@ class Agilent33500(Instrument):
     #     values=[0.001, 10],
     # )
 
-    arb_srate = Instrument.control(
-        "FUNC:ARB:SRAT?", "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected
-        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device). This can be set. """,
-        validator=strict_range,
-        values=[1e-6, 250e6],
-    )
+    #### Transfer waveform
+    def transfer_array(self, array, filename):
+        """
+        Takes an array and saves it to the INT directory
+        """
+        to_transfer = np.array(array)
+        to_transferstr = ''
+        for i, val in enumerate(to_transfer):
+            if i == 0:
+                to_transferstr = to_transferstr + str(val)
+            else:
+                to_transferstr = to_transferstr + '\n' + str(val)
+        l = len(to_transferstr)
+        to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
+        default_path = self.default_dir + filename +".arb"
+        self.write(f'MMEM:DOWN:FNAM "{default_path}"')
+        #sleep(.01)
+        self.write('MMEM:DOWN:DATA ' + to_transferstr)
+        #sleep(.01)
+
+    def delete_all_user(self, key=''):
+        self.write('WLIST:WAV:DEL ALL')
 
     def data_volatile_clear(self):
         """
@@ -389,48 +520,6 @@ class Agilent33500(Instrument):
         will occur if a trace is loaded which already exists in the memory.
         """
         self.write("DATA:VOL:CLE")
-
-    def data_arb(self, arb_name, data_points, data_format='DAC'):
-        """
-        Uploads an arbitrary trace into the volatile memory of the device. The data_points can be
-        given as comma separated 16 bit DAC values (ranging from -32767 to +32767), as comma
-        separated floating point values (ranging from -1.0 to +1.0) or as a binary data stream.
-        Check the manual for more information. The storage depends on the device type and ranges
-        from 8 Sa to 16 MSa (maximum).
-        TODO: *Binary is not yet implemented*
-
-        :param arb_name: The name of the trace in the volatile memory. This is used to access the
-                         trace.
-        :param data_points: Individual points of the trace. The format depends on the format
-                            parameter.
-
-                            format = 'DAC' (default): Accepts list of integer values ranging from
-                            -32767 to +32767 (32767 == 2**15-1). Minimum of 8 a maximum of 65536 points.
-                            Transfer is binary
-
-                            format = 'float': Accepts list of floating point values ranging from
-                            -1.0 to +1.0. Minimum of 8 a maximum of 65536 points. Transfer is ASCII
-        """
-        if data_format == 'DAC':
-            data = np.array(data_points, dtype=int)
-            endianness = self.is_big_endian
-            self.adapter.write_binary_values(f"DATA:ARB:DAC {arb_name}, ", data, is_big_endian=endianness, datatype='h')
-            return
-        elif data_format == 'float':
-            separator = ', '
-            data_points_str = [str(item) for item in data_points]  # Turn list entries into strings
-            data_string = separator.join(data_points_str)  # Join strings with separator
-            print(f"DATA:ARB {arb_name}, {data_string}")
-            self.write(f"DATA:ARB {arb_name}, {data_string}")
-            return
-        else:
-            raise ValueError('Undefined format keyword was used. Valid entries are "DAC", "float"')
-
-    def send_sequence(self, sequence_string):
-        strlen = len(sequence_string)
-        numlen = len(str(strlen))
-        command = f"DATA:SEQ #{numlen}{strlen}{sequence_string}"
-        self.write(command)
 
 
     display = Instrument.setting(
@@ -495,4 +584,9 @@ class Agilent33500(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+    )
+
+    arb_sync = Instrument.setting(
+        "FUNC:ARB:SYNC",
+        """ Synchronize both arb channels"""
     )
