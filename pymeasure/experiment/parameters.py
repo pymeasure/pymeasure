@@ -48,8 +48,8 @@ class Parameter:
         self.name = name
         separator = ": "
         if separator in name:
-            raise ValueError("The provided name argument '%s' contains the sparator '%s'."
-                             % (name, separator))
+            raise ValueError(f"The provided name argument '{name}' contains the "
+                             "separator '{separator}'.")
 
         self._value = None
         if default is not None:
