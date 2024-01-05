@@ -59,6 +59,7 @@ from . import mksinst
 from . import newport
 from . import ni
 from . import novanta
+from . import optosigma
 from . import oxfordinstruments
 from . import parker
 from . import pendulum
