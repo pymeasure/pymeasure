@@ -45,6 +45,7 @@ Instruments by manufacturer:
    ipgphotonics/index
    keithley/index
    keysight/index
+   kuhneelectronic/index
    lakeshore/index
    lecroy/index
    mksinst/index

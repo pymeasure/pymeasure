@@ -53,6 +53,7 @@ from . import inficon
 from . import ipgphotonics
 from . import keithley
 from . import keysight
+from . import kuhneelectronic
 from . import lakeshore
 from . import lecroy
 from . import mksinst

@@ -1,0 +1,7 @@
+########################################################
+KU SG 2.45 250 A - 2.45 GHz ISM-Band Microwave Generator 
+########################################################
+
+.. autoclass:: pymeasure.instruments.kuhneelectronic.Kusg245_250A
+    :members:
+    :show-inheritance:
