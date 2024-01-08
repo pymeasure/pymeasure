@@ -52,6 +52,7 @@ class Agilent4294A(Instrument):
         "STAR?", "STAR %d HZ", "Control the start frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
+
     stop_frequency = Instrument.control(
         "STOP?", "STOP %d HZ", "Control the stop frequency in Hz",
         validator=strict_range, values=[40, 140E6]
