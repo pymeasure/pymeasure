@@ -28,6 +28,34 @@ import pandas as pd
 import numpy as np
 import os
 
+# Set of valid arguments for the MEAS? command
+MEASUREMENT_TYPES = [
+    "IMPH",
+    "IRIM",
+    "LSR",
+    "LSQ",
+    "CSR",
+    "CSQ",
+    "CSD",
+    "AMPH",
+    "ARIM",
+    "LPG",
+    "LPQ",
+    "CPG",
+    "CPQ",
+    "CPD",
+    "COMP",
+    "IMLS",
+    "IMCS",
+    "IMLP",
+    "IMCP",
+    "IMRS",
+    "IMQ",
+    "IMD",
+    "LPR",
+    "CPR",
+]
+
 
 class Agilent4294A(Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
@@ -57,44 +85,23 @@ class Agilent4294A(Instrument):
         "STOP?", "STOP %d HZ", "Control the stop frequency in Hz",
         validator=strict_range, values=[40, 140E6]
     )
+
     num_points = Instrument.control(
         "POIN?", "POIN %d", "Control the number of points measured at each sweep",
         validator=strict_discrete_set, values=range(2, 802),
         cast=int,
     )
-    measurement = Instrument.control(
-        "MEAS?", "MEAS %d", "Control the measurement type",
-        validator=strict_discrete_set, values=[
-            "IMPH",
-            "IRIM",
-            "LSR",
-            "LSQ",
-            "CSR",
-            "CSQ",
-            "CSD",
-            "AMPH",
-            "ARIM",
-            "LPG",
-            "LPQ",
-            "CPG",
-            "CPQ",
-            "CPD",
-            "COMP",
-            "IMLS",
-            "IMCS",
-            "IMLP",
-            "IMCP",
-            "IMRS",
-            "IMQ",
-            "IMD",
-            "LPR",
-            "CPR",
-        ]
+
+    measurement_type = Instrument.control(
+        "MEAS?", "MEAS %d", "Control the measurement type. See MEASUREMENT_TYPES",
+        validator=strict_discrete_set, values=MEASUREMENT_TYPES,
     )
+
     active_trace = Instrument.control(
         "TRAC?", "TRAC %s", "Control the active trace",
         validator=strict_discrete_set, values=["A", "B"]
     )
+
     title = Instrument.control(
         "TITL?", 'TITL "%s"', "Control the title of the active trace"
     )
@@ -120,16 +127,13 @@ class Agilent4294A(Instrument):
         self.write(f'SAVDTIF "{REMOTE_FILE}"')
 
         vErr = self.ask("OUTPERRO?").split(",")
-        print(vErr)
         if not int(vErr[0]) == 0:
             self.write(f'PURG "{REMOTE_FILE}"')
             self.write(f'SAVDTIF "{REMOTE_FILE}"')
             vErr = self.ask("OUTPERRO?").split(",")
-            print(vErr)
 
         self.write(f'ROPEN "{REMOTE_FILE}"')
         lngFileSize = int(self.ask(f'FSIZE? "{REMOTE_FILE}"'))
-        print(lngFileSize)
         MAX_BUFF_SIZE = 16384
         iBufCnt = lngFileSize // MAX_BUFF_SIZE
         if lngFileSize % MAX_BUFF_SIZE > 0:
