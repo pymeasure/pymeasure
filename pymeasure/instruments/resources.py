@@ -42,7 +42,7 @@ def list_resources():
     rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()
     for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
+        # trying to catch errors in communication
         try:
             res = rm.open_resource(instr)
             # try to avoid errors from *idn?

@@ -45,7 +45,7 @@ def fromUi(*args, **kwargs):
     """ Returns a Qt object constructed using loadUiType
     based on its arguments. All QWidget objects in the
     form class are set in the returned object for easy
-    accessability.
+    accessibility.
     """
     form_class, base_class = loadUiType(*args, **kwargs)
     widget = base_class()

@@ -47,7 +47,7 @@ class CNT91(Instrument):
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
 
-    def __init__(self, adapter, name="Pendulum CNT-91",  **kwargs):
+    def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
         # allow long-term measurements, add 30 s for data transfer
         kwargs.setdefault("timeout", 24 * 60 * 60 * 1000 + 30)
         kwargs.setdefault("read_termination", "\n")
@@ -55,7 +55,7 @@ class CNT91(Instrument):
         super().__init__(
             adapter,
             name,
-            asrl={'baud_rate': 256000},
+            asrl={"baud_rate": 256000},
             **kwargs,
         )
 
@@ -139,7 +139,7 @@ class CNT91(Instrument):
         Configure the counter for an array of measurements.
 
         :param n_samples: The number of samples
-        :param channel: Measurment channel (A, B, C, E, INTREF)
+        :param channel: Measurement channel (A, B, C, E, INTREF)
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
         n_samples = truncated_range(n_samples, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])
