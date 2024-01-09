@@ -1,10 +1,14 @@
 Upcoming version
 ================
 
+Added features
+- SCPI instruments have :code:`next_error` property giving the next error.
+
 Deprecated features
 -------------------
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
 - Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
+- Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
 
 GUI
 ---

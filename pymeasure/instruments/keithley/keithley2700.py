@@ -23,6 +23,7 @@
 #
 
 import logging
+from warnings import warn
 
 from pymeasure.instruments import Instrument
 
@@ -278,7 +279,7 @@ class Keithley2700(KeithleyBuffer, Instrument):
         self.beep(base_frequency * 6.0 / 4.0, duration)
 
     @property
-    def error(self):
+    def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
@@ -288,15 +289,20 @@ class Keithley2700(KeithleyBuffer, Instrument):
         message = err[1].replace('"', '')
         return (code, message)
 
+    @property
+    def error(self):
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
+
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
-        code, message = self.error
+        code, message = self.next_error
         while code != 0:
             t = time.time()
             log.info("Keithley 2700 reported error: %d, %s" % (code, message))
             print(code, message)
-            code, message = self.error
+            code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2700 error retrieval.")
 

@@ -25,6 +25,7 @@
 import logging
 import time
 import re
+from warnings import warn
 
 import numpy as np
 
@@ -280,7 +281,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         self.check_errors()
 
     @property
-    def error(self):
+    def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
         err = self.values(":system:error?")
@@ -290,14 +291,19 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         message = err[1].replace('"', '')
         return (code, message)
 
+    @property
+    def error(self):
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
+
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
-        code, message = self.error
+        code, message = self.next_error
         while code != 0:
             t = time.time()
             log.info("Keithley 6517B reported error: %d, %s", code, message)
-            code, message = self.error
+            code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 6517B error retrieval.")
 
