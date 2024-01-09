@@ -418,7 +418,7 @@ class Results:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
-                    header += line.strip() + Results.LINE_BREAK
+                    header += line.strip('\t\v\n\r\f') + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
