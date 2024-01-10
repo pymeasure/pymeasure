@@ -31,93 +31,118 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-class SHRC203Errors(Enum):
+
+class D(Exception):
     """
-    IntFlag type to decode error register queries. Error codes are as follows:
-    0 ~ 1FFFFFF(Hexadecimal number)
-    1bit: Normal (S1 to S10 and emergency stop has not occurred)
-    2bit: Command error
-    3bit: Scale error (S1)
-    4bit: Disconnection error (S2)
-    5bit: Overflow error (S4)
-    6bit: Emergency stop
-    7bit: Hunting error (S3)
-    8bit: Limit error (S5)
-    9bit: Counter overflow (S6)
-    10bit: Auto config error
-    11bit: 24V IO overload warning (W1)
-    12bit: 24V terminal block overload warning (W2)
-    13bit: System error (S7)
-    14bit: Motor driver overheat warning (W3)
-    15bit: Motor driver overheat error (S10)
-    16bit: Out of in-position range   (after positioning is completed) (READY)
-    17bit: Out of in-position range (During positioning operation) (BUSY)
-    18bit: Logical origin return is in progress
-    19bit: Mechanical origin return is in progress
-    20bit: CW limit detection
-    21bit: CCW limit detection
-    22bit: CW software limit stop
-    23bit: CCW software limit stop
-    24bit: NEAR sensor detection
-    25bit: ORG sensor detection
+    Exception raised when an invalid axis is specified.
+
+    TODO
+    param:
     """
 
-    NO_ERR = "1"
-    CMD_ERR = "3"
-    SCALE_ERR = "7"
-    DISCONN_ERR = "F"
-    OVERFLOW_ERR = "1F"
-    EMERGENCY_STOP = "3F"
-    HUNTING_ERR = "7F"
-    LIMIT_ERR = "FF"
-    COUNTER_OVERFLOW = "1FF"
-    AUTO_CONFIG_ERR = "3FF"
-    IO_OVERLOAD_WARNING = "7FF"
-    TERMINAL_OVERLOAD_WARNING = "FFF"
-    SYSTEM_ERR = "1FFF"
-    DRIVER_OVERHEAT_WARNING = "3FFF"
-    DRIVER_OVERHEAT_ERR = "7FFF"
-    OUT_OF_RANGE_READY = "FFFF"
-    OUT_OF_RANGE_BUSY = "1FFFF"
-    LOGICAL_ORIGIN_RETURN = "3FFFF"
-    MECHANICAL_ORIGIN_RETURN = "7FFFF"
-    CW_LIMIT_DETECTION = "FFFFF"
-    CCW_LIMIT_DETECTION = "1FFFFF"
-    CW_SOFTWARE_LIMIT_STOP = "3FFFFF"
-    CCW_SOFTWARE_LIMIT_STOP = "7FFFFF"
-    NEAR_SENSOR_DETECTION = "FFFFFF"
-    ORG_SENSOR_DETECTION = "1FFFFFF"
+    MESSAGES = {
+        '1': 'Normal (S1 to S10 and emergency stop has not occurred)',
+        '3': 'Command error',
+        '7': 'Scale error (S1)',
+        'F': 'Disconnection error (S2)',
+        '1F': 'Overflow error (S4)',
+        '3F': 'Emergency stop',
+        '7F': 'Hunting error (S3)',
+        'FF': 'Limit error (S5)',
+        '1FF': 'Counter overflow (S6)',
+        '3FF': 'Auto config error',
+        '7FF': '24V IO overload warning (W1)',
+        'FFF': '24V terminal block overload warning (W2)',
+        '1FFF': 'System error (S7)',
+        '3FFF': 'Motor driver overheat warning (W3)',
+        '7FFF': 'Motor driver overheat error (S10)',
+        'FFFF': 'Out of in-position range   (after positioning is completed) (READY)',
+        '1FFFF': 'Out of in-position range (During positioning operation) (BUSY)',
+        '3FFFF': 'Logical origin return is in progress',
+        '7FFFF': 'Mechanical origin return is in progress',
+        'FFFFF': 'CW limit detection',
+        '1FFFFF': 'CCW limit detection',
+        '3FFFFF': 'CW software limit stop',
+        '7FFFFF': 'CCW software limit stop',
+        'FFFFFF': 'NEAR sensor detection',
+        '1FFFFFF': 'ORG sensor detection',
+    }
+
+    def __init__(self, axis, code):
+        """
+        :param code: The error code returned by the controller, as a string of comma-separated values  (e.g. "1,1,1,R,B,R") 
+        """
+        self.axis = axis
+        self.code = code.split(",")
+        self.error = code[0]
+        self.message = self.MESSAGES[self.error]
+        self.status = code[1]
+
+    # def __str__(self):
+    #     self.error_message = "OptoSigma SHRC-203"
+    #     for i in range(len(self.code)):
+    #         error = self.code[i]
+    #         message = self.MESSAGES[error]
+    #         self.error_message += " Axis {} Error: {}\n".format(i + 1, message)
+    #     return self.error_message
+
+    def __str__(self):
+        return f"OptoSigma SHRC-203 Axis {self.axis} Error: {self.message}"
+
+
+class Axis:
+    """ Represents an axis of OptoSigma SHRC203 Three-Axis Controller,
+    which can have independent parameters from the other axes.
+
+    """
+
+    def __init__(self, axis, controller):
+        self.axis = str(axis)
+        self.controller = controller
 
 
 class SHRC203(Instrument):
     """
-    Represents the OptoSigma SHRC203 three-axis controller and provides a
+    Represents the OptoSigma SHRC-203 Three-Axis Controller and provides a
     high-level interface for interacting with the instrument.
+
+    By default this instrument is constructed with x, y, and z
+    attributes that represent axes 1, 2, and 3. Custom implementations
+    can overwrite this depending on the avalible axes. Axes are controlled
+    through an :class:`Axis <pymeasure.instruments.optosigma.shrc203.Axis>`
+    class.
     
     :param adapter: The VISA resource name of the controller
     :param name: The name of the controller
+    :param query_delay: The time delay between successive queries in seconds, default 0.05
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
 
-    # TODO: correct values, {axis}
-    speed = Instument.control("?D:{axis}", "D:{axis} {value}", "docs", validator=truncated_range, values=[0, 10000], units="mm/s")
+    # TODO: make command with no axis ->  !:!, RESET, MODE, FMT,
 
-    # TODO: correct values
-    division = Instrument.control("","","docs", validator=strict_discrete_set, values=[1, 2, 5, 10, 20, 50, 100, 200, 500, 1000])
 
 
     def __init__(self,
                  adapter,
                  name="OptoSigma SHRC-203 Stage Controller",
+                 query_delay=0.05,
                  **kwargs
                  ):
+        self.query_delay = query_delay
+        self.termination_str = "\r\n"
+
+        self.x = Axis(1, self)
+        self.y = Axis(2, self)
+        self.z = Axis(3, self)
 
         super().__init__(
             adapter,
             name,
+            write_termination=self.termination_str,
+            read_termination=self.termination_str,
+            usb={baud_rate: 38400},
             **kwargs
         )
-
 
     def home(self):
         """
@@ -128,8 +153,11 @@ class SHRC203(Instrument):
     def move(self, axis, position):
         """
         Move the stage to the specified position.
+
+        :param axis: The axis to move
+        :param position: The position to move to
         """
-        self.write
+        self.write(f"{axis}:M {position}")
 
     def wait_for(self, query_delay=0):
         """
