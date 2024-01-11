@@ -67,18 +67,21 @@ class AxisError(Exception):
         '1FFFFFF': 'ORG sensor detection',
     }
 
-    def __init__(self, axis, code):
-        """
-        :param code: The error code returned by the controller, as a string of comma-separated values  (e.g. "1,1,1,R,B,R") 
-        """
-        self.axis = axis
-        self.code = code.split(",")
-        self.error = code[0]
-        self.message = self.MESSAGES[self.error]
-        self.status = code[1]
+    # def __init__(self, code):
+    #     """
+    #     :param code: The error code returned by the controller, as a string of comma-separated values  (e.g. "1,1,1,R,B,R")
+    #     """
+    #     self.code = code.split(",")
+    #     self.error = code[0]
+    #     self.message = self.MESSAGES[self.error]
+    #     self.status = code[1]
+
+    def __init__(self, code):
+        # self.error = str(code)
+        self.message = self.MESSAGES[code]
 
     def __str__(self):
-        return f"OptoSigma SHRC-203 Axis {self.axis} Error: {self.message}"
+        return f"OptoSigma SHRC-203 Error: {self.message}"
 
 
 class Axis(Channel):
@@ -101,22 +104,46 @@ class Axis(Channel):
                                map_values=True
                                )
 
-    speed = Instrument.control()
-
-
+    speed = Instrument.control("?:D{ch}", "D:{ch}S%dF%dR%d",
+                               """ A integer property that controls the speed of the axis in pulses/s units. 
+                               Example: D:1S100F1000R100 sets the operating speed of the first axis as follows: 
+                               the minimum speed (S) 100pls/s, 
+                               the maximum speed (F) 1000pls/s, 
+                               acceleration / deceleration time (R) 100ms.
+                               """,
+                               validator=truncated_range,
+                               values=[1, 1000000]
+                               )
 
     # TODO: continue editing here
-    absolute_position = Instrument.control()
+    position_positive = Instrument.control("Q:", "A:{ch}+%d",
+                                           """Query or set the 0 or position coordinate of the axis.""",
+                                           validator=truncated_range,
+                                           values=[0, 2147483647]
+                                           )
 
-    relative_position = Instrument.control()
+    position_negative = Instrument.control("Q:", "A:{ch}+%d",
+                                           """Query or set the 0 or negative coordinate of the axis.""",
+                                           validator=truncated_range,
+                                           values=[-2147483647, 0]
+                                           )
 
-    motion_done = Instrument.measurement()
+    motion_done = Instrument.measurement("!:{ch}S",
+                                         """Query to see if the axis is currently moving. "R": ready, "B": busy""")
 
-    error = Instrument.measurement()
+    error = Instrument.measurement("SRQ:{ch}S", """ Get an error code from the motion controller.""",
+                                   get_process=lambda v: AxisError(v.split(",")[1])
+                                   )
 
     def __init__(self, axis, controller):
         self.axis = str(axis)
         self.controller = controller
+
+    def set_limit(self, lower, upper):
+        """ Set the absolute position limits of the axis.
+        """
+        self.position_positive_values = [0, upper]
+        self.position_negative_values = [lower, 0]
 
 
 class SHRC203(Instrument):
@@ -139,6 +166,7 @@ class SHRC203(Instrument):
     axis_x = Instrument.ChannelCreator(Axis, "1")
     axis_y = Instrument.ChannelCreator(Axis, "2")
     axis_z = Instrument.ChannelCreator(Axis, "3")
+    axis_all = Instrument.ChannelCreator(Axis, "W")
 
     busy = Instrument.measurement("!:!",
                                   """Query to see if the controller is currently moving a motor. "R": ready, "B": busy"""
