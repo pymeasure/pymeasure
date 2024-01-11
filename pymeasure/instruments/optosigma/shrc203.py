@@ -23,21 +23,20 @@
 #
 
 import logging
-from pymeasure.adapters import Adapter
-from enum import StrEnum
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
+# from pymeasure.instruments.channel import ChannelCreator
+from pymeasure.instruments import Channel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class D(Exception):
+class AxisError(Exception):
     """
-    Exception raised when an invalid axis is specified.
+    Raised when a particular axis causes an error for OptoSigma SHRC-203.
 
-    TODO
-    param:
     """
 
     MESSAGES = {
@@ -78,23 +77,36 @@ class D(Exception):
         self.message = self.MESSAGES[self.error]
         self.status = code[1]
 
-    # def __str__(self):
-    #     self.error_message = "OptoSigma SHRC-203"
-    #     for i in range(len(self.code)):
-    #         error = self.code[i]
-    #         message = self.MESSAGES[error]
-    #         self.error_message += " Axis {} Error: {}\n".format(i + 1, message)
-    #     return self.error_message
-
     def __str__(self):
         return f"OptoSigma SHRC-203 Axis {self.axis} Error: {self.message}"
 
 
-class Axis:
+class Axis(Channel):
     """ Represents an axis of OptoSigma SHRC203 Three-Axis Controller,
     which can have independent parameters from the other axes.
 
     """
+
+    open_loop = Instrument.control("?:F", "F:W%s",
+                                   """Query or set the open loop mode. 0: Close loop, 1: Open loop""",
+                                   validator=strict_discrete_set,
+                                   values=["1", "0"]
+                                   )
+
+    units = Instrument.setting("Q:S%", """ A string property that controls the displacement units of the
+        axis""",
+                               validator=strict_discrete_set,
+                               values={'nanometer': "N", 'micrometer': "U", 'millimeter': "M", 'degree': "D",
+                                       'no unit': "P"},
+                               map_values=True
+                               )
+
+    # TODO: continue editing here
+    absolute_position = Instrument.control()
+
+    relative_position = Instrument.control()
+
+    motion_done = Instrument.measurement()
 
     def __init__(self, axis, controller):
         self.axis = str(axis)
@@ -118,9 +130,18 @@ class SHRC203(Instrument):
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
 
-    # TODO: make command with no axis ->  !:!, RESET, MODE, FMT,
+    axis_x = Instrument.ChannelCreator(Axis, "1")
+    axis_y = Instrument.ChannelCreator(Axis, "2")
+    axis_z = Instrument.ChannelCreator(Axis, "3")
 
+    busy = Instrument.measurement("!:!",
+                                  """Query to see if the controller is currently moving a motor. "R": ready, "B": busy"""
+                                  )
 
+    mode = Instrument.control("?:MODE", "MODE:%s", """Query or set the controller mode.""",
+                              validator=strict_discrete_set,
+                              values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"]
+                              )
 
     def __init__(self,
                  adapter,
@@ -131,9 +152,9 @@ class SHRC203(Instrument):
         self.query_delay = query_delay
         self.termination_str = "\r\n"
 
-        self.x = Axis(1, self)
-        self.y = Axis(2, self)
-        self.z = Axis(3, self)
+        # self.x = Axis(1, self)
+        # self.y = Axis(2, self)
+        # self.z = Axis(3, self)
 
         super().__init__(
             adapter,
