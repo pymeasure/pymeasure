@@ -101,12 +101,18 @@ class Axis(Channel):
                                map_values=True
                                )
 
+    speed = Instrument.control()
+
+
+
     # TODO: continue editing here
     absolute_position = Instrument.control()
 
     relative_position = Instrument.control()
 
     motion_done = Instrument.measurement()
+
+    error = Instrument.measurement()
 
     def __init__(self, axis, controller):
         self.axis = str(axis)
@@ -169,23 +175,43 @@ class SHRC203(Instrument):
         """
         Perform mechanical origin return.
         """
-        self.write("H")
 
-    def move(self, axis, position):
+    #     TODO: implement this
+
+    def move_absolute(self, axis, position):
         """
         Move the stage to the specified position.
 
         :param axis: The axis to move
         :param position: The position to move to
         """
-        self.write(f"{axis}:M {position}")
 
-    def wait_for(self, query_delay=0):
+    #     TODO: implement this
+
+    def move_relative(self, axis, position):
+        """
+        Move the stage by the specified amount.
+
+        :param axis: The axis to move
+        :param position: The position to move by
         """
 
+    #     TODO: implement this
+
+    def zero(self):
+        """ Resets the axis position to be zero at the current poisiton.
         """
 
-    def speed(self, ):
+    # TODO: implement this
+
+    def stop(self):
+        """
+        Stop all motion.
+        """
+
+    #     TODO: implement this
+
+    def wait_for_completion(self, query_delay=0):
         """
 
         """
