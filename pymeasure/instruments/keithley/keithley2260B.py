@@ -56,6 +56,7 @@ class Keithley2260B(Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=True,
             read_termination=read_termination,
             **kwargs
         )
@@ -132,7 +133,7 @@ class Keithley2260B(Instrument):
     def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
-        err = self.values(":system:error?")
+        err = super().next_error
         if len(err) < 2:
             err = self.read()  # Try reading again
         code = err[0]

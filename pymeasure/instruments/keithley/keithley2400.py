@@ -372,7 +372,9 @@ class Keithley2400(KeithleyBuffer, Instrument):
 
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(
-            adapter, name, **kwargs
+            adapter, name,
+            includeSCPI=True,
+            **kwargs
         )
 
     def enable_source(self):
@@ -512,7 +514,7 @@ class Keithley2400(KeithleyBuffer, Instrument):
     def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
-        err = self.values(":system:error?")
+        err = super().next_error
         if len(err) < 2:
             err = self.read()  # Try reading again
         code = err[0]

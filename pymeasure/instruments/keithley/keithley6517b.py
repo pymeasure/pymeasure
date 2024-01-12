@@ -196,6 +196,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
     def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
             adapter, name,
+            includeSCPI=True,
             **kwargs
         )
 
@@ -284,7 +285,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
     def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
-        err = self.values(":system:error?")
+        err = super().next_error
         if len(err) < 2:
             err = self.read()  # Try reading again
         code = err[0]
