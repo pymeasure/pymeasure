@@ -26,7 +26,8 @@ from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range
 
 from time import sleep
-from numpy import linspace
+
+import numpy as np
 
 
 class SM7045D(SCPIUnknownMixin, Instrument):
@@ -124,7 +125,7 @@ class SM7045D(SCPIUnknownMixin, Instrument):
 
         curr = self.current
         n = round(abs(curr - target_current) / current_step) + 1
-        for i in linspace(curr, target_current, n):
+        for i in np.linspace(curr, target_current, n):
             self.current = i
             sleep(0.1)
 
