@@ -35,7 +35,6 @@ from pymeasure.instruments.validators import strict_discrete_set, \
 
 from .base import OxfordInstrumentsBase
 
-
 # Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -540,7 +539,7 @@ class ITC503(OxfordInstrumentsBase):
         # Pad with zeros to wipe unused steps (total 16) of the sweep program
         padding = 16 - temperatures.size
         temperatures = np.pad(temperatures, (0, padding), 'constant',
-                                 constant_values=temperatures[-1])
+                              constant_values=temperatures[-1])
         sweep_time = np.pad(sweep_time, (0, padding), 'constant')
         hold_time = np.pad(hold_time, (0, padding), 'constant')
 
