@@ -70,11 +70,13 @@ class HP34401A(Instrument):
 
     BOOL_MAPPINGS = {True: 1, False: 0}
 
+    # Below: stop_bits: 20 comes from
+    # https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.StopBits
     def __init__(self, adapter, name="HP 34401A", **kwargs):
         super().__init__(
             adapter,
             name,
-            asrl={'baud_rate': 9600, 'data_bits': 8, 'parity': 0},
+            asrl={'baud_rate': 9600, 'data_bits': 8, 'parity': 0, 'stop_bits': 20},
             **kwargs
         )
 
@@ -300,14 +302,20 @@ class HP34401A(Instrument):
     )
 
     # System related commands
-    remote_local_state = Instrument.setting(
-        "SYST:%s",
-        """ A string property that controls the remote/local state of the
-        function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
-        This setting can only be set. """,
+    remote_control_enabled = Instrument.control(
+        "SYST: ", "SYST:%s",
+        """Control whether remote is enabled.""",
         validator=strict_discrete_set,
-        values=["LOC", "LOCAL", "REM", "REMOTE", "RWL", "RWLOCK"],
-        map_values=False,
+        values={True: "REM", False: "LOC"},
+        map_values=True,
+    )
+
+    remote_lock_enabled = Instrument.control(
+        "SYST: ", "SYST:%s",
+        """Control whether the beeper is enabled.""",
+        validator=strict_discrete_set,
+        values={True: "RWL", False: "LOC"},
+        map_values=True,
     )
 
     def beep(self):
