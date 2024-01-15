@@ -300,6 +300,9 @@ class ANC300Controller(Instrument):
         for i, axis in enumerate(axisnames):
             setattr(self, axis, self.add_child(Axis, id=str(i + 1)))
 
+        self._init_communication(passwd)
+
+    def _init_communication(self, passwd):
         self.wait_for()
         # clear messages sent upon opening the connection,
         # this contains some non-ascii characters!

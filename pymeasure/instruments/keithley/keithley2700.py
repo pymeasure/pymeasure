@@ -147,6 +147,9 @@ class Keithley2700(KeithleyBuffer, Instrument):
             **kwargs
         )
 
+        self._init_communication()
+
+    def _init_communication(self):
         self.check_errors()
         self.determine_valid_channels()
 

@@ -25,9 +25,9 @@
 import importlib
 from pathlib import Path
 import pytest
-from unittest.mock import MagicMock
 
 from pymeasure import instruments
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments import Instrument, Channel
 
 
@@ -86,18 +86,8 @@ for device in devices.union(channels):
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
-    "SwissArmyFake",
-    "FakeInstrument",
-    "ThorlabsPM100USB",
-    "Keithley2700",
-    "TC038",
-    "Agilent34450A",
     "AWG401x_AWG",
     "AWG401x_AFG",
-    "VARX",
-    "HP8116A",
-    "IBeamSmart",
-    "ANC300Controller",
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [
@@ -190,6 +180,13 @@ grandfathered_docstring_instruments = [
 ]
 
 
+def create_init_communication_less_instrument(cls):
+    class ModifiedCls(cls):
+        def _init_communication(self, *args, **kwargs):
+            pass
+    return ModifiedCls
+
+
 @pytest.mark.parametrize("cls", devices)
 def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument."
@@ -201,7 +198,9 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
-    cls(adapter=MagicMock())
+
+    cls = create_init_communication_less_instrument(cls)
+    cls(adapter=ProtocolAdapter())
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -211,7 +210,9 @@ def test_name_argument(cls):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
-    inst = cls(adapter=MagicMock(), name="Name_Test")
+
+    cls = create_init_communication_less_instrument(cls)
+    inst = cls(adapter=ProtocolAdapter(), name="Name_Test")
     assert inst.name == "Name_Test"
 
 
@@ -231,10 +232,13 @@ def test_kwargs_to_adapter(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
+    elif cls.__name__ in ("FakeInstrument", "SwissArmyFake"):
+        pytest.skip("Fake instruments replace the adapter.")
 
+    cls = create_init_communication_less_instrument(cls)
     with pytest.raises(ValueError,
                        match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
-        cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
+        cls(adapter=SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
 
 
 def property_name_to_id(value):

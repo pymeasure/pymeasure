@@ -65,6 +65,9 @@ class AMI430(Instrument):
             **kwargs
         )
         # Read twice in order to remove welcome/connect message
+        self._init_communication()
+
+    def _init_communication(self):
         self.read()
         self.read()
 

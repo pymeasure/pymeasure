@@ -26,7 +26,7 @@ import re
 import time
 import numpy as np
 
-from pymeasure.adapters import FakeAdapter
+from pymeasure.adapters import Adapter, FakeAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
@@ -37,9 +37,11 @@ class FakeInstrument(Instrument):
     """
 
     def __init__(self, adapter=None, name="Fake Instrument", includeSCPI=False, **kwargs):
+        if not isinstance(adapter, Adapter):
+            adapter = FakeAdapter()
         super().__init__(
-            FakeAdapter(**kwargs),
-            name,
+            adapter=adapter,
+            name=name,
             includeSCPI=includeSCPI,
             **kwargs
         )
@@ -88,8 +90,9 @@ class SwissArmyFake(FakeInstrument):
     include 'voltages', sinusoidal 'waveforms', and mono channel 'image data'.
     """
 
-    def __init__(self, name="Mock instrument", wait=.1, **kwargs):
+    def __init__(self, name="Mock instrument", wait=.1, adapter=None, **kwargs):
         super().__init__(
+            adapter=adapter,
             name=name,
             includeSCPI=False,
             **kwargs
