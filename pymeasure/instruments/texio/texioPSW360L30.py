@@ -70,10 +70,10 @@ class TexioPSW360L30(Keithley2260B):
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
-        code, message = self.error
+        code, message = self.next_error
         while code != 0:
             t = time.time()
             log.info("TEXIO PSW-360L30 reported error: %d, %s" % (code, message))
-            code, message = self.error
+            code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")

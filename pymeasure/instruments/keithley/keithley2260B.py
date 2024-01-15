@@ -56,6 +56,7 @@ class Keithley2260B(Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=True,
             read_termination=read_termination,
             **kwargs
         )
@@ -127,24 +128,26 @@ class Keithley2260B(Instrument):
         self.output_enabled = value
 
     @property
-    def error(self):
+    def next_error(self):
         """ Get a tuple of an error code and message from a
         single error. """
-        err = self.values(":system:error?")
+        err = super().next_error
         if len(err) < 2:
             err = self.read()  # Try reading again
         code = err[0]
         message = err[1].replace('"', "")
         return (code, message)
 
+    error = next_error
+
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
-        code, message = self.error
+        code, message = self.next_error
         while code != 0:
             t = time.time()
             log.info("Keithley 2260B reported error: %d, %s" % (code, message))
-            code, message = self.error
+            code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2260B error retrieval.")
 

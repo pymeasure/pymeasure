@@ -23,6 +23,8 @@
 
 import logging
 import time
+from warnings import warn
+
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
@@ -45,7 +47,7 @@ class Keithley2600(Instrument):
         self.ChB = Channel(self, 'b')
 
     @property
-    def error(self):
+    def next_error(self):
         """ Returns a tuple of an error code and message from a
         single error. """
         err = self.ask('print(errorqueue.next())')
@@ -62,14 +64,19 @@ class Keithley2600(Instrument):
         log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
         return (code, message)
 
+    @property
+    def error(self):
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
+
     def check_errors(self):
         """ Logs any system errors reported by the instrument.
         """
-        code, message = self.error
+        code, message = self.next_error
         while code != 0:
             t = time.time()
             log.info("Keithley 2600 reported error: %d, %s" % (code, message))
-            code, message = self.error
+            code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for Keithley 2600 error retrieval.")
 
@@ -110,7 +117,7 @@ class Channel:
 
     source_mode = Instrument.control(
         'source.func', 'source.func=%d',
-        """Property controlling the channel soource function (Voltage or Current)
+        """Property controlling the channel source function (Voltage or Current)
         """,
         validator=strict_discrete_set,
         values={'voltage': 1, 'current': 0},
