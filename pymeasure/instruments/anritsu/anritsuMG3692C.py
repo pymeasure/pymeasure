@@ -30,13 +30,11 @@ class AnritsuMG3692C(Instrument):
     """
     power = Instrument.control(
         ":POWER?;", ":POWER %g dBm;",
-        """ A floating point property that represents the output power
-        in dBm. This property can be set. """
+        """Control the output power in dBm. (float))"""
     )
     frequency = Instrument.control(
         ":FREQUENCY?;", ":FREQUENCY %e Hz;",
-        """ A floating point property that represents the output frequency
-        in Hz. This property can be set. """
+        """Control the output frequency in Hz. This property can be set. (float)"""
     )
 
     def __init__(self, adapter, name="Anritsu MG3692C Signal Generator", **kwargs):
@@ -48,9 +46,7 @@ class AnritsuMG3692C(Instrument):
 
     @property
     def output(self):
-        """ A boolean property that represents the signal output state.
-        This property can be set to control the output.
-        """
+        """Control the signal output state. (bool)"""
         return int(self.ask(":OUTPUT?")) == 1
 
     @output.setter
