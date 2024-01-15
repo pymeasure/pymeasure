@@ -522,7 +522,7 @@ class HP8116A(Instrument):
         self.write(digit.value + direction.value)
 
     def GPIB_trigger(self):
-        """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger). """
+        """ Initiate trigger via low-level GPIB-command (aka GET - group execute trigger). """
         self.adapter.connection.assert_trigger()
 
     def reset(self):

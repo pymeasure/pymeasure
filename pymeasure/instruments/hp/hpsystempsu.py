@@ -148,7 +148,7 @@ class HP6632A(HPLegacyInstrument):
         :return error_status: one byte with the error status register content
         :rtype error_status: int
         """
-        # Read the error status reigster only one time for this method, as
+        # Read the error status register only one time for this method, as
         # the manual states that reading the error status register also clears it.
         current_errors = int(self.ask("ERR?"))
         if current_errors != 0:
@@ -162,7 +162,7 @@ class HP6632A(HPLegacyInstrument):
         :return error_status: one byte with the error status register content
         :rtype error_status: int
         """
-        # Read the error status reigster only one time for this method, as
+        # Read the error status register only one time for this method, as
         # the manual states that reading the error status register also clears it.
         current_errors = int(self.ask("TEST?"))
         if current_errors != 0:
@@ -179,7 +179,7 @@ class HP6632A(HPLegacyInstrument):
     delay = HPLegacyInstrument.setting(
         "DELAY %g",
         """
-        A float propery that changes the reprogamming delay
+        A float property that changes the reprogamming delay
         Default values:
         8 ms in FAST mode
         80 ms in NORM mode
@@ -207,7 +207,7 @@ class HP6632A(HPLegacyInstrument):
         Returns an object representing the current status of the unit.
 
         """
-        # overloading the already exisiting property because of the different command
+        # overloading the already existing property because of the different command
         reply = bytearray(int(self.ask("STS?")).to_bytes(
             self.status_bytes_count, "little"))
         return self.status_bits.from_buffer(reply)
