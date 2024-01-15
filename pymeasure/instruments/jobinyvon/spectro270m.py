@@ -35,13 +35,12 @@ class JY270M(Instrument):
             name,
             **kwargs)
 
-
     def _write_read(self, command: bytes):
         self.write_bytes(command)
         read = b''
         for ind in range(10000):
             try:
-                read += spectro.read_bytes(1)
+                read += self.read_bytes(1)
             except VisaIOError:
                 break
         return read
