@@ -22,31 +22,28 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.keithley import Keithley2400
 
 
-class Agilent34410A(Instrument):
-    """
-    Represent the HP/Agilent/Keysight 34410A and related multimeters.
+def test_id():
+    with expected_protocol(
+        Keithley2400,
+        [("*IDN?", "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d")],
+    ) as inst:
+        assert inst.id == "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d"
 
-    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance,
-    resistance_4w
-    """
-    def __init__(self, adapter, name="HP/Agilent/Keysight 34410A Multimeter", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
 
-    # only the most simple functions are implemented
-    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "Get DC voltage, in Volts")
+def test_next_error():
+    with expected_protocol(Keithley2400,
+                           [("SYST:ERR?", '-113, "Undefined header"')],
+                           ) as inst:
+        assert inst.next_error == (-113, " Undefined header")
 
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "Get AC voltage, in Volts")
 
-    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "Get DC current, in Amps")
-
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "Get AC current, in Amps")
-
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Get Resistance, in Ohms")
-
-    resistance_4w = Instrument.measurement(
-        "MEAS:FRES? DEF,DEF", "Get Four-wires (remote sensing) resistance, in Ohms")
+def test_enable_source():
+    with expected_protocol(Keithley2400,
+                           [("OUTPUT ON", None)],
+                           ) as inst:
+        inst.enable_source()
