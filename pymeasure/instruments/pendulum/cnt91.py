@@ -113,7 +113,7 @@ class CNT91(Instrument):
         Control gate time of one measurement in s (float strictly from 2e-9 to 1000).
 
         .. deprecated:: 0.14
-            Use `gate_time` instead.
+           Use `gate_time` instead.
         """
         warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
         return self.gate_time
@@ -179,8 +179,8 @@ class CNT91(Instrument):
         :param trigger_source: Optionally specify a trigger source to start the measurement
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
         :param sample_rate: Sample rate in Hz
-            .. deprecated:: 0.14
-                Use parameter `gate_time` instead.
+           .. deprecated:: 0.14
+              Use parameter `gate_time` instead.
         """
         if (gate_time is None) and (sample_rate is None):
             raise ValueError("`gate_time` must be specified.")
