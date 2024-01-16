@@ -159,11 +159,10 @@ class CNT91(Instrument):
         self,
         channel,
         n_samples,
-        *,
-        gate_time,
+        sample_rate=None,  # deprecated, only kept for backwards compatibility
+        gate_time=None,
         trigger_source=None,
         back_to_back=True,
-        sample_rate=None,
     ):
         """
         Record a time series to the buffer and read it out after completion.
@@ -174,12 +173,15 @@ class CNT91(Instrument):
         :param trigger_source: Optionally specify a trigger source to start the measurement
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
         :param sample_rate: Sample rate in Hz
-
             .. deprecated:: 0.14
                 Use parameter `gate_time` instead.
         """
+        if (gate_time is None) and (sample_rate is None):
+            raise ValueError("`gate_time` must be specified.")
         if sample_rate is not None:
             warn("`sample_rate` is deprecated, use `gate_time` instead.", FutureWarning)
+            if gate_time is not None:
+                raise ValueError("Only one of `gate_time` and `sample_rate` can be specified.")
             gate_time = 1 / sample_rate
         self.clear()
         self.format = "ASCII"
