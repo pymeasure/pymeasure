@@ -23,10 +23,9 @@
 #
 
 import logging
-
+from time import sleep
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range, truncated_range, strict_discrete_set
-# from pymeasure.instruments.channel import ChannelCreator
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from pymeasure.instruments import Channel
 
 log = logging.getLogger(__name__)
@@ -67,15 +66,6 @@ class AxisError(Exception):
         '1FFFFFF': 'ORG sensor detection',
     }
 
-    # def __init__(self, code):
-    #     """
-    #     :param code: The error code returned by the controller, as a string of comma-separated values  (e.g. "1,1,1,R,B,R")
-    #     """
-    #     self.code = code.split(",")
-    #     self.error = code[0]
-    #     self.message = self.MESSAGES[self.error]
-    #     self.status = code[1]
-
     def __init__(self, code):
         # self.error = str(code)
         self.message = self.MESSAGES[code]
@@ -115,18 +105,14 @@ class Axis(Channel):
                                values=[1, 1000000]
                                )
 
-    # TODO: continue editing here
-    position_positive = Instrument.control("Q:", "A:{ch}+%d",
-                                           """Query or set the 0 or position coordinate of the axis.""",
-                                           validator=truncated_range,
-                                           values=[0, 2147483647]
-                                           )
-
-    position_negative = Instrument.control("Q:", "A:{ch}+%d",
-                                           """Query or set the 0 or negative coordinate of the axis.""",
-                                           validator=truncated_range,
-                                           values=[-2147483647, 0]
-                                           )
+    position = Instrument.control("Q:", "A:{ch}S%s",
+                                  """Query or set the position of the axis.""",
+                                  validator=truncated_range,
+                                  values=[-2147483647, 2147483647],
+                                  get_process=lambda v: v.replace(" ", "").split(",")[0:3],
+                                  set_process=lambda v: "+%d" if v >= 0 else "%d",
+                                  dynamic=True
+                                  )
 
     motion_done = Instrument.measurement("!:{ch}S",
                                          """Query to see if the axis is currently moving. "R": ready, "B": busy""")
@@ -135,15 +121,32 @@ class Axis(Channel):
                                    get_process=lambda v: AxisError(v.split(",")[1])
                                    )
 
+    home = Instrument.setting("H:{ch}", """ Perform mechanical origin return.""")
+
+    zero = Instrument.setting("R:{ch}", """ Resets the axis position to be zero at the current poisiton.""")
+
+    stop = Instrument.setting("L:{ch}", """ Decelerate and stop the axis.""")
+
     def __init__(self, axis, controller):
         self.axis = str(axis)
         self.controller = controller
 
-    def set_limit(self, lower, upper):
-        """ Set the absolute position limits of the axis.
+    def set_position_limit(self, lower, upper):
+        """ Set the software limit of the axis in the units of the axis.
         """
-        self.position_positive_values = [0, upper]
-        self.position_negative_values = [lower, 0]
+        self.postion_values = [lower, upper]
+
+    def wait_for_stop(self, interval=0.05, timeout=10):
+        """ Wait for the axis to stop moving.
+        """
+
+        loop = 0
+        while self.motion_done == "B":
+            sleep(interval)
+            loop = loop + 1
+            if loop > timeout / interval:
+                break
+                # raise TimeoutError("Timeout waiting for axis to stop.")
 
 
 class SHRC203(Instrument):
@@ -156,10 +159,9 @@ class SHRC203(Instrument):
     can overwrite this depending on the avalible axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.optosigma.shrc203.Axis>`
     class.
-    
+
     :param adapter: The VISA resource name of the controller
     :param name: The name of the controller
-    :param query_delay: The time delay between successive queries in seconds, default 0.05
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
 
@@ -167,10 +169,6 @@ class SHRC203(Instrument):
     axis_y = Instrument.ChannelCreator(Axis, "2")
     axis_z = Instrument.ChannelCreator(Axis, "3")
     axis_all = Instrument.ChannelCreator(Axis, "W")
-
-    busy = Instrument.measurement("!:!",
-                                  """Query to see if the controller is currently moving a motor. "R": ready, "B": busy"""
-                                  )
 
     mode = Instrument.control("?:MODE", "MODE:%s", """Query or set the controller mode.""",
                               validator=strict_discrete_set,
@@ -180,66 +178,14 @@ class SHRC203(Instrument):
     def __init__(self,
                  adapter,
                  name="OptoSigma SHRC-203 Stage Controller",
-                 query_delay=0.05,
                  **kwargs
                  ):
-        self.query_delay = query_delay
         self.termination_str = "\r\n"
-
-        # self.x = Axis(1, self)
-        # self.y = Axis(2, self)
-        # self.z = Axis(3, self)
 
         super().__init__(
             adapter,
             name,
             write_termination=self.termination_str,
             read_termination=self.termination_str,
-            usb={baud_rate: 38400},
             **kwargs
         )
-
-    def home(self):
-        """
-        Perform mechanical origin return.
-        """
-
-    #     TODO: implement this
-
-    def move_absolute(self, axis, position):
-        """
-        Move the stage to the specified position.
-
-        :param axis: The axis to move
-        :param position: The position to move to
-        """
-
-    #     TODO: implement this
-
-    def move_relative(self, axis, position):
-        """
-        Move the stage by the specified amount.
-
-        :param axis: The axis to move
-        :param position: The position to move by
-        """
-
-    #     TODO: implement this
-
-    def zero(self):
-        """ Resets the axis position to be zero at the current poisiton.
-        """
-
-    # TODO: implement this
-
-    def stop(self):
-        """
-        Stop all motion.
-        """
-
-    #     TODO: implement this
-
-    def wait_for_completion(self, query_delay=0):
-        """
-
-        """
