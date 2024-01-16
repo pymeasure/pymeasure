@@ -62,14 +62,14 @@ class CNT91(Instrument):
 
     @property
     def batch_size(self):
-        """Maximum number of buffer entries that can be transmitted at once."""
+        """Get maximum number of buffer entries that can be transmitted at once."""
         if not hasattr(self, "_batch_size"):
             self._batch_size = int(self.ask("FORM:SMAX?"))
         return self._batch_size
 
     def read_buffer(self, n=MAX_BUFFER_SIZE):
         """
-        Read out n samples from the buffer.
+        Read out `n` samples from the buffer.
 
         :param n: Number of samples that should be read from the buffer. The maximum number of
             10000 samples is read out by default.
@@ -84,10 +84,7 @@ class CNT91(Instrument):
     external_start_arming_source = Instrument.control(
         "ARM:SOUR?",
         "ARM:SOUR %s",
-        """
-        Select arming input or switch off the start arming function. Options are 'A', 'B' and 'E'
-        (rear). 'IMM' turns trigger off.
-        """,
+        """Control external arming source ('A', 'B', 'E' (rear) or 'IMM' for immediately arming).""",  # noqa: E501
         validator=strict_discrete_set,
         values={"A": "EXT1", "B": "EXT2", "E": "EXT4", "IMM": "IMM"},
         map_values=True,
@@ -96,7 +93,7 @@ class CNT91(Instrument):
     external_arming_start_slope = Instrument.control(
         "ARM:SLOP?",
         "ARM:SLOP %s",
-        "Set slope for the start arming condition.",
+        """Control slope for the start arming condition (str 'POS' or 'NEG').""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
     )
@@ -104,7 +101,7 @@ class CNT91(Instrument):
     continuous = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
-        "Controls whether to perform continuous measurements.",
+        """Control whether to perform continuous measurements.""",
         strict_discrete_set,
         values={True: 1.0, False: 0.0},
         map_values=True,
@@ -112,18 +109,18 @@ class CNT91(Instrument):
 
     @property
     def measurement_time(self):
-        warn("measurement_time is deprecated, use `gate_time` instead.", FutureWarning)
+        warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
         return self.gate_time
 
     @measurement_time.setter
     def measurement_time(self, value):
-        warn("measurement_time is deprecated, use `gate_time` instead.", FutureWarning)
+        warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
         self.gate_time = value
 
     gate_time = Instrument.control(
         ":ACQ:APER?",
         ":ACQ:APER %f",
-        "Gate time for one measurement in s.",
+        """Control gate time of one measurement in s (float strictly from 2e-9 to 1000).""",
         validator=strict_range,
         values=[MIN_GATE_TIME, MAX_GATE_TIME],  # Programmer's guide 8-92
     )
@@ -139,7 +136,7 @@ class CNT91(Instrument):
     interpolator_autocalibrated = Instrument.control(
         ":CAL:INT:AUTO?",
         "CAL:INT:AUTO %s",
-        "Controls if interpolators should be calibrated automatically.",
+        """Control if interpolators should be calibrated automatically (bool).""",
         strict_discrete_set,
         values={True: 1.0, False: 0.0},
         map_values=True,
@@ -178,7 +175,7 @@ class CNT91(Instrument):
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
         if sample_rate is not None:
-            warn("sample_rate is deprecated, use `gate_time` instead.", FutureWarning)
+            warn("`sample_rate` is deprecated, use `gate_time` instead.", FutureWarning)
             gate_time = 1 / sample_rate
         self.clear()
         self.format = "ASCII"
