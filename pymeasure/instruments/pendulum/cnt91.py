@@ -24,6 +24,7 @@
 
 import logging
 from time import sleep
+from warnings import warn
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
@@ -35,68 +36,41 @@ from pymeasure.instruments.validators import (
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# Programmer's guide 8-92, defined outside of the class, since it is used by
-# `Instrument.control` without access to `self`.
-MAX_MEASUREMENT_TIME = 1000
+# Defined outside of the class, since it is used by `Instrument.control` without access to `self`.
+MIN_GATE_TIME = 2e-8  # Programmer's guide 8-92
+MAX_GATE_TIME = 1000  # Programmer's guide 8-92
+MIN_BUFFER_SIZE = 4  # Programmer's guide 8-39
+MAX_BUFFER_SIZE = 10000  # Programmer's guide 8-39
 
 
 class CNT91(Instrument):
     """Represents a Pendulum CNT-91 frequency counter."""
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
-    MAX_BUFFER_SIZE = 32000  # User Manual 8-38
 
     def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
-        kwargs.setdefault('timeout', 120000)
-        kwargs.setdefault('read_termination', '\n')
+        # allow long-term measurements, add 30 s for data transfer
+        kwargs.setdefault("timeout", 24 * 60 * 60 * 1000 + 30)
+        kwargs.setdefault("read_termination", "\n")
+
         super().__init__(
             adapter,
             name,
+            asrl={"baud_rate": 256000},
             **kwargs,
         )
 
     @property
     def batch_size(self):
-        """Maximum number of buffer entries that can be transmitted at once."""
+        """Get maximum number of buffer entries that can be transmitted at once."""
         if not hasattr(self, "_batch_size"):
             self._batch_size = int(self.ask("FORM:SMAX?"))
         return self._batch_size
 
-    def read_buffer(self, expected_length=0):
-        """
-        Read out the entire buffer.
-
-        :param expected_length: The expected length of the buffer. If more
-            data is read, values at the end are removed. Defaults to 0,
-            which means that the entire buffer is returned independent of its
-            length.
-        :return: Frequency values from the buffer.
-        """
-        while not self.complete:
-            # Wait until the buffer is filled.
-            sleep(0.01)
-        data = []
-        # Loop until the buffer is completely read out.
-        while True:
-            # Get maximum number of buffer values.
-            new = self.values(":FETC:ARR? MAX")
-            data += new
-            # Last values have been read from buffer.
-            if len(new) < self.batch_size:
-                # Remove the last values if the buffer is too long.
-                if expected_length and len(data) > expected_length:
-                    data = data[:expected_length]
-                    log.info("Buffer was too long, truncated.")
-                break
-        return data
-
     external_start_arming_source = Instrument.control(
         "ARM:SOUR?",
         "ARM:SOUR %s",
-        """
-        Select arming input or switch off the start arming function.
-        Options are 'A', 'B' and 'E' (rear). 'IMM' turns trigger off.
-        """,
+        """Control external arming source ('A', 'B', 'E' (rear) or 'IMM' for immediately arming).""",  # noqa: E501
         validator=strict_discrete_set,
         values={"A": "EXT1", "B": "EXT2", "E": "EXT4", "IMM": "IMM"},
         map_values=True,
@@ -105,7 +79,7 @@ class CNT91(Instrument):
     external_arming_start_slope = Instrument.control(
         "ARM:SLOP?",
         "ARM:SLOP %s",
-        "Set slope for the start arming condition.",
+        """Control slope for the start arming condition (str 'POS' or 'NEG').""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
     )
@@ -113,76 +87,115 @@ class CNT91(Instrument):
     continuous = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
-        "Controls whether to perform continuous measurements.",
+        """Control whether to perform continuous measurements.""",
         strict_discrete_set,
         values={True: 1.0, False: 0.0},
         map_values=True,
     )
 
-    measurement_time = Instrument.control(
+    @property
+    def measurement_time(self):
+        """
+        Control gate time of one measurement in s (float strictly from 2e-8 to 1000).
+
+        .. deprecated:: 0.14
+           Use `gate_time` instead.
+        """
+        warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
+        return self.gate_time
+
+    @measurement_time.setter
+    def measurement_time(self, value):
+        warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
+        self.gate_time = value
+
+    gate_time = Instrument.control(
         ":ACQ:APER?",
-        ":ACQ:APER %f",
-        "Gate time for one measurement in s.",
+        ":ACQ:APER %s",
+        """Control gate time of one measurement in s (float strictly from 2e-8 to 1000).""",
         validator=strict_range,
-        values=[2e-9, MAX_MEASUREMENT_TIME],  # Programmer's guide 8-92
+        values=[MIN_GATE_TIME, MAX_GATE_TIME],  # Programmer's guide 8-92
     )
 
     format = Instrument.control(
         "FORM?",
         "FORM %s",
-        "Reponse format (ASCII or REAL).",
+        "Control response format ('ASCII' or 'REAL').",
         validator=strict_discrete_set,
-        values=["ASCII", "REAL"],
+        values={"ASCII": "ASC", "REAL": "REAL"},
+        map_values=True,
     )
 
     interpolator_autocalibrated = Instrument.control(
         ":CAL:INT:AUTO?",
         "CAL:INT:AUTO %s",
-        "Controls if interpolators should be calibrated automatically.",
+        """Control if interpolators should be calibrated automatically (bool).""",
         strict_discrete_set,
         values={True: 1.0, False: 0.0},
         map_values=True,
     )
 
-    def configure_frequency_array_measurement(self, n_samples, channel):
+    def read_buffer(self, n=MAX_BUFFER_SIZE):
+        """
+        Read out `n` samples from the buffer.
+
+        :param n: Number of samples that should be read from the buffer. The maximum number of
+            10000 samples is read out by default.
+        :return: Frequency values from the buffer.
+        """
+        n = truncated_range(n, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])  # Programmer's guide 8-39
+        while not self.complete:
+            # Wait until the buffer is filled.
+            sleep(0.01)
+        return self.values(f":FETC:ARR? {'MAX' if n == MAX_BUFFER_SIZE else n}")
+
+    def configure_frequency_array_measurement(self, n_samples, channel, back_to_back=True):
         """
         Configure the counter for an array of measurements.
 
         :param n_samples: The number of samples
         :param channel: Measurement channel (A, B, C, E, INTREF)
+        :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
-        n_samples = truncated_range(n_samples, [1, self.MAX_BUFFER_SIZE])
+        n_samples = truncated_range(n_samples, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)
         channel = self.CHANNELS[channel]
-        self.write(f":CONF:ARR:FREQ {n_samples},(@{channel})")
+        self.write(f":CONF:ARR:FREQ{':BTB' if back_to_back else ''} {n_samples},(@{channel})")
 
     def buffer_frequency_time_series(
-        self, channel, n_samples, sample_rate, trigger_source=None
+        self,
+        channel,
+        n_samples,
+        sample_rate=None,  # deprecated, only kept for backwards compatibility
+        gate_time=None,
+        trigger_source=None,
+        back_to_back=True,
     ):
         """
         Record a time series to the buffer and read it out after completion.
 
         :param channel: Channel that should be used
         :param n_samples: The number of samples
+        :param gate_time: Gate time in s
+        :param trigger_source: Optionally specify a trigger source to start the measurement
+        :param back_to_back: If True, the buffer measurement is performed back-to-back.
         :param sample_rate: Sample rate in Hz
-        :param trigger_source: Optionally specify a trigger source to start the
-            measurement
-        """
-        if self.interpolator_autocalibrated:
-            max_sample_rate = 125e3
-        else:
-            max_sample_rate = 250e3
-        # Minimum sample rate is 1 sample in the maximum measurement time.
-        sample_rate = strict_range(
-            sample_rate, [1 / MAX_MEASUREMENT_TIME, max_sample_rate]
-        )
-        measurement_time = 1 / sample_rate
 
+           .. deprecated:: 0.14
+              Use parameter `gate_time` instead.
+        """
+        if (gate_time is None) and (sample_rate is None):
+            raise ValueError("`gate_time` must be specified.")
+        if sample_rate is not None:
+            warn("`sample_rate` is deprecated, use `gate_time` instead.", FutureWarning)
+            if gate_time is not None:
+                raise ValueError("Only one of `gate_time` and `sample_rate` can be specified.")
+            gate_time = 1 / sample_rate
         self.clear()
         self.format = "ASCII"
-        self.configure_frequency_array_measurement(n_samples, channel)
+        self.configure_frequency_array_measurement(n_samples, channel, back_to_back=back_to_back)
         self.continuous = False
-        self.measurement_time = measurement_time
+        self.gate_time = gate_time
 
         if trigger_source:
             self.external_start_arming_source = trigger_source
