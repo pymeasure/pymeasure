@@ -122,7 +122,8 @@ class CNT91(Instrument):
         "FORM %s",
         "Control response format ('ASCII' or 'REAL').",
         validator=strict_discrete_set,
-        values=["ASCII", "REAL"],
+        values={"ASCII": "ASC", "REAL": "REAL"},
+        map_values=True,
     )
 
     interpolator_autocalibrated = Instrument.control(
