@@ -109,6 +109,12 @@ class CNT91(Instrument):
 
     @property
     def measurement_time(self):
+        """
+        Control gate time of one measurement in s (float strictly from 2e-9 to 1000).
+
+        .. deprecated:: 0.14
+            Use `gate_time` instead.
+        """
         warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
         return self.gate_time
 
@@ -128,7 +134,7 @@ class CNT91(Instrument):
     format = Instrument.control(
         "FORM?",
         "FORM %s",
-        "Reponse format (ASCII or REAL).",
+        "Control response format ('ASCII' or 'REAL').",
         validator=strict_discrete_set,
         values=["ASCII", "REAL"],
     )
