@@ -304,7 +304,7 @@ class HP34401A(Instrument):
     # System related commands
     remote_control_enabled = Instrument.control(
         "SYST: ", "SYST:%s",
-        """Control whether remote is enabled.""",
+        """Control whether remote control is enabled.""",
         validator=strict_discrete_set,
         values={True: "REM", False: "LOC"},
         map_values=True,
