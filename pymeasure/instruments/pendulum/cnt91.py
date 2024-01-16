@@ -24,6 +24,7 @@
 
 import logging
 from time import sleep
+from warnings import warn
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
@@ -108,6 +109,16 @@ class CNT91(Instrument):
         values={True: 1.0, False: 0.0},
         map_values=True,
     )
+
+    @property
+    def measurement_time(self):
+        warn("measurement_time is deprecated, use `gate_time` instead.", FutureWarning)
+        return self.gate_time
+
+    @measurement_time.setter
+    def measurement_time(self, value):
+        warn("measurement_time is deprecated, use `gate_time` instead.", FutureWarning)
+        self.gate_time = value
 
     gate_time = Instrument.control(
         ":ACQ:APER?",
