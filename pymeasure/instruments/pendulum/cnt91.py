@@ -173,6 +173,10 @@ class CNT91(Instrument):
         :param gate_time: Gate time in s
         :param trigger_source: Optionally specify a trigger source to start the measurement
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
+        :param sample_rate: Sample rate in Hz
+
+            .. deprecated:: 0.14
+                Use parameter `gate_time` instead.
         """
         if sample_rate is not None:
             warn("`sample_rate` is deprecated, use `gate_time` instead.", FutureWarning)
