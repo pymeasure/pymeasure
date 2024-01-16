@@ -67,20 +67,6 @@ class CNT91(Instrument):
             self._batch_size = int(self.ask("FORM:SMAX?"))
         return self._batch_size
 
-    def read_buffer(self, n=MAX_BUFFER_SIZE):
-        """
-        Read out `n` samples from the buffer.
-
-        :param n: Number of samples that should be read from the buffer. The maximum number of
-            10000 samples is read out by default.
-        :return: Frequency values from the buffer.
-        """
-        n = truncated_range(n, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])  # Programmer's guide 8-39
-        while not self.complete:
-            # Wait until the buffer is filled.
-            sleep(0.01)
-        return self.values(f":FETC:ARR? {'MAX' if n == MAX_BUFFER_SIZE else n}")
-
     external_start_arming_source = Instrument.control(
         "ARM:SOUR?",
         "ARM:SOUR %s",
@@ -147,6 +133,20 @@ class CNT91(Instrument):
         values={True: 1.0, False: 0.0},
         map_values=True,
     )
+
+    def read_buffer(self, n=MAX_BUFFER_SIZE):
+        """
+        Read out `n` samples from the buffer.
+
+        :param n: Number of samples that should be read from the buffer. The maximum number of
+            10000 samples is read out by default.
+        :return: Frequency values from the buffer.
+        """
+        n = truncated_range(n, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])  # Programmer's guide 8-39
+        while not self.complete:
+            # Wait until the buffer is filled.
+            sleep(0.01)
+        return self.values(f":FETC:ARR? {'MAX' if n == MAX_BUFFER_SIZE else n}")
 
     def configure_frequency_array_measurement(self, n_samples, channel, back_to_back=True):
         """
