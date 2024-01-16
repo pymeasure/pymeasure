@@ -159,7 +159,14 @@ class CNT91(Instrument):
         self.write(f":CONF:ARR:FREQ{':BTB' if back_to_back else ''} {n_samples},(@{channel})")
 
     def buffer_frequency_time_series(
-        self, channel, n_samples, gate_time, back_to_back=True, trigger_source=None
+        self,
+        channel,
+        n_samples,
+        *,
+        gate_time,
+        trigger_source=None,
+        back_to_back=True,
+        sample_rate=None,
     ):
         """
         Record a time series to the buffer and read it out after completion.
@@ -170,6 +177,9 @@ class CNT91(Instrument):
         :param trigger_source: Optionally specify a trigger source to start the measurement
         :param back_to_back: If True, the buffer measurement is performed back-to-back.
         """
+        if sample_rate is not None:
+            warn("sample_rate is deprecated, use `gate_time` instead.", FutureWarning)
+            gate_time = 1 / sample_rate
         self.clear()
         self.format = "ASCII"
         self.configure_frequency_array_measurement(n_samples, channel, back_to_back=back_to_back)
