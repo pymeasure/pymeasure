@@ -69,7 +69,7 @@ class KeithleyBuffer:
     def is_buffer_full(self):
         """ Returns True if the buffer is full of measurements. """
         status_bit = int(self.ask("*STB?"))
-        return status_bit == 65
+        return (status_bit & 0b1000001) == 65
 
     def wait_for_buffer(self, should_stop=lambda: False,
                         timeout=60, interval=0.1):
