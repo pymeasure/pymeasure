@@ -49,8 +49,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         keithley.channel_function = 'voltage'   # Configures active channel for voltage measurement
         print(keithley.voltage)                 # Prints the voltage in volts
         
-        keithley.measure_voltage(1)             # Measure voltage on channel 1
-        keithley.measure_temp(2)                # Measure temperature on channel 2
+        keithley.measure_voltage(channel=1)     # Measure voltage on channel 1
+        keithley.measure_temp(channel=2)        # Measure temperature on channel 2
 
     """
 
@@ -92,7 +92,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         validator=strict_discrete_set,
         values={'voltage': 'VOLT', 'temperature': 'TEMP'},
         map_values=True
-        )
+    )
     
 
     ###############
@@ -101,15 +101,15 @@ class Keithley2182(KeithleyBuffer, Instrument):
 
     voltage = Instrument.measurement(
         ":READ?",
-        """ Reads the voltage in Volts, if configured for this reading.
-        """
+        """ Reads the voltage in Volts, if active channel is configured for
+        this reading. """
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG %g",
         """ A floating point property that controls the positive full-scale 
         measurement voltage range in Volts, which can take values from 0 to
-        120 V (Ch. 1) or 12 V (Ch. 2). Auto-range is disabled when this
-        property is set. """,
+        120 V (Ch. 1) or 12 V (Ch. 2). Auto-range is automatically disabled
+        when this property is set. """,
         validator=truncated_range,
         values=[0, 120]
     )
@@ -117,8 +117,9 @@ class Keithley2182(KeithleyBuffer, Instrument):
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ A floating point property that controls the number of power line
         cycles (NPLC) for voltage measurements, which sets the integration
-        period and measurement speed. Takes values from 0.01 to 50 or 60, where
-        0.1, 1, and 10 are Fast, Medium, and Slow respectively. """,
+        period and measurement speed. Takes values from 0.01 to 50 or 60,
+        depending on the line frequency. 0.1, 1, and 10 are Fast, Medium, and
+        Slow respectively. """,
         validator=truncated_range,
         values=[0.01, 60]
     )
@@ -129,15 +130,16 @@ class Keithley2182(KeithleyBuffer, Instrument):
 
     temperature = Instrument.measurement(
         ":READ?",
-        """ Reads the temperature in Celsius, if configured for this reading. """
+        """ Reads the temperature in Celsius, if active channel is configured
+        for this reading. """
     )
     thermocouple = Instrument.control(
         ":SENS:TEMP:TC?", ":SENSE:TEMP:TC %s",
-        """A property that controls the thermocouple type for temperature
-        measurements. Valid options are B, E, J, K, N, R, S, or T. """,
+        """ A property that controls the thermocouple type for temperature
+        measurements. Valid options are B, E, J, K, N, R, S, and T. """,
         validator=strict_discrete_set,
         values=['B','E','J','K','N','R','S','T']
-        )
+    )
     temperature_reference = Instrument.control(
         ":SENS:TEMP:REF?", ":SENS:TEMP:REF %g",
         """ A floating point property that controls the relative temperature 
@@ -149,8 +151,9 @@ class Keithley2182(KeithleyBuffer, Instrument):
         ":SENS:TEMP:NPLC?", ":SENS:TEMP:NPLC %g",
         """ A floating point property that controls the number of power line
         cycles (NPLC) for temperature measurements, which sets the integration
-        period and measurement speed. Takes values from 0.01 to 50 or 60, where
-        0.1, 1, and 10 are Fast, Medium, and Slow respectively. """,
+        period and measurement speed. Takes values from 0.01 to 50 or 60,
+        depending on the line frequency. 0.1, 1, and 10 are Fast, Medium, and
+        Slow respectively. """,
         validator=truncated_range,
         values=[0.01, 60]
     )
@@ -218,7 +221,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """ Configures and acquires voltage measurement.
         
         :param channel: Voltage measurement channel
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 60
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 50/60
         :param voltage: Upper limit of measurement range in Volts, from 0 to 120 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
@@ -230,6 +233,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
             self.voltage_range = voltage
+        self.write(":READ?")
         self.check_errors()
 
     def measure_temperature(self, channel=2, nplc=1, TC='S'):
@@ -240,18 +244,11 @@ class Keithley2182(KeithleyBuffer, Instrument):
         :param TC: Thermocouple type
         """
         log.info("%s is measuring temperature." % self.name)
-        self.write(":SENS:FUNC 'TEMP';"
-                   ":SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
-
+        self.write(":SENS:CHAN %d;"
+                   ":SENS:FUNC 'TEMP';"
+                   ":SENS:CURR:NPLC %f;" % (channel, nplc))
+        self.write(":READ?")
         self.check_errors()
-
-    def auto_range_source(self):
-        """ Configures the source to use an automatic range.
-        """
-        if self.source_mode == 'current':
-            self.write(":SOUR:CURR:RANG:AUTO 1")
-        else:
-            self.write(":SOUR:VOLT:RANG:AUTO 1")
 
     def beep(self, frequency, duration):
         """ Sounds a system beep.
@@ -290,10 +287,10 @@ class Keithley2182(KeithleyBuffer, Instrument):
         code, message = self.error
         while code != 0:
             t = time.time()
-            log.info("Keithley 2400 reported error: %d, %s" % (code, message))
+            log.info("Keithley 2182 reported error: %d, %s" % (code, message))
             code, message = self.error
             if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2400 error retrieval.")
+                log.warning("Timed out for Keithley 2182 error retrieval.")
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
@@ -323,7 +320,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         points can not exceed 2500
         """
         if arm * trigger > 2500 or arm * trigger < 0:
-            raise RangeException("Keithley 2400 has a combined maximum "
+            raise RangeException("Keithley 2182 has a combined maximum "
                                  "of 2500 counts")
         if arm < trigger:
             self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
@@ -344,7 +341,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         in seconds between sampling points
         """
         if interval > 99999.99 or interval < 0.001:
-            raise RangeException("Keithley 2400 can only be time"
+            raise RangeException("Keithley 2182 can only be time"
                                  " triggered between 1 mS and 1 Ms")
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
 
