@@ -66,10 +66,11 @@ class ROD4Channel(Channel):
         values={'flow': 0, 'close': 1, 'open': 2},
         map_values=True
         )
-    
-    def __init__(self):
+
+    def __init__(self, *argv):
         self.flow_unit('sccm')
-    
+        super().__init__(*argv)
+
     @property
     def flow_unit(self):
         """Returns flow units for the selected channel.
@@ -79,14 +80,14 @@ class ROD4Channel(Channel):
 
     @flow_unit.setter
     def flow_unit(self, units):
-        values={'%': 0, 'sccm': 1, 'slm': 1},
-        if type(units)==str and units.casefold() in values:
+        values={'%': 0, 'sccm': 1, 'slm': 1}
+        if isinstance(units, str) and units.casefold() in values:
             units = units.casefold()
             self.write("\020{ch}SFU%d" %values[units])
             self._flow_unit = values[units]
         else:
-            print('Units must be %, sccm, or slm.') 
-    
+            print('Units must be %, sccm, or slm.')
+
 
 class ROD4(Instrument):
     """ Represents the Proterial ROD-4(A) operator for mass flow controllers
@@ -108,30 +109,30 @@ class ROD4(Instrument):
     ch_2 = Instrument.ChannelCreator(ROD4Channel, 2)
     ch_3 = Instrument.ChannelCreator(ROD4Channel, 3)
     ch_4 = Instrument.ChannelCreator(ROD4Channel, 4)
-    
+
     def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
         super().__init__(
             adapter, name, write_termination='\r', **kwargs
         )
         self.keyboard('unlocked')
-    
+
     version = Instrument.measurement(
         "\0200RVN",
         """ Read version and series number. Returns x.xx<TAB>S/N """
         )
-    
+
     @property
     def keyboard(self):
         """Returns front keyboard lock status. 
         Valid options are unlocked or locked. """
         return self._keyboard
-    
+
     @keyboard.setter
     def keyboard(self, status):
-        values={'unlocked': 0, 'locked': 1},
-        if type(status)==str and status.casefold() in values:
+        values={'unlocked': 0, 'locked': 1}
+        if isinstance(status, str) and status.casefold() in values:
             status = status.casefold()
             self.write("\0200SKO%d" %values[status])
             self._keyboard = values[status]
         else:
-            print('Status must be unlocked or locked.') 
+            print('Status must be unlocked or locked.')
