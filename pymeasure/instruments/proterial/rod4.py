@@ -35,30 +35,30 @@ log.addHandler(logging.NullHandler())
 class ROD4Channel(Channel):
     """ Implementation of a ROD-4 MFC channel """
 
-    actual_flow = Instrument.measurement(
+    actual_flow = Channel.measurement(
         "\020{ch}RFX",
         """ Read the actual flow in % . """
         )
-    setpoint = Instrument.control(
+    setpoint = Channel.control(
         "\020{ch}RFD", "\020{ch}SFD%.1f",
         """A property that controls the set point in % of control range. """,
         validator=truncated_range,
         values=[0, 100],
         )
-    mfc_range = Instrument.control(
+    mfc_range = Channel.control(
         "\020{ch}RFK", "\020{ch}SFK%d",
         """An integer property that controls the MFC range in sccm.
         Upper limit is 200 slm. """,
         validator=truncated_range,
         values=[0, 200000]
         )
-    ramp_time = Instrument.control(
+    ramp_time = Channel.control(
         "\020{ch}RRT", "\020{ch}SRT%.1f",
         """A property that controls the MFC set point ramping time in seconds. """,
         validator=truncated_range,
         values=[0, 200000]
         )
-    valve_mode = Instrument.control(
+    valve_mode = Channel.control(
         "\020{ch}RVM", "\020{ch}SVM%d",
         """A property that controls the MFC valve mode.
         Valid options are `flow`, `close`, and `open`. """,
