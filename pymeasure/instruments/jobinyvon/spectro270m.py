@@ -1,3 +1,27 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2023 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range, strict_range
 from pyvisa.constants import ControlFlow, Parity, StopBits
@@ -7,21 +31,36 @@ from pyvisa import VisaIOError
 
 
 def get_steps_returns(steps_str: str):
+    """
+    When asked for the number of steps, the spectrometer returns a string in
+    format "o(number of steps)\r", with this function we get rid of the "o" and 
+    the "\r" and we convert the resulting string to an integer.
+    """
     steps_str = steps_str.lstrip('o')
     steps_str = steps_str.rstrip('\r')
     return int(steps_str)
 
 def read_int(string: str):
+    """
+    When we expect a numeric answer from the spectrometer, it sometimes sends 
+    some more characters in between, and with this function we get rid of those
+    extra characters. 
+    """
     numeric_string = ''.join(char for char in string if char.isdigit())
     return int(numeric_string)
 
 class JY270M(Instrument):
-    """This is a class for the 270M JY spectrometer."""
+    """This class represents the Jobin-Yvon 270M Driver."""
 
-    """Backlash in number of motor steps"""
+    """Backlash in number of motor steps."""
     _backlash = 320
+    
+    """Number of motor steps per nm and slit steps per micron."""
     _steps_nm = 32
     _slit_steps_micron = 0.15748
+    
+    """Maximum value for the wavelength in nm, maximum number of steps for
+    the grating motor and for the entry and exit slits."""
     _lambda_max = 1171.68
     _max_steps = 37494
     _max_steps_slit = 1102.36
@@ -136,13 +175,13 @@ class JY270M(Instrument):
         return True
 
     def move_grating_steps(self, nsteps: int):
-        """Absolute positioning of the grating motor in number of steps"""
+        """Absolute positioning of the grating motor in number of steps."""
         ans = self._write_read(f'F0,{nsteps - self.gsteps}\r'.encode())
         code = self._get_code(ans)
         assert code == 'o'
 
     def get_grating_wavelength(self):
-        """Reading the wavelength from the grating motor"""
+        """Reading the wavelength from the grating motor."""
         return self._lambda_max - ((self._max_steps - self.gsteps) / self._steps_nm)
 
     def move_grating_wavelength(self, wavelength: float):
