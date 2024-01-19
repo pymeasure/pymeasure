@@ -53,6 +53,7 @@ Instruments by manufacturer:
    novanta/index
    oxfordinstruments/index
    parker/index
+   philips/index
    pendulum/index
    racal/index
    razorbill/index
