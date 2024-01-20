@@ -36,11 +36,9 @@ python gui_foreign_instrument.py
 
 import sys
 import random
-import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
@@ -105,15 +103,6 @@ class MainWindow(ManagedWindow):
             y_axis='Power (W)',
         )
         self.setWindowTitle('GUI Example for Foreign Instrument')
-
-    def queue(self):
-        filename = tempfile.mktemp()
-
-        procedure = self.make_procedure()
-        results = Results(procedure, filename)
-        experiment = self.new_experiment(results)
-
-        self.manager.queue(experiment)
 
 
 if __name__ == "__main__":

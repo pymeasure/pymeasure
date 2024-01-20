@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS464xB(Instrument):
     """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series.
 
-    This familly consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in
+    This family consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in
     their respective classes (:class:`~.AnritsuMS4642B`, :class:`~.AnritsuMS4644B`,
     :class:`~.AnritsuMS4645B`, :class:`~.AnritsuMS4647B`), that only differ in the available
     frequency range.

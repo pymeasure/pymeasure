@@ -32,42 +32,38 @@ class APSIN12G(Instrument):
     FREQ_LIMIT = [9e3, 12e9]
     POW_LIMIT = [-30, 27]
 
-    power = Instrument.control(
-        "SOUR:POW:LEV:IMM:AMPL?;", "SOUR:POW:LEV:IMM:AMPL %gdBm;",
-        """ A floating point property that represents the output power
-        in dBm. This property can be set. """,
-        validator=strict_range,
-        values=POW_LIMIT
-    )
-    frequency = Instrument.control(
-        "SOUR:FREQ:CW?;", "SOUR:FREQ:CW %eHz;",
-        """ A floating point property that represents the output frequency
-        in Hz. This property can be set. """,
-        validator=strict_range,
-        values=FREQ_LIMIT
-    )
-    blanking = Instrument.control(
-        ":OUTP:BLAN:STAT?", ":OUTP:BLAN:STAT %s",
-        """ A string property that represents the blanking of output power
-        when frequency is changed. ON makes the output to be blanked (off) while
-        changing frequency. This property can be set. """,
-        validator=strict_discrete_set,
-        values=['ON', 'OFF']
-    )
-    reference_output = Instrument.control(
-        "SOUR:ROSC:OUTP:STAT?", "SOUR:ROSC:OUTP:STAT %s",
-        """ A string property that represents the 10MHz reference output from
-        the synth. This property can be set. """,
-        validator=strict_discrete_set,
-        values=['ON', 'OFF']
-    )
-
     def __init__(self, adapter, name="Anapico APSIN12G Signal Generator", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
+
+    power = Instrument.control(
+        "SOUR:POW:LEV:IMM:AMPL?;", "SOUR:POW:LEV:IMM:AMPL %gdBm;",
+        """Control the output power in dBm. (float)""",
+        validator=strict_range,
+        values=POW_LIMIT
+    )
+    frequency = Instrument.control(
+        "SOUR:FREQ:CW?;", "SOUR:FREQ:CW %eHz;",
+        """Control the output frequency in Hz. (float)""",
+        validator=strict_range,
+        values=FREQ_LIMIT
+    )
+    blanking = Instrument.control(
+        ":OUTP:BLAN:STAT?", ":OUTP:BLAN:STAT %s",
+        """Control the blanking of output power when frequency is changed. ON makes the output
+        to be blanked (off) while changing frequency. """,
+        validator=strict_discrete_set,
+        values=['ON', 'OFF']
+    )
+    reference_output = Instrument.control(
+        "SOUR:ROSC:OUTP:STAT?", "SOUR:ROSC:OUTP:STAT %s",
+        """Control the 10MHz reference output from the synth. (str)""",
+        validator=strict_discrete_set,
+        values=['ON', 'OFF']
+    )
 
     def enable_rf(self):
         """ Enables the RF output. """

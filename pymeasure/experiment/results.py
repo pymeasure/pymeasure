@@ -69,7 +69,7 @@ def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format=
     """
     now = datetime.now()
 
-    parameters = procedure.parameter_objects()
+    parameters = procedure.placeholder_objects()
     placeholders = {param.name: param.value for param in parameters.values()}
 
     placeholders["date"] = now.strftime(date_format)
@@ -418,7 +418,7 @@ class Results:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
-                    header += line.strip() + Results.LINE_BREAK
+                    header += line.strip('\t\v\n\r\f') + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True

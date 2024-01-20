@@ -43,12 +43,13 @@ _ion_gauge_status = {"Wait": "W",
 
 class PressureChannel(Channel):
     pressure = Channel.measurement(
-        "PR{ch}?", """ Pressure on the channel in units selected on the device""",
+        "PR{ch}?",
+        """Get the pressure on the channel in units selected on the device""",
     )
 
     power_enabled = Channel.control(
         "CP{ch}?", "CP{ch}!%s",
-        """Power status of the channel""",
+        """Control power status of the channel. (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
@@ -60,7 +61,7 @@ class IonGaugeAndPressureChannel(PressureChannel):
     """Channel having both a pressure and an ion gauge sensor"""
     ion_gauge_status = Channel.measurement(
         "T{ch}?",
-        """Ion gauge status of the channel""",
+        """Get ion gauge status of the channel.""",
         map_values=True,
         values=_ion_gauge_status,
     )
@@ -169,25 +170,25 @@ class MKS937B(Instrument):
         raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
     serial = Instrument.measurement(
-        "SN?", """ Serial number of the instrument """,
+        "SN?", """Get the serial number of the instrument """,
         cast=str,
     )
 
     all_pressures = Instrument.measurement(
-        "PRZ?", """ Read pressures on all channels in selected units """,
+        "PRZ?", """ Get pressures on all channels in selected units """,
     )
 
     combined_pressure1 = Instrument.measurement(
-        "PC1?", """ Read pressure on channel 1 and its combination sensor """,
+        "PC1?", """ Get pressure on channel 1 and its combination sensor """,
     )
 
     combined_pressure2 = Instrument.measurement(
-        "PC2?", """ Read pressure on channel 2 and its combination sensor """,
+        "PC2?", """ Get pressure on channel 2 and its combination sensor """,
     )
 
     unit = Instrument.control(
         "U?", "U!%s",
-        """Pressure unit used for all pressure readings from the instrument""",
+        """Control pressure unit used for all pressure readings from the instrument""",
         validator=strict_discrete_set,
         map_values=True,
         values={"Torr": "TORR",
