@@ -670,7 +670,6 @@ class HP437B(Instrument):
         """,
         validator=strict_discrete_set,
         values=[e for e in SensorType],
-        set_process=lambda v: int(v),
         check_set_errors=True
     )
 
