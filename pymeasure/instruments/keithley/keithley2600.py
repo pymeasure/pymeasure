@@ -69,17 +69,6 @@ class Keithley2600(Instrument):
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.next_error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 2600 reported error: %d, %s" % (code, message))
-            code, message = self.next_error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2600 error retrieval.")
-
 
 class Channel:
 
