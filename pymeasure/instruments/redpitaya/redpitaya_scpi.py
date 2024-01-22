@@ -1,3 +1,28 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2023 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+
 import datetime
 import time
 
@@ -14,16 +39,17 @@ log.addHandler(logging.NullHandler())
 class DigitalChannelP(Channel):
     """ A digital line of the P type"""
 
-    direction = Channel.control(
+    direction_in = Channel.control(
         "DIG:PIN:DIR? DIO{ch}_P", "DIG:PIN:DIR %s,DIO{ch}_P",
-        """ Control a digital line to the given direction (str either 'IN' or 'OUT')""",
-        validator=truncated_discrete_set,
-        values=['IN', 'OUT'],
+        """ Control a digital line to the given direction (True for 'IN' or False for 'OUT')""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 'IN', False: 'OUT'},
     )
 
-    state = Channel.control(
+    enabled = Channel.control(
         "DIG:PIN? DIO{ch}_P", "DIG:PIN DIO{ch}_P,%d",
-        """ Control the state of the line (bool)""",
+        """ Control the enabled state of the line (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -35,14 +61,15 @@ class DigitalChannelN(Channel):
 
     direction = Channel.control(
         "DIG:PIN:DIR? DIO{ch}_N", "DIG:PIN:DIR %s,DIO{ch}_N",
-        """ Control a digital line to the given direction (str either 'IN' or 'OUT')""",
-        validator=truncated_discrete_set,
-        values=['IN', 'OUT'],
+        """ Control a digital line to the given direction (True for 'IN' or False for 'OUT')""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 'IN', False: 'OUT'},
     )
 
-    state = Channel.control(
+    enabled = Channel.control(
         "DIG:PIN? DIO{ch}_N", "DIG:PIN DIO{ch}_N,%d",
-        """ Control the state of the line (bool)""",
+        """ Control the enabled state of the line (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -52,9 +79,9 @@ class DigitalChannelN(Channel):
 class DigitalChannelLed(Channel):
     """ A LED digital line (Output only)"""
 
-    state = Channel.control(
+    enabled = Channel.control(
         "DIG:PIN? LED{ch}", "DIG:PIN LED{ch},%d",
-        """ Control the state of the led (bool)""",
+        """ Control the enabled state of the led (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -94,18 +121,18 @@ class AnalogInputFastChannel(Channel):
     )
 
     def get_data_from_ascii(self) -> np.ndarray:
-        self.write(f"ACQ:SOUR{self.id}:DATA?")
+        self.write("ACQ:SOUR{ch}:DATA?")
         data_str = self.read()
         return np.fromstring(data_str.strip('{}').encode(), sep=',')
 
     def get_data_from_binary(self) -> np.ndarray:
         """ Get the data in """
-        self.write(f"ACQ:SOUR{self.id}:DATA?")
-        self.parent.adapter.read_bytes(1)
-        nint = self.parent.adapter.read_bytes(1)
-        length = int(self.parent.adapter.read_bytes(nint).decode())
-        data = np.frombuffer(self.parent.adapter.read_bytes(length), dtype=int)
-        self.parent.adapter.read_bytes(2)
+        self.write("ACQ:SOUR{ch}:DATA?")
+        self.read_bytes(1)
+        nint = self.read_bytes(1)
+        length = int(self.read_bytes(nint).decode())
+        data = np.frombuffer(self.read_bytes(length), dtype=int)
+        self.read_bytes(2)
         if self.gain == 'LV':
             max_range = 2 * RedPitayaScpi.LV_MAX
         else:
@@ -121,7 +148,10 @@ class RedPitayaScpi(Instrument):
     "TCPIP::x.y.z.k::port::SOCKET" where x.y.z.k is the IP address of the SCPI server
     (that should be activated on the board) and port is the TCP/IP port number, usually 5000
 
-    :parameter
+    To activate the SCPI server, you have to connect first the redpitaya to your computer/network and enter the
+    url address written on the network plug (on the redpitaya). It should be something like "RP-F06432.LOCAL/"
+    then browse the menu, open the Development application and activate the SCPI server. When activating the server,
+    you'll be notified with the IP/port address to use with this Instrument.
 
     """
 
@@ -131,12 +161,15 @@ class RedPitayaScpi(Instrument):
     HV_MAX = 20
     CLOCK = 125e6  # Hz
 
-    def __init__(self, ip_address: str, port: int = 5000, name="Redpitaya SCPI",
+    def __init__(self,
+                 adapter=None,
+                 ip_address: str = '169.254.134.87', port: int = 5000, name="Redpitaya SCPI",
                  read_termination='\r\n',
                  write_termination='\r\n',
                  **kwargs):
 
-        adapter = f"TCPIP::{ip_address}::{port}::SOCKET"
+        if adapter is None:  # if None build it from the usual way as written in the documentation
+            adapter = f"TCPIP::{ip_address}::{port}::SOCKET"
 
         super().__init__(
             adapter,
