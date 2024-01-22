@@ -59,7 +59,7 @@ class DigitalChannelP(Channel):
 class DigitalChannelN(Channel):
     """ A digital line of the N type"""
 
-    direction = Channel.control(
+    direction_in = Channel.control(
         "DIG:PIN:DIR? DIO{ch}_N", "DIG:PIN:DIR %s,DIO{ch}_N",
         """ Control a digital line to the given direction (True for 'IN' or False for 'OUT')""",
         validator=strict_discrete_set,
@@ -129,7 +129,7 @@ class AnalogInputFastChannel(Channel):
         """ Get the data in """
         self.write("ACQ:SOUR{ch}:DATA?")
         self.read_bytes(1)
-        nint = self.read_bytes(1)
+        nint = int(self.read_bytes(1).decode())
         length = int(self.read_bytes(nint).decode())
         data = np.frombuffer(self.read_bytes(length), dtype=int)
         self.read_bytes(2)
@@ -202,7 +202,7 @@ class RedPitayaScpi(Instrument):
         self.write("DIG:RST")
 
     digitalN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
-    digitalP = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
+    digitalP = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioP')
     led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(8)), prefix='led')
 
     # ANALOG SECTION
@@ -338,7 +338,7 @@ if __name__ == '__main__':
     print(rp.led5.state)
 
     print(rp.average_skipped_samples)
-    rp.average_skiped_samples = True
+    rp.average_skipped_samples = True
     print(rp.average_skipped_samples)
 
     print(rp.acq_size)
