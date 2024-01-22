@@ -23,7 +23,7 @@
 #
 
 
-class Parameter:
+class InputField:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 
@@ -45,6 +45,7 @@ class Parameter:
     """
 
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
+        print("InputField")
         self.name = name
         separator = ": "
         if separator in name:
@@ -123,7 +124,7 @@ class Parameter:
             self.__class__.__name__, self.name, self._value, self.default)
 
 
-class IntegerParameter(Parameter):
+class IntegerInputField(InputField):
     """ :class:`.Parameter` sub-class that uses the integer type to
     store the value.
 
@@ -139,6 +140,7 @@ class IntegerParameter(Parameter):
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
+        print("IntegerInputField")
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
@@ -179,7 +181,7 @@ class IntegerParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
-class BooleanParameter(Parameter):
+class BooleanInputField(InputField):
     """ :class:`.Parameter` sub-class that uses the boolean type to
     store the value.
 
@@ -208,7 +210,7 @@ class BooleanParameter(Parameter):
         return value
 
 
-class FloatParameter(Parameter):
+class FloatInputField(InputField):
     """ :class:`.Parameter` sub-class that uses the floating point
     type to store the value.
 
@@ -266,7 +268,7 @@ class FloatParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
-class VectorParameter(Parameter):
+class VectorInputField(InputField):
     """ :class:`.Parameter` sub-class that stores the value in a
     vector format.
 
@@ -329,7 +331,7 @@ class VectorParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
-class ListParameter(Parameter):
+class ListInputField(InputField):
     """ :class:`.Parameter` sub-class that stores the value as a list.
     String representation of choices must be unique.
 
@@ -378,7 +380,7 @@ class ListParameter(Parameter):
         return tuple(self._choices.values())
 
 
-class PhysicalParameter(VectorParameter):
+class PhysicalInputField(InputField):
     """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
     and its uncertainty.
 
@@ -468,6 +470,34 @@ class PhysicalParameter(VectorParameter):
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
 
+class Parameter(InputField):
+    pass
+
+
+class IntegerParameter(Parameter, IntegerInputField):
+    pass
+
+
+class BooleanParameter(Parameter, BooleanInputField):
+    pass
+
+
+class FloatParameter(Parameter, FloatInputField):
+    pass
+
+
+class VectorParameter(Parameter, VectorInputField):
+    pass
+
+
+class ListParameter(Parameter, ListInputField):
+    pass
+
+
+class PhysicalParameter(Parameter, PhysicalInputField):
+    pass
+
+
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.
@@ -509,7 +539,7 @@ class Measurable:
         self._value = value
 
 
-class Metadata(object):
+class Metadata(InputField):
     """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the
@@ -533,27 +563,11 @@ class Metadata(object):
         Default is "%s"
 
     """
-    def __init__(self, name, fget=None, units=None, default=None, fmt="%s"):
-        self.name = name
-        self.units = units
-
-        self._value = default
+    def __init__(self, name, fget=None, **kwargs):
+        print("Metadata")
         self.fget = fget
-        self.fmt = fmt
-
         self.evaluated = False
-
-    @property
-    def value(self):
-        if self.is_set():
-            return self._value
-        else:
-            raise ValueError("Metadata value is not set")
-
-    def is_set(self):
-        """ Returns True if the Parameter value is set
-        """
-        return self._value is not None
+        super().__init__(name, **kwargs)
 
     def evaluate(self, parent=None, new_value=None):
         if new_value is not None and self.fget is not None:
@@ -580,10 +594,26 @@ class Metadata(object):
         else:
             return fget
 
-    def __str__(self):
-        result = self.fmt % self.value
 
-        if self.units is not None:
-            result += " %s" % self.units
+class IntegerMetadata(Metadata, IntegerInputField):
+    pass
 
-        return result
+
+class BooleanMetadata(Metadata, BooleanInputField):
+    pass
+
+
+class FloatMetadata(Metadata, FloatInputField):
+    pass
+
+
+class VectorMetadata(Metadata, VectorInputField):
+    pass
+
+
+class ListMetadata(Metadata, ListInputField):
+    pass
+
+
+class PhysicalMetadata(Metadata, PhysicalInputField):
+    pass

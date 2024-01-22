@@ -22,9 +22,16 @@
 # THE SOFTWARE.
 #
 
-from .parameters import (Parameter, IntegerParameter, FloatParameter,
+from .parameters import (InputField, IntegerInputField, FloatInputField,
+                         BooleanInputField, VectorInputField, ListInputField,
+                         PhysicalInputField,
+                         Parameter, IntegerParameter, FloatParameter,
                          VectorParameter, ListParameter, BooleanParameter,
-                         Measurable, Metadata)
+                         PhysicalParameter,
+                         Metadata, IntegerMetadata, FloatMetadata,
+                         BooleanMetadata, VectorMetadata, ListMetadata,
+                         PhysicalMetadata,
+                         Measurable)
 from .procedure import Procedure, UnknownProcedure
 from .results import Results, unique_filename, replace_placeholders
 from .workers import Worker
