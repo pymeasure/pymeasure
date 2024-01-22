@@ -54,26 +54,27 @@ class InputsWidget(QtWidgets.QWidget):
         self._setup_visibility_groups()
 
     def _setup_ui(self):
-        parameter_objects = self._procedure.parameter_objects()
+        inputfield_objects = self._procedure.inputfield_objects()
+        print(inputfield_objects.keys())
         for name in self._inputs:
-            parameter = parameter_objects[name]
-            if parameter.ui_class is not None:
-                element = parameter.ui_class(parameter)
+            inputfield = inputfield_objects[name]
+            if inputfield.ui_class is not None:
+                element = inputfield.ui_class(inputfield)
 
-            elif isinstance(parameter, parameters.FloatParameter):
-                element = ScientificInput(parameter)
+            elif isinstance(inputfield, parameters.FloatInputField):
+                element = ScientificInput(inputfield)
 
-            elif isinstance(parameter, parameters.IntegerParameter):
-                element = IntegerInput(parameter)
+            elif isinstance(inputfield, parameters.IntegerInputField):
+                element = IntegerInput(inputfield)
 
-            elif isinstance(parameter, parameters.BooleanParameter):
-                element = BooleanInput(parameter)
+            elif isinstance(inputfield, parameters.BooleanInputField):
+                element = BooleanInput(inputfield)
 
-            elif isinstance(parameter, parameters.ListParameter):
-                element = ListInput(parameter)
+            elif isinstance(inputfield, parameters.ListInputField):
+                element = ListInput(inputfield)
 
-            elif isinstance(parameter, parameters.Parameter):
-                element = StringInput(parameter)
+            elif isinstance(inputfield, parameters.InputField):
+                element = StringInput(inputfield)
 
             setattr(self, name, element)
 
@@ -83,11 +84,11 @@ class InputsWidget(QtWidgets.QWidget):
         vbox.setContentsMargins(0, 0, 0, 0)
 
         self.labels = {}
-        parameters = self._procedure.parameter_objects()
+        inputfields = self._procedure.inputfield_objects()
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
                 label = QtWidgets.QLabel(self)
-                label.setText("%s:" % parameters[name].name)
+                label.setText("%s:" % inputfields[name].name)
                 vbox.addWidget(label)
                 self.labels[name] = label
 
@@ -113,13 +114,13 @@ class InputsWidget(QtWidgets.QWidget):
 
     def _setup_visibility_groups(self):
         groups = {}
-        parameters = self._procedure.parameter_objects()
+        inputfields = self._procedure.inputfield_objects()
         for name in self._inputs:
-            parameter = parameters[name]
+            inputfield = inputfields[name]
 
-            group_state = {g: True for g in parameter.group_by}
+            group_state = {g: True for g in inputfield.group_by}
 
-            for group_name, condition in parameter.group_by.items():
+            for group_name, condition in inputfield.group_by.items():
                 if group_name not in self._inputs or group_name == name:
                     continue
 
