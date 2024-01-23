@@ -306,6 +306,7 @@ class RedPitayaScpi(Instrument):
     # direct call to the SCPI command "ACQ:TRig:DLY:NS?" seems not to be working...
     @property
     def acq_trigger_delay_ns(self):
+        """Control the trigger delay in nanoseconds (int) in the range [-8192, 8192] / CLOCK"""
         return int(self.acq_trigger_delay_samples * 1 / self.CLOCK * 1e9)
 
     @acq_trigger_delay_ns.setter
