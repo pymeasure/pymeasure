@@ -39,7 +39,7 @@ def test_next_error():
     with expected_protocol(Keithley2400,
                            [("SYST:ERR?", '-113, "Undefined header"')],
                            ) as inst:
-        assert inst.next_error == (-113, " Undefined header")
+        assert inst.next_error == [-113, ' "Undefined header"']
 
 
 def test_enable_source():

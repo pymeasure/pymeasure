@@ -25,8 +25,8 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
-import time
 import logging
+from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -115,6 +115,12 @@ class Keithley2260B(Instrument):
     )
 
     @property
+    def error(self):
+        """Get the next error of the instrument (list of code and message)."""
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
+
+    @property
     def enabled(self):
         """Control whether the output is enabled, see :attr:`output_enabled`."""
         log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
@@ -126,30 +132,6 @@ class Keithley2260B(Instrument):
         log.warning('Deprecated property name "enabled", use the identical "output_enabled", '
                     'instead.', FutureWarning)
         self.output_enabled = value
-
-    @property
-    def next_error(self):
-        """ Get a tuple of an error code and message from a
-        single error. """
-        err = super().next_error
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', "")
-        return (code, message)
-
-    error = next_error
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.next_error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 2260B reported error: %d, %s" % (code, message))
-            code, message = self.next_error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2260B error retrieval.")
 
     def shutdown(self):
         """ Disable output, call parent function"""

@@ -282,31 +282,9 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         self.check_errors()
 
     @property
-    def next_error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = super().next_error
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    @property
     def error(self):
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.next_error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 6517B reported error: %d, %s", code, message)
-            code, message = self.next_error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 6517B error retrieval.")
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
