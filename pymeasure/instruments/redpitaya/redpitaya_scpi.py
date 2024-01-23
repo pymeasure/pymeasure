@@ -155,11 +155,12 @@ class RedPitayaScpi(Instrument):
 
     """
 
-    TRIGGER_SOURCES = ['DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
-                       'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE']
+    TRIGGER_SOURCES = ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
+                       'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE')
     LV_MAX = 1
     HV_MAX = 20
     CLOCK = 125e6  # Hz
+    DELAY_NS = tuple(np.array(np.array(range(-2**13, 2**13+1)) * 1 / CLOCK * 1e9, dtype=int))
 
     def __init__(self,
                  adapter=None,
@@ -201,8 +202,8 @@ class RedPitayaScpi(Instrument):
         """Reset the state of all digital lines"""
         self.write("DIG:RST")
 
-    digitalN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
-    digitalP = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioP')
+    dioN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
+    dioP = Instrument.MultiChannelCreator(DigitalChannelP, list(range(7)), prefix='dioP')
     led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(8)), prefix='led')
 
     # ANALOG SECTION
@@ -212,7 +213,7 @@ class RedPitayaScpi(Instrument):
         self.write("ANALOG:RST")
 
     analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)), prefix='ainslow')
-    analog_out_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)), prefix='aoutslow')
+    analog_out_slow = Instrument.MultiChannelCreator(AnalogOutputSlowChannel, list(range(4)), prefix='aoutslow')
 
     # ACQUISITION SECTION
 
@@ -280,7 +281,6 @@ class RedPitayaScpi(Instrument):
     acq_trigger_status = Instrument.measurement(
         "ACQ:TRig:STAT?",
         """Get the trigger status (bool), if True the trigger as been fired (or is disabled)""",
-        validator=strict_discrete_set,
         map_values=True,
         values={True: 'TD', False: 'WAIT'},
     )
@@ -288,30 +288,41 @@ class RedPitayaScpi(Instrument):
     acq_buffer_filled = Instrument.measurement(
         "ACQ:TRig:FILL?",
         """Get the status of the buffer(bool), if True the buffer is full""",
-        validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
     )
 
     acq_trigger_delay_samples = Instrument.control(
-        "ACQ:TRig:DLY?", "ACQ:TRig:DLY?",
+        "ACQ:TRig:DLY?", "ACQ:TRig:DLY %d",
         """Control the trigger delay in number of samples (int) in the range [-8192, 8192]""",
         validator=truncated_range,
+        cast=int,
         values=[-2**13, 2**13],
     )
 
-    acq_trigger_delay_ns = Instrument.control(
-        "ACQ:TRig:DLY:NS?", "ACQ:TRig:DLY:NS %d",
-        """Control the trigger delay in nanoseconds (int) multiple of the board clock period (1/RedPitayaSCPI.CLOCK)""",
-        validator=truncated_discrete_set,
-        values=list(np.array(np.array(range(-2**13, 2**13+1)) * 1 / CLOCK * 1e9, dtype=int)),
-        cast=int,
-    )
+    # direct call to the SCPI command "ACQ:TRig:DLY:NS?" seems not to be working...
+    @property
+    def acq_trigger_delay_ns(self):
+        return int(self.acq_trigger_delay_samples * 1 / self.CLOCK * 1e9)
 
-    acq_trigger_delay = Instrument.control(
+    @acq_trigger_delay_ns.setter
+    def acq_trigger_delay_ns(self, delay_ns: int):
+        delay_sample = int(delay_ns * self.CLOCK / 1e9)
+        self.acq_trigger_delay_samples = delay_sample
+
+    # not working
+    # acq_trigger_delay_ns = Instrument.control(
+    #     "ACQ:TRig:DLY:NS?", "ACQ:TRig:DLY:NS %d",
+    #     """Control the trigger delay in nanoseconds (int) multiple of the board clock period (1/RedPitayaSCPI.CLOCK)""",
+    #     validator=truncated_discrete_set,
+    #     values=DELAY_NS,
+    #     cast=int,
+    # )
+
+    acq_trigger_level = Instrument.control(
         "ACQ:TRig:LEV?", "ACQ:TRig:LEV %f",
         """Control the level of the trigger in volts
-        The allowed range should be dynamically set depending on the gain settings
+        The allowed range should be dynamically set depending on the gain settings either +-LV_MAX or +- HV_MAX
         """,
         validator=truncated_range,
         values=[-LV_MAX, LV_MAX],
