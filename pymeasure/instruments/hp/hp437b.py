@@ -609,8 +609,7 @@ class HP437B(Instrument):
         values={True: "LN", False: "LG"},
         cast=bool,
         map_values=True,
-        get_process=_getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN",
-                                                                          1: "LG"}[v])
+        get_process=_getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN", 1: "LG"}[v])
     )
 
     @property
