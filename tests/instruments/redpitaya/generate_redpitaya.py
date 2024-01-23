@@ -1,5 +1,4 @@
 import datetime
-import time
 
 import pytest
 
@@ -10,10 +9,11 @@ ip_address = '169.254.134.87'
 port = 5000
 
 generator = Generator()
-inst: RedPitayaScpi = generator.instantiate(RedPitayaScpi, f"TCPIP::{ip_address}::{port}::SOCKET", 'redpitaya',
-                             adapter_kwargs=dict(read_termination='\r\n',
-                                                 write_termination='\r\n',
-                                                 ))
+inst: RedPitayaScpi = generator.instantiate(RedPitayaScpi, f"TCPIP::{ip_address}::{port}::SOCKET",
+                                            'redpitaya',
+                                            adapter_kwargs=dict(read_termination='\r\n',
+                                                                write_termination='\r\n',
+                                                                ))
 
 
 inst.time = datetime.time(13, 7, 20)

@@ -27,7 +27,8 @@ def test_TRIGGER_SOURCES_getter():
             RedPitayaScpi,
             [],
     ) as inst:
-        assert inst.TRIGGER_SOURCES == ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE', 'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE')
+        assert inst.TRIGGER_SOURCES == ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
+                                        'EXT_PE', 'EXT_NE', 'AWG_PE', 'AWG_NE')
 
 
 def test_acq_buffer_filled_getter():
