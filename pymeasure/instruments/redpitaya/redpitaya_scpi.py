@@ -24,8 +24,6 @@
 
 
 import datetime
-import time
-
 import numpy as np
 
 from pymeasure.instruments import Instrument, Channel
@@ -237,7 +235,6 @@ class RedPitayaScpi(Instrument):
     decimation = Instrument.control(
         "ACQ:DEC?", "ACQ:DEC %d",
         """Control the decimation (int) as 2**n with n in range [0, 16]
-        
         The sampling rate is given as 125MS/s / decimation
         """,
         validator=strict_discrete_set,
@@ -278,8 +275,7 @@ class RedPitayaScpi(Instrument):
     acq_trigger_source = Instrument.setting(
         "ACQ:TRig %s",
         """Set the trigger source (str), one of RedPitayaScpi.TRIGGER_SOURCES.
-         
-         PE and NE means respectively Positive and Negative edge
+        PE and NE means respectively Positive and Negative edge
         """,
         validator=strict_discrete_set,
         values=TRIGGER_SOURCES,
