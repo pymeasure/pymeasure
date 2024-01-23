@@ -167,7 +167,7 @@ class HP437B(Instrument):
             **kwargs,
         )
 
-    def __getstatus(status_type, modifier=lambda v: v):
+    def _getstatus(status_type, modifier=lambda v: v):
         start_index, stop_offset = status_type
         return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
 
@@ -288,7 +288,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.DutyCycleStatus),
+        get_process=_getstatus(StatusMessage.DutyCycleStatus),
         check_set_errors=True
     )
 
@@ -327,7 +327,7 @@ class HP437B(Instrument):
         the instrument implicitly keeps (holds) the filter value from the automatic selection.
         """,
         cast=bool,
-        get_process=__getstatus(StatusMessage.AutoFilterStatus),
+        get_process=_getstatus(StatusMessage.AutoFilterStatus),
         set_process=lambda v: "FA" if v else "FH",
         check_set_errors=True
     )
@@ -340,7 +340,7 @@ class HP437B(Instrument):
         """,
         values=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
         validator=strict_discrete_set,
-        get_process=__getstatus(StatusMessage.Filter, (lambda x: 2 ** x)),
+        get_process=_getstatus(StatusMessage.Filter, (lambda x: 2 ** x)),
         check_set_errors=True
     )
 
@@ -380,7 +380,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.LimitsCheckingStatus),
+        get_process=_getstatus(StatusMessage.LimitsCheckingStatus),
         check_set_errors=True
     )
 
@@ -438,7 +438,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.LimitsStatus),
+        get_process=_getstatus(StatusMessage.LimitsStatus),
     )
 
     limit_low_hit = Instrument.measurement(
@@ -449,7 +449,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 2, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.LimitsStatus),
+        get_process=_getstatus(StatusMessage.LimitsStatus),
     )
 
     # just addressing the instrument to talk (without a query string) and read until EOI results
@@ -472,7 +472,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.PowerRefStatus),
+        get_process=_getstatus(StatusMessage.PowerRefStatus),
         check_set_errors=True
     )
 
@@ -484,7 +484,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.OffsetStatus),
+        get_process=_getstatus(StatusMessage.OffsetStatus),
         check_set_errors=True
     )
 
@@ -567,7 +567,7 @@ class HP437B(Instrument):
         map_values=True,
         values={True: 1, False: 0},
         cast=int,
-        get_process=__getstatus(StatusMessage.RelativeModeStatus),
+        get_process=_getstatus(StatusMessage.RelativeModeStatus),
         check_set_errors=True
     )
 
@@ -589,7 +589,7 @@ class HP437B(Instrument):
         """,
         values=[e for e in MeasurementUnit],
         cast=int,
-        get_process=__getstatus(StatusMessage.MeasurementUnits, lambda v: MeasurementUnit(v)),
+        get_process=_getstatus(StatusMessage.MeasurementUnits, lambda v: MeasurementUnit(v)),
     )
 
     linear_display_enabled = Instrument.control(
@@ -609,7 +609,7 @@ class HP437B(Instrument):
         values={True: "LN", False: "LG"},
         cast=bool,
         map_values=True,
-        get_process=__getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN",
+        get_process=_getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN",
                                                                           1: "LG"}[v])
     )
 
@@ -817,7 +817,7 @@ class HP437B(Instrument):
         is the most sensitive (lowest power levels), and Range 5 is the least sensitive (highest
         power levels). The range can be set either automatically or manually.
         """,
-        get_process=__getstatus(StatusMessage.AutomaticRangeStatus, lambda v: bool(v)),
+        get_process=_getstatus(StatusMessage.AutomaticRangeStatus, lambda v: bool(v)),
         set_process=lambda v: "RM0EN" if v is True else "RH"
     )
 
@@ -829,7 +829,7 @@ class HP437B(Instrument):
         """,
         values=[1, 5],
         validator=strict_range,
-        get_process=__getstatus(StatusMessage.Range)
+        get_process=_getstatus(StatusMessage.Range)
     )
 
     def store(self, register):
@@ -864,7 +864,7 @@ class HP437B(Instrument):
         """
         Get the operating mode the power meter is currently in.
         """,
-        get_process=__getstatus(StatusMessage.OperatingMode, lambda v: OperatingMode(v))
+        get_process=_getstatus(StatusMessage.OperatingMode, lambda v: OperatingMode(v))
     )
 
     def zero(self):
@@ -893,7 +893,7 @@ class HP437B(Instrument):
         """,
         values=[e for e in TriggerMode],
         validator=strict_discrete_set,
-        get_process=__getstatus(StatusMessage.TriggerMode, lambda v: TriggerMode(v)),
+        get_process=_getstatus(StatusMessage.TriggerMode, lambda v: TriggerMode(v)),
         set_process=lambda v: int(v)
     )
 
@@ -929,7 +929,7 @@ class HP437B(Instrument):
         for comparison. Once the measurement results are displayed and read onto the bus,
         the power meter reverts to standby mode.
         """
-        self.trigger_delay()
+        self.write("TR2")
 
     group_trigger_mode = Instrument.control(
         "SM", "GT%d",
@@ -940,6 +940,6 @@ class HP437B(Instrument):
         """,
         values=[e for e in GroupTriggerMode],
         validator=strict_discrete_set,
-        get_process=__getstatus(StatusMessage.GroupTriggerMode, lambda v: GroupTriggerMode(v)),
+        get_process=_getstatus(StatusMessage.GroupTriggerMode, lambda v: GroupTriggerMode(v)),
         set_process=lambda v: int(v)
     )
