@@ -29,7 +29,7 @@ import time
 import numpy as np
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 import logging
 log = logging.getLogger(__name__)
@@ -112,7 +112,8 @@ class AnalogInputFastChannel(Channel):
 
     gain = Instrument.control(
         "ACQ:SOUR{ch}:GAIN?", "ACQ:SOUR{ch}:GAIN %s",
-        """Control the gain of the selected fast analog input either 'LV' or 'HV' (see jumpers on boards)
+        """Control the gain of the selected fast analog input either 'LV' or 'HV'
+        (see jumpers on boards)
 
         'LV' set the returned values in the range [-1, 1]V and 'HV' in the range [-20, 20]V
         """,
@@ -148,11 +149,11 @@ class RedPitayaScpi(Instrument):
     "TCPIP::x.y.z.k::port::SOCKET" where x.y.z.k is the IP address of the SCPI server
     (that should be activated on the board) and port is the TCP/IP port number, usually 5000
 
-    To activate the SCPI server, you have to connect first the redpitaya to your computer/network and enter the
-    url address written on the network plug (on the redpitaya). It should be something like "RP-F06432.LOCAL/"
-    then browse the menu, open the Development application and activate the SCPI server. When activating the server,
-    you'll be notified with the IP/port address to use with this Instrument.
-
+    To activate the SCPI server, you have to connect first the redpitaya to your computer/network
+    and enter the url address written on the network plug (on the redpitaya). It should be something
+    like "RP-F06432.LOCAL/" then browse the menu, open the Development application and activate the
+    SCPI server. When activating the server, you'll be notified with the IP/port address to use
+    with this Instrument.
     """
 
     TRIGGER_SOURCES = ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
@@ -183,15 +184,18 @@ class RedPitayaScpi(Instrument):
                               "SYST:TIME %s",
                               """Control the time on board
                               time should be given as a datetime.time object""",
-                              get_process=lambda tstr: datetime.time(*[int(split) for split in tstr]),
-                              set_process=lambda time: time.strftime('%H,%M,%S'),
+                              get_process=lambda _tstr:
+                              datetime.time(*[int(split) for split in _tstr]),
+                              set_process=lambda _time:
+                              _time.strftime('%H,%M,%S'),
                               )
 
     date = Instrument.control("SYST:DATE?",
                               "SYST:DATE %s",
                               """Control the date on board
                               date should be given as a datetime.date object""",
-                              get_process=lambda dstr: datetime.date(*[int(split) for split in dstr]),
+                              get_process=lambda dstr:
+                              datetime.date(*[int(split) for split in dstr]),
                               set_process=lambda date: date.strftime('%Y,%m,%d'),
                               )
 
@@ -212,8 +216,10 @@ class RedPitayaScpi(Instrument):
         """ Reset the voltage of all analog channels """
         self.write("ANALOG:RST")
 
-    analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)), prefix='ainslow')
-    analog_out_slow = Instrument.MultiChannelCreator(AnalogOutputSlowChannel, list(range(4)), prefix='aoutslow')
+    analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)),
+                                                    prefix='ainslow')
+    analog_out_slow = Instrument.MultiChannelCreator(AnalogOutputSlowChannel, list(range(4)),
+                                                     prefix='aoutslow')
 
     # ACQUISITION SECTION
 
@@ -240,7 +246,8 @@ class RedPitayaScpi(Instrument):
 
     average_skipped_samples = Instrument.control(
         "ACQ:AVG?", "ACQ:AVG %s",
-        """Control the use of skipped samples (if decimation > 1) to average the returned acquisition array (bool)""",
+        """Control the use of skipped samples (if decimation > 1) to average the returned
+        acquisition array (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'ON', False: 'OFF'},
@@ -313,7 +320,8 @@ class RedPitayaScpi(Instrument):
     # not working
     # acq_trigger_delay_ns = Instrument.control(
     #     "ACQ:TRig:DLY:NS?", "ACQ:TRig:DLY:NS %d",
-    #     """Control the trigger delay in nanoseconds (int) multiple of the board clock period (1/RedPitayaSCPI.CLOCK)""",
+    #     """Control the trigger delay in nanoseconds (int) multiple of the board clock period
+    #     (1/RedPitayaSCPI.CLOCK)""",
     #     validator=truncated_discrete_set,
     #     values=DELAY_NS,
     #     cast=int,
@@ -322,7 +330,8 @@ class RedPitayaScpi(Instrument):
     acq_trigger_level = Instrument.control(
         "ACQ:TRig:LEV?", "ACQ:TRig:LEV %f",
         """Control the level of the trigger in volts
-        The allowed range should be dynamically set depending on the gain settings either +-LV_MAX or +- HV_MAX
+        The allowed range should be dynamically set depending on the gain settings either +-LV_MAX
+        or +- HV_MAX
         """,
         validator=truncated_range,
         values=[-LV_MAX, LV_MAX],
