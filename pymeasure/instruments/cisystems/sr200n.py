@@ -126,7 +126,7 @@ class SR200N(Instrument):
         b255 = bytes.fromhex('ff')
         cs = int.from_bytes(b255, 'big') - int.from_bytes(sum_bytes, 'big') + 1
         
-        return cs.to_bytes(length=4, byteorder='big')
+        return cs.to_bytes(length=1, byteorder='big')
 
     def write(self, command, **kwargs):
         """ Override the base write method to construct the checksum and use `write_bytes()`.
