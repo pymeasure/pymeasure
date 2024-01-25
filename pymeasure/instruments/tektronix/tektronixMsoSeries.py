@@ -26,7 +26,8 @@ import re
 import time
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, strict_discrete_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
+    truncated_range, strict_discrete_range
 
 
 def sanitize_source(source):
@@ -124,8 +125,7 @@ class TektronixMsoScopeChannel(Channel):
     probe_ext_attenuation = Instrument.control(
         "CH{ch}:PROBEFunc:EXTAtten?",
         "CH{ch}:PROBEFunc:EXTAtten %s",
-        """Control the attenuation value as a multiplier to the given 
-        scale factor.
+        """Control the attenuation value as a multiplier to the given scale factor.
         """,
         validator=strict_discrete_set,
         values={1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
@@ -135,7 +135,7 @@ class TektronixMsoScopeChannel(Channel):
         "TRIGger:A:LEVel:CH{ch}?",
         "TRIGger:A:LEVel:CH{ch} %g",
         """Control the trigger level for an Edge, Pulse Width,
-        Runt or Rise/Fall (Transition and Slew Rate) trigger 
+        Runt or Rise/Fall (Transition and Slew Rate) trigger
         when triggering on an analog channel waveform.
         """,
     )
@@ -208,28 +208,27 @@ class TektronixMsoScope(Instrument):
     _BOOLS = {True: "ON", False: "OFF"}
     _STATE = {"ON": 1, "OFF": 0}
     _TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
-    _TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD", "TRANSITION", "BUS"]
+    _TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD",
+                      "TRANSITION", "BUS"]
     _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ", "noise": "NOISEREJ"}
-    _trigger_source_vals = {
-        "EDGE": ["CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "CH7", "CH8", "LINE"],
-    }
 
     ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
-    DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3', 'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7'
-                                                                                                    'CH2_D0', 'CH2_D1',
-                              'CH2_D2', 'CH2_D3', 'CH2_D4', 'CH2_D5', 'CH2_D6', 'CH2_D7'
-                                                                                'CH3_D0', 'CH3_D1', 'CH3_D2', 'CH3_D3',
-                              'CH3_D4', 'CH3_D5', 'CH3_D6', 'CH3_D7'
-                                                            'CH4_D0', 'CH4_D1', 'CH4_D2', 'CH4_D3', 'CH4_D4', 'CH4_D5',
-                              'CH4_D6', 'CH4_D7'
-                                        'CH5_D0', 'CH5_D1', 'CH5_D2', 'CH5_D3', 'CH5_D4', 'CH5_D5', 'CH5_D6', 'CH5_D7'
-                                                                                                              'CH6_D0',
-                              'CH6_D1', 'CH6_D2', 'CH6_D3', 'CH6_D4', 'CH6_D5', 'CH6_D6', 'CH6_D7'
-                                                                                          'CH7_D0', 'CH7_D1', 'CH7_D2',
-                              'CH7_D3', 'CH7_D4', 'CH7_D5', 'CH7_D6', 'CH7_D7'
-                                                                      'CH8_D0', 'CH8_D1', 'CH8_D2', 'CH8_D3', 'CH8_D4',
-                              'CH8_D5', 'CH8_D6', 'CH8_D7'
-                              ]
+    DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',
+                              'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7',
+                              'CH2_D0', 'CH2_D1', 'CH2_D2', 'CH2_D3',
+                              'CH2_D4', 'CH2_D5', 'CH2_D6', 'CH2_D7',
+                              'CH3_D0', 'CH3_D1', 'CH3_D2', 'CH3_D3',
+                              'CH3_D4', 'CH3_D5', 'CH3_D6', 'CH3_D7',
+                              'CH4_D0', 'CH4_D1', 'CH4_D2', 'CH4_D3',
+                              'CH4_D4', 'CH4_D5', 'CH4_D6', 'CH4_D7',
+                              'CH5_D0', 'CH5_D1', 'CH5_D2', 'CH5_D3',
+                              'CH5_D4', 'CH5_D5', 'CH5_D6', 'CH5_D7',
+                              'CH6_D0', 'CH6_D1', 'CH6_D2', 'CH6_D3',
+                              'CH6_D4', 'CH6_D5', 'CH6_D6', 'CH6_D7',
+                              'CH7_D0', 'CH7_D1', 'CH7_D2', 'CH7_D3',
+                              'CH7_D4', 'CH7_D5', 'CH7_D6', 'CH7_D7',
+                              'CH8_D0', 'CH8_D1', 'CH8_D2', 'CH8_D3',
+                              'CH8_D4', 'CH8_D5', 'CH8_D6', 'CH8_D7']
     CHANNELS_MAX = 8
     BANDWIDTH_RANGE = [1E7, 7E10]
     WRITE_INTERVAL_S = 0.02  # seconds
@@ -238,7 +237,7 @@ class TektronixMsoScope(Instrument):
                  name="Tektronix Oscilloscope",
                  analog_channels=8,
                  **kwargs):
-        super().__init__(adapter, name=name, **kwargs)
+        super().__init__(adapter, name=name, includeSCPI=True, **kwargs)
         if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
         self._seconds_since_last_write = 0  # Timestamp of the last command
@@ -294,7 +293,8 @@ class TektronixMsoScope(Instrument):
         """ Get channel object from its index or its name. Or if source is "math", just return the
         scope object.
 
-        :param source: can be 1, 2, 3, 4, 5, 6, 7, 8 or CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8 , LINE
+        :param source: can be 1, 2, 3, 4, 5, 6, 7, 8
+         or CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8, LINE
         :return: handle to the selected source.
         """
         if isinstance(source, str):
@@ -345,7 +345,7 @@ class TektronixMsoScope(Instrument):
     _verbose = Instrument.control(
         "VERBose?", "VERBose %s",
         """Control Verbose state that controls the length of
-        keywords on query responses. 
+        keywords on query responses.
         Keywords can be both headers and arguments.""",
         validator=strict_discrete_set,
         values=_STATE,
@@ -354,9 +354,9 @@ class TektronixMsoScope(Instrument):
     # Timebase Setup
     timebase_offset = Instrument.control(
         "HORizontal:POSition?", "HORizontal:POSition %G",
-        """horizontal position as a percent of screen width. 
+        """horizontal position as a percent of screen width.
         When Horizontal Delay Mode is turned off, this command is equivalent
-        to adjusting the HORIZONTAL POSITION knob on the front panel. 
+        to adjusting the HORIZONTAL POSITION knob on the front panel.
         When Horizontal Delay Mode is turned on, the horizontal position is forced to 50%.""",
         validator=strict_range,
         values=[0, 100],
@@ -410,7 +410,7 @@ class TektronixMsoScope(Instrument):
 
     acquisition_average = Instrument.control(
         "ACQuire:NUMAVg?", "ACQuire:NUMAVg %d",
-        """Control number of waveform acquisitions 
+        """Control number of waveform acquisitions
         that make up an averaged waveform.
         """,
         validator=strict_range,
@@ -436,8 +436,8 @@ class TektronixMsoScope(Instrument):
 
     acquisition_num_sequence = Instrument.control(
         "ACQuire:SEQ:NUMSEQ?", "ACQuire:SEQ:NUMSEQ %d",
-        """In single sequence acquisition mode, 
-        specify the number of acquisitions or measurements 
+        """In single sequence acquisition mode,
+        specify the number of acquisitions or measurements
         that comprise the sequence.
         """,
     )
@@ -471,7 +471,7 @@ class TektronixMsoScope(Instrument):
         "TRIGGER:A:TYPE %s",
         """Control the type of A trigger.
 
-        Arguments 
+        Arguments
         EDGE is a normal trigger. A trigger event occurs when a signal passes through
         a specified voltage level in a specified direction and is controlled by the
         WIDth specifies that the trigger occurs when a pulse with a specified with is found.
@@ -526,11 +526,9 @@ class TektronixMsoScope(Instrument):
     trigger_holdoff_by = Instrument.control(
         "TRIGger:A:HOLDoff:BY?",
         "TRIGger:A:HOLDoff:BY %s",
-        """sets or queries the type of holdoff for the A trigger. 
-        Holdoff types are expressed as either 
-        user-specified time (TIMe) 
-        or by an internally calculated random time value (RANDom).
-        """,
+        """sets or queries the type of holdoff for the A trigger.
+        Holdoff types are expressed as either user-specified time (TIMe)
+        or by an internally calculated random time value (RANDom).""",
         validator=strict_discrete_set,
         values=["TIME", "RANDOM"],
     )
@@ -547,10 +545,9 @@ class TektronixMsoScope(Instrument):
     trigger_edge_source = Instrument.control(
         "TRIGger:A:EDGE:SOUrce?",
         "TRIGger:A:EDGE:SOUrce %s",
-        """source for the edge trigger. 
+        """source for the edge trigger.
         For instruments that have an Auxiliary Input
-        (such as the MSO58LP), AUXiliary can be selected as trigger source.
-        """,
+        (such as the MSO58LP), AUXiliary can be selected as trigger source.""",
         validator=strict_discrete_set,
         values=ANALOG_TRIGGER_SOURCE + DIGITAL_TRIGGER_SOURCE,
         dynamic=True,
@@ -604,7 +601,7 @@ class TektronixMsoScope(Instrument):
         that is less than, greater than, equal to, or unequal to a specified value.
         {LESSthan|MOREthan|EQual|UNEQual|WIThin|OUTside}
 
-        Arguments 
+        Arguments
         LESSthan causes a trigger when a pulse is detected with a width less than the
         time set by the TRIGger:{A|B}:PULSEWidth:LOWLimit command.
 
@@ -633,11 +630,11 @@ class TektronixMsoScope(Instrument):
     trigger_width_lowlimit = Instrument.control(
         "TRIGger:A:PULSEWidth:LOWLimit?",
         "TRIGger:A:PULSEWidth:LOWLimit %g",
-        """lower limit to use, in seconds, when triggering on detection 
+        """lower limit to use, in seconds, when triggering on detection
         of a pulse whose duration is inside or outside a range of two values.
 
-        This command also specifies the single limit to use, in seconds, 
-        when triggering on detection of a pulse whose duration is less than, 
+        This command also specifies the single limit to use, in seconds,
+        when triggering on detection of a pulse whose duration is less than,
         greater than, equal to, or not equal to this time limit.
         """,
     )
@@ -646,7 +643,7 @@ class TektronixMsoScope(Instrument):
         "TRIGger:A:PULSEWidth:HIGHLimit?",
         "TRIGger:A:PULSEWidth:HIGHLimit %g",
         """specifies the upper limit to use, in seconds, when triggering on
-        detection of a pulse whose duration is inside or outside 
+        detection of a pulse whose duration is inside or outside
         a range of two values.
         """,
     )
@@ -679,7 +676,7 @@ class TektronixMsoScope(Instrument):
         """sets or queries the window trigger event. This command is
         equivalent to selecting Window Setup from the Trig menu and selecting from the
         Window Trigger When box.
-        Arguments 
+        Arguments
         OUTSIDEGreater specifies a trigger event when the signal leaves the window
         defined by the threshold levels for the time specified by Width.
         INSIDEGreater specifies a trigger event when the signal enters the window
@@ -711,14 +708,14 @@ class TektronixMsoScope(Instrument):
         return bytearray(img)
 
     # Measurement
-    _measurable_parameters = ["ACCOMMONMODE", "ACRMS", "AMPlITUDE", "AREA",
-                              "BASE", "BITAMPLITUDE", "BITHIGH", "BITLOW", "BURSTWIDTH",
-                              "COMMONMODE", "DATARATE", "DCD", "DDJ", "DDRAOS", "DDRAOSPERTCK",
-                              "DDRAOSPERUI", "DDRAUS", "DDRAUSPERTCK", "DDRAUSPERUI", "DDRHOLDDIFF",
-                              "DDRSETUPDIFF", "DDRTCHABS", "DDRTCHAVERAGE", "DDRTCKAVERAGE",
-                              "DDRTCLABS", "DDRTCLAVERAGE", "DDRTERRMN", "DDRTERRN", "DDRTJITCC",
-                              "DDRTJITDUTY", "DDRTJITPER", "DDRTPST", "DDRTRPRE", "DDRTWPRE",
-                              "DDRVIXAC", "DDRTDQSCK", "DELAY", "DJ", "DJDIRAC", "EYEHIGH", "EYELOW",
+    _measurable_parameters = ["ACCOMMONMODE", "ACRMS", "AMPlITUDE", "AREA", "BASE", "BITAMPLITUDE",
+                              "BITHIGH", "BITLOW", "BURSTWIDTH", "COMMONMODE", "DATARATE", "DCD",
+                              "DDJ", "DDRAOS", "DDRAOSPERTCK", "DDRAOSPERUI", "DDRAUS",
+                              "DDRAUSPERTCK", "DDRAUSPERUI", "DDRHOLDDIFF", "DDRSETUPDIFF",
+                              "DDRTCHABS", "DDRTCHAVERAGE", "DDRTCKAVERAGE", "DDRTCLABS",
+                              "DDRTCLAVERAGE", "DDRTERRMN", "DDRTERRN", "DDRTJITCC", "DDRTJITDUTY",
+                              "DDRTJITPER", "DDRTPST", "DDRTRPRE", "DDRTWPRE", "DDRVIXAC",
+                              "DDRTDQSCK", "DELAY", "DJ", "DJDIRAC", "EYEHIGH", "EYELOW",
                               "FALLSLEWRATE", "FALLTIME", "FREQUENCY", "F2", "F4", "F8", "HEIGHT",
                               "HEIGHTBER", "HIGH", "HIGHTIME", "HOLD", "IMDAPOWERQUALITY",
                               "IMDAHARMONICS", "IMDAINPUTVOLTAGE", "IMDAINPUTCURRENT",
@@ -728,9 +725,9 @@ class TektronixMsoScope(Instrument):
                               "NOVERSHOOT", "NPERIOD", "NPJ", "NWIDTH", "PDUTY", "PERIOD", "PHASE",
                               "PHASENOISE", "PJ", "PK2PK", "POVERSHOOT", "PWIDTH", "QFACTOR",
                               "RISESLEWRATE", "RISETIME", "RJ", "RJDIRAC", "RMS", "SETUP", "SKEW",
-                              "SRJ", "SSCFREQDEV", "SSCMODRATE", "TIE", "TIMEOUTSIDELEVEL", "TIMETOMAX",
-                              "TIMETOMIN", "TJBER", "TNTRATIO", "TOP", "UNITINTERVAL", "VDIFFXOVR",
-                              "WIDTH", "WIDTHBER"]
+                              "SRJ", "SSCFREQDEV", "SSCMODRATE", "TIE", "TIMEOUTSIDELEVEL",
+                              "TIMETOMAX", "TIMETOMIN", "TJBER", "TNTRATIO", "TOP", "UNITINTERVAL",
+                              "VDIFFXOVR", "WIDTH", "WIDTHBER"]
 
     measurement_add_slot = Instrument.setting(
         "MEASUrement:ADDNew MEAS%d",
@@ -747,7 +744,8 @@ class TektronixMsoScope(Instrument):
         values=_measurable_parameters,
     )
 
-    def measurement_population_config(self, slot: int, global_flag=0, limit_state=0, limit_value=1000):
+    def measurement_population_config(self, slot: int, global_flag=0, limit_state=0,
+                                      limit_value=1000):
         """Configure the measurement population settings.
         :param slot
         :param global_flag : int
@@ -935,7 +933,7 @@ class TektronixMsoScope(Instrument):
     afg_arbitrary_source = Instrument.control(
         "AFG:ARBitrary:SOUrce?", "AFG:ARBitrary:SOUrce %s",
         """Control the source name for the Arbitrary Waveform.
-        Currently supported sources are either waveform file 
+        Currently supported sources are either waveform file
         (.wfm) or text file (.csv).""",
     )
 
@@ -988,7 +986,7 @@ class TektronixMSO58(TektronixMsoScope):
                  name="Tektronix MSO58 Oscilloscope",
                  active_channels=8,
                  **kwargs):
-        super().__init__(adapter, name, active_channels, **kwargs)
+        super().__init__(adapter, name,  active_channels, includeSCPI=True, **kwargs)
 
 
 class TektronixMSO64(TektronixMsoScope):
@@ -1003,10 +1001,14 @@ class TektronixMSO64(TektronixMsoScope):
                  name="Tektronix MSO64 Oscilloscope",
                  active_channels=4,
                  **kwargs):
-        super().__init__(adapter, name, active_channels, **kwargs)
+        super().__init__(adapter, name, active_channels, includeSCPI=True, **kwargs)
 
     ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4']
-    DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3', 'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7',
-                              'CH2_D0', 'CH2_D1', 'CH2_D2', 'CH2_D3', 'CH2_D4', 'CH2_D5', 'CH2_D6', 'CH2_D7',
-                              'CH3_D0', 'CH3_D1', 'CH3_D2', 'CH3_D3', 'CH3_D4', 'CH3_D5', 'CH3_D6', 'CH3_D7',
-                              'CH4_D0', 'CH4_D1', 'CH4_D2', 'CH4_D3', 'CH4_D4', 'CH4_D5', 'CH4_D6', 'CH4_D7']
+    DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',
+                              'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7',
+                              'CH2_D0', 'CH2_D1', 'CH2_D2', 'CH2_D3',
+                              'CH2_D4', 'CH2_D5', 'CH2_D6', 'CH2_D7',
+                              'CH3_D0', 'CH3_D1', 'CH3_D2', 'CH3_D3',
+                              'CH3_D4', 'CH3_D5', 'CH3_D6', 'CH3_D7',
+                              'CH4_D0', 'CH4_D1', 'CH4_D2', 'CH4_D3',
+                              'CH4_D4', 'CH4_D5', 'CH4_D6', 'CH4_D7']
