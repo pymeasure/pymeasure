@@ -218,15 +218,11 @@ class RedPitayaScpi(Instrument):
         """Reset the state of all digital lines"""
         self.write("DIG:RST")
 
-
-
     # ANALOG SECTION
 
     def analog_reset(self):
         """ Reset the voltage of all analog channels """
         self.write("ANALOG:RST")
-
-
 
     # ACQUISITION SECTION
 
@@ -343,4 +339,3 @@ class RedPitayaScpi(Instrument):
         values=[-LV_MAX, LV_MAX],
         dynamic=True,
     )
-

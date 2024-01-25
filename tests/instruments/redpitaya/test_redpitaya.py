@@ -1,10 +1,7 @@
 import datetime
 
 import pytest
-
-from pymeasure.generator import Generator
 from pymeasure.instruments.redpitaya import RedPitayaScpi
-
 
 
 @pytest.fixture(scope="module")
@@ -123,4 +120,3 @@ class TestRedpitaya:
 
         inst.acq_format = 'ASCII'
         inst.ain1.get_data_from_ascii()
-
