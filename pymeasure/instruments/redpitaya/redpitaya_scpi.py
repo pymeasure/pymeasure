@@ -119,14 +119,29 @@ class AnalogInputFastChannel(Channel):
         values=['LV', 'HV'],
     )
 
-    def get_data_from_ascii(self) -> np.ndarray:
-        self.write("ACQ:SOUR{ch}:DATA?")
+    def get_data_from_ascii(self, start=0, npts: int = None) -> np.ndarray:
+        """ Read data from the buffer from ascii format, see :meth:acq_format
+
+        :param start: starting point in the buffer
+        :param npts: number of points to be read
+        """
+        if npts is not None:
+            self.write(f"ACQ:SOUR{'{ch}'}:DATA:Start:N? {start:.0f},{npts:.0f}")
+        else:
+            self.write("ACQ:SOUR{ch}:DATA?")
         data_str = self.read()
         return np.fromstring(data_str.strip('{}').encode(), sep=',')
 
-    def get_data_from_binary(self) -> np.ndarray:
-        """ Get the data in """
-        self.write("ACQ:SOUR{ch}:DATA?")
+    def get_data_from_binary(self, start=0, npts: int = None) -> np.ndarray:
+        """ Read data from the buffer from binary format, see :meth:acq_format
+
+        :param start: starting point in the buffer
+        :param npts: number of points to be read
+        """
+        if npts is not None:
+            self.write(f"ACQ:SOUR{'{ch}'}:DATA:Start:N? {start:.0f},{npts:.0f}")
+        else:
+            self.write("ACQ:SOUR{ch}:DATA?")
         self.read_bytes(1)
         nint = int(self.read_bytes(1).decode())
         length = int(self.read_bytes(nint).decode())
@@ -243,7 +258,8 @@ class RedPitayaScpi(Instrument):
         The sampling rate is given as 125MS/s / decimation
         """,
         validator=strict_discrete_set,
-        values=[2**n for n in range(17)]
+        values=[2**n for n in range(17)],
+        cast=int,
     )
 
     average_skipped_samples = Instrument.control(
