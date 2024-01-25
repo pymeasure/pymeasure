@@ -66,7 +66,7 @@ class SetpointChannel(Channel):
         values=["ABOVE", "BELOW"],
         check_set_errors=True,
     )
-    
+
     enable = Channel.control(
         "EN{ch}?", "EN{ch}!%s",
         """Control the assigned input channel or disable the setpoint relay.""",
@@ -80,7 +80,7 @@ class SetpointChannel(Channel):
                 },
         check_set_errors=True,
     )
-    
+
 
 class MKS974B(MKSInstrument):
     """ MKS 974B vacuum pressure transducer
@@ -134,7 +134,7 @@ class MKS974B(MKSInstrument):
         "DT?", """Get the device type""",
         cast=str,
     )
-    
+
     manufacturer = Instrument.measurement(
         "MF?", """Get the manufacturer name""",
         cast=str,
@@ -144,7 +144,7 @@ class MKS974B(MKSInstrument):
         "MD?", """Get the transducer model number""",
         cast=str,
     )
-     
+
     part_number = Instrument.measurement(
         "MD?", """Get the transducer part number""",
         cast=str,
@@ -154,11 +154,11 @@ class MKS974B(MKSInstrument):
         "TIM?", """Get the operation hours of the instrument""",
         cast=int,
     )
- 
+
     temperature = Instrument.measurement(
         "TEM?", """Get the MicroPirani sensor temperature""",
     )
-      
+
     status = Channel.measurement(
         "T?",
         """Get transducer status""",
@@ -171,7 +171,7 @@ class MKS974B(MKSInstrument):
                 "Cold Cathode On": "G",
                 },
     )
-    
+
     pirani_pressure = Instrument.measurement(
         "PR1?", """Get MicroPirani sensor pressure""",
     )
