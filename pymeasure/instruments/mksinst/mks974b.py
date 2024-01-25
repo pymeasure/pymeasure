@@ -32,10 +32,14 @@ class SetpointChannel(Channel):
     """
     Settings of the optionally included setpoint relays.
     
+    The relay is energized either below or above the setpoint 'value' depending on the
+    'direction' property. The relay is de-energized when the reset value is crossed in
+    the opposite direction.
+    
     Note that 974B transducer has an auto hysteresis setting of 10% of the setpoint value that
-    overwrites the current reset value whenever the setpoint value or setpoint
-    direction is changed. If other hysteresis value than 10% is required, first set the
-    setpoint value and setpoint direction before setting the reset value.
+    overwrites the current reset value whenever the setpoint value or setpoint direction is
+    changed. If other hysteresis value than 10% is required, first set the setpoint value
+    and setpoint direction before setting the reset value.
     """
     status = Channel.measurement(
         "SS{ch}?",
@@ -45,19 +49,19 @@ class SetpointChannel(Channel):
 
     value = Channel.control(
         "SP{ch}?", "SP{ch}!%s",
-        """Control the relay switch value. The setpoint value is the pressure either below or above which the setpoint relay will be energized.""",
+        """Control the relay switch value"""
         check_set_errors=True,
     )
 
     reset_value = Channel.control(
         "SH{ch}?", "SH{ch}!%s",
-        """Control the relay switch off value. The reset value is the pressure value at which the setpoint relay will be de-energized.""",
+        """Control the relay switch off value""",
         check_set_errors=True,
     )
 
     direction = Channel.control(
         "SD{ch}?", "SD{ch}!%s",
-        """Get the setpoint relay status""",
+        """Control the switching direction""",
         validator=strict_discrete_set,
         values=["ABOVE", "BELOW"],
         check_set_errors=True,
@@ -159,13 +163,13 @@ class MKS974B(MKSInstrument):
         "T?",
         """Get transducer status""",
         map_values=True,
-        values= {"Ok": "O",
-                 "MicroPirani failure": "M",
-                 "Cold Cathode failure": "C",
-                 "Piezo sensor failure": "Z",
-                 "pressure dose setpoint exceeded": "R",
-                 "Cold Cathode On": "G",
-                 },
+        values={"Ok": "O",
+                "MicroPirani failure": "M",
+                "Cold Cathode failure": "C",
+                "Piezo sensor failure": "Z",
+                "pressure dose setpoint exceeded": "R",
+                "Cold Cathode On": "G",
+                },
     )
     
     pirani_pressure = Instrument.measurement(
@@ -198,13 +202,15 @@ class MKS974B(MKSInstrument):
     )
 
     user_tag = Instrument.control(
-        "UT?", "UT!%s", """Control the user programmable tag""",
+        "UT?", "UT!%s",
+        """Control the user programmable tag""",
         cast=str,
         check_set_errors=True,
     )
 
     switch_enabled = Instrument.control(
-        "SW?", "SW!%s", """Control the user switch to prevent accidental execution of adjustments""",
+        "SW?", "SW!%s",
+        """Control the user switch to prevent accidental execution of adjustments""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON",
