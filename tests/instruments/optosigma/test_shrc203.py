@@ -28,7 +28,20 @@ from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.optosigma import SHRC203
 
+
 def test_init():
+    # Test the initialization of the instrument
     with expected_protocol(
-            SHRC203, []) as instr:
-        pass  # Verify the expected communication.
+            SHRC203,
+            [],
+            ):
+        pass # Verify the expected communication.
+
+def test_motion_done():
+    # instr.ch_1.motion_done should produce the following commands
+    with expected_protocol(
+            SHRC203,
+            [("!:1S", None)],
+    ) as instr:
+        assert instr.ch_1.motion_done == "R"
+

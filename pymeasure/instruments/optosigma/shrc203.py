@@ -165,15 +165,6 @@ class SHRC203(Instrument):
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
 
-    axis_x = Instrument.ChannelCreator(Axis, "1")
-    axis_y = Instrument.ChannelCreator(Axis, "2")
-    axis_z = Instrument.ChannelCreator(Axis, "3")
-    axis_all = Instrument.ChannelCreator(Axis, "W")
-
-    mode = Instrument.control("?:MODE", "MODE:%s", """Query or set the controller mode.""",
-                              validator=strict_discrete_set,
-                              values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"]
-                              )
 
     def __init__(self,
                  adapter,
@@ -189,3 +180,14 @@ class SHRC203(Instrument):
             read_termination=self.termination_str,
             **kwargs
         )
+
+
+    ch_1 = Instrument.ChannelCreator(Axis, 1)
+    ch_2 = Instrument.ChannelCreator(Axis, 2)
+    ch_3 = Instrument.ChannelCreator(Axis, 3)
+    # axis_all = Instrument.ChannelCreator(Axis, "W")
+
+    mode = Instrument.control("?:MODE", "MODE:%s", """Query or set the controller mode.""",
+                              validator=strict_discrete_set,
+                              values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"]
+                              )
