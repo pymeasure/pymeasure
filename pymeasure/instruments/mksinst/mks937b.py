@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-import re
-
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
+
+from .mksinst import MKSInstrument
+
 
 _ion_gauge_status = {"Wait": "W",
                      "Off": "O",
@@ -67,7 +68,7 @@ class IonGaugeAndPressureChannel(PressureChannel):
     )
 
 
-class MKS937B(Instrument):
+class MKS937B(MKSInstrument):
     """ MKS 937B vacuum gauge controller
 
     Connection to the device is made through an RS232/RS485 serial connection.
@@ -103,71 +104,9 @@ class MKS937B(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
-            read_termination=";",  # in reality its ";FF"
-            # which is, however, invalid for pyvisa. Therefore extra bytes have to
-            # be read in the read() method and the terminators are hardcoded here.
-            write_termination=";FF",
+            address=address,
             **kwargs
         )
-        self.address = address
-        # compiled regular expression for finding numerical values in reply strings
-        self._re_response = re.compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
-
-    def _extract_reply(self, reply):
-        """ preprocess_reply function which tries to extract <Response> from
-        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
-        is returned.
-        :param reply: reply string
-        :returns: string with only the response, or the original string
-        """
-        rvalue = self._re_response.search(reply)
-        if rvalue:
-            return rvalue.group('msg')
-        return reply
-
-    def _prepend_address(self, cmd):
-        """
-        create command string by including the device address
-        """
-        return f"@{self.address:03d}{cmd}"
-
-    def _check_extra_termination(self):
-        """
-        Check the read termination to correspond to the protocol
-        """
-        t = super().read_bytes(2)  # read extra termination chars 'FF'
-        if t != b'FF':
-            raise ValueError(f"unexpected termination string received {t}")
-
-    def read(self):
-        """
-        Reads from the instrument including the correct termination characters
-        """
-        ret = super().read()
-        self._check_extra_termination()
-        return self._extract_reply(ret)
-
-    def write(self, command):
-        """
-        Write to the instrument including the device address.
-
-        :param command: command string to be sent to the instrument
-        """
-        super().write(self._prepend_address(command))
-
-    def check_set_errors(self):
-        """
-        Check reply string for acknowledgement string.
-        """
-        ret = super().read()  # use super read to get raw reply
-        reply = self._re_response.search(ret)
-        if reply:
-            if reply.group('ack') == 'ACK':
-                self._check_extra_termination()
-                return []
-        # no valid acknowledgement message found
-        raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
     serial = Instrument.measurement(
         "SN?", """Get the serial number of the instrument """,

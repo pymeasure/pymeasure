@@ -22,4 +22,6 @@
 # THE SOFTWARE.
 #
 
+from .mksinst import MKSInstrument
 from .mks937b import MKS937B
+from .mks974b import MKS974B
