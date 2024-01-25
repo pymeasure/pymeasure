@@ -744,6 +744,72 @@ class TektronixMsoScope(Instrument):
         values=_measurable_parameters,
     )
 
+    measurement_gating_type = Instrument.control(
+        "MEASUrement:GATing?", "MEASUrement:GATing %s",
+        """Control the gating type for the measurement.
+        :param slot: int
+        :param gating_type: str
+        NONE specifies measurements are taken across the entire record.
+        SCREEN turns on gating, using the left and right edges of the screen.
+        CURSor limits measurements to the portion of the waveform between the vertical
+        bar cursors, even if they are off screen.
+        LOGic specifies that measurements are taken only when the logical state of other
+        waveforms is true.
+        SEARch specifies that measurements are taken only where the results of a user
+        specified search are found.
+        TIMe limits measurements to the portion of the waveform between the Start and
+        End gate times.
+        """,
+        validator=strict_discrete_set,
+        values=["NONE", "SCREEN", "CURSOR", "LOGIC", "SEARCH", "TIME"],
+    )
+
+    measurement_gating_starttime = Instrument.control(
+        "MEASUrement:GATing:STARTtime?", "MEASUrement:GATing:STARTtime %g",
+        """Control the start gate time for all measurements that use Global gating.
+        """,
+    )
+
+    measurement_gating_endtime = Instrument.control(
+        "MEASUrement:GATing:ENDtime?", "MEASUrement:GATing:ENDtime %g",
+        """Control the end gate time for all measurements that use Global gating.
+        """,
+    )
+
+    measurement_gating_active = Instrument.control(
+        "MEASUrement:GATing:ACTive?", "MEASUrement:GATing:ACTive %s",
+        """Control the global gating active level used for logic gating.
+        """,
+        validator=strict_discrete_set,
+        values=["HIGH", "LOW"],
+    )
+
+    measurement_gating_hysteresis = Instrument.control(
+        "MEASUrement:GATing:HYSTeresis?", "MEASUrement:GATing:HYSTeresis %g",
+        """Control the global gating hysteresis value used for logic gating.
+        """,
+    )
+
+    measurement_gating_logicsource = Instrument.control(
+        "MEASUrement:GATing:LOGICSource?", "MEASUrement:GATing:LOGICSource %s",
+        """Control the gating data source used for logic gating.
+
+        accepted values are CH<x>, MATH<x>, REF<x>
+        """,
+    )
+
+    measurement_gating_threshold = Instrument.control(
+        "MEASUrement:GATing:MIDRef?", "MEASUrement:GATing:MIDRef %g",
+        """Control the global gating mid ref value used for logic gating.
+        """,
+    )
+
+    measurement_gating_searchsource = Instrument.control(
+        "MEASUrement:GATing:SEARCHSource?", "MEASUrement:GATing:SEARCHSource %s",
+        """the global gating search source when the gating type is search.
+        """,
+    )
+
     def measurement_population_config(self, slot: int, global_flag=0, limit_state=0,
                                       limit_value=1000):
         """Configure the measurement population settings.
@@ -986,7 +1052,7 @@ class TektronixMSO58(TektronixMsoScope):
                  name="Tektronix MSO58 Oscilloscope",
                  active_channels=8,
                  **kwargs):
-        super().__init__(adapter, name,  active_channels, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name,  active_channels, **kwargs)
 
 
 class TektronixMSO64(TektronixMsoScope):
@@ -1001,7 +1067,7 @@ class TektronixMSO64(TektronixMsoScope):
                  name="Tektronix MSO64 Oscilloscope",
                  active_channels=4,
                  **kwargs):
-        super().__init__(adapter, name, active_channels, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name, active_channels, **kwargs)
 
     ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4']
     DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',

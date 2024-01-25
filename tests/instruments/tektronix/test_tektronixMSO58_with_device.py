@@ -36,6 +36,7 @@ class TestTektronixMSO58:
                      "LORENTZ", "ERISE", "EDECAY", "HAVERSINE", "CARDIAC", "ARBITRARY"]
     AFG_OUTPUT_MODES = ["OFF", "CONTINUOUS", "BURST"]
     AFG_OUTPUT_IMPEDANCE = ["FIFTY", "HIGHZ"]
+    GATING_TYPE = ["NONE", "SCREEN", "CURSOR", "LOGIC", "SEARCH", "TIME"]
 
     ############
     # FIXTURES #
@@ -212,6 +213,13 @@ class TestTektronixMSO58:
             autoscaled_instrument.measurement_configure(slot, "CH1", "CH1", meas_type)
             sleep(0.5)
             assert autoscaled_instrument.measurement_result_curracq_mean(slot) == pytest.approx(value, rel=0.3)
+
+    @pytest.mark.parametrize("case", GATING_TYPE)
+    def test_measurement_gating(self, case, autoscaled_instrument):
+        with pytest.raises(ValueError):
+            autoscaled_instrument.measurement_gating_type = "abdc"
+        autoscaled_instrument.measurement_gating_type = case
+        assert autoscaled_instrument.measurement_gating_type == case
 
     # AFG
     @pytest.mark.parametrize("case", AFG_FUNCTIONS)
