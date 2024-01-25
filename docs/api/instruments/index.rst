@@ -54,6 +54,7 @@ Instruments by manufacturer:
    parker/index
    pendulum/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index
