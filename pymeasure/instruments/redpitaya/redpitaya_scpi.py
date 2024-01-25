@@ -152,6 +152,9 @@ class RedPitayaScpi(Instrument):
     like "RP-F06432.LOCAL/" then browse the menu, open the Development application and activate the
     SCPI server. When activating the server, you'll be notified with the IP/port address to use
     with this Instrument.
+
+    :param ip_address: IP address to use, if `adapter` is None.
+    :param port: Port number to use, if `adapter` is None.
     """
 
     TRIGGER_SOURCES = ('DISABLED', 'NOW', 'CH1_PE', 'CH1_NE', 'CH2_PE', 'CH2_NE',
@@ -177,6 +180,17 @@ class RedPitayaScpi(Instrument):
             read_termination=read_termination,
             write_termination=write_termination,
             **kwargs)
+
+    dioN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
+    dioP = Instrument.MultiChannelCreator(DigitalChannelP, list(range(7)), prefix='dioP')
+    led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(8)), prefix='led')
+
+    analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)),
+                                                    prefix='ainslow')
+    analog_out_slow = Instrument.MultiChannelCreator(AnalogOutputSlowChannel, list(range(4)),
+                                                     prefix='aoutslow')
+
+    analog_in = Instrument.MultiChannelCreator(AnalogInputFastChannel, (1, 2), prefix='ain')
 
     time = Instrument.control("SYST:TIME?",
                               "SYST:TIME %s",
@@ -204,9 +218,7 @@ class RedPitayaScpi(Instrument):
         """Reset the state of all digital lines"""
         self.write("DIG:RST")
 
-    dioN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
-    dioP = Instrument.MultiChannelCreator(DigitalChannelP, list(range(7)), prefix='dioP')
-    led = Instrument.MultiChannelCreator(DigitalChannelLed, list(range(8)), prefix='led')
+
 
     # ANALOG SECTION
 
@@ -214,10 +226,7 @@ class RedPitayaScpi(Instrument):
         """ Reset the voltage of all analog channels """
         self.write("ANALOG:RST")
 
-    analog_in_slow = Instrument.MultiChannelCreator(AnalogInputSlowChannel, list(range(4)),
-                                                    prefix='ainslow')
-    analog_out_slow = Instrument.MultiChannelCreator(AnalogOutputSlowChannel, list(range(4)),
-                                                     prefix='aoutslow')
+
 
     # ACQUISITION SECTION
 
@@ -335,4 +344,3 @@ class RedPitayaScpi(Instrument):
         dynamic=True,
     )
 
-    analog_in = Instrument.MultiChannelCreator(AnalogInputFastChannel, (1, 2), prefix='ain')
