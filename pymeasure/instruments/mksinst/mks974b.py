@@ -31,11 +31,11 @@ from .mksinst import MKSInstrument
 class SetpointChannel(Channel):
     """
     Settings of the optionally included setpoint relays.
-    
+
     The relay is energized either below or above the setpoint 'value' depending on the
     'direction' property. The relay is de-energized when the reset value is crossed in
     the opposite direction.
-    
+
     Note that 974B transducer has an auto hysteresis setting of 10% of the setpoint value that
     overwrites the current reset value whenever the setpoint value or setpoint direction is
     changed. If other hysteresis value than 10% is required, first set the setpoint value
@@ -49,7 +49,7 @@ class SetpointChannel(Channel):
 
     value = Channel.control(
         "SP{ch}?", "SP{ch}!%s",
-        """Control the relay switch value"""
+        """Control the relay switch value""",
         check_set_errors=True,
     )
 
