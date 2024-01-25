@@ -1,10 +1,10 @@
 import pytest
 from time import sleep
 from pyvisa.errors import VisaIOError
-from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58
+from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO64
 
 
-class TestTektronixMSO58:
+class TestTektronixMSO64:
     """
         Unit tests for TektronixOscilloscope class.
 
@@ -25,10 +25,10 @@ class TestTektronixMSO58:
     TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD", "TRANSITION"]
     TRIGGER_LEVELS = [100.000E-3, 200.000E-3, 300.000E-3]
     TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
-    TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
+    TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4']
     ACQUISITION_AVERAGE = [4, 16, 32, 64, 128, 256]
     ACQUISITION_STATE = ["RUN", "STOP"]
-    CHANNELS = [1, 2, 3, 4, 5, 6, 7, 8]
+    CHANNELS = [1, 2, 3, 4]
     MEAS_SLOTS = {1: "PK2PK", 2: "PWIDTH", 3: "NWIDTH", 4: "FREQUENCY"}
     EXPECTED_MEAS_VALUES = {'PK2PK': 2.5, 'PWIDTH': 500.0000E-6, 'NWIDTH': 500.0000E-6,
                             'FREQUENCY': 1.0000E3}
@@ -44,7 +44,7 @@ class TestTektronixMSO58:
 
     @pytest.fixture(scope="module")
     def instrument(self, connected_device_address):
-        return TektronixMSO58(connected_device_address)
+        return TektronixMSO64(connected_device_address)
 
     @pytest.fixture
     def resetted_instrument(self, instrument):
@@ -78,7 +78,7 @@ class TestTektronixMSO58:
         # The pure python VISA library (pyvisa-py) raises a ValueError while the
         # PyVISA library raises a VisaIOError.
         with pytest.raises((ValueError, VisaIOError)):
-            TektronixMSO58(bad_resource)
+            TektronixMSO64(bad_resource)
 
     # Channel
     def test_ch_current_configuration(self, resetted_instrument):
