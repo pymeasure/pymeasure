@@ -28,18 +28,19 @@ from pymeasure.instruments.validators import strict_discrete_set
 from .mksinst import MKSInstrument
 
 
-class SetpointChannel(Channel):
+class RelayChannel(Channel):
     """
     Settings of the optionally included setpoint relay.
 
-    The relay is energized either below or above the setpoint 'value' depending on the
-    'direction' property. The relay is de-energized when the reset value is crossed in
-    the opposite direction.
+    The relay is energized either below or above the setpoint depending on the
+    'direction' property. The relay is de-energized when the reset value is
+    crossed in the opposite direction.
 
-    Note that 974B transducer has an auto hysteresis setting of 10% of the setpoint value that
-    overwrites the current reset value whenever the setpoint value or setpoint direction is
-    changed. If other hysteresis value than 10% is required, first set the setpoint value
-    and setpoint direction before setting the reset value.
+    Note that 974B transducer has an auto hysteresis setting of 10% of the
+    setpoint value that overwrites the current reset value whenever the setpoint
+    value or direction is changed. If other hysteresis value than 10% is
+    required, first set the setpoint value and direction before setting the
+    reset value.
     """
     status = Channel.measurement(
         "SS{ch}?",
@@ -47,13 +48,13 @@ class SetpointChannel(Channel):
         values={True: "SET", False: "CLEAR"},
     )
 
-    value = Channel.control(
+    setpoint = Channel.control(
         "SP{ch}?", "SP{ch}!%s",
-        """Control the relay switch value""",
+        """Control the relay switch setpoint""",
         check_set_errors=True,
     )
 
-    reset_value = Channel.control(
+    resetpoint = Channel.control(
         "SH{ch}?", "SH{ch}!%s",
         """Control the relay switch off value""",
         check_set_errors=True,
@@ -102,11 +103,11 @@ class MKS974B(MKSInstrument):
     :param kwargs: Any valid key-word argument for :class:`Instrument`
     """
 
-    setpoint_1 = Instrument.ChannelCreator(SetpointChannel, 1)
+    relay_1 = Instrument.ChannelCreator(RelayChannel, 1)
 
-    setpoint_2 = Instrument.ChannelCreator(SetpointChannel, 2)
+    relay_2 = Instrument.ChannelCreator(RelayChannel, 2)
 
-    setpoint_3 = Instrument.ChannelCreator(SetpointChannel, 3)
+    relay_3 = Instrument.ChannelCreator(RelayChannel, 3)
 
     def __init__(self, adapter, name="MKS 974B vacuum pressure transducer", address=253, **kwargs):
         super().__init__(
