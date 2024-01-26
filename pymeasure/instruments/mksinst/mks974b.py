@@ -30,7 +30,7 @@ from .mksinst import MKSInstrument
 
 class SetpointChannel(Channel):
     """
-    Settings of the optionally included setpoint relays.
+    Settings of the optionally included setpoint relay.
 
     The relay is energized either below or above the setpoint 'value' depending on the
     'direction' property. The relay is de-energized when the reset value is crossed in
@@ -73,6 +73,7 @@ class SetpointChannel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={False: "OFF",
+                True: "ON",
                 "combined": "CMB",
                 "pirani": "PIR",
                 "piezo": "PZ",
@@ -115,7 +116,11 @@ class MKS974B(MKSInstrument):
             **kwargs
         )
 
-    serial = Instrument.measurement(
+    def id(self):
+        """ Get the identification of the instrument. """
+        return f"{self.manufacturer}{self.model} {self.device_type} ({self.serial_number})"
+
+    serial_number = Instrument.measurement(
         "SN?", """Get the serial number of the instrument""",
         cast=str,
     )
@@ -194,9 +199,8 @@ class MKS974B(MKSInstrument):
         validator=strict_discrete_set,
         map_values=True,
         values={"Torr": "TORR",
-                "mBar": "mBAR",
+                "mBar": "MBAR",
                 "Pascal": "PASCAL",
-                "Micron": "MICRON",
                 },
         check_set_errors=True,
     )
