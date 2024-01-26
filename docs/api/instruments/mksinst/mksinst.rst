@@ -1,5 +1,5 @@
 ###################################
-MKS Instruments abstract Instrument
+MKS Instruments Abstract Instrument
 ###################################
 
 .. autoclass:: pymeasure.instruments.mksinst.mksinst.MKSInstrument

@@ -99,7 +99,7 @@ class MKS974B(MKSInstrument):
     :param string name: The name of the instrument.
     :param address: device address included in every message to the instrument
                     (default=253)
-    :param kwargs: Any valid key-word argument for Instrument
+    :param kwargs: Any valid key-word argument for :class:`Instrument`
     """
 
     setpoint_1 = Instrument.ChannelCreator(SetpointChannel, 1)

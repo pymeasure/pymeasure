@@ -45,6 +45,7 @@ class MKSInstrument(Instrument):
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
+
     def __init__(self, adapter, name="MKS Instrument", address=253, **kwargs):
         super().__init__(
             adapter,
