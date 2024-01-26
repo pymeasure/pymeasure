@@ -150,6 +150,11 @@ class StatusMessage:
     MeasurementUnits = (25, 1)
 
 
+def _getstatus(status_type, modifier=lambda v: v):
+    start_index, stop_offset = status_type
+    return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
+
+
 class HP437B(Instrument):
     """Represents the HP437B Power Meters.
 
@@ -166,10 +171,6 @@ class HP437B(Instrument):
             send_end=True,
             **kwargs,
         )
-
-    def _getstatus(status_type, modifier=lambda v: v):
-        start_index, stop_offset = status_type
-        return lambda v: modifier(int(v[start_index:start_index + stop_offset]))
 
     def check_errors(self):
         errors = []
