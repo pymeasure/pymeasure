@@ -114,4 +114,4 @@ def test_relay_enabled():
         [("@253EN6?", "@253ACKENABLE"),
          (None, b"FF")],
     ) as inst:
-        assert inst.relay_6.enabled == True
+        assert inst.relay_6.enabled is True
