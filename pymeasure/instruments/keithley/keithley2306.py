@@ -659,7 +659,7 @@ class Keithley2306(Instrument):
 
         :param: relay_number:
             int: the number of the relay to be selected
-        :type: :class:`.Relay`
+        :type: :class:`~Relay`
 
         """
         if relay_number == 1:

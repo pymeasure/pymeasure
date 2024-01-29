@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from enum import StrEnum
+from enum import Enum
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
@@ -43,7 +43,7 @@ _ion_gauge_status = {"Wait": "W",
                      }
 
 
-class Unit(StrEnum):
+class Unit(Enum):
     Torr = "TORR"
     mbar = "mBAR"
     Pa = "PASCAL"
