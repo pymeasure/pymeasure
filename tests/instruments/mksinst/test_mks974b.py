@@ -115,3 +115,13 @@ def test_relay_direction():
          (None, b"FF")],
     ) as inst:
         assert inst.relay_2.direction == "BELOW"
+
+
+def test_relay_enabled():
+    """Verify the communication of the relay enabled property."""
+    with expected_protocol(
+        MKS974B,
+        [("@253EN3?", "@253ACKPIR"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_3.enabled == "pirani"

@@ -24,7 +24,49 @@
 
 from re import compile
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
+
+class RelayChannel(Channel):
+    """
+    Settings of the optionally included setpoint relay.
+
+    The relay is energized either below or above the setpoint depending on the
+    'direction' property. The relay is de-energized when the reset value is
+    crossed in the opposite direction.
+
+    Note that device by default uses an auto hysteresis setting of 10% of the
+    setpoint value that overwrites the current reset value whenever the setpoint
+    value or direction is changed. If other hysteresis value than 10% is
+    required, first set the setpoint value and direction before setting the
+    reset value.
+    """
+    status = Channel.measurement(
+        "SS{ch}?",
+        """Get the setpoint relay status""",
+        values={True: "SET", False: "CLEAR"},
+    )
+
+    setpoint = Channel.control(
+        "SP{ch}?", "SP{ch}!%s",
+        """Control the relay switch setpoint""",
+        check_set_errors=True,
+    )
+
+    resetpoint = Channel.control(
+        "SH{ch}?", "SH{ch}!%s",
+        """Control the relay switch off value""",
+        check_set_errors=True,
+    )
+
+    direction = Channel.control(
+        "SD{ch}?", "SD{ch}!%s",
+        """Control the switching direction""",
+        validator=strict_discrete_set,
+        values=["ABOVE", "BELOW"],
+        check_set_errors=True,
+    )
 
 
 class MKSInstrument(Instrument):

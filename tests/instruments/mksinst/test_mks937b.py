@@ -85,3 +85,33 @@ def test_power_enabled():
          (None, b"FF")],
     ) as inst:
         assert inst.ch_1.power_enabled is True
+
+
+def test_relay_value():
+    """Verify the communication of the relay setpoint getter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253SP10?", "@253ACK2.00E+0"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_10.setpoint == pytest.approx(2.00e0)
+
+
+def test_relay_direction():
+    """Verify the communication of the relay direction."""
+    with expected_protocol(
+        MKS937B,
+        [("@253SD3?", "@253ACKABOVE"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_3.direction == "ABOVE"
+
+
+def test_relay_enabled():
+    """Verify the communication of the relay enabled property."""
+    with expected_protocol(
+        MKS937B,
+        [("@253EN6?", "@253ACKENABLE"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_6.enabled == True

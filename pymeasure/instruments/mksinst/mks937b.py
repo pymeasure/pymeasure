@@ -26,7 +26,7 @@ from enum import StrEnum
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
-from .mksinst import MKSInstrument
+from .mksinst import MKSInstrument, RelayChannel
 
 
 _ion_gauge_status = {"Wait": "W",
@@ -48,6 +48,24 @@ class Unit(StrEnum):
     mbar = "mBAR"
     Pa = "PASCAL"
     uHg = "MICRON"
+
+
+class Relay(RelayChannel):
+
+    enabled = Channel.control(
+        "EN{ch}?", "EN{ch}!%s",
+        """Control the relay function or disable the setpoint relay.
+
+        Possible values are True/False to enable/disable pressure based
+        activation of the relay and 'SET' to permanently energize the relay.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={False: "CLEAR",
+                True: "ENABLE",
+                "SET": "SET",
+                },
+        check_set_errors=True,
+    )
 
 
 class PressureChannel(Channel):
@@ -80,13 +98,13 @@ class MKS937B(MKSInstrument):
     """ MKS 937B vacuum gauge controller
 
     Connection to the device is made through an RS232/RS485 serial connection.
-    The communication protocol of this device is as follows:
 
-    Query: '@<aaa><Command>?;FF' with the response '@<aaa>ACK<Response>;FF'
-    Set command: '@<aaa><Command>!<parameter>;FF' with the response '@<aaa>ACK<Response>;FF'
-    Above <aaa> is an address from 001 to 254 which can be specified upon
-    initialization. Since ';FF' is not supported by pyvisa as terminator this
-    class overloads the device communication methods.
+    The 937B gauge controller can connect up to 6 pressure measurement channels
+    for gauges of various types which includes ionization gauges, Pirani and
+    piezo gauges. Based on the pressure values of the gauges twelve setpoint
+    relays can be energized when certain pressure values are reached. The
+    assignment of the relays to measurement channels is fixed to have two
+    relays for each pressure channel.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
     :param string name: The name of the instrument.
@@ -107,6 +125,30 @@ class MKS937B(MKSInstrument):
     ch_5 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 5)
 
     ch_6 = Instrument.ChannelCreator(PressureChannel, 6)
+
+    relay_1 = Instrument.ChannelCreator(Relay, 1)
+
+    relay_2 = Instrument.ChannelCreator(Relay, 2)
+
+    relay_3 = Instrument.ChannelCreator(Relay, 3)
+
+    relay_4 = Instrument.ChannelCreator(Relay, 4)
+
+    relay_5 = Instrument.ChannelCreator(Relay, 5)
+
+    relay_6 = Instrument.ChannelCreator(Relay, 6)
+
+    relay_7 = Instrument.ChannelCreator(Relay, 7)
+
+    relay_8 = Instrument.ChannelCreator(Relay, 8)
+
+    relay_9 = Instrument.ChannelCreator(Relay, 9)
+
+    relay_10 = Instrument.ChannelCreator(Relay, 10)
+
+    relay_11 = Instrument.ChannelCreator(Relay, 11)
+
+    relay_12 = Instrument.ChannelCreator(Relay, 12)
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         super().__init__(
