@@ -24,7 +24,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.mksinst.mks974b import MKS974B
+from pymeasure.instruments.mksinst.mks974b import MKS974B, Unit
 
 
 def test_device_type():
@@ -71,10 +71,10 @@ def test_unit_setter():
     """Verify the communication of the unit setter."""
     with expected_protocol(
         MKS974B,
-        [("@253U!TORR", "@253ACKTORR"),
+        [("@253U!PASCAL", "@253ACKPASCAL"),
          (None, b"FF")],
     ) as inst:
-        inst.unit = "Torr"
+        inst.unit = Unit.Pa
 
 
 def test_unit_getter():
@@ -84,7 +84,7 @@ def test_unit_getter():
         [("@253U?", "@253ACKTORR"),
          (None, b"FF")],
     ) as inst:
-        assert inst.unit == "Torr"
+        assert inst.unit == Unit.Torr
 
 
 def test_switch_enabled():
@@ -97,21 +97,21 @@ def test_switch_enabled():
         assert inst.switch_enabled is True
 
 
-def test_setpoint_value():
-    """Verify the communication of the setpoint getter."""
+def test_relay_value():
+    """Verify the communication of the relay setpoint getter."""
     with expected_protocol(
         MKS974B,
         [("@253SP1?", "@253ACK2.00E+1"),
          (None, b"FF")],
     ) as inst:
-        assert inst.setpoint_1.value == pytest.approx(2.00e1)
+        assert inst.relay_1.setpoint == pytest.approx(2.00e1)
 
 
-def test_setpoint_direction():
-    """Verify the communication of the setpoint direction."""
+def test_relay_direction():
+    """Verify the communication of the relay direction."""
     with expected_protocol(
         MKS974B,
         [("@253SD2?", "@253ACKBELOW"),
          (None, b"FF")],
     ) as inst:
-        assert inst.setpoint_2.direction == "BELOW"
+        assert inst.relay_2.direction == "BELOW"

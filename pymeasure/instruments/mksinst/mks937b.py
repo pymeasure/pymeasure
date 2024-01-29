@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from enum import StrEnum
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
@@ -40,6 +41,13 @@ _ion_gauge_status = {"Wait": "W",
                      "NOT_IONGAUGE": "NAK152",
                      "INVALID COMMAND": "NAK160",
                      }
+
+
+class Unit(StrEnum):
+    Torr = "TORR"
+    mbar = "mBAR"
+    Pa = "PASCAL"
+    uHg = "MICRON"
 
 
 class PressureChannel(Channel):
@@ -127,13 +135,11 @@ class MKS937B(MKSInstrument):
 
     unit = Instrument.control(
         "U?", "U!%s",
-        """Control pressure unit used for all pressure readings from the instrument""",
+        """Control pressure unit used for all pressure readings from the instrument.
+
+        Allowed units are Unit.Torr, Unit.mbar, Unit.Pa, Unit.uHg""",
         validator=strict_discrete_set,
         map_values=True,
-        values={"Torr": "TORR",
-                "mBar": "mBAR",
-                "Pascal": "PASCAL",
-                "Micron": "MICRON",
-                },
+        values={u: u.value for u in Unit},
         check_set_errors=True,
     )

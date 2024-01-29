@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import re
+from re import compile
 
 from pymeasure.instruments import Instrument
 
@@ -59,7 +59,7 @@ class MKSInstrument(Instrument):
         )
         self.address = address
         # compiled regular expression for finding numerical values in reply strings
-        self._re_response = re.compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
+        self._re_response = compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
 
     def _extract_reply(self, reply):
         """ preprocess_reply function which tries to extract <Response> from

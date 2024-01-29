@@ -24,7 +24,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.mksinst.mks937b import MKS937B
+from pymeasure.instruments.mksinst.mks937b import MKS937B, Unit
 
 
 def test_pressure():
@@ -61,10 +61,10 @@ def test_unit_setter():
     """Verify the communication of the unit setter."""
     with expected_protocol(
         MKS937B,
-        [("@253U!TORR", "@253ACKTORR"),
+        [("@253U!MICRON", "@253ACKMICRON"),
          (None, b"FF")],
     ) as inst:
-        inst.unit = "Torr"
+        inst.unit = Unit.uHg
 
 
 def test_unit_getter():
@@ -74,7 +74,7 @@ def test_unit_getter():
         [("@253U?", "@253ACKTORR"),
          (None, b"FF")],
     ) as inst:
-        assert inst.unit == "Torr"
+        assert inst.unit == Unit.Torr
 
 
 def test_power_enabled():

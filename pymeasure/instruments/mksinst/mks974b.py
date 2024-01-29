@@ -21,11 +21,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from enum import StrEnum
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument
+
+
+class Unit(StrEnum):
+    Torr = "TORR"
+    mbar = "MBAR"
+    Pa = "PASCAL"
 
 
 class RelayChannel(Channel):
@@ -68,7 +75,7 @@ class RelayChannel(Channel):
         check_set_errors=True,
     )
 
-    enable = Channel.control(
+    enabled = Channel.control(
         "EN{ch}?", "EN{ch}!%s",
         """Control the assigned input channel or disable the setpoint relay.""",
         validator=strict_discrete_set,
@@ -196,13 +203,12 @@ class MKS974B(MKSInstrument):
 
     unit = Instrument.control(
         "U?", "U!%s",
-        """Control pressure unit used for all pressure readings from the instrument""",
+        """Control pressure unit used for all pressure readings from the instrument.
+
+        Allowed units are Unit.Torr, Unit.mbar, Unit.Pa.""",
         validator=strict_discrete_set,
-        map_values=True,
-        values={"Torr": "TORR",
-                "mBar": "MBAR",
-                "Pascal": "PASCAL",
-                },
+        map_values = True,
+        values={u: u.value for u in Unit},
         check_set_errors=True,
     )
 
