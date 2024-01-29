@@ -85,7 +85,7 @@ class TestRedpitaya:
         inst.acq_units = 'RAW'
         assert inst.acq_units == 'RAW'
 
-        assert inst.acq_size == 16384
+        assert inst.buffer_length == 16384
 
         inst.acq_format = 'ASCII'
         inst.acq_format = 'BIN'
