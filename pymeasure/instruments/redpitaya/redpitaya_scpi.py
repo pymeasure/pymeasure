@@ -124,7 +124,6 @@ class AnalogInputFastChannel(Channel):
 
         :param npts: number of points to be read
         :param format: either 'ASCII' or 'BIN', see :meth:acq_format
-        :param center_trigger: if True data are symmetric around the trigger event position
         """
         if npts is not None:
             self.write(f"ACQ:SOUR{'{ch}'}:DATA:Old:N? {npts:.0f}")
