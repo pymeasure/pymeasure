@@ -179,9 +179,15 @@ class MKS937B(MKSInstrument):
         "U?", "U!%s",
         """Control pressure unit used for all pressure readings from the instrument.
 
-        Allowed units are Unit.Torr, Unit.mbar, Unit.Pa, Unit.uHg""",
+        Allowed units are Unit.Torr/'Torr', Unit.mbar/'mBar', Unit.Pa/'Pascal',
+        Unit.uHg/'Micron'.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={u: u.value for u in Unit},
+        values={**{u: u.value for u in Unit},
+                "Torr": "TORR",
+                "mBar": "mBAR",
+                "Pascal": "PASCAL",
+                "Micron": "MICRON",
+                },
         check_set_errors=True,
     )
