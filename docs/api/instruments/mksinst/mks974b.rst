@@ -6,6 +6,6 @@ MKS Instruments 974B Vacuum Pressure Transducer
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.mksinst.mks974b.SetpointChannel
+.. autoclass:: pymeasure.instruments.mksinst.mks974b.Relay
     :members:
     :show-inheritance:
