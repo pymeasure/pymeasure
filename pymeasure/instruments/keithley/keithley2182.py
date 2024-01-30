@@ -26,7 +26,9 @@ import logging
 import time
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set, strict_range
+from pymeasure.instruments.validators import (truncated_range,
+                                              strict_discrete_set,
+                                              strict_range)
 
 from .buffer import KeithleyBuffer
 
@@ -50,7 +52,7 @@ class Keithley2182Channel(Channel):
 
     def __init__(self, instrument, id_):
         """Set max voltage depending on channel."""
-        if id_==1:
+        if id_ == 1:
             self.voltage_range_values = [0, 120]
             self.voltage_offset_values = [-120, 120]
         else:
@@ -60,7 +62,7 @@ class Keithley2182Channel(Channel):
 
     voltage_range = Channel.control(
         ":SENS:VOLT:CHAN{ch}:RANG?", ":SENS:VOLT:CHAN{ch}:RANG %g",
-        """ A floating point property that controls the positive full-scale 
+        """ A floating point property that controls the positive full-scale
         measurement voltage range in Volts, which can take values from 0 to
         120 V (Ch. 1) or 12 V (Ch. 2). Auto-range is automatically disabled
         when this property is set. """,
@@ -110,40 +112,40 @@ class Keithley2182Channel(Channel):
         values=['OFF', 'ON'],
     )
 
-    def measure_voltage(self, auto_range=True, nplc=1):
-        """ Configures and acquires voltage measurement.
-        
-        :param auto_range: Enables auto_range if True, else uses set voltage range
+    def setup_voltage(self, auto_range=True, nplc=1):
+        """Changes active channel and configures channel for voltage
+            measurement.
+
+        :param auto_range: Enables auto_range if True, else uses set voltage
+            range
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 50/60
         """
-        log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:CHAN {ch};"
                    ":SENS:FUNC 'VOLT';"
                    f":SENS:VOLT:NPLC {nplc};")
         if auto_range:
-            self.write(":SENS:VOLT:RANG:AUTO 1;")
-        self.write(":READ?")
+            self.write(":SENS:VOLT:RANG:AUTO 1")
         self.check_errors()
 
-    def measure_temperature(self, nplc=1):
-        """ Configures and acquires temperature measurement.
+    def setup_temperature(self, nplc=1):
+        """Changes active channel and configures channel for temperature
+            measurement.
 
         :param channel: Temperature measurement channel
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 50/60
         """
-        log.info("%s is measuring temperature.", self.name)
         self.write(":SENS:CHAN {ch};"
                    ":SENS:FUNC 'TEMP';"
-                   f":SENS:CURR:NPLC {nplc};")
-        self.write(":READ?")
+                   f":SENS:TEMP:NPLC {nplc}")
         self.check_errors()
 
     def acquire_reference(self, func='VOLT'):
         """Acquire a measurement and store it as the relative offset value.
-        
+
         :param func: 'VOLT' or 'TEMP'
         """
         self.write(f":SENS:{func}:""CHAN{ch}:REF:ACQ")
+
 
 class Keithley2182(KeithleyBuffer, Instrument):
     """Represents the Keithley 2182 Nanovoltmeter and provides a
@@ -158,9 +160,9 @@ class Keithley2182(KeithleyBuffer, Instrument):
         keithley.active_channel = 1             # Sets channel 1 for active measurement
         keithley.channel_function = 'voltage'   # Configures active channel for voltage measurement
         print(keithley.voltage)                 # Prints the voltage in volts
-        
-        keithley.ch_1.measure_voltage()         # Measure voltage on channel 1
-        keithley.ch_2.measure_temp()            # Measure temperature on channel 2
+
+        volt = keithley.ch_1.measure_voltage()  # Measure voltage on channel 1
+        temp = keithley.ch_2.measure_temp()     # Measure temperature on channel 2
 
     """
 
@@ -202,8 +204,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
     )
     channel_function = Instrument.control(
         ":SENS:FUNC?", "SENS:FUNC %s",
-        """ A property that controls the measurement mode of the active channel.
-        Valid options are voltage and temperature. """,
+        """ A property that controls the measurement mode of the active
+        channel. Valid options are voltage and temperature. """,
         validator=strict_discrete_set,
         values={'voltage': 'VOLT', 'temperature': 'TEMP'},
         map_values=True
@@ -240,11 +242,11 @@ class Keithley2182(KeithleyBuffer, Instrument):
         for this reading. """
     )
     thermocouple = Instrument.control(
-        ":SENS:TEMP:TC?", ":SENSE:TEMP:TC %s",
+        ":SENS:TEMP:TC?", ":SENS:TEMP:TC %s",
         """ A property that controls the thermocouple type for temperature
         measurements. Valid options are B, E, J, K, N, R, S, and T. """,
         validator=strict_discrete_set,
-        values=['B','E','J','K','N','R','S','T']
+        values=['B', 'E', 'J', 'K', 'N', 'R', 'S', 'T']
     )
     temperature_nplc = Instrument.control(
         ":SENS:TEMP:NPLC?", ":SENS:TEMP:NPLC %g",
@@ -262,7 +264,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """ A property that controls the type of thermocouple reference
         junction. Default is internal.""",
         validator=strict_discrete_set,
-        values=['SIM','INT'],
+        values=['SIM', 'INT'],
     )
     temperature_simulated_reference = Instrument.control(
         ":SENS:TEMP:RJUN:SIM?", ":SENS:TEMP:RJUN:SIM %g",
@@ -274,7 +276,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
     internal_temperature = Instrument.measurement(
         ":SENS:TEMP:RTEM?",
         """ Query the internal temperature in Celsius."""
-        )
+    )
 
     ##############
     # Statistics #
@@ -339,7 +341,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
 
     def auto_line_frequency(self):
         """Set appropriate limits for NPLC voltage and temperature readings."""
-        if self.line_frequency==50:
+        if self.line_frequency == 50:
             self.temperature_nplc_values = [0.01, 50]
             self.voltage_nplc_values = [0.01, 50]
         else:
