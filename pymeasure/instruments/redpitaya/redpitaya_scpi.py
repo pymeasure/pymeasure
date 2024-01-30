@@ -119,14 +119,32 @@ class AnalogInputFastChannel(Channel):
         values=['LV', 'HV'],
     )
 
-    def get_data_from_ascii(self) -> np.ndarray:
-        self.write("ACQ:SOUR{ch}:DATA?")
+    def get_data(self, npts: int = None, format='ASCII') -> np.ndarray:
+        """ Read data from the buffer
+
+        :param npts: number of points to be read
+        :param format: either 'ASCII' or 'BIN', see :meth:acq_format
+        """
+        if npts is not None:
+            self.write(f"ACQ:SOUR{'{ch}'}:DATA:Old:N? {npts:.0f}")
+        else:
+            self.write("ACQ:SOUR{ch}:DATA?")
+
+        if format == 'ASCII':
+            data = self._read_from_ascii()
+        else:
+            data = self._read_from_binary()
+        return data
+
+    def _read_from_ascii(self) -> np.ndarray:
+        """ Read data from the buffer from ascii format, see :meth:acq_format
+        """
         data_str = self.read()
         return np.fromstring(data_str.strip('{}').encode(), sep=',')
 
-    def get_data_from_binary(self) -> np.ndarray:
-        """ Get the data in """
-        self.write("ACQ:SOUR{ch}:DATA?")
+    def _read_from_binary(self) -> np.ndarray:
+        """ Read data from the buffer from binary format, see :meth:acq_format
+        """
         self.read_bytes(1)
         nint = int(self.read_bytes(1).decode())
         length = int(self.read_bytes(nint).decode())
@@ -243,7 +261,8 @@ class RedPitayaScpi(Instrument):
         The sampling rate is given as 125MS/s / decimation
         """,
         validator=strict_discrete_set,
-        values=[2**n for n in range(17)]
+        values=[2**n for n in range(17)],
+        cast=int,
     )
 
     average_skipped_samples = Instrument.control(
@@ -262,7 +281,7 @@ class RedPitayaScpi(Instrument):
         values=['RAW', 'VOLTS'],
     )
 
-    acq_size = Instrument.measurement(
+    buffer_length = Instrument.measurement(
         "ACQ:BUF:SIZE?",
         """Measure the size of the buffer, that is the number of points of the acquisition""",
         cast=int,
@@ -291,6 +310,12 @@ class RedPitayaScpi(Instrument):
         """Get the trigger status (bool), if True the trigger as been fired (or is disabled)""",
         map_values=True,
         values={True: 'TD', False: 'WAIT'},
+    )
+
+    acq_trigger_position = Instrument.measurement(
+        "ACQ:TPOS?",
+        """Get the position within the buffer where the trigger event happened""",
+        cast=int,
     )
 
     acq_buffer_filled = Instrument.measurement(

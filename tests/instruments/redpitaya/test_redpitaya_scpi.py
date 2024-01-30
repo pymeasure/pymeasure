@@ -62,7 +62,7 @@ def test_acq_size_getter():
             RedPitayaScpi,
             [(b'ACQ:BUF:SIZE?', b'16384')],
     ) as inst:
-        assert inst.acq_size == 16384
+        assert inst.buffer_length == 16384
 
 
 def test_acq_trigger_delay_ns_setter():
