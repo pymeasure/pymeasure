@@ -67,7 +67,6 @@ jobs:
       - name: Python version
         run: python --version
       - name: Install Pymeasure
-        # If the pytest problem matcher stops working because of bad paths, do an editable install
         run: pip install -e .[tests]  # editable for covtest
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
