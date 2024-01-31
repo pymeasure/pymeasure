@@ -22,7 +22,53 @@
 # THE SOFTWARE.
 #
 
-# from pymeasure.instruments import Instrument
+import logging
+from time import sleep
+from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class AxisError(Exception):
+    """
+    Raised when a particular axis causes an error for OptoSigma SBIS26.
+
+
+    """
+    MESSAGE_ACK1 = {
+        'X': 'Error of command',
+        'K': 'Command received normally'
+    }
+
+    MESSAGE_ACK2 = {
+        'C': 'Stopped by clockwise limit sensor detected',
+        'W': 'Stopped by counter-clockwise limit sensor detected',
+        'E': 'Stopped by both of limit sensors detected',
+        'K': 'Normal stop'
+    }
+
+    MESSAGE_ACK3 = {
+        'K': 'No alarm',
+        'E': 'Alarm on the hardware',
+        'C': 'Alarm on the communication',
+    }
+
+    MESSAGE_ACK4 = {
+        'B': 'Busy',
+        'R': 'Ready',
+    }
+
+    def __init__(self, code1, code2, code3, code4):
+        self.message1 = self.MESSAGE_ACK1[code1]
+        self.message2 = self.MESSAGE_ACK2[code2]
+        self.message3 = self.MESSAGE_ACK3[code3]
+        self.message4 = self.MESSAGE_ACK4[code4]
+
+    def __str__(self):
+        return "OptoSigma SBIS26 Error: %s, %s, %s, %s" % (self.message1, self.message2, self.message3, self.message4)
+
 
 class SBIS26(Instrument):
     """Represents the OptoSigma SBIS26 Motorized Stage."""
