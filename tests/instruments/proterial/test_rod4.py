@@ -29,8 +29,8 @@ from pymeasure.instruments.proterial.rod4 import ROD4
 def test_mfc_range():
     with expected_protocol(
         ROD4,
-        [("\0201SFK 400", None),
-         ("\0202RFK", "200")],
+        [("\x0201SFK400", None),
+         ("\x0202RFK", "200")],
     ) as inst:
         inst.ch_1.mfc_range = 400
         assert inst.ch_2.mfc_range == 200
@@ -39,8 +39,8 @@ def test_mfc_range():
 def test_valve_mode():
     with expected_protocol(
         ROD4,
-        [("\0203SVM0", None),
-         ("\0204RVM", "1")],
+        [("\x0203SVM0", None),
+         ("\x0204RVM", "1")],
     ) as inst:
         inst.ch_3.valve_mode = 'flow'
         assert inst.ch_4.valve_mode == 'close'
@@ -49,8 +49,8 @@ def test_valve_mode():
 def test_setpoint():
     with expected_protocol(
         ROD4,
-        [("\0201SFD33.3", None),
-         ("\0202RFD", "50.4")],
+        [("\x0201SFD33.3", None),
+         ("\x0202RFD", "50.4")],
     ) as inst:
         inst.ch_1.setpoint = 33.3
         assert inst.ch_2.setpoint == 50.4
@@ -59,6 +59,6 @@ def test_setpoint():
 def test_actual_flow():
     with expected_protocol(
         ROD4,
-        [("\\0203RFX", "40.1")],
+        [("\x0203RFX", "40.1")],
     ) as inst:
         assert inst.ch_3.actual_flow == 40.1
