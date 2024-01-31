@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.optosigma import SHRC203
@@ -32,16 +30,59 @@ from pymeasure.instruments.optosigma import SHRC203
 def test_init():
     # Test the initialization of the instrument
     with expected_protocol(
-            SHRC203,
-            [],
-            ):
+            SHRC203,[],):
         pass # Verify the expected communication.
 
-def test_motion_done():
-    # instr.ch_1.motion_done should produce the following commands
+def test_speed_slow():
+    # Test the speed setting
     with expected_protocol(
             SHRC203,
-            [("!:1S", None)],
-    ) as instr:
-        assert instr.ch_1.motion_done == "R"
+            [("DS:1 20000", None),
+             ("?:DS1", "10000")],
+            ) as instr:
+                instr.ch_1.speed_slow = 20000
+                assert instr.ch_1.speed_slow == 10000
 
+def test_open_loop():
+    # Test the open loop setting
+    with expected_protocol(
+            SHRC203,
+            [("F:10", None),
+             ("?:F1", 0)
+             ],
+            ) as instr:
+                instr.ch_1.open_loop = 0
+                assert instr.ch_1.open_loop == 0
+
+def test_motion_done():
+    # Test the motion done setting
+    with expected_protocol(
+            SHRC203,
+            [("!:1S", "R")],
+            ) as instr:
+                assert instr.ch_1.motion_done == "R"
+
+def test_step():
+    # Test the step setting
+    with expected_protocol(
+            SHRC203,
+            [("?:P1", 1)],
+            ) as instr:
+                assert instr.ch_1.step == 1
+def test_home():
+    # Test the home setting
+    with expected_protocol(
+            SHRC203,
+            [("H:1", None)],
+            ) as instr:
+                instr.ch_1.home()
+
+def test_mode():
+    # Test the mode setting
+    with expected_protocol(
+            SHRC203,
+            [("MODE:MANUAL", None),
+             ("?:MODE", "HOST")],
+            ) as instr:
+                instr.mode = "MANUAL"
+                assert instr.mode == "HOST"

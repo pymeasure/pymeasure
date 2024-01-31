@@ -24,9 +24,8 @@
 
 import logging
 from time import sleep
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-from pymeasure.instruments import Channel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -67,7 +66,6 @@ class AxisError(Exception):
     }
 
     def __init__(self, code):
-        # self.error = str(code)
         self.message = self.MESSAGES[code]
 
     def __str__(self):
@@ -77,67 +75,53 @@ class AxisError(Exception):
 class Axis(Channel):
     """ Represents an axis of OptoSigma SHRC203 Three-Axis Controller,
     which can have independent parameters from the other axes.
-
     """
 
-    open_loop = Instrument.control("?:F", "F:W%s",
+    open_loop = Instrument.control("?:F{ch}", "F:{ch}%d",
                                    """Query or set the open loop mode. 0: Close loop, 1: Open loop""",
                                    validator=strict_discrete_set,
-                                   values=["1", "0"]
+                                   values=[1, 0]
                                    )
 
-    units = Instrument.setting("Q:S%", """ A string property that controls the displacement units of the
-        axis""",
-                               validator=strict_discrete_set,
-                               values={'nanometer': "N", 'micrometer': "U", 'millimeter': "M", 'degree': "D",
-                                       'no unit': "P"},
-                               map_values=True
-                               )
+    speed_slow = Instrument.control("?:DS{ch}", "DS:{ch} %d",
+                                    """ A integer property that controls the minimum speed of the axis in pulses/s units. 
+                                    """,
+                                    validator=truncated_range,
+                                    values=[1, 999999999]
+                                    )
 
-    speed = Instrument.control("?:D{ch}", "D:{ch}S%dF%dR%d",
-                               """ A integer property that controls the speed of the axis in pulses/s units. 
-                               Example: D:1S100F1000R100 sets the operating speed of the first axis as follows: 
-                               the minimum speed (S) 100pls/s, 
-                               the maximum speed (F) 1000pls/s, 
-                               acceleration / deceleration time (R) 100ms.
-                               """,
-                               validator=truncated_range,
-                               values=[1, 1000000]
-                               )
+    speed_fast = Instrument.control("?:DF{ch}", "DF:{ch} %d",
+                                    """ A integer property that controls the maximum speed of the axis in pulses/s units. 
+                                    """,
+                                    validator=truncated_range,
+                                    values=[1, 999999999]
+                                    )
 
-    position = Instrument.control("Q:", "A:{ch}S%s",
-                                  """Query or set the position of the axis.""",
-                                  validator=truncated_range,
-                                  values=[-2147483647, 2147483647],
-                                  get_process=lambda v: v.replace(" ", "").split(",")[0:3],
-                                  set_process=lambda v: "+%d" if v >= 0 else "%d",
-                                  dynamic=True
-                                  )
+    speed_acceleration = Instrument.control("?:DR{ch}", "DR:{ch} %d",
+                                            """ A integer property that controls the acceleration/deceleration time of the axis in pulses/s units. 
+                                            """,
+                                            validator=truncated_range,
+                                            values=[1, 1000]
+                                            )
 
     motion_done = Instrument.measurement("!:{ch}S",
                                          """Query to see if the axis is currently moving. "R": ready, "B": busy""")
 
-    error = Instrument.measurement("SRQ:{ch}S", """ Get an error code from the motion controller.""",
-                                   get_process=lambda v: AxisError(v.split(",")[1])
-                                   )
+    zero = Instrument.setting("R:{ch}",
+                              """ Resets the axis position to be zero at the current poisiton.""")
 
-    home = Instrument.setting("H:{ch}", """ Perform mechanical origin return.""")
+    stop = Instrument.setting("L:{ch}",
+                              """ Decelerate and stop the axis.""")
 
-    zero = Instrument.setting("R:{ch}", """ Resets the axis position to be zero at the current poisiton.""")
-
-    stop = Instrument.setting("L:{ch}", """ Decelerate and stop the axis.""")
-
-    def __init__(self, axis, controller):
-        self.axis = str(axis)
-        self.controller = controller
-
-    def set_position_limit(self, lower, upper):
-        """ Set the software limit of the axis in the units of the axis.
-        """
-        self.postion_values = [lower, upper]
+    step = Instrument.measurement("?:P{ch}",
+                                  """ Query the step size per pulse in nanometer. The step size is calculated from 
+                                  BASERATE (B) and DIVIDE (D) expressed as B*10/D """)
 
     def wait_for_stop(self, interval=0.05, timeout=10):
         """ Wait for the axis to stop moving.
+
+        :param interval: The time in seconds to wait between checks
+        :param timeout: The maximum time in seconds to wait
         """
 
         loop = 0
@@ -148,6 +132,38 @@ class Axis(Channel):
                 break
                 # raise TimeoutError("Timeout waiting for axis to stop.")
 
+    def move(self, position):
+        """ Move the axis to a position.
+        """
+        if position >= 0:
+            self.write("A:{ch}" + f"+P{position}")
+        else:
+            self.write("A:{ch}" + f"-P%{abs(position)}")
+        self.write("G:")
+        self.wait_for_stop()
+
+    def move_relative(self, position, speed=None, units=None):
+        """ Move the axis to a relative position.
+        """
+        if position >= 0:
+            self.write("M:{ch}" + f"+P{position}")
+        else:
+            self.write("M:{ch}" + f"-P%{abs(position)}")
+        self.write("G:")
+        self.wait_for_stop()
+
+    def home(self):
+        """ Home the axis to the mechanical origin.
+        """
+        self.write("H:{ch}")
+
+    def error(self):
+        """ Get an error code from the motion controller.
+        """
+        code = self.ask("SRQ:{ch}S")
+        code = code.split(",")[0]
+        return AxisError(code)
+
 
 class SHRC203(Instrument):
     """
@@ -156,7 +172,7 @@ class SHRC203(Instrument):
 
     By default this instrument is constructed with x, y, and z
     attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the avalible axes. Axes are controlled
+    can overwrite this depending on the available axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.optosigma.shrc203.Axis>`
     class.
 
@@ -164,7 +180,6 @@ class SHRC203(Instrument):
     :param name: The name of the controller
     :param kwargs: Any valid key-word argument for VISAAdapter
     """
-
 
     def __init__(self,
                  adapter,
@@ -180,7 +195,6 @@ class SHRC203(Instrument):
             read_termination=self.termination_str,
             **kwargs
         )
-
 
     ch_1 = Instrument.ChannelCreator(Axis, 1)
     ch_2 = Instrument.ChannelCreator(Axis, 2)
