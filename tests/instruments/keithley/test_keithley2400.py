@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ def test_next_error():
     with expected_protocol(Keithley2400,
                            [("SYST:ERR?", '-113, "Undefined header"')],
                            ) as inst:
-        assert inst.next_error == (-113, " Undefined header")
+        assert inst.next_error == [-113, ' "Undefined header"']
 
 
 def test_enable_source():

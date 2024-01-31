@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,12 @@
 
 import importlib
 from pathlib import Path
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from pymeasure import instruments
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Channel, Instrument
 
 
 # Collect all instruments
@@ -36,14 +37,14 @@ def find_devices_in_module(module):
     devices = set()
     channels = set()
     base_dir = Path(module.__path__[0])
-    base_import = module.__package__ + '.'
-    for inst_file in Path(base_dir).rglob('*.py'):
+    base_import = module.__package__ + "."
+    for inst_file in Path(base_dir).rglob("*.py"):
         relative_path = inst_file.relative_to(base_dir)
-        if inst_file == '__init__.py':
+        if inst_file == "__init__.py":
             # import parent module when filename __init__.py
-            relative_import = '.'.join(relative_path.parts[:-1])[:-3]
+            relative_import = ".".join(relative_path.parts[:-1])[:-3]
         else:
-            relative_import = '.'.join(relative_path.parts)[:-3]
+            relative_import = ".".join(relative_path.parts)[:-3]
         try:
             submodule = importlib.import_module(base_import + relative_import)
             for dev in dir(submodule):
@@ -167,7 +168,6 @@ grandfathered_docstring_instruments = [
     "ITC503",
     "PS120_10",
     "ParkerGV6",
-    "CNT91",
     "FSL",
     "SFM",
     "DSP7265",
@@ -216,12 +216,13 @@ def test_name_argument(cls):
 
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
-SIM_RESOURCE = 'ASRL2::INSTR'
-is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec('pyvisa_sim'))
+SIM_RESOURCE = "ASRL2::INSTR"
+is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim"))
 
 
-@pytest.mark.skipif(is_pyvisa_sim_not_installed,
-                    reason='PyVISA tests require the pyvisa-sim library')
+@pytest.mark.skipif(
+    is_pyvisa_sim_not_installed, reason="PyVISA tests require the pyvisa-sim library"
+)
 @pytest.mark.parametrize("cls", devices)
 def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
@@ -232,9 +233,10 @@ def test_kwargs_to_adapter(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    with pytest.raises(ValueError,
-                       match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
-        cls(SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
+    with pytest.raises(
+        ValueError, match="'kwarg_test' is not a valid attribute for type SerialInstrument"
+    ):
+        cls(SIM_RESOURCE, visa_library="@sim", kwarg_test=True)
 
 
 def property_name_to_id(value):
