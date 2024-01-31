@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,14 @@
 # THE SOFTWARE.
 #
 
-from .shrc203 import SHRC203
-from .sbis26 import SBIS26
+# from pymeasure.instruments import Instrument
+
+class SBIS26(Instrument):
+    """Represents the OptoSigma SBIS26 Motorized Stage."""
+
+    def __init__(self, adapter, name="SBIS26", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
