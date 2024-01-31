@@ -72,9 +72,10 @@ jobs:
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Test for Coverage
+        # xvfb for graphical interface
         run: |
           echo "::add-matcher::.github/pytest.json"
-          pytest --cov=pymeasure --cov-report=xml
+          xvfb-run -a pytest --cov=pymeasure --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
