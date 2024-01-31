@@ -46,6 +46,44 @@ jobs:
         run: |
           echo "::add-matcher::.github/sphinx.json"
           make doctest SPHINXOPTS="-W --keep-going"
+
+  test_coverage:
+    name: Code Coverage on codecov
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install pymeasure requirements
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: .github/pymeasure.yml
+          create-args: python=${{ matrix.python-version }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-downloads: false
+      - name: Python version
+        run: python --version
+      - name: Install Pymeasure
+        # If the pytest problem matcher stops working because of bad paths, do an editable install
+        run: pip install .[tests]
+      - name: Pymeasure version
+        run: python -c "import pymeasure;print(pymeasure.__version__)"
+      - name: Test for Coverage
+        run: pytest --cov=pymeasure --cov-report=xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage/reports/
+          fail_ci_if_error: true
+          files: ./coverage.xml,!./cache
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true
+
   test:
     name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
