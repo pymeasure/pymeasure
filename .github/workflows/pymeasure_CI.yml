@@ -76,6 +76,8 @@ jobs:
         run: |
           echo "::add-matcher::.github/pytest.json"
           xvfb-run -a pytest --cov=pymeasure --cov-report=xml
+      - name: Print output file
+        run: cat ./coverage.xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
