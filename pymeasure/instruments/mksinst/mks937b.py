@@ -191,8 +191,6 @@ class MKS937B(MKSInstrument):
         Unit.uHg/'Micron'.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={**{u: u.value for u in Unit},
-                "mBar": "mBAR",
-                },
+        values={u: u.value for u in Unit},
         check_set_errors=True,
     )
