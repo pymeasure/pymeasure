@@ -35,6 +35,7 @@ except ImportError:
 
     class StrEnum(str, Enum):
         """Until StrEnum is broadly available from the standard library"""
+        # Python>3.10 remove it
 
 
 _ion_gauge_status = {"Wait": "W",
