@@ -70,12 +70,48 @@ class AxisError(Exception):
         return "OptoSigma SBIS26 Error: %s, %s, %s, %s" % (self.message1, self.message2, self.message3, self.message4)
 
 
+class Axis(Channel):
+    """FIXME"""
+
+    # position = Instrument.control()
+
+    # speed = Instrument.control()
+
+    # status = Instrument.measurement()
+
+    # divider = Instrument.control()
+
+    def move(self):
+        pass
+
+    def move_relative(self):
+        pass
+
+    def home(self):
+        pass
+
+    def stop(self):
+        pass
+
+
 class SBIS26(Instrument):
     """Represents the OptoSigma SBIS26 Motorized Stage."""
 
-    def __init__(self, adapter, name="SBIS26", **kwargs):
+    def __init__(self,
+                 adapter,
+                 name="OptoSigma SBIS26 Motorized Stage",
+                 **kwargs
+                 ):
+        self.termination_str = "\r\n"
+
         super().__init__(
             adapter,
             name,
+            write_termination=self.termination_str,
+            read_termination=self.termination_str,
             **kwargs
         )
+
+    ch_1 = Instrument.ChannelCreator(Axis, 1)
+    ch_2 = Instrument.ChannelCreator(Axis, 2)
+    ch_3 = Instrument.ChannelCreator(Axis, 3)
