@@ -21,13 +21,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from unittest.mock import MagicMock
 
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.optosigma import SBIS26
 
+
 def test_init():
-    # Test the initialization of the instrument
+    # Test initialization of the instrument
     with expected_protocol(
-            SBIS26,[],):
-        pass # Verify the expected communication.
+            SBIS26,
+            [("#CONNECT", None), ],
+    ):
+        pass  # Verify the expected communication.
+
+
+def test_position():
+    # Test the position setting
+    with expected_protocol(
+            SBIS26,
+            [("#CONNECT", None),
+             ("Q:D,1", "D,1,-1000"),
+             ],
+    ) as instr:
+        assert instr.ch_1.position == -1000
+
+def test_speed():
+    # Test the speed setting
+    with expected_protocol(
+        SBIS26,
+        [("#CONNECT", None),
+         ("?:D,1,D", "10000,100000,200"),
+         ("D:D,1,10000,100000,200", None),
+         ],
+    ) as instr:
+        assert instr.ch_1.speed == [10000, 100000, 200]
+        instr.ch_1.speed = (10000,100000,200)

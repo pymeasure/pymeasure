@@ -73,13 +73,20 @@ class AxisError(Exception):
 class Axis(Channel):
     """FIXME"""
 
-    # position = Instrument.control()
+    position = Instrument.measurement("Q:D,{ch}",
+                                      """Reads the current poision""",
+                                      get_process=lambda v: v[2]
+                                      )
+    speed = Instrument.control("?:D,{ch},D",
+                               "D:D,{ch},%d,%d,%d",
+                               """An integer property that represents the speed of the axis in pulses/s units""",
+                               validator=truncated_range,
+                               values=((1,1,1),(800000,800000,1000)),
+                               get_process=lambda v: list(map(int, v))
+                               )
 
-    # speed = Instrument.control()
-
-    # status = Instrument.measurement()
-
-    # divider = Instrument.control()
+    def home(self):
+        pass
 
     def move(self):
         pass
@@ -87,19 +94,39 @@ class Axis(Channel):
     def move_relative(self):
         pass
 
-    def home(self):
-        pass
+    def error(self):
+        """ Get an error code from the motion controller.
+        """
+        code = self.ask("SRQ:{ch}S")
+        code = code.split(",")[0]
+        return AxisError(code)
 
     def stop(self):
+        # command: LE
         pass
 
 
 class SBIS26(Instrument):
-    """Represents the OptoSigma SBIS26 Motorized Stage."""
+    """
+
+    SBIS26 Class
+
+    This class is a subclass of the Instrument class and represents the OptoSigma SBIS26 Motorized Stage instrument.
+
+    Attributes:
+        connection: A control attribute that represents the instrument's connection status.
+        ch_1: A channel creator attribute for channel 1 of the instrument.
+        ch_2: A channel creator attribute for channel 2 of the instrument.
+        ch_3: A channel creator attribute for channel 3 of the instrument.
+
+    Methods:
+        __init__ : Initializes the SBIS26 object.
+    """
 
     def __init__(self,
                  adapter,
                  name="OptoSigma SBIS26 Motorized Stage",
+                 baud_rate=38400,
                  **kwargs
                  ):
         self.termination_str = "\r\n"
@@ -107,11 +134,18 @@ class SBIS26(Instrument):
         super().__init__(
             adapter,
             name,
+            baud_rate=baud_rate,
             write_termination=self.termination_str,
             read_termination=self.termination_str,
             **kwargs
         )
 
+        self.initialize()
+
     ch_1 = Instrument.ChannelCreator(Axis, 1)
     ch_2 = Instrument.ChannelCreator(Axis, 2)
     ch_3 = Instrument.ChannelCreator(Axis, 3)
+
+    def initialize(self):
+        """Initializes the SBIS26 object"""
+        return self.write("#CONNECT")
