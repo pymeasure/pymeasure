@@ -21,12 +21,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from enum import Enum
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel
+
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Until StrEnum is broadly available from the standard library"""
 
 
 _ion_gauge_status = {"Wait": "W",
@@ -43,7 +51,7 @@ _ion_gauge_status = {"Wait": "W",
                      }
 
 
-class Unit(Enum):
+class Unit(StrEnum):
     Torr = "TORR"
     mbar = "mBAR"
     Pa = "PASCAL"
@@ -184,10 +192,7 @@ class MKS937B(MKSInstrument):
         validator=strict_discrete_set,
         map_values=True,
         values={**{u: u.value for u in Unit},
-                "Torr": "TORR",
                 "mBar": "mBAR",
-                "Pascal": "PASCAL",
-                "Micron": "MICRON",
                 },
         check_set_errors=True,
     )
