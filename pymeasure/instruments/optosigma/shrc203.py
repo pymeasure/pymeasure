@@ -80,38 +80,46 @@ class Axis(Channel):
     open_loop = Instrument.control("?:F{ch}", "F:{ch}%d",
                                    """Query or set the open loop mode. 0: Close loop, 1: Open loop""",
                                    validator=strict_discrete_set,
-                                   values=[1, 0]
+                                   values=[1, 0],
+                                   check_set_errors=True
                                    )
 
     speed_slow = Instrument.control("?:DS{ch}", "DS:{ch} %d",
                                     """ A integer property that controls the minimum speed of the axis in pulses/s units. 
                                     """,
                                     validator=truncated_range,
-                                    values=[1, 999999999]
+                                    values=[1, 999999999],
+                                    check_set_errors=True
                                     )
 
     speed_fast = Instrument.control("?:DF{ch}", "DF:{ch} %d",
                                     """ A integer property that controls the maximum speed of the axis in pulses/s units. 
                                     """,
                                     validator=truncated_range,
-                                    values=[1, 999999999]
+                                    values=[1, 999999999],
+                                    check_set_errors=True
                                     )
 
     speed_acceleration = Instrument.control("?:DR{ch}", "DR:{ch} %d",
                                             """ A integer property that controls the acceleration/deceleration time of the axis in pulses/s units. 
                                             """,
                                             validator=truncated_range,
-                                            values=[1, 1000]
+                                            values=[1, 1000],
+                                            check_set_errors=True
                                             )
 
     motion_done = Instrument.measurement("!:{ch}S",
                                          """Query to see if the axis is currently moving. "R": ready, "B": busy""")
 
     zero = Instrument.setting("R:{ch}",
-                              """ Resets the axis position to be zero at the current poisiton.""")
+                              """ Resets the axis position to be zero at the current poisiton.""",
+                              check_set_errors=True
+                              )
 
     stop = Instrument.setting("L:{ch}",
-                              """ Decelerate and stop the axis.""")
+                              """ Decelerate and stop the axis.""",
+                              check_set_errors=True
+                              )
 
     step = Instrument.measurement("?:P{ch}",
                                   """ Query the step size per pulse in nanometer. The step size is calculated from 
@@ -141,6 +149,7 @@ class Axis(Channel):
             self.write("A:{ch}" + f"-P%{abs(position)}")
         self.write("G:")
         self.wait_for_stop()
+        return self.read()
 
     def move_relative(self, position, speed=None, units=None):
         """ Move the axis to a relative position.
@@ -151,11 +160,13 @@ class Axis(Channel):
             self.write("M:{ch}" + f"-P%{abs(position)}")
         self.write("G:")
         self.wait_for_stop()
+        return self.read()
 
     def home(self):
         """ Home the axis to the mechanical origin.
         """
         self.write("H:{ch}")
+        return self.read()
 
     def error(self):
         """ Get an error code from the motion controller.
@@ -199,9 +210,31 @@ class SHRC203(Instrument):
     ch_1 = Instrument.ChannelCreator(Axis, 1)
     ch_2 = Instrument.ChannelCreator(Axis, 2)
     ch_3 = Instrument.ChannelCreator(Axis, 3)
+
     # axis_all = Instrument.ChannelCreator(Axis, "W")
 
     mode = Instrument.control("?:MODE", "MODE:%s", """Query or set the controller mode.""",
                               validator=strict_discrete_set,
-                              values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"]
+                              values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"],
+                              check_set_errors=True
                               )
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        :return: error entry.
+        """
+        try:
+            self.read()
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
+
+    def read(self):
+        msg = super().read()
+        if msg == "NG":
+            raise ValueError('SHRC203 Error')
+        return msg
