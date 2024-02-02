@@ -58,7 +58,7 @@ class TektronixMsoScopeChannel(Channel):
     unit = Instrument.control(
         "CH{ch}:PRObe:UNIts?",
         "CH{ch}:PRObe:UNIts %s",
-        """Returns a string describing the units of measure for the
+        """Control a string describing the units of measure for the
            probe attached to the specified channel. ("A" for Amperes, "V" for
         Volts).
         """,
@@ -354,7 +354,7 @@ class TektronixMsoScope(Instrument):
     # Timebase Setup
     timebase_offset = Instrument.control(
         "HORizontal:POSition?", "HORizontal:POSition %G",
-        """horizontal position as a percent of screen width.
+        """Control horizontal position as a percent of screen width.
         When Horizontal Delay Mode is turned off, this command is equivalent
         to adjusting the HORIZONTAL POSITION knob on the front panel.
         When Horizontal Delay Mode is turned on, the horizontal position is forced to 50%.""",
@@ -401,7 +401,7 @@ class TektronixMsoScope(Instrument):
     # Acquisition
     acquisition_state = Instrument.control(
         "ACQuire:STATE?", "ACQuire:STATE %s",
-        """starts or stops acquisitions.
+        """Control starts or stops acquisitions.
         """,
         validator=strict_discrete_set,
         values={"STOP": 0, "RUN": 1},
@@ -436,9 +436,8 @@ class TektronixMsoScope(Instrument):
 
     acquisition_num_sequence = Instrument.control(
         "ACQuire:SEQ:NUMSEQ?", "ACQuire:SEQ:NUMSEQ %d",
-        """In single sequence acquisition mode,
-        specify the number of acquisitions or measurements
-        that comprise the sequence.
+        """Control the number of acquisitions or measurements
+        that comprise the sequence, In single sequence acquisition mode.
         """,
     )
 
@@ -526,7 +525,7 @@ class TektronixMsoScope(Instrument):
     trigger_holdoff_by = Instrument.control(
         "TRIGger:A:HOLDoff:BY?",
         "TRIGger:A:HOLDoff:BY %s",
-        """sets or queries the type of holdoff for the A trigger.
+        """Control the type of holdoff for the A trigger.
         Holdoff types are expressed as either user-specified time (TIMe)
         or by an internally calculated random time value (RANDom).""",
         validator=strict_discrete_set,
@@ -536,7 +535,7 @@ class TektronixMsoScope(Instrument):
     trigger_holdoff_time = Instrument.control(
         "TRIGger:A:HOLDoff:TIMe?",
         "TRIGger:A:HOLDoff:TIMe %s",
-        """sets or queries the A trigger holdoff time.""",
+        """Control the A trigger holdoff time.""",
         validator=strict_range,
         values=[0, 10],
     )
@@ -545,7 +544,7 @@ class TektronixMsoScope(Instrument):
     trigger_edge_source = Instrument.control(
         "TRIGger:A:EDGE:SOUrce?",
         "TRIGger:A:EDGE:SOUrce %s",
-        """source for the edge trigger.
+        """Control the source for the edge trigger.
         For instruments that have an Auxiliary Input
         (such as the MSO58LP), AUXiliary can be selected as trigger source.""",
         validator=strict_discrete_set,
@@ -597,7 +596,7 @@ class TektronixMsoScope(Instrument):
     trigger_width_when = Instrument.control(
         "TRIGger:A:PULSEWidth:WHEn?",
         "TRIGger:A:PULSEWidth:WHEn %s",
-        """specifies to trigger when a pulse is detected with a width (duration)
+        """Control the trigger when a pulse is detected with a width (duration)
         that is less than, greater than, equal to, or unequal to a specified value.
         {LESSthan|MOREthan|EQual|UNEQual|WIThin|OUTside}
 
@@ -630,7 +629,7 @@ class TektronixMsoScope(Instrument):
     trigger_width_lowlimit = Instrument.control(
         "TRIGger:A:PULSEWidth:LOWLimit?",
         "TRIGger:A:PULSEWidth:LOWLimit %g",
-        """lower limit to use, in seconds, when triggering on detection
+        """Control the lower limit to use, in seconds, when triggering on detection
         of a pulse whose duration is inside or outside a range of two values.
 
         This command also specifies the single limit to use, in seconds,
@@ -642,7 +641,7 @@ class TektronixMsoScope(Instrument):
     trigger_width_highlimit = Instrument.control(
         "TRIGger:A:PULSEWidth:HIGHLimit?",
         "TRIGger:A:PULSEWidth:HIGHLimit %g",
-        """specifies the upper limit to use, in seconds, when triggering on
+        """Control the upper limit to use, in seconds, when triggering on
         detection of a pulse whose duration is inside or outside
         a range of two values.
         """,
@@ -661,7 +660,7 @@ class TektronixMsoScope(Instrument):
     trigger_window_crossing = Instrument.control(
         "TRIGger:A:WINdow:CROSSIng?",
         "TRIGger:A:WINdow:CROSSIng %s",
-        """sets or queries the window trigger threshold crossing of the
+        """Control the window trigger threshold crossing of the
         selected trigger source. The threshold crossing selection is only effective when
         :TRIGger:{A|B}:WINdow:WHEn is INSIDEGreater or OUTSIDEGreater.
         """,
@@ -673,9 +672,9 @@ class TektronixMsoScope(Instrument):
     trigger_window_when = Instrument.control(
         "TRIGger:A:WINdow:WHEn?",
         "TRIGger:A:WINdow:WHEn %s",
-        """sets or queries the window trigger event. This command is
-        equivalent to selecting Window Setup from the Trig menu and selecting from the
-        Window Trigger When box.
+        """Control the window trigger event. 
+        This command is equivalent to selecting Window Setup from the Trig menu
+        and selecting from the Window Trigger When box.
         Arguments
         OUTSIDEGreater specifies a trigger event when the signal leaves the window
         defined by the threshold levels for the time specified by Width.
@@ -694,7 +693,7 @@ class TektronixMsoScope(Instrument):
     trigger_window_width = Instrument.control(
         "TRIGger:A:WINdow:WIDTH?",
         "TRIGger:A:WINdow:WIDTH %g",
-        """sets or queries the minimum width for a window violation.""",
+        """Control the minimum width for a window violation.""",
     )
 
     # Download data
@@ -731,14 +730,14 @@ class TektronixMsoScope(Instrument):
 
     measurement_add_slot = Instrument.setting(
         "MEASUrement:ADDNew MEAS%d",
-        """adds the specified measurement.
+        """Set the specified measurement.
         :param slot >=1
         """,
     )
 
     measurement_add = Instrument.setting(
         "MEASUrement:ADDMEAS %s",
-        """Adds a measurement.
+        """Set a measurement.
         """,
         validator=strict_discrete_set,
         values=_measurable_parameters,
@@ -806,7 +805,7 @@ class TektronixMsoScope(Instrument):
 
     measurement_gating_searchsource = Instrument.control(
         "MEASUrement:GATing:SEARCHSource?", "MEASUrement:GATing:SEARCHSource %s",
-        """the global gating search source when the gating type is search.
+        """Control the global gating search source when the gating type is search.
         """,
     )
 
@@ -905,7 +904,7 @@ class TektronixMsoScope(Instrument):
     # Display
     intensity_backlight = Instrument.control(
         "DISplay:INTENSITy:BACKLight?", "DISplay:INTENSITy:BACKLight %s",
-        """Set the display backlight intensity setting""",
+        """Control the display backlight intensity setting""",
         validator=strict_range,
         values=['LOW', 'MEDIUM', 'HIGH'],
     )
@@ -988,7 +987,7 @@ class TektronixMsoScope(Instrument):
 
     afg_burst_trigger = Instrument.setting(
         "AFG:BURSt:TRIGger",
-        """This command triggers a burst on AFG output.""",
+        """Set a burst trigger on AFG output.""",
     )
 
     afg_burst_ccount = Instrument.control(
