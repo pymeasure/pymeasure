@@ -809,7 +809,8 @@ class TektronixMsoScope(Instrument):
         """,
     )
 
-    def measurement_population_config(self, slot: int, global_flag=0, limit_state=0, limit_value=1000):
+    def measurement_population_config(self, slot: int, global_flag=0,
+                                      limit_state=0, limit_value=1000):
         """Configure the measurement population settings.
         :param slot
         :param global_flag : int
