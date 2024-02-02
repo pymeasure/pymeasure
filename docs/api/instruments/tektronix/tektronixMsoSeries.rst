@@ -12,6 +12,6 @@ TEKTRONIX MSO Series Oscilloscope
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.tektronix.TektronixMsoScope.TektronixMsoScopeChannel
+.. autoclass:: pymeasure.instruments.tektronix.tektronixMsoSeries.TektronixMsoScopeChannel
     :members:
     :show-inheritance:

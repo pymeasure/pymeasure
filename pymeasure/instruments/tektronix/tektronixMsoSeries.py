@@ -809,13 +809,12 @@ class TektronixMsoScope(Instrument):
         """,
     )
 
-    def measurement_population_config(self, slot: int, global_flag=0, limit_state=0,
-                                      limit_value=1000):
+    def measurement_population_config(self, slot: int, global_flag=0, limit_state=0, limit_value=1000):
         """Configure the measurement population settings.
         :param slot
         :param global_flag : int
         0 specifies that population settings can be changed independently
-         for each individual measurement.
+        for each individual measurement.
         1 applies the global population settings to all the measurements' population
         settings.
         :param limit_state : int 0 turns off the population limit.
