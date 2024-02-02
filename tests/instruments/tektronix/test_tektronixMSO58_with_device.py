@@ -209,8 +209,8 @@ class TestTektronixMSO58:
     # Measurement
     @pytest.mark.skip(reason="connect CH1 probe to ground and probe compensation connectors")
     def test_measurement_configure(self, autoscaled_instrument):
-        for (slot, meas_type), (meas, value) in zip(self.MEAS_SLOTS.items(),
-                                                    self.EXPECTED_MEAS_VALUES.items()):
+        for (slot,meas_type),(meas,value) in \
+                zip(self.MEAS_SLOTS.items(),self.EXPECTED_MEAS_VALUES.items()):
             autoscaled_instrument.measurement_configure(slot, "CH1", "CH1", meas_type)
             sleep(0.5)
             assert autoscaled_instrument.measurement_result_curracq_mean(slot) ==\

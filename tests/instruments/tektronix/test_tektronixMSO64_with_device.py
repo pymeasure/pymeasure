@@ -22,7 +22,7 @@ class TestTektronixMSO64:
     BANDWIDTH_LIMITS = [20.0000E+6, 250.0000E+6, 1.0000E+9]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
-    TRIGGER_TYPES = ["EDGE","WIDTH","TIMEOUT","RUNT","WINDOW","LOGIC","SETHOLD","TRANSITION"]
+    TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD", "TRANSITION"]
     TRIGGER_LEVELS = [100.000E-3, 200.000E-3, 300.000E-3]
     TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
     TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4']
@@ -209,11 +209,11 @@ class TestTektronixMSO64:
     # Measurement
     @pytest.mark.skip(reason="connect CH1 probe to ground and probe compensation connectors")
     def test_measurement_configure(self, autoscaled_instrument):
-        for (slot, meas_type), (meas, value) in zip(self.MEAS_SLOTS.items(),
-                                                    self.EXPECTED_MEAS_VALUES.items()):
+        for (slot, meas_type), (meas, value) in \
+                zip(self.MEAS_SLOTS.items(), self.EXPECTED_MEAS_VALUES.items()):
             autoscaled_instrument.measurement_configure(slot, "CH1", "CH1", meas_type)
             sleep(0.5)
-            assert autoscaled_instrument.measurement_result_curracq_mean(slot) ==\
+            assert autoscaled_instrument.measurement_result_curracq_mean(slot) == \
                    pytest.approx(value, rel=0.3)
 
     @pytest.mark.parametrize("case", GATING_TYPE)

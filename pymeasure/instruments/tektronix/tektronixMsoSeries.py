@@ -672,7 +672,7 @@ class TektronixMsoScope(Instrument):
     trigger_window_when = Instrument.control(
         "TRIGger:A:WINdow:WHEn?",
         "TRIGger:A:WINdow:WHEn %s",
-        """Control the window trigger event. 
+        """Control the window trigger event.
         This command is equivalent to selecting Window Setup from the Trig menu
         and selecting from the Window Trigger When box.
         Arguments
