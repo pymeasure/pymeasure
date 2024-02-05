@@ -161,8 +161,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         keithley.channel_function = 'voltage'   # Configures active channel for voltage measurement
         print(keithley.voltage)                 # Prints the voltage in volts
 
-        volt = keithley.ch_1.measure_voltage()  # Measure voltage on channel 1
-        temp = keithley.ch_2.measure_temp()     # Measure temperature on channel 2
+        keithley.ch_1.setup_voltage()           # Set channel 1 active and prepare voltage measurement
+        keithley.ch_2.setup_temperature()       # Set channel 2 active and prepare temperature measurement
 
     """
 
