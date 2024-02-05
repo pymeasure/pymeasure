@@ -27,7 +27,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='PyMeasure',
-    version='0.9.1',
+    version='0.9.2',
     author='PyMeasure Developers',
     packages=find_packages(),
     scripts=[],
