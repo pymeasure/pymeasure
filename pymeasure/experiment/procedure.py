@@ -252,14 +252,14 @@ class Procedure:
         return {**self.parameter_objects(), **self.metadata_objects(), **self._inputfields}
 
     @classmethod
-    def placeholder_names(cls):
+    def inputfield_names(cls):
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
-        placeholders = []
+        inputfields = []
         for _, item in inspect.getmembers(cls):
-            if isinstance(item, Metadata) or isinstance(item, Parameter):
-                placeholders.append(item.name)
+            if isinstance(item, InputField):
+                inputfields.append(item.name)
 
-        return list(set(placeholders))
+        return list(set(inputfields))
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement
