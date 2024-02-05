@@ -31,7 +31,7 @@ import traceback
 
 from .listeners import Recorder
 from .procedure import Procedure
-from .results import Results
+from .results import ResultsBase
 from ..thread import StoppableThread
 
 log = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class Worker(StoppableThread):
         super().__init__()
 
         self.port = port
-        if not isinstance(results, Results):
+        if not isinstance(results, ResultsBase):
             raise ValueError("Invalid Results object during Worker construction")
         self.results = results
         self.results.procedure.check_parameters()
@@ -202,7 +202,7 @@ class Analyzer(StoppableThread):
         super().__init__()
 
         self.port = port
-        if not isinstance(results, Results):
+        if not isinstance(results, ResultsBase):
             raise ValueError("Invalid Results object during Analyzer construction")
         self.results = results
         #if self.procedure.status != Procedure.FINISHED:
@@ -277,6 +277,7 @@ class Analyzer(StoppableThread):
         self.emit('status', status)
 
     def shutdown(self):
+        log.info('Attempting to shutdown analyzer')
         self.routine.shutdown()
 
         if self.should_stop() and self.routine.status == Procedure.RUNNING:
@@ -286,6 +287,7 @@ class Analyzer(StoppableThread):
                 self.emit('progress', 100.)
                 self.update_status(Procedure.FINISHED)
                 self.update_status(Procedure.QUEUED)
+                sleep(0.01)
             else:
                 self.update_status(Procedure.FINISHED)
 
@@ -301,8 +303,7 @@ class Analyzer(StoppableThread):
     def run(self):
         retries = 3
         log.info("Analyzer thread started")
-
-        self.routine = self.results.routine
+        
         self.routine.procedure = self.results.procedure
         for i in range(retries):
             try:
@@ -313,12 +314,13 @@ class Analyzer(StoppableThread):
             except Exception as e:
                 msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
                 log.info(f'Error detected {e}'
-                         )
+                        )
                 log.info(f'{msg}')
                 success = False
             if success:
                 break
             sleep(.1)
+
 
         self.routine.should_stop = self.should_stop
         self.routine.emit = self.emit
@@ -329,13 +331,16 @@ class Analyzer(StoppableThread):
 
         try:
             self.routine.startup()
+            log.info('made it through analyzer startup')
             self.routine.execute()
+            log.info('made it through analyzer execute')
         except (KeyboardInterrupt, SystemExit):
             self.handle_abort()
         except Exception:
             self.handle_error()
         finally:
             self.shutdown()
+            log.info('made it through analyzer shutdown, stopping next')
             self.stop()
 
     def __repr__(self):

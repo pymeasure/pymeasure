@@ -195,10 +195,11 @@ class BrowserWidget(QtWidgets.QWidget):
             no = QtWidgets.QMessageBox.StandardButton.No
         reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
                                            "Are you sure you want to remove the graph?",
-                                               yes |
-                                               no, no)
+                                           yes |
+                                           no, no)
         if reply == yes:
             self.manager.remove(experiment)
+
 
     def open_file_externally(self, filename):
         """ Method to open the datafile using an external editor or viewer. Uses the default
@@ -235,7 +236,6 @@ class BrowserWidget(QtWidgets.QWidget):
                 item.setCheckState(0, QtCore.Qt.Unchecked)
             except AttributeError:
                 item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
-
 
     def clear_experiments(self):
         self.manager.clear()

@@ -476,6 +476,9 @@ class AnalyzerManager(QtCore.QObject):
     def queue(self, analysis):
         """ Adds an analysis to the queue.
         """
+        log.info(f'Calling analysis queue, running_analysis is {self._running_analysis}')
+        log.info(f'start on add is {self._start_on_add}')
+        log.info(f'analysis queue is {self.analyses.queue}')
         self.load(analysis)
         self.queued_am.emit(analysis)
         if self._start_on_add and not self.is_running():
@@ -521,19 +524,24 @@ class AnalyzerManager(QtCore.QObject):
     def _clean_up(self):
         self._analyzer.join()
         self._monitor.stop = True
-        print(f'did monitor get stop? {self._monitor.stop}')
+        log.info(f'did analysis monitor get stop? {self._monitor.stop}')
         success = self._monitor.wait(10)
         if not success:
-            log.debug('Analyzer monitor did not properly exit')
+            log.info('Analyzer monitor did not properly exit')
             raise ValueError('Analyzer monitor did not exit properly')
         else:
             self._monitor.terminate()
         del self._analyzer
+        log.info('waiting on monitor')
         self._monitor.wait(10)
         del self._monitor
+        log.info('Deleted analysis monitor')
         self._worker = None
+        
         self._running_analysis = None
-        log.debug("Analyzer manager has cleaned up after the worker")
+        log.info(f'running analysis{self._running_analysis}')
+
+        log.info("Analyzer manager has cleaned up after the worker")
 
     def _failed(self):
         log.debug("Analyzer manager's running analysis has failed")

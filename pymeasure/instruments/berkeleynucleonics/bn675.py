@@ -137,7 +137,10 @@ class Channel(object):
         self.instrument.write("output%d:state off" % self.number)
 
     def in_focus(self):
-        self.instrument.write('DISPlay:FOCus CH%d' % self.number)
+        if self.number < 9:
+            self.instrument.write('DISPlay:FOCus CH%d' % self.number)
+        else:
+            self.instrument.write('DISPlay:FOCus DIG')
 
     @property
     def active_sequence_elem(self):

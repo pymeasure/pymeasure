@@ -24,10 +24,10 @@
 
 
 import time
-
 import logging
-
 import clr
+import os
+
 try:
     clr.AddReference('mcl_SolidStateSwitch_NET45')
     from mcl_SolidStateSwitch_NET45 import USB_Digital_Switch

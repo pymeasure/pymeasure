@@ -102,24 +102,25 @@ class Recorder(QueueListener):
     """ Recorder loads the initial Results for a filepath and
     appends data by listening for it over a queue. The queue
     ensures that no data is lost between the Recorder and Worker.
+
+     Queue listeners work by calling self.handle(record) when they get a record
+    handle is roughly defined as:
+    def handle(self, record):
+        record = self.prepare(record)
+        for handler in self.handlers:
+            handler.handle(record)
+    handle, however, wraps the io in a lock. so what should really be changed is emit
+    the handler.handles do something like
+    record = self.format(record)
+    self.emit(record)
+    Modern python has things about respecting propagation, but that is beyond what is needed here
     """
 
     def __init__(self, results, queue, **kwargs):
         """ Constructs a Recorder to record the Procedure data into
         the file path, by waiting for data on the subscription port
         """
-        self.results = results
-        handlers = []
-
-        if self.results.output_format == 'JSON':
-            self.handle = self._json_handle
-        else:
-            for filename in results.data_filenames:
-                fh = FileHandler(filename=filename, **kwargs)
-                fh.setFormatter(results.formatter)
-                fh.setLevel(logging.NOTSET)
-                handlers.append(fh)
-
+        handlers = results.create_handlers(**kwargs)
         super().__init__(queue, *handlers)
 
     def stop(self):
@@ -127,60 +128,6 @@ class Recorder(QueueListener):
             handler.close()
 
         super().stop()
-
-    def _json_handle(self, record):
-        """Method to override the normal logging FileHandler when the record is json.
-        The json formatter returns a string for compatibility with filehandling, so the first
-        step is to re-extract the dict. Then we check various conditions. The end result is a file with a
-        single (possibly updated) dictionary of dictionaries"""
-
-        record = json.loads(self.results.formatter.format(record))
-        key = list(record.keys())[0]
-        item = record[key]
-
-        for file in self.results.data_filenames:
-            if stat(file).st_size == 0:
-                # this case is deprecated, new files have header in them
-                with open(file, 'w') as f:
-                    extant = {key: {}}
-                    for column, value in item.items():
-                        if not isinstance(value, (list,tuple)):
-                            extant[key][column] = [value, ]
-                        else:
-                            extant[key] = item
-                    json.dump(extant, f)
-
-            else:
-                with open(file, 'r') as f:
-                    extant = json.load(f)
-
-                keys = list(extant.keys())
-                if len(keys) != 1:
-                    raise ValueError(f'got more than one key for json, {len(keys)}')
-                data = extant[keys[0]]
-                for column, array in data.items():
-                    if isinstance(data[column], (list,tuple)):
-                        if isinstance(data[column], tuple):
-                            data[column] = list(data[column])
-                        if isinstance(item[column], (list,tuple,np.ndarray)):
-                            data[column] = list(np.concatenate([array,item[column]]))
-                        elif isinstance(item[column], (float, int)):
-                            data[column].append(item[column])
-                        else:
-                            raise TypeError(f'got {item[column]} to append but it is type {type(item[column])}')
-                    elif isinstance(data[column], (float,int)):
-                        if isinstance(item[column], (float,int)):
-                            data[column] = [data[column], item[column]]
-                        elif isinstance(item[column], (list, tuple, np.ndarray)):
-                            data[column] = [data[column], *item[column]]
-                        else:
-                            TypeError(f'got {item[column]} to add but it is type {type(item[column])}')
-                    else:
-                        raise TypeError(f'got unexpected type for the old data {data[column]}, {type(data[column])}')
-
-                with open(file, 'w') as f:
-                    json.dump(extant, f)
-
 
 
 

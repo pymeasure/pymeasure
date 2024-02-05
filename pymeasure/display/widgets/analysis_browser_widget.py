@@ -164,7 +164,6 @@ class AnalysisBrowserWidget(QtWidgets.QWidget):
             except AttributeError:
                 browser_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
                 browser_item.setCheckState(0, QtCore.Qt.CheckState.Checked)
-
         #for wdg, curve in zip(self._parent.widget_list,experiment.curve_list):
         #    wdg.load(curve)
         self.analysis_manager.remove(analysis)

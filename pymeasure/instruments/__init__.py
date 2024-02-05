@@ -46,7 +46,12 @@ from . import keithley
 from . import keysight
 from . import lakeshore
 from . import newport
-from . import ni
+try:
+    from . import ni
+except:
+    print('Failed to import NI instruments (DAQmx, NIDaq, etc. '
+          'If you need these consider checking you NI488.2 install'
+          'it may not have been installed by default')
 from . import oxfordinstruments
 from . import parker
 from . import picotech

@@ -34,6 +34,22 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class SignalRouter:
+    """ Convenience class to capture the signals when values are edited so that
+    we can do something with them later on, like saving the state."""
+    def __init__(self, name, element, procedure_class):
+        self.name = name
+        self.element = element
+        self.procedure_class = procedure_class
+
+    def handle(self, *args):
+        self.do()
+
+    def do(self):
+        # needs to be patched by instance of InputsWidgets later on to do something
+        # useful
+        pass
+
 class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
@@ -47,6 +63,7 @@ class InputsWidget(QtWidgets.QWidget):
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
         self._inputs = inputs
+        self.router_dict = {}
         self._setup_ui()
         self._layout()
         self._hide_groups = hide_groups
@@ -62,17 +79,42 @@ class InputsWidget(QtWidgets.QWidget):
             elif isinstance(parameter, parameters.FloatParameter):
                 element = ScientificInput(parameter)
 
+                setattr(self, name + '_router',
+                        SignalRouter(name, element, self._procedure_class))
+                self.router_dict[name] = getattr(self, name + '_router')
+                element.valueChanged.connect(getattr(self, name + '_router').handle)
+
             elif isinstance(parameter, parameters.IntegerParameter):
                 element = IntegerInput(parameter)
+
+                setattr(self, name + '_router',
+                        SignalRouter(name, element, self._procedure_class))
+                self.router_dict[name] = getattr(self, name + '_router')
+                element.valueChanged.connect(getattr(self, name + '_router').handle)
 
             elif isinstance(parameter, parameters.BooleanParameter):
                 element = BooleanInput(parameter)
 
+                setattr(self, name + '_router',
+                        SignalRouter(name, element, self._procedure_class))
+                self.router_dict[name] = getattr(self, name + '_router')
+                element.stateChanged.connect(getattr(self, name + '_router').handle)
+
             elif isinstance(parameter, parameters.ListParameter):
                 element = ListInput(parameter)
 
+                setattr(self, name + '_router',
+                        SignalRouter(name, element, self._procedure_class))
+                self.router_dict[name] = getattr(self, name + '_router')
+                element.currentIndexChanged.connect(getattr(self, name + '_router').handle)
+
             elif isinstance(parameter, parameters.Parameter):
                 element = StringInput(parameter)
+
+                setattr(self, name + '_router',
+                        SignalRouter(name, element, self._procedure_class))
+                self.router_dict[name] = getattr(self, name + '_router')
+                element.editingFinished.connect(getattr(self, name+'_router').handle)
 
             setattr(self, name, element)
 
