@@ -11,6 +11,7 @@ Deprecated features
 - Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
 - Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
 - Replaced :code:`sample_rate` keyword-argument of :code:`buffer_frequency_time_series` of Pendulum CNT-91 by :code:`gate_time`.
+- The property :code:`unit` of MKS937B switched to using values defined in :code:`instruments/mksinst/mks937b/Unit`. Old string values are not supported anymore. (@dkriegner, @BenediktBurger #1034)
 
 GUI
 ---
