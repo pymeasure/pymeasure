@@ -113,6 +113,12 @@ class TektronixMsoScopeChannel(Channel):
         """,
     )
 
+    position = Instrument.control(
+        "CH{ch}:POSition?",
+        "CH{ch}:POSition %d",
+        """Control the vertical position.""",
+    )
+
     display = Instrument.control(
         "DISplay:GLObal:CH{ch}:STATE?",
         "DISplay:GLObal:CH{ch}:STATE %d",
