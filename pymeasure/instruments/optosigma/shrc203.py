@@ -84,29 +84,13 @@ class Axis(Channel):
                                    check_set_errors=True
                                    )
 
-    speed_slow = Instrument.control("?:DS{ch}", "DS:{ch} %d",
-                                    """ A integer property that controls the minimum speed of the axis in pulses/s units. 
-                                    """,
-                                    validator=truncated_range,
-                                    values=[1, 999999999],
-                                    check_set_errors=True
-                                    )
-
-    speed_fast = Instrument.control("?:DF{ch}", "DF:{ch} %d",
-                                    """ A integer property that controls the maximum speed of the axis in pulses/s units. 
-                                    """,
-                                    validator=truncated_range,
-                                    values=[1, 999999999],
-                                    check_set_errors=True
-                                    )
-
-    speed_acceleration = Instrument.control("?:DR{ch}", "DR:{ch} %d",
-                                            """ A integer property that controls the acceleration/deceleration time of the axis in pulses/s units. 
-                                            """,
-                                            validator=truncated_range,
-                                            values=[1, 1000],
-                                            check_set_errors=True
-                                            )
+    speed = Instrument.control("?:D{ch}", "D:{ch}S%dF%dR%d",
+                               """An integer property that controls the speed""",
+                               validator=truncated_range,
+                               values=((1, 1, 1), (1000000, 1000000, 1000)),
+                               get_process=lambda v: list(map(int, v)),
+                               check_set_errors=True,
+                               )
 
     motion_done = Instrument.measurement("!:{ch}S",
                                          """Query to see if the axis is currently moving. "R": ready, "B": busy""")
@@ -218,6 +202,7 @@ class SHRC203(Instrument):
                               values=["HOST", "MANUAL", "REMOTE", "TEACHING", "EDIT", "LOAD", "TEST"],
                               check_set_errors=True
                               )
+
     def check_set_errors(self):
         """Check for errors after having set a property and log them.
 

@@ -45,16 +45,17 @@ def test_open_loop():
         instr.ch_1.open_loop = 0
         assert instr.ch_1.open_loop == 0
 
-def test_speed_slow():
+
+def test_speed():
     # Test the speed setting
     with expected_protocol(
             SHRC203,
-            [("DS:1 20000", "OK"),
-             ("?:DS1", "10000")
+            [("D:1S100F1000R100", "OK"),
+             ("?:D1", "100,1000,100")
              ],
     ) as instr:
-        instr.ch_1.speed_slow = 20000
-        assert instr.ch_1.speed_slow == 10000
+        instr.ch_1.speed = (100, 1000, 100)
+        assert instr.ch_1.speed == [100, 1000, 100]
 
 
 def test_motion_done():
