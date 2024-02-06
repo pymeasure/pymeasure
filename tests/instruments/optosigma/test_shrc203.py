@@ -30,59 +30,67 @@ from pymeasure.instruments.optosigma import SHRC203
 def test_init():
     # Test the initialization of the instrument
     with expected_protocol(
-            SHRC203,[],):
-        pass # Verify the expected communication.
+            SHRC203, [], ):
+        pass  # Verify the expected communication.
 
-def test_speed_slow():
-    # Test the speed setting
-    with expected_protocol(
-            SHRC203,
-            [("DS:1 20000", None),
-             ("?:DS1", "10000")],
-            ) as instr:
-                instr.ch_1.speed_slow = 20000
-                assert instr.ch_1.speed_slow == 10000
 
 def test_open_loop():
     # Test the open loop setting
     with expected_protocol(
             SHRC203,
-            [("F:10", None),
-             ("?:F1", 0)
+            [("F:10", "OK"),
+             ("?:F1", "0")
              ],
-            ) as instr:
-                instr.ch_1.open_loop = 0
-                assert instr.ch_1.open_loop == 0
+    ) as instr:
+        instr.ch_1.open_loop = 0
+        assert instr.ch_1.open_loop == 0
+
+
+def test_speed():
+    # Test the speed setting
+    with expected_protocol(
+            SHRC203,
+            [("D:1S100F1000R100", "OK"),
+             ("?:D1", "100,1000,100")
+             ],
+    ) as instr:
+        instr.ch_1.speed = (100, 1000, 100)
+        assert instr.ch_1.speed == [100, 1000, 100]
+
 
 def test_motion_done():
     # Test the motion done setting
     with expected_protocol(
             SHRC203,
             [("!:1S", "R")],
-            ) as instr:
-                assert instr.ch_1.motion_done == "R"
+    ) as instr:
+        assert instr.ch_1.motion_done == "R"
+
 
 def test_step():
     # Test the step setting
     with expected_protocol(
             SHRC203,
             [("?:P1", 1)],
-            ) as instr:
-                assert instr.ch_1.step == 1
+    ) as instr:
+        assert instr.ch_1.step == 1
+
+
 def test_home():
     # Test the home setting
     with expected_protocol(
             SHRC203,
-            [("H:1", None)],
-            ) as instr:
-                instr.ch_1.home()
+            [("H:1", "OK")],
+    ) as instr:
+        instr.ch_1.home()
+
 
 def test_mode():
     # Test the mode setting
     with expected_protocol(
             SHRC203,
-            [("MODE:MANUAL", None),
+            [("MODE:MANUAL", "OK"),
              ("?:MODE", "HOST")],
-            ) as instr:
-                instr.mode = "MANUAL"
-                assert instr.mode == "HOST"
+    ) as instr:
+        instr.mode = "MANUAL"
+        assert instr.mode == "HOST"
