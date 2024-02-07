@@ -81,18 +81,60 @@ class Axis(Channel):
                                "D:D,{ch},%d,%d,%d",
                                """An integer property that represents the speed of the axis in pulses/s units""",
                                validator=truncated_range,
-                               values=((1,1,1),(800000,800000,1000)),
-                               get_process=lambda v: list(map(int, v))
+                               values=((1, 1, 1), (800000, 800000, 1000)),
+                               get_process=lambda v: list(map(int, v)),
+                               check_set_errors=True,
                                )
 
     def home(self):
-        pass
+        """
+        Send the stage to the mechanical home
+        """
+        self.write("H:{ch}")
+        return self.read()
 
-    def move(self):
-        pass
+    def move(self, pos):
+        """
+        Moves to the specified position.
 
-    def move_relative(self):
-        pass
+        Parameters:
+            pos (int): The position to move to.
+
+        Returns:
+            str: The response received from the write operation.
+
+        """
+        if pos >= 0:
+            self.write("A:D,{ch}," + f"+{pos}")
+        else:
+            self.write("A:D,{ch}," + f"{pos}")
+
+        return self.read()
+
+    def move_relative(self, pos):
+        """
+        Moves the position relative to the current position.
+
+        Args:
+            pos (int): The relative position to move. Positive values will move in the forward direction,
+                       while negative values will move in the backward direction.
+
+        Returns:
+            str: The result of the movement.
+        """
+        if pos >= 0:
+            self.write("M:D,{ch}," + f"+{pos}")
+        else:
+            self.write("M:D,{ch}," + f"{pos}")
+
+        return self.read()
+
+    def stop(self):
+        """
+        Stop the stage for all the axes immediately
+        """
+        self.write("LE:A")
+        return self.read()
 
     def error(self):
         """ Get an error code from the motion controller.
@@ -100,10 +142,6 @@ class Axis(Channel):
         code = self.ask("SRQ:{ch}S")
         code = code.split(",")[0]
         return AxisError(code)
-
-    def stop(self):
-        # command: LE
-        pass
 
 
 class SBIS26(Instrument):
@@ -148,4 +186,29 @@ class SBIS26(Instrument):
 
     def initialize(self):
         """Initializes the SBIS26 object"""
-        return self.write("#CONNECT")
+        self.write("#CONNECT")
+        return self.read()
+
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        :return: error entry.
+        """
+        try:
+            self.read()
+        except Exception as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
+
+    def read(self):
+        # FIXME: get only the last elements in a list
+        msg = super().read()
+        if msg[-1] == "NG":
+            raise ValueError('SBIS26 Error')
+        return msg
+
+
