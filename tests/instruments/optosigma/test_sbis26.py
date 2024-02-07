@@ -61,6 +61,26 @@ def test_speed():
         instr.ch_1.speed = (10000, 100000, 200)
 
 
+def test_error():
+    # Test the error handling
+    with expected_protocol(
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("SRQ:D,1", "D,1,X,C,K,R"),
+             ],
+    ) as instr:
+        instr.ch_1.error == ["D", "1", "X", "C", "K", "R"]
+
+def test_errors():
+    # Test the error handling
+    with expected_protocol(
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("SRQ:D,1", "D,1,X,C,K,R"),
+             ],
+    ) as instr:
+        assert print(instr.ch_1.errors) == None
+
 def test_home():
     # Test the home method
     with expected_protocol(
@@ -81,3 +101,5 @@ def test_move():
              ],
     ) as instr:
         instr.ch_1.move(-10000)
+
+

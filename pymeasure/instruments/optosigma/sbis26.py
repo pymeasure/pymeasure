@@ -85,6 +85,9 @@ class Axis(Channel):
                                get_process=lambda v: list(map(int, v)),
                                check_set_errors=True,
                                )
+    error = Instrument.measurement("SRQ:D,{ch}",
+                                   """Get an error code from the stage.""",
+                                   )
 
     def home(self):
         """
@@ -136,12 +139,23 @@ class Axis(Channel):
         self.write("LE:A")
         return self.read()
 
-    def error(self):
-        """ Get an error code from the motion controller.
+    @property
+    def errors(self):
         """
-        code = self.ask("SRQ:{ch}S")
-        code = code.split(",")[0]
-        return AxisError(code)
+
+        Get a list of error Exceptions that can be later raised, or used to diagnose the situation.
+
+        Parameters:
+            - self: The current instance of the class (implicitly passed).
+
+        Returns:
+            - AxisError object: An instance of the `AxisError` class based on the error code retrieved from the device.
+
+        """
+
+        code = self.error
+        errors = AxisError(*code[2:])
+        return errors
 
 
 class SBIS26(Instrument):
@@ -205,10 +219,7 @@ class SBIS26(Instrument):
             return []
 
     def read(self):
-        # FIXME: get only the last elements in a list
         msg = super().read()
         if msg[-1] == "NG":
             raise ValueError('SBIS26 Error')
         return msg
-
-
