@@ -37,6 +37,13 @@ class TestTektronixMSO58:
     AFG_OUTPUT_MODES = ["OFF", "CONTINUOUS", "BURST"]
     AFG_OUTPUT_IMPEDANCE = ["FIFTY", "HIGHZ"]
     GATING_TYPE = ["NONE", "SCREEN", "CURSOR", "LOGIC", "SEARCH", "TIME"]
+    MINIMUM_SAMPLE_RATE = ["AUTOMATIC", "3.125GS", "1.5625GS", "1.25GS", "625M", "312.5M",
+                           "250M", "125M", "62.5M", "31.25M", "25M", "12.5M", "6.25M", "5M",
+                           "3.125M", "2.5M", "1.25M", "1M", "625k", "500k", "312.5k", "250k",
+                           "125k", "100k", "62.5k", "50k", "31.25k", "25k", "12.5k", "10k",
+                           "6.25k", "5k", "3.125k", "2.5k", "1.25k", "1k", "625", "500",
+                           "312.5", "250", "125", "100", "62.5", "50", "31.25", "25", "12.5",
+                           "10", "6.25", "5", "3.125", "2.5", "1.5625"]
 
     ############
     # FIXTURES #
@@ -171,6 +178,11 @@ class TestTektronixMSO58:
         expected = resetted_instrument.timebase
         resetted_instrument.timebase_setup(scale=40.0E-09, offset=50.0)
         assert resetted_instrument.timebase == expected
+
+    @pytest.mark.parametrize("case", MINIMUM_SAMPLE_RATE)
+    def test_horizontal_minsamplerate(self, instrument, case):
+        instrument.horizontal_minsamplerate_value = case
+        assert instrument.horizontal_minsamplerate_value == case
 
     # Acquisition
     @pytest.mark.parametrize("case", ACQUISITION_MODES)
