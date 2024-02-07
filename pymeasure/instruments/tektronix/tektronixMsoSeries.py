@@ -358,6 +358,91 @@ class TektronixMsoScope(Instrument):
     )
 
     # Timebase Setup
+    horizontal_mode = Instrument.control(
+        "HORizontal:MODE?", "HORizontal:MODE %s",
+        """Control horizontal operating mode.
+        """,
+        validator=strict_discrete_set,
+        values=["AUTO", "MANUAL"],
+    )
+
+    horizontal_manualmode_cfg = Instrument.control(
+        "HORizontal:MODe:MANual:CONFIGure?",
+        "HORizontal:MODe:MANual:CONFIGure %s",
+        """Control which horizontal control (scale or record length)
+        will primarily change when the sample rate is changed in Manual mode.
+        If the selected control (scale or record length) reaches a limit then
+        the unselected control (record length or scale) may also change.
+        """,
+        validator=strict_discrete_set,
+        values=["HORIZONTALSCALE", "RECORDLENGTH"],
+    )
+
+    horizontal_record_length = Instrument.control(
+        "HORizontal:RECOrdlength?", "HORizontal:RECOrdlength %f",
+        """Control horizontal record length in kilo-points per seconds.
+        To change the record length the Horizontal Mode must be set to Manual.
+        """,
+    )
+
+    horizontal_sample_rate = Instrument.control(
+        "HORizontal:MODE:SAMPLERate?", "HORizontal:MODE:SAMPLERate %f",
+        """Control the sample rate in Mega-sample per seconds.""",
+    )
+
+    horizontal_delay_mode = Instrument.control(
+        "HORizontal:DELay:MODe?", "HORizontal:DELay:MODe %s",
+        """Control horizontal delay mode.
+        OFF sets the Horizontal Delay Mode to off.
+        This causes the HORizontal:POSition command to operate like
+        the HORIZONTAL POSITION knob on the front panel.
+        ON sets the Horizontal Delay Mode to on.
+        This causes the HORizontal:DELay:TIMe command to operate like
+        the HORIZONTAL POSITION knob on the front panel.""",
+        validator=strict_discrete_set,
+        values=_STATE,
+    )
+
+    horizontal_minsamplerate_override = Instrument.control(
+        "HORizontal:SAMPLERate:ANALYZemode:MINimum:OVERRide?",
+        "HORizontal:SAMPLERate:ANALYZemode:MINimum:OVERRide %s",
+        """Control the flag which allows override of the horizontal
+        analyze minimum sample rate.
+        OFF does not allow override of the horizontal analyze minimum sample rate.
+        ON allows override of the horizontal analyze minimum sample rate.
+        """,
+        validator=strict_discrete_set,
+        values=_STATE,
+    )
+
+    horizontal_minsamplerate_value = Instrument.control(
+        "HORizontal:SAMPLERate:ANALYZemode:MINimum:VALue?",
+        "HORizontal:SAMPLERate:ANALYZemode:MINimum:VALue %s",
+        """Control the minimum sample rate used by Analysis Automatic horizontal mode.
+        Value is in sample per seconds.
+        AUTOmatic allows the instrument to set the minimum value.
+        """,
+        validator=strict_discrete_set,
+        values={"AUTOMATIC":"AUTOMATIC","3.125GS":3.125E+9,"1.5625GS":1.5625E+9,"1.25GS":1.25E+9,
+                "625M":6.25E+8,"312.5M":3.125E+8,"250M":250E+6,"125M":1.25E+8,"62.5M":6.25E+7,
+                "31.25M":3.125E+7,"25M":25E+6,"12.5M":12.5E+6,"6.25M":6.25E+6,"5M":5.E+6,
+                "3.125M":3.125E+6,"2.5M":2.5E+6,"1.25M":1.25E+6,"1M":1.0E+6,"625k":625E+3,
+                "500k": 500E+3,"312.5k":312.5E+3,"250k":250E+3,"125k":125E+3,"100k":100E+3,
+                "62.5k":6.250E+4,"50k":5.00E+4,"31.25k":3.1250E+4,"25k":2.50E+4,"12.5k":1.250E+4,
+                "10k":1.00E+4,"6.25k":6.250E+3,"5k":5.00E+3,"3.125k":3.1250E+3,"2.5k":2.50E+3,
+                "1.25k":1.25e+3,"1k":1000,"625":625,"500":500,"312.5":312.5,
+                "250":250,"125":125,"100":100,"62.5":62.5,"50":50,
+                "31.25":31.25,"25":25,"12.5":12.5,"10":10,"6.25":6.25,
+                "5":5,"3.125":3.125,"2.5":2.5,"1.5625":1.5625},
+        map_values=True,
+        dynamic=True,
+    )
+
+    horizontal_delay_time = Instrument.control(
+        "HORizontal:DELay:TIMe?", "HORizontal:DELay:TIMe %G",
+        """Control horizontal delay time that is used when delay mode is on.""",
+    )
+
     timebase_offset = Instrument.control(
         "HORizontal:POSition?", "HORizontal:POSition %G",
         """Control horizontal position as a percent of screen width.
@@ -1057,7 +1142,7 @@ class TektronixMSO58(TektronixMsoScope):
                  name="Tektronix MSO58 Oscilloscope",
                  active_channels=8,
                  **kwargs):
-        super().__init__(adapter, name,  active_channels, **kwargs)
+        super().__init__(adapter, name, active_channels, **kwargs)
 
 
 class TektronixMSO64(TektronixMsoScope):
