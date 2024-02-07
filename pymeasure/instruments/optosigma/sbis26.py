@@ -143,7 +143,7 @@ class Axis(Channel):
     def errors(self):
         """
 
-        Get a list of error Exceptions that can be later raised, or used to diagnose the situation.
+        Get a whole error Exceptions that can be later raised, or used to diagnose the situation.
 
         Parameters:
             - self: The current instance of the class (implicitly passed).
