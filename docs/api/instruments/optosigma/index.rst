@@ -10,6 +10,7 @@ This section contains specific documentation on the OptoSigma instruments that a
    :maxdepth: 2
 
     shrc203
+    sbis26
 
 
 

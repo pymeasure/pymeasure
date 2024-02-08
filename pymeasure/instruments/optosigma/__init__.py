@@ -23,3 +23,4 @@
 #
 
 from .shrc203 import SHRC203
+from .sbis26 import SBIS26

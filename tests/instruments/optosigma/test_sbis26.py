@@ -21,76 +21,85 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from unittest.mock import MagicMock
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.optosigma import SHRC203
+from pymeasure.instruments.optosigma import SBIS26
 
 
 def test_init():
-    # Test the initialization of the instrument
+    # Test initialization of the instrument
     with expected_protocol(
-            SHRC203, [], ):
+            SBIS26,
+            [("#CONNECT", "OK"), ],
+    ):
         pass  # Verify the expected communication.
 
 
-def test_open_loop():
-    # Test the open loop setting
+def test_position():
+    # Test the position setting
     with expected_protocol(
-            SHRC203,
-            [("F:10", "OK"),
-             ("?:F1", "0")
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("Q:D,1", "D,1,-1000"),
              ],
     ) as instr:
-        instr.ch_1.open_loop = 0
-        assert instr.ch_1.open_loop == 0
+        assert instr.ch_1.position == -1000
 
 
 def test_speed():
     # Test the speed setting
     with expected_protocol(
-            SHRC203,
-            [("D:1S100F1000R100", "OK"),
-             ("?:D1", "100,1000,100")
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("?:D,1,D", "10000,100000,200"),
+             ("D:D,1,10000,100000,200", "OK"),
              ],
     ) as instr:
-        instr.ch_1.speed = (100, 1000, 100)
-        assert instr.ch_1.speed == [100, 1000, 100]
+        assert instr.ch_1.speed == [10000, 100000, 200]
+        instr.ch_1.speed = (10000, 100000, 200)
 
 
-def test_motion_done():
-    # Test the motion done setting
+def test_error():
+    # Test the error handling
     with expected_protocol(
-            SHRC203,
-            [("!:1S", "R")],
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("SRQ:D,1", "D,1,X,C,K,R"),
+             ],
     ) as instr:
-        assert instr.ch_1.motion_done == "R"
+        instr.ch_1.error == ["D", "1", "X", "C", "K", "R"]
 
-
-def test_step():
-    # Test the step setting
+def test_errors():
+    # Test the error handling
     with expected_protocol(
-            SHRC203,
-            [("?:P1", 1)],
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("SRQ:D,1", "D,1,X,C,K,R"),
+             ],
     ) as instr:
-        assert instr.ch_1.step == 1
-
+        assert print(instr.ch_1.errors) == None
 
 def test_home():
-    # Test the home setting
+    # Test the home method
     with expected_protocol(
-            SHRC203,
-            [("H:1", "OK")],
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("H:1", "OK"),
+             ],
     ) as instr:
         instr.ch_1.home()
 
 
-def test_mode():
-    # Test the mode setting
+def test_move():
+    # Test the move method
     with expected_protocol(
-            SHRC203,
-            [("MODE:MANUAL", "OK"),
-             ("?:MODE", "HOST")],
+            SBIS26,
+            [("#CONNECT", "OK"),
+             ("A:D,1,-10000", "D,1,OK"),
+             ],
     ) as instr:
-        instr.mode = "MANUAL"
-        assert instr.mode == "HOST"
+        instr.ch_1.move(-10000)
+
+
