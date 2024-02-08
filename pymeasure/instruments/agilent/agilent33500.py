@@ -370,22 +370,22 @@ class Agilent33500(Instrument):
         generator = Agilent33500("GPIB::1")
 
         generator.shape = 'SIN'                 # Sets default channel output signal shape to sine
-        generator.ch_1.shape = 'SIN'           # Sets channel 1 output signal shape to sine
+        generator.channels[1].shape = 'SIN'           # Sets channel 1 output signal shape to sine
         generator.frequency = 1e3               # Sets default channel output frequency to 1 kHz
-        generator.ch_1.frequency = 1e3         # Sets channel 1 output frequency to 1 kHz
-        generator.ch_2.amplitude = 5           # Sets channel 2 output amplitude to 5 Vpp
-        generator.ch_2.output = 'on'           # Enables channel 2 output
+        generator.channels[1].frequency = 1e3         # Sets channel 1 output frequency to 1 kHz
+        generator.channels[2].amplitude = 5           # Sets channel 2 output amplitude to 5 Vpp
+        generator.channels[2].output = 'on'           # Enables channel 2 output
 
-        generator.ch_1.shape = 'ARB'           # Set channel 1 shape to arbitrary
-        generator.ch_1.arb_srate = 1e6         # Set channel 1 sample rate to 1MSa/s
+        generator.channels[1].shape = 'ARB'           # Set channel 1 shape to arbitrary
+        generator.channels[1].arb_srate = 1e6         # Set channel 1 sample rate to 1MSa/s
 
-        generator.ch_1.data_volatile_clear()   # Clear channel 1 volatile internal memory
-        generator.ch_1.data_arb(               # Send data of arbitrary waveform to channel 1
+        generator.channels[1].data_volatile_clear()   # Clear channel 1 volatile internal memory
+        generator.channels[1].data_arb(               # Send data of arbitrary waveform to channel 1
             'test',
             range(-10000, 10000, +20),          # In this case a simple ramp
             data_format='DAC'                   # Data format is set to 'DAC'
          )
-        generator.ch_1.arb_file = 'test'       # Select the transmitted waveform 'test'
+        generator.channels[1].arb_file = 'test'       # Select the transmitted waveform 'test'
 
     """
 
