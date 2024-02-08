@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -262,7 +262,7 @@ class ESP300(Instrument):
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
-        recived. """
+        received. """
         while self.error != 0:
             continue
 

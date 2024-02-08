@@ -8,6 +8,7 @@ This section contains specific documentation on the classes and methods of the p
    :maxdepth: 2
 
    browser
+   console
    curves
    inputs
    listeners

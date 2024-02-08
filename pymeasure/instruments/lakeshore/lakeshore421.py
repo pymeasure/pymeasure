@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ class LakeShore421(Instrument):
     """
     Represents the Lake Shore 421 Gaussmeter and provides a high-level interface for interacting
     with the instrument.
+
     .. code-block:: python
 
         gaussmeter = LakeShore421("COM1")

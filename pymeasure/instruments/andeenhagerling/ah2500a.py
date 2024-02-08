@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,25 +43,25 @@ class AH2500A(Instrument):
     def __init__(self, adapter, name=None, timeout=3000,
                  write_termination="\n", read_termination="\n",
                  **kwargs):
-        kwargs.setdefault("includeSCPI", False)
         super().__init__(
             adapter,
             name or "Andeen Hagerling 2500A Precision Capacitance Bridge",
             write_termination=write_termination,
             read_termination=read_termination,
             timeout=timeout,
+            includeSCPI=False,
             **kwargs
         )
         self._triggered = False
 
     config = Instrument.measurement(
         "SHOW",
-        """ Read out configuration """,
+        """Get the configuration.""",
     )
 
     caplossvolt = Instrument.measurement(
         "Q",
-        """ Perform a single capacitance, loss measurement and return the
+        """Get the result of a single capacitance, loss measurement and return the
         values in units of pF and nS. The used measurement voltage is returned
         as third value.""",
         # lambda function is needed here since AH2500A is otherwise undefined
@@ -70,7 +70,7 @@ class AH2500A(Instrument):
 
     vhighest = Instrument.control(
         "SH V", "V %.4f",
-        """maximum RMS value of the used measurement voltage. Values of up to
+        """Control maximum RMS value of the used measurement voltage. Values of up to
         15 V are allowed. The device will select the best suiting range below
         the given value.""",
         validator=strict_range,

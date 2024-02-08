@@ -44,7 +44,7 @@ Usage of getter and setter functions
 ====================================
 
 Getter and setter functions are discouraged, since properties provide a more fluid experience.
-Given the extensive tools available for defining properties, detailed in the sections starting with :ref:`properties`, these types of properties are prefered.
+Given the extensive tools available for defining properties, detailed in the sections starting with :ref:`properties`, these types of properties are preferred.
 
 
 .. _docstrings:

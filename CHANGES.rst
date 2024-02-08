@@ -1,9 +1,66 @@
 Upcoming version
 ================
 
+Added features
+- SCPI instruments have :code:`next_error` property giving the next error.
+
 Deprecated features
 -------------------
-- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead.
+- Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
+- Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
+- Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
+- Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
+- Replaced :code:`sample_rate` keyword-argument of :code:`buffer_frequency_time_series` of Pendulum CNT-91 by :code:`gate_time`.
+- The property :code:`unit` of MKS937B switched to using values defined in :code:`instruments/mksinst/mks937b/Unit`. Old string values are not supported anymore. (@dkriegner, @BenediktBurger #1034)
+
+GUI
+---
+- Add a :code:`FileInputWidget` to choose if and where the experiment data is stored. (@CasperSchippers, #964)
+- A default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
+
+Version 0.13.1 (2023-10-05)
+===========================
+New release to fix ineffective python version restriction in the project metadata (only affected Python<=3.7 environments installing via pip).
+
+Version 0.13.0 (2023-09-23)
+===========================
+Main items of this new release:
+
+- Dropped support for Python 3.7, added support for Python 3.11.
+- Adds a test generator, which observes the communication with an actual device and writes protocol tests accordingly.
+- 2 new instrument drivers have been added.
+
+Deprecated features
+-------------------
+- Attocube ANC300: The :code:`stepu` and :code:`stepd` properties are deprecated, use the new :code:`move_raw` method instead. (@dkriegner, #938)
+
+Instruments
+-----------
+- Adds a test generator (@bmoneke, #882)
+- Adds Thyracont Smartline v2 vacuum sensor transmitter (@bmoneke, #940)
+- Adds Thyracont Smartline v1 vacuum gauge (@dkriegner, #937)
+- AddsTeledyne base classes with most of `LeCroyT3DSO1204` functionality (@RobertoRoos, #951)
+- Fixes instrument documentation (@mcdo0486, #941, #903, @omahs, #960)
+- Fixes Toptica Ibeamsmart's __init__ (@waveman68, #959)
+- Fixes VISAAdapter flush_read_buffer() (@ileu, #968)
+- Updates Keithley2306 and AFG3152C to Channels (@bilderbuchi, #953)
+
+GUI
+---
+- Adds console mode (@msmttchr, #500)
+- Fixes Dock widget (@msmttchr, #961)
+
+Miscellaneous
+-------------
+- Change CI from conda to mamba (@bmoneke, #947)
+- Add support for python 3.11 (@CasperSchippers, #896)
+
+New Contributors
+----------------
+@waveman68, @omahs, @ileu
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.12.0...v0.13.0
+
 
 Version 0.12.0 (2023-07-05)
 ===========================

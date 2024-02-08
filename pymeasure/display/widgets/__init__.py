@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 from .browser_widget import BrowserWidget
-from .directory_widget import DirectoryLineEdit
+from .fileinput_widget import FileInputWidget
 from .estimator_widget import EstimatorWidget, EstimatorThread
 from .image_frame import ImageFrame
 from .image_widget import ImageWidget

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -126,23 +126,25 @@ class TeledyneT3AFG(Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
-    Intially targeting T3AFG80, some features may not be available on
+    Initially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
-    included here intially.
+    included here yet.
 
     Future improvements (help welcomed):
+
     - Add other OUTPut related controls like Load and Polarity
     - Add other Basic Waveform related controls like Period
     - Add frequency ranges per model
     - Add channel coupling control
 
     .. code-block: python
-    # Example assumes Ethernet (TCPIP) interface
-    generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
-    generator.reset()
-    generator.ch_1.wavetype='SINE'
-    generator.ch_1.amplitude=2
-    generator.ch_1.output_enabled=True
+
+        # Example assumes Ethernet (TCPIP) interface
+        generator=TeledyneT3AFG('TCPIP0::xxx.xxx.xxx.xxx::pppp::SOCKET')
+        generator.reset()
+        generator.ch_1.wavetype='SINE'
+        generator.ch_1.amplitude=2
+        generator.ch_1.output_enabled=True
     """
 
     ch_1 = Instrument.ChannelCreator(SignalChannel, 1)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -303,7 +303,7 @@ class Agilent33500Channel(Channel):
 
         This should be done if the same name is used continuously to load
         different arbitrary signals into the memory, since an error will occur
-         if a trace is loaded which already exists in memory.
+        if a trace is loaded which already exists in memory.
         """
         self.write("SOUR{ch}:DATA:VOL:CLE")
 

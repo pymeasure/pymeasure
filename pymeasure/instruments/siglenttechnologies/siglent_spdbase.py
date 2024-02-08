@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -174,7 +174,7 @@ class SPDBase(Instrument):
 
     error = Instrument.measurement(
         "SYST:ERR?",
-        """Read the error code and information of the instrument.
+        """Get the error code and information of the instrument.
 
         :type: string
         """
@@ -182,7 +182,7 @@ class SPDBase(Instrument):
 
     fw_version = Instrument.measurement(
         "SYST:VERS?",
-        """Read the software version of the instrument.
+        """Get the software version of the instrument.
 
         :type: string
         """
@@ -190,7 +190,7 @@ class SPDBase(Instrument):
 
     system_status_code = Instrument.measurement(
         "SYST:STAT?",
-        """Read the system status register.
+        """Get the system status register.
 
         :type: :class:`.SystemStatusCode`
         """,
