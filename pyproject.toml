@@ -10,3 +10,24 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.poetry]
+name = 'pymeasure'
+authors = ['authors.txt']
+description = ''
+version = '0.1.0'
+
+[tool.poetry.dependencies]
+python = '>=3.10, <3.12'
+pyvisa = "^1.14.1"
+pyvisa-py = "^0.7.1"
+numpy = "^1.26.2"
+pyserial = "^3.5"
+pandas = "^2.1.4"
+ipython = "^8.19.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.3"
+vulture = "^2.10"
+coverage = "^7.3.4"
+

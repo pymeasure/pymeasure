@@ -35,13 +35,20 @@ log.addHandler(logging.NullHandler())
 
 try:
     if platform == "win32":
-        nidaq = ctypes.windll.nicaiu
+        try:
+            nidaq = ctypes.windll.nicaiu
+        except AttributeError as err:
+            log.info('Failed loading the NI-DAQmx library. '
+                 + 'Check the NI-DAQmx documentation on how to '
+                 + 'install this external dependency. '
+                 + f'AttributeError: {err}')
+            # raise
 except OSError as err:
     log.info('Failed loading the NI-DAQmx library. '
              + 'Check the NI-DAQmx documentation on how to '
              + 'install this external dependency. '
              + f'OSError: {err}')
-    raise
+    # raise
 
 # Data Types
 int32 = ctypes.c_long
