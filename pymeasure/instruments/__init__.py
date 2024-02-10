@@ -40,6 +40,7 @@ from . import andeenhagerling
 from . import anritsu
 from . import attocube
 from . import bkprecision
+from . import cisystems
 from . import danfysik
 from . import deltaelektronika
 from . import edwards
