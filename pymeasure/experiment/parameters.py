@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,11 @@ class Parameter:
 
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
         self.name = name
+        separator = ": "
+        if separator in name:
+            raise ValueError(f"The provided name argument '{name}' contains the "
+                             f"separator '{separator}'.")
+
         self._value = None
         if default is not None:
             self.value = default

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,21 +53,21 @@ class LakeShore425(Instrument):
 
     field = Instrument.measurement(
         "RDGFIELD?",
-        """ Returns the field in the current units """
+        """ Get the field in the current units """
     )
     unit = Instrument.control(
         "UNIT?", "UNIT %d",
-        """ A string property that controls the units of the instrument,
-        which can take the values of G, T, Oe, or A/m. """,
+        """ Control the units of the instrument,
+        which can take the values of G, T, Oe, or A/m. (str)""",
         validator=strict_discrete_set,
         values={'G': 1, 'T': 2, 'Oe': 3, 'A/m': 4},
         map_values=True
     )
     range = Instrument.control(
         "RANGE?", "RANGE %d",
-        """ A floating point property that controls the field range in
+        """ Control the field range in
         units of Gauss, which can take the values 35, 350, 3500, and
-        35,000 G. """,
+        35,000 G. (float)""",
         validator=truncated_discrete_set,
         values={35: 1, 350: 2, 3500: 3, 35000: 4},
         map_values=True
@@ -107,13 +107,11 @@ class LakeShore425(Instrument):
 
     @property
     def mode(self):
+        """Control the mode, filter, and bandwidth settings."""
         return tuple(self.values("RDGMODE?"))
 
     @mode.setter
     def mode(self, value):
-        """ Provides access to directly setting the mode, filter, and
-        bandwidth settings
-        """
         mode, filter, band = value
         self.write("RDGMODE %d,%d,%d" % (mode, filter, band))
 
