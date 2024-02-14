@@ -117,7 +117,7 @@ class ROD4(Instrument):
 
     def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
         super().__init__(
-            adapter, name, write_termination='\r', **kwargs
+            adapter, name, read_termination='\r', write_termination='\r', **kwargs
         )
         self._keyboard = None
 
