@@ -34,35 +34,34 @@ log.addHandler(logging.NullHandler())
 
 
 class ROD4Channel(Channel):
-    """ Implementation of a ROD-4 MFC channel """
+    """Implementation of a ROD-4 MFC channel."""
 
     actual_flow = Channel.measurement(
         "\x020{ch}RFX",
-        """ Read the actual flow in % . """
+        """Measure the actual flow in % ."""
     )
     setpoint = Channel.control(
         "\x020{ch}RFD", "\x020{ch}SFD%.1f",
-        """A property that controls the set point in % of control range. """,
+        """Control the set point in % of control range.""",
         validator=truncated_range,
         values=[0, 100],
     )
     mfc_range = Channel.control(
         "\x020{ch}RFK", "\x020{ch}SFK%d",
-        """An integer property that controls the MFC range in sccm.
-        Upper limit is 200 slm. """,
+        """Control the MFC range in sccm.
+        Upper limit is 200 slm.""",
         validator=truncated_range,
         values=[0, 200000]
     )
     ramp_time = Channel.control(
         "\x020{ch}RRT", "\x020{ch}SRT%.1f",
-        """A property that controls the MFC set point ramping time in
-        seconds.""",
+        """Control the MFC set point ramping time in seconds.""",
         validator=truncated_range,
         values=[0, 200000]
     )
     valve_mode = Channel.control(
         "\x020{ch}RVM", "\x020{ch}SVM%d",
-        """A property that controls the MFC valve mode.
+        """Control the MFC valve mode.
         Valid options are `flow`, `close`, and `open`. """,
         validator=strict_discrete_set,
         values={'flow': 0, 'close': 1, 'open': 2},
@@ -75,9 +74,9 @@ class ROD4Channel(Channel):
 
     @property
     def flow_unit(self):
-        """Returns flow units for the selected channel.
+        """Control flow units for the selected channel.
         Valid options are %, sccm, or slm.
-        Display in absolute units is in sccm for control range < 10 slm. """
+        Display in absolute units is in sccm for control range < 10 slm."""
         if self._flow_unit is None:
             log.info("Flow units have not been set on ROD-4 channel "
                      f"{self.id}")
@@ -91,11 +90,11 @@ class ROD4Channel(Channel):
             self.write("\x020{ch}SFU%d" % values[units])
             self._flow_unit = 'sccm'
         else:
-            print('Units must be %, sccm, or slm.')
+            log.info('Units must be %, sccm, or slm.')
 
 
 class ROD4(Instrument):
-    """ Represents the Proterial ROD-4(A) operator for mass flow controllers
+    """Represents the Proterial ROD-4(A) operator for mass flow controllers
     and provides a high-level interface for interacting with the instrument.
     User must specify which channel to control (1-4).
 
@@ -123,12 +122,12 @@ class ROD4(Instrument):
 
     version = Instrument.measurement(
         "\x0200RVN",
-        """ Read version and series number. Returns x.xx<TAB>S/N """
+        """Get the version and series number. Returns x.xx<TAB>S/N """
     )
 
     @property
     def keyboard(self):
-        """Returns front keyboard lock status.
+        """Control the front keyboard lock status.
         Valid options are unlocked or locked. """
         if self._keyboard is None:
             log.info('ROD-4 keyboard status has not been set')
@@ -142,4 +141,4 @@ class ROD4(Instrument):
             self.write("\x0200SKO%d" % values[status])
             self._keyboard = values[status]
         else:
-            print('Status must be unlocked or locked.')
+            log.info('Status must be unlocked or locked.')
