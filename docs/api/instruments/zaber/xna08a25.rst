@@ -1,0 +1,7 @@
+#################################
+Zaber X-NA08A25 Micro Linear Actuator
+#################################
+
+.. autoclass:: pymeasure.instruments.zaber.XNA08A25
+    :members:
+    :show-inheritance:
