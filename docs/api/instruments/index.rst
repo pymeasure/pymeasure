@@ -54,6 +54,7 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    pendulum/index
+   proterial/index
    racal/index
    razorbill/index
    rohdeschwarz/index
