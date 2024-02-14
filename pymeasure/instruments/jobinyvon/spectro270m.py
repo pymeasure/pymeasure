@@ -243,9 +243,9 @@ class JY270M(Instrument):
     def motor_busy_check(self):
         ans = self.write_read(b'E\r').decode()
         if ans == "oz":
-            return False
+            return False # We return False if the motor is not busy.
         if ans == "ooq":
-            return True
+            return True # We return True if the motor is busy.
 
 if __name__ == '__main__':
     spectro = JY270M('COM1',
@@ -259,7 +259,6 @@ if __name__ == '__main__':
                      read_termination='')
 
 
-    print(spectro.gsteps)
 
 
 
