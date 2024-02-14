@@ -102,14 +102,16 @@ class Keithley2182Channel(Channel):
         relative or absolute value. Enabled by default for Ch. 2 voltage, which
         is measured relative to Ch. 1 voltage.""",
         validator=strict_discrete_set,
-        values=['OFF', 'ON'],
+        values={'OFF': 0, 'ON': 1},
+        map_values=True
     )
     temperature_offset_state = Channel.control(
         ":SENS:TEMP:CHAN{ch}:REF:STAT?", ":SENS:TEMP:CHAN{ch}:REF:STAT %s",
         """ A string property that controls whether temperature is measured as
         a relative or absolute value. Disabled by default.""",
         validator=strict_discrete_set,
-        values=['OFF', 'ON'],
+        values={'OFF': 0, 'ON': 1},
+        map_values=True
     )
 
     def setup_voltage(self, auto_range=True, nplc=1):
@@ -141,6 +143,8 @@ class Keithley2182Channel(Channel):
 
     def acquire_reference(self, func='VOLT'):
         """Acquire a measurement and store it as the relative offset value.
+
+        Only acquires reference if offset state is ON.
 
         :param func: 'VOLT' or 'TEMP'
         """
@@ -174,7 +178,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
     #################
 
     auto_zero = Instrument.control(
-        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %s",
+        ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
         """ A property that controls the auto zero option. Valid values are
         True (enabled) and False (disabled). """,
         validator=strict_discrete_set,
@@ -207,7 +211,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """ A property that controls the measurement mode of the active
         channel. Valid options are voltage and temperature. """,
         validator=strict_discrete_set,
-        values={'voltage': 'VOLT', 'temperature': 'TEMP'},
+        values={'voltage': '"VOLT:DC"', 'temperature': '"TEMP"'},
         map_values=True
     )
 
@@ -332,7 +336,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
     # Methods #
     ###########
 
-    def __init__(self, adapter, name="Keithley 2182 Nanovoltmeter", **kwargs):
+    def __init__(self, adapter, name="Keithley 2182 Nanovoltmeter",
+                 read_termination='\r', **kwargs):
         super().__init__(
             adapter, name, **kwargs
         )
@@ -347,26 +352,6 @@ class Keithley2182(KeithleyBuffer, Instrument):
         else:
             self.temperature_nplc_values = [0.01, 60]
             self.voltage_nplc_values = [0.01, 60]
-
-    def beep(self, frequency, duration):
-        """ Sounds a system beep.
-
-        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
-
-    def triad(self, base_frequency, duration):
-        """ Sounds a musical triad using the system beep.
-
-        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.beep(base_frequency, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 5.0 / 4.0, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 6.0 / 4.0, duration)
 
     @property
     def error(self):
