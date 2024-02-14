@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,94 +24,104 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.mksinst.mks937b import MKS937B, Unit
+from pymeasure.instruments.mksinst.mks974b import MKS974B, Unit
+
+
+def test_device_type():
+    """Verify the communication of the device type."""
+    with expected_protocol(
+        MKS974B,
+        [("@253DT?", "@253ACKQUADMAG"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.device_type == "QUADMAG"
+
+
+def test_status():
+    """Verify the communication of the status."""
+    with expected_protocol(
+        MKS974B,
+        [("@253T?", "@253ACKO"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.status == "Ok"
 
 
 def test_pressure():
     """Verify the communication of the pressure getter."""
     with expected_protocol(
-        MKS937B,
-        [("@253PR1?", "@253ACK1.10e-9"),
+        MKS974B,
+        [("@253PR4?", "@253ACK1.234E-3"),
          (None, b"FF")],
     ) as inst:
-        assert inst.ch_1.pressure == pytest.approx(1.1e-9)
+        assert inst.pressure == pytest.approx(1.234e-3)
 
 
-def test_ion_gauge_status():
-    """Verify the communication of the ion gauge status getter."""
+def test_pirani_pressure():
+    """Verify the communication of the pirani pressure getter."""
     with expected_protocol(
-        MKS937B,
-        [("@253T1?", "@253ACKG"),
+        MKS974B,
+        [("@253PR1?", "@253ACK1.23E-3"),
          (None, b"FF")],
     ) as inst:
-        assert inst.ch_1.ion_gauge_status == "Good"
-
-
-def test_ion_gauge_status_invalid_channel():
-    """Ion gauge status does not exist on all channels."""
-    with expected_protocol(
-        MKS937B,
-        [],
-    ) as inst:
-        with pytest.raises(AttributeError):
-            inst.ch_2.ion_gauge_status
+        assert inst.pirani_pressure == pytest.approx(1.23e-3)
 
 
 def test_unit_setter():
     """Verify the communication of the unit setter."""
     with expected_protocol(
-        MKS937B,
-        [("@253U!MICRON", "@253ACKMICRON"),
+        MKS974B,
+        [("@253U!PASCAL", "@253ACKPASCAL"),
          (None, b"FF")],
     ) as inst:
-        inst.unit = Unit.uHg
+        inst.unit = Unit.Pa
 
 
 def test_unit_getter():
     """Verify the communication of the unit getter."""
     with expected_protocol(
-        MKS937B,
+        MKS974B,
         [("@253U?", "@253ACKTORR"),
          (None, b"FF")],
     ) as inst:
         assert inst.unit == Unit.Torr
 
 
-def test_power_enabled():
-    """Verify the communication of the channel power getter."""
+def test_switch_enabled():
+    """Verify the communication of the user swith getter."""
     with expected_protocol(
-        MKS937B,
-        [("@253CP1?", "@253ACKON"),
+        MKS974B,
+        [("@253SW?", "@253ACKON"),
          (None, b"FF")],
     ) as inst:
-        assert inst.ch_1.power_enabled is True
+        assert inst.switch_enabled is True
 
 
 def test_relay_value():
     """Verify the communication of the relay setpoint getter."""
     with expected_protocol(
-        MKS937B,
-        [("@253SP10?", "@253ACK2.00E+0"),
+        MKS974B,
+        [("@253SP1?", "@253ACK2.00E+1"),
          (None, b"FF")],
     ) as inst:
-        assert inst.relay_10.setpoint == pytest.approx(2.00e0)
+        assert inst.relay_1.setpoint == pytest.approx(2.00e1)
 
 
 def test_relay_direction():
     """Verify the communication of the relay direction."""
     with expected_protocol(
-        MKS937B,
-        [("@253SD3?", "@253ACKABOVE"),
+        MKS974B,
+        [("@253SD2?", "@253ACKBELOW"),
          (None, b"FF")],
     ) as inst:
-        assert inst.relay_3.direction == "ABOVE"
+        assert inst.relay_2.direction == "BELOW"
 
 
 def test_relay_enabled():
     """Verify the communication of the relay enabled property."""
     with expected_protocol(
-        MKS937B,
-        [("@253EN6?", "@253ACKENABLE"),
+        MKS974B,
+        [("@253EN3?", "@253ACKPIR"),
          (None, b"FF")],
     ) as inst:
-        assert inst.relay_6.enabled is True
+        assert inst.relay_3.enabled == "pirani"
