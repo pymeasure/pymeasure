@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ class AFG3152CChannel(Channel):
         "edecay": "EDEC",
         "haversine": "HAV",
     }
-    FREQ_LIMIT = [1e-6, 150e6]  # Frequeny limit for sinusoidal function
+    FREQ_LIMIT = [1e-6, 150e6]  # Frequency limit for sinusoidal function
     DUTY_LIMIT = [0.001, 99.999]
     AMPLITUDE_LIMIT = {
         "VPP": [20e-3, 10],
@@ -56,8 +56,7 @@ class AFG3152CChannel(Channel):
     shape = Instrument.control(
         "function:shape?",
         "function:shape %s",
-        """ A string property that controls the shape of the output.
-            This property can be set.""",
+        """ Control the shape of the output. (str)""",
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
@@ -66,8 +65,7 @@ class AFG3152CChannel(Channel):
     unit = Instrument.control(
         "voltage:unit?",
         "voltage:unit %s",
-        """ A string property that controls the amplitude unit.
-            This property can be set.""",
+        """ Control the amplitude unit. (str)""",
         validator=strict_discrete_set,
         values=UNIT_LIMIT,
     )
@@ -75,8 +73,7 @@ class AFG3152CChannel(Channel):
     amp_vpp = Instrument.control(
         "voltage:amplitude?",
         "voltage:amplitude %eVPP",
-        """ A floating point property that controls the output amplitude
-            in Vpp. This property can be set.""",
+        """Control the output amplitude in Vpp. (float)""",
         validator=strict_range,
         values=AMPLITUDE_LIMIT["VPP"],
     )
@@ -84,8 +81,7 @@ class AFG3152CChannel(Channel):
     amp_dbm = Instrument.control(
         "voltage:amplitude?",
         "voltage:amplitude %eDBM",
-        """ A floating point property that controls the output amplitude
-            in dBm. This property can be set.""",
+        """ Control the output amplitude in dBm. (float)""",
         validator=strict_range,
         values=AMPLITUDE_LIMIT["DBM"],
     )
@@ -93,8 +89,7 @@ class AFG3152CChannel(Channel):
     amp_vrms = Instrument.control(
         "voltage:amplitude?",
         "voltage:amplitude %eVRMS",
-        """ A floating point property that controls the output amplitude
-            in Vrms. This property can be set.""",
+        """ Control the output amplitude in Vrms. (float)""",
         validator=strict_range,
         values=AMPLITUDE_LIMIT["VRMS"],
     )
@@ -102,15 +97,13 @@ class AFG3152CChannel(Channel):
     offset = Instrument.control(
         "voltage:offset?",
         "voltage:offset %e",
-        """ A floating point property that controls the amplitude
-            offset. It is always in Volt. This property can be set.""",
+        """ Control the amplitude offset. It is always in Volt. (float)""",
     )
 
     frequency = Instrument.control(
         "frequency:fixed?",
         "frequency:fixed %e",
-        """ A floating point property that controls the frequency.
-            This property can be set.""",
+        """ Control the frequency. (float)""",
         validator=strict_range,
         values=FREQ_LIMIT,
     )
@@ -118,8 +111,7 @@ class AFG3152CChannel(Channel):
     duty = Instrument.control(
         "pulse:dcycle?",
         "pulse:dcycle %.3f",
-        """ A floating point property that controls the duty
-            cycle of pulse. This property can be set.""",
+        """ Control the duty cycle of pulse. (float))""",
         validator=strict_range,
         values=DUTY_LIMIT,
     )
@@ -127,9 +119,7 @@ class AFG3152CChannel(Channel):
     impedance = Instrument.control(
         "output:impedance?",
         "output:impedance %d",
-        """ A floating point property that controls the output
-            impedance of the channel. Be careful with this.
-            This property can be set.""",
+        """ Control the output impedance of the channel. Be careful with this.""",
         validator=strict_range,
         values=IMP_LIMIT,
         cast=int,

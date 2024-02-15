@@ -56,6 +56,7 @@ Instruments by manufacturer:
    pendulum/index
    racal/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index

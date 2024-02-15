@@ -1,0 +1,7 @@
+####################
+HP 437B Power Meter
+####################
+
+.. autoclass:: pymeasure.instruments.hp.HP437B
+    :members:
+    :show-inheritance:
