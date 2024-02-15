@@ -426,7 +426,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 ##########
 
 
-class SMU(Instrument):
+class SMU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -649,7 +649,7 @@ class SMU(Instrument):
         return values
 
 
-class VMU(Instrument):
+class VMU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -707,7 +707,7 @@ class VMU(Instrument):
         self.check_errors()
 
 
-class VSU(Instrument):
+class VSU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -803,7 +803,7 @@ class VSU(Instrument):
 #################
 
 
-class VARX(Instrument):
+class VARX(SCPIUnknownMixin, Instrument):
     """ Base class to define sweep variable settings """
 
     def __init__(self, adapter, var_name, **kwargs):
@@ -964,7 +964,7 @@ class VAR2(VARX):
     )
 
 
-class VARD(Instrument):
+class VARD(SCPIUnknownMixin, Instrument):
     """ Class to handle all the definitions needed for VARD.
     VARD is always defined in relation to VAR1.
     """
