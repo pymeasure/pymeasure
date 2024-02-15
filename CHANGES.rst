@@ -7,6 +7,7 @@ Added features
 Deprecated features
 -------------------
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
+- Make parameter :code:`includeSCPI` obligatory for all instruments, even those which use SCPI (@BenediktBurger, #1007)
 - Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
 - Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
 - Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
