@@ -206,6 +206,7 @@ grandfathered_includeSCPI_instruments = [
     "Agilent33220A",
     "Agilent4156",
     "Ametek7270",
+    "AMI430",
     "AnritsuMS4645B",
     "AnritsuMS4647B",
     "AnritsuMS4644B",
