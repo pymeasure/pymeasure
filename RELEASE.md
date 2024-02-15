@@ -14,20 +14,18 @@
 4. Push the changes up as a PR
 5. Verify that the builds complete
 6. Merge the PR
-7. Fetch `master`, build and check the source packages
-    - `python -m pip install --upgrade build twine`
-    - `python -m build`
-    - Check the distributions (`twine check dist/*`, version will not yet be correct)
-8. Create a git tag in the format "vX.Y.Z"
-9. Build final packages and confirm the correct version number is being used
-    - `python -m build`
-    - Check the distributions (`twine check dist/*`)
-10. Push the Git tag
-11. Create a tagged [release on GitHub](https://github.com/pymeasure/pymeasure/releases). You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
+7. Create a new [release on GitHub](https://github.com/pymeasure/pymeasure/releases)
+    * Add a tag name in the format "vX.Y.Z" and select "create tag on publish"
+    * You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
+    * Publish the release
+8. Approve the _build and upload_ run under Actions.
+   This will create the wheel and upload it to PyPI.
 
-## PyPI release
+## PyPI release - manually
 
 Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
+
+If the upload action does not work, you can create a PyPI release manually:
 
 1. Upload the wheel and source distributions to the test server
     - `python -m twine upload --repository testpypi dist/*`
