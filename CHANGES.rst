@@ -6,6 +6,7 @@ Added features
 
 Deprecated features
 -------------------
+- Remove :code:`TelnetAdapter`, as its library is deprecated.
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
 - Make parameter :code:`includeSCPI` obligatory for all instruments, even those which use SCPI (@BenediktBurger, #1007)
 - Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
