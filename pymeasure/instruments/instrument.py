@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -139,6 +139,14 @@ class Instrument(CommonBase):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
+    @property
+    def next_error(self):
+        """Get the next error of the instrument (tuple of code and message)."""
+        if self.SCPI:
+            return self.values("SYST:ERR?")
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
     # Wrapper functions for the Adapter object
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
@@ -217,7 +225,7 @@ class Instrument(CommonBase):
         if self.SCPI:
             errors = []
             while True:
-                err = self.values("SYST:ERR?")
+                err = self.next_error
                 if int(err[0]) != 0:
                     log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
