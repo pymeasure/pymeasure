@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 import logging
 import time
+from warnings import warn
 
 from .common_base import CommonBase
 from ..adapters.visa import VISAAdapter
@@ -58,7 +59,7 @@ class Instrument(CommonBase):
 
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
-    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param includeSCPI: An obligatory boolean, which toggles the inclusion of standard SCPI commands
     :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
@@ -71,7 +72,7 @@ class Instrument(CommonBase):
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True,
+    def __init__(self, adapter, name, includeSCPI=None,
                  preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
@@ -82,6 +83,10 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
+        if includeSCPI is None:
+            warn("It is deprecated to specify `includeSCPI` implicitly, declare it explicitly.",
+                 FutureWarning)
+            includeSCPI = True
         self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
@@ -131,6 +136,14 @@ class Instrument(CommonBase):
         """ Get the identification of the instrument. """
         if self.SCPI:
             return self.ask("*IDN?").strip()
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
+    def next_error(self):
+        """Get the next error of the instrument (tuple of code and message)."""
+        if self.SCPI:
+            return self.values("SYST:ERR?")
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
@@ -212,7 +225,7 @@ class Instrument(CommonBase):
         if self.SCPI:
             errors = []
             while True:
-                err = self.values("SYST:ERR?")
+                err = self.next_error
                 if int(err[0]) != 0:
                     log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)

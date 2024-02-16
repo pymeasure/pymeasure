@@ -1,0 +1,11 @@
+#################################################
+Inficon SQM-160 multi-film rate/thickness monitor
+#################################################
+
+.. autoclass:: pymeasure.instruments.inficon.sqm160.SQM160
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.inficon.sqm160.SensorChannel
+    :members:
+    :show-inheritance:

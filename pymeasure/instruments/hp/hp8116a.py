@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -522,7 +522,7 @@ class HP8116A(Instrument):
         self.write(digit.value + direction.value)
 
     def GPIB_trigger(self):
-        """ Initate trigger via low-level GPIB-command (aka GET - group execute trigger). """
+        """ Initiate trigger via low-level GPIB-command (aka GET - group execute trigger). """
         self.adapter.connection.assert_trigger()
 
     def reset(self):

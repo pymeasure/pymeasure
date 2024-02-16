@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -102,6 +102,18 @@ def test_fake_instrument():
     assert fake.read() == "Testing"
     assert fake.read() == ""
     assert fake.values("5") == [5]
+
+
+class Test_includeSCPI_parameter:
+    def test_not_defined_includeSCPI_raises_warning(self):
+        with pytest.warns(FutureWarning) as record:
+            Instrument(name="test", adapter=ProtocolAdapter())
+        msg = str(record[0].message)
+        assert msg == "It is deprecated to specify `includeSCPI` implicitly, declare it explicitly."
+
+    def test_not_defined_includeSCPI_is_interpreted_as_true(self):
+        inst = Instrument(name="test", adapter=ProtocolAdapter())
+        assert inst.SCPI is True
 
 
 @pytest.mark.parametrize("adapter", (("COM1", 87, "USB")))

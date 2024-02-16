@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,14 +48,14 @@ class Thermotron3800(Instrument):
         sleep(1)
 
     id = Instrument.measurement(
-        "IDEN?", """ Reads the instrument identification
+        "IDEN?", """ Get the instrument identification
 
         :return: String
         """
     )
 
     temperature = Instrument.measurement(
-        "PVAR1?", """ Reads the current temperature of the oven
+        "PVAR1?", """ Get the current temperature of the oven
         via built in thermocouple. Default unit is Celsius, unless
         changed by the user.
 
@@ -64,7 +64,7 @@ class Thermotron3800(Instrument):
     )
 
     mode = Instrument.measurement(
-        "MODE?", """ Gets the operating mode of the oven.
+        "MODE?", """ Get the operating mode of the oven.
 
         :return: Tuple(String, int)
         """,
@@ -73,8 +73,7 @@ class Thermotron3800(Instrument):
 
     setpoint = Instrument.control(
         "SETP1?", "SETP1,%g",
-        """ A floating point property that controls the setpoint
-        of the oven in Celsius. This property can be set.
+        """Control the setpoint of the oven in Celsius. (float)
         "setpoint" will not update until the "run()" command is called.
         After setpoint is set to a new value, the "run()" command
         must be called to tell the oven to run to the new temperature.

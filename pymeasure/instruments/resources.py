@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ def list_resources():
     rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()
     for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
+        # trying to catch errors in communication
         try:
             res = rm.open_resource(instr)
             # try to avoid errors from *idn?

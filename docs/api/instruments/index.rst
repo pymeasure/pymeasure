@@ -41,6 +41,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   inficon/index
    ipgphotonics/index
    keithley/index
    keysight/index
@@ -53,7 +54,9 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    pendulum/index
+   racal/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index
