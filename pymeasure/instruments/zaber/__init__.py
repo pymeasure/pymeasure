@@ -22,4 +22,9 @@
 # THE SOFTWARE.
 #
 
-# from pymeasure.instruments import Instrument
+
+try:
+    from .xna08a25 import XNA08A25
+except ModuleNotFoundError:
+    # Error Logging is handled within package
+    pass

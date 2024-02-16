@@ -80,3 +80,4 @@ from . import thyracont
 from . import toptica
 from . import velleman
 from . import yokogawa
+from . import zaber
