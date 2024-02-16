@@ -22,6 +22,7 @@ Instruments by manufacturer:
    activetechnologies/index
    advantest/index
    agilent/index
+   aimtti/index
    aja/index
    ametek/index
    ami/index
@@ -40,6 +41,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   inficon/index
    ipgphotonics/index
    keithley/index
    keysight/index
@@ -52,7 +54,9 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    pendulum/index
+   racal/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index
@@ -65,6 +69,7 @@ Instruments by manufacturer:
    texio/index
    thermotron/index
    thorlabs/index
+   thyracont/index
    toptica/index
    velleman/index
    yokogawa/index

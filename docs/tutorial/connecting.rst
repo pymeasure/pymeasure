@@ -28,6 +28,11 @@ Then construct an object by passing the VISA address. For this example we connec
         from pymeasure.instruments import list_resources
         list_resources()
 
+    If you know the USB properties (vendor id, product id, serial numer) of the serial device, you can query for the VISA resource string::
+
+        from pymeasure.instruments import find_serial_port
+        resource_name = find_serial_port(vendor_id=15, product_id=0x12e5, serial_number="sn56X")
+
 For instruments with standard SCPI commands, an :code:`id` property will return the results of a :code:`*IDN?` SCPI command, identifying the instrument. ::
 
     sourcemeter.id

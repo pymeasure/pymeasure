@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,9 @@ class TC038D(Instrument):
     def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
                  **kwargs):
         """Initialize the device."""
-        super().__init__(adapter, name, timeout=timeout, **kwargs)
+        super().__init__(adapter, name, timeout=timeout,
+                         includeSCPI=False,
+                         **kwargs)
         self.address = address
 
     def write(self, command):

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 import logging
 import time
+from warnings import warn
 
 import numpy as np
 
@@ -36,8 +37,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6221(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 6221 AC and DC current source and provides a
+class Keithley6221(KeithleyBuffer, Instrument):
+    """ Represents the Keithley 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -285,7 +286,9 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     def __init__(self, adapter, name="Keithley 6221 SourceMeter", **kwargs):
         super().__init__(
-            adapter, name, **kwargs
+            adapter, name,
+            includeSCPI=True,
+            **kwargs
         )
 
     def enable_source(self):
@@ -328,25 +331,8 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 6221 reported error: %d, %s" % (code, message))
-            code, message = self.error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 6221 error retrieval.")
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """

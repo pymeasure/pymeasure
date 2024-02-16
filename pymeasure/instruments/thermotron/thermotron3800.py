@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,14 +48,14 @@ class Thermotron3800(Instrument):
         sleep(1)
 
     id = Instrument.measurement(
-        "IDEN?", """ Reads the instrument identification
+        "IDEN?", """ Get the instrument identification
 
         :return: String
         """
     )
 
     temperature = Instrument.measurement(
-        "PVAR1?", """ Reads the current temperature of the oven
+        "PVAR1?", """ Get the current temperature of the oven
         via built in thermocouple. Default unit is Celsius, unless
         changed by the user.
 
@@ -64,7 +64,7 @@ class Thermotron3800(Instrument):
     )
 
     mode = Instrument.measurement(
-        "MODE?", """ Gets the operating mode of the oven.
+        "MODE?", """ Get the operating mode of the oven.
 
         :return: Tuple(String, int)
         """,
@@ -73,8 +73,7 @@ class Thermotron3800(Instrument):
 
     setpoint = Instrument.control(
         "SETP1?", "SETP1,%g",
-        """ A floating point property that controls the setpoint
-        of the oven in Celsius. This property can be set.
+        """Control the setpoint of the oven in Celsius. (float)
         "setpoint" will not update until the "run()" command is called.
         After setpoint is set to a new value, the "run()" command
         must be called to tell the oven to run to the new temperature.
@@ -88,6 +87,7 @@ class Thermotron3800(Instrument):
     def run(self):
         '''
         Starts temperature forcing. The oven will ramp to the setpoint.
+
         :return: None
         '''
         self.write("RUNM")
@@ -95,6 +95,7 @@ class Thermotron3800(Instrument):
     def stop(self):
         '''
         Stops temperature forcing on the oven.
+
         :return: None
         '''
         self.write("STOP")
@@ -104,8 +105,8 @@ class Thermotron3800(Instrument):
         The manufacturer recommends a 3 second wait time after after initializing the oven.
         The optional "wait" variable should remain true, unless the 3 second wait time is
         taken care of on the user end. The wait time is split up in the following way:
-            1 second (built into the write function) +
-            2 seconds (optional wait time from this function (initialize_oven)).
+        1 second (built into the write function) +
+        2 seconds (optional wait time from this function (initialize_oven)).
 
         :return: None
         '''
@@ -114,16 +115,27 @@ class Thermotron3800(Instrument):
             sleep(2)
 
     class Thermotron3800Mode(IntFlag):
-        '''
-        Bit 0 = Program mode
-        Bit 1 = Edit mode (controller in stop mode)
-        Bit 2 = View program mode
-        Bit 3 = Edit mode (controller in hold mode)
-        Bit 4 = Manual mode
-        Bit 5 = Delayed start mode
-        Bit 6 = Unused
-        Bit 7 = Calibration mode
-        '''
+        """
+        +--------+--------------------------------------+
+        | Bit    | Mode                                 |
+        +========+======================================+
+        | 0      | Program mode                         |
+        +--------+--------------------------------------+
+        | 1      | Edit mode (controller in stop mode)  |
+        +--------+--------------------------------------+
+        | 2      | View program mode                    |
+        +--------+--------------------------------------+
+        | 3      | Edit mode (controller in hold mode)  |
+        +--------+--------------------------------------+
+        | 4      | Manual mode                          |
+        +--------+--------------------------------------+
+        | 5      | Delayed start mode                   |
+        +--------+--------------------------------------+
+        | 6      | Unused                               |
+        +--------+--------------------------------------+
+        | 7      | Calibration mode                     |
+        +--------+--------------------------------------+
+        """
         PROGRAM_MODE = 1
         EDIT_MODE_STOP = 2
         VIEW_PROGRAM_MODE = 4

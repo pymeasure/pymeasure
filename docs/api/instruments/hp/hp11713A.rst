@@ -1,0 +1,16 @@
+###########################################
+HP 11713A Attenuator/Switch Driver
+###########################################
+
+.. autoclass:: pymeasure.instruments.hp.HP11713A
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp11713a.SwitchDriverChannel
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp11713a.Attenuator_11dB
+.. autoclass:: pymeasure.instruments.hp.hp11713a.Attenuator_110dB
+.. autoclass:: pymeasure.instruments.hp.hp11713a.Attenuator_70dB_3_Section
+.. autoclass:: pymeasure.instruments.hp.hp11713a.Attenuator_70dB_4_Section
