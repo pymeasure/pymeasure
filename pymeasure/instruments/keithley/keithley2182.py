@@ -170,8 +170,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
                  read_termination='\r', **kwargs):
         super().__init__(adapter, name, read_termination=read_termination,
                          includeSCPI=True, **kwargs)
-        self.temperature_nplc_values = [0.01, 60]
-        self.voltage_nplc_values = [0.01, 60]
+        self.auto_line_frequency()
 
     ch_1 = Instrument.ChannelCreator(Keithley2182Channel, 1)
     ch_2 = Instrument.ChannelCreator(Keithley2182Channel, 2)
