@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,29 +68,15 @@ class ROD4Channel(Channel):
         map_values=True
     )
 
-    def __init__(self, *argv, **kwargs):
-        super().__init__(*argv, **kwargs)
-        self._flow_unit = None
-
-    @property
-    def flow_unit(self):
-        """Control flow units for the selected channel.
+    flow_unit_display = Channel.setting(
+        "\x020{ch}SFU%d",
+        """Set the flow units on the front display.
         Valid options are %, sccm, or slm.
-        Display in absolute units is in sccm for control range < 10 slm."""
-        if self._flow_unit is None:
-            log.info("Flow units have not been set on ROD-4 channel "
-                     f"{self.id}")
-        return self._flow_unit
-
-    @flow_unit.setter
-    def flow_unit(self, units):
-        values = {'%': 0, 'sccm': 1, 'slm': 1}
-        if isinstance(units, str) and units.casefold() in values:
-            units = units.casefold()
-            self.write("\x020{ch}SFU%d" % values[units])
-            self._flow_unit = 'sccm'
-        else:
-            log.info('Units must be %, sccm, or slm.')
+        Display in absolute units is in sccm for control range < 10 slm.""",
+        validator=strict_discrete_set,
+        values={'%': 0, 'sccm': 1, 'slm': 1},
+        map_values=True
+        )
 
 
 class ROD4(Instrument):
@@ -109,36 +95,28 @@ class ROD4(Instrument):
         print(rod4.ch_4.actual_flow)    # Prints Channel 4 actual MFC flow in %
 
     """
+
+    def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
+        super().__init__(
+            adapter, name, read_termination='\r', write_termination='\r',
+            includeSCPI=False, **kwargs
+        )
+
     ch_1 = Instrument.ChannelCreator(ROD4Channel, 1)
     ch_2 = Instrument.ChannelCreator(ROD4Channel, 2)
     ch_3 = Instrument.ChannelCreator(ROD4Channel, 3)
     ch_4 = Instrument.ChannelCreator(ROD4Channel, 4)
 
-    def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
-        super().__init__(
-            adapter, name, read_termination='\r', write_termination='\r', **kwargs
-        )
-        self._keyboard = None
-
     version = Instrument.measurement(
-        "\x0200RVN",
+        "\x0201RVN",
         """Get the version and series number. Returns x.xx<TAB>S/N """
     )
 
-    @property
-    def keyboard(self):
-        """Control the front keyboard lock status.
-        Valid options are unlocked or locked. """
-        if self._keyboard is None:
-            log.info('ROD-4 keyboard status has not been set')
-        return self._keyboard
-
-    @keyboard.setter
-    def keyboard(self, status):
-        values = {'unlocked': 0, 'locked': 1}
-        if isinstance(status, str) and status.casefold() in values:
-            status = status.casefold()
-            self.write("\x0200SKO%d" % values[status])
-            self._keyboard = values[status]
-        else:
-            log.info('Status must be unlocked or locked.')
+    keyboard = Instrument.setting(
+        "\x0201SKO%d",
+        """Set the front keyboard lock status.
+        Valid options are `unlocked` or `locked`.""",
+        validator=strict_discrete_set,
+        values={'unlocked': 0, 'locked': 1},
+        map_values=True
+        )
