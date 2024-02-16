@@ -29,6 +29,7 @@ from .resources import find_serial_port, list_resources
 from .validators import discreteTruncate
 
 from . import activetechnologies
+from . import aculight
 from . import advantest
 from . import agilent
 from . import aja
