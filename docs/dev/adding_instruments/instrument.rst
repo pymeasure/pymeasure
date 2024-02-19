@@ -123,12 +123,29 @@ In principle, you are free to write any methods that are necessary for interacti
 
 In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
 
+.. _common_instrument_types:
+
 Common instrument types
 ***********************
 There are a number of categories that many instruments fit into.
 In the future, pymeasure should gain an abstraction layer based on that, see `this issue <https://github.com/pymeasure/pymeasure/issues/416>`__.
 Until that is ready, here are a couple of guidelines towards a more uniform API.
 Note that not all already available instruments follow these, but expect this to be harmonized in the future.
+
+Generic types mixins
+--------------------
+The :doc:`generic_types <../../api/instruments/generic_types>` module contains mixin classes for common types.
+For example, if an instrument complies to SCPI standards, you can add :class:`~pymeasure.instruments.generic_types.SCPIMixin` to your instrument:
+
+.. testcode::
+
+    from pymeasure.instruments.generic_types import SCPIMixin
+
+    class SomeSCPIInstrument(SCPIMixin, Instrument):
+        """This instrument has properties and methods defined for all SCPI instruments"""
+
+This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.generic_types.SCPIMixin.id`, :attr:`~pymeasure.instruments.generic_types.SCPIMixin.status` and default methods like :meth:`~pymeasure.instruments.generic_types.SCPIMixin.clear` and :meth:`~pymeasure.instruments.generic_types.SCPIMixin.reset` to :code:`SomeSCPIInstrument`.
+
 
 Frequent properties
 -------------------
