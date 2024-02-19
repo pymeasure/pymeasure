@@ -20,6 +20,10 @@ GUI
 - Add a :code:`FileInputWidget` to choose if and where the experiment data is stored. (@CasperSchippers, #964)
 - A default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
 
+Dropped Support
+---------------
+- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`. Removing manufacturer modules from that file lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+
 Version 0.13.1 (2023-10-05)
 ===========================
 New release to fix ineffective python version restriction in the project metadata (only affected Python<=3.7 environments installing via pip).
@@ -174,10 +178,6 @@ New Contributors
 @JCarl-OS, @aruznieto, @scandey, @tomverbeure, @wichers, @Max-Herbold, @RobertoRoos
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.11.1...v0.12.0
-
-Dropped Support
----------------
-- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. When importing a single instrument into a procedure all instruments would be imported into memory through the manufacturer modules. This change lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
 
 Version 0.11.1 (2022-12-31)
 ===========================
