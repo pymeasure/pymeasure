@@ -380,7 +380,7 @@ class ListInputField(InputField):
         return tuple(self._choices.values())
 
 
-class PhysicalInputField(InputField):
+class PhysicalInputField(VectorInputField):
     """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
     and its uncertainty.
 
