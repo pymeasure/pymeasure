@@ -28,6 +28,9 @@ PyMeasure runs on Python 3.8-3.11, and is tested with continuous-integration on 
 .. image:: https://anaconda.org/conda-forge/pymeasure/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pymeasure
 
+.. image:: https://codecov.io/gh/pymeasure/pymeasure/graph/badge.svg
+   :target: https://codecov.io/gh/pymeasure/pymeasure
+
 
 Quick start
 ===========

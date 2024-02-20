@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS464xB(Instrument):
     """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series.
 
-    This familly consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in
+    This family consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in
     their respective classes (:class:`~.AnritsuMS4642B`, :class:`~.AnritsuMS4644B`,
     :class:`~.AnritsuMS4645B`, :class:`~.AnritsuMS4647B`), that only differ in the available
     frequency range.

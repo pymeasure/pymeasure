@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,11 +70,13 @@ class HP34401A(Instrument):
 
     BOOL_MAPPINGS = {True: 1, False: 0}
 
+    # Below: stop_bits: 20 comes from
+    # https://pyvisa.readthedocs.io/en/latest/api/constants.html#pyvisa.constants.StopBits
     def __init__(self, adapter, name="HP 34401A", **kwargs):
         super().__init__(
             adapter,
             name,
-            asrl={'baud_rate': 9600, 'data_bits': 7, 'parity': 2},
+            asrl={'baud_rate': 9600, 'data_bits': 8, 'parity': 0, 'stop_bits': 20},
             **kwargs
         )
 
@@ -300,6 +302,22 @@ class HP34401A(Instrument):
     )
 
     # System related commands
+    remote_control_enabled = Instrument.control(
+        "SYST: ", "SYST:%s",
+        """Control whether remote control is enabled.""",
+        validator=strict_discrete_set,
+        values={True: "REM", False: "LOC"},
+        map_values=True,
+    )
+
+    remote_lock_enabled = Instrument.control(
+        "SYST: ", "SYST:%s",
+        """Control whether the beeper is enabled.""",
+        validator=strict_discrete_set,
+        values={True: "RWL", False: "LOC"},
+        map_values=True,
+    )
+
     def beep(self):
         """This command causes the multimeter to beep once."""
         self.write("SYST:BEEP")
