@@ -112,11 +112,11 @@ class ROD4(Instrument):
         """Get the version and series number. Returns x.xx<TAB>S/N """
     )
 
-    keyboard = Instrument.setting(
+    keyboard_locked = Instrument.setting(
         "\x0201SKO%d",
         """Set the front keyboard lock status.
         Valid options are `unlocked` or `locked`.""",
         validator=strict_discrete_set,
-        values={'unlocked': 0, 'locked': 1},
+        values={False: 0, True: 1},
         map_values=True
         )
