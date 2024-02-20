@@ -40,12 +40,14 @@ class ROD4Channel(Channel):
         "\x020{ch}RFX",
         """Measure the actual flow in % ."""
     )
+
     setpoint = Channel.control(
         "\x020{ch}RFD", "\x020{ch}SFD%.1f",
         """Control the set point in % of control range.""",
         validator=truncated_range,
         values=[0, 100],
     )
+
     mfc_range = Channel.control(
         "\x020{ch}RFK", "\x020{ch}SFK%d",
         """Control the MFC range in sccm.
@@ -53,12 +55,14 @@ class ROD4Channel(Channel):
         validator=truncated_range,
         values=[0, 200000]
     )
+
     ramp_time = Channel.control(
         "\x020{ch}RRT", "\x020{ch}SRT%.1f",
         """Control the MFC set point ramping time in seconds.""",
         validator=truncated_range,
         values=[0, 200000]
     )
+
     valve_mode = Channel.control(
         "\x020{ch}RVM", "\x020{ch}SVM%d",
         """Control the MFC valve mode.
