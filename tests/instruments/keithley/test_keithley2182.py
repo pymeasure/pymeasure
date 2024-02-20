@@ -86,7 +86,7 @@ def test_setup_voltage():
           ":SENS:FUNC 'VOLT';"
           ":SENS:VOLT:NPLC 5;", None),
          (":SENS:VOLT:RANG:AUTO 1", None),
-         (":system:error?", '0,"No error"'),
+         ("SYST:ERR?", '0,"No error"'),
          ],
     ) as inst:
         inst.ch_1.setup_voltage()
@@ -98,7 +98,7 @@ def test_setup_temperature():
         [(":SENS:CHAN 2;"
           ":SENS:FUNC 'TEMP';"
           ":SENS:TEMP:NPLC 5", None),
-         (":system:error?", '0,"No error"'),
+         ("SYST:ERR?", '0,"No error"'),
          ],
     ) as inst:
         inst.ch_2.setup_temperature()
