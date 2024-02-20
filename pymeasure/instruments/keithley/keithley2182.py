@@ -69,14 +69,15 @@ class Keithley2182Channel(Channel):
         values=[0, 120],
         dynamic=True,
     )
-    voltage_range_auto = Channel.control(
+
+    voltage_range_auto_enabled = Channel.control(
         ":SENS:VOLT:CHAN{ch}:RANG:AUTO?", ":SENS:VOLT:CHAN{ch}:RANG:AUTO %d",
-        """Control whether auto voltage ranging is enabled.
-        Valid values are True and False.""",
+        """Control the auto voltage ranging option (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
+
     voltage_offset = Channel.control(
         ":SENS:VOLT:CHAN{ch}:REF?", ":SENS:VOLT:CHAN{ch}:REF %g",
         """Control the relative offset for measuring voltage.
@@ -86,6 +87,7 @@ class Keithley2182Channel(Channel):
         values=[-120, 120],
         dynamic=True,
     )
+
     temperature_offset = Channel.control(
         ":SENS:TEMP:CHAN{ch}:REF?", ":SENS:TEMP:CHAN{ch}:REF %g",
         """Control the relative offset for measuring temperature.
@@ -94,21 +96,23 @@ class Keithley2182Channel(Channel):
         validator=strict_range,
         values=[-273, 1800],
     )
-    voltage_offset_state = Channel.control(
+
+    voltage_offset_enabled = Channel.control(
         ":SENS:VOLT:CHAN{ch}:REF:STAT?", ":SENS:VOLT:CHAN{ch}:REF:STAT %s",
-        """Control whether voltage is measured as a relative or absolute value.
+        """Control whether voltage is measured as a relative or absolute value (bool).
         Enabled by default for Ch. 2 voltage, which is measured relative to Ch. 1
         voltage.""",
         validator=strict_discrete_set,
-        values={'OFF': 0, 'ON': 1},
+        values={False: 0, True: 1},
         map_values=True
     )
-    temperature_offset_state = Channel.control(
+
+    temperature_offset_enabled = Channel.control(
         ":SENS:TEMP:CHAN{ch}:REF:STAT?", ":SENS:TEMP:CHAN{ch}:REF:STAT %s",
-        """Control whether temperature is measured as a relative or absolute value.
+        """Control whether temperature is measured as a relative or absolute value (bool).
         Disabled by default.""",
         validator=strict_discrete_set,
-        values={'OFF': 0, 'ON': 1},
+        values={False: 0, True: 1},
         map_values=True
     )
 
@@ -137,14 +141,19 @@ class Keithley2182Channel(Channel):
                    f":SENS:TEMP:NPLC {nplc}")
         self.check_errors()
 
-    def acquire_reference(self, func='VOLT'):
-        """Acquire a measurement and store it as the relative offset value.
+    def acquire_temperature_reference(self):
+        """Acquire a temperature measurement and store it as the relative offset value.
 
-        Only acquires reference if offset state is ON.
-
-        :param func: 'VOLT' or 'TEMP'
+        Only acquires reference if temperature offset is enabled.
         """
-        self.write(f":SENS:{func}:""CHAN{ch}:REF:ACQ")
+        self.write(":SENS:TEMP:CHAN{ch}:REF:ACQ")
+
+    def acquire_voltage_reference(self):
+        """Acquire a voltage measurement and store it as the relative offset value.
+
+        Only acquires reference if voltage offset is enabled.
+        """
+        self.write(":SENS:VOLT:CHAN{ch}:REF:ACQ")
 
 
 class Keithley2182(KeithleyBuffer, Instrument):
@@ -179,19 +188,20 @@ class Keithley2182(KeithleyBuffer, Instrument):
     # Configuration #
     #################
 
-    auto_zero = Instrument.control(
+    auto_zero_enabled = Instrument.control(
         ":SYST:AZER:STAT?", ":SYST:AZER:STAT %d",
-        """Control the auto zero option.
-        Valid values are True (enabled) and False (disabled).""",
+        """Control the auto zero option (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
+
     line_frequency = Instrument.measurement(
         ":SYST:LFR?",
         """Get the line frequency in Hertz. Values are 50 or 60.
         Cannot be set on 2182.""",
     )
+
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
         """Control whether the front display of the voltmeter is enabled.
@@ -200,6 +210,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         values={True: 1, False: 0},
         map_values=True,
     )
+
     active_channel = Instrument.control(
         ":SENS:CHAN?", ":SENS:CHAN %d",
         """Control which channel is active for measurement.
@@ -208,6 +219,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         values=[0, 1, 2],
         cast=int
     )
+
     channel_function = Instrument.control(
         ":SENS:FUNC?", "SENS:FUNC %s",
         """Control the measurement mode of the active channel.
@@ -226,6 +238,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """Measure the voltage in Volts, if active channel is configured for this
         reading."""
     )
+
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """Control the number of power line cycles (NPLC) for voltage measurements,
@@ -246,6 +259,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """Measure the temperature in Celsius, if active channel is configured for this
         reading."""
     )
+
     thermocouple = Instrument.control(
         ":SENS:TEMP:TC?", ":SENS:TEMP:TC %s",
         """Control the thermocouple type for temperature measurements.
@@ -253,6 +267,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         validator=strict_discrete_set,
         values=['B', 'E', 'J', 'K', 'N', 'R', 'S', 'T']
     )
+
     temperature_nplc = Instrument.control(
         ":SENS:TEMP:NPLC?", ":SENS:TEMP:NPLC %g",
         """Control the number of power line cycles (NPLC) for temperature measurements,
@@ -263,6 +278,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         values=[0.01, 60],
         dynamic=True,
     )
+
     temperature_reference_junction = Instrument.control(
         ":SENS:TEMP:RJUN:RSEL?", ":SENS:TEMP:RJUN:RSEL %s",
         """Control whether the thermocouple reference junction is internal (INT) or
@@ -270,6 +286,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         validator=strict_discrete_set,
         values=['SIM', 'INT'],
     )
+
     temperature_simulated_reference = Instrument.control(
         ":SENS:TEMP:RJUN:SIM?", ":SENS:TEMP:RJUN:SIM %g",
         """Control the value of the simulated thermocouple reference junction in
@@ -277,6 +294,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         validator=truncated_range,
         values=[0, 60],
     )
+
     internal_temperature = Instrument.measurement(
         ":SENS:TEMP:RTEM?",
         """Measure the internal temperature in Celsius."""
@@ -295,18 +313,22 @@ class Keithley2182(KeithleyBuffer, Instrument):
         values=[2, 1024],
         cast=int
     )
+
     mean = Instrument.measurement(
         ":CALC2:FORM MEAN;:CALC2:STAT ON;:CALC2:IMM?;",
         """Get the calculated mean (average) from the buffer data."""
     )
+
     maximum = Instrument.measurement(
         ":CALC2:FORM MAX;:CALC2:STAT ON;:CALC2:IMM?;",
         """Get the calculated maximum from the buffer data."""
     )
+
     minimum = Instrument.measurement(
         ":CALC2:FORM MIN;:CALC2:STAT ON;:CALC2:IMM?;",
         """Get the calculated minimum from the buffer data."""
     )
+
     standard_dev = Instrument.measurement(
         ":CALC2:FORM SDEV;:CALC2:STAT ON;:CALC2:IMM?;",
         """Get the calculated standard deviation from the buffer data."""
@@ -324,6 +346,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         values=[1, 9999],
         cast=int
     )
+
     trigger_delay = Instrument.control(
         ":TRIG:DEL?", ":TRIG:DEL %g",
         """Control the trigger delay in seconds, which can take values from 0 to
@@ -344,26 +367,6 @@ class Keithley2182(KeithleyBuffer, Instrument):
         else:
             self.temperature_nplc_values = [0.01, 60]
             self.voltage_nplc_values = [0.01, 60]
-
-    @property
-    def error(self):
-        """Get a tuple of an error code and message from a single error."""
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    def check_errors(self):
-        """Log any system errors reported by the instrument."""
-        code, message = self.error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 2182 reported error: %d, %s", code, message)
-            code, message = self.error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2182 error retrieval.")
 
     def reset(self):
         """Reset the instrument and clear the queue."""
