@@ -23,7 +23,6 @@
 #
 
 import logging
-import time
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import (truncated_range,
@@ -164,14 +163,18 @@ class Keithley2182(KeithleyBuffer, Instrument):
 
         keithley = Keithley2182("GPIB::1")
 
-        keithley.reset()                        # Return instrument settings to default values
+        keithley.reset()                        # Return instrument settings to default
+                                                  values
         keithley.thermocouple = 'S'             # Sets thermocouple type to S
         keithley.active_channel = 1             # Sets channel 1 for active measurement
-        keithley.channel_function = 'voltage'   # Configures active channel for voltage measurement
+        keithley.channel_function = 'voltage'   # Configures active channel for voltage
+                                                  measurement
         print(keithley.voltage)                 # Prints the voltage in volts
 
-        keithley.ch_1.setup_voltage()           # Set channel 1 active and prepare voltage measurement
-        keithley.ch_2.setup_temperature()       # Set channel 2 active and prepare temperature measurement
+        keithley.ch_1.setup_voltage()           # Set channel 1 active and prepare
+                                                  voltage measurement
+        keithley.ch_2.setup_temperature()       # Set channel 2 active and prepare
+                                                  temperature measurement
 
     """
 
@@ -179,7 +182,6 @@ class Keithley2182(KeithleyBuffer, Instrument):
                  read_termination='\r', **kwargs):
         super().__init__(adapter, name, read_termination=read_termination,
                          includeSCPI=True, **kwargs)
-        self.auto_line_frequency()
 
     ch_1 = Instrument.ChannelCreator(Keithley2182Channel, 1)
     ch_2 = Instrument.ChannelCreator(Keithley2182Channel, 2)
@@ -304,16 +306,6 @@ class Keithley2182(KeithleyBuffer, Instrument):
     # Statistics #
     ##############
 
-    buffer_points = Instrument.control(
-        ":TRAC:POIN?", ":TRAC:POIN %d",
-        """Control the number of buffer points.
-        This does not represent actual points in the buffer, but the configuration
-        value instead. Default is 100.""",
-        validator=truncated_range,
-        values=[2, 1024],
-        cast=int
-    )
-
     mean = Instrument.measurement(
         ":CALC2:FORM MEAN;:CALC2:STAT ON;:CALC2:IMM?;",
         """Get the calculated mean (average) from the buffer data."""
@@ -396,7 +388,3 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """
         self.disable_buffer()
         self.trigger_immediately()
-
-    @property
-    def status(self):
-        return self.ask("status:queue?;")
