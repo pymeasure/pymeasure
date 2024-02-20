@@ -84,7 +84,7 @@ def test_setup_voltage():
         Keithley2182,
         [(":SENS:CHAN 1;"
           ":SENS:FUNC 'VOLT';"
-          ":SENS:VOLT:NPLC 1;", None),
+          ":SENS:VOLT:NPLC 5;", None),
          (":SENS:VOLT:RANG:AUTO 1", None),
          (":system:error?", '0,"No error"'),
          ],
@@ -97,7 +97,7 @@ def test_setup_temperature():
         Keithley2182,
         [(":SENS:CHAN 2;"
           ":SENS:FUNC 'TEMP';"
-          ":SENS:TEMP:NPLC 1", None),
+          ":SENS:TEMP:NPLC 5", None),
          (":system:error?", '0,"No error"'),
          ],
     ) as inst:
