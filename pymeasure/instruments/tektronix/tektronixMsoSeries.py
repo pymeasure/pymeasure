@@ -900,6 +900,10 @@ class TektronixMsoScope(Instrument):
         """,
     )
 
+    def measurement_clear_all(self):
+        """deletes all the active instances of measurements defined in the scope application."""
+        self.write("MEASUrement:DELETEALL")
+
     def measurement_population_config(self, slot: int, global_flag=0,
                                       limit_state=0, limit_value=1000):
         """Configure the measurement population settings.
