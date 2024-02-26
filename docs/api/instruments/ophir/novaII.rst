@@ -2,6 +2,6 @@
 Nova II
 #######
 
-.. autoclass:: pymeasure.instruments.novaII.NovaII
+.. autoclass:: pymeasure.instruments.ophir.novaII.NovaII
     :members:
     :show-inheritance:

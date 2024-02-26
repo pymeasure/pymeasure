@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.novanta
+.. module:: pymeasure.instruments.ophir
 
 #####
 Ophir

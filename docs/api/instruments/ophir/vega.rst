@@ -2,6 +2,6 @@
 Vega
 ####
 
-.. autoclass:: pymeasure.instruments.vega.Vega
+.. autoclass:: pymeasure.instruments.ophir.vega.Vega
     :members:
     :show-inheritance:
