@@ -20,7 +20,7 @@ inst.auto_baud()
 time.sleep(6)
 ans = inst.write_read(b' ')
 assert ans.decode() == 'F'
-inst.motor_init
+inst.motor_init()
 time.sleep(30)
 assert inst.gsteps == 37494
 assert inst.entrysteps == 0

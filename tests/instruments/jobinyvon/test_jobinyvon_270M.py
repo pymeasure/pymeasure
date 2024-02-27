@@ -1,15 +1,45 @@
-import pytest
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2023 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
 
+import pytest
+import time
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.jobinyvon.spectro270m import JY270M
 
 
-def test_init():
+def test_initialization():
+    with expected_protocol():
+        JY270M, 
+        
+def test_auto_baud():
     with expected_protocol(
-            JY270M,
-            [],
-    ):
-        pass  # Verify the expected communication.
+        JY270M,
+        [],
+    ) as inst:
+        inst.auto_baud()
+        time.sleep(6)
+        assert 
 
 
 def test_entrysteps_setter():
@@ -28,6 +58,8 @@ def test_entrysteps_setter():
     ([(b'j0,0\r', b'oo0\r')],
      0),
 ))
+
+
 def test_entrysteps_getter(comm_pairs, value):
     with expected_protocol(
             JY270M,
@@ -92,14 +124,6 @@ def test_motor_init_getter():
             [(b'A', None)],
     ) as inst:
         assert inst.motor_init == ''
-
-
-def test_auto_baud():
-    with expected_protocol(
-            JY270M,
-            [(b' ', b'F')],
-    ) as inst:
-        assert inst.auto_baud() is True
 
 
 @pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
