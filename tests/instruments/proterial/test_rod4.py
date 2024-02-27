@@ -29,7 +29,7 @@ from pymeasure.instruments.proterial.rod4 import ROD4
 def test_mfc_range():
     with expected_protocol(
         ROD4,
-        [("\x0201SFK400", None),
+        [("\x0201SFK400", "OK"),
          ("\x0202RFK", "200")],
     ) as inst:
         inst.ch_1.mfc_range = 400
@@ -39,7 +39,7 @@ def test_mfc_range():
 def test_valve_mode():
     with expected_protocol(
         ROD4,
-        [("\x0203SVM0", None),
+        [("\x0203SVM0", "OK"),
          ("\x0204RVM", "1")],
     ) as inst:
         inst.ch_3.valve_mode = 'flow'
@@ -49,7 +49,7 @@ def test_valve_mode():
 def test_setpoint():
     with expected_protocol(
         ROD4,
-        [("\x0201SFD33.3", None),
+        [("\x0201SFD33.3", "OK"),
          ("\x0202RFD", "50.4")],
     ) as inst:
         inst.ch_1.setpoint = 33.3
