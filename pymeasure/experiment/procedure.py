@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -244,6 +244,21 @@ class Procedure:
         """ Returns a dictionary of all the Metadata objects
         """
         return self._metadata
+
+    def placeholder_objects(self):
+        """ Collect all eligible placeholders (parameters & metadata) with their value in a dict.
+        """
+        return {**self.parameter_objects(), **self.metadata_objects()}
+
+    @classmethod
+    def placeholder_names(cls):
+        """ Collect the names of all eligible placeholders (parameters & metadata)"""
+        placeholders = []
+        for _, item in inspect.getmembers(cls):
+            if isinstance(item, Metadata) or isinstance(item, Parameter):
+                placeholders.append(item.name)
+
+        return list(set(placeholders))
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -53,7 +53,7 @@ def test_stepu():
 
 
 def test_continuous_move():
-    """Test a continous move setting."""
+    """Test a continuous move setting."""
     with expected_protocol(
         ANC300Controller,
         init_comm + [("setm 3 stp", "OK"), ("stepd 3 c", "OK"), ],

@@ -23,9 +23,9 @@ Then construct an object by passing the VISA address. For this example we connec
     Passing an appropriate resource string is the default method when creating pymeasure instruments.
     See the :ref:`adapters <adapters>` section below for more details.
 
-    If you are not sure about the correct resource string identifying your instrument, you can run the :func:`pymeasure.instruments.list_resources` function to list all available resources::
+    If you are not sure about the correct resource string identifying your instrument, you can run the :func:`pymeasure.instruments.resources.list_resources` function to list all available resources::
 
-        from pymeasure.instruments import list_resources
+        from pymeasure.instruments.resources import list_resources
         list_resources()
 
     If you know the USB properties (vendor id, product id, serial numer) of the serial device, you can query for the VISA resource string::

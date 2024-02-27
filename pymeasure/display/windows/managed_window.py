@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ import logging
 import os
 import platform
 import subprocess
+import tempfile
+import shutil
 
 import pyqtgraph as pg
 
@@ -40,10 +42,10 @@ from ..widgets import (
     LogWidget,
     ResultsDialog,
     SequencerWidget,
-    DirectoryLineEdit,
+    FileInputWidget,
     EstimatorWidget,
 )
-from ...experiment import Results, Procedure
+from ...experiment import Results, Procedure, unique_filename
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -66,7 +68,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     The ManagedWindowBase allow user to define a set of widget that display information about the
     experiment. The information displayed may include: plots, tabular view, logging information,...
 
-    This class is not intended to be used directy, but it should be subclassed to provide some
+    This class is not intended to be used directly, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
 
     - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
@@ -104,11 +106,19 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         over. If no list of parameters is given, the parameters displayed in the manager queue
         are used.
     :param sequence_file: simple text file to quickly load a pre-defined sequence with the
-        code:`Load sequence` button
+        :code:`Load sequence` button
     :param inputs_in_scrollarea: boolean that display or hide a scrollbar to the input area
-    :param directory_input: specify, if present, where the experiment's result will be saved.
+    :param enable_file_input: a boolean controlling whether a
+        :class:`~pymeasure.display.widgets.fileinput_widget.FileInputWidget` to specify where the
+        experiment's result will be saved is displayed (True, default) or not (False). This widget
+        contains a field to enter the (base of the) filename (with or without extension; if absent,
+        the extension will be appended). This field also allows for placeholders to use
+        parameter-values and metadata-value in the filename. The widget also has a field to select
+        the directory where the file is to be stored, and a toggle to control whether the data
+        should be saved to the selected file, or not (i.e., to a temporary file instead).
     :param hide_groups: a boolean controlling whether parameter groups are hidden (True, default)
         or disabled/grayed-out (False) when the group conditions are not met.
+
     """
 
     def __init__(self,
@@ -123,7 +133,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                  sequencer_inputs=None,
                  sequence_file=None,
                  inputs_in_scrollarea=False,
-                 directory_input=False,
+                 enable_file_input=True,
                  hide_groups=True,
                  ):
 
@@ -138,7 +148,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.sequencer_inputs = sequencer_inputs
         self.sequence_file = sequence_file
         self.inputs_in_scrollarea = inputs_in_scrollarea
-        self.directory_input = directory_input
+        self.enable_file_input = enable_file_input
         self.log = logging.getLogger(log_channel)
         self.log_level = log_level
         log.setLevel(log_level)
@@ -155,10 +165,6 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self._layout()
 
     def _setup_ui(self):
-        if self.directory_input:
-            self.directory_label = QtWidgets.QLabel(self)
-            self.directory_label.setText('Directory')
-            self.directory_line = DirectoryLineEdit(parent=self)
 
         self.queue_button = QtWidgets.QPushButton('Queue', self)
         self.queue_button.clicked.connect(self._queue)
@@ -188,7 +194,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             self.inputs,
             parent=self,
             hide_groups=self.hide_groups,
+            inputs_in_scrollarea=self.inputs_in_scrollarea,
         )
+        if self.enable_file_input:
+            self.file_input = FileInputWidget(parent=self)
 
         self.manager = Manager(self.widget_list,
                                self.browser,
@@ -218,36 +227,20 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         inputs_dock = QtWidgets.QWidget(self)
         inputs_vbox = QtWidgets.QVBoxLayout(self.main)
 
-        hbox = QtWidgets.QHBoxLayout()
-        hbox.setSpacing(10)
-        hbox.setContentsMargins(-1, 6, -1, 6)
-        hbox.addWidget(self.queue_button)
-        hbox.addWidget(self.abort_button)
-        hbox.addStretch()
+        queue_abort_hbox = QtWidgets.QHBoxLayout()
+        queue_abort_hbox.setSpacing(10)
+        queue_abort_hbox.setContentsMargins(-1, 6, -1, 6)
+        queue_abort_hbox.addWidget(self.queue_button)
+        queue_abort_hbox.addWidget(self.abort_button)
+        queue_abort_hbox.addStretch()
 
-        if self.directory_input:
-            vbox = QtWidgets.QVBoxLayout()
-            vbox.addWidget(self.directory_label)
-            vbox.addWidget(self.directory_line)
-            vbox.addLayout(hbox)
+        inputs_vbox.addWidget(self.inputs)
+        inputs_vbox.addSpacing(15)
+        if self.enable_file_input:
+            inputs_vbox.addWidget(self.file_input)
+            inputs_vbox.addSpacing(15)
 
-        if self.inputs_in_scrollarea:
-            inputs_scroll = QtWidgets.QScrollArea()
-            inputs_scroll.setWidgetResizable(True)
-            inputs_scroll.setFrameStyle(QtWidgets.QScrollArea.Shape.NoFrame)
-
-            self.inputs.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,
-                                      QtWidgets.QSizePolicy.Policy.Fixed)
-            inputs_scroll.setWidget(self.inputs)
-            inputs_vbox.addWidget(inputs_scroll, 1)
-
-        else:
-            inputs_vbox.addWidget(self.inputs)
-
-        if self.directory_input:
-            inputs_vbox.addLayout(vbox)
-        else:
-            inputs_vbox.addLayout(hbox)
+        inputs_vbox.addLayout(queue_abort_hbox)
 
         inputs_vbox.addStretch(0)
         inputs_dock.setLayout(inputs_vbox)
@@ -319,6 +312,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
+
+            # Save a copy of the datafile
+            action_save = QtGui.QAction(menu)
+            action_save.setText("Save Data File Copy")
+            action_save.triggered.connect(
+                lambda: self.save_experiment_copy(experiment.results.data_filename))
+            menu.addAction(action_save)
 
             # Change Color
             action_change_color = QtGui.QAction(menu)
@@ -410,6 +410,21 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                     self.manager.load(experiment)
                     log.info('Opened data file %s' % filename)
 
+    def save_experiment_copy(self, source_filename):
+        """Save a copy of the datafile to a selected folder and file.
+        Primarily useful for experiments that are stored in a temporary file.
+        """
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dialog.setDefaultSuffix('.csv')
+
+        if dialog.exec():
+            filename = dialog.selectedFiles()[0]
+            shutil.copy2(source_filename, filename)
+
+            log.info(f"Copied data from '{source_filename}' to '{filename}'.")
+
     def change_color(self, experiment):
         color = QtWidgets.QColorDialog.getColor(
             parent=self)
@@ -491,9 +506,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         self.queue()
 
     def queue(self, procedure=None):
-        """
+        """ Queue a measurement based on the parameters in the input-widget.
 
-        Abstract method, which must be overridden by the child class.
+        Semi-abstract method, which must be overridden by the child class if the filename- and
+        directory-inputs are disabled. When filename- and directory inputs are enabled, overwriting
+        is not required, but can be done for custom naming, input processing, or other features.
 
         Implementations must call ``self.manager.queue(experiment)`` and pass
         an ``experiment``
@@ -520,8 +537,36 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 self.manager.queue(experiment)
 
         """
-        raise NotImplementedError(
-            "Abstract method ManagedWindow.queue not implemented")
+
+        # Check if the filename and the directory inputs are available
+        if not self.enable_file_input:
+            raise NotImplementedError("Queue method must be overwritten if the filename- and "
+                                      "directory-inputs are disabled.")
+
+        if procedure is None:
+            procedure = self.make_procedure()
+
+        if self.store_measurement:
+            try:
+                filename = unique_filename(
+                    self.directory,
+                    prefix=self.file_input.filename_base,
+                    datetimeformat="",
+                    procedure=procedure,
+                    ext=self.file_input.filename_extension,
+                )
+            except KeyError as E:
+                if not E.args[0].startswith("The following placeholder-keys are not valid:"):
+                    raise E from None
+                log.error(f"Invalid filename provided: {E.args[0]}")
+                return
+        else:
+            filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
+
+        results = Results(procedure, filename)
+
+        experiment = self.new_experiment(results)
+        self.manager.queue(experiment)
 
     def abort(self):
         self.abort_button.setEnabled(False)
@@ -568,16 +613,39 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
     @property
     def directory(self):
-        if not self.directory_input:
-            raise ValueError("No directory input in the ManagedWindow")
-        return self.directory_line.text()
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        return self.file_input.directory
 
     @directory.setter
     def directory(self, value):
-        if not self.directory_input:
-            raise ValueError("No directory input in the ManagedWindow")
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        self.file_input.directory = value
 
-        self.directory_line.setText(str(value))
+    @property
+    def filename(self):
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        return self.file_input.filename
+
+    @filename.setter
+    def filename(self, value):
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        self.file_input.filename = value
+
+    @property
+    def store_measurement(self):
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        return self.file_input.store_measurement
+
+    @store_measurement.setter
+    def store_measurement(self, value):
+        if not self.enable_file_input:
+            raise AttributeError("File-input widget not enabled (i.e., enable_file_input == False)")
+        self.file_input.store_measurement = value
 
 
 class ManagedWindow(ManagedWindowBase):
