@@ -38,14 +38,15 @@ class ROD4Channel(Channel):
 
     actual_flow = Channel.measurement(
         "\x020{ch}RFX",
-        """Measure the actual flow in % ."""
+        """Measure the actual flow in %."""
     )
 
     setpoint = Channel.control(
         "\x020{ch}RFD", "\x020{ch}SFD%.1f",
-        """Control the set point in % of control range.""",
+        """Control the setpoint in % of MFC range.""",
         validator=truncated_range,
         values=[0, 100],
+        check_set_errors=True
     )
 
     mfc_range = Channel.control(
@@ -53,14 +54,16 @@ class ROD4Channel(Channel):
         """Control the MFC range in sccm.
         Upper limit is 200 slm.""",
         validator=truncated_range,
-        values=[0, 200000]
+        values=[0, 200000],
+        check_set_errors=True
     )
 
     ramp_time = Channel.control(
         "\x020{ch}RRT", "\x020{ch}SRT%.1f",
-        """Control the MFC set point ramping time in seconds.""",
+        """Control the MFC setpoint ramping time in seconds.""",
         validator=truncated_range,
-        values=[0, 200000]
+        values=[0, 200000],
+        check_set_errors=True
     )
 
     valve_mode = Channel.control(
@@ -69,7 +72,8 @@ class ROD4Channel(Channel):
         Valid options are `flow`, `close`, and `open`. """,
         validator=strict_discrete_set,
         values={'flow': 0, 'close': 1, 'open': 2},
-        map_values=True
+        map_values=True,
+        check_set_errors=True
     )
 
     flow_unit_display = Channel.setting(
@@ -79,7 +83,8 @@ class ROD4Channel(Channel):
         Display in absolute units is in sccm for control range < 10 slm.""",
         validator=strict_discrete_set,
         values={'%': 0, 'sccm': 1, 'slm': 1},
-        map_values=True
+        map_values=True,
+        check_set_errors=True
         )
 
 
@@ -118,9 +123,18 @@ class ROD4(Instrument):
 
     keyboard_locked = Instrument.setting(
         "\x0201SKO%d",
-        """Set the front keyboard lock status.
-        Valid options are `unlocked` or `locked`.""",
+        """Set the front keyboard lock status.""",
         validator=strict_discrete_set,
         values={False: 0, True: 1},
-        map_values=True
+        map_values=True,
+        check_set_errors=True
         )
+
+    def check_set_errors(self):
+        """Read 'OK' from ROD-4 after setting."""
+        response = self.read()
+        if response != 'OK':
+            errors = ["Error setting ROD-4.",]
+        else:
+            errors = []
+        return errors
