@@ -38,9 +38,9 @@ class Nova(KeyMixin, OphirCommunication):
     LegacyModes = LegacyModes
     ScreenModes = ScreenModes
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Nova", **kwargs):
         """Set the proper settings for Nova (not Nova II)."""
-        super().__init__(adapter, name="Nova", **kwargs)
+        super().__init__(adapter, name=name, **kwargs)
         # Set timeouts for Nova device.
         self._power_timeout = 0
         self._energy_timeout = 0

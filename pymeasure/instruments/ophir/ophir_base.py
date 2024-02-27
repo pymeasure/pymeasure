@@ -22,14 +22,7 @@
 # THE SOFTWARE.
 #
 
-from enum import IntFlag, IntEnum
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        pass
+from enum import Enum, IntFlag, IntEnum
 
 from typing import Union
 
@@ -65,7 +58,7 @@ class Modes(IntEnum):
     LOW_FREQUENCY_POWER = 16
 
 
-class LegacyModes(StrEnum):
+class LegacyModes(Enum):
     POWER = "FP"
     ENERGY = "FE"
     POSITION = "FB"
@@ -259,6 +252,7 @@ class OphirBase(OphirCommunication):
         """Set the measurement mode with one of :class:`LegacyModes`,
         if possible, use :attr:`mode` instead.""",
         values=LegacyModes,
+        set_process=lambda v: v.value,
         check_set_errors=True,
     )
 
@@ -431,7 +425,7 @@ class OphirBase(OphirCommunication):
         - 'C' for calibration
         - 'R' for Responsive for thermopile sensors
 
-        Response is "*SAVED" or "*UNCHANGED" or "?FAILED".
+        Response is `"*SAVED"` or `"*UNCHANGED"` or `"?FAILED"`.
         """
         self.ask(f"HC{config}")  # Head Configuration
 
@@ -439,7 +433,7 @@ class OphirBase(OphirCommunication):
         """
         Save instrument configuration.
 
-        Response is "*SAVED" or "*UNCHANGED" or "?FAILED".
+        Response is `"*SAVED"` or `"*UNCHANGED"` or `"?FAILED"`.
         """
         self.ask("IC")  # Instrument Configuration
 
