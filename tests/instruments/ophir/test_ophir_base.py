@@ -33,7 +33,7 @@ from pymeasure.instruments.ophir.ophir_base import OphirBase, Modes, ScreenModes
 def test_read_processes_response():
     with expected_protocol(
         OphirBase,
-        [("$II", "* USBD 113217 SH2USB"), (None, "* Afas 23 45e-3")],
+        [(None, "* Afas 23 45e-3")],
     ) as inst:
         assert inst.read() == " Afas 23 45e-3"
 
@@ -41,7 +41,7 @@ def test_read_processes_response():
 def test_read_raises_error():
     with expected_protocol(
         OphirBase,
-        [("$II", "* USBD 113217 SH2USB"), (None, "?COM ERROR")],
+        [(None, "?COM ERROR")],
     ) as inst:
         with raises(ConnectionError) as exc:
             inst.read()
@@ -49,14 +49,14 @@ def test_read_raises_error():
 
 
 def test_init():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB")]) as instr:
-        assert instr.device_name == "USBD"
+    with expected_protocol(OphirBase, []):
+        pass  # verify init communication
 
 
 # INFORMATION ABOUT DEVICE AND HEAD
 def test_id():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$II", "* USBD 113217 SH2USB")]
+        OphirBase, [("$II", "* USBD 113217 SH2USB")]
     ) as instr:
         assert instr.id == ["USBD", "113217", "SH2USB"]
 
@@ -64,7 +64,7 @@ def test_id():
 def test_head1():
     # From manual
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$HI", "* TH 12345 03AP 00000183")]
+        OphirBase, [("$HI", "* TH 12345 03AP 00000183")]
     ) as instr:
         assert instr.head_information == {
             "sensortype": "TH",
@@ -77,7 +77,7 @@ def test_head1():
 def test_head2():
     # From manual
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$HI", "* PY 22323 PE10-C 80000003")]
+        OphirBase, [("$HI", "* PY 22323 PE10-C 80000003")]
     ) as instr:
         assert instr.head_information == {
             "sensortype": "PY",
@@ -92,33 +92,33 @@ def test_head2():
 
 
 def test_mode_getter():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$MM0", "*2")]) as instr:
+    with expected_protocol(OphirBase, [("$MM0", "*2")]) as instr:
         assert instr.mode == Modes.POWER
 
 
 def test_mode_setter():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$MM3", "*")]) as instr:
+    with expected_protocol(OphirBase, [("$MM3", "*")]) as instr:
         instr.mode = Modes.ENERGY
 
 
 def test_units():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$SI", "* W")]) as instr:
+    with expected_protocol(OphirBase, [("$SI", "* W")]) as instr:
         assert instr.units == "W"
 
 
 # Range
 def test_range_getter():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$RN", "*4")]) as instr:
+    with expected_protocol(OphirBase, [("$RN", "*4")]) as instr:
         assert instr.range == 4
 
 
 def test_range_setter():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$WN1", "*")]) as instr:
+    with expected_protocol(OphirBase, [("$WN1", "*")]) as instr:
         instr.range = 1
 
 
 def test_range_values():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$WN-1", "*")]) as instr:
+    with expected_protocol(OphirBase, [("$WN-1", "*")]) as instr:
         instr.range_map_values = True
         instr.range_values = {
             "AUTO": -1,
@@ -136,10 +136,7 @@ def test_range_values():
 def test_getAllRanges():
     with expected_protocol(
         OphirBase,
-        [
-            ("$II", "* USBD 113217 SH2USB"),
-            ("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"),
-        ],
+        [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW")],
     ) as instr:
         assert instr.getAllRanges() == {
             "AUTO": -1,
@@ -161,42 +158,42 @@ def test_getAllRanges():
 
 def test_diffuser_getter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$DQ", "*1 OUT IN")]
+        OphirBase, [("$DQ", "*1 OUT IN")]
     ) as instr:
         assert instr.diffuser == "OUT"
 
 
 def test_diffuser_setter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$DQ2", "*2 OUT IN")]
+        OphirBase, [("$DQ2", "*2 OUT IN")]
     ) as instr:
         instr.diffuser = "IN"
 
 
 def test_filter_getter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$FQ", "*1 OUT IN")]
+        OphirBase, [("$FQ", "*1 OUT IN")]
     ) as instr:
         assert instr.filter == "OUT"
 
 
 def test_filter_setter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$FQ2", "*2 OUT IN")]
+        OphirBase, [("$FQ2", "*2 OUT IN")]
     ) as instr:
         instr.filter = "IN"
 
 
 def test_mains_getter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$MA", "* 1 50Hz 60Hz")]
+        OphirBase, [("$MA", "* 1 50Hz 60Hz")]
     ) as instr:
         assert instr.mains == "50Hz"
 
 
 def test_mains_setter():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$MA1", "*1 50Hz 60Hz")]
+        OphirBase, [("$MA1", "*1 50Hz 60Hz")]
     ) as instr:
         instr.mains = "50Hz"
 
@@ -205,7 +202,7 @@ def test_mains_setter():
 
 
 def test_screen_mode_setter():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$FS1", "*")]) as instr:
+    with expected_protocol(OphirBase, [("$FS1", "*")]) as instr:
         instr.screen_mode = ScreenModes.ENERGY
 
 
@@ -214,26 +211,26 @@ def test_screen_mode_setter():
 
 def test_energy():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$SE", "*1.300E-5")]
+        OphirBase, [("$SE", "*1.300E-5")]
     ) as instr:
         assert instr.energy == 1.3e-5
 
 
 def test_energy_flag():
-    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$EF", "*1")]) as instr:
+    with expected_protocol(OphirBase, [("$EF", "*1")]) as instr:
         assert instr.energy_flag is True
 
 
 def test_frequency():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$SF", "*1.000E3")]
+        OphirBase, [("$SF", "*1.000E3")]
     ) as instr:
         assert instr.frequency == 1000
 
 
 def test_power():
     with expected_protocol(
-        OphirBase, [("$II", "* USBD 113217 SH2USB"), ("$SP", "*1.300E-5")]
+        OphirBase, [("$SP", "*1.300E-5")]
     ) as instr:
         assert instr.power == 1.3e-5
 
@@ -241,6 +238,6 @@ def test_power():
 def test_position():
     with expected_protocol(
         OphirBase,
-        [("$II", "* USBD 113217 SH2USB"), ("$BT", "* F 00000000 X -1.50 Y -0.9 S 6.50")],
+        [("$BT", "* F 00000000 X -1.50 Y -0.9 S 6.50")],
     ) as instr:
         assert instr.position == [-1.5, -0.9, 6.5]

@@ -22,15 +22,21 @@
 # THE SOFTWARE.
 #
 
-import enum
+from enum import IntFlag, IntEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
 from typing import Union
 
 from pymeasure.instruments import Instrument
 
-from pyvisa import VisaIOError
 
-
-class Capabilities(enum.IntFlag):
+class Capabilities(IntFlag):
     # Bit 0 is lit if sensor can measure power.
     # Bit 1 is lit if sensor can measure energy.
     # Bit 18 is lit if head can measure temperature.
@@ -42,7 +48,7 @@ class Capabilities(enum.IntFlag):
     FREQUENCY = 1 << 31
 
 
-class Modes(enum.IntEnum):
+class Modes(IntEnum):
     PASSIVE = 1
     POWER = 2
     ENERGY = 3
@@ -59,14 +65,14 @@ class Modes(enum.IntEnum):
     LOW_FREQUENCY_POWER = 16
 
 
-class LegacyModes(enum.StrEnum):
+class LegacyModes(StrEnum):
     POWER = "FP"
     ENERGY = "FE"
     POSITION = "FB"
     EXPOSURE = "FX"
 
 
-class Keys(enum.IntEnum):
+class Keys(IntEnum):
     LEFT_LEFT = 0
     MIDDLE_LEFT = 1
     MIDDLE_RIGHT = 2
@@ -78,7 +84,7 @@ class Keys(enum.IntEnum):
     ENTER = 8
 
 
-class ScreenModes(enum.IntEnum):
+class ScreenModes(IntEnum):
     POWER = 0
     ENERGY = 1
     NON_MEASUREMENT = 2
@@ -121,11 +127,6 @@ class OphirCommunication(Instrument):
             **kwargs,
         )
         # TODO verify and test USB communication
-        try:
-            self.device_name = self.id[0]
-        except VisaIOError:  # timeout
-            raise
-        # self.getHeadInformation()
 
     """
     The device expects a command and always responds.
@@ -504,7 +505,7 @@ class OphirBase(OphirCommunication):
 
     energy = Instrument.measurement(
         "SE",
-        """Return the most recent energy measurement in J.""",
+        """Get the most recent energy measurement in J.""",
         dynamic=True,  # Send Energy
     )
 

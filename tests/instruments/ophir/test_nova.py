@@ -32,7 +32,7 @@ from pymeasure.instruments.ophir.nova import Nova, LegacyModes
 
 def test_Nova_power():
     with expected_protocol(
-        Nova, [("$II", "* USBD 113217 SH2USB"), ("$SP10", "*1.300E-5")]
+        Nova, [("$SP10", "*1.300E-5")]
     ) as instr:
         instr.power_timeout = 1000
         assert instr.power == 1.3e-5
@@ -50,6 +50,6 @@ def test_Nova_power():
 def test_Nova_mode(mode, string):
     with expected_protocol(
         Nova,
-        [("$II", "* USBD 113217 SH2USB"), (string, "*")],
+        [(string, "*")],
     ) as instr:
         instr.mode = mode
