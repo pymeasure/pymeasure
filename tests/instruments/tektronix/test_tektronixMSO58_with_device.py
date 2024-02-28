@@ -1,7 +1,7 @@
 import pytest
 from time import sleep
 from pyvisa.errors import VisaIOError
-from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58
+from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58, TektronixMsoScopeMathChannel
 
 
 class TestTektronixMSO58:
@@ -44,6 +44,10 @@ class TestTektronixMSO58:
                            "6.25k", "5k", "3.125k", "2.5k", "1.25k", "1k", "625", "500",
                            "312.5", "250", "125", "100", "62.5", "50", "31.25", "25", "12.5",
                            "10", "6.25", "5", "3.125", "2.5", "1.5625"]
+    MATH_BASIC_OPERATIONS = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE']
+    MATH_FFT_OUTPUT_TYPE = ["MAGNITUDE", "PHASE"]
+    MATH_FFT_WINDOW_TYPE = ["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
+                "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
 
     ############
     # FIXTURES #
@@ -219,7 +223,7 @@ class TestTektronixMSO58:
             print("empty image")
 
     # Measurement
-    @pytest.mark.skip(reason="connect CH1 probe to ground and probe compensation connectors")
+    # @pytest.mark.skip(reason="connect CH1 probe to ground and probe compensation connectors")
     def test_measurement_configure(self, autoscaled_instrument):
         for (slot, meas_type), (meas, value) in \
                 zip(self.MEAS_SLOTS.items(), self.EXPECTED_MEAS_VALUES.items()):
@@ -234,6 +238,45 @@ class TestTektronixMSO58:
             autoscaled_instrument.measurement_gating_type = "abdc"
         autoscaled_instrument.measurement_gating_type = case
         assert autoscaled_instrument.measurement_gating_type == case
+
+    # Math Channel
+    @pytest.mark.parametrize('operation', MATH_BASIC_OPERATIONS)
+    def test_math_basic(self, instrument, operation):
+        instrument.add_new_math(1)
+        assert isinstance(instrument.math_1, TektronixMsoScopeMathChannel)
+        instrument.maths[1].math_type = "BASIC"
+        assert instrument.maths[1].math_type == "BASIC"
+        instrument.math_1.math_source1 = "CH1"
+        assert instrument.math_1.math_source1 == "CH1"
+        instrument.math_1.math_source2 = "CH2"
+        assert instrument.math_1.math_source2 == "CH2"
+        instrument.math_1.math_basic_function = operation
+        assert instrument.math_1.math_basic_function == operation
+
+    @pytest.mark.parametrize('output_type', MATH_FFT_OUTPUT_TYPE)
+    @pytest.mark.parametrize('window_type', MATH_FFT_WINDOW_TYPE)
+    def test_math_fft(self, instrument, output_type, window_type):
+        instrument.add_new_math(1)
+        assert isinstance(instrument.math_1, TektronixMsoScopeMathChannel)
+        instrument.maths[1].math_type = "FFT"
+        assert instrument.math_1.math_type == "FFT"
+        instrument.math_1.math_source1 = "CH1"
+        assert instrument.math_1.math_source1 == "CH1"
+        instrument.math_1.math_average_mode = True
+        assert instrument.math_1.math_average_mode == 1
+        instrument.math_1.math_average_sweeps = 10
+        assert instrument.math_1.math_average_sweeps == 10
+        instrument.math_1.math_FFT_horizontal_unit = "LOG"
+        assert instrument.math_1.math_FFT_horizontal_unit == "LOG"
+        instrument.math_1.math_FFT_vertical_unit = "LINEAR"
+        assert instrument.math_1.math_FFT_vertical_unit == "LINEAR"
+        instrument.math_1.math_FFT_view_autoscale = True
+        assert instrument.math_1.math_FFT_view_autoscale == 1
+        instrument.math_1.math_FFT_output_type = output_type
+        assert instrument.math_1.math_FFT_output_type == output_type
+        instrument.math_1.math_FFT_window_type = window_type
+        assert instrument.math_1.math_FFT_window_type == window_type
+        # instrument.math_delete_all()
 
     # AFG
     @pytest.mark.parametrize("case", AFG_FUNCTIONS)
