@@ -69,7 +69,7 @@ def _math_define_validator(value, values):
 
 
 class TektronixMsoScopeChannel(Channel):
-    """Implementation of a scope base class channel"""
+    """Implementation of a scope base class channel."""
 
     unit = Instrument.control(
         "CH{ch}:PRObe:UNIts?",
@@ -239,7 +239,6 @@ class TektronixMsoScopeMathChannel(Channel):
         "MATH:MATH{ch}:FUNCtion?",
         "MATH:MATH{ch}:FUNCtion %s",
         """Control the basic math arithmetic function.
-        
         This command does not affect the same Math equation in Advanced math
         (also accessed via the property math_define.""",
         validator=strict_discrete_set,
@@ -249,9 +248,9 @@ class TektronixMsoScopeMathChannel(Channel):
     math_source1 = Instrument.control(
         "MATH:MATH{ch}:SOUrce1?",
         "MATH:MATH{ch}:SOUrce1 %s",
-        """Control the math source1. 
+        """Control the math source1.
         This command sets the Basic Math components in the user interface,
-        with two sources and a function. You would also need to set the 
+        with two sources and a function. You would also need to set the
         math type to Basic to see the change in the user interface but this will not effect
         the programmable interface.""",
         validator=strict_discrete_set,
@@ -451,8 +450,6 @@ class TektronixMsoScope(Instrument):
         for math_channel in self.ask("MATH:LIST?").strip('\n').split(","):
             self.write(f'MATH:DELETE "{math_channel}"')
 
-
-
     def default_setup(self):
         """ Set up the oscilloscope for remote operation.
 
@@ -595,17 +592,19 @@ class TektronixMsoScope(Instrument):
         AUTOmatic allows the instrument to set the minimum value.
         """,
         validator=strict_discrete_set,
-        values={"AUTOMATIC":"AUTOMATIC","3.125GS":3.125E+9,"1.5625GS":1.5625E+9,"1.25GS":1.25E+9,
-                "625M":6.25E+8,"312.5M":3.125E+8,"250M":250E+6,"125M":1.25E+8,"62.5M":6.25E+7,
-                "31.25M":3.125E+7,"25M":25E+6,"12.5M":12.5E+6,"6.25M":6.25E+6,"5M":5.E+6,
-                "3.125M":3.125E+6,"2.5M":2.5E+6,"1.25M":1.25E+6,"1M":1.0E+6,"625k":625E+3,
-                "500k": 500E+3,"312.5k":312.5E+3,"250k":250E+3,"125k":125E+3,"100k":100E+3,
-                "62.5k":6.250E+4,"50k":5.00E+4,"31.25k":3.1250E+4,"25k":2.50E+4,"12.5k":1.250E+4,
-                "10k":1.00E+4,"6.25k":6.250E+3,"5k":5.00E+3,"3.125k":3.1250E+3,"2.5k":2.50E+3,
-                "1.25k":1.25e+3,"1k":1000,"625":625,"500":500,"312.5":312.5,
-                "250":250,"125":125,"100":100,"62.5":62.5,"50":50,
-                "31.25":31.25,"25":25,"12.5":12.5,"10":10,"6.25":6.25,
-                "5":5,"3.125":3.125,"2.5":2.5,"1.5625":1.5625},
+        values={"AUTOMATIC": "AUTOMATIC", "3.125GS": 3.125E+9, "1.5625GS": 1.5625E+9,
+                "1.25GS": 1.25E+9, "625M": 6.25E+8, "312.5M": 3.125E+8, "250M": 250E+6,
+                "125M": 1.25E+8, "62.5M": 6.25E+7, "31.25M": 3.125E+7, "25M": 25E+6,
+                "12.5M": 12.5E+6, "6.25M": 6.25E+6, "5M": 5.E+6, "3.125M": 3.125E+6,
+                "2.5M": 2.5E+6, "1.25M": 1.25E+6, "1M": 1.0E+6, "625k": 625E+3,
+                "500k": 500E+3, "312.5k": 312.5E+3, "250k": 250E+3, "125k": 125E+3,
+                "100k": 100E+3, "62.5k": 6.250E+4, "50k": 5.00E+4, "31.25k": 3.1250E+4,
+                "25k": 2.50E+4, "12.5k": 1.250E+4, "10k": 1.00E+4, "6.25k": 6.250E+3,
+                "5k": 5.00E+3, "3.125k": 3.1250E+3, "2.5k": 2.50E+3, "1.25k": 1.25e+3,
+                "1k": 1000, "625": 625, "500": 500, "312.5": 312.5, "250": 250,
+                "125": 125, "100": 100, "62.5": 62.5, "50": 50, "31.25": 31.25,
+                "25": 25, "12.5": 12.5, "10": 10, "6.25": 6.25, "5": 5, "3.125": 3.125,
+                "2.5": 2.5, "1.5625": 1.5625},
         map_values=True,
         dynamic=True,
     )
@@ -1166,9 +1165,6 @@ class TektronixMsoScope(Instrument):
         self.write(f'MEASUrement:MEAS{slot}:SOUrce1 {source1};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:SOUrce2 {source2};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:TYPe {meas_type};*WAI')
-
-    # Math
-
 
     # Display
     intensity_backlight = Instrument.control(

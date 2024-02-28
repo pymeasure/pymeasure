@@ -1,7 +1,8 @@
-import pytest
 from time import sleep
+import pytest
 from pyvisa.errors import VisaIOError
-from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58, TektronixMsoScopeMathChannel
+from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58,\
+    TektronixMsoScopeMathChannel
 
 
 class TestTektronixMSO58:
@@ -47,7 +48,7 @@ class TestTektronixMSO58:
     MATH_BASIC_OPERATIONS = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE']
     MATH_FFT_OUTPUT_TYPE = ["MAGNITUDE", "PHASE"]
     MATH_FFT_WINDOW_TYPE = ["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
-                "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
+                            "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
 
     ############
     # FIXTURES #
