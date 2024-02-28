@@ -52,6 +52,22 @@ def sanitize_source(source):
     return source
 
 
+def _math_define_validator(value, values):
+    """
+    Validate the input of the math_define property
+    :param value: input parameters as a 3-element tuple
+    :param values: allowed space for each parameter
+    """
+    if not isinstance(value, tuple):
+        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+    if len(value) != 3:
+        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+    output = (value[0], value[1], value[2])
+    for i in range(3):
+        strict_discrete_set(output[i], values=values[i])
+    return output
+
+
 class TektronixMsoScopeChannel(Channel):
     """Implementation of a scope base class channel"""
 
@@ -189,6 +205,150 @@ class TektronixMsoScopeChannel(Channel):
         return ch_setup
 
 
+class TektronixMsoScopeMathChannel(Channel):
+    """Implementation of a math base class channel"""
+
+    def math_add_new(self, slot: int):
+        """Add a new math channel."""
+        self.write(f'MATH:ADDNEW \"MATH{slot}\"')
+
+    math_define = Instrument.control(
+        "MATH:MATH{ch}:DEFine?", "MATH:MATH{ch}:DEFine \"%s%s%s\"",
+        """Control the desired waveform math operation between two channels.
+
+        Three parameters must be passed as a tuple:
+
+        #. source1 : source channel on the left
+        #. operation : operator must be "*", "/", "+", "-"
+        #. source2 : source channel on the right
+
+        """,
+        validator=_math_define_validator,
+        values=[["CH1", "CH2", "CH3", "CH4"], ["*", "/", "+", "-"], ["CH1", "CH2", "CH3", "CH4"]],
+    )
+
+    math_type = Instrument.control(
+        "MATH:MATH{ch}:TYPe?",
+        "MATH:MATH{ch}:TYPe %s",
+        """Control the math type.""",
+        validator=strict_discrete_set,
+        values=["BASIC", "FFT", "ADVANCED"],
+    )
+
+    math_basic_function = Instrument.control(
+        "MATH:MATH{ch}:FUNCtion?",
+        "MATH:MATH{ch}:FUNCtion %s",
+        """Control the basic math arithmetic function.
+        
+        This command does not affect the same Math equation in Advanced math
+        (also accessed via the property math_define.""",
+        validator=strict_discrete_set,
+        values=["ADD", "SUBTRACT", "MULTIPLY", "DIVIDE"],
+    )
+
+    math_source1 = Instrument.control(
+        "MATH:MATH{ch}:SOUrce1?",
+        "MATH:MATH{ch}:SOUrce1 %s",
+        """Control the math source1. 
+        This command sets the Basic Math components in the user interface,
+        with two sources and a function. You would also need to set the 
+        math type to Basic to see the change in the user interface but this will not effect
+        the programmable interface.""",
+        validator=strict_discrete_set,
+        values=['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8'],
+    )
+
+    math_source2 = Instrument.control(
+        "MATH:MATH{ch}:SOUrce2?",
+        "MATH:MATH{ch}:SOUrce2 %s",
+        """Control the math source2.""",
+        validator=strict_discrete_set,
+        values=['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8'],
+    )
+
+    math_average_mode = Instrument.control(
+        "MATH:MATH{ch}:AVG:MODE?",
+        "MATH:MATH{ch}:AVG:MODE %d",
+        """Control the math average mode flag.""",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+    )
+
+    math_average_sweeps = Instrument.control(
+        "MATH:MATH{ch}:AVG:WEIGht?",
+        "MATH:MATH{ch}:AVG:WEIGht %d",
+        """Control the number of acquisitions at which the averaging
+        algorithm will begin exponential averaging.""",
+        validator=strict_range,
+        values=[1, 1000000],
+    )
+
+    math_FFT_output_type = Instrument.control(
+        "MATH:MATH{ch}:SPECTral:TYPE?",
+        "MATH:MATH{ch}:SPECTral:TYPE %s",
+        """Control the FFT type selected for spectral analysis.""",
+        validator=strict_discrete_set,
+        values=["MAGNITUDE", "PHASE", "REAL", "IMAGINARY"],
+    )
+
+    math_FFT_window_type = Instrument.control(
+        "MATH:MATH{ch}:SPECTral:WINdow?",
+        "MATH:MATH{ch}:SPECTral:WINdow %s",
+        """Control the type of window for the FFT.""",
+        validator=strict_discrete_set,
+        values=["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
+                "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"],
+    )
+
+    math_FFT_horizontal_unit = Instrument.control(
+        "MATH:MATH{ch}:SPECTral:HORZ?",
+        "MATH:MATH{ch}:SPECTral:HORZ %s",
+        """Control the horizontal axis unit.""",
+        validator=strict_discrete_set,
+        values=["LOG", "LINEAR"],
+    )
+
+    math_FFT_vertical_unit = Instrument.control(
+        "MATH:MATH{ch}:SPECTral:MAG?",
+        "MATH:MATH{ch}:SPECTral:MAG %s",
+        """Control the vertical axis unit.""",
+        validator=strict_discrete_set,
+        values=["LINEAR", "DBM"],
+    )
+
+    math_FFT_view_autoscale = Instrument.control(
+        "DISplay:MATHFFTView{ch}:AUTOScale?",
+        "DISplay:MATHFFTView{ch}:AUTOScale %d",
+        """Control the enabled state of autoscale for Math/FFT waveforms.""",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+    )
+
+    math_FFT_view_zoom_xaxis_from = Instrument.control(
+        "DISplay:MATHFFTView{ch}:ZOOM:XAXIS:FROM?",
+        "DISplay:MATHFFTView{ch}:ZOOM:XAXIS:FROM %f",
+        """Control the left edge of the zoom x-axis.""",
+    )
+
+    math_FFT_view_zoom_xaxis_to = Instrument.control(
+        "DISplay:MATHFFTView{ch}:ZOOM:XAXIS:TO?",
+        "DISplay:MATHFFTView{ch}:ZOOM:XAXIS:TO %f",
+        """Control the right edge of the zoom x-axis.""",
+    )
+
+    math_FFT_view_zoom_yaxis_from = Instrument.control(
+        "DISplay:MATHFFTView{ch}:ZOOM:YAXIS:FROM?",
+        "DISplay:MATHFFTView{ch}:ZOOM:YAXIS:FROM %f",
+        """Control the bottom value of the zoom y-axis.""",
+    )
+
+    math_FFT_view_zoom_yaxis_to = Instrument.control(
+        "DISplay:MATHFFTView{ch}:ZOOM:YAXIS:TO?",
+        "DISplay:MATHFFTView{ch}:ZOOM:YAXIS:TO %f",
+        """Control the top value of the zoom y-axis.""",
+    )
+
+
 class TektronixMsoScope(Instrument):
     """A base abstract class for any Tektronix MSO oscilloscope family.
 
@@ -280,6 +440,18 @@ class TektronixMsoScope(Instrument):
     ################
     # System Setup #
     ################
+
+    def add_new_math(self, slot: int):
+        """adds the specified math channel."""
+        self.add_child(TektronixMsoScopeMathChannel, slot, collection="maths", prefix="math_")
+        self.maths[slot].math_add_new(slot)
+
+    def math_delete_all(self):
+        """Delete all math channels"""
+        for math_channel in self.ask("MATH:LIST?").strip('\n').split(","):
+            self.write(f'MATH:DELETE "{math_channel}"')
+
+
 
     def default_setup(self):
         """ Set up the oscilloscope for remote operation.
@@ -828,8 +1000,7 @@ class TektronixMsoScope(Instrument):
 
     measurement_add = Instrument.setting(
         "MEASUrement:ADDMEAS %s",
-        """Set a measurement.
-        """,
+        """Set a measurement.""",
         validator=strict_discrete_set,
         values=_measurable_parameters,
     )
@@ -995,6 +1166,9 @@ class TektronixMsoScope(Instrument):
         self.write(f'MEASUrement:MEAS{slot}:SOUrce1 {source1};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:SOUrce2 {source2};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:TYPe {meas_type};*WAI')
+
+    # Math
+
 
     # Display
     intensity_backlight = Instrument.control(
