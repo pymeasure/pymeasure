@@ -44,7 +44,7 @@ class AQ6370D(Instrument):
         """Stop operations such as measurements and calibration."""
         self.write(":ABORt")
 
-    def initiate_immediately(self):
+    def initiate(self):
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
 
@@ -58,10 +58,32 @@ class AQ6370D(Instrument):
         values=[-100, 20],
     )
 
+    level_position = Instrument.control(
+        ":DISPlay:TRACe:Y1:RPOSition?",
+        ":DISPlay:TRACe:Y1:RPOSition %g",
+        """Control the reference level position regarding divisions
+        (int, smaller than total number of divisions which is either 8, 10 or 12).""",
+        validator=strict_range,
+        values=[0, 12],
+    )
+
+    def level_position_max(self):
+        """Set the reference level position to the maximum value."""
+        self.write(":CALCulate:MARKer:MAXimum:SRLevel")
+
     # Sweep settings -------------------------------------------------------------------------------
 
+    sweep_mode = Instrument.control(
+        ":INITiate:SMODe?",
+        ":INITiate:SMODe %s",
+        "Control the sweep mode (str 'SINGLE', 'REPEAT', 'AUTO', 'SEGMENT').",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"SINGLE": 1, "REPEAT": 2, "AUTO": 3, "SEGMENT": 4},
+    )
+
     sweep_speed = Instrument.control(
-        ":SENSe:SETTing:FCONector?",
+        ":SENSe:SETTing:SPEed?",
         ":SENSe:SWEep:SPEed %d",
         "Control the sweep speed (str '1x' or '2x' for double speed).",
         validator=strict_discrete_set,
@@ -156,3 +178,14 @@ class AQ6370D(Instrument):
         :return: The y-axis data of specified trace.
         """
         return self.values(f":TRACe:Y? {trace}")
+
+    # Resolution -----------------------------------------------------------------------------------
+
+    resolution_bandwidth = Instrument.control(
+        ":SENSe:BWIDth:RESolution?",
+        ":SENSe:BWIDth:RESolution %g",
+        """Control the measurement resolution (float in m,
+        discrete values: [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2] nm).""",
+        validator=strict_range,
+        values=[0.02e-9, 2e-9],
+    )
