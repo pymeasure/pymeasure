@@ -107,8 +107,8 @@ class TestImageGUI(ManagedImageWindow):
             inputs=['X_start', 'X_end', 'X_step', 'Y_start', 'Y_end', 'Y_step',
                     'delay'],
             displays=['X_start', 'X_end', 'Y_start', 'Y_end', 'delay'],
-            filename_input=False,
-            directory_input=False,
+            # filename_input=False,
+            # directory_input=False,
         )
         self.setWindowTitle('PyMeasure Image Test')
 

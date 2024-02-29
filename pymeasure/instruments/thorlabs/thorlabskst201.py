@@ -22,6 +22,16 @@
 # THE SOFTWARE.
 #
 
-from .thorlabspm100usb import ThorlabsPM100USB
-from .thorlabspro8000 import ThorlabsPro8000
-from .thorlabskst201 import ThorlabsKST201
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_discrete_set
+
+
+class ThorlabsKST201(Instrument):
+    """Control the Thorlabs KST201 K-Cube Stepper Motor Controller."""
+
+    def __init__(self, adapter, name="Thorlabs KST201", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )

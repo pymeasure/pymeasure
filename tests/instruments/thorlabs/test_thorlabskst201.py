@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from unittest.mock import MagicMock
 
-from .thorlabspm100usb import ThorlabsPM100USB
-from .thorlabspro8000 import ThorlabsPro8000
-from .thorlabskst201 import ThorlabsKST201
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.thorlabs import ThorlabsKST201
+
+def test_init():
+    pass
