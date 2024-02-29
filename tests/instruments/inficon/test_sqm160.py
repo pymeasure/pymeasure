@@ -37,8 +37,8 @@ def test_checksum():
 def test_firmware_version():
     """Verify the communication of the firmware version."""
     with expected_protocol(
-        SQM160,
-        [(b"!#@O7", b"!0AMON Ver 4.13Uw"),],
+            SQM160,
+            [(b"!#@O7", b"!0AMON Ver 4.13Uw"), ],
     ) as inst:
         assert inst.firmware_version == "MON Ver 4.13"
 
@@ -46,8 +46,8 @@ def test_firmware_version():
 def test_number_of_channels():
     """Verify the communication of the number of channels."""
     with expected_protocol(
-        SQM160,
-        [(b"!#JO8", b"!%A6v\x86"),],
+            SQM160,
+            [(b"!#JO8", b"!%A6v\x86"), ],
     ) as inst:
         assert inst.number_of_channels == 6
 
@@ -55,8 +55,8 @@ def test_number_of_channels():
 def test_average_rate():
     """Verify reading of the average rate."""
     with expected_protocol(
-        SQM160,
-        [(b"!#M\x8e\x8a", b"!*A 0.01 i?"),],
+            SQM160,
+            [(b"!#M\x8e\x8a", b"!*A 0.01 i?"), ],
     ) as inst:
         assert inst.average_rate == pytest.approx(0.01)
 
@@ -64,8 +64,8 @@ def test_average_rate():
 def test_average_thickness():
     """Verify reading of the average rate."""
     with expected_protocol(
-        SQM160,
-        [(b"!#O\x8f9", b"!+A 0.000 Jo"),],
+            SQM160,
+            [(b"!#O\x8f9", b"!+A 0.000 Jo"), ],
     ) as inst:
         assert inst.average_thickness == pytest.approx(0.0)
 
@@ -73,8 +73,8 @@ def test_average_thickness():
 def test_channel_rate():
     """Verify reading of the rate of a channel."""
     with expected_protocol(
-        SQM160,
-        [(b"!%L1?\x85{", b"!*A 0.00 [d"),],
+            SQM160,
+            [(b"!%L1?\x85{", b"!*A 0.00 [d"), ],
     ) as inst:
         assert inst.sensor_1.rate == pytest.approx(0.0)
 
@@ -82,7 +82,7 @@ def test_channel_rate():
 def test_channel_frequency():
     """Verify reading of the frequency of a channel."""
     with expected_protocol(
-        SQM160,
-        [(b"!$P1Z\x91", b"!/A5875830.230:X"),],
+            SQM160,
+            [(b"!$P1Z\x91", b"!/A5875830.230:X"), ],
     ) as inst:
         assert inst.sensor_1.frequency == pytest.approx(5875830.23)

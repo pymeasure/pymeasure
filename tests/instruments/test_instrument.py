@@ -104,6 +104,18 @@ def test_fake_instrument():
     assert fake.values("5") == [5]
 
 
+class Test_includeSCPI_parameter:
+    def test_not_defined_includeSCPI_raises_warning(self):
+        with pytest.warns(FutureWarning) as record:
+            Instrument(name="test", adapter=ProtocolAdapter())
+        msg = str(record[0].message)
+        assert msg == "It is deprecated to specify `includeSCPI` implicitly, declare it explicitly."
+
+    def test_not_defined_includeSCPI_is_interpreted_as_true(self):
+        inst = Instrument(name="test", adapter=ProtocolAdapter())
+        assert inst.SCPI is True
+
+
 @pytest.mark.parametrize("adapter", (("COM1", 87, "USB")))
 def test_init_visa(adapter):
     Instrument(adapter, "def", visa_library="@sim")
