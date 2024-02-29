@@ -95,18 +95,6 @@ class OphirCommunication(Instrument):
     """
 
     def __init__(self, adapter, name="Ophir", **kwargs):
-        """
-        Initialize the communication with the device.
-
-        Parameters
-        ----------
-        number : int
-            Number of the COM-Port or USB device.
-        connection : str, optional
-            Type of connection, either "COM" or "USB". The default is "COM".
-        baud_rate : int, optional
-            The serial COM baud rate. The default is 9600.
-        """
         super().__init__(
             adapter,
             name,
