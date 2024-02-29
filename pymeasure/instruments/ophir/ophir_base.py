@@ -91,7 +91,8 @@ class OphirCommunication(Instrument):
 
     This communication is ASCII based and suitable for RS-232 and USB
     communication.
-    For USB exists a COM (win32) object as well.
+
+    For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
 
     def __init__(self, adapter, name="Ophir", **kwargs):
