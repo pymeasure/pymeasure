@@ -91,7 +91,8 @@ class OphirCommunication(Instrument):
 
     This communication is ASCII based and suitable for RS-232 and USB
     communication.
-    For USB exists a COM (win32) object as well.
+
+    For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
 
     def __init__(self, adapter, name="Ophir", **kwargs):
@@ -107,15 +108,14 @@ class OphirCommunication(Instrument):
             usb={"write_termination": "\n", "read_termination": "\n"},
             **kwargs,
         )
-        # TODO verify and test USB communication
 
     """
     The device expects a command and always responds.
-    - Commands start with "$" and end with \n. Mainly two letter commands
-    - Response to successful command starts with "*" and ends with \n.
-    - Response to an invalid command starts with "?" and ends with \n.
+    - Commands start with "$" and end with "\n". Commands consist mainly in two letters.
+    - Response to successful command starts with "*" and ends with "\n".
+    - Response to an invalid command starts with "?" and ends with "\n".
         It contains the original command.
-    - RS-232 requires additionally carriage return before \n.
+    - RS-232 requires additionally carriage return before "\n".
     """
 
     def write(self, command):
@@ -160,7 +160,7 @@ class OphirBase(OphirCommunication):
     id = Instrument.measurement(
         "II",  # Instrument Information
         """Get information about the instrument.
-        List with 'instrument', 'serialNumber', 'name'.""",
+        It is a list with 'instrument', 'serialNumber', 'name'.""",
         cast=str,
         separator=None,
     )
@@ -197,28 +197,27 @@ class OphirBase(OphirCommunication):
     baud_rate = Instrument.control(
         "BR0",
         "BR%i",  # Baud Rate
-        """Get the communication baud rate.""",
+        """Control the communication baud rate.""",
         check_set_errors=True,
         values={9600: 1, 19200: 2, 38400: 3, 300: 4, 1200: 5, 4800: 6},
         map_values=True,
         get_process=lambda v: v[v[0]],
     )
 
-    def reset(self):
-        """Reset the device, for example after head change."""
+    def reset(self) -> None:
+        """Reset the device, for example after a head change."""
         return self.ask("RE")
 
-    # TODO streaming mode:
-    def startStreaming(self, downsampling=0):
+    def start_streaming(self, downsampling: int = 0) -> None:
         """Start streaming mode, where the device sends every `downsampling` measurement."""
         RS232 = True  # TODO make the check
         if RS232:
             # only for RS232 kommunication. Only needed once.
             self.ask("DU")  # full DUplex, necessary for streaming mode
-        self.ask("CS1{downsampling if downsampling else ''}")
+        self.ask(f"CS1{downsampling if downsampling else ''}")
         # Continuous Send. CS {int(on/off)} {every X measurement} {response format}
 
-    def stopStreaming(self):
+    def stop_streaming(self):
         """Stop streaming mode."""
         self.ask("CS0")
 
@@ -227,7 +226,7 @@ class OphirBase(OphirCommunication):
     mode = Instrument.control(
         "MM0",
         "MM%i",  # Measurement Mode
-        """Control the measurement mode of the device, use :class:`Modes`.""",
+        """Control the measurement mode of the device, use :class:`.Modes`.""",
         values=Modes,
         check_set_errors=True,
         get_process=Modes,
@@ -237,7 +236,7 @@ class OphirBase(OphirCommunication):
 
     mode_legacy = Instrument.setting(
         "%s",
-        """Set the measurement mode with one of :class:`LegacyModes`,
+        """Set the measurement mode with one of :class:`.LegacyModes`,
         if possible, use :attr:`mode` instead.""",
         values=LegacyModes,
         set_process=lambda v: v.value,
@@ -290,7 +289,6 @@ class OphirBase(OphirCommunication):
         return values
 
     # Wavelength
-    # TODO all the wavelength suff. How to implement it well?
     @property
     def wavelength_options(self):
         """Get a list of all wavelengths or a list of the wavelength limits."""
@@ -309,7 +307,7 @@ class OphirBase(OphirCommunication):
     wavelength = Instrument.control(
         "AW",
         "WI%i",
-        """Control the selected wavelength range""",
+        """Control the selected wavelength range.""",
         # AW, WI not available for NOVA I
         cast=str,
         map_values=True,
@@ -330,7 +328,7 @@ class OphirBase(OphirCommunication):
         return self.ask("AW")  # All Wavelengths
 
     """
-        TODO
+        # Additional commands not yet implemented
         WE erase a wavelength from the list
         WI set the wavelength to index
         WL set currently active wavelength to value
@@ -399,13 +397,13 @@ class OphirBase(OphirCommunication):
     # Other settings
     screen_mode = Instrument.setting(
         "FS%i",  # Force Screen
-        """Set the device to a specific screen mode, use :class:`ScreenModes`.""",
+        """Set the device to a specific screen mode, use :class:`.ScreenModes`.""",
         values=ScreenModes,
         check_set_errors=True,
         # not Pulsar
     )
 
-    def save_head_configuration(self, config):
+    def save_head_configuration(self, config: str) -> None:
         """
         Save selected sensor configuration.
 
