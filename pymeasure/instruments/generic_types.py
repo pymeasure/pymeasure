@@ -66,6 +66,7 @@ class SCPIMixin:
         "*IDN?",
         """Get the identification of the instrument.""",
         cast=str,
+        maxsplit=0,
     )
 
     next_error = Instrument.measurement(
