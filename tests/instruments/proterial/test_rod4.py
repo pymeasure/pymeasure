@@ -22,7 +22,43 @@
 # THE SOFTWARE.
 #
 
-from .channel import Channel
-from .instrument import Instrument
-from .resources import find_serial_port, list_resources
-from .generic_types import SCPIMixin, SCPIUnknownMixin
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.proterial.rod4 import ROD4
+
+
+def test_mfc_range():
+    with expected_protocol(
+        ROD4,
+        [("\x0201SFK400", "OK"),
+         ("\x0202RFK", "200")],
+    ) as inst:
+        inst.ch_1.mfc_range = 400
+        assert inst.ch_2.mfc_range == 200
+
+
+def test_valve_mode():
+    with expected_protocol(
+        ROD4,
+        [("\x0203SVM0", "OK"),
+         ("\x0204RVM", "1")],
+    ) as inst:
+        inst.ch_3.valve_mode = 'flow'
+        assert inst.ch_4.valve_mode == 'close'
+
+
+def test_setpoint():
+    with expected_protocol(
+        ROD4,
+        [("\x0201SFD33.3", "OK"),
+         ("\x0202RFD", "50.4")],
+    ) as inst:
+        inst.ch_1.setpoint = 33.3
+        assert inst.ch_2.setpoint == 50.4
+
+
+def test_actual_flow():
+    with expected_protocol(
+        ROD4,
+        [("\x0203RFX", "40.1")],
+    ) as inst:
+        assert inst.ch_3.actual_flow == 40.1

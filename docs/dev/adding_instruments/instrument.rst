@@ -12,7 +12,7 @@ Your new instrument should be placed in the directory corresponding to the manuf
 Updating the init file
 **********************
 
-The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`.
+The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported.
 
 Add test files
 **************
