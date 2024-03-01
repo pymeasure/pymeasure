@@ -99,6 +99,16 @@ class Keithley2700(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     CLIST_VALUES = list(range(101, 300))
 
+    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+        self.check_errors()
+        self.determine_valid_channels()
+
     # Routing commands
     closed_channels = Instrument.control(
         "ROUTe:MULTiple:CLOSe?", "ROUTe:MULTiple:CLOSe %s",
@@ -139,16 +149,6 @@ class Keithley2700(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         """ Open all channels of the Keithley 2700.
         """
         self.write(":ROUTe:OPEN:ALL")
-
-    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
-
-        self.check_errors()
-        self.determine_valid_channels()
 
     def determine_valid_channels(self):
         """ Determine what cards are installed into the Keithley 2700

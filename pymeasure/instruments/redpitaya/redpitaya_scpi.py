@@ -26,7 +26,7 @@
 import datetime
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 import logging
@@ -158,7 +158,7 @@ class AnalogInputFastChannel(Channel):
         return max_range * data / (2**16 - 1) - max_range / 2
 
 
-class RedPitayaScpi(Instrument):
+class RedPitayaScpi(SCPIMixin, Instrument):
     """This is the class for the Redpitaya reconfigurable board
 
     The instrument is accessed using a TCP/IP Socket communication, that is an adapter in the form:
@@ -197,7 +197,6 @@ class RedPitayaScpi(Instrument):
             name,
             read_termination=read_termination,
             write_termination=write_termination,
-            includeSCPI=True,
             **kwargs)
 
     dioN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')
