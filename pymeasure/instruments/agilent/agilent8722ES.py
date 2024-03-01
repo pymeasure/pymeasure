@@ -22,7 +22,9 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin, discreteTruncate, RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import discreteTruncate
+from pymeasure.errors import RangeException
 from pyvisa import VisaIOError
 
 import numpy as np

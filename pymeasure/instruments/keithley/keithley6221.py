@@ -28,7 +28,8 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, RangeException, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer

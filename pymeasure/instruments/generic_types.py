@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,37 +32,41 @@ log.addHandler(logging.NullHandler())
 
 
 class SCPIMixin:
-    """Base class for SCPI instruments with the default implementations of SCPI commands."""
+    """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("includeSCPI", False)  # in order not to trigger the deprecation warning
         super().__init__(*args, **kwargs)
 
     # SCPI default properties
-    @property
-    def complete(self):
+    complete = Instrument.measurement(
+        "*OPC?",
         """Get the synchronization bit.
 
         This property allows synchronization between a controller and a device. The Operation
         Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
-        """
-        return self.ask("*OPC?").strip()
+        """,
+        cast=str,
+    )
 
-    @property
-    def status(self):
-        """ Get the status byte and Master Summary Status bit. """
-        return self.ask("*STB?").strip()
+    status = Instrument.measurement(
+        "*STB?",
+        """Get the status byte and Master Summary Status bit.""",
+        cast=str,
+    )
 
-    @property
-    def options(self):
-        """ Get the device options installed. """
-        return self.ask("*OPT?").strip()
+    options = Instrument.measurement(
+        "*OPT?",
+        """Get the device options installed.""",
+        cast=str,
+    )
 
-    @property
-    def id(self):
-        """ Get the identification of the instrument. """
-        return self.ask("*IDN?").strip()
+    id = Instrument.measurement(
+        "*IDN?",
+        """Get the identification of the instrument.""",
+        cast=str,
+    )
 
     next_error = Instrument.measurement(
         "SYST:ERR?",
@@ -73,12 +77,11 @@ class SCPIMixin:
 
     # SCPI default methods
     def clear(self):
-        """ Clears the instrument status byte
-        """
+        """Clear the instrument status byte."""
         self.write("*CLS")
 
     def reset(self):
-        """ Resets the instrument. """
+        """Reset the instrument."""
         self.write("*RST")
 
     def check_errors(self):
