@@ -28,8 +28,6 @@ def main():
 
     inst.wavelength_span = 100e-9
 
-    # inst.active_trace()
-
     inst.copy_trace("TRB", "TRC")
 
     inst.delete_trace("TRB")
