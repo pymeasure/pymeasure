@@ -112,6 +112,54 @@ class HP33120A(Instrument):
         values=AMPLITUDE_UNITS,
         map_values=True
     )
+    burst_state = Instrument.control(
+        "BM:STATE?", "BM:STATE %d",
+        """Enable or disable burst modulation""",
+        validator=strict_discrete_set,
+        values=[0, 1],
+    )
+    burst_source = Instrument.control(
+        "BM:SOURCE?", "BM:SOURCE %s",
+        """Select an internal or external gate source for burst modulation""",
+        validator=strict_discrete_set,
+        values=['INT', 'EXT'],
+    )
+    burst_count = Instrument.control(
+        "BM:NCYC?", "BM:NCYC %d",
+        """Sets the number of cycles per burst (1 to 50,000 cycles)""",
+    )
+    min_burst_count = Instrument.measurement(
+        "BM:NCYC? MIN",
+        """Get the minimum :attr:`~.HP33120A.burst_count`"""
+    )
+    max_burst_count = Instrument.measurement(
+        "BM:NCYC? MAX",
+        """Get the maximum :attr:`~.HP33120A.burst_count`"""
+    )
+    burst_rate = Instrument.control(
+        "BM:INT:RATE?", "BM:INT:RATE %g",
+        """Set the burst rate in Hz fo an internal burst source"""
+    )
+    min_burst_rate = Instrument.measurement(
+        "BM:INT:RATE? MIN",
+        """Get the minimum :attr:`~.HP33120A.burst_rate`"""
+    )
+    max_burst_rate = Instrument.measurement(
+        "BM:INT:RATE? MAX",
+        """Get the maximum :attr:`~.HP33120A.burst_rate`"""
+    )
+    burst_phase = Instrument.control(
+        "BM:PHAS?", "BM:PHAS %g",
+        """Set the starting phase angle of a burst (-360 to +360 degrees)"""
+    )
+    min_burst_phase = Instrument.measurement(
+        "BM:PHAS? MIN",
+        """Get the minimum :attr:`~.HP33120A.burst_phase`"""
+    )
+    max_burst_phase = Instrument.measurement(
+        "BM:PHAS? MAX",
+        """Get the maximum :attr:`~.HP33120A.burst_phase`"""
+    )
 
     def beep(self):
         """ Causes a system beep. """
