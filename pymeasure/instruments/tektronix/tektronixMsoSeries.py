@@ -75,7 +75,7 @@ class TektronixMsoScopeChannel(Channel):
         "CH{ch}:PRObe:UNIts?",
         "CH{ch}:PRObe:UNIts %s",
         """Control a string describing the units of measure for the
-           probe attached to the specified channel. ("A" for Amperes, "V" for
+        probe attached to the specified channel. ("A" for Amperes, "V" for
         Volts).
         """,
         validator=strict_discrete_set,
