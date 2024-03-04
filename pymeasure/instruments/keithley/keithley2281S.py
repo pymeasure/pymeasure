@@ -111,7 +111,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
         data = np.array(buffer_content, dtype=np.float32)
         return pd.DataFrame({'current': data[0::3], 'voltage': data[1::3], 'time': data[2::3]})
 
-    ps_voltage = Instrument.control(
+    ps_voltage_setpoint = Instrument.control(
         ":VOLT?",
         ":VOLT %g",
         """Set the output voltage in Volts.""",
@@ -166,7 +166,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     # Battery test commands, only applicable in battery test mode
 
-    bt_charge_voltage = Instrument.control(
+    bt_charge_voltage_setpoint = Instrument.control(
         ":BATT:TEST:VOLT?",
         ":BATT:TEST:VOLT %g",
         """
@@ -298,7 +298,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
         values=[-100, 100]
     )
 
-    bs_soc = Instrument.control(
+    bs_soc_setpoint = Instrument.control(
         ":BATT:SIM:SOC?",
         ":BATT:SIM:SOC %g",
         """Set the SoC of the simulated battery.""",
@@ -306,7 +306,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
         values=[0.0, 100]
     )
 
-    bs_voc = Instrument.control(
+    bs_voc_setpoint = Instrument.control(
         ":BATT:SIM:VOC?",
         ":BATT:SIM:VOC %g",
         """Set the Voc of the simulated battery.""",
