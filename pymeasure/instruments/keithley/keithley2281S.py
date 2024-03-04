@@ -1,16 +1,17 @@
 
 import enum
 
+import numpy as np
+import pandas as pd
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.keithley.buffer import KeithleyBuffer
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
-import numpy as np
-import pandas as pd
 
 
 @enum.unique
 class Keithley2281SOperationCondition(enum.IntFlag):
-    """Enum containing Keithley2281S operation condition defintition"""
+    """Enum containing Keithley2281S operation condition definition"""
     CALIBRATION = 1
     _RESERVED_1 = 2
     _RESERVED_2 = 4
@@ -31,7 +32,7 @@ class Keithley2281SOperationCondition(enum.IntFlag):
 class Keithley2281S(Instrument, KeithleyBuffer):
     """
     Represents the Keithley 2281S-20-6 power supply and battery simulator / characterizer.
-    Common commands, beside `function_mode` and power supply commands should also work for
+    Common commands beside `function_mode` and power supply commands should also work for
     Keithley 2280S power supplies, although this is untested.
     """
     _VOLTAGE_RANGE = [0.0, 20]
@@ -40,30 +41,26 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     _INTERNAL_MEMORY_SLOTS = [*range(1, 10)]
 
     def __init__(self, adapter, name="Keithley2281S", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter, name, includeSCPI=True, **kwargs)
 
     # Common commands
 
     cm_display_text_data = Instrument.setting(
         ":DISP:USER:TEXT '%s'",
-        """Control text to be displayed(24 characters)."""
+        """Set control text to be displayed(24 characters)."""
     )
 
     cm_function_mode = Instrument.control(
         ":ENTR:FUNC?",
         ":ENTR:FUNC %s",
-        """Control which function to use.""",
+        """Set function mode to use.""",
         validator=strict_discrete_set,
         values=["POWER", "TEST", "SIMULATOR"]
     )
 
     cm_buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
-        """
-        An integer property that controls the maximum number of buffer points.
-        This does not represent actual points in the buffer, but the configuration
-        value instead.
-        """,
+        """Set the maximum number of buffer points to store.""",
         validator=truncated_range,
         values=[2, 2500],
         cast=int
@@ -71,7 +68,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     cm_operation_condition = Instrument.measurement(
         ":STAT:OPER:INST:ISUM:COND?",
-        """Query test status.""",
+        """Get test status.""",
         get_process=lambda x: Keithley2281SOperationCondition(int(x))
     )
 
@@ -79,7 +76,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     ps_buffer_data = Instrument.measurement(
         ":DATA:DATA? \"READ,SOUR,REL\"",
-        """Read the buffer in power supply mode and returns its content as a pandas dataframe""",
+        """Get the buffer in power supply mode and return its content as a pandas dataframe""",
         separator=",",
         get_process=lambda v: Keithley2281S._ps_parse_buffer(v)  # Does not work without lambda
     )
@@ -94,7 +91,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     ps_voltage = Instrument.control(
         ":VOLT?",
         ":VOLT %g",
-        """Control output voltage in Volts.""",
+        """Set the output voltage in Volts.""",
         validator=strict_range,
         values=_VOLTAGE_RANGE
     )
@@ -102,7 +99,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     ps_current_limit = Instrument.control(
         ":CURR?",
         ":CURR %g",
-        """Control output current in Amps.""",
+        """Set the output current limit in Amps.""",
         validator=strict_range,
         values=_CURRENT_RANGE_PS
     )
@@ -110,7 +107,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     ps_voltage_limit = Instrument.control(
         ":VOLT:LIM?",
         ":VOLT:LIM %g",
-        """Control the maximum voltage that can be set.""",
+        """Set the maximum voltage that can be set.""",
         validator=strict_range,
         values=_VOLTAGE_RANGE
     )
@@ -118,7 +115,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     ps_power_supply_mode = Instrument.control(
         ":FORM:ELEM:MODE?",
         ":FORM:ELEM:MODE %s",
-        """Control which power supply mode to use.""",
+        """Set which power supply mode to use.""",
         validator=strict_discrete_set,
         values={"CV", "CC", "OFF"}
     )
@@ -126,7 +123,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     ps_output_enabled = Instrument.control(
         "OUTP:STAT?",
         "OUTP:STAT %s",
-        """ Control the output state.""",
+        """Set the output state.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True
@@ -136,7 +133,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
         ":SENS:CONC:NPLC?",
         ":SENS:CONC:NPLC %g",
         """
-        Set number of power line cycles for current and voltage measurements.
+        Set the number of power line cycles for current and voltage measurements.
         The upper limit is for the 50Hz setting, the 60Hz settings goes up to 15.
         TODO: use dynamic property to adapt range
         """,
@@ -150,7 +147,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
         ":BATT:TEST:VOLT?",
         ":BATT:TEST:VOLT %g",
         """
-        Target voltage for battery tests.
+        Set the target voltage for battery tests.
         If it is lower than terminal voltage, the battery gets discharged,
         if it is higher than the terminal voltage the battery gets charged.
         """,
@@ -161,7 +158,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     bt_charge_voltage_limit = Instrument.control(
         ":BATT:TEST:SENS:AH:VFUL?",
         ":BATT:TEST:SENS:AH:VFUL %g",
-        """Charging target voltage for battery tests.""",
+        """Set the charging target voltage for battery tests.""",
         validator=strict_range,
         values=_VOLTAGE_RANGE
     )
@@ -169,7 +166,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     bt_charge_current_limit = Instrument.control(
         ":BATT:TEST:SENS:AH:ILIM?",
         ":BATT:TEST:SENS:AH:ILIM %g",
-        """Maximum charging current for battery tests.""",
+        """Set the maximum charging current for battery tests.""",
         validator=strict_range,
         values=_CURRENT_RANGE_BT_BS
     )
@@ -177,7 +174,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     bt_termination_current = Instrument.control(
         ":BATT:TEST:CURR:END?",
         ":BATT:TEST:CURR:END %g",
-        """Termination current for battery charging and discharging.""",
+        """Set the termination current for battery charging and discharging.""",
         validator=strict_range,
         values=[0, 0.1]
     )
@@ -212,7 +209,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     bt_buffer_data = Instrument.measurement(
         ":BATT:DATA:DATA? \"VOLT, CURR, RES, AH, REL\"",
-        """Read the buffer in battery test mode and returns its content as a pandas dataframe""",
+        """Get the buffer in battery test mode and return its content as a pandas dataframe""",
         separator=",",
         get_process=lambda v: Keithley2281S._bt_parse_buffer(v)  # Does not work without lambda
     )
@@ -229,7 +226,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     bs_select_model_internal = Instrument.setting(
         ":BATT:MOD:RCL %d",
-        """Select the battery model from internal memory.""",
+        """Set the battery model from internal memory.""",
         validator=strict_discrete_set,
         values=_INTERNAL_MEMORY_SLOTS
     )
@@ -249,7 +246,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     bs_simulation_mode = Instrument.control(
         ":BATT:SIM:METH?",
         ":BATT:SIM:METH %s",
-        """Select simulation mode to use. I.e. does the SoC change when charging or discharging.""",
+        """Control simulation mode to use. I.e. does the SoC change when charging or discharging.""",
         validator=strict_discrete_set,
         values={"DYNAMIC", "STATIC"}
     )
@@ -312,7 +309,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
 
     bs_buffer_data = Instrument.measurement(
         ":BATT:DATA:DATA? \"VOLT, CURR, SOC, RES,REL\"",
-        """Read the buffer in battery simulator mode and returns its content as a pandas dataframe""",
+        """Get the buffer in battery simulator mode and return its content as a pandas dataframe""",
         separator=",",
         get_process=lambda v: Keithley2281S._bs_parse_buffer(v)  # Does not work without lambda
     )
