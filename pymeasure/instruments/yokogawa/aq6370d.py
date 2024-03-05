@@ -42,7 +42,7 @@ class AQ6370D(Instrument):
         """Stop operations such as measurements and calibration."""
         self.write(":ABORt")
 
-    def initiate(self):
+    def initiate_sweep(self):
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
 
@@ -63,6 +63,7 @@ class AQ6370D(Instrument):
         (int, smaller than total number of divisions which is either 8, 10 or 12).""",
         validator=strict_range,
         values=[0, 12],
+        get_process=lambda x: int(x),
     )
 
     def set_level_position_to_max(self):
@@ -81,7 +82,7 @@ class AQ6370D(Instrument):
     )
 
     sweep_speed = Instrument.control(
-        ":SENSe:SETTing:SPEed?",
+        ":SENSe:SWEep:SPEed?",
         ":SENSe:SWEep:SPEed %d",
         "Control the sweep speed (str '1x' or '2x' for double speed).",
         validator=strict_discrete_set,
@@ -95,6 +96,24 @@ class AQ6370D(Instrument):
         "Control the sweep time interval (int from 0 to 99999 s).",
         validator=strict_range,
         values=[0, 99999],
+    )
+
+    automatic_sample_number = Instrument.control(
+        ":SENSe:SWEep:POINts:AUTO?",
+        ":SENSe:SWEep:POINts:AUTO %d",
+        "Control the automatic sample number (bool).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={False: 0, True: 1},
+    )
+
+    sample_number = Instrument.control(
+        ":SENSe:SWEep:POINts?",
+        ":SENSe:SWEep:POINts %d",
+        "Control the sample number (int from 51 to 50001).",
+        validator=strict_range,
+        values=[51, 50001],
+        get_process=lambda x: int(x),
     )
 
     # Wavelength settings (all assuming wavelength mode, not frequency mode) -----------------------
