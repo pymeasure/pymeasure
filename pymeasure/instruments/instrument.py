@@ -60,6 +60,11 @@ class Instrument(CommonBase):
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
     :param includeSCPI: An obligatory boolean, which toggles the inclusion of standard SCPI commands
+
+        .. deprecated:: 0.14
+            If True, inherit the :class:`~pymeasure.instruments.generic_types.SCPIMixin` class
+            instead.
+
     :param preprocess_reply: An optional callable used to preprocess
         strings received from the instrument. The callable returns the
         processed string.
@@ -83,9 +88,12 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
-        if includeSCPI is None:
-            warn("It is deprecated to specify `includeSCPI` implicitly, declare it explicitly.",
-                 FutureWarning)
+        if includeSCPI is True:
+            warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
+                 "the `SCPIMixin` class instead.", FutureWarning)
+        elif includeSCPI is None:
+            warn("It is deprecated to specify `includeSCPI` implicitly, use "
+                 "`includeSCPI=False` or inherit the `SCPIMixin` class instead.", FutureWarning)
             includeSCPI = True
         self.SCPI = includeSCPI
         self.isShutdown = False
