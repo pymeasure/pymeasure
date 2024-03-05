@@ -6,6 +6,8 @@ def main():
     generator = Generator()
     inst = generator.instantiate(AQ6370D, "TCPIP::192.168.123.169::INSTR", "yokogawa.aq6370d")
 
+    inst.reset()
+
     inst.initiate()
 
     inst.abort()
@@ -14,7 +16,7 @@ def main():
 
     inst.level_position = 5
 
-    inst.level_position_max()
+    inst.set_level_position_to_max()
 
     inst.sweep_mode = "REPEAT"
 

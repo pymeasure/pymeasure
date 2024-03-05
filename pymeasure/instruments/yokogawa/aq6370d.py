@@ -31,9 +31,7 @@ log.addHandler(logging.NullHandler())
 
 
 class AQ6370D(Instrument):
-    """
-    Represents a Yokogawa AQ6370D Optical Spectrum Analyzer.
-    """
+    """Represents a Yokogawa AQ6370D optical spectrum analyzer."""
 
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
         super().__init__(adapter, name, includeSCPI=True, **kwargs)
@@ -67,7 +65,7 @@ class AQ6370D(Instrument):
         values=[0, 12],
     )
 
-    def level_position_max(self):
+    def set_level_position_to_max(self):
         """Set the reference level position to the maximum value."""
         self.write(":CALCulate:MARKer:MAXimum:SRLevel")
 
@@ -104,7 +102,7 @@ class AQ6370D(Instrument):
     wavelength_center = Instrument.control(
         ":SENSe:WAVelength:CENTer?",
         ":SENSe:WAVelength:CENTer %g",
-        """Control measurement condition center wavelength (float in m).""",
+        "Control measurement condition center wavelength (float in m).",
         validator=strict_range,
         values=[50e-9, 2250e-9],
     )
@@ -112,7 +110,7 @@ class AQ6370D(Instrument):
     wavelength_span = Instrument.control(
         ":SENSe:WAVelength:SPAN?",
         ":SENSe:WAVelength:SPAN %g",
-        """Control wavelength span (float from 0 to 3e-7 m).""",
+        "Control wavelength span (float from 0 to 1100e-9 m).",
         validator=strict_range,
         values=[0, 1100e-9],
     )
@@ -120,7 +118,7 @@ class AQ6370D(Instrument):
     wavelength_start = Instrument.control(
         ":SENSe:WAVelength:STARt?",
         ":SENSe:WAVelength:STARt %g",
-        """Control the measurement start wavelength (float in m).""",
+        "Control the measurement start wavelength (float from 50e-9 to 2250e-9 in m).",
         validator=strict_range,
         values=[50e-9, 2250e-9],
     )
@@ -128,7 +126,7 @@ class AQ6370D(Instrument):
     wavelength_stop = Instrument.control(
         ":SENSe:WAVelength:STOP?",
         ":SENSe:WAVelength:STOP %g",
-        """Control the measurement stop wavelength (float in m).""",
+        "Control the measurement stop wavelength (float from 50e-9 to 2250e-9 in m).",
         validator=strict_range,
         values=[50e-9, 2250e-9],
     )
@@ -184,8 +182,8 @@ class AQ6370D(Instrument):
     resolution_bandwidth = Instrument.control(
         ":SENSe:BWIDth:RESolution?",
         ":SENSe:BWIDth:RESolution %g",
-        """Control the measurement resolution (float in m,
-        discrete values: [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2] nm).""",
-        validator=strict_range,
-        values=[0.02e-9, 2e-9],
+        """Control the measurement resolution
+        (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
+        validator=strict_discrete_set,
+        values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
     )
