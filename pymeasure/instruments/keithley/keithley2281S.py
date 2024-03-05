@@ -27,7 +27,7 @@ import enum
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.keithley.buffer import KeithleyBuffer
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -53,7 +53,7 @@ class Keithley2281SSummaryEventRegister(enum.IntFlag):
     _RESERVED_8 = 16384
 
 
-class Keithley2281S(Instrument, KeithleyBuffer):
+class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     """
     Represents the Keithley 2281S-20-6 power supply and battery simulator / characterizer.
     Common commands beside `function_mode` and power supply commands should also work for
@@ -65,7 +65,7 @@ class Keithley2281S(Instrument, KeithleyBuffer):
     _INTERNAL_MEMORY_SLOTS = [*range(1, 10)]
 
     def __init__(self, adapter, name="Keithley2281S", **kwargs):
-        super().__init__(adapter, name, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name, **kwargs)
 
     # Common commands (cm_*)
 
