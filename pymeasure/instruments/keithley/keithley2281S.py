@@ -222,7 +222,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
 
     bt_save_model_internal = Instrument.setting(
         ":BATT:TEST:SENS:AH:GMOD:SAVE:INTE %d",
-        """Save the battery model to internal memory.""",
+        """Set the memory slot the battery model will be saved to.""",
         validator=strict_discrete_set,
         values=_INTERNAL_MEMORY_SLOTS
     )
