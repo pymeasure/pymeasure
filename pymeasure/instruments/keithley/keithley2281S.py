@@ -27,7 +27,7 @@ import enum
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.keithley.buffer import KeithleyBuffer
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -51,8 +51,6 @@ class Keithley2281SOperationCondition(enum.IntFlag):
     _RESERVED_7 = 8192
     _RESERVED_8 = 16384
 
-
-from pymeasure.instruments import SCPIMixin
 
 class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     """
