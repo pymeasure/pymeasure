@@ -25,6 +25,27 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set
 
+"""
+Required DLLs
+Thorlabs.MotionControl.DeviceManager.dll
+Thorlabs.MotionControl.KCube.StepperMotor.dll
+Thorlabs.MotionControl.KCube.StepperMotor.h
+Thorlabs.MotionControl.KCube.StepperMotor.lib
+
+See an example with ctypes:
+```
+/home/daichi/OneDrive/DatasheetsManuals/Thorlabs/Motion_Control_Examples/Python/KCube/KDC101/kdc101_example.py
+```
+"""
+
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.DeviceManagerCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\Thorlabs.MotionControl.GenericMotorCLI.dll")
+clr.AddReference("C:\\Program Files\\Thorlabs\\Kinesis\\ThorLabs.MotionControl.KCube.DCServoCLI.dll")
+from Thorlabs.MotionControl.DeviceManagerCLI import *
+from Thorlabs.MotionControl.GenericMotorCLI import *
+from Thorlabs.MotionControl.KCube.DCServoCLI import *
+from System import Decimal
+
 
 class ThorlabsKST201(Instrument):
     """Control the Thorlabs KST201 K-Cube Stepper Motor Controller."""
