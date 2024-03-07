@@ -183,7 +183,6 @@ class HP33120A(Instrument):
         """Get the maximum :attr:`~.HP33120A.burst_phase`"""
     )
 
-
     def beep(self):
         """ Causes a system beep. """
         self.write("SYST:BEEP")
