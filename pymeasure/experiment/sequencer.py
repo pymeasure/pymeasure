@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -355,7 +355,7 @@ class SequenceHandler:
         """
         Generate a list of parameters from the sequence tree.
 
-        :param names_map: an optional dict to map paramter name
+        :param names_map: an optional dict to map parameter name
         :return: A list of dictionaries. Each dictionary represents a parameters setting
         for running an experiment.
         """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -158,7 +158,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
             kwargs['antialias'] = False
         curves = []
         for i in range(self.num_plots):
-            curves.append(self.plot_frames[i].new_curve(results, color=pg.intColor(0), **kwargs))
+            curves.append(self.plot_frames[i].new_curve(results, color=color, **kwargs))
         return curves
 
     def clear(self):

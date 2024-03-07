@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -236,7 +236,7 @@ class KeysightDSOX1102G(Instrument):
     Known issues:
 
     - The digitize command will be completed before the operation is. May lead to
-      VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
+      VI_ERROR_TMO (timeout) occurring when sending commands immediately after digitize.
       Current fix: if deemed necessary, add delay between digitize and follow-up command
       to scope.
     """
