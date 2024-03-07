@@ -196,6 +196,19 @@ class AQ6370(SCPIMixin, Instrument):
         """
         return self.values(f":TRACe:Y? {trace}")
 
+    # Analyis --------------------------------------------------------------------------------------
+
+    def execute_analysis(self):
+        """Execute the analysis with the current analysis settings."""
+        self.write(":CALCulate")
+
+    def analysis_results(self):
+        """
+        Query the analysis results of latest analysis. If no analysis has been
+        performed, returns query error.
+        """
+        return self.write(":CALCulate:DATA?")
+
     # Resolution -----------------------------------------------------------------------------------
 
     resolution_bandwidth = Instrument.control(
@@ -206,3 +219,27 @@ class AQ6370(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
     )
+
+
+class AQ6370C(AQ6370):
+    pass
+
+
+class AQ6370D(AQ6370):
+    pass
+
+
+class AQ6373(AQ6370):
+    pass
+
+
+class AQ6373B(AQ6370):
+    pass
+
+
+class AQ6375(AQ6370):
+    pass
+
+
+class AQ6375B(AQ6370):
+    pass
