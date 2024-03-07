@@ -23,18 +23,18 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AQ6370D(Instrument):
+class AQ6370(SCPIMixin, Instrument):
     """Represents a Yokogawa AQ6370D optical spectrum analyzer."""
 
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
-        super().__init__(adapter, name, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name, **kwargs)
 
     # Initiate and abort sweep ---------------------------------------------------------------------
 
