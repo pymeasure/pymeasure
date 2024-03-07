@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -108,7 +108,7 @@ class Axis(Channel):
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
         """Control step up pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
@@ -119,7 +119,7 @@ class Axis(Channel):
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
         """Control step down pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,

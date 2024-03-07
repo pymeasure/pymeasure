@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,21 +32,21 @@ class Agilent34410A(Instrument):
     Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance,
     resistance_4w
     """
-    # only the most simple functions are implemented
-    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "DC voltage, in Volts")
-
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "AC voltage, in Volts")
-
-    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "DC current, in Amps")
-
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "AC current, in Amps")
-
-    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Resistance, in Ohms")
-
-    resistance_4w = Instrument.measurement(
-        "MEAS:FRES? DEF,DEF", "Four-wires (remote sensing) resistance, in Ohms")
-
     def __init__(self, adapter, name="HP/Agilent/Keysight 34410A Multimeter", **kwargs):
         super().__init__(
             adapter, name, **kwargs
         )
+
+    # only the most simple functions are implemented
+    voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "Get DC voltage, in Volts")
+
+    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "Get AC voltage, in Volts")
+
+    current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "Get DC current, in Amps")
+
+    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "Get AC current, in Amps")
+
+    resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Get Resistance, in Ohms")
+
+    resistance_4w = Instrument.measurement(
+        "MEAS:FRES? DEF,DEF", "Get Four-wires (remote sensing) resistance, in Ohms")

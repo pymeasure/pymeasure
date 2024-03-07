@@ -13,3 +13,7 @@ MKS Instruments 937B Vacuum Gauge Controller
 .. autoclass:: pymeasure.instruments.mksinst.mks937b.PressureChannel
     :members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.mksinst.mks937b.Relay
+    :members:
+    :show-inheritance:
