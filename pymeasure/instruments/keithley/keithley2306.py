@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -659,7 +659,7 @@ class Keithley2306(Instrument):
 
         :param: relay_number:
             int: the number of the relay to be selected
-        :type: :class:`.Relay`
+        :type: :class:`~Relay`
 
         """
         if relay_number == 1:

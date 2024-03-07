@@ -17,7 +17,7 @@ Model  Voltage   Current    Power
       share some of the command syntax and could probably be incorporated in this implementation
     
     * The B-version of these models (6632B, 6633B & 6634B) are SPCI-compliant and 
-      could be implemented in a similiar manner
+      could be implemented in a similar manner
     
     
 .. autoclass:: pymeasure.instruments.hp.HP6632A
