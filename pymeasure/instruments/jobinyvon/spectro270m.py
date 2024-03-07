@@ -74,12 +74,6 @@ class JY270M(Instrument):
             name,
             **kwargs)
 
-    motor_init = Instrument.control(
-        'A',
-        '',
-        """Spectrometer initialization""",
-    )
-
     gsteps = Instrument.control(
         'H0\r',
         'F0,%d\r',
@@ -182,6 +176,13 @@ class JY270M(Instrument):
                 return False
         return True
 
+    def motor_init(self) -> bool:
+        """
+        Spectrometer initialization
+        """
+        self.write_read(b'A')
+        time.sleep(30)
+
     def move_grating_steps(self, nsteps: int):
         """Absolute positioning of the grating motor in number of steps."""
         ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode())
@@ -193,12 +194,12 @@ class JY270M(Instrument):
         return self._lambda_max - ((self._max_steps - self.gsteps) / self._steps_nm)
 
     def move_grating_wavelength(self, wavelength: float):
-        """Positioning of the grating motor in wavelength"""
+        """Absolute positioning of the grating motor in wavelength"""
         steps = int(self._max_steps - int((self._lambda_max - wavelength) * self._steps_nm))
         self.move_grating_steps(steps)
 
     def move_entry_slit_steps(self, nsteps: int):
-        """Absolut positioning of the entry slit motor in number of steps"""
+        """Absolute positioning of the entry slit motor in number of steps"""
         ans = self.write_read(f'k0,0,{nsteps - self.entrysteps}\r'.encode())
         code = self._get_code(ans)
         assert code == 'o'
@@ -244,8 +245,17 @@ class JY270M(Instrument):
         ans = self.write_read(b'E\r').decode()
         if ans == "oz":
             return False # We return False if the motor is not busy.
-        if ans == "ooq":
+        if ans == "oq":
             return True # We return True if the motor is busy.
+
+    def motor_available(self):
+        """
+        This function verifies if the grating motor or the slits motors are free.
+        """
+        while self.motor_busy_check():
+            pass
+        time.sleep(1)
+        return True
 
 if __name__ == '__main__':
     spectro = JY270M('COM1',
@@ -256,15 +266,5 @@ if __name__ == '__main__':
                      stop_bits=StopBits.one,
                      flow_control=ControlFlow.dtr_dsr,
                      write_termination='',
-                     read_termination='')
-
-
-
-
-
-
-
-
-
-
-
+                     read_termination='',
+                     includeSCPI=False)
