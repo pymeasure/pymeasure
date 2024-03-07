@@ -16,6 +16,7 @@ dependencies:
   - pytest-qt=4.2.0
   - pytest-runner=5.2
   - pytest=7.2.0
+  - pytest-cov=4.1.0
   - pyvisa-sim==0.5.1
   - flake8=6.0.0
   - setuptools_scm # don't pin, to get newest features
