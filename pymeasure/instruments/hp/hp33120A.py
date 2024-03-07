@@ -125,7 +125,7 @@ class HP33120A(Instrument):
 
     burst_enabled = Instrument.control(
         "BM:STATE?", "BM:STATE %d",
-        """Enable or disable burst modulation""",
+        """Control state of burst modulation""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -133,14 +133,14 @@ class HP33120A(Instrument):
 
     burst_source = Instrument.control(
         "BM:SOURCE?", "BM:SOURCE %s",
-        """Select an internal or external gate source for burst modulation""",
+        """Control internal or external gate source for burst modulation""",
         validator=strict_discrete_set,
         values=['INT', 'EXT'],
     )
 
     burst_count = Instrument.control(
         "BM:NCYC?", "BM:NCYC %d",
-        """Sets the number of cycles per burst (1 to 50,000 cycles)""",
+        """Control the number of cycles per burst (1 to 50,000 cycles)""",
     )
 
     min_burst_count = Instrument.measurement(
@@ -155,7 +155,7 @@ class HP33120A(Instrument):
 
     burst_rate = Instrument.control(
         "BM:INT:RATE?", "BM:INT:RATE %g",
-        """Set the burst rate in Hz fo an internal burst source"""
+        """Control the burst rate in Hz fo an internal burst source"""
     )
 
     min_burst_rate = Instrument.measurement(
@@ -170,7 +170,7 @@ class HP33120A(Instrument):
 
     burst_phase = Instrument.control(
         "BM:PHAS?", "BM:PHAS %g",
-        """Set the starting phase angle of a burst (-360 to +360 degrees)"""
+        """Control the starting phase angle of a burst (-360 to +360 degrees)"""
     )
 
     min_burst_phase = Instrument.measurement(
