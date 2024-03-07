@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AQ6370(SCPIMixin, Instrument):
+class AQ6370D(SCPIMixin, Instrument):
     """Represents a Yokogawa AQ6370D optical spectrum analyzer."""
 
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
@@ -152,6 +152,8 @@ class AQ6370(SCPIMixin, Instrument):
 
     # Trace operations -----------------------------------------------------------------------------
 
+    mapping = {"TRA": "A", "TRB": "B", "TRC": "C", "TRD": "D"}
+
     active_trace = Instrument.control(
         ":TRACe:ACTive?",
         ":TRACe:ACTive %d",
@@ -196,13 +198,13 @@ class AQ6370(SCPIMixin, Instrument):
         """
         return self.values(f":TRACe:Y? {trace}")
 
-    # Analyis --------------------------------------------------------------------------------------
+    # Analysis -------------------------------------------------------------------------------------
 
     def execute_analysis(self):
         """Execute the analysis with the current analysis settings."""
         self.write(":CALCulate")
 
-    def analysis_results(self):
+    def get_analysis(self):
         """
         Query the analysis results of latest analysis. If no analysis has been
         performed, returns query error.
@@ -221,25 +223,20 @@ class AQ6370(SCPIMixin, Instrument):
     )
 
 
-class AQ6370C(AQ6370):
-    pass
+# class AQ6370C(AQ6370):
+#     pass
 
+# class AQ6370D(AQ6370):
+#     pass
 
-class AQ6370D(AQ6370):
-    pass
+# class AQ6373(AQ6370):
+#     pass
 
+# class AQ6373B(AQ6370):
+#     pass
 
-class AQ6373(AQ6370):
-    pass
+# class AQ6375(AQ6370):
+#     pass
 
-
-class AQ6373B(AQ6370):
-    pass
-
-
-class AQ6375(AQ6370):
-    pass
-
-
-class AQ6375B(AQ6370):
-    pass
+# class AQ6375B(AQ6370):
+#     pass
