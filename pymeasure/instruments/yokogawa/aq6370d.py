@@ -152,29 +152,39 @@ class AQ6370D(SCPIMixin, Instrument):
 
     # Trace operations -----------------------------------------------------------------------------
 
-    mapping = {"TRA": "A", "TRB": "B", "TRC": "C", "TRD": "D"}
-
     active_trace = Instrument.control(
         ":TRACe:ACTive?",
         ":TRACe:ACTive %d",
-        "Control the active trace (str 'TRA', 'TRB', 'TRC', ...).",
+        "Control the active trace (str 'A', 'B', 'C', ...).",
     )
 
     def copy_trace(self, source, destination):
         """
         Copy the data of specified trace to the another trace.
 
-        :param source: Source trace (str 'TRA', 'TRB', 'TRC', ...).
-        :param destination: Destination trace (str 'TRA', 'TRB', 'TRC', ...).
+        :param source: Source trace (str 'A', 'B', 'C', ...).
+        :param destination: Destination trace (str 'A', 'B', 'C', ...).
         """
+        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
+
+        if source in mapping:
+            source = mapping[source]
+        if destination in mapping:
+            destination = mapping[destination]
+
         self.write(f":TRACe:COPY {source},{destination}")
 
     def delete_trace(self, trace):
         """
         Delete the specified trace.
 
-        :param trace: Trace to be deleted (str 'ALL', 'TRA', 'TRB', 'TRC', ...).
+        :param trace: Trace to be deleted (str 'ALL', 'A', 'B', 'C', ...).
         """
+        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
+
+        if trace in mapping:
+            trace = mapping[trace]
+
         if trace == "ALL":
             self.write(":TRACe:DELete:ALL")
         else:
@@ -184,18 +194,28 @@ class AQ6370D(SCPIMixin, Instrument):
         """
         Measure the x-axis data of specified trace, output wavelength in m.
 
-        :param trace: Trace to measure (str 'TRA', 'TRB', 'TRC', ...).
+        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
         :return: The x-axis data of specified trace.
         """
+        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
+
+        if trace in mapping:
+            trace = mapping[trace]
+
         return self.values(f":TRACe:X? {trace}")
 
     def get_ydata(self, trace="TRA"):
         """
         Measure the y-axis data of specified trace, output power in dBm.
 
-        :param trace: Trace to measure (str 'TRA', 'TRB', 'TRC', ...).
+        :param trace: Trace to measure (str 'A', 'B', 'C', ...).
         :return: The y-axis data of specified trace.
         """
+        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
+
+        if trace in mapping:
+            trace = mapping[trace]
+
         return self.values(f":TRACe:Y? {trace}")
 
     # Analysis -------------------------------------------------------------------------------------
