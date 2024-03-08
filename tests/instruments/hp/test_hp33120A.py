@@ -25,9 +25,6 @@ def test_amplitude_setter():
     ([(b'SOUR:VOLT:UNIT VPP', None),
       (b'SOUR:VOLT?', b'+4.00000E+00')],
      4.0),
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'SOUR:VOLT?', b'+4.00000E+00')],
-     4.0),
 ))
 def test_amplitude_getter(comm_pairs, value):
     with expected_protocol(
@@ -38,12 +35,6 @@ def test_amplitude_getter(comm_pairs, value):
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'SOUR:VOLT:UNIT?', b'VPP')],
-     'Vpp'),
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'SOUR:VOLT:UNIT?', b'VPP')],
-     'Vpp'),
     ([(b'SOUR:VOLT:UNIT VPP', None),
       (b'SOUR:VOLT:UNIT?', b'VPP')],
      'Vpp'),
@@ -95,8 +86,8 @@ def test_burst_enabled_setter():
       (b'BM:STATE?', b'1')],
      True),
     ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'BM:STATE?', b'1')],
-     True),
+      (b'BM:STATE?', b'0')],
+     False),
 ))
 def test_burst_enabled_getter(comm_pairs, value):
     with expected_protocol(
@@ -166,9 +157,6 @@ def test_burst_source_setter():
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'SOUR:VOLT:UNIT VPP', None),
-      (b'BM:SOURCE?', b'INT')],
-     'INT'),
     ([(b'SOUR:VOLT:UNIT VPP', None),
       (b'BM:SOURCE?', b'INT')],
      'INT'),
