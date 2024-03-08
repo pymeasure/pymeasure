@@ -25,9 +25,7 @@
 import logging
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import (truncated_range,
-                                              strict_discrete_set,
-                                              strict_range)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 from .buffer import KeithleyBuffer
 
@@ -49,23 +47,26 @@ class Keithley2182Channel(Channel):
     Voltage     (Channel 1) and Temperature (Channel 2)
     """
 
-    def __init__(self, instrument, id_):
+    def __init__(self, parent, id):
         """Set max voltage depending on channel."""
-        if id_ == 1:
-            self.voltage_range_values = [0, 120]
-            self.voltage_offset_values = [-120, 120]
+        if id == 1:
+            self.voltage_range_values = (0, 120)
+            self.voltage_offset_values = (-120, 120)
         else:
-            self.voltage_range_values = [0, 12]
-            self.voltage_offset_values = [-12, 12]
-        super().__init__(instrument, id_)
+            self.voltage_range_values = (0, 12)
+            self.voltage_offset_values = (-12, 12)
+        super().__init__(parent, id)
 
     voltage_range = Channel.control(
         ":SENS:VOLT:CHAN{ch}:RANG?", ":SENS:VOLT:CHAN{ch}:RANG %g",
         """Control the positive full-scale measurement voltage range in Volts.
-        Valid ranges are from 0 to 120 V for Ch. 1, and 0 to 12 V for Ch. 2.
+        The Keithley 2182 selects a measurement range based on the expected voltage.
+        DCV1 has five ranges: 10 mV, 100 mV, 1 V, 10 V, and 100 V.
+        DCV2 has three ranges: 100 mV, 1 V, and 10 V.
+        Valid limits are from 0 to 120 V for Ch. 1, and 0 to 12 V for Ch. 2.
         Auto-range is automatically disabled when this property is set.""",
-        validator=truncated_range,
-        values=[0, 120],
+        validator=strict_range,
+        values=(0, 120),
         dynamic=True,
     )
 
@@ -83,7 +84,7 @@ class Keithley2182Channel(Channel):
         Displayed value = actual value - offset value.
         Valid ranges are -120 V to +120 V for Ch. 1, and -12 V to +12 V for Ch. 2.""",
         validator=strict_range,
-        values=[-120, 120],
+        values=(-120, 120),
         dynamic=True,
     )
 
@@ -93,7 +94,7 @@ class Keithley2182Channel(Channel):
         Displayed value = actual value - offset value.
         Valid values are -273 C to 1800 C.""",
         validator=strict_range,
-        values=[-273, 1800],
+        values=(-273, 1800),
     )
 
     voltage_offset_enabled = Channel.control(
@@ -132,7 +133,6 @@ class Keithley2182Channel(Channel):
     def setup_temperature(self, nplc=5):
         """Change active channel and configure channel for temperature measurement.
 
-        :param channel: Temperature measurement channel
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 50/60
         """
         self.write(":SENS:CHAN {ch};"
@@ -218,7 +218,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """Control which channel is active for measurement.
         Valid values are 0 (internal temperature sensor), 1, and 2.""",
         validator=strict_discrete_set,
-        values=[0, 1, 2],
+        values=(0, 1, 2),
         cast=int
     )
 
@@ -247,8 +247,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         which sets the integration period and measurement speed.
         Valid values are from 0.01 to 50 or 60, depending on the line frequency.
         Default is 5.""",
-        validator=truncated_range,
-        values=[0.01, 60],
+        validator=strict_range,
+        values=(0.01, 60),
         dynamic=True,
     )
 
@@ -267,7 +267,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """Control the thermocouple type for temperature measurements.
         Valid options are B, E, J, K, N, R, S, and T.""",
         validator=strict_discrete_set,
-        values=['B', 'E', 'J', 'K', 'N', 'R', 'S', 'T']
+        values=('B', 'E', 'J', 'K', 'N', 'R', 'S', 'T')
     )
 
     temperature_nplc = Instrument.control(
@@ -276,8 +276,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         which sets the integration period and measurement speed.
         Valid values are from 0.01 to 50 or 60, depending on the line frequency.
         Default is 5.""",
-        validator=truncated_range,
-        values=[0.01, 60],
+        validator=strict_range,
+        values=(0.01, 60),
         dynamic=True,
     )
 
@@ -286,15 +286,15 @@ class Keithley2182(KeithleyBuffer, Instrument):
         """Control whether the thermocouple reference junction is internal (INT) or
         simulated (SIM). Default is INT.""",
         validator=strict_discrete_set,
-        values=['SIM', 'INT'],
+        values=('SIM', 'INT'),
     )
 
     temperature_simulated_reference = Instrument.control(
         ":SENS:TEMP:RJUN:SIM?", ":SENS:TEMP:RJUN:SIM %g",
         """Control the value of the simulated thermocouple reference junction in
         Celsius. Default is 23 C.""",
-        validator=truncated_range,
-        values=[0, 60],
+        validator=strict_range,
+        values=(0, 60),
     )
 
     internal_temperature = Instrument.measurement(
@@ -334,8 +334,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         ":TRIG:COUN?", ":TRIG:COUN %d",
         """Control the trigger count which can take values from 1 to 9,999.
         Default is 1.""",
-        validator=truncated_range,
-        values=[1, 9999],
+        validator=strict_range,
+        values=(1, 9999),
         cast=int
     )
 
@@ -343,8 +343,8 @@ class Keithley2182(KeithleyBuffer, Instrument):
         ":TRIG:DEL?", ":TRIG:DEL %g",
         """Control the trigger delay in seconds, which can take values from 0 to
         999999.999 s. Default is 0.""",
-        validator=truncated_range,
-        values=[0, 999999.999]
+        validator=strict_range,
+        values=(0, 999999.999)
     )
 
     ###########
@@ -354,11 +354,11 @@ class Keithley2182(KeithleyBuffer, Instrument):
     def auto_line_frequency(self):
         """Set appropriate limits for NPLC voltage and temperature readings."""
         if self.line_frequency == 50:
-            self.temperature_nplc_values = [0.01, 50]
-            self.voltage_nplc_values = [0.01, 50]
+            self.temperature_nplc_values = (0.01, 50)
+            self.voltage_nplc_values = (0.01, 50)
         else:
-            self.temperature_nplc_values = [0.01, 60]
-            self.voltage_nplc_values = [0.01, 60]
+            self.temperature_nplc_values = (0.01, 60)
+            self.voltage_nplc_values = (0.01, 60)
 
     def reset(self):
         """Reset the instrument and clear the queue."""
