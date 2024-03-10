@@ -24,10 +24,16 @@
 
 from time import sleep
 import logging
-#from pymeasure.instruments import list_resources
+from pymeasure.instruments import list_resources
 import numpy as np
+import pymeasure
 from pymeasure.instruments.siglenttechnologies.siglent_sds1072cml import SDS1072CML
 from pyvisa.errors import VisaIOError
-
-list_resources()
-scp.setCoupling(channel=1,mode='DC')
+import pyvisa
+pyvisa.ResourceManager('@py')
+#print(pymeasure.__version__)
+#print(list_resources())
+scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
+scope.timediv=20e-1
+print(scope.internalState)
+#scp.setCoupling(channel=1,mode='DC')
