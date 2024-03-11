@@ -94,8 +94,7 @@ class MainWindow(ManagedWindowBase):
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],
             widget_list=widget_list,
-            filename_input=False,
-            directory_input=False,
+            enable_file_input=False,
         )
         logging.getLogger().addHandler(widget_list[1].handler)
         log.setLevel(self.log_level)
