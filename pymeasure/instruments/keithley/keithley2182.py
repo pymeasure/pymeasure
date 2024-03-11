@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 from .buffer import KeithleyBuffer
@@ -155,7 +155,7 @@ class Keithley2182Channel(Channel):
         self.write(":SENS:VOLT:CHAN{ch}:REF:ACQ")
 
 
-class Keithley2182(KeithleyBuffer, Instrument):
+class Keithley2182(SCPIMixin, KeithleyBuffer, Instrument):
     """Represents the Keithley 2182 Nanovoltmeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -180,8 +180,7 @@ class Keithley2182(KeithleyBuffer, Instrument):
 
     def __init__(self, adapter, name="Keithley 2182 Nanovoltmeter",
                  read_termination='\r', **kwargs):
-        super().__init__(adapter, name, read_termination=read_termination,
-                         includeSCPI=True, **kwargs)
+        super().__init__(adapter, name, read_termination=read_termination, **kwargs)
 
     ch_1 = Instrument.ChannelCreator(Keithley2182Channel, 1)
     ch_2 = Instrument.ChannelCreator(Keithley2182Channel, 2)
