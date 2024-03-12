@@ -30,8 +30,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AQ6370D(SCPIMixin, Instrument):
-    """Represents a Yokogawa AQ6370D optical spectrum analyzer."""
+class AQ6370Series(SCPIMixin, Instrument):
+    """Represents Yokogawa AQ6370 Series of optical spectrum analyzer."""
 
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -53,7 +53,7 @@ class AQ6370D(SCPIMixin, Instrument):
         ":DISPlay:TRACe:Y1:SCALe:RLEVel %g",
         "Control the reference level of main scale of level axis (float in dBm).",
         validator=strict_range,
-        values=[-100, 20],
+        values=[-90, 30],
     )
 
     level_position = Instrument.control(
@@ -63,6 +63,7 @@ class AQ6370D(SCPIMixin, Instrument):
         (int, smaller than total number of divisions which is either 8, 10 or 12).""",
         validator=strict_range,
         values=[0, 12],
+        dynamic=True,
         get_process=lambda x: int(x),
     )
 
@@ -79,15 +80,6 @@ class AQ6370D(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={"SINGLE": 1, "REPEAT": 2, "AUTO": 3, "SEGMENT": 4},
-    )
-
-    sweep_speed = Instrument.control(
-        ":SENSe:SWEep:SPEed?",
-        ":SENSe:SWEep:SPEed %d",
-        "Control the sweep speed (str '1x' or '2x' for double speed).",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={"1x": 0, "2x": 1},
     )
 
     sweep_time_interval = Instrument.control(
@@ -112,7 +104,7 @@ class AQ6370D(SCPIMixin, Instrument):
         ":SENSe:SWEep:POINts %d",
         "Control the sample number (int from 51 to 50001).",
         validator=strict_range,
-        values=[51, 50001],
+        values=[101, 50001],
         get_process=lambda x: int(x),
     )
 
@@ -123,7 +115,8 @@ class AQ6370D(SCPIMixin, Instrument):
         ":SENSe:WAVelength:CENTer %g",
         "Control measurement condition center wavelength (float in m).",
         validator=strict_range,
-        values=[50e-9, 2250e-9],
+        values=[600e-9, 1700e-9],
+        dynamic=True,
     )
 
     wavelength_span = Instrument.control(
@@ -132,6 +125,7 @@ class AQ6370D(SCPIMixin, Instrument):
         "Control wavelength span (float from 0 to 1100e-9 m).",
         validator=strict_range,
         values=[0, 1100e-9],
+        dynamic=True,
     )
 
     wavelength_start = Instrument.control(
@@ -139,7 +133,8 @@ class AQ6370D(SCPIMixin, Instrument):
         ":SENSe:WAVelength:STARt %g",
         "Control the measurement start wavelength (float from 50e-9 to 2250e-9 in m).",
         validator=strict_range,
-        values=[50e-9, 2250e-9],
+        values=[50e-9, 1700 - 9],
+        dynamic=True,
     )
 
     wavelength_stop = Instrument.control(
@@ -147,7 +142,8 @@ class AQ6370D(SCPIMixin, Instrument):
         ":SENSe:WAVelength:STOP %g",
         "Control the measurement stop wavelength (float from 50e-9 to 2250e-9 in m).",
         validator=strict_range,
-        values=[50e-9, 2250e-9],
+        values=[600e-9, 2250e-9],
+        dynamic=True,
     )
 
     # Trace operations -----------------------------------------------------------------------------
@@ -222,23 +218,104 @@ class AQ6370D(SCPIMixin, Instrument):
         (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
         validator=strict_discrete_set,
         values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
+        dynamic=True,
     )
 
 
-# class AQ6370C(AQ6370):
-#     pass
+# subclasses of specific instruments ---------------------------------------------------------------
 
-# class AQ6370D(AQ6370):
-#     pass
 
-# class AQ6373(AQ6370):
-#     pass
+class AQ6370D(AQ6370Series):
+    """Represents Yokogawa AQ6370D optical spectrum analyzer."""
 
-# class AQ6373B(AQ6370):
-#     pass
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+    pass
 
-# class AQ6375(AQ6370):
-#     pass
 
-# class AQ6375B(AQ6370):
-#     pass
+class AQ6370C(AQ6370Series):
+    """Represents Yokogawa AQ6370C optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+    pass
+
+
+class AQ6373(AQ6370Series):
+    """Represents Yokogawa AQ6373 optical spectrum analyzer."""
+
+    wavelength_center_values = [350e-9, 1200e-9]  # 0.001 steps
+    wavelength_start_values = [1e-9, 1200e-9]  # 0.001 steps
+    wavelength_stop_values = [350e-9, 1625e-9]  # 0.001 steps
+    wavelength_span_values = [0, 850e-9]  # 0.1 steps
+    resolution_bandwidth_values = [
+        0.01e-9,
+        0.02e-9,
+        0.05e-9,
+        0.1e-9,
+        0.2e-9,
+        0.5e-9,
+        1e-9,
+        2e-9,
+        5e-9,
+        10e-9,
+    ]
+    pass
+
+
+class AQ6373B(AQ6373):
+    """Represents Yokogawa AQ6373B variant optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+    pass
+
+
+class AQ6375(AQ6370Series):
+    """Represents Yokogawa AQ6375 optical spectrum analyzer."""
+
+    wavelength_center_values = [1200e-9, 2400e-9]  # 0.001 steps
+    wavelength_start_values = [600e-9, 2400e-9]  # 0.001 steps
+    wavelength_stop_values = [1200e-9, 3000e-9]  # 0.001 steps
+    wavelength_span_values = [0, 1200e-9]  # 0.1 steps
+    resolution_bandwidth_values = [
+        0.05e-9,
+        0.1e-9,
+        0.2e-9,
+        0.5e-9,
+        1e-9,
+        2e-9,
+    ]
+    pass
+
+
+class AQ6375B(AQ6375):
+    """Represents Yokogawa AQ6375B variant optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+    pass
