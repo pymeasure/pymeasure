@@ -165,14 +165,8 @@ class AQ6370D(SCPIMixin, Instrument):
         :param source: Source trace (str 'A', 'B', 'C', ...).
         :param destination: Destination trace (str 'A', 'B', 'C', ...).
         """
-        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
 
-        if source in mapping:
-            source = mapping[source]
-        if destination in mapping:
-            destination = mapping[destination]
-
-        self.write(f":TRACe:COPY {source},{destination}")
+        self.write(f":TRACe:COPY TR{source.replace('TR', '')},TR{destination.replace('TR', '')}")
 
     def delete_trace(self, trace):
         """
@@ -180,15 +174,11 @@ class AQ6370D(SCPIMixin, Instrument):
 
         :param trace: Trace to be deleted (str 'ALL', 'A', 'B', 'C', ...).
         """
-        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
-
-        if trace in mapping:
-            trace = mapping[trace]
 
         if trace == "ALL":
             self.write(":TRACe:DELete:ALL")
         else:
-            self.write(f":TRACe:DELete {trace}")
+            self.write(f":TRACe:DELete TR{trace.replace('TR', '')}")
 
     def get_xdata(self, trace="TRA"):
         """
@@ -197,12 +187,8 @@ class AQ6370D(SCPIMixin, Instrument):
         :param trace: Trace to measure (str 'A', 'B', 'C', ...).
         :return: The x-axis data of specified trace.
         """
-        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
 
-        if trace in mapping:
-            trace = mapping[trace]
-
-        return self.values(f":TRACe:X? {trace}")
+        return self.values(f":TRACe:X? TR{trace.replace('TR', '')}")
 
     def get_ydata(self, trace="TRA"):
         """
@@ -211,12 +197,8 @@ class AQ6370D(SCPIMixin, Instrument):
         :param trace: Trace to measure (str 'A', 'B', 'C', ...).
         :return: The y-axis data of specified trace.
         """
-        mapping = {"A": "TRA", "B": "TRB", "C": "TRC", "D": "TRD"}
 
-        if trace in mapping:
-            trace = mapping[trace]
-
-        return self.values(f":TRACe:Y? {trace}")
+        return self.values(f":TRACe:Y? TR{trace.replace('TR', '')}")
 
     # Analysis -------------------------------------------------------------------------------------
 
