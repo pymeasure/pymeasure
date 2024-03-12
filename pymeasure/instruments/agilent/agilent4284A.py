@@ -22,10 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.agilent import AgilentE4980
-from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+import logging
 from time import sleep
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 IMPEDANCE_MODES = (
     "CPD", "CPQ", "CPG", "CPRP", "CSD", "CSQ", "CSRS", "LPQ", "LPD", "LPG", "LPRP",
@@ -33,7 +37,7 @@ IMPEDANCE_MODES = (
 )
 
 
-class Agilent4284A(AgilentE4980):
+class Agilent4284A(SCPIMixin, Instrument):
     """Represents the Agilent 4284A precision LCR meter.
 
     Most attributes are inherited from the Agilent E4980; a couple are overwritten
@@ -43,26 +47,35 @@ class Agilent4284A(AgilentE4980):
 
         agilent = Agilent4284A("GPIB::1")
 
+        agilent.reset()                         # Return instrument settings to default
+                                                  values
+        agilent.frequency = 10e3                # Set frequency to 10 kHz
+        agilent.voltage = 0.02                  # Set AC voltage to 20 mV
         agilent.mode = 'ZTR'                    # Set impedance mode to measure
-                                                  impedance magnitude [Ohm] and phase [rad]
-        agilent.
+                                                  impedance magnitude [Ohm] and phase
+                                                  [rad]
+        agilent.trigger_on_bus()
+        print(agilent.trigger())                # Trigger and print a measurement
+        agilent.enable_high_power()             # Enable upper current, voltage, and
+                                                  bias limits, if properly configured.
+
     """
 
     def __init__(self, adapter, name="Agilent 4284A LCR meter", **kwargs):
-        super().__init__(adapter, name, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name, **kwargs)
 
     frequency = Instrument.control(
         "FREQ?", "FREQ %g",
-        """Control AC frequency in Hertz.""",
-        validator=truncated_range,
+        """Control AC frequency in Hertz, from 20 Hz to 1 MHz.""",
+        validator=strict_range,
         values=(20, 1e6),
     )
 
     ac_current = Instrument.control(
         "CURR:LEV?", "CURR:LEV %g",
-        """"Control AC current level in Amps. Range is 50 uA to 20 mA for default, 50 uA
-        to 200 mA in high-power mode.""",
-        validator=truncated_range,
+        """"Control AC current level in Amps. Valid range is 50 uA to 20 mA for default,
+        50 uA to 200 mA in high-power mode.""",
+        validator=strict_range,
         values=(50e-6, 0.02),
         dynamic=True
     )
@@ -71,16 +84,15 @@ class Agilent4284A(AgilentE4980):
         "VOLT:LEV?", "VOLT:LEV %g",
         """"Control AC voltage level in Volts. Range is 5 mV to 2 V for default, 5 mV to
         20 V in high-power mode.""",
-        validator=truncated_range,
-        values=(0.005, 0.02),
+        validator=strict_range,
+        values=(0.005, 2),
         dynamic=True
     )
 
-    high_power_enabled = Instrument.control(
-        "OUTP:HPOW?", "OUTP:HPOW %d",
-        """Control whether the high-power mode is enabled.
-        Requires Option 001 (power amplifier / DC bias) is installed.""",
-        validator=strict_discrete_set,
+    high_power_enabled = Instrument.measurement(
+        "OUTP:HPOW?",
+        """Get whether the high-power mode is enabled.
+        High power requires Option 001 (power amplifier / DC bias) is installed.""",
         values={False: 0, True: 1},
         map_values=True
     )
@@ -97,16 +109,19 @@ class Agilent4284A(AgilentE4980):
         "BIAS:VOLT?", "BIAS:VOLT %g",
         """Control the DC bias voltage in Volts.
         Maximum is 2 V by default, 40 V in high-power mode.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=(0, 2),
+        dynamic=True
     )
 
     bias_current = Instrument.control(
         "BIAS:CURR?", "BIAS:CURR %g",
         """Control the DC bias current in Amps.
-        Requires Option 001 (power amplifier / DC bias) is installed.""",
-        validator=truncated_range,
-        values=(0, 0.1)
+        Requires Option 001 (power amplifier / DC bias) is installed.
+        Maximum is 100 mA.""",
+        validator=strict_range,
+        values=(0, 0),
+        dynamic=True
     )
 
     impedance_mode = Instrument.control(
@@ -154,32 +169,53 @@ class Agilent4284A(AgilentE4980):
         values={False: 0, True: 1}
     )
 
-    def freq_sweep(self, freq_list, return_freq=False):
+    def enable_high_power(self):
+        """Enable high power mode.
+
+        Requires option 001 (power amplifier / DC bias) is installed.
+        """
+        if self.options[0] == 0:
+            log.warning("Agilent 4284A power amplifier is not installed.")
+            return
+        self.ac_current_values = (50e-6, 0.2)
+        self.ac_voltage_values = (0.005, 20)
+        self.bias_voltage_values = (0, 40)
+        self.bias_current_values = (0, 0.1)
+        self.write("OUTP:HPOW 1")
+
+    def disable_high_power(self):
+        """Disable high power mode."""
+        self.ac_current_values = (50e-6, 0.02)
+        self.ac_voltage_values = (0.005, 2)
+        self.bias_voltage_values = (0, 2)
+        self.bias_current_values = (0, 0)
+        self.write("OUTP:HPOW 0")
+
+    def frequency_sweep(self, freq_list, return_freq=True):
         """Run frequency list sweep using sequential trigger.
 
         :param freq_list: list of frequencies
         :param return_freq: if True, returns the frequencies read from the instrument
 
-        Returns values as configured with :attr:`~.Agilent4284A.mode`
+        Returns values as configured with :attr:`~.Agilent4284A.impedance_mode` and list
+            of frequencies in format ([val A], [val B], [frequency])
         """
-        # self.write("*RST;*CLS")
-        self.write("TRIG:SOUR BUS")
-        self.write("DISP:PAGE LIST")
-        self.write("FORM ASC")
-        # trigger in sequential mode
-        self.write("LIST:MODE SEQ")
-        lista_str = ",".join(['%e' % f for f in freq_list])
-        self.write("LIST:FREQ %s" % lista_str)
-        # trigger
+        if min(freq_list) < 20 or max(freq_list) > 1e6:
+            log.warning("Agilent 4284A valid frequency range is 20 Hz to 1 MHz.")
+            return
+        freq_str = ",".join(['%g' % f for f in freq_list])
+        self.reset()
+        self.clear()
+        self.write(f"TRIG:SOUR BUS;FORM ASC;LIST:MODE SEQ;LIST:FREQ {freq_str}")
         self.write("INIT:CONT ON")
         self.write("TRIG:IMM")
-        while True:
-            status = self.read("STAT:OPER?")
-            if (status & 8) == 8:  # bit no. 3 is list sweep measurement complete bit
-                break
-            else:
-                sleep(1)
-                continue
+        # TODO: see if this while block is necessary
+        # while True:
+        #     if (self.status & 8) == 8:  # bit 3 is list sweep measurement complete bit
+        #         break
+        #     else:
+        #         sleep(1)
+        #         continue
         measured = self.values("FETCH?")
         # at the end return to manual trigger
         self.write(":TRIG:SOUR HOLD")
@@ -188,6 +224,20 @@ class Agilent4284A(AgilentE4980):
         b_data = [measured[_] for _ in range(1, 4 * len(freq_list), 4)]
         if return_freq:
             read_freqs = self.values("LIST:FREQ?")
+            self.check_errors()
             return a_data, b_data, read_freqs
         else:
-            return a_data, b_data
+            self.check_errors()
+            return a_data, b_data, freq_list
+
+    def trigger(self):
+        """Execute a bus trigger, which can be used when :meth:`~.trigger_on_bus`
+        is configured. Returns result of triggered measurement.
+        """
+        return self.write("*TRG")
+
+    def trigger_on_bus(self):
+        """Configure the trigger to detect events based on the bus trigger, which can be
+        activated by :meth:`~.trigger`.
+        """
+        self.write("TRIG:SOUR BUS")
