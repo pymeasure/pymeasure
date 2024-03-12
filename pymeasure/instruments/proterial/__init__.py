@@ -22,7 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .channel import Channel
-from .instrument import Instrument
-from .resources import find_serial_port, list_resources
-from .generic_types import SCPIMixin, SCPIUnknownMixin
+from .rod4 import ROD4

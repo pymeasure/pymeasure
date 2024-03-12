@@ -29,7 +29,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from pymeasure import instruments
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import Instrument, Channel, generic_types
 
 
 # Collect all instruments
@@ -82,6 +82,16 @@ for device in devices.union(channels):
         prop = getattr(device, property_name)
         if isinstance(prop, property):
             properties.append((device, property_name, prop))
+for mixin in dir(generic_types):
+    if mixin in ("Instrument", "Channel", "CommonBase"):  # exclucion list.
+        continue
+    elif mixin[0].isupper():
+        # filter only classes
+        device = getattr(generic_types, mixin)
+        for property_name in dir(device):
+            prop = getattr(device, property_name)
+            if isinstance(prop, property):
+                properties.append((device, property_name, prop))
 
 # Instruments unable to accept an Adapter instance.
 proper_adapters = []
