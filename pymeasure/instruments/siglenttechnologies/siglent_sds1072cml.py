@@ -30,6 +30,29 @@ class VoltageChannel(Channel):
     """ Implementation of a SIGLENT SDS1072CML Oscilloscope channel
 
     """
+    vertical_division=Channel.control(
+        "C{ch}:VDIV?","C{ch}:VDIV %s",
+        "Sets or gets the vertical sensitivity of a channel.",
+        validator=truncated_discrete_set,
+        values={
+                2e-3:"2.00E-03V",5e-3:"5.00E-03V",
+                1e-2:"1.00E-02V",2e-2:"2.00E-02V",5e-2:"5.00E-02V",
+                1e-1:"1.00E-01V",2e-1:"2.00E-01V",5e-1:"5.00E-01V",
+                1e+0:"1.00E+00V",2e+0:"2.00E+00V",5e+0:"5.00E+00V",
+                1e+1:"1.00E+01V"
+                },
+        get_process= lambda v : v.split(" ",1)[-1],
+        map_values=True
+    )
+    coupling=Channel.control(
+        "C{ch}:CPL?","C{ch}:CPL %s1M",
+        "Sets and gets the channel coupling mode. (see UM p. 35)",
+        validator=truncated_discrete_set,
+        values={"AC":"A","DC":"D"},
+        map_values=True,
+        get_process= lambda v : v.split(" ",1)[-1][0],
+    )
+
 
 class SDS1072CML(Instrument):
     """ Represents the SIGLENT SDS1072CML Oscilloscope
@@ -41,13 +64,13 @@ class SDS1072CML(Instrument):
             name,
             **kwargs
         )
-        self.ch1 = Channel(self,1)
-        self.ch2 = Channel(self,2)
+    channel_1=Instrument.ChannelCreator(VoltageChannel,"1")
+    channel_2=Instrument.ChannelCreator(VoltageChannel,"2")
     timeDiv=Instrument.control(
         ":TDIV?",":TDIV %s",
         "Sets the time division to the closest possible value,rounding downwards.",
         validator=truncated_discrete_set,
-        values={5e-9:"5NS",
+        values={5e-9:"5.00E-09S",
                 1e-8:"1.00E-08S",2.5e-8:"2.50E-08S",5e-8:"5.00E-08S",
                 1e-7:"1.00E-07S",2.5e-7:"2.50E-07S",5e-7:"5.00E-07S",
                 1e-6:"1.00E-06S",2.5e-6:"2.50E-06S",5e-6:"5.00E-06S",
@@ -57,7 +80,7 @@ class SDS1072CML(Instrument):
                 1e-2:"1.00E-02S",2.5e-2:"2.50E-02S",5e-2:"5.00E-02S",
                 1e-1:"1.00E-01S",2.5e-1:"2.50E-01S",5e-1:"5.00E-01S",
                 1e0:"1.00E+00S",2.5e0:"2.50E+00S",5e0:"5.00E+00S",
-                1e1:"1.00E+01S",2.5e1:"2.50E+01S",5e0:"5.00E+01S",
+                1e1:"1.00E+01S",2.5e1:"2.50E+01S",5e1:"5.00E+01S",
                 },
                 map_values=True,
                 get_process=lambda v: v.split(" ",1)[-1]
@@ -72,57 +95,58 @@ class SDS1072CML(Instrument):
         "Gets the scope's Internal state change register and clears it.",
         get_process= lambda v : v.split(" ",1)[-1]
     )
+    is_ready=Instrument.control(
+        "SAST?",None,
+        "Checks if the scope is ready for the next acquisition",
+        #validator=truncated_discrete_set,
+        #values={True:"Stop",True:"Ready",True:"Armed",False:"Trig\'d"},
+        #map_values=True,
+        get_process= lambda v : True if (v.split(" ",1)[-1] in ["Stop","Ready","Armed"]) else False
+    )
+    stop=Instrument.control(
+        "STOP",None,
+        "Stops all acquisitions"
+    )
+    wait=Instrument.control(
+        None,"WAIT %d",
+        "Stops the scope from doing anything until it has completed the current acquisition (p.146)"
+    )
+    arm=Instrument.control(
+        "ARM",None,
+        "Changes the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition."
+    )
+    trigger_setup=Instrument.control(
+        ":TRIG_SELECT?","TRSE %s,SR,%s,HT,%s,HV,%s",
+        """ Read and set trigger setup as a dict containing the following keys:
 
-#        SOURCE_VALUES = ['CH1', 'CH2', 'MATH']
-#
-#        TYPE_VALUES = [
-#            'FREQ', 'MEAN', 'PERI', 'PHA', 'PK2', 'CRM',
-#            'MINI', 'MAXI', 'RIS', 'FALL', 'PWI', 'NWI'
-#        ]
-#
-#        UNIT_VALUES = ['V', 's', 'Hz']
-#
-#        def __init__(self, parent, preamble="MEASU:IMM:"):
-#            self.parent = parent
-#            self.preamble = preamble
-#
-#        @property
-#        def value(self):
-#            return self.parent.values("%sVAL?" % self.preamble)
-#
-#        @property
-#        def source(self):
-#            return self.parent.ask("%sSOU?" % self.preamble).strip()
-#
-#        @source.setter
-#        def source(self, value):
-#            if value in TDS2000.Measurement.SOURCE_VALUES:
-#                self.parent.write(f"{self.preamble}SOU {value}")
-#            else:
-#                raise ValueError("Invalid source ('{}') provided to {}".format(
-#                    self.parent, value))
-#
-#        @property
-#        def type(self):
-#            return self.parent.ask("%sTYP?" % self.preamble).strip()
-#
-#        @type.setter
-#        def type(self, value):
-#            if value in TDS2000.Measurement.TYPE_VALUES:
-#                self.parent.write(f"{self.preamble}TYP {value}")
-#            else:
-#                raise ValueError("Invalid type ('{}') provided to {}".format(
-#                    self.parent, value))
-#
-#        @property
-#        def unit(self):
-#            return self.parent.ask("%sUNI?" % self.preamble).strip()
-#
-#        @unit.setter
-#        def unit(self, value):
-#            if value in TDS2000.Measurement.UNIT_VALUES:
-#                self.parent.write(f"{self.preamble}UNI {value}")
-#            else:
-#                raise ValueError("Invalid unit ('{}') provided to {}".format(
-#                    self.parent, value))
-#
+        - "trigger_type": condition that will trigger the acquisition of waveforms [edge,
+          slew,glit,intv,runt,drop]
+        - "source": trigger source [c1,c2,c3,c4]
+        - "hold_type": hold type (refer to page 131 of programing guide)
+        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+
+        This function fails if the oscilloscope is in alternating trigger mode
+
+        """,
+        set_process=lambda dictIn: (
+         dictIn.get("trigger_type") if dictIn.get("trigger_type") is not None else "EDGE",
+         dictIn.get("source") if dictIn.get("source") is not None else "C1",
+         dictIn.get("hold_type") if dictIn.get("hold_type") is not None else "TI",
+         dictIn.get("hold_value1") if dictIn.get("hold_value1") is not None else "100NS"
+        ),
+        get_process=lambda v:{
+            "trigger_type":v[0].split(" ",1)[-1],
+            "source":v[2] ,
+            "hold_type":v[4],
+            "hold_value1":v[6]
+            }
+    )
+#    #Maybe make this a little more elegant? make a trigger channel?
+#    @property
+#    def trigger_source=Instrument.control(
+#        "TRIG_SELECT?","TRSE %s,SR,%s",
+#        "Sets the oscilloscope trigger to a specific type () the specified channel (str, {EX,EX/5,C1,C2})",
+#        validator=truncated_discrete_set,
+#        values=["EX","EX/5","C1","C2"],
+#        get_process=lambda v : v[2].split(" ",1)[-1]
+#    )

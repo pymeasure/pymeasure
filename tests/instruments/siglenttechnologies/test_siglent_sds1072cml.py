@@ -35,5 +35,9 @@ pyvisa.ResourceManager('@py')
 #print(list_resources())
 scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
 scope.timediv=20e-1
-print(scope.internalState)
+print(scope.trigger_setup)
+triggerDict=scope.trigger_setup
+triggerDict['source']='C1'
+scope.trigger_setup=triggerDict
+#scope.trigger_setup=("GLIT","C1")
 #scp.setCoupling(channel=1,mode='DC')
