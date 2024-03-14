@@ -1,6 +1,6 @@
-##########################################
+####################################################
 Yokogawa AQ6370 Series of Optical Spectrum Analyzers
-##########################################
+####################################################
 
 .. autoclass:: pymeasure.instruments.yokogawa.aq6370series.AQ6370Series
     :members:
