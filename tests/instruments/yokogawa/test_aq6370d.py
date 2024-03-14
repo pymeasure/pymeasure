@@ -1,6 +1,6 @@
 import pytest
 
-from pymeasure.instruments.yokogawa.aq6370Series import AQ6370D
+from pymeasure.instruments.yokogawa.aq6370series import AQ6370D
 from pymeasure.test import expected_protocol
 
 
