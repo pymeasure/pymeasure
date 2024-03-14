@@ -11,5 +11,5 @@ This section contains specific documentation on the Yokogawa instruments that ar
 
    yokogawa7651
    yokogawags200
-   aq6370Series
+   aq6370series
    
