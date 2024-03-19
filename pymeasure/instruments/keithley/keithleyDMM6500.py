@@ -815,7 +815,7 @@ class KeithleyDMM6500(Instrument):
             self.mode = "resistance 4W"
             self.resistance_4W_range = max_resistance
         else:
-            raise ValueError("Keithley DMM6500 only supports 2 or 4 wire" "resistance measurements.")
+            raise ValueError("Keithley DMM6500 only supports 2 or 4 wire resistance measurements.")
 
     ##################
     # Frequency (Hz) #
