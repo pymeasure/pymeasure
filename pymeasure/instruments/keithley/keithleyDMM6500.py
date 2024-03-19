@@ -1229,7 +1229,7 @@ class KeithleyDMM6500(Instrument):
             to accept new commands
         :param end_idx: An alternative way to set :attr:`scan_count`
         :param raw: An alternative way to set :attr:`scan_interval` in second
-        :return: A list of scan channels' measuredh
+        :return: A list of scan channels' measured
         :rtype: A list of channels' list
         """
         self.write(":FORM:DATA ASCII")
