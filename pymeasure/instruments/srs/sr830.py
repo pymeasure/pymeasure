@@ -416,7 +416,7 @@ class SR830(Instrument):
         """
         offset, expand = self.get_scaling(channel)
         sensitivity = self.sensitivity
-        return lambda x: (x / (10. * expand) + offset) * sensitivity
+        return lambda x: x / expand + offset / 100. * sensitivity
 
     @property
     def sample_frequency(self):
