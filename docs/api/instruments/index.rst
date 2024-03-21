@@ -21,6 +21,7 @@ Instruments by manufacturer:
    :maxdepth: 2
 
    activetechnologies/index
+   aculight/index
    advantest/index
    agilent/index
    aimtti/index
