@@ -25,15 +25,15 @@
 
 import logging
 from time import sleep, time
-import numpy
 from enum import IntFlag
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
 from .base import OxfordInstrumentsBase
-
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -514,34 +514,34 @@ class ITC503(OxfordInstrumentsBase):
         self.sweep_status = 0
 
         # Convert input np.ndarrays
-        temperatures = numpy.array(temperatures, ndmin=1)
-        sweep_time = numpy.array(sweep_time, ndmin=1)
-        hold_time = numpy.array(hold_time, ndmin=1)
+        temperatures = np.array(temperatures, ndmin=1)
+        sweep_time = np.array(sweep_time, ndmin=1)
+        hold_time = np.array(hold_time, ndmin=1)
 
         # Make steps array
         if steps is None:
             steps = temperatures.size
-        steps = numpy.linspace(1, steps, steps)
+        steps = np.linspace(1, steps, steps)
 
         # Create interpolated arrays
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, temperatures.size))
-        temperatures = numpy.interp(steps, interpolator, temperatures)
+        interpolator = np.round(
+            np.linspace(1, steps.size, temperatures.size))
+        temperatures = np.interp(steps, interpolator, temperatures)
 
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, sweep_time.size))
-        sweep_time = numpy.interp(steps, interpolator, sweep_time)
+        interpolator = np.round(
+            np.linspace(1, steps.size, sweep_time.size))
+        sweep_time = np.interp(steps, interpolator, sweep_time)
 
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, hold_time.size))
-        hold_time = numpy.interp(steps, interpolator, hold_time)
+        interpolator = np.round(
+            np.linspace(1, steps.size, hold_time.size))
+        hold_time = np.interp(steps, interpolator, hold_time)
 
         # Pad with zeros to wipe unused steps (total 16) of the sweep program
         padding = 16 - temperatures.size
-        temperatures = numpy.pad(temperatures, (0, padding), 'constant',
-                                 constant_values=temperatures[-1])
-        sweep_time = numpy.pad(sweep_time, (0, padding), 'constant')
-        hold_time = numpy.pad(hold_time, (0, padding), 'constant')
+        temperatures = np.pad(temperatures, (0, padding), 'constant',
+                              constant_values=temperatures[-1])
+        sweep_time = np.pad(sweep_time, (0, padding), 'constant')
+        hold_time = np.pad(hold_time, (0, padding), 'constant')
 
         # Setting the arrays to the controller
         for line, (setpoint, sweep, hold) in \

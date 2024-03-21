@@ -24,8 +24,9 @@
 
 import logging
 import re
-import numpy
 from itertools import product
+
+import numpy as np
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -101,35 +102,35 @@ class SequenceHandler:
         'range': range,
         'sorted': sorted,
         'list': list,
-        'arange': numpy.arange,
-        'linspace': numpy.linspace,
-        'arccos': numpy.arccos,
-        'arcsin': numpy.arcsin,
-        'arctan': numpy.arctan,
-        'arctan2': numpy.arctan2,
-        'ceil': numpy.ceil,
-        'cos': numpy.cos,
-        'cosh': numpy.cosh,
-        'degrees': numpy.degrees,
-        'e': numpy.e,
-        'exp': numpy.exp,
-        'fabs': numpy.fabs,
-        'floor': numpy.floor,
-        'fmod': numpy.fmod,
-        'frexp': numpy.frexp,
-        'hypot': numpy.hypot,
-        'ldexp': numpy.ldexp,
-        'log': numpy.log,
-        'log10': numpy.log10,
-        'modf': numpy.modf,
-        'pi': numpy.pi,
-        'power': numpy.power,
-        'radians': numpy.radians,
-        'sin': numpy.sin,
-        'sinh': numpy.sinh,
-        'sqrt': numpy.sqrt,
-        'tan': numpy.tan,
-        'tanh': numpy.tanh,
+        'arange': np.arange,
+        'linspace': np.linspace,
+        'arccos': np.arccos,
+        'arcsin': np.arcsin,
+        'arctan': np.arctan,
+        'arctan2': np.arctan2,
+        'ceil': np.ceil,
+        'cos': np.cos,
+        'cosh': np.cosh,
+        'degrees': np.degrees,
+        'e': np.e,
+        'exp': np.exp,
+        'fabs': np.fabs,
+        'floor': np.floor,
+        'fmod': np.fmod,
+        'frexp': np.frexp,
+        'hypot': np.hypot,
+        'ldexp': np.ldexp,
+        'log': np.log,
+        'log10': np.log10,
+        'modf': np.modf,
+        'pi': np.pi,
+        'power': np.power,
+        'radians': np.radians,
+        'sin': np.sin,
+        'sinh': np.sinh,
+        'sqrt': np.sqrt,
+        'tan': np.tan,
+        'tanh': np.tanh,
     }
 
     def __init__(self, valid_inputs=(), file_obj=None):
@@ -185,7 +186,7 @@ class SequenceHandler:
                           "for parameter '{}', depth {}".format(name, depth))
             raise SequenceEvaluationError("No sequence entered")
 
-        evaluated_string = numpy.array(evaluated_string)
+        evaluated_string = np.array(evaluated_string)
         return evaluated_string
 
     def _get_idx(self, seq_item):
