@@ -146,7 +146,7 @@ class IBeamSmart(Instrument):
         before the '[OK]'
 
         Value extraction: extract <value> from 'name = <value> [unit]'.
-        If <value> can not be identified the orignal string is returned.
+        If <value> can not be identified the original string is returned.
 
         :return: string containing the ASCII response of the instrument (without '[OK]').
         """
@@ -164,7 +164,7 @@ class IBeamSmart(Instrument):
         except VisaIOError:
             reply = '\n'.join(msg)
             try:
-                self.adapter.connection.flush_read_buffer()
+                self.adapter.flush_read_buffer()
             except AttributeError:
                 log.warning("Adapter does not have 'flush_read_buffer' method.")
             raise ValueError(f"Flush buffer failed after '{reply}'")
@@ -185,7 +185,7 @@ class IBeamSmart(Instrument):
         reply = self.read()
         if reply:
             # anything else than '[OK]'.
-            self.adapter.connection.flush_read_buffer()
+            self.adapter.flush_read_buffer()
             log.error(f"Setting a property failed with reply '{reply}'.")
             raise ValueError(f"Setting a property failed with reply '{reply}'.")
         return []
