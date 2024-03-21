@@ -52,6 +52,7 @@ Instruments by manufacturer:
    newport/index
    ni/index
    novanta/index
+   ophir/index
    oxfordinstruments/index
    parker/index
    pendulum/index
