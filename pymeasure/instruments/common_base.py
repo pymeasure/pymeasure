@@ -24,6 +24,7 @@
 
 from inspect import getmembers
 import logging
+from threading import RLock
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -127,6 +128,7 @@ class CommonBase:
     __reserved_prefix = "___"
 
     def __init__(self, preprocess_reply=None, **kwargs):
+        self._rlock = RLock()
         self._special_names = self._setup_special_names()
         self._create_channels()
         if preprocess_reply is not None:
@@ -382,9 +384,10 @@ class CommonBase:
         :param query_delay: Delay between writing and reading in seconds.
         :returns: String returned by the device without read_termination.
         """
-        self.write(command)
-        self.wait_for(query_delay)
-        return self.read()
+        with self._rlock:
+            self.write(command)
+            self.wait_for(query_delay)
+            return self.read()
 
     def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1,
                **kwargs):
@@ -552,23 +555,24 @@ class CommonBase:
                  ):
             if get_command is None:
                 raise LookupError("Property can not be read.")
-            vals = self.values(command_process(get_command),
-                               separator=separator,
-                               cast=cast,
-                               preprocess_reply=preprocess_reply,
-                               maxsplit=maxsplit,
-                               **values_kwargs)
-            if check_get_errors:
-                try:
-                    error_list = self.check_get_errors()
-                except Exception as exc:
-                    log.error("Exception raised while getting a property with the command "
-                              f"""'{command_process(get_command)}': '{str(exc)}'.""")
-                    raise
-                errors = [str(error) for error in error_list]
-                if errors:
-                    log.error("Error received after trying to get a property with the command "
-                              f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
+            with self._rlock:
+                vals = self.values(command_process(get_command),
+                                   separator=separator,
+                                   cast=cast,
+                                   preprocess_reply=preprocess_reply,
+                                   maxsplit=maxsplit,
+                                   **values_kwargs)
+                if check_get_errors:
+                    try:
+                        error_list = self.check_get_errors()
+                    except Exception as exc:
+                        log.error("Exception raised while getting a property with the command "
+                                  f"""'{command_process(get_command)}': '{str(exc)}'.""")
+                        raise
+                    errors = [str(error) for error in error_list]
+                    if errors:
+                        log.error("Error received after trying to get a property with the command "
+                                  f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -615,20 +619,21 @@ class CommonBase:
                     'Values of type `{}` are not allowed '
                     'for CommonBase.control'.format(type(values))
                 )
-            self.write(command_process(set_command) % value)
-            if check_set_errors:
-                try:
-                    error_list = self.check_set_errors()
-                except Exception as exc:
-                    log.error("Exception raised while setting a property with the command "
-                              f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
-                    raise
-                errors = [str(error) for error in error_list]
-                if errors:
-                    log.error(
-                        "Error received after trying to set a property with the command "
-                        f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
-                    )
+            with self._rlock:
+                self.write(command_process(set_command) % value)
+                if check_set_errors:
+                    try:
+                        error_list = self.check_set_errors()
+                    except Exception as exc:
+                        log.error("Exception raised while setting a property with the command "
+                                  f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
+                        raise
+                    errors = [str(error) for error in error_list]
+                    if errors:
+                        log.error(
+                            "Error received after trying to set a property with the command "
+                            f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""  # noqa: E501
+                        )
 
         # Add the specified document string to the getter
         fget.__doc__ = docs
