@@ -46,6 +46,7 @@ Bastian Leykauf
 Matthew Delaney
 Marco von Rosenberg
 Jack Van Sambeek
+Pierre-Louis Lamure
 JC Arbelbide
 Florian Jünger
 Benedikt Moneke

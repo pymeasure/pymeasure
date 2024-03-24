@@ -23,3 +23,4 @@
 #
 
 from .esp300 import ESP300
+from .smc100 import SMC100
