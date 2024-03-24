@@ -74,4 +74,5 @@ Instruments by manufacturer:
    thyracont/index
    toptica/index
    velleman/index
+   wentworthlabs/index
    yokogawa/index
