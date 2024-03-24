@@ -45,7 +45,18 @@ Prologix adapter
     :inherited-members:
     :show-inheritance:
     :private-members: _format_binary_values
+    
+=====================
+NI GPIB-232CT adapter
+=====================
 
+.. autoclass:: pymeasure.adapters.NI_GPIB_232
+    :members:
+    :undoc-members:
+    :inherited-members: pymeasure.adapters.NI_GPIB_232.GPIBStatus, pymeasure.adapters.NI_GPIB_232.GPIBError, pymeasure.adapters.NI_GPIB_232.SERIALError, IntFlag
+    :show-inheritance:
+    :private-members: _format_binary_values
+    
 ==============
 VXI-11 adapter
 ==============
