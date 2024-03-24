@@ -255,9 +255,10 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
         try:
-            return self.toDouble(text)
+            val = self.toDouble(text)
         except ValueError:
-            return self._parameter.default
+            val = self._parameter.default
+        return val
 
     def textFromValue(self, value):
         string = self.toString(value).replace("e+", "e")
