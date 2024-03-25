@@ -827,7 +827,7 @@ class TektronixMsoScope(Instrument):
 
     trigger_edge_coupling = Instrument.control(
         "TRIGger:A:EDGE:COUPling?",
-        "TRIGger:A:EDGE:COUPling? %s",
+        "TRIGger:A:EDGE:COUPling %s",
         """Control the coupling for the edge trigger.
         """,
         validator=strict_discrete_set,
