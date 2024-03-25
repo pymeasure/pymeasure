@@ -33,42 +33,68 @@ from pyvisa import VisaIOError
 def get_steps_returns(steps_str: str):
     """
     When asked for the number of steps, the spectrometer returns a string in
-    format "o(number of steps)\r", with this function we get rid of the "o" and 
+    format "o(number of steps)\r", with this function we get rid of the "o" and
     the "\r" and we convert the resulting string to an integer.
     """
     steps_str = steps_str.lstrip('o')
     steps_str = steps_str.rstrip('\r')
     return int(steps_str)
 
+
 def read_int(string: str):
     """
-    When we expect a numeric answer from the spectrometer, it sometimes sends 
+    When we expect a numeric answer from the spectrometer, it sometimes sends
     some more characters in between, and with this function we get rid of those
-    extra characters. 
+    extra characters.
     """
     numeric_string = ''.join(char for char in string if char.isdigit())
     return int(numeric_string)
+
 
 class JY270M(Instrument):
     """This class represents the Jobin-Yvon 270M Driver."""
 
     """Backlash in number of motor steps."""
     _backlash = 320
-    
+
     """Number of motor steps per nm, nm per motor step, slit steps per micron, and microns per slit step."""
     _steps_nm = 32
-    _nm_step = 1/_steps_nm
+    _nm_step = 1 / _steps_nm
     _slit_steps_micron = 0.15748
-    _slit_microns_step = 1.0/_slit_steps_micron
-    
+    _slit_microns_step = 1.0 / _slit_steps_micron
+
     """Maximum value for the wavelength in nm, maximum number of steps for
     the grating motor and for the entry and exit slits."""
     _lambda_max = 1171.68
     _max_steps = 37494
     _max_steps_slit = 1102.36
 
+    @property
+    def default_timeout(self):
+        """ Usual timeout needed for normal working"""
+        return 300
 
-    def __init__(self, adapter, name = "JY270M", **kwargs):
+    @property
+    def lambda_0(self):
+        """ Get the wavelength when the motor just finished the initialization"""
+        return self._lambda_max
+
+    @property
+    def steps_in_one_nanometer(self):
+        return self._steps_nm
+
+    def __init__(self, adapter, name="JY270M", **kwargs):
+
+        kwargs.update(dict(baud_rate=9600,
+                           timeout=self.default_timeout,
+                           parity=Parity.none,
+                           data_bits=8,
+                           stop_bits=StopBits.one,
+                           flow_control=ControlFlow.dtr_dsr,
+                           write_termination='',
+                           read_termination='',
+                           includeSCPI=False))
+
         super().__init__(
             adapter,
             name,
@@ -100,27 +126,37 @@ class JY270M(Instrument):
         This function reads the answer of the spectrometer one byte at a time.
         """
         read = b''
-        for ind in range(10000):
+        for ind in range(100):
             try:
-                read += self.read_bytes(1)
+                r = self.read_bytes(1)
+                read += r
+                if r == b'\r':  # not all reads ends with \r so we rely on timeouts to end the loop
+                    break
             except VisaIOError:
                 break
         return read.decode()
 
-    def write_read(self, command: bytes):
+    def write_read(self, command: bytes, nread: int = 100, **kwargs):
         """
         This function writes a command to the spectrometer and reads the answer of the spectrometer one byte at a time.
         """
         self.write_bytes(command)
         read = b''
-        for ind in range(10000):
+        timeout = kwargs.get('timeout', self.default_timeout)
+        self.adapter.connection.timeout = timeout
+        for ind in range(nread):
             try:
-                read += self.read_bytes(1)
+                r = self.read_bytes(1)
+                read += r
+                if r == b'\r':  # not all reads ends with \r so we rely on timeouts to end the loop
+                    break
             except VisaIOError:
                 break
+        self.adapter.connection.timeout = self.default_timeout
         return read
 
-    def _get_code(self, ans: bytes):
+    @staticmethod
+    def _get_code(ans: bytes):
         if len(ans) > 0:
             return ans.decode()[0]
         else:
@@ -180,12 +216,13 @@ class JY270M(Instrument):
         """
         Spectrometer initialization
         """
-        self.write_read(b'A')
-        time.sleep(30)
+        ans = self.write_read(b'A', nread=1, timeout=100000)
+        code = self._get_code(ans)
+        assert code == 'o'
 
     def move_grating_steps(self, nsteps: int):
         """Absolute positioning of the grating motor in number of steps."""
-        ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode())
+        ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode(), nread=1, timeout=20000)
         code = self._get_code(ans)
         assert code == 'o'
 
@@ -200,24 +237,22 @@ class JY270M(Instrument):
 
     def move_entry_slit_steps(self, nsteps: int):
         """Absolute positioning of the entry slit motor in number of steps"""
-        ans = self.write_read(f'k0,0,{nsteps - self.entrysteps}\r'.encode())
+        ans = self.write_read(f'k0,0,{nsteps - self.entrysteps}\r'.encode(), nread=1, timeout=10000)
         code = self._get_code(ans)
         assert code == 'o'
 
     def get_entry_slit_microns(self):
         """Reading of the entry slit absolute position in micrometers"""
-        return self.entrysteps/self._slit_steps_micron
+        return self.entrysteps / self._slit_steps_micron
 
     def move_entry_slit_microns(self, microns: float):
         """Absolute positioning of the entry slit in micrometers"""
-        pos = microns * self._slit_steps_micron
-        ans = self.write_read(f'k0,0,{pos - self.entrysteps}\r'.encode())
-        code = self._get_code(ans)
-        assert code == 'o'
+        pos_steps = microns * self._slit_steps_micron
+        self.move_entry_slit_steps(pos_steps)
 
     def move_exit_slit_steps(self, nsteps: int):
         """Absolut positioning of the exit slit motor in number of steps"""
-        ans = self.write_read(f'k0,2,{nsteps - self.exitsteps}\r'.encode())
+        ans = self.write_read(f'k0,2,{nsteps - self.exitsteps}\r'.encode(), nread=1, timeout=10000)
         code = self._get_code(ans)
         assert code == 'o'
 
@@ -227,10 +262,8 @@ class JY270M(Instrument):
 
     def move_exit_slit_microns(self, microns: float):
         """Absolute positioning of the exit slit in millimeters"""
-        pos = microns * self._slit_steps_micron
-        ans = self.write_read(f'k0,2,{pos - self.exitsteps}\r'.encode())
-        code = self._get_code(ans)
-        assert code == 'o'
+        pos_steps = microns * self._slit_steps_micron
+        self.move_exit_slit_steps(pos_steps)
 
     def check_get_errors(self, error):
         print(error)
@@ -244,9 +277,9 @@ class JY270M(Instrument):
     def motor_busy_check(self):
         ans = self.write_read(b'E\r').decode()
         if ans == "oz":
-            return False # We return False if the motor is not busy.
+            return False  # We return False if the motor is not busy.
         if ans == "oq":
-            return True # We return True if the motor is busy.
+            return True  # We return True if the motor is busy.
 
     def motor_available(self):
         """
@@ -256,6 +289,7 @@ class JY270M(Instrument):
             pass
         time.sleep(1)
         return True
+
 
 if __name__ == '__main__':
     spectro = JY270M('COM1',
@@ -268,3 +302,4 @@ if __name__ == '__main__':
                      write_termination='',
                      read_termination='',
                      includeSCPI=False)
+
