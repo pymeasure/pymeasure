@@ -28,35 +28,37 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.jobinyvon.spectro270m import JY270M
 
 
-def test_initialization():
-    with expected_protocol():
-        JY270M,
-
-
-def test_auto_baud():
-    pass
 
 def test_entrysteps_setter():
     with expected_protocol(
             JY270M,
-            [(b'k0,0,-50\r', None)],
+            [(b'k0,0,50\r', None),
+             ],
     ) as inst:
-        inst.entrysteps = -50
+        inst.entrysteps = 50
 
-@pytest.mark.parametrize("comm_pairs, value", (
-        ([(b'j0,0\r', b'o0\r')],
-         0),
-        ([(b'j0,0\r', b'o50\r')],
-         50),
-        ([(b'j0,0\r', b'oo0\r')],
-         0),
-))
-def test_entrysteps_getter(comm_pairs, value):
+
+def test_entrysteps_getter():
     with expected_protocol(
             JY270M,
-            comm_pairs,
+            [(b'j0,0\r', b'o50\r'),
+            (b'j0,0\r', b'o-50\r'),
+            (b'j0,0\r', b'o1550\r')
+             ],
     ) as inst:
-        assert inst.entrysteps == value
+        assert inst.entrysteps == 50
+        assert inst.entrysteps == -50
+        assert inst.entrysteps == 1550
+
+
+def test_motor_init():
+    with expected_protocol(
+            JY270M,
+            [(b'A', b'o')
+             ],
+    ) as inst:
+        inst.motor_init()
+
 
 def test_exitsteps_setter():
     with expected_protocol(
