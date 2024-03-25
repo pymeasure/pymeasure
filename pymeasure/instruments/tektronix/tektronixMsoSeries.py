@@ -780,7 +780,7 @@ class TektronixMsoScope(Instrument):
           Otherwise, the running state shows Ready, and the interface does not display the waveform.
         """,
         validator=strict_discrete_set,
-        values={"normal": "NORM", "auto": "AUTO"},
+        values={"normal": "NORMAL", "auto": "AUTO"},
         map_values=True,
     )
 
