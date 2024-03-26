@@ -622,7 +622,6 @@ class Metadata(InputField):
         else:
             return fget
 
-
     def __str__(self):
         # Deprecated, can be removed once the units and fmt parameters are removed from the
         # Metadata base class
