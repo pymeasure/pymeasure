@@ -78,6 +78,7 @@ def test_motor_init():
              ],
     ) as inst:
         inst.motor_init()
+        assert entrysteps == 22
 
 
 def test_gsteps_setter():
