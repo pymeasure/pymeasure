@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from warnings import warn
 
 
 class InputField:
@@ -563,17 +564,38 @@ class Metadata(InputField):
         them with a period (e.g. to access an attribute or method of an
         instrument) where only the last attribute can be a method.
     :param units: The parameter units
+
+        .. deprecated:: 0.14
+            Removed from the base :class:`Metadata` class; the numeric subclasses
+            :class:`.IntegerMetadata`, :class:`.FloatMetadata`, :class:`.VectorMetadata`,
+            :class:`.ListMetadata`, and :class:`.PhysicalMetadata` do provide the possibility to
+            define units.
+
     :param default: The default value, in case no value is assigned or if no
         fget method is provided
     :param fmt: A string used to format the value upon writing it to a file.
         Default is "%s"
 
+        .. deprecated:: 0.14
+            The formatting is now defined by the specific :class:`.Metadata` subclasses; the
+            :class:`.Metadata` base class uses :code:`str` to convert the value to a string.
+
     """
-    def __init__(self, name, fget=None, **kwargs):
-        print("Metadata")
+
+    def __init__(self, name, fget=None, units=None, fmt=None, **kwargs):
         self.fget = fget
         self.evaluated = False
         super().__init__(name, **kwargs)
+
+        if units is not None:
+            self.units = units
+            warn("units parameter is deprecated, use appropriate Metadata subclass instead"
+                 " instead", FutureWarning)
+
+        if fmt is not None:
+            self.fmt = fmt
+            warn("fmt parameter is deprecated, use appropriate Metadata subclass instead"
+                 " instead", FutureWarning)
 
     def evaluate(self, parent=None, new_value=None):
         if new_value is not None and self.fget is not None:
@@ -599,6 +621,20 @@ class Metadata(InputField):
             return fget()
         else:
             return fget
+
+
+    def __str__(self):
+        # Deprecated, can be removed once the units and fmt parameters are removed from the
+        # Metadata base class
+        if hasattr(self, 'fmt'):
+            result = self.fmt % self.value
+        else:
+            result = super().__str__()
+
+        if hasattr(self, 'units') and self.units is not None:
+            result += " %s" % self.units
+
+        return result
 
 
 class IntegerMetadata(Metadata, IntegerInputField):
