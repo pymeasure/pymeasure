@@ -102,18 +102,17 @@ def test_gsteps_getter(comm_pairs, value):
         assert inst.gsteps == 12000
 
 
-@pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
-        ([(b'j0,0\r', b'o50\r')],
-         (), {}, 317.50063500127),
-        ([(b'j0,0\r', b'o15\r')],
-         (), {}, 95.250190500381),
-))
-def test_get_entry_slit_microns(comm_pairs, args, kwargs, value):
+def test_get_entry_slit_microns():
     with expected_protocol(
             JY270M,
-            comm_pairs,
+            [(b'j0,0\r', b'o50\r'),
+            (b'j0,0\r', b'o-50\r'),
+            (b'j0,0\r', b'o150\r')
+             ],
     ) as inst:
-        assert inst.get_entry_slit_microns(*args, **kwargs) == value
+        assert inst.get_entry_slit_microns() == 317.5
+        assert inst.get_entry_slit_microns() == -317.5
+        assert inst.get_entry_slit_microns() == 952.5
 
 @pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
         ([(b'j0,2\r', b'o50\r')],
