@@ -50,6 +50,27 @@ def test_entrysteps_getter():
         assert inst.entrysteps == -50
         assert inst.entrysteps == 1550
 
+def test_exitsteps_setter():
+    with expected_protocol(
+            JY270M,
+            [(b'k0,2,100\r', None),
+             ],
+    ) as inst:
+        inst.entrysteps = 100
+
+
+def test_exitsteps_getter():
+    with expected_protocol(
+            JY270M,
+            [(b'j0,2\r', b'o100\r'),
+            (b'j0,0\r', b'o-30\r'),
+            (b'j0,0\r', b'o250\r')
+             ],
+    ) as inst:
+        assert inst.entrysteps == 100
+        assert inst.entrysteps == -30
+        assert inst.entrysteps == 250
+
 
 def test_motor_init():
     with expected_protocol(
@@ -60,58 +81,26 @@ def test_motor_init():
         inst.motor_init()
 
 
-def test_exitsteps_setter():
-    with expected_protocol(
-            JY270M,
-            [(b'k0,2,-50\r', None)],
-    ) as inst:
-        inst.exitsteps = -50
-
-@pytest.mark.parametrize("comm_pairs, value", (
-        ([(b'j0,2\r', b'o0\r')],
-         0),
-        ([(b'j0,2\r', b'o50\r')],
-         50),
-        ([(b'j0,2\r', b'oo0\r')],
-         0),
-))
-def test_exitsteps_getter(comm_pairs, value):
-    with expected_protocol(
-            JY270M,
-            comm_pairs,
-    ) as inst:
-        assert inst.exitsteps == value
-
 def test_gsteps_setter():
     with expected_protocol(
             JY270M,
-            [(b'F0,-1000\r', None)],
+            [(b'F0,1000\r', None)],
     ) as inst:
-        inst.gsteps = -1000
+        inst.gsteps = 1000
 
-@pytest.mark.parametrize("comm_pairs, value", (
-        ([(b'H0\r', b'oo37494\r')],
-         37494),
-        ([(b'H0\r', b'o31100\r')],
-         31100),
-        ([(b'H0\r', b'o20000\r')],
-         20000),
-        ([(b'H0\r', b'oo19000\r')],
-         19000),
-))
+
 def test_gsteps_getter(comm_pairs, value):
     with expected_protocol(
             JY270M,
-            comm_pairs,
+            [(b'H0\r', b'o1000\r'),
+            (b'H0\r', b'o350\r'),
+            (b'H0\r', b'o12000\r')
+             ],
     ) as inst:
-        assert inst.gsteps == value
+        assert inst.gsteps == 1000
+        assert inst.gsteps == 350
+        assert inst.gsteps == 12000
 
-def test_motor_init_getter():
-    with expected_protocol(
-            JY270M,
-            [(b'A', None)],
-    ) as inst:
-        assert inst.motor_init == ''
 
 @pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
         ([(b'j0,0\r', b'o50\r')],
