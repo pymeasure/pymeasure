@@ -852,7 +852,6 @@ class TektronixMsoScope(Instrument):
         """,
         validator=strict_discrete_set,
         values=["NEGATIVE", "POSITIVE"],
-        map_values=True,
     )
 
     trigger_width_when = Instrument.control(
