@@ -110,9 +110,9 @@ def test_get_entry_slit_microns():
             (b'j0,0\r', 952.5)
              ],
     ) as inst:
-        inst.get_entry_slit_microns()
-        inst.get_entry_slit_microns()
-        inst.get_entry_slit_microns()
+        assert inst.get_entry_slit_microns()
+        assert inst.get_entry_slit_microns()
+        assert inst.get_entry_slit_microns()
 
 
 
@@ -120,7 +120,7 @@ def test_get_exit_slit_microns():
     with expected_protocol(
             JY270M,
     ) as inst:
-        assert inst.get_exit_slit_microns() == value
+        assert inst.get_exit_slit_microns() == 0
 
 def test_get_grating_wavelength():
     with expected_protocol(
