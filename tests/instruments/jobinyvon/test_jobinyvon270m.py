@@ -56,20 +56,20 @@ def test_exitsteps_setter():
             [(b'k0,2,100\r', None),
              ],
     ) as inst:
-        inst.entrysteps = 100
+        inst.exitsteps = 100
 
 
 def test_exitsteps_getter():
     with expected_protocol(
             JY270M,
             [(b'j0,2\r', b'o100\r'),
-            (b'j0,0\r', b'o-30\r'),
-            (b'j0,0\r', b'o250\r')
+            (b'j0,2\r', b'o-30\r'),
+            (b'j0,2\r', b'o250\r')
              ],
     ) as inst:
-        assert inst.entrysteps == 100
-        assert inst.entrysteps == -30
-        assert inst.entrysteps == 250
+        assert inst.exitsteps == 100
+        assert inst.exitsteps == -30
+        assert inst.exitsteps == 250
 
 
 def test_motor_init():
@@ -89,7 +89,7 @@ def test_gsteps_setter():
         inst.gsteps = 1000
 
 
-def test_gsteps_getter(comm_pairs, value):
+def test_gsteps_getter():
     with expected_protocol(
             JY270M,
             [(b'H0\r', b'o1000\r'),
