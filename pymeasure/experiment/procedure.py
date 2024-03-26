@@ -30,7 +30,7 @@ from importlib.machinery import SourceFileLoader
 import re
 from pint import UndefinedUnitError
 
-from .parameters import Parameter, Measurable, Metadata
+from .parameters import Parameter, Measurable, Metadata, InputField
 from pymeasure.units import ureg
 
 log = logging.getLogger()
@@ -67,11 +67,14 @@ class Procedure:
     }
 
     _parameters = {}
+    _metadata = {}
+    _inputfields = {}
 
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
-        self._update_parameters()
-        self._update_metadata()
+        self._initialize_input_fields()
+        # self._update_parameters()
+        # self._update_metadata()
         for key in kwargs:
             if key in self._parameters.keys():
                 setattr(self, key, kwargs[key])
@@ -130,20 +133,34 @@ class Procedure:
         log.debug("Produced numbers: %s" % data)
         self.emit('results', data)
 
-    def _update_parameters(self):
-        """ Collects all the Parameter objects for the procedure and stores
+    def _initialize_input_fields(self):
+        """ Collects all the InputField objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set in
-        their stead
+        their stead. The Parameters are placed in the `_parameters` dictionary,
+        the Metadata in the `_metadata` dictionary,  and the other InputFields
+        in the `_inputfields` dictionary.
+
         """
         if not self._parameters:
             self._parameters = {}
-        for item, parameter in inspect.getmembers(self.__class__):
-            if isinstance(parameter, Parameter):
-                self._parameters[item] = deepcopy(parameter)
-                if parameter.is_set():
-                    setattr(self, item, parameter.value)
+        if not self._metadata:
+            self._metadata = {}
+        if not self._inputfields:
+            self._inputfields = {}
+
+        for name, attribute in inspect.getmembers(self.__class__):
+            if isinstance(attribute, InputField):
+                if isinstance(attribute, Parameter):
+                    self._parameters[name] = deepcopy(attribute)
+                elif isinstance(attribute, Metadata):
+                    self._metadata[name] = deepcopy(attribute)
                 else:
-                    setattr(self, item, None)
+                    self._inputfields[name] = deepcopy(attribute)
+
+                if attribute.is_set():
+                    setattr(self, name, attribute.value)
+                else:
+                    setattr(self, name, None)
 
     def parameters_are_set(self):
         """ Returns True if all parameters are set """
@@ -214,22 +231,6 @@ class Procedure:
                     raise NameError("Parameter '{}' does not belong to '{}'".format(
                         name, repr(self)))
 
-    def _update_metadata(self):
-        """ Collects all the Metadata objects for the procedure and stores
-        them in a meta dictionary so that the actual values can be set and used
-        in their stead
-        """
-        self._metadata = {}
-
-        for item, metadata in inspect.getmembers(self.__class__):
-            if isinstance(metadata, Metadata):
-                self._metadata[item] = deepcopy(metadata)
-
-                if metadata.is_set():
-                    setattr(self, item, metadata.value)
-                else:
-                    setattr(self, item, None)
-
     def evaluate_metadata(self):
         """ Evaluates all Metadata objects, fixing their values to the current value
         """
@@ -245,20 +246,20 @@ class Procedure:
         """
         return self._metadata
 
-    def placeholder_objects(self):
-        """ Collect all eligible placeholders (parameters & metadata) with their value in a dict.
+    def inputfield_objects(self):
+        """ Collect all InputFields (parameters & metadata) with their value in a dict.
         """
-        return {**self.parameter_objects(), **self.metadata_objects()}
+        return {**self.parameter_objects(), **self.metadata_objects(), **self._inputfields}
 
     @classmethod
-    def placeholder_names(cls):
+    def inputfield_names(cls):
         """ Collect the names of all eligible placeholders (parameters & metadata)"""
-        placeholders = []
+        inputfields = []
         for _, item in inspect.getmembers(cls):
-            if isinstance(item, Metadata) or isinstance(item, Parameter):
-                placeholders.append(item.name)
+            if isinstance(item, InputField):
+                inputfields.append(item.name)
 
-        return list(set(placeholders))
+        return list(set(inputfields))
 
     def startup(self):
         """ Executes the commands needed at the start-up of the measurement

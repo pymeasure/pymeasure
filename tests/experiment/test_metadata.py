@@ -25,6 +25,7 @@
 import pytest
 
 from pymeasure.experiment.parameters import Metadata
+from pymeasure.experiment.parameters import IntegerMetadata
 from pymeasure.experiment.procedure import Procedure
 
 
@@ -34,16 +35,27 @@ def test_metadata_default():
 
 
 def test_metadata_units():
-    p = Metadata('Test', units='tests')
+    p = IntegerMetadata('Test', units='tests')
     assert p.units == 'tests'
 
 
-def test_metadata_formatting():
+def test_metadata_deprecated_behaviour():
+    # This test ensures the metadata units keeps working on the base Metadata class
+    # This behaviour is deprecated and the tests are to be removed when the units functionality
+    # is removed from the Metadata base class
+    p = Metadata('Test', units='tests')
+    assert p.units == 'tests'
+
     p1 = Metadata('Test', default=5.157, units='tests')
     assert str(p1) == "5.157 tests"
 
     p2 = Metadata('Test', default=5.157, units='tests', fmt="%.1f")
     assert str(p2) == "5.2 tests"
+
+
+def test_metadata_formatting():
+    p1 = Metadata('Test', default=5.157)
+    assert str(p1) == "5.157"
 
 
 def test_metadata_notset():

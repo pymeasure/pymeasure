@@ -41,7 +41,7 @@ class FilenameLineEdit(QtWidgets.QLineEdit):
     def __init__(self, procedure_class, parent=None):
         super().__init__("DATA", parent=parent)
 
-        self.placeholders = procedure_class.placeholder_names()
+        self.placeholders = procedure_class.inputfield_names()
         self.placeholders.extend(["date", "time"])
 
         completer = PlaceholderCompleter(self.placeholders)
