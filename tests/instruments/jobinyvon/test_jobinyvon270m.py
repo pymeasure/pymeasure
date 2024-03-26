@@ -37,7 +37,6 @@ def test_entrysteps_setter():
     ) as inst:
         inst.entrysteps = 50
 
-
 def test_entrysteps_getter():
     with expected_protocol(
             JY270M,
