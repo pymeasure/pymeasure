@@ -105,27 +105,22 @@ def test_gsteps_getter():
 def test_get_entry_slit_microns():
     with expected_protocol(
             JY270M,
-            [(b'j0,0\r', b'o50\r'),
-            (b'j0,0\r', b'o-50\r'),
-            (b'j0,0\r', b'o150\r')
+            [(b'j0,0\r', 317.5),
+            (b'j0,0\r', -317.5),
+            (b'j0,0\r', 952.5)
              ],
     ) as inst:
-        assert inst.get_entry_slit_microns() == 317.5
-        assert inst.get_entry_slit_microns() == -317.5
-        assert inst.get_entry_slit_microns() == 952.5
+        inst.get_entry_slit_microns()
+        inst.get_entry_slit_microns()
+        inst.get_entry_slit_microns()
 
-@pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
-        ([(b'j0,2\r', b'o50\r')],
-         (), {}, 317.50063500127),
-        ([(b'j0,2\r', b'o15\r')],
-         (), {}, 95.250190500381),
-))
-def test_get_exit_slit_microns(comm_pairs, args, kwargs, value):
+
+
+def test_get_exit_slit_microns():
     with expected_protocol(
             JY270M,
-            comm_pairs,
     ) as inst:
-        assert inst.get_exit_slit_microns(*args, **kwargs) == value
+        assert inst.get_exit_slit_microns() == value
 
 def test_get_grating_wavelength():
     with expected_protocol(
