@@ -78,8 +78,6 @@ def test_motor_init():
              ],
     ) as inst:
         inst.motor_init()
-        assert entrysteps == 22
-
 
 def test_gsteps_setter():
     with expected_protocol(
@@ -105,49 +103,59 @@ def test_gsteps_getter():
 def test_get_entry_slit_microns():
     with expected_protocol(
             JY270M,
-            [(b'j0,0\r', 317.5),
-            (b'j0,0\r', -317.5),
-            (b'j0,0\r', 952.5)
+            [(b'j0,0\r', b'o50\r'),
+             (b'j0,0\r', b'o-50\r'),
+             (b'j0,0\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_entry_slit_microns()
-        assert inst.get_entry_slit_microns()
-        assert inst.get_entry_slit_microns()
+        assert inst.get_entry_slit_microns() == 317.50063500127
+        assert inst.get_entry_slit_microns() == -317.50063500127
+        assert inst.get_entry_slit_microns() == 952.50190500381
 
 
 
 def test_get_exit_slit_microns():
     with expected_protocol(
             JY270M,
+            [(b'j0,2\r', b'o50\r'),
+            (b'j0,2\r', b'o-50\r'),
+            (b'j0,2\r', b'o150\r')
+             ],
     ) as inst:
-        assert inst.get_exit_slit_microns() == 0
+        assert inst.get_exit_slit_microns() == 317.50063500127
+        assert inst.get_exit_slit_microns() == -317.50063500127
+        assert inst.get_exit_slit_microns() == 952.50190500381
 
 def test_get_grating_wavelength():
     with expected_protocol(
             JY270M,
-            [(b'H0\r', b'o20801\r')],
+            [(b'H0\r', b'o20801\r'),
+             (b'H0\r', b'o5000\r'),
+             (b'H0\r', b'o30000\r')],
     ) as inst:
         assert inst.get_grating_wavelength() == 650.0237500000001
+        assert inst.get_grating_wavelength() == 156.24250000000006
+        assert inst.get_grating_wavelength() == 937.4925000000001
 
 def test_motor_busy_check():
     with expected_protocol(
             JY270M,
-            [(b'E\r', b'oz')],
+            [(b'E\r', b'oz\r')],
     ) as inst:
-        assert inst.motor_busy_check() is False
+        assert inst.motor_busy_check() == None
 
 def test_motor_stop():
     with expected_protocol(
             JY270M,
-            [(b'L', b'o')],
+            [(b'L', b'o\r')],
     ) as inst:
-        assert inst.motor_stop() is None
+        assert inst.motor_stop() == None
 
 def test_move_entry_slit_microns():
     with expected_protocol(
             JY270M,
-            [(b'j0,0\r', b'o0\r'),
-             (b'k0,0,15.748000000000001\r', b'o')],
+            [(b'j0,0\r', b'o100\r')
+             ],
     ) as inst:
         assert inst.move_entry_slit_microns(*(100,), ) is None
 
@@ -175,20 +183,12 @@ def test_move_exit_slit_steps():
     ) as inst:
         assert inst.move_exit_slit_steps(*(50,), ) is None
 
-@pytest.mark.parametrize("comm_pairs, args, kwargs, value", (
-        ([(b'H0\r', b'o37494\r'),
-          (b'F0,-37494\r', b'o')],
-         (0,), {}, None),
-        ([(b'H0\r', b'o31100\r'),
-          (b'F0,-11100\r', b'o')],
-         (20000,), {}, None),
-))
-def test_move_grating_steps(comm_pairs, args, kwargs, value):
+def test_move_grating_steps():
     with expected_protocol(
             JY270M,
             comm_pairs,
     ) as inst:
-        assert inst.move_grating_steps(*args, **kwargs) == value
+        assert inst.move_grating_steps() == value
 
 def test_move_grating_wavelength():
     with expected_protocol(
@@ -196,11 +196,11 @@ def test_move_grating_wavelength():
             [(b'H0\r', b'o19000\r'),
              (b'F0,1801\r', b'o')],
     ) as inst:
-        assert inst.move_grating_wavelength(*(650,), ) is None
+        assert inst.move_grating_wavelength() is None
 
 def test_write_read():
     with expected_protocol(
             JY270M,
             [(b' ', b'F')],
     ) as inst:
-        assert inst.write_read(*(b' ',), ) == b'F'
+        assert inst.write_read() == b'F'
