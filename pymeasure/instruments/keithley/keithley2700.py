@@ -25,7 +25,7 @@
 import logging
 from warnings import warn
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 
 from .buffer import KeithleyBuffer
 
@@ -87,7 +87,7 @@ def text_length_validator(value, values):
     return value[:values]
 
 
-class Keithley2700(KeithleyBuffer, SCPIUnknownMixin, Instrument):
+class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2700 Multimeter/Switch System and provides a
     high-level interface for interacting with the instrument.
 

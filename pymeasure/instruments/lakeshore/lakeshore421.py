@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
@@ -30,7 +30,7 @@ import numpy as np
 from time import time, sleep
 
 
-class LakeShore421(SCPIUnknownMixin, Instrument):
+class LakeShore421(Instrument):
     """
     Represents the Lake Shore 421 Gaussmeter and provides a high-level interface for interacting
     with the instrument.
@@ -64,6 +64,7 @@ class LakeShore421(SCPIUnknownMixin, Instrument):
             asrl={'baud_rate': baud_rate, 'data_bits': 7, 'stop_bits': 10, 'parity': 1},
             read_termination='\r',
             write_termination='\n',
+            includeSCPI=False,
             **kwargs
         )
         self.last_write_time = time()

@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set
 
 from time import sleep
 import numpy as np
 
 
-class LakeShore425(SCPIUnknownMixin, Instrument):
+class LakeShore425(Instrument):
     """ Represents the LakeShore 425 Gaussmeter and provides
     a high-level interface for interacting with the instrument
 
@@ -84,6 +84,7 @@ class LakeShore425(SCPIUnknownMixin, Instrument):
                   'parity': 1,  # odd
                   'data_bits': 7
                   },
+            includeSCPI=False,
             **kwargs
         )
 
@@ -96,7 +97,7 @@ class LakeShore425(SCPIUnknownMixin, Instrument):
         if wideband:
             self.mode = (1, 0, 1)
         else:
-            self.mode(1, 0, 2)
+            self.mode = (1, 0, 2)
 
     def ac_mode(self, wideband=True):
         """ Sets up a measurement of an oscillating (AC) field """
