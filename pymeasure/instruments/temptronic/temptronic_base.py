@@ -125,6 +125,12 @@ class ATSBase(Instrument):
     """The base class for Temptronic ATSXXX instruments.
     """
 
+    def __init__(self, adapter, name="ATSBase", **kwargs):
+        super().__init__(adapter, name=name, **kwargs)
+
+    def wait_for(self, query_delay=None):
+        super().wait_for(0.05 if query_delay is None else query_delay)
+
     remote_mode = Instrument.setting(
         "%s",
         """``True`` disables TS GUI but displays a “Return to local" switch.""",
@@ -375,7 +381,7 @@ class ATSBase(Instrument):
          0      None
         ======  ======
 
-        Refere to chapter 4 in the manual
+        Refer to chapter 4 in the manual
 
         """,
     )
@@ -548,9 +554,6 @@ class ATSBase(Instrument):
         map_values=True,
         dynamic=True
     )
-
-    def __init__(self, adapter, name="ATSBase", **kwargs):
-        super().__init__(adapter, name=name, query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.

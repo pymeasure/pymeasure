@@ -266,7 +266,7 @@ class SmartlineV2(Instrument):
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")
 
-    def ask(self, command_message, query_delay=0):
+    def ask(self, command_message, query_delay=None):
         """Ask for some value and check that the response matches the original command.
 
         :param str command_message: Access code, command, length, and content.
@@ -276,14 +276,14 @@ class SmartlineV2(Instrument):
         self.wait_for(query_delay)
         return self.read(command_message[1:3])
 
-    def ask_manually(self, accessCode, command, data="", query_delay=0):
+    def ask_manually(self, accessCode, command, data="", query_delay=None):
         """
         Send a message to the transmitter and return its answer.
 
         :param accessCode: How to access the device.
         :param command: Command to send to the device.
         :param data: Data for the command.
-        :param int query_delay: Time to wait between writing and reading.
+        :param float query_delay: Time to wait between writing and reading in seconds.
         :return str: Response from the device after error checking.
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")

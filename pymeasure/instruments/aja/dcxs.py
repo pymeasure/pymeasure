@@ -31,7 +31,7 @@ class DCXS(Instrument):
 
     Connection to the device is made through an RS232 serial connection.
     The communication settings are fixed in the device at 38400, one stopbit, no parity.
-    The communication protocol of the device uses single character commands and fixed length replys,
+    The device's communication protocol uses single character commands and fixed length replies,
     both without any terminator.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
@@ -53,7 +53,7 @@ class DCXS(Instrument):
         # characters.
         self.adapter.flush_read_buffer()
 
-    def ask(self, command, query_delay=0, **kwargs):
+    def ask(self, command, query_delay=None, **kwargs):
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
