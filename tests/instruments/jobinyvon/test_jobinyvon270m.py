@@ -33,9 +33,13 @@ def test_entrysteps_setter():
     with expected_protocol(
             JY270M,
             [(b'k0,0,50\r', None),
+             (b'k0,0,1500\r', None),
+             (b'k0,0,-50\r', None)
              ],
     ) as inst:
         inst.entrysteps = 50
+        inst.entrysteps = 1500
+        inst.entrysteps = -50
 
 def test_entrysteps_getter():
     with expected_protocol(
@@ -52,10 +56,15 @@ def test_entrysteps_getter():
 def test_exitsteps_setter():
     with expected_protocol(
             JY270M,
-            [(b'k0,2,100\r', None),
+            [(b'k0,2,50\r', None),
+             (b'k0,2,1500\r', None),
+             (b'k0,2,-50\r', None)
              ],
     ) as inst:
-        inst.exitsteps = 100
+        inst.exitsteps = 50
+        inst.exitsteps = 1500
+        inst.exitsteps = -50
+
 
 
 def test_exitsteps_getter():
@@ -82,9 +91,14 @@ def test_motor_init():
 def test_gsteps_setter():
     with expected_protocol(
             JY270M,
-            [(b'F0,1000\r', None)],
+            [(b'F0,1000\r', None),
+             (b'F0,5000\r', None),
+             (b'F0,-50\r', None)],
     ) as inst:
         inst.gsteps = 1000
+        inst.gsteps = 5000
+        inst.gsteps = -50
+
 
 
 def test_gsteps_getter():
@@ -154,53 +168,102 @@ def test_motor_stop():
 def test_move_entry_slit_microns():
     with expected_protocol(
             JY270M,
-            [(b'j0,0\r', b'o100\r')
+            [(b'j0,0\r', b'o0\r'),
+             (b'k0,0,50.0\r', b'o'),
+             (b'j0,0\r', b'o0\r'),
+             (b'k0,0,5000.0\r', b'o'),
+             (b'j0,0\r', b'o0\r'),
+             (b'k0,0,1500.0\r', b'o')
              ],
     ) as inst:
-        assert inst.move_entry_slit_microns(*(100,), ) is None
+        assert inst.move_entry_slit_microns(50 * inst.micrometers_in_one_step) is None
+        assert inst.move_entry_slit_microns(5000 * inst.micrometers_in_one_step) is None
+        assert inst.move_entry_slit_microns(1500 * inst.micrometers_in_one_step) is None
+
 
 def test_move_entry_slit_steps():
     with expected_protocol(
             JY270M,
             [(b'j0,0\r', b'o0\r'),
-             (b'k0,0,50\r', b'o')],
+             (b'k0,0,50\r', b'o'),
+             (b'j0,0\r', b'o0\r'),
+             (b'k0,0,5000\r', b'o'),
+             (b'j0,0\r', b'o0\r'),
+             (b'k0,0,1500\r', b'o')
+             ],
     ) as inst:
-        assert inst.move_entry_slit_steps(*(50,), ) is None
+        assert inst.move_entry_slit_steps(50) is None
+        assert inst.move_entry_slit_steps(5000) is None
+        assert inst.move_entry_slit_steps(1500) is None
+
 
 def test_move_exit_slit_microns():
     with expected_protocol(
             JY270M,
             [(b'j0,2\r', b'o0\r'),
-             (b'k0,2,15.748000000000001\r', b'o')],
+             (b'k0,2,50.0\r', b'o'),
+             (b'j0,2\r', b'o0\r'),
+             (b'k0,2,5000.0\r', b'o'),
+             (b'j0,2\r', b'o0\r'),
+             (b'k0,2,1500.0\r', b'o')
+             ],
     ) as inst:
-        assert inst.move_exit_slit_microns(*(100,), ) is None
+        assert inst.move_exit_slit_microns(50 * inst.micrometers_in_one_step) is None
+        assert inst.move_exit_slit_microns(5000 * inst.micrometers_in_one_step) is None
+        assert inst.move_exit_slit_microns(1500 * inst.micrometers_in_one_step) is None
+
 
 def test_move_exit_slit_steps():
     with expected_protocol(
             JY270M,
             [(b'j0,2\r', b'o0\r'),
-             (b'k0,2,50\r', b'o')],
+             (b'k0,2,50\r', b'o'),
+             (b'j0,2\r', b'o0\r'),
+             (b'k0,2,5000\r', b'o'),
+             (b'j0,2\r', b'o0\r'),
+             (b'k0,2,1500\r', b'o')
+             ],
     ) as inst:
-        assert inst.move_exit_slit_steps(*(50,), ) is None
+        assert inst.move_exit_slit_steps(50) is None
+        assert inst.move_exit_slit_steps(5000) is None
+        assert inst.move_exit_slit_steps(1500) is None
+
 
 def test_move_grating_steps():
     with expected_protocol(
             JY270M,
-            comm_pairs,
+            [(b'H0\r', b'o0\r'),
+             (b'F0,1000\r', b'o'),
+             (b'H0\r', b'o0\r'),
+             (b'F0,15000\r', b'o'),
+             (b'H0\r', b'o0\r'),
+             (b'F0,35000\r', b'o')
+             ],
     ) as inst:
-        assert inst.move_grating_steps() == value
+        assert inst.move_grating_steps(1000) is None
+        assert inst.move_grating_steps(15000) is None
+        assert inst.move_grating_steps(35000) is None
+
 
 def test_move_grating_wavelength():
     with expected_protocol(
             JY270M,
-            [(b'H0\r', b'o19000\r'),
-             (b'F0,1801\r', b'o')],
+            [(b'H0\r', b'o0\r'),
+             (b'F0,1001\r', b'o'),
+             (b'H0\r', b'o0\r'),
+             (b'F0,551\r', b'o'),
+             (b'H0\r', b'o0\r'),
+             (b'F0,101\r', b'o')
+             ],
     ) as inst:
-        assert inst.move_grating_wavelength() is None
+        assert inst.move_grating_wavelength(1000 / inst.steps_in_one_nanometer) is None
+        assert inst.move_grating_wavelength(550 / inst.steps_in_one_nanometer) is None
+        assert inst.move_grating_wavelength(100 / inst.steps_in_one_nanometer) is None
+
 
 def test_write_read():
     with expected_protocol(
             JY270M,
             [(b' ', b'F')],
     ) as inst:
-        assert inst.write_read() == b'F'
+        assert inst.write_read(b' ', 1) == b'F'

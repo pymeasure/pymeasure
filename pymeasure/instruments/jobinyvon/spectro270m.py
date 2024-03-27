@@ -83,6 +83,10 @@ class JY270M(Instrument):
     def steps_in_one_nanometer(self):
         return self._steps_nm
 
+    @property
+    def micrometers_in_one_step(self):
+        return self._slit_microns_step
+
     def __init__(self, adapter, name="JY270M", **kwargs):
 
         kwargs.update(dict(baud_rate=9600,
