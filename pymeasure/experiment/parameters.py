@@ -146,7 +146,7 @@ class IntegerInputField(InputField):
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
     :param step: int step size for the field's UI spinbox. If None, spinbox will have step disabled.
-    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
+    :param \\**kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
@@ -229,7 +229,7 @@ class FloatInputField(InputField):
     :param maximum: The maximum allowed value (default: 1e9)
     :param decimals: The number of decimals considered (default: 15)
     :param step: step size for the field's UI spinbox. If None, spinbox will have step disabled
-    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
+    :param \\**kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
@@ -282,7 +282,7 @@ class VectorInputField(InputField):
     :param name: the InputField name
     :param length: The integer dimensions of the vector
     :param units: The units of measure for the InputField
-    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
+    :param \\**kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, length=3, units=None, **kwargs):
@@ -342,7 +342,7 @@ class ListInputField(InputField):
     :param name: the InputField name
     :param choices: An explicit list of choices, which is disregarded if None
     :param units: The units of measure for the InputField
-    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
+    :param \\**kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, choices=None, units=None, **kwargs):
@@ -392,7 +392,7 @@ class PhysicalInputField(VectorInputField):
     :param name: the InputField name
     :param uncertainty_type: Type of uncertainty, 'absolute', 'relative' or 'percentage'
     :param units: The units of measure for the InputField
-    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
+    :param \\**kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, uncertaintyType='absolute', **kwargs):
@@ -510,7 +510,7 @@ class IntegerParameter(Parameter, IntegerInputField):
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
     :param step: int step size for the field's UI spinbox. If None, spinbox will have step disabled.
-    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    :param \\**kwargs: keyword-arguments passed to :class:`.Parameter`
     """
     pass
 
@@ -536,7 +536,7 @@ class FloatParameter(Parameter, FloatInputField):
     :param maximum: The maximum allowed value (default: 1e9)
     :param decimals: The number of decimals considered (default: 15)
     :param step: step size for the field's UI spinbox. If None, spinbox will have step disabled
-    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    :param \\**kwargs: keyword-arguments passed to :class:`.Parameter`
     """
     pass
 
@@ -549,7 +549,7 @@ class VectorParameter(Parameter, VectorInputField):
     :param name: the parameter name
     :param length: The integer dimensions of the vector
     :param units: The units of measure for the parameter
-    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    :param \\**kwargs: keyword-arguments passed to :class:`.Parameter`
     """
     pass
 
@@ -561,7 +561,7 @@ class ListParameter(Parameter, ListInputField):
     :param name: the parameter name
     :param choices: An explicit list of choices, which is disregarded if None
     :param units: The units of measure for the parameter
-    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    :param \\**kwargs: keyword-arguments passed to :class:`.Parameter`
     """
     pass
 
@@ -575,7 +575,7 @@ class PhysicalParameter(Parameter, PhysicalInputField):
     :param name: the parameter name
     :param uncertainty_type: Type of uncertainty, 'absolute', 'relative' or 'percentage'
     :param units: The units of measure for the parameter
-    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    :param \\**kwargs: keyword-arguments passed to :class:`.Parameter`
     """
     pass
 
