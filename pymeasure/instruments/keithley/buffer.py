@@ -41,9 +41,8 @@ class KeithleyBuffer:
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?", ":TRAC:POIN %d",
-        """ An integer property that controls the number of buffer points. This
-        does not represent actual points in the buffer, but the configuration
-        value instead. """,
+        """ Control the number of buffer points. This does not represent actual points
+        in the buffer, but the configuration value instead. """,
         validator=truncated_range,
         values=[2, 1024],
         cast=int
@@ -68,8 +67,8 @@ class KeithleyBuffer:
 
     def is_buffer_full(self):
         """ Returns True if the buffer is full of measurements. """
-        status_bit = int(self.ask("*STB?"))
-        return status_bit == 65
+        status_byte = int(self.ask("*STB?"))
+        return (status_byte & 65) == 65
 
     def wait_for_buffer(self, should_stop=lambda: False,
                         timeout=60, interval=0.1):
@@ -93,7 +92,7 @@ class KeithleyBuffer:
 
     @property
     def buffer_data(self):
-        """ Returns a numpy array of values from the buffer. """
+        """ Get a numpy array of values from the buffer. """
         self.write(":FORM:DATA ASCII")
         return np.array(self.values(":TRAC:DATA?"), dtype=np.float64)
 

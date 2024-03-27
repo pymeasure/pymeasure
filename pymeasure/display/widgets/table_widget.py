@@ -173,8 +173,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             try:
                 results, row, col = self.translate_to_local(index.row(), index.column())
-                value = results.data.iloc[row][col]
-                column_type = results.data.dtypes[col]
+                value = results.data.iat[row, col]
+                column_type = results.data.dtypes.iat[col]
                 # Cast to column type
                 value_render = column_type.type(value)
             except (IndexError, ValueError, TypeError):

@@ -216,7 +216,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param resistance: Upper limit of resistance in Ohms,
                            from -210 POhms to 210 POhms
         :param auto_range: Enables auto_range if True, else uses the
-                           resistance_range attribut
+                           resistance_range attribute
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
@@ -233,7 +233,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param voltage: Upper limit of voltage in Volts, from -1000 V to 1000 V
         :param auto_range: Enables auto_range if True, else uses the
-                           voltage_range attribut
+                           voltage_range attribute
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
@@ -250,7 +250,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param current: Upper limit of current in Amps, from -21 mA to 21 mA
         :param auto_range: Enables auto_range if True, else uses the
-                           current_range attribut
+                           current_range attribute
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"
