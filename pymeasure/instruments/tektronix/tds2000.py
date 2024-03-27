@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
-class TDS2000(Instrument):
+class TDS2000(SCPIUnknownMixin, Instrument):
     """ Represents the Tektronix TDS 2000 Oscilloscope
     and provides a high-level for interacting with the instrument
     """
@@ -85,7 +85,7 @@ class TDS2000(Instrument):
                 raise ValueError("Invalid unit ('{}') provided to {}".format(
                                  self.parent, value))
 
-    def __init__(self, adapter, name="Tektronix TDS 2000 Oscilliscope", **kwargs):
+    def __init__(self, adapter, name="Tektronix TDS 2000 Oscilloscope", **kwargs):
         super().__init__(
             adapter,
             name,

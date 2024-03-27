@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_range)
 
@@ -54,13 +54,14 @@ def process_sequence(sequence):
     return sequence
 
 
-class HMP4040(Instrument):
+class HMP4040(SCPIMixin, Instrument):
     """Represents a Rohde&Schwarz HMP4040 power supply."""
 
     def __init__(self, adapter, **kwargs):
         kwargs.setdefault("name", "Rohde&Schwarz HMP4040")
         super().__init__(
-            adapter, includeSCPI=True, **kwargs
+            adapter,
+            **kwargs
         )
 
     # System Setting Commands -------------------------------------------------

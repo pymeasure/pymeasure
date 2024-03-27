@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -41,7 +41,7 @@ def _number_or_auto(value):
         return " " + str(value)
 
 
-class FSL(Instrument):
+class FSL(SCPIMixin, Instrument):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
 
@@ -52,7 +52,8 @@ class FSL(Instrument):
 
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True, **kwargs
+            adapter, name,
+            **kwargs
         )
 
     # Frequency settings ------------------------------------------------------
