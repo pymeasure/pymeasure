@@ -505,47 +505,6 @@ class PhysicalParameter(Parameter, PhysicalInputField):
     pass
 
 
-class Measurable:
-    """ Encapsulates the information for a measurable experiment parameter
-    with information about the name, fget function and units if supplied.
-    The value property is called when the procedure retrieves a datapoint
-    and calls the fget function. If no fget function is specified, the value
-    property will return the latest set value of the parameter (or default
-    if never set).
-
-    :var value: The value of the parameter
-
-    :param name: The parameter name
-    :param fget: The parameter fget function (e.g. an instrument parameter)
-    :param default: The default value
-    """
-    DATA_COLUMNS = []
-
-    def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
-        self.name = name
-        self.units = units
-        self.measure = measure
-        if fget is not None:
-            self.fget = fget
-            self._value = fget()
-        else:
-            self._value = default
-        Measurable.DATA_COLUMNS.append(name)
-
-    def fget(self):
-        return self._value
-
-    @property
-    def value(self):
-        if hasattr(self, 'fget'):
-            self._value = self.fget()
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        self._value = value
-
-
 class Metadata(InputField):
     """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
@@ -658,3 +617,44 @@ class ListMetadata(Metadata, ListInputField):
 
 class PhysicalMetadata(Metadata, PhysicalInputField):
     pass
+
+
+class Measurable:
+    """ Encapsulates the information for a measurable experiment parameter
+    with information about the name, fget function and units if supplied.
+    The value property is called when the procedure retrieves a datapoint
+    and calls the fget function. If no fget function is specified, the value
+    property will return the latest set value of the parameter (or default
+    if never set).
+
+    :var value: The value of the parameter
+
+    :param name: The parameter name
+    :param fget: The parameter fget function (e.g. an instrument parameter)
+    :param default: The default value
+    """
+    DATA_COLUMNS = []
+
+    def __init__(self, name, fget=None, units=None, measure=True, default=None, **kwargs):
+        self.name = name
+        self.units = units
+        self.measure = measure
+        if fget is not None:
+            self.fget = fget
+            self._value = fget()
+        else:
+            self._value = default
+        Measurable.DATA_COLUMNS.append(name)
+
+    def fget(self):
+        return self._value
+
+    @property
+    def value(self):
+        if hasattr(self, 'fget'):
+            self._value = self.fget()
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
