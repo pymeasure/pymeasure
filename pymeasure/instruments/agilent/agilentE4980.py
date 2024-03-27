@@ -23,12 +23,12 @@
 #
 
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pyvisa.errors import VisaIOError
 
 
-class AgilentE4980(Instrument):
+class AgilentE4980(SCPIUnknownMixin, Instrument):
     """Represents LCR meter E4980A/AL"""
 
     ac_voltage = Instrument.control(":VOLT:LEV?", ":VOLT:LEV %g",
@@ -74,7 +74,7 @@ Select quantities to be measured:
     - LSQ: Seriesinductance [H] and quality factor [number]
     - LSRS: Series inductance [H] and series resistance [Ohm]
 
-    * RX: Resitance [Ohm] and reactance [Ohm]
+    * RX: Resistance [Ohm] and reactance [Ohm]
     * ZTD: Impedance, magnitude [Ohm] and phase [deg]
     * ZTR: Impedance, magnitude [Ohm] and phase [rad]
     * GB: Conductance [S] and susceptance [S]

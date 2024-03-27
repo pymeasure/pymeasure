@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
-class ThorlabsPro8000(Instrument):
+class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
     """Represents Thorlabs Pro 8000 modular laser driver"""
     SLOTS = range(1, 9)
     LDC_POLARITIES = ['AG', 'CG']

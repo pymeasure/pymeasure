@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     truncated_range, truncated_discrete_set,
     strict_discrete_set
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(KeithleyBuffer, Instrument):
+class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 

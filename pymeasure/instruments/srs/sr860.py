@@ -24,10 +24,10 @@
 
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
-class SR860(Instrument):
+class SR860(SCPIUnknownMixin, Instrument):
 
     SENSITIVITIES = [
         1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,

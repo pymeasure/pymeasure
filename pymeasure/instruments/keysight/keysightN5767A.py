@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 from pymeasure.adapters import VISAAdapter
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeysightN5767A(Instrument):
+class KeysightN5767A(SCPIUnknownMixin, Instrument):
     """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
     """

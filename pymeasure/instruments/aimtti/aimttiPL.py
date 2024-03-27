@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -88,7 +88,7 @@ class PLChannel(Channel):
     )
 
 
-class PLBase(Instrument):
+class PLBase(SCPIUnknownMixin, Instrument):
     """Control AimTTI PL series power supplies.
     Model number ending with -P or P(G) support this remote interface.
 

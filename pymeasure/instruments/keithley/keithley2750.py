@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 
 
 def clean_closed_channels(output):
@@ -50,7 +50,7 @@ def clean_closed_channels(output):
         raise ValueError("`output` must be a string or list.")
 
 
-class Keithley2750(Instrument):
+class Keithley2750(SCPIMixin, Instrument):
     """ Represents the Keithley2750 multimeter/switch system and provides a high-level interface for
     interacting with the instrument.
     """

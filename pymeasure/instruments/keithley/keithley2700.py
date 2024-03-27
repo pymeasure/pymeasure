@@ -25,7 +25,7 @@
 import logging
 from warnings import warn
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 
 from .buffer import KeithleyBuffer
 
@@ -87,7 +87,7 @@ def text_length_validator(value, values):
     return value[:values]
 
 
-class Keithley2700(KeithleyBuffer, Instrument):
+class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2700 Multimeter/Switch System and provides a
     high-level interface for interacting with the instrument.
 
@@ -98,6 +98,16 @@ class Keithley2700(KeithleyBuffer, Instrument):
     """
 
     CLIST_VALUES = list(range(101, 300))
+
+    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+        self.check_errors()
+        self.determine_valid_channels()
 
     # Routing commands
     closed_channels = Instrument.control(
@@ -139,16 +149,6 @@ class Keithley2700(KeithleyBuffer, Instrument):
         """ Open all channels of the Keithley 2700.
         """
         self.write(":ROUTe:OPEN:ALL")
-
-    def __init__(self, adapter, name="Keithley 2700 MultiMeter/Switch System", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
-
-        self.check_errors()
-        self.determine_valid_channels()
 
     def determine_valid_channels(self):
         """ Determine what cards are installed into the Keithley 2700

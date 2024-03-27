@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
 import logging
@@ -41,7 +41,7 @@ def check_read_not_empty(value):
         return value
 
 
-class Ametek7270(Instrument):
+class Ametek7270(SCPIUnknownMixin, Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier
 
     In this instrument, some measurements are defined only for specific modes,

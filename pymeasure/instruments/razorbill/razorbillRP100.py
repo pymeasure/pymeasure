@@ -23,12 +23,12 @@
 #
 
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
 
 
-class razorbillRP100(Instrument):
+class razorbillRP100(SCPIUnknownMixin, Instrument):
     """Represents Razorbill RP100 strain cell controller
 
     .. code-block:: python

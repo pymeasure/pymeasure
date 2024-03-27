@@ -31,7 +31,7 @@ from collections import abc, namedtuple
 
 import pprint
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range
 
@@ -349,7 +349,7 @@ class ChannelAWG(ChannelBase):
     )
 
 
-class AWG401x_base(Instrument):
+class AWG401x_base(SCPIUnknownMixin, Instrument):
     """AWG-401x base class"""
 
     def __init__(self, adapter,

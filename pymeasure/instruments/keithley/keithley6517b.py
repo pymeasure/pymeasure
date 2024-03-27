@@ -29,7 +29,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range
 from .buffer import KeithleyBuffer
 
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6517B(KeithleyBuffer, Instrument):
+class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 6517B ElectroMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -60,6 +60,12 @@ class Keithley6517B(KeithleyBuffer, Instrument):
                                               # and disables output
 
     """
+
+    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
+        super().__init__(
+            adapter, name,
+            **kwargs
+        )
 
     source_enabled = Instrument.measurement(
         "OUTPUT?",
@@ -192,13 +198,6 @@ class Keithley6517B(KeithleyBuffer, Instrument):
     ####################
     # Methods        #
     ####################
-
-    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the

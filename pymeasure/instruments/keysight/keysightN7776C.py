@@ -24,7 +24,7 @@
 
 import logging
 import numpy as np
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ WL_RANGE = [1480, 1620]
 LOCK_PW = 1234
 
 
-class KeysightN7776C(Instrument):
+class KeysightN7776C(SCPIUnknownMixin, Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
 

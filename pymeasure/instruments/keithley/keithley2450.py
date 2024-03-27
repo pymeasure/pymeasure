@@ -28,7 +28,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from .buffer import KeithleyBuffer
 
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2450(KeithleyBuffer, Instrument):
+class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -59,6 +59,13 @@ class Keithley2450(KeithleyBuffer, Instrument):
         keithley.shutdown()                     # Ramps the current to 0 mA and disables output
 
     """
+
+    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
 
     source_mode = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
@@ -365,13 +372,6 @@ class Keithley2450(KeithleyBuffer, Instrument):
     ####################
     # Methods        #
     ####################
-
-    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the

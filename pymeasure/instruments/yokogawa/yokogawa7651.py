@@ -27,7 +27,7 @@ import re
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     truncated_discrete_set, strict_discrete_set,
     truncated_range
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Yokogawa7651(Instrument):
+class Yokogawa7651(SCPIUnknownMixin, Instrument):
     """ Represents the Yokogawa 7651 Programmable DC Source
     and provides a high-level for interacting with the instrument.
 

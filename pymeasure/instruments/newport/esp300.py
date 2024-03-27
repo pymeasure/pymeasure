@@ -24,7 +24,7 @@
 
 from time import sleep
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -160,7 +160,7 @@ class Axis:
     units = Instrument.control(
         "SN?", "SN%d",
         """ A string property that controls the displacement units of the
-        axis, which can take values of: enconder count, motor step, millimeter,
+        axis, which can take values of: encoder count, motor step, millimeter,
         micrometer, inches, milli-inches, micro-inches, degree, gradient, radian,
         milliradian, and microradian.
         """,
@@ -231,13 +231,13 @@ class Axis:
             sleep(interval)
 
 
-class ESP300(Instrument):
+class ESP300(SCPIUnknownMixin, Instrument):
     """ Represents the Newport ESP 300 Motion Controller
     and provides a high-level for interacting with the instrument.
 
     By default this instrument is constructed with x, y, and phi
     attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the avalible axes. Axes are controlled
+    can overwrite this depending on the available axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
     class.
     """

@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import (strict_discrete_range,
                                               strict_discrete_set,
@@ -155,7 +155,7 @@ class SPDChannel(Channel):
         self.write(f'TIME:SET CH{{ch}},{step:d},{voltage:1.3f},{current:1.3f},{duration:d}')
 
 
-class SPDBase(Instrument):
+class SPDBase(SCPIUnknownMixin, Instrument):
     """ The base class for Siglent SPDxxxxX instruments.
 
     Uses :class:`SPDChannel` for measurement channels.

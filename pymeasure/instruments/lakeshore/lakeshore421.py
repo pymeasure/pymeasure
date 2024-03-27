@@ -64,6 +64,7 @@ class LakeShore421(Instrument):
             asrl={'baud_rate': baud_rate, 'data_bits': 7, 'stop_bits': 10, 'parity': 1},
             read_termination='\r',
             write_termination='\n',
+            includeSCPI=False,
             **kwargs
         )
         self.last_write_time = time()

@@ -39,7 +39,7 @@ class Test_SCPIMixin:
         assert inst.SCPI is False  # should not be set by the new init
 
     @pytest.mark.parametrize("method, write, reply", (
-        ("id", "*IDN?", "xyz"),
+        ("id", "*IDN?", "xyz, abc"),
         ("complete", "*OPC?", "1"),
         ("status", "*STB?", "189"),
         ("options", "*OPT?", "a9"),

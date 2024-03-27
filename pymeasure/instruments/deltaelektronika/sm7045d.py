@@ -22,14 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range
 
 from time import sleep
 from numpy import linspace
 
 
-class SM7045D(Instrument):
+class SM7045D(SCPIUnknownMixin, Instrument):
     """ This is the class for the SM 70-45 D power supply.
 
     .. code-block:: python

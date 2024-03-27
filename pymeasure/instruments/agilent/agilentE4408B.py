@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 from io import StringIO
@@ -30,11 +30,18 @@ import numpy as np
 import pandas as pd
 
 
-class AgilentE4408B(Instrument):
+class AgilentE4408B(SCPIUnknownMixin, Instrument):
     """ Represents the AgilentE4408B Spectrum Analyzer
     and provides a high-level interface for taking scans of
     high-frequency spectrums
     """
+
+    def __init__(self, adapter, name="Agilent E4408B Spectrum Analyzer", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
 
     start_frequency = Instrument.control(
         ":SENS:FREQ:STAR?;", ":SENS:FREQ:STAR %e Hz;",
@@ -75,13 +82,6 @@ class AgilentE4408B(Instrument):
         in seconds. This property can be set.
         """
     )
-
-    def __init__(self, adapter, name="Agilent E4408B Spectrum Analyzer", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
 
     @property
     def frequencies(self):
