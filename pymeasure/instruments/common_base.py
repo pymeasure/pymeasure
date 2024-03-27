@@ -421,7 +421,7 @@ class CommonBase:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, query_delay=0, **kwargs):
+    def binary_values(self, command, query_delay=None, **kwargs):
         """ Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.

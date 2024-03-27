@@ -218,7 +218,7 @@ class TestWaiting:
     def test_binary_values_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
 
 @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),
