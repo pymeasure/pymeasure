@@ -102,11 +102,11 @@ class SCPIMixin:
 
 
 class SCPIUnknownMixin(SCPIMixin):
-    """Mixin which adds SCPI commands to an instrument from which it is not known, whether it
+    """Mixin which adds SCPI commands to an instrument from which it is not known whether it
     supports SCPI commands or not.
     """
 
     def __init__(self, *args, **kwargs):
-        warn("It is not known, whether this device support SCPI commands or not. Please inform "
-             "the pymeasure maintainers, if you know the answer.", FutureWarning)
+        warn("It is not known whether this device support SCPI commands or not. Please inform "
+             "the pymeasure maintainers if you know the answer.", FutureWarning)
         super().__init__(*args, **kwargs)
