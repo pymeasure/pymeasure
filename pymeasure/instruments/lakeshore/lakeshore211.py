@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 from pyvisa.constants import Parity
 from enum import IntEnum
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LakeShore211(Instrument):
+class LakeShore211(SCPIUnknownMixin, Instrument):
     """ Represents the Lake Shore 211 Temperature Monitor and provides
     a high-level interface for interacting with the instrument.
 

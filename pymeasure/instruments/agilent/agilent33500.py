@@ -25,7 +25,7 @@
 # Parts of this code were copied and adapted from the Agilent33220A class.
 
 import logging
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import time
 from pyvisa.errors import VisaIOError
@@ -356,7 +356,7 @@ class Agilent33500Channel(Channel):
             )
 
 
-class Agilent33500(Instrument):
+class Agilent33500(SCPIUnknownMixin, Instrument):
     """
     Represents the Agilent 33500 Function/Arbitrary Waveform Generator family.
 

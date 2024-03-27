@@ -23,7 +23,7 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -568,7 +568,7 @@ class Relay(Channel):
     )
 
 
-class Keithley2306(Instrument):
+class Keithley2306(SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2306 Dual Channel Battery/Charger Simulator.
     """
 

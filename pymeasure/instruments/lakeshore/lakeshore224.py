@@ -23,14 +23,14 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LakeShore224(Instrument):
+class LakeShore224(SCPIUnknownMixin, Instrument):
     """ Represents the Lakeshore 224 Temperature monitor and provides a high-level interface
     for interacting with the instrument. Note that the 224 provides 12 temperature input channels
     (A, B, C1-5, D1-5). This driver makes use of the :ref:`LakeShoreChannels`
