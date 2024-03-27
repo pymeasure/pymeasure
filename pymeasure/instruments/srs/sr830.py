@@ -26,7 +26,7 @@ import re
 import time
 import numpy as np
 from enum import IntFlag
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range, discreteTruncate
 
@@ -57,7 +57,7 @@ class ERRStatus(IntFlag):
     MATH_ERR = 128
 
 
-class SR830(SCPIUnknownMixin, Instrument):
+class SR830(Instrument):
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
@@ -87,6 +87,27 @@ class SR830(SCPIUnknownMixin, Instrument):
                         "frequency": 9, "ch1": 10, "ch2": 11}
     REFERENCE_SOURCE_TRIGGER = ['SINE', 'POS EDGE', 'NEG EDGE']
     INPUT_FILTER = ['Off', 'On']
+
+    status = Instrument.measurement(
+        "*STB?",
+        """Get the status byte and Master Summary Status bit.""",
+        cast=str,
+    )
+
+    id = Instrument.measurement(
+        "*IDN?",
+        """Get the identification of the instrument.""",
+        cast=str,
+        maxsplit=0,
+    )
+
+    def clear(self):
+        """Clear the instrument status byte."""
+        self.write("*CLS")
+
+    def reset(self):
+        """Reset the instrument."""
+        self.write("*RST")
 
     sine_voltage = Instrument.control(
         "SLVL?", "SLVL%0.3f",
@@ -370,6 +391,7 @@ class SR830(SCPIUnknownMixin, Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=False,
             **kwargs
         )
 
@@ -390,7 +412,7 @@ class SR830(SCPIUnknownMixin, Instrument):
         self.write("AOFF %d" % channel)
 
     def get_scaling(self, channel):
-        """ Returns the offset precent and the exapnsion term
+        """ Returns the offset percent and the expansion term
         that are used to scale the channel in question
         """
         if channel not in self.CHANNELS:
@@ -401,7 +423,7 @@ class SR830(SCPIUnknownMixin, Instrument):
 
     def set_scaling(self, channel, precent, expand=0):
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
-        certain precent (-105% to 105%) of the signal, with
+        certain percent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
         """
         if channel not in self.CHANNELS:
