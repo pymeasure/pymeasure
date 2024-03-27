@@ -145,9 +145,8 @@ class IntegerInputField(InputField):
     :param units: The units of measure for the InputField
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
-    :param default: The default integer value
-    :param ui_class: A Qt class to use for the UI of this InputField
-    :param step: int step size for the field's UI spinbox. If None, spinbox will have step disabled
+    :param step: int step size for the field's UI spinbox. If None, spinbox will have step disabled.
+    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
@@ -229,9 +228,8 @@ class FloatInputField(InputField):
     :param minimum: The minimum allowed value (default: -1e9)
     :param maximum: The maximum allowed value (default: 1e9)
     :param decimals: The number of decimals considered (default: 15)
-    :param default: The default floating point value
-    :param ui_class: A Qt class to use for the UI of this InputField
     :param step: step size for the field's UI spinbox. If None, spinbox will have step disabled
+    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
@@ -284,8 +282,7 @@ class VectorInputField(InputField):
     :param name: the InputField name
     :param length: The integer dimensions of the vector
     :param units: The units of measure for the InputField
-    :param default: The default value
-    :param ui_class: A Qt class to use for the UI of this InputField
+    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, length=3, units=None, **kwargs):
@@ -345,8 +342,7 @@ class ListInputField(InputField):
     :param name: the InputField name
     :param choices: An explicit list of choices, which is disregarded if None
     :param units: The units of measure for the InputField
-    :param default: The default value
-    :param ui_class: A Qt class to use for the UI of this InputField
+    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, choices=None, units=None, **kwargs):
@@ -396,8 +392,7 @@ class PhysicalInputField(VectorInputField):
     :param name: the InputField name
     :param uncertainty_type: Type of uncertainty, 'absolute', 'relative' or 'percentage'
     :param units: The units of measure for the InputField
-    :param default: The default value
-    :param ui_class: A Qt class to use for the UI of this InputField
+    :param \*\*kwargs: keyword-arguments passed to :class:`.InputField`
     """
 
     def __init__(self, name, uncertaintyType='absolute', **kwargs):
@@ -478,30 +473,110 @@ class PhysicalInputField(VectorInputField):
 
 
 class Parameter(InputField):
+    """ Encapsulates the information for a parameter of an experiment with information about the
+    name.
+
+    The data dat is stored in a parameter is written to the parameters section of the data file
+    when an experiment is queued.
+    Information that is stored as a parameter is loaded to the inputs-widget of a ManagedWindow by
+    using the `Use These Parameters` option.
+
+    :var value: The value of the :class:`.Parameter`
+
+    :param name: The :class:`.Parameter` name
+    :param default: The default value
+    :param ui_class: A Qt class to use for the UI of this :class:`.Parameter`
+    :param group_by: Defines the :class:`InputField(s)<.InputField>` that controls the visibility
+        of the associated input; can be a string containing the :class:`.Parameter`
+        name, a list of strings with multiple :class:`.InputField` names, or a dict
+        containing {"InputField name": condition} pairs.
+    :param group_condition: The condition for the group_by :class:`.InputField`
+        that controls the visibility of this :class:`.Parameter`, provided as a value
+        or a (lambda)function. If the group_by argument is provided as a
+        list of strings, this argument can be either a single condition or
+        a list of conditions. If the group_by argument is provided as a dict
+        this argument is ignored.
+    """
     pass
 
 
 class IntegerParameter(Parameter, IntegerInputField):
+    """ :class:`.Parameter` subclass that uses the integer type to store the value..
+
+    :var value: The integer value of the Parameter
+
+    :param name: the Parameter name
+    :param units: The units of measure for the Parameter
+    :param minimum: The minimum allowed value (default: -1e9)
+    :param maximum: The maximum allowed value (default: 1e9)
+    :param step: int step size for the field's UI spinbox. If None, spinbox will have step disabled.
+    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    """
     pass
 
 
 class BooleanParameter(Parameter, BooleanInputField):
+    """ :class:`.Parameter` subclass that uses the boolean type to store the value.
+
+    :var value: The boolean value of the parameter
+
+    Refer to :class:`.Parameter` for the initialization arguments and keyword-arguments.
+    """
     pass
 
 
 class FloatParameter(Parameter, FloatInputField):
+    """ :class:`.Parameter` subclass that uses the floating point type to store the value.
+
+    :var value: The floating point value of the parameter
+
+    :param name: the parameter name
+    :param units: The units of measure for the parameter
+    :param minimum: The minimum allowed value (default: -1e9)
+    :param maximum: The maximum allowed value (default: 1e9)
+    :param decimals: The number of decimals considered (default: 15)
+    :param step: step size for the field's UI spinbox. If None, spinbox will have step disabled
+    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    """
     pass
 
 
 class VectorParameter(Parameter, VectorInputField):
+    """ :class:`.Parameter` subclass that stores the value in a vector format.
+
+    :var value: The value of the parameter as a list of floating point numbers
+
+    :param name: the parameter name
+    :param length: The integer dimensions of the vector
+    :param units: The units of measure for the parameter
+    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    """
     pass
 
 
 class ListParameter(Parameter, ListInputField):
+    """ :class:`.Parameter` subclass that stores the value as a list.
+    String representation of choices must be unique.
+
+    :param name: the parameter name
+    :param choices: An explicit list of choices, which is disregarded if None
+    :param units: The units of measure for the parameter
+    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    """
     pass
 
 
 class PhysicalParameter(Parameter, PhysicalInputField):
+    """ :class:`.VectorParameter` subclass of 2 dimensions to store a value
+    and its uncertainty.
+
+    :var value: The value of the parameter as a list of 2 floating point numbers
+
+    :param name: the parameter name
+    :param uncertainty_type: Type of uncertainty, 'absolute', 'relative' or 'percentage'
+    :param units: The units of measure for the parameter
+    :param \*\*kwargs: keyword-arguments passed to :class:`.Parameter`
+    """
     pass
 
 
@@ -510,19 +585,20 @@ class Metadata(InputField):
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the
     latest set value of the parameter (or default if never set).
+    Subclass of :class:`.InputField`
 
     :var value: The value of the parameter. This returns (if a value is set)
         the value obtained from the `fget` (after evaluation) or a manually
         set value. Returns `None` if no value has been set
 
-    :param name: The parameter name
-    :param fget: The parameter fget function; can be provided as a callable,
+    :param name: The metadata name
+    :param fget: The metadata fget function; can be provided as a callable,
         or as a string, in which case it is assumed to be the name of a
         method or attribute of the `Procedure` class in which the Metadata is
         defined. Passing a string also allows for nested attributes by separating
         them with a period (e.g. to access an attribute or method of an
         instrument) where only the last attribute can be a method.
-    :param units: The parameter units
+    :param units: The metadata units
 
         .. deprecated:: 0.14
             Removed from the base :class:`Metadata` class; the numeric subclasses

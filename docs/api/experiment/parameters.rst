@@ -6,3 +6,4 @@ The parameter classes are used to define input variables for a :class:`.Procedur
 
 .. automodule:: pymeasure.experiment.parameters
     :members:
+    :member-order: bysource
