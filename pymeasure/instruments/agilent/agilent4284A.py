@@ -40,12 +40,9 @@ IMPEDANCE_MODES = (
 class Agilent4284A(SCPIMixin, Instrument):
     """Represents the Agilent 4284A precision LCR meter.
 
-    Most attributes are inherited from the Agilent E4980; a couple are overwritten
-    to accomodate slight differences between the instruments.
-
     .. code-block:: python
 
-        agilent = Agilent4284A("GPIB::1")
+        agilent = Agilent4284A("GPIB::1::INSTR")
 
         agilent.reset()                         # Return instrument settings to default
                                                   values
@@ -54,15 +51,20 @@ class Agilent4284A(SCPIMixin, Instrument):
         agilent.mode = 'ZTR'                    # Set impedance mode to measure
                                                   impedance magnitude [Ohm] and phase
                                                   [rad]
-        agilent.trigger_on_bus()
-        print(agilent.trigger())                # Trigger and print a measurement
+        agilent.sweep_measurement(
+            'frequency', [1e4, 1e3, 100]        # Perform frequency sweep measurement
+        )                                       # at 10 kHz, 1 kHz, and 100 Hz
         agilent.enable_high_power()             # Enable upper current, voltage, and
                                                   bias limits, if properly configured.
 
     """
 
     def __init__(self, adapter, name="Agilent 4284A LCR meter", **kwargs):
+        kwargs.setdefault("read_termination", '\n')
+        kwargs.setdefault("write_termination", '\n')
+        kwargs.setdefault("timeout", 10000)
         super().__init__(adapter, name, **kwargs)
+        self._set_ranges(0)
 
     frequency = Instrument.control(
         "FREQ?", "FREQ %g",
@@ -169,72 +171,115 @@ class Agilent4284A(SCPIMixin, Instrument):
         values={False: 0, True: 1}
     )
 
+    def _set_ranges(self, condition):
+        """Copy dynamic property values for sweep_measurement method to reference."""
+        if condition == 0:
+            self.ac_current_values = (50e-6, 0.02)
+            self.ac_voltage_values = (0.005, 2)
+            self.bias_voltage_values = (0, 2)
+            self.bias_current_values = (0, 0)
+            self._ac_current_values = (50e-6, 0.02)
+            self._ac_voltage_values = (0.005, 2)
+            self._bias_voltage_values = (0, 2)
+            self._bias_current_values = (0, 0)
+        elif condition == 1:
+            self.ac_current_values = (50e-6, 0.2)
+            self.ac_voltage_values = (0.005, 20)
+            self.bias_voltage_values = (0, 40)
+            self.bias_current_values = (0, 0.1)
+            self._ac_current_values = (50e-6, 0.2)
+            self._ac_voltage_values = (0.005, 20)
+            self._bias_voltage_values = (0, 40)
+            self._bias_current_values = (0, 0.1)
+
     def enable_high_power(self):
         """Enable high power mode.
 
         Requires option 001 (power amplifier / DC bias) is installed.
         """
-        if self.options[0] == 0:
+        if self.options[0] == '0':
             log.warning("Agilent 4284A power amplifier is not installed.")
             return
-        self.ac_current_values = (50e-6, 0.2)
-        self.ac_voltage_values = (0.005, 20)
-        self.bias_voltage_values = (0, 40)
-        self.bias_current_values = (0, 0.1)
+        self._set_ranges(1)
         self.write("OUTP:HPOW 1")
 
     def disable_high_power(self):
         """Disable high power mode."""
-        self.ac_current_values = (50e-6, 0.02)
-        self.ac_voltage_values = (0.005, 2)
-        self.bias_voltage_values = (0, 2)
-        self.bias_current_values = (0, 0)
+        self._set_ranges(0)
         self.write("OUTP:HPOW 0")
 
-    def frequency_sweep(self, freq_list, return_freq=True):
-        """Run frequency list sweep using sequential trigger.
+    def sweep_measurement(self, sweep_mode, sweep_values):
+        """Run list sweep measurement using sequential trigger.
 
-        :param freq_list: list of frequencies
-        :param return_freq: if True, returns the frequencies read from the instrument
+        :param sweep_mode (str): parameter to sweep across. Must be one of `frequency`,
+            `voltage`, `current`, `bias_voltage`, or `bias_current`.
+        :param sweep_values: list of parameter values to sweep across.
 
         Returns values as configured with :attr:`~.Agilent4284A.impedance_mode` and list
-            of frequencies in format ([val A], [val B], [frequency])
+            of sweep parameters in format ([val A], [val B], [sweep_values])
         """
-        if min(freq_list) < 20 or max(freq_list) > 1e6:
-            log.warning("Agilent 4284A valid frequency range is 20 Hz to 1 MHz.")
+        param_dict = {
+            "frequency": ("FREQ", (20, 1e6)),
+            "voltage": ("VOLT", self._ac_voltage_values),
+            "current": ("CURR", self._ac_current_values),
+            "bias_voltage": ("BIAS:VOLT", self._bias_voltage_values),
+            "bias_current": ("BIAS:CURR", self._bias_current_values)
+        }
+
+        if sweep_mode not in param_dict:
+            log.warning(
+                "Sweep mode but be one of %s, not '%s'.", list(param_dict.keys()), sweep_mode
+            )
             return
-        freq_str = ",".join(['%g' % f for f in freq_list])
-        self.reset()
+
+        low_limit = param_dict[sweep_mode][1][0]
+        high_limit = param_dict[sweep_mode][1][1]
+        if (min(sweep_values) < low_limit or max(sweep_values) > high_limit):
+            log.warning(
+                "%s values are outside valid Agilent 4284A range of %g and %g "
+                "and will be truncated.", sweep_mode, low_limit, high_limit
+            )
+            sweep_truncated = []
+            for val in sweep_values:
+                if val <= high_limit and val >= low_limit:
+                    sweep_truncated.append(val)
+            sweep_values = sweep_truncated
+
+        loops = (len(sweep_values) - 1) // 10  # 4284A sweeps 10 points at a time
+        param_div = []
+        for i in range(loops):
+            param_div.append(sweep_values[10*i:10*(i+1)])
+        param_div.append(sweep_values[loops*10:])
+
         self.clear()
-        self.write(f"TRIG:SOUR BUS;FORM ASC;LIST:MODE SEQ;LIST:FREQ {freq_str}")
-        self.write("INIT:CONT ON")
-        self.write("TRIG:IMM")
-        # TODO: see if this while block is necessary
-        # while True:
-        #     if (self.status & 8) == 8:  # bit 3 is list sweep measurement complete bit
-        #         break
-        #     else:
-        #         sleep(1)
-        #         continue
-        measured = self.values("FETCH?")
-        # at the end return to manual trigger
-        self.write(":TRIG:SOUR HOLD")
-        # gets 4-ples of numbers, first two are data A and B
-        a_data = [measured[_] for _ in range(0, 4 * len(freq_list), 4)]
-        b_data = [measured[_] for _ in range(1, 4 * len(freq_list), 4)]
-        if return_freq:
-            read_freqs = self.values("LIST:FREQ?")
-            self.check_errors()
-            return a_data, b_data, read_freqs
-        else:
-            self.check_errors()
-            return a_data, b_data, freq_list
+        self.write("TRIG:SOUR BUS;:DISP:PAGE LIST;:FORM ASC;:LIST:MODE SEQ;:INIT:CONT ON")
+
+        a_data = []
+        b_data = []
+        sweep_return = []
+        for i in range(loops + 1):
+            param_str = ",".join(['%g' % p for p in param_div[i]])
+            self.write(f"LIST:{param_dict[sweep_mode][0]} {param_str};:TRIG:IMM")
+            status_event_register = int(self.ask("STAT:OPER?"))
+            while (status_event_register & 8) != 8:  # Sweep bit no. 3
+                sleep(0.1)
+                status_event_register = int(self.ask("STAT:OPER?"))
+            measured = self.values("FETCH?")
+            # gets 4-ples of numbers, first two are data A and B
+            a_data += [measured[_] for _ in range(0, 4 * len(param_div[i]), 4)]
+            b_data += [measured[_] for _ in range(1, 4 * len(param_div[i]), 4)]
+            sweep_return += self.values(f"LIST:{param_dict[sweep_mode][0]}?")
+
+        # Return to manual trigger and reset display
+        self.write(":TRIG:SOUR HOLD;:DISP:PAGE MEAS")
+        self.check_errors()
+        return a_data, b_data, sweep_return
 
     def trigger(self):
         """Execute a bus trigger, which can be used when :meth:`~.trigger_on_bus`
         is configured. Returns result of triggered measurement.
         """
-        return self.write("*TRG")
+        return self.values("*TRG")
 
     def trigger_on_bus(self):
         """Configure the trigger to detect events based on the bus trigger, which can be

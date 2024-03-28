@@ -91,20 +91,31 @@ def test_disable_high_power():
             inst.ac_voltage = 5
 
 
-def test_frequency_sweep():
+@pytest.fixture
+def param_list():
+    freq_input = [1e7, 5e6, 1e6, 5e5, 1e5, 5e4, 1e4, 5e3, 1e3, 500, 100, 50, 20, 10]
+    freq_str = "1000000,500000,100000,50000,10000,5000,1000,500,100,50,20"
+    freq_output = [1e6, 5e5, 1e5, 5e4, 1e4, 5e3, 1e3, 500, 100, 50, 20]
+    measured_str = "0.5,-0.785,+0,+0,"
+    return freq_input, freq_str, freq_output, measured_str
+
+
+def sweep_measurement(param_list):
     with expected_protocol(
         Agilent4284A,
-        [("*RST", None),
-         ("*CLS", None),
-         ("TRIG:SOUR BUS;FORM ASC;LIST:MODE SEQ;LIST:FREQ 50,10000,500000", None),
-         ("INIT:CONT ON", None),
-         ("TRIG:IMM", None),
-         ("FETCH?", "0.5,-0.785,+0,+0,1.5,-0.785,+0,+0,2.5,-0.785,+0,+0"),
-         (":TRIG:SOUR HOLD", None),
-         ("LIST:FREQ?", "48,1.01e4,4.89e5"),
+        [("*CLS", None),
+         ("TRIG:SOUR BUS;:DISP:PAGE LIST;:FORM ASC;:LIST:MODE SEQ;:INIT:CONT ON", None),
+         (f"LIST:FREQ {param_list[1][:-3]};:TRIG:IMM", None),
+         ("STAT:OPER?", "+8"),
+         ("FETCH?", f"{param_list[3]*10}"),
+         ("LIST:FREQ?", f"{param_list[1][:-3]}"),
+         ("LIST:FREQ 20;:TRIG:IMM", None),
+         ("STAT:OPER?", "+8"),
+         ("FETCH?", f"{param_list[3]}"),
+         ("LIST:FREQ?", "20"),
          ("SYST:ERR?", '0,"No error"')],
     ) as inst:
-        results = inst.frequency_sweep([50, 1e4, 5e5], return_freq=True)
-        assert results[0] == [0.5, 1.5, 2.5]
-        assert results[1] == [-0.785, -0.785, -0.785]
-        assert results[2] == [48, 1.01e4, 4.89e5]
+        results = inst.sweep_measurement('frequency', param_list[0])
+        assert results[0] == [0.5,] * 11
+        assert results[1] == [-0.785,] * 11
+        assert results[2] == param_list[2]
