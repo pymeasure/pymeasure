@@ -74,7 +74,7 @@ class Agilent4284A(SCPIMixin, Instrument):
 
     ac_current = Instrument.control(
         "CURR:LEV?", "CURR:LEV %g",
-        """"Control AC current level in Amps. Valid range is 50 uA to 20 mA for default,
+        """Control AC current level in Amps. Valid range is 50 uA to 20 mA for default,
         50 uA to 200 mA in high-power mode.""",
         validator=strict_range,
         values=(50e-6, 0.02),
@@ -83,7 +83,7 @@ class Agilent4284A(SCPIMixin, Instrument):
 
     ac_voltage = Instrument.control(
         "VOLT:LEV?", "VOLT:LEV %g",
-        """"Control AC voltage level in Volts. Range is 5 mV to 2 V for default, 5 mV to
+        """Control AC voltage level in Volts. Range is 5 mV to 2 V for default, 5 mV to
         20 V in high-power mode.""",
         validator=strict_range,
         values=(0.005, 2),
