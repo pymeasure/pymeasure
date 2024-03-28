@@ -56,7 +56,6 @@ class Agilent4284A(SCPIMixin, Instrument):
         )                                       # at 10 kHz, 1 kHz, and 100 Hz
         agilent.enable_high_power()             # Enable upper current, voltage, and
                                                   bias limits, if properly configured.
-
     """
 
     def __init__(self, adapter, name="Agilent 4284A LCR meter", **kwargs):
@@ -153,7 +152,8 @@ class Agilent4284A(SCPIMixin, Instrument):
         * ZTR: Impedance, magnitude [Ohm] and phase [rad]
         * GB: Conductance [S] and susceptance [S]
         * YTD: Admittance, magnitude [Ohm] and phase [deg]
-        * YTR: Admittance magnitude [Ohm] and phase [rad]""",
+        * YTR: Admittance magnitude [Ohm] and phase [rad]
+        """,
         validator=strict_discrete_set,
         values=IMPEDANCE_MODES
     )
@@ -172,7 +172,7 @@ class Agilent4284A(SCPIMixin, Instrument):
     )
 
     def _set_ranges(self, condition):
-        """Copy dynamic property values for sweep_measurement method to reference."""
+        """Set dynamic property values and make copies for sweep_measurement to reference."""
         if condition == 0:
             self.ac_current_values = (50e-6, 0.02)
             self.ac_voltage_values = (0.005, 2)
@@ -215,8 +215,8 @@ class Agilent4284A(SCPIMixin, Instrument):
             `voltage`, `current`, `bias_voltage`, or `bias_current`.
         :param sweep_values: list of parameter values to sweep across.
 
-        Returns values as configured with :attr:`~.Agilent4284A.impedance_mode` and list
-            of sweep parameters in format ([val A], [val B], [sweep_values])
+        :returns: values as configured with :attr:`~.Agilent4284A.impedance_mode` and
+            list of sweep parameters in format ([val A], [val B], [sweep_values])
         """
         param_dict = {
             "frequency": ("FREQ", (20, 1e6)),
