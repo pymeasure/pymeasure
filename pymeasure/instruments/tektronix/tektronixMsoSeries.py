@@ -851,7 +851,8 @@ class TektronixMsoScope(Instrument):
         """Control the polarity for a pulse width trigger.
         """,
         validator=strict_discrete_set,
-        values=["NEGATIVE", "POSITIVE"],
+        values={"negative": "NEGATIVE", "positive": "POSITIVE"},
+        map_values=True,
     )
 
     trigger_width_when = Instrument.control(
