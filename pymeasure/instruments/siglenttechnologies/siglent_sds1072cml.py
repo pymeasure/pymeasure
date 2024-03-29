@@ -24,6 +24,7 @@
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_range,truncated_discrete_set,strict_range,truncated_range
+import struct
 
 class VoltageChannel(Channel):
 
@@ -46,6 +47,53 @@ class VoltageChannel(Channel):
         map_values=True,
         get_process= lambda v : v.split(" ",1)[-1][0],
     )
+    def getWaveform(self):
+        """
+        Returns the waveforms displayed in the channel.
+        return:
+            time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
+            voltages: (1d array) the waveform in V
+        """
+        command='C{ch}:WF? DAT2'
+        descriptorDictionnary=self.getDesc()
+        self.write(command) 
+        response=self.read_bytes(count=32)
+        rawWaveform=list(struct.unpack_from('%db'%descriptorDictionnary["numDataPoints"],response,offset=descriptorDictionnary["descriptorOffset"]))
+        waveform=[point*descriptorDictionnary["verticalGain"]-descriptorDictionnary["verticalOffset"] for point in rawWaveform]
+        timetags=[i*descriptorDictionnary["horizInterval"]+descriptorDictionnary["horizOffset"] for i in range(len(rawWaveform))]
+        return timetags,waveform
+
+    def getDesc(self):
+        '''
+        Gets the descriptor of data being sent when querying device for waveform
+        :return:
+            dict: A dictionnary with the keys:
+                numDataPoints: the number of poitns in the waveform
+                verticalGain: the voltage increment per code value (in V)
+                verticalOffset: the voltage offset to add to the decoded voltage values
+                horizInterval: the time interval between points in s
+                horizOffset:the offset to add to the time steps
+                descriptorOffset: Length of the C1:WF ALL,#9000000346 message
+        '''
+        command='C{ch}:WF? DESC'
+        self.write(command)
+        descriptor=self.read_bytes(count=1)
+        descriptorOffset=21
+        (numDataPoints,)=struct.unpack_from('l',descriptor,offset=descriptorOffset+60)
+        (verticalGain,)=struct.unpack_from('f',descriptor,offset=descriptorOffset+156)
+        (verticalOffset,)=struct.unpack_from('f',descriptor,offset=descriptorOffset+160)
+        (horizInterval,)=struct.unpack_from('f',descriptor,offset=descriptorOffset+176)
+        (horizOffset,)=struct.unpack_from('d',descriptor,offset=descriptorOffset+180)
+        descriptorDictionnary={
+            "numDataPoints":numDataPoints,
+            "verticalGain":verticalGain,
+            "verticalOffset":verticalOffset,
+            "horizInterval":horizInterval,
+            "horizOffset":horizOffset,
+            "descriptorOffset":descriptorOffset
+        }
+        return descriptorDictionnary
+
 
 
 
@@ -110,7 +158,7 @@ class SDS1072CML(Instrument):
         ":TRIG_SELECT?","TRSE %s,SR,%s,HT,%s,HV,%s",
         """ Read and set trigger setup as a dict containing the following keys:
 
-        - "trigger_type": condition that will trigger the acquisition of waveforms [EDGE,
+        - "type": condition that will trigger the acquisition of waveforms [EDGE,
           slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2}) 
         - "hold_type": hold type (refer to page 131 of programing guide)
@@ -120,13 +168,13 @@ class SDS1072CML(Instrument):
 
         """,
         set_process=lambda dictIn: (
-         dictIn.get("trigger_type") if dictIn.get("trigger_type") is not None else "EDGE",
+         dictIn.get("type") if dictIn.get("type") is not None else "EDGE",
          dictIn.get("source") if dictIn.get("source") is not None else "C1",
          dictIn.get("hold_type") if dictIn.get("hold_type") is not None else "TI",
          dictIn.get("hold_value1") if dictIn.get("hold_value1") is not None else "100NS"
         ),
         get_process=lambda v:{
-            "trigger_type":v[0].split(" ",1)[-1],
+            "type":v[0].split(" ",1)[-1],
             "source":v[2] ,
             "hold_type":v[4],
             "hold_value1":v[6]
@@ -137,15 +185,15 @@ class SDS1072CML(Instrument):
         """ Read and set trigger level as a dict containning the following keys:
 
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
-        - "trigger_level": Level at which the trigger will be set (float)
+        - "level": Level at which the trigger will be set (float)
         """,
         set_process=lambda dictIn: (
          dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         "%.2eV"%dictIn.get("trigger_level") if dictIn.get("trigger_level") is not None else "0.00E+00V",
+         "%.2eV"%dictIn.get("level") if dictIn.get("level") is not None else "0.00E+00V",
         ),
         get_process=lambda v:{
             "source":v.split(":",1)[0],
-            "trigger_level":float(v.split(" ",1)[-1][:-1]),
+            "level":float(v.split(" ",1)[-1][:-1]),
             }
     )
     trigger_coupling=Instrument.control(
@@ -153,16 +201,16 @@ class SDS1072CML(Instrument):
         """
             Reads or sets the trigger coupling on the provided channel. Expects and returns a dict containing the following keys:
             - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
-            - "trigger_coupling":  (str,{AC,DC}) Coupling to the trigger channel
+            - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         """,
         set_process=lambda dictIn: (
          dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         dictIn.get("trigger_coupling") if dictIn.get("trigger_coupling") is not None else "DC"
+         dictIn.get("coupling") if dictIn.get("coupling") is not None else "DC"
 
         ),
         get_process=lambda v:{
             "source":v.split(":",1)[0],
-            "trigger_coupling":v.split(" ",1)[-1]
+            "coupling":v.split(" ",1)[-1]
             }
     )
     trigger_slope=Instrument.control(
@@ -174,12 +222,12 @@ class SDS1072CML(Instrument):
         """,
         set_process=lambda dictIn: (
          dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         dictIn.get("trigger_slope") if dictIn.get("trigger_slope") is not None else "POS"
+         dictIn.get("slope") if dictIn.get("slope") is not None else "POS"
 
         ),
         get_process=lambda v:{
             "source":v.split(":",1)[0],
-            "trigger_slope":v.split(" ",1)[-1]
+            "slope":v.split(" ",1)[-1]
             }
     )
     trigger_mode=Instrument.control(
@@ -190,12 +238,31 @@ class SDS1072CML(Instrument):
         values={"NORM","AUTO","SINGLE","STOP"},
         validator=truncated_discrete_set,
     )
-#    #Maybe make this a little more elegant? make a trigger channel?
-#    @property
-#    def trigger_source=Instrument.control(
-#        "TRIG_SELECT?","TRSE %s,SR,%s",
-#        "Sets the oscilloscope trigger to a specific type () the specified channel (str, {EX,EX/5,C1,C2})",
-#        validator=truncated_discrete_set,
-#        values=["EX","EX/5","C1","C2"],
-#        get_process=lambda v : v[2].split(" ",1)[-1]
-#    )
+    template=Instrument.control(
+        "TMP?",None,
+        """
+            Returns a copy of the template that describes the various logical entities making up a complete waveform. In
+            particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
+        """
+    )
+    def getTemplate(self):
+        self.write("TMP?") 
+        response=self.read_bytes(count=1)
+        return response
+    def getWaveAcq(self):
+        '''
+        Queries the amount of data to be sent from the scope to the controller.
+        See page 144 of programming manual
+        :return: nuttin
+        '''
+        return self.ask('WFSU?')
+    def waveformSetup(self):
+        '''
+        Specifies the amount of data to be sent from the scope to the controller.
+        See page 144 of programming manual
+        :return: nuttin
+        '''
+        self.write('WFSU SP,0,FP,0')
+        return self.getWaveAcq()
+        
+
