@@ -28,7 +28,7 @@ def jobinyvon270m(init_communication):
 
 def test_autobaud(init_communication):
     inst = init_communication
-    # ensure the device is in a defined state, e.g. by resetting it.
+    "Ensure the device is in a defined state, e.g. by resetting it."
     initialized = inst.auto_baud()
     i = 0
     while not initialized and i < 2:
@@ -39,11 +39,18 @@ def test_autobaud(init_communication):
 
 
 class TestJobinyvon270m:
+    """
+    Unit tests for the JY270M class.
+
+    This test needs the following setup to work properly:
+        - A Jobin Yvon 270M should be connected to the computer via a serial connection.
+        - The Jobin Yvon 270M must be turned on.
+    """
 
     def test_motor_init(self, jobinyvon270m):
         inst = jobinyvon270m
         inst.motor_init()
-        assert inst.gsteps == 37494
+        assert inst.gsteps == JY270M.max_grating_steps
         assert inst.entrysteps == 0
         assert inst.exitsteps == 0
 
@@ -70,7 +77,7 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-        assert abs(inst.get_grating_wavelength() - 800.0) <= 1/32
+        assert abs(inst.get_grating_wavelength() - 800.0) <= JY270M.nanometers_in_one_step
         assert inst.gsteps == 25601
 
     def test_move_entry_slits_steps(self, jobinyvon270m):
@@ -87,11 +94,8 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-
-        """
-        We test that the entry slit response accuracy is within a certain limit.
-        """
-        assert abs(inst.get_entry_slit_microns() - 1000.0) <= 6.3500128
+        "We test that the entry slit response accuracy is within a certain limit."
+        assert abs(inst.get_entry_slit_microns() - 1000.0) <= JY270M.micrometers_in_one_step
 
     def test_move_exit_slits_steps(self, jobinyvon270m):
         inst = jobinyvon270m
@@ -107,11 +111,8 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-
-        """
-        We test that the exit slit response accuracy is within a certain limit.
-        """
-        assert abs(inst.get_exit_slit_microns() - 1000.0) <= 6.3500128
+        "We test that the exit slit response accuracy is within a certain limit."
+        assert abs(inst.get_exit_slit_microns() - 1000.0) <= JY270M.micrometers_in_one_step
 
     def test_entrysteps(self, jobinyvon270m):
         inst = jobinyvon270m
