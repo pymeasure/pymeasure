@@ -1,7 +1,8 @@
 import time
-from pymeasure.instruments.jobinyvon.spectro270m import JY270M
+from pymeasure.instruments.jobinyvon.jobinyvon270m import JY270M
 from pyvisa.constants import ControlFlow, Parity, StopBits
 import pytest
+
 
 @pytest.fixture(scope="module")
 def init_communication():
@@ -17,11 +18,13 @@ def init_communication():
                    includeSCPI=False)
     return instr
 
+
 @pytest.fixture(scope="module")
 def jobinyvon270m(init_communication):
     inst = init_communication
     inst.auto_baud()
     return inst
+
 
 def test_autobaud(init_communication):
     inst = init_communication
@@ -125,4 +128,3 @@ class TestJobinyvon270m:
             pass
         time.sleep(0.5)
         assert inst.exitsteps == 127
-
