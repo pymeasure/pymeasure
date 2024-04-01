@@ -22,10 +22,8 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import time
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.jobinyvon.spectro270m import JY270M
+from pymeasure.instruments.jobinyvon.jobinyvon270m import JY270M
 
 
 
@@ -169,11 +167,11 @@ def test_move_entry_slit_microns():
     with expected_protocol(
             JY270M,
             [(b'j0,0\r', b'o0\r'),
-             (b'k0,0,50.0\r', b'o'),
+             (b'k0,0,50\r', b'o'),
              (b'j0,0\r', b'o0\r'),
-             (b'k0,0,5000.0\r', b'o'),
+             (b'k0,0,5000\r', b'o'),
              (b'j0,0\r', b'o0\r'),
-             (b'k0,0,1500.0\r', b'o')
+             (b'k0,0,1500\r', b'o')
              ],
     ) as inst:
         assert inst.move_entry_slit_microns(50 * inst.micrometers_in_one_step) is None
@@ -201,11 +199,11 @@ def test_move_exit_slit_microns():
     with expected_protocol(
             JY270M,
             [(b'j0,2\r', b'o0\r'),
-             (b'k0,2,50.0\r', b'o'),
+             (b'k0,2,50\r', b'o'),
              (b'j0,2\r', b'o0\r'),
-             (b'k0,2,5000.0\r', b'o'),
+             (b'k0,2,5000\r', b'o'),
              (b'j0,2\r', b'o0\r'),
-             (b'k0,2,1500.0\r', b'o')
+             (b'k0,2,1500\r', b'o')
              ],
     ) as inst:
         assert inst.move_exit_slit_microns(50 * inst.micrometers_in_one_step) is None
