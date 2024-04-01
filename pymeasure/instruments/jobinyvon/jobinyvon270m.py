@@ -86,8 +86,16 @@ class JY270M(Instrument):
         return self._steps_nm
 
     @property
+    def nanometers_in_one_step(self):
+        return self._nm_step
+
+    @property
     def micrometers_in_one_step(self):
         return self._slit_microns_step
+
+    @property
+    def max_grating_steps(self):
+        return self._max_steps
 
     def __init__(self, adapter, name="JY270M", **kwargs):
 
