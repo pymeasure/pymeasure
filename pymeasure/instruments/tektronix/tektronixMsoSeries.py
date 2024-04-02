@@ -375,7 +375,7 @@ class TektronixMsoScope(Instrument):
     _TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
     _TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD",
                       "TRANSITION", "BUS"]
-    _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ", "noise": "NOISEREJ"}
+    _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "LFREJ", "highpass": "HFREJ", "noise": "NOISEREJ"}
 
     ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
     DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',
