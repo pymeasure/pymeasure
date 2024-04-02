@@ -373,8 +373,9 @@ class TektronixMsoScope(Instrument):
     _BOOLS = {True: "ON", False: "OFF"}
     _STATE = {"ON": 1, "OFF": 0}
     _TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
-    _TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD",
-                      "TRANSITION", "BUS"]
+    TRIGGER_TYPES = {"edge": "EDGE", "pulse": "WIDTH", "timeout": "TIMEOUT", "runt": "RUNT",
+                    "window": "WINDOW", "logic": "LOGIC", "sethold": "SETHOLD",
+                    "transition": "TRANSITION", "bus": "BUS"}
     _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "LFREJ", "highpass": "HFREJ", "noise": "NOISEREJ"}
 
     ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
@@ -752,7 +753,8 @@ class TektronixMsoScope(Instrument):
         bus setup parameters.
         """,
         validator=strict_discrete_set,
-        values=_TRIGGER_TYPES,
+        values=TRIGGER_TYPES,
+        map_values=True,
     )
 
     trigger_mode = Instrument.control(
