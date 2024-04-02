@@ -23,7 +23,7 @@ class TestTektronixMSO58:
     BANDWIDTH_LIMITS = [20.0000E+6, 250.0000E+6, 1.0000E+9]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
-    TRIGGER_TYPES = ["EDGE", "WIDTH", "TIMEOUT", "RUNT", "WINDOW", "LOGIC", "SETHOLD", "TRANSITION"]
+    TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold", "transition"]
     TRIGGER_LEVELS = [100.000E-3, 200.000E-3, 300.000E-3]
     TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
     TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
