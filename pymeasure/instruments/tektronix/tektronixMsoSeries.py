@@ -378,7 +378,8 @@ class TektronixMsoScope(Instrument):
                     "transition": "TRANSITION", "bus": "BUS"}
     _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "LFREJ", "highpass": "HFREJ", "noise": "NOISEREJ"}
 
-    ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
+    ANALOG_TRIGGER_SOURCE = {"channel1": "CH1", "channel2": "CH2", "channel3": "CH3", "channel4": "CH4",
+                             "channel5": "CH5", "channel6": "CH6", "channel7": "CH7", "channel8": "CH8"}
     DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',
                               'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7',
                               'CH2_D0', 'CH2_D1', 'CH2_D2', 'CH2_D3',
@@ -812,8 +813,8 @@ class TektronixMsoScope(Instrument):
         For instruments that have an Auxiliary Input
         (such as the MSO58LP), AUXiliary can be selected as trigger source.""",
         validator=strict_discrete_set,
-        values=ANALOG_TRIGGER_SOURCE + DIGITAL_TRIGGER_SOURCE,
-        dynamic=True,
+        values=ANALOG_TRIGGER_SOURCE,
+        map_values=True,
     )
 
     trigger_edge_slope = Instrument.control(
@@ -845,6 +846,7 @@ class TektronixMsoScope(Instrument):
         """,
         validator=strict_discrete_set,
         values=ANALOG_TRIGGER_SOURCE,
+        map_values=True,
     )
 
     trigger_width_polarity = Instrument.control(
