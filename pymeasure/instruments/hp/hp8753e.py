@@ -43,15 +43,15 @@ class HP8753E(Instrument):
 
     :param name: Optional set the name of the instrument (str).
     :param min_frequency: Optional set the minimum validator for `HP8753E.start_frequency`,
-    `HP8753E.stop_frequency`, `HP8753E.span_frequency`, `HP8753E.center_frequency`
-    on initialization (float in Hz).
+        `HP8753E.stop_frequency`, `HP8753E.span_frequency`, `HP8753E.center_frequency`
+        on initialization (float in Hz).
     :param max_frequency: Optional set the maximum validator for `HP8753E.start_frequency`,
-    `HP8753E.stop_frequency`, `HP8753E.span_frequency`, `HP8753E.center_frequency`
-    on initialization (float in Hz).
+        `HP8753E.stop_frequency`, `HP8753E.span_frequency`, `HP8753E.center_frequency`
+        on initialization (float in Hz).
     :param min_power: Optional set the minimum validator for `HP8753E.power` on initialization
-    (float in dBm).
+        (float in dBm).
     :param max_power: Optional set the maximum validator for `HP8753E.power` on initialization
-    (float in dBm).
+        (float in dBm).
 
     """
 
