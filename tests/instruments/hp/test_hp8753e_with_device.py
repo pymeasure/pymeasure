@@ -28,10 +28,12 @@ from time import sleep
 
 import numpy
 import pytest
-from pyvisa.errors import VisaIOError
 
 from pymeasure.adapters import PrologixAdapter
 from pymeasure.instruments.hp import HP8753E
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 pytest.skip("Only works with connected hardware", allow_module_level=True)
 
@@ -67,6 +69,7 @@ def test_sanity():
 
 def test_init_prologix_adapter():
     with init_prologix_adapter() as prologix:
+        assert isinstance(prologix, PrologixAdapter)
         test_sanity()
 
 

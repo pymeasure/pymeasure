@@ -22,9 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.adapters import PrologixAdapter
+import logging
+
 from pymeasure.instruments.hp import HP8753E
 from pymeasure.test import expected_protocol
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def test_sanity():

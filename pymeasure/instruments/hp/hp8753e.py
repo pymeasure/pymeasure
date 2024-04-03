@@ -322,7 +322,7 @@ class HP8753E(Instrument):
         else:
             raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for \
-                {self._manu} {self._model}. Valid values are: {MEASURING_PARAMETERS}"
+                {self._manu} {self._model}. Valid values are: {self.MEASURING_PARAMETERS}"
             )
 
     IFBW = Instrument.control(
