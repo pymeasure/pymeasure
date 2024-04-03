@@ -20,7 +20,7 @@ class TestTektronixMSO58:
     #########################
 
     BOOLEANS = [False, True]
-    BANDWIDTH_LIMITS = [20.0000E+6, 250.0000E+6, 1.0000E+9]
+    BANDWIDTH_LIMITS = ["20MHz", "250MHz", "1GHz"]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
     TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold",
