@@ -105,8 +105,9 @@ class TektronixMsoScopeChannel(Channel):
         Available arguments depend upon the instrument and the attached accessories.
         """,
         validator=strict_range,
-        values=[20.0000E+6, 250.0000E+6, 500.0000E+6, 1.0000E+9],
-        dynamic=True,
+        values={"20MHz": 20.0000E+6, "250MHz": 250.0000E+6,
+                "500MHz": 500.0000E+6, "1GHz": 1.0000E+9},
+        map_values=True,
     )
 
     coupling = Instrument.control(
@@ -374,8 +375,8 @@ class TektronixMsoScope(Instrument):
     _STATE = {"ON": 1, "OFF": 0}
     _TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
     TRIGGER_TYPES = {"edge": "EDGE", "pulse": "WIDTH", "timeout": "TIMEOUT", "runt": "RUNT",
-                    "window": "WINDOW", "logic": "LOGIC", "sethold": "SETHOLD",
-                    "transition": "TRANSITION", "bus": "BUS"}
+                     "window": "WINDOW", "logic": "LOGIC", "sethold": "SETHOLD",
+                     "transition": "TRANSITION", "bus": "BUS"}
     _TRIGGER_COUPLING = {"dc": "DC", "lowpass": "LFREJ", "highpass": "HFREJ", "noise": "NOISEREJ"}
 
     ANALOG_TRIGGER_SOURCE = {"channel1": "CH1", "channel2": "CH2", "channel3": "CH3", "channel4": "CH4",
