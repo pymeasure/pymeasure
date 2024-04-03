@@ -30,11 +30,7 @@ import numpy as np
 from pyvisa import VisaIOError
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import (
-    strict_discrete_set,
-    strict_range,
-    truncated_range,
-)
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -252,8 +248,8 @@ class HP8753E(Instrument):
     scan_points = Instrument.control(
         "POIN?",
         "POIN%d",
-        f"""Control the number of points used for a scan sweep. 
-        From the set [{[f'"{value}"' for value in SCAN_POINT_VALUES]}]""",
+        f"""Control the number of points used for a scan sweep.
+        From the set {HP8753E.SCAN_POINT_VALUES}""",
         cast=lambda x: int(float(x)),
         validator=strict_discrete_set,
         values=SCAN_POINT_VALUES,
@@ -326,17 +322,17 @@ class HP8753E(Instrument):
         else:
             raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for \
-                {self._manu} {self._model}. Valid values are: {MEASURING_PARAMETERS}"
+                {self._manu} {self._model}. Valid values are: {HP8753E.MEASURING_PARAMETERS}"
             )
 
     IFBW = Instrument.control(
         "IFBW?",
         "IFBW%d",
-        f"""Control the IF Bandwidth of the instrument for a scan sweep. 
-        (int from the set [{[f'"{value}"' for value in ALLOWED_BANDWIDTH]}]).""",
+        f"""Control the IF Bandwidth of the instrument for a scan sweep.
+        (int from the set {HP8753E.ALLOWED_BANDWIDTH}).""",
         cast=lambda x: int(float(x)),
         validator=strict_discrete_set,
-        values=ALLOWED_BANDWIDTH,
+        values=HP8753E.ALLOWED_BANDWIDTH,
     )
 
     def reset(self):
