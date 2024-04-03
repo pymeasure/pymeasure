@@ -100,7 +100,7 @@ class TestTektronixMSO58:
         resetted_instrument.ch_1.trigger_level = 0
         expected = {
             "channel": 1,
-            "bandwidth_limit": 1.0E+9,
+            "bandwidth_limit": "1GHz",
             "coupling": "dc",
             "offset": 0.0,
             "display": True,
