@@ -249,7 +249,7 @@ class HP8753E(Instrument):
         "POIN?",
         "POIN%d",
         f"""Control the number of points used for a scan sweep.
-        From the set {HP8753E.SCAN_POINT_VALUES}""",
+        From the set {SCAN_POINT_VALUES}""",
         cast=lambda x: int(float(x)),
         validator=strict_discrete_set,
         values=SCAN_POINT_VALUES,
@@ -302,9 +302,9 @@ class HP8753E(Instrument):
     def measuring_parameter(self):
         """Get the active Scattering or Measuring Parameter being measured.
         (str from ['S11', 'S21', 'S12', 'S22', 'A', 'B', 'R'])"""
-        for parameter in HP8753E.MEASURING_PARAMETERS:
-            if parameter in HP8753E.MEASURING_PARAMETER_MAP:
-                if int(self.ask(f"{HP8753E.MEASURING_PARAMETER_MAP[parameter]}?")) == 1:
+        for parameter in self.MEASURING_PARAMETERS:
+            if parameter in self.MEASURING_PARAMETER_MAP:
+                if int(self.ask(f"{self.MEASURING_PARAMETER_MAP[parameter]}?")) == 1:
                     return parameter
             elif int(self.ask(f"{parameter}?")) == 1:
                 return parameter
@@ -314,25 +314,25 @@ class HP8753E(Instrument):
     def measuring_parameter(self, value):
         """Set the active Measuring Parameter to be measured.
         (str from ['S11', 'S21', 'S12', 'S22', 'A', 'B', 'R'])"""
-        if value in HP8753E.MEASURING_PARAMETERS:
-            if value in HP8753E.MEASURING_PARAMETER_MAP:
-                self.write("%s" % HP8753E.MEASURING_PARAMETER_MAP[value])
+        if value in self.MEASURING_PARAMETERS:
+            if value in self.MEASURING_PARAMETER_MAP:
+                self.write("%s" % self.MEASURING_PARAMETER_MAP[value])
             else:
                 self.write("%s" % value)
         else:
             raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for \
-                {self._manu} {self._model}. Valid values are: {HP8753E.MEASURING_PARAMETERS}"
+                {self._manu} {self._model}. Valid values are: {MEASURING_PARAMETERS}"
             )
 
     IFBW = Instrument.control(
         "IFBW?",
         "IFBW%d",
         f"""Control the IF Bandwidth of the instrument for a scan sweep.
-        (int from the set {HP8753E.ALLOWED_BANDWIDTH}).""",
+        (int from the set {ALLOWED_BANDWIDTH}).""",
         cast=lambda x: int(float(x)),
         validator=strict_discrete_set,
-        values=HP8753E.ALLOWED_BANDWIDTH,
+        values=ALLOWED_BANDWIDTH,
     )
 
     def reset(self):
