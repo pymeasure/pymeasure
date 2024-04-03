@@ -23,10 +23,12 @@ class TestTektronixMSO58:
     BANDWIDTH_LIMITS = [20.0000E+6, 250.0000E+6, 1.0000E+9]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
-    TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold", "transition"]
+    TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold",
+                     "transition"]
     TRIGGER_LEVELS = [100.000E-3, 200.000E-3, 300.000E-3]
     TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
-    TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4', 'CH5', 'CH6', 'CH7', 'CH8']
+    TRIGGER_SOURCE = ['channel1', 'channel2', 'channel3', 'channel4', 'channel5',
+                      'channel6', 'channel7', 'channel8']
     ACQUISITION_AVERAGE = [4, 16, 32, 64, 128, 256]
     ACQUISITION_STATE = ["RUN", "STOP"]
     CHANNELS = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -159,6 +161,11 @@ class TestTektronixMSO58:
         instrument.trigger_edge_source = case
         assert instrument.trigger_edge_source == case
 
+    @pytest.mark.parametrize("case", TRIGGER_SOURCE)
+    def test_trigger_width_source(self, case, instrument):
+        instrument.trigger_width_source = case
+        assert instrument.trigger_width_source == case
+
     @pytest.mark.parametrize("case", TRIGGER_SLOPES)
     def test_trigger_edge_slopes(self, case, instrument):
         instrument.trigger_edge_slope = case
@@ -228,7 +235,7 @@ class TestTektronixMSO58:
     def test_measurement_configure(self, autoscaled_instrument):
         for (slot, meas_type), (meas, value) in \
                 zip(self.MEAS_SLOTS.items(), self.EXPECTED_MEAS_VALUES.items()):
-            autoscaled_instrument.measurement_configure(slot, "CH1", "CH1", meas_type)
+            autoscaled_instrument.measurement_configure(slot, "channel1", "channel1", meas_type)
             sleep(0.5)
             assert autoscaled_instrument.measurement_result_curracq_mean(slot) ==\
                    pytest.approx(value, rel=0.3)
