@@ -1163,8 +1163,11 @@ class TektronixMsoScope(Instrument):
         :param meas_type: str measurement type"""
         slot = truncated_range(slot, [1, 1000])
         source1 = strict_discrete_set(source1, self.ANALOG_TRIGGER_SOURCE)
+        source1 = self.ANALOG_TRIGGER_SOURCE[source1]
         source2 = strict_discrete_set(source2, self.ANALOG_TRIGGER_SOURCE)
+        source2 = self.ANALOG_TRIGGER_SOURCE[source2]
         meas_type = strict_discrete_set(meas_type, self._measurable_parameters)
+        meas_type = self._measurable_parameters[meas_type]
         self.write(f'MEASUrement:MEAS{slot}:SOUrce1 {source1};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:SOUrce2 {source2};*WAI')
         self.write(f'MEASUrement:MEAS{slot}:TYPe {meas_type};*WAI')
