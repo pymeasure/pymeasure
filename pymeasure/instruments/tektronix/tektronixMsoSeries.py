@@ -975,26 +975,22 @@ class TektronixMsoScope(Instrument):
         return bytearray(img)
 
     # Measurement
-    _measurable_parameters = ["ACCOMMONMODE", "ACRMS", "AMPlITUDE", "AREA", "BASE", "BITAMPLITUDE",
-                              "BITHIGH", "BITLOW", "BURSTWIDTH", "COMMONMODE", "DATARATE", "DCD",
-                              "DDJ", "DDRAOS", "DDRAOSPERTCK", "DDRAOSPERUI", "DDRAUS",
-                              "DDRAUSPERTCK", "DDRAUSPERUI", "DDRHOLDDIFF", "DDRSETUPDIFF",
-                              "DDRTCHABS", "DDRTCHAVERAGE", "DDRTCKAVERAGE", "DDRTCLABS",
-                              "DDRTCLAVERAGE", "DDRTERRMN", "DDRTERRN", "DDRTJITCC", "DDRTJITDUTY",
-                              "DDRTJITPER", "DDRTPST", "DDRTRPRE", "DDRTWPRE", "DDRVIXAC",
-                              "DDRTDQSCK", "DELAY", "DJ", "DJDIRAC", "EYEHIGH", "EYELOW",
-                              "FALLSLEWRATE", "FALLTIME", "FREQUENCY", "F2", "F4", "F8", "HEIGHT",
-                              "HEIGHTBER", "HIGH", "HIGHTIME", "HOLD", "IMDAPOWERQUALITY",
-                              "IMDAHARMONICS", "IMDAINPUTVOLTAGE", "IMDAINPUTCURRENT",
-                              "IMDAINPUTPOWER", "IMDAPHASORDIAGRAM", "IMDAEFFICIENCY",
-                              "IMDALINERIPPLE", "IMDASWITCHRIPPLE", "IMDADQ0", "JITTERSUMMARY",
-                              "J2", "J9", "LOW", "LOWTIME", "MAXIMUM", "MEAN", "MINIMUM", "NDUTY",
-                              "NOVERSHOOT", "NPERIOD", "NPJ", "NWIDTH", "PDUTY", "PERIOD", "PHASE",
-                              "PHASENOISE", "PJ", "PK2PK", "POVERSHOOT", "PWIDTH", "QFACTOR",
-                              "RISESLEWRATE", "RISETIME", "RJ", "RJDIRAC", "RMS", "SETUP", "SKEW",
-                              "SRJ", "SSCFREQDEV", "SSCMODRATE", "TIE", "TIMEOUTSIDELEVEL",
-                              "TIMETOMAX", "TIMETOMIN", "TJBER", "TNTRATIO", "TOP", "UNITINTERVAL",
-                              "VDIFFXOVR", "WIDTH", "WIDTHBER"]
+    _measurable_parameters = {"amplitude": "AMPLITUDE", "base": "BASE", "maximum": "MAXIMUM",
+                              "mean": "MEAN", "minimum": "MINIMUM", "pkpk": "PK2PK",
+                              "rms": "RMS", "top": "TOP", "acrms": "ACRMS", "area": "AREA",
+                              "dutycylce": "PDUTY", "delay": "DELAY", "falltime": "FALLTIME",
+                              "risetime": "RISETIME", "frequency": "FREQUENCY", "period": "PERIOD",
+                              "pwidth": "PWIDTH", "nwidth": "NWIDTH", "skew": "SKEW",
+                              "phase": "PHASE", "holdtime": "HOLD", "setuptime": "SETUP",
+                              "burstwidth": "BURSTWIDTH", "datarate": "DATARATE",
+                              "fallslewrate": "FALLSLEWRATE", "high": "HIGH",
+                              "hightime": "HIGHTIME", "low": "LOW", "lowtime": "LOWTIME",
+                              "nduty": "NDUTY", "novershoot": "NOVERSHOOT",
+                              "nperiod": "NPERIOD", "phasenoise": "PHASENOISE",
+                              "povershoot": "POVERSHOOT", "tie": "TIE",
+                              "timeoutsidelevel": "TIMEOUTSIDELEVEL", "timetomax": "TIMETOMAX",
+                              "timetomin": "TIMETOMIN", "unitinterval": "UNITINTERVAL",
+                              }
 
     measurement_add_slot = Instrument.setting(
         "MEASUrement:ADDNew MEAS%d",
