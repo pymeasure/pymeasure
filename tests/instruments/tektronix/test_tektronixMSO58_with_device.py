@@ -1,5 +1,6 @@
 from time import sleep
 import pytest
+from datetime import datetime
 from pyvisa.errors import VisaIOError
 from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58,\
     TektronixMsoScopeMathChannel
@@ -250,11 +251,15 @@ class TestTektronixMSO58:
         assert resetted_instrument.acquisition_state == 'STOP'
 
     # Data
-    def test_download_image(self, resetted_instrument):
-        img = resetted_instrument.download_image()
+    def test_download_image(self, instrument):
+        img = instrument.download_image()
         assert type(img) is bytearray
-        if not img:
-            print("empty image")
+        dt = datetime.now()
+        fileName = dt.strftime("C:\\Temp\\TEKTRONIX_%Y%m%d_%H%M%S.png")
+        # Save image data to local disk
+        file = open(fileName, "wb")
+        file.write(img)
+        file.close()
 
     # Measurement
     @pytest.mark.parametrize("case", MEASURABLE_PARAMETERS)
