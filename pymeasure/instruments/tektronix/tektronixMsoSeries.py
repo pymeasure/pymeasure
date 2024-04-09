@@ -1004,6 +1004,7 @@ class TektronixMsoScope(Instrument):
         """Set a measurement.""",
         validator=strict_discrete_set,
         values=_measurable_parameters,
+        map_values=True,
     )
 
     measurement_gating_type = Instrument.control(
