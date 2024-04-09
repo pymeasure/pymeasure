@@ -968,9 +968,9 @@ class TektronixMsoScope(Instrument):
     def download_image(self):
         """Get a PNG image of oscilloscope screen in bytearray.
         """
-        self.write('SAVE:IMAGe \"C:/Temp.png\"')
+        self.write('SAVE:IMAGe \"C:/Temp.png\";*OPC?')
         self.write('FILESystem:READFile \"C:/Temp.png\"')
-        img = self.read_bytes(-1)
+        img = self.read_bytes(count=-1, break_on_termchar=True)
         self.write('FILESystem:DELEte \"C:/Temp.png\"')
         return bytearray(img)
 
