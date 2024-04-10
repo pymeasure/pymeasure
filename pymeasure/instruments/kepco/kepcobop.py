@@ -62,10 +62,12 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     _Imax = 12
 
     def __init__(self, adapter, name="Kepco BOP 36-12 Bipolar Power Supply",
-                 read_termination="\n", write_termination="\n", **kwargs):
+                 baud_rate=9600, read_termination="\n", write_termination="\n",
+                 **kwargs):
         super().__init__(
             adapter,
             name,
+            baud_rate=baud_rate,
             read_termination=read_termination,
             write_termination=write_termination,
             **kwargs
@@ -114,7 +116,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         commands or queries. """
         self.write("*WAI")
 
-    voltage_measure = Instrument.measurement(
+    voltage = Instrument.measurement(
         "MEASure:VOLTage?",
         """
         Measures actual voltage that is across the output terminals.
@@ -122,7 +124,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         cast=float
     )
 
-    current_measure = Instrument.measurement(
+    current = Instrument.measurement(
         "MEASure:CURRent?",
         """
         Measures the actual current through the output terminals.
@@ -143,7 +145,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         get_process=lambda x: OPERATING_MODES[int(x)]
     )
 
-    current = Instrument.control(
+    current_setpoint = Instrument.control(
         "CURRent?", "CURRent %g",
         """
         Sets the output current setpoint, depending on the operating mode.
@@ -160,7 +162,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         values=[-1*_Imax, _Imax]
     )
 
-    voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         "VOLTage?", "VOLTage %g",
         """
         Sets the output voltage setpoint, depending on the operating mode.
