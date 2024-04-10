@@ -45,11 +45,26 @@
 # 72-6
 # 100-4
 
+from enum import IntFlag
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range
 
 OPERATING_MODES = ['VOLT', 'CURR']
+
+
+class TestErrorCode(IntFlag):
+    QUARTER_SCALE_VOLTAGE_READBACK = 512
+    QUARTER_SCALE_VOLTAGE = 256
+    MIN_VOLTAGE_OUTPUT = 128
+    MAX_VOLTAGE_OUTPUT = 64
+    LOOP_BACK_TEST = 32
+    DIGITAL_POT = 16
+    OPTICAL_BUFFER = 8
+    FLASH = 4
+    RAM = 2
+    ROM = 1
+    OK = 0
 
 
 class KepcoBOP3612(SCPIMixin, Instrument):
@@ -83,9 +98,6 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    # TODO
-    # Return list of errors based on return number.
-
     def beep(self):
         """Cause the unit to emit a brief audible tone."""
         self.write("SYSTem:BEEP")
@@ -98,7 +110,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         Returns 0 if all tests passed, otherwise corresponding error code
         as detailed in manual.
         """,
-        cast=int
+        get_process=lambda v: TestErrorCode(v),
     )
 
     bop_test = Instrument.measurement(
@@ -111,7 +123,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         Caution: Output will switch on and swing to maximum values.
         Disconnect any load before testing.
         """,
-        cast=int
+        get_process=lambda v: TestErrorCode(v),
     )
 
     def wait_to_continue(self):
