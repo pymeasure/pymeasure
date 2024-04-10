@@ -83,16 +83,20 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         map_values=True,
     )
 
+    # TODO 
+    # Return list of errors based on return number.
+
     def beep(self):
-        """Causes the unit to emit a brief audible tone."""
+        """Cause the unit to emit a brief audible tone."""
         self.write("SYSTem:BEEP")
 
     confidence_test = Instrument.measurement(
         "*TST?",
         """
-        Power supply interface self-test procedure.
-        Returns 0 if all tests passed,
-        otherwise corresponding error code.
+        Get error code after performing interface self-test procedure.
+
+        Returns 0 if all tests passed, otherwise corresponding error code
+        as detailed in manual.
         """,
         cast=int
     )
@@ -100,17 +104,18 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     bop_test = Instrument.measurement(
         "DIAG:TST?",
         """
-        Power supply self-test (includes interface plus BOP operation).
+        Get error code after performing full power supply self-test.
+
+        Returns 0 if all tests passed, otherwise corresponding error code
+        as detailed in manual.
         Caution: Output will switch on and swing to maximum values.
         Disconnect any load before testing.
-        Reutnrs 0 if all tests passed,
-        otherwise corresponding error code.
         """,
         cast=int
     )
 
     def wait_to_continue(self):
-        """ Causes the power supply to wait until all previously issued
+        """ Cause the power supply to wait until all previously issued
         commands and queries are complete before executing subsequent
         commands or queries. """
         self.write("*WAI")
@@ -118,7 +123,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     voltage = Instrument.measurement(
         "MEASure:VOLTage?",
         """
-        Measures actual voltage that is across the output terminals.
+        Measure voltage present across the output terminals in Volts.
         """,
         cast=float
     )
@@ -126,7 +131,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     current = Instrument.measurement(
         "MEASure:CURRent?",
         """
-        Measures the actual current through the output terminals.
+        Measure current through the output terminals in Amps.
         """,
         cast=float
     )
@@ -134,9 +139,10 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     operating_mode = Instrument.control(
         "FUNCtion:MODE?", "FUNCtion:MODE %s",
         """
-        A string property that controls the operating mode of the BOP.
+        Control the operating mode of the BOP.
+
         As a command, a string, VOLT or CURR, is sent.
-        As a query, a 0 or 1 is returned, corresponding to (VOLT, CURR) respectively.
+        As a query, a 0 or 1 is returned, corresponding to VOLT or CURR respectively.
         This is mapped to corresponding string.
         """,
         validator=strict_discrete_set,
@@ -147,14 +153,17 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     current_setpoint = Instrument.control(
         "CURRent?", "CURRent %g",
         """
-        Sets the output current setpoint, depending on the operating mode.
-        If power supply in current mode, this sets the output current,
-        depending on the voltage compliance and load conditions.
+        Control the output current setpoint.
+
+        Functionality depends on the operating mode.
+        If power supply in current mode, this sets the output current setpoint.
+        The current achieved depends on the voltage compliance and load conditions
+        (see: `current`).
         If power supply in voltage mode, this sets the compliance current
         for the corresponding voltage set point.
-        Query returns corresponding programmed value, meaning of which
-        is dependent on power supply operating context (see: `operating_mode`).
-        Set current not same as actual current (see: `current_measure`).
+        Query returns programmed value, meaning of which is dependent on 
+        power supply operating context (see: `operating_mode`).
+
         Output must be enabled separately (see: `output_enabled`)
         """,
         validator=truncated_range,
@@ -164,14 +173,17 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     voltage_setpoint = Instrument.control(
         "VOLTage?", "VOLTage %g",
         """
-        Sets the output voltage setpoint, depending on the operating mode.
-        If power supply in voltage mode, this sets the output voltage,
-        depending on the current compliance and load conditions.
+        Control the output voltage setpoint.
+
+        Functionality depends on the operating mode.
+        If power supply in voltage mode, this sets the output voltage setpoint.
+        The voltage achieved depends on the current compliance and load conditions
+        (see: `voltage`).
         If power supply in current mode, this sets the compliance voltage
         for the corresponding current set point.
-        Query returns corresponding programmed value, meaning of which
-        is dependent on power supply operating context (see: `operating_mode`).
-        Set voltage not same as actual voltage (see: `voltage_measure`).
+        Query returns programmed value, meaning of which is dependent on 
+        power supply operating context (see: `operating_mode`).
+
         Output must be enabled separately (see: `output_enabled`)
         """,
         validator=truncated_range,
