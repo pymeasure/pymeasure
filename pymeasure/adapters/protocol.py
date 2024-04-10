@@ -22,7 +22,9 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
 import logging
+from typing import cast, Optional, Sequence, Union
 from unittest.mock import MagicMock
 from warnings import warn
 
@@ -31,8 +33,12 @@ from .adapter import Adapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+BYTABLE = Union[bytes, bytearray, str, list[int], tuple[int, ...], int, float]
 
-def to_bytes(command):
+
+def to_bytes(
+    command: Optional[BYTABLE],
+) -> Optional[Union[bytearray, bytes]]:
     """Change `command` to a bytes object"""
     if isinstance(command, (bytes, bytearray)):
         return command
@@ -68,10 +74,13 @@ class ProtocolAdapter(Adapter):
     :param connection_methods: Dictionary of method names of the connection and their return values.
     """
 
-    def __init__(self, comm_pairs=None,
-                 connection_attributes=None,
-                 connection_methods=None,
-                 **kwargs):
+    def __init__(
+        self,
+        comm_pairs: Optional[Sequence[tuple[Union[BYTABLE, None], Union[BYTABLE, None]]]] = None,
+        connection_attributes=None,
+        connection_methods=None,
+        **kwargs,
+    ):
         """Generate the adapter and initialize internal buffers."""
         super().__init__(**kwargs)
         # Setup communication
@@ -82,8 +91,8 @@ class ProtocolAdapter(Adapter):
         for pair in comm_pairs:
             if len(pair) != 2:
                 raise ValueError(f'Comm_pairs element {pair} does not have two elements!')
-        self._read_buffer = None
-        self._write_buffer = None
+        self._read_buffer: Optional[Union[bytearray, bytes]] = None
+        self._write_buffer: Optional[Union[bytearray, bytes]] = None
         self.comm_pairs = comm_pairs
         self._index = 0
         # Setup attributes
@@ -130,11 +139,11 @@ class ProtocolAdapter(Adapter):
         # It's not clear how relevant this is in real-world use, but it's analogous
         # to the possibility to fetch a (binary) message over several reads.
 
-    def _read(self, **kwargs):
+    def _read(self, **kwargs) -> str:
         """Return an already present or freshly fetched read buffer as a string."""
         return self._read_bytes(-1).decode("utf-8")
 
-    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs) -> Union[bytes, bytearray]:
         """Read `count` number of bytes from the buffer.
 
         :param int count: Number of bytes to read. If -1, return the buffer.
@@ -162,7 +171,7 @@ class ProtocolAdapter(Adapter):
                 else "Unexpected read without prior write.")
             assert p_read is not None, "Communication pair cannot be (None, None)."
             self._index += 1
-            p_read = to_bytes(p_read)
+            p_read = cast(bytes, to_bytes(p_read))
             if count == -1 or count >= len(p_read):
                 # _read_buffer is already empty, no action required.
                 return p_read
