@@ -83,7 +83,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    # TODO 
+    # TODO
     # Return list of errors based on return number.
 
     def beep(self):
@@ -161,7 +161,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         (see: `current`).
         If power supply in voltage mode, this sets the compliance current
         for the corresponding voltage set point.
-        Query returns programmed value, meaning of which is dependent on 
+        Query returns programmed value, meaning of which is dependent on
         power supply operating context (see: `operating_mode`).
 
         Output must be enabled separately (see: `output_enabled`)
@@ -181,7 +181,7 @@ class KepcoBOP3612(SCPIMixin, Instrument):
         (see: `voltage`).
         If power supply in current mode, this sets the compliance voltage
         for the corresponding current set point.
-        Query returns programmed value, meaning of which is dependent on 
+        Query returns programmed value, meaning of which is dependent on
         power supply operating context (see: `operating_mode`).
 
         Output must be enabled separately (see: `output_enabled`)
