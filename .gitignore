@@ -109,3 +109,4 @@ settings.json
 
 # Vim
 *.swp
+pymeasure.code-workspace
