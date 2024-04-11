@@ -31,6 +31,9 @@ from pymeasure.instruments.hp.hp8116a import Status
 HP8116A.status = property(fget=lambda self: Status(5))
 
 
+init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
+
+
 def test_init():
     with expected_protocol(
             HP8116A,
@@ -53,3 +56,14 @@ def test_duty_cycle_setter():
             [(b"CST", b"x" * 87 + b' ,\r\n'), (b"DTY 34.5 %", None)],
     ) as instr:
         instr.duty_cycle = 34.5
+
+
+def test_sweep_time():
+    with expected_protocol(HP8116A, init_comm + [("SWT 5 S", None)]) as inst:
+        # This test tests also the generate_1_2_5_sequence method and truncation.
+        inst.sweep_time = 3
+
+
+def test_limit_enabled():
+    with expected_protocol(HP8116A, init_comm + [("L1", None)]) as inst:
+        inst.limit_enabled = True
