@@ -79,9 +79,8 @@ class KepcoBOP3612(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Kepco BOP 36-12 Bipolar Power Supply",
                  **kwargs):
         super().__init__(
-            adapter,
-            name,
-            baud_rate=9600,
+            adapter=adapter,
+            name=name,
             read_termination="\n",
             write_termination="\n",
             **kwargs
