@@ -421,12 +421,74 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
         return df
 
+
+def check_current_voltage_name(name):
+    if (len(name) > 6) or not name[0].isalpha():
+        new_name = 'a' + name[:5]
+        log.info(f"Renaming {name} to {new_name}...")
+        name = new_name
+    return name
+
+
 ##########
 # CHANNELS
 ##########
 
+class MeasurementChannel(Channel):
+    """Offers some common properties."""
 
-class SMU(Channel):
+    voltage_name = Channel.control(
+        "PAGE:CHAN:{ch}:VNAME?",
+        ":PAGE:CHAN:{ch}:VNAME \'%s\'",
+        """ Control the voltage name of the channel.
+
+        If input is greater than 6 characters long or starts with a number,
+        the name is autocorrected and prepended with 'a'. Event is logged.
+
+        .. code-block:: python
+
+            instr.smu1.voltage_name = "Vbase"
+        """,
+        set_process=check_current_voltage_name,
+    )
+
+    @property
+    def disable(self):
+        """ Deletes the settings of this channel.
+
+        .. code-block:: python
+
+            instr.smu1.disable()
+        """
+        self.write(":PAGE:CHAN:{ch}:DIS")
+        self.check_errors()
+
+    channel_mode = Channel.control(
+        ":PAGE:CHAN:{ch}:MODE?",
+        ":PAGE:CHAN:{ch}:MODE %s",
+        """Control the channel mode.""",
+        values=[],
+        validator=strict_discrete_set,
+        check_get_errors=True,
+        check_set_errors=True,
+        dynamic=True,
+    )
+
+    channel_function = Channel.control(
+        ":PAGE:CHAN:{ch}:FUNC?",
+        ":PAGE:CHAN:{ch}:FUNC %s",
+        """Control the channel function.
+
+        - Values: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
+        """,
+        check_get_errors=True,
+        check_set_errors=True,
+        validator=strict_discrete_set,
+        values=["VAR1", "VAR2", "VARD", "CONS"],
+    )
+
+
+class SMU(MeasurementChannel):
     """SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -435,56 +497,12 @@ class SMU(Channel):
             id.upper(),
             **kwargs
         )
+        self.channel_mode_values = ["V", "I", "COMM"]
 
-    @property
-    def channel_mode(self):
-        """ A string property that controls the SMU<n> channel mode.
-
-        - Values: :code:`V`, :code:`I` or :code:`COMM`
-
-        VPULSE AND IPULSE are not yet supported.
-
-        .. code-block:: python
-
-            instr.smu1.channel_mode = "V"
-        """
-        value = self.ask(":PAGE:CHAN:{ch}:MODE?")
-        self.check_errors()
-        return value
-
-    @channel_mode.setter
-    def channel_mode(self, mode):
-        validator = strict_discrete_set
-        values = ["V", "I", "COMM"]
-        value = validator(mode, values)
-        self.write(f":PAGE:CHAN:{{ch}}:MODE {value}")
-        self.check_errors()
-
-    @property
-    def channel_function(self):
-        """ A string property that controls the SMU<n> channel function.
-
-        - Values: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
-
-        .. code-block:: python
-
-            instr.smu1.channel_function = "VAR1"
-        """
-        value = self.ask(":PAGE:CHAN:{ch}:FUNC?")
-        self.check_errors()
-        return value
-
-    @channel_function.setter
-    def channel_function(self, function):
-        validator = strict_discrete_set
-        values = ["VAR1", "VAR2", "VARD", "CONS"]
-        value = validator(function, values)
-        self.write(f":PAGE:CHAN:{{ch}}:FUNC {value}")
-        self.check_errors()
-
-    @property
-    def series_resistance(self):
-        """ Controls the series resistance of SMU<n>.
+    series_resistance = Channel.control(
+        ":PAGE:CHAN:{ch}:SRES?",
+        ":PAGE:CHAN:{ch}:SRES %s",
+        """ Control the series resistance of SMU<n>.
 
         - Values: :code:`0OHM`, :code:`10KOHM`, :code:`100KOHM`, or :code:`1MOHM`
 
@@ -492,29 +510,12 @@ class SMU(Channel):
 
             instr.smu1.series_resistance = "10KOHM"
 
-        """
-        value = self.ask(":PAGE:CHAN:{ch}:SRES?")
-        self.check_errors()
-        return value
-
-    @series_resistance.setter
-    def series_resistance(self, sres):
-        validator = strict_discrete_set
-        values = ["0OHM", "10KOHM", "100KOHM", "1MOHM"]
-        value = validator(sres, values)
-        self.write(f":PAGE:CHAN:{{ch}}:SRES {value}")
-        self.check_errors()
-
-    @property
-    def disable(self):
-        """ Deletes the settings of SMU<n>.
-
-        .. code-block:: python
-
-            instr.smu1.disable()
-        """
-        self.write(":PAGE:CHAN:{ch}:DIS")
-        self.check_errors()
+        """,
+        check_get_errors=True,
+        check_set_errors=True,
+        validator=strict_discrete_set,
+        values=["0OHM", "10KOHM", "100KOHM", "1MOHM"],
+    )
 
     @property
     def constant_value(self):
@@ -585,9 +586,10 @@ class SMU(Channel):
                 self.channel, value))
         self.check_errors()
 
-    @property
-    def voltage_name(self):
-        """ Define the voltage name of the channel.
+    current_name = Channel.control(
+        "PAGE:CHAN:{ch}:INAME?",
+        ":PAGE:CHAN:{ch}:INAME \'%s\'",
+        """ Control the current name of the channel.
 
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
@@ -595,33 +597,9 @@ class SMU(Channel):
         .. code-block:: python
 
             instr.smu1.voltage_name = "Vbase"
-        """
-        value = self.ask("PAGE:CHAN:{ch}:VNAME?")
-        return value
-
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{{ch}}:VNAME \'{value}\'")
-
-    @property
-    def current_name(self):
-        """ Define the current name of the channel.
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.smu1.current_name = "Ibase"
-        """
-        value = self.ask("PAGE:CHAN:{ch}:INAME?")
-        return value
-
-    @current_name.setter
-    def current_name(self, iname):
-        value = check_current_voltage_name(iname)
-        self.write(f":PAGE:CHAN:{{ch}}:INAME \'{value}\'")
+        """,
+        set_process=check_current_voltage_name,
+    )
 
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
@@ -650,7 +628,7 @@ class SMU(Channel):
         return values
 
 
-class VMU(Channel):
+class VMU(MeasurementChannel):
     """VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -659,57 +637,10 @@ class VMU(Channel):
             id=id.upper(),
             **kwargs
         )
-
-    @property
-    def voltage_name(self):
-        """ Define the voltage name of the VMU channel.
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.vmu1.voltage_name = "Vanode"
-        """
-        value = self.ask("PAGE:CHAN:{ch}:VNAME?")
-        return value
-
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{{ch}}:VNAME \'{value}\'")
-
-    @property
-    def disable(self):
-        """ Disables the settings of VMU<n>.
-
-        .. code-block:: python
-
-            instr.vmu1.disable()
-        """
-        self.write(":PAGE:CHAN:{ch}:DIS")
-        self.check_errors()
-
-    @property
-    def channel_mode(self):
-        """ A string property that controls the VMU<n> channel mode.
-
-        - Values: :code:`V`, :code:`DVOL`
-        """
-        value = self.ask(":PAGE:CHAN:{ch}:MODE?")
-        self.check_errors()
-        return value
-
-    @channel_mode.setter
-    def channel_mode(self, mode):
-        validator = strict_discrete_set
-        values = ["V", "DVOL"]
-        value = validator(mode, values)
-        self.write(f":PAGE:CHAN:{{ch}}:MODE {value}")
-        self.check_errors()
+        self.channel_mode_values = ["V", "DVOL"]
 
 
-class VSU(Channel):
+class VSU(MeasurementChannel):
     """VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -718,43 +649,6 @@ class VSU(Channel):
             id.upper(),
             **kwargs
         )
-
-    @property
-    def voltage_name(self):
-        """ Define the voltage name of the VSU channel
-
-        If input is greater than 6 characters long or starts with a number,
-        the name is autocorrected and prepended with 'a'. Event is logged.
-
-        .. code-block:: python
-
-            instr.vsu1.voltage_name = "Ve"
-        """
-        value = self.ask("PAGE:CHAN:{ch}:VNAME?")
-        return value
-
-    @voltage_name.setter
-    def voltage_name(self, vname):
-        value = check_current_voltage_name(vname)
-        self.write(f":PAGE:CHAN:{{ch}}:VNAME \'{value}\'")
-
-    @property
-    def disable(self):
-        """ Deletes the settings of VSU<n>.
-
-        .. code-block:: python
-
-            instr.vsu1.disable()
-        """
-        self.write(":PAGE:CHAN:{ch}:DIS")
-        self.check_errors()
-
-    @property
-    def channel_mode(self):
-        """ Get channel mode of VSU<n>."""
-        value = self.ask(":PAGE:CHAN:{ch}:MODE?")
-        self.check_errors()
-        return value
 
     @property
     def constant_value(self):
@@ -783,23 +677,6 @@ class VSU(Channel):
                 self.channel, value))
         self.check_errors()
 
-    @property
-    def channel_function(self):
-        """ A string property that controls the VSU channel function.
-
-        - Value: :code:`VAR1`, :code:`VAR2`, :code:`VARD` or :code:`CONS`.
-        """
-        value = self.ask(":PAGE:CHAN:{ch}:FUNC?")
-        self.check_errors()
-        return value
-
-    @channel_function.setter
-    def channel_function(self, function):
-        validator = strict_discrete_set
-        values = ["VAR1", "VAR2", "VARD", "CONS"]
-        value = validator(function, values)
-        self.write(f":PAGE:CHAN:{{ch}}:FUNC {value}")
-        self.check_errors()
 
 #################
 # SWEEP VARIABLES
@@ -1046,14 +923,6 @@ class VARD(Channel):
         set_value = validator(value, values)
         self.write(f":PAGE:MEAS:VARD:COMP {set_value}")
         self.check_errors()
-
-
-def check_current_voltage_name(name):
-    if (len(name) > 6) or not name[0].isalpha():
-        new_name = 'a' + name[:5]
-        log.info(f"Renaming {name} to {new_name}...")
-        name = new_name
-    return name
 
 
 def valid_iv(channel_mode):
