@@ -152,7 +152,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     analyzer_mode = Instrument.control(
         ":PAGE:CHAN:MODE?", ":PAGE:CHAN:MODE %s",
-        """ A string property that controls the instrument operating mode.
+        """Control the instrument operating mode.
 
         - Values: :code:`SWEEP`, :code:`SAMPLING`
 
@@ -169,7 +169,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     integration_time = Instrument.control(
         ":PAGE:MEAS:MSET:ITIM?", ":PAGE:MEAS:MSET:ITIM %s",
-        """ A string property that controls the integration time.
+        """Control the integration time.
 
         - Values: :code:`SHORT`, :code:`MEDIUM`, :code:`LONG`
 
@@ -186,7 +186,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     delay_time = Instrument.control(
         ":PAGE:MEAS:DEL?", ":PAGE:MEAS:DEL %g",
-        """ A floating point property that measurement delay time in seconds,
+        """Control the measurement delay time in seconds,
         which can take the values from 0 to 65s in 0.1s steps.
 
         .. code-block:: python
@@ -201,7 +201,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     hold_time = Instrument.control(
         ":PAGE:MEAS:HTIME?", ":PAGE:MEAS:HTIME %g",
-        """ A floating point property that measurement hold time in seconds,
+        """Control the measurement hold time in seconds,
         which can take the values from 0 to 655s in 1s steps.
 
         .. code-block:: python
@@ -215,7 +215,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
     )
 
     def stop(self):
-        """Stops the ongoing measurement
+        """Stop the ongoing measurement
 
         .. code-block:: python
 
@@ -225,7 +225,8 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
     def measure(self, period="INF", points=100):
         """
-        Performs a single measurement and waits for completion in sweep mode.
+        Perform a single measurement and wait for completion in sweep mode.
+
         In sampling mode, the measurement period and number of points can be specified.
 
         :param period: Period of sampling measurement from 6E-6 to 1E11 seconds.
@@ -247,23 +248,23 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
             self.write(":PAGE:SCON:MEAS:SING; *OPC?")
 
     def disable_all(self):
-        """ Disables all channels in the instrument.
+        """ Disable all channels in the instrument.
 
         .. code-block:: python
 
             instr.disable_all()
         """
-        self.smu1.disable
+        self.smu1.delete_settings()
         time.sleep(0.1)
-        self.smu2.disable
+        self.smu2.delete_settings()
         time.sleep(0.1)
-        self.smu3.disable
+        self.smu3.delete_settings()
         time.sleep(0.1)
-        self.smu4.disable
+        self.smu4.delete_settings()
         time.sleep(0.1)
-        self.vmu1.disable
+        self.vmu1.delete_settings()
         time.sleep(0.1)
-        self.vmu2.disable
+        self.vmu2.delete_settings()
         time.sleep(0.1)
 
     def configure(self, config_file):
@@ -434,7 +435,7 @@ def check_current_voltage_name(name):
 # CHANNELS
 ##########
 
-class MeasurementChannel(Channel):
+class AgilentMeasurementChannel(Channel):
     """Offers some common properties."""
 
     voltage_name = Channel.control(
@@ -452,16 +453,25 @@ class MeasurementChannel(Channel):
         set_process=check_current_voltage_name,
     )
 
-    @property
-    def disable(self):
-        """ Deletes the settings of this channel.
+    def delete_settings(self):
+        """Delete the settings of this channel to default value.
 
         .. code-block:: python
 
             instr.smu1.disable()
         """
         self.write(":PAGE:CHAN:{ch}:DIS")
-        self.check_errors()
+        return self.check_errors()
+
+    @property
+    def disable(self):
+        """Set the settings of this channel to default value.
+
+        .. code-block:: python
+
+            instr.smu1.disable()
+        """
+        self.delete_settings()
 
     channel_mode = Channel.control(
         ":PAGE:CHAN:{ch}:MODE?",
@@ -488,7 +498,7 @@ class MeasurementChannel(Channel):
     )
 
 
-class SMU(MeasurementChannel):
+class SMU(AgilentMeasurementChannel):
     """SMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -519,7 +529,7 @@ class SMU(MeasurementChannel):
 
     @property
     def constant_value(self):
-        """ Set the constant source value of SMU<n>.
+        """Control the constant source value of SMU<n>.
 
         You use this command only if :meth:`~.SMU.channel_function`
         is :code:`CONS` and also :meth:`~.SMU.channel_mode` should not be :code:`COMM`.
@@ -553,7 +563,7 @@ class SMU(MeasurementChannel):
 
     @property
     def compliance(self):
-        """ Sets the *constant* compliance value of SMU<n>.
+        """Control the *constant* compliance value of SMU<n>.
 
         If the SMU channel is setup as a variable (VAR1, VAR2, VARD) then compliance limits are
         set by the variable definition.
@@ -628,7 +638,7 @@ class SMU(MeasurementChannel):
         return values
 
 
-class VMU(MeasurementChannel):
+class VMU(AgilentMeasurementChannel):
     """VMU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -640,7 +650,7 @@ class VMU(MeasurementChannel):
         self.channel_mode_values = ["V", "DVOL"]
 
 
-class VSU(MeasurementChannel):
+class VSU(AgilentMeasurementChannel):
     """VSU of Agilent 4155/4156 Semiconductor Parameter Analyzer"""
 
     def __init__(self, parent, id, **kwargs):
@@ -652,7 +662,7 @@ class VSU(MeasurementChannel):
 
     @property
     def constant_value(self):
-        """ Sets the constant source value of VSU<n>.
+        """Control the constant source value of VSU<n>.
 
         .. code-block:: python
 
@@ -695,6 +705,7 @@ class VARX(Channel):
 
     @property
     def channel_mode(self):
+        """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
             ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
@@ -704,7 +715,7 @@ class VARX(Channel):
 
     @property
     def start(self):
-        """ Sets the sweep START value.
+        """Control the sweep START value.
 
         .. code-block:: python
 
@@ -724,7 +735,7 @@ class VARX(Channel):
 
     @property
     def stop(self):
-        """ Sets the sweep STOP value.
+        """Control the sweep STOP value.
 
         .. code-block:: python
 
@@ -744,7 +755,7 @@ class VARX(Channel):
 
     @property
     def step(self):
-        """ Sets the sweep STEP value.
+        """Control the sweep STEP value.
 
         .. code-block:: python
 
@@ -764,7 +775,7 @@ class VARX(Channel):
 
     @property
     def compliance(self):
-        """ Sets the sweep COMPLIANCE value.
+        """Control the sweep COMPLIANCE value.
 
         .. code-block:: python
 
@@ -795,11 +806,11 @@ class VAR1(VARX):
             **kwargs
         )
 
-    spacing = Instrument.control(
+    spacing = Channel.control(
         ":PAGE:MEAS:{ch}:SPAC?",
         ":PAGE:MEAS:{ch}:SPAC %s",
         """
-        Selects the sweep type of VAR1.
+        Control the sweep type of VAR1.
 
         - Values: :code:`LINEAR`, :code:`LOG10`, :code:`LOG25`, :code:`LOG50`.
         """,
@@ -824,11 +835,11 @@ class VAR2(VARX):
             **kwargs
         )
 
-    points = Instrument.control(
+    points = Channel.control(
         ":PAGE:MEAS:{ch}:POINTS?",
         ":PAGE:MEAS:{ch}:POINTS %g",
         """
-        Sets the number of sweep steps of VAR2.
+        Control the number of sweep steps of VAR2.
         You use this command only if there is an SMU or VSU
         whose function (FCTN) is VAR2.
 
@@ -857,6 +868,7 @@ class VARD(Channel):
 
     @property
     def channel_mode(self):
+        """Control the channel mode."""
         channels = ['SMU1', 'SMU2', 'SMU3', 'SMU4', 'VSU1', 'VSU2']
         for ch in channels:
             ch_func = self.ask(f":PAGE:CHAN:{ch}:FUNC?")
@@ -867,7 +879,7 @@ class VARD(Channel):
     @property
     def offset(self):
         """
-        Sets the OFFSET value of VARD.
+        Control the OFFSET value of VARD.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VARD = VAR1 X RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function is VARD.
@@ -892,7 +904,7 @@ class VARD(Channel):
         ":PAGE:MEAS:VARD:RATIO?",
         ":PAGE:MEAS:VARD:RATIO %g",
         """
-        Sets the RATIO of VAR1'.
+        Control the RATIO of VAR1'.
         For each step of sweep, the output values of VAR1' are determined by the
         following equation: VAR1’ = VAR1 * RATio + OFFSet
         You use this command only if there is an SMU or VSU whose function
@@ -906,7 +918,7 @@ class VARD(Channel):
 
     @property
     def compliance(self):
-        """ Sets the sweep COMPLIANCE value of VARD.
+        """Control the sweep COMPLIANCE value of VARD.
 
         .. code-block:: python
 
