@@ -57,7 +57,7 @@ class VoltageChannel(Channel):
         command='C{ch}:WF? DAT2'
         descriptorDictionnary=self.getDesc()
         self.write(command) 
-        response=self.read_bytes(count=32)
+        response=self.read_bytes(count=-1,break_on_termchar=False)
         rawWaveform=list(struct.unpack_from('%db'%descriptorDictionnary["numDataPoints"],response,offset=descriptorDictionnary["descriptorOffset"]))
         waveform=[point*descriptorDictionnary["verticalGain"]-descriptorDictionnary["verticalOffset"] for point in rawWaveform]
         timetags=[i*descriptorDictionnary["horizInterval"]+descriptorDictionnary["horizOffset"] for i in range(len(rawWaveform))]
@@ -93,8 +93,143 @@ class VoltageChannel(Channel):
             "descriptorOffset":descriptorOffset
         }
         return descriptorDictionnary
+class TriggerChannel(Channel):
+    """
+        Implementation of trigger control channel
+    """
 
+    triggerConfDict={}
+    
+    def getTriggerConfig(self):
+        """
+            Returns the current trigger configuration as a dict with keys:
+                - "type": condition that will trigger the acquisition of waveforms [EDGE,
+                slew,GLIT,intv,runt,drop]
+                - "source": trigger source (str, {EX,EX/5,C1,C2}) 
+                - "hold_type": hold type (refer to page 131 of programing guide)
+                - "hold_value1": hold value1 (refer to page 131 of programing guide)
+                - "level": Level at which the trigger will be set (float)
+                - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+                - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
+                - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+            and updates the internal configuration status
+        """
+        self.triggerConfDict.update(self.getSetup())
+        self.triggerConfDict.update(self.getLevel())
+        self.triggerConfDict.update(self.getSlope())
+        self.triggerConfDict.update(self.getMode())
+        self.triggerConfDict.update(self.getCoupling())
+        return self.triggerConfDict
 
+    def getSetup(self):
+        """
+            Returns the current trigger setup as a dict with keys:
+                - "type": condition that will trigger the acquisition of waveforms [EDGE,
+                slew,GLIT,intv,runt,drop]
+                - "source": trigger source (str, {EX,EX/5,C1,C2}) 
+                - "hold_type": hold type (refer to page 131 of programing guide)
+                - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        """
+        get_process=lambda v:{
+            "type":v.split(" ",1)[1].split(",")[0],
+            "source":v.split(" ",1)[1].split(",")[2],
+            "hold_type":v.split(" ",1)[1].split(",")[4],
+            "hold_value1":v.split(" ",1)[1].split(",")[6][:-1],
+            }
+        triggerSetupDict=get_process(self.ask("TRSE?"))
+        return triggerSetupDict
+    def getLevel(self):
+        """
+            Returns the current trigger level as a dict with keys:
+                - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
+                - "level": Level at which the trigger will be set (float)
+        """
+        get_process=lambda v:{
+            "source":v.split(":",1)[0],
+            "level":float(v.split(" ",1)[-1][:-2]),
+            }
+        triggerLevelDict=get_process(self.ask("TRLV?"))
+        return triggerLevelDict
+    def getSlope(self):
+        """
+            Returns the current trigger slope as a dict with keys:
+                - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
+                - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+        """
+        get_process=lambda v:{
+            "source":v.split(":",1)[0],
+            "slope":v.split(" ",1)[-1][:-1]
+            }
+        triggerSlopeDict=get_process(self.ask("TRSL?"))
+        return triggerSlopeDict
+
+    def getMode(self):
+        """
+            Returns the current trigger mode as a dict with keys:
+                - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
+        """
+        get_process=lambda v:{
+            "mode":v.split(" ",1)[-1][:-1]
+            }
+        triggerModeDict=get_process(self.ask("TRMD?"))
+        return triggerModeDict
+
+    def getCoupling(self):
+        """
+            Returns the current trigger coupling as a dict with keys:
+                - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
+                - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+        """
+        get_process=lambda v:{
+            "source":v.split(":",1)[0],
+            "coupling":v.split(" ",1)[-1][:-1]
+            }
+        triggerCouplingDict=get_process(self.ask("TRCP?"))
+        return triggerCouplingDict
+
+    def setTriggerConfig(self,**kwargs):
+        """
+            Sets the current trigger configuration with keys:
+                - "type": condition that will trigger the acquisition of waveforms [EDGE,
+                slew,GLIT,intv,runt,drop]
+                - "source": trigger source (str, {EX,EX/5,C1,C2}) 
+                - "hold_type": hold type (refer to page 131 of programing guide)
+                - "hold_value1": hold value1 (refer to page 131 of programing guide)
+                - "level": Level at which the trigger will be set (float)
+                - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+                - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
+                - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+        Returns a flag indicating if all specified entries were correctly set on the oscilloscope and updates the interal trigger configuration
+        """
+        triggerConfDict=self.getTriggerConfig()
+        for key in kwargs:
+            if triggerConfDict.get(key) is not None:
+                triggerConfDict[key]=kwargs[key]
+        self.triggerConfDict=triggerConfDict
+        self.id=self.triggerConfDict['source']
+        setProcesses={
+            "setup":lambda dictIn: (
+                dictIn.get("type"),
+                dictIn.get("hold_type"),
+                dictIn.get("hold_value1")
+            ),
+            "level":lambda dictIn: "%.2eV"%dictIn.get("level"),
+            "coupling": lambda dictIn: dictIn.get("coupling"),
+            "slope": lambda dictIn: dictIn.get("slope"),
+            "mode": lambda dictIn: dictIn.get("mode")
+        }
+        setCommands={
+            "setup":"TRSE %s,SR,{ch},HT,%s,HV,%s",
+            "level":"{ch}:TRLV %s",
+            "coupling":"{ch}:TRCP %s",
+            "slope":"{ch}:TRSL %s",
+            "mode":"TRMD %s"
+        }
+        for key in setProcesses:
+            self.write(setCommands[key]%setProcesses[key](self.triggerConfDict))
+        statusFlag=all([self.triggerConfDict[key]==self.getTriggerConfig()[key] for key in self.triggerConfDict])
+        self.triggerConfDict=self.getTriggerConfig()
+        return statusFlag
 
 
 class SDS1072CML(Instrument):
@@ -109,6 +244,7 @@ class SDS1072CML(Instrument):
         )
     channel_1=Instrument.ChannelCreator(VoltageChannel,"1")
     channel_2=Instrument.ChannelCreator(VoltageChannel,"2")
+    trigger=Instrument.ChannelCreator(TriggerChannel,"")
 
     timeDiv=Instrument.control(
         ":TDIV?",":TDIV %s",
@@ -153,91 +289,6 @@ class SDS1072CML(Instrument):
         else:
             return False
         
-
-    trigger_setup=Instrument.control(
-        ":TRIG_SELECT?","TRSE %s,SR,%s,HT,%s,HV,%s",
-        """ Read and set trigger setup as a dict containing the following keys:
-
-        - "type": condition that will trigger the acquisition of waveforms [EDGE,
-          slew,GLIT,intv,runt,drop]
-        - "source": trigger source (str, {EX,EX/5,C1,C2}) 
-        - "hold_type": hold type (refer to page 131 of programing guide)
-        - "hold_value1": hold value1 (refer to page 131 of programing guide)
-
-        This function fails if the oscilloscope is in alternating trigger mode
-
-        """,
-        set_process=lambda dictIn: (
-         dictIn.get("type") if dictIn.get("type") is not None else "EDGE",
-         dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         dictIn.get("hold_type") if dictIn.get("hold_type") is not None else "TI",
-         dictIn.get("hold_value1") if dictIn.get("hold_value1") is not None else "100NS"
-        ),
-        get_process=lambda v:{
-            "type":v[0].split(" ",1)[-1],
-            "source":v[2] ,
-            "hold_type":v[4],
-            "hold_value1":v[6]
-            }
-    )
-    trigger_level=Instrument.control(
-        "TRLV?","%s:TRLV %s",
-        """ Read and set trigger level as a dict containning the following keys:
-
-        - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
-        - "level": Level at which the trigger will be set (float)
-        """,
-        set_process=lambda dictIn: (
-         dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         "%.2eV"%dictIn.get("level") if dictIn.get("level") is not None else "0.00E+00V",
-        ),
-        get_process=lambda v:{
-            "source":v.split(":",1)[0],
-            "level":float(v.split(" ",1)[-1][:-1]),
-            }
-    )
-    trigger_coupling=Instrument.control(
-        "TRCP?","%s:TRCP %s",
-        """
-            Reads or sets the trigger coupling on the provided channel. Expects and returns a dict containing the following keys:
-            - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
-            - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
-        """,
-        set_process=lambda dictIn: (
-         dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         dictIn.get("coupling") if dictIn.get("coupling") is not None else "DC"
-
-        ),
-        get_process=lambda v:{
-            "source":v.split(":",1)[0],
-            "coupling":v.split(" ",1)[-1]
-            }
-    )
-    trigger_slope=Instrument.control(
-        "TRSL?","%s:TRSL %s",
-        """
-            Reads or sets the trigger slope on the provided channel. Expects and returns a dict containing the following keys:
-            - "source": trigger source whose slope will be changed (str, {EX,EX/5,C1,C2}) 
-            - "trigger_slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        """,
-        set_process=lambda dictIn: (
-         dictIn.get("source") if dictIn.get("source") is not None else "C1",
-         dictIn.get("slope") if dictIn.get("slope") is not None else "POS"
-
-        ),
-        get_process=lambda v:{
-            "source":v.split(":",1)[0],
-            "slope":v.split(" ",1)[-1]
-            }
-    )
-    trigger_mode=Instrument.control(
-        "TRMD?","TRMD %s",
-        """
-            Sets the behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
-        """,
-        values={"NORM","AUTO","SINGLE","STOP"},
-        validator=truncated_discrete_set,
-    )
     template=Instrument.control(
         "TMP?",None,
         """
@@ -245,24 +296,5 @@ class SDS1072CML(Instrument):
             particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
         """
     )
-    def getTemplate(self):
-        self.write("TMP?") 
-        response=self.read_bytes(count=1)
-        return response
-    def getWaveAcq(self):
-        '''
-        Queries the amount of data to be sent from the scope to the controller.
-        See page 144 of programming manual
-        :return: nuttin
-        '''
-        return self.ask('WFSU?')
-    def waveformSetup(self):
-        '''
-        Specifies the amount of data to be sent from the scope to the controller.
-        See page 144 of programming manual
-        :return: nuttin
-        '''
-        self.write('WFSU SP,0,FP,0')
-        return self.getWaveAcq()
         
 

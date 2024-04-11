@@ -44,16 +44,23 @@ print(scope.channel_1.coupling)
 print(scope.is_ready)
 scope.arm()
 
-print(scope.trigger_setup)
-triggerDict=scope.trigger_setup
-triggerDict['type']='EDGE'
-triggerDict['source']='EX'
-scope.trigger_setup=triggerDict
-print(scope.trigger_setup)
-triggerLevel=scope.trigger_level
-triggerLevel['source']='EX'
-triggerLevel["level"]=0.
-scope.trigger_level=triggerLevel
+#print(scope.trigger.getSetup())
+#print(scope.trigger.getLevel())
+#print(scope.trigger.getSlope())
+#print(scope.trigger.getMode())
+#print(scope.trigger.getCoupling())
+print(scope.trigger.getTriggerConfig())
+print(scope.trigger.setTriggerConfig(source="EX",coupling="DC",level=0.5,slope='POS'))
+#print(scope.trigger_setup)
+#triggerDict=scope.trigger_setup
+#triggerDict['type']='EDGE'
+#triggerDict['source']='EX'
+#scope.trigger_setup=triggerDict
+#print(scope.trigger_setup)
+#triggerLevel=scope.trigger_level
+#triggerLevel['source']='EX'
+#triggerLevel["level"]=0.
+#scope.trigger_level=triggerLevel
 
 #triggerCoupling=scope.trigger_coupling
 #print(triggerCoupling)
@@ -66,7 +73,6 @@ scope.trigger_level=triggerLevel
 #print(scope.trigger_mode)
 #scope.trigger_mode="AUTO"
 
-print(scope.waveformSetup())
 timetag1,waveform1=scope.channel_1.getWaveform()
 timetag2,waveform2=scope.channel_2.getWaveform()
 plt.figure()
