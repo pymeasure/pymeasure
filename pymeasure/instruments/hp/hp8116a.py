@@ -256,7 +256,7 @@ class HP8116A(Instrument):
 
     operating_mode = Instrument.control(
         'CST', '%s',
-        """ A string property that controls the operating mode of the instrument.
+        """Control the operating mode of the instrument.
         Possible values (without Option 001) are: 'normal', 'triggered', 'gate', 'external_width'.
         With Option 001, 'internal_sweep', 'external_sweep', 'external_width', 'external_pulse'
         are also available.
@@ -269,7 +269,7 @@ class HP8116A(Instrument):
 
     control_mode = Instrument.control(
         'CST', '%s',
-        """ A string property that controls the control mode of the instrument.
+        """Control the control mode of the instrument.
         Possible values are 'off', 'FM', 'AM', 'PWM', 'VCO'.
         """,
         validator=strict_discrete_set,
@@ -280,7 +280,7 @@ class HP8116A(Instrument):
 
     trigger_slope = Instrument.control(
         'CST', '%s',
-        """ A string property that controls the slope the trigger triggers on.
+        """Control the slope the trigger triggers on.
         Possible values are: 'off', 'positive', 'negative'.
         """,
         validator=strict_discrete_set,
@@ -291,7 +291,7 @@ class HP8116A(Instrument):
 
     shape = Instrument.control(
         'CST', '%s',
-        """ A string property that controls the shape of the output waveform.
+        """Control the shape of the output waveform.
         Possible values are: 'dc', 'sine', 'triangle', 'square', 'pulse'.
         """,
         validator=strict_discrete_set,
@@ -302,39 +302,36 @@ class HP8116A(Instrument):
 
     haversine_enabled = _boolean_control(
         'H', 4,
-        """ A boolean property that controls whether a haversine/havertriangle signal
+        """Control whether a haversine/havertriangle signal
         is generated when in 'triggered', 'internal_burst' or 'external_burst' operating mode.
         """,
     )
 
     autovernier_enabled = _boolean_control(
         'A', 5,
-        """ A boolean property that controls whether the autovernier is enabled. """,
+        """Control whether the autovernier is enabled (bool).""",
         check_set_errors=True
     )
 
     limit_enabled = _boolean_control(
         'L', 6,
-        """ A boolean property that controls whether parameter limiting is enabled. """,
+        """Control whether parameter limiting is enabled (bool).""",
     )
 
     complement_enabled = _boolean_control(
         'C', 7,
-        """ A boolean property that controls whether the complement
-        of the signal is generated.
-        """,
+        """Control whether the complement of the signal is generated (bool).""",
     )
 
     output_enabled = _boolean_control(
         'D', 8,
-        """ A boolean property that controls whether the output is enabled. """,
+        """Control whether the output is enabled (bool).""",
         inverted=True,  # The actual command is "Disable output"...
     )
 
     frequency = Instrument.control(
         'IFRQ', 'FRQ %s',
-        """ A floating point value that controls the frequency of the
-        output in Hz. The allowed frequency range is 1 mHz to 52.5 MHz.
+        """Control the frequency of the output in Hz. (strict float from 1 mHz to 52.5 MHz).
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -344,7 +341,7 @@ class HP8116A(Instrument):
 
     duty_cycle = Instrument.control(
         'IDTY', 'DTY %s %%',
-        """ An integer value that controls the duty cycle of the output in percent.
+        """Control the duty cycle of the output in percent (float).
         The allowed range generally is 10 % to 90 %, but it also depends on the current frequency.
         It is valid for all shapes except 'pulse', where :py:attr:`pulse_width` is used instead.
         """,
@@ -356,7 +353,7 @@ class HP8116A(Instrument):
 
     pulse_width = Instrument.control(
         'IWID', 'WID %s',
-        """ A floating point value that controls the pulse width.
+        """Control the pulse width (float).
         The allowed pulse width range is 8 ns to 999 ms.
         The pulse width may not be larger than the period.
         """,
@@ -368,8 +365,8 @@ class HP8116A(Instrument):
 
     amplitude = Instrument.control(
         'IAMP', 'AMP %s',
-        """ A floating point value that controls the amplitude of the
-        output in V. The allowed amplitude range generally is 10 mV to 16 V,
+        """Control the amplitude of the output in V (float).
+        The allowed amplitude range generally is 10 mV to 16 V,
         but it is also limited by the current offset.
         """,
         validator=strict_range,
@@ -380,8 +377,8 @@ class HP8116A(Instrument):
 
     offset = Instrument.control(
         'IOFS', 'OFS %s',
-        """ A floating point value that controls the offset of the
-        output in V. The allowed offset range generally is -7.95 V to 7.95 V,
+        """Control the offset of the output in V (float).
+        The allowed offset range generally is -7.95 V to 7.95 V,
         but it is also limited by the amplitude.
         """,
         validator=strict_range,
@@ -392,8 +389,8 @@ class HP8116A(Instrument):
 
     high_level = Instrument.control(
         'IHIL', 'HIL %s',
-        """ A floating point value that controls the high level of the
-        output in V. The allowed high level range generally is -7.9 V to 8 V,
+        """Control the high level of the output in V (float).
+        The allowed high level range generally is -7.9 V to 8 V,
         but it must be at least 10 mV greater than the low level.
         """,
         validator=strict_range,
@@ -404,8 +401,8 @@ class HP8116A(Instrument):
 
     low_level = Instrument.control(
         'ILOL', 'LOL %s',
-        """ A floating point value that controls the low level of the
-        output in V. The allowed low level range generally is -8 V to 7.9 V,
+        """Control the low level of the output in V (float).
+        The allowed low level range generally is -8 V to 7.9 V,
         but it must be at least 10 mV less than the high level.
         """,
         validator=strict_range,
@@ -416,7 +413,7 @@ class HP8116A(Instrument):
 
     burst_number = Instrument.control(
         'IBUR', 'BUR %s #',
-        """ An integer value that controls the number of periods generated in a burst.
+        """Control the number of periods generated in a burst (int).
         The allowed range is 1 to 1999. It is only valid for units with Option 001
         in one of the burst modes.
         """,
@@ -427,8 +424,8 @@ class HP8116A(Instrument):
 
     repetition_rate = Instrument.control(
         'IRPT', 'RPT %s',
-        """ A floating point value that controls the repetition rate (= the time between bursts)
-        in 'internal_burst' mode. The allowed range is 20 ns to 999 ms.
+        """Control the repetition rate (= the time between bursts)
+        in 'internal_burst' mode (strict float from 20 ns to 999 ms).
         """,
         validator=strict_range,
         values=[20e-9, 999.001e-3],
@@ -438,7 +435,7 @@ class HP8116A(Instrument):
 
     sweep_start = Instrument.control(
         'ISTA', 'STA %s',
-        """ A floating point value that controls the start frequency in both sweep modes.
+        """Control the start frequency in both sweep modes (float).
         The allowed range is 1 mHz to 52.5 MHz.
         """,
         validator=strict_range,
@@ -449,7 +446,7 @@ class HP8116A(Instrument):
 
     sweep_stop = Instrument.control(
         'ISTP', 'STP %s',
-        """ A floating point value that controls the stop frequency in both sweep modes.
+        """Control the stop frequency in both sweep modes (float).
         The allowed range is 1 mHz to 52.5 MHz.
         """,
         validator=strict_range,
@@ -460,7 +457,7 @@ class HP8116A(Instrument):
 
     sweep_marker_frequency = Instrument.control(
         'IMRK', 'MRK %s',
-        """ A floating point value that controls the frequency marker in both sweep modes.
+        """Control the frequency marker in both sweep modes (float).
         At this frequency, the marker output switches from low to high.
         The allowed range is 1 mHz to 52.5 MHz.
         """,
@@ -472,7 +469,7 @@ class HP8116A(Instrument):
 
     sweep_time = Instrument.control(
         'ISWT', 'SWT %s',
-        """ A floating point value that controls the sweep time per decade in both sweep modes.
+        """Control the sweep time per decade in both sweep modes (float).
         The sweep time is selectable in a 1-2-5 sequence between 10 ms and 500 s.
         """,
         validator=truncated_discrete_set,
@@ -483,16 +480,17 @@ class HP8116A(Instrument):
 
     @property
     def status(self):
-        """ Returns the status byte of the 8116A as an IntFlag-type enum. """
+        """Get the status byte of the 8116A as a :class:`Status` IntFlag-type enum."""
         return Status(self.adapter.connection.read_stb())
 
     @property
     def complete(self):
+        """Get whether the measurement is complete (bool)."""
         return not (self.status & Status.buffer_not_empty)
 
     @property
     def options(self):
-        """ Return the device options installed. The only possible option is 001. """
+        """Get the device options installed. The only possible option is 001."""
         if self.has_option_001:
             return ['001']
         else:
