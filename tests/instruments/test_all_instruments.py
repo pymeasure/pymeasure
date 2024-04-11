@@ -112,16 +112,6 @@ need_init_communication = [
     "ANC300Controller",
     "Keithley2281S",
 ]
-# Channels which are still an Instrument subclass
-channel_as_instrument_subclass = [
-    "SMU",  # agilent/agilent4156
-    "VMU",  # agilent/agilent4156
-    "VSU",  # agilent/agilent4156
-    "VARX",  # agilent/agilent4156
-    "VAR1",  # agilent/agilent4156
-    "VAR2",  # agilent/agilent4156
-    "VARD",  # agilent/agilent4156
-]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
     "AWG401x_AFG",
@@ -208,8 +198,6 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in need_init_communication:
         pytest.skip(f"{cls.__name__} requires communication in init.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
     cls(adapter=MagicMock())
@@ -220,8 +208,6 @@ def test_name_argument(cls):
     "Test that every instrument accepts a name argument."
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     inst = cls(adapter=MagicMock(), name="Name_Test")
     assert inst.name == "Name_Test"
 
@@ -239,8 +225,6 @@ def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
@@ -256,8 +240,6 @@ def test_kwargs_to_adapter(cls):
 def test_includeSCPI_explicitly_set(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
@@ -271,8 +253,6 @@ def test_includeSCPI_explicitly_set(cls):
 def test_includeSCPI_not_set_to_True(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
