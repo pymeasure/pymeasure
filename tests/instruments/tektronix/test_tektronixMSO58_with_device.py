@@ -298,6 +298,11 @@ class TestTektronixMSO58:
         instrument.math_1.math_basic_function = operation
         assert instrument.math_1.math_basic_function == operation
 
+    def test_math_define(self, instrument):
+        instrument.add_new_math(1)
+        assert isinstance(instrument.math_1, TektronixMsoScopeMathChannel)
+        instrument.maths[1].math_define = ("CH1", "+", "CH2")
+
     @pytest.mark.parametrize('output_type', MATH_FFT_OUTPUT_TYPE)
     @pytest.mark.parametrize('window_type', MATH_FFT_WINDOW_TYPE)
     def test_math_fft(self, instrument, output_type, window_type):
