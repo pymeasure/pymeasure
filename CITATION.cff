@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- name: PyMeasure Developers
+title: "PyMeasure"
+version: 0.13.1
+repository-code: https://github.com/pymeasure/pymeasure
+commit: a064eef80cb072d1c2e905e2f64f0a0455060446
+
