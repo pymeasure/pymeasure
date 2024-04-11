@@ -495,6 +495,11 @@ class TektronixMsoScope(Instrument):
         """ Resets the instrument. """
         self.write("*RST;*WAI")
 
+    def clear(self):
+        """This command clears acquisitions, measurements, and waveforms."""
+        self.write("CLEAR")
+
+
     def write(self, command, **kwargs):
         """Write the command to the instrument through the adapter.
 
@@ -968,7 +973,7 @@ class TektronixMsoScope(Instrument):
     def download_image(self):
         """Get a PNG image of oscilloscope screen in bytearray.
         """
-        self.write('SAVE:IMAGe \"C:/Temp.png\";*OPC?')
+        self.write('SAVE:IMAGe \"C:/Temp.png\";*WAI')
         self.write('FILESystem:READFile \"C:/Temp.png\"')
         img = self.read_bytes(count=-1, break_on_termchar=True)
         self.write('FILESystem:DELEte \"C:/Temp.png\"')
