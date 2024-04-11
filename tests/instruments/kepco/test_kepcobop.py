@@ -21,7 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.kepco import KepcoBOP3612
