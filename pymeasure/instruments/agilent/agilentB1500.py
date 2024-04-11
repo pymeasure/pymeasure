@@ -277,7 +277,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         smu_status = {
             1: 'A/D converter overflowed.',
             2: 'Oscillation of force or saturation current.',
-            4: 'Antoher unit reached its compliance setting.',
+            4: 'Another unit reached its compliance setting.',
             8: 'This unit reached its compliance setting.',
             16: 'Target value was not found within the search range.',
             32: 'Search measurement was automatically stopped.',
