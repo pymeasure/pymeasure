@@ -57,7 +57,7 @@ class VoltageChannel(Channel):
         command='C{ch}:WF? DAT2'
         descriptorDictionnary=self.getDesc()
         self.write(command) 
-        response=self.read_bytes(count=-1,break_on_termchar=False)
+        response=self.read_bytes(count=-1,break_on_termchar=True)
         rawWaveform=list(struct.unpack_from('%db'%descriptorDictionnary["numDataPoints"],response,offset=descriptorDictionnary["descriptorOffset"]))
         waveform=[point*descriptorDictionnary["verticalGain"]-descriptorDictionnary["verticalOffset"] for point in rawWaveform]
         timetags=[i*descriptorDictionnary["horizInterval"]+descriptorDictionnary["horizOffset"] for i in range(len(rawWaveform))]
@@ -77,7 +77,7 @@ class VoltageChannel(Channel):
         '''
         command='C{ch}:WF? DESC'
         self.write(command)
-        descriptor=self.read_bytes(count=1)
+        descriptor=self.read_bytes(count=-1,break_on_termchar=True)
         descriptorOffset=21
         (numDataPoints,)=struct.unpack_from('l',descriptor,offset=descriptorOffset+60)
         (verticalGain,)=struct.unpack_from('f',descriptor,offset=descriptorOffset+156)
@@ -202,11 +202,7 @@ class TriggerChannel(Channel):
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope and updates the interal trigger configuration
         """
         triggerConfDict=self.getTriggerConfig()
-        for key in kwargs:
-            if triggerConfDict.get(key) is not None:
-                triggerConfDict[key]=kwargs[key]
-        self.triggerConfDict=triggerConfDict
-        self.id=self.triggerConfDict['source']
+        #self.triggerConfDict=triggerConfDict
         setProcesses={
             "setup":lambda dictIn: (
                 dictIn.get("type"),
@@ -225,10 +221,23 @@ class TriggerChannel(Channel):
             "slope":"{ch}:TRSL %s",
             "mode":"TRMD %s"
         }
-        for key in setProcesses:
-            self.write(setCommands[key]%setProcesses[key](self.triggerConfDict))
-        statusFlag=all([self.triggerConfDict[key]==self.getTriggerConfig()[key] for key in self.triggerConfDict])
+        setValues={# For a given change in conf dict,find the relevant command to be called
+            "setup":["source","type","hold_type","hold_value1"],
+            "level":["level"],
+            "coupling":["coupling"],
+            "slope":["slope"],
+            "mode":["mode"]
+        }
+        if kwargs.get('source') is not None:
+            self.id=kwargs['source']
+        changedValues=[key for key in kwargs if not triggerConfDict[key]==kwargs[key]]
+        processToChange=[key for key in setValues if any([value in changedValues for value in setValues[key]])]
+        for changedKey in changedValues:
+            triggerConfDict[changedKey]=kwargs[changedKey]
+        for processKey in processToChange:
+            self.write(setCommands[processKey]%setProcesses[processKey](triggerConfDict))
         self.triggerConfDict=self.getTriggerConfig()
+        statusFlag=self.triggerConfDict==triggerConfDict
         return statusFlag
 
 
