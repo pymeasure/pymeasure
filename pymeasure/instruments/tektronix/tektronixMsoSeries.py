@@ -1344,7 +1344,8 @@ class TektronixMSO64(TektronixMsoScope):
                  **kwargs):
         super().__init__(adapter, name, active_channels, **kwargs)
 
-    ANALOG_TRIGGER_SOURCE = ['CH1', 'CH2', 'CH3', 'CH4']
+    ANALOG_TRIGGER_SOURCE = {"channel1": "CH1", "channel2": "CH2", "channel3": "CH3",
+                             "channel4": "CH4"}
     DIGITAL_TRIGGER_SOURCE = ['CH1_D0', 'CH1_D1', 'CH1_D2', 'CH1_D3',
                               'CH1_D4', 'CH1_D5', 'CH1_D6', 'CH1_D7',
                               'CH2_D0', 'CH2_D1', 'CH2_D2', 'CH2_D3',
