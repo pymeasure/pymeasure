@@ -303,8 +303,8 @@ class HP8753E(Instrument):
 
     @property
     def measuring_parameter(self):
-        f"""Get the active Scattering or Measuring Parameter being measured.
-        (str from {self.MEASURING_PARAMETER_MAP})"""
+        """Get the active Scattering or Measuring Parameter being measured.
+        (str from ['S11', 'S12', 'S21', 'S22', 'A/R', 'B/R', 'A/B', 'A', 'B', 'R'])"""
         for key in self.MEASURING_PARAMETER_MAP:
             if int(self.ask(f"{self.MEASURING_PARAMETER_MAP[key]}?")) == 1:
                 return key
@@ -312,8 +312,8 @@ class HP8753E(Instrument):
 
     @measuring_parameter.setter
     def measuring_parameter(self, value):
-        f"""Set the active Measuring Parameter to be measured.
-        (str from {self.MEASURING_PARAMETER_MAP.keys()})"""
+        """Set the active Measuring Parameter to be measured.
+        (str from ['S11', 'S12', 'S21', 'S22', 'A/R', 'B/R', 'A/B', 'A', 'B', 'R'])"""
         if value in self.MEASURING_PARAMETER_MAP:
             self.write(self.MEASURING_PARAMETER_MAP[value])
         else:
