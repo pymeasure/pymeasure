@@ -18,7 +18,7 @@ def test_waveform():
     ) as instr:
         instr.main_channel.waveform = "SQUARE"
         instr.subsidiary_channel.waveform = "SQUARE"
-        
+       
 def test_amplitude():
     with expected_protocol(
         FY3200S,
@@ -27,7 +27,7 @@ def test_amplitude():
     ) as instr:
         instr.main_channel.amplitude = 1.5
         instr.subsidiary_channel.amplitude = 1.5
-        
+                
 def test_offset():
     with expected_protocol(
         FY3200S,

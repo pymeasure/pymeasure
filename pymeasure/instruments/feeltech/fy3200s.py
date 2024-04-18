@@ -1,6 +1,6 @@
 from pymeasure.instruments import Instrument, SCPIUnknownMixin, Channel
 from pymeasure.adapters import SerialAdapter
-from pymeasure.instruments.validators import strict_discrete_range, strict_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
 def step_validator(step):
     """Creates a strict_discrete_range with the specified step"""
