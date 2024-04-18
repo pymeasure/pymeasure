@@ -322,6 +322,16 @@ class HP8753E(Instrument):
                 {self._manu} {self._model}. Valid values are: {self.MEASURING_PARAMETER_MAP}"
             )
 
+    IFBW = Instrument.control(
+        "IFBW?",
+        "IFBW%d",
+        f"""Control the IF Bandwidth of the instrument for a scan sweep.
+        (int from the set {ALLOWED_BANDWIDTH}).""",
+        cast=lambda x: int(float(x)),
+        validator=strict_discrete_set,
+        values=ALLOWED_BANDWIDTH,
+    )
+
     def reset(self):
         """Reset the instrument. May cause RF Output power to be enabled!"""
         self.write("*RST")
