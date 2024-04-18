@@ -95,8 +95,11 @@ class HP8753E(Instrument):
 
     ALLOWED_BANDWIDTH = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
     SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
-    MEASURING_PARAMETERS = ["S11", "S12", "S21", "S22", "A/R", "B/R", "A/B", "A", "B", "R"]
     MEASURING_PARAMETER_MAP = {
+        "S11": "S11",
+        "S12": "S12",
+        "S21": "S21",
+        "S22": "S22",
         "A/R": "AR",
         "B/R": "BR",
         "A/B": "AB",
@@ -300,40 +303,24 @@ class HP8753E(Instrument):
 
     @property
     def measuring_parameter(self):
-        """Get the active Scattering or Measuring Parameter being measured.
-        (str from ['S11', 'S21', 'S12', 'S22', 'A', 'B', 'R'])"""
-        for parameter in self.MEASURING_PARAMETERS:
-            if parameter in self.MEASURING_PARAMETER_MAP:
-                if int(self.ask(f"{self.MEASURING_PARAMETER_MAP[parameter]}?")) == 1:
-                    return parameter
-            elif int(self.ask(f"{parameter}?")) == 1:
-                return parameter
+        f"""Get the active Scattering or Measuring Parameter being measured.
+        (str from {self.MEASURING_PARAMETER_MAP})"""
+        for key in self.MEASURING_PARAMETER_MAP:
+            if int(self.ask(f"{self.MEASURING_PARAMETER_MAP[key]}?")) == 1:
+                return key
         return None
 
     @measuring_parameter.setter
     def measuring_parameter(self, value):
-        """Set the active Measuring Parameter to be measured.
-        (str from ['S11', 'S21', 'S12', 'S22', 'A', 'B', 'R'])"""
-        if value in self.MEASURING_PARAMETERS:
-            if value in self.MEASURING_PARAMETER_MAP:
-                self.write("%s" % self.MEASURING_PARAMETER_MAP[value])
-            else:
-                self.write("%s" % value)
+        f"""Set the active Measuring Parameter to be measured.
+        (str from {self.MEASURING_PARAMETER_MAP.keys()})"""
+        if value in self.MEASURING_PARAMETER_MAP:
+            self.write(self.MEASURING_PARAMETER_MAP[value])
         else:
             raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for \
-                {self._manu} {self._model}. Valid values are: {self.MEASURING_PARAMETERS}"
+                {self._manu} {self._model}. Valid values are: {self.MEASURING_PARAMETER_MAP}"
             )
-
-    IFBW = Instrument.control(
-        "IFBW?",
-        "IFBW%d",
-        f"""Control the IF Bandwidth of the instrument for a scan sweep.
-        (int from the set {ALLOWED_BANDWIDTH}).""",
-        cast=lambda x: int(float(x)),
-        validator=strict_discrete_set,
-        values=ALLOWED_BANDWIDTH,
-    )
 
     def reset(self):
         """Reset the instrument. May cause RF Output power to be enabled!"""

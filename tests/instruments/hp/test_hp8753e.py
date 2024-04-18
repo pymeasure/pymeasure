@@ -105,18 +105,18 @@ def test_hp8753e_measuring_parameter():
             ("S21?", "1\n"),
         ],
     ) as inst:
-        assert inst.MEASURING_PARAMETERS == [
-            "S11",
-            "S12",
-            "S21",
-            "S22",
-            "A/R",
-            "B/R",
-            "A/B",
-            "A",
-            "B",
-            "R",
-        ]
+        assert inst.MEASURING_PARAMETER_MAP == {
+            "S11": "S11",
+            "S12": "S12",
+            "S21": "S21",
+            "S22": "S22",
+            "A/R": "AR",
+            "B/R": "BR",
+            "A/B": "AB",
+            "A": "MEASA",
+            "B": "MEASB",
+            "R": "MEASR",
+        }
         inst.measuring_parameter = "S21"
         assert inst.measuring_parameter == "S21"
 
