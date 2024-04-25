@@ -33,10 +33,10 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 
 
 @enum.unique
-class Keithley2281SOperationCondition(enum.IntFlag):
-    """Enum containing Keithley2281S operation condition definition"""
+class Keithley2281SSummaryEventRegister(enum.IntFlag):
+    """Enum containing Keithley2281S Summary Event Register definition"""
 
-    CALIBRATION = 1
+    CALIBRATION = 1  # Performing calibration
     _RESERVED_1 = 2
     _RESERVED_2 = 4
     _RESERVED_3 = 8
@@ -68,7 +68,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     def __init__(self, adapter, name="Keithley2281S", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    # Common commands (cm_*)
+    # Common commands (cm_*), these can be used in any function mode
 
     cm_display_text_data = Instrument.setting(
         ":DISP:USER:TEXT '%s'", """Set control text to be displayed(24 characters)."""
@@ -93,9 +93,20 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
 
     cm_operation_condition = Instrument.measurement(
         ":STAT:OPER:INST:ISUM:COND?",
-        """Get test status.""",
-        get_process=lambda x: Keithley2281SOperationCondition(int(x)),
+        """Get summary event register.""",
+        get_process=lambda x: Keithley2281SSummaryEventRegister(int(x)),
     )
+
+    def cm_measurement_ongoing(self) -> bool:
+        """Return wether a measurement is ongoing
+
+        Returns:
+            bool: measurement is ongoing?
+        """
+        op_flags = self.cm_operation_condition
+        if Keithley2281SSummaryEventRegister.MEASUREMENT in op_flags:
+            return True
+        return False
 
     # Power Supply (ps_*) Commands, only applicable in power supply mode
 
