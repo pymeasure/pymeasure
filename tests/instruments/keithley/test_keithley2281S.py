@@ -21,59 +21,63 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
-
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.keithley.keithley2000 import Keithley2000
+from pymeasure.instruments.keithley.keithley2281S import Keithley2281S
+
+init_comm = [(":SYST:LFR?", "50")]  # communication during init
+init_comm_us = [(":SYST:LFR?", "60")]  # communication during init
 
 
-def test_voltage_read():
+def test_init():
     with expected_protocol(
-        Keithley2000,
-        [(":READ?", "3.1415")],
+        Keithley2281S,
+        init_comm
     ) as inst:
-        assert inst.voltage == pytest.approx(3.1415)
+        assert inst._PLC_RANGE == [0.002, 12]
 
 
-def test_voltage_range():
+def test_init_us():
     with expected_protocol(
-        Keithley2000,
-        [(":SENS:VOLT:RANG?", "955"),
-         (":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG 234", None)
+        Keithley2281S,
+        init_comm_us
+    ) as inst:
+        assert inst._PLC_RANGE == [0.002, 15]
+
+
+def test_function_modes():
+    with expected_protocol(
+        Keithley2281S,
+        init_comm +
+        [(":ENTR:FUNC?", "POWER"),
+         (":ENTR:FUNC TEST", None),
+         (":ENTR:FUNC SIMULATOR", None),
          ],
     ) as inst:
-        assert inst.voltage_range == 955
-        inst.voltage_range = 234
+        assert inst.cm_function_mode == "POWER"
+        inst.cm_function_mode = "TEST"
+        inst.cm_function_mode = "SIMULATOR"
 
 
-def test_voltage_range_trunc():
+def test_ps_output():
     with expected_protocol(
-        Keithley2000,
-        [(":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG 1010", None),
-         (":SENS:VOLT:RANG?", "1010"),
+        Keithley2281S,
+        init_comm +
+        [(":OUTP:STAT?", "OFF"),
+         (":OUTP:STAT ON", None),
          ],
     ) as inst:
-        inst.voltage_range = 3333  # too large, gets truncated
-        assert inst.voltage_range == 1010
+        assert inst.ps_output_enabled is False
+        inst.ps_output_enabled = True
 
 
-def test_mode():
-    "Confirm that mode string mapping works correctly"
+# Same for bs_output_enabled
+def test_bt_output():
     with expected_protocol(
-        Keithley2000,
-        [(":CONF?", "VOLT:AC"),
-         (":CONF:FRES", None),
+        Keithley2281S,
+        init_comm +
+        [(":BATT:OUTP?", "OFF"),
+         (":BATT:OUTP ON", None),
          ],
     ) as inst:
-        assert inst.mode == 'voltage ac'
-        inst.mode = 'resistance 4W'
-
-
-def test_measure_voltage():
-    with expected_protocol(
-        Keithley2000,
-        [(":CONF:VOLT:AC", None),
-         (":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG 300", None),
-         ],
-    ) as inst:
-        inst.measure_voltage(max_voltage=300, ac=True)
+        assert inst.bt_output_enabled is False
+        inst.bt_output_enabled = True
