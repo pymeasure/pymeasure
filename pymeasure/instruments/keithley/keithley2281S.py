@@ -238,16 +238,26 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         values=_INTERNAL_MEMORY_SLOTS,
     )
 
-    bt_save_model_usb = Instrument.setting(
-        ':BATT:TEST:SENS:AH:GMOD:SAVE:USB "%s"', """Save the battery model to usb memory."""
-    )
-
     bt_buffer_data = Instrument.measurement(
         ':BATT:DATA:DATA? "VOLT, CURR, RES, AH, REL"',
         """Get the buffer in battery test mode and return its content as a pandas dataframe""",
         separator=",",
         get_process=lambda v: Keithley2281S._bt_parse_buffer(v),  # Does not work without lambda
     )
+
+    def bt_save_model_to_usb(self, memory_slot: int, model_file_name: str):
+        """Save battery model to USB
+
+        Args:
+            memory_slot (int): Number of memory slot to save model from. Valid values are 1 to 10.
+            model_file_name (str): Name of battery model to save
+
+        Raises:
+            ValueError: invalid memory slot given
+        """
+        if self._INTERNAL_MEMORY_SLOTS[0] > memory_slot > self._INTERNAL_MEMORY_SLOTS[-1]:
+            raise ValueError
+        self.write(f":BATT:MOD:SAVE:USB {memory_slot}, {model_file_name}")
 
     @staticmethod
     def _bt_parse_buffer(buffer_content):
@@ -275,14 +285,19 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         values=_INTERNAL_MEMORY_SLOTS,
     )
 
-    # Needs two arguments
-    # bs_load_model_usb = Instrument.setting(
-    #    ":BATT:MOD:LOAD:USB %d, \"%s\"",
-    #    """Loads a battery model from USB to the internal memory.""",
-    #    validator=strict_discrete_set,
-    #    values=_INTERNAL_MEMORY_SLOTS
-    #    cast=int
-    # )
+    def bs_load_model_from_usb(self, memory_slot: int, model_file_name: str):
+        """Load battery model from USB
+
+        Args:
+            memory_slot (int): Number of memory slot to load model to. Valid values are 1 to 10.
+            model_file_name (str): Name of battery model to load
+
+        Raises:
+            ValueError: invalid memory slot given
+        """
+        if self._INTERNAL_MEMORY_SLOTS[0] > memory_slot > self._INTERNAL_MEMORY_SLOTS[-1]:
+            raise ValueError
+        self.write(f":BATT:MOD:LOAD:USB {memory_slot}, {model_file_name}")
 
     # To be consistent in the interface
     bs_output_enabled = bt_output_enabled
