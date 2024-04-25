@@ -83,11 +83,17 @@ class TC038(Instrument):
     """
 
     def __init__(self, adapter, name="TC038", address=1, timeout=1000,
-                 includeSCPI=False, **kwargs):
-
-        super().__init__(adapter, name, timeout=timeout,
-                         write_termination="\r", read_termination="\r",
-                         parity=Parity.even, **kwargs)
+                 **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            timeout=timeout,
+            write_termination="\r",
+            read_termination="\r",
+            parity=Parity.even,
+            includeSCPI=False,
+            **kwargs,
+        )
         self.address = address
 
         self.set_monitored_quantity()  # start to monitor the temperature
@@ -155,6 +161,6 @@ class TC038(Instrument):
 
     information = Instrument.measurement(
         "INF6",
-        """Get the information about the device and its capabilites.""",
+        """Get the information about the device and its capabilities.""",
         get_process=lambda got: got[7:-1],
     )

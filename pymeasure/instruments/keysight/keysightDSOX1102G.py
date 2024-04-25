@@ -25,7 +25,7 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -218,7 +218,7 @@ class Channel():
         return ch_setup_dict
 
 
-class KeysightDSOX1102G(Instrument):
+class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     """ Represents the Keysight DSOX1102G Oscilloscope interface for interacting
     with the instrument.
 

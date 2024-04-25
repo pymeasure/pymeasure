@@ -33,7 +33,7 @@ from collections import Counter, namedtuple, OrderedDict
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range,
                                               strict_discrete_range)
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,7 +43,7 @@ log.addHandler(logging.NullHandler())
 ######################################
 
 
-class AgilentB1500(Instrument):
+class AgilentB1500(SCPIUnknownMixin, Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking different kinds of
     measurements.
@@ -124,7 +124,7 @@ class AgilentB1500(Instrument):
                     # i+1: channels start at 1 not at 0
                 except Exception:
                     raise NotImplementedError(
-                        f'Module {module[0]} is not implented yet!')
+                        f'Module {module[0]} is not implemented yet!')
         return out
 
     def initialize_smu(self, channel, smu_type, name):
@@ -165,7 +165,7 @@ class AgilentB1500(Instrument):
                 i += 1
 
     def pause(self, pause_seconds):
-        """ Pauses Command Excecution for given time in seconds (``PA``)
+        """ Pauses Command Execution for given time in seconds (``PA``)
 
         :param pause_seconds: Seconds to pause
         :type pause_seconds: int
@@ -277,7 +277,7 @@ class AgilentB1500(Instrument):
         smu_status = {
             1: 'A/D converter overflowed.',
             2: 'Oscillation of force or saturation current.',
-            4: 'Antoher unit reached its compliance setting.',
+            4: 'Another unit reached its compliance setting.',
             8: 'This unit reached its compliance setting.',
             16: 'Target value was not found within the search range.',
             32: 'Search measurement was automatically stopped.',
@@ -598,7 +598,7 @@ class AgilentB1500(Instrument):
     # ADC Setup: AAD, AIT, AV, AZ
 
     def query_adc_setup(self):
-        """Read ADC settings (55, 56) from the intrument.
+        """Read ADC settings (55, 56) from the instrument.
         """
         return {**self.query_learn_header(55), **self.query_learn_header(56)}
 
@@ -652,7 +652,7 @@ class AgilentB1500(Instrument):
 
     @property
     def adc_auto_zero(self):
-        """ Enable/Disable ADC zero function. Halfs the
+        """ Enable/Disable ADC zero function. Halves the
         integration time, if off. (``AZ``)
 
         :type: bool
@@ -1074,7 +1074,7 @@ class SMU():
         :param source_range: Output range index or name
         :type source_range: int or str
         :param output: Source output value in A or V
-        :type outout: float
+        :type output: float
         :param comp: Compliance value, defaults to previous setting
         :type comp: float, optional
         :param comp_polarity: Compliance polairty, defaults to auto

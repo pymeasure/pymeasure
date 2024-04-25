@@ -23,7 +23,7 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class Sound_Channel:
     """
     Class object for the two sound channels
 
-    refere also to chapter 3.6.6.7 of the user manual
+    refer also to chapter 3.6.6.7 of the user manual
     """
     modulation_degree = Instrument.control(
         "AUD:DEGR?",
@@ -189,7 +189,7 @@ class Sound_Channel:
         self.instrument.read()
 
 
-class SFM(Instrument):
+class SFM(SCPIMixin, Instrument):
     """ Represents the Rohde&Schwarz SFM TV test transmitter
     interface for interacting with the instrument.
 
@@ -198,7 +198,7 @@ class SFM(Instrument):
 
         Further source extension for system 2-6 would be required.
 
-        The intermodulation subsystem is also not yet implmented.
+        The intermodulation subsystem is also not yet implemented.
 
     """
 
@@ -206,7 +206,6 @@ class SFM(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
             **kwargs
         )
         self.sound1 = Sound_Channel(self, 1)
@@ -447,7 +446,7 @@ class SFM(Instrument):
         ======  =======
         Value   Meaning
         ======  =======
-        CW      Continous wave mode
+        CW      Continuous wave mode
         FIXED   fixed frequency mode
         CHSW    Channel sweep
         RFSW    Frequency sweep
@@ -567,7 +566,7 @@ class SFM(Instrument):
         ======  ====================  =================
         NORM    Normal mode           +6 dBm
         LOWN    low noise mode        +10 dBm
-        CONT    continous mode        +10 dBm
+        CONT    continuous mode        +10 dBm
         LOWD    low distortion mode   +0 dBm
         ======  ====================  =================
 
@@ -759,7 +758,7 @@ class SFM(Instrument):
     nicam_bit_error_rate = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT?",
         "SOUR:TEL:MOD:NIC:BIT %g",
-        """ A float property that controls the artifical bit error rate.
+        """ A float property that controls the artificial bit error rate.
 
         valid range: 1.2E-7 .. 2E-3
         """,
@@ -770,7 +769,7 @@ class SFM(Instrument):
     nicam_bit_error_enabled = Instrument.control(
         "SOUR:TEL:MOD:NIC:BIT:STAT?",
         "SOUR:TEL:MOD:NIC:BIT:STAT %d",
-        """ A bool property that controls the status of an artifical bit error rate to be applied
+        """ A bool property that controls the status of an artificial bit error rate to be applied
 
         """,
         validator=strict_discrete_set,
@@ -852,7 +851,7 @@ class SFM(Instrument):
         ======  =======
         INT     Internal audio generator(s)
         EXT     External audio source
-        CW      Continous wave signal
+        CW      Continuous wave signal
         RAND    Random data stream
         TEST    Test signal
         ======  =======
