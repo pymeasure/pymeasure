@@ -65,9 +65,12 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     _CURRENT_RANGE_PS = [0.1, 6.1]
     _CURRENT_RANGE_BT_BS = [0.0, 6.1]
     _INTERNAL_MEMORY_SLOTS = [*range(1, 10)]
+    _PLC_RANGE = [0.002, 12]
 
     def __init__(self, adapter, name="Keithley2281S", **kwargs):
         super().__init__(adapter, name, **kwargs)
+        if self.cm_line_frequency == 60:
+            self._PLC_RANGE[1] = 15
 
     # Common commands (cm_*), these can be used in any function mode
 
@@ -96,6 +99,12 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         ":STAT:OPER:INST:ISUM:COND?",
         """Get summary event register.""",
         get_process=lambda x: Keithley2281SSummaryEventRegister(int(x)),
+    )
+
+    cm_line_frequency = Instrument.measurement(
+        ":SYST:LFR?",
+        """Get line frequency.""",
+        cast=int,
     )
 
     def cm_measurement_ongoing(self) -> bool:
@@ -244,10 +253,9 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         """
         Control the number of power line cycles for current and voltage measurements.
         The upper limit is for the 50Hz setting, the 60Hz settings goes up to 15.
-        TODO: use dynamic property to adapt range
         """,
         validator=truncated_range,
-        values=[0.002, 12],
+        values=_PLC_RANGE,
     )
 
     # Battery test (bt_*) commands, only applicable in battery test mode
