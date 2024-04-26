@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ from pymeasure.instruments.hp import HP8753E
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-pytest.skip("Only works with connected hardware", allow_module_level=True)
+# pytest.skip("Only works with connected hardware", allow_module_level=True)
 
 
 @contextmanager
@@ -60,22 +60,16 @@ def init_HP8753E(**kwargs):
     with init_prologix_adapter() as prologix:
         vna = HP8753E(adapter=prologix, **kwargs)
         yield vna
-        del vna
-
-
-def test_sanity():
-    assert 1 + 1 == 2
+        vna.shutdown()
 
 
 def test_init_prologix_adapter():
     with init_prologix_adapter() as prologix:
         assert isinstance(prologix, PrologixAdapter)
-        test_sanity()
 
 
 def test_init_HP8753E():
     with init_HP8753E() as hp8753e:
-        test_sanity()
         hp8753e.reset()
         hp8753e.emit_beep()
 
@@ -134,22 +128,22 @@ def test_hp8753e_sweep_time():
 def test_hp8753e_measuring_parameters():
     with init_HP8753E() as hp8753e:
         hp8753e.reset()
-        for parameter in hp8753e.MEASURING_PARAMETERS:
+        for parameter in hp8753e.MEASURING_PARAMETER_MAP:
             hp8753e.measuring_parameter = parameter
             assert hp8753e.measuring_parameter == parameter
 
-        assert hp8753e.MEASURING_PARAMETERS == [
-            "S11",
-            "S12",
-            "S21",
-            "S22",
-            "A/R",
-            "B/R",
-            "A/B",
-            "A",
-            "B",
-            "R",
-        ]
+        assert hp8753e.MEASURING_PARAMETER_MAP == {
+            "S11": "S11",
+            "S12": "S12",
+            "S21": "S21",
+            "S22": "S22",
+            "A/R": "AR",
+            "B/R": "BR",
+            "A/B": "AB",
+            "A": "MEASA",
+            "B": "MEASB",
+            "R": "MEASR",
+        }
 
 
 def test_hp8753e_scan_points():
@@ -207,10 +201,10 @@ def test_hp8753e_center_and_span_frequency():
                     assert hp8753e.center_frequency == freq
 
 
-def test_hp8753e_set_fixed_frequency():
+def test_hp8753e_set_single_frequency_scan():
     with init_HP8753E() as hp8753e:
         for frequency in [30_000, 1_000_000, 500_000_000, 4_000_000_000, 6_000_000_000]:
-            hp8753e.set_fixed_frequency(frequency)
+            hp8753e.set_single_frequency_scan(frequency)
             assert hp8753e.start_frequency == frequency
             assert hp8753e.stop_frequency == frequency
             assert hp8753e.scan_points == 3
@@ -272,7 +266,7 @@ def test_hp8753e_np_frequencies():
 def test_hp8753e_reset():
     with init_HP8753E() as hp8753e:
         frequency = 500_000_000
-        hp8753e.set_fixed_frequency(500_000_000)
+        hp8753e.set_single_frequency_scan(500_000_000)
         assert hp8753e.start_frequency == frequency
         assert hp8753e.stop_frequency == frequency
         assert hp8753e.scan_points == 3
@@ -287,16 +281,6 @@ def test_hp8753e_averaging_enabled():
         hp8753e.averaging_enabled = True
         assert hp8753e.averaging_enabled is True
         hp8753e.averaging_enabled = False
-        assert hp8753e.averaging_enabled is False
-
-        hp8753e.averaging_enabled = "ON"
-        assert hp8753e.averaging_enabled is True
-        hp8753e.averaging_enabled = "OFF"
-        assert hp8753e.averaging_enabled is False
-
-        hp8753e.averaging_enabled = "1"
-        assert hp8753e.averaging_enabled is True
-        hp8753e.averaging_enabled = "0"
         assert hp8753e.averaging_enabled is False
 
 

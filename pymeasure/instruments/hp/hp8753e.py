@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -89,9 +89,8 @@ class HP8753E(Instrument):
                 self._manu = "Hewlett Packard"
                 self._model = "8753E"
             self._desc = "Vector Network Analyzer"
-            name = self.name = f"{self._manu} {self._model} {self._desc}"
-        else:
-            self.name = name
+            name = f"{self._manu} {self._model} {self._desc}"
+        self.name = name
 
     ALLOWED_BANDWIDTH = [10, 30, 100, 300, 1000, 3000, 3700, 6000]
     SCAN_POINT_VALUES = [3, 11, 21, 26, 51, 101, 201, 401, 801, 1601]
@@ -159,7 +158,7 @@ class HP8753E(Instrument):
     sweep_time = Instrument.control(
         "SWET?",
         "SWET%.2e",
-        """Control the sweep time in seconds. (float truncated from 0.0 to 36_400.0)
+        """Control the sweep time in seconds. (float strictly from 0.0 to 36_400.0)
         """,
         validator=strict_range,
         cast=float,
@@ -167,13 +166,13 @@ class HP8753E(Instrument):
     )
 
     def set_sweep_time_fastest(self):
-        """Set instrument scan sweep time to select fastest possible time."""
+        """Set the scan sweep time to the fastest time possible."""
         self.write("SWEA")
 
     averages = Instrument.control(
         "AVERFACT?",
         "AVERFACT%d",
-        """Control the number of averages for a scan sweep. (int truncated from 1 to 999).
+        """Control the number of averages for a scan sweep. (int strict from 1 to 999).
         """,
         cast=lambda x: int(float(x)),  # need float() to convert scientific notation in strings
         validator=strict_range,
@@ -187,7 +186,7 @@ class HP8753E(Instrument):
         cast=bool,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0, "ON": 1, "OFF": 0, "1": True, "0": False},
+        values={True: 1, False: 0},
     )
 
     correction_enabled = Instrument.control(
@@ -197,7 +196,7 @@ class HP8753E(Instrument):
         cast=bool,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0, "ON": 1, "OFF": 0},
+        values={True: 1, False: 0},
     )
 
     def averaging_restart(self):
@@ -227,7 +226,7 @@ class HP8753E(Instrument):
         cast=bool,
         map_values=True,
         validator=strict_discrete_set,
-        values={True: 1, False: 0, "ON": 1, "OFF": 0},
+        values={True: 1, False: 0}
     )
 
     trigger_hold = Instrument.control(
@@ -266,12 +265,12 @@ class HP8753E(Instrument):
 
     sn = Instrument.measurement(
         "OUTPSERN",
-        """Get the serial number for the instrument""",
+        """Get the serial number of the instrument""",
     )
 
     options = Instrument.measurement(
         "OUTPOPTS",
-        """Get the installed options for the instrument""",
+        """Get the installed options of the instrument""",
     )
 
     @property
@@ -303,7 +302,7 @@ class HP8753E(Instrument):
 
     @property
     def measuring_parameter(self):
-        """Get the active Scattering or Measuring Parameter being measured.
+        """Control the active Scattering or Measuring Parameter being measured.
         (str from ['S11', 'S12', 'S21', 'S22', 'A/R', 'B/R', 'A/B', 'A', 'B', 'R'])"""
         for key in self.MEASURING_PARAMETER_MAP:
             if int(self.ask(f"{self.MEASURING_PARAMETER_MAP[key]}?")) == 1:
@@ -312,8 +311,6 @@ class HP8753E(Instrument):
 
     @measuring_parameter.setter
     def measuring_parameter(self, value):
-        """Set the active Measuring Parameter to be measured.
-        (str from ['S11', 'S12', 'S21', 'S22', 'A/R', 'B/R', 'A/B', 'A', 'B', 'R'])"""
         if value in self.MEASURING_PARAMETER_MAP:
             self.write(self.MEASURING_PARAMETER_MAP[value])
         else:
@@ -332,13 +329,16 @@ class HP8753E(Instrument):
         values=ALLOWED_BANDWIDTH,
     )
 
-    def reset(self):
-        """Reset the instrument. May cause RF Output power to be enabled!"""
+    def reset(self, pause=0.25):
+        """Reset the instrument. May cause RF Output power to be enabled!
+
+        :param pause: Optional value in seconds to pause to allow the reset process to complete.
+        Default value is 0.25."""
         self.write("*RST")
-        sleep(0.25)
+        sleep(pause)
 
     def scan(self, timeout=10):
-        """Initiates a scan with the number of averages specified and
+        """Initiate a scan with the number of averages specified and
         blocks until the operation is complete.
 
         :param timeout: Optional value in seconds to add to the sweep time before timeout occurs.
@@ -381,7 +381,7 @@ class HP8753E(Instrument):
             sleep(0.25)
 
     def scan_single(self):
-        """Initiates a single scan or N scans averaged based on averaging
+        """Initiate a single scan or N scans averaged based on averaging.
         This function is not blocking.
         """
         if self.averaging_enabled:
@@ -468,5 +468,5 @@ class HP8753E(Instrument):
         return data
 
     def shutdown(self):
-        """Shutdown - Disables RF Output."""
+        """Shutdown - Disable RF Output."""
         self.output_enabled = False

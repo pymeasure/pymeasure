@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,10 +29,6 @@ from pymeasure.test import expected_protocol
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-def test_sanity():
-    assert 1 + 1 == 2
 
 
 def test_hp8753e_id():
