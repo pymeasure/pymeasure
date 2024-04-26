@@ -226,7 +226,7 @@ class HP8753E(Instrument):
         cast=bool,
         map_values=True,
         validator=strict_discrete_set,
-        values={True: 1, False: 0}
+        values={True: 1, False: 0},
     )
 
     trigger_hold = Instrument.control(
@@ -294,7 +294,7 @@ class HP8753E(Instrument):
             self._manu, self._model, _, self._fw = self.id
         return self._fw
 
-    def set_fixed_frequency(self, frequency):
+    def set_single_frequency_scan(self, frequency):
         """Set the sweep to be a fixed frequency in Hz."""
         self.start_frequency = frequency
         self.stop_frequency = frequency

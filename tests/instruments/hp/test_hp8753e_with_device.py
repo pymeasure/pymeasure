@@ -35,7 +35,7 @@ from pymeasure.instruments.hp import HP8753E
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-# pytest.skip("Only works with connected hardware", allow_module_level=True)
+pytest.skip("Only works with connected hardware", allow_module_level=True)
 
 
 @contextmanager
