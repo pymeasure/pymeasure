@@ -34,8 +34,10 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 
 
 @enum.unique
-class Keithley2281SSummaryEventRegister(enum.IntFlag):
-    """Enum containing Keithley2281S Summary Event Register definition"""
+class Keithley2281SOperationEventRegister(enum.IntFlag):
+    """
+    Enum containing Keithley2281S Operation Instrument Summary Event Register definition
+    """
 
     CALIBRATION = 1  # Performing calibration
     _RESERVED_1 = 2
@@ -52,6 +54,29 @@ class Keithley2281SSummaryEventRegister(enum.IntFlag):
     _RESERVED_6 = 4096
     _RESERVED_7 = 8192
     _RESERVED_8 = 16384
+
+
+@enum.unique
+class Keithley2281SMeasurementEventRegister(enum.IntFlag):
+    """
+    Enum containing Keithley2281S Measurement Instrument Summary Event Register definition
+    """
+
+    ROF = 1  # Reading overflow
+    _RESERVED_1 = 2
+    _RESERVED_2 = 4
+    _RESERVED_3 = 8
+    _RESERVED_4 = 16
+    _RESERVED_5 = 32
+    RAV = 64  # Reading available
+    BHF = 128  # Buffer half-full
+    BH = 256  # Buffer full
+    BTF = 512  # Buffer three-quarters full
+    BQF = 1024  # Buffer one-quarter-full
+    _RESERVED_6 = 2048
+    _RESERVED_7 = 4096
+    _RESERVED_8 = 8192
+    _RESERVED_9 = 16384
 
 
 class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
@@ -95,10 +120,16 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         cast=int,
     )
 
-    cm_operation_condition = Instrument.measurement(
+    cm_summary_event = Instrument.measurement(
         ":STAT:OPER:INST:ISUM:COND?",
         """Get summary event register.""",
-        get_process=lambda x: Keithley2281SSummaryEventRegister(int(x)),
+        get_process=lambda x: Keithley2281SOperationEventRegister(int(x)),
+    )
+
+    cm_measurement_event = Instrument.measurement(
+        ":STAT:MEAS:INST:ISUM:COND?",
+        """Get measurement event register.""",
+        get_process=lambda x: Keithley2281SMeasurementEventRegister(int(x)),
     )
 
     cm_line_frequency = Instrument.measurement(
@@ -113,8 +144,19 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         Returns:
             bool: measurement is ongoing?
         """
-        op_flags = self.cm_operation_condition
-        if Keithley2281SSummaryEventRegister.MEASUREMENT in op_flags:
+        op_flags = self.cm_summary_event
+        if Keithley2281SOperationEventRegister.MEASUREMENT in op_flags:
+            return True
+        return False
+
+    def cm_reading_available(self) -> bool:
+        """Return wether a reading is available
+
+        Returns:
+            bool: is a reading available?
+        """
+        meas_flags = self.cm_measurement_event
+        if Keithley2281SMeasurementEventRegister.RAV in meas_flags:
             return True
         return False
 
@@ -199,9 +241,8 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         get_process=lambda v: Keithley2281S._ps_parse_buffer(v),  # Does not work without lambda
     )
 
-    @staticmethod
-    def _ps_parse_buffer(buffer_content):
-        if len(buffer_content) < 3:
+    def _ps_parse_buffer(self, buffer_content):
+        if not self.cm_reading_available:
             return pd.DataFrame({"current": [], "voltage": [], "time": []})
         data = np.array(buffer_content, dtype=np.float32)
         return pd.DataFrame({"current": data[0::3], "voltage": data[1::3], "time": data[2::3]})
@@ -349,9 +390,8 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
             raise ValueError
         self.write(f":BATT:MOD:SAVE:USB {memory_slot}, {model_file_name}")
 
-    @staticmethod
-    def _bt_parse_buffer(buffer_content):
-        if len(buffer_content) < 3:
+    def _bt_parse_buffer(self, buffer_content):
+        if not self.cm_reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
             )
@@ -471,9 +511,8 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         get_process=lambda v: Keithley2281S._bs_parse_buffer(v),  # Does not work without lambda
     )
 
-    @staticmethod
-    def _bs_parse_buffer(buffer_content):
-        if len(buffer_content) < 3:
+    def _bs_parse_buffer(self, buffer_content):
+        if not self.cm_reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "soc": [], "resistance": [], "time": []}
             )
