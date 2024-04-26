@@ -23,6 +23,7 @@
 #
 
 import enum
+import time
 
 import numpy as np
 import pandas as pd
@@ -107,6 +108,78 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         if Keithley2281SSummaryEventRegister.MEASUREMENT in op_flags:
             return True
         return False
+
+    def cm_characterize(
+        self,
+        lower_voltage: float,
+        upper_voltage: float,
+        charge_current: float,
+        memory_slot: int,
+        model_voltage_offset: float = 0.05,
+        charge_delay: float = 0,
+    ):
+        """Convenience function to test a battery and save a its model to the internal memory.
+           The device can only discharge the battery at a fixed 1A! If this current is too high,
+           a series resistor has to be used during discharge to limit the current!
+           If the battery is discharged below the lower limit, it will be charged with a 10th of
+           the set charge current till it reaches the lower limit, then the battery profile will
+           be characterized.
+
+        :param lower_voltage: discharge end voltage, set this slightly lower (~0.05V)
+                              than in normal operation
+        :type lower_voltage: float
+        :param upper_voltage: charge end voltage, set this slightly higher (~0.05V)
+                              than in normal operation
+        :type upper_voltage: float
+        :param charge_current: maximum charge current.
+                               A 1/100th is used as (dis-)charge end current.
+        :type charge_current: float
+        :param memory_slot: Internal memory slot to save the model to
+        :type memory_slot: int
+        :param model_voltage_offset: Voltage offset for the generated model
+                                     upper and lower limits. These have to be in
+                                     the range of the actual measured values, i.e.
+                                     in between the hard limits of the measurement.
+                                     Defaults to 0.05
+        :type model_voltage_offset: float, optional
+        :param charge_delay: Seconds to wait between discharging and charging.
+                             Actual time is higher since the device has some internal
+                             delay on reporting end of a test. Defaults to 0.
+        :type charge_delay: float, optional
+        """
+
+        # Reset device to known state
+        self.reset()
+        self.cm_function_mode = "TEST"
+
+        # Set discharging conditions and start discharging
+        self.bt_charge_voltage_setpoint = lower_voltage
+        self.bt_charge_current_limit = charge_current / 10
+        self.bt_termination_current = charge_current / 100
+        self.bt_output_enabled = True
+        self.cm_display_text_data = "Measurement Ongoing! Discharging..."
+        while self.cm_measurement_ongoing():
+            time.sleep(1)
+
+        # Discharging finished, wait some time if set
+        time.sleep(charge_delay)
+
+        # Set charging conditions and start charging
+        self.bt_charge_voltage_limit = upper_voltage
+        self.bt_charge_current_limit = charge_current
+        self.bt_termination_current = charge_current / 100
+        self.bt_test_control = "START"
+        self.cm_display_text_data = "Measurement Ongoing! Charging..."
+        while self.cm_measurement_ongoing():
+            time.sleep(1)
+
+        # Charging finished, generate and save model
+        self.bt_set_battery_model_range(
+            lower_voltage+model_voltage_offset,
+            upper_voltage-model_voltage_offset
+            )
+        self.bt_save_model_internal = memory_slot
+        self.cm_display_text_data = "Measurement Finished!"
 
     # Power Supply (ps_*) Commands, only applicable in power supply mode
 
@@ -211,7 +284,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         ":BATT:TEST:CURR:END?",
         ":BATT:TEST:CURR:END %g",
         """Control the termination current for battery charging and discharging.""",
-        validator=strict_range,
+        validator=truncated_range,
         values=[0, 0.1],
     )
 
@@ -244,6 +317,15 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         separator=",",
         get_process=lambda v: Keithley2281S._bt_parse_buffer(v),  # Does not work without lambda
     )
+
+    def bt_set_battery_model_range(self, lower_voltage: float, upper_voltage: float):
+        """Set the lower and upper end voltage of the model.
+
+        Args:
+            lower_voltage (float): discharge end voltage
+            upper_voltage (float): charge end voltage
+        """
+        self.write(f":BATT:TEST:SENS:AH:GMOD:RANG {lower_voltage}, {upper_voltage}")
 
     def bt_save_model_to_usb(self, memory_slot: int, model_file_name: str):
         """Save battery model to USB
@@ -305,17 +387,25 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     bs_simulation_mode = Instrument.control(
         ":BATT:SIM:METH?",
         ":BATT:SIM:METH %s",
-        """Control simulation mode to use. I.e. does the SoC change when charging or discharging.""",
+        """
+        Control simulation mode to use.
+        I.e. does the SoC change when charging or discharging.
+        """,
         validator=strict_discrete_set,
         values={"DYNAMIC", "STATIC"},
     )
 
-    bs_capacity = Instrument.control(
+    bs_capacity_limit = Instrument.control(
         ":BATT:SIM:CAP:LIM?",
         ":BATT:SIM:CAP:LIM %g",
-        """Control maximum capacity of the simulated battery.""",
+        """Control maximum capacity of the simulated battery in Ah.""",
         validator=truncated_range,
         values=[0.001, 99],
+    )
+
+    bs_current_capacity = Instrument.measurement(
+        ":BATT:SIM:CAP",
+        """Get the real-time capacity of the simulated battery in Ah.""",
     )
 
     bs_current_limit = Instrument.control(
