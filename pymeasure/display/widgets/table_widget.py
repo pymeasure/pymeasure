@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -173,8 +173,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             try:
                 results, row, col = self.translate_to_local(index.row(), index.column())
-                value = results.data.iloc[row][col]
-                column_type = results.data.dtypes[col]
+                value = results.data.iat[row, col]
+                column_type = results.data.dtypes.iat[col]
                 # Cast to column type
                 value_render = column_type.type(value)
             except (IndexError, ValueError, TypeError):

@@ -10,6 +10,7 @@ This section contains documentation on the instrument classes.
    :maxdepth: 2
 
    instruments
+   generic_types
    validators
    comedi
    resources
@@ -54,8 +55,10 @@ Instruments by manufacturer:
    oxfordinstruments/index
    parker/index
    pendulum/index
+   proterial/index
    racal/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index

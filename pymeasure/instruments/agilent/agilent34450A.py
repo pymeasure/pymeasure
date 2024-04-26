@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,14 @@
 import re
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Agilent34450A(Instrument):
+class Agilent34450A(SCPIUnknownMixin, Instrument):
     """
     Represent the HP/Agilent/Keysight 34450A and related multimeters.
 
@@ -458,7 +458,7 @@ class Agilent34450A(Instrument):
                 self.resistance_4w_range = resistance_range
         else:
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
-                             "resistance meaurement.")
+                             "resistance measurement.")
 
     def configure_frequency(self, measured_from="voltage_ac",
                             measured_from_range="AUTO", aperture="DEF"):

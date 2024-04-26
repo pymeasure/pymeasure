@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class VoltageChannel(Channel):
     )
 
 
-class KeysightE3631A(Instrument):
+class KeysightE3631A(SCPIMixin, Instrument):
     """ Represents the Keysight E3631A Triple Output DC Power Supply
     interface for interacting with the instrument.
 
@@ -85,7 +85,8 @@ class KeysightE3631A(Instrument):
 
     def __init__(self, adapter, name="Keysight E3631A", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True, **kwargs
+            adapter, name,
+            **kwargs
         )
         self.channels[1].voltage_setpoint_values = [0, 6]
         self.channels[1].current_limit_values = [0, 5]

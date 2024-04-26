@@ -1,15 +1,29 @@
 Upcoming version
 ================
 
+Added features
+- SCPI instruments have :code:`next_error` property giving the next error.
+
 Deprecated features
 -------------------
+- Remove :code:`TelnetAdapter`, as its library is deprecated.
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
+- Make parameter :code:`includeSCPI` obligatory for all instruments, even those which use SCPI (@BenediktBurger, #1007)
+- Setting `includeSCPI=True` is deprecated, inherit instead the :code:`SCPIMixin` class if the device supports SCPI commands.
 - Replaced :code:`celcius` attribute of :code:`LakeShoreTemperatureChannel` by :code:`celsius` (@afuetterer, #1003)
+- Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
+- Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
+- Replaced :code:`sample_rate` keyword-argument of :code:`buffer_frequency_time_series` of Pendulum CNT-91 by :code:`gate_time`.
+- The property :code:`unit` of MKS937B switched to using values defined in :code:`instruments/mksinst/mks937b/Unit`. Old string values are not supported anymore. (@dkriegner, @BenediktBurger #1034)
 
 GUI
 ---
 - Add a :code:`FileInputWidget` to choose if and where the experiment data is stored. (@CasperSchippers, #964)
 - A default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
+
+Dropped Support
+---------------
+- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`. Removing manufacturer modules from that file lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
 
 Version 0.13.1 (2023-10-05)
 ===========================

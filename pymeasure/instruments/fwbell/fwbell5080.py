@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +22,13 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 from numpy import array, float64
 from time import sleep
 
 
-class FWBell5080(Instrument):
+class FWBell5080(SCPIMixin, Instrument):
     """ Represents the F.W. Bell 5080 Handheld Gaussmeter and
     provides a high-level interface for interacting with the
     instrument
@@ -54,7 +54,6 @@ class FWBell5080(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
             **kwargs
         )
 

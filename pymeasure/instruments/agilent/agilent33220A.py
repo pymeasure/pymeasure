@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 from time import time
@@ -42,7 +42,7 @@ def capitalize_string(string: str, *args, **kwargs):
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
-class Agilent33220A(Instrument):
+class Agilent33220A(SCPIUnknownMixin, Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
