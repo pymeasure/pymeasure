@@ -278,8 +278,8 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     )
 
     ps_output_enabled = Instrument.control(
-        "OUTP:STAT?",
-        "OUTP:STAT %s",
+        ":OUTP:STAT?",
+        ":OUTP:STAT %s",
         """Control the output state.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
