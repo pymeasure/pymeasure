@@ -144,8 +144,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         Returns:
             bool: measurement is ongoing?
         """
-        op_flags = self.cm_summary_event
-        if Keithley2281SOperationEventRegister.MEASUREMENT in op_flags:
+        if Keithley2281SOperationEventRegister.MEASUREMENT in self.cm_summary_event:
             return True
         return False
 
@@ -155,8 +154,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         Returns:
             bool: is a reading available?
         """
-        meas_flags = self.cm_measurement_event
-        if Keithley2281SMeasurementEventRegister.RAV in meas_flags:
+        if Keithley2281SMeasurementEventRegister.RAV in self.cm_measurement_event:
             return True
         return False
 
