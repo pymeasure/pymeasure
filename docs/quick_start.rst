@@ -49,6 +49,7 @@ However, this needs a VISA implementation installed to handle device communicati
 If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
 If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
 
+
 Checking the version
 --------------------
 
@@ -61,3 +62,9 @@ Execute the following Python code.
     pymeasure.__version__
 
 You should see the version of PyMeasure printed out. At this point you have PyMeasure installed, and you are ready to start using it! Are you ready to :doc:`connect to an instrument <./tutorial/connecting>`?
+
+.. warning::
+    The release of numpy version 2 caused some compatibility issues.
+    PyMeasure is compatible with version 2 as of PyMeasure version 0.14.
+    To use PyMeasure with numpy>=2, you also ensure the dependencies are compatible.
+    This means installing pandas>=2.2.2 and pint>0.23 (at the time of writing, pint needs to be installed directly from the github repository, as no numpy-2 compatible version has been released).
