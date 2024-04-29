@@ -97,6 +97,19 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         if self.cm_line_frequency == 60:
             self._PLC_RANGE[1] = 15
 
+    # Overwritten parent property
+
+    @property
+    def buffer_data(self):
+        """Get a pandas dataframe of values from the buffer."""
+        # Replace with match case, once Python>=3.10 is required
+        if self.cm_function_mode == "POWER":
+            return self.ps_buffer_data
+        elif self.cm_function_mode == "TEST":
+            return self.bt_buffer_data
+        elif self.cm_function_mode == "SIMULATOR":
+            return self.bs_buffer_data
+
     # Common commands (cm_*), these can be used in any function mode
 
     cm_display_text_data = Instrument.setting(
