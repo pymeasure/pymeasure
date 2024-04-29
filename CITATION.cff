@@ -5,4 +5,6 @@ authors:
 title: "PyMeasure"
 version: 0.13.1
 doi: 10.5281/zenodo.595633
+publisher:
+- name: Zenodo
 repository-code: https://github.com/pymeasure/pymeasure
