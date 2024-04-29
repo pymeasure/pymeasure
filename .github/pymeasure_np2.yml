@@ -3,8 +3,8 @@ channels:
   - conda-forge
 dependencies:
   - cloudpickle=1.6.0
-  - pandas>=2.2.2
-#  - pint=0.18 a pint version that has not yet been released (>0.23) is required to work with numpy2
+#  - pandas>=2.2.2  # The version on conda-forge seems not be built with numpy==2, but the pip version has been
+#  - pint=0.18  # A pint version that has not yet been released (>0.23) is required to work with numpy2
   - pyqt=5.15.7
   - pyqtgraph=0.12.4
   - pyserial=3.4
@@ -25,4 +25,5 @@ dependencies:
   - pip  # don't pin, to gain newest conda compatibility fixes
   - pip:
       - numpy==2.0.0rc1
+      - pandas==2.2.2
       - -e git+https://github.com/hgrecco/pint.git#egg=pint
