@@ -1,7 +1,7 @@
 Upcoming version
 ================
 Main items of this new release:
-- Added support for numpy 2.0; limited the allowed numpy version to <3.
+- Added support for numpy 2.0.
 
 Added features
 - SCPI instruments have :code:`next_error` property giving the next error.
