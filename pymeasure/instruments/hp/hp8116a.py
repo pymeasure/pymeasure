@@ -35,6 +35,30 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def _generate_1_2_5_sequence(min, max):
+    """ Generate a list of a 1-2-5 sequence between min and max. """
+    exp_min = int(np.log10(min))
+    exp_max = int(np.log10(max))
+
+    seq_1_2_5 = np.array([1, 2, 5])
+    sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
+    sequence = sequence.flatten()
+    sequence = sequence[(sequence >= min) & (sequence <= max)]
+
+    return list(sequence)
+
+
+def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
+    return Instrument.control(
+        'CST', identifier + '%d', docs,
+        validator=strict_discrete_set,
+        values=[True, False],
+        get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
+        set_process=lambda x: int(inverted ^ x),
+        **kwargs
+    )
+
+
 class Status(IntFlag):
     """ IntFlag type for the GPIB status byte which is returned by the :py:attr:`status` property.
     When the timing_error or programming_error flag is set, a more detailed error description
@@ -196,30 +220,6 @@ class HP8116A(Instrument):
         value *= HP8116A._si_prefixes[units_inverse[unit]]
 
         return value
-
-    @staticmethod
-    def _generate_1_2_5_sequence(min, max):
-        """ Generate a list of a 1-2-5 sequence between min and max. """
-        exp_min = int(np.log10(min))
-        exp_max = int(np.log10(max))
-
-        seq_1_2_5 = np.array([1, 2, 5])
-        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
-        sequence = sequence.flatten()
-        sequence = sequence[(sequence >= min) & (sequence <= max)]
-
-        return list(sequence)
-
-    @staticmethod
-    def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
-        return Instrument.control(
-            'CST', identifier + '%d', docs,
-            validator=strict_discrete_set,
-            values=[True, False],
-            get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
-            set_process=lambda x: int(inverted ^ x),
-            **kwargs
-        )
 
     # Instrument communication #
 
