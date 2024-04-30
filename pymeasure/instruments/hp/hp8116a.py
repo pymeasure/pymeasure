@@ -533,7 +533,7 @@ class HP8116A(Instrument):
     def shutdown(self):
         """ Gracefully close the connection to the 8116A. """
         self.adapter.connection.clear()
-        self.adapter.connection.close()
+        self.adapter.close()
         super().shutdown()
 
     def check_errors(self):
