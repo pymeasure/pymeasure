@@ -1,4 +1,4 @@
-name: pymeasure_np2
+name: pymeasure_numpy2
 channels:
   - conda-forge
 dependencies:
@@ -26,4 +26,4 @@ dependencies:
   - pip:
       - numpy==2.0.0rc1
       - pandas==2.2.2
-      - -e git+https://github.com/hgrecco/pint.git#egg=pint
+      - git+https://github.com/hgrecco/pint.git#egg=pint
