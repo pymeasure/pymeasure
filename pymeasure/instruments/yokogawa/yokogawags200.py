@@ -23,7 +23,7 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set, truncated_discrete_set, truncated_range
 )
@@ -34,7 +34,7 @@ log.addHandler(logging.NullHandler())
 MIN_RAMP_TIME = 0.1  # seconds
 
 
-class YokogawaGS200(Instrument):
+class YokogawaGS200(SCPIUnknownMixin, Instrument):
     """ Represents the Yokogawa GS200 source and provides a high-level interface for interacting
     with the instrument. """
 

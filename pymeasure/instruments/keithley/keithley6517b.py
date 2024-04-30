@@ -29,7 +29,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range
 from .buffer import KeithleyBuffer
 
@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6517B(KeithleyBuffer, Instrument):
+class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 6517B ElectroMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -60,6 +60,12 @@ class Keithley6517B(KeithleyBuffer, Instrument):
                                               # and disables output
 
     """
+
+    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
+        super().__init__(
+            adapter, name,
+            **kwargs
+        )
 
     source_enabled = Instrument.measurement(
         "OUTPUT?",
@@ -193,13 +199,6 @@ class Keithley6517B(KeithleyBuffer, Instrument):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, name="Keithley 6517B Electrometer/High Resistance Meter", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
-
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
@@ -217,7 +216,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         :param resistance: Upper limit of resistance in Ohms,
                            from -210 POhms to 210 POhms
         :param auto_range: Enables auto_range if True, else uses the
-                           resistance_range attribut
+                           resistance_range attribute
         """
         log.info("%s is measuring resistance.", self.name)
         self.write(":SENS:FUNC 'RES';"
@@ -234,7 +233,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param voltage: Upper limit of voltage in Volts, from -1000 V to 1000 V
         :param auto_range: Enables auto_range if True, else uses the
-                           voltage_range attribut
+                           voltage_range attribute
         """
         log.info("%s is measuring voltage.", self.name)
         self.write(":SENS:FUNC 'VOLT';"
@@ -251,7 +250,7 @@ class Keithley6517B(KeithleyBuffer, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param current: Upper limit of current in Amps, from -21 mA to 21 mA
         :param auto_range: Enables auto_range if True, else uses the
-                           current_range attribut
+                           current_range attribute
         """
         log.info("%s is measuring current.", self.name)
         self.write(":SENS:FUNC 'CURR';"

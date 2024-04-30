@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -122,7 +122,7 @@ class SignalChannel(Channel):
     )
 
 
-class TeledyneT3AFG(Instrument):
+class TeledyneT3AFG(SCPIMixin, Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
@@ -153,7 +153,8 @@ class TeledyneT3AFG(Instrument):
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True,
+            adapter,
+            name,
             tcpip={'read_termination': '\n'},
             **kwargs
         )

@@ -9,7 +9,7 @@ dependencies:
   - pyqt=5.15.7
   - pyqtgraph=0.12.4
   - pyserial=3.4
-  - pyvisa=1.12.0
+  - pyvisa=1.13.0
   - pyzmq=24.0.1
   - qt=5.15.6
 # Development dependencies below

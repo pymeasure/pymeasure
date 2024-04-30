@@ -19,8 +19,8 @@ PyMeasure runs on Python 3.8-3.11, and is tested with continuous-integration on 
     :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3732545.svg
-   :target: https://doi.org/10.5281/zenodo.3732545
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.595633.svg
+   :target: https://doi.org/10.5281/zenodo.595633
 
 .. image:: https://anaconda.org/conda-forge/pymeasure/badges/version.svg
    :target: https://anaconda.org/conda-forge/pymeasure

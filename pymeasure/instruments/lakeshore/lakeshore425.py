@@ -84,6 +84,7 @@ class LakeShore425(Instrument):
                   'parity': 1,  # odd
                   'data_bits': 7
                   },
+            includeSCPI=False,
             **kwargs
         )
 
@@ -96,7 +97,7 @@ class LakeShore425(Instrument):
         if wideband:
             self.mode = (1, 0, 1)
         else:
-            self.mode(1, 0, 2)
+            self.mode = (1, 0, 2)
 
     def ac_mode(self, wideband=True):
         """ Sets up a measurement of an oscillating (AC) field """

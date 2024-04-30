@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import (
     truncated_range,
     truncated_discrete_set,
@@ -153,7 +153,7 @@ class ScannerCard2000Channel(Channel):
             super().write(command)
 
 
-class KeithleyDMM6500(Instrument):
+class KeithleyDMM6500(SCPIMixin, Instrument):
     """Represent the Keithely DMM6500 6½-Digit Multimeter and provide a
     high-level interface for interacting with the instrument.
     This class only uses "SCPI" command set (see also :attr:`command_set`) to
@@ -220,9 +220,11 @@ class KeithleyDMM6500(Instrument):
     def __init__(
         self, adapter, name="Keithley DMM6500 6½-Digit Multimeter", read_termination="\n", **kwargs
     ):
-        super().__init__(adapter, name, read_termination=read_termination,
-                         includeSCPI=True,
-                         **kwargs)
+        super().__init__(
+            adapter,
+            name,
+            read_termination=read_termination,
+            **kwargs)
         self.command_set = "SCPI"
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -361,7 +363,7 @@ class KeithleyDMM6500(Instrument):
         ":DISP:{function}:DIG?",
         ":DISP:{function}:DIG %d",
         """ Control the displaying number of digits for currently active :attr:`mode`.
-        Available values are from 3 to 6 representing dispaly digits from 3.5 to 6.5.""",
+        Available values are from 3 to 6 representing display digits from 3.5 to 6.5.""",
         validator=truncated_discrete_set,
         values=[3, 4, 5, 6],
         cast=int,
@@ -713,7 +715,7 @@ class KeithleyDMM6500(Instrument):
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
         ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """ Control the 2-wire reistance full-scale measure range in Ohms.
+        """ Control the 2-wire resistance full-scale measure range in Ohms.
         Available ranges are: 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
         Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
@@ -756,7 +758,7 @@ class KeithleyDMM6500(Instrument):
     resistance_4W_range = Instrument.control(
         ":SENS:FRES:RANG?",
         ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %g",
-        """ Control the 4-wire reistance full-scale measure range in Ohms.
+        """ Control the 4-wire resistance full-scale measure range in Ohms.
         Available ranges are: 1, 10, 100, 1e3, 10e3, 100e3, 1e6, 10e6, and 100e6.
         Auto-range is disabled when this property is set. See also the :attr:`range`.""",
         validator=truncated_discrete_set,
@@ -815,7 +817,7 @@ class KeithleyDMM6500(Instrument):
             self.mode = "resistance 4W"
             self.resistance_4W_range = max_resistance
         else:
-            raise ValueError("Keithley DMM6500 only supports 2 or 4 wire" "resistance meaurements.")
+            raise ValueError("Keithley DMM6500 only supports 2 or 4 wire resistance measurements.")
 
     ##################
     # Frequency (Hz) #
@@ -1092,14 +1094,14 @@ class KeithleyDMM6500(Instrument):
     ##########
     # Buffer #
     ##########
-    # Main buffer fuctions are inherited from `KeithleyBuffer` class
+    # Main buffer functions are inherited from `KeithleyBuffer` class
 
     buffer_points = buffer_size = Instrument.control(
         ":TRAC:POIN?",
         ":TRAC:POIN %d",
         """ Control the number of buffer points.
         This does not represent actual points in the buffer, but the configuration
-        value instead. `0` means the largest buffer possibe based on the available
+        value instead. `0` means the largest buffer possible based on the available
         memory when the bufer is created.""",
         validator=truncated_range,
         values=[0, 6_000_000],
@@ -1229,7 +1231,7 @@ class KeithleyDMM6500(Instrument):
             to accept new commands
         :param end_idx: An alternative way to set :attr:`scan_count`
         :param raw: An alternative way to set :attr:`scan_interval` in second
-        :return: A list of scan channels' measuredh
+        :return: A list of scan channels' measured
         :rtype: A list of channels' list
         """
         self.write(":FORM:DATA ASCII")
@@ -1255,14 +1257,14 @@ class KeithleyDMM6500(Instrument):
 
     @scan_modes.setter
     def scan_modes(self, new_mode):
-        """Set all channles to the new mode. Ex: ``scan_modes = "voltage"``"""
+        """Set all channels to the new mode. Ex: ``scan_modes = "voltage"``"""
         self.write(f':SENS:FUNC "{self._mode_command(new_mode)}", (@1:10)')
 
     @property
     def scan_iscomplete(self):
         """Get Event Status Register (ESR) bit 0 to determine if previous works were
         completed.
-        This properity is used while running time-consuming scanning operation."""
+        This property is used while running time-consuming scanning operation."""
         res = int(self.ask("*ESR?")) & 1
         if res == 1:
             return True
@@ -1274,7 +1276,7 @@ class KeithleyDMM6500(Instrument):
         and to do measurements.
 
         If :attr:`scan_count` is larger than 1, the next scanning will start again
-        after :attr:`scan_interval` seceond. Running large counts or long interval scanning
+        after :attr:`scan_interval` second. Running large counts or long interval scanning
         is a time-consuming operation. It's better to set ``block_communication=False`` and
         use :attr:`scan_iscomplete` to check if the measurement is completed.
 
