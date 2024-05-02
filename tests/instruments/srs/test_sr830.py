@@ -35,6 +35,7 @@ def test_id():
     ) as inst:
         assert inst.id == "Stanford_Research_Systems,SR830,s/n12345,ver1.07"
 
+
 @pytest.mark.parametrize("number, value", (
         ("0", 2e-9),
         ("14", 100e-6),
@@ -88,7 +89,7 @@ def test_output_conversion():
         [("OEXP? 1", "10,1"),
          ("SENS?", "19"),
          ("OUTP?1", "-0.000500266"),
-        ]
+         ],
     ) as inst:
         conv = inst.output_conversion("X")
         assert conv(inst.x) == pytest.approx(-2.66e-7)
