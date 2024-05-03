@@ -58,14 +58,14 @@ class JY270M(Instrument):
     micron, and microns per slit step."""
     _steps_nm = 32
     _nm_step = 1 / _steps_nm
-    _slit_steps_micron = 0.15748
+    _slit_steps_micron = 0.5
     _slit_microns_step = 1.0 / _slit_steps_micron
 
     """Maximum value for the wavelength in nm, maximum number of steps 
     for the grating motor and for the entry and exit slits."""
     _lambda_max = 1171.68
     _max_steps = 37494
-    _max_steps_slit = 1102.36
+    # _max_steps_slit = 1102.36 # do not know what this is for?
 
     @property
     def default_timeout(self):
