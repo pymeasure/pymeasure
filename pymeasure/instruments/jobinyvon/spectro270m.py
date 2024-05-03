@@ -252,7 +252,7 @@ class JY270M(Instrument):
     def move_entry_slit_microns(self, microns: float):
         """Absolute positioning of the entry slit in micrometers"""
         pos_steps = microns * self._slit_steps_micron
-        self.move_entry_slit_steps(pos_steps)
+        self.move_entry_slit_steps(int(pos_steps))
 
     def move_exit_slit_steps(self, nsteps: int):
         """Absolut positioning of the exit slit motor in number of steps"""
@@ -267,7 +267,7 @@ class JY270M(Instrument):
     def move_exit_slit_microns(self, microns: float):
         """Absolute positioning of the exit slit in millimeters"""
         pos_steps = microns * self._slit_steps_micron
-        self.move_exit_slit_steps(pos_steps)
+        self.move_exit_slit_steps(int(pos_steps))
 
     def check_get_errors(self, error):
         print(error)
