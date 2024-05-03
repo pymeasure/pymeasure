@@ -54,18 +54,14 @@ class JY270M(Instrument):
     This class represents the Jobin-Yvon 270M Driver.
     """
 
-    """Number of motor steps per nm, nm per motor step, slit steps per 
-    micron, and microns per slit step."""
-    _steps_nm = 32
-    _nm_step = 1 / _steps_nm
-    _slit_steps_micron = 0.560
-    _slit_microns_step = 1.0 / _slit_steps_micron
+    _steps_nm = 32  # Number of motor steps per nm
+    _nm_step = 1 / _steps_nm  # nm per motor step
+    _slit_steps_micron = 0.560  # slit steps per micron
+    _slit_microns_step = 1.0 / _slit_steps_micron  # microns per slit step
 
-    """Maximum value for the wavelength in nm, maximum number of steps 
-    for the grating motor and for the entry and exit slits."""
-    _lambda_max = 1171.68
-    _max_steps = 37494
-    _max_steps_slit = 1102.36 # do not know what this is for?
+    _lambda_max = 1171.68  # Maximum value for the wavelength in nm
+    _max_steps = 37494  # maximum number of steps for the grating motor
+    _max_steps_slit = 1102.36  # do not know what this is for?
 
     @property
     def default_timeout(self):
