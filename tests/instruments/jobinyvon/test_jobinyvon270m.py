@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.jobinyvon.jobinyvon270m import JY270M
@@ -120,9 +121,9 @@ def test_get_entry_slit_microns():
              (b'j0,0\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_entry_slit_microns() == 89.28571428571428
-        assert inst.get_entry_slit_microns() == -89.28571428571428
-        assert inst.get_entry_slit_microns() == 267.85714285714283
+        assert inst.get_entry_slit_microns() == pytest.approx(89.28571428571428)
+        assert inst.get_entry_slit_microns() == pytest.approx(-89.28571428571428)
+        assert inst.get_entry_slit_microns() == pytest.approx(267.85714285714283)
 
 
 def test_get_exit_slit_microns():
@@ -133,9 +134,9 @@ def test_get_exit_slit_microns():
              (b'j0,2\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_exit_slit_microns() == 89.28571428571428
-        assert inst.get_exit_slit_microns() == -89.28571428571428
-        assert inst.get_exit_slit_microns() == 267.85714285714283
+        assert inst.get_exit_slit_microns() == pytest.approx(89.28571428571428)
+        assert inst.get_exit_slit_microns() == pytest.approx(-89.28571428571428)
+        assert inst.get_exit_slit_microns() == pytest.approx(267.85714285714283)
 
 
 def test_get_grating_wavelength():
@@ -145,9 +146,9 @@ def test_get_grating_wavelength():
              (b'H0\r', b'o5000\r'),
              (b'H0\r', b'o30000\r')],
     ) as inst:
-        assert inst.get_grating_wavelength() == 650.0237500000001
-        assert inst.get_grating_wavelength() == 156.24250000000006
-        assert inst.get_grating_wavelength() == 937.4925000000001
+        assert inst.get_grating_wavelength() == pytest.approx(650.0237500000001)
+        assert inst.get_grating_wavelength() == pytest.approx(156.24250000000006)
+        assert inst.get_grating_wavelength() == pytest.approx(937.4925000000001)
 
 
 def test_motor_busy_check():
