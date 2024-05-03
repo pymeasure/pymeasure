@@ -50,7 +50,7 @@ class TestJobinyvon270m:
     def test_motor_init(self, jobinyvon270m):
         inst = jobinyvon270m
         inst.motor_init()
-        assert inst.gsteps == JY270M.max_grating_steps
+        assert inst.gsteps == inst.max_grating_steps
         assert inst.entrysteps == 0
         assert inst.exitsteps == 0
 
@@ -77,7 +77,7 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-        assert abs(inst.get_grating_wavelength() - 800.0) <= JY270M.nanometers_in_one_step
+        assert abs(inst.get_grating_wavelength() - 800.0) <= inst.nanometers_in_one_step
         assert inst.gsteps == 25601
 
     def test_move_entry_slits_steps(self, jobinyvon270m):
@@ -95,7 +95,7 @@ class TestJobinyvon270m:
             pass
         time.sleep(0.5)
         "We test that the entry slit response accuracy is within a certain limit."
-        assert abs(inst.get_entry_slit_microns() - 1000.0) <= JY270M.micrometers_in_one_step
+        assert abs(inst.get_entry_slit_microns() - 1000.0) <= inst.micrometers_in_one_step
 
     def test_move_exit_slits_steps(self, jobinyvon270m):
         inst = jobinyvon270m
@@ -112,7 +112,7 @@ class TestJobinyvon270m:
             pass
         time.sleep(0.5)
         "We test that the exit slit response accuracy is within a certain limit."
-        assert abs(inst.get_exit_slit_microns() - 1000.0) <= JY270M.micrometers_in_one_step
+        assert abs(inst.get_exit_slit_microns() - 1000.0) <= inst.micrometers_in_one_step
 
     def test_entrysteps(self, jobinyvon270m):
         inst = jobinyvon270m
@@ -120,7 +120,7 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-        assert inst.entrysteps == 127
+        assert inst.entrysteps == 530
 
     def test_exitsteps(self, jobinyvon270m):
         inst = jobinyvon270m
@@ -128,4 +128,4 @@ class TestJobinyvon270m:
         while inst.motor_busy_check():
             pass
         time.sleep(0.5)
-        assert inst.exitsteps == 127
+        assert inst.exitsteps == 530

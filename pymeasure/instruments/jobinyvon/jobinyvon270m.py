@@ -58,14 +58,14 @@ class JY270M(Instrument):
     micron, and microns per slit step."""
     _steps_nm = 32
     _nm_step = 1 / _steps_nm
-    _slit_steps_micron = 0.5
+    _slit_steps_micron = 0.560
     _slit_microns_step = 1.0 / _slit_steps_micron
 
     """Maximum value for the wavelength in nm, maximum number of steps 
     for the grating motor and for the entry and exit slits."""
     _lambda_max = 1171.68
     _max_steps = 37494
-    # _max_steps_slit = 1102.36 # do not know what this is for?
+    _max_steps_slit = 1102.36 # do not know what this is for?
 
     @property
     def default_timeout(self):
@@ -242,7 +242,8 @@ class JY270M(Instrument):
         """
         ans = self.write_read(b'A', nread=1, timeout=100000)
         code = self._get_code(ans)
-        assert code == 'o'
+        if code != 'o':
+            raise IOError(f'Wrong return code from driver, received {code}')
         return True
 
     def move_grating_steps(self, nsteps: int):
@@ -251,7 +252,8 @@ class JY270M(Instrument):
         """
         ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode(), nread=1, timeout=20000)
         code = self._get_code(ans)
-        assert code == 'o'
+        if code != 'o':
+            raise IOError(f'Wrong return code from driver, received {code}')
 
     def get_grating_wavelength(self):
         """
@@ -271,8 +273,10 @@ class JY270M(Instrument):
         ABSOLUTE positioning of the entry slit motor in number of steps.
         """
         ans = self.write_read(f'k0,0,{nsteps - self.entrysteps}\r'.encode(), nread=1, timeout=10000)
+        time.sleep(0.5)
         code = self._get_code(ans)
-        assert code == 'o'
+        if code != 'o':
+            raise IOError(f'Wrong return code from driver, received {code}')
 
     def get_entry_slit_microns(self):
         """
@@ -293,8 +297,10 @@ class JY270M(Instrument):
         ABSOLUTE positioning of the exit slit motor in number of steps.
         """
         ans = self.write_read(f'k0,2,{nsteps - self.exitsteps}\r'.encode(), nread=1, timeout=10000)
+        time.sleep(0.5)
         code = self._get_code(ans)
-        assert code == 'o'
+        if code != 'o':
+            raise IOError(f'Wrong return code from driver, received {code}')
 
     def get_exit_slit_microns(self):
         """
@@ -320,7 +326,8 @@ class JY270M(Instrument):
         """
         ans = self.write_read(b'L')
         code = self._get_code(ans)
-        assert code == 'o'
+        if code != 'o':
+            raise IOError(f'Wrong return code from driver, received {code}')
 
     def motor_busy_check(self):
         """

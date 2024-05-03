@@ -120,9 +120,9 @@ def test_get_entry_slit_microns():
              (b'j0,0\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_entry_slit_microns() == 317.50063500127
-        assert inst.get_entry_slit_microns() == -317.50063500127
-        assert inst.get_entry_slit_microns() == 952.50190500381
+        assert inst.get_entry_slit_microns() == 89.28571428571428
+        assert inst.get_entry_slit_microns() == -89.28571428571428
+        assert inst.get_entry_slit_microns() == 267.85714285714283
 
 
 def test_get_exit_slit_microns():
@@ -133,9 +133,9 @@ def test_get_exit_slit_microns():
              (b'j0,2\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_exit_slit_microns() == 317.50063500127
-        assert inst.get_exit_slit_microns() == -317.50063500127
-        assert inst.get_exit_slit_microns() == 952.50190500381
+        assert inst.get_exit_slit_microns() == 89.28571428571428
+        assert inst.get_exit_slit_microns() == -89.28571428571428
+        assert inst.get_exit_slit_microns() == 267.85714285714283
 
 
 def test_get_grating_wavelength():
