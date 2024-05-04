@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 import pandas as pd
 import numpy as np
@@ -57,7 +57,7 @@ MEASUREMENT_TYPES = [
 ]
 
 
-class Agilent4294A(Instrument):
+class Agilent4294A(SCPIMixin, Instrument):
     """ Represents the Agilent 4294A Precision Impedance Analyzer """
 
     def __init__(self, adapter, name="Agilent 4294A Precision Impedance Analyzer",
@@ -69,7 +69,6 @@ class Agilent4294A(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
             read_termination=read_termination,
             write_termination=write_termination,
             timeout=timeout,
