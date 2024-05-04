@@ -49,6 +49,7 @@ However, this needs a VISA implementation installed to handle device communicati
 If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
 If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
 
+
 Checking the version
 --------------------
 

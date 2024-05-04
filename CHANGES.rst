@@ -1,5 +1,7 @@
 Upcoming version
 ================
+Main items of this new release:
+- Added support for numpy 2.0.
 
 Added features
 - SCPI instruments have :code:`next_error` property giving the next error.
@@ -24,6 +26,7 @@ GUI
 Dropped Support
 ---------------
 - Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`. Removing manufacturer modules from that file lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+
 
 Version 0.13.1 (2023-10-05)
 ===========================
