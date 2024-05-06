@@ -332,7 +332,7 @@ class HP8116A(Instrument):
 
     frequency = Instrument.control(
         'IFRQ', 'FRQ %s',
-        """Control the frequency of the output in Hz. (strict float from 1 mHz to 52.5 MHz).
+        """Control the frequency of the output in Hz (strict float from 1e-3 to 52.5e6).
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -354,8 +354,7 @@ class HP8116A(Instrument):
 
     pulse_width = Instrument.control(
         'IWID', 'WID %s',
-        """Control the pulse width (float).
-        The allowed pulse width range is 8 ns to 999 ms.
+        """Control the pulse width in s (strict float from 8e-9 to 999e-3).
         The pulse width may not be larger than the period.
         """,
         validator=strict_range,
@@ -366,9 +365,8 @@ class HP8116A(Instrument):
 
     amplitude = Instrument.control(
         'IAMP', 'AMP %s',
-        """Control the amplitude of the output in V (float).
-        The allowed amplitude range generally is 10 mV to 16 V,
-        but it is also limited by the current offset.
+        """Control the amplitude of the output in V (strict float from 10e-3 to 16).
+        The allowed amplitude range is also limited by the current offset.
         """,
         validator=strict_range,
         values=[10e-3, 16.001],
@@ -378,9 +376,8 @@ class HP8116A(Instrument):
 
     offset = Instrument.control(
         'IOFS', 'OFS %s',
-        """Control the offset of the output in V (float).
-        The allowed offset range generally is -7.95 V to 7.95 V,
-        but it is also limited by the amplitude.
+        """Control the offset of the output in V (strit float from -7.95 to 7.95).
+        The allowed offset range is also limited by the amplitude.
         """,
         validator=strict_range,
         values=[-7.95, 7.95001],
@@ -390,9 +387,8 @@ class HP8116A(Instrument):
 
     high_level = Instrument.control(
         'IHIL', 'HIL %s',
-        """Control the high level of the output in V (float).
-        The allowed high level range generally is -7.9 V to 8 V,
-        but it must be at least 10 mV greater than the low level.
+        """Control the high level of the output in V (strict float from -7.9 to 8).
+        The allowed high level range must be at least 10 mV greater than the low level.
         """,
         validator=strict_range,
         values=[-7.9, 8.001],
@@ -402,9 +398,8 @@ class HP8116A(Instrument):
 
     low_level = Instrument.control(
         'ILOL', 'LOL %s',
-        """Control the low level of the output in V (float).
-        The allowed low level range generally is -8 V to 7.9 V,
-        but it must be at least 10 mV less than the high level.
+        """Control the low level of the output in V (strict float from -8 to 7.9).
+        The allowed low level range must be at least 10 mV less than the high level.
         """,
         validator=strict_range,
         values=[-8, 7.9001],
@@ -414,9 +409,8 @@ class HP8116A(Instrument):
 
     burst_number = Instrument.control(
         'IBUR', 'BUR %s #',
-        """Control the number of periods generated in a burst (int).
-        The allowed range is 1 to 1999. It is only valid for units with Option 001
-        in one of the burst modes.
+        """Control the number of periods generated in a burst (strict int from 1 to 1999).
+        It is only valid for units with Option 001 in one of the burst modes.
         """,
         validator=strict_range,
         values=[1, 1999],
@@ -425,8 +419,8 @@ class HP8116A(Instrument):
 
     repetition_rate = Instrument.control(
         'IRPT', 'RPT %s',
-        """Control the repetition rate (= the time between bursts)
-        in 'internal_burst' mode (strict float from 20 ns to 999 ms).
+        """Control the repetition rate in s (i.e. the time between bursts)
+        in 'internal_burst' mode (strict float from 20e-9 to 999e-3).
         """,
         validator=strict_range,
         values=[20e-9, 999.001e-3],
@@ -436,8 +430,8 @@ class HP8116A(Instrument):
 
     sweep_start = Instrument.control(
         'ISTA', 'STA %s',
-        """Control the start frequency in both sweep modes (float).
-        The allowed range is 1 mHz to 52.5 MHz.
+        """Control the start frequency in both sweep modes in Hz
+        (strict float from 1e-3 to 52.5e6).
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -447,8 +441,7 @@ class HP8116A(Instrument):
 
     sweep_stop = Instrument.control(
         'ISTP', 'STP %s',
-        """Control the stop frequency in both sweep modes (float).
-        The allowed range is 1 mHz to 52.5 MHz.
+        """Control the stop frequency in both sweep modes in Hz (strict float from 1e-3 to 52.5e6).
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -458,9 +451,9 @@ class HP8116A(Instrument):
 
     sweep_marker_frequency = Instrument.control(
         'IMRK', 'MRK %s',
-        """Control the frequency marker in both sweep modes (float).
+        """Control the frequency marker in both sweep modes in Hz
+        (strict float from 1e-3 to 52.5e6).
         At this frequency, the marker output switches from low to high.
-        The allowed range is 1 mHz to 52.5 MHz.
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
@@ -470,7 +463,7 @@ class HP8116A(Instrument):
 
     sweep_time = Instrument.control(
         'ISWT', 'SWT %s',
-        """Control the sweep time per decade in both sweep modes (float).
+        """Control the sweep time per decade in both sweep modes in s (float).
         The sweep time is selectable in a 1-2-5 sequence between 10 ms and 500 s.
         """,
         validator=truncated_discrete_set,
