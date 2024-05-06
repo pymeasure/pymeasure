@@ -37,7 +37,7 @@ init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
 def test_init():
     with expected_protocol(
             HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n')],
+            init_comm,
     ):
         pass  # Verify the expected communication.
 
@@ -45,7 +45,7 @@ def test_init():
 def test_duty_cycle():
     with expected_protocol(
             HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"IDTY", b"00000035")],
+            init_comm + [(b"IDTY", b"00000035")],
     ) as instr:
         assert instr.duty_cycle == 35
 
@@ -53,7 +53,7 @@ def test_duty_cycle():
 def test_duty_cycle_setter():
     with expected_protocol(
             HP8116A,
-            [(b"CST", b"x" * 87 + b' ,\r\n'), (b"DTY 34.5 %", None)],
+            init_comm + [(b"DTY 34.5 %", None)],
     ) as instr:
         instr.duty_cycle = 34.5
 

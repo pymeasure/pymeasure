@@ -35,6 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+# for Python>3.9, these two methods can be static methods in the class
 def _generate_1_2_5_sequence(min, max):
     """ Generate a list of a 1-2-5 sequence between min and max. """
     exp_min = int(np.log10(min))
