@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
-class Agilent8257D(Instrument):
+class Agilent8257D(SCPIUnknownMixin, Instrument):
     """Represents the Agilent 8257D Signal Generator and
     provides a high-level interface for interacting with
     the instrument.
@@ -119,7 +119,7 @@ class Agilent8257D(Instrument):
     amplitude_depth = Instrument.control(
         ":SOUR:AM:DEPT?", ":SOUR:AM:DEPT %g",
         """ A floating point property that controls the amplitude modulation
-        in precent, which can take values from 0 to 100 %. """,
+        in percent, which can take values from 0 to 100 %. """,
         validator=truncated_range,
         values=[0, 100]
     )
@@ -199,8 +199,8 @@ class Agilent8257D(Instrument):
     low_freq_out_source = Instrument.control(
         ":SOUR:LFO:SOUR?", ":SOUR:LFO:SOUR %s",
         """A string property which controls the source of the low frequency output, which
-        can take the values 'internal [2]' for the inernal source, or 'function [2]' for an internal
-        function generator which can be configured.""",
+        can take the values 'internal [2]' for the internal source, or 'function [2]' for an
+        internal function generator which can be configured.""",
         validator=strict_discrete_set,
         values=LOW_FREQUENCY_SOURCES,
         map_values=True
@@ -275,7 +275,7 @@ class Agilent8257D(Instrument):
         """ Configures the amplitude modulation of the output signal.
 
         :param frequency: A modulation frequency for the internal oscillator
-        :param depth: A linear depth precentage
+        :param depth: A linear depth percentage
         :param shape: A string that describes the shape for the internal oscillator
         """
         self.enable_amplitude_modulation()

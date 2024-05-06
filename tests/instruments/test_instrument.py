@@ -109,7 +109,8 @@ class Test_includeSCPI_parameter:
         with pytest.warns(FutureWarning) as record:
             Instrument(name="test", adapter=ProtocolAdapter())
         msg = str(record[0].message)
-        assert msg == "It is deprecated to specify `includeSCPI` implicitly, declare it explicitly."
+        assert msg == ("It is deprecated to specify `includeSCPI` implicitly, use "
+                       "`includeSCPI=False` or inherit the `SCPIMixin` class instead.")
 
     def test_not_defined_includeSCPI_is_interpreted_as_true(self):
         inst = Instrument(name="test", adapter=ProtocolAdapter())
@@ -126,6 +127,16 @@ def test_init_visa(adapter):
 def test_init_visa_fail():
     with pytest.raises(Exception, match="Invalid adapter"):
         Instrument("abc", "def", visa_library="@xyz")
+
+
+def test_init_includeSCPI_implicit_warning():
+    with pytest.warns(FutureWarning, match="includeSCPI"):
+        Instrument("COM1", "def", visa_library="@sim")
+
+
+def test_init_includeSCPI_explicit_warning():
+    with pytest.warns(FutureWarning, match="includeSCPI"):
+        Instrument("COM1", "def", visa_library="@sim", includeSCPI=True)
 
 
 def test_global_preprocess_reply():
@@ -184,7 +195,7 @@ class TestWaiting:
     @pytest.fixture()
     def instr(self):
         class Faked(Instrument):
-            def wait_for(self, query_delay=0):
+            def wait_for(self, query_delay=None):
                 self.waited = query_delay
         return Faked(ProtocolAdapter(), name="faked")
 
@@ -197,7 +208,7 @@ class TestWaiting:
     def test_ask_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
     def test_ask_calls_wait_with_delay(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
@@ -207,7 +218,7 @@ class TestWaiting:
     def test_binary_values_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
 
 @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),

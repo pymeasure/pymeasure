@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 
 #
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 
-class SG380(Instrument):
+class SG380(SCPIUnknownMixin, Instrument):
 
     MOD_TYPES_VALUES = ['AM', 'FM', 'PM', 'SWEEP', 'PULSE', 'BLANK', 'IQ']
 

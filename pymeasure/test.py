@@ -29,7 +29,7 @@ from pymeasure.adapters.protocol import ProtocolAdapter
 
 @contextmanager
 def expected_protocol(instrument_cls, comm_pairs,
-                      connection_attributes={}, connection_methods={},
+                      connection_attributes=None, connection_methods=None,
                       **kwargs):
     """Context manager that checks sent/received instrument commands without a
     device connected.

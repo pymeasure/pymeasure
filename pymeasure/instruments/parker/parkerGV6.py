@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from time import sleep
 import re
 
 
-class ParkerGV6(Instrument):
+class ParkerGV6(SCPIUnknownMixin, Instrument):
     """ Represents the Parker Gemini GV6 Servo Motor Controller
     and provides a high-level interface for interacting with
     the instrument

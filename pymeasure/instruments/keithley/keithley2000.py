@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     truncated_range, truncated_discrete_set,
     strict_discrete_set
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(KeithleyBuffer, Instrument):
+class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 
@@ -487,7 +487,7 @@ class Keithley2000(KeithleyBuffer, Instrument):
             self.resistance_4W_range = max_resistance
         else:
             raise ValueError("Keithley 2000 only supports 2 or 4 wire"
-                             "resistance meaurements.")
+                             "resistance measurements.")
 
     def measure_period(self):
         """ Configures the instrument to measure the period. """
@@ -573,7 +573,7 @@ class Keithley2000(KeithleyBuffer, Instrument):
 
     def remote(self):
         """ Places the instrument in the remote state, which is
-        does not need to be explicity called in general. """
+        does not need to be explicitly called in general. """
         self.write(":SYST:REM")
 
     def remote_lock(self):

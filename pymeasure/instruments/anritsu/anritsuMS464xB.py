@@ -23,7 +23,7 @@
 #
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AnritsuMS464xB(Instrument):
+class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
     """ A class representing the Anritsu MS464xB Vector Network Analyzer (VNA) series.
 
     This family consists of the MS4642B, MS4644B, MS4645B, and MS4647B, which are represented in

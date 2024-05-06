@@ -25,8 +25,9 @@
 import logging
 from math import log10
 from enum import Enum, IntFlag
-from numpy import arange
 from datetime import datetime
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
@@ -725,7 +726,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN"], arange(10, 80, 10)],
+        values=[["AUTO", "MAN"], np.arange(10, 80, 10)],
         cast=int,
     )
 
@@ -2035,7 +2036,7 @@ class HP856Xx(Instrument):
                 pbw = instr.power_bandwidth(Trace.A, 99.0)
                 print("The power bandwidth at 99 percent is %f kHz" % (pbw / 1e3))
         """
-        ran = arange(0, 100, 0.1)
+        ran = np.arange(0, 100, 0.1)
 
         if not isinstance(trace, str):
             raise TypeError("Should be of type string but is '%s'" % type(trace))
@@ -2064,7 +2065,7 @@ class HP856Xx(Instrument):
         Type: :code:`str, dec`
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["AUTO", "MAN"], arange(10, 2e6)],
+        values=[["AUTO", "MAN"], np.arange(10, 2e6)],
         set_process=lambda v: v if isinstance(v, str) else f"{int(v)} Hz",
         get_process=lambda v: v if isinstance(v, str) else int(v)
     )
@@ -2078,7 +2079,7 @@ class HP856Xx(Instrument):
         parameters adjust the ratio in a 1, 2, 5 sequence. The default ratio is 0.011.
         """,
         validator=strict_range,
-        values=arange(0.002, 0.10, 0.001)
+        values=np.arange(0.002, 0.10, 0.001)
     )
 
     def recall_open_short_average(self):
@@ -2450,7 +2451,7 @@ class HP856Xx(Instrument):
         cannot be adjusted.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["AUTO", "MAN"], arange(50E-6, 100)],
+        values=[["AUTO", "MAN"], np.arange(50E-6, 100)],
         set_process=lambda v: v if isinstance(v, str) else ("%.3f S" % v)
     )
 
@@ -2563,7 +2564,7 @@ class HP856Xx(Instrument):
             trace data, the data below the threshold will be permanently lost.
         """,
         validator=strict_discrete_set,
-        values=arange(-200, 30),
+        values=np.arange(-200, 30),
     )
 
     threshold_enabled = Instrument.setting(
@@ -2745,7 +2746,7 @@ class HP856Xx(Instrument):
         Type: :code:`str, int`
         """,
         validator=strict_range,
-        values=arange(1, 999),
+        values=np.arange(1, 999),
         cast=int
     )
 
@@ -2779,7 +2780,7 @@ class HP856Xx(Instrument):
         Type: :code:`int`
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["AUTO", "MAN"], arange(1, 3e6)],
+        values=[["AUTO", "MAN"], np.arange(1, 3e6)],
         cast=int,
         set_process=lambda v: v if isinstance(v, str) else f"{v} Hz"
     )
@@ -2794,7 +2795,7 @@ class HP856Xx(Instrument):
         new ratio—the resolution bandwidth does not change value.
         """,
         validator=strict_range,
-        values=arange(0.002, 0.10, 0.001)
+        values=np.arange(0.002, 0.10, 0.001)
     )
 
     def view_trace(self, trace):
@@ -2962,7 +2963,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=strict_range,
-        values=arange(0.1, 12.75, 0.05)
+        values=np.arange(0.1, 12.75, 0.05)
     )
 
     source_power_sweep = Instrument.control(
@@ -2979,7 +2980,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=truncated_discrete_set,
-        values=arange(0.1, 12.75, 0.05),
+        values=np.arange(0.1, 12.75, 0.05),
     )
 
     source_power_sweep_enabled = Instrument.setting(
@@ -3003,7 +3004,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
-        values=[["OFF", "ON"], arange(-10, 2.8, 0.05)],
+        values=[["OFF", "ON"], np.arange(-10, 2.8, 0.05)],
         set_process=lambda v: v if isinstance(v, str) else ("%.2f {amplitude_unit}" % v)
     )
 
