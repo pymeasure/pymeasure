@@ -246,7 +246,7 @@ class ANC300Controller(Instrument):
     :param axisnames: a list of axis names which will be used to create
         properties with these names
     :param passwd: password for the attocube standard console
-    :param query_delay: delay between sending and reading (default 0.05 sec)
+    :param query_delay: default delay between sending and reading in s (default 0.05)
     :param host: host address of the instrument (e.g. 169.254.0.1)
 
         .. deprecated:: 0.11.2
@@ -411,6 +411,7 @@ class ANC300Controller(Instrument):
     def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
-        :param query_delay: Delay between writing and reading in seconds. None is default delay.
+        :param query_delay: Delay between writing and reading in seconds.
+            None means :attr:`query_delay`.
         """
         super().wait_for(self.query_delay if query_delay is None else query_delay)
