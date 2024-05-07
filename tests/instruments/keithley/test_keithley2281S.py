@@ -21,11 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
+import pandas as pd
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley.keithley2281S import Keithley2281S
 
-init_comm = [(":SYST:LFR?", "50")]  # communication during init
-init_comm_us = [(":SYST:LFR?", "60")]  # communication during init
+init_comm = [(":SYST:LFR?", "50")]  # communication during init for 50Hz line
+init_comm_us = [(":SYST:LFR?", "60")]  # communication during init for 60Hz line
+no_reading_comm = [(":STAT:MEAS:INST:ISUM:COND?", "0")]  # no reading available
 
 
 def test_init():
@@ -81,3 +85,51 @@ def test_bt_output():
     ) as inst:
         assert inst.bt_output_enabled is False
         inst.bt_output_enabled = True
+
+
+def test_reading_availability():
+    with expected_protocol(
+        Keithley2281S,
+        init_comm +
+        [(":STAT:MEAS:INST:ISUM:COND?", "64")]
+    ) as inst:
+        assert inst.cm_reading_available is True
+
+
+def test_ps_buffer():
+    with expected_protocol(
+        Keithley2281S,
+        init_comm +
+        [(":ENTR:FUNC POWER", None),
+         (":ENTR:FUNC?", "POWER"),
+         ] +
+        no_reading_comm
+    ) as inst:
+        inst.cm_function_mode = "POWER"
+        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "time": []}))
+
+
+def test_bt_buffer():
+    with expected_protocol(
+        Keithley2281S,
+        init_comm +
+        [(":ENTR:FUNC TEST", None),
+         (":ENTR:FUNC?", "TEST"),
+         ] +
+        no_reading_comm
+    ) as inst:
+        inst.cm_function_mode = "TEST"
+        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}))
+
+
+def test_bs_buffer():
+    with expected_protocol(
+        Keithley2281S,
+        init_comm +
+        [(":ENTR:FUNC SIMULATOR", None),
+         (":ENTR:FUNC?", "SIMULATOR"),
+         ] +
+        no_reading_comm
+    ) as inst:
+        inst.cm_function_mode = "SIMULATOR"
+        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "soc": [], "resistance": [], "time": []}))
