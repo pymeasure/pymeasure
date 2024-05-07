@@ -22,15 +22,34 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
-from .agilentE4980 import AgilentE4980
-from .agilent34410A import Agilent34410A
-from .agilent34450A import Agilent34450A
-from .agilent4156 import Agilent4156
-from .agilent4294A import Agilent4294A
-from .agilent33220A import Agilent33220A
-from .agilent33500 import Agilent33500
-from .agilent33521A import Agilent33521A
-from .agilentB1500 import AgilentB1500
+import pytest
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.agilent.agilent4294A import Agilent4294A
+
+
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_set_start_freq(freq):
+    """ Test Agilent 4294A start frequency setter """
+    with expected_protocol(Agilent4294A, [(f"STAR {freq:.0f} HZ", None), ],) as inst:
+        inst.start_frequency = freq
+
+
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_get_start_freq(freq):
+    """ Test Agilent 4294A start frequency getter """
+    with expected_protocol(Agilent4294A, [("STAR?", freq), ],) as inst:
+        assert freq == inst.start_frequency
+
+
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_set_stop_freq(freq):
+    """ Test Agilent 4294A stop frequency setter """
+    with expected_protocol(Agilent4294A, [(f"STOP {freq:.0f} HZ", None), ],) as inst:
+        inst.stop_frequency = freq
+
+
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_get_stop_freq(freq):
+    """ Test Agilent 4294A stop frequency getter """
+    with expected_protocol(Agilent4294A, [("STOP?", freq), ],) as inst:
+        assert freq == inst.stop_frequency
