@@ -304,7 +304,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         ":SENS:CONC:NPLC %g",
         """
         Control the number of power line cycles for current and voltage measurements.
-        The upper limit is for the 50Hz setting, the 60Hz settings goes up to 15.
+        The upper limit depends on the line frequency and is adapted at startup.
         """,
         validator=truncated_range,
         values=_PLC_RANGE,
