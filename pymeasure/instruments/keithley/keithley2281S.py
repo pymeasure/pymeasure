@@ -89,7 +89,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     _VOLTAGE_RANGE = [0.0, 20]
     _CURRENT_RANGE_PS = [0.1, 6.1]
     _CURRENT_RANGE_BT_BS = [0.0, 6.1]
-    _INTERNAL_MEMORY_SLOTS = [*range(1, 10)]
+    _INTERNAL_MEMORY_SLOTS = list(range(1, 10))
     _PLC_RANGE = [0.002, 12]
 
     def __init__(self, adapter, name="Keithley2281S", **kwargs):
@@ -155,16 +155,13 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     @property
     def cm_measurement_ongoing(self) -> bool:
         """Get measurement status."""
-        if Keithley2281SOperationEventRegister.MEASUREMENT in self.cm_summary_event:
-            return True
-        return False
+        return Keithley2281SOperationEventRegister.MEASUREMENT in self.cm_summary_event
 
     @property
     def cm_reading_available(self) -> bool:
         """Get availability of a reading."""
-        if Keithley2281SMeasurementEventRegister.RAV in self.cm_measurement_event:
-            return True
-        return False
+        return Keithley2281SMeasurementEventRegister.RAV in self.cm_measurement_event
+
 
     def cm_characterize(
         self,
