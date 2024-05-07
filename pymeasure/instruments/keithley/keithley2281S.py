@@ -103,11 +103,12 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     def buffer_data(self):
         """Get a pandas dataframe of values from the buffer."""
         # Replace with match case, once Python>=3.10 is required
-        if self.cm_function_mode == "POWER":
+        function_mode = self.cm_function_mode
+        if function_mode == "POWER":
             return self.ps_buffer_data
-        elif self.cm_function_mode == "TEST":
+        elif function_mode == "TEST":
             return self.bt_buffer_data
-        elif self.cm_function_mode == "SIMULATOR":
+        elif function_mode == "SIMULATOR":
             return self.bs_buffer_data
 
     # Common commands (cm_*), these can be used in any function mode
@@ -151,22 +152,16 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         cast=int,
     )
 
+    @property
     def cm_measurement_ongoing(self) -> bool:
-        """Return wether a measurement is ongoing
-
-        Returns:
-            bool: measurement is ongoing?
-        """
+        """Get measurement status."""
         if Keithley2281SOperationEventRegister.MEASUREMENT in self.cm_summary_event:
             return True
         return False
 
+    @property
     def cm_reading_available(self) -> bool:
-        """Return wether a reading is available
-
-        Returns:
-            bool: is a reading available?
-        """
+        """Get availability of a reading."""
         if Keithley2281SMeasurementEventRegister.RAV in self.cm_measurement_event:
             return True
         return False
@@ -220,7 +215,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         self.bt_termination_current = charge_current / 100
         self.bt_output_enabled = True
         self.cm_display_text_data = "Measurement Ongoing! Discharging..."
-        while self.cm_measurement_ongoing():
+        while self.cm_measurement_ongoing:
             time.sleep(1)
 
         # Discharging finished, wait some time if set
@@ -232,7 +227,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         self.bt_termination_current = charge_current / 100
         self.bt_test_control = "START"
         self.cm_display_text_data = "Measurement Ongoing! Charging..."
-        while self.cm_measurement_ongoing():
+        while self.cm_measurement_ongoing:
             time.sleep(1)
 
         # Charging finished, generate and save model
@@ -245,17 +240,18 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
 
     # Power Supply (ps_*) Commands, only applicable in power supply mode
 
-    ps_buffer_data = Instrument.measurement(
+    _ps_query_buffer_data = Instrument.measurement(
         ':DATA:DATA? "READ,SOUR,REL"',
-        """Get the buffer in power supply mode and return its content as a pandas dataframe""",
+        """Get the buffer in power supply mode""",
         separator=",",
-        get_process=lambda v: Keithley2281S._ps_parse_buffer(v),  # Does not work without lambda
     )
 
-    def _ps_parse_buffer(self, buffer_content):
+    @property
+    def ps_buffer_data(self) -> pd.DataFrame:
+        """Get the buffer in power supply mode and return its content as a pandas dataframe"""
         if not self.cm_reading_available:
             return pd.DataFrame({"current": [], "voltage": [], "time": []})
-        data = np.array(buffer_content, dtype=np.float32)
+        data = np.array(self._ps_query_buffer_data, dtype=np.float32)
         return pd.DataFrame({"current": data[0::3], "voltage": data[1::3], "time": data[2::3]})
 
     ps_voltage_setpoint = Instrument.control(
@@ -371,11 +367,10 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         values=_INTERNAL_MEMORY_SLOTS,
     )
 
-    bt_buffer_data = Instrument.measurement(
+    _bt_query_buffer_data = Instrument.measurement(
         ':BATT:DATA:DATA? "VOLT, CURR, RES, AH, REL"',
-        """Get the buffer in battery test mode and return its content as a pandas dataframe""",
+        """Get the buffer in battery test mode""",
         separator=",",
-        get_process=lambda v: Keithley2281S._bt_parse_buffer(v),  # Does not work without lambda
     )
 
     def bt_set_battery_model_range(self, lower_voltage: float, upper_voltage: float):
@@ -401,12 +396,14 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
             raise ValueError
         self.write(f":BATT:MOD:SAVE:USB {memory_slot}, {model_file_name}")
 
-    def _bt_parse_buffer(self, buffer_content):
+    @property
+    def bt_buffer_data(self) -> pd.DataFrame:
+        """Get the buffer in battery test mode and return its content as a pandas dataframe"""
         if not self.cm_reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
             )
-        data = np.array(buffer_content, dtype=np.float32)
+        data = np.array(self._bt_query_buffer_data, dtype=np.float32)
         return pd.DataFrame(
             {
                 "voltage": data[0::5],
@@ -515,19 +512,20 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         values=_VOLTAGE_RANGE,
     )
 
-    bs_buffer_data = Instrument.measurement(
+    _bs_query_buffer_data = Instrument.measurement(
         ':BATT:DATA:DATA? "VOLT, CURR, SOC, RES,REL"',
-        """Get the buffer in battery simulator mode and return its content as a pandas dataframe""",
+        """Get the buffer in battery simulator mode""",
         separator=",",
-        get_process=lambda v: Keithley2281S._bs_parse_buffer(v),  # Does not work without lambda
     )
 
-    def _bs_parse_buffer(self, buffer_content):
+    @property
+    def bs_buffer_data(self) -> pd.DataFrame:
+        """Get the buffer in battery simulator mode and return its content as a pandas dataframe"""
         if not self.cm_reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "soc": [], "resistance": [], "time": []}
             )
-        data = np.array(buffer_content, dtype=np.float32)
+        data = np.array(self._bs_query_buffer_data, dtype=np.float32)
         return pd.DataFrame(
             {
                 "voltage": data[0::5],
