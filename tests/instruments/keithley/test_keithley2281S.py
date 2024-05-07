@@ -33,29 +33,24 @@ no_reading_comm = [(":STAT:MEAS:INST:ISUM:COND?", "0")]  # no reading available
 
 
 def test_init():
-    with expected_protocol(
-        Keithley2281S,
-        init_comm
-    ) as inst:
+    with expected_protocol(Keithley2281S, init_comm) as inst:
         assert inst._PLC_RANGE == [0.002, 12]
 
 
 def test_init_us():
-    with expected_protocol(
-        Keithley2281S,
-        init_comm_us
-    ) as inst:
+    with expected_protocol(Keithley2281S, init_comm_us) as inst:
         assert inst._PLC_RANGE == [0.002, 15]
 
 
 def test_function_modes():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":ENTR:FUNC?", "POWER"),
-         (":ENTR:FUNC TEST", None),
-         (":ENTR:FUNC SIMULATOR", None),
-         ],
+        init_comm
+        + [
+            (":ENTR:FUNC?", "POWER"),
+            (":ENTR:FUNC TEST", None),
+            (":ENTR:FUNC SIMULATOR", None),
+        ],
     ) as inst:
         assert inst.cm_function_mode == "POWER"
         inst.cm_function_mode = "TEST"
@@ -65,10 +60,11 @@ def test_function_modes():
 def test_ps_output():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":OUTP:STAT?", "OFF"),
-         (":OUTP:STAT ON", None),
-         ],
+        init_comm
+        + [
+            (":OUTP:STAT?", "OFF"),
+            (":OUTP:STAT ON", None),
+        ],
     ) as inst:
         assert inst.ps_output_enabled is False
         inst.ps_output_enabled = True
@@ -78,10 +74,11 @@ def test_ps_output():
 def test_bt_output():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":BATT:OUTP?", "OFF"),
-         (":BATT:OUTP ON", None),
-         ],
+        init_comm
+        + [
+            (":BATT:OUTP?", "OFF"),
+            (":BATT:OUTP ON", None),
+        ],
     ) as inst:
         assert inst.bt_output_enabled is False
         inst.bt_output_enabled = True
@@ -89,9 +86,7 @@ def test_bt_output():
 
 def test_reading_availability():
     with expected_protocol(
-        Keithley2281S,
-        init_comm +
-        [(":STAT:MEAS:INST:ISUM:COND?", "64")]
+        Keithley2281S, init_comm + [(":STAT:MEAS:INST:ISUM:COND?", "64")]
     ) as inst:
         assert inst.cm_reading_available is True
 
@@ -99,11 +94,12 @@ def test_reading_availability():
 def test_ps_buffer():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":ENTR:FUNC POWER", None),
-         (":ENTR:FUNC?", "POWER"),
-         ] +
-        no_reading_comm
+        init_comm
+        + [
+            (":ENTR:FUNC POWER", None),
+            (":ENTR:FUNC?", "POWER"),
+        ]
+        + no_reading_comm,
     ) as inst:
         inst.cm_function_mode = "POWER"
         assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "time": []}))
@@ -112,24 +108,32 @@ def test_ps_buffer():
 def test_bt_buffer():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":ENTR:FUNC TEST", None),
-         (":ENTR:FUNC?", "TEST"),
-         ] +
-        no_reading_comm
+        init_comm
+        + [
+            (":ENTR:FUNC TEST", None),
+            (":ENTR:FUNC?", "TEST"),
+        ]
+        + no_reading_comm,
     ) as inst:
         inst.cm_function_mode = "TEST"
-        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}))
+        assert inst.buffer_data.equals(
+            pd.DataFrame(
+                {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
+            )
+        )
 
 
 def test_bs_buffer():
     with expected_protocol(
         Keithley2281S,
-        init_comm +
-        [(":ENTR:FUNC SIMULATOR", None),
-         (":ENTR:FUNC?", "SIMULATOR"),
-         ] +
-        no_reading_comm
+        init_comm
+        + [
+            (":ENTR:FUNC SIMULATOR", None),
+            (":ENTR:FUNC?", "SIMULATOR"),
+        ]
+        + no_reading_comm,
     ) as inst:
         inst.cm_function_mode = "SIMULATOR"
-        assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "soc": [], "resistance": [], "time": []}))
+        assert inst.buffer_data.equals(
+            pd.DataFrame({"current": [], "voltage": [], "soc": [], "resistance": [], "time": []})
+        )
