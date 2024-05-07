@@ -9,10 +9,6 @@ Keithley 2281S power supply and battery simulator / characterizer.
 
 .. autoclass:: pymeasure.instruments.keithley.keithley2281S.Keithley2281SOperationEventRegister
     :members:
-    :show-inheritance:
-    :inherited-members:
 
 .. autoclass:: pymeasure.instruments.keithley.keithley2281S.Keithley2281SMeasurementEventRegister
     :members:
-    :show-inheritance:
-    :inherited-members:
