@@ -91,6 +91,13 @@ def test_reading_availability():
         assert inst.cm_reading_available is True
 
 
+def test_measurement_ongoging():
+    with expected_protocol(
+        Keithley2281S, init_comm + [(":STAT:OPER:INST:ISUM:COND?", "16")]
+    ) as inst:
+        assert inst.cm_measurement_ongoing is True
+
+
 def test_ps_buffer():
     with expected_protocol(
         Keithley2281S,
