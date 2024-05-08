@@ -29,13 +29,21 @@ Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging
 
 If the upload action does not work, you can create a PyPI release manually:
 
-1. Upload the wheel and source distributions to the test server
+1. Fetch `master`, build and check the source packages
+    - `python -m pip install --upgrade build twine`
+    - `python -m build`
+    - Check the distributions (`twine check dist/*`, version will not yet be correct)
+2. Ensure to have a git tag in the format "vX.Y.Z"
+3. Build final packages and confirm the correct version number is being used
+     - `python -m build`
+     - Check the distributions (`twine check dist/*`)
+4. Upload the wheel and source distributions to the test server
     - `python -m twine upload --repository testpypi dist/*`
-2. Verify the test repository: https://test.pypi.org/project/PyMeasure
-3. Confirm that the installation works (best in a separate environment)
+5. Verify the test repository: https://test.pypi.org/project/PyMeasure
+6. Confirm that the installation works (best in a separate environment)
     - `python -m pip install --index-url https://test.pypi.org/simple/ --no-deps pymeasure`
-4. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
-5. Verify that the package is updated: https://pypi.org/project/PyMeasure
+7. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
+8. Verify that the package is updated: https://pypi.org/project/PyMeasure
 
 ## conda-forge feedstock
 
