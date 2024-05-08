@@ -172,12 +172,14 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         model_voltage_offset: float = 0.05,
         charge_delay: float = 0,
     ):
-        """Convenience function to test a battery and save a its model to the internal memory.
-           The device can only discharge the battery at a fixed 1A! If this current is too high,
-           a series resistor has to be used during discharge to limit the current!
-           If the battery is discharged below the lower limit, it will be charged with a 10th of
-           the set charge current till it reaches the lower limit, then the battery profile will
-           be characterized.
+        """
+        Convenience function for testing a battery and saving its model to the internal memory.
+
+        The device can only discharge the battery at a fixed 1A! If this current is too high,
+        a series resistor has to be used during discharge to limit the current!
+        If the battery is discharged below the lower limit, it will be charged with a 10th of
+        the set charge current till it reaches the lower limit, then the battery profile will
+        be characterized.
 
         :param lower_voltage: discharge end voltage, set this slightly lower (~0.05V)
                               than in normal operation
@@ -352,7 +354,13 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
 
     bt_test_control = Instrument.setting(
         ":BATT:TEST:SENS:AH:EXEC %s",
-        """Control the output state.""",
+        """
+        Set the battery-characterization state.
+
+        Set to "START", "STOP", "PAUSE" or "CONTINUE". This will en-/disable the output
+        for the characterization process. The device will measure and collect data for
+        the battery model. See the Keithley 077114601 p. 251 for details.
+        """,
         validator=strict_discrete_set,
         values={"START", "STOP", "PAUSE", "CONTINUE"},
     )
