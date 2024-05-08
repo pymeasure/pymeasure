@@ -47,7 +47,7 @@ class Keithley2281SOperationEventRegister(enum.IntFlag):
     TRIGGER = 32  # Waiting for trigger
     ARM = 64  # Waiting for arm event
     _RESERVED_4 = 128
-    FILT = 256  # Filter has settled or is disabled
+    FILTER_SETTLED = 256  # Filter has settled or is disabled
     LIST = 512  # Running a list
     IDLE = 1024  # Idling
     _RESERVED_5 = 2048
@@ -62,17 +62,17 @@ class Keithley2281SMeasurementEventRegister(enum.IntFlag):
     Enum containing Keithley2281S Measurement Instrument Summary Event Register definition
     """
 
-    ROF = 1  # Reading overflow
+    READING_OVERFLOW = 1
     _RESERVED_1 = 2
     _RESERVED_2 = 4
     _RESERVED_3 = 8
     _RESERVED_4 = 16
     _RESERVED_5 = 32
-    RAV = 64  # Reading available
-    BHF = 128  # Buffer half-full
-    BH = 256  # Buffer full
-    BTF = 512  # Buffer three-quarters full
-    BQF = 1024  # Buffer one-quarter-full
+    READING_AVAILABLE = 64
+    BUFFER_HALF_FULL = 128
+    BUFFER_FULL = 256
+    BUFFER_THREE_QUARTERS_FULL = 512
+    BUFFER_ONE_QUARTER_FULL = 1024
     _RESERVED_6 = 2048
     _RESERVED_7 = 4096
     _RESERVED_8 = 8192
@@ -160,7 +160,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     @property
     def cm_reading_available(self) -> bool:
         """Get availability of a reading."""
-        return Keithley2281SMeasurementEventRegister.RAV in self.cm_measurement_event
+        return Keithley2281SMeasurementEventRegister.READING_AVAILABLE in self.cm_measurement_event
 
 
     def cm_characterize(
