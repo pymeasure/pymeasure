@@ -86,16 +86,28 @@ def test_bt_output():
 
 def test_reading_availability():
     with expected_protocol(
-        Keithley2281S, init_comm + [(":STAT:MEAS:INST:ISUM:COND?", "64")]
+        Keithley2281S,
+        init_comm
+        + [
+            (":STAT:MEAS:INST:ISUM:COND?", "64"),
+            (":STAT:MEAS:INST:ISUM:COND?", "0"),
+        ],
     ) as inst:
         assert inst.cm_reading_available is True
+        assert inst.cm_reading_available is False
 
 
 def test_measurement_ongoging():
     with expected_protocol(
-        Keithley2281S, init_comm + [(":STAT:OPER:INST:ISUM:COND?", "16")]
+        Keithley2281S,
+        init_comm
+        + [
+            (":STAT:OPER:INST:ISUM:COND?", "16"),
+            (":STAT:OPER:INST:ISUM:COND?", "0"),
+        ],
     ) as inst:
         assert inst.cm_measurement_ongoing is True
+        assert inst.cm_measurement_ongoing is False
 
 
 def test_ps_buffer():
