@@ -162,7 +162,6 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         """Get availability of a reading."""
         return Keithley2281SMeasurementEventRegister.READING_AVAILABLE in self.cm_measurement_event
 
-
     def cm_characterize(
         self,
         lower_voltage: float,
