@@ -95,7 +95,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,7 +103,8 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          environment-file: .github/pymeasure.yml
+          # ternary operator: if python-version == 3.12 use pymeasure_python312.yml else use pymeasure.yml
+          environment-file: ${{ matrix.python-version == '3.12' && '.github/pymeasure_python312.yml' || '.github/pymeasure.yml'}}
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
@@ -154,43 +155,3 @@ jobs:
         run: |
           echo "::add-matcher::.github/pytest.json"
           xvfb-run -a pytest
-
-  test_python312:
-    name: Python ${{ matrix.python-version }}, ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
-    strategy:
-      fail-fast: true
-      matrix:
-        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.12"]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install pymeasure requirements
-        uses: mamba-org/setup-micromamba@v1
-        with:
-          environment-file: .github/pymeasure_python312.yml
-          create-args: python=${{ matrix.python-version }}
-          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
-          cache-downloads: false
-      - name: Python version
-        run: python --version
-      - name: Install Pymeasure
-        # If the pytest problem matcher stops working because of bad paths, do an editable install
-        run: pip install .[tests]
-      - name: Pymeasure version
-        run: python -c "import pymeasure;print(pymeasure.__version__)"
-      - name: Run pytest with xvfb
-        if: runner.os == 'Linux'
-        run: |
-          echo "::add-matcher::.github/pytest.json"
-          xvfb-run -a pytest
-      - name: Run pytest
-        if: runner.os != 'Linux'
-        run: |
-          echo "::add-matcher::.github/pytest.json"
-          pytest
