@@ -5,6 +5,7 @@ Main items of this new release:
 
 Added features
 - SCPI instruments have :code:`next_error` property giving the next error.
+- The :class:`Parameter` and :class:`Metadata` infrastructure has been restructured; both are now a subclass of :class:`InputField` and have series of type-specific subclasses (like :class:`Parameter` already had) for more control on what is written to/read from file.
 
 Deprecated features
 -------------------
@@ -17,6 +18,7 @@ Deprecated features
 - Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
 - Replaced :code:`sample_rate` keyword-argument of :code:`buffer_frequency_time_series` of Pendulum CNT-91 by :code:`gate_time`.
 - The property :code:`unit` of MKS937B switched to using values defined in :code:`instruments/mksinst/mks937b/Unit`. Old string values are not supported anymore. (@dkriegner, @BenediktBurger #1034)
+- Deprecated parameters :code:`units` and :code:`fmt` for the :class:`Metadata` base class; the functionality is now in line with the :class:`InputField` (the parent class) and  :class:`Parameter` classes, with type-specific :class:`Metadata` classes that handle the formatting. (@CasperSchippers #1036)
 
 GUI
 ---
