@@ -23,7 +23,7 @@
 #
 from pymeasure.instruments import SCPIMixin, Instrument
 from pymeasure.adapters.prologix import PrologixAdapter
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class KeysightE3642A(SCPIMixin, Instrument):
@@ -46,6 +46,9 @@ class KeysightE3642A(SCPIMixin, Instrument):
         "VOLT?",
         "VOLT %f",
         """Control the output voltage""",
+        validator=strict_range,
+        values=[0, 20],
+        dynamic=True,
     )
 
     current = Instrument.control(
