@@ -12,12 +12,12 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-def test_current_setter():
+def test_current_limit_setter():
     with expected_protocol(
             KeysightE3642A,
             [(b'CURR 2.670000', None)],
     ) as inst:
-        inst.current = 2.67
+        inst.current_limit = 2.67
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
@@ -28,19 +28,19 @@ def test_current_setter():
       (b'++read eoi', b'+5.00000000E+00\n')],
      5.0),
 ))
-def test_current_getter(comm_pairs, value):
+def test_current_limit_getter(comm_pairs, value):
     with expected_protocol(
             KeysightE3642A,
             comm_pairs,
     ) as inst:
-        assert inst.current == value
+        assert inst.current_limit == value
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
-    ([(b'OUTPUT:STATE 1', None)],
-     True),
     ([(b'OUTPUT:STATE 0', None)],
      False),
+    ([(b'OUTPUT:STATE 1', None)],
+     True),
 ))
 def test_output_state_enabled_setter(comm_pairs, value):
     with expected_protocol(
@@ -52,11 +52,11 @@ def test_output_state_enabled_setter(comm_pairs, value):
 
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'OUTPUT:STATE?', None),
-      (b'++read eoi', b'1\n')],
-     True),
-    ([(b'OUTPUT:STATE?', None),
       (b'++read eoi', b'0\n')],
      False),
+    ([(b'OUTPUT:STATE?', None),
+      (b'++read eoi', b'1\n')],
+     True),
 ))
 def test_output_state_enabled_getter(comm_pairs, value):
     with expected_protocol(
@@ -66,12 +66,12 @@ def test_output_state_enabled_getter(comm_pairs, value):
         assert inst.output_state_enabled == value
 
 
-def test_voltage_setter():
+def test_voltage_setpoint_setter():
     with expected_protocol(
             KeysightE3642A,
             [(b'VOLT 5.310000', None)],
     ) as inst:
-        inst.voltage = 5.31
+        inst.voltage_setpoint = 5.31
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
@@ -82,12 +82,12 @@ def test_voltage_setter():
       (b'++read eoi', b'+8.00000000E+00\n')],
      8.0),
 ))
-def test_voltage_getter(comm_pairs, value):
+def test_voltage_setpoint_getter(comm_pairs, value):
     with expected_protocol(
             KeysightE3642A,
             comm_pairs,
     ) as inst:
-        assert inst.voltage == value
+        assert inst.voltage_setpoint == value
 
 
 def test_apply():
@@ -96,4 +96,4 @@ def test_apply():
             [(b'VOLT 8.000000', None),
              (b'CURR 5.000000', None)],
     ) as inst:
-        assert inst.apply(**{'voltage': 8.0, 'current': 5.0}) is None
+        assert inst.apply(**{'voltage_setpoint': 8.0, 'current_limit': 5.0}) is None
