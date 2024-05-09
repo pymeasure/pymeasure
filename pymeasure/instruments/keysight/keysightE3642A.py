@@ -55,6 +55,9 @@ class KeysightE3642A(SCPIMixin, Instrument):
         "CURR?",
         "CURR %f",
         """Control the output current""",
+        validator=strict_range,
+        values=[0, 5],
+        dynamic=True,
     )
 
 
