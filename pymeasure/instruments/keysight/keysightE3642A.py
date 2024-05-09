@@ -48,6 +48,12 @@ class KeysightE3642A(SCPIMixin, Instrument):
         """Control the output voltage""",
     )
 
+    current = Instrument.control(
+        "CURR?",
+        "CURR %f",
+        """Control the output current""",
+    )
+
 
 if __name__ == "__main__":
     adapter = PrologixAdapter('ASRL3::INSTR')
@@ -59,6 +65,7 @@ if __name__ == "__main__":
     ps.output_state_enabled = True
     print(ps.output_state_enabled)
     ps.voltage = 5.31
+    ps.current = 0.2
 
 
 
