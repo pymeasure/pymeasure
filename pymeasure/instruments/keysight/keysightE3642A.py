@@ -42,6 +42,13 @@ class KeysightE3642A(SCPIMixin, Instrument):
         map_values=True
     )
 
+    voltage = Instrument.control(
+        "VOLT?",
+        "VOLT %f",
+        """Control the output voltage""",
+    )
+
+
 if __name__ == "__main__":
     adapter = PrologixAdapter('ASRL3::INSTR')
     adapter.connection.read_termination = '\r\n'
@@ -49,4 +56,9 @@ if __name__ == "__main__":
     adapter.auto = True
 
     ps = KeysightE3642A(adapter)
-    ps.output_state_enabled = False
+    ps.output_state_enabled = True
+    print(ps.output_state_enabled)
+    ps.voltage = 5.31
+
+
+
