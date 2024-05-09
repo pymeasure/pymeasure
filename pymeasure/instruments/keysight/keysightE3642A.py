@@ -60,6 +60,10 @@ class KeysightE3642A(SCPIMixin, Instrument):
         dynamic=True,
     )
 
+    def apply(self, voltage, current):
+        self.voltage = voltage
+        self.current = current
+
 
 if __name__ == "__main__":
     adapter = PrologixAdapter('ASRL3::INSTR')
@@ -70,8 +74,8 @@ if __name__ == "__main__":
     ps = KeysightE3642A(adapter)
     ps.output_state_enabled = True
     print(ps.output_state_enabled)
-    ps.voltage = 5.31
-    ps.current = 0.2
+    ps.voltage = 20
+    ps.current = 5
 
 
 
