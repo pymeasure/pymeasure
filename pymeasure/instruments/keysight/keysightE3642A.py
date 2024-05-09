@@ -33,12 +33,13 @@ class KeysightE3642A(SCPIMixin, Instrument):
             **kwargs
         )
 
-    output_state = Instrument.control(
+    output_state_enabled = Instrument.control(
         "OUTPUT:STATE?",
         "OUTPUT:STATE %s",
-        """Control output state""",
+        """Control if output state is enabled""",
         validator=strict_discrete_set,
-        values=['on', 'off'],
+        values={True: 'on', False: 'off'},
+        map_values=True
     )
 
 if __name__ == "__main__":
@@ -48,4 +49,4 @@ if __name__ == "__main__":
     adapter.auto = True
 
     ps = KeysightE3642A(adapter)
-    ps.output_state = 'off'
+    ps.output_state_enabled = False
