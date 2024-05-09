@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 from pymeasure.instruments import SCPIMixin, Instrument
-from pymeasure.adapters.prologix import PrologixAdapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -63,19 +62,4 @@ class KeysightE3642A(SCPIMixin, Instrument):
     def apply(self, voltage, current):
         self.voltage = voltage
         self.current = current
-
-
-if __name__ == "__main__":
-    adapter = PrologixAdapter('ASRL3::INSTR')
-    adapter.connection.read_termination = '\r\n'
-    adapter.address = 5
-    adapter.auto = True
-
-    ps = KeysightE3642A(adapter)
-    ps.output_state_enabled = True
-    print(ps.output_state_enabled)
-    ps.voltage = 20
-    ps.current = 5
-
-
 
