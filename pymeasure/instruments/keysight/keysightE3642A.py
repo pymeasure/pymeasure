@@ -26,9 +26,9 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class KeysightE3642A(SCPIMixin, Instrument):
+    """ Represents the Keysight E3642A DC Power Supply interface for interacting with
+    the instrument. """
     def __init__(self, adapter, name="Keysight E3642A", **kwargs):
-        """ Represents the Keysight E3642A DC Power Supply interface for interacting with
-        the instrument. """
         super().__init__(
             adapter, name,
             **kwargs
