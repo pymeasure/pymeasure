@@ -22,10 +22,10 @@ def test_current_limit_setter():
 
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'CURR?', None),
-      (b'++read eoi', b'+2.67000000E+00\n')],
+      (None, b'+2.67000000E+00\n')],
      2.67),
     ([(b'CURR?', None),
-      (b'++read eoi', b'+5.00000000E+00\n')],
+      (None, b'+5.00000000E+00\n')],
      5.0),
 ))
 def test_current_limit_getter(comm_pairs, value):
@@ -52,10 +52,10 @@ def test_output_state_enabled_setter(comm_pairs, value):
 
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'OUTPUT:STATE?', None),
-      (b'++read eoi', b'0\n')],
+      (None, b'0\n')],
      False),
     ([(b'OUTPUT:STATE?', None),
-      (b'++read eoi', b'1\n')],
+      (None, b'1\n')],
      True),
 ))
 def test_output_state_enabled_getter(comm_pairs, value):
@@ -76,10 +76,10 @@ def test_voltage_setpoint_setter():
 
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'VOLT?', None),
-      (b'++read eoi', b'+5.31000000E+00\n')],
+      (None, b'+5.31000000E+00\n')],
      5.31),
     ([(b'VOLT?', None),
-      (b'++read eoi', b'+8.00000000E+00\n')],
+      (None, b'+8.00000000E+00\n')],
      8.0),
 ))
 def test_voltage_setpoint_getter(comm_pairs, value):
