@@ -37,7 +37,7 @@ class KeysightE3642A(SCPIMixin, Instrument):
     output_state_enabled = Instrument.control(
         "OUTPUT:STATE?",
         "OUTPUT:STATE %d",
-        """Control if output state is enabled""",
+        """Control whether output state is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
