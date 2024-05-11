@@ -46,7 +46,7 @@ class KeysightE3642A(SCPIMixin, Instrument):
     voltage_setpoint = Instrument.control(
         "VOLT?",
         "VOLT %f",
-        """Control the output voltage setpoint""",
+        """Control the output voltage setpoint in Volts.""",
         validator=strict_range,
         values=[0, 20],
         dynamic=True,
@@ -55,7 +55,7 @@ class KeysightE3642A(SCPIMixin, Instrument):
     current_limit = Instrument.control(
         "CURR?",
         "CURR %f",
-        """Control the output current limit""",
+        """Control the output current limit in Amperes.""",
         validator=strict_range,
         values=[0, 5],
         dynamic=True,
