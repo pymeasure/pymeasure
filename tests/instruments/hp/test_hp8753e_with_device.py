@@ -207,6 +207,8 @@ def test_hp8753e_with_device_scan(hp8753e):
     assert hp8753e.averages == 2
     hp8753e.scan(timeout=10)
     data = hp8753e.data_complex
+    assert isinstance(data, numpy.ndarray)
+    assert isinstance(data[12], numpy.complex128)
 
 
 def test_hp8753e_with_device_data_complex(hp8753e):
