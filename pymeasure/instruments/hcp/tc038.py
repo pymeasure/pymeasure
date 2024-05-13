@@ -161,6 +161,6 @@ class TC038(Instrument):
 
     information = Instrument.measurement(
         "INF6",
-        """Get the information about the device and its capabilites.""",
+        """Get the information about the device and its capabilities.""",
         get_process=lambda got: got[7:-1],
     )

@@ -78,4 +78,5 @@ Connor Carr
 Jannis Kleine-Schönepauck
 Douwe den Blanken
 Till Zürner
-David Ziliak
+J. A. Wilcox
+Nick James Kirkby

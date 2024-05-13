@@ -69,6 +69,7 @@ def find_devices_in_module(module):
         except (OSError, AttributeError):
             # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
             # when checking installed driver files
+            # it raises an AttributeError under Python 312
             pass
     return devices, channels
 
@@ -156,7 +157,6 @@ grandfathered_docstring_instruments = [
     "HP6632A",
     "HP6633A",
     "HP6634A",
-    "HP8116A",
     "Keithley2000",
     "Keithley2306",
     "Keithley2306Channel",

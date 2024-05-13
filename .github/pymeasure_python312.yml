@@ -1,17 +1,17 @@
-name: pymeasure
+name: pymeasure_python312
 channels:
   - conda-forge
 dependencies:
   - cloudpickle=1.6.0
-  - numpy=1.23.4
-  - pandas=1.5.1
+  - numpy=1.26.4
+  - pandas=2.2.0
   - pint=0.18
-  - pyqt=5.15.7
+  - pyqt=5.15.9
   - pyqtgraph=0.12.4
   - pyserial=3.4
-  - pyvisa=1.13.0
-  - pyzmq=24.0.1
-  - qt=5.15.6
+  - pyvisa=1.14.1
+  - pyzmq=25.1.2
+  - qt=5.15.8
 # Development dependencies below
   - pytest-qt=4.2.0
   - pytest-runner=5.2

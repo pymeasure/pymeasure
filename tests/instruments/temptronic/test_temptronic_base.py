@@ -22,48 +22,15 @@
 # THE SOFTWARE.
 #
 
+from time import perf_counter
 
 from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.hp import HP8116A
-from pymeasure.instruments.hp.hp8116a import Status
-
-HP8116A.status = property(fget=lambda self: Status(5))
+from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 
 
-init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
-
-
-def test_init():
-    with expected_protocol(
-            HP8116A,
-            init_comm,
-    ):
-        pass  # Verify the expected communication.
-
-
-def test_duty_cycle():
-    with expected_protocol(
-            HP8116A,
-            init_comm + [(b"IDTY", b"00000035")],
-    ) as instr:
-        assert instr.duty_cycle == 35
-
-
-def test_duty_cycle_setter():
-    with expected_protocol(
-            HP8116A,
-            init_comm + [(b"DTY 34.5 %", None)],
-    ) as instr:
-        instr.duty_cycle = 34.5
-
-
-def test_sweep_time():
-    with expected_protocol(HP8116A, init_comm + [("SWT 5 S", None)]) as inst:
-        # This test tests also the generate_1_2_5_sequence method and truncation.
-        inst.sweep_time = 3
-
-
-def test_limit_enabled():
-    with expected_protocol(HP8116A, init_comm + [("L1", None)]) as inst:
-        inst.limit_enabled = True
+def test_check_query_delay():
+    with expected_protocol(ATSBase, [("TTIM?", "7")]) as inst:
+        start = perf_counter()
+        assert inst.maximum_test_time == 7
+        delay = perf_counter() - start
+        assert delay > 0.05

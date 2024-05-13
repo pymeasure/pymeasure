@@ -195,7 +195,7 @@ class TestWaiting:
     @pytest.fixture()
     def instr(self):
         class Faked(Instrument):
-            def wait_for(self, query_delay=0):
+            def wait_for(self, query_delay=None):
                 self.waited = query_delay
         return Faked(ProtocolAdapter(), name="faked")
 
@@ -208,7 +208,7 @@ class TestWaiting:
     def test_ask_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
     def test_ask_calls_wait_with_delay(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
@@ -218,7 +218,7 @@ class TestWaiting:
     def test_binary_values_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
 
 @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),

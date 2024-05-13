@@ -22,48 +22,34 @@
 # THE SOFTWARE.
 #
 
-
+import pytest
 from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.hp import HP8116A
-from pymeasure.instruments.hp.hp8116a import Status
-
-HP8116A.status = property(fget=lambda self: Status(5))
+from pymeasure.instruments.agilent.agilent4294A import Agilent4294A
 
 
-init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_set_start_freq(freq):
+    """ Test Agilent 4294A start frequency setter """
+    with expected_protocol(Agilent4294A, [(f"STAR {freq:.0f} HZ", None), ],) as inst:
+        inst.start_frequency = freq
 
 
-def test_init():
-    with expected_protocol(
-            HP8116A,
-            init_comm,
-    ):
-        pass  # Verify the expected communication.
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_get_start_freq(freq):
+    """ Test Agilent 4294A start frequency getter """
+    with expected_protocol(Agilent4294A, [("STAR?", freq), ],) as inst:
+        assert freq == inst.start_frequency
 
 
-def test_duty_cycle():
-    with expected_protocol(
-            HP8116A,
-            init_comm + [(b"IDTY", b"00000035")],
-    ) as instr:
-        assert instr.duty_cycle == 35
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_set_stop_freq(freq):
+    """ Test Agilent 4294A stop frequency setter """
+    with expected_protocol(Agilent4294A, [(f"STOP {freq:.0f} HZ", None), ],) as inst:
+        inst.stop_frequency = freq
 
 
-def test_duty_cycle_setter():
-    with expected_protocol(
-            HP8116A,
-            init_comm + [(b"DTY 34.5 %", None)],
-    ) as instr:
-        instr.duty_cycle = 34.5
-
-
-def test_sweep_time():
-    with expected_protocol(HP8116A, init_comm + [("SWT 5 S", None)]) as inst:
-        # This test tests also the generate_1_2_5_sequence method and truncation.
-        inst.sweep_time = 3
-
-
-def test_limit_enabled():
-    with expected_protocol(HP8116A, init_comm + [("L1", None)]) as inst:
-        inst.limit_enabled = True
+@pytest.mark.parametrize("freq", [40, 140E6])
+def test_get_stop_freq(freq):
+    """ Test Agilent 4294A stop frequency getter """
+    with expected_protocol(Agilent4294A, [("STOP?", freq), ],) as inst:
+        assert freq == inst.stop_frequency

@@ -196,10 +196,10 @@ class Instrument(CommonBase):
         return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
-        :param query_delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         if query_delay:
             time.sleep(query_delay)

@@ -248,7 +248,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
         else:
             return ['Incorrect return from previously set property']
 
-    def ask(self, command, query_delay=0):
+    def ask(self, command, query_delay=None):
         """Send a command and read the response, stripping white spaces.
 
         Usually the properties use the
