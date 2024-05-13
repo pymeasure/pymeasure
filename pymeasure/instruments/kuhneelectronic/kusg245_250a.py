@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,7 @@ class Kusg245_250A(Instrument):
                          asrl={"baud_rate": 115200,
                                "read_termination": termination_character,
                                "write_termination": termination_character},
+                         includeSCPI=False,
                          **kwargs)
 
         self._power_limit = power_limit
@@ -395,7 +396,7 @@ class Kusg245_250A(Instrument):
         self.rf_enabled = True
 
     def write(self, command, **kwargs):
-        self.adapter.write(command, **kwargs)
+        super().write(command, **kwargs)
         if _is_expecting_acknowledgement(command):
             s = self.read()
             if s != "A":
