@@ -319,7 +319,6 @@ class Kusg245_250A(Instrument):
 
     @property
     def reflection_limit(self):
-        "B%d",
         """Control limit of reflection in Watts
         (integer in 0 - no limit, 100, 150, 180, 200, 230).
 
