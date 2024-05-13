@@ -58,6 +58,7 @@ Andres Ruz-Nieto
 Carlos Martinez
 Scott Candey
 Tom Verbeure
+Juraj Jašík
 Max Herbold
 Alexander Wichers
 Ashok Bruno

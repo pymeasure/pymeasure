@@ -47,6 +47,7 @@ Instruments by manufacturer:
    keithley/index
    kepco/index
    keysight/index
+   kuhneelectronic/index
    lakeshore/index
    lecroy/index
    mksinst/index
