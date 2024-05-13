@@ -77,7 +77,7 @@ def test_hp8753e_fw():
         assert inst.fw == "7.10"
 
 
-def test_hp8753e_set_fixed_frequency():
+def test_hp8753e_set_single_frequency_scan():
     with expected_protocol(
         HP8753E,
         [
@@ -87,7 +87,7 @@ def test_hp8753e_set_fixed_frequency():
             ("POIN3", None),
         ],
     ) as inst:
-        inst.set_fixed_frequency(50e6)
+        inst.set_single_frequency_scan(50e6)
 
 
 def test_hp8753e_measuring_parameter():
