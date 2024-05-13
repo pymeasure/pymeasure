@@ -66,7 +66,7 @@ def find_devices_in_module(module):
             # Some non-required driver dependencies may not be installed on test computer,
             # for example ni.VirtualBench
             pass
-        except OSError:
+        except (OSError, AttributeError):
             # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
             # when checking installed driver files
             pass

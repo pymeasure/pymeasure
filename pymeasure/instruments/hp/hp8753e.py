@@ -329,11 +329,11 @@ class HP8753E(Instrument):
         values=ALLOWED_BANDWIDTH,
     )
 
-    def reset(self, pause=0.25):
+    def reset(self, pause=0.5):
         """Reset the instrument. May cause RF Output power to be enabled!
 
         :param pause: Optional value in seconds to pause to allow the reset process to complete.
-        Default value is 0.25."""
+        Default value is 0.5."""
         self.write("*RST")
         sleep(pause)
 
@@ -347,11 +347,18 @@ class HP8753E(Instrument):
         """
 
         # get time to perform sweep
-        sweep_time = self.sweep_time + timeout
+        sweep_time = self.sweep_time
+
+        assert isinstance(sweep_time, float)
+
+        if sweep_time < 0.2:
+            sweep_time = 0.2
 
         # get number of averages if enabled
         if self.averaging_enabled:
             sweep_time = sweep_time * self.averages
+
+        sweep_time = sweep_time + timeout
 
         self.scan_single()
 
@@ -368,17 +375,17 @@ class HP8753E(Instrument):
                 break
             except VisaIOError:
                 pass
-
+            sleep(0.1)
             # calculate time sweep should be complete by
             if now() > (start + sweep_time):
                 raise TimeoutError(
                     f"VNA Scan took longer than {sweep_time} seconds to complete and timed out."
                 )
 
-        sleep(0.5)
+        sleep(0.25)
         while self.adapter.connection.bytes_in_buffer > 0:
             _ = self.read()
-            sleep(0.25)
+            sleep(0.1)
 
     def scan_single(self):
         """Initiate a single scan or N scans averaged based on averaging.
@@ -433,6 +440,12 @@ class HP8753E(Instrument):
         # read the extra self.scan_points out of the buffer
         for i in range(counter):
             self.read()
+            sleep(0.25)
+        # points = self.scan_points
+
+        sleep(0.25)
+        while self.adapter.connection.bytes_in_buffer > 0:
+            _ = self.read()
             sleep(0.1)
 
         # get time to perform sweep
