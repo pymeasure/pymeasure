@@ -23,7 +23,6 @@
 #
 
 import logging
-from contextlib import contextmanager
 from time import sleep
 
 import numpy
@@ -186,12 +185,16 @@ def test_hp8753e_with_device_scan_single(hp8753e):
     assert hp8753e.averaging_enabled is False
     hp8753e.scan_single()
     data = hp8753e.data_complex
+    assert isinstance(data, numpy.ndarray)
+    assert isinstance(data[12], numpy.complex128)
     hp8753e.averaging_enabled = True
     assert hp8753e.averaging_enabled is True
     hp8753e.averages = 2
     assert hp8753e.averages == 2
     hp8753e.scan_single()
     data = hp8753e.data_complex
+    assert isinstance(data, numpy.ndarray)
+    assert isinstance(data[12], numpy.complex128)
 
 
 def test_hp8753e_with_device_scan(hp8753e):
@@ -199,7 +202,7 @@ def test_hp8753e_with_device_scan(hp8753e):
     hp8753e.averaging_enabled = False
     hp8753e.scan(timeout=10)
     hp8753e.averaging_enabled = True
-    assert hp8753e.averaging_enabled == True
+    assert hp8753e.averaging_enabled is True
     hp8753e.averages = 2
     assert hp8753e.averages == 2
     hp8753e.scan(timeout=10)
