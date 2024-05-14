@@ -544,11 +544,12 @@ class AWG401x_AWG(AWG401x_base):
         self._waveforms = self.WaveformsLazyDict(self)
 
     _init_comm_pairs = [
-        ("*IDN?", "x,AWG4012"),
-        ("SOURce1:INITDELay? MINimum", "1"),
-        ("SOURce1:INITDELay? MAXimum", "2"),
-        ("SOURce2:INITDELay? MINimum", "1"),
-        ("SOURce2:INITDELay? MAXimum", "2"),
+        ("AWGControl:CONFigure:CNUMber?", "2"),
+        ("OUTPut1:DELay? MINimum", "1"),
+        ("OUTPut1:DELay? MAXimum", "2"),
+        ("OUTPut2:DELay? MINimum", "1"),
+        ("OUTPut2:DELay? MAXimum", "2"),
+        ("AWGControl:CONFigure:CNUMber?", "2"),
         ("AWGControl:BURST? MINimum", "1"),
         ("AWGControl:BURST? MAXimum", "2"),
         ("AWGControl:SRATe? MINimum", "1"),

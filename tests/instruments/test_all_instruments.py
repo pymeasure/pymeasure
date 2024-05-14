@@ -98,8 +98,7 @@ for mixin in dir(generic_types):
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
-    "AWG401x_AWG",
-    "AWG401x_AFG",
+    "HP8116A",  # it depends on `adapter.connection.read_stb`
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [

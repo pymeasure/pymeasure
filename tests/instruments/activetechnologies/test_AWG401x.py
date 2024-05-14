@@ -25,7 +25,7 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
 
-from pymeasure.instruments.activetechnologies import AWG401x_AFG
+from pymeasure.instruments.activetechnologies import AWG401x_AFG, AWG401x_AWG
 from pymeasure.instruments.activetechnologies.AWG401x import ChannelAFG, SequenceEntry
 
 
@@ -69,6 +69,13 @@ def test_AFG_frequency_getter():
              ],
     ) as inst:
         assert inst.ch_2.frequency == 1.5
+
+
+# AWG tests
+
+def test_AWG_init():
+    with expected_protocol(AWG401x_AWG, AWG401x_AWG._init_comm_pairs):
+        pass  # verify init communication
 
 
 # SequenceEntry Tests
