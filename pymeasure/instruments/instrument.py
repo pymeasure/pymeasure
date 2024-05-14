@@ -103,6 +103,15 @@ class Instrument(CommonBase):
 
         log.info("Initializing %s." % self.name)
 
+    def _init_communication(self):
+        """Do any :meth:`__init__` configuration requiring communicating with the device.
+
+        In order to test the main code of the instrument without required knowledge of the
+        communication during initialization.
+        Override in your subclass with the communication you need and call it in your `__init__`.
+        """
+        pass
+
     def __enter__(self):
         return self
 
