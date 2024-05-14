@@ -5,6 +5,7 @@ Main items of this new release:
 
 - Add support for numpy 2.0
 - Add support for python 3.12
+- Improve academic quotability with an up to date Zenodo DOI and with citation information.
 - Add a :code:`SCPIMixin` base class for instruments instead of defining :code:`includeSCPI=True`
 - Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file.
   Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`.
