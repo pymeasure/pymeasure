@@ -23,3 +23,4 @@ If the instrument you are looking for is not here, also check :doc:`HP<../hp/ind
    agilent33500
    agilent33521A
    agilentB1500
+   agilent4284A
