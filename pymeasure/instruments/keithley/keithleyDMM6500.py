@@ -225,6 +225,10 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
             name,
             read_termination=read_termination,
             **kwargs)
+
+        self._init_communication()
+
+    def _init_communication(self):
         self.command_set = "SCPI"
 
     def __exit__(self, exc_type, exc_value, traceback):
