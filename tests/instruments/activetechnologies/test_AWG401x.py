@@ -39,42 +39,7 @@ class SequencerInstrument(Instrument):
 
 
 # AFG Tests
-AFG_init_comm = [
-    # ("*IDN?", "x,AWG4012"),
-    ("SOURce1:INITDELay? MINimum", "1"),
-    ("SOURce1:INITDELay? MAXimum", "2"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
-    ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
-    ("SOURce1:VOLTage:BASELINE:OFFSET? MINimum", "1"),
-    ("SOURce1:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
-    ("SOURce1:FREQuency? MINimum", "1"),
-    ("SOURce1:FREQuency? MAXimum", "2"),
-    ("SOURce1:PHASe:ADJust? MINimum", "1"),
-    ("SOURce1:PHASe:ADJust? MAXimum", "2"),
-    ("SOURce2:INITDELay? MINimum", "1"),
-    ("SOURce2:INITDELay? MAXimum", "2"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
-    ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
-    ("SOURce2:VOLTage:BASELINE:OFFSET? MINimum", "1"),
-    ("SOURce2:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
-    ("SOURce2:FREQuency? MINimum", "1"),
-    ("SOURce2:FREQuency? MAXimum", "2"),
-    ("SOURce2:PHASe:ADJust? MINimum", "1"),
-    ("SOURce2:PHASe:ADJust? MAXimum", "2"),
-    ("*IDN?", "x,AWG4012"),
-]
+AFG_init_comm = AWG401x_AFG._init_comm_pairs
 
 
 def test_AFG_init():

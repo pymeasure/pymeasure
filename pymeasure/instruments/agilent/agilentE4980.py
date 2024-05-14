@@ -104,10 +104,9 @@ Select trigger source; accept the values:
         )
         self.timeout = 30000
         # format: output ascii
-        self._init_communication()
-
-    def _init_communication(self):
         self.write("FORM ASC")
+
+    _init_comm_pairs = [("FORM ASC", None)]
 
     def freq_sweep(self, freq_list, return_freq=False):
         """

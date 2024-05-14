@@ -42,10 +42,9 @@ class HP33120A(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        self._init_communication()
-
-    def _init_communication(self):
         self.amplitude_units = 'Vpp'
+
+    _init_comm_pairs = [(b'SOUR:VOLT:UNIT VPP', None)]
 
     SHAPES = {
         'sinusoid': 'SIN', 'square': 'SQU', 'triangle': 'TRI',

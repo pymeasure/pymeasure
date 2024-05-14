@@ -122,9 +122,6 @@ class IBeamSmart(Instrument):
             asrl={'baud_rate': baud_rate},
             **kwargs
         )
-        self._init_communication()
-
-    def _init_communication(self):
         # configure communication mode: no repeating and no command prompt
         self.write('echo off')
         self.write('prom off')
@@ -135,6 +132,8 @@ class IBeamSmart(Instrument):
         except AttributeError:
             log.warning("Adapter does not have 'flush_read_buffer' method.")
         self.ask('talk usual')
+
+    _init_comm_pairs = [("echo off", None), ("prom off", None), ("talk usual", ""), (None, "[OK]")]
 
     def read(self):
         """Read a reply of the instrument and extract the values, if possible.

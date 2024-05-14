@@ -65,11 +65,10 @@ class AMI430(SCPIMixin, Instrument):
             **kwargs
         )
         # Read twice in order to remove welcome/connect message
-        self._init_communication()
+        self.read()
+        self.read()
 
-    def _init_communication(self):
-        self.read()
-        self.read()
+    _init_comm_pairs = [(None, "welcome"), (None, "connect")]
 
     maximumfield = 1.00
     maximumcurrent = 50.63

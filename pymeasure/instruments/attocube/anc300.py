@@ -300,9 +300,6 @@ class ANC300Controller(Instrument):
         for i, axis in enumerate(axisnames):
             setattr(self, axis, self.add_child(Axis, id=str(i + 1)))
 
-        self._init_communication(passwd)
-
-    def _init_communication(self, passwd):
         self.wait_for()
         # clear messages sent upon opening the connection,
         # this contains some non-ascii characters!
@@ -316,6 +313,13 @@ class ANC300Controller(Instrument):
             raise Exception(f"Attocube authorization failed '{auth_msg}'")
         # switch console echo off
         self.ask('echo off')
+
+    _init_comm_pairs = [
+        ("", "*" * len("")),
+        (None, "Authorization success"),
+        ("echo off", "> echo off"),
+        (None, "OK"),
+    ]
 
     def check_set_errors(self):
         """Check for errors after having set a property and log them.

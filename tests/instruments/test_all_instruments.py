@@ -190,13 +190,6 @@ grandfathered_docstring_instruments = [
 ]
 
 
-def create_init_communication_less_instrument(cls):
-    class ModifiedCls(cls):
-        def _init_communication(self, *args, **kwargs):
-            pass
-    return ModifiedCls
-
-
 @pytest.mark.parametrize("cls", devices)
 def test_adapter_arg(cls):
     "Test that every instrument has adapter as their input argument."
@@ -209,8 +202,7 @@ def test_adapter_arg(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    cls = create_init_communication_less_instrument(cls)
-    cls(adapter=ProtocolAdapter())
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -221,8 +213,7 @@ def test_name_argument(cls):
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
 
-    cls = create_init_communication_less_instrument(cls)
-    inst = cls(adapter=ProtocolAdapter(), name="Name_Test")
+    inst = cls(adapter=ProtocolAdapter(cls._init_comm_pairs), name="Name_Test")
     assert inst.name == "Name_Test"
 
 
@@ -246,7 +237,6 @@ def test_kwargs_to_adapter(cls):
     elif cls.__name__ in ("FakeInstrument", "SwissArmyFake"):
         pytest.skip("Fake instruments replace the adapter.")
 
-    cls = create_init_communication_less_instrument(cls)
     with pytest.raises(ValueError,
                        match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
         cls(adapter=SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
@@ -263,8 +253,7 @@ def test_includeSCPI_explicitly_set(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    cls = create_init_communication_less_instrument(cls)
-    cls(adapter=ProtocolAdapter())
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
     # assert that no error is raised
 
 
@@ -279,8 +268,7 @@ def test_includeSCPI_not_set_to_True(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    cls = create_init_communication_less_instrument(cls)
-    cls(adapter=ProtocolAdapter())
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
     # assert that no error is raised
 
 

@@ -82,12 +82,12 @@ class YAR(Instrument):
         # by space is option. Commands are case-insensitive.
         # Response is command echoed back, followed by ': ' and the return
         # value.
-        self._init_communication()
 
-    def _init_communication(self):
         # get valid range of power setpoint:
         self.power_setpoint_values = self.power_range
         self.power_get_process = power_get_process_generator(self.minimum_display_power)
+
+    _init_comm_pairs = [("RNP", "RNP: 0.200"), ("RMP", "RMP: 10.5"), ("RDPT", "RDPT: 0.100")]
 
     class Status(IntFlag):
         EMISSION = 0x1  # emission is fully on

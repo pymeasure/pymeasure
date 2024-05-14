@@ -91,10 +91,9 @@ class HP8116A(Instrument):
             includeSCPI=False,
             **kwargs
         )
-        self._init_communication()
-
-    def _init_communication(self):
         self.has_option_001 = self._check_has_option_001()
+
+    _init_comm_pairs = [(b"CST", b"x" * 87 + b' ,\r\n')]
 
     class Digit(Enum):
         """ Enum of the digits used with the autovernier

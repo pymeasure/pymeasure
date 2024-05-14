@@ -37,11 +37,10 @@ class AdvantestR3767CG(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        self._init_communication()
-
-    def _init_communication(self):
         # Tell unit to operate in IEEE488.2-1987 command mode.
         self.write("OLDC OFF")
+
+    _init_comm_pairs = [("OLDC OFF", None)]
 
     id = Instrument.measurement(
         "*IDN?", """Get the instrument identification."""

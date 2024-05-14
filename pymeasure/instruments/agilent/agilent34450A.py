@@ -375,10 +375,9 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
             adapter, name, timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
-        self._init_communication()
-
-    def _init_communication(self):
         self.check_errors()
+
+    _init_comm_pairs = [("SYST:ERR?", "0,None")]
 
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
         """ Configures the instrument to measure voltage.

@@ -38,10 +38,9 @@ class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        self._init_communication()
-
-    def _init_communication(self):
         self.write(':SYST:ANSW VALUE')
+
+    _init_comm_pairs = [(':SYST:ANSW VALUE', None)]
 
     # Code for general purpose commands (mother board related)
     slot = Instrument.control(":SLOT?", ":SLOT %d",

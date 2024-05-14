@@ -445,9 +445,6 @@ class AWG401x_AFG(AWG401x_base):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, **kwargs)
 
-        self._init_communication()
-
-    def _init_communication(self):
         model = self.id.split(",")[1]
         if model == "AWG4012":
             num_ch = 2
@@ -462,6 +459,43 @@ class AWG401x_AFG(AWG401x_base):
         for i in range(3, num_ch + 1):
             child = self.add_child(ChannelAFG, i)
             child._protected = True
+
+    _init_comm_pairs = [
+        # ("*IDN?", "x,AWG4012"),
+        ("SOURce1:INITDELay? MINimum", "1"),
+        ("SOURce1:INITDELay? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
+        ("SOURce1:VOLTage:BASELINE:OFFSET? MINimum", "1"),
+        ("SOURce1:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
+        ("SOURce1:FREQuency? MINimum", "1"),
+        ("SOURce1:FREQuency? MAXimum", "2"),
+        ("SOURce1:PHASe:ADJust? MINimum", "1"),
+        ("SOURce1:PHASe:ADJust? MAXimum", "2"),
+        ("SOURce2:INITDELay? MINimum", "1"),
+        ("SOURce2:INITDELay? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
+        ("SOURce2:VOLTage:BASELINE:OFFSET? MINimum", "1"),
+        ("SOURce2:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
+        ("SOURce2:FREQuency? MINimum", "1"),
+        ("SOURce2:FREQuency? MAXimum", "2"),
+        ("SOURce2:PHASe:ADJust? MINimum", "1"),
+        ("SOURce2:PHASe:ADJust? MAXimum", "2"),
+        ("*IDN?", "x,AWG4012"),
+    ]
 
 
 class AWG401x_AWG(AWG401x_base):
@@ -497,7 +531,10 @@ class AWG401x_AWG(AWG401x_base):
     def __init__(self, adapter, **kwargs):
         super().__init__(adapter, **kwargs)
 
-        self._init_communication()
+        for i in range(1, self.num_ch + 1):
+            self.add_child(ChannelAWG, i, collection="setting_ch")
+
+        self.entries = self.DummyEntriesElements(self, self.num_ch)
 
         self.burst_count_values = [self.burst_count_min, self.burst_count_max]
 
@@ -506,11 +543,19 @@ class AWG401x_AWG(AWG401x_base):
 
         self._waveforms = self.WaveformsLazyDict(self)
 
-    def _init_communication(self):
-        for i in range(1, self.num_ch + 1):
-            self.add_child(ChannelAWG, i, collection="setting_ch")
-
-        self.entries = self.DummyEntriesElements(self, self.num_ch)
+    _init_comm_pairs = [
+        ("*IDN?", "x,AWG4012"),
+        ("SOURce1:INITDELay? MINimum", "1"),
+        ("SOURce1:INITDELay? MAXimum", "2"),
+        ("SOURce2:INITDELay? MINimum", "1"),
+        ("SOURce2:INITDELay? MAXimum", "2"),
+        ("AWGControl:BURST? MINimum", "1"),
+        ("AWGControl:BURST? MAXimum", "2"),
+        ("AWGControl:SRATe? MINimum", "1"),
+        ("AWGControl:SRATe? MAXimum", "1"),
+        ("WLISt:LIST?", ""),
+        # ("*IDN?", "x,AWG4012"),
+    ]
 
     num_ch = Instrument.measurement(
         "AWGControl:CONFigure:CNUMber?",
