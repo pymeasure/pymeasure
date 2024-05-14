@@ -90,14 +90,6 @@ class Agilent4284A(SCPIMixin, Instrument):
         dynamic=True
     )
 
-    high_power_enabled = Instrument.measurement(
-        "OUTP:HPOW?",
-        """Get whether the high-power mode is enabled.
-        High power requires Option 001 (power amplifier / DC bias) is installed.""",
-        values={False: 0, True: 1},
-        map_values=True
-    )
-
     bias_enabled = Instrument.control(
         "BIAS:STAT?", "BIAS:STAT %d",
         """Control whether DC bias is enabled.""",
@@ -118,7 +110,7 @@ class Agilent4284A(SCPIMixin, Instrument):
     bias_current = Instrument.control(
         "BIAS:CURR?", "BIAS:CURR %g",
         """Control the DC bias current in Amps.
-        Requires Option 001 (power amplifier / DC bias) is installed.
+        Requires Option 001 (power amplifier / DC bias) to be installed.
         Maximum is 100 mA.""",
         validator=strict_range,
         values=(0, 0),
@@ -168,21 +160,37 @@ class Agilent4284A(SCPIMixin, Instrument):
         "FUNC:IMP:RANG:AUTO?", "FUNC:IMP:RANG:AUTO %d",
         """Control whether the impedance auto range is enabled.""",
         validator=strict_discrete_set,
-        values={False: 0, True: 1}
+        values={False: 0, True: 1},
+        map_values=True
     )
 
-    def _set_ranges(self, condition):
+    trigger_source = Instrument.control(
+        "TRIG:SOUR?", "TRIG:SOUR %s",
+        """Control trigger mode. Valid options are `INT`, `EXT`, `BUS`, or `HOLD`.""",
+        validator=strict_discrete_set,
+        values=('INT', 'EXT', 'BUS', 'HOLD'),
+        cast=str
+    )
+
+    trigger_delay = Instrument.control(
+        "TRIG:DEL?", "TRIG:DEL %g",
+        """Control trigger delay in seconds. Valid range is 0 to 60, with 1 ms resolution.""",
+        validator=strict_range,
+        values=(0, 60)
+    )
+
+    trigger_continuous_enabled = Instrument.control(
+        "TRIG:CONT?", "TRIG:CONT %d",
+        """Control whether trigger state automatically returns to WAIT FOR TRIGGER
+        after measurement.""",
+        validator=strict_discrete_set,
+        values={False: 0, True: 1},
+        map_values=True
+    )
+
+    def _set_ranges(self, high_power_mode):
         """Set dynamic property values and make copies for sweep_measurement to reference."""
-        if condition == 0:
-            self.ac_current_values = (50e-6, 0.02)
-            self.ac_voltage_values = (0.005, 2)
-            self.bias_voltage_values = (0, 2)
-            self.bias_current_values = (0, 0)
-            self._ac_current_values = (50e-6, 0.02)
-            self._ac_voltage_values = (0.005, 2)
-            self._bias_voltage_values = (0, 2)
-            self._bias_current_values = (0, 0)
-        elif condition == 1:
+        if high_power_mode:
             self.ac_current_values = (50e-6, 0.2)
             self.ac_voltage_values = (0.005, 20)
             self.bias_voltage_values = (0, 40)
@@ -191,27 +199,39 @@ class Agilent4284A(SCPIMixin, Instrument):
             self._ac_voltage_values = (0.005, 20)
             self._bias_voltage_values = (0, 40)
             self._bias_current_values = (0, 0.1)
+        else:
+            self.ac_current_values = (50e-6, 0.02)
+            self.ac_voltage_values = (0.005, 2)
+            self.bias_voltage_values = (0, 2)
+            self.bias_current_values = (0, 0)
+            self._ac_current_values = (50e-6, 0.02)
+            self._ac_voltage_values = (0.005, 2)
+            self._bias_voltage_values = (0, 2)
+            self._bias_current_values = (0, 0)
 
-    def enable_high_power(self):
-        """Enable high power mode.
-
-        Requires option 001 (power amplifier / DC bias) is installed.
+    @property
+    def high_power_enabled(self):
+        """Control whether high power mode is enabled.
+        Enabling requires option 001 (power amplifier / DC bias) to be installed.
         """
-        if self.options[0] == '0':
-            log.warning("Agilent 4284A power amplifier is not installed.")
-            return
-        self._set_ranges(1)
-        self.write("OUTP:HPOW 1")
+        mode = self.values("OUTP:HPOW?", cast=int)
+        return bool(mode)
 
-    def disable_high_power(self):
-        """Disable high power mode."""
-        self._set_ranges(0)
-        self.write("OUTP:HPOW 0")
+    @high_power_enabled.setter
+    def high_power_enabled(self, val):
+        if not val:
+            self._set_ranges(0)
+            self.write("OUTP:HPOW 0")
+        elif val and self.options[0] == '0':
+            raise AttributeError("Agilent 4284A power amplifier is not installed.")
+        else:
+            self._set_ranges(1)
+            self.write("OUTP:HPOW 1")
 
     def sweep_measurement(self, sweep_mode, sweep_values):
         """Run list sweep measurement using sequential trigger.
 
-        :param sweep_mode (str): parameter to sweep across. Must be one of `frequency`,
+        :param str sweep_mode: parameter to sweep across. Must be one of `frequency`,
             `voltage`, `current`, `bias_voltage`, or `bias_current`.
         :param sweep_values: list of parameter values to sweep across.
 
@@ -227,10 +247,9 @@ class Agilent4284A(SCPIMixin, Instrument):
         }
 
         if sweep_mode not in param_dict:
-            log.warning(
-                "Sweep mode but be one of %s, not '%s'.", list(param_dict.keys()), sweep_mode
+            raise KeyError(
+                f"Sweep mode but be one of {list(param_dict.keys())}, not '{sweep_mode}'."
             )
-            return
 
         low_limit = param_dict[sweep_mode][1][0]
         high_limit = param_dict[sweep_mode][1][1]
@@ -241,7 +260,7 @@ class Agilent4284A(SCPIMixin, Instrument):
             )
             sweep_truncated = []
             for val in sweep_values:
-                if val <= high_limit and val >= low_limit:
+                if low_limit <= val <= high_limit:
                     sweep_truncated.append(val)
             sweep_values = sweep_truncated
 
@@ -276,13 +295,19 @@ class Agilent4284A(SCPIMixin, Instrument):
         return a_data, b_data, sweep_return
 
     def trigger(self):
-        """Execute a bus trigger, which can be used when :meth:`~.trigger_on_bus`
-        is configured. Returns result of triggered measurement.
+        """Execute a bus trigger, regardless of trigger state.
+        Can be used when :attr:`trigger_source` is set to `BUS`.
+        Returns result of triggered measurement.
         """
         return self.values("*TRG")
 
-    def trigger_on_bus(self):
-        """Configure the trigger to detect events based on the bus trigger, which can be
-        activated by :meth:`~.trigger`.
+    def trigger_immediate(self):
+        """Execute a bus trigger, regardless of trigger state.
+        Can be used when :attr:`trigger_source` is set to `BUS`.
+        Measurement result must be retrieved with `FETCH?` command.
         """
-        self.write("TRIG:SOUR BUS")
+        self.write("TRIG:IMM")
+
+    def trigger_initiate(self):
+        """Change the trigger state from IDLE to WAIT FOR TRIGGER for one trigger sequence."""
+        self.write("TRIG:INIT:IMM")

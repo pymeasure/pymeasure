@@ -47,13 +47,13 @@ def test_frequency_limit():
             inst.frequency = 1
 
 
-@pytest.mark.parametrize("power_mode", [0, 1])
+@pytest.mark.parametrize("power_mode", ["0", "1"])
 def test_high_power_mode(power_mode):
     with expected_protocol(
         Agilent4284A,
         [("OUTP:HPOW?", power_mode),],
     ) as inst:
-        assert power_mode == inst.high_power_enabled
+        assert bool(power_mode) == inst.high_power_enabled
 
 
 @pytest.mark.parametrize("impedance_mode", [
@@ -76,7 +76,7 @@ def test_enable_high_power():
          ("OUTP:HPOW 1", None),
          ("VOLT:LEV 5", None),],
     ) as inst:
-        inst.enable_high_power()
+        inst.high_power_enabled = True
         inst.ac_voltage = 5
 
 
@@ -87,7 +87,7 @@ def test_disable_high_power():
             [("OUTP:HPOW 0", None),
              ("VOLT:LEV 5", None)],
         ) as inst:
-            inst.disable_high_power()
+            inst.high_power_enabled = False
             inst.ac_voltage = 5
 
 
