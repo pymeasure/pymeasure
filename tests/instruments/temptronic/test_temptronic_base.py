@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from time import perf_counter
+from time import perf_counter_ns
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
@@ -30,7 +30,7 @@ from pymeasure.instruments.temptronic.temptronic_base import ATSBase
 
 def test_check_query_delay():
     with expected_protocol(ATSBase, [("TTIM?", "7")]) as inst:
-        start = perf_counter()
+        start = perf_counter_ns()
         assert inst.maximum_test_time == 7
-        delay = perf_counter() - start
-        assert delay > 0.05
+        delay = perf_counter_ns() - start
+        assert delay > 0.05 * 1e9
