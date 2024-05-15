@@ -24,6 +24,8 @@
 
 import re
 import time
+import numpy as np
+from decimal import Decimal
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
@@ -66,6 +68,29 @@ def _math_define_validator(value, values):
     for i in range(3):
         strict_discrete_set(output[i], values=values[i])
     return output
+
+
+class _ChunkResizer:
+    """The only purpose of this class is to resize the chunk size of the instrument adapter.
+
+    This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
+    waveforms.
+
+    .. Note::
+        Only if the new chunk size is bigger than the current chunk size, it is resized.
+
+    """
+
+    def __init__(self, adapter, chunk_size):
+        """Just initialize the object attributes.
+
+        :param adapter: Adapter of the instrument. This is usually accessed through the
+                        Instrument::adapter attribute.
+        :param chunk_size: new chunk size (int).
+        """
+        self.adapter = adapter
+        self.old_chunk_size = None
+        self.new_chunk_size = int(chunk_size) if chunk_size else 0
 
 
 class TektronixMsoScopeChannel(Channel):
@@ -410,6 +435,10 @@ class TektronixMsoScope(Instrument):
         if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
         self._seconds_since_last_write = 0  # Timestamp of the last command
+        self._grid_number = 10  # Number of grids in the horizontal direction
+        self._header_size = 3  # bytes
+        self._footer_size = 1  # bytes
+        self.waveform_source = "CH1"
         self.default_setup()
 
         number_of_channels = None if analog_channels == "auto" else analog_channels
@@ -534,8 +563,9 @@ class TektronixMsoScope(Instrument):
         validator=strict_discrete_set,
         values=_STATE,
     )
-
-    # Timebase Setup
+    ##################
+    # Timebase Setup #
+    ##################
     horizontal_mode = Instrument.control(
         "HORizontal:MODE?", "HORizontal:MODE %s",
         """Control horizontal operating mode.
@@ -561,6 +591,8 @@ class TektronixMsoScope(Instrument):
         """Control horizontal record length in kilo-points per seconds.
         To change the record length the Horizontal Mode must be set to Manual.
         """,
+        validator=truncated_range,
+        values=[1000, 62500000],
     )
 
     horizontal_sample_rate = Instrument.control(
@@ -669,7 +701,9 @@ class TektronixMsoScope(Instrument):
         if offset is not None:
             self.timebase_offset = offset
 
-    # Acquisition
+    ###############
+    # Acquisition #
+    ###############
     acquisition_state = Instrument.control(
         "ACQuire:STATE?", "ACQuire:STATE %s",
         """Control starts or stops acquisitions.
@@ -731,7 +765,221 @@ class TektronixMsoScope(Instrument):
         self.acquisition_condition = "SEQUENCE"
         self.acquisition_state = 'RUN'
 
-    # General Trigger settings
+    #############################
+    #      Waveform             #
+    #############################
+
+    waveform_data_source = Instrument.control(
+        "DATa:SOUrce?", "DATa:SOUrce %s",
+        """Control the location of waveform data that is transferred
+        from the instrument by the CURVe? Query.
+                       
+        Argument can consist of the following:
+        CH<x> selects the specified analog channel as the source.
+        MATH<x> selects the specified reference waveform as the source. The reference
+        number is specified by x, which ranges from 1 through 4.
+        REF<x> selects the specified reference waveform as the source. The reference
+        number is specified by x, which ranges from 1 through 8.
+        CH<x>_D<x> selects the specified digital channel.
+        CH<x>_DAll selects the specified channel group of digital channels.
+        DIGITALALL selects digital waveforms as the source. The Digital data is
+        transferred as 16-bit data, with the least-significant bit representing D0, and the
+        most-significant bit representing D15. The LSB always contains D0-D7 and
+        MSB always contains D8-D15 data.
+        CH<x>_SV_NORMal, CH<x>_SV_AVErage, CH<x>_SV_MAXHold,
+        CH<x>_SV_MINHold selects the specified Spectrum View waveform.
+        CH<x>_MAG_VS_TIME, CH<x>_FREQ_VS_TIME, CH<x>_PHASE_VS_TIME
+        selects the specified RF vs. Time waveform.
+        CH<x>_SV_BASEBAND_IQ selects the specified RF baseband IQ data.
+        """,
+    )
+
+    waveform_points = Instrument.measurement(
+        "WFMOutpre:NR_Pt?",
+        """Get the number of waveform points to be transferred with
+        the digitize method (int).
+
+        Note that the oscilloscope may provide less than the specified nb of points.
+        """,
+    )
+
+    waveform_first_point = Instrument.control(
+        "DATa:STARt?", "DATa:STARt %d",
+        """Control the starting data point for waveform transfer.
+        This command allows for the transfer of partial waveforms to and from the instrument.
+        waveform_first_point is the first data point that will be transferred,
+        which ranges from 1 to the record length. 
+        Data will be transferred from waveform_first_point to DATa:STOP or the record
+        length, whichever is less. If <NR1> is greater than the record length, the last
+        data point in the record is transferred.""",
+        validator=strict_range,
+        values=[1, 62500000],
+    )
+
+    waveform_last_point = Instrument.control(
+        "DATa:STOP?", "DATa:STOP %d",
+        """Control the last data point that will be transferred when using the CURVe? query.
+        This command allows for the transfer of partial waveforms to the controller.
+        Changes to the record length value are not automatically reflected in the data:stop value.
+        As record length is varied, the DATa:STOP value must be explicitly changed to ensure 
+        the entire record is transmitted.
+        In other words, curve results will not automatically and correctly reflect increases
+        in record length if the distance from DATa:STARt to DATa:STOP
+        stays smaller than the increased record length.""",
+        validator=strict_range,
+        values=[1, 62500000],
+    )
+
+    @property
+    def waveform_preamble(self):
+        """Get preamble information for the selected waveform source as a dict with the
+        following keys:
+
+        - "requested_points": number of data points requested by the user (int)
+        - "sampled_points": number of data points sampled by the oscilloscope (int)
+        - "transmitted_points": number of data points actually transmitted (optional) (int)
+        - "memory_size": size of the oscilloscope internal memory in bytes (int)
+        - "sparsing": sparse point. It defines the interval between data points. (int)
+        - "first_point": address of the first data point to be sent (int)
+        - "source": source of the data : "CH1" to "CH8", "MATH".
+        - "sampling_rate": sampling rate (it is a read-only property)
+        - "grid_number": number of horizontal grids (it is a read-only property)
+        - "xdiv": horizontal scale (units per division) in seconds
+        - "xoffset": time interval in seconds between the trigger event and the reference position
+        - "ydiv": vertical scale (units per division) in Volts
+        - "yoffset": value that is represented at center of screen in Volts
+
+        """
+        preamble = {
+            "sparsing": 1,
+            "requested_points": self.waveform_points,
+            "first_point": self.waveform_first_point,
+            "transmitted_points": None,
+            "source": self.waveform_source,
+            "sampling_rate": self.horizontal_sample_rate,
+            "grid_number": self._grid_number,
+            "memory_size": self.horizontal_record_length,
+            "xdiv": self.timebase_scale,
+            "xoffset": self.timebase_offset
+        }
+        return self._fill_yaxis_preamble(preamble)
+
+    def _fill_yaxis_preamble(self, preamble=None):
+        """Fill waveform preamble section concerning the Y-axis.
+        :param preamble: waveform preamble to be filled
+        :return: filled preamble
+        """
+        if preamble is None:
+            preamble = {}
+        if self.waveform_source == "MATH":
+            preamble["ydiv"] = self.math_vdiv
+            preamble["yoffset"] = self.math_vpos
+        else:
+            preamble["ydiv"] = self.ch(self.waveform_source).scale
+            preamble["yoffset"] = self.ch(self.waveform_source).offset
+        return preamble
+
+    def _digitize(self, src, num_bytes=None):
+        """Acquire waveforms according to the settings of the acquire commands.
+        Note.
+        If the requested number of bytes is not specified, the default chunk size is used,
+        but in such a case it cannot be guaranteed that the message is received in its entirety.
+
+        :param src: source of data: "C1", "C2", "C3", "C4", "MATH".
+        :param: num_bytes: number of bytes expected from the scope (including the header and
+        footer).
+        :return: bytearray with raw data.
+        """
+        # with _ChunkResizer(self.adapter, num_bytes):
+        #     self.waveform_source = src
+        #     binary_values = self.binary_values("CURVe?", dtype=np.uint8)
+        self.waveform_data_source = src
+        binary_values = self.binary_values("CURVe?", dtype=np.uint8)
+        if num_bytes is not None and len(binary_values) != num_bytes:
+            raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
+        return binary_values
+
+    def _header_footer_sanity_checks(self, message):
+        """Check that the header follows the predefined format.
+        The format of the header is #ABBBB where BBBB is the number of acquired
+        points. A is the number of digits to define BBBB i.e. #4 -> BBBB=[1 to 9999]
+        Then check that the footer is present. The footer is a line-carriage \n
+        :param message: raw bytes received from the scope """
+        message_header = bytes(message[0:self._header_size]).decode("ascii")
+        # Sanity check on header and footer
+        if message_header[0:1] != "#":
+            raise ValueError(f"Waveform data is invalid : header is {message_header}")
+        message_footer = bytes(message[-self._footer_size:]).decode("ascii")
+        if message_footer != "\n":
+            raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
+
+    def _npoints_sanity_checks(self, message):
+        """Check that the number of transmitted points is consistent with the message length.
+        :param message: raw bytes received from the scope """
+        message_header = bytes(message[0:self._header_size]).decode("ascii")
+        transmitted_points = int(message_header[2:])
+        received_points = len(message) - self._header_size - self._footer_size
+        if transmitted_points != received_points:
+            raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
+                             f"number of received points ({received_points})")
+
+    def _acquire_data(self, requested_points=0, sparsing=1):
+        """Acquire raw data points from the scope. The header, footer and number of points are
+        sanity-checked, but they are not processed otherwise. For a description of the input
+        arguments refer to the download_waveform method.
+        If the number of expected points is big enough, the transmission is split in smaller
+        chunks of 20k points and read one chunk at a time. I do not know the reason why,
+        but if the chunk size is big enough the transmission does not complete successfully.
+        :return: raw data points as numpy array and waveform preamble
+        """
+        # Setup waveform acquisition parameters
+        self.waveform_first_point = 1
+
+        # Calculate how many points are to be expected
+        sample_points = self.horizontal_record_length
+        if requested_points > 0:
+            expected_points = min(requested_points, int(sample_points / sparsing))
+        else:
+            expected_points = int(sample_points / sparsing)
+        self._header_size = len(str(expected_points))+2
+
+        # If the number of points is big enough, split the data in small chunks and read it one
+        # chunk at a time. For less than a certain amount of points we do not bother splitting them.
+        chunk_bytes = 20000
+        chunk_points = chunk_bytes - self._header_size - self._footer_size
+        iterations = -(expected_points // -chunk_points)
+        i = 0
+        data = []
+        while i < iterations:
+            # number of points already read
+            read_points = i * chunk_points
+            # number of points still to read
+            remaining_points = expected_points - read_points
+            # number of points requested in a single chunk
+            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
+            self.waveform_last_point = requested_points + read_points
+            # number of bytes requested in a single chunk
+            self._header_size = len(str(requested_points)) + 2
+            requested_bytes = requested_points + self._header_size + self._footer_size
+            # read the next chunk starting from this points
+            first_point = read_points * sparsing
+            if first_point != 0:
+                self.waveform_first_point = first_point+1
+            # read chunk of points
+            values = self._digitize(src=self.waveform_source, num_bytes=requested_bytes)
+            # perform many sanity checks on the received data
+            self._header_footer_sanity_checks(values)
+            self._npoints_sanity_checks(values)
+            # append the points without the header and footer
+            data.append(values[self._header_size:-self._footer_size])
+            i += 1
+        data = np.concatenate(data)
+        preamble = self.waveform_preamble
+        return data, preamble
+
+    #############################
+    # General Trigger settings  #
+    #############################
     def center_trigger(self):
         """Set the trigger levels to center of the trigger source waveform."""
         self.write("TRIGger:A SETLEVEL")
@@ -812,7 +1060,9 @@ class TektronixMsoScope(Instrument):
         values=[0, 10],
     )
 
-    # Edge trigger settings
+    ################################
+    # Edge trigger settings        #
+    ################################
     trigger_edge_source = Instrument.control(
         "TRIGger:A:EDGE:SOUrce?",
         "TRIGger:A:EDGE:SOUrce %s",
@@ -844,8 +1094,9 @@ class TektronixMsoScope(Instrument):
         values=_TRIGGER_COUPLING,
         map_values=True,
     )
-
-    # Pulse Width Trigger Settings
+    ################################
+    # Pulse Width Trigger Settings #
+    ################################
     trigger_width_source = Instrument.control(
         "TRIGger:A:PULSEWidth:SOUrce?",
         "TRIGger:A:PULSEWidth:SOUrce %s",
@@ -969,7 +1220,9 @@ class TektronixMsoScope(Instrument):
         """Control the minimum width for a window violation.""",
     )
 
-    # Download data
+    #################
+    # Download data #
+    #################
     def download_image(self):
         """Get a PNG image of oscilloscope screen in bytearray.
         """
@@ -979,7 +1232,70 @@ class TektronixMsoScope(Instrument):
         self.write('FILESystem:DELEte \"C:/Temp.png\"')
         return bytearray(img)
 
-    # Measurement
+    def _process_data(self, ydata, preamble):
+        """Apply scale and offset to the data points acquired from the scope.
+        - Y axis : the scale is ydiv / 25 and the offset -yoffset. the
+        offset is not applied for the MATH source.
+        - X axis : the scale is sparsing / sampling_rate and the offset is -xdiv * 7. The
+        7 = 14 / 2 factor comes from the fact that there are 14 vertical grid lines and the data
+        starts from the left half of the screen.
+
+        :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
+
+        def _scale_data(y):
+            if preamble["source"] == "MATH":
+                value = int.from_bytes([y], byteorder='big', signed=False) * preamble["ydiv"] / 25.
+                value -= preamble["ydiv"] * (preamble["yoffset"] + 255) / 50.
+            else:
+                value = int.from_bytes([y], byteorder='big', signed=True) * preamble["ydiv"] / 25.
+                value -= preamble["yoffset"]
+            return value
+
+        def _scale_time(x):
+            return float(Decimal(-preamble["xdiv"] * self._grid_number / 2.) +
+                         Decimal(float(x * preamble["sparsing"])) /
+                         Decimal(preamble["sampling_rate"]))
+
+        data_points = np.vectorize(_scale_data)(ydata)
+        time_points = np.vectorize(_scale_time)(np.arange(len(data_points)))
+        return data_points, time_points, preamble
+
+    def download_waveform(self, source, requested_points=None, sparsing=None):
+        """Get data points from the specified source of the oscilloscope.
+
+        The returned objects are two np.ndarray of data and time points and a dict with the
+        waveform preamble, that contains metadata about the waveform.
+
+        :param source: measurement source. It can be "CH1", "CH2", "CH3", "CH4", "MATH".
+        :param requested_points: number of points to acquire. If None the number of points
+               requested in the previous call will be assumed, i.e. the value of the number of
+               points stored in the oscilloscope memory. If 0 the maximum number of points will
+               be returned.
+        :param sparsing: interval between data points. For example if sparsing = 4, only one
+               point every 4 points is read. If 0 or None the sparsing of the previous call is
+               assumed, i.e. the value of the sparsing stored in the oscilloscope memory.
+        :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
+                 property for dict format.
+        """
+        # Sanitize the input arguments
+        if not sparsing:
+            sparsing = self.waveform_sparsing
+        if requested_points is None:
+            requested_points = self.waveform_points
+        self.waveform_data_source = sanitize_source(source)
+        # Acquire the Y data and the preamble
+        ydata, preamble = self._acquire_data(requested_points, sparsing)
+        # Update the preamble with info about actually acquired data
+        preamble["transmitted_points"] = len(ydata)
+        preamble["requested_points"] = requested_points
+        preamble["sparsing"] = sparsing
+        preamble["first_point"] = 0
+        # Scale the Y-data and create the X-data
+        return self._process_data(ydata, preamble)
+
+    #################
+    # Measurement   #
+    #################
     _measurable_parameters = {"amplitude": "AMPLITUDE", "base": "BASE", "maximum": "MAXIMUM",
                               "mean": "MEAN", "minimum": "MINIMUM", "pkpk": "PK2PK",
                               "rms": "RMS", "top": "TOP", "acrms": "ACRMS", "area": "AREA",
