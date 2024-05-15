@@ -1,6 +1,7 @@
 from time import sleep
 import pytest
 from datetime import datetime
+import numpy as np
 from pyvisa.errors import VisaIOError
 from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58,\
     TektronixMsoScopeMathChannel
@@ -78,6 +79,8 @@ class TestTektronixMSO58:
     MATH_FFT_OUTPUT_TYPE = ["MAGNITUDE", "PHASE"]
     MATH_FFT_WINDOW_TYPE = ["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
                             "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
+    WAVEFORM_POINTS = [100, 1000, 20000, 40000]#, 1250000]
+    WAVEFORM_SOURCES = ["CH1"]  # , "C2", "C3", "C4"]
 
     ############
     # FIXTURES #
@@ -327,6 +330,68 @@ class TestTektronixMSO58:
         instrument.math_1.math_FFT_window_type = window_type
         assert instrument.math_1.math_FFT_window_type == window_type
         # instrument.math_delete_all()
+
+    def test_waveform_preamble(self, resetted_instrument):
+        resetted_instrument.acquisition_type = "normal"
+        resetted_instrument.ch_1.offset = 0
+        # resetted_instrument.waveform_points = 0
+        resetted_instrument.waveform_first_point = 1
+        # resetted_instrument.waveform_sparsing = 1
+        resetted_instrument.waveform_source = "C1"
+        expected_preamble = {
+            "sparsing": 1,
+            "requested_points": 2500.0,
+            "memory_size": 2500.0,
+            "transmitted_points": None,
+            "first_point": 1.0,
+            "source": resetted_instrument.waveform_source,
+            # "sampling_rate": 10e9,
+            "grid_number": 10,
+            "xdiv": 4e-08,
+            "xoffset": 50.0,
+            "ydiv": 0.1,
+            "yoffset": 0.0,
+        }
+        preamble = resetted_instrument.waveform_preamble
+        assert preamble == expected_preamble
+
+    @pytest.mark.parametrize("case1", WAVEFORM_SOURCES)
+    @pytest.mark.parametrize("case2", WAVEFORM_POINTS)
+    def test_download_data(self, instrument, case1, case2):
+        from matplotlib import pyplot as plt
+        # if case1 == self.WAVEFORM_SOURCES[0] and case2 == self.WAVEFORM_POINTS[0]:
+            # instrument.reset()
+            # sleep(1)
+            # instrument.autoscale()
+            # sleep(5)
+        instrument.ch(case1).display = True
+        instrument.single()
+        sleep(1)
+        data, time, preamble = instrument.download_waveform(
+            source=case1, requested_points=case2, sparsing=1
+        )
+        assert type(data) is np.ndarray
+        assert len(data) == case2
+        assert type(time) is np.ndarray
+        assert len(time) == case2
+        assert type(preamble) is dict
+        plt.scatter(x=time, y=data)
+        plt.show()
+
+    # @pytest.mark.skip(reason="A human is needed to check the output waveform")
+    def test_download_data_all_points(self, instrument):
+        from matplotlib import pyplot as plt
+
+        instrument.ch_1.display = True
+        instrument.single()
+        sleep(3)
+        data, time, preamble = instrument.download_waveform(source="c1", requested_points=0, sparsing=1)
+        assert type(data) is np.ndarray
+        print(max(data))
+        assert type(time) is np.ndarray
+        assert type(preamble) is dict
+        plt.scatter(x=time, y=data)
+        plt.show()
 
     # AFG
     @pytest.mark.parametrize("case", AFG_FUNCTIONS)
