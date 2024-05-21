@@ -1,5 +1,5 @@
 
-Version 0.14.0 (2024-mm-dd)
+Version 0.14.0 (2024-05-21)
 ===========================
 Main items of this new release:
 
@@ -62,7 +62,7 @@ Instruments
 - Fix Stanford Research SR830 output conversion (@dkriegner, #1069)
 - Fix SR830 missing get_buffer method (@seb5g, #999)
 - Fix set command of SR860 aux output (@wehlgrundspitze, #1048)
-- Fix Temptronic test to use ns perf counter (@BenediktBurger, #1109)
+- Fix Temptronic test to use ns perf counter (@BenediktBurger, #1109, #1110)
 - Fix Toptica Ibeamsmart referencing removed adapter function (@BenediktBurger, #1065)
 - Fix typos in docstrings for Keithley instruments (@V0XNIHILI, #1071)
 - Link Keysight, Agilent, and HP documentation pages. (@BenediktBurger, #1021)
