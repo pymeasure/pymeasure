@@ -33,4 +33,7 @@ def test_check_query_delay():
         start = perf_counter_ns()
         assert inst.maximum_test_time == 7
         delay = perf_counter_ns() - start
-        assert delay > 0.05 * 1e9
+        # HACK acceptable factor is needed, as in CI under windows (Py38, Py39) the `sleep` interval
+        # is slightly shorter than the given argument.
+        acceptable_factor = 0.95
+        assert delay > 0.05 * 1e9 * acceptable_factor
