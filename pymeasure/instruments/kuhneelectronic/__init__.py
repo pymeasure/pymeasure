@@ -22,16 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
-from .agilentE4980 import AgilentE4980
-from .agilent34410A import Agilent34410A
-from .agilent34450A import Agilent34450A
-from .agilent4156 import Agilent4156
-from .agilent4294A import Agilent4294A
-from .agilent33220A import Agilent33220A
-from .agilent33500 import Agilent33500
-from .agilent33521A import Agilent33521A
-from .agilentB1500 import AgilentB1500
-from .agilent4284A import Agilent4284A
+from .kusg245_250a import Kusg245_250A
