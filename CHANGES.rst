@@ -1,11 +1,12 @@
 
-Version 0.14.0 (2024-05-21)
+Version 0.14.0 (2024-05-22)
 ===========================
 Main items of this new release:
 
 - Add support for numpy 2.0
 - Add support for python 3.12
 - Improve academic quotability with an up to date Zenodo DOI and with citation information.
+- Add default :code:`queue` method and a :code:`FileInputWidget`, allowing to more quickly get started with the PyMeasure user interface (:code:`ManagedWindow`).
 - Add a :code:`SCPIMixin` base class for instruments instead of defining :code:`includeSCPI=True`
 - Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file.
   Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`.
@@ -28,7 +29,7 @@ Deprecated features
 
 Instruments mechanics
 ---------------------
-- Add a SCPI base class :code:`SCPIMixin` as replacement for :code:`includeSCPI=True` (@BenediktBurger, #905, #1007, #1019)
+- Add a SCPI base class :code:`SCPIMixin` as replacement for :code:`includeSCPI=True` (@BenediktBurger, #905, #1007, #1019, #1047)
 - Add :code:`next_error` property to SCPI instruments (@BenediktBurger, #1024)
 - Make :code:`query_delay=None` the default for :code:`wait_for` (@BenediktBurger, #1077)
 - Fix :code:`expected_protocol` using empty dictionary as default value (@BenediktBurger, #1087)
