@@ -215,7 +215,7 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
     )
 
     def stop(self):
-        """Stop the ongoing measurement
+        """Stop the ongoing measurement.
 
         .. code-block:: python
 
@@ -254,17 +254,17 @@ class Agilent4156(SCPIUnknownMixin, Instrument):
 
             instr.disable_all()
         """
-        self.smu1.delete_settings()
+        self.smu1.reset_settings()
         time.sleep(0.1)
-        self.smu2.delete_settings()
+        self.smu2.reset_settings()
         time.sleep(0.1)
-        self.smu3.delete_settings()
+        self.smu3.reset_settings()
         time.sleep(0.1)
-        self.smu4.delete_settings()
+        self.smu4.reset_settings()
         time.sleep(0.1)
-        self.vmu1.delete_settings()
+        self.vmu1.reset_settings()
         time.sleep(0.1)
-        self.vmu2.delete_settings()
+        self.vmu2.reset_settings()
         time.sleep(0.1)
 
     def configure(self, config_file):
@@ -453,12 +453,12 @@ class AgilentMeasurementChannel(Channel):
         set_process=check_current_voltage_name,
     )
 
-    def delete_settings(self):
-        """Delete the settings of this channel to default value.
+    def reset_settings(self):
+        """Reset the settings of this channel to default value.
 
         .. code-block:: python
 
-            instr.smu1.disable()
+            instr.smu1.reset_settings()
         """
         self.write(":PAGE:CHAN:{ch}:DIS")
         return self.check_errors()
@@ -469,9 +469,9 @@ class AgilentMeasurementChannel(Channel):
 
         .. code-block:: python
 
-            instr.smu1.disable()
+            instr.smu1.disable
         """
-        self.delete_settings()
+        self.reset_settings()
 
     channel_mode = Channel.control(
         ":PAGE:CHAN:{ch}:MODE?",
