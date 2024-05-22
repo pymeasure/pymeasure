@@ -46,7 +46,9 @@ Instruments by manufacturer:
    inficon/index
    ipgphotonics/index
    keithley/index
+   kepco/index
    keysight/index
+   kuhneelectronic/index
    lakeshore/index
    lecroy/index
    mksinst/index

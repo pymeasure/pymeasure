@@ -436,9 +436,9 @@ class SR830(Instrument):
         """ Returns a function that can be used to determine
         the signal from the channel output (X, Y, or R)
         """
-        offset, expand = self.get_scaling(channel)
+        offset, _ = self.get_scaling(channel)
         sensitivity = self.sensitivity
-        return lambda x: (x / (10. * expand) + offset) * sensitivity
+        return lambda x: x + offset / 100 * sensitivity
 
     @property
     def sample_frequency(self):
