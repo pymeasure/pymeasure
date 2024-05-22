@@ -27,13 +27,13 @@ import pytest
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.ophir.nova import Nova, LegacyModes
+from pymeasure.instruments.ophir.nova import Nova
+
+LegacyModes = Nova.LegacyModes
 
 
 def test_Nova_power():
-    with expected_protocol(
-        Nova, [("$SP10", "*1.300E-5")]
-    ) as instr:
+    with expected_protocol(Nova, [("$SP10", "*1.300E-5")]) as instr:
         instr.power_timeout = 1000
         assert instr.power == 1.3e-5
 
