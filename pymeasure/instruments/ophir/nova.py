@@ -22,11 +22,18 @@
 # THE SOFTWARE.
 #
 
-from .ophir_base import (KeyMixin, OphirCommunication, OphirBase, LegacyModes, Capabilities,
-                         ScreenModes)
+from .ophir_base import KeyMixin, OphirCommunication, OphirBase
 
 
-class Nova(KeyMixin, OphirCommunication):
+class NovaEnums:
+    """This method is needed to separate the enums from the Nova for the documentation"""
+
+    Capabilities = OphirBase.Capabilities
+    LegacyModes = OphirBase.LegacyModes
+    ScreenModes = OphirBase.ScreenModes
+
+
+class Nova(KeyMixin, NovaEnums, OphirCommunication):
     """For the older Nova device.
 
     Does not support most commands, only:
@@ -34,12 +41,7 @@ class Nova(KeyMixin, OphirCommunication):
     SL, SP, VE, WL, WN, WW
     """
 
-    Capabilities = Capabilities
-    LegacyModes = LegacyModes
-    ScreenModes = ScreenModes
-
     def __init__(self, adapter, name="Nova", **kwargs):
-        """Set the proper settings for Nova (not Nova II)."""
         super().__init__(adapter, name=name, **kwargs)
         # Set timeouts for Nova device.
         self._power_timeout = 0
