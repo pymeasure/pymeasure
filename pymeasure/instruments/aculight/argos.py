@@ -83,9 +83,12 @@ class Argos(Instrument):
         self.query_delay = query_delay
         # read starts with space and ends with "\n\rOPO>"
 
-    def wait_for(self, query_delay=0):
-        """Wait between write and read"""
-        super().wait_for(query_delay or self.query_delay)  # type: ignore
+    def wait_for(self, query_delay=None):
+        """Wait for some time. Used by 'ask' to wait before reading.
+
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
+        """
+        super().wait_for(self.query_delay if query_delay is None else query_delay)
 
     def check_set_errors(self):
         """Read after setting."""
