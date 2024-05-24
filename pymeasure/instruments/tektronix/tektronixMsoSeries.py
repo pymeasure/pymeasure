@@ -132,7 +132,7 @@ class TektronixMsoScopeChannel(Channel):
         validator=strict_range,
         values={"20MHz": 20.0000E+6, "250MHz": 250.0000E+6,
                 "500MHz": 500.0000E+6, "1GHz": 1.0000E+9},
-        map_values=True,
+        map_values=False,
     )
 
     coupling = Instrument.control(
@@ -431,7 +431,7 @@ class TektronixMsoScope(Instrument):
                  name="Tektronix Oscilloscope",
                  analog_channels=8,
                  **kwargs):
-        super().__init__(adapter, name=name, includeSCPI=True, **kwargs)
+        super().__init__(adapter, name=name, **kwargs)
         if self.adapter.connection is not None:
             self.adapter.connection.timeout = 3000
         self._seconds_since_last_write = 0  # Timestamp of the last command
