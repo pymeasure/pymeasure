@@ -771,7 +771,7 @@ class TektronixMsoScope(Instrument):
     waveform_data_source = Instrument.control(
         "DATa:SOUrce?", "DATa:SOUrce %s",
         """Control the location of waveform data that is transferred
-        from the instrument by the CURVe? Query.       
+        from the instrument by the CURVe? Query.
         Argument can consist of the following:
         CH<x> selects the specified analog channel as the source.
         MATH<x> selects the specified reference waveform as the source. The reference
@@ -806,7 +806,7 @@ class TektronixMsoScope(Instrument):
         """Control the starting data point for waveform transfer.
         This command allows for the transfer of partial waveforms to and from the instrument.
         waveform_first_point is the first data point that will be transferred,
-        which ranges from 1 to the record length. 
+        which ranges from 1 to the record length.
         Data will be transferred from waveform_first_point to DATa:STOP or the record
         length, whichever is less. If <NR1> is greater than the record length, the last
         data point in the record is transferred.""",
@@ -819,7 +819,7 @@ class TektronixMsoScope(Instrument):
         """Control the last data point that will be transferred when using the CURVe? query.
         This command allows for the transfer of partial waveforms to the controller.
         Changes to the record length value are not automatically reflected in the data:stop value.
-        As record length is varied, the DATa:STOP value must be explicitly changed to ensure 
+        As record length is varied, the DATa:STOP value must be explicitly changed to ensure
         the entire record is transmitted.
         In other words, curve results will not automatically and correctly reflect increases
         in record length if the distance from DATa:STARt to DATa:STOP
@@ -1100,7 +1100,6 @@ class TektronixMsoScope(Instrument):
         "TRIGger:A:PULSEWidth:SOUrce %s",
         """Control the source waveform for a pulse width trigger.
         """,
-        validator=strict_discrete_set,
         values=ANALOG_TRIGGER_SOURCE,
         map_values=True,
     )
