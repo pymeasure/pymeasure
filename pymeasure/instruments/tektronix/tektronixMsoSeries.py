@@ -27,7 +27,7 @@ import time
 import numpy as np
 from decimal import Decimal
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     truncated_range, strict_discrete_range
 
@@ -374,7 +374,7 @@ class TektronixMsoScopeMathChannel(Channel):
     )
 
 
-class TektronixMsoScope(Instrument):
+class TektronixMsoScope(SCPIMixin, Instrument):
     """A base abstract class for any Tektronix MSO oscilloscope family.
 
     This MSO Scope Family consists of:
