@@ -23,8 +23,9 @@
 #
 
 import logging
-from numpy import float64, NaN
 from functools import partial
+
+import numpy as np
 import pyqtgraph as pg
 import pandas as pd
 
@@ -173,14 +174,14 @@ class PandasModelBase(QtCore.QAbstractTableModel):
         if index.isValid() and role in (QtCore.Qt.ItemDataRole.DisplayRole, SORT_ROLE):
             try:
                 results, row, col = self.translate_to_local(index.row(), index.column())
-                value = results.data.iloc[row][col]
-                column_type = results.data.dtypes[col]
+                value = results.data.iat[row, col]
+                column_type = results.data.dtypes.iat[col]
                 # Cast to column type
                 value_render = column_type.type(value)
             except (IndexError, ValueError, TypeError):
-                value = NaN
+                value = np.nan
                 value_render = ""
-            if isinstance(value_render, float64):
+            if isinstance(value_render, np.float64):
                 # limit maximum number of decimal digits displayed
                 value_render = f"{value_render:.{self.float_digits:d}g}"
 
@@ -297,7 +298,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
             df = None
         else:
             # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=self.concat_axis).replace(to_replace=NaN, value="")
+            df = pd.concat(df_list, axis=self.concat_axis).replace(to_replace=np.nan, value="")
         return df
 
     def set_index(self, index):

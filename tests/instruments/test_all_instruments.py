@@ -29,7 +29,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from pymeasure import instruments
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import Instrument, Channel, generic_types
 
 
 # Collect all instruments
@@ -66,9 +66,10 @@ def find_devices_in_module(module):
             # Some non-required driver dependencies may not be installed on test computer,
             # for example ni.VirtualBench
             pass
-        except OSError:
+        except (OSError, AttributeError):
             # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
             # when checking installed driver files
+            # it raises an AttributeError under Python 312
             pass
     return devices, channels
 
@@ -82,6 +83,16 @@ for device in devices.union(channels):
         prop = getattr(device, property_name)
         if isinstance(prop, property):
             properties.append((device, property_name, prop))
+for mixin in dir(generic_types):
+    if mixin in ("Instrument", "Channel", "CommonBase"):  # exclucion list.
+        continue
+    elif mixin[0].isupper():
+        # filter only classes
+        device = getattr(generic_types, mixin)
+        for property_name in dir(device):
+            prop = getattr(device, property_name)
+            if isinstance(prop, property):
+                properties.append((device, property_name, prop))
 
 # Instruments unable to accept an Adapter instance.
 proper_adapters = []
@@ -146,7 +157,6 @@ grandfathered_docstring_instruments = [
     "HP6632A",
     "HP6633A",
     "HP6634A",
-    "HP8116A",
     "Keithley2000",
     "Keithley2306",
     "Keithley2306Channel",
@@ -237,6 +247,36 @@ def test_kwargs_to_adapter(cls):
         ValueError, match="'kwarg_test' is not a valid attribute for type SerialInstrument"
     ):
         cls(SIM_RESOURCE, visa_library="@sim", kwarg_test=True)
+
+
+@pytest.mark.parametrize("cls", devices)
+@pytest.mark.filterwarnings(
+    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning")
+def test_includeSCPI_explicitly_set(cls):
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
+
+    cls(adapter=MagicMock())
+    # assert that no error is raised
+
+
+@pytest.mark.parametrize("cls", devices)
+@pytest.mark.filterwarnings(
+    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning")
+def test_includeSCPI_not_set_to_True(cls):
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
+
+    cls(adapter=MagicMock())
+    # assert that no error is raised
 
 
 def property_name_to_id(value):

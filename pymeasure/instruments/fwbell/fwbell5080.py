@@ -22,13 +22,14 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
-from numpy import array, float64
 from time import sleep
 
+import numpy as np
 
-class FWBell5080(Instrument):
+
+class FWBell5080(SCPIMixin, Instrument):
     """ Represents the F.W. Bell 5080 Handheld Gaussmeter and
     provides a high-level interface for interacting with the
     instrument
@@ -54,7 +55,6 @@ class FWBell5080(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
             **kwargs
         )
 
@@ -128,7 +128,7 @@ class FWBell5080(Instrument):
             raise Exception("F.W. Bell 5080 does not support samples less than 1.")
         else:
             data = [self.field for i in range(int(samples))]
-            return array(data, dtype=float64)
+            return np.array(data, dtype=np.float64)
 
     def auto_range(self):
         """ Enables the auto range functionality. """

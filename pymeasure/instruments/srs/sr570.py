@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
 
-class SR570(Instrument):
+class SR570(SCPIUnknownMixin, Instrument):
 
     def __init__(self, adapter, name="Stanford Research Systems SR570 Lock-in amplifier",
                  **kwargs):
