@@ -528,7 +528,6 @@ class TektronixMsoScope(Instrument):
         """This command clears acquisitions, measurements, and waveforms."""
         self.write("CLEAR")
 
-
     def write(self, command, **kwargs):
         """Write the command to the instrument through the adapter.
 
@@ -772,8 +771,7 @@ class TektronixMsoScope(Instrument):
     waveform_data_source = Instrument.control(
         "DATa:SOUrce?", "DATa:SOUrce %s",
         """Control the location of waveform data that is transferred
-        from the instrument by the CURVe? Query.
-                       
+        from the instrument by the CURVe? Query.       
         Argument can consist of the following:
         CH<x> selects the specified analog channel as the source.
         MATH<x> selects the specified reference waveform as the source. The reference

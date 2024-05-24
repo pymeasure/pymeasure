@@ -29,7 +29,8 @@ class TestTektronixMSO58:
                      "transition"]
     TRIGGER_LEVELS = [100.000E-3, 200.000E-3, 300.000E-3]
     TRIGGER_SLOPES = {"negative": "FALL", "positive": "RISE", "either": "EITHER"}
-    TRIGGER_SOURCE = ['channel1', 'channel2', 'channel3', 'channel4', 'channel5', 'channel6', 'channel7', 'channel8']
+    TRIGGER_SOURCE = ['channel1', 'channel2', 'channel3', 'channel4', 'channel5', 'channel6',
+                      'channel7', 'channel8']
     ACQUISITION_AVERAGE = [4, 16, 32, 64, 128, 256]
     ACQUISITION_STATE = ["RUN", "STOP"]
     CHANNELS = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -79,7 +80,7 @@ class TestTektronixMSO58:
     MATH_FFT_OUTPUT_TYPE = ["MAGNITUDE", "PHASE"]
     MATH_FFT_WINDOW_TYPE = ["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
                             "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
-    WAVEFORM_POINTS = [100, 1000, 20000, 40000]#, 1250000]
+    WAVEFORM_POINTS = [100, 1000, 20000, 40000]
     WAVEFORM_SOURCES = ["CH1"]  # , "C2", "C3", "C4"]
 
     ############
@@ -258,9 +259,9 @@ class TestTektronixMSO58:
         img = instrument.download_image()
         assert type(img) is bytearray
         dt = datetime.now()
-        fileName = dt.strftime("C:\\Temp\\TEKTRONIX_%Y%m%d_%H%M%S.png")
+        file_name = dt.strftime("C:\\Temp\\TEKTRONIX_%Y%m%d_%H%M%S.png")
         # Save image data to local disk
-        file = open(fileName, "wb")
+        file = open(file_name, "wb")
         file.write(img)
         file.close()
 
@@ -269,7 +270,8 @@ class TestTektronixMSO58:
     def test_measurement_add(self, instrument, case):
         instrument.measurement_clear_all()
         instrument.measurement_add = case
-        assert instrument.ask("MEASUrement:MEAS1:TYPe?").strip() == self._MEASURABLE_PARAMETERS[case]
+        assert instrument.ask("MEASUrement:MEAS1:TYPe?").strip() == \
+               self._MEASURABLE_PARAMETERS[case]
 
     # @pytest.mark.skip(reason="connect CH1 probe to ground and probe compensation connectors")
     def test_measurement_configure(self, autoscaled_instrument):
@@ -359,11 +361,6 @@ class TestTektronixMSO58:
     @pytest.mark.parametrize("case2", WAVEFORM_POINTS)
     def test_download_data(self, instrument, case1, case2):
         from matplotlib import pyplot as plt
-        # if case1 == self.WAVEFORM_SOURCES[0] and case2 == self.WAVEFORM_POINTS[0]:
-            # instrument.reset()
-            # sleep(1)
-            # instrument.autoscale()
-            # sleep(5)
         instrument.ch(case1).display = True
         instrument.single()
         sleep(1)
@@ -385,7 +382,8 @@ class TestTektronixMSO58:
         instrument.ch_1.display = True
         instrument.single()
         sleep(3)
-        data, time, preamble = instrument.download_waveform(source="c1", requested_points=0, sparsing=1)
+        data, time, preamble =\
+            instrument.download_waveform(source="c1", requested_points=0, sparsing=1)
         assert type(data) is np.ndarray
         print(max(data))
         assert type(time) is np.ndarray
