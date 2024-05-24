@@ -22,7 +22,7 @@ class TestTektronixMSO58:
     #########################
 
     BOOLEANS = [False, True]
-    BANDWIDTH_LIMITS = [20.0000E+6, 250.0000E+6, 1.0000E+9]
+    BANDWIDTH_LIMITS = [[20.0000E+6, "20MHz"], [250.0000E+6, "250MHz"], [1.0000E+9, "1GHz"]]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
     TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold",
@@ -150,10 +150,10 @@ class TestTektronixMSO58:
         assert instrument.channels[ch_number].display == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
-    @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
-    def test_ch_bwlimit(self, instrument, ch_number, case):
+    @pytest.mark.parametrize("case, expected", BANDWIDTH_LIMITS)
+    def test_ch_bwlimit(self, instrument, ch_number, case, expected):
         instrument.ch(ch_number).bwlimit = case
-        assert instrument.channels[ch_number].bwlimit == case
+        assert instrument.channels[ch_number].bwlimit == expected
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", CHANNEL_COUPLINGS)
