@@ -57,7 +57,7 @@ def test_bwl():
     ) as instr:
         instr.ch_1.bwlimit = "20MHz"
         assert instr.ch_1.bwlimit == 2E+7
-        instr.ch_1.bwlimit = 2.5E+8
+        instr.ch_1.bwlimit = "250MHz"
         assert instr.ch_1.bwlimit == 2.5E+8
 
 
@@ -132,6 +132,32 @@ def test_trigger_level():
     ) as instr:
         instr.ch_1.trigger_level = 0.1
         assert instr.ch_1.trigger_level == 0.1
+
+
+def test_trigger_lower_threshold():
+    with expected_protocol(
+            TektronixMSO58,
+            [(b"HEADer OFF", None),
+             (b"VERBose ON", None),
+             (b"TRIGger:A:LOWerthreshold:CH1 0.1", None),
+             (b"TRIGger:A:LOWerthreshold:CH1?", b"0.1")
+             ],
+    ) as instr:
+        instr.ch_1.trigger_lower_threshold = 0.1
+        assert instr.ch_1.trigger_lower_threshold == 0.1
+
+
+def test_trigger_upper_threshold():
+    with expected_protocol(
+            TektronixMSO58,
+            [(b"HEADer OFF", None),
+             (b"VERBose ON", None),
+             (b"TRIGger:A:UPPerthreshold:CH1 0.1", None),
+             (b"TRIGger:A:UPPerthreshold:CH1?", b"0.1")
+             ],
+    ) as instr:
+        instr.ch_1.trigger_upper_threshold = 0.1
+        assert instr.ch_1.trigger_upper_threshold == 0.1
 
 
 def test_channel_setup():
