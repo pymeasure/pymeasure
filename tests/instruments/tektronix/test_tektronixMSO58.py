@@ -55,9 +55,9 @@ def test_bwl():
              (b"CH1:BANdwidth?", b"2.5E+08")
              ],
     ) as instr:
-        instr.ch_1.bwlimit = "20MHz"
+        instr.ch_1.bwlimit = 2E+7
         assert instr.ch_1.bwlimit == 2E+7
-        instr.ch_1.bwlimit = "250MHz"
+        instr.ch_1.bwlimit = 2.5E+8
         assert instr.ch_1.bwlimit == 2.5E+8
 
 
