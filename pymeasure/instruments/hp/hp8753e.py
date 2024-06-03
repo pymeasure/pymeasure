@@ -53,6 +53,7 @@ class HP8753E(Instrument):
     :param max_power: Optional set the maximum validator for `HP8753E.power` on initialization
         (float in dBm).
 
+
     """
 
     def __init__(
