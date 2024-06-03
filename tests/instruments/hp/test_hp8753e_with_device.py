@@ -40,17 +40,23 @@ def hp8753e(connected_device_address):
     try:
         # This allows a PrologixAdapter to be used for running the tests as well
         #  `pytest --device-address PrologixAdapter,ASRL4::INSTR,16 -k "test_hp8753e_with_device"`
+
         if "PrologixAdapter" not in connected_device_address:
             vna = HP8753E(connected_device_address)
         else:
             _, prologix_address, gpib_address, *other_address_info = connected_device_address.split(
                 ","
             )
-            prologix = PrologixAdapter(resource_name=prologix_address, visa_library="@py", auto=1)
+
+            temp_prologix = PrologixAdapter(
+                resource_name=prologix_address, visa_library="@py", auto=1
+            )
+            prologix = temp_prologix.gpib(gpib_address)
             # need to ensure `eot_enable` is set to zero otherwise you will have to read twice to
             # get rid of the extra new line character
             prologix.write("++eot_enable 0")
-            vna = HP8753E(adapter=prologix.gpib(int(gpib_address)))
+            vna = HP8753E(adapter=prologix)
+
     except IOError:
         print("Not able to connect to vna")
         assert False
@@ -278,8 +284,9 @@ def test_hp8753e_with_device_averages(hp8753e):
     hp8753e.averaging_enabled = False
 
 
-# this test will wear out the mechanical relays and should be run only as necessary
-@pytest.mark.skip
+@pytest.mark.skip(
+    reason="This test will wear out the mechanical relays and should be run only as necessary"
+)
 def test_hp8753e_with_device_power(hp8753e):
 
     hp8753e.reset()
@@ -300,8 +307,9 @@ def test_hp8753e_with_device_power(hp8753e):
     hp8753e.shutdown()
 
 
-# this test will wear out the mechanical relays and should be run only as necessary
-@pytest.mark.skip
+@pytest.mark.skip(
+    reason="This test will wear out the mechanical relays and should be run only as necessary"
+)
 def test_hp8753e_with_device_output_enabled(hp8753e):
 
     hp8753e.reset()

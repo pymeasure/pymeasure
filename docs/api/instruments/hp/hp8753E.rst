@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ################################
 HP 8753E Vector Network Analyzer
 ################################
@@ -6,3 +7,12 @@ HP 8753E Vector Network Analyzer
 .. autoclass:: pymeasure.instruments.hp.HP8753E
     :members:
     :show-inheritance:
+=======
+####################
+HP 8753E Vector Network Analyzer
+####################
+
+.. autoclass:: pymeasure.instruments.hp.HP8753E
+    :members:
+    :show-inheritance:
+>>>>>>> 83902925 (Wiped branch and branched from the current pymeasure master to add my Hewlett Packard Instrument Files.)
