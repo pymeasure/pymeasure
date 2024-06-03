@@ -101,7 +101,8 @@ class Argos(Instrument):
     def state(self) -> State:
         """Get the current state of the system as a namped tuple
 
-        :return tuple: with 'setpoint', 'temperature', 'etalon', and 'seed'.
+        :return named tuple: with 'crystal_temperature', 'crystal_temperature_setpoint',
+            'etalon_angle', and 'seed_voltage'.
         """
         got = self.ask("state")
         # got is in form (note the spaces at the begin):
