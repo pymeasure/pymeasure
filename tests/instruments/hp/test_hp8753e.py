@@ -87,7 +87,7 @@ def test_hp8753e_set_single_frequency_scan():
             ("POIN3", None),
         ],
     ) as inst:
-        inst.set_single_frequency_scan(50e6)
+        inst.set_fixed_frequency(50e6)
 
 
 def test_hp8753e_measuring_parameter():
@@ -102,10 +102,6 @@ def test_hp8753e_measuring_parameter():
         ],
     ) as inst:
         assert inst.MEASURING_PARAMETER_MAP == {
-            "S11": "S11",
-            "S12": "S12",
-            "S21": "S21",
-            "S22": "S22",
             "A/R": "AR",
             "B/R": "BR",
             "A/B": "AB",
