@@ -19,7 +19,7 @@ dependencies:
   - pytest-cov=4.1.0
   - pyvisa-sim==0.5.1
   - flake8=6.0.0
-  - setuptools_scm # don't pin, to get newest features
+  - setuptools_scm==8.1.0 # don't pin, to get newest features
   - sphinx=5.3.0
   - sphinx_rtd_theme=1.2.2
 #  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required

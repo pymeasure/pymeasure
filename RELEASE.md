@@ -16,28 +16,34 @@
 5. Push the changes up as a PR
 6. Verify that the builds complete
 7. Merge the PR
-8. Fetch `master`, build and check the source packages
-    - `python -m pip install --upgrade build twine`
-    - `python -m build`
-    - Check the distributions (`twine check dist/*`, version will not yet be correct)
-9. Create a git tag in the format "vX.Y.Z"
-10. Build final packages and confirm the correct version number is being used
-     - `python -m build`
-     - Check the distributions (`twine check dist/*`)
-11. Push the Git tag
-12. Create a tagged [release on GitHub](https://github.com/pymeasure/pymeasure/releases). You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
+8. Create a new [release on GitHub](https://github.com/pymeasure/pymeasure/releases)
+    * Add a tag name in the format "vX.Y.Z" and select "create tag on publish"
+    * You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
+    * Publish the release
+8. Approve the _build and upload_ run under Actions.
+   This will create the wheel and upload it to PyPI.
 
-## PyPI release
+## PyPI release - manually
 
 Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
 
-1. Upload the wheel and source distributions to the test server
+If the upload action does not work, you can create a PyPI release manually:
+
+1. Fetch `master`, build and check the source packages
+    - `python -m pip install --upgrade build twine`
+    - `python -m build`
+    - Check the distributions (`twine check dist/*`, version will not yet be correct)
+2. Ensure to have a git tag in the format "vX.Y.Z"
+3. Build final packages and confirm the correct version number is being used
+     - `python -m build`
+     - Check the distributions (`twine check dist/*`)
+4. Upload the wheel and source distributions to the test server
     - `python -m twine upload --repository testpypi dist/*`
-2. Verify the test repository: https://test.pypi.org/project/PyMeasure
-3. Confirm that the installation works (best in a separate environment)
+5. Verify the test repository: https://test.pypi.org/project/PyMeasure
+6. Confirm that the installation works (best in a separate environment)
     - `python -m pip install --index-url https://test.pypi.org/simple/ --no-deps pymeasure`
-4. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
-5. Verify that the package is updated: https://pypi.org/project/PyMeasure
+7. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
+8. Verify that the package is updated: https://pypi.org/project/PyMeasure
 
 ## conda-forge feedstock
 
