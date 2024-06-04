@@ -48,10 +48,13 @@ def hp8753e(connected_device_address):
                 ","
             )
 
-            temp_prologix = PrologixAdapter(
-                resource_name=prologix_address, visa_library="@py", auto=1
+            prologix = PrologixAdapter(
+                resource_name=prologix_address,
+                visa_library="@py",
+                auto=1,
+                address=gpib_address,
             )
-            prologix = temp_prologix.gpib(gpib_address)
+
             # need to ensure `eot_enable` is set to zero otherwise you will have to read twice to
             # get rid of the extra new line character
             prologix.write("++eot_enable 0")
