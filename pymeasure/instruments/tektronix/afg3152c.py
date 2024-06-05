@@ -137,6 +137,8 @@ class Channel:
         values = PHASE_LIMIT['DEG']
     )
 
+    # phase_units = 
+
     duty = Instrument.control(
         "pulse:dcycle?",
         "pulse:dcycle %.3f",
