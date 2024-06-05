@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -109,9 +109,7 @@ class HP8753E(Instrument):
     start_frequency = Instrument.control(
         "STAR?",
         "STAR %e Hz",
-        """Control the start frequency in Hz. (float).
-        Property is dynamic and allows remapping min/max limits.
-        """,
+        """Control the start frequency in Hz. (float).""",
         validator=strict_range,
         cast=float,
         dynamic=True,
@@ -121,9 +119,7 @@ class HP8753E(Instrument):
     stop_frequency = Instrument.control(
         "STOP?",
         "STOP %e Hz",
-        """Control the stop frequency in Hz. (float).
-        Property is dynamic and allows remapping min/max limits.
-        """,
+        """Control the stop frequency in Hz. (float).""",
         validator=strict_range,
         cast=float,
         dynamic=True,
@@ -133,9 +129,7 @@ class HP8753E(Instrument):
     center_frequency = Instrument.control(
         "CENT?",
         "CENT %e Hz",
-        """Control the center frequency in Hz (float).
-        Property is dynamic and allows remapping min/max limits.
-        """,
+        """Control the center frequency in Hz (float).""",
         cast=float,
         validator=strict_range,
         dynamic=True,
@@ -145,9 +139,7 @@ class HP8753E(Instrument):
     span_frequency = Instrument.control(
         "SPAN?",
         "SPAN %e Hz",
-        """Control the span of the sweep frequency in Hz (float).
-        Property is dynamic and allows remapping min/max limits.
-        """,
+        """Control the span of the sweep frequency in Hz (float).""",
         cast=float,
         validator=strict_range,
         dynamic=True,
@@ -209,9 +201,7 @@ class HP8753E(Instrument):
     power = Instrument.control(
         "POWE?",
         "POWE%.3e",
-        """Control the output RF power of the instrument's active port. (float).
-        Property is dynamic and allows remapping min/max limits.
-        """,
+        """Control the output RF power of the instrument's active port. (float).""",
         cast=float,
         validator=strict_range,
         dynamic=True,
