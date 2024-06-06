@@ -1,0 +1,8 @@
+################################
+HP 8753E Vector Network Analyzer
+################################
+
+
+.. autoclass:: pymeasure.instruments.hp.HP8753E
+    :members:
+    :show-inheritance:
