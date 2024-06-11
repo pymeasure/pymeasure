@@ -207,6 +207,7 @@ class Results:
     DELIMITER = ','
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
+    ENCODING = "utf-8"
 
     def __init__(self, procedure, data_filename):
         if not isinstance(procedure, Procedure):
@@ -233,7 +234,7 @@ class Results:
             # TODO: Correctly store and retrieve status
         else:
             for filename in self.data_filenames:
-                with open(filename, 'w') as f:
+                with open(filename, 'w', encoding=Results.ENCODING) as f:
                     f.write(self.header())
                     f.write(self.labels())
             self._data = None
@@ -329,7 +330,7 @@ class Results:
             return
 
         for filename in self.data_filenames:
-            with open(filename, 'r+') as f:
+            with open(filename, 'r+', encoding=Results.ENCODING) as f:
                 contents = f.readlines()
                 contents.insert(self._header_count - 1, c_header)
 
@@ -414,7 +415,7 @@ class Results:
         header = ""
         header_read = False
         header_count = 0
-        with open(data_filename) as f:
+        with open(data_filename, "r", encoding=Results.ENCODING) as f:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
