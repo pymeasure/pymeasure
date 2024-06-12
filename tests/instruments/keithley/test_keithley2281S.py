@@ -25,7 +25,7 @@
 import pandas as pd
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.keithley.keithley2281S import Keithley2281S
+from pymeasure.instruments.keithley.keithley2281S import Keithley2281S, _PLC_RANGE
 
 init_comm = [(":SYST:LFR?", "50")]  # communication during init for 50Hz line
 init_comm_us = [(":SYST:LFR?", "60")]  # communication during init for 60Hz line
@@ -34,12 +34,12 @@ no_reading_comm = [(":STAT:MEAS:INST:ISUM:COND?", "0")]  # no reading available
 
 def test_init():
     with expected_protocol(Keithley2281S, init_comm) as inst:
-        assert inst._PLC_RANGE == [0.002, 12]
+        assert _PLC_RANGE == [0.002, 12]
 
 
 def test_init_us():
     with expected_protocol(Keithley2281S, init_comm_us) as inst:
-        assert inst._PLC_RANGE == [0.002, 15]
+        assert _PLC_RANGE == [0.002, 15]
 
 
 def test_function_modes():
@@ -52,9 +52,9 @@ def test_function_modes():
             (":ENTR:FUNC SIMULATOR", None),
         ],
     ) as inst:
-        assert inst.cm_function_mode == "POWER"
-        inst.cm_function_mode = "TEST"
-        inst.cm_function_mode = "SIMULATOR"
+        assert inst.function_mode == "POWER"
+        inst.function_mode = "TEST"
+        inst.function_mode = "SIMULATOR"
 
 
 def test_ps_output():
@@ -66,8 +66,8 @@ def test_ps_output():
             (":OUTP:STAT ON", None),
         ],
     ) as inst:
-        assert inst.ps_output_enabled is False
-        inst.ps_output_enabled = True
+        assert inst.ps.output_enabled is False
+        inst.ps.output_enabled = True
 
 
 # Same for bs_output_enabled
@@ -80,8 +80,8 @@ def test_bt_output():
             (":BATT:OUTP ON", None),
         ],
     ) as inst:
-        assert inst.bt_output_enabled is False
-        inst.bt_output_enabled = True
+        assert inst.bt.output_enabled is False
+        inst.bt.output_enabled = True
 
 
 def test_reading_availability():
@@ -93,8 +93,8 @@ def test_reading_availability():
             (":STAT:MEAS:INST:ISUM:COND?", "0"),
         ],
     ) as inst:
-        assert inst.cm_reading_available is True
-        assert inst.cm_reading_available is False
+        assert inst.reading_available is True
+        assert inst.reading_available is False
 
 
 def test_measurement_ongoging():
@@ -106,8 +106,8 @@ def test_measurement_ongoging():
             (":STAT:OPER:INST:ISUM:COND?", "0"),
         ],
     ) as inst:
-        assert inst.cm_measurement_ongoing is True
-        assert inst.cm_measurement_ongoing is False
+        assert inst.measurement_ongoing is True
+        assert inst.measurement_ongoing is False
 
 
 def test_ps_buffer():
@@ -120,7 +120,7 @@ def test_ps_buffer():
         ]
         + no_reading_comm,
     ) as inst:
-        inst.cm_function_mode = "POWER"
+        inst.function_mode = "POWER"
         assert inst.buffer_data.equals(pd.DataFrame({"current": [], "voltage": [], "time": []}))
 
 
@@ -134,7 +134,7 @@ def test_bt_buffer():
         ]
         + no_reading_comm,
     ) as inst:
-        inst.cm_function_mode = "TEST"
+        inst.function_mode = "TEST"
         assert inst.buffer_data.equals(
             pd.DataFrame(
                 {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
@@ -152,7 +152,7 @@ def test_bs_buffer():
         ]
         + no_reading_comm,
     ) as inst:
-        inst.cm_function_mode = "SIMULATOR"
+        inst.function_mode = "SIMULATOR"
         assert inst.buffer_data.equals(
             pd.DataFrame({"current": [], "voltage": [], "soc": [], "resistance": [], "time": []})
         )
