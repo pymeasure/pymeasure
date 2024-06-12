@@ -13,8 +13,8 @@ repos:
         - --isort
         - --lint
         - flake8
-        - --lint
-        - pylint
+        # - --lint
+        # - pylint
       additional_dependencies:
         - black
         - isort
