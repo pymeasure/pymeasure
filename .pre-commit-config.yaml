@@ -4,6 +4,7 @@ repos:
   hooks:
     - id: darker
       args:
+        - --color
         - --isort
         - --lint
         - flake8
