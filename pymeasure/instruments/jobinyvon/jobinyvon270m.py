@@ -338,16 +338,3 @@ class JY270M(Instrument):
             pass
         time.sleep(1)
         return True
-
-
-if __name__ == '__main__':
-    spectro = JY270M('COM1',
-                     baud_rate=9600,
-                     timeout=300,
-                     parity=Parity.none,
-                     data_bits=8,
-                     stop_bits=StopBits.one,
-                     flow_control=ControlFlow.dtr_dsr,
-                     write_termination='',
-                     read_termination='',
-                     includeSCPI=False)
