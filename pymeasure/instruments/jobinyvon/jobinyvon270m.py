@@ -94,21 +94,18 @@ class JY270M(Instrument):
         return self._max_steps
 
     def __init__(self, adapter, name="JY270M", **kwargs):
-
-        kwargs.update(dict(baud_rate=9600,
-                           timeout=self.default_timeout,
-                           parity=Parity.none,
-                           data_bits=8,
-                           stop_bits=StopBits.one,
-                           flow_control=ControlFlow.dtr_dsr,
-                           write_termination='',
-                           read_termination='',
-                           includeSCPI=False))
-
         super().__init__(
             adapter,
             name,
-            **kwargs)
+            baud_rate=9600,
+            timeout=self.default_timeout,
+            parity=Parity.none,
+            data_bits=8,
+            stop_bits=StopBits.one,
+            flow_control=ControlFlow.dtr_dsr,
+            write_termination='',
+            read_termination='',
+            includeSCPI=False)
 
     gsteps = Instrument.control(
         'H0\r',
