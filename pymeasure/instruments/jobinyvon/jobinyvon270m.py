@@ -107,7 +107,7 @@ class JY270M(Instrument):
             read_termination='',
             includeSCPI=False)
 
-    gsteps = Instrument.control(
+    grating_steps = Instrument.control(
         'H0\r',
         'F0,%d\r',
         "Control the relative step displacement of the grating motor.",
@@ -243,7 +243,7 @@ class JY270M(Instrument):
         """
         ABSOLUTE positioning of the grating motor in number of steps.
         """
-        ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode(), nread=1, timeout=20000)
+        ans = self.write_read(f'F0,{nsteps - self.grating_steps}\r'.encode(), nread=1, timeout=20000)
         code = self._get_code(ans)
         if code != 'o':
             raise IOError(f'Wrong return code from driver, received {code}')
@@ -252,7 +252,7 @@ class JY270M(Instrument):
         """
         Reading the wavelength from the grating motor of the spectrometer.
         """
-        return self._lambda_max - ((self._max_steps - self.gsteps) / self._steps_nm)
+        return self._lambda_max - ((self._max_steps - self.grating_steps) / self._steps_nm)
 
     def move_grating_wavelength(self, wavelength: float):
         """
@@ -308,10 +308,6 @@ class JY270M(Instrument):
         pos_steps = microns * self._slit_steps_micron
         pos_steps = int(pos_steps)
         self.move_exit_slit_steps(pos_steps)
-
-    def check_get_errors(self, error):
-        print(error)
-        pass
 
     def motor_stop(self):
         """
