@@ -5,8 +5,9 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def init_communication():
-    instr = JY270M('COM1',
+
+def init_communication(connected_device_address):
+    instr = JY270M(connected_device_address,
                    baud_rate=9600,
                    timeout=300,
                    parity=Parity.none,
@@ -17,7 +18,7 @@ def init_communication():
                    read_termination='',
                    includeSCPI=False)
     return instr
-
+    
 
 @pytest.fixture(scope="module")
 def jobinyvon270m(init_communication):
