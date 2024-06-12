@@ -30,13 +30,8 @@ from pymeasure.instruments.attocube import ANC300Controller
 
 # Note: This communication does not contain the first several device
 # responses, as they are ignored due to `adapter.flush_read_buffer()`.
-passwd = "passwd"
-init_comm = [
-    (passwd, "*" * len(passwd)),
-    (None, "Authorization success"),
-    ("echo off", "> echo off"),
-    (None, "OK"),
-]
+passwd = ""
+init_comm = ANC300Controller._init_comm_pairs
 
 
 def test_stepu():

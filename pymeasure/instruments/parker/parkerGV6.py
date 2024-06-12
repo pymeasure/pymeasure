@@ -47,6 +47,16 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         )
         self.set_defaults()
 
+    _init_comm_pairs = [
+        (b"ECHO0", None),
+        (b"LH0", None),
+        (b"MA1", None),
+        (b"MC0", None),
+        (b"AA1.0", None),
+        (b"A1.0", None),
+        (b"V3.0", None),
+    ]
+
     def read(self):
         """ Overwrites the Instrument.read command to provide the correct
         functionality

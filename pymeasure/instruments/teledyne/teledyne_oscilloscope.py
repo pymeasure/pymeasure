@@ -499,6 +499,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         self.waveform_source = "C1"
         self.default_setup()
 
+    _init_comm_pairs = [("CHDR OFF", None)]
+
     ################
     # System Setup #
     ################

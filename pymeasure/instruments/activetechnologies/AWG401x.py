@@ -460,6 +460,43 @@ class AWG401x_AFG(AWG401x_base):
             child = self.add_child(ChannelAFG, i)
             child._protected = True
 
+    _init_comm_pairs = [
+        # ("*IDN?", "x,AWG4012"),
+        ("SOURce1:INITDELay? MINimum", "1"),
+        ("SOURce1:INITDELay? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
+        ("SOURce1:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
+        ("SOURce1:VOLTage:BASELINE:OFFSET? MINimum", "1"),
+        ("SOURce1:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
+        ("SOURce1:FREQuency? MINimum", "1"),
+        ("SOURce1:FREQuency? MAXimum", "2"),
+        ("SOURce1:PHASe:ADJust? MINimum", "1"),
+        ("SOURce1:PHASe:ADJust? MAXimum", "2"),
+        ("SOURce2:INITDELay? MINimum", "1"),
+        ("SOURce2:INITDELay? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:LOW? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:HIGH? MAXimum", "2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MINimum", "VPP1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum", "VPP2"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MINimum", "1"),
+        ("SOURce2:VOLTage:LEVel:IMMediate:OFFSet? MAXimum", "2"),
+        ("SOURce2:VOLTage:BASELINE:OFFSET? MINimum", "1"),
+        ("SOURce2:VOLTage:BASELINE:OFFSET? MAXimum", "2"),
+        ("SOURce2:FREQuency? MINimum", "1"),
+        ("SOURce2:FREQuency? MAXimum", "2"),
+        ("SOURce2:PHASe:ADJust? MINimum", "1"),
+        ("SOURce2:PHASe:ADJust? MAXimum", "2"),
+        ("*IDN?", "x,AWG4012"),
+    ]
+
 
 class AWG401x_AWG(AWG401x_base):
     """Represents the Active Technologies AWG-401x Arbitrary Waveform Generator
@@ -498,12 +535,28 @@ class AWG401x_AWG(AWG401x_base):
             self.add_child(ChannelAWG, i, collection="setting_ch")
 
         self.entries = self.DummyEntriesElements(self, self.num_ch)
+
         self.burst_count_values = [self.burst_count_min, self.burst_count_max]
 
         self.sampling_rate_values = [self.sampling_rate_min,
                                      self.sampling_rate_max]
 
         self._waveforms = self.WaveformsLazyDict(self)
+
+    _init_comm_pairs = [
+        ("AWGControl:CONFigure:CNUMber?", "2"),
+        ("OUTPut1:DELay? MINimum", "1"),
+        ("OUTPut1:DELay? MAXimum", "2"),
+        ("OUTPut2:DELay? MINimum", "1"),
+        ("OUTPut2:DELay? MAXimum", "2"),
+        ("AWGControl:CONFigure:CNUMber?", "2"),
+        ("AWGControl:BURST? MINimum", "1"),
+        ("AWGControl:BURST? MAXimum", "2"),
+        ("AWGControl:SRATe? MINimum", "1"),
+        ("AWGControl:SRATe? MAXimum", "1"),
+        ("WLISt:LIST?", ""),
+        # ("*IDN?", "x,AWG4012"),
+    ]
 
     num_ch = Instrument.measurement(
         "AWGControl:CONFigure:CNUMber?",

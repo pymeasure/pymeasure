@@ -106,6 +106,8 @@ Select trigger source; accept the values:
         # format: output ascii
         self.write("FORM ASC")
 
+    _init_comm_pairs = [("FORM ASC", None)]
+
     def freq_sweep(self, freq_list, return_freq=False):
         """
         Run frequency list sweep using sequential trigger.

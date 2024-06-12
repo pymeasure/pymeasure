@@ -44,6 +44,8 @@ class HP33120A(SCPIUnknownMixin, Instrument):
         )
         self.amplitude_units = 'Vpp'
 
+    _init_comm_pairs = [(b'SOUR:VOLT:UNIT VPP', None)]
+
     SHAPES = {
         'sinusoid': 'SIN', 'square': 'SQU', 'triangle': 'TRI',
         'ramp': 'RAMP', 'noise': 'NOIS', 'dc': 'DC', 'user': 'USER'

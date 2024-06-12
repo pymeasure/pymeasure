@@ -32,7 +32,7 @@ from pymeasure.instruments.toptica import IBeamSmart
 # Note: This communication does not contain the first two device responses, as they are
 # ignored due to `adapter.flush_read_buffer()`.
 # The device communication depends on previous commands and whether the device power cycled.
-init_comm = [("echo off", None), ("prom off", None), ("talk usual", ""), (None, "[OK]")]
+init_comm = IBeamSmart._init_comm_pairs
 
 
 def test_init():

@@ -133,6 +133,8 @@ class IBeamSmart(Instrument):
             log.warning("Adapter does not have 'flush_read_buffer' method.")
         self.ask('talk usual')
 
+    _init_comm_pairs = [("echo off", None), ("prom off", None), ("talk usual", ""), (None, "[OK]")]
+
     def read(self):
         """Read a reply of the instrument and extract the values, if possible.
 

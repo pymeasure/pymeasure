@@ -29,7 +29,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.ipgphotonics.yar import YAR
 
 
-init_comm = [("RNP", "RNP: 0.200"), ("RMP", "RMP: 10.5"), ("RDPT", "RDPT: 0.100")]
+init_comm = YAR._init_comm_pairs
 
 ################################
 # Values according to the manual

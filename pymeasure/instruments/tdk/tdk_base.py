@@ -69,6 +69,8 @@ class TDK_Lambda_Base(Instrument):
         )
         self.address = address
 
+    _init_comm_pairs = [(b"ADR 6", b"OK")]
+
     def check_set_errors(self):
         """
         Only use this command for setting commands, i.e. non-querying commands.
