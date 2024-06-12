@@ -26,7 +26,8 @@
 import logging
 
 from pymeasure.instruments import Channel, Instrument
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+# from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -42,8 +43,9 @@ class TraceCommands(Channel):
     """
     Need docstring
 
-    These first functions just read the `_active_trace` and call the parent to read its '_active_channel' value
-    so that the SCPI commands do not need to be sent every time querying what channel and trace are active.
+    These first functions just read the `_active_trace` and call the parent to read its
+    '_active_channel' value so that the SCPI commands do not need to be sent every time querying
+    which channel and trace are active.
     """
 
     # these functions will allow the option to query active channel, trace, and total traces enabled
@@ -62,7 +64,7 @@ class TraceCommands(Channel):
 
     def make_active(self):
         # make trace active
-        parent.active_trace = self.id
+        self.parent.active_trace = self.id
 
     def is_active(self):
         """
@@ -70,13 +72,13 @@ class TraceCommands(Channel):
         and that the active trace is this one.
         """
 
-        if get_active_channel() != self.parent.id:
+        if self.get_active_channel() != self.parent.id:
             self.parent.make_active = True
 
-        if int(self.id) > get_total_traces():
+        if int(self.id) > self.get_total_traces():
             self.parent.total_traces = int(self.id)
 
-        if get_active_trace() != self.id:
+        if self.get_active_trace() != self.id:
             self.make_active()
 
     measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
@@ -119,7 +121,8 @@ class ChannelCommands(Channel):
         cast=str,
     )
 
-    # absolute_measurement_source set output port for absolute measurement ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
+    # absolute_measurement_source set output port for absolute measurement
+    # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
     measurement_data = Channel.measurement(
         "CALC{ch}:DATA:SDAT?",  # read out real/imag data for active trace with corrections
@@ -271,7 +274,9 @@ class ChannelCommands(Channel):
 
     # SOURse Commands
 
-    # power 'SOUR{1-16}:POW:PORT{1-4}?' Sets the power level of port 1 (:PORT1) to port 4 (:PORT4) of channel 1 (:SOUR1) to channel 16 (:SOUR16).
+    # power 'SOUR{1-16}:POW:PORT{1-4}?' Sets the power level of
+    # port 1 (:PORT1) to port 4 (:PORT4) of channel 1 (:SOUR1) to
+    # channel 16 (:SOUR16).
     # power attenuator 'SOUR{1-16}:POW:ATT'
     # power couple ports 'SOUR{1-16}:POW:PORT:COUP?'
 
@@ -284,7 +289,7 @@ class ChannelCommands(Channel):
     )
 
     get_active_trace = Channel.measurement(
-        'SERV:CHAN{ch}:TRAC:ACT?',
+        "SERV:CHAN{ch}:TRAC:ACT?",
         """ """,
     )
 
@@ -310,8 +315,7 @@ class KeysightE5071C(Instrument):
         self._fw = ""
         self._sn = ""
         self._options = ""
-        self._active_channel = '1'
-
+        self._active_channel = "1"
 
         if name is None:
             # written this way to pass 'test_all_instruments.py' while allowing the
@@ -406,7 +410,8 @@ class KeysightE5071C(Instrument):
     # windows 'DISP:SPL' pg 466
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
     # disable display 'DISP:ENAB?' {ON|OFF|0|1}
-    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight, if off you cannot read display
+    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
+    # if off you cannot read display
     # update display (used when display is off) 'DISPlay:UPDate:IMMediate'
 
     # markers
@@ -434,7 +439,8 @@ class KeysightE5071C(Instrument):
     # scan
 
     # emit_beep ':SYST:BEEP:COMP:IMM' Generates a beep
-    # emit beep on completion ':SYST:BEEP:COMP:STAT {ON|OFF|0|1}?' turns on or off beeper for completion of operation
+    # emit beep on completion ':SYST:BEEP:COMP:STAT {ON|OFF|0|1}?'
+    # turns on or off beeper for completion of operation
     # emit beep on warnings 'SYSTem:BEEPer:WARNing:STATe {ON|OFF|1|0}?'
 
     # reset
@@ -443,7 +449,8 @@ class KeysightE5071C(Instrument):
     # clock 'DISP:CLOC'
     # 'SYST:TIME {Hour},{Min},{Sec}?'
 
-    # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548 and "SENS{1-16}:CORR:COEF:SAVE"
+    # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
+    # and "SENS{1-16}:CORR:COEF:SAVE"
     # save image of screen ":MMEM:STOR:IMAG" pg 512
 
     # error stuff
