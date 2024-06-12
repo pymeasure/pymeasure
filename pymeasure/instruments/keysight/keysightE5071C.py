@@ -38,6 +38,8 @@ log.addHandler(logging.NullHandler())
 # Instrument.measurement
 # Instrument.setting
 
+MEASURING_PARAMETERS = ["S11", "S21", "S12", "S22", "A", "B", "R1", "R2"]
+
 
 class TraceCommands(Channel):
     """
@@ -81,12 +83,16 @@ class TraceCommands(Channel):
         if self.get_active_trace() != self.id:
             self.make_active()
 
+    # need to ensure the parameter selected is of {S11|S21|S12|S22|A|B|R1|R2}
     measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
         "CALC{ch}:PAR{tr}:DEF?",
-        "CALC{ch}:PAR{tr}:DEF?",
+        "CALC{ch}:PAR{tr}:DEF %s",
         """ """,
         cast=str,
     )
+
+
+# need marker class
 
 
 class ChannelCommands(Channel):
@@ -112,11 +118,14 @@ class ChannelCommands(Channel):
         """ """,
     )
 
+    # need total_traces to trigger a function to change the traces
+    # available to the channel
+
     # select active trace "CALC{1-16}:PAR{1-16}:SEL"
 
     measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
         "CALC{ch}:PAR1:DEF?",
-        "CALC{ch}:PAR1:DEF?",
+        "CALC{ch}:PAR1:DEF %s",
         """ """,
         cast=str,
     )
@@ -193,7 +202,7 @@ class ChannelCommands(Channel):
     )
 
     sweep_frequencies = Channel.measurement(  # frequencies of sweep are read out
-        "SENS{1-16}:FREQ:DATA?",
+        "SENS{ch}:FREQ:DATA?",
         """ """,
     )
 
