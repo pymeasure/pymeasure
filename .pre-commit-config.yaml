@@ -18,5 +18,5 @@ repos:
       additional_dependencies:
         - black
         - isort
-        - flake8
+        - flake8==6.0.0
         - pylint
