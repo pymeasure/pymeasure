@@ -5,6 +5,7 @@ repos:
     - id: darker
       args:
         - --color
+        - --quiet
         - --isort
         - --lint
         - flake8
