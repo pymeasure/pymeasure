@@ -1,8 +1,4 @@
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v1.2.3
-  hooks:
-    - id: flake8
 - repo: https://github.com/akaihola/darker
   rev: v2.1.1
   hooks:
@@ -20,3 +16,7 @@ repos:
         - isort
         - flake8==6.0.0
         - pylint
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v1.2.3
+  hooks:
+    - id: flake8
