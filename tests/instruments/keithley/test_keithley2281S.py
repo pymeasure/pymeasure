@@ -33,12 +33,12 @@ no_reading_comm = [(":STAT:MEAS:INST:ISUM:COND?", "0")]  # no reading available
 
 
 def test_init():
-    with expected_protocol(Keithley2281S, init_comm) as inst:
+    with expected_protocol(Keithley2281S, init_comm) as _:
         assert _PLC_RANGE == [0.002, 12]
 
 
 def test_init_us():
-    with expected_protocol(Keithley2281S, init_comm_us) as inst:
+    with expected_protocol(Keithley2281S, init_comm_us) as _:
         assert _PLC_RANGE == [0.002, 15]
 
 
