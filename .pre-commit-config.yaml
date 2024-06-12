@@ -1,0 +1,16 @@
+repos:
+- repo: https://github.com/akaihola/darker
+  rev: v2.1.1
+  hooks:
+    - id: darker
+      args:
+        - --isort
+        - --lint
+        - flake8
+        - --lint
+        - pylint
+      additional_dependencies:
+        - black
+        - isort
+        - flake8
+        - pylint
