@@ -31,10 +31,10 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def test_hp8753e_id():
+def test_keysightE5071C_id():
     """Verify *IDN? communication"""
     with expected_protocol(
         KeysightE5071C,
         [("*IDN?", "HEWLETT PACKARD,8753E,0,7.10\n"), ("*IDN?", "HEWLETT PACKARD,8753E,0,7.10\n")],
     ) as inst:
-        assert inst.id == ["HEWLETT PACKARD", "8753E", "0", "7.10"]
+        assert inst.id == "HEWLETT PACKARD,8753E,0,7.10"
