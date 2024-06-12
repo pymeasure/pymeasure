@@ -46,9 +46,70 @@ def test_keysightE5071C_id():
             ("*IDN?", "Keysight Technologies,E5071C,0,B.13.10\n\n"),
             ("*IDN?", "Keysight Technologies,E5071C,0,B.13.10\n\n"),
         ],
-    ) as inst:
-        assert inst.id == ["Keysight Technologies", "E5071C", "0", "B.13.10"]
-        assert inst.manu == "Keysight Technologies"
-        assert inst.model == "E5071C"
-        assert inst.fw == "B.13.10"
-        assert inst.sn == "0"
+    ) as keysighte5071c:
+        assert keysighte5071c.id == ["Keysight Technologies", "E5071C", "0", "B.13.10"]
+        assert keysighte5071c.manu == "Keysight Technologies"
+        assert keysighte5071c.model == "E5071C"
+        assert keysighte5071c.fw == "B.13.10"
+        assert keysighte5071c.sn == "0"
+        # options
+
+
+def test_keysightE5071C_channels():
+    with expected_protocol(
+        KeysightE5071C,
+        [
+            ("SERV:CHAN:ACT?", "1\n\n"),
+        ],
+    ) as keysighte5071c:
+        assert keysighte5071c.ch_1.get_active_channel == 1
+
+
+def test_keysightE5071C_scan_points():
+    with expected_protocol(
+        KeysightE5071C,
+        [
+            ("SENS1:SWE:POIN?", "201\n\n"),
+        ],
+    ) as keysighte5071c:
+        assert keysighte5071c.ch_1.scan_points == 201
+
+
+def test_keysightE5071C_averaging():
+    with expected_protocol(
+        KeysightE5071C,
+        [
+            (":SENS1:AVER?", "0\n\n"),
+        ],
+    ) as keysighte5071c:
+        assert keysighte5071c.ch_1.averaging_enabled is False
+
+
+# def test_keysightE5071C_frequencies(keysighte5071c):
+
+
+# def test_keysightE5071C_scan(keysighte5071c):
+
+
+# def test_keysightE5071C_data_complex(keysighte5071c):
+
+
+# def test_keysightE5071C_shutdown(keysighte5071c):
+
+
+# def test_keysightE5071C_warmup_complete(keysighte5071c):
+
+
+# def test_keysightE5071C_emit_beeps(keysighte5071c):
+
+
+# def test_keysightE5071C_output_power(keysighte5071c):
+
+
+# def test_keysightE5071C_triggering(keysighte5071c):
+
+
+# def test_keysightE5071C_windows(keysighte5071c):
+
+
+# def test_keysightE5071C_sweep(keysighte5071c):

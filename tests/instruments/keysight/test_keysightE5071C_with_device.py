@@ -67,7 +67,7 @@ def keysighte5071c(connected_device_address):
     del vna
 
 
-def test_keysightE5071C_reset(keysighte5071c):
+def test_keysightE5071C_with_device_reset(keysighte5071c):
     keysighte5071c.reset()
 
 
@@ -81,43 +81,43 @@ def test_keysightE5071C_with_device_id(keysighte5071c):
     # options
 
 
-def test_keysightE5071C_channels(keysighte5071c):
+def test_keysightE5071C_with_device_channels(keysighte5071c):
     assert keysighte5071c.ch_1.get_active_channel == 1
 
 
-def test_keysightE5071C_scan_points(keysighte5071c):
+def test_keysightE5071C_with_device_scan_points(keysighte5071c):
     assert keysighte5071c.ch_1.scan_points == 201
 
 
-def test_keysightE5071C_averaging(keysighte5071c):
+def test_keysightE5071C_with_device_averaging(keysighte5071c):
     assert keysighte5071c.ch_1.averaging_enabled is False
 
 
-# def test_keysightE5071C_frequencies(keysighte5071c):
+# def test_keysightE5071C_with_device_frequencies(keysighte5071c):
 
 
-# def test_keysightE5071C_scan(keysighte5071c):
+# def test_keysightE5071C_with_device_scan(keysighte5071c):
 
 
-# def test_keysightE5071C_data_complex(keysighte5071c):
+# def test_keysightE5071C_with_device_data_complex(keysighte5071c):
 
 
-# def test_keysightE5071C_shutdown(keysighte5071c):
+# def test_keysightE5071C_with_device_shutdown(keysighte5071c):
 
 
-# def test_keysightE5071C_warmup_complete(keysighte5071c):
+# def test_keysightE5071C_with_device_warmup_complete(keysighte5071c):
 
 
-# def test_keysightE5071C_emit_beeps(keysighte5071c):
+# def test_keysightE5071C_with_device_emit_beeps(keysighte5071c):
 
 
-# def test_keysightE5071C_output_power(keysighte5071c):
+# def test_keysightE5071C_with_device_output_power(keysighte5071c):
 
 
-# def test_keysightE5071C_triggering(keysighte5071c):
+# def test_keysightE5071C_with_device_triggering(keysighte5071c):
 
 
-# def test_keysightE5071C_windows(keysighte5071c):
+# def test_keysightE5071C_with_device_windows(keysighte5071c):
 
 
-# def test_keysightE5071C_sweep(keysighte5071c):
+# def test_keysightE5071C_with_device_sweep(keysighte5071c):
