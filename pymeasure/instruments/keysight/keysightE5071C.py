@@ -39,6 +39,19 @@ log.addHandler(logging.NullHandler())
 # Instrument.setting
 
 MEASURING_PARAMETERS = ["S11", "S21", "S12", "S22", "A", "B", "R1", "R2"]
+MEASUREMENT_FORMAT = [
+    "SMITH",
+    "LOGMAG",
+    "PHASE",
+    "REAL",
+    "IMAG",
+    "GROUP DELAY",
+    "POLAR",
+    "LINMAG",
+    "POS PHASE",
+    "EXPAND PHASE",
+    "SWR",
+]
 
 
 class TraceCommands(Channel):
@@ -91,6 +104,14 @@ class TraceCommands(Channel):
         cast=str,
     )
 
+    # need trace scale
+
+    # need trace divisions
+
+    # need trace units
+
+    # need trace format
+
 
 # need marker class
 
@@ -104,6 +125,8 @@ class ChannelCommands(Channel):
 
     _active_marker = 1
     _active_trace = 1
+    _active_marker = 1
+    # trace window layout?
 
     # CALCulation Commands
 
@@ -419,6 +442,8 @@ class KeysightE5071C(Instrument):
     )
 
     channels = Instrument.MultiChannelCreator(ChannelCommands, [x + 1 for x in range(16)])
+
+    # channel layout window?
 
     # class to track active channel and active trace in channel
     # ':SERV:CHAN:ACT?' query only read out of active channel
