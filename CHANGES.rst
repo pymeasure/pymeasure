@@ -1,14 +1,23 @@
-Upcoming version
-================
-Main items of this new release:
-- Added support for numpy 2.0.
 
-Added features
-- SCPI instruments have :code:`next_error` property giving the next error.
+Version 0.14.0 (2024-05-22)
+===========================
+Main items of this new release:
+
+- Add support for numpy 2.0
+- Add support for python 3.12
+- Improve academic quotability with an up to date Zenodo DOI and with citation information.
+- Add default :code:`queue` method and a :code:`FileInputWidget`, allowing to more quickly get started with the PyMeasure user interface (:code:`ManagedWindow`).
+- Add a :code:`SCPIMixin` base class for instruments instead of defining :code:`includeSCPI=True`
+- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file.
+  Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`.
+  Removing manufacturer modules from that file lowers the memory footprint of pymeasure when importing an instrument.
+  Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file.
+  For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+- 17 new instruments
 
 Deprecated features
 -------------------
-- Remove :code:`TelnetAdapter`, as its library is deprecated.
+- Remove :code:`TelnetAdapter`, as its library is deprecated (@BenediktBurger, #1045)
 - Replaced :code:`directory_input` keyword-argument of :code:`ManagedWindowBase` by :code:`enable_file_input` (@CasperSchippers, #964)
 - Make parameter :code:`includeSCPI` obligatory for all instruments, even those which use SCPI (@BenediktBurger, #1007)
 - Setting `includeSCPI=True` is deprecated, inherit instead the :code:`SCPIMixin` class if the device supports SCPI commands.
@@ -16,16 +25,80 @@ Deprecated features
 - Replaced :code:`error` property of Keithley instruments by :code:`next_error`.
 - Replaced :code:`measurement_time` property of Pendulum CNT-91 by :code:`gate_time`.
 - Replaced :code:`sample_rate` keyword-argument of :code:`buffer_frequency_time_series` of Pendulum CNT-91 by :code:`gate_time`.
-- The property :code:`unit` of MKS937B switched to using values defined in :code:`instruments/mksinst/mks937b/Unit`. Old string values are not supported anymore. (@dkriegner, @BenediktBurger #1034)
+- Replaced MKS937B :code:`unit` to use :code:`instruments/mksinst/mks937b/Unit` instead of strings (@dkriegner, @BenediktBurger #1034)
+
+Instruments mechanics
+---------------------
+- Add a SCPI base class :code:`SCPIMixin` as replacement for :code:`includeSCPI=True` (@BenediktBurger, #905, #1007, #1019, #1047)
+- Add :code:`next_error` property to SCPI instruments (@BenediktBurger, #1024)
+- Make :code:`query_delay=None` the default for :code:`wait_for` (@BenediktBurger, #1077)
+- Fix :code:`expected_protocol` using empty dictionary as default value (@BenediktBurger, #1087)
+- Remove auto-importing all instruments in :code:`pymeasure/instruments/__init__.py`` (@mcdo0486, #919)
+- Add :code:`find_serial_port` to find a serial port by providing USB information (@BenediktBurger, #982)
+
+Instruments
+-----------
+- Add Agilent4294A (@driftregion, #998)
+- Add Agilent 4284A by (@ConnorGCarr #1079)
+- Add AimTTI PL series power supplies (@guuskuiper, #942)
+- Add HP11713A Switch & Attenuator Driver  (@neuschs, #970)
+- Add HP437B power meter (@neuschs, #979)
+- Add Inficon SQM160 SQM-160 multi-film rate/thickness monitor (@dkriegner, #991)
+- Add Keithley 2182 (@ConnorGCarr, #1043)
+- Add KeithleyDMM6500 (@fwutw, #963)
+- Add Kepco BOP 36-12 Bipolar Power Supply (@JAW90, #1086)
+- Add KeysightE3631A (@OptimisticBeliever, #990)
+- Add Kuhne Electronic KU SG 2.45 250A microwave generator (@jurajjasik, @BenediktBurger, @1108)
+- Add MKS 974B vacuum pressure transducer (@dkriegner, #1034)
+- Add Proterial rod4 (@ConnorGCarr, #1044)
+- Add Racal-Dana 1992 universal counter (@tomverbeure, #798, #1012)
+- Add redpitaya board (@seb5g, #1010, #1035)
+- Add Teledyne HDO6xxx (@RobertoRoos, #868)
+- Add Yokogawa AQ6370D Optical Spectral Analyzer (@jnnskls, #1059)
+- Fix property docstrings of several instruments (@BenediktBurger, #1018)
+- Fix checksums of hcp TC038D tests (@BenediktBurger, #987)
+- Fix Hp8116a (@BenediktBurger, #1088)
+- Fix Hp856x to append amplitude units (@neuschs, #977)
+- Fix Keysight E36312A confirmed SCPI functionality (@Konradrundfunk, #1107)
+- Fix Stanford Research SR830 output conversion (@dkriegner, #1069)
+- Fix SR830 missing get_buffer method (@seb5g, #999)
+- Fix set command of SR860 aux output (@wehlgrundspitze, #1048)
+- Fix Temptronic test to use ns perf counter (@BenediktBurger, #1109, #1110)
+- Fix Toptica Ibeamsmart referencing removed adapter function (@BenediktBurger, #1065)
+- Fix typos in docstrings for Keithley instruments (@V0XNIHILI, #1071)
+- Link Keysight, Agilent, and HP documentation pages. (@BenediktBurger, #1021)
+- Update Agilent33500 Series from :code:`.ch[]` to :code:`.channels[]` (@AlecVercruysse, #945)
+- Update AWG401x driver to use 'channels' (@mcdo0486, #944)
+- Update HP33120A with new burst modulation parameters (@mzen228, #1056)
+- Update HP34401A with new remote control command. (@Rybok, #992)
+- Update Keithleys' next_error (@msmttchr, #1030)
+- Update pendulum CNT-91 (@bleykauf, #988)
 
 GUI
 ---
 - Add a :code:`FileInputWidget` to choose if and where the experiment data is stored. (@CasperSchippers, #964)
-- A default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
+- Add a default :code:`Queue` method for :code:`ManagedWindowBase` is implemented. (@CasperSchippers, #964)
+- Fix :code:`ScientificInput` to be locale compatible  (@pyZerrenner, #1074)
+- Fix exception if loading result file with an empty parameter (@poje42, #1016)
 
-Dropped Support
----------------
-- Instrument manufacturer modules are no longer imported in the :code:`pymeasure/instruments/__init__.py` file. Previously, when importing a single instrument into a procedure, all instruments would be imported into memory through the manufacturer modules in :code:`pymeasure/instruments/__init__.py`. Removing manufacturer modules from that file lowers the memory footprint of pymeasure when importing an instrument. Instrument classes will need to be imported from the manufacturer module or explicitly from the instrument driver file. For example, :code:`from pymeasure.instruments import Extreme5000` will need to change to :code:`from pymeasure.instruments.extreme import Extreme5000` or :code:`from pymeasure.instruments.extreme.extreme5000 import Extreme5000`.
+Miscellaneous
+-------------
+- Add support for python 3.12 (@BenediktBurger, #1051)
+- Add support for numpy 2.0 (@CasperSchippers, #1026)
+- Add codecov to CI and to readme (@BenediktBurger, #1037, #1052, #1099)
+- Add citation file for PyMeasure repository (@mcdo0486, #1092)
+- Add release CI (@BenediktBurger, #1039)
+- Update readme with permanent Zenodo DOI (@BenediktBurger, #1095)
+- Bump CI dependencies to: pyvisa 1.13.0, checkout@v4 (@mcdo0486, #1097)
+- Fix/pandas futurewarning (@CasperSchippers, #1062)
+- Change copyright year. (@BenediktBurger, #1032)
+- Fix typos (@afuetterer, #1003)
+
+New Contributors
+----------------
+@guuskuiper, @OptimisticBeliever, @fwutw, @afuetterer, @poje42, @Rybok, @AlecVercruysse, @ConnorGCarr, @mzen228, @jnnskls, @V0XNIHILI, @pyZerrenner, @JAW90, @driftregion, @jurajjasik, @Konradrundfunk 
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.13.1...v0.14.0
 
 
 Version 0.13.1 (2023-10-05)

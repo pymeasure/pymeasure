@@ -22,18 +22,4 @@
 # THE SOFTWARE.
 #
 
-from time import perf_counter_ns
-
-from pymeasure.test import expected_protocol
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-
-
-def test_check_query_delay():
-    with expected_protocol(ATSBase, [("TTIM?", "7")]) as inst:
-        start = perf_counter_ns()
-        assert inst.maximum_test_time == 7
-        delay = perf_counter_ns() - start
-        # HACK acceptable factor is needed, as in CI under windows (Py38, Py39) the `sleep` interval
-        # is slightly shorter than the given argument.
-        acceptable_factor = 0.95
-        assert delay > 0.05 * 1e9 * acceptable_factor
+from .kusg245_250a import Kusg245_250A
