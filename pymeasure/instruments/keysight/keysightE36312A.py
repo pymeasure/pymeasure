@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class VoltageChannel(Channel):
     )
 
 
-class KeysightE36312A(Instrument):
+class KeysightE36312A(SCPIMixin, Instrument):
     """ Represents the Keysight E36312A Power supply
     interface for interacting with the instrument.
 

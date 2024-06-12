@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range
 
 
-class AdvantestR3767CG(Instrument):
+class AdvantestR3767CG(SCPIUnknownMixin, Instrument):
     """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
         range and to retrieve the data for the trace.
     """

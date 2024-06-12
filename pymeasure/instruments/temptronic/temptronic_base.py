@@ -39,7 +39,7 @@ No automatic safety measures are part of this driver implementation.
 """
 import logging
 import time
-from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_range,
                                               strict_range
@@ -121,9 +121,15 @@ class ErrorCode(IntFlag):
     OK = 0  # ok state
 
 
-class ATSBase(Instrument):
+class ATSBase(SCPIUnknownMixin, Instrument):
     """The base class for Temptronic ATSXXX instruments.
     """
+
+    def __init__(self, adapter, name="ATSBase", **kwargs):
+        super().__init__(adapter, name=name, **kwargs)
+
+    def wait_for(self, query_delay=None):
+        super().wait_for(0.05 if query_delay is None else query_delay)
 
     remote_mode = Instrument.setting(
         "%s",
@@ -375,7 +381,7 @@ class ATSBase(Instrument):
          0      None
         ======  ======
 
-        Refere to chapter 4 in the manual
+        Refer to chapter 4 in the manual
 
         """,
     )
@@ -548,9 +554,6 @@ class ATSBase(Instrument):
         map_values=True,
         dynamic=True
     )
-
-    def __init__(self, adapter, name="ATSBase", **kwargs):
-        super().__init__(adapter, name=name, query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.

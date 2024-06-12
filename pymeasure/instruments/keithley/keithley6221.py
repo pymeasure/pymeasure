@@ -28,7 +28,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6221(KeithleyBuffer, Instrument):
+class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
@@ -72,6 +72,12 @@ class Keithley6221(KeithleyBuffer, Instrument):
         keithley.shutdown()                     # Disables output
 
     """
+
+    def __init__(self, adapter, name="Keithley 6221 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs)
 
     ##########
     # OUTPUT #
@@ -284,13 +290,6 @@ class Keithley6221(KeithleyBuffer, Instrument):
 
         # Select the newly made arbitrary waveform as waveform function
         self.waveform_function = "arbitrary%d" % location
-
-    def __init__(self, adapter, name="Keithley 6221 SourceMeter", **kwargs):
-        super().__init__(
-            adapter, name,
-            includeSCPI=True,
-            **kwargs
-        )
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
