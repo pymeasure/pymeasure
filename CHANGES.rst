@@ -4,7 +4,7 @@ Upcoming version
 
 Automation
 ----------
-- Explicitly set encoding when writing and reading data to file, allowing the use of special characters (@CasperSchippers, #1123).
+- Explicitly set encoding to utf8 when writing and reading data to file, allowing the use of special characters (@CasperSchippers, #1123).
 
 Version 0.14.0 (2024-05-22)
 ===========================
