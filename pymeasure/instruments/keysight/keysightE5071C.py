@@ -94,6 +94,8 @@ class TraceCommands(Channel):
 
 # need marker class
 
+# need window class
+
 
 class ChannelCommands(Channel):
     """
@@ -120,6 +122,28 @@ class ChannelCommands(Channel):
 
     # need total_traces to trigger a function to change the traces
     # available to the channel
+
+    # def update_traces(self, number_of_traces=None):
+    #     """Create or remove traces to be correct with the actual number of traces.
+
+    #     :param int number_of_traces: optional, if given defines the desired number of traces.
+    #     """
+    #     if number_of_traces is None:
+    #         number_of_traces = self.number_of_traces
+
+    #     if not hasattr(self, "traces"):
+    #         self.traces = {}
+
+    #     if len(self.traces) == number_of_traces:
+    #         return
+
+    #     # Remove redant channels
+    #     while len(self.traces) > number_of_traces:
+    #         self.remove_child(self.traces[len(self.traces)])
+
+    #     # Remove create new channels
+    #     while len(self.traces) < number_of_traces:
+    #         self.add_child(Trace, len(self.traces) + 1, collection="traces", prefix="tr_")
 
     # select active trace "CALC{1-16}:PAR{1-16}:SEL"
 
