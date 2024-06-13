@@ -25,6 +25,7 @@ from math import sqrt, log10
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
+
 class AFG3152CChannel(Channel):
     SHAPES = {
         "sinusoidal": "SIN",
@@ -106,7 +107,7 @@ class AFG3152CChannel(Channel):
         validator=strict_range,
         values=FREQ_LIMIT,
     )
-    
+
     duty = Instrument.control(
         "pulse:dcycle?",
         "pulse:dcycle %.3f",
