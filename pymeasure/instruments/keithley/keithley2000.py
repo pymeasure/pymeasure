@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     truncated_range, truncated_discrete_set,
     strict_discrete_set
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2000(Instrument, KeithleyBuffer):
+class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     """ Represents the Keithley 2000 Multimeter and provides a high-level
     interface for interacting with the instrument.
 
@@ -58,10 +58,10 @@ class Keithley2000(Instrument, KeithleyBuffer):
     mode = Instrument.control(
         ":CONF?", ":CONF:%s",
         """ A string property that controls the configuration mode for measurements,
-        which can take the values: :code:'current' (DC), :code:'current ac',
-        :code:'voltage' (DC),  :code:'voltage ac', :code:'resistance' (2-wire),
-        :code:'resistance 4W' (4-wire), :code:'period', :code:'frequency',
-        :code:'temperature', :code:'diode', and :code:'frequency'. """,
+        which can take the values: ``current`` (DC), ``current ac``,
+        ``voltage`` (DC),  ``voltage ac``, ``resistance`` (2-wire),
+        ``resistance 4W`` (4-wire), ``period``,
+        ``temperature``, ``diode``, and ``frequency``.""",
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
@@ -72,7 +72,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
         ":SYST:BEEP:STAT?",
         ":SYST:BEEP:STAT %g",
         """ A string property that enables or disables the system status beeper,
-        which can take the values: :code:'enabled' and :code:'disabled'. """,
+        which can take the values: ``enabled`` and ``disabled``. """,
         validator=strict_discrete_set,
         values={'enabled': 1, 'disabled': 0},
         map_values=True
@@ -436,9 +436,9 @@ class Keithley2000(Instrument, KeithleyBuffer):
         values=[0, 999999.999]
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keithley 2000 Multimeter", **kwargs):
         super().__init__(
-            adapter, "Keithley 2000 Multimeter", **kwargs
+            adapter, name, **kwargs
         )
 
     def measure_voltage(self, max_voltage=1, ac=False):
@@ -487,7 +487,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
             self.resistance_4W_range = max_resistance
         else:
             raise ValueError("Keithley 2000 only supports 2 or 4 wire"
-                             "resistance meaurements.")
+                             "resistance measurements.")
 
     def measure_period(self):
         """ Configures the instrument to measure the period. """
@@ -573,7 +573,7 @@ class Keithley2000(Instrument, KeithleyBuffer):
 
     def remote(self):
         """ Places the instrument in the remote state, which is
-        does not need to be explicity called in general. """
+        does not need to be explicitly called in general. """
         self.write(":SYST:REM")
 
     def remote_lock(self):

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,15 +25,15 @@
 
 import logging
 from time import sleep, time
-import numpy
 from enum import IntFlag
+
+import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_range, strict_range
 
-from .adapters import OxfordInstrumentsAdapter
-
+from .base import OxfordInstrumentsBase
 
 # Setup logging
 log = logging.getLogger(__name__)
@@ -58,7 +58,7 @@ def pointer_validator(value, values):
     return tuple(strict_range(v, values) for v in value)
 
 
-class ITC503(Instrument):
+class ITC503(OxfordInstrumentsBase):
     """Represents the Oxford Intelligent Temperature Controller 503.
 
     .. code-block:: python
@@ -84,25 +84,10 @@ class ITC503(Instrument):
                  max_temperature=1677.7,
                  **kwargs):
 
-        if isinstance(adapter, (int, str)):
-            kwargs.setdefault('read_termination', '\r')
-            kwargs.setdefault('send_end', True)
-            adapter = OxfordInstrumentsAdapter(
-                adapter,
-                asrl={
-                    'baud_rate': 9600,
-                    'data_bits': 8,
-                    'parity': 0,
-                    'stop_bits': 20,
-                },
-                preprocess_reply=lambda v: v[1:],
-                **kwargs,
-            )
-
         super().__init__(
             adapter=adapter,
             name=name,
-            includeSCPI=False,
+            **kwargs,
         )
 
         # Clear the buffer in order to prevent communication problems
@@ -304,7 +289,7 @@ class ITC503(Instrument):
         'channel 3 freq/4'.
         """,
         validator=strict_discrete_set,
-        map=True,
+        map_values=True,
         values={
             "temperature setpoint": 0,
             "temperature 1": 1,
@@ -529,34 +514,34 @@ class ITC503(Instrument):
         self.sweep_status = 0
 
         # Convert input np.ndarrays
-        temperatures = numpy.array(temperatures, ndmin=1)
-        sweep_time = numpy.array(sweep_time, ndmin=1)
-        hold_time = numpy.array(hold_time, ndmin=1)
+        temperatures = np.array(temperatures, ndmin=1)
+        sweep_time = np.array(sweep_time, ndmin=1)
+        hold_time = np.array(hold_time, ndmin=1)
 
         # Make steps array
         if steps is None:
             steps = temperatures.size
-        steps = numpy.linspace(1, steps, steps)
+        steps = np.linspace(1, steps, steps)
 
         # Create interpolated arrays
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, temperatures.size))
-        temperatures = numpy.interp(steps, interpolator, temperatures)
+        interpolator = np.round(
+            np.linspace(1, steps.size, temperatures.size))
+        temperatures = np.interp(steps, interpolator, temperatures)
 
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, sweep_time.size))
-        sweep_time = numpy.interp(steps, interpolator, sweep_time)
+        interpolator = np.round(
+            np.linspace(1, steps.size, sweep_time.size))
+        sweep_time = np.interp(steps, interpolator, sweep_time)
 
-        interpolator = numpy.round(
-            numpy.linspace(1, steps.size, hold_time.size))
-        hold_time = numpy.interp(steps, interpolator, hold_time)
+        interpolator = np.round(
+            np.linspace(1, steps.size, hold_time.size))
+        hold_time = np.interp(steps, interpolator, hold_time)
 
         # Pad with zeros to wipe unused steps (total 16) of the sweep program
         padding = 16 - temperatures.size
-        temperatures = numpy.pad(temperatures, (0, padding), 'constant',
-                                 constant_values=temperatures[-1])
-        sweep_time = numpy.pad(sweep_time, (0, padding), 'constant')
-        hold_time = numpy.pad(hold_time, (0, padding), 'constant')
+        temperatures = np.pad(temperatures, (0, padding), 'constant',
+                              constant_values=temperatures[-1])
+        sweep_time = np.pad(sweep_time, (0, padding), 'constant')
+        hold_time = np.pad(hold_time, (0, padding), 'constant')
 
         # Setting the arrays to the controller
         for line, (setpoint, sweep, hold) in \

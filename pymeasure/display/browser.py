@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,32 @@ import logging
 
 from os.path import basename
 
-from .Qt import QtCore, QtGui
+from .Qt import QtCore, QtGui, QtWidgets
+
 from ..experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class BrowserItem(QtGui.QTreeWidgetItem):
+class BaseBrowserItem:
+    """ Base class for an experiment's browser item. BaseBrowerItem outlines core functionality
+    for displaying progress of an experiment to the user.
+    """
+
+    status_label = {
+        Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
+        Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
+        Procedure.FINISHED: 'Finished'}
+
+    def setStatus(self, status):
+        raise NotImplementedError('Must be reimplemented by subclasses')
+
+    def setProgress(self, status):
+        raise NotImplementedError('Must be reimplemented by subclasses')
+
+
+class BrowserItem(QtWidgets.QTreeWidgetItem, BaseBrowserItem):
     """ Represent a row in the :class:`~pymeasure.display.browser.Browser` tree widget """
 
     def __init__(self, results, color, parent=None):
@@ -42,22 +60,18 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         pixelmap = QtGui.QPixmap(24, 24)
         pixelmap.fill(color)
         self.setIcon(0, QtGui.QIcon(pixelmap))
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(0, QtCore.Qt.Checked)
+        self.setFlags(self.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+        self.setCheckState(0, QtCore.Qt.CheckState.Checked)
         self.setText(1, basename(results.data_filename))
 
         self.setStatus(results.procedure.status)
 
-        self.progressbar = QtGui.QProgressBar()
+        self.progressbar = QtWidgets.QProgressBar()
         self.progressbar.setRange(0, 100)
         self.progressbar.setValue(0)
 
     def setStatus(self, status):
-        status_label = {
-            Procedure.QUEUED: 'Queued', Procedure.RUNNING: 'Running',
-            Procedure.FAILED: 'Failed', Procedure.ABORTED: 'Aborted',
-            Procedure.FINISHED: 'Finished'}
-        self.setText(3, status_label[status])
+        self.setText(3, self.status_label[status])
 
         if status == Procedure.FAILED or status == Procedure.ABORTED:
             # Set progress bar color to red
@@ -77,7 +91,7 @@ class BrowserItem(QtGui.QTreeWidgetItem):
         self.progressbar.setValue(int(progress))
 
 
-class Browser(QtGui.QTreeWidget):
+class Browser(QtWidgets.QTreeWidget):
     """Graphical list view of :class:`Experiment<pymeasure.display.manager.Experiment>`
     objects allowing the user to view the status of queued Experiments as well as
     loading and displaying data from previous runs.
@@ -92,7 +106,7 @@ class Browser(QtGui.QTreeWidget):
         super().__init__(parent)
         self.display_parameters = display_parameters
         self.procedure_class = procedure_class
-        self.measured_quantities = measured_quantities
+        self.measured_quantities = set(measured_quantities)
 
         header_labels = ["Graph", "Filename", "Progress", "Status"]
         for parameter in self.display_parameters:
@@ -102,7 +116,7 @@ class Browser(QtGui.QTreeWidget):
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
         if sort_by_filename:
-            self.sortItems(1, QtCore.Qt.AscendingOrder)
+            self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
         for i, width in enumerate([80, 140]):
             self.header().resizeSection(i, width)
