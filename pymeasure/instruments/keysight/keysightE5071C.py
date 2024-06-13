@@ -53,6 +53,9 @@ MEASUREMENT_FORMAT = [
     "SWR",
 ]
 
+# set the analyzer to trace averaging in single sweep mode, use the following SCPI commands to
+# start the 100 average sweep and wait for the Operation Complete bit to be returned:
+
 
 class TraceCommands(Channel):
     """
