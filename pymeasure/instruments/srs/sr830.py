@@ -572,7 +572,8 @@ class SR830(Instrument):
             i += 1
             if has_aborted():
                 return False
-        self.pause_buffer()
+            if i>timeout/timestep: print('Buffer timeout')
+        self.pause_buffer()  
 
     def get_buffer(self, channel=1, start=0, end=None):
         """ Acquires the 32 bit floating point data through binary transfer
@@ -584,6 +585,56 @@ class SR830(Instrument):
 
     def reset_buffer(self):
         self.write("REST")
+
+    def buffer_measure_from_bytes(self, buffer_size, timeout=60, fast=False):
+        '''
+        Buffer measurement method that returns both channel 1 and channel 2 buffers as np.arrays
+
+        Args
+        buffer_size:  Desired minimum buffer length.
+        timeout: Timeout in seconds for the waiting/buffer fill period.  This should be configured approriately if sampling rate is low and buffer size is high.
+        fast: Sets the transfer mode, see programming section of the SR830 manual for more detail.  
+        '''
+        self.reset_buffer()
+        self.start_buffer(fast)
+        self.wait_for_buffer(buffer_size, timeout=timeout)
+        x_buffer, y_buffer = self.read_buffer_bytes()
+
+        return x_buffer, y_buffer
+    
+    def read_buffer_bytes(self, count=-1, start =0, end=-1):
+        '''
+        Reads the SR830 buffer as bytes.  According to the manual this is the fastest data transfer method over GPIB.
+        
+        Args:
+        count: the number of bytest to read.
+        start: starting position of the buffer to read
+        end: ending postition of the buffer.
+        '''
+        if end==-1 or end>2**14:
+            end = self.buffer_count
+
+        self.write(f'TRCL?1, {start}, {end}')
+        x_bytes = self.read_bytes(count)
+        self.write(f'TRCL?2, {start}, {end}')
+        y_bytes = self.read_bytes(count)
+
+        x_buffer = self.buffer_bytes_convert(x_bytes), 
+        y_buffer = self.buffer_bytes_convert(y_bytes)
+        return x_buffer, y_buffer    
+    
+    def buffer_bytes_convert(self, buffer):
+        '''
+        Converts the SR830's buffer in bytes to decimal numbers.  This formula was derived from the programming manual.  
+        '''
+        byteproduct = np.array(list(buffer[0::4])) + np.array(list(buffer[1::4]))*2**8
+        divsor, remainder = np.divmod(
+            byteproduct, 
+            32768*np.ones(shape = byteproduct.shape)
+        )
+        mantissa = remainder - divsor*2**15
+        exp = np.array(list(buffer[2::4]))
+        return mantissa*np.power(np.ones(shape = exp.shape)*2, exp-124)
 
     def trigger(self):
         self.write("TRIG")
