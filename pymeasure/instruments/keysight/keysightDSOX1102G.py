@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ class Channel():
 
     scale = Instrument.control(
         "SCALe?", "SCALe %f",
-        """ A float parameter that specifies the vertical scale, or units per division, in Volts."""
+        """A float parameter that specifies the vertical scale, or units per division, in Volts."""
     )
 
     def __init__(self, instrument, number):
@@ -218,7 +218,7 @@ class Channel():
         return ch_setup_dict
 
 
-class KeysightDSOX1102G(Instrument):
+class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
     """ Represents the Keysight DSOX1102G Oscilloscope interface for interacting
     with the instrument.
 
@@ -236,19 +236,18 @@ class KeysightDSOX1102G(Instrument):
     Known issues:
 
     - The digitize command will be completed before the operation is. May lead to
-      VI_ERROR_TMO (timeout) occuring when sending commands immediately after digitize.
+      VI_ERROR_TMO (timeout) occurring when sending commands immediately after digitize.
       Current fix: if deemed necessary, add delay between digitize and follow-up command
       to scope.
     """
 
     BOOLS = {True: 1, False: 0}
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Keysight DSOX1102G Oscilloscope", **kwargs):
         super().__init__(
-            adapter, "Keysight DSOX1102G Oscilloscope", **kwargs
+            adapter, name, timeout=6000, **kwargs
         )
         # Account for setup time for timebase_mode, waveform_points_mode
-        self.adapter.connection.timeout = 6000
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
 
@@ -405,7 +404,7 @@ class KeysightDSOX1102G(Instrument):
             - "xreference": data point associated with xorigin (int)
             - "yincrement": voltage difference between data points (float)
             - "yorigin": voltage at center of screen (float)
-            - "yreference": data point associated with yorigin (int)"""
+            - "yreference": data point associated with yorigin (int)"""  # noqa: E501
         return self._waveform_preamble()
 
     @property

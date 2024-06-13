@@ -34,6 +34,7 @@ Mathieu Plante
 Michele Sardo
 Steven Siegl
 Benjamin Klebel-Knobloch
+Markus Röleke
 Demetra Adrahtas
 Dan McDonald
 Hud Wahab
@@ -45,3 +46,40 @@ Bastian Leykauf
 Matthew Delaney
 Marco von Rosenberg
 Jack Van Sambeek
+JC Arbelbide
+Florian Jünger
+Benedikt Moneke
+Asaf Yagoda
+Fabio Garzetti
+Daniel Schmeer
+Mike Manno
+David Sanchez Sanchez
+Andres Ruz-Nieto
+Carlos Martinez
+Scott Candey
+Tom Verbeure
+Juraj Jašík
+Max Herbold
+Alexander Wichers
+Ashok Bruno
+Robert Roos
+Sebastien Weber
+Sebastian Neusch
+Ulrich Sauter
+Guus Kuiper
+Armindo Pinto
+Frank Wu
+Heinz-Alexander Fütterer
+Per-Olof Svensson
+Karl Komierowski
+Alec Vercruysse
+Matthew Zenaldin
+Canyon Clark
+Connor Carr
+Jannis Kleine-Schönepauck
+Douwe den Blanken
+Till Zürner
+J. A. Wilcox
+Nick James Kirkby
+Konrad Gralher
+David Ziliak

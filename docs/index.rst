@@ -16,8 +16,8 @@ Installing Python and PyMeasure are demonstrated in the :doc:`Quick Start guide 
 
 PyMeasure is currently under active development, so please report any issues you experience on our `Issues page`_.
 
-.. image:: https://github.com/pymeasure/pymeasure/workflows/Pymeasure%20CI/badge.svg
-    :target: https://github.com/pymeasure/pymeasure/actions
+.. image:: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml/badge.svg
+    :target: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml
 
 .. image:: http://readthedocs.org/projects/pymeasure/badge/?version=latest
     :target: http://pymeasure.readthedocs.io/en/latest/?badge=latest
@@ -61,7 +61,7 @@ Information about development is also available:
 
 .. toctree::
    :maxdepth: 1
-   :caption: API References
+   :caption: API Reference
 
    api/adapters
    api/experiment/index
@@ -76,7 +76,7 @@ Information about development is also available:
 
    dev/contribute
    dev/reporting_errors
-   dev/adding_instruments
+   dev/adding_instruments/index
    dev/coding_standards
 
 .. _about-docs:
@@ -87,4 +87,4 @@ Information about development is also available:
 
    about/authors
    about/license
-
+   about/changes

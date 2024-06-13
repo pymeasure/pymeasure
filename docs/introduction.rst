@@ -6,8 +6,10 @@ PyMeasure uses an object-oriented approach for communicating with scientific ins
 
 Instruments with VISA (GPIB, Serial, etc) are supported through the `PyVISA package`_ under the hood. `Prologix GPIB`_ adapters are also supported. Communication protocols can be swapped, so that instrument classes can be used with all supported protocols interchangeably.
 
-.. _PyVISA package: http://pyvisa.readthedocs.org/en/master/
+.. _PyVISA package: https://pyvisa.readthedocs.io/en/latest/
 .. _Prologix GPIB: http://prologix.biz/
+
+In order to keep the corresponding numbers and physical units (e.g. 5 meters) together, `pint <https://pint.readthedocs.io>`_ quantities can be used. That way it is easy to handle different orders of magnitude (meters and centimeters) or different units (meters and feet).
 
 Before using PyMeasure, you may find it helpful to be acquainted with `basic Python programming for the sciences`_ and understand the concept of objects.
 
@@ -22,7 +24,7 @@ The package includes a number of :doc:`instruments already defined<api/instrumen
 
   from pymeasure.instruments.keithley import Keithley2400
 
-The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments>`.
+The :doc:`Tutorials <tutorial/index>` section will go into more detail on :doc:`connecting to an instrument <tutorial/connecting>`. If you don't find the instrument you are looking for, but are interested in contributing, see the documentation on :doc:`adding an instrument <dev/adding_instruments/index>`.
 
 
 Graphical displays
@@ -34,3 +36,6 @@ These features are explored in the :doc:`Using a graphical interface <tutorial/g
 
 .. image:: tutorial/pymeasure-managedwindow-running.png
     :alt: ManagedWindow Running Example
+
+The GUIs are not restricted to the instruments included in this package. Any python instrument may be used.
+For example,  `this script <https://github.com/pymeasure/pymeasure/tree/master/examples/Basic/gui_foreign_instrument.py>`_ demonstrates how to use an `InstrumentKit <instrumentkit.readthedocs.io/>`_ instrument.
