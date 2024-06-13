@@ -499,7 +499,7 @@ class SR830(Instrument):
             i += 1
             if has_aborted():
                 return False
-        self.pauseBuffer()
+        self.pause_buffer()
 
     def get_buffer(self, channel=1, start=0, end=None):
         """ Aquires the 32 bit floating point data through binary transfer
@@ -512,6 +512,34 @@ class SR830(Instrument):
     def reset_buffer(self):
         self.write("REST")
 
+    def buffer_measure_from_bytes(self, count, fast=False, stopRequest=None, delay = 1e-3):
+        self.reset_buffer()
+        self.start_buffer(fast)
+        self.wait_for_buffer(count)
+        x_buffer, y_buffer = self.read_buffer_bytes()
+
+        return x_buffer, y_buffer
+    
+    def read_buffer_bytes(self, count=-1, start =0, end=None):
+        buffer_size = self.buffer_count
+        self.write(f'TRCL?1, 0, {buffer_size}')
+        x_bytes = self.read_bytes(count)
+        self.write(f'TRCL?2, 0, {buffer_size}')
+        y_bytes = self.read_bytes(count)
+
+        x_buffer, y_buffer = self.buffer_bytes_convert(x_bytes), self.buffer_bytes_convert(y_bytes)
+        return x_buffer, y_buffer    
+    
+    def buffer_bytes_convert(self, buffer):
+        byteproduct = np.array(list(buffer[0::4])) + np.array(list(buffer[1::4]))*2**8
+        divsor, remainder = np.divmod(
+            byteproduct, 
+            32768*np.ones(shape = byteproduct.shape)
+        )
+        mantissa = remainder - divsor*2**15
+        exp = np.array(list(buffer[2::4]))
+        return mantissa*np.power(np.ones(shape = exp.shape)*2, exp-124)
+    
     def trigger(self):
         self.write("TRIG")
 
