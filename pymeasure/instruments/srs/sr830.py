@@ -572,7 +572,7 @@ class SR830(Instrument):
             i += 1
             if has_aborted():
                 return False
-        self.pause_buffer()  
+        self.pause_buffer()
 
     def get_buffer(self, channel=1, start=0, end=None):
         """ Acquires the 32 bit floating point data through binary transfer
@@ -591,30 +591,30 @@ class SR830(Instrument):
 
         Args
         buffer_size:  Desired minimum buffer length.
-        timeout: Timeout in seconds for the waiting/buffer fill period.  
+        timeout: Timeout in seconds for the waiting/buffer fill period.
         This should be configured approriately if sampling rate is low and buffer size is high.
-        fast: Sets the transfer mode.  
-        See programming section of the SR830 manual for more detail.  
+        fast: Sets the transfer mode.
+        See programming section of the SR830 manual for more detail.
         '''
         self.reset_buffer()
         self.start_buffer(fast)
         self.wait_for_buffer(buffer_size, timeout=timeout)
         x_buffer, y_buffer = self.read_buffer_bytes()
-        
+
         return x_buffer, y_buffer
-    
+
     def read_buffer_bytes(self, count=-1, start=0, end=-1):
         '''
-        Reads the SR830 buffer as bytes.  
-        According to the manual this is the 
+        Reads the SR830 buffer as bytes.
+        According to the manual this is the
         fastest data transfer method over GPIB.
-        
+
         Args:
         count: the number of bytest to read.
         start: starting position of the buffer to read
         end: ending postition of the buffer.
         '''
-        if end==-1 or end > 2**14:
+        if end == -1 or end > 2**14:
             end = self.buffer_count
 
         self.write(f'TRCL?1, {start}, {end}')
@@ -624,7 +624,7 @@ class SR830(Instrument):
 
         x_buffer = self.buffer_bytes_convert(x_bytes)
         y_buffer = self.buffer_bytes_convert(y_bytes)
-        return x_buffer, y_buffer    
+        return x_buffer, y_buffer
     
     def buffer_bytes_convert(self, buffer):
         '''
@@ -638,7 +638,8 @@ class SR830(Instrument):
         )
         mantissa = remainder - divsor*2**15
         exp = np.array(list(buffer[2::4]))
-        return mantissa*np.power(np.ones(shape = exp.shape)*2, exp-124)
+        return mantissa*np.power(np.ones(shape=exp.shape)*2, exp-124)
+
     def trigger(self):
         self.write("TRIG")
 
