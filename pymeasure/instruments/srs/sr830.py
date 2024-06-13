@@ -625,15 +625,15 @@ class SR830(Instrument):
         x_buffer = self.buffer_bytes_convert(x_bytes)
         y_buffer = self.buffer_bytes_convert(y_bytes)
         return x_buffer, y_buffer
-    
+
     def buffer_bytes_convert(self, buffer):
         '''
-        Converts the SR830's buffer in bytes to decimal numbers.  
-        This formula was derived from the programming manual.  
+        Converts the SR830's buffer in bytes to decimal numbers.
+        This formula was derived from the programming manual.
         '''
         byteproduct = np.array(list(buffer[0::4])) + np.array(list(buffer[1::4]))*2**8
         divsor, remainder = np.divmod(
-            byteproduct, 
+            byteproduct,
             32768*np.ones(shape=byteproduct.shape)
         )
         mantissa = remainder - divsor*2**15

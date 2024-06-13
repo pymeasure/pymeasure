@@ -176,4 +176,3 @@ class AFG3152C(SCPIUnknownMixin, Instrument):
 
     def opc(self):
         return int(self.ask("*OPC?"))
-    
