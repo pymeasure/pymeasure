@@ -1,22 +1,38 @@
 repos:
-- repo: https://github.com/akaihola/darker
-  rev: v2.1.1
-  hooks:
-    - id: darker
-      args:
-        - --color
-        - --quiet
-        - --isort
-        - --lint
-        - flake8
-        # - --lint
-        # - pylint
-      additional_dependencies:
-        - black
-        - isort
-        - flake8==6.0.0
-        - pylint
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v1.2.3
-  hooks:
-    - id: flake8
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: fix-encoding-pragma
+        args: [--remove]
+      - id: check-yaml
+        exclude: ^.+(/tests/|/recipe/).+$
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: pretty-format-json
+        args: [--autofix]
+      - id: debug-statements
+        language_version: python3
+  - repo: https://github.com/akaihola/darker
+    rev: v2.1.1
+    hooks:
+      - id: darker
+        args:
+          - --color
+          - --quiet
+          - --isort
+          - --lint
+          - flake8
+          # - --lint
+          # - pylint
+        additional_dependencies:
+          - black
+          - isort
+          - flake8==6.0.0
+          - pylint
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v1.2.3
+    hooks:
+      - id: flake8
