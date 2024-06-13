@@ -109,3 +109,5 @@ settings.json
 
 # Vim
 *.swp
+pymeasure/instruments/srs/buffer_test_nb.ipynb
+buffer_test_nb.ipynb
