@@ -522,7 +522,6 @@ class AnalyzerManager(QtCore.QObject):
             self.running_am.emit(self._running_analysis)
 
     def _clean_up(self):
-        self._analyzer.join()
         self._monitor.stop = True
         log.info(f'did analysis monitor get stop? {self._monitor.stop}')
         success = self._monitor.wait(60)
