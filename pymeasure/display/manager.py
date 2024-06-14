@@ -254,7 +254,7 @@ class Manager(QtCore.QObject):
     def _clean_up(self):
         self._worker.join()
         self._monitor.stop = True
-        success = self._monitor.wait(100)
+        success = self._monitor.wait(10000)
         if not success:
             log.debug('Monitor did not properly exit')
             raise ValueError('Monitor did not exit properly')
@@ -524,7 +524,7 @@ class AnalyzerManager(QtCore.QObject):
     def _clean_up(self):
         self._monitor.stop = True
         log.info(f'did analysis monitor get stop? {self._monitor.stop}')
-        success = self._monitor.wait(60)
+        success = self._monitor.wait(60000)
         if not success:
             log.info('Analyzer monitor did not properly exit')
             raise ValueError('Analyzer monitor did not exit properly')
@@ -532,7 +532,7 @@ class AnalyzerManager(QtCore.QObject):
             self._monitor.terminate()
         del self._analyzer
         log.info('waiting on monitor')
-        self._monitor.wait(10)
+        self._monitor.wait(10000)
         del self._monitor
         log.info('Deleted analysis monitor')
         self._worker = None
