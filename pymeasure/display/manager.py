@@ -525,7 +525,7 @@ class AnalyzerManager(QtCore.QObject):
         self._analyzer.join()
         self._monitor.stop = True
         log.info(f'did analysis monitor get stop? {self._monitor.stop}')
-        success = self._monitor.wait(10)
+        success = self._monitor.wait(60)
         if not success:
             log.info('Analyzer monitor did not properly exit')
             raise ValueError('Analyzer monitor did not exit properly')
