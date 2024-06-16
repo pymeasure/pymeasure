@@ -324,17 +324,7 @@ class JY270M(Instrument):
         if code != 'o':
             raise IOError(f'Wrong return code from driver, received {code}')
 
-    def motor_busy_check(self):
-        """
-        This function checks if at least one of the motors is busy.
-        """
-        ans = self.write_read(b'E\r').decode()
-        if ans == "oz":
-            "We return False if the motor is not busy."
-            return False
-        if ans == "oq":
-            "We return True if the motor is busy."
-            return True
+    motor_busy = Instrument.measurement("E\r", values={True: "oq", False: "oz"}, map_values=True)
 
     def motor_available(self):
         """
