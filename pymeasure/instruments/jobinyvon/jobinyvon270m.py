@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -54,14 +54,18 @@ class JY270M(Instrument):
     This class represents the Jobin-Yvon 270M Driver.
     """
 
-    _steps_nm = 32  # Number of motor steps per nm
-    _nm_step = 1 / _steps_nm  # nm per motor step
-    _slit_steps_micron = 0.560  # slit steps per micron
-    _slit_microns_step = 1.0 / _slit_steps_micron  # microns per slit step
+    """Number of motor steps per nm, nm per motor step, slit steps per 
+    micron, and microns per slit step."""
+    _steps_nm = 32
+    _nm_step = 1 / _steps_nm
+    _slit_steps_micron = 0.560
+    _slit_microns_step = 1.0 / _slit_steps_micron
 
-    _lambda_max = 1171.68  # Maximum value for the wavelength in nm
-    _max_steps = 37494  # maximum number of steps for the grating motor
-    _max_steps_slit = 1102.36  # do not know what this is for?
+    """Maximum value for the wavelength in nm, maximum number of steps 
+    for the grating motor and for the entry and exit slits."""
+    lambda_0 = 1171.68
+    _max_steps = 37494
+    _max_steps_slit = 1102.36 # do not know what this is for?
 
     @property
     def default_timeout(self):
@@ -69,13 +73,6 @@ class JY270M(Instrument):
         Usual timeout needed for normal use.
         """
         return 300
-
-    @property
-    def lambda_0(self):
-        """
-        Get the wavelength when the motor just finished the initialization.
-        """
-        return self._lambda_max
 
     @property
     def steps_in_one_nanometer(self):
@@ -94,39 +91,39 @@ class JY270M(Instrument):
         return self._max_steps
 
     def __init__(self, adapter, name="JY270M", **kwargs):
+
+        kwargs.update(dict(baud_rate=9600,
+                           timeout=self.default_timeout,
+                           parity=Parity.none,
+                           data_bits=8,
+                           stop_bits=StopBits.one,
+                           flow_control=ControlFlow.dtr_dsr,
+                           write_termination='',
+                           read_termination='',
+                           includeSCPI=False))
+
         super().__init__(
             adapter,
             name,
-            baud_rate=9600,
-            timeout=self.default_timeout,
-            parity=Parity.none,
-            data_bits=8,
-            stop_bits=StopBits.one,
-            flow_control=ControlFlow.dtr_dsr,
-            write_termination='',
-            read_termination='',
-            includeSCPI=False)
+            **kwargs)
 
-    grating_steps = Instrument.control(
+    gsteps = Instrument.control(
         'H0\r',
         'F0,%d\r',
         "Control the relative step displacement of the grating motor.",
-        get_process=get_steps_returns,
-    )
+        get_process=get_steps_returns)
 
     entrysteps = Instrument.control(
         'j0,0\r',
         'k0,0,%d\r',
         "Control the relative step displacement of the entry slit.",
-        get_process=get_steps_returns,
-    )
+        get_process=get_steps_returns)
 
     exitsteps = Instrument.control(
         'j0,2\r',
         'k0,2,%d\r',
         "Control the relative step displacement of the exit slit.",
-        get_process=get_steps_returns,
-    )
+        get_process=get_steps_returns)
 
     def read(self, **kwargs):
         """
@@ -144,14 +141,12 @@ class JY270M(Instrument):
                 break
         return read.decode()
 
-    def write_read(self, command: bytes, nread: int = 100, **kwargs):
+    def write_read(self, command: bytes, nread: int = 100, timeout=None, **kwargs):
         """
         This function writes a command to the spectrometer and reads the
         answer of the spectrometer one byte at a time.
         """
-        self.write_bytes(command)
-        read = b''
-        timeout = kwargs.get('timeout', self.default_timeout)
+        timeout = self.default_timeout if timeout is None else timeout
         self.adapter.connection.timeout = timeout
         for ind in range(nread):
             try:
@@ -174,21 +169,24 @@ class JY270M(Instrument):
 
     def unstuck(self):
         """
-        If the spectrometer gets stuck, these function tries to unstick
-        the instrument using two commands.
+        Unstuck the instrument, if it got stuck.
         """
         self.write_read(b'\xF8')
         self.write_read(b'\xDE')
 
     def auto_baud(self):
         """
+        Set the instrument to intelligent mode to start communication.
+        
         This function tries to set the spectrometer into
         intelligent mode (mode that allows communication with the
         instrument). The logic of this function is based on the
-        spectrometer's datasheet. If the function successfully sets
-        the instrument into intelligent mode, we return True,
-        False otherwise.
+        spectrometer's datasheet.
+        
+        :return: boolean whether setting the instrument into
+            intelligent mode was successful.
         """
+        
         while True:
             ans = self.write_read(b' ')
             if len(ans) != 0:
@@ -243,18 +241,20 @@ class JY270M(Instrument):
         """
         ABSOLUTE positioning of the grating motor in number of steps.
         """
-        ans = self.write_read(f'F0,{nsteps - self.grating_steps}\r'.encode(), nread=1, timeout=20000)
+        ans = self.write_read(f'F0,{nsteps - self.gsteps}\r'.encode(), nread=1, timeout=20000)
         code = self._get_code(ans)
         if code != 'o':
             raise IOError(f'Wrong return code from driver, received {code}')
 
-    def get_grating_wavelength(self):
+    @property
+    def grating_wavelength(self):
         """
         Reading the wavelength from the grating motor of the spectrometer.
         """
         return self._lambda_max - ((self._max_steps - self.grating_steps) / self._steps_nm)
 
-    def move_grating_wavelength(self, wavelength: float):
+    @grating_wavelengt.setter
+    def grating_wavelength(self, wavelength: float):
         """
         ABSOLUTE positioning of the grating motor in wavelength.
         """
@@ -271,7 +271,8 @@ class JY270M(Instrument):
         if code != 'o':
             raise IOError(f'Wrong return code from driver, received {code}')
 
-    def get_entry_slit_microns(self):
+    @property
+    def entry_slit_microns(self):
         """
         Reading of the ABSOLUTE position of the entrance slit in micrometres.
         """
@@ -309,6 +310,10 @@ class JY270M(Instrument):
         pos_steps = int(pos_steps)
         self.move_exit_slit_steps(pos_steps)
 
+    def check_get_errors(self, error):
+        print(error)
+        pass
+
     def motor_stop(self):
         """
         Stopping of all the motors when this function is called.
@@ -338,3 +343,16 @@ class JY270M(Instrument):
             pass
         time.sleep(1)
         return True
+
+
+if __name__ == '__main__':
+    spectro = JY270M('COM1',
+                     baud_rate=9600,
+                     timeout=300,
+                     parity=Parity.none,
+                     data_bits=8,
+                     stop_bits=StopBits.one,
+                     flow_control=ControlFlow.dtr_dsr,
+                     write_termination='',
+                     read_termination='',
+                     includeSCPI=False)
