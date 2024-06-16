@@ -23,7 +23,6 @@
 #
 
 import pytest
-
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.jobinyvon.jobinyvon270m import JY270M
 
@@ -36,9 +35,9 @@ def test_entrysteps_setter():
              (b'k0,0,-50\r', None)
              ],
     ) as inst:
-        inst.entrysteps = 50
-        inst.entrysteps = 1500
-        inst.entrysteps = -50
+        inst.entry_steps = 50
+        inst.entry_steps = 1500
+        inst.entry_steps = -50
 
 
 def test_entrysteps_getter():
@@ -49,9 +48,9 @@ def test_entrysteps_getter():
              (b'j0,0\r', b'o1550\r')
              ],
     ) as inst:
-        assert inst.entrysteps == 50
-        assert inst.entrysteps == -50
-        assert inst.entrysteps == 1550
+        assert inst.entry_steps == 50
+        assert inst.entry_steps == -50
+        assert inst.entry_steps == 1550
 
 
 def test_exitsteps_setter():
@@ -62,9 +61,9 @@ def test_exitsteps_setter():
              (b'k0,2,-50\r', None)
              ],
     ) as inst:
-        inst.exitsteps = 50
-        inst.exitsteps = 1500
-        inst.exitsteps = -50
+        inst.exit_steps = 50
+        inst.exit_steps = 1500
+        inst.exit_steps = -50
 
 
 def test_exitsteps_getter():
@@ -75,9 +74,9 @@ def test_exitsteps_getter():
              (b'j0,2\r', b'o250\r')
              ],
     ) as inst:
-        assert inst.exitsteps == 100
-        assert inst.exitsteps == -30
-        assert inst.exitsteps == 250
+        assert inst.exit_steps == 100
+        assert inst.exit_steps == -30
+        assert inst.exit_steps == 250
 
 
 def test_motor_init():
@@ -122,9 +121,9 @@ def test_get_entry_slit_microns():
              (b'j0,0\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_entry_slit_microns() == pytest.approx(89.28571428571428)
-        assert inst.get_entry_slit_microns() == pytest.approx(-89.28571428571428)
-        assert inst.get_entry_slit_microns() == pytest.approx(267.85714285714283)
+        assert inst.entry_slit_microns == pytest.approx(89.28571428571428)
+        assert inst.entry_slit_microns == pytest.approx(-89.28571428571428)
+        assert inst.entry_slit_microns == pytest.approx(267.85714285714283)
 
 
 def test_get_exit_slit_microns():
@@ -135,9 +134,9 @@ def test_get_exit_slit_microns():
              (b'j0,2\r', b'o150\r')
              ],
     ) as inst:
-        assert inst.get_exit_slit_microns() == pytest.approx(89.28571428571428)
-        assert inst.get_exit_slit_microns() == pytest.approx(-89.28571428571428)
-        assert inst.get_exit_slit_microns() == pytest.approx(267.85714285714283)
+        assert inst.exit_slit_microns == pytest.approx(89.28571428571428)
+        assert inst.exit_slit_microns == pytest.approx(-89.28571428571428)
+        assert inst.exit_slit_microns == pytest.approx(267.85714285714283)
 
 
 def test_get_grating_wavelength():
@@ -147,9 +146,9 @@ def test_get_grating_wavelength():
              (b'H0\r', b'o5000\r'),
              (b'H0\r', b'o30000\r')],
     ) as inst:
-        assert inst.get_grating_wavelength() == pytest.approx(650.0237500000001)
-        assert inst.get_grating_wavelength() == pytest.approx(156.24250000000006)
-        assert inst.get_grating_wavelength() == pytest.approx(937.4925000000001)
+        assert inst.grating_wavelength == pytest.approx(650.0237500000001)
+        assert inst.grating_wavelength == pytest.approx(156.24250000000006)
+        assert inst.grating_wavelength == pytest.approx(937.4925000000001)
 
 
 def test_motor_busy_check():

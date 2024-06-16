@@ -251,14 +251,14 @@ class JY270M(Instrument):
         """
         Reading the wavelength from the grating motor of the spectrometer.
         """
-        return self._lambda_max - ((self._max_steps - self.grating_steps) / self._steps_nm)
+        return self.lambda_0 - ((self._max_steps - self.gsteps) / self._steps_nm)
 
-    @grating_wavelengt.setter
+    @grating_wavelength.setter
     def grating_wavelength(self, wavelength: float):
         """
         ABSOLUTE positioning of the grating motor in wavelength.
         """
-        steps = int(self._max_steps - int((self._lambda_max - wavelength) * self._steps_nm))
+        steps = int(self._max_steps - int((self.lambda_0 - wavelength) * self._steps_nm))
         self.move_grating_steps(steps)
 
     def move_entry_slit_steps(self, nsteps: int):
@@ -296,7 +296,8 @@ class JY270M(Instrument):
         if code != 'o':
             raise IOError(f'Wrong return code from driver, received {code}')
 
-    def get_exit_slit_microns(self):
+    @property
+    def exit_slit_microns(self):
         """
         Reading of the ABSOLUTE position of the exit slit in micrometres.
         """
