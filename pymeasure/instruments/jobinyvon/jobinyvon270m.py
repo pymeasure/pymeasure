@@ -113,13 +113,13 @@ class JY270M(Instrument):
         "Control the relative step displacement of the grating motor.",
         get_process=get_steps_returns)
 
-    entrysteps = Instrument.control(
+    entry_steps = Instrument.control(
         'j0,0\r',
         'k0,0,%d\r',
         "Control the relative step displacement of the entry slit.",
         get_process=get_steps_returns)
 
-    exitsteps = Instrument.control(
+    exit_steps = Instrument.control(
         'j0,2\r',
         'k0,2,%d\r',
         "Control the relative step displacement of the exit slit.",
@@ -265,7 +265,7 @@ class JY270M(Instrument):
         """
         ABSOLUTE positioning of the entry slit motor in number of steps.
         """
-        ans = self.write_read(f'k0,0,{nsteps - self.entrysteps}\r'.encode(), nread=1, timeout=10000)
+        ans = self.write_read(f'k0,0,{nsteps - self.entry_steps}\r'.encode(), nread=1, timeout=10000)
         time.sleep(0.5)
         code = self._get_code(ans)
         if code != 'o':
@@ -276,7 +276,7 @@ class JY270M(Instrument):
         """
         Reading of the ABSOLUTE position of the entrance slit in micrometres.
         """
-        return self.entrysteps / self._slit_steps_micron
+        return self.entry_steps / self._slit_steps_micron
 
     def move_entry_slit_microns(self, microns: float):
         """
@@ -290,7 +290,7 @@ class JY270M(Instrument):
         """
         ABSOLUTE positioning of the exit slit motor in number of steps.
         """
-        ans = self.write_read(f'k0,2,{nsteps - self.exitsteps}\r'.encode(), nread=1, timeout=10000)
+        ans = self.write_read(f'k0,2,{nsteps - self.exit_steps}\r'.encode(), nread=1, timeout=10000)
         time.sleep(0.5)
         code = self._get_code(ans)
         if code != 'o':
@@ -300,7 +300,7 @@ class JY270M(Instrument):
         """
         Reading of the ABSOLUTE position of the exit slit in micrometres.
         """
-        return self.exitsteps / self._slit_steps_micron
+        return self.exit_steps / self._slit_steps_micron
 
     def move_exit_slit_microns(self, microns: float):
         """
