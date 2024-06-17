@@ -560,7 +560,7 @@ class SR830(Instrument):
         if fast:
             self.write("FAST2;STRD")
         else:
-            self.write("FAST0")
+            self.write("FAST0;STRT")
 
     def wait_for_buffer(self, count, has_aborted=lambda: False,
                         timeout=60, timestep=0.01):
@@ -582,6 +582,14 @@ class SR830(Instrument):
         return self.binary_values("TRCB?%d,%d,%d" % (
             channel, start, end - start))
 
+    def get_buffer_frombytes(self, channel = 1, start=0, end=None):
+        """ Acquires the 32 bit floating point data through bytes transfer
+        """
+        if end is None:
+            end = self.buffer_count
+        return self.binary_values("TRCL?%d,%d,%d" % (
+            channel, start, end - start))
+
     def reset_buffer(self):
         self.write("REST")
 
@@ -593,13 +601,18 @@ class SR830(Instrument):
         buffer_size:  Desired minimum buffer length.
         timeout: Timeout in seconds for the waiting/buffer fill period.
         This should be configured approriately if sampling rate is low and buffer size is high.
-        fast: Sets the transfer mode.
+        fast: Sets the transfer mode.  
+        Fast mode 1 or 2 is not supported yet.
         See programming section of the SR830 manual for more detail.
         '''
         self.reset_buffer()
         self.start_buffer(fast)
-        self.wait_for_buffer(buffer_size, timeout=timeout)
-        x_buffer, y_buffer = self.read_buffer_bytes()
+        if fast:
+            time.sleep(buffer_size/self.sample_frequency) #
+            self.pause_buffer()
+        else: 
+            self.wait_for_buffer(buffer_size, timeout=timeout)
+        x_buffer, y_buffer = self.read_buffer_bytes(end = buffer_size)
 
         return x_buffer, y_buffer
 
@@ -616,7 +629,7 @@ class SR830(Instrument):
         '''
         if end == -1 or end > 2**14:
             end = self.buffer_count
-
+        
         self.write(f'TRCL?1, {start}, {end}')
         x_bytes = self.read_bytes(count)
         self.write(f'TRCL?2, {start}, {end}')
