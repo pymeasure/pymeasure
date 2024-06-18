@@ -93,13 +93,3 @@ class DSA815(Instrument):
             'Frequency (GHz)': self.frequencies(len(trace1)) * 1e-9,
             'Amplitude (dBm)': trace1
             })
-    
-
-
-
-    
-    
-
-
-
-
