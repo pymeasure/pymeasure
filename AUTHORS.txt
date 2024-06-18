@@ -81,5 +81,6 @@ Douwe den Blanken
 Till Zürner
 J. A. Wilcox
 Nick James Kirkby
+Johannes Rothmayr
 Konrad Gralher
 David Ziliak

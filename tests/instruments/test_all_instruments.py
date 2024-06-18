@@ -110,6 +110,7 @@ need_init_communication = [
     "HP8116A",
     "IBeamSmart",
     "ANC300Controller",
+    "Keithley2281S",
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [
