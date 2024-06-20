@@ -1,0 +1,7 @@
+#######################
+SR850 Lock-in Amplifier
+#######################
+
+.. autoclass:: pymeasure.instruments.srs.SR850
+    :members:
+    :show-inheritance:
