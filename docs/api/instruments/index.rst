@@ -56,6 +56,7 @@ Instruments by manufacturer:
    novanta/index
    oxfordinstruments/index
    parker/index
+   panasonic/index
    pendulum/index
    proterial/index
    racal/index
