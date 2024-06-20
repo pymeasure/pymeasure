@@ -18,6 +18,7 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    hp8116A
    hp856xx
    hp8657B
+   hp8753E
    hp11713A
    hp437B
    hplegacyinstrument

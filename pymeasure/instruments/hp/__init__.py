@@ -30,6 +30,7 @@ from .hp8116a import HP8116A
 from .hp8657b import HP8657B
 from .hp856Xx import HP8560A
 from .hp856Xx import HP8561B
+from .hp8753e import HP8753E
 from .hp11713a import HP11713A
 from .hp437b import HP437B
 from .hpsystempsu import HP6632A
