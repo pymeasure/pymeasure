@@ -108,8 +108,21 @@ class TraceCommands(Channel):
     measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
         "CALC{{ch}}:PAR{tr}:DEF?",
         "CALC{{ch}}:PAR{tr}:DEF %s",
-        """ """,
+        """
+        Controls the measurement parameter of the trace and channel. If not specifying
+        a scattering parameter, this command must be used with `absolute_measurement_port`
+        for the same trace on the same channel. (string).
+        """,
         cast=str,
+    )
+
+    absolute_measurement_port = Channel.control(
+        "CALC{{ch}}:PAR{tr}:SPOR?",
+        "CALC{{ch}}:PAR{tr}:SPOR %e",
+        """
+        Controls the output port used for absolute measurement (integer).
+        """,
+        cast=int,
     )
 
     marker_position = Instrument.control(
@@ -159,14 +172,22 @@ class ChannelCommands(Channel):
     active_trace = Channel.control(
         "SERV:CHAN{ch}:TRAC:ACT?",
         "CALC{ch}:PAR%d:SEL",
-        """ """,
-        cast=str,
+        """
+        Controls the active trace for a channel. Only displaced traces can be made into
+        being the active trace. If the trace is > the total traces for the channel, set
+        by `total_traces`, this command with not complete and with error (integer).
+        """,
+        cast=int,
     )
 
     total_traces = Channel.control(
         "CALC{ch}:PAR:COUN?",
         "CALC{ch}:PAR:COUN %d",
-        """ """,
+        """
+        Controls the total number of traces for a channel. Up to 16 traces are allowed but
+        could be lower depending on instrument configuration. (integer).
+        """,
+        cast=int,
     )
 
     measurement_conversion = Channel.control(
@@ -176,22 +197,26 @@ class ChannelCommands(Channel):
         For the active trace of channel, select the parameter after conversion using the
         parameter conversion function.
 
-        ===================          =============================================================
-        Function Conversion          Description
-        ===================          =============================================================
-        ZREFlection (preset value)   Specifies the equivalent impedance in reflection measurement.
-        ZTRansmit                    Specifies the equivalent impedance (series) in transmission
-                                     measurement.
-        YREFlection                  Specifies the equivalent admittance in reflection
-                                     measurement.
-        YTRansmit                    Specifies the equivalent admittance (series) in transmission
-                                     measurement.
-        INVersion                    Specifies the inverse S-parameter.
-        ZTSHunt                      Specifies the equivalent impedance (shunt) in transmission
-                                     measurement.
-        YTSHunt                      Specifies the equivalent admittance (shunt) in transmission
-                                     measurement.
-        CONJugation                  Specifies the conjugate.
+        ===========================   ============================================================
+        Function Conversion           Description
+        ===========================   ============================================================
+        ZREF lection (preset value)   Specifies the equivalent impedance in reflection
+                                      measurement.
+        ZTR ansmit                    Specifies the equivalent impedance (series) in transmission
+                                      measurement.
+        YREF lection                  Specifies the equivalent admittance in reflection
+                                      measurement.
+        YTR ansmit                    Specifies the equivalent admittance (series) in transmission
+                                      measurement.
+        INV ersion                    Specifies the inverse S-parameter.
+
+        ZTSH unt                      Specifies the equivalent impedance (shunt) in transmission
+                                      measurement.
+        YTSH unt                      Specifies the equivalent admittance (shunt) in transmission
+                                      measurement.
+        CONJ ugation                  Specifies the conjugate.
+
+        (string).
         """,
         cast=str,
     )
@@ -230,6 +255,7 @@ class ChannelCommands(Channel):
     # """
     # sets/reads out the formatted data array for the active trace of the channel selected
     # """
+    # data_complex 'CALC{1-16}:DATA:FDAT' for active trace
 
     # :CALC{1-16}:DATA:FMEM
     # """
@@ -249,6 +275,37 @@ class ChannelCommands(Channel):
         # get_process=lambda x: [i+1j*j for i,j in zip(x[0::2], x[1::2])],
         # separator=',',
         # command_process=
+    )
+
+    measurement_format = Channel.control(
+        "CALC{ch}:FORM?",
+        "CALC{ch}:FORM %s",
+        """
+        Control the data format of the active trace of a channel. Valid values to use are given
+        below. Use only the upper case letters for a specific format value (string):
+
+        =============   =============================================
+        Value           Description
+        =============   =============================================
+        MLOG arithmic   Specifies the logarithmic magnitude format.
+        PHAS e          Specifies the phase format.
+        GDEL ay         Specifies the group delay format.
+        SLIN ear        Specifies the Smith chart format (Lin/Phase).
+        SLOG arithmic   Specifies the Smith chart format (Log/Phase).
+        SCOM plex       Specifies the Smith chart format (Real/Imag).
+        SMIT h          Specifies the Smith chart format (R+jX).
+        SADM ittance    Specifies the Smith chart format (G+jB).
+        PLIN ear        Specifies the polar format (Lin).
+        PLOG arithmic   Specifies the polar format (Log).
+        POL ar          Specifies the polar format (Re/Im).
+        MLIN ear        Specifies the linear magnitude format.
+        SWR             Specifies the SWR format.
+        REAL            Specifies the real format.
+        IMAG inary      Specifies the imaginary format.
+        UPH ase         Specifies the expanded phase format.
+        PPH ase         Specifies the positive phase format.
+        """,
+        cast=str,
     )
 
     measurement_data_to_memory = Channel.setting(
@@ -388,17 +445,10 @@ class ChannelCommands(Channel):
     # power attenuator 'SOUR{1-16}:POW:ATT'
     # power couple ports 'SOUR{1-16}:POW:PORT:COUP?'
 
-    # data_complex 'CALC{1-16}:DATA:FDAT' for active trace
-
-    # SERVice Commands
-    get_active_channel = Channel.measurement(
-        "SERV:CHAN:ACT?",
-        """ """,
-    )
-
     get_active_trace = Channel.measurement(
         "SERV:CHAN{ch}:TRAC:ACT?",
         """ """,
+        cast=int,
     )
 
     # Redundant Commands
@@ -408,6 +458,8 @@ class ChannelCommands(Channel):
         "OUTP %d",
         """ """,
     )
+
+    # trigger_continuous 'INIT{1-16}:CONT'
 
 
 class KeysightE5071C(Instrument):
@@ -437,21 +489,6 @@ class KeysightE5071C(Instrument):
             name = self.name = f"{self._manu} {self._model} {self._desc}"
         else:
             self.name = name
-
-    marker_1_position = Instrument.control(
-        "CALC1:MARK1:X %e",
-        "CALC1:MARK1:X?",
-        "Control the position of marker 1",
-        cast=float,
-    )
-
-    marker_1_value = Instrument.measurement(
-        "CALC1:MARK1:Y?",
-        """
-        Read value of marker 1. (complex)
-        """,
-        cast=complex,
-    )
 
     id = Instrument.measurement(
         "*IDN?",
@@ -520,7 +557,7 @@ class KeysightE5071C(Instrument):
     # windows 'DISP:SPL' pg 466
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
     # disable display 'DISP:ENAB?' {ON|OFF|0|1}
-    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
+
     # if off you cannot read display
     # update display (used when display is off) 'DISPlay:UPDate:IMMediate'
 
@@ -528,10 +565,8 @@ class KeysightE5071C(Instrument):
     # get marker position
     # get marker value
 
-    # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
-
     # trigger_hold
-    # trigger_continuous 'INIT{1-16}:CONT'
+
     # trigger single 'TRIG:SING'
     # trigger source ':TRIGger[:SEQuence]:SOURce {INTernal|EXTernal|MANual|BUS}?'
     # trigger averaging 'TRIG:AVER'
@@ -543,21 +578,8 @@ class KeysightE5071C(Instrument):
 
     # scan
     # frequencies 'SENS{1-16}:FREQ:DATA?' frequencies of sweep are read out
-    # data_complex 'CALC{1-16}:DATA:FDAT' for active trace
-    # 'CALC{1-16}:DATA:SDAT' read out real/imag data for active trace with corrections
     # scan_single
     # scan
-
-    # emit_beep ':SYST:BEEP:COMP:IMM' Generates a beep
-    # emit beep on completion ':SYST:BEEP:COMP:STAT {ON|OFF|0|1}?'
-    # turns on or off beeper for completion of operation
-    # emit beep on warnings 'SYSTem:BEEPer:WARNing:STATe {ON|OFF|1|0}?'
-
-    # reset
-
-    # date 'SYST:DATE {YEAR},{MONTH},{DAY}?' ie ":SYST:DATE 2002,1,1"
-    # clock 'DISP:CLOC'
-    # 'SYST:TIME {Hour},{Min},{Sec}?'
 
     # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
     # and "SENS{1-16}:CORR:COEF:SAVE"
@@ -568,7 +590,7 @@ class KeysightE5071C(Instrument):
     # 'STAT:OPER:COND?' Reads out the value of the Operation Status Condition Register. (Query only)
     # ':STAT:OPER:ENAB' Sets the value of the Operation Status Enable Register.
     # 'SYST:ERR?'
-
+    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
     # 'SYST:TEMP' read out if warm-up satisfy specifications of VNA
 
     # 'SERV:PORT:COUN?'
@@ -577,6 +599,28 @@ class KeysightE5071C(Instrument):
     # ':SERV:SWE:POIN?'
     # ':SERV:SWE:FREQ:MIN?'
     # ':SERV:SWE:FREQ:MAX?'
+
+    # SERVice Commands
+    get_active_channel = Instrument.measurement(
+        "SERV:CHAN:ACT?",
+        """ """,
+        cast=int,
+    )
+
+    # SYSTem Commands
+
+    # emit_beep ':SYST:BEEP:COMP:IMM' Generates a beep
+    # emit beep on completion ':SYST:BEEP:COMP:STAT {ON|OFF|0|1}?'
+    # turns on or off beeper for completion of operation
+    # emit beep on warnings 'SYSTem:BEEPer:WARNing:STATe {ON|OFF|1|0}?'
+
+    # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
+
+    # reset
+
+    # date 'SYST:DATE {YEAR},{MONTH},{DAY}?' ie ":SYST:DATE 2002,1,1"
+    # clock 'DISP:CLOC'
+    # 'SYST:TIME {Hour},{Min},{Sec}?'
 
     def abort(self):
         """
