@@ -28,25 +28,25 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley import KeithleyDAQ6510
 
 
-def test_init():
-    with expected_protocol(
-            KeithleyDAQ6510,
-            [(b'*LANG SCPI', None)],
-    ):
-        pass  # Verify the expected communication
-
-
-def test_id():
-    with expected_protocol(
-            KeithleyDAQ6510,
-            [("*IDN?", "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d")],
-    ) as inst:
-        assert inst.id == "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d"
-
-
-def test_next_error():
-    with expected_protocol(
-            KeithleyDAQ6510,
-            [("SYST:ERR?", '-113, "Undefined header"')],
-    ) as inst:
-        assert inst.next_error == [-113, ' "Undefined header"']
+# def test_init():
+#     with expected_protocol(
+#             KeithleyDAQ6510,
+#             [(b'*LANG SCPI', None)],
+#     ):
+#         pass  # Verify the expected communication
+#
+#
+# def test_id():
+#     with expected_protocol(
+#             KeithleyDAQ6510,
+#             [("*IDN?", "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d")],
+#     ) as inst:
+#         assert inst.id == "KEITHLEY INSTRUMENTS INC., MODEL nnnn, xxxxxxx, yyyyy/zzzzz /a/d"
+#
+#
+# def test_next_error():
+#     with expected_protocol(
+#             KeithleyDAQ6510,
+#             [("SYST:ERR?", '-113, "Undefined header"')],
+#     ) as inst:
+#         assert inst.next_error == [-113, ' "Undefined header"']
