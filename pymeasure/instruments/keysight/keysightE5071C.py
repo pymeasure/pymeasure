@@ -246,8 +246,6 @@ class ChannelCommands(Channel):
     #     while len(self.traces) < number_of_traces:
     #         self.add_child(Trace, len(self.traces) + 1, collection="traces", prefix="tr_")
 
-    # select active trace "CALC{1-16}:PAR{1-16}:SEL"
-
     # absolute_measurement_source set output port for absolute measurement
     # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
@@ -267,6 +265,9 @@ class ChannelCommands(Channel):
         # "CALC{ch}:DATA:SDAT %e",
         """
         Gets the corrected data array of the active trace for a channel (array of complex).
+
+        Formatted data array values depend on the data format set for the active trace of the
+        channel queried.
         """,
         cast=complex,
         preprocess_reply=lambda x: ",".join(
@@ -325,6 +326,45 @@ class ChannelCommands(Channel):
     )
 
     # SENSe Commands
+
+    # needs to be rewritten to a function
+    # calibration_coefficient = Channel.control(
+    #     "SENS{ch}:CORR:COEF? %s, %i, %i",
+    #     "SENS{ch}:CORR:COEF %s, %i, %i",
+    #     """
+    #     Control the calibration coefficient data for a channel. Requires a tuple in the format of
+    #     `tuple[str, int, int]` for getting the calibration coefficient values or in the format of
+    #     `tuple[str, int, int, list[complex]]` for setting the calibration coefficient.
+
+    #     The first element in the tuple is the coefficient type, being one of the following:
+    #     ES Source match
+    #     ER Reflection tracking
+    #     ED Directivity
+    #     EL Load match
+    #     ET Transmission tracking
+    #     EX Isolation
+
+    #     The second element is the response port (int).
+
+    #     The third element is the stimulus port (int).
+
+    #     The last element is only needed for writing an array of coefficient values to a channel
+    #     (complex).
+
+    #     If the first element is ES Source match, ER Reflection tracking, or ED Directivity, both
+    #     the second and third elements must be the same integer.
+
+    #     If the first element is EL Load match, ET Transmission tracking, or EX Isolation, both
+    #     the second and third elements must be different integers.
+
+    #     Example:
+
+    #     KeysightE5071C.ch_1.calibration_coefficient("EL",1,2)
+
+    #     Returns:
+
+    #     """,
+    #     )
 
     start_frequency = Channel.control(
         "SENS{ch}:FREQ:STAR?",
@@ -530,7 +570,31 @@ class KeysightE5071C(Instrument):
         """ """,
     )
 
-    channels = Instrument.MultiChannelCreator(ChannelCommands, [x + 1 for x in range(16)])
+    channels = Instrument.MultiChannelCreator(
+        ChannelCommands, [x + 1 for x in range(16)], prefix="ch_"
+    )
+
+    # def update_channels(self, number_of_channels=None):
+    #     """Create or remove channels to be correct with the actual number of channels.
+
+    #     :param int number_of_channels: optional, if given defines the desired number of channels.
+    #     """
+    #     if number_of_channels is None:
+    #         number_of_channels = self.number_of_channels
+
+    #     if not hasattr(self, "channels"):
+    #         self.channels = {}
+
+    #     if len(self.channels) == number_of_channels:
+    #         return
+
+    #     # Remove redant channels
+    #     while len(self.channels) > number_of_channels:
+    #         self.remove_child(self.channels[len(self.channels)])
+
+    #     # Remove create new channels
+    #     while len(self.channels) < number_of_channels:
+    #         self.add_child(Trace, len(self.channels) + 1, collection="channels", prefix="ch_")
 
     # channel layout window?
 
