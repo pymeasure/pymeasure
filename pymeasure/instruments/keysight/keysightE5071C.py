@@ -99,12 +99,35 @@ class TraceCommands(Channel):
         if self.get_active_trace() != self.id:
             self.make_active()
 
+    # double nest `{ch}` to have the command use the parent channel
+    # measurement_parameter = Channel.control(
+    #    ":CALC{{ch}}:PAR{tr}:DEF?"
+    # for more examples look at https://github.com/pymeasure/pymeasure/pull/827/files
     # need to ensure the parameter selected is of {S11|S21|S12|S22|A|B|R1|R2}
+
     measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
-        "CALC{ch}:PAR{tr}:DEF?",
-        "CALC{ch}:PAR{tr}:DEF %s",
+        "CALC{{ch}}:PAR{tr}:DEF?",
+        "CALC{{ch}}:PAR{tr}:DEF %s",
         """ """,
         cast=str,
+    )
+
+    marker_position = Instrument.control(
+        "CALC{{ch}}:MARK{tr}:X %e",
+        "CALC{{ch}}:MARK{tr}:X?",
+        """
+        Control the position of marker the marker for a specific channel and trace. (float
+        frequency in Hz)
+        """,
+        cast=float,
+    )
+
+    marker_value = Instrument.measurement(
+        "CALC{{ch}}:MARK{tr}:Y?",
+        """
+        Get value of the marker for a specific channel and trace. (complex)
+        """,
+        cast=complex,
     )
 
     # need trace scale
@@ -146,6 +169,33 @@ class ChannelCommands(Channel):
         """ """,
     )
 
+    measurement_conversion = Channel.control(
+        ":CALC{ch}:CONV:FUNC?",
+        ":CALC{ch}:CONV:FUNC %s",
+        """
+        For the active trace of channel, select the parameter after conversion using the
+        parameter conversion function.
+
+        ===================          =============================================================
+        Function Conversion          Description
+        ===================          =============================================================
+        ZREFlection (preset value)   Specifies the equivalent impedance in reflection measurement.
+        ZTRansmit                    Specifies the equivalent impedance (series) in transmission
+                                     measurement.
+        YREFlection                  Specifies the equivalent admittance in reflection
+                                     measurement.
+        YTRansmit                    Specifies the equivalent admittance (series) in transmission
+                                     measurement.
+        INVersion                    Specifies the inverse S-parameter.
+        ZTSHunt                      Specifies the equivalent impedance (shunt) in transmission
+                                     measurement.
+        YTSHunt                      Specifies the equivalent admittance (shunt) in transmission
+                                     measurement.
+        CONJugation                  Specifies the conjugate.
+        """,
+        cast=str,
+    )
+
     # need total_traces to trigger a function to change the traces
     # available to the channel
 
@@ -173,19 +223,25 @@ class ChannelCommands(Channel):
 
     # select active trace "CALC{1-16}:PAR{1-16}:SEL"
 
-    measuring_parameter = Channel.control(  # {S11|S21|S12|S22|A|B|R1|R2},
-        "CALC{ch}:PAR1:DEF?",
-        "CALC{ch}:PAR1:DEF %s",
-        """ """,
-        cast=str,
-    )
-
     # absolute_measurement_source set output port for absolute measurement
     # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
+    # CALC{1-16}:DATA:FDAT
+    # """
+    # sets/reads out the formatted data array for the active trace of the channel selected
+    # """
+
+    # :CALC{1-16}:DATA:FMEM
+    # """
+    # For the active trace of channel sets/reads out the formatted memory array.
+    # """
+
     measurement_data = Channel.measurement(
         "CALC{ch}:DATA:SDAT?",  # read out real/imag data for active trace with corrections
-        """ """,
+        # "CALC{ch}:DATA:SDAT %e",
+        """
+        Gets the corrected data array of the active trace for a channel (array of complex).
+        """,
         cast=complex,
         preprocess_reply=lambda x: ",".join(
             [f"{float(i)}+{float(j)}j" for i, j in zip(x.split(",")[0::2], x.split(",")[1::2])],
@@ -195,20 +251,13 @@ class ChannelCommands(Channel):
         # command_process=
     )
 
-    # needs get and set functions
-    marker_position = Instrument.control(
-        "CALC{ch}:MARK1:X %e",
-        "CALC{ch}:MARK1:X?",
-        "Control the position of marker 1",
-        cast=float,
-    )
-
-    marker_1_value = Instrument.measurement(
-        "CALC{ch}:MARK1:Y?",
+    measurement_data_to_memory = Channel.setting(
+        "CALC{ch}:MATH:MEM",
+        # "",
         """
-        Read value of marker 1. (complex)
+        Sets a copy the measurement data at the execution to the memory of the channel's active
+        trace. (no input).
         """,
-        cast=complex,
     )
 
     # DISPlay Commands
@@ -529,4 +578,8 @@ class KeysightE5071C(Instrument):
     # ':SERV:SWE:FREQ:MIN?'
     # ':SERV:SWE:FREQ:MAX?'
 
-    # 'ABOR' abort measurement and changes all channels to idle state
+    def abort(self):
+        """
+        Sets the trigger sequence for all channels to idle state.
+        """
+        self.write(":ABOR")
