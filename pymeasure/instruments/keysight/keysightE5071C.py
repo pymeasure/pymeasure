@@ -92,17 +92,6 @@ class TraceCommands(Channel):
     # these functions will allow the option to query active channel, trace, and total traces enabled
     # or trust the function to keep track of them. Hoping this speeds up operations.
 
-    def get_active_channel(self):
-        # get active channel from parent
-        return self.parent.get_active_channel
-
-    def get_active_trace(self):
-        # get active trace from parent
-        return self.parent.active_trace
-
-    def get_total_traces(self):
-        return self.parent.total_traces
-
     def make_active(self):
         self.parent.active_trace = self.id
 
@@ -111,12 +100,12 @@ class TraceCommands(Channel):
         Check that the number of traces for the channel is greater than this trace id,
         and that the active trace is this one.
         """
-        if int(self.id) > self.get_total_traces():
+        if int(self.id) > self.parent.total_traces:  # pylint: disable=consider-using-max-builtin
             self.parent.total_traces = int(self.id)
 
         # check parent channel has traces added to it to match its total number of traces
 
-        return self.get_active_trace() == self.id
+        return self.parent.active_trace == self.id
 
     # double nest `{ch}` to have the command use the parent channel
     # measurement_parameter = Channel.control(
@@ -144,9 +133,105 @@ class TraceCommands(Channel):
         cast=int,
     )
 
+    # need trace scale
+
+    # need trace divisions
+
+    # need trace units
+
+    # need trace format
+    # measurement_format = Channel.control(
+    #     "CALC{ch}:FORM?",
+    #     "CALC{ch}:FORM %s",
+    #     """
+    #     Control the data format of the active trace of a channel. Valid values to use are given
+    #     below (case insensitive string):
+
+    #     =======================   =============   =============================================
+    #     Value                     Format Sent     Description
+    #     =======================   =============   =============================================
+    #     LOGARITHMIC MAGNITUDE     MLOG            Specifies the logarithmic magnitude format.
+    #     PHASE                     PHAS            Specifies the phase format.
+    #     GROUP DELAY               GDEL            Specifies the group delay format.
+    #     SMITH CHART LINEAR        SLIN            Specifies the Smith chart format (Lin/Phase).
+    #     SMITH CHART LOGARITHMIC   SLOG            Specifies the Smith chart format (Log/Phase).
+    #     SMITH CHART               SCOM            Specifies the Smith chart format (Real/Imag).
+    #     SMITH CHART COMPLEX       SCOM            Specifies the Smith chart format (Real/Imag).
+    #     SMITH CHART IMPEDANCE     SMIT h          Specifies the Smith chart format (R+jX).
+    #     SMITH CHART ADMITTANCE    SADM ittance    Specifies the Smith chart format (G+jB).
+    #     POLAR LINEAR              PLIN ear        Specifies the polar format (Lin).
+    #     POLAR LOGARITHMIC         PLOG arithmic   Specifies the polar format (Log).
+    #     POLAR                     POL ar          Specifies the polar format (Re/Im).
+    #     POLAR COMPLEX             POL ar          Specifies the polar format (Re/Im).
+    #     LINEAR MAGNITUDE          MLIN ear        Specifies the linear magnitude format.
+    #     SWR                       SWR             Specifies the SWR format.
+    #     REAL                      REAL            Specifies the real format.
+    #     IMAGINARY                 IMAG inary      Specifies the imaginary format.
+    #     PHASE EXPANDED            UPH ase         Specifies the expanded phase format.
+    #     PHASE POSITIVE            PPH ase         Specifies the positive phase format.
+
+    #     """,
+    #     cast=str,
+    #     values=MEASUREMENT_FORMAT,
+    #     map_values=True,
+    #     set_process=lambda x: x.upper(),
+    # )
+
+    @property
+    def measurement_format(self):
+        """
+        Control the data format of the active trace of a channel. Valid values to use are given
+        below (case insensitive string):
+
+        =======================   =============   ===============================
+        Value                     Format Sent     Description
+        =======================   =============   ===============================
+        LOGARITHMIC MAGNITUDE     MLOG            Logarithmic magnitude format.
+        PHASE                     PHAS            Phase format.
+        GROUP DELAY               GDEL            Group delay format.
+        SMITH CHART LINEAR        SLIN            Smith chart format (Lin/Phase).
+        SMITH CHART LOGARITHMIC   SLOG            Smith chart format (Log/Phase).
+        SMITH CHART               SCOM            Smith chart format (Real/Imag).
+        SMITH CHART COMPLEX       SCOM            Smith chart format (Real/Imag).
+        SMITH CHART IMPEDANCE     SMIT h          Smith chart format (R+jX).
+        SMITH CHART ADMITTANCE    SADM ittance    Smith chart format (G+jB).
+        POLAR LINEAR              PLIN ear        Polar format (Lin).
+        POLAR LOGARITHMIC         PLOG arithmic   Polar format (Log).
+        POLAR                     POL ar          Polar format (Re/Im).
+        POLAR COMPLEX             POL ar          Polar format (Re/Im).
+        LINEAR MAGNITUDE          MLIN ear        Linear magnitude format.
+        SWR                       SWR             SWR format.
+        REAL                      REAL            Real format.
+        IMAGINARY                 IMAG inary      Imaginary format.
+        PHASE EXPANDED            UPH ase         Expanded phase format.
+        PHASE POSITIVE            PPH ase         Positive phase format.
+
+        """
+        if not self.is_active():
+            self.make_active()
+
+        return self.parent.measurement_format
+
+    @measurement_format.setter
+    def measurement_format(self, value):
+        # check if trace is active and set trace to be active if not
+        if not self.is_active():
+            self.make_active()
+
+        self.parent.measurement_format = value
+
+
+# need marker class
+
+
+class MarkerCommands(Channel):
+    """
+    Commands to control markers for a specific channel.
+    """
+
     marker_position = Instrument.control(
-        "CALC{{ch}}:MARK{tr}:X %e",
-        "CALC{{ch}}:MARK{tr}:X?",
+        "CALC{{ch}}:MARK{marker}:X %e",
+        "CALC{{ch}}:MARK{marker}:X?",
         """
         Control the position of marker the marker for a specific channel and trace. (float
         frequency in Hz)
@@ -155,23 +240,19 @@ class TraceCommands(Channel):
     )
 
     marker_value = Instrument.measurement(
-        "CALC{{ch}}:MARK{tr}:Y?",
+        "CALC{{ch}}:MARK{marker}:Y?",
         """
         Get value of the marker for a specific channel and trace. (complex)
         """,
         cast=complex,
     )
 
-    # need trace scale
+    # show marker
 
-    # need trace divisions
+    # hide marker
 
-    # need trace units
+    # marker type
 
-    # need trace format
-
-
-# need marker class
 
 # need window class
 
@@ -262,6 +343,31 @@ class ChannelCommands(Channel):
     #     while len(self.traces) < number_of_traces:
     #         self.add_child(Trace, len(self.traces) + 1, collection="traces", prefix="tr_")
 
+    # need total_markers to trigger a function to change the traces
+    # available to the channel
+
+    # def update_markers(self, number_of_markers=None):
+    #     """Create or remove markers to be correct with the actual number of markers.
+
+    #     :param int number_of_markers: optional, if given defines the desired number of markers.
+    #     """
+    #     if number_of_markers is None:
+    #         number_of_markers = self.number_of_markers
+
+    #     if not hasattr(self, "markers"):
+    #         self.markers = {}
+
+    #     if len(self.markers) == number_of_markers:
+    #         return
+
+    #     # Remove redant channels
+    #     while len(self.markers) > number_of_markers:
+    #         self.remove_child(self.markers[len(self.markers)])
+
+    #     # Remove create new channels
+    #     while len(self.markers) < number_of_markers:
+    #         self.add_child(Trace, len(self.markers) + 1, collection="markers", prefix="marker_")
+
     # absolute_measurement_source set output port for absolute measurement
     # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
@@ -280,10 +386,64 @@ class ChannelCommands(Channel):
         "CALC{ch}:DATA:SDAT?",  # read out real/imag data for active trace with corrections
         # "CALC{ch}:DATA:SDAT %e",
         """
-        Gets the corrected data array of the active trace for a channel (array of complex).
+        Gets the corrected scattering parameter array of the active trace for a channel by
+        performing error correction, port extension compensation (calibration), and fixture
+        simulator operations on the raw measured data specified for the trace of each channel if
+        enabled (array of complex).
+
+        `measurement_data` always returns the real/imaginary complex number array. To have the data
+        formated, use `formatted_measurement_data` instead.
 
         Formatted data array values depend on the data format set for the active trace of the
         channel queried.
+        """,
+        cast=complex,
+        preprocess_reply=lambda x: ",".join(
+            [f"{float(i)}+{float(j)}j" for i, j in zip(x.split(",")[0::2], x.split(",")[1::2])],
+        ),
+        # get_process=lambda x: [i+1j*j for i,j in zip(x[0::2], x[1::2])],
+        # separator=',',
+        # command_process=
+    )
+
+    formatted_measurement_data = Channel.measurement(
+        "CALC{ch}:DATA:FDAT?",  # read out real/imag data for active trace with corrections
+        # "CALC{ch}:DATA:SDAT %e",
+        """
+        Gets a formatted data array contains the formatted data (values displayed on VNA) obtained
+        by performing data math operations, measurement parameter conversion, and smoothing on a
+        particular corrected data array. Regardless of the data format, it contains two data
+        elements per measurement point as shown in the following table (array of complex).
+
+        `formatted_measurement_data` always returns a complex number array based on the format set
+        by using `measurement_format` and the currently active trace for the channel.
+
+        ===================     ==================================   ========================
+        Data format             Data element (real)                  Data element (imaginary)
+        ===================     ==================================   ========================
+        LOGARITHMIC MAGNITUDE   Log magnitude                        Always 0
+        PHASE                   Phase                                Always 0
+        GROUP DELAY             Group delay                          Always 0
+        SMITH CHART LINEAR      Linear magnitude                     Phase
+        SMITH CHART LOGARITHMIC log magnitude                        Phase
+        SMITH CHART             Real part of a complex number        Imaginary part of a complex
+                                                                     number
+        SMITH CHART COMPLEX     Real part of a complex number        Imaginary part of a complex
+                                                                     number
+        SMITH CHART IMPEDANCE   Resistance                           Reactance
+        SMITH CHART ADMITTANCE  Conductance                          Susceptance
+        POLAR LINEAR            Linear magnitude                     Phase
+        POLAR LOGARITHMIC       log magnitude                        Phase
+        POLAR                   Real part of a complex number        Imaginary part of a complex
+                                                                     number
+        POLAR COMPLEX           Real part of a complex number        Imaginary part of a complex
+                                                                     number
+        LINEAR MAGNITUDE        Linear magnitude                     Always 0
+        SWR                     SWR                                  Always 0
+        REAL                    Real part of a complex number        Always 0
+        IMAGINARY               Imaginary part of a complex number   Always 0
+        PHASE EXPANDED          Expanded phase                       Always 0
+        PHASE POSITIVE          Phase                                Always 0
         """,
         cast=complex,
         preprocess_reply=lambda x: ",".join(
@@ -301,28 +461,28 @@ class ChannelCommands(Channel):
         Control the data format of the active trace of a channel. Valid values to use are given
         below (case insensitive string):
 
-        =======================   =============   =============================================
+        =======================   =============   ===============================
         Value                     Format Sent     Description
-        =======================   =============   =============================================
-        LOGARITHMIC MAGNITUDE     MLOG            Specifies the logarithmic magnitude format.
-        PHASE                     PHAS            Specifies the phase format.
-        GROUP DELAY               GDEL            Specifies the group delay format.
-        SMITH CHART LINEAR        SLIN            Specifies the Smith chart format (Lin/Phase).
-        SMITH CHART LOGARITHMIC   SLOG            Specifies the Smith chart format (Log/Phase).
-        SMITH CHART               SCOM            Specifies the Smith chart format (Real/Imag).
-        SMITH CHART COMPLEX       SCOM            Specifies the Smith chart format (Real/Imag).
-        SMITH CHART IMPEDANCE     SMIT h          Specifies the Smith chart format (R+jX).
-        SMITH CHART ADMITTANCE    SADM ittance    Specifies the Smith chart format (G+jB).
-        POLAR LINEAR              PLIN ear        Specifies the polar format (Lin).
-        POLAR LOGARITHMIC         PLOG arithmic   Specifies the polar format (Log).
-        POLAR                     POL ar          Specifies the polar format (Re/Im).
-        POLAR COMPLEX             POL ar          Specifies the polar format (Re/Im).
-        LINEAR MAGNITUDE          MLIN ear        Specifies the linear magnitude format.
-        SWR                       SWR             Specifies the SWR format.
-        REAL                      REAL            Specifies the real format.
-        IMAGINARY                 IMAG inary      Specifies the imaginary format.
-        PHASE EXPANDED            UPH ase         Specifies the expanded phase format.
-        PHASE POSITIVE            PPH ase         Specifies the positive phase format.
+        =======================   =============   ===============================
+        LOGARITHMIC MAGNITUDE     MLOG            Logarithmic magnitude format.
+        PHASE                     PHAS            Phase format.
+        GROUP DELAY               GDEL            Group delay format.
+        SMITH CHART LINEAR        SLIN            Smith chart format (Lin/Phase).
+        SMITH CHART LOGARITHMIC   SLOG            Smith chart format (Log/Phase).
+        SMITH CHART               SCOM            Smith chart format (Real/Imag).
+        SMITH CHART COMPLEX       SCOM            Smith chart format (Real/Imag).
+        SMITH CHART IMPEDANCE     SMIT h          Smith chart format (R+jX).
+        SMITH CHART ADMITTANCE    SADM ittance    Smith chart format (G+jB).
+        POLAR LINEAR              PLIN ear        Polar format (Lin).
+        POLAR LOGARITHMIC         PLOG arithmic   Polar format (Log).
+        POLAR                     POL ar          Polar format (Re/Im).
+        POLAR COMPLEX             POL ar          Polar format (Re/Im).
+        LINEAR MAGNITUDE          MLIN ear        Linear magnitude format.
+        SWR                       SWR             SWR format.
+        REAL                      REAL            Real format.
+        IMAGINARY                 IMAG inary      Imaginary format.
+        PHASE EXPANDED            UPH ase         Expanded phase format.
+        PHASE POSITIVE            PPH ase         Positive phase format.
 
         """,
         cast=str,
