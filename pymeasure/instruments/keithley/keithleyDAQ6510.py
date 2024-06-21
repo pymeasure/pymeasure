@@ -45,16 +45,6 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
             **kwargs
         )
 
-    open_channel = Instrument.setting(
-        ":ROUT:OPEN (@%d)",
-        """Set a single channel to open."""
-    )
-
-    close_channel = Instrument.setting(
-        ":ROUT:CLOS (@%d)",
-        """Set a single channel to closed."""
-    )
-
     def no_errors(self):
         """
         Check to see if the instrument has any errors returned or not.
@@ -73,6 +63,22 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         self.open_channels([134, 135])
         self.close_channels([133])
         return self.ask(":ROUT:CLOS?") == "(@133)\n"
+
+    def open_channel(self, channel):
+        """
+        Set a single channel to open.
+
+        :param channel: Channel to be set to open.
+        """
+        self.write(f":ROUT:OPEN (@{channel})")
+
+    def close_channel(self, channel):
+        """
+        Set a single channel to closed.
+
+        :param channel: Channel to be set to closed.
+        """
+        self.write(f":ROUT:CLOS (@{channel})")
 
     def open_channels(self, channel_list):
         """
