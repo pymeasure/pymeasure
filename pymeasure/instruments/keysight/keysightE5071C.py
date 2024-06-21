@@ -707,6 +707,8 @@ class ChannelCommands(Channel):
 
     # trigger_continuous 'INIT{1-16}:CONT'
 
+    # Traces
+
 
 class KeysightE5071C(Instrument):
     """
@@ -808,32 +810,27 @@ class KeysightE5071C(Instrument):
     # ':SERV:CHAN:ACT?' query only read out of active channel
     # ':SERV:CHAN{1-16}:TRAC:ACT?' query only read out of active trace for channel
 
-    # select active trace "CALC{1-16}:PAR{1-16}:SEL"
     # select active channel "DISP:WIND{1-16}:ACT"
-
-    # ':SERV:CHAN:ACT?' query only read out of active channel
-    # ':SERV:CHAN{1-16}:TRAC:ACT?' query only read out of active trace for channel
-
-    # select active channel "DISP:WIND{1-16}:ACT"
-
-    # traces
-
-    # auto scale pg 481
-    # divisions 'DISP:WIND{1-16}:TRAC{1-16}:Y:AUTO'
-    # REF POS
-    # REF Value
-    # Scale/div
 
     # windows 'DISP:SPL' pg 466
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
+
     # disable display 'DISP:ENAB?' {ON|OFF|0|1}
+
+    # Display
+
+    display_enabled = Instrument.control(
+        "DISP:ENAB?",
+        "DISP:ENAB %i",
+        """
+        Control if the display state (boolean).
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
 
     # if off you cannot read display
     # update display (used when display is off) 'DISPlay:UPDate:IMMediate'
-
-    # markers
-    # get marker position
-    # get marker value
 
     # trigger_hold
 
@@ -847,7 +844,7 @@ class KeysightE5071C(Instrument):
     # options
 
     # scan
-    # frequencies 'SENS{1-16}:FREQ:DATA?' frequencies of sweep are read out
+
     # scan_single
     # scan
 
@@ -863,7 +860,14 @@ class KeysightE5071C(Instrument):
     # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
     # 'SYST:TEMP' read out if warm-up satisfy specifications of VNA
 
-    # 'SERV:PORT:COUN?'
+    port_count = Instrument.measurement(
+        "SERV:PORT:COUN?",
+        """
+        Get the total number of ports on VNA (integer).
+        """,
+        cast=int,
+    )
+
     # ':SERV:CHAN:COUN?'
     # ':SERV:CHAN:TRAC:COUN?'
     # ':SERV:SWE:POIN?'
@@ -871,9 +875,11 @@ class KeysightE5071C(Instrument):
     # ':SERV:SWE:FREQ:MAX?'
 
     # SERVice Commands
-    get_active_channel = Instrument.measurement(
+    active_channel = Instrument.measurement(
         "SERV:CHAN:ACT?",
-        """ """,
+        """
+        Get the channel that is currently active (integer).
+        """,
         cast=int,
     )
 
