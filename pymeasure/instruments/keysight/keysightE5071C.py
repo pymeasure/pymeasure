@@ -66,6 +66,7 @@ MEASUREMENT_FORMAT = {
     "POLAR LINEAR": "PLIN",
     "POLAR LOGARITHMIC": "PLOG",
     "POLAR": "POL",
+    "POLAR COMPLEX": "POL",
     "LINEAR MAGNITUDE": "MLIN",
     "SWR": "SWR",
     "REAL": "REAL",
@@ -305,28 +306,31 @@ class ChannelCommands(Channel):
         "CALC{ch}:FORM %s",
         """
         Control the data format of the active trace of a channel. Valid values to use are given
-        below. Use only the upper case letters for a specific format value (string):
+        below (case insensitive string):
 
-        =============   =============================================
-        Value           Description
-        =============   =============================================
-        MLOG arithmic   Specifies the logarithmic magnitude format.
-        PHAS e          Specifies the phase format.
-        GDEL ay         Specifies the group delay format.
-        SLIN ear        Specifies the Smith chart format (Lin/Phase).
-        SLOG arithmic   Specifies the Smith chart format (Log/Phase).
-        SCOM plex       Specifies the Smith chart format (Real/Imag).
-        SMIT h          Specifies the Smith chart format (R+jX).
-        SADM ittance    Specifies the Smith chart format (G+jB).
-        PLIN ear        Specifies the polar format (Lin).
-        PLOG arithmic   Specifies the polar format (Log).
-        POL ar          Specifies the polar format (Re/Im).
-        MLIN ear        Specifies the linear magnitude format.
-        SWR             Specifies the SWR format.
-        REAL            Specifies the real format.
-        IMAG inary      Specifies the imaginary format.
-        UPH ase         Specifies the expanded phase format.
-        PPH ase         Specifies the positive phase format.
+        =======================   =============   =============================================
+        Value                     Format Sent     Description
+        =======================   =============   =============================================
+        LOGARITHMIC MAGNITUDE     MLOG            Specifies the logarithmic magnitude format.
+        PHASE                     PHAS            Specifies the phase format.
+        GROUP DELAY               GDEL            Specifies the group delay format.
+        SMITH CHART LINEAR        SLIN            Specifies the Smith chart format (Lin/Phase).
+        SMITH CHART LOGARITHMIC   SLOG            Specifies the Smith chart format (Log/Phase).
+        SMITH CHART               SCOM            Specifies the Smith chart format (Real/Imag).
+        SMITH CHART COMPLEX       SCOM            Specifies the Smith chart format (Real/Imag).
+        SMITH CHART IMPEDANCE     SMIT h          Specifies the Smith chart format (R+jX).
+        SMITH CHART ADMITTANCE    SADM ittance    Specifies the Smith chart format (G+jB).
+        POLAR LINEAR              PLIN ear        Specifies the polar format (Lin).
+        POLAR LOGARITHMIC         PLOG arithmic   Specifies the polar format (Log).
+        POLAR                     POL ar          Specifies the polar format (Re/Im).
+        POLAR COMPLEX             POL ar          Specifies the polar format (Re/Im).
+        LINEAR MAGNITUDE          MLIN ear        Specifies the linear magnitude format.
+        SWR                       SWR             Specifies the SWR format.
+        REAL                      REAL            Specifies the real format.
+        IMAGINARY                 IMAG inary      Specifies the imaginary format.
+        PHASE EXPANDED            UPH ase         Specifies the expanded phase format.
+        PHASE POSITIVE            PPH ase         Specifies the positive phase format.
+
         """,
         cast=str,
         values=MEASUREMENT_FORMAT,
