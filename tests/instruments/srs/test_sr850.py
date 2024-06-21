@@ -75,8 +75,6 @@ def test_input_gain_setter():
 @pytest.mark.parametrize("comm_pairs, value", (
     ([(b'IGAN?', b'0\n')],
      '1 MOhm'),
-#     ([(b'IGAN?', b'0\n')],
-#      '1 MOhm'),
 ))
 def test_input_gain_getter(comm_pairs, value):
     with expected_protocol(

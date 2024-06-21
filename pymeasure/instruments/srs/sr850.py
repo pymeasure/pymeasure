@@ -126,20 +126,9 @@ class SR850(sr830.SR830):
         self.write("OEXP %i,%.2f,%i" % (channel, percent, expand))
     
     def quick_range(self):
-        """ While the magnitude is out of range, increase
-        the sensitivity by one setting
+        """ not yet implemented
         """
-        self.write('LIAE 2,1')
-        while self.is_out_of_range():
-            self.write("SENS%d" % (int(self.ask("SENS?")) + 1))
-            time.sleep(5.0 * self.time_constant)
-            self.write("*CLS")
-        # Set the range as low as possible
-        newsensitivity = 1.15 * abs(self.magnitude)
-        # FIXME - double check this
-        if self.input_gain in ('1 MOhm', '100 MOhm'):
-            newsensitivity = newsensitivity * 1e6
-        self.sensitivity = newsensitivity
+        raise NotImplementedError()
 
     def snap(self, val1="X", val2="Y", *vals):
         """ Method that records and retrieves 2 to 6 parameters at a single
