@@ -105,6 +105,10 @@ class TraceCommands(Channel):
 
         # check parent channel has traces added to it to match its total number of traces
 
+        # check trace is shown
+        if self.displayed is not True:
+            self.displayed = True
+
         return self.parent.active_trace == self.id
 
     # double nest `{ch}` to have the command use the parent channel
@@ -133,7 +137,22 @@ class TraceCommands(Channel):
         cast=int,
     )
 
-    # need trace scale
+    displayed = Channel.control(
+        "DISP:WIND{{ch}}:TRAC{tr}:STAT?",
+        "DISP:WIND{{ch}}:TRAC{tr}:STAT %b",
+        """
+        Controls the trace being displayed on the screen (boolean).
+        """,
+        cast=bool,
+    )
+
+    # :DISP:WIND{1-16}:TRAC{1-16}:STAT
+
+    # trace scale
+    # :DISP:WIND{1-16}:TRAC{1-16}:Y:PDIV
+
+    # trace auto scale
+    # :DISP:WIND{1-16}:TRAC{1-16}:Y:AUTO
 
     # need trace divisions
 
