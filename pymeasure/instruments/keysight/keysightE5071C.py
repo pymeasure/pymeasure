@@ -275,6 +275,10 @@ class MarkerCommands(Channel):
 
 # need window class (each channel gets a window)
 
+# Sets the number of divisions of all the graphs of a channel
+# valid value 4-30 preset to 10
+# :DISP:WIND{1-16}:Y:DIV
+
 # need channel window class (channel window gets again divided into subwindows)
 
 
@@ -881,6 +885,19 @@ class KeysightE5071C(Instrument):
     # emit beep on warnings 'SYSTem:BEEPer:WARNing:STATe {ON|OFF|1|0}?'
 
     # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
+
+    # :FORM:BORD NORMal or SWAPped
+    # data transfer format is set to the binary transfer format, sets the transfer order of
+    # each byte in data (byte order)
+    # Normal MSB first
+    # Swapped LSB first
+
+    # :FORM:DATA
+    # Specifies the format of data transfered
+    # Description
+    # ASCii (preset value) Specifies the ASCII transfer format.
+    # REAL Specifies the IEEE 64-bit floating point binary transfer format.
+    # REAL32 Specifies the IEEE 32-bit floating point binary transfer format
 
     # reset
 
