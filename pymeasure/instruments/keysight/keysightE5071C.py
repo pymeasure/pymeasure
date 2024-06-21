@@ -709,6 +709,9 @@ class ChannelCommands(Channel):
 
     # Traces
 
+    # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
+    # and "SENS{1-16}:CORR:COEF:SAVE"
+
 
 class KeysightE5071C(Instrument):
     """
@@ -848,8 +851,6 @@ class KeysightE5071C(Instrument):
     # scan_single
     # scan
 
-    # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
-    # and "SENS{1-16}:CORR:COEF:SAVE"
     # save image of screen ":MMEM:STOR:IMAG" pg 512
 
     # error stuff
@@ -892,18 +893,18 @@ class KeysightE5071C(Instrument):
 
     # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
 
-    # :FORM:BORD NORMal or SWAPped
-    # data transfer format is set to the binary transfer format, sets the transfer order of
-    # each byte in data (byte order)
-    # Normal MSB first
-    # Swapped LSB first
-
     # :FORM:DATA
     # Specifies the format of data transfered
     # Description
     # ASCii (preset value) Specifies the ASCII transfer format.
     # REAL Specifies the IEEE 64-bit floating point binary transfer format.
     # REAL32 Specifies the IEEE 32-bit floating point binary transfer format
+
+    # :FORM:BORD NORMal or SWAPped
+    # data transfer format is set to the binary transfer format, sets the transfer order of
+    # each byte in data (byte order)
+    # Normal MSB first
+    # Swapped LSB first
 
     # reset
 
