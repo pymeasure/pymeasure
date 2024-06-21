@@ -254,7 +254,9 @@ class MarkerCommands(Channel):
     # marker type
 
 
-# need window class
+# need window class (each channel gets a window)
+
+# need channel window class (channel window gets again divided into subwindows)
 
 
 class ChannelCommands(Channel):
