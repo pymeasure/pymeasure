@@ -44,6 +44,7 @@ Instruments by manufacturer:
    hp/index
    inficon/index
    ipgphotonics/index
+   jobinyvon/index
    keithley/index
    kepco/index
    keysight/index

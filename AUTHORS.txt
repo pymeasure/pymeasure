@@ -67,12 +67,16 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Daniel Perales Rios
+Maël Le Blanc
 Armindo Pinto
 Frank Wu
 Heinz-Alexander Fütterer
 Per-Olof Svensson
 Karl Komierowski
 Alec Vercruysse
+Daniel Perales Rios
+Maël Le Blanc
 Matthew Zenaldin
 Canyon Clark
 Connor Carr
