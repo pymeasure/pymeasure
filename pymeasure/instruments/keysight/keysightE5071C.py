@@ -39,19 +39,6 @@ log.addHandler(logging.NullHandler())
 # Instrument.setting
 
 MEASURING_PARAMETERS = ["S11", "S21", "S12", "S22", "A", "B", "R1", "R2"]
-# MEASUREMENT_FORMAT = [
-#     "SMITH",
-#     "LOGMAG",
-#     "PHASE",
-#     "REAL",
-#     "IMAG",
-#     "GROUP DELAY",
-#     "POLAR",
-#     "LINMAG",
-#     "POS PHASE",
-#     "EXPAND PHASE",
-#     "SWR",
-# ]
 
 MEASUREMENT_FORMAT = {
     "LOGARITHMIC MAGNITUDE": "MLOG",
@@ -248,29 +235,39 @@ class MarkerCommands(Channel):
     Commands to control markers for a specific channel.
     """
 
-    marker_position = Instrument.control(
-        "CALC{{ch}}:MARK{marker}:X %e",
-        "CALC{{ch}}:MARK{marker}:X?",
+    position = Instrument.control(
+        "CALC{{ch}}:MARK{m}:X %e",
+        "CALC{{ch}}:MARK{m}:X?",
         """
-        Control the position of marker the marker for a specific channel and trace. (float
-        frequency in Hz)
+        Control the position of marker the marker for a specific channel (float frequency in Hz).
         """,
         cast=float,
     )
 
-    marker_value = Instrument.measurement(
-        "CALC{{ch}}:MARK{marker}:Y?",
+    value = Instrument.measurement(
+        "CALC{{ch}}:MARK{m}:Y?",
         """
-        Get value of the marker for a specific channel and trace. (complex)
+        Get value of the marker for the active trace. (complex).
         """,
         cast=complex,
     )
 
-    # show marker
+    enabled = Channel.control(
+        "CALC{{ch}}:MARK{m}?",
+        "CALC{{ch}}:MARK{m} %i",
+        """
+        Control the display of a marker on a channel (boolean).
+        """,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
 
-    # hide marker
-
-    # marker type
+    active = Channel.setting(
+        "CALC{{ch}}:MARK{m}:ACT",
+        """
+        Sets the marker for the active trace to be the active marker (boolean).
+        """,
+    )
 
 
 # need window class (each channel gets a window)
@@ -391,7 +388,10 @@ class ChannelCommands(Channel):
 
     #     # Remove create new channels
     #     while len(self.markers) < number_of_markers:
-    #         self.add_child(Trace, len(self.markers) + 1, collection="markers", prefix="marker_")
+    #         self.add_child(Trace, len(self.markers) + 1, collection="markers", prefix="m_")
+
+    # need another function for the reference marker (number 10) to show, position, and read value
+    # for
 
     # absolute_measurement_source set output port for absolute measurement
     # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
