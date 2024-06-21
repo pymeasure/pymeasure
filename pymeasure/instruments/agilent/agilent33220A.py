@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set,\
     strict_range, joined_validators
 from time import time
@@ -42,7 +42,7 @@ def capitalize_string(string: str, *args, **kwargs):
 string_validator = joined_validators(capitalize_string, strict_discrete_set)
 
 
-class Agilent33220A(Instrument):
+class Agilent33220A(SCPIUnknownMixin, Instrument):
     """Represents the Agilent 33220A Arbitrary Waveform Generator.
 
     .. code-block:: python
@@ -199,7 +199,7 @@ class Agilent33220A(Instrument):
 
     pulse_transition = Instrument.control(
         "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %g",
-        """ A floating point property that controls the the edge time in
+        """ A floating point property that controls the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between
         5 ns to 100 ns. The transition time has to be smaller than

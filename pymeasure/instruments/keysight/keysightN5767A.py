@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 from pymeasure.adapters import VISAAdapter
@@ -34,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeysightN5767A(Instrument):
+class KeysightN5767A(SCPIUnknownMixin, Instrument):
     """ Represents the Keysight N5767A Power supply
     interface for interacting with the instrument.
     """
@@ -43,15 +43,15 @@ class KeysightN5767A(Instrument):
     ###############
     current_range = Instrument.control(
         ":CURR?", ":CURR %g",
-        """ A floating point property that controls the DC current range in
+        """Control the DC current range in
         Amps, which can take values from 0 to 25 A.
-        Auto-range is disabled when this property is set. """,
+        Auto-range is disabled when this property is set. (float)""",
         validator=truncated_range,
         values=[0, 25],
     )
 
     current = Instrument.measurement(":MEAS:CURR?",
-                                     """ Reads a setting current in Amps. """
+                                     """ Get current in Amps. """
                                      )
 
     ###############
@@ -59,7 +59,7 @@ class KeysightN5767A(Instrument):
     ###############
     voltage_range = Instrument.control(
         ":VOLT?", ":VOLT %g V",
-        """ A floating point property that controls the DC voltage range in
+        """ Control the DC voltage range in
         Volts, which can take values from 0 to 60 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -67,14 +67,14 @@ class KeysightN5767A(Instrument):
     )
 
     voltage = Instrument.measurement("MEAS:VOLT?",
-                                     """ Reads a DC voltage measurement in Volts. """
+                                     """ Get a DC voltage measurement in Volts. """
                                      )
 
     #################
     # _status (0/1) #
     #################
     _status = Instrument.measurement(":OUTP?",
-                                     """ Read power supply current output status. """,
+                                     """ Get power supply current output status. """,
                                      )
 
     def enable(self):

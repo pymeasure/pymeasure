@@ -29,7 +29,7 @@ import time
 from decimal import Decimal
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -458,7 +458,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         return ch_setup
 
 
-class TeledyneOscilloscope(Instrument, metaclass=ABCMeta):
+class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     """A base abstract class for any Teledyne Lecroy oscilloscope.
 
     All Teledyne oscilloscopes have a very similar interface, hence this base class to combine

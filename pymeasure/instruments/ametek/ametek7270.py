@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import modular_range, truncated_discrete_set, truncated_range
 
 import logging
@@ -41,7 +41,7 @@ def check_read_not_empty(value):
         return value
 
 
-class Ametek7270(Instrument):
+class Ametek7270(SCPIUnknownMixin, Instrument):
     """This is the class for the Ametek DSP 7270 lockin amplifier
 
     In this instrument, some measurements are defined only for specific modes,
@@ -248,7 +248,7 @@ class Ametek7270(Instrument):
         else:
             return ['Incorrect return from previously set property']
 
-    def ask(self, command, query_delay=0):
+    def ask(self, command, query_delay=None):
         """Send a command and read the response, stripping white spaces.
 
         Usually the properties use the

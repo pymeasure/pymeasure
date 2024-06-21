@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,10 @@
 
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
-class SR860(Instrument):
+class SR860(SCPIUnknownMixin, Instrument):
 
     SENSITIVITIES = [
         1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
@@ -335,7 +335,7 @@ class SR860(Instrument):
     )
 
     aux_out_1 = Instrument.control(
-        "AUXV? 0", "AUXV 1, %f",
+        "AUXV? 0", "AUXV 0, %f",
         """ A floating point property that controls the output of Aux output 1 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -346,7 +346,7 @@ class SR860(Instrument):
     dac1 = aux_out_1
 
     aux_out_2 = Instrument.control(
-        "AUXV? 1", "AUXV 2, %f",
+        "AUXV? 1", "AUXV 1, %f",
         """ A floating point property that controls the output of Aux output 2 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -357,7 +357,7 @@ class SR860(Instrument):
     dac2 = aux_out_2
 
     aux_out_3 = Instrument.control(
-        "AUXV? 2", "AUXV 3, %f",
+        "AUXV? 2", "AUXV 2, %f",
         """ A floating point property that controls the output of Aux output 3 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -368,7 +368,7 @@ class SR860(Instrument):
     dac3 = aux_out_3
 
     aux_out_4 = Instrument.control(
-        "AUXV? 3", "AUXV 4, %f",
+        "AUXV? 3", "AUXV 3, %f",
         """ A floating point property that controls the output of Aux output 4 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
