@@ -39,19 +39,41 @@ log.addHandler(logging.NullHandler())
 # Instrument.setting
 
 MEASURING_PARAMETERS = ["S11", "S21", "S12", "S22", "A", "B", "R1", "R2"]
-MEASUREMENT_FORMAT = [
-    "SMITH",
-    "LOGMAG",
-    "PHASE",
-    "REAL",
-    "IMAG",
-    "GROUP DELAY",
-    "POLAR",
-    "LINMAG",
-    "POS PHASE",
-    "EXPAND PHASE",
-    "SWR",
-]
+# MEASUREMENT_FORMAT = [
+#     "SMITH",
+#     "LOGMAG",
+#     "PHASE",
+#     "REAL",
+#     "IMAG",
+#     "GROUP DELAY",
+#     "POLAR",
+#     "LINMAG",
+#     "POS PHASE",
+#     "EXPAND PHASE",
+#     "SWR",
+# ]
+
+MEASUREMENT_FORMAT = {
+    "LOGARITHMIC MAGNITUDE": "MLOG",
+    "PHASE": "PHAS",
+    "GROUP DELAY": "GDEL",
+    "SMITH CHART LINEAR": "SLIN",
+    "SMITH CHART LOGARITHMIC": "SLOG",
+    "SMITH CHART": "SCOM",
+    "SMITH CHART COMPLEX": "SCOM",
+    "SMITH CHART IMPEDANCE": "SMIT",
+    "SMITH CHART ADMITTANCE": "SADM",
+    "POLAR LINEAR": "PLIN",
+    "POLAR LOGARITHMIC": "PLOG",
+    "POLAR": "POL",
+    "LINEAR MAGNITUDE": "MLIN",
+    "SWR": "SWR",
+    "REAL": "REAL",
+    "IMAGINARY": "IMAG",
+    "PHASE EXPANDED": "UPH",
+    "PHASE POSITIVE": "PPH",
+}
+
 
 # set the analyzer to trace averaging in single sweep mode, use the following SCPI commands to
 # start the 100 average sweep and wait for the Operation Complete bit to be returned:
@@ -307,6 +329,9 @@ class ChannelCommands(Channel):
         PPH ase         Specifies the positive phase format.
         """,
         cast=str,
+        values=MEASUREMENT_FORMAT,
+        map_values=True,
+        set_process=lambda x: x.upper(),
     )
 
     measurement_data_to_memory = Channel.setting(
