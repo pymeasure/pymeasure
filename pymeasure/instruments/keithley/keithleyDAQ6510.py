@@ -87,7 +87,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param channel_list: List of channels to be set to open.
         """
         for channel in channel_list:
-            self.open_channel = channel
+            self.open_channel(channel)
 
     def close_channels(self, channel_list):
         """
@@ -96,7 +96,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param channel_list: List of channels to be set to closed.
         """
         for channel in channel_list:
-            self.close_channel = channel
+            self.close_channel(channel)
 
     def beep(self, frequency, duration):
         """
