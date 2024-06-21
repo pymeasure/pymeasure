@@ -104,23 +104,19 @@ class TraceCommands(Channel):
         return self.parent.total_traces
 
     def make_active(self):
-        # make trace active
         self.parent.active_trace = self.id
 
     def is_active(self):
         """
-        Check that the channel is active, the number of traces is greater than this trace id,
+        Check that the number of traces for the channel is greater than this trace id,
         and that the active trace is this one.
         """
-
-        if self.get_active_channel() != self.parent.id:
-            self.parent.make_active = True
-
         if int(self.id) > self.get_total_traces():
             self.parent.total_traces = int(self.id)
 
-        if self.get_active_trace() != self.id:
-            self.make_active()
+        # check parent channel has traces added to it to match its total number of traces
+
+        return self.get_active_trace() == self.id
 
     # double nest `{ch}` to have the command use the parent channel
     # measurement_parameter = Channel.control(
@@ -185,9 +181,6 @@ class ChannelCommands(Channel):
     Need docstring
     """
 
-    _active_marker = 1
-    _active_trace = 1
-    _active_marker = 1
     # trace window layout?
 
     # CALCulation Commands
@@ -340,7 +333,6 @@ class ChannelCommands(Channel):
 
     measurement_data_to_memory = Channel.setting(
         "CALC{ch}:MATH:MEM",
-        # "",
         """
         Sets a copy the measurement data at the execution to the memory of the channel's active
         trace. (no input).
