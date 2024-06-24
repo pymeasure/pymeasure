@@ -13,7 +13,9 @@ from ctypes import cdll
 get_directory = os.getcwd()
 print(get_directory, "= get directory")
 
-sdk = cdll.LoadLibrary(r"C:\Users\desha\Codes\pymeasure\pymeasure\instruments\thorlabs\dlls\thorlabs_tsi_camera_sdk.dll")
+sdk = cdll.LoadLibrary(r"C:\Users\desha\Downloads\Scientific_Camera_Interfaces_Windows-2.1\Scientific Camera Interfaces\SDK\Native Toolkit\dlls\Native_64_lib\thorlabs_tsi_camera_sdk.dll")
+print(sdk, "= sdk")
+from "C:\Users\desha\Downloads\Scientific_Camera_Interfaces_Windows-2.1\Scientific Camera Interfaces\SDK\Python Toolkit\source\tl_camera.py" import TLCameraSDK, TLCamera, Frame, TLCameraError
 # from pymeasure.instruments.thorlabs.dlls.tl_camera import TLCameraSDK, TLCamera, Frame, TLCameraError
 # from pymeasure.instruments.thorlabs.dlls.tl_mono_to_color_processor import MonoToColorProcessorSDK
 # from pymeasure.instruments import Instrument
