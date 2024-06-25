@@ -87,8 +87,9 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
         """ A floating point property that controls the measurement current
-        range in Amps. If the measurement function is DC current, available ranges are 10E-6 A to 3A.
-        If the measurement function is AC current, available ranges are 100E-6 to 3A.
+        range in Amps. If the measurement function is DC current,
+        available ranges are 10E-6 A to 3A. If the measurement function is AC current,
+        available ranges are 100E-6 to 3A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[10E-6, 3]
@@ -118,8 +119,9 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
         """ A floating point property that controls the measurement voltage
-        range in Volts. If the measurement function is DC voltage, available ranges are 100E-3 V to 1000 V.
-        If the measurement function is AC voltage, available ranges are 100E-3 to 750 V.
+        range in Volts. If the measurement function is DC voltage,
+        available ranges are 100E-3 V to 1000 V. If the measurement function is AC voltage,
+        available ranges are 100E-3 to 750 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[100E-3, 1000]
@@ -149,9 +151,10 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
         """ A floating point property that controls the resistance range
-        in Ohms. If the measurement function is 2-wire resistance, the available ranges are 10 to 100E6 Ohms.
-        If the measurement function is 4-wire resistance with offset compensation off,
-        the available ranges are 1 to 100E6 Ohms. If the measurement function is 4-wire resistance
+        in Ohms. If the measurement function is 2-wire resistance,
+        the available ranges are 10 to 100E6 Ohms. If the measurement function is
+        4-wire resistance with offset compensation off, the available ranges
+        are 1 to 100E6 Ohms. If the measurement function is 4-wire resistance
         with offset compensation on, the available ranges are 1 to 10E3 Ohms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -185,10 +188,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     def measure_resistance(self, nplc=1, resistance=100e6, auto_range=True):
         """ Configures the measurement of resistance.
 
-        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
+        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
+                     or 12 (50 Hz or 400 Hz).
         :param resistance: Upper limit of resistance in Ohms, from 10 to 100E6 (2-wire),
-        1 to 100E6 (4-wire with OCOM off), or 1 to 10E3 (4-wire with OCOM on).
-        :param auto_range: A boolean value to enable auto_range if ``True``, else uses the set resistance.
+                           1 to 100E6 (4-wire with OCOM off), or 1 to 10E3 (4-wire with OCOM on).
+        :param auto_range: A boolean value to enable auto_range if ``True``,
+                           else uses the set resistance.
         """
         log.info(f"{self.name} is measuring resistance.")
         self.write(f":SENS:FUNC \"RES\";:SENS:RES:NPLC {nplc};")
@@ -201,9 +206,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     def measure_voltage(self, nplc=1, voltage=1000, auto_range=True):
         """ Configures the measurement of voltage.
 
-        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
-        :param voltage: Upper limit of voltage in Volts, from 100E-3 to 1000 V (DC) or 100E-3 to 750 V (AC).
-        :param auto_range: A boolean value to enable auto_range if ``True``, else uses the set resistance.
+        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
+                     or 12 (50 Hz or 400 Hz).
+        :param voltage: Upper limit of voltage in Volts, from 100E-3 to 1000 V (DC)
+                        or 100E-3 to 750 V (AC).
+        :param auto_range: A boolean value to enable auto_range if ``True``,
+                           else uses the set voltage.
         """
         log.info(f"{self.name} is measuring voltage.")
         self.write(f":SENS:FUNC \"VOLT\";:SENS:VOLT:NPLC {nplc};")
@@ -214,13 +222,16 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def measure_current(self, nplc=1, current=3, auto_range=True):
-        """ Configures the measurement of voltage.
+        """ Configures the measurement of current.
 
-        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
-        :param current: Upper limit of current in Amps, from 10E-6 to 3 A (DC) or 100E-6 to 3A (AC).
-        :param auto_range: A boolean value to enable auto_range if ``True``, else uses the set resistance.
+        :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
+                     or 12 (50 Hz or 400 Hz).
+        :param current: Upper limit of current in Amps, from 10E-6 to 3 A (DC)
+                        or 100E-6 to 3A (AC).
+        :param auto_range: A boolean value to enable auto_range if ``True``,
+                           else uses the set current.
         """
-        log.info(f"{self.name} is measuring voltage.")
+        log.info(f"{self.name} is measuring current.")
         self.write(f":SENS:FUNC \"CURR\";:SENS:CURR:NPLC {nplc};")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO ON;")
