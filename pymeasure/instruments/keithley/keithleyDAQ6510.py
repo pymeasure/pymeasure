@@ -64,11 +64,10 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         )
 
     sense_mode = Instrument.control(
-        ":SENS:FUNC?", ":SENS:FUNC %s",
-        """ A string property that controls the reading mode, which can
-        take the values 'current' or 'voltage'. The convenience methods
-        :meth:`~.KeithleyDAQ6510.sense_current` and :meth:`~.KeithleyDAQ6510.sense_voltage`
-        can also be used. """,
+        ":SENS:FUNC?", ":SENS:FUNC \"%s\"",
+        """ Control the reading mode, which can take the values 'current' or 'voltage'.
+        The convenience methods :meth:`~.KeithleyDAQ6510.sense_current` and
+        :meth:`~.KeithleyDAQ6510.sense_voltage` can also be used. """,
         validator=strict_discrete_set,
         values={'current': 'CURR', 'voltage': 'VOLT'},
         map_values=True
@@ -80,15 +79,14 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     current = Instrument.measurement(
         ":READ?",
-        """ Reads the current in Amps, if configured for this reading.
+        """ Measure the current in Amps, if configured for this reading.
         """
     )
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
-        """ A floating point property that controls the measurement current
-        range in Amps. If the measurement function is DC current,
-        available ranges are 10E-6 A to 3A. If the measurement function is AC current,
+        """ Control the measurement current range in Amps. If the measurement function is DC,
+        available ranges are 10E-6 A to 3A. If the measurement function is AC,
         available ranges are 100E-6 to 3A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -97,13 +95,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC current measurements, which sets the integration period
-        and measurement speed. Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
-        The smallest value is the shortest time, and results in the fastest reading rate,
-        but increases the reading noise and decreases the number of usable digits.
-        The largest value is the longest time, and results in the lowest reading rate,
-        but increases the number of usable digits. """
+        """ Control the number of power line cycles (NPLC) for the DC current measurements,
+        which sets the integration period and measurement speed.
+        Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz). The smallest value is the
+        shortest time, and results in the fastest reading rate, but increases the reading noise
+        and decreases the number of usable digits. The largest value is the longest time, and
+        results in the lowest reading rate, but increases the number of usable digits. """
     )
 
     ###############
@@ -112,26 +109,24 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     voltage = Instrument.measurement(
         ":READ?",
-        """ Reads the voltage in Volts, if configured for this reading.
+        """ Measure the voltage in Volts, if configured for this reading.
         """
     )
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
-        """ A floating point property that controls the measurement voltage
-        range in Volts. If the measurement function is DC voltage,
-        available ranges are 100E-3 V to 1000 V. If the measurement function is AC voltage,
-        available ranges are 100E-3 to 750 V.
-        Auto-range is disabled when this property is set. """,
+        """ Control the measurement voltage range in Volts. If the measurement function is DC,
+        available ranges are 100E-3 V to 1000 V. If the measurement function is AC, available
+        ranges are 100E-3 to 750 V. Auto-range is disabled when this property is set. """,
         validator=truncated_range,
         values=[100E-3, 1000]
     )
 
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the DC voltage measurements, which sets the integration period
-        and measurement speed. Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
+        """ Control the number of power line cycles (NPLC) for the DC voltage measurements,
+        which sets the integration period and measurement speed.
+        Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
         The smallest value is the shortest time, and results in the fastest reading rate,
         but increases the reading noise and decreases the number of usable digits.
         The largest value is the longest time, and results in the lowest reading rate,
@@ -144,14 +139,13 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     resistance = Instrument.measurement(
         ":READ?",
-        """ Reads the resistance in Ohms, if configured for this reading.
+        """ Measure the resistance in Ohms, if configured for this reading.
         """
     )
 
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """ A floating point property that controls the resistance range
-        in Ohms. If the measurement function is 2-wire resistance,
+        """ Control the resistance range in Ohms. If the measurement function is 2-wire,
         the available ranges are 10 to 100E6 Ohms. If the measurement function is
         4-wire resistance with offset compensation off, the available ranges
         are 1 to 100E6 Ohms. If the measurement function is 4-wire resistance
@@ -163,7 +157,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     offset_compensated = Instrument.control(
         ":SENS:FRES:OCOM?", ":SENS:FRES:OCOM %s",
-        """ A string property that determines if offset compensation is used or not.
+        """ Control if offset compensation is used or not.
         Valid values are OFF, ON, and AUTO. """,
         validator=strict_discrete_set,
         values=["OFF", "ON", "AUTO"],
@@ -172,9 +166,9 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
-        (NPLC) for the 2-wire resistance measurements, which sets the integration period
-        and measurement speed. Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
+        """ Control the number of power line cycles (NPLC) for the 2-wire resistance measurements,
+        which sets the integration period and measurement speed.
+        Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz).
         The smallest value is the shortest time, and results in the fastest reading rate,
         but increases the reading noise and decreases the number of usable digits.
         The largest value is the longest time, and results in the lowest reading rate,
