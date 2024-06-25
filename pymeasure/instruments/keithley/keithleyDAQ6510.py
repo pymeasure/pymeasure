@@ -159,7 +159,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     offset_compensated = Instrument.control(
-        ":SENS:RES:OCOM?", ":SENS:RES:OCOM %s",
+        ":SENS:FRES:OCOM?", ":SENS:FRES:OCOM %s",
         """ A string property that determines if offset compensation is used or not.
         Valid values are OFF, ON, and AUTO. """,
         validator=strict_discrete_set,
