@@ -42,7 +42,17 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         keithley = KeithleyDAQ6510("GPIB::1")
         keithley = KeithleyDAQ6510("TCPIP::192.168.1.1::INSTR")
 
-        keithley.apply_current()                # Sets up to source current
+        print(keithley.current)                 # Prints the current in Amps
+        keithley.current_range = 10E-6          # Select the 10 uA range
+
+        print(keithley.voltage)                 # Prints the voltage in Volts
+        keithley.voltage_range = 100e-3         # Select the 100 mV range
+
+        print(keithley.resistance)              # Prints the resistance in Ohms
+        keithley.offset_compensated = "ON"      # Turns offset-compensated ohms on
+
+        keithley.open_channels([134, 135])      # Open channels 134 and 135 on the MUX card
+        keithley.close_channel(133)             # Close channel 133 on the MUX card
 
     """
 
