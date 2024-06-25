@@ -448,7 +448,10 @@ class Results:
                 comment=Results.COMMENT,
                 header=0,
                 names=self._data.columns,
-                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                chunksize=Results.CHUNK_SIZE,
+                skiprows=skiprows,
+                iterator=True,
+                encoding=Results.ENCODING,
             )
             try:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
@@ -471,7 +474,8 @@ class Results:
             self.data_filename,
             comment=Results.COMMENT,
             chunksize=Results.CHUNK_SIZE,
-            iterator=True
+            iterator=True,
+            encoding=Results.ENCODING,
         )
         try:
             self._data = pd.concat(chunks, ignore_index=True)
