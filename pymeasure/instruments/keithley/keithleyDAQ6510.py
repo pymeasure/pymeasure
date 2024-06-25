@@ -56,6 +56,13 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     """
 
+    def __init__(self, adapter, name="Keithley DAQ6510", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
     sense_mode = Instrument.control(
         ":SENS:FUNC?", ":SENS:FUNC %s",
         """ A string property that controls the reading mode, which can
@@ -174,13 +181,6 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     ####################
     # Methods        #
     ####################
-
-    def __init__(self, adapter, name="Keithley DAQ6510", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
 
     def measure_resistance(self, nplc=1, resistance=100e6, auto_range=True):
         """ Configures the measurement of resistance.
