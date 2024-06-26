@@ -180,7 +180,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     ####################
 
     def measure_resistance(self, nplc=1, resistance=100e6, auto_range=True):
-        """ Configures the measurement of resistance.
+        """ Configure the measurement of resistance.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -198,7 +198,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def measure_voltage(self, nplc=1, voltage=1000, auto_range=True):
-        """ Configures the measurement of voltage.
+        """ Configure the measurement of voltage.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -216,7 +216,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def measure_current(self, nplc=1, current=3, auto_range=True):
-        """ Configures the measurement of current.
+        """ Configure the measurement of current.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -259,7 +259,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     def open_channels(self, channel_list):
         """
-        Configures multiple channels to be open.
+        Configure multiple channels to be open.
 
         :param channel_list: List of channels to be set to open.
         """
@@ -268,7 +268,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     def close_channels(self, channel_list):
         """
-        Configures multiple channels to be closed.
+        Configure multiple channels to be closed.
 
         :param channel_list: List of channels to be set to closed.
         """
