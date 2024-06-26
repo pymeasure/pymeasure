@@ -233,14 +233,6 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
             self.current_range = current
         self.check_errors()
 
-    def no_errors(self):
-        """
-        Check to see if the instrument has any errors returned or not.
-
-        :return: ``True`` if there are no errors, ``False`` if there are errors.
-        """
-        return len(self.check_errors() == 0)
-
     def open_channel(self, channel):
         """
         Set a single channel to open.
