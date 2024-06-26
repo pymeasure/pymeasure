@@ -12,4 +12,5 @@ This section contains specific documentation on the Stanford Research Systems (S
    sr510
    sr570
    sr830
+   sr850
    sr860
