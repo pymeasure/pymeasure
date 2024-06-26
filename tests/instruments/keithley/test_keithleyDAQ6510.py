@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
-import logging
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley import KeithleyDAQ6510
 
