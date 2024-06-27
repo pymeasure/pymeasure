@@ -538,9 +538,7 @@ class SR830(Instrument):
 
         Return the mean and std from both channels
         """
-        # self.write("FAST2;STRD"); time.sleep(1)
-        # self.write("FAST1;STRD")
-        self.write("FAST0;STRT")
+        self.write("FAST2;STRD")
         ch1 = np.empty(count, np.float64)
         ch2 = np.empty(count, np.float64)
         currentCount = self.buffer_count
