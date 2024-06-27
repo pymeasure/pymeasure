@@ -37,8 +37,7 @@ def test_init():
 def test_current_range_set():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b':SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG 1', None)],
+            [(b':SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG 1', None)],
     ) as inst:
         inst.current_range = 1.0
 
@@ -46,8 +45,7 @@ def test_current_range_set():
 def test_current_range_get():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b':SENS:CURR:RANG?', b'1.0\n')],
+            [(b':SENS:CURR:RANG?', b'1.0\n')],
     ) as inst:
         assert inst.current_range == 1.0
 
@@ -55,8 +53,7 @@ def test_current_range_get():
 def test_current_nplc_set():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b':SENS:CURR:NPLC 2', None)],
+            [(b':SENS:CURR:NPLC 2', None)],
     ) as inst:
         inst.current_nplc = 2
 
@@ -64,8 +61,7 @@ def test_current_nplc_set():
 def test_current_nplc_get():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b':SENS:CURR:NPLC?', b'2\n')],
+            [(b':SENS:CURR:NPLC?', b'2\n')],
     ) as inst:
         assert inst.current_nplc == 2.0
 
@@ -73,8 +69,7 @@ def test_current_nplc_get():
 def test_id():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b'*IDN?', b'KEITHLEY INSTRUMENTS,MODEL DAQ6510,04591126,1.7.12b\n')],
+            [(b'*IDN?', b'KEITHLEY INSTRUMENTS,MODEL DAQ6510,04591126,1.7.12b\n')],
     ) as inst:
         assert inst.id == 'KEITHLEY INSTRUMENTS,MODEL DAQ6510,04591126,1.7.12b'
 
@@ -82,7 +77,6 @@ def test_id():
 def test_reset():
     with expected_protocol(
             KeithleyDAQ6510,
-            [(b'*LANG SCPI', None),
-             (b'*RST', None)],
+            [(b'*RST', None)],
     ) as inst:
         assert inst.reset() is None
