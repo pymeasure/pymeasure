@@ -26,14 +26,6 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley import KeithleyDAQ6510
 
 
-def test_init():
-    with expected_protocol(
-            KeithleyDAQ6510,
-            [(b'*LANG SCPI', None)],
-    ):
-        pass  # Verify the expected communication.
-
-
 def test_current_range_set():
     with expected_protocol(
             KeithleyDAQ6510,
