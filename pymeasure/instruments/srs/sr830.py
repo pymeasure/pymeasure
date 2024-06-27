@@ -573,30 +573,31 @@ class SR830(Instrument):
         '''
         self.reset_buffer()
         standard_timeout = 3E3
-        sleep_time = np.max([standard_timeout/1e3, buffer_size/self.sample_frequency +0.5]) # add 1 second to accomodate the start of the scan
-        self.adapter.connection.timeout = (sleep_time)*1E3 #timeout is specified in ms
+        sleep_time = np.max([standard_timeout/1e3, buffer_size/self.sample_frequency +0.5]) 
+        self.adapter.connection.timeout = (sleep_time)*1E3 
         self.start_buffer(fast) 
         if fast:
             try:
                 buffer_bytes = self.read_bytes(4*buffer_size)
                 self.pause_buffer()
-                self.adapter.connection.timeout = 0.5e3; 
-                self.read_bytes(-1) 
                 
+                self.adapter.connection.timeout = 0.5e3; self.read_bytes(-1)  #clears the read buffer
                 self.adapter.connection.timeout = standard_timeout
+
+                buffer_float = np.frombuffer(buffer_bytes, dtype = np.int16) * self.sensitivity / 3e4
+                ch1_buffer, ch2_buffer = buffer_float[0::2], buffer_float[1::2]
             except Exception as e:
                 print(f'exception ocurred {e}')
                 self.pause_buffer()
                 self.read_bytes(-1) # clear the buffer in the case of an exception
                 self.adapter.connection.timeout = standard_timeout
-                result = np.nan
+                ch1_buffer, ch2_buffer = np.nan, np.nan
         else: 
             self.wait_for_buffer(buffer_size, timeout=timeout)
             measured_buffer_count = self.buffer_count
-            ch1_buffer = self.get_buffer_frombytes(channel = 1, start = 0, end = measured_buffer_count)
-            ch2_buffer = self.get_buffer_frombytes(channel = 2, start = 0, end = measured_buffer_count)
-            result = ch1_buffer, ch2_buffer
-        return result        
+            ch1_buffer = self.get_buffer_bytes(channel = 1, start = 0, end = measured_buffer_count)
+            ch2_buffer = self.get_buffer_bytes(channel = 2, start = 0, end = measured_buffer_count)
+        return ch1_buffer, ch2_buffer        
 
     def pause_buffer(self):
         self.write("PAUS")
