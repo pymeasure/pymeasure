@@ -532,7 +532,7 @@ class SR830(Instrument):
         ch2[index: count + 1] = self.get_buffer(2, index, count)  # noqa: E203
         return ch1, ch2
 
-    def buffer_measure_old(self, count, stopRequest=None, delay=1e-3):
+    def buffer_measure(self, count, stopRequest=None, delay=1e-3):
         """ Start a fast measurement mode and transfers data from buffer to extract mean
         and std measurements
 
@@ -547,14 +547,8 @@ class SR830(Instrument):
         index = 0
         while currentCount < count:
             if currentCount > index:
-                print('the current count is ', currentCount)
                 ch1[index:currentCount] = self.get_buffer(1, index, currentCount)
-                print('the count after ch1 is ', self.buffer_count)
                 ch2[index:currentCount] = self.get_buffer(2, index, currentCount)
-                print('the count after ch2 is ', self.buffer_count)
-
-                # ch1[index:currentCount] = self.get_buffer_frombytes(1, index, currentCount)
-                # ch2[index:currentCount] = self.get_buffer_frombytes(2, index, currentCount)
                 index = currentCount
                 time.sleep(delay)
             currentCount = self.buffer_count
@@ -564,45 +558,38 @@ class SR830(Instrument):
         self.pause_buffer()
         ch1[index:count] = self.get_buffer(1, index, count)
         ch2[index:count] = self.get_buffer(2, index, count)
-        print('measurement done and the current count is ', self.buffer_count)
-        return ch1, ch2
-        # return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
+        return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
-    def buffer_measure(self, buffer_size, timeout=60, fast=False):
+    def buffer_measure_fast(self, buffer_size, fast=True, timeout=60,):
         '''
-        Buffer measurement method that returns both channel 1 and channel 2 buffers as np.arrays
-
-        Args
+        Buffer measurement method that returns 
+        both channel 1 and channel 2 buffers as np.arrays.
+        Args:
         buffer_size:  Desired minimum buffer length.
-        timeout: Timeout in seconds for the waiting/buffer fill period.
-        This should be configured approriately if sampling rate is low and buffer size is high.
-        fast: Sets the transfer mode.  
-        Fast mode 1 or 2 is not supported yet.
+        If fast == True,  FAST2 is the data transfer method.
+        FAST2 sends data through the adapter ~0.5seconds 
+        after `start_buffer` is called.
+        If  fast == False, FAST0 is the transfer mode and
+        an appropriate timeout needs to be spcified.
         See programming section of the SR830 manual for more detail.
         '''
         self.reset_buffer()
-        
-        # change the timeout
         standard_timeout = 3E3
         sleep_time = np.max([standard_timeout/1e3, buffer_size/self.sample_frequency +0.5]) # add 1 second to accomodate the start of the scan
-        # print('The current timeout is ', standard_timeout)
         self.adapter.connection.timeout = (sleep_time)*1E3 #timeout is specified in ms
-        # print('new timeout time is ', self.adapter.connection.timeout)
-        t0 = time.time()
         self.start_buffer(fast) 
         if fast:
             try:
-                com_line = self.read_bytes(4*buffer_size)
-                self.pause_buffer(); print('buffer stopped at time ', time.time()-t0)
-                self.adapter.connection.timeout = 0.5e3; self.read_bytes(-1) # this clears the read buffer
-                print('read buffer cleared at time ', time.time()-t0)
-                result = com_line
-                print('measurement complete at ', time.time()-t0)
+                buffer_bytes = self.read_bytes(4*buffer_size)
+                self.pause_buffer()
+                self.adapter.connection.timeout = 0.5e3; 
+                self.read_bytes(-1) 
+                
                 self.adapter.connection.timeout = standard_timeout
             except Exception as e:
                 print(f'exception ocurred {e}')
                 self.pause_buffer()
-                self.read_bytes(-1) # clear the buffer just in case 
+                self.read_bytes(-1) # clear the buffer in the case of an exception
                 self.adapter.connection.timeout = standard_timeout
                 result = np.nan
         else: 
@@ -642,14 +629,12 @@ class SR830(Instrument):
         return self.binary_values("TRCB?%d,%d,%d" % (
             channel, start, end - start))
 
-    def get_buffer_frombytes(self, channel = 1, start=0, end=None):
+    def get_buffer_bytes(self, channel = 1, start=0, end=None):
         """ Acquires the 32 bit floating point data through bytes transfer
         """
         if end is None:
             end = self.buffer_count
-        
         self.write("TRCL?%d,%d,%d" % (channel, start, end - start))
-        # self.wait_for()
         output = self.buffer_bytes_convert(self.read_bytes(-1))
         return output
 
