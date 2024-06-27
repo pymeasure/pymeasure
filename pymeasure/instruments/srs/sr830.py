@@ -583,9 +583,9 @@ class SR830(Instrument):
                 
                 self.adapter.connection.timeout = 0.5e3; self.read_bytes(-1)  #clears the read buffer
                 self.adapter.connection.timeout = standard_timeout
+                
                 ch1_off, ch1_expand = self.get_scaling('X')
                 ch2_off, ch2_expand = self.get_scaling('Y')
-
                 buffer_float = np.frombuffer(buffer_bytes, dtype = np.int16) * self.sensitivity / 3e4
                 ch1_buffer = buffer_float[0::2] / ch1_expand + ch1_off / 100 * self.sensitivity 
                 ch2_buffer = buffer_float[1::2] / ch2_expand + ch2_off / 100 * self.sensitivity
