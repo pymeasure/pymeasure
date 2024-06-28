@@ -428,9 +428,9 @@ class SR830(Instrument):
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        if percent == None:
+        if percent is None:
             percent = self.get_scaling(channel)[0]
-        if expand == None:
+        if expand is None:
             expand = self.get_scaling(channel)[1]
         channel = self.CHANNELS.index(channel) + 1
         expand = discreteTruncate(expand, self.EXPANSION_VALUES)
@@ -560,47 +560,50 @@ class SR830(Instrument):
 
     def buffer_measure_fast(self, buffer_size, fast=True, timeout=60,):
         '''
-        Buffer measurement method that returns 
+        Buffer measurement method that returns
         both channel 1 and channel 2 buffers as np.arrays.
         Args:
         buffer_size:  Desired minimum buffer length.
         If fast == True,  FAST2 is the data transfer method.
-        FAST2 sends data through the adapter ~0.5seconds 
+        FAST2 sends data through the adapter ~0.5seconds
         after `start_buffer` is called.
         If  fast == False, FAST0 is the transfer mode and
         an appropriate timeout needs to be spcified.
         See programming section of the SR830 manual for more detail.
         '''
         self.reset_buffer()
-        standard_timeout = 3E3
-        sleep_time = np.max([standard_timeout/1e3, buffer_size/self.sample_frequency +0.5]) 
-        self.adapter.connection.timeout = (sleep_time)*1E3 
-        self.start_buffer(fast) 
         if fast:
+            standard_timeout = 3E3
+            sleep_time = np.max([standard_timeout/1e3, buffer_size/self.sample_frequency + 0.5])
+            self.adapter.connection.timeout = sleep_time * 1E3
+            self.start_buffer(fast)
             try:
                 buffer_bytes = self.read_bytes(4*buffer_size)
                 self.pause_buffer()
-                
-                self.adapter.connection.timeout = 0.5e3; self.read_bytes(-1)  #clears the read buffer
+                # clear the read buffer 
+                # for any accidental measurements
+                self.adapter.connection.timeout = 0.5e3
+                self.read_bytes(-1)
                 self.adapter.connection.timeout = standard_timeout
-                
+
                 ch1_off, ch1_expand = self.get_scaling('X')
                 ch2_off, ch2_expand = self.get_scaling('Y')
-                buffer_float = np.frombuffer(buffer_bytes, dtype = np.int16) * self.sensitivity / 3e4
-                ch1_buffer = buffer_float[0::2] / ch1_expand + ch1_off / 100 * self.sensitivity 
+                buffer_float = np.frombuffer(buffer_bytes, dtype=np.int16) * self.sensitivity / 3e4
+                ch1_buffer = buffer_float[0::2] / ch1_expand + ch1_off / 100 * self.sensitivity
                 ch2_buffer = buffer_float[1::2] / ch2_expand + ch2_off / 100 * self.sensitivity
             except Exception as e:
                 print(f'exception ocurred {e}')
                 self.pause_buffer()
-                self.read_bytes(-1) # clear the buffer in the case of an exception
+                self.read_bytes(-1)
+                # clear the buffer in the case of an exception
                 self.adapter.connection.timeout = standard_timeout
                 ch1_buffer, ch2_buffer = np.nan, np.nan
-        else: 
+        else:
             self.wait_for_buffer(buffer_size, timeout=timeout)
             measured_buffer_count = self.buffer_count
-            ch1_buffer = self.get_buffer_bytes(channel = 1, start = 0, end = measured_buffer_count)
-            ch2_buffer = self.get_buffer_bytes(channel = 2, start = 0, end = measured_buffer_count)
-        return ch1_buffer, ch2_buffer        
+            ch1_buffer = self.get_buffer_bytes(channel=1, start=0, end=measured_buffer_count)
+            ch2_buffer = self.get_buffer_bytes(channel=2, start=0, end=measured_buffer_count)
+        return ch1_buffer, ch2_buffer
 
     def pause_buffer(self):
         self.write("PAUS")
@@ -631,7 +634,7 @@ class SR830(Instrument):
         return self.binary_values("TRCB?%d,%d,%d" % (
             channel, start, end - start))
 
-    def get_buffer_bytes(self, channel = 1, start=0, end=None):
+    def get_buffer_bytes(self, channel=1, start=0, end=None):
         """ Acquires the 32 bit floating point data through bytes transfer
         Manual suggests this is the fastest transfer method.
         The byte to float conversion is provided in the manual
