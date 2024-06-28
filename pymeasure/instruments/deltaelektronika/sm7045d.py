@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,15 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range
 
 from time import sleep
-from numpy import linspace
+
+import numpy as np
 
 
-class SM7045D(Instrument):
+class SM7045D(SCPIUnknownMixin, Instrument):
     """ This is the class for the SM 70-45 D power supply.
 
     .. code-block:: python
@@ -94,10 +95,10 @@ class SM7045D(Instrument):
         output of the power supply is disabled/enabled. """,
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Delta Elektronika SM 70-45 D", **kwargs):
         super().__init__(
-            resourceName,
-            "Delta Elektronika SM 70-45 D",
+            adapter,
+            name,
             **kwargs
         )
 
@@ -124,7 +125,7 @@ class SM7045D(Instrument):
 
         curr = self.current
         n = round(abs(curr - target_current) / current_step) + 1
-        for i in linspace(curr, target_current, n):
+        for i in np.linspace(curr, target_current, n):
             self.current = i
             sleep(0.1)
 
@@ -144,3 +145,4 @@ class SM7045D(Instrument):
         """
         self.ramp_to_zero()
         self.disable()
+        super().shutdown()

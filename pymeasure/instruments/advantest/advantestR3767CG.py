@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,57 +22,57 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range
 
 
-class AdvantestR3767CG(Instrument):
+class AdvantestR3767CG(SCPIUnknownMixin, Instrument):
     """ Represents the Advantest R3767CG VNA. Implements controls to change the analysis
-        range and to retreve the data for the trace.
+        range and to retrieve the data for the trace.
     """
 
+    def __init__(self, adapter, name="Advantest R3767CG", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+        # Tell unit to operate in IEEE488.2-1987 command mode.
+        self.write("OLDC OFF")
+
     id = Instrument.measurement(
-        "*IDN?", """ Reads the instrument identification """
+        "*IDN?", """Get the instrument identification."""
     )
 
     center_frequency = Instrument.control(
         ":FREQ:CENT?", ":FREQ:CENT %d",
-        """Center Frequency in Hz""",
+        """Control the center Frequency in Hz.""",
         validator=strict_range,
         values=[300000, 8000000000]
     )
 
     span_frequency = Instrument.control(
         ":FREQ:SPAN?", ":FREQ:SPAN %d",
-        """Span Frequency in Hz""",
+        """Control the frequency span in Hz.""",
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     start_frequency = Instrument.control(
         ":FREQ:STAR?", ":FREQ:STAR %d",
-        """ Starting frequency in Hz """,
+        """Control the starting frequency in Hz.""",
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     stop_frequency = Instrument.control(
         ":FREQ:STOP?", ":FREQ:STOP %d",
-        """ Stoping frequency in Hz """,
+        """Control the stopping frequency in Hz.""",
         validator=strict_range,
         values=[1, 8000000000]
     )
 
     trace_1 = Instrument.measurement(
-        "TRAC:DATA? FDAT1", """ Reads the Data array from trace 1 after formatting """
+        "TRAC:DATA? FDAT1", """Get the data array from trace 1 after formatting."""
     )
-
-    def __init__(self, resourceName, **kwargs):
-        super().__init__(
-            resourceName,
-            "Advantest R3767CG",
-            **kwargs
-        )
-
-        # Tell unit to operate in IEEE488.2-1987 command mode.
-        self.write("OLDC OFF")

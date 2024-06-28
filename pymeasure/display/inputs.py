@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import logging
 
 import re
 
-from .Qt import QtGui
+from .Qt import QtGui, QtWidgets
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -80,7 +80,7 @@ class Input:
         return self._parameter
 
 
-class StringInput(Input, QtGui.QLineEdit):
+class StringInput(Input, QtWidgets.QLineEdit):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
@@ -91,46 +91,30 @@ class StringInput(Input, QtGui.QLineEdit):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
     def setValue(self, value):
-        # QtGui.QLineEdit has a setText() method instead of setValue()
+        # QtWidgets.QLineEdit has a setText() method instead of setValue()
         return super().setText(value)
 
     def setSuffix(self, value):
         pass
 
     def value(self):
-        # QtGui.QLineEdit has a text() method instead of value()
+        # QtWidgets.QLineEdit has a text() method instead of value()
         return super().text()
 
 
-class FloatInput(Input, QtGui.QDoubleSpinBox):
-    """
-    Spin input box for floating-point values, connected to a
-    :class:`FloatParameter`.
-
-    .. seealso::
-        Class :class:`~.ScientificInput`
-            For inputs in scientific notation.
-    """
-
-    def __init__(self, parameter, parent=None, **kwargs):
-        super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
-
-    def set_parameter(self, parameter):
-        # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
-        super().set_parameter(parameter)  # default gets set here, after min/max
-
-
-class IntegerInput(Input, QtGui.QSpinBox):
+class IntegerInput(Input, QtWidgets.QSpinBox):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        if parameter.step:
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setSingleStep(parameter.step)
+            self.setEnabled(True)
+        else:
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -138,8 +122,15 @@ class IntegerInput(Input, QtGui.QSpinBox):
         self.setMaximum(parameter.maximum)
         super().set_parameter(parameter)  # default gets set here, after min/max
 
+    def stepEnabled(self):
+        if self.parameter.step:
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
+        else:
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
 
-class BooleanInput(Input, QtGui.QCheckBox):
+
+class BooleanInput(Input, QtWidgets.QCheckBox):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
@@ -162,7 +153,7 @@ class BooleanInput(Input, QtGui.QCheckBox):
         return super().isChecked()
 
 
-class ListInput(Input, QtGui.QComboBox):
+class ListInput(Input, QtWidgets.QComboBox):
     """
     Dropdown for list values, connected to a :class:`ListParameter`.
     """
@@ -203,7 +194,7 @@ class ListInput(Input, QtGui.QComboBox):
         return self._parameter.choices[self.currentIndex()]
 
 
-class ScientificInput(Input, QtGui.QDoubleSpinBox):
+class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
     """
     Spinner input box for floating-point values, connected to a
     :class:`FloatParameter`. This box will display and accept values in
@@ -216,7 +207,12 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
-        self.setButtonSymbols(QtGui.QAbstractSpinBox.NoButtons)
+        if parameter.step:
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.setSingleStep(parameter.step)
+            self.setEnabled(True)
+        else:
+            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -230,7 +226,7 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
         self.setDecimals(parameter.decimals)
         self.setMinimum(parameter.minimum)
         self.setMaximum(parameter.maximum)
-        self.validator.setNotation(QtGui.QDoubleValidator.ScientificNotation)
+        self.validator.setNotation(QtGui.QDoubleValidator.Notation.ScientificNotation)
         super().set_parameter(parameter)  # default gets set here, after min/max
 
     def validate(self, text, pos):
@@ -244,19 +240,34 @@ class ScientificInput(Input, QtGui.QDoubleSpinBox):
     def fixCase(self, text):
         self.lineEdit().setText(text.toLower())
 
+    def toDouble(self, string):
+        value, success = self.validator.locale().toDouble(string)
+        if not success:
+            raise ValueError('String could not be converted to a double')
+        else:
+            return value
+
+    def toString(self, value, format='g', precision=6):
+        return self.validator.locale().toString(value, format, precision)
+
     def valueFromText(self, text):
+        text = str(text)
+        if self._parameter.units:
+            text = text[:-(len(self._parameter.units) + 1)]
         try:
-            if self._parameter.units:
-                return float(str(text)[:-(len(self._parameter.units) + 1)])
-            else:
-                return float(str(text))
+            val = self.toDouble(text)
         except ValueError:
-            return self._parameter.default
+            val = self._parameter.default
+        return val
 
     def textFromValue(self, value):
-        string = f"{value:g}".replace("e+", "e")
+        string = self.toString(value).replace("e+", "e")
         string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 
     def stepEnabled(self):
-        return QtGui.QAbstractSpinBox.StepNone
+        if self.parameter.step:
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepUpEnabled | \
+                QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
+        else:
+            return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone

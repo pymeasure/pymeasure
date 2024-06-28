@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ import logging
 import sys
 import time
 
-from .Qt import QtGui
+from .Qt import QtWidgets
 from .windows import PlotterWindow
 from ..thread import StoppableThread
 
@@ -51,12 +51,12 @@ class Plotter(StoppableThread):
         self.linewidth = linewidth
 
     def run(self):
-        app = QtGui.QApplication(sys.argv)
+        app = QtWidgets.QApplication(sys.argv)
         window = PlotterWindow(self, refresh_time=self.refresh_time, linewidth=self.linewidth)
         self.setup_plot(window.plot)
         app.aboutToQuit.connect(window.quit)
         window.show()
-        app.exec_()
+        app.exec()
 
     def setup_plot(self, plot):
         """
@@ -66,7 +66,7 @@ class Plotter(StoppableThread):
 
         :param plot: This window's PlotItem_ instance.
 
-        .. _PlotItem: http://www.pyqtgraph.org/documentation/graphicsItems/plotitem.html
+        .. _PlotItem: https://pyqtgraph.readthedocs.io/en/latest/graphicsItems/plotitem.html
         """
         pass
 

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- name: PyMeasure Developers
+title: "PyMeasure"
+version: 0.14.0
+doi: 10.5281/zenodo.595633
+publisher:
+- name: Zenodo
+repository-code: https://github.com/pymeasure/pymeasure
