@@ -55,9 +55,7 @@ class AFG3152CChannel(Channel):
     PHASE_LIMIT = {
         'RAD': [-2*pi, 2*pi],
         'DEG': [-360, 360]
-        } #radian and degree limits
-
-
+        }  # radian and degree limits
 
     shape = Instrument.control(
         "function:shape?",
@@ -113,24 +111,24 @@ class AFG3152CChannel(Channel):
         validator=strict_range,
         values=FREQ_LIMIT,
     )
-    
-    phase_rad = Instrument.control( 
+
+    phase_rad = Instrument.control(
         "phase:adjust?", "phase:adjust %e RAD",
         """ A floating point property that controls the phase in radian units.
         This property can be set.""",
-        validator = strict_range,
-        values = PHASE_LIMIT['RAD']
+        validator=strict_range,
+        values=PHASE_LIMIT['RAD']
     )
-    
+
     phase_deg = Instrument.control(
         "phase:adjust?", "phase:adjust %e DEG",
         """ A floating point property that controls the phase in degrees.
         This property can be set.""",
         validator=strict_range,
-        values = PHASE_LIMIT['DEG']
+        values=PHASE_LIMIT['DEG']
     )
 
-    # phase_units = 
+    # phase_units =
 
     duty = Instrument.control(
         "pulse:dcycle?",
