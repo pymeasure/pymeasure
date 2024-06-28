@@ -562,12 +562,12 @@ class SR830(Instrument):
         return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
     def buffer_measure_fast(self, buffer_size, fast=True, timeout=60,):
-        """Measures the buffer in either the fast or slow
-        data transfer mode. Returns X, Y values in the fast 
-        mode as np.arrays. 
-        
+        """Measure the buffer in either the fast or slow
+        data transfer mode. Returns X, Y values in the fast
+        mode as np.arrays.
+
         :param buffer_size:  Desired minimum buffer length.
-        :param fast: whether to use FAST2 
+        :param fast: whether to use FAST2
             as the data transfer method.
             FAST2 sends data through the adapter ~0.5seconds
             after :meth:`start_buffer` is called.
@@ -650,9 +650,8 @@ class SR830(Instrument):
         return self.buffer_bytes_convert(self.read_bytes(-1))
 
     def buffer_bytes_convert(self, buffer):
-        """Converts the measurement buffer from bytes to a float.
-        The byte to float conversion is non-standard; 
-        the conversion was derived from the programming manual.
+        """Convert the measurement buffer from bytes to a float
+        using a non-standard conversion according to the manual.
         """
         byteproduct = np.array(list(buffer[0::4])) + np.array(list(buffer[1::4]))*2**8
         divsor, remainder = np.divmod(
