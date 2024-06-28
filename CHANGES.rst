@@ -1,3 +1,11 @@
+Upcoming version
+================
+
+
+Automation
+----------
+- Explicitly set encoding to utf8 when writing and reading data to file, allowing the use of special characters.
+  Previously the encoding was not explicitly set, this could potentially disrupt loading old data-files; if this is required, the encoading can be changed by changing (e.g., monkey-patching) the :code:`pymeasure.experiment.Results.ENCODING` property. (@CasperSchippers, #1123)
 
 Version 0.14.0 (2024-05-22)
 ===========================
