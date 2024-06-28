@@ -428,10 +428,13 @@ class SR830(Instrument):
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        if percent is None:
-            percent = self.get_scaling(channel)[0]
-        if expand is None:
-            expand = self.get_scaling(channel)[1]
+        if percent is None or expand is None:
+            prior_percent, prior_expand = self.get_scaling(channel)
+            if percent is None:
+                percent = prior_percent
+            if expand is None:
+                expand = prior_expand
+
         channel = self.CHANNELS.index(channel) + 1
         expand = discreteTruncate(expand, self.EXPANSION_VALUES)
         expand = self.EXPANSION_VALUES.index(int(expand))
@@ -559,18 +562,19 @@ class SR830(Instrument):
         return (ch1.mean(), ch1.std(), ch2.mean(), ch2.std())
 
     def buffer_measure_fast(self, buffer_size, fast=True, timeout=60,):
-        '''
-        Buffer measurement method that returns
-        both channel 1 and channel 2 buffers as np.arrays.
-        Args:
-        buffer_size:  Desired minimum buffer length.
-        If fast == True,  FAST2 is the data transfer method.
-        FAST2 sends data through the adapter ~0.5seconds
-        after `start_buffer` is called.
-        If  fast == False, FAST0 is the transfer mode and
-        an appropriate timeout needs to be spcified.
-        See programming section of the SR830 manual for more detail.
-        '''
+        """Measures the buffer in either the fast or slow
+        data transfer mode. Returns X, Y values in the fast 
+        mode as np.arrays. 
+        
+        :param buffer_size:  Desired minimum buffer length.
+        :param fast: whether to use FAST2 
+            as the data transfer method.
+            FAST2 sends data through the adapter ~0.5seconds
+            after :meth:`start_buffer` is called.
+            Otherwise, FAST0 is the transfer mode and
+            an appropriate timeout needs to be specified.
+        :param timeout: Reading timeout for FAST0 (`fast=False`) in seconds.
+        """
         self.reset_buffer()
         if fast:
             standard_timeout = 3E3
@@ -636,9 +640,9 @@ class SR830(Instrument):
 
     def get_buffer_bytes(self, channel=1, start=0, end=None):
         """ Acquires the 32 bit floating point data through bytes transfer
-        Manual suggests this is the fastest transfer method.
+        This is the fastest transfer method according to the manual.
         The byte to float conversion is provided in the manual
-        and implemented in `buffer_bytes_convert`
+        and implemented in :meth:`buffer_bytes_convert`
         """
         if end is None:
             end = self.buffer_count
@@ -646,10 +650,10 @@ class SR830(Instrument):
         return self.buffer_bytes_convert(self.read_bytes(-1))
 
     def buffer_bytes_convert(self, buffer):
-        '''
-        Converts the SR830's buffer in bytes to decimal numbers.
-        This formula was derived from the programming manual.
-        '''
+        """Converts the measurement buffer from bytes to a float.
+        The byte to float conversion is non-standard; 
+        the conversion was derived from the programming manual.
+        """
         byteproduct = np.array(list(buffer[0::4])) + np.array(list(buffer[1::4]))*2**8
         divsor, remainder = np.divmod(
             byteproduct,
