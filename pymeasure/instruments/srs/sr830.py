@@ -580,7 +580,7 @@ class SR830(Instrument):
             try:
                 buffer_bytes = self.read_bytes(4*buffer_size)
                 self.pause_buffer()
-                # clear the read buffer 
+                # clear the read buffer
                 # for any accidental measurements
                 self.adapter.connection.timeout = 0.5e3
                 self.read_bytes(-1)
