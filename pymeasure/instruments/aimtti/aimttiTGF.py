@@ -49,10 +49,72 @@ class TGF4000Channel(Channel):
         values=WAVE
     )
 
-    #...
+    # FREQ < NRF >
+    # PER < NRF >
+    # AMPLRNG < CPD >
+    # AMPL < NRF >
+    # HILVL < NRF >
+    # LOLVL < NRF >
+    # DCOFFS < NRF >
+    # OUTPUT < CPD >
+    # ZLOAD < CPD >
+    # SQRSYMM < NRF >
+    # RMPSYMM < NRF >
+    # SYNCOUT < CPD >
+    # SYNCTYPE < CPD >
+    # CHN2CONFIG < CPD >
+    # PHASE < NRF >
+    # ALIGN
 
     # Pulse generator commands
+    set_pulse_freq = Channel.setting(
+        "PULSFREQ %g",
+        """Set the pulse waveform frequency to <NRF> Hz""",
+        validator=strict_range,
+        values=[0, 80e6]
+    )
 
+    set_pulse_period = Channel.setting(
+        "PULSPER %g",
+        """Set the pulse waveform period to <NRF> sec""",
+    )
+
+    set_pulse_width = Channel.setting(
+        "PULSWID %g",
+        """Set the pulse waveform width to <NRF> sec""",
+    )
+
+    set_pulse_width = Channel.setting(
+        "PULSSYMM %g",
+        """Set the pulse waveform symmetry to <NRF> %""",
+        validator=strict_range,
+        values=[0, 100]
+    )
+
+    set_pulse_edge = Channel.setting(
+        "PULSEDGE %g",
+        """Set the pulse waveform edges (positive and negative edge) to <NRF> sec""",
+    )
+
+    set_pulse_rise = Channel.setting(
+        "PULSRISE %g",
+        """Set the pulse waveform positive edge to <NRF> sec""",
+    )
+
+    set_pulse_fall = Channel.setting(
+        "PULSFALL %g",
+        """Set the pulse waveform negative edge to <NRF> sec""",
+    )
+
+    set_pulse_delay = Channel.setting(
+        "PULSDLY %g",
+        """Set the pulse waveform delay to <NRF> sec""",
+    )
+
+    # PRBS generator commands
+    # PRBSBITRATE <NRF>
+
+    # Arbitrary waveform commands
 
 
 
@@ -87,6 +149,7 @@ class TGF4000Base(SCPIUnknownMixin, Instrument):
     select_channel = Instrument.control(
         "CHN?",
         "CHN{ch}",
+        "Set channel as the destination for subsequent commands. Can be 1 or 2.",
         validator=strict_discrete_set,
         values=[1, 2]
     )
@@ -103,7 +166,6 @@ class TGF4082(TGF4000Base):
     ch_2: TGF4000Channel = Instrument.ChannelCreator(
         TGF4000Channel, "2",
     )
-
 
     def __init__(self, adapter, name="AimTTI TGF4082", **kwargs):
         super().__init__(adapter, name, **kwargs)
