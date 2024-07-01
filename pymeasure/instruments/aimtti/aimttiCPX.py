@@ -37,6 +37,7 @@ class CPXChannel(Channel):
         self.voltage_setpoint_values = voltage_range
         self.current_limit_values = current_range
 
+    # Set points
     voltage_setpoint = Channel.control(
         "V{ch}?", "V{ch}V %g",
         """ Control the output voltage of this channel.
@@ -57,6 +58,85 @@ class CPXChannel(Channel):
         get_process=lambda x: float(x[3:]),
     )
 
+    # Protections
+    overvoltage_protection = Channel.control(
+        "OVP{ch}?", "OVP{ch} %g",
+        """ Control the overvoltage of this channel.
+        With verify: the operation is completed when the parameter being adjusted
+        reaches the required value to within ±5% or ±10 counts.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    overcurrent_protection = Channel.control(
+        "OCP{ch}?", "OCP{ch} %g",
+        """ Control the overvoltage of this channel.
+        With verify: the operation is completed when the parameter being adjusted
+        reaches the required value to within ±5% or ±10 counts.""",
+        validator=strict_range,
+        values=[0, 20],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    # Steps
+    voltage_step = Channel.control(
+        "DELTAV{ch}?", "DELTAV{ch} %g",
+        """ Control the voltage step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    inc_voltage_step = Channel.control(
+        "INCV{ch}?", "INCV{ch} %g",
+        """ Increment the voltage step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    dec_voltage_step = Channel.control(
+        "DECV{ch}?", "DECV{ch} %g",
+        """ Decrement the voltage step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    current_step = Channel.control(
+        "DELTAI{ch}?", "DELTAI{ch} %g",
+        """ Control the current step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    inc_current_step = Channel.control(
+        "INCI{ch}?", "INCI{ch} %g",
+        """ Increment the current step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    dec_current_step = Channel.control(
+        "DECI{ch}?", "DECI{ch} %g",
+        """ Decrement the current step of this channel.""",
+        validator=strict_range,
+        values=[0, 60],
+        dynamic=True,
+        get_process=lambda x: float(x[3:]),
+    )
+
+    # Actual mesurements
     voltage = Channel.measurement(
         "V{ch}O?",
         """ Measure the output readback voltage for this output channel in Volts.""",
@@ -69,16 +149,7 @@ class CPXChannel(Channel):
         get_process=lambda x: float(x[:-1]),
     )
 
-    current_range = Channel.control(
-        "IRANGE{ch}?", "IRANGE{ch} %g",
-        """ Control the current range of the channel.
-        Low (500/800mA) range, or High range.
-        Output must be switched off before changing range.""",
-        validator=strict_discrete_set,
-        values={"LOW": 1, "HIGH": 2},
-        map_values=True,
-    )
-
+    # Output control
     output_enabled = Channel.control(
         "OP{ch}?", "OP{ch} %i",
         """ Control whether the source is enabled, takes values True or False.""",
@@ -123,6 +194,16 @@ class CPXBase(SCPIUnknownMixin, Instrument):
         values={True: 1, False: 0},
         map_values=True,
     )
+
+    query_and_clear_errors = Instrument.measurement(
+        "QER?",
+        """Query and clear Query Error Register. The response format is nr1<RMT>""",
+        cast=str,
+    )
+
+    def trip_reset(self):
+        """Trip reset."""
+        self.write("TRIPRST")
 
     def local(self):
         """Go to local. Make sure all output are disabled first."""
