@@ -137,13 +137,13 @@ class CPXChannel(Channel):
     )
 
     # Actual mesurements
-    voltage = Channel.measurement(
+    measure_voltage = Channel.measurement(
         "V{ch}O?",
         """ Measure the output readback voltage for this output channel in Volts.""",
         get_process=lambda x: float(x[:-1]),
     )
 
-    current = Channel.measurement(
+    measure_current = Channel.measurement(
         "I{ch}O?",
         """ Measure the output readback current for this output channel in Amps.""",
         get_process=lambda x: float(x[:-1]),
