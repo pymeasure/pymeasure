@@ -23,3 +23,4 @@
 #
 
 from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303QMDP, PL303QMTP
+from .aimttiTGF import TGF4082
