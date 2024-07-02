@@ -327,7 +327,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         data = self.read_bytes(length)
         return from_binary_block(
             data, datatype="d" if bitness == 64 else "f", is_big_endian=False
-    )
+        )
 
 
 # subclasses of specific instruments ---------------------------------------------------------------
@@ -344,7 +344,6 @@ class AQ6370D(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6370C(AQ6370Series):
@@ -358,7 +357,6 @@ class AQ6370C(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6373(AQ6370Series):
@@ -380,7 +378,6 @@ class AQ6373(AQ6370Series):
         5e-9,
         10e-9,
     ]
-    pass
 
 
 class AQ6373B(AQ6373):
@@ -394,7 +391,6 @@ class AQ6373B(AQ6373):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6375(AQ6370Series):
@@ -412,7 +408,6 @@ class AQ6375(AQ6370Series):
         1e-9,
         2e-9,
     ]
-    pass
 
 
 class AQ6375B(AQ6375):
@@ -426,4 +421,3 @@ class AQ6375B(AQ6375):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
