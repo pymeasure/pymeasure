@@ -646,7 +646,7 @@ class SR830(Instrument):
         """
         if end is None:
             end = self.buffer_count
-        self.write("TRCL?%d,%d,%d" % (channel, start, end - start))
+        self.write(f"TRCL?{channel},{start},{end - start}")
         return self.buffer_bytes_convert(self.read_bytes(-1))
 
     def buffer_bytes_convert(self, buffer):
