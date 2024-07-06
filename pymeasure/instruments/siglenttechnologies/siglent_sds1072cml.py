@@ -56,7 +56,7 @@ class VoltageChannel(Channel):
             voltages: (1d array) the waveform in V
         """
         command='C{ch}:WF? DAT2'
-        descriptorDictionnary=self.getDesc()
+        descriptorDictionnary=self.get_desc()
         self.write(command) 
         response=self.read_bytes(count=-1,break_on_termchar=True)
         rawWaveform=list(struct.unpack_from('%db'%descriptorDictionnary["numDataPoints"],response,offset=descriptorDictionnary["descriptorOffset"]))
@@ -113,11 +113,11 @@ class TriggerChannel(Channel):
                 - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
             and updates the internal configuration status
         """
-        self.triggerConfDict.update(self.getSetup())
-        self.triggerConfDict.update(self.getLevel())
-        self.triggerConfDict.update(self.getSlope())
-        self.triggerConfDict.update(self.getMode())
-        self.triggerConfDict.update(self.getCoupling())
+        self.triggerConfDict.update(self.get_setup())
+        self.triggerConfDict.update(self.get_level())
+        self.triggerConfDict.update(self.get_slope())
+        self.triggerConfDict.update(self.get_mode())
+        self.triggerConfDict.update(self.get_coupling())
         return self.triggerConfDict
 
     def get_setup(self):
@@ -196,7 +196,7 @@ class TriggerChannel(Channel):
                 - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope and updates the interal trigger configuration
         """
-        triggerConfDict=self.getTriggerConfig()
+        triggerConfDict=self.get_triggerConfig()
         #self.triggerConfDict=triggerConfDict
         setProcesses={
             "setup":lambda dictIn: (
@@ -231,7 +231,7 @@ class TriggerChannel(Channel):
             triggerConfDict[changedKey]=kwargs[changedKey]
         for processKey in processToChange:
             self.write(setCommands[processKey]%setProcesses[processKey](triggerConfDict))
-        self.triggerConfDict=self.getTriggerConfig()
+        self.triggerConfDict=self.get_triggerConfig()
         statusFlag=self.triggerConfDict==triggerConfDict
         return statusFlag
 

@@ -29,15 +29,12 @@ import numpy as np
 import pymeasure
 from pymeasure.instruments.siglenttechnologies.siglent_sds1072cml import SDS1072CML
 from pyvisa.errors import VisaIOError
-from pymeasure.generator import Generator
 import pyvisa
 from matplotlib import pyplot as plt
 pyvisa.ResourceManager('@py')
 #print(pymeasure.__version__)
 #print(list_resources())
-generator=Generator()
-scope=generator.instantiate(SDS1072CML,'USB0::62700::60986::SDS100P2151785::0::INSTR','siglenttechnologies')
-#scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
+scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
 scope.timeDiv=1e-3
 scope.timeDiv
 print(scope.channel_1.vertical_division)
@@ -52,4 +49,7 @@ print(scope.trigger.set_triggerConfig(source="EX",coupling="DC",level=0.5,slope=
 
 timetag1,waveform1=scope.channel_1.get_waveform()
 timetag2,waveform2=scope.channel_2.get_waveform()
-generator.write_file("/home/fthouin/Downloads/test_siglent_sds1072cml.py")
+plt.figure()
+plt.plot(timetag1,waveform1,label="channel 1")
+plt.plot(timetag2,waveform2,label="channel 2")
+plt.show()
