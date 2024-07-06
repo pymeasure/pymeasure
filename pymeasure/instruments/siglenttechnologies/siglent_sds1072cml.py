@@ -45,7 +45,7 @@ class VoltageChannel(Channel):
         map_values=True,
         get_process= lambda v : v.split(" ",1)[-1][0],
     )
-    def getWaveform(self):
+    def get_waveform(self):
         """Returns the waveforms displayed in the channel.
         return:
             time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
@@ -60,7 +60,7 @@ class VoltageChannel(Channel):
         timetags=[i*descriptorDictionnary["horizInterval"]+descriptorDictionnary["horizOffset"] for i in range(len(rawWaveform))]
         return timetags,waveform
 
-    def getDesc(self):
+    def get_desc(self):
         '''Gets the descriptor of data being sent when querying device for waveform
         :return:
             dict: A dictionnary with the keys:
@@ -94,7 +94,7 @@ class TriggerChannel(Channel):
 
     triggerConfDict={}
     
-    def getTriggerConfig(self):
+    def get_triggerConfig(self):
         """Returns the current trigger configuration as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
@@ -114,7 +114,7 @@ class TriggerChannel(Channel):
         self.triggerConfDict.update(self.getCoupling())
         return self.triggerConfDict
 
-    def getSetup(self):
+    def get_setup(self):
         """Returns the current trigger setup as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
@@ -130,7 +130,7 @@ class TriggerChannel(Channel):
             }
         triggerSetupDict=get_process(self.ask("TRSE?"))
         return triggerSetupDict
-    def getLevel(self):
+    def get_level(self):
         """Returns the current trigger level as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "level": Level at which the trigger will be set (float)
@@ -141,7 +141,7 @@ class TriggerChannel(Channel):
             }
         triggerLevelDict=get_process(self.ask("TRLV?"))
         return triggerLevelDict
-    def getSlope(self):
+    def get_slope(self):
         """Returns the current trigger slope as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
@@ -153,7 +153,7 @@ class TriggerChannel(Channel):
         triggerSlopeDict=get_process(self.ask("TRSL?"))
         return triggerSlopeDict
 
-    def getMode(self):
+    def get_mode(self):
         """Returns the current trigger mode as a dict with keys:
                 - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
         """
@@ -163,7 +163,7 @@ class TriggerChannel(Channel):
         triggerModeDict=get_process(self.ask("TRMD?"))
         return triggerModeDict
 
-    def getCoupling(self):
+    def get_coupling(self):
         """Returns the current trigger coupling as a dict with keys:
                 - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
                 - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
@@ -175,7 +175,7 @@ class TriggerChannel(Channel):
         triggerCouplingDict=get_process(self.ask("TRCP?"))
         return triggerCouplingDict
 
-    def setTriggerConfig(self,**kwargs):
+    def set_triggerConfig(self,**kwargs):
         """Sets the current trigger configuration with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
