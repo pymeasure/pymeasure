@@ -41,7 +41,7 @@ class VoltageChannel(Channel):
     )
     coupling=Channel.control(
         "C{ch}:CPL?","C{ch}:CPL %s1M",
-        "Sets and gets the channel coupling mode. (see UM p. 35)",
+        "Sets and gets the channel coupling mode to "AC" or "DC". (see UM p. 35)",
         validator=truncated_discrete_set,
         values={"DC":"D","AC":"A"},
         map_values=True,
