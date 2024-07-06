@@ -49,7 +49,8 @@ class VoltageChannel(Channel):
     )
     def getWaveform(self):
         """
-        Returns the waveforms displayed in the channel.
+        Return the waveforms displayed in the channel.
+
         return:
             time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
             voltages: (1d array) the waveform in V
