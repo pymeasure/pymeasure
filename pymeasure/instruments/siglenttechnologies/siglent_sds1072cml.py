@@ -33,7 +33,7 @@ class VoltageChannel(Channel):
     """
     vertical_division=Channel.control(
         "C{ch}:VDIV?","C{ch}:VDIV %s",
-        "Sets or gets the vertical sensitivity of a channel.",
+        "Control the vertical sensitivity of a channel.",
         validator=truncated_range,
         values=[2e-3,10],
         get_process= lambda v : float(v.split(" ",1)[-1][:-1]),
