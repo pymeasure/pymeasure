@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class VoltageChannel(Channel):
     )
 
 
-class KeysightE36312A(Instrument):
+class KeysightE36312A(SCPIMixin, Instrument):
     """ Represents the Keysight E36312A Power supply
     interface for interacting with the instrument.
 

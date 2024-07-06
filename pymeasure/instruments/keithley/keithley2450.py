@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,11 @@
 
 import logging
 import time
+from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 from .buffer import KeithleyBuffer
 
@@ -36,8 +37,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2450(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 2450 SourceMeter and provides a
+class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
+    """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -58,6 +59,13 @@ class Keithley2450(Instrument, KeithleyBuffer):
         keithley.shutdown()                     # Ramps the current to 0 mA and disables output
 
     """
+
+    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
 
     source_mode = Instrument.control(
         ":SOUR:FUNC?", ":SOUR:FUNC %s",
@@ -365,11 +373,6 @@ class Keithley2450(Instrument, KeithleyBuffer):
     # Methods        #
     ####################
 
-    def __init__(self, adapter, name="Keithley 2450 SourceMeter", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
-
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
@@ -496,25 +499,8 @@ class Keithley2450(Instrument, KeithleyBuffer):
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 2450 reported error: %d, %s", code, message)
-            code, message = self.error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 2450 error retrieval.")
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,9 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, discreteTruncate, RangeException
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.validators import discreteTruncate
+from pymeasure.errors import RangeException
 from pyvisa import VisaIOError
 
 import numpy as np
@@ -31,7 +33,7 @@ from io import BytesIO
 import warnings
 
 
-class Agilent8722ES(Instrument):
+class Agilent8722ES(SCPIUnknownMixin, Instrument):
     """ Represents the Agilent8722ES Vector Network Analyzer
     and provides a high-level interface for taking scans of the
     scattering parameters.

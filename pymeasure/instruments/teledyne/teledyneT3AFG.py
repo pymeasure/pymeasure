@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -122,15 +122,16 @@ class SignalChannel(Channel):
     )
 
 
-class TeledyneT3AFG(Instrument):
+class TeledyneT3AFG(SCPIMixin, Instrument):
     """Represents the Teledyne T3AFG series of arbitrary waveform
     generator interface for interacting with the instrument.
 
-    Intially targeting T3AFG80, some features may not be available on
+    Initially targeting T3AFG80, some features may not be available on
     lower end models and features from higher end models are not
-    included here intially.
+    included here yet.
 
     Future improvements (help welcomed):
+
     - Add other OUTPut related controls like Load and Polarity
     - Add other Basic Waveform related controls like Period
     - Add frequency ranges per model
@@ -152,7 +153,8 @@ class TeledyneT3AFG(Instrument):
 
     def __init__(self, adapter, name="Teledyne T3AFG", **kwargs):
         super().__init__(
-            adapter, name, includeSCPI=True,
+            adapter,
+            name,
             tcpip={'read_termination': '\n'},
             **kwargs
         )

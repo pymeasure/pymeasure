@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -366,16 +366,16 @@ class CommonBase:
         delattr(self, child._name)
 
     # Communication functions
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
         Implement in subclass!
 
-        :param query_delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         raise NotImplementedError("Implement in subclass!")
 
-    def ask(self, command, query_delay=0):
+    def ask(self, command, query_delay=None):
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
@@ -421,7 +421,7 @@ class CommonBase:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, query_delay=0, **kwargs):
+    def binary_values(self, command, query_delay=None, **kwargs):
         """ Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.

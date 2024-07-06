@@ -12,7 +12,7 @@ Your new instrument should be placed in the directory corresponding to the manuf
 Updating the init file
 **********************
 
-The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported. For a new manufacturer, the manufacturer should also be added to :code:`pymeasure/pymeasure/instruments/__init__.py`.
+The :code:`__init__.py` file in the manufacturer directory should import all of the instruments that correspond to the manufacturer, to allow the files to be easily imported.
 
 Add test files
 **************
@@ -57,7 +57,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2023 PyMeasure Developers
+    # Copyright (c) 2013-2024 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -123,12 +123,29 @@ In principle, you are free to write any methods that are necessary for interacti
 
 In practice, we have developed a number of best practices for making instruments easy to write and maintain. The following sections detail these, which are highly encouraged to follow.
 
+.. _common_instrument_types:
+
 Common instrument types
 ***********************
 There are a number of categories that many instruments fit into.
 In the future, pymeasure should gain an abstraction layer based on that, see `this issue <https://github.com/pymeasure/pymeasure/issues/416>`__.
 Until that is ready, here are a couple of guidelines towards a more uniform API.
 Note that not all already available instruments follow these, but expect this to be harmonized in the future.
+
+Generic types mixins
+--------------------
+The :doc:`generic_types <../../api/instruments/generic_types>` module contains mixin classes for common types.
+For example, if an instrument complies to SCPI standards, you can add :class:`~pymeasure.instruments.generic_types.SCPIMixin` to your instrument:
+
+.. testcode::
+
+    from pymeasure.instruments.generic_types import SCPIMixin
+
+    class SomeSCPIInstrument(SCPIMixin, Instrument):
+        """This instrument has properties and methods defined for all SCPI instruments"""
+
+This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.generic_types.SCPIMixin.id`, :attr:`~pymeasure.instruments.generic_types.SCPIMixin.status` and default methods like :meth:`~pymeasure.instruments.generic_types.SCPIMixin.clear` and :meth:`~pymeasure.instruments.generic_types.SCPIMixin.reset` to :code:`SomeSCPIInstrument`.
+
 
 Frequent properties
 -------------------
@@ -155,6 +172,7 @@ To cite the `Python documentation <https://docs.python.org/3.11/howto/enum.html>
 As our signal values are often integers, the most appropriate enum types are :code:`IntEnum` and :code:`IntFlag`.
 
 :code:`IntEnum` is the same as :code:`Enum`, but its members are also integers and can be used anywhere that an integer can be used (so their use for composing commands is transparent), but logic/code they appear in is much more legible.
+Note that starting from Python version 3.11, the printed format of the :code:`IntEnum` and :code:`IntFlag` has been changed to return numeric value; however, the symbolic name can be obtained by printing its :code:`repr` or the :code:`.name` property, or returning the value in a REPL.
 
 .. doctest::
 
@@ -169,10 +187,12 @@ As our signal values are often integers, the most appropriate enum types are :co
     >>> if current_mode == InstrMode.WAITING:
     ...     print('Idle')
     ... else:
-    ...     print(current_mode)
+    ...     current_mode
+    ...     print(repr(current_mode))
     ...     print(f'Mode value: {current_mode}')
     ...
-    InstrMode.HEATING
+    <InstrMode.HEATING: 1>
+    <InstrMode.HEATING: 1>
     Mode value: 1
 
 :code:`IntFlag` has the added benefit that it supports bitwise operators and combinations, and as such is a good fit for status bitmasks or error codes that can represent multiple values:
@@ -188,8 +208,8 @@ As our signal values are often integers, the most appropriate enum types are :co
     ...     OK = 0
     ...
     >>> received_from_device = 7
-    >>> print(ErrorCode(received_from_device))
-    ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE
+    >>> ErrorCode(received_from_device)
+    <ErrorCode.TEMPSENSOR_FAILURE|COOLER_FAILURE|HEATER_FAILURE: 7>
 
 :code:`IntFlags` are used by many instruments for the purpose just demonstrated.
 
