@@ -29,27 +29,25 @@ import numpy as np
 import pymeasure
 from pymeasure.instruments.siglenttechnologies.siglent_sds1072cml import SDS1072CML
 from pyvisa.errors import VisaIOError
+from pymeasure.generator import Generator
 import pyvisa
 from matplotlib import pyplot as plt
 pyvisa.ResourceManager('@py')
 #print(pymeasure.__version__)
 #print(list_resources())
-scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
+generator=Generator()
+scope=generator.instantiate(SDS1072CML,'USB0::62700::60986::SDS100P2151785::0::INSTR')
+#scope=SDS1072CML('USB0::62700::60986::SDS100P2151785::0::INSTR')
 scope.timeDiv=1e-3
-scope.timeDiv
-print(scope.channel_1.vertical_division)
+assert scope.timeDiv==1e-3
 scope.channel_1.vertical_division=2
+assert scope.channel_1.vertical_division==2
 scope.channel_1.coupling="AC"
-print(scope.channel_1.coupling)
-print(scope.is_ready)
-scope.arm()
+assert scope.channel_1.coupling=="AC"
 
-print(scope.trigger.getTriggerConfig())
-print(scope.trigger.setTriggerConfig(source="EX",coupling="DC",level=0.5,slope='POS'))
+scope.trigger.setTriggerConfig(source="EX",coupling="DC",level=0.5,slope='POS')
+
 
 timetag1,waveform1=scope.channel_1.getWaveform()
 timetag2,waveform2=scope.channel_2.getWaveform()
-plt.figure()
-plt.plot(timetag1,waveform1,label="channel 1")
-plt.plot(timetag2,waveform2,label="channel 2")
-plt.show()
+generator.write_file("~/Downloads/test_siglent_sds1072cml.py")

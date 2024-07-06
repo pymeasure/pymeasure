@@ -28,9 +28,7 @@ import struct
 
 class VoltageChannel(Channel):
 
-    """ Implementation of a SIGLENT SDS1072CML Oscilloscope channel
-
-    """
+    """ Implementation of a SIGLENT SDS1072CML Oscilloscope channel."""
     vertical_division=Channel.control(
         "C{ch}:VDIV?","C{ch}:VDIV %s",
         "Control the vertical sensitivity of a channel.",
@@ -41,15 +39,14 @@ class VoltageChannel(Channel):
     )
     coupling=Channel.control(
         "C{ch}:CPL?","C{ch}:CPL %s1M",
-        "Sets and gets the channel coupling mode. (see UM p. 35)",
+        "Controls the channel coupling mode. (see UM p. 35)",
         validator=truncated_discrete_set,
         values={"DC":"D","AC":"A"},
         map_values=True,
         get_process= lambda v : v.split(" ",1)[-1][0],
     )
     def getWaveform(self):
-        """
-        Returns the waveforms displayed in the channel.
+        """Returns the waveforms displayed in the channel.
         return:
             time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
             voltages: (1d array) the waveform in V
@@ -64,8 +61,7 @@ class VoltageChannel(Channel):
         return timetags,waveform
 
     def getDesc(self):
-        '''
-        Gets the descriptor of data being sent when querying device for waveform
+        '''Gets the descriptor of data being sent when querying device for waveform
         :return:
             dict: A dictionnary with the keys:
                 numDataPoints: the number of poitns in the waveform
@@ -94,15 +90,12 @@ class VoltageChannel(Channel):
         }
         return descriptorDictionnary
 class TriggerChannel(Channel):
-    """
-        Implementation of trigger control channel
-    """
+    """Implementation of trigger control channel"""
 
     triggerConfDict={}
     
     def getTriggerConfig(self):
-        """
-            Returns the current trigger configuration as a dict with keys:
+        """Returns the current trigger configuration as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -122,8 +115,7 @@ class TriggerChannel(Channel):
         return self.triggerConfDict
 
     def getSetup(self):
-        """
-            Returns the current trigger setup as a dict with keys:
+        """Returns the current trigger setup as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -139,8 +131,7 @@ class TriggerChannel(Channel):
         triggerSetupDict=get_process(self.ask("TRSE?"))
         return triggerSetupDict
     def getLevel(self):
-        """
-            Returns the current trigger level as a dict with keys:
+        """Returns the current trigger level as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "level": Level at which the trigger will be set (float)
         """
@@ -151,8 +142,7 @@ class TriggerChannel(Channel):
         triggerLevelDict=get_process(self.ask("TRLV?"))
         return triggerLevelDict
     def getSlope(self):
-        """
-            Returns the current trigger slope as a dict with keys:
+        """Returns the current trigger slope as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         """
@@ -164,8 +154,7 @@ class TriggerChannel(Channel):
         return triggerSlopeDict
 
     def getMode(self):
-        """
-            Returns the current trigger mode as a dict with keys:
+        """Returns the current trigger mode as a dict with keys:
                 - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
         """
         get_process=lambda v:{
@@ -175,8 +164,7 @@ class TriggerChannel(Channel):
         return triggerModeDict
 
     def getCoupling(self):
-        """
-            Returns the current trigger coupling as a dict with keys:
+        """Returns the current trigger coupling as a dict with keys:
                 - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
                 - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         """
@@ -188,8 +176,7 @@ class TriggerChannel(Channel):
         return triggerCouplingDict
 
     def setTriggerConfig(self,**kwargs):
-        """
-            Sets the current trigger configuration with keys:
+        """Sets the current trigger configuration with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -282,16 +269,13 @@ class SDS1072CML(Instrument):
         get_process= lambda v : True if (v.split(" ",1)[-1] in ["Stop","Ready","Armed"]) else False
     )
     def wait(self,time):
-        """
+        """Stops the scope from doing anything until it has completed the current acquisition (p.146)
         param time: time in seconds to wait for
-        Stops the scope from doing anything until it has completed the current acquisition (p.146)
         """
         self.write("WAIT %d"%int(time))
 
     def arm(self):
-        """
-            Changes the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition
-        """
+        """Changes the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition"""
         if self.is_ready:
             self.write('ARM')
             return True
@@ -300,9 +284,8 @@ class SDS1072CML(Instrument):
         
     template=Instrument.control(
         "TMP?",None,
-        """
-            Returns a copy of the template that describes the various logical entities making up a complete waveform. In
-            particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
+        """Returns a copy of the template that describes the various logical entities making up a complete waveform.
+            In particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
         """
     )
         
