@@ -89,6 +89,8 @@ class VoltageChannel(Channel):
             "descriptorOffset":descriptorOffset
         }
         return descriptorDictionnary
+
+
 class TriggerChannel(Channel):
     """Implementation of trigger control channel"""
 
