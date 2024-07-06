@@ -24,7 +24,9 @@
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_range,truncated_discrete_set,strict_range,truncated_range
+from pymeasure.instruments.generic_types import SCPIMixin
 import struct
+
 
 class VoltageChannel(Channel):
 
@@ -37,6 +39,7 @@ class VoltageChannel(Channel):
         get_process= lambda v : float(v.split(" ",1)[-1][:-1]),
         set_process=lambda v: "%.2eV"%v
     )
+
     coupling=Channel.control(
         "C{ch}:CPL?","C{ch}:CPL %s1M",
         "Controls the channel coupling mode. (see UM p. 35)",
@@ -45,6 +48,7 @@ class VoltageChannel(Channel):
         map_values=True,
         get_process= lambda v : v.split(" ",1)[-1][0],
     )
+
     def get_waveform(self):
         """Returns the waveforms displayed in the channel.
         return:
@@ -132,6 +136,7 @@ class TriggerChannel(Channel):
             }
         triggerSetupDict=get_process(self.ask("TRSE?"))
         return triggerSetupDict
+
     def get_level(self):
         """Returns the current trigger level as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
@@ -143,6 +148,7 @@ class TriggerChannel(Channel):
             }
         triggerLevelDict=get_process(self.ask("TRLV?"))
         return triggerLevelDict
+
     def get_slope(self):
         """Returns the current trigger slope as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
@@ -230,7 +236,7 @@ class TriggerChannel(Channel):
         return statusFlag
 
 
-class SDS1072CML(Instrument):
+class SDS1072CML(SCPIMixin,Instrument):
     """ Represents the SIGLENT SDS1072CML Oscilloscope
     and provides a high-level for interacting with the instrument
     """
@@ -252,16 +258,19 @@ class SDS1072CML(Instrument):
         set_process=lambda v: "%.2eS"%v,
         get_process=lambda v: float(v.split(" ",1)[-1][:-1])
     )
+
     status=Instrument.control(
         "SAST?",None,
         "Queries the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process= lambda v : v.split(" ",1)[-1]
     )
+    
     internal_state=Instrument.control(
         "INR?",None,
         "Gets the scope's Internal state change register and clears it.",
         get_process= lambda v : v.split(" ",1)[-1]
     )
+
     is_ready=Instrument.control(
         "SAST?",None,
         "Checks if the scope is ready for the next acquisition",
@@ -270,6 +279,7 @@ class SDS1072CML(Instrument):
         #map_values=True,
         get_process= lambda v : True if (v.split(" ",1)[-1] in ["Stop","Ready","Armed"]) else False
     )
+
     def wait(self,time):
         """Stops the scope from doing anything until it has completed the current acquisition (p.146)
         param time: time in seconds to wait for
