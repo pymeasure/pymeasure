@@ -21,7 +21,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-
-from .firstattempt_draft import DSA
 from .rigoldsa815 import DSA815
-#from .dsa815spectrum import DSA815Spectrum
