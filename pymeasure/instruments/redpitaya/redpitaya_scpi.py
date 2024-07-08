@@ -197,6 +197,7 @@ class RedPitayaScpi(Instrument):
             name,
             read_termination=read_termination,
             write_termination=write_termination,
+            includeSCPI=True,
             **kwargs)
 
     dioN = Instrument.MultiChannelCreator(DigitalChannelN, list(range(7)), prefix='dioN')

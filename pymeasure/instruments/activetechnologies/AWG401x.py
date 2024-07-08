@@ -412,17 +412,17 @@ class AWG401x_AFG(AWG401x_base):
 
         wfg.reset()                     # Reset the instrument at default state
 
-        wfg.ch[1].shape = "SINUSOID"    # Sets a sine waveform on CH1
-        wfg.ch[1].frequency = 4.7e3     # Sets the frequency to 4.7 kHz on CH1
-        wfg.ch[1].amplitude = 1         # Set amplitude of 1 V on CH1
-        wfg.ch[1].offset = 0            # Set the amplitude to 0 V on CH1
-        wfg.ch[1].enabled = True        # Enables the CH1
+        wfg.channels[1].shape = "SINUSOID"    # Sets a sine waveform on CH1
+        wfg.channels[1].frequency = 4.7e3     # Sets the frequency to 4.7 kHz on CH1
+        wfg.channels[1].amplitude = 1         # Set amplitude of 1 V on CH1
+        wfg.channels[1].offset = 0            # Set the amplitude to 0 V on CH1
+        wfg.channels[1].enabled = True        # Enables the CH1
 
-        wfg.ch[2].shape = "SQUARE"      # Sets a square waveform on CH2
-        wfg.ch[2].frequency = 100e6     # Sets the frequency to 100 MHz on CH2
-        wfg.ch[2].amplitude = 0.5         # Set amplitude of 0.5 V on CH2
-        wfg.ch[2].offset = 0            # Set the amplitude to 0 V on CH2
-        wfg.ch[2].enabled = True        # Enables the CH2
+        wfg.channels[2].shape = "SQUARE"      # Sets a square waveform on CH2
+        wfg.channels[2].frequency = 100e6     # Sets the frequency to 100 MHz on CH2
+        wfg.channels[2].amplitude = 0.5         # Set amplitude of 0.5 V on CH2
+        wfg.channels[2].offset = 0            # Set the amplitude to 0 V on CH2
+        wfg.channels[2].enabled = True        # Enables the CH2
 
         wfg.enabled = True              # Enable output of waveform generator
         wfg.beep()                      # "beep"
@@ -457,7 +457,7 @@ class AWG401x_AFG(AWG401x_base):
                                       "class AWG401x")
 
         for i in range(3, num_ch + 1):
-            child = self.add_child(ChannelAFG, i, collection="ch")
+            child = self.add_child(ChannelAFG, i)
             child._protected = True
 
 
@@ -475,14 +475,14 @@ class AWG401x_AWG(AWG401x_base):
         wfg.waveforms["MyWaveform"] = [1, 0] * 8
 
         for i in range(1, wfg.num_ch + 1):
-            wfg.entries[1].ch[i].voltage_high = 1       # Sets high voltage = 1
-            wfg.entries[1].ch[i].voltage_low = 0        # Sets low voltage = 1
-            wfg.entries[1].ch[i].waveform = "SQUARE"    # Sets a square wave
+            wfg.entries[1].channels[i].voltage_high = 1       # Sets high voltage = 1
+            wfg.entries[1].channels[i].voltage_low = 0        # Sets low voltage = 1
+            wfg.entries[1].channels[i].waveform = "SQUARE"    # Sets a square wave
             wfg.setting_ch[i].enabled = True            # Enable channel
 
         wfg.entries.resize(2)           # Resize the number of entries to 2
 
-        wfg.entries[2].ch[1].waveform = "MyWaveform"   # Set custom waveform
+        wfg.entries[2].channels[1].waveform = "MyWaveform"   # Set custom waveform
 
         wfg.enabled = True              # Enable output of waveform generator
         wfg.beep()                      # "beep"
@@ -763,16 +763,16 @@ class AWG401x_AWG(AWG401x_base):
             class VoltageOutOfRangeError(Exception):
                 pass
 
-            if max(value) > self.parent.entries[1].ch[1].voltage_high_max:
+            if max(value) > self.parent.entries[1].channels[1].voltage_high_max:
                 raise VoltageOutOfRangeError(
                     f"{max(value)}V is higher than maximum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].ch[1].voltage_high_max}V")
-            if min(value) < self.parent.entries[1].ch[1].voltage_low_min:
+                    f"{self.instrument.entries[1].channels[1].voltage_high_max}V")
+            if min(value) < self.parent.entries[1].channels[1].voltage_low_min:
                 raise VoltageOutOfRangeError(
                     f"{min(value)}V is lower than minimum possible voltage, "
                     f"which is "
-                    f"{self.instrument.entries[1].ch[1].voltage_low_min}V")
+                    f"{self.instrument.entries[1].channels[1].voltage_low_min}V")
 
             self.parent.save_file(f"{key}.txt",
                                   "\n".join(map(str, value)),
@@ -846,7 +846,7 @@ class AWG401x_AWG(AWG401x_base):
                 raise IndexError("Entry numeration start from 1")
             if key > int(self.parent.values("SEQuence:LENGth?")[0]):
                 raise IndexError("Index out of range")
-            return (self.parent, self.num_ch, key)
+            return SequenceEntry(self.parent, self.num_ch, key)
 
         def __len__(self):
             return int(self.parent.values("SEQuence:LENGth?")[0])
@@ -863,7 +863,7 @@ class SequenceEntry(Channel):
         self.loop_count_values = [self.loop_count_min, self.loop_count_max]
 
         for i in range(1, self.number_of_channels + 1):
-            self.add_child(self.AnalogChannel, i, collection="ch",
+            self.add_child(self.AnalogChannel, i,
                            sequence_number=sequence_number)
 
     def insert_id(self, command):

@@ -26,9 +26,9 @@ import re
 import time
 import numpy as np
 from enum import IntFlag
-from pymeasure.instruments import Instrument, discreteTruncate
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range
+    truncated_discrete_set, truncated_range, discreteTruncate
 
 
 class LIAStatus(IntFlag):
@@ -58,7 +58,6 @@ class ERRStatus(IntFlag):
 
 
 class SR830(Instrument):
-
     SAMPLE_FREQUENCIES = [
         62.5e-3, 125e-3, 250e-3, 500e-3, 1, 2, 4, 8, 16,
         32, 64, 128, 256, 512
@@ -502,8 +501,8 @@ class SR830(Instrument):
                 self.pause_buffer()
                 return ch1, ch2
         self.pause_buffer()
-        ch1[index : count + 1] = self.get_buffer(1, index, count)  # noqa: E203
-        ch2[index : count + 1] = self.get_buffer(2, index, count)  # noqa: E203
+        ch1[index: count + 1] = self.get_buffer(1, index, count)  # noqa: E203
+        ch2[index: count + 1] = self.get_buffer(2, index, count)  # noqa: E203
         return ch1, ch2
 
     def buffer_measure(self, count, stopRequest=None, delay=1e-3):

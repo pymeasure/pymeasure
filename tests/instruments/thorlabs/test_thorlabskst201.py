@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2023 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from unittest.mock import MagicMock
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp3437A import HP3437A
-from .hp8116a import HP8116A
-from .hp8657b import HP8657B
-from .hp856Xx import HP8560A
-from .hp856Xx import HP8561B
-from .hp11713a import HP11713A
-from .hp437b import HP437B
-from .hpsystempsu import HP6632A
-from .hpsystempsu import HP6633A
-from .hpsystempsu import HP6634A
-from .hplegacyinstrument import HPLegacyInstrument
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.thorlabs import ThorlabsKST201
+
+def test_init():
+    pass

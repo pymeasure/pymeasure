@@ -220,7 +220,9 @@ class KeithleyDMM6500(Instrument):
     def __init__(
         self, adapter, name="Keithley DMM6500 6½-Digit Multimeter", read_termination="\n", **kwargs
     ):
-        super().__init__(adapter, name, read_termination=read_termination, **kwargs)
+        super().__init__(adapter, name, read_termination=read_termination,
+                         includeSCPI=True,
+                         **kwargs)
         self.command_set = "SCPI"
 
     def __exit__(self, exc_type, exc_value, traceback):

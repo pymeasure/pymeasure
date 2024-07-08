@@ -19,5 +19,6 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    hp856xx
    hp8657B
    hp11713A
+   hp437B
    hplegacyinstrument
    hpsystempsu

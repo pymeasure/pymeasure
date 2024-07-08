@@ -188,6 +188,92 @@ grandfathered_docstring_instruments = [
     "ChannelAWG",
     "ChannelAFG",
 ]
+# Instruments which do not YET define `includeSCPI` explicitly
+grandfathered_includeSCPI_instruments = [
+    "AdvantestR624X",
+    "AdvantestR6245",
+    "AdvantestR6246",
+    "AdvantestR3767CG",
+    "AFG3152C",
+    "Agilent33521A",
+    "Agilent8722ES",
+    "AgilentB1500",
+    "AgilentE4980",
+    "AgilentE4408B",
+    "Agilent33500",
+    "Agilent8257D",
+    "Agilent34410A",
+    "Agilent33220A",
+    "Agilent4156",
+    "Ametek7270",
+    "AMI430",
+    "AnritsuMS4645B",
+    "AnritsuMS4647B",
+    "AnritsuMS4644B",
+    "AnritsuMS464xB",
+    "AnritsuMS4642B",
+    "AnritsuMS9740A",
+    "AnritsuMS2090A",
+    "AnritsuMS9710C",
+    "AnritsuMG3692C",
+    "APSIN12G",
+    "ATSBase",
+    "ATS545",
+    "ATS525",
+    "AWG401x_base",
+    "BKPrecision9130B",
+    "CNT91",
+    "ECO560",
+    "ESP300",
+    "HP33120A",
+    "HP34401A",
+    "Keithley2000",
+    "Keithley2200",
+    "Keithley2400",
+    "Keithley2600",
+    "Keithley2260B",
+    "Keithley2306",
+    "Keithley2750",
+    "Keithley6221",
+    "Keithley6517B",
+    "Keithley2450",
+    "KeysightDSOX1102G",
+    "KeysightN7776C",
+    "KeysightN5767A",
+    "KeysightE36312A",
+    "LakeShore211",
+    "LakeShore224",
+    "LakeShore331",
+    "LakeShore421",
+    "LakeShore425",
+    "LeCroyT3DSO1204",
+    "ParkerGV6",
+    "PL303P",
+    "PL303QMTP",
+    "PL303QMDP",
+    "PLBase",
+    "PL068P",
+    "PL601P",
+    "PL155P",
+    "razorbillRP100",
+    "SG380",
+    "SM7045D",
+    "SPDBase",
+    "SPDSingleChannelBase",
+    "SPD1168X",
+    "SPD1305X",
+    "SR860",
+    "SR830",
+    "SR570",
+    "TDS2000",
+    "TeledyneMAUI",
+    "TeledyneOscilloscope",
+    "TexioPSW360L30",
+    "ThorlabsPro8000",
+    "VellemanK8090",
+    "Yokogawa7651",
+    "YokogawaGS200",
+]
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -237,6 +323,22 @@ def test_kwargs_to_adapter(cls):
         ValueError, match="'kwarg_test' is not a valid attribute for type SerialInstrument"
     ):
         cls(SIM_RESOURCE, visa_library="@sim", kwarg_test=True)
+
+
+@pytest.mark.parametrize("cls", devices)
+@pytest.mark.filterwarnings("error:It is deprecated to specify `includeSCPI`:FutureWarning")
+def test_includeSCPI_explicitly_set(cls):
+    if cls.__name__ in (*proper_adapters, *need_init_communication):
+        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
+    elif cls.__name__ in channel_as_instrument_subclass:
+        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
+    elif cls.__name__ in grandfathered_includeSCPI_instruments:
+        pytest.skip(f"{cls.__name__} is in the codebase and needs information about SCPI.")
+    elif cls.__name__ == "Instrument":
+        pytest.skip("`Instrument` requires a `name` parameter.")
+
+    cls(adapter=MagicMock())
+    # assert that no error is raised
 
 
 def property_name_to_id(value):
