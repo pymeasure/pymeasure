@@ -139,73 +139,79 @@ class TriggerChannel(Channel):
             - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         and updates the internal configuration status
         """
-        self.triggerConfDict.update(self.get_setup())
-        self.triggerConfDict.update(self.get_level())
-        self.triggerConfDict.update(self.get_slope())
-        self.triggerConfDict.update(self.get_mode())
-        self.triggerConfDict.update(self.get_coupling())
+        self.triggerConfDict.update(self.trigger_setup)
+        self.triggerConfDict.update(self.trigger_level)
+        self.triggerConfDict.update(self.trigger_slope)
+        self.triggerConfDict.update(self.trigger_mode)
+        self.triggerConfDict.update(self.trigger_coupling)
         return self.triggerConfDict
 
-    def get_setup(self):
+    trigger_setup=Channel.measurement(
+        "TRSE?",
+        docs=
         """Return the current trigger setup as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
-        """
+        """,
+        preprocess_reply=lambda v:v.split(" ",1)[1],
         get_process = lambda v: {
-            "type": v.split(" ", 1)[1].split(",")[0],
-            "source": v.split(" ", 1)[1].split(",")[2],
-            "hold_type": v.split(" ", 1)[1].split(",")[4],
-            "hold_value1": v.split(" ", 1)[1].split(",")[6][:-1],
+            "type": v[0],
+            "source": v[2],
+            "hold_type": v[4],
+            "hold_value1": v[6],
         }
-        triggerSetupDict = get_process(self.ask("TRSE?"))
-        return triggerSetupDict
+    )
 
-    def get_level(self):
+    trigger_level=Channel.measurement(
+        "TRLV?",
+        docs=
         """Return the current trigger level as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "level": Level at which the trigger will be set (float)
-        """
+        """,
         get_process = lambda v: {
             "source": v.split(":", 1)[0],
             "level": float(v.split(" ", 1)[-1][:-2]),
         }
-        triggerLevelDict = get_process(self.ask("TRLV?"))
-        return triggerLevelDict
+    )
 
-    def get_slope(self):
+    trigger_slope=Channel.measurement(
+        "TRSL?",
+        docs=
         """Return the current trigger slope as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        """
+        """,
         get_process = lambda v: {
             "source": v.split(":", 1)[0],
-            "slope": v.split(" ", 1)[-1][:-1],
+            "slope": v.split(" ", 1)[-1],
         }
-        triggerSlopeDict = get_process(self.ask("TRSL?"))
-        return triggerSlopeDict
+    )
 
-    def get_mode(self):
+    trigger_mode=Channel.measurement(
+        "TRMD?",
+        docs=
         """Return the current trigger mode as a dict with keys:
         - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
-        """
-        get_process = lambda v: {"mode": v.split(" ", 1)[-1][:-1]}
-        triggerModeDict = get_process(self.ask("TRMD?"))
-        return triggerModeDict
+        """,
+        get_process = lambda v: {"mode": v.split(" ", 1)[-1]}
+    )
 
-    def get_coupling(self):
+    trigger_coupling=Channel.measurement(
+        "TRCP?",
+        docs=
         """Return the current trigger coupling as a dict with keys:
         - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
-        """
+        """,
         get_process = lambda v: {
             "source": v.split(":", 1)[0],
-            "coupling": v.split(" ", 1)[-1][:-1],
+            "coupling": v.split(" ", 1)[-1],
         }
-        triggerCouplingDict = get_process(self.ask("TRCP?"))
-        return triggerCouplingDict
+    )
 
     def set_triggerConfig(self, **kwargs):
         """Set the current trigger configuration with keys:
