@@ -29,8 +29,8 @@ import struct
 
 
 class VoltageChannel(Channel):
-
     """ Implementation of a SIGLENT SDS1072CML Oscilloscope channel."""
+
     vertical_division=Channel.control(
         "C{ch}:VDIV?","C{ch}:VDIV %s",
         "Control the vertical sensitivity of a channel.",
@@ -42,7 +42,7 @@ class VoltageChannel(Channel):
 
     coupling=Channel.control(
         "C{ch}:CPL?","C{ch}:CPL %s1M",
-        "Controls the channel coupling mode. (see UM p. 35)",
+        "Control the channel coupling mode. (see UM p. 35)",
         validator=truncated_discrete_set,
         values={"DC":"D","AC":"A"},
         map_values=True,
@@ -50,7 +50,7 @@ class VoltageChannel(Channel):
     )
 
     def get_waveform(self):
-        """Returns the waveforms displayed in the channel.
+        """Return the waveforms displayed in the channel.
         return:
             time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
             voltages: (1d array) the waveform in V
@@ -65,7 +65,7 @@ class VoltageChannel(Channel):
         return timetags,waveform
 
     def get_desc(self):
-        '''Gets the descriptor of data being sent when querying device for waveform
+        '''Get the descriptor of data being sent when querying device for waveform
         :return:
             dict: A dictionnary with the keys:
                 numDataPoints: the number of poitns in the waveform
@@ -101,7 +101,7 @@ class TriggerChannel(Channel):
     triggerConfDict={}
     
     def get_triggerConfig(self):
-        """Returns the current trigger configuration as a dict with keys:
+        """Return the current trigger configuration as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -121,7 +121,7 @@ class TriggerChannel(Channel):
         return self.triggerConfDict
 
     def get_setup(self):
-        """Returns the current trigger setup as a dict with keys:
+        """Return the current trigger setup as a dict with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -138,7 +138,7 @@ class TriggerChannel(Channel):
         return triggerSetupDict
 
     def get_level(self):
-        """Returns the current trigger level as a dict with keys:
+        """Return the current trigger level as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "level": Level at which the trigger will be set (float)
         """
@@ -150,7 +150,7 @@ class TriggerChannel(Channel):
         return triggerLevelDict
 
     def get_slope(self):
-        """Returns the current trigger slope as a dict with keys:
+        """Return the current trigger slope as a dict with keys:
                 - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2}) 
                 - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         """
@@ -162,7 +162,7 @@ class TriggerChannel(Channel):
         return triggerSlopeDict
 
     def get_mode(self):
-        """Returns the current trigger mode as a dict with keys:
+        """Return the current trigger mode as a dict with keys:
                 - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP}) 
         """
         get_process=lambda v:{
@@ -172,7 +172,7 @@ class TriggerChannel(Channel):
         return triggerModeDict
 
     def get_coupling(self):
-        """Returns the current trigger coupling as a dict with keys:
+        """Return the current trigger coupling as a dict with keys:
                 - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2}) 
                 - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         """
@@ -184,7 +184,7 @@ class TriggerChannel(Channel):
         return triggerCouplingDict
 
     def set_triggerConfig(self,**kwargs):
-        """Sets the current trigger configuration with keys:
+        """Set the current trigger configuration with keys:
                 - "type": condition that will trigger the acquisition of waveforms [EDGE,
                 slew,GLIT,intv,runt,drop]
                 - "source": trigger source (str, {EX,EX/5,C1,C2}) 
@@ -237,9 +237,7 @@ class TriggerChannel(Channel):
 
 
 class SDS1072CML(SCPIMixin,Instrument):
-    """ Represents the SIGLENT SDS1072CML Oscilloscope
-    and provides a high-level for interacting with the instrument
-    """
+    """ Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with the instrument"""
     def __init__(self, adapter, name="Siglent SDS1072CML Oscilloscope", **kwargs):
         super().__init__(
             adapter,
@@ -252,7 +250,7 @@ class SDS1072CML(SCPIMixin,Instrument):
 
     timeDiv=Instrument.control(
         ":TDIV?",":TDIV %s",
-        "Sets the time division to the closest possible value,rounding downwards.",
+        "Set the time division to the closest possible value,rounding downwards.",
         validator=truncated_range,
         values=[5e-9,50],
         set_process=lambda v: "%.2eS"%v,
@@ -261,19 +259,19 @@ class SDS1072CML(SCPIMixin,Instrument):
 
     status=Instrument.control(
         "SAST?",None,
-        "Queries the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
+        "Query the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process= lambda v : v.split(" ",1)[-1]
     )
     
     internal_state=Instrument.control(
         "INR?",None,
-        "Gets the scope's Internal state change register and clears it.",
+        "Get the scope's Internal state change register and clears it.",
         get_process= lambda v : v.split(" ",1)[-1]
     )
 
     is_ready=Instrument.control(
         "SAST?",None,
-        "Checks if the scope is ready for the next acquisition",
+        "Check if the scope is ready for the next acquisition",
         #validator=truncated_discrete_set,
         #values={True:"Stop",True:"Ready",True:"Armed",False:"Trig\'d"},
         #map_values=True,
@@ -281,13 +279,13 @@ class SDS1072CML(SCPIMixin,Instrument):
     )
 
     def wait(self,time):
-        """Stops the scope from doing anything until it has completed the current acquisition (p.146)
+        """Stop the scope from doing anything until it has completed the current acquisition (p.146)
         param time: time in seconds to wait for
         """
         self.write("WAIT %d"%int(time))
 
     def arm(self):
-        """Changes the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition"""
+        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition"""
         if self.is_ready:
             self.write('ARM')
             return True
@@ -296,7 +294,7 @@ class SDS1072CML(SCPIMixin,Instrument):
         
     template=Instrument.control(
         "TMP?",None,
-        """Returns a copy of the template that describes the various logical entities making up a complete waveform.
+        """Return a copy of the template that describes the various logical entities making up a complete waveform.
             In particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
         """
     )
