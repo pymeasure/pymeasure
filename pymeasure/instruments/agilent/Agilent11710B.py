@@ -33,20 +33,16 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import sleep, time
 from pyvisa.errors import VisaIOError
 
-MAX_SAMPLING = 120e9
 
-class ChannelBase():
-    """ Implementation of a Lecroy MAUI channel. Note, that is
-    The primary command style is the VBS style instead of the SCPI-like commands. Why?
-    There is literally no complete command reference. I had to root around the instrument
-    COM explorer to figure out how to access these parameters. Subclass this for a
-    specific scope.
-
-    Implementation modeled on Channel object of Tektronix AFG3152C instrument. Majority of
-     driver re-used from  DSOX1102G. Maybe this is a deep statement about a base oscilloscope class.
+class BankBase():
+    """ Implementation of a bank of a Keysight/Agilent 11710B class of attenuator/switch
+    drivers. Depending on the model there may be more than one bank
      """
 
     BOOLS = {True: -1, False: 0}
+
+    ATTENS = {'NA','AG8494g','AG8495g','AG8495k', 'AG8496g', 'AG8497k', 'AG84904k',
+              'AG84905m', 'AG84906k', 'AG84907k', 'AG84908m'}
 
     coupling = Instrument.control(
         'Coupling', """Coupling = "%s" """,
@@ -195,8 +191,6 @@ class LecroyMAUIBase(Instrument):
     # Trigger #
     ###########
 
-
-
     aux_in_coupling = Instrument.control(
         # good
         "vbs? 'return = app.acquisition.auxin.Coupling'",
@@ -246,59 +240,15 @@ class LecroyMAUIBase(Instrument):
         values=[-0.82, 0.82]
     )
 
-    @property
-    def sampling_strategy(self):
-        strategy = self.ask("vbs? 'return = app.acquisition.horizontal.Maximize'")
-        strategy = strategy.strip()
-        return strategy
-
-    @sampling_strategy.setter
-    def sampling_strategy(self, strategy):
-        if isinstance(strategy, str):
-            if strategy not in ['SetMaximumMemory', 'FixedSampleRate']:
-                raise ValueError(f"strategy must be 0,1, "
-                                 f"'SetMaximumMemory', 'FixedSampleRate' not {strategy} ")
-        elif isinstance(strategy, (int, float)):
-            if strategy not in [0,1]:
-                raise ValueError(f"strategy must be 0,1, "
-                                 f"'SetMaximumMemory', 'FixedSampleRate' not {strategy} ")
-        else:
-            raise TypeError(f"only str's, int's and float's are allowed, not {type(strategy)}")
-        self.write(f"vbs 'app.acquisition.horizontal.Maximize = {strategy}'")
-
-
-    @property
-    def sample_rate(self):
-        return self.ask("vbs? 'return = app.acquisition.horizontal.SampleRate'")
-
-    @sample_rate.setter
-    def sample_rate(self, sample_rate):
-        """Set the sample rate according to sample_rate. If sample_rate is 0 or None,
-         set to maximum sample rate."""
-
-        if sample_rate == 0 or sample_rate is None:
-            self.write(f"vbs 'app.acquisition.horizontal.SampleRate = {MAX_SAMPLING}'")
-            self.sampling_strategy = 0
-
-        else:
-            self.write(f"vbs 'app.acquisition.horizontal.SampleRate = {sample_rate}'")
-            self.sampling_strategy = 1
-
-
-
-    def setup_sequence(self, sequence_on, n_sequences=1, max_size=None):
+    def setup_sequence(self, sequence_on, n_sequences=1):
         """
         Turn sequence mode on or off with sequence_on = [True, False] and
-        if True, specify the number of sequences to record. If max_size is None, memory
-         depth is left to the scope to optimize, otherwise the scope will big the
-         closest valid memory value.
-         Note: turning sequence on or off will invoke an auto-calibrate.
+        if True, specify the number of sequences to record. Memory depth is left
+        to the scope to optimize. Note: turning sequence on or off will invoke an
+        auto-calibrate.
         """
         if sequence_on:
-            if max_size is not None:
-                self.write(f'SEQ ON, {n_sequences}, {max_size}')
-            else:
-                self.write(f'SEQ ON, {n_sequences}')
+            self.write(f'SEQ ON, {n_sequences}')
         else:
             self.write('SEQ OFF')
 
@@ -451,30 +401,6 @@ class LecroyMAUIBase(Instrument):
         self.write(f'WAVEFORM_SETUP SP,{int(val)}')
 
     @property
-    def waveform_select_sequence(self):
-        full = self.ask('WAVEFORM_SETUP?')
-        full = full.split(',')
-        return int(full[7])
-
-    @waveform_select_sequence.setter
-    def waveform_select_sequence(self, val):
-        self.write(f'WAVEFORM_SETUP SN,{int(val)}')
-
-    @property
-    def waveform_number_points(self):
-        full = self.ask('WAVEFORM_SETUP?')
-        full = full.split(',')
-        return int(full[3])
-
-    @waveform_number_points.setter
-    def waveform_number_points(self, val):
-        """
-        A val of zero sends all points, anything > 0 specifies the number
-        of points to send
-        """
-        self.write(f'WAVEFORM_SETUP NP,{int(val)}')
-
-    @property
     def waveform_preamble(self, channel=None):
         #good
         """ Get preamble information for the selected waveform source as a dict with the following keys:
@@ -491,7 +417,8 @@ class LecroyMAUIBase(Instrument):
         return self._waveform_preamble(channel=channel)
 
 
-    def waveform_data_word(self, source, sparsing=0, sequence_index=None):
+
+    def waveform_data_word(self, source, sparsing=0):
         #good
         """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format. valid sources are C1, C2, C3, C4, F1-4, M1-4
@@ -499,17 +426,14 @@ class LecroyMAUIBase(Instrument):
         set sparsing to n-1. """
         # Other waveform formats raise UnicodeDecodeError
         self.waveform_sparsing = sparsing
-        if sequence_index is not None:
-            self.waveform_select_sequence = sequence_index
-        else:
-            self.waveform_select_sequence = 0 # get all the sequence elements
         self.waveform_format = "WORD"
         self.waveform_byteorder = 'little'
         preamble = self.waveform_preamble
-        data = self.adapter.connection.query_binary_values(f"{source}:WAVEFORM? DAT1", datatype='h')
+        data = self.adapter.connection.query_binary_values(f"{source}:WAVEFORM? ", datatype='h')
         sparsing_factor = 1
         if preamble['SPARSING_FACTOR'] > 0:
             sparsing_factor = int(preamble['SPARSING_FACTOR'])
+        data = data[-preamble['points']//(sparsing_factor):]
 
         return data
 
@@ -597,6 +521,5 @@ class LecroyMAUIBase(Instrument):
         wfdata['yincrement'] = wfdata['VERTICAL_GAIN']
         wfdata['yorigin'] = wfdata['VERTICAL_OFFSET']
         wfdata['xreference'] = wfdata['FIRST_POINT']
-        wfdata['wave_array_count'] = wfdata['WAVE_ARRAY_COUNT']
 
         return wfdata

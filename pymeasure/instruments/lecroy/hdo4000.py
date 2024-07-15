@@ -34,6 +34,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import sleep, time
 from pyvisa.errors import VisaIOError
 
+MAX_SAMPLING = 10e9
 
 class Channel(ChannelBase):
     """ Implementation of a Lecroy HDO4000 Oscilloscope channel.

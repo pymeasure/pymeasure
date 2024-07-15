@@ -34,6 +34,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import sleep, time
 from pyvisa.errors import VisaIOError
 
+MAX_SAMPLING = 120e9
 
 class Channel(ChannelBase):
     """ Implementation of a Lecroy Wavemaster 845Zi-A Oscilloscope channel.
