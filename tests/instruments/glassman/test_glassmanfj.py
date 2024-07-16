@@ -22,36 +22,48 @@
 # THE SOFTWARE.
 #
 
-import pytest
-
-
 from pymeasure.instruments.glassman.glassman import Glassman
 
-pytest.skip('Only works with connected hardware', allow_module_level=True)
+"""
+Unit tests for Glassman class.
 
-class TestGlassman:
-    """
-    Unit tests for Glassman class.
+This test suite, needs the following setup to work properly:
+    - A Glassman Series FJ power supply connected to the computer;
+    - The device's address must be set in the RESOURCE constant;
+"""
 
-    This test suite, needs the following setup to work properly:
-        - A Glassman Series FJ power supply connected to the computer;
-        - The device's address must be set in the RESOURCE constant;
-    """
+# Device configuration
+##################################################
+# Name
+NAME = "Quadrupole p"
 
-    # Device configuration
-    ##################################################
-    # Name
-    NAME = "Quadrupole -"
-    
-    # Address
-    RESOURCE = "ASRL20::INSTR"
-    
-    # Max output voltage (V)
-    MAXV = -2000
-    
-    # Max output current (A)
-    MAXI = 0.060
-    ##################################################
-    
-    GHV = Glassman(RESOURCE, MAXV, MAXI, NAME)
+# Address
+RESOURCE = "ASRL15::INSTR"
+
+# Max output voltage (V)
+MAXV = 2000
+
+# Max output current (A)
+MAXI = 0.060
+##################################################
+
+def test_get_version(GHV):
+    return(GHV.query("V"))
+
+def test_query(GHV):
+    return(GHV.query("Q"))
+
+#%% Open connection
+
+QP=Glassman(RESOURCE, NAME)
+
+#%%  Test sequence
+print(test_get_version(QP))
+
+print(test_query(QP))
+   
+#%% Close connection
+   
+QP.close()
+del QP
     
