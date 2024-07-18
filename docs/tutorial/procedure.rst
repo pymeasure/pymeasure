@@ -266,7 +266,7 @@ Storing metadata
 ~~~~~~~~~~~~~~~~
 
 Metadata (:class:`pymeasure.experiment.parameters.Metadata`) allows storing information (e.g. the actual starting time, instrument parameters) about the measurement in the header of the datafile.
-These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has ran; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
+These Metadata objects are evaluated and stored in the datafile only after the :python:`startup` method has run; this way it is possible to e.g. retrieve settings from an instrument and store them in the file.
 Using a Metadata is nearly as straightforward as using a Parameter; extending the example of above to include metadata, looks as follows: ::
 
     from time import sleep, time
@@ -303,7 +303,7 @@ Using a Metadata is nearly as straightforward as using a Parameter; extending th
 As with a Parameter, PyMeasure swaps out the Metadata with their values behind the scene, which makes accessing the values of Metadata very convenient.
 
 The value of a Metadata can be set either using an :python:`fget` method or manually in the startup method.
-The :python:`fget` method, if provided, is ran after startup method.
+The :python:`fget` method, if provided, is run after startup method.
 It can also be provided as a string; in that case it is assumed that the string contains the name of an attribute (either a callable or not) of the Procedure class which returns the value that is to be stored.
 This also allows to retrieve nested attributes (e.g. in order to store a property or method of an instrument) by separating the attributes with a period: e.g. `instrument_name.attribute_name` (or even `instrument_name.subclass_name.attribute_name`); note that here only the final element (i.e. `attribute_name` in the example) is allowed to refer to a callable.
 If neither an :python:`fget` method is provided or a value manually set, the Metadata will return to its default value, if set.
