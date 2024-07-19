@@ -79,7 +79,7 @@ class KeysightE36312A(SCPIMixin, Instrument):
 
         supply = KeysightE36312A(resource)
         supply.ch_1.voltage_setpoint=10
-        supply.ch_1.current_setpoint=0.1
+        supply.ch_1.current_limit=0.1
         supply.ch_1.output_enabled=True
         print(supply.ch_1.voltage)
     """
