@@ -78,7 +78,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     # THE SOFTWARE.
     #
 
-    # from pymeasure.instruments import Instrument
+    from pymeasure.instruments import Instrument
 
 This is a minimal instrument definition:
 
