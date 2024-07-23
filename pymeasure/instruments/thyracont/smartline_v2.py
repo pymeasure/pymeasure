@@ -463,6 +463,13 @@ class VSH(SmartlineV2):
     hotcathode = Instrument.ChannelCreator(HotCathode)
 
 
+class VSM(SmartlineV2):
+    """Vacuum transmitter of VSM series with both piece and cold cathode sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)
+    coldcathode = Instrument.ChannelCreator(ColdCathode)
+
+
 class VSR(SmartlineV2):
     """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
 

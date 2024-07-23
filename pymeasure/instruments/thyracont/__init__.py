@@ -23,4 +23,4 @@
 #
 
 from .smartline_v1 import SmartlineV1
-from .smartline_v2 import SmartlineV2, VSR, VSH, VSP
+from .smartline_v2 import SmartlineV2, VSH, VSM, VSP, VSR
