@@ -468,3 +468,9 @@ class VSR(SmartlineV2):
 
     piezo = Instrument.ChannelCreator(Piezo)
     pirani = Instrument.ChannelCreator(Pirani)
+
+
+class VSP(SmartlineV2):
+    """Vacuum transmitter of VSP/VCP series with a piezo sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)
