@@ -62,6 +62,41 @@ MEASUREMENT_FORMAT = {
     "PHASE POSITIVE": "PPH",
 }
 
+OPTION_VALUES = {
+    "240": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "440": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "245": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "445": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "260": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "460": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "265": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "465": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "280": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "480": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "285": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "485": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "2D5": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "4D5": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "2K5": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "4K5": {"Minimum Frequency": 9e3, "Maximum Frequeney": 4.5e9, "Has Bias Tee": False},
+    "1E5": {
+        "Time Base": "High Stability Time Base",
+        "CW accuracy": "+/-1 ppm (specification)",
+        "Source stability": "+/-0.05 ppm (5C to 40C typical), +/-0.5 ppm/year",
+    },
+    "UNQ": {
+        "Time Base": "Standard Stability Time Base",
+        "CW accuracy": "+/-5 ppm (specification)",
+        "Source stability": "+/-5 ppm (5C to 40C typical)",
+    },
+    "017": {"Harddisk": "Removable"},
+    "019": {"Harddisk": "Standard"},
+    "008": {"Additional Options": "Frequency offset mode"},
+    "TDR": {"Additional Options": "Enhanced time domain analysis"},
+    "010": {"Additional Options": "Time domain analysis"},
+    "790": {"Additional Options": "Measurement Wizard Assistant software"},
+}
+
 
 # set the analyzer to trace averaging in single sweep mode, use the following SCPI commands to
 # start the 100 average sweep and wait for the Operation Complete bit to be returned:
@@ -911,6 +946,14 @@ class KeysightE5071C(Instrument):
     # date 'SYST:DATE {YEAR},{MONTH},{DAY}?' ie ":SYST:DATE 2002,1,1"
     # clock 'DISP:CLOC'
     # 'SYST:TIME {Hour},{Min},{Sec}?'
+
+    options = Instrument.measurement(
+        "*OPT?",
+        """
+        Get the identification number(s) of an option installed (string).
+        """,
+        cast=str,
+    )
 
     def abort(self):
         """

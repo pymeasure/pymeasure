@@ -62,7 +62,7 @@ def test_keysightE5071C_channels():
             ("SERV:CHAN:ACT?", "1\n\n"),
         ],
     ) as keysighte5071c:
-        assert keysighte5071c.ch_1.get_active_channel == 1
+        assert keysighte5071c.active_channel == 1
 
 
 def test_keysightE5071C_scan_points():

@@ -81,8 +81,15 @@ def test_keysightE5071C_with_device_id(keysighte5071c):
     # options
 
 
+def test_keysightE5071C_with_device_options(
+    keysighte5071c,
+):  # pylint: disable-msg=C0103, disable-msg=W0621, disable-msg=C0116
+    # Likely will be different for your Keysight E5071C
+    assert keysighte5071c.options == ["280", "010", "1E5"]
+
+
 def test_keysightE5071C_with_device_channels(keysighte5071c):
-    assert keysighte5071c.ch_1.get_active_channel == 1
+    assert keysighte5071c.active_channel == 1
 
 
 def test_keysightE5071C_with_device_scan_points(keysighte5071c):
