@@ -102,5 +102,3 @@ class KeysightE36311A(SCPIUnknownMixin, Instrument):
 
         self.channels[3].voltage_setpoint_values = [0, -25]
         self.channels[3].current_limit_values = [0, 1]
-
-
