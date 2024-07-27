@@ -54,8 +54,8 @@ class VoltageChannel(Channel):
     def get_waveform(self):
         """Return the waveforms displayed in the channel.
         return:
-            time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
-            voltages: (1d array) the waveform in V
+        - time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
+        - voltages: (1d array) the waveform in V
         """
         command = "C{ch}:WF? DAT2"
         descriptorDictionnary = self.get_desc()
@@ -83,13 +83,13 @@ class VoltageChannel(Channel):
     def get_desc(self):
         """Get the descriptor of data being sent when querying device for waveform
         :return:
-            dict: A dictionnary with the keys:
-                numDataPoints: the number of poitns in the waveform
-                verticalGain: the voltage increment per code value (in V)
-                verticalOffset: the voltage offset to add to the decoded voltage values
-                horizInterval: the time interval between points in s
-                horizOffset:the offset to add to the time steps
-                descriptorOffset: Length of the C1:WF ALL,#9000000346 message
+        dict: A dictionnary with the keys:
+        - numDataPoints: the number of poitns in the waveform
+        - verticalGain: the voltage increment per code value (in V)
+        - verticalOffset: the voltage offset to add to the decoded voltage values
+        - horizInterval: the time interval between points in s
+        - horizOffset:the offset to add to the time steps
+        - descriptorOffset: Length of the C1:WF ALL,#9000000346 message
         """
         command = "C{ch}:WF? DESC"
         self.write(command)
@@ -127,16 +127,17 @@ class TriggerChannel(Channel):
     triggerConfDict = {}
 
     def get_triggerConfig(self):
-        """Return the current trigger configuration as a dict with keys:
-            - "type": condition that will trigger the acquisition of waveforms [EDGE,
-            slew,GLIT,intv,runt,drop]
-            - "source": trigger source (str, {EX,EX/5,C1,C2})
-            - "hold_type": hold type (refer to page 131 of programing guide)
-            - "hold_value1": hold value1 (refer to page 131 of programing guide)
-            - "level": Level at which the trigger will be set (float)
-            - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-            - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
-            - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+        """Get the current trigger configuration as a dict with keys:
+        - "type": condition that will trigger the acquisition of waveforms [EDGE,
+        slew,GLIT,intv,runt,drop]
+        - "source": trigger source (str, {EX,EX/5,C1,C2})
+        - "hold_type": hold type (refer to page 131 of programing guide)
+        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        - "level": Level at which the trigger will be set (float)
+        - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+        - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
+        - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+
         and updates the internal configuration status
         """
         self.triggerConfDict.update(self.trigger_setup)
@@ -149,7 +150,7 @@ class TriggerChannel(Channel):
     trigger_setup=Channel.measurement(
         "TRSE?",
         docs=
-        """Return the current trigger setup as a dict with keys:
+        """Get the current trigger setup as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
@@ -168,7 +169,7 @@ class TriggerChannel(Channel):
     trigger_level=Channel.measurement(
         "TRLV?",
         docs=
-        """Return the current trigger level as a dict with keys:
+        """Get the current trigger level as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "level": Level at which the trigger will be set (float)
         """,
@@ -181,7 +182,7 @@ class TriggerChannel(Channel):
     trigger_slope=Channel.measurement(
         "TRSL?",
         docs=
-        """Return the current trigger slope as a dict with keys:
+        """Get the current trigger slope as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         """,
@@ -194,7 +195,7 @@ class TriggerChannel(Channel):
     trigger_mode=Channel.measurement(
         "TRMD?",
         docs=
-        """Return the current trigger mode as a dict with keys:
+        """Get the current trigger mode as a dict with keys:
         - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
         """,
         get_process = lambda v: {"mode": v.split(" ", 1)[-1]}
@@ -203,7 +204,7 @@ class TriggerChannel(Channel):
     trigger_coupling=Channel.measurement(
         "TRCP?",
         docs=
-        """Return the current trigger coupling as a dict with keys:
+        """Get the current trigger coupling as a dict with keys:
         - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         """,
@@ -215,15 +216,16 @@ class TriggerChannel(Channel):
 
     def set_triggerConfig(self, **kwargs):
         """Set the current trigger configuration with keys:
-                - "type": condition that will trigger the acquisition of waveforms [EDGE,
-                slew,GLIT,intv,runt,drop]
-                - "source": trigger source (str, {EX,EX/5,C1,C2})
-                - "hold_type": hold type (refer to page 131 of programing guide)
-                - "hold_value1": hold value1 (refer to page 131 of programing guide)
-                - "level": Level at which the trigger will be set (float)
-                - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-                - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
-                - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+        - "type": condition that will trigger the acquisition of waveforms [EDGE,
+        slew,GLIT,intv,runt,drop]
+        - "source": trigger source (str, {EX,EX/5,C1,C2})
+        - "hold_type": hold type (refer to page 131 of programing guide)
+        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        - "level": Level at which the trigger will be set (float)
+        - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+        - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
+        - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope and updates the interal trigger configuration
         """
         triggerConfDict = self.get_triggerConfig()
@@ -297,7 +299,7 @@ class SDS1072CML(SCPIMixin, Instrument):
     status = Instrument.control(
         "SAST?",
         None,
-        "Query the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
+        "Get the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process=lambda v: v.split(" ", 1)[-1],
     )
 
@@ -311,7 +313,7 @@ class SDS1072CML(SCPIMixin, Instrument):
     is_ready = Instrument.control(
         "SAST?",
         None,
-        "Check if the scope is ready for the next acquisition",
+        "Get a boolean flat indicating if the scope is ready for the next acquisition",
         # validator=truncated_discrete_set,
         # values={True:"Stop",True:"Ready",True:"Armed",False:"Trig\'d"},
         # map_values=True,
@@ -337,7 +339,7 @@ class SDS1072CML(SCPIMixin, Instrument):
     template = Instrument.control(
         "TMP?",
         None,
-        """Return a copy of the template that describes the various logical entities making up a complete waveform.
-            In particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
+        """Get a copy of the template that describes the various logical entities making up a complete waveform.
+        In particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
         """,
     )
