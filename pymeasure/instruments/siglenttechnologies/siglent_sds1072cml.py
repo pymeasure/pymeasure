@@ -36,7 +36,6 @@ class VoltageChannel(Channel):
     ===========================================================
     """
 
-
     vertical_division = Channel.control(
         "C{ch}:VDIV?",
         "C{ch}:VDIV %s",
@@ -61,7 +60,7 @@ class VoltageChannel(Channel):
         """Return the waveforms displayed in the channel.
 
         Return:
-        ------
+        -------
         - time: (1d array) the time in seconds since the trigger epoch for every voltage value in
         the waveforms
         - voltages: (1d array) the waveform in V
@@ -79,13 +78,11 @@ class VoltageChannel(Channel):
             ),
         )
         waveform = [
-            point * descriptorDictionnary["verticalGain"]
-            - descriptorDictionnary["verticalOffset"]
+            point * descriptorDictionnary["verticalGain"] - descriptorDictionnary["verticalOffset"]
             for point in rawWaveform
         ]
         timetags = [
-            i * descriptorDictionnary["horizInterval"]
-            + descriptorDictionnary["horizOffset"]
+            i * descriptorDictionnary["horizInterval"] + descriptorDictionnary["horizOffset"]
             for i in range(len(rawWaveform))
         ]
         return timetags, waveform
@@ -100,6 +97,7 @@ class VoltageChannel(Channel):
         - horizInterval: the time interval between points in s
         - horizOffset:the offset to add to the time steps
         - descriptorOffset: Length of the C1:WF ALL,#9000000346 message
+
         """
         command = "C{ch}:WF? DESC"
         self.write(command)
@@ -180,6 +178,7 @@ class TriggerChannel(Channel):
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
+
         """,
         preprocess_reply=lambda v: v.split(" ", 1)[1],
         get_process=lambda v: {
@@ -195,6 +194,7 @@ class TriggerChannel(Channel):
         docs="""Get the current trigger level as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "level": Level at which the trigger will be set (float)
+
         """,
         get_process=lambda v: {
             "source": v.split(":", 1)[0],
@@ -207,6 +207,7 @@ class TriggerChannel(Channel):
         docs="""Get the current trigger slope as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
+
         """,
         get_process=lambda v: {
             "source": v.split(":", 1)[0],
@@ -219,6 +220,7 @@ class TriggerChannel(Channel):
         docs="""Get the current trigger mode as a dict with keys:
         - "mode": behavior of the trigger following a triggering event
         (str, {NORM, AUTO, SINGLE,STOP})
+
         """,
         get_process=lambda v: {"mode": v.split(" ", 1)[-1]},
     )
@@ -228,6 +230,7 @@ class TriggerChannel(Channel):
         docs="""Get the current trigger coupling as a dict with keys:
         - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
+
         """,
         get_process=lambda v: {
             "source": v.split(":", 1)[0],
@@ -282,9 +285,7 @@ class TriggerChannel(Channel):
             self.id = kwargs["source"]
         changedValues = [key for key in kwargs if triggerConfDict[key] != kwargs[key]]
         processToChange = [
-            key
-            for key in setValues
-            if any([value in changedValues for value in setValues[key]])
+            key for key in setValues if any([value in changedValues for value in setValues[key]])
         ]
         for changedKey in changedValues:
             triggerConfDict[changedKey] = kwargs[changedKey]
@@ -299,10 +300,9 @@ class TriggerChannel(Channel):
 
 class SDS1072CML(SCPIMixin, Instrument):
     """
-    =============================================================================================
-    Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with
-    the instrument
-    =============================================================================================
+    ==============================================
+    Represents the SIGLENT SDS1072CML Oscilloscope
+    ==============================================
     """
 
     def __init__(self, adapter, name="Siglent SDS1072CML Oscilloscope", **kwargs):
