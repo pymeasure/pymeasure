@@ -57,12 +57,9 @@ class VoltageChannel(Channel):
     )
 
     def get_waveform(self):
-        """Return the waveforms displayed in the channel.
-
-        Return:
-        -------
+        """Get the waveforms displayed in the channel as a tuple with elements:
         - time: (1d array) the time in seconds since the trigger epoch for every voltage value in
-            the waveforms
+        the waveforms
         - voltages: (1d array) the waveform in V
 
         """
@@ -151,14 +148,14 @@ class TriggerChannel(Channel):
     def get_triggerConfig(self):
         """Get the current trigger configuration as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
-            slew,GLIT,intv,runt,drop]
+        slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         - "mode": behavior of the trigger following a triggering event
-            (str, {NORM, AUTO, SINGLE,STOP})
+        (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
         and updates the internal configuration status
@@ -174,7 +171,7 @@ class TriggerChannel(Channel):
         "TRSE?",
         docs="""Get the current trigger setup as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
-            slew,GLIT,intv,runt,drop]
+        slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
@@ -241,14 +238,14 @@ class TriggerChannel(Channel):
     def set_triggerConfig(self, **kwargs):
         """Set the current trigger configuration with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
-            slew,GLIT,intv,runt,drop]
+        slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         - "mode": behavior of the trigger following a triggering event
-            (str, {NORM, AUTO, SINGLE,STOP})
+        (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope
