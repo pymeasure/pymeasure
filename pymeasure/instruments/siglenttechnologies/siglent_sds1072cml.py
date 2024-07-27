@@ -36,7 +36,6 @@ class VoltageChannel(Channel):
     ===========================================================
     """
 
-
     vertical_division = Channel.control(
         "C{ch}:VDIV?",
         "C{ch}:VDIV %s",
@@ -79,13 +78,11 @@ class VoltageChannel(Channel):
             ),
         )
         waveform = [
-            point * descriptorDictionnary["verticalGain"]
-            - descriptorDictionnary["verticalOffset"]
+            point * descriptorDictionnary["verticalGain"] - descriptorDictionnary["verticalOffset"]
             for point in rawWaveform
         ]
         timetags = [
-            i * descriptorDictionnary["horizInterval"]
-            + descriptorDictionnary["horizOffset"]
+            i * descriptorDictionnary["horizInterval"] + descriptorDictionnary["horizOffset"]
             for i in range(len(rawWaveform))
         ]
         return timetags, waveform
@@ -282,9 +279,7 @@ class TriggerChannel(Channel):
             self.id = kwargs["source"]
         changedValues = [key for key in kwargs if triggerConfDict[key] != kwargs[key]]
         processToChange = [
-            key
-            for key in setValues
-            if any([value in changedValues for value in setValues[key]])
+            key for key in setValues if any([value in changedValues for value in setValues[key]])
         ]
         for changedKey in changedValues:
             triggerConfDict[changedKey] = kwargs[changedKey]
@@ -299,10 +294,9 @@ class TriggerChannel(Channel):
 
 class SDS1072CML(SCPIMixin, Instrument):
     """
-    =============================================================================================
-    Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with
-    the instrument
-    =============================================================================================
+    ==============================================
+    Represents the SIGLENT SDS1072CML Oscilloscope
+    ==============================================
     """
 
     def __init__(self, adapter, name="Siglent SDS1072CML Oscilloscope", **kwargs):
