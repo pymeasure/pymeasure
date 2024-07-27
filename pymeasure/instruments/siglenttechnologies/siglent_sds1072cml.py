@@ -22,10 +22,11 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
-from pymeasure.instruments.generic_types import SCPIMixin
 import struct
+
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.generic_types import SCPIMixin
+from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
 
 class VoltageChannel(Channel):
@@ -53,9 +54,13 @@ class VoltageChannel(Channel):
 
     def get_waveform(self):
         """Return the waveforms displayed in the channel.
-        return:
-        - time: (1d array) the time in seconds since the trigger epoch for every voltage value in the waveforms
+
+        Return:
+        ------
+        - time: (1d array) the time in seconds since the trigger epoch for every voltage value in 
+        the waveforms
         - voltages: (1d array) the waveform in V
+
         """
         command = "C{ch}:WF? DAT2"
         descriptorDictionnary = self.get_desc()
@@ -66,7 +71,7 @@ class VoltageChannel(Channel):
                 "%db" % descriptorDictionnary["numDataPoints"],
                 response,
                 offset=descriptorDictionnary["descriptorOffset"],
-            )
+            ),
         )
         waveform = [
             point * descriptorDictionnary["verticalGain"]
@@ -96,19 +101,29 @@ class VoltageChannel(Channel):
         descriptor = self.read_bytes(count=-1, break_on_termchar=True)
         descriptorOffset = 21
         (numDataPoints,) = struct.unpack_from(
-            "l", descriptor, offset=descriptorOffset + 60
+            "l",
+            descriptor,
+            offset=descriptorOffset + 60,
         )
         (verticalGain,) = struct.unpack_from(
-            "f", descriptor, offset=descriptorOffset + 156
+            "f",
+            descriptor,
+            offset=descriptorOffset + 156,
         )
         (verticalOffset,) = struct.unpack_from(
-            "f", descriptor, offset=descriptorOffset + 160
+            "f",
+            descriptor,
+            offset=descriptorOffset + 160,
         )
         (horizInterval,) = struct.unpack_from(
-            "f", descriptor, offset=descriptorOffset + 176
+            "f",
+            descriptor,
+            offset=descriptorOffset + 176,
         )
         (horizOffset,) = struct.unpack_from(
-            "d", descriptor, offset=descriptorOffset + 180
+            "d",
+            descriptor,
+            offset=descriptorOffset + 180,
         )
         descriptorDictionnary = {
             "numDataPoints": numDataPoints,
@@ -135,7 +150,8 @@ class TriggerChannel(Channel):
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
+        - "mode": behavior of the trigger following a triggering event 
+        (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
         and updates the internal configuration status
@@ -147,71 +163,67 @@ class TriggerChannel(Channel):
         self.triggerConfDict.update(self.trigger_coupling)
         return self.triggerConfDict
 
-    trigger_setup=Channel.measurement(
+    trigger_setup = Channel.measurement(
         "TRSE?",
-        docs=
-        """Get the current trigger setup as a dict with keys:
+        docs="""Get the current trigger setup as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
         - "hold_type": hold type (refer to page 131 of programing guide)
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         """,
-        preprocess_reply=lambda v:v.split(" ",1)[1],
-        get_process = lambda v: {
+        preprocess_reply=lambda v: v.split(" ", 1)[1],
+        get_process=lambda v: {
             "type": v[0],
             "source": v[2],
             "hold_type": v[4],
             "hold_value1": v[6],
-        }
+        },
     )
 
-    trigger_level=Channel.measurement(
+    trigger_level = Channel.measurement(
         "TRLV?",
-        docs=
-        """Get the current trigger level as a dict with keys:
+        docs="""Get the current trigger level as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "level": Level at which the trigger will be set (float)
         """,
-        get_process = lambda v: {
+        get_process=lambda v: {
             "source": v.split(":", 1)[0],
             "level": float(v.split(" ", 1)[-1][:-2]),
-        }
+        },
     )
 
-    trigger_slope=Channel.measurement(
+    trigger_slope = Channel.measurement(
         "TRSL?",
-        docs=
-        """Get the current trigger slope as a dict with keys:
+        docs="""Get the current trigger slope as a dict with keys:
         - "source": trigger source whose level will be changed (str, {EX,EX/5,C1,C2})
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         """,
-        get_process = lambda v: {
+        get_process=lambda v: {
             "source": v.split(":", 1)[0],
             "slope": v.split(" ", 1)[-1],
-        }
+        },
     )
 
-    trigger_mode=Channel.measurement(
+    trigger_mode = Channel.measurement(
         "TRMD?",
-        docs=
-        """Get the current trigger mode as a dict with keys:
-        - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
+        docs="""Get the current trigger mode as a dict with keys:
+        - "mode": behavior of the trigger following a triggering event
+        (str, {NORM, AUTO, SINGLE,STOP})
         """,
-        get_process = lambda v: {"mode": v.split(" ", 1)[-1]}
+        get_process=lambda v: {"mode": v.split(" ", 1)[-1]},
     )
 
-    trigger_coupling=Channel.measurement(
+    trigger_coupling = Channel.measurement(
         "TRCP?",
-        docs=
-        """Get the current trigger coupling as a dict with keys:
+        docs="""Get the current trigger coupling as a dict with keys:
         - "source": trigger source whose coupling will be changed (str, {EX,EX/5,C1,C2})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
         """,
-        get_process = lambda v: {
+        get_process=lambda v: {
             "source": v.split(":", 1)[0],
             "coupling": v.split(" ", 1)[-1],
-        }
+        },
     )
 
     def set_triggerConfig(self, **kwargs):
@@ -223,10 +235,12 @@ class TriggerChannel(Channel):
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        - "mode": behavior of the trigger following a triggering event (str, {NORM, AUTO, SINGLE,STOP})
+        - "mode": behavior of the trigger following a triggering event 
+        (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
-        Returns a flag indicating if all specified entries were correctly set on the oscilloscope and updates the interal trigger configuration
+        Returns a flag indicating if all specified entries were correctly set on the oscilloscope 
+        and updates the interal trigger configuration
         """
         triggerConfDict = self.get_triggerConfig()
         # self.triggerConfDict=triggerConfDict
@@ -257,9 +271,7 @@ class TriggerChannel(Channel):
         }
         if kwargs.get("source") is not None:
             self.id = kwargs["source"]
-        changedValues = [
-            key for key in kwargs if not triggerConfDict[key] == kwargs[key]
-        ]
+        changedValues = [key for key in kwargs if triggerConfDict[key] != kwargs[key]]
         processToChange = [
             key
             for key in setValues
@@ -269,7 +281,7 @@ class TriggerChannel(Channel):
             triggerConfDict[changedKey] = kwargs[changedKey]
         for processKey in processToChange:
             self.write(
-                setCommands[processKey] % setProcesses[processKey](triggerConfDict)
+                setCommands[processKey] % setProcesses[processKey](triggerConfDict),
             )
         self.triggerConfDict = self.get_triggerConfig()
         statusFlag = self.triggerConfDict == triggerConfDict
@@ -277,7 +289,8 @@ class TriggerChannel(Channel):
 
 
 class SDS1072CML(SCPIMixin, Instrument):
-    """Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with the instrument"""
+    """Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with
+    the instrument"""
 
     def __init__(self, adapter, name="Siglent SDS1072CML Oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -329,7 +342,8 @@ class SDS1072CML(SCPIMixin, Instrument):
         self.write("WAIT %d" % int(time))
 
     def arm(self):
-        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the next acquisition"""
+        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the 
+        next acquisition"""
         if self.is_ready:
             self.write("ARM")
             return True
@@ -339,7 +353,9 @@ class SDS1072CML(SCPIMixin, Instrument):
     template = Instrument.control(
         "TMP?",
         None,
-        """Get a copy of the template that describes the various logical entities making up a complete waveform.
-        In particular, the template describes in full detail the variables contained in the descriptor part of a waveform.
+        """Get a copy of the template that describes the various logical entities making up a 
+        complete waveform.
+        In particular, the template describes in full detail the variables contained in the 
+        descriptor part of a waveform.
         """,
     )
