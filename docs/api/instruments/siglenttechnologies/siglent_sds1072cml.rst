@@ -6,10 +6,10 @@ Siglent SDS1072CML Oscilloscope
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.siglenttechnologies.SDS1072CML.VoltageChannel
+.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_sds1072cml.VoltageChannel
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.siglenttechnologies.SDS1072CML.TriggerChannel
+.. autoclass:: pymeasure.instruments.siglenttechnologies.siglent_sds1072cml.TriggerChannel
     :members:
     :show-inheritance:
