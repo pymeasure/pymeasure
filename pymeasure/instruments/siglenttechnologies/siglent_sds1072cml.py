@@ -373,9 +373,9 @@ class SDS1072CML(SCPIMixin, Instrument):
         "WFSU?",
         "WFSU SP,%d,NP,%d,FP,%d",
         docs="""
-        Controls the amount of data in a waveform to be transmitted to the controller with 
+        Control the amount of data in a waveform to be transmitted to the controller with
         a dict containing the keys:
-        - sparsing: The interval between data points (0 and 1 are all points, 4 are 
+        - sparsing: The interval between data points (0 and 1 are all points, 4 are
         1 out of 4 points, etc...)
         - number: the maximal number of data points to return. 0 is all points
         - first: the index of the data point from which to begin data transfer (0 is first)
