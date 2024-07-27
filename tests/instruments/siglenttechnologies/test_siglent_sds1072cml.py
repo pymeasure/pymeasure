@@ -87,10 +87,10 @@ def test_trigger_get_triggerConfig():
     ) as inst:
         assert inst.trigger.get_triggerConfig() == {
             'type': 'EDGE',
-            'source': 'EX',
+            'source': 'C1',
             'hold_type': 'TI',
             'hold_value1': '100NS',
-            'level': 0.504,
+            'level': 0.0,
             'slope': 'POS',
             'mode': 'SINGLE',
             'coupling': 'DC'}

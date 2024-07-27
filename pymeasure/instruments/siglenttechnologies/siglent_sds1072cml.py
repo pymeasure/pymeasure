@@ -30,7 +30,12 @@ from pymeasure.instruments.validators import truncated_discrete_set, truncated_r
 
 
 class VoltageChannel(Channel):
-    """Implementation of a SIGLENT SDS1072CML Oscilloscope channel."""
+    """
+    ===========================================================
+    Implementation of a SIGLENT SDS1072CML Oscilloscope channel
+    ===========================================================
+    """
+
 
     vertical_division = Channel.control(
         "C{ch}:VDIV?",
@@ -57,7 +62,7 @@ class VoltageChannel(Channel):
 
         Return:
         ------
-        - time: (1d array) the time in seconds since the trigger epoch for every voltage value in 
+        - time: (1d array) the time in seconds since the trigger epoch for every voltage value in
         the waveforms
         - voltages: (1d array) the waveform in V
 
@@ -137,7 +142,11 @@ class VoltageChannel(Channel):
 
 
 class TriggerChannel(Channel):
-    """Implementation of trigger control channel"""
+    """
+    =========================================
+    Implementation of trigger control channel
+    =========================================
+    """
 
     triggerConfDict = {}
 
@@ -150,7 +159,7 @@ class TriggerChannel(Channel):
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        - "mode": behavior of the trigger following a triggering event 
+        - "mode": behavior of the trigger following a triggering event
         (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
@@ -235,11 +244,11 @@ class TriggerChannel(Channel):
         - "hold_value1": hold value1 (refer to page 131 of programing guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
-        - "mode": behavior of the trigger following a triggering event 
+        - "mode": behavior of the trigger following a triggering event
         (str, {NORM, AUTO, SINGLE,STOP})
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
-        Returns a flag indicating if all specified entries were correctly set on the oscilloscope 
+        Returns a flag indicating if all specified entries were correctly set on the oscilloscope
         and updates the interal trigger configuration
         """
         triggerConfDict = self.get_triggerConfig()
@@ -289,8 +298,12 @@ class TriggerChannel(Channel):
 
 
 class SDS1072CML(SCPIMixin, Instrument):
-    """Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with
-    the instrument"""
+    """
+    =============================================================================================
+    Represents the SIGLENT SDS1072CML Oscilloscope and provides a high-level for interacting with
+    the instrument
+    =============================================================================================
+    """
 
     def __init__(self, adapter, name="Siglent SDS1072CML Oscilloscope", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -342,7 +355,7 @@ class SDS1072CML(SCPIMixin, Instrument):
         self.write("WAIT %d" % int(time))
 
     def arm(self):
-        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the 
+        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the
         next acquisition"""
         if self.is_ready:
             self.write("ARM")
@@ -353,9 +366,9 @@ class SDS1072CML(SCPIMixin, Instrument):
     template = Instrument.control(
         "TMP?",
         None,
-        """Get a copy of the template that describes the various logical entities making up a 
+        """Get a copy of the template that describes the various logical entities making up a
         complete waveform.
-        In particular, the template describes in full detail the variables contained in the 
+        In particular, the template describes in full detail the variables contained in the
         descriptor part of a waveform.
         """,
     )
