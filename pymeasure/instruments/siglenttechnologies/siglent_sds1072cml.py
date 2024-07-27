@@ -39,7 +39,7 @@ class VoltageChannel(Channel):
     vertical_division = Channel.control(
         "C{ch}:VDIV?",
         "C{ch}:VDIV %s",
-        "Control the vertical sensitivity of a channel.",
+        "Control the vertical sensitivity of a channel in V/divisions.",
         validator=truncated_range,
         values=[2e-3, 10],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
@@ -49,7 +49,7 @@ class VoltageChannel(Channel):
     coupling = Channel.control(
         "C{ch}:CPL?",
         "C{ch}:CPL %s1M",
-        "Control the channel coupling mode. (see UM p. 35)",
+        "Control the channel coupling mode.(DC or AC)",
         validator=truncated_discrete_set,
         values={"DC": "D", "AC": "A"},
         map_values=True,
@@ -63,10 +63,12 @@ class VoltageChannel(Channel):
         - voltages: (1d array) the waveform in V
 
         """
-        command = "C{ch}:WF? DAT2"
-        descriptorDictionnary = self.get_desc()
+        command = "C{ch}:WF? ALL"
         self.write(command)
         response = self.read_bytes(count=-1, break_on_termchar=True)
+        descriptorDictionnary = self.get_desc()
+
+        print(descriptorDictionnary)
         rawWaveform = list(
             struct.unpack_from(
                 "%db" % descriptorDictionnary["numDataPoints"],
@@ -84,8 +86,9 @@ class VoltageChannel(Channel):
         ]
         return timetags, waveform
 
-    def get_desc(self):
+    def get_desc(self, descriptor=None):
         """Get the descriptor of data being sent when querying device for waveform
+        Will decode a descriptor if provided one (Raw byte stream), otherwise it will query it
         :return:
         dict: A dictionnary with the keys:
         - numDataPoints: the number of poitns in the waveform
@@ -96,43 +99,52 @@ class VoltageChannel(Channel):
         - descriptorOffset: Length of the C1:WF ALL,#9000000346 message
 
         """
-        command = "C{ch}:WF? DESC"
+        if descriptor is None:
+            command = "C{ch}:WF? DESC"
+            self.write(command)
+            descriptor = self.read_bytes(count=-1, break_on_termchar=True)
+        command = "WFSU?"
         self.write(command)
-        descriptor = self.read_bytes(count=-1, break_on_termchar=True)
+        wfsu = self.read()
+        sparsing = int(wfsu.split(",")[1])
+        number = int(wfsu.split(",")[3])
+        first = int(wfsu.split(",")[5])
         descriptorOffset = 21
-        (numDataPoints,) = struct.unpack_from(
-            "l",
-            descriptor,
-            offset=descriptorOffset + 60,
-        )
-        (verticalGain,) = struct.unpack_from(
-            "f",
-            descriptor,
-            offset=descriptorOffset + 156,
-        )
-        (verticalOffset,) = struct.unpack_from(
-            "f",
-            descriptor,
-            offset=descriptorOffset + 160,
-        )
-        (horizInterval,) = struct.unpack_from(
-            "f",
-            descriptor,
-            offset=descriptorOffset + 176,
-        )
-        (horizOffset,) = struct.unpack_from(
-            "d",
-            descriptor,
-            offset=descriptorOffset + 180,
-        )
-        descriptorDictionnary = {
-            "numDataPoints": numDataPoints,
-            "verticalGain": verticalGain,
-            "verticalOffset": verticalOffset,
-            "horizInterval": horizInterval,
-            "horizOffset": horizOffset,
-            "descriptorOffset": descriptorOffset,
-        }
+        descriptorDictionnary = {"sparsing": sparsing, "numDataPoints": number, "firstPoint": first}
+        variables = [
+            ("commType", 32, "h"),
+            ("commOrder", 34, "h"),
+            ("waveDescLen", 36, "l"),
+            # ('numDataPoints',60,'l'),#This seems to give non-sense. A bug in the firmware?
+            ("pointsScreen", 120, "l"),
+            # ('firstPoint',124,'L'), #same
+            ("sparsingFactor", 136, "l"),
+            ("numSweeps", 148, "l"),
+            ("verticalGain", 156, "f"),
+            ("verticalOffset", 160, "f"),
+            ("horizInterval", 176, "f"),
+            ("horizOffset", 180, "d"),
+            ("acqDuration", 312, "f"),
+            ("recordType", 316, "h"),
+            ("processing", 318, "h"),
+            ("timebase", 324, "h"),
+            ("vertCoupling", 326, "h"),
+            ("probeAtt", 328, "f"),
+            ("fixedVertGain", 332, "h"),
+            ("bwLim", 334, "h"),
+        ]
+        for name, offset, format in variables:
+            (value,) = struct.unpack_from(
+                format,
+                descriptor,
+                offset=descriptorOffset + offset,
+            )
+            descriptorDictionnary.update({name: value})
+        if descriptor is None:
+            descriptorDictionnary.update({"descriptorOffset": descriptorOffset})
+        else:
+            descriptorDictionnary.update({"descriptorOffset": descriptorOffset + 346})
+
         return descriptorDictionnary
 
 
@@ -357,8 +369,28 @@ class SDS1072CML(SCPIMixin, Instrument):
         else:
             return False
 
+    waveform_setup = Instrument.control(
+        "WFSU?",
+        "WFSU SP,%d,NP,%d,FP,%d",
+        docs="""
+        Controls the amount of data in a waveform to be transmitted to the controller with 
+        a dict containing the keys:
+        - sparsing: The interval between data points (0 and 1 are all points, 4 are 
+        1 out of 4 points, etc...)
+        - number: the maximal number of data points to return. 0 is all points
+        - first: the index of the data point from which to begin data transfer (0 is first)
+
+        """,
+        get_process=lambda v: {"sparsing": int(v[1]), "number": int(v[3]), "first": int(v[5])},
+        set_process=lambda dictIn: (
+            dictIn.get("sparsing"),
+            dictIn.get("number"),
+            dictIn.get("first"),
+        ),
+    )
+
     template = Instrument.control(
-        "TMP?",
+        "TMPL?",
         None,
         """Get a copy of the template that describes the various logical entities making up a
         complete waveform.
