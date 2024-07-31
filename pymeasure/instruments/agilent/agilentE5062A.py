@@ -434,7 +434,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     display_layout = Instrument.control(
         "DISPlay:SPLit?", "DISPlay:SPLit %s",
-        """Sets the layout of the windows (channels) on the display
+        """Control the layout of the windows (channels) on the display
         (string). Valid options are in
         `AgilentE5062A.DISPLAY_LAYOUT_OPTIONS`. In general, an occurance of a
         number denotes the associated channel being visible and an occurence of
@@ -454,8 +454,8 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     output_enabled = Instrument.control(
         "OUTPut?", "OUTPUT %d",
-        """Controls whether to turn on the RF stimulus. The stimulus needs to
-        be on to perform any measurement. Beware that the stimulus is on by
+        """Control whether to turn on the RF stimulus. The stimulus needs to be
+        on to perform any measurement. Beware that the stimulus is on by
         default! (i.e. after reset())""",
         validator=strict_discrete_set,
         map_values=True,
@@ -471,7 +471,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     trigger_source = Instrument.control(
         "TRIGger:SOURce?", "TRIGger:SOURce %s",
-        """Controls the trigger source. From the documentation:
+        """Control the trigger source. From the documentation:
 
         INTernal: Uses the internal trigger to generate continuous triggers
         automatically (default).
