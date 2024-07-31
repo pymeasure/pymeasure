@@ -104,6 +104,8 @@ OPTION_VALUES = {
 
 class TraceCommands(Channel):
     """
+    Commands to control traces for a specific channel.
+
     Need docstring
 
     These first functions just read the `_active_trace` and call the parent to read its
@@ -154,7 +156,8 @@ class TraceCommands(Channel):
         "CALC{{ch}}:PAR{tr}:SPOR?",
         "CALC{{ch}}:PAR{tr}:SPOR %e",
         """
-        Controls the output port used for absolute measurement (integer).
+        Controls the output port used for absolute measurement. This command must be used
+        with `measuring_parameter` for the same trace on the same channel (integer).
         """,
         cast=int,
     )
@@ -167,8 +170,6 @@ class TraceCommands(Channel):
         """,
         cast=bool,
     )
-
-    # :DISP:WIND{1-16}:TRAC{1-16}:STAT
 
     # trace scale
     # :DISP:WIND{1-16}:TRAC{1-16}:Y:PDIV
@@ -260,9 +261,6 @@ class TraceCommands(Channel):
             self.make_active()
 
         self.parent.measurement_format = value
-
-
-# need marker class
 
 
 class MarkerCommands(Channel):
