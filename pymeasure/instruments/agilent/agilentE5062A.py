@@ -289,8 +289,9 @@ class AgilentE5062A(SCPIMixin, Instrument):
             """Control the data format of the *active trace* of the channel
             (str). Default is MLOGarithmic. From the programmer's manual:
 
+            +--------------+-----------------------------------------------+
             | Setting      | Description                                   |
-            |--------------+-----------------------------------------------|
+            +--------------+-----------------------------------------------+
             | MLOGarithmic | Specifies the logarithmic magnitude format.   |
             | PHASe        | Specifies the phase format.                   |
             | GDELay       | Specifies the group delay format.             |
@@ -308,6 +309,8 @@ class AgilentE5062A(SCPIMixin, Instrument):
             | IMAGinary    | Specifies the imaginary format.               |
             | UPHase       | Specifies the expanded phase format.          |
             | PPHase       | Specifies the positive phase format.          |
+            +--------------+-----------------------------------------------+
+
             """,
             validator=strict_discrete_set,
             values=TRACE_FORMAT
