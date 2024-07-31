@@ -49,23 +49,23 @@ class AgilentE5062A(SCPIMixin, Instrument):
     """Represents the Agilent E5062A Vector Network Analyzer
 
     This VNA has 4 separate channels, each of which has its own sweep. The
-    channels are stored in the `channels` dictionary. Channels can be enabled
+    channels are stored in the ``channels`` dictionary. Channels can be enabled
     even if not displayed. Reading out data happens at the channel level.
 
-    Each channel can display up to 4 traces (controlled via the `active_traces`
-    parameter). Note that each channel also has a `display_layout` property
+    Each channel can display up to 4 traces (controlled via the ``active_traces``
+    parameter). Note that each channel also has a ``display_layout`` property
     that controls the layout of the traces in the channel. The traces are
-    accessed via the `traces` dictionary (i.e. `vna.channels[1].traces[1]`).
+    accessed via the ``traces`` dictionary (i.e. ``vna.channels[1].traces[1]``).
 
     The VNA supports multiple transfer formats. This API only supports the IEEE
     64-bit floating point format. The VNA is configured for this format during
     initialization, and the data transfer format is not a publicly accessible
     property.
 
-    This class misses a lot of functionality. The more egregious missing
-    things include (TODO):
+    This class implements only a subset of the total E5062A functionality. The
+    more significant missing functionality includes (TODO):
+
     - editing the scale of the graphs
-    - some trigger functionality
     - markers
     - calibration
     - power sweeps
@@ -151,13 +151,13 @@ class AgilentE5062A(SCPIMixin, Instrument):
             "SENSe{ch}:SWEep:TIME?", "SENSe{ch}:SWEep:TIME %g",
             """Control the sweep time in seconds (float). The allowable range
             varies on config and the set value is truncated. Note that
-            `sweep_time_auto` needs to be `False` for changes to this property to
-            have an effect."""
+            ``sweep_time_auto`` needs to be ``False`` for changes to this
+            property to have an effect."""
         )
 
         sweep_time_auto = Channel.control(
             "SENSe{ch}:SWEep:TIME:AUTO?", "SENSe{ch}:SWEep:TIME:AUTO %d",
-            """Controls whether to automatically set the sweep time. You probably
+            """Controls whether to automatically set the sweep time (bool). You probably
             want this on to always keep the sweep time to a minimum (given the
             range, IF BW, and sweep delay time).""",
             validator=strict_discrete_set,
@@ -177,7 +177,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         averaging_enabled = Channel.control(
             "SENSe{ch}:AVERage?", "SENSe{ch}:AVERage %d",
-            """Controls whether to average the measurement data.""",
+            """Controls whether to average the measurement data (bool).""",
             validator=strict_discrete_set,
             map_values=True,
             values={True: 1, False: 0}
@@ -192,7 +192,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
         averages = Channel.control(
             "SENSe{ch}:AVERage:COUNt?", "SENSe{ch}:AVERage:COUNt %d",
             """Controls how many averages to take, from 1-999 (int). Note that
-            `averaging_enabled` needs to be true for averaging to be enabled.""",
+            ``averaging_enabled`` needs to be true for averaging to be enabled.""",
             cast=lambda x: int(float(x)),
             validator=strict_range,
             values=[1, 999]
@@ -213,12 +213,12 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
             """
             if str(self.id) not in self.parent.display_layout:
-                raise ValueError('cannot activate a channel that is not displayed')
+                raise ValueError('Cannot activate a channel that is not displayed')
             self.write("DISP:WIND{ch}:ACT")
 
         @property
         def active_traces(self):
-            """Controls the number of traces active in the channel."""
+            """Controls the number of traces active (visible) in the channel."""
             return int(self.ask("CALC{ch}:PARameter:COUNt?"))
 
         @active_traces.setter
@@ -230,8 +230,8 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         power = Channel.control(
             "SOURce{ch}:POWer?", "SOURce{ch}:POWer %g",
-            """Controls the stimulus power in dBm (float). The allowable range
-            is influenced by the value of `attenuation`""",
+            """Controls the simulus power in dBm (float). The allowable range
+            is influenced by the value of ``attenuation``. """,
             validator=strict_range,
             values=(-5, 10),
             dynamic=True,
@@ -241,7 +241,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
         def attenuation(self):
             """Controls the stimulus attenuation in dB (positive int), from 0
             to 40 in incrememnts of 10. Default is 0 dB. The allowable stimulus
-            power range is a 15 dB range: (`attenuation` - 5 dB, `attenuation`
+            power range is a 15 dB range: (``attenuation`` - 5 dB, ``attenuation``
             + 10 dB).
 
             This requires the power range extension, and the command is ignored
@@ -257,8 +257,34 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         display_layout = Channel.control(
             "DISPlay:WINDow{ch}:SPLit?", "DISPlay:WINDow{ch}:SPLit %s",
-            """Controls the graph layout of the traces in the channel. Does not
-            affect how many traces are active.""",
+            """Controls the graph layout of the traces in the channel
+            (str). Does not affect how many traces are active. See the list of
+            valid options:
+
+            - D1
+            - D12
+            - D1_2
+            - D112
+            - D1_1_2
+            - D123
+            - D1_2_3
+            - D12_33
+            - D11_23
+            - D13_23
+            - D12_13
+            - D1234
+            - D1_2_3_4
+            - D12_34
+
+            In general, an occurance of a number denotes the associated trace
+            having it's own subplot and an occurence of '_' denotes a vertical
+            split. Multiple occurences of the same number denote the trace
+            having a larger window than the other traces. Refer to Figure 3-1
+            in the the programmer's manual for details. If a trace is active
+            but it's associated number is not present in the ``display_layout``
+            identifier, it is plotted in the first subplot.
+
+            """,
             validator=strict_discrete_set,
             values=DISPLAY_LAYOUT_OPTIONS
         )
@@ -289,27 +315,27 @@ class AgilentE5062A(SCPIMixin, Instrument):
             """Control the data format of the *active trace* of the channel
             (str). Default is MLOGarithmic. From the programmer's manual:
 
-            +--------------+-----------------------------------------------+
-            | Setting      | Description                                   |
-            +--------------+-----------------------------------------------+
-            | MLOGarithmic | Specifies the logarithmic magnitude format.   |
-            | PHASe        | Specifies the phase format.                   |
-            | GDELay       | Specifies the group delay format.             |
-            | SLINear      | Specifies the Smith chart format (Lin/Phase). |
-            | SLOGarithmic | Specifies the Smith chart format (Log/Phase). |
-            | SCOMplex     | Specifies the Smith chart format (Real/Imag). |
-            | SMITh        | Specifies the Smith chart format (R+jX).      |
-            | SADMittance  | Specifies the Smith chart format (G+jB).      |
-            | PLINear      | Specifies the polar format (Lin).             |
-            | PLOGarithmic | Specifies the polar format (Log).             |
-            | POLar        | Specifies the polar format (Re/Im).           |
-            | MLINear      | Specifies the linear magnitude format.        |
-            | SWR          | Specifies the SWR format.                     |
-            | REAL         | Specifies the real format.                    |
-            | IMAGinary    | Specifies the imaginary format.               |
-            | UPHase       | Specifies the expanded phase format.          |
-            | PPHase       | Specifies the positive phase format.          |
-            +--------------+-----------------------------------------------+
+            ============  =============================================
+            Setting       Description
+            ============  =============================================
+            MLOGarithmic  Specifies the logarithmic magnitude format.
+            PHASe         Specifies the phase format.
+            GDELay        Specifies the group delay format.
+            SLINear       Specifies the Smith chart format (Lin/Phase).
+            SLOGarithmic  Specifies the Smith chart format (Log/Phase).
+            SCOMplex      Specifies the Smith chart format (Real/Imag).
+            SMITh         Specifies the Smith chart format (R+jX).
+            SADMittance   Specifies the Smith chart format (G+jB).
+            PLINear       Specifies the polar format (Lin).
+            PLOGarithmic  Specifies the polar format (Log).
+            POLar         Specifies the polar format (Re/Im).
+            MLINear       Specifies the linear magnitude format.
+            SWR           Specifies the SWR format.
+            REAL          Specifies the real format.
+            IMAGinary     Specifies the imaginary format.
+            UPHase        Specifies the expanded phase format.
+            PPHase        Specifies the positive phase format.
+            ============  =============================================
 
             """,
             validator=strict_discrete_set,
@@ -345,23 +371,24 @@ class AgilentE5062A(SCPIMixin, Instrument):
         def data(self):
             """Access the Formatted Data of the *active trace*.
 
-            Each trace consists of `scan_points` plotted either vs. frequency
+            Each trace consists of ``scan_points`` plotted either vs. frequency
             or in something like a smith-chart configuration. This property
             does not access any frequency information. So for rectangular
             plots, this query returns only the y-values of the trace (no
             frequency information). For smith- and polar- plots, this two
             values per data point.
 
-            The way this interface works is that this function returns a tuple
-            containing both a primary and a secondary data array. The secondary
-            data is all zeros for all trace formats that are not smith or
-            polar. The implication for this is that the best way to save
-            complex S-parameter data in one go is to use a Smith (Real/Imag) or
-            Polar (Real/Imag) trace format, (SCOMplex and POLar, respectively).
+            This function returns a tuple containing both a primary and a
+            secondary data numpy array. The secondary data is all zeros for all
+            trace formats that are not smith or polar. The implication for this
+            is that the best way to save complex S-parameter data in one go is
+            to use a Smith (Real/Imag) or Polar (Real/Imag) trace format,
+            (SCOMplex and POLar, respectively).
 
-            This is settable in the VNA but not implemented in this python API.
+            The formatted data array is settable in the VNA but not implemented
+            in this python API.
 
-            Frequency data is accessed via the `frequencies` property.
+            Frequency data is accessed via the ``frequencies`` property.
 
             """
             self.write(f'CALC{self.id}:DATA:FDAT?')
@@ -373,7 +400,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
         @property
         def frequencies(self):
             """Access the frequency in Hz associated with each data point of
-            the *active trace*.
+            the *active trace*. Returns a numpy array.
 
             """
             self.write(f'SENS{self.id}:FREQ:DATA?')
@@ -381,16 +408,16 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
         trigger_continuous = Instrument.control(
             "INITiate{ch}:CONTinuous?", "INITiate{ch}:CONTinuous %d",
-            """Controls whether the channel triggers continuously. If not, after a
-            sweep is complete, the global trigger enters the hold state, and will
-            not respond to triggers.  """,
+            """Control whether the channel triggers continuously (bool). If
+            not, after a sweep is complete, the global trigger enters the hold
+            state, and will not respond to triggers.  """,
             validator=strict_discrete_set,
             map_values=True,
             values={True: 1, False: 0}
         )
 
         def trigger_initiate(self):
-            """If the trigger is in the hold state (i.e. `trigger_continuous`
+            """If the trigger is in the hold state (i.e. ``trigger_continuous``
             is off and the measurement has completed), re-initialize the
             trigger for a single measurement.
 
@@ -415,38 +442,36 @@ class AgilentE5062A(SCPIMixin, Instrument):
         self.write("FORMat:DATA REAL")  # set data transfer format to IEEE fp64
         self.write("FORMat:BORDer SWAPped")  # ensure byte-order is little-endian
 
-    DISPLAY_LAYOUT_OPTIONS = [
-        "D1",
-        "D12",
-        "D1_2",
-        "D112",
-        "D1_1_2",
-        "D123",
-        "D1_2_3",
-        "D12_33",
-        "D11_23",
-        "D13_23",
-        "D12_13",
-        "D1234",
-        "D1_2_3_4",
-        "D12_34"
-    ]
-
     display_layout = Instrument.control(
         "DISPlay:SPLit?", "DISPlay:SPLit %s",
         """Control the layout of the windows (channels) on the display
-        (string). Valid options are in
-        `AgilentE5062A.DISPLAY_LAYOUT_OPTIONS`. In general, an occurance of a
-        number denotes the associated channel being visible and an occurence of
-        '_' denotes a vertical split. Multiple occurences of the same number
-        denote the channel having a larger window than the other
-        channels. Refer to Figure 3-1 in the the programmer's manual for
-        details.
+        (str). See the list of valid options below:
+
+        - D1
+        - D12
+        - D1_2
+        - D112
+        - D1_1_2
+        - D123
+        - D1_2_3
+        - D12_33
+        - D11_23
+        - D13_23
+        - D12_13
+        - D1234
+        - D1_2_3_4
+        - D12_34
+
+        In general, an occurance of a number denotes the associated channel
+        being visible and an occurence of '_' denotes a vertical
+        split. Multiple occurences of the same number denote the channel having
+        a larger window than the other channels. Refer to Figure 3-1 in the the
+        programmer's manual for details.
 
         Note that this splits windows for multiple *channels*, not
         traces. Basic S-param measurements most likely want to use only a
         single channel, but with multuple *traces* instead. See
-        e.g. `AgilentE5062A.channels[1].active_traces`
+        e.g. ``AgilentE5062A.channels[1].active_traces``
         """,
         validator=strict_discrete_set,
         values=DISPLAY_LAYOUT_OPTIONS
@@ -454,9 +479,9 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     output_enabled = Instrument.control(
         "OUTPut?", "OUTPUT %d",
-        """Control whether to turn on the RF stimulus. The stimulus needs to be
-        on to perform any measurement. Beware that the stimulus is on by
-        default! (i.e. after reset())""",
+        """Control whether to turn on the RF stimulus (bool). The stimulus
+        needs to be on to perform any measurement. Beware that the stimulus is
+        on by default! (i.e. after reset())""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0}
@@ -471,7 +496,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     trigger_source = Instrument.control(
         "TRIGger:SOURce?", "TRIGger:SOURce %s",
-        """Control the trigger source. From the documentation:
+        """Control the trigger source (str). From the documentation:
 
         INTernal: Uses the internal trigger to generate continuous triggers
         automatically (default).
@@ -482,7 +507,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
         MANual: Generates a trigger when the key operation of [Trigger] -
         Trigger is executed from the front panel.
 
-        BUS: Generates a trigger when the *TRG command is executed.""",
+        BUS: Generates a trigger when the ``*TRG`` command is executed.""",
         validator=strict_discrete_set,
         values=[
             'INTernal',
@@ -501,11 +526,11 @@ class AgilentE5062A(SCPIMixin, Instrument):
         self.write('TRIGger')
 
     def pop_err(self):
-        """Pop an error off the error queue. Return a tuple containing the code
-        and error description. An error code 0 indicates success.
+        """Pop an error off the error queue. Returns a tuple containing the
+        code and error description. An error code 0 indicates success.
 
         The Error queue can be deleted using the standard SCPI
-        `agilentE5062A.clear()` method.
+        ``agilentE5062A.clear()`` method.
 
         """
         error_str = self.ask('SYST:ERR?').strip()
