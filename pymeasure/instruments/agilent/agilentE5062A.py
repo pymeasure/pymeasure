@@ -262,7 +262,7 @@ class VNAChannel(Channel):
     )
 
     TRACE_FORMAT = [
-        'MLOGarithmic'
+        'MLOGarithmic',
         'PHASe',
         'GDELay',
         'SLINear',

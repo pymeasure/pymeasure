@@ -24,6 +24,9 @@
 
 # Tested using SCPI over telnet (via ethernet). call signature:
 # $ pytest test_agilentE5062A_with_device.py --device-address 'TCPIP::192.168.2.233::INSTR'
+#
+# The RF stimulus is turned on with the default power level of 0 dBm. The test
+# port connection can be anything that is safe for that power level.
 
 import pytest
 from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
@@ -201,11 +204,14 @@ def test_ch_activate_incorrect(agilentE5062A):
 
 def test_tr_format(agilentE5062A):
     agilentE5062A.clear()
-    for ch in agilentE5062A.channels.values():
-        for tr in ch.traces.values():
-            for opt in ch.TRACE_FORMAT:
-                tr.trace_format = opt
-                assert tr.trace_format == opt
+    ch = agilentE5062A.channels[1]
+    ch.activate()
+    ch.active_traces = 4
+    for tr in ch.traces.values():
+        tr.activate()
+        for opt in ch.TRACE_FORMAT:
+            ch.trace_format = opt
+            assert ch.trace_format in opt
     assert not agilentE5062A.pop_err()[0]
 
 
