@@ -129,9 +129,9 @@ class VNAChannel(Channel):
 
     sweep_time_auto = Channel.control(
         "SENSe{ch}:SWEep:TIME:AUTO?", "SENSe{ch}:SWEep:TIME:AUTO %d",
-        """Controls whether to automatically set the sweep time (bool). You probably
-        want this on to always keep the sweep time to a minimum (given the
-        range, IF BW, and sweep delay time).""",
+        """Control whether to automatically set the sweep time (bool). You
+        probably want this on to always keep the sweep time to a minimum (given
+        the range, IF BW, and sweep delay time).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0}
@@ -139,17 +139,17 @@ class VNAChannel(Channel):
 
     sweep_type = Channel.control(
         "SENSe{ch}:SWEep:TYPE?", "SENSe{ch}:SWEep:TYPE %s",
-        """Controls the type of the sweep, between 'LINear', 'LOGarithmic',
-        'SEGMent', and 'POWer' (string). Defaults to linear. Note that the
-        API for configuring segment type sweeps is not implememented in
-        this class.""",
+        """Control the type of the sweep, between 'LINear', 'LOGarithmic',
+        'SEGMent', and 'POWer' (string). Defaults to linear. Note that the API
+        for configuring segment type sweeps is not implememented in this
+        class.""",
         validator=strict_discrete_set,
         values=['LINear', 'LOGarithmic', 'SEGMent', 'POWer']
     )
 
     averaging_enabled = Channel.control(
         "SENSe{ch}:AVERage?", "SENSe{ch}:AVERage %d",
-        """Controls whether to average the measurement data (bool).""",
+        """Control whether to average the measurement data (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0}
@@ -163,7 +163,7 @@ class VNAChannel(Channel):
 
     averages = Channel.control(
         "SENSe{ch}:AVERage:COUNt?", "SENSe{ch}:AVERage:COUNt %d",
-        """Controls how many averages to take, from 1-999 (int). Note that
+        """Control how many averages to take, from 1-999 (int). Note that
         ``averaging_enabled`` needs to be true for averaging to be enabled.""",
         cast=lambda x: int(float(x)),
         validator=strict_range,
@@ -172,7 +172,8 @@ class VNAChannel(Channel):
 
     IF_bandwidth = Channel.control(
         "SENSe{ch}:BANDwidth?", "SENSe{ch}:BANDwidth %d",
-        """Controls the IF bandwidth in Hz (int), from 10 Hz to 30 kHz. Default 30 kHz.""",
+        """Control the IF bandwidth in Hz (int), from 10 Hz to 30 kHz. Default
+        30 kHz.""",
         cast=lambda x: int(float(x)),
         validator=strict_range,
         values=[10, 30000]
@@ -190,7 +191,7 @@ class VNAChannel(Channel):
 
     @property
     def active_traces(self):
-        """Controls the number of traces active (visible) in the channel."""
+        """Control the number of traces active (visible) in the channel (int)."""
         return int(self.ask("CALC{ch}:PARameter:COUNt?"))
 
     @active_traces.setter
@@ -202,8 +203,8 @@ class VNAChannel(Channel):
 
     power = Channel.control(
         "SOURce{ch}:POWer?", "SOURce{ch}:POWer %g",
-        """Controls the simulus power in dBm (float). The allowable range
-        is influenced by the value of ``attenuation``. """,
+        """Control the simulus power in dBm (float). The allowable range is
+        influenced by the value of ``attenuation``. """,
         validator=strict_range,
         values=(-5, 10),
         dynamic=True,
@@ -211,13 +212,15 @@ class VNAChannel(Channel):
 
     @property
     def attenuation(self):
-        """Controls the stimulus attenuation in dB (positive int), from 0
-        to 40 in incrememnts of 10. Default is 0 dB. The allowable stimulus
-        power range is a 15 dB range: (``attenuation`` - 5 dB, ``attenuation``
-        + 10 dB).
+        """Control the stimulus attenuation in dB (positive int), from 0 to 40
+        in incrememnts of 10. Default is 0 dB. The allowable stimulus power
+        range is a 15 dB range: (``attenuation`` - 5 dB, ``attenuation`` + 10
+        dB).
 
         This requires the power range extension, and the command is ignored
-        if the extension is not installed."""
+        if the extension is not installed.
+
+        """
         return int(float(self.ask("SOURce{ch}:POWer:ATTenuation?")))
 
     @attenuation.setter
@@ -229,9 +232,8 @@ class VNAChannel(Channel):
 
     display_layout = Channel.control(
         "DISPlay:WINDow{ch}:SPLit?", "DISPlay:WINDow{ch}:SPLit %s",
-        """Controls the graph layout of the traces in the channel
-        (str). Does not affect how many traces are active. See the list of
-        valid options:
+        """Control the graph layout of the traces in the channel (str). Does
+        not affect how many traces are active. See the list of valid options:
 
         - D1
         - D12
@@ -334,7 +336,7 @@ class VNAChannel(Channel):
 
     @property
     def data(self):
-        """Access the Formatted Data of the *active trace*.
+        """Measure the Formatted Data of the *active trace*.
 
         Each trace consists of ``scan_points`` plotted either vs. frequency
         or in something like a smith-chart configuration. This property
@@ -364,8 +366,8 @@ class VNAChannel(Channel):
 
     @property
     def frequencies(self):
-        """Access the frequency in Hz associated with each data point of
-        the *active trace*. Returns a numpy array.
+        """Measure the frequency in Hz associated with each data point of the
+        *active trace*. Returns a numpy array.
 
         """
         self.write(f'SENS{self.id}:FREQ:DATA?')
