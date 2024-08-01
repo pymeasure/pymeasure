@@ -72,30 +72,28 @@ class VNAChannel(Channel):
         tr_id = len(self.traces) + 1 if override_id is None else override_id
         self.add_child(VNATrace, tr_id, 'traces', 'tr_')
 
-    def _update_trace_count(self, active_traces=None):
+    def _update_trace_count(self, active_traces):
         """Internal method that updates the trace list based on the number
         of active traces.
         """
-        if active_traces is None:
-            active_traces = self.active_traces
         while len(self.traces) > active_traces:
             self.remove_child(self.traces[max(self.traces.keys())])
         while len(self.traces) < active_traces:
             self._add_trace()
 
-    def _update_power_values(self):
+    def _update_power_values(self, attenuation):
         """Internal method that updates the valid range of stimulus power
         based on the configured attenuation"""
         self.power_values = (
-            -self.attenuation - 5,
-            -self.attenuation + 10)
+            -attenuation - 5,
+            -attenuation + 10)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # self.traces = []
-        self._add_trace(override_id=1)   # add just a single trace to init it all
-        self._update_trace_count()       # add remaining traces if necessary
-        self._update_power_values()      # update dynamic limits of power
+        self._add_trace(override_id=1)                # add just a single trace to init it all
+        self._update_trace_count(self.active_traces)  # add remaining traces if necessary
+        self._update_power_values(self.attenuation)   # update dynamic limits of power
 
     start_frequency = Channel.control(
         "SENSe{ch}:FREQuency:STARt?", "SENSe{ch}:FREQuency:STARt %g",
@@ -200,7 +198,7 @@ class VNAChannel(Channel):
         value = int(float(value))
         value = strict_range(value, [1, 4])
         self.write("CALC{ch}:PARameter:COUNt %d" % value)
-        self._update_trace_count()
+        self._update_trace_count(value)
 
     power = Channel.control(
         "SOURce{ch}:POWer?", "SOURce{ch}:POWer %g",
@@ -227,7 +225,7 @@ class VNAChannel(Channel):
         value = int(float(value))
         value = strict_discrete_set(value, [0, 10, 20, 30, 40])
         self.write("SOURce{ch}:POWer:ATTenuation %d" % value)
-        self._update_power_values()
+        self._update_power_values(value)
 
     display_layout = Channel.control(
         "DISPlay:WINDow{ch}:SPLit?", "DISPlay:WINDow{ch}:SPLit %s",
@@ -325,15 +323,8 @@ class VNAChannel(Channel):
         """
         header = self.read_bytes(8)  # 2 start bytes + 6 <nbytes> bytes
         if not header[0:2].decode('ascii') == '#6':
-            fmt = self.ask("FORM:DATA?").strip()
-            if not (fmt == "REAL"):
-                raise ValueError(
-                    'Unrecognized header. Data transfer format is incorrect!' +
-                    f'is {fmt}, should be REAL')
-            else:
-                raise ValueError(
-                    'Unrecognized header, even though the configured ' +
-                    'data transfer format is correct.')
+            raise ValueError('''Unrecognized header. Ensure the data transfer
+            format (FORM:DATA?) is set to "REAL"''')
         nbytes = int(header[2:].decode('ascii'))
         binary_data = self.read_bytes(nbytes)
         terminator = self.read_bytes(1)
