@@ -45,10 +45,13 @@ class Glassman(Instrument):
     
     Prerequisites for remote control:
         - Interlock on J3 must be satisfied
-        - HV ON function must be enabled via the front panel `HV ON` button or Remote `HV ON` pins on J3
+        - HV ON function must be enabled via the front panel `HV ON` button or
+            Remote `HV ON` pins on J3
     
     
-    Supports the following, as defined in `Instruction Manual EJ/ET/EY/FJ/FR Series` (102002-177 Rev M2):
+    Supports the following, as defined in `Instruction Manual EJ/ET/EY/FJ/FR
+        Series` (102002-177 Rev M2):
+            
         Command: Set (S), Query (Q), Version (V), Configure (C)
     
         Response: Acknowledge (A), Response (R), SW Version (B), Error (E)
@@ -116,8 +119,10 @@ class Glassman(Instrument):
         
         """
         self.voltage_setpoint = value
-        if self._output and self.status()["Output"]:
-            self.set_status(voltage=self.voltage_setpoint)
+        if self._output and self.status()["Output"] and self.voltage_setpoint > self.voltage_max * 0.02:
+            # If output is off, first setpoint must be < 2% max output
+            self.set_status(voltage=self.voltage_max * 0.02)
+        self.set_status(voltage=self.voltage_setpoint)        
         return
         
     @property
