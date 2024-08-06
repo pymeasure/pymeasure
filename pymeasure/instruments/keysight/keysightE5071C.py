@@ -295,6 +295,11 @@ class TraceCommands(Channel):
 
         self.parent.measurement_format = value
 
+    # add marker commands to:
+    #   - check that trace is displayed
+    #   - change to trace if not active
+    #   - perform marker action
+
 
 class MarkerCommands(Channel):
     """
@@ -330,12 +335,18 @@ class MarkerCommands(Channel):
         values={True: 1, False: 0},
     )
 
+    # may need to change to be a function instead since no values get passed to it
     active = Channel.setting(
         "CALC{{ch}}:MARK{m}:ACT",
         """
         Sets the marker for the active trace to be the active marker (boolean).
         """,
     )
+
+    # ref marker position
+    # ref marker value
+    # ref marker enabled
+    # ref marker active
 
 
 # need window class (each channel gets a window)
@@ -646,6 +657,9 @@ class ChannelCommands(Channel):
     #     """,
     #     )
 
+    # needs validator
+    # dynamic=True,
+    # values=() # based on options or updated to new values
     start_frequency = Channel.control(
         "SENS{ch}:FREQ:STAR?",
         "SENS{ch}:FREQ:STAR %d",
@@ -694,7 +708,7 @@ class ChannelCommands(Channel):
     sweep_frequencies = Channel.measurement(  # frequencies of sweep are read out
         "SENS{ch}:FREQ:DATA?",
         """
-
+        Get a list of frequencies measured in Hertz (float).
         """,
         cast=float,
     )
@@ -703,7 +717,7 @@ class ChannelCommands(Channel):
         ":SENS{ch}:AVER?",
         ":SENS{ch}:AVER %d",
         """
-        Control the channel averaging enabled state (boolean).
+        Control the averaging enabled state for the channel (boolean).
         """,
         cast=bool,
     )
@@ -717,29 +731,46 @@ class ChannelCommands(Channel):
         cast=int,
     )
 
+    # may need to change to be a function
     averaging_restart = Channel.setting(
         "SENS{ch}:AVER:CLE",
-        """ """,
+        """
+
+        """,
     )
 
     sweep_time = Channel.control(
         "SENS{ch}:SWE:TIME?",
         "SENS{ch}:SWE:TIME %d",
-        """ """,
+        """
+        Control the time taken to perform a measurement sweep (float).
+        """,
+        cast=float,
     )
 
     auto_sweep_time_enabled = Channel.control(
         "SENS{ch}:SWE:TIME:AUTO?",
         "SENS{ch}:SWE:TIME:AUTO %d",
-        """ """,
+        """
+        Control the sweep measurement time being automatically optimized (boolean).
+        """,
     )
 
     sweep_type = Channel.control(  # {LIN|LOG|SEG|POW}
         "SENS{ch}:SWE:TYPE?",
         "SENS{ch}:SWE:TYPE %s",
         """
-        Control the sweep type for a specific channel. Acceptable types are LIN, LOG, SEG, POW
-        (string).
+        Control the sweep type for a specific channel for how the number of points are spaced
+        over frequency. Acceptable types are LIN, LOG, SEG, POW (string).
+
+        ========================   =============   ===============================
+        Value                      Format Sent     Description
+        ========================   =============   ===============================
+
+        Linear Sweep               LIN
+        Logrithmic Sweep           LOG
+        Sequential Segment Sweep   SEG
+        Power Sweep                POW
         """,
         cast=str,
     )
@@ -757,19 +788,25 @@ class ChannelCommands(Channel):
     avoid_spurs = Channel.control(
         "SENS{ch}:SWE:ASP?",
         "SENS{ch}:SWE:ASP %d",
-        """Control spurious avoidance mode (bool)""",
+        """
+        Control spurious avoidance mode (bool)
+        """,
     )
 
     sweep_delay = Channel.control(
         "SENS{ch}:SWE:DELay?",
         "SENS{ch}:SWE:DELay %d",
-        """ """,
+        """
+
+        """,
     )
 
     scan_points = Channel.control(
         "SENS{ch}:SWE:POIN?",
         "SENS{ch}:SWE:POIN %d",
-        """ """,
+        """
+
+        """,
     )
 
     IFBW = Channel.control(  # 10-100000 HZ in 1, 1.5, 2, 3, 4, 5, 7 sized steps
@@ -803,7 +840,9 @@ class ChannelCommands(Channel):
 
     get_active_trace = Channel.measurement(
         "SERV:CHAN{ch}:TRAC:ACT?",
-        """ """,
+        """
+        Get the active trace for a given channel (int).
+        """,
         cast=int,
     )
 
@@ -832,9 +871,13 @@ class ChannelCommands(Channel):
     # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
     # and "SENS{1-16}:CORR:COEF:SAVE"
 
+    # might be better to move this to in the trace channel
+
     markers = Instrument.MultiChannelCreator(
         MarkerCommands, [x + 1 for x in range(9)], prefix="mkr_"
     )
+
+    # def update markers
 
 
 class KeysightE5071C(Instrument):
