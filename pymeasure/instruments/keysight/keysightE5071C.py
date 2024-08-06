@@ -26,8 +26,7 @@
 import logging
 
 from pymeasure.instruments import Channel, Instrument
-
-# from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -97,6 +96,38 @@ OPTION_VALUES = {
     "790": {"Additional Options": "Measurement Wizard Assistant software"},
 }
 
+WINDOW_GRAPH_LAYOUT = {
+    1: ["D1"],
+    2: ["D12", "D1_2", "D112", "D1_1_2"],
+    3: ["D123", "D1_2_3", "D12_33", "D11_23", "D13_23", "D12_13"],
+    4: ["D1234", "D1_2_3_4", "D12_34"],
+    6: ["D123_456", "D12_34_56"],
+    8: ["D1234_5678", "D12_34_56_78"],
+    9: ["D123_456_789"],
+    12: ["D123__ABC", "D1234__9ABC"],
+    16: [
+        "D1234__CDEF",
+    ],
+}
+
+
+class TraceException(Exception):
+    """
+    Trace Exception raised when trace called isn't active or displayed.
+    """
+
+
+class ChannelException(Exception):
+    """
+    Channel Exception raised when channel called isn't active or displayed.
+    """
+
+
+class MarkerException(Exception):
+    """
+    Marker Exception raised when marker called isn't active or displayed.
+    """
+
 
 # set the analyzer to trace averaging in single sweep mode, use the following SCPI commands to
 # start the 100 average sweep and wait for the Operation Complete bit to be returned:
@@ -115,6 +146,8 @@ class TraceCommands(Channel):
 
     # these functions will allow the option to query active channel, trace, and total traces enabled
     # or trust the function to keep track of them. Hoping this speeds up operations.
+
+    placeholder = "tr"
 
     def make_active(self):
         self.parent.active_trace = self.id
@@ -149,7 +182,7 @@ class TraceCommands(Channel):
         a scattering parameter, this command must be used with `absolute_measurement_port`
         for the same trace on the same channel. (string).
         """,
-        cast=str,
+        # cast=str,
     )
 
     absolute_measurement_port = Channel.control(
@@ -268,6 +301,8 @@ class MarkerCommands(Channel):
     Commands to control markers for a specific channel.
     """
 
+    placeholder = "mkr"
+
     position = Instrument.control(
         "CALC{{ch}}:MARK{m}:X %e",
         "CALC{{ch}}:MARK{m}:X?",
@@ -321,6 +356,38 @@ class ChannelCommands(Channel):
 
     # CALCulation Commands
 
+    placeholder = "ch"
+
+    # Traces
+
+    traces = Instrument.MultiChannelCreator(TraceCommands, [x + 1 for x in range(1)], prefix="tr_")
+
+    def update_number_of_traces(self, number_of_traces=None):
+        """
+        Create or remove traces to be correct with the actual number of traces.
+
+        Up to 16 traces are allowed but could be lower depending on instrument configuration
+        (integer).
+
+        :param int number_of_traces: optional, if given defines the desired number of traces.
+        """
+        if number_of_traces is None:
+            number_of_traces = self.total_traces
+
+        # Set limits to active trace
+        self.active_trace_values = range(1, number_of_traces, 1)  # pylint: disable=W0201
+
+        if len(self.traces) == number_of_traces:
+            return
+
+        # Remove redant channels
+        while len(self.traces) > number_of_traces:
+            self.remove_child(self.traces[len(self.traces)])  # pylint: disable =E1136
+
+        # Remove create new channels
+        while len(self.traces) < number_of_traces:
+            self.add_child(TraceCommands, len(self.traces) + 1, collection="traces", prefix="tr_")
+
     active_trace = Channel.control(
         "SERV:CHAN{ch}:TRAC:ACT?",
         "CALC{ch}:PAR%d:SEL",
@@ -330,6 +397,9 @@ class ChannelCommands(Channel):
         by `total_traces`, this command with not complete and with error (integer).
         """,
         cast=int,
+        validator=strict_discrete_set,
+        values=range(1, 1, 1),
+        dynamic=True,
     )
 
     total_traces = Channel.control(
@@ -337,9 +407,14 @@ class ChannelCommands(Channel):
         "CALC{ch}:PAR:COUN %d",
         """
         Controls the total number of traces for a channel. Up to 16 traces are allowed but
-        could be lower depending on instrument configuration. (integer).
+        could be lower depending on instrument configuration (integer).
+
+        Make sure to call `update_number_of_traces()` to update the range of values for
+        `active_trace`.
         """,
         cast=int,
+        validator=strict_discrete_set,
+        values=range(1, 17, 1),
     )
 
     measurement_conversion = Channel.control(
@@ -373,59 +448,6 @@ class ChannelCommands(Channel):
         cast=str,
     )
 
-    # need total_traces to trigger a function to change the traces
-    # available to the channel
-
-    # def update_traces(self, number_of_traces=None):
-    #     """Create or remove traces to be correct with the actual number of traces.
-
-    #     :param int number_of_traces: optional, if given defines the desired number of traces.
-    #     """
-    #     if number_of_traces is None:
-    #         number_of_traces = self.number_of_traces
-
-    #     if not hasattr(self, "traces"):
-    #         self.traces = {}
-
-    #     if len(self.traces) == number_of_traces:
-    #         return
-
-    #     # Remove redant channels
-    #     while len(self.traces) > number_of_traces:
-    #         self.remove_child(self.traces[len(self.traces)])
-
-    #     # Remove create new channels
-    #     while len(self.traces) < number_of_traces:
-    #         self.add_child(Trace, len(self.traces) + 1, collection="traces", prefix="tr_")
-
-    # need total_markers to trigger a function to change the traces
-    # available to the channel
-
-    # def update_markers(self, number_of_markers=None):
-    #     """Create or remove markers to be correct with the actual number of markers.
-
-    #     :param int number_of_markers: optional, if given defines the desired number of markers.
-    #     """
-    #     if number_of_markers is None:
-    #         number_of_markers = self.number_of_markers
-
-    #     if not hasattr(self, "markers"):
-    #         self.markers = {}
-
-    #     if len(self.markers) == number_of_markers:
-    #         return
-
-    #     # Remove redant channels
-    #     while len(self.markers) > number_of_markers:
-    #         self.remove_child(self.markers[len(self.markers)])
-
-    #     # Remove create new channels
-    #     while len(self.markers) < number_of_markers:
-    #         self.add_child(Trace, len(self.markers) + 1, collection="markers", prefix="m_")
-
-    # need another function for the reference marker (number 10) to show, position, and read value
-    # for
-
     # absolute_measurement_source set output port for absolute measurement
     # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
@@ -457,7 +479,10 @@ class ChannelCommands(Channel):
         """,
         cast=complex,
         preprocess_reply=lambda x: ",".join(
-            [f"{float(i)}+{float(j)}j" for i, j in zip(x.split(",")[0::2], x.split(",")[1::2])],
+            [
+                f"{float(i)}+{float(j)}j".replace("+-", "-")
+                for i, j in zip(x.split(",")[0::2], x.split(",")[1::2])
+            ],
         ),
         # get_process=lambda x: [i+1j*j for i,j in zip(x[0::2], x[1::2])],
         # separator=',',
@@ -557,12 +582,28 @@ class ChannelCommands(Channel):
         """,
     )
 
-    # DISPlay Commands
+    def check_channel_displayed(self, display_code):
+        """
+        Identify if a channel or trace is displayed for a provided layout.
+        """
 
-    make_active = Channel.setting(  # select active channel "DISP:WIND{1-16}:ACT"
-        "DISP:WIND{ch}:ACT",
-        """ """,
-    )
+        for key, values in WINDOW_GRAPH_LAYOUT.items():
+            if display_code in values:
+                return self.id <= key
+        return False
+
+    def make_active(self):
+        """
+        Check display layout to ensure channel is displayed.
+        """
+
+        if self.check_channel_displayed(self.parent.display_layout):
+            self.write(f"DISP:WIND{self.id}:ACT")  # noqa
+        else:
+            raise ChannelException(
+                "Channel not currently displayed! Call `parent.display_layout` with \
+                proper layout value."
+            )
 
     # SENSe Commands
 
@@ -608,50 +649,71 @@ class ChannelCommands(Channel):
     start_frequency = Channel.control(
         "SENS{ch}:FREQ:STAR?",
         "SENS{ch}:FREQ:STAR %d",
-        """ """,
+        """
+
+        """,
         cast=float,
     )
 
     stop_frequency = Channel.control(
         "SENS{ch}:FREQ:STOP?",
         "SENS{ch}:FREQ:STOP",
-        """ """,
+        """
+
+        """,
+        cast=float,
     )
 
     center_frequency = Channel.control(
         "SENS{ch}:FREQ:CENT?",
         "SENS{ch}:FREQ:CENT %d",
-        """ """,
+        """
+
+        """,
+        cast=float,
     )
 
     span_frequency = Channel.control(
         "SENS{ch}:FREQ:SPAN?",
         "SENS{ch}:FREQ:SPAN %d",
-        """ """,
+        """
+
+        """,
+        cast=float,
     )
 
     cw_frequency = Channel.control(
         "SENS{ch}:FREQ?",
         "SENS{ch}:FREQ %d",
-        """ """,
+        """
+
+        """,
+        cast=float,
     )
 
     sweep_frequencies = Channel.measurement(  # frequencies of sweep are read out
         "SENS{ch}:FREQ:DATA?",
-        """ """,
+        """
+
+        """,
+        cast=float,
     )
 
     averaging_enabled = Channel.control(
         ":SENS{ch}:AVER?",
         ":SENS{ch}:AVER %d",
-        """Control the channel averaging enabled state. (bool)""",
+        """
+        Control the channel averaging enabled state (boolean).
+        """,
         cast=bool,
     )
 
     averaging_count = Channel.control(
         ":SENS{ch}:AVER:COUN?",
         ":SENS{ch}:AVER:COUN %d",
-        """Control the number of averaging counts to use. (int)""",
+        """
+        Control the number of averaging counts to use (int).
+        """,
         cast=int,
     )
 
@@ -675,14 +737,20 @@ class ChannelCommands(Channel):
     sweep_type = Channel.control(  # {LIN|LOG|SEG|POW}
         "SENS{ch}:SWE:TYPE?",
         "SENS{ch}:SWE:TYPE %s",
-        """ """,
+        """
+        Control the sweep type for a specific channel. Acceptable types are LIN, LOG, SEG, POW
+        (string).
+        """,
         cast=str,
     )
 
     sweep_mode = Channel.control(  # {STEPped|ANALog|FSTepped|FANalog}'
         "SENS{ch}:SWE:GEN?",
         "SENS{ch}:SWE:GEN %s",
-        """ """,
+        """
+        Control the sweep mode for a specific channel. Acceptable modes are STEPped, ANALog,
+        FSTepped, or FANalog (string).
+        """,
         cast=str,
     )
 
@@ -707,13 +775,22 @@ class ChannelCommands(Channel):
     IFBW = Channel.control(  # 10-100000 HZ in 1, 1.5, 2, 3, 4, 5, 7 sized steps
         "SENS{ch}:BAND?",
         "SENS{ch}:BAND %d",
-        """ """,
+        """
+        Control the IFBW in Hz from 10-100000 in step sizes of 1, 1.5, 2, 3, 4, 5, 7 (float).
+        """,
+        cast=float,
+        validator=strict_range,
+        values=(10, 100000),
+        dynamic=True,
     )
 
     correction_enabled = Channel.control(
         "SENS{ch}:CORR:STAT?",
         "SENS{ch}:CORR:STAT %d",
-        """ """,
+        """
+        Control whether corrections are applied to `measurement_data` and
+        `formated_measurement_data` (boolean).
+        """,
     )
 
     # SOURse Commands
@@ -738,18 +815,35 @@ class ChannelCommands(Channel):
         """ """,
     )
 
-    # trigger_continuous 'INIT{1-16}:CONT'
+    trigger_continuous = Channel.control(
+        "INIT{ch}:CONT?",
+        "INIT{ch}:CONT %d",
+        """
+        Control whether to trigger a channel continuously or to have it hold (boolean).
+        """,
+        cast=int,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
 
-    # Traces
+    # def trigger_continuous(self):
+    #     self.write("INIT{self.id}:CONT")
 
     # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
     # and "SENS{1-16}:CORR:COEF:SAVE"
+
+    markers = Instrument.MultiChannelCreator(
+        MarkerCommands, [x + 1 for x in range(9)], prefix="mkr_"
+    )
 
 
 class KeysightE5071C(Instrument):
     """
     Need docstring
     """
+
+    # pylint: disable=too-many-instance-attributes
+    # Nine is reasonable in this case.
 
     def __init__(self, adapter, name="Keysight E5071C", **kwargs):
         super().__init__(adapter, name, includeSCPI=True, **kwargs)
@@ -759,7 +853,7 @@ class KeysightE5071C(Instrument):
         self._fw = ""
         self._sn = ""
         self._options = ""
-        self._active_channel = "1"
+        self.number_of_channels = 1
 
         if name is None:
             # written this way to pass 'test_all_instruments.py' while allowing the
@@ -811,44 +905,58 @@ class KeysightE5071C(Instrument):
     output_enabled = Instrument.control(
         "OUTP?",
         "OUTP %d",
-        """ """,
+        """
+
+        """,
     )
 
     channels = Instrument.MultiChannelCreator(
-        ChannelCommands, [x + 1 for x in range(16)], prefix="ch_"
+        ChannelCommands, [x + 1 for x in range(1)], prefix="ch_"
     )
 
-    # def update_channels(self, number_of_channels=None):
-    #     """Create or remove channels to be correct with the actual number of channels.
+    # windows ...
 
-    #     :param int number_of_channels: optional, if given defines the desired number of channels.
-    #     """
-    #     if number_of_channels is None:
-    #         number_of_channels = self.number_of_channels
+    def update_channels(self, number_of_channels=None):
+        """Create or remove channels to be correct with the actual number of channels.
 
-    #     if not hasattr(self, "channels"):
-    #         self.channels = {}
+        :param int number_of_channels: optional, if given defines the desired number of channels.
+        """
+        if number_of_channels is None:
+            number_of_channels = self.number_of_channels
+        else:
+            if number_of_channels > self.maximum_channels:
+                raise ChannelException(
+                    "Cannot update channels to be > maximum_channels VNA is configured for!"
+                )
 
-    #     if len(self.channels) == number_of_channels:
-    #         return
+        if not hasattr(self, "channels"):
+            self.channels = {}
 
-    #     # Remove redant channels
-    #     while len(self.channels) > number_of_channels:
-    #         self.remove_child(self.channels[len(self.channels)])
+        if len(self.channels) == number_of_channels:
+            return
 
-    #     # Remove create new channels
-    #     while len(self.channels) < number_of_channels:
-    #         self.add_child(Trace, len(self.channels) + 1, collection="channels", prefix="ch_")
+        # Remove redant channels
+        while len(self.channels) > number_of_channels:
+            self.remove_child(self.channels[len(self.channels)])
+
+        # Remove create new channels
+        while len(self.channels) < number_of_channels:
+            self.add_child(
+                ChannelCommands, len(self.channels) + 1, collection="channels", prefix="ch_"
+            )
 
     # channel layout window?
 
-    # class to track active channel and active trace in channel
-    # ':SERV:CHAN:ACT?' query only read out of active channel
-    # ':SERV:CHAN{1-16}:TRAC:ACT?' query only read out of active trace for channel
-
     # select active channel "DISP:WIND{1-16}:ACT"
 
-    # windows 'DISP:SPL' pg 466
+    display_layout = Instrument.control(
+        "DISP:SPL?",
+        "DISP:SPL %s",
+        """
+        """,
+        cast=str,
+    )
+
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
 
     # disable display 'DISP:ENAB?' {ON|OFF|0|1}
@@ -861,6 +969,17 @@ class KeysightE5071C(Instrument):
         """
         Control if the display state (boolean).
         """,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    display_backlight_enabled = Instrument.control(
+        "SYST:BACK?",
+        "SYST:BACK %d",
+        """
+        Control whether the display backlight is enabled (boolean).
+        """,
+        cast=int,
         map_values=True,
         values={True: 1, False: 0},
     )
@@ -886,13 +1005,7 @@ class KeysightE5071C(Instrument):
 
     # save image of screen ":MMEM:STOR:IMAG" pg 512
 
-    # error stuff
-    # ':STAT:OPER?' Reads out the value of the Operation Status Event Register. (Query only)
-    # 'STAT:OPER:COND?' Reads out the value of the Operation Status Condition Register. (Query only)
-    # ':STAT:OPER:ENAB' Sets the value of the Operation Status Enable Register.
-    # 'SYST:ERR?'
-    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
-    # 'SYST:TEMP' read out if warm-up satisfy specifications of VNA
+    # SERVice Commands
 
     port_count = Instrument.measurement(
         "SERV:PORT:COUN?",
@@ -902,13 +1015,46 @@ class KeysightE5071C(Instrument):
         cast=int,
     )
 
-    # ':SERV:CHAN:COUN?'
-    # ':SERV:CHAN:TRAC:COUN?'
-    # ':SERV:SWE:POIN?'
-    # ':SERV:SWE:FREQ:MIN?'
-    # ':SERV:SWE:FREQ:MAX?'
+    maximum_channels = Instrument.measurement(
+        "SERV:CHAN:COUN?",
+        """
 
-    # SERVice Commands
+        """,
+        cast=int,
+    )
+
+    maximum_traces = Instrument.measurement(
+        "SERV:CHAN:TRAC:COUN?",
+        """
+
+        """,
+        cast=int,
+    )
+
+    maximum_points = Instrument.measurement(
+        "SERV:SWE:POIN?",
+        """
+
+        """,
+        cast=int,
+    )
+
+    minimum_frequency = Instrument.measurement(
+        "SERV:SWE:FREQ:MIN?",
+        """
+
+        """,
+        cast=float,
+    )
+
+    maximum_frequency = Instrument.measurement(
+        "SERV:SWE:FREQ:MAX?",
+        """
+
+        """,
+        cast=float,
+    )
+
     active_channel = Instrument.measurement(
         "SERV:CHAN:ACT?",
         """
@@ -917,12 +1063,47 @@ class KeysightE5071C(Instrument):
         cast=int,
     )
 
+    # class to track active channel and active trace in channel
+    # ':SERV:CHAN:ACT?' query only read out of active channel
+    # ':SERV:CHAN{1-16}:TRAC:ACT?' query only read out of active trace for channel
+
     # SYSTem Commands
 
-    # emit_beep ':SYST:BEEP:COMP:IMM' Generates a beep
-    # emit beep on completion ':SYST:BEEP:COMP:STAT {ON|OFF|0|1}?'
-    # turns on or off beeper for completion of operation
-    # emit beep on warnings 'SYSTem:BEEPer:WARNing:STATe {ON|OFF|1|0}?'
+    def emit_beep(self):
+        """
+        Command VNA to emit a beep. This command takes no inputs and returns nothing.
+        """
+        self.write("SYST:BEEP:COMP:IMM")
+
+    emit_beep_on_warnings = Instrument.control(
+        "SYST:BEEP:WARN:STAT?",
+        "SYST:BEEP:WARN:STAT %d",
+        """
+        Control if VNA will emit a beep on warnings and errors (boolean).
+        """,
+        cast=bool,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    emit_beep_on_completions = Instrument.control(
+        "SYST:BEEP:COMP:STAT?",
+        "SYST:BEEP:COMP:STAT %d",
+        """
+        Control if VNA will emit a beep on completion of operations (boolean).
+        """,
+        cast=bool,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
+    # error stuff
+    # ':STAT:OPER?' Reads out the value of the Operation Status Event Register. (Query only)
+    # 'STAT:OPER:COND?' Reads out the value of the Operation Status Condition Register. (Query only)
+    # ':STAT:OPER:ENAB' Sets the value of the Operation Status Enable Register.
+    # 'SYST:ERR?'
+    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
+    # 'SYST:TEMP' read out if warm-up satisfy specifications of VNA
 
     # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
 
