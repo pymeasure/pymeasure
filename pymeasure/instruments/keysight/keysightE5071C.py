@@ -223,11 +223,11 @@ class TraceCommands(Channel):
 
     displayed = Channel.control(
         "DISP:WIND{{ch}}:TRAC{tr}:STAT?",
-        "DISP:WIND{{ch}}:TRAC{tr}:STAT %b",
+        "DISP:WIND{{ch}}:TRAC{tr}:STAT %d",
         """
         Controls the trace being displayed on the screen (boolean).
         """,
-        cast=bool,
+        cast=int,
     )
 
     # trace scale
@@ -294,8 +294,8 @@ class MarkerCommands(Channel):
     placeholder = "mkr"
 
     position = Instrument.control(
-        "CALC{{ch}}:MARK{mkr}:X %e",
         "CALC{{ch}}:MARK{mkr}:X?",
+        "CALC{{ch}}:MARK{mkr}:X %d",
         """
         Control the position of marker the marker for a specific channel (float frequency in Hz).
         """,
@@ -396,6 +396,8 @@ class ChannelCommands(Channel):
         """
         if number_of_traces is None:
             number_of_traces = self.total_traces
+
+        self.total_traces = number_of_traces
 
         # Set limits to active trace
         self.active_trace_values = range(1, number_of_traces, 1)  # pylint: disable=W0201
@@ -1030,7 +1032,7 @@ class KeysightE5071C(Instrument):
         if number_of_channels is None:
             number_of_channels = self.number_of_channels
         else:
-            if number_of_channels > self.maximum_channels:
+            if number_of_channels > int(self.maximum_channels):
                 raise ChannelException(
                     "Cannot update channels to be > maximum_channels VNA is configured for!"
                 )
@@ -1039,7 +1041,11 @@ class KeysightE5071C(Instrument):
             self.channels = {}
 
         # ensure channels have correct number of ports
-        for ch in self.channels.items():
+        for ch in self.channels.values():
+
+            if not hasattr(ch, "ports"):
+                ch.ports = {}
+
             if len(ch.ports) != self.port_count:
                 # Remove redundant ports
                 while len(ch.ports) > self.port_count:
