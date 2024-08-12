@@ -857,7 +857,7 @@ class ChannelCommands(Channel):
         """
         return [x + 1 for x in range(0, int(self.parent.port_count))]
 
-    ports = Instrument.MultiChannelCreator(PortCommands, total_ports, prefix="port_")
+    ports = Instrument.MultiChannelCreator(PortCommands, [1], prefix="port_")
 
     couple_ports_power = Channel.control(
         "SOUR{ch}:POW:PORT:COUP?",
@@ -1038,6 +1038,20 @@ class KeysightE5071C(Instrument):
         if not hasattr(self, "channels"):
             self.channels = {}
 
+        # ensure channels have correct number of ports
+        for ch in self.channels.items():
+            if len(ch.ports) != self.port_count:
+                # Remove redundant ports
+                while len(ch.ports) > self.port_count:
+                    ch.remove_child(ch.ports[len(ch.ports)])
+                while len(ch.ports) < self.port_count:
+                    ch.add_child(
+                        PortCommands,
+                        len(ch.ports) + 1,
+                        collection="ports",
+                        prefix="port_",
+                    )
+
         if len(self.channels) == number_of_channels:
             return
 
@@ -1045,7 +1059,7 @@ class KeysightE5071C(Instrument):
         while len(self.channels) > number_of_channels:
             self.remove_child(self.channels[len(self.channels)])
 
-        # Remove create new channels
+        # Create new channels
         while len(self.channels) < number_of_channels:
             self.add_child(
                 ChannelCommands, len(self.channels) + 1, collection="channels", prefix="ch_"
