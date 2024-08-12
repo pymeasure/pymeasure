@@ -110,6 +110,31 @@ WINDOW_GRAPH_LAYOUT = {
     ],
 }
 
+WINDOW_GRAPH_OPTIONS = [
+    "D1",
+    "D12",
+    "D1_2",
+    "D112",
+    "D1_1_2",
+    "D123",
+    "D1_2_3",
+    "D12_33",
+    "D11_23",
+    "D13_23",
+    "D12_13",
+    "D1234",
+    "D1_2_3_4",
+    "D12_34",
+    "D123_456",
+    "D12_34_56",
+    "D1234_5678",
+    "D12_34_56_78",
+    "D123_456_789",
+    "D123__ABC",
+    "D1234__9ABC",
+    "D1234__CDEF",
+]
+
 
 class TraceException(Exception):
     """
@@ -1129,15 +1154,17 @@ class KeysightE5071C(Instrument):
                     |_7_|_9_|_9_|   |_5_|_6_|_7_|_8_|
                     |_A_|_B_|_C_|   |_9_|_A_|_B_|_C_|
                       D123__ABC        D1234__9ABC
-                     ___________
-                    |__|__|__|__|
-        Eight       |__|__|__|__|
-                    |__|__|__|__|
-                    |__|__|__|__|
-                    D1234__CDEF
+                     _______________
+                    |_1_|_2_|_3_|_4_|
+        Sixteen     |_5_|_6_|_7_|_8_|
+                    |_9_|_A_|_B_|_C_|
+                    |_D_|_E_|_F_|_G_|
+                       D1234__CDEF     (not a typo, as-is from the programming manual)
 
         """,
         cast=str,
+        validator=strict_discrete_set,
+        values=WINDOW_GRAPH_OPTIONS,
     )
 
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
@@ -1201,7 +1228,7 @@ class KeysightE5071C(Instrument):
     maximum_channels = Instrument.measurement(
         "SERV:CHAN:COUN?",
         """
-
+        Get the total number of channels configured on the VNA (integer).
         """,
         cast=int,
     )
@@ -1209,7 +1236,7 @@ class KeysightE5071C(Instrument):
     maximum_traces = Instrument.measurement(
         "SERV:CHAN:TRAC:COUN?",
         """
-
+        Get the total number of traces allowed per channel configured on the VNA (integer).
         """,
         cast=int,
     )
@@ -1217,7 +1244,7 @@ class KeysightE5071C(Instrument):
     maximum_points = Instrument.measurement(
         "SERV:SWE:POIN?",
         """
-
+        Get the maximum number of points measured as configured on the VNA (integer).
         """,
         cast=int,
     )
@@ -1225,7 +1252,7 @@ class KeysightE5071C(Instrument):
     minimum_frequency = Instrument.measurement(
         "SERV:SWE:FREQ:MIN?",
         """
-
+        Get the minimum frequency the VNA can measure (float).
         """,
         cast=float,
     )
@@ -1233,7 +1260,7 @@ class KeysightE5071C(Instrument):
     maximum_frequency = Instrument.measurement(
         "SERV:SWE:FREQ:MAX?",
         """
-
+        Get the maximum frequency the VNA can measure (float).
         """,
         cast=float,
     )
