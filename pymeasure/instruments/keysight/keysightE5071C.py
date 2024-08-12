@@ -295,11 +295,6 @@ class TraceCommands(Channel):
 
         self.parent.measurement_format = value
 
-    # add marker commands to:
-    #   - check that trace is displayed
-    #   - change to trace if not active
-    #   - perform marker action
-
 
 class MarkerCommands(Channel):
     """
@@ -309,8 +304,8 @@ class MarkerCommands(Channel):
     placeholder = "mkr"
 
     position = Instrument.control(
-        "CALC{{ch}}:MARK{m}:X %e",
-        "CALC{{ch}}:MARK{m}:X?",
+        "CALC{{ch}}:MARK{mkr}:X %e",
+        "CALC{{ch}}:MARK{mkr}:X?",
         """
         Control the position of marker the marker for a specific channel (float frequency in Hz).
         """,
@@ -318,7 +313,7 @@ class MarkerCommands(Channel):
     )
 
     value = Instrument.measurement(
-        "CALC{{ch}}:MARK{m}:Y?",
+        "CALC{{ch}}:MARK{mkr}:Y?",
         """
         Get value of the marker for the active trace. (complex).
         """,
@@ -326,8 +321,8 @@ class MarkerCommands(Channel):
     )
 
     enabled = Channel.control(
-        "CALC{{ch}}:MARK{m}?",
-        "CALC{{ch}}:MARK{m} %i",
+        "CALC{{ch}}:MARK{mkr}?",
+        "CALC{{ch}}:MARK{mkr} %i",
         """
         Control the display of a marker on a channel (boolean).
         """,
@@ -565,18 +560,18 @@ class ChannelCommands(Channel):
         SMITH CHART LOGARITHMIC   SLOG            Smith chart format (Log/Phase).
         SMITH CHART               SCOM            Smith chart format (Real/Imag).
         SMITH CHART COMPLEX       SCOM            Smith chart format (Real/Imag).
-        SMITH CHART IMPEDANCE     SMIT h          Smith chart format (R+jX).
-        SMITH CHART ADMITTANCE    SADM ittance    Smith chart format (G+jB).
-        POLAR LINEAR              PLIN ear        Polar format (Lin).
-        POLAR LOGARITHMIC         PLOG arithmic   Polar format (Log).
-        POLAR                     POL ar          Polar format (Re/Im).
-        POLAR COMPLEX             POL ar          Polar format (Re/Im).
-        LINEAR MAGNITUDE          MLIN ear        Linear magnitude format.
+        SMITH CHART IMPEDANCE     SMIT            Smith chart format (R+jX).
+        SMITH CHART ADMITTANCE    SADM            Smith chart format (G+jB).
+        POLAR LINEAR              PLIN            Polar format (Lin).
+        POLAR LOGARITHMIC         PLOG            Polar format (Log).
+        POLAR                     POL             Polar format (Re/Im).
+        POLAR COMPLEX             POL             Polar format (Re/Im).
+        LINEAR MAGNITUDE          MLIN            Linear magnitude format.
         SWR                       SWR             SWR format.
         REAL                      REAL            Real format.
-        IMAGINARY                 IMAG inary      Imaginary format.
-        PHASE EXPANDED            UPH ase         Expanded phase format.
-        PHASE POSITIVE            PPH ase         Positive phase format.
+        IMAGINARY                 IMAG            Imaginary format.
+        PHASE EXPANDED            UPH             Expanded phase format.
+        PHASE POSITIVE            PPH             Positive phase format.
 
         """,
         cast=str,
@@ -660,6 +655,7 @@ class ChannelCommands(Channel):
     # needs validator
     # dynamic=True,
     # values=() # based on options or updated to new values
+
     start_frequency = Channel.control(
         "SENS{ch}:FREQ:STAR?",
         "SENS{ch}:FREQ:STAR %d",
@@ -714,8 +710,8 @@ class ChannelCommands(Channel):
     )
 
     averaging_enabled = Channel.control(
-        ":SENS{ch}:AVER?",
-        ":SENS{ch}:AVER %d",
+        "SENS{ch}:AVER?",
+        "SENS{ch}:AVER %d",
         """
         Control the averaging enabled state for the channel (boolean).
         """,
@@ -723,8 +719,8 @@ class ChannelCommands(Channel):
     )
 
     averaging_count = Channel.control(
-        ":SENS{ch}:AVER:COUN?",
-        ":SENS{ch}:AVER:COUN %d",
+        "SENS{ch}:AVER:COUN?",
+        "SENS{ch}:AVER:COUN %d",
         """
         Control the number of averaging counts to use (int).
         """,
@@ -732,12 +728,11 @@ class ChannelCommands(Channel):
     )
 
     # may need to change to be a function
-    averaging_restart = Channel.setting(
-        "SENS{ch}:AVER:CLE",
+    def restart_averaging(self, channel):
         """
-
-        """,
-    )
+        Restart the measurement averaging for a given channel (integer).
+        """
+        self.write(f"SENS{channel}:AVER:CLE")  # noqa
 
     sweep_time = Channel.control(
         "SENS{ch}:SWE:TIME?",
@@ -797,15 +792,20 @@ class ChannelCommands(Channel):
         "SENS{ch}:SWE:DELay?",
         "SENS{ch}:SWE:DELay %d",
         """
-
+        Control the delay in seconds before performing each measurement sweep (float 0.1-999).
         """,
+        cast=float,
+        validator=strict_range,
+        values=(0.1, 999),
     )
 
     scan_points = Channel.control(
         "SENS{ch}:SWE:POIN?",
         "SENS{ch}:SWE:POIN %d",
         """
-
+        Control the number of points measured per sweep. Can between either 1 and 1601 or 1
+        to 20001 depending on the settings of the VNA for the maximum number of channels and
+        traces (integer).
         """,
     )
 
@@ -851,7 +851,10 @@ class ChannelCommands(Channel):
     output_enabled = Channel.control(
         "OUTP?",
         "OUTP %d",
-        """ """,
+        """
+
+        """,
+        cast=bool,
     )
 
     trigger_continuous = Channel.control(
@@ -874,10 +877,39 @@ class ChannelCommands(Channel):
     # might be better to move this to in the trace channel
 
     markers = Instrument.MultiChannelCreator(
-        MarkerCommands, [x + 1 for x in range(9)], prefix="mkr_"
+        MarkerCommands, [x + 1 for x in range(1)], prefix="mkr_"
     )
 
-    # def update markers
+    total_markers = 1
+
+    def update_number_of_markers(self, number_of_markers=None):
+        """
+        Create or remove markers to be correct with the actual number of markers.
+
+        Up to 9 markers are allowed (integer).
+
+        If making comparison measurements using markers, Marker #0 is the reference marker.
+
+        :param int number_of_markers: optional, if given defines the desired number of markers.
+        """
+        if number_of_markers is None:
+            number_of_markers = self.total_markers
+
+        # Set limits to active markers
+        self.active_trace_values = range(1, number_of_markers, 1)  # pylint: disable=W0201
+
+        if len(self.markers) == number_of_markers:
+            return
+
+        # Remove reduant markers
+        while len(self.markers) > number_of_markers:
+            self.remove_child(self.markers[len(self.markers)])  # pylint: disable =E1136
+
+        # Remove create new markers
+        while len(self.markers) < number_of_markers:
+            self.add_child(
+                MarkerCommands, len(self.markers) + 1, collection="markers", prefix="mkr_"
+            )
 
 
 class KeysightE5071C(Instrument):
