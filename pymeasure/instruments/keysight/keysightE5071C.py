@@ -769,7 +769,7 @@ class ChannelCommands(Channel):
         "SENS{ch}:FREQ:STAR?",
         "SENS{ch}:FREQ:STAR %d",
         """
-
+        Control the starting frequency for a measurement sweep in Hz. (float).
         """,
         cast=float,
     )
@@ -778,7 +778,7 @@ class ChannelCommands(Channel):
         "SENS{ch}:FREQ:STOP?",
         "SENS{ch}:FREQ:STOP",
         """
-
+        Control the stopping frequency for a measurement sweep in Hz. (float).
         """,
         cast=float,
     )
@@ -787,7 +787,7 @@ class ChannelCommands(Channel):
         "SENS{ch}:FREQ:CENT?",
         "SENS{ch}:FREQ:CENT %d",
         """
-
+        Control the center frequency for a measurement sweep in Hz. (float).
         """,
         cast=float,
     )
@@ -796,7 +796,8 @@ class ChannelCommands(Channel):
         "SENS{ch}:FREQ:SPAN?",
         "SENS{ch}:FREQ:SPAN %d",
         """
-
+        Control the range of frequencies for a measurement sweep in Hz from the center frequency
+        (float).
         """,
         cast=float,
     )
@@ -805,7 +806,7 @@ class ChannelCommands(Channel):
         "SENS{ch}:FREQ?",
         "SENS{ch}:FREQ %d",
         """
-
+        Control frequency (in Hz.) to use for a CW fixed frequency measurement (float).
         """,
         cast=float,
     )
@@ -951,6 +952,15 @@ class ChannelCommands(Channel):
 
     ports = Instrument.MultiChannelCreator(PortCommands, [1], prefix="port_")
 
+    power_attenuator = Channel.control(
+        "SOUR{ch}:POW:ATT?",
+        "SOUR{ch}:POW:ATT %d",
+        """
+        Need docstring
+        """,
+        cast=float,
+    )
+
     couple_ports_power = Channel.control(
         "SOUR{ch}:POW:PORT:COUP?",
         "SOUR{ch}:POW:PORT:COUP %d",
@@ -973,9 +983,9 @@ class ChannelCommands(Channel):
 
     output_enabled = Channel.control(
         "OUTP?",
-        "OUTP %d",
+        "OUTP %i",
         """
-
+        Control whether the RF output simulus is enabled or disabled (boolean).
         """,
         cast=bool,
     )
@@ -996,8 +1006,6 @@ class ChannelCommands(Channel):
 
     # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
     # and "SENS{1-16}:CORR:COEF:SAVE"
-
-    # might be better to move this to in the trace channel
 
     markers = Instrument.MultiChannelCreator(
         MarkerCommands, [x + 1 for x in range(1)], prefix="mkr_"
@@ -1109,7 +1117,7 @@ class KeysightE5071C(Instrument):
         "OUTP?",
         "OUTP %d",
         """
-
+        Control whether the RF output simulus is enabled or disabled (boolean).
         """,
     )
 
