@@ -175,10 +175,14 @@ class TraceCommands(Channel):
 
     placeholder = "tr"
 
-    def make_active(self):
-        self.parent.active_trace = self.id
-
+    @property
     def is_active(self):
+        """
+        Get boolean for whether trace is active or not.
+        """
+        return self.parent.active_trace == self.id
+
+    def make_active(self):
         """
         Check that the number of traces for the channel is greater than this trace id,
         and that the active trace is this one.
@@ -407,11 +411,14 @@ class ChannelCommands(Channel):
 
         # Remove redant channels
         while len(self.traces) > number_of_traces:
-            self.remove_child(self.traces[len(self.traces)])  # pylint: disable =E1136
+            self.remove_child(self.traces[len(self.traces)])  # pylint: disable=E1136
 
         # Remove create new channels
         while len(self.traces) < number_of_traces:
             self.add_child(TraceCommands, len(self.traces) + 1, collection="traces", prefix="tr_")
+
+        for trace in self.traces.values():  # pylint: disable=E1101, disable=E1136
+            trace.enabled = True
 
     active_trace = Channel.control(
         "SERV:CHAN{ch}:TRAC:ACT?",
@@ -936,13 +943,18 @@ class ChannelCommands(Channel):
 
         # Remove reduant markers
         while len(self.markers) > number_of_markers:
-            self.remove_child(self.markers[len(self.markers)])  # pylint: disable =E1136
+            self.markers[len(self.markers)].enabled = False  # pylint: disable=E1101, disable=E1136
+            self.remove_child(self.markers[len(self.markers)])  # pylint: disable=E1136
 
         # Remove create new markers
         while len(self.markers) < number_of_markers:
             self.add_child(
                 MarkerCommands, len(self.markers) + 1, collection="markers", prefix="mkr_"
             )
+
+        # Ensure active markers get displayed
+        for marker in self.markers.values():  # pylint: disable=E1101
+            marker.enabled = True
 
 
 class KeysightE5071C(Instrument):
