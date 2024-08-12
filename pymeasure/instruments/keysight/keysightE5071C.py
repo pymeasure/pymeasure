@@ -332,7 +332,7 @@ class MarkerCommands(Channel):
 
     # may need to change to be a function instead since no values get passed to it
     active = Channel.setting(
-        "CALC{{ch}}:MARK{m}:ACT",
+        "CALC{{ch}}:MARK{mkr}:ACT %d",
         """
         Sets the marker for the active trace to be the active marker (boolean).
         """,
@@ -351,6 +351,33 @@ class MarkerCommands(Channel):
 # :DISP:WIND{1-16}:Y:DIV
 
 # need channel window class (channel window gets again divided into subwindows)
+
+# need port power class
+
+
+class PortCommands(Channel):
+    """
+    Need docstring
+    """
+
+    placeholder = "port_"
+
+    output_power = Channel.control(
+        "SOUR{{ch}}:POW:PORT{port_}?",
+        "SOUR{{ch}}:POW:PORT{port_} %d",
+        """
+        Control the output power in dBm for a port of a channel (float). This property is dynamic.
+        """,
+        validator=strict_range,
+        values=(-60, 10),
+        cast=float,
+        dynamic=True,
+    )
+
+    # power 'SOUR{1-16}:POW:PORT{1-4}?' Sets the power level of
+    # port 1 (:PORT1) to port 4 (:PORT4) of channel 1 (:SOUR1) to
+    # channel 16 (:SOUR16).
+    # power attenuator 'SOUR{1-16}:POW:ATT'
 
 
 class ChannelCommands(Channel):
@@ -832,11 +859,17 @@ class ChannelCommands(Channel):
 
     # SOURse Commands
 
-    # power 'SOUR{1-16}:POW:PORT{1-4}?' Sets the power level of
-    # port 1 (:PORT1) to port 4 (:PORT4) of channel 1 (:SOUR1) to
-    # channel 16 (:SOUR16).
-    # power attenuator 'SOUR{1-16}:POW:ATT'
-    # power couple ports 'SOUR{1-16}:POW:PORT:COUP?'
+    # ports =
+
+    couple_ports_power = Channel.control(
+        "SOUR{ch}:POW:PORT:COUP?",
+        "",
+        """
+        Control whether the output power of the ports for the channel are coupled or independent
+        (boolean).
+        """,
+        cast=bool,
+    )
 
     get_active_trace = Channel.measurement(
         "SERV:CHAN{ch}:TRAC:ACT?",
