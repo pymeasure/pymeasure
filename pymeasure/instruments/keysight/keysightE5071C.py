@@ -96,6 +96,7 @@ OPTION_VALUES = {
     "790": {"Additional Options": "Measurement Wizard Assistant software"},
 }
 
+# used to identify if the channel layout is showing the channel
 WINDOW_GRAPH_LAYOUT = {
     1: ["D1"],
     2: ["D12", "D1_2", "D112", "D1_1_2"],
@@ -240,42 +241,6 @@ class TraceCommands(Channel):
     # need trace units
 
     # need trace format
-    # measurement_format = Channel.control(
-    #     "CALC{ch}:FORM?",
-    #     "CALC{ch}:FORM %s",
-    #     """
-    #     Control the data format of the active trace of a channel. Valid values to use are given
-    #     below (case insensitive string):
-
-    #     =======================   =============   =============================================
-    #     Value                     Format Sent     Description
-    #     =======================   =============   =============================================
-    #     LOGARITHMIC MAGNITUDE     MLOG            Specifies the logarithmic magnitude format.
-    #     PHASE                     PHAS            Specifies the phase format.
-    #     GROUP DELAY               GDEL            Specifies the group delay format.
-    #     SMITH CHART LINEAR        SLIN            Specifies the Smith chart format (Lin/Phase).
-    #     SMITH CHART LOGARITHMIC   SLOG            Specifies the Smith chart format (Log/Phase).
-    #     SMITH CHART               SCOM            Specifies the Smith chart format (Real/Imag).
-    #     SMITH CHART COMPLEX       SCOM            Specifies the Smith chart format (Real/Imag).
-    #     SMITH CHART IMPEDANCE     SMIT h          Specifies the Smith chart format (R+jX).
-    #     SMITH CHART ADMITTANCE    SADM ittance    Specifies the Smith chart format (G+jB).
-    #     POLAR LINEAR              PLIN ear        Specifies the polar format (Lin).
-    #     POLAR LOGARITHMIC         PLOG arithmic   Specifies the polar format (Log).
-    #     POLAR                     POL ar          Specifies the polar format (Re/Im).
-    #     POLAR COMPLEX             POL ar          Specifies the polar format (Re/Im).
-    #     LINEAR MAGNITUDE          MLIN ear        Specifies the linear magnitude format.
-    #     SWR                       SWR             Specifies the SWR format.
-    #     REAL                      REAL            Specifies the real format.
-    #     IMAGINARY                 IMAG inary      Specifies the imaginary format.
-    #     PHASE EXPANDED            UPH ase         Specifies the expanded phase format.
-    #     PHASE POSITIVE            PPH ase         Specifies the positive phase format.
-
-    #     """,
-    #     cast=str,
-    #     values=MEASUREMENT_FORMAT,
-    #     map_values=True,
-    #     set_process=lambda x: x.upper(),
-    # )
 
     @property
     def measurement_format(self):
