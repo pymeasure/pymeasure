@@ -849,11 +849,19 @@ class ChannelCommands(Channel):
 
     # SOURse Commands
 
-    # ports =
+    @property
+    def total_ports(self):
+        """
+        Get list of available ports for initializing PortCommands to control their associated
+        output power in dBm (list of integers).
+        """
+        return [x + 1 for x in range(0, int(self.parent.port_count))]
+
+    ports = Instrument.MultiChannelCreator(PortCommands, total_ports, prefix="port_")
 
     couple_ports_power = Channel.control(
         "SOUR{ch}:POW:PORT:COUP?",
-        "",
+        "SOUR{ch}:POW:PORT:COUP %d",
         """
         Control whether the output power of the ports for the channel are coupled or independent
         (boolean).
