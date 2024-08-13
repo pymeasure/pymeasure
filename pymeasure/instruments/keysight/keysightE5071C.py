@@ -196,7 +196,7 @@ class TraceCommands(Channel):
         if self.displayed is not True:
             self.displayed = True
 
-        return self.parent.active_trace == self.id
+        self.parent.active_trace = self.id
 
     # double nest `{ch}` to have the command use the parent channel
     # measurement_parameter = Channel.control(
@@ -276,7 +276,7 @@ class TraceCommands(Channel):
         PHASE POSITIVE            PPH ase         Positive phase format.
 
         """
-        if not self.is_active():
+        if not self.is_active:
             self.make_active()
 
         return self.parent.measurement_format
@@ -284,7 +284,7 @@ class TraceCommands(Channel):
     @measurement_format.setter
     def measurement_format(self, value):
         # check if trace is active and set trace to be active if not
-        if not self.is_active():
+        if not self.is_active:
             self.make_active()
 
         self.parent.measurement_format = value
@@ -404,7 +404,7 @@ class ChannelCommands(Channel):
         self.total_traces = number_of_traces
 
         # Set limits to active trace
-        self.active_trace_values = range(1, number_of_traces, 1)  # pylint: disable=W0201
+        self.active_trace_values = range(1, number_of_traces + 1, 1)  # pylint: disable=W0201
 
         if len(self.traces) == number_of_traces:
             return
@@ -776,7 +776,7 @@ class ChannelCommands(Channel):
 
     stop_frequency = Channel.control(
         "SENS{ch}:FREQ:STOP?",
-        "SENS{ch}:FREQ:STOP",
+        "SENS{ch}:FREQ:STOP %d",
         """
         Control the stopping frequency for a measurement sweep in Hz. (float).
         """,
