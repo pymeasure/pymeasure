@@ -42,9 +42,9 @@ def _number_or_auto(value):
         return " " + str(value)
 
 
-class FSL(SCPIMixin, Instrument):
+class FSSeries(SCPIMixin, Instrument):
     """
-    Represents a Rohde&Schwarz FSL spectrum analyzer.
+    Represents a Rohde&Schwarz FS Series of spectrum analyzers like FSL and FSW.
 
     All physical values that can be set can either be as a string of a value
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
@@ -361,3 +361,23 @@ class FSL(SCPIMixin, Instrument):
     nominal_level = Instrument.control(
         "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the instrument"
     )
+
+class FSL(FSSeries):
+    """
+    Represents a Rohde&Schwarz FSL spectrum analyzers.
+
+    All physical values that can be set can either be as a string of a value
+    and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
+    dBm, etc.).
+    """
+    pass
+
+class FSW(FSSeries):
+    """
+    Represents a Rohde&Schwarz FSW spectrum analyzers.
+
+    All physical values that can be set can either be as a string of a value
+    and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
+    dBm, etc.).
+    """
+    pass
