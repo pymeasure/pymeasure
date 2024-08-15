@@ -25,7 +25,7 @@
 import logging
 
 import numpy as np
-
+import pyvisa
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
@@ -131,31 +131,66 @@ class FSSeries(SCPIMixin, Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
+    # Helper function ------------------------------------------------------------------------------
+    # Since devices are equipped differently, we need function to determine the nr of channels
+    # which then determines whether the switching channel command is supported
+
+    def check_instrument_channels(resource):
+        try:
+            response = resource.ask("INST:LIST?")
+            print("Raw response:", response)
+            
+            # Split the response into a list of channels, divide by 2 because each channel has a name and an identifier
+            channels = [channel.strip().strip("'") for channel in response.split(',')]
+            num_channels = len(channels) // 2
+            
+            print(f"Number of available channels: {num_channels}")
+            return num_channels
+        except AttributeError:
+            print("The instrument object does not support 'query' or 'ask'.")
+            return 0
+        except pyvisa.VisaIOError as e:
+            if e.error_code == pyvisa.constants.StatusCode.error_timeout:
+                print("INST:LIST? command not supported. Assuming non-multichannel device.")
+                return 0
+            else:
+                raise
+
     # Traces ---------------------------------------------------------------------------------------
 
     def read_trace(self, n_trace=1):
         """
         Read trace data from the active channel.
+        Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
+        measurements, that is added to a device on request. Therefore, not every device has
+        this and can change between channels. 
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
         trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
-        if (
-            self.active_channel == ("PNO")
-            or self.available_channels.get(self.active_channel) == "PNOISE"
-        ):
-            y = trace_data[1::2]
-            x = trace_data[0::2]
+        frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
 
-        elif (
-            self.active_channel == ("SAN")
-            or self.available_channels.get(self.active_channel) == "SANALYZER"
-        ):
+        # Check for multichannel devices
+        if check_instrument_channels(self) < 2:
             y = trace_data
-            x = np.linspace(self.freq_start, self.freq_stop, len(y))
+            x = frequency_data
+        else:
+            if (
+                self.active_channel == ("PNO")
+                or self.available_channels.get(self.active_channel) == "PNOISE"
+            ):
+                y = trace_data[1::2]
+                x = trace_data[0::2]
 
-        return np.array([x, y])
+            elif (
+                self.active_channel == ("SAN")
+                or self.available_channels.get(self.active_channel) == "SANALYZER"
+            ):
+                y = trace_data
+                x = frequency_data
+
+            return np.array([x, y])
 
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
@@ -364,7 +399,7 @@ class FSSeries(SCPIMixin, Instrument):
 
 class FSL(FSSeries):
     """
-    Represents a Rohde&Schwarz FSL spectrum analyzers.
+    Represents a Rohde&Schwarz FSL spectrum analyzer.
 
     All physical values that can be set can either be as a string of a value
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
@@ -374,7 +409,7 @@ class FSL(FSSeries):
 
 class FSW(FSSeries):
     """
-    Represents a Rohde&Schwarz FSW spectrum analyzers.
+    Represents a Rohde&Schwarz FSW spectrum analyzer.
 
     All physical values that can be set can either be as a string of a value
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
