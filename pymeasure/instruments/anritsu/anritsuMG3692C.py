@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,35 +22,31 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
-class AnritsuMG3692C(Instrument):
+class AnritsuMG3692C(SCPIUnknownMixin, Instrument):
     """ Represents the Anritsu MG3692C Signal Generator
     """
     power = Instrument.control(
         ":POWER?;", ":POWER %g dBm;",
-        """ A floating point property that represents the output power
-        in dBm. This property can be set. """
+        """Control the output power in dBm. (float))"""
     )
     frequency = Instrument.control(
         ":FREQUENCY?;", ":FREQUENCY %e Hz;",
-        """ A floating point property that represents the output frequency
-        in Hz. This property can be set. """
+        """Control the output frequency in Hz. This property can be set. (float)"""
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anritsu MG3692C Signal Generator", **kwargs):
         super().__init__(
             adapter,
-            "Anritsu MG3692C Signal Generator",
+            name,
             **kwargs
         )
 
     @property
     def output(self):
-        """ A boolean property that represents the signal output state.
-        This property can be set to control the output.
-        """
+        """Control the signal output state. (bool)"""
         return int(self.ask(":OUTPUT?")) == 1
 
     @output.setter

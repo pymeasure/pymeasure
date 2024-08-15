@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -90,11 +90,11 @@ class ECO560(ATSBase):
     copy_active_setup_file = None
     # Not Implemented in ECO-560
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Temptronic ECO-560 Thermostream", **kwargs):
         kwargs.setdefault('timeout', 3000)
         super().__init__(
             adapter,
-            name="Temptronic ECO-560 Thermostream",
+            name,
             tcpip={'write_termination': '\n',
                    'read_termination': '\n'},
             **kwargs

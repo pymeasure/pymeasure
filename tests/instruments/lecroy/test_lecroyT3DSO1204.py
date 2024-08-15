@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,8 @@
 
 import pytest
 
-from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204, sanitize_source
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import sanitize_source
+from pymeasure.instruments.lecroy.lecroyT3DSO1204 import LeCroyT3DSO1204
 from pymeasure.test import expected_protocol
 
 INVALID_CHANNELS = ["INVALID_SOURCE", "C1 C2", "C1 MATH", "C1234567", "CHANNEL"]

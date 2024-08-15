@@ -10,6 +10,7 @@ This section contains documentation on the instrument classes.
    :maxdepth: 2
 
    instruments
+   generic_types
    validators
    comedi
    resources
@@ -22,6 +23,8 @@ Instruments by manufacturer:
    activetechnologies/index
    advantest/index
    agilent/index
+   aimtti/index
+   aja/index
    ametek/index
    ami/index
    anaheimautomation/index
@@ -39,25 +42,38 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   inficon/index
+   ipgphotonics/index
    keithley/index
+   kepco/index
    keysight/index
+   kuhneelectronic/index
    lakeshore/index
    lecroy/index
    mksinst/index
    newport/index
    ni/index
+   novanta/index
    oxfordinstruments/index
    parker/index
    pendulum/index
+   proterial/index
+   racal/index
    razorbill/index
+   redpitaya/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index
    srs/index
+   tcpowerconversion/index
+   tdk/index
    tektronix/index
+   teledyne/index
    temptronic/index
    texio/index
    thermotron/index
    thorlabs/index
+   thyracont/index
    toptica/index
+   velleman/index
    yokogawa/index

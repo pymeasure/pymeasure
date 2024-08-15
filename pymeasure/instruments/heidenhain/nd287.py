@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,17 +37,17 @@ class ND287(Instrument):
     """
 
     status = Instrument.measurement(
-        "\x1BA0800", "Read the encoder's status bar"
+        "\x1BA0800", "Get the encoder's status bar"
     )
 
     # get_process lambda functions used in the position property
     position_get_process_map = {
-        "mm": lambda p: float(p.split("\x02")[-1])*1e-4,
-        "inch": lambda p: float(p.split("\x02")[-1])*1e-5
+        "mm": lambda p: float(p.split("\x02")[-1]) * 1e-4,
+        "inch": lambda p: float(p.split("\x02")[-1]) * 1e-5
     }
 
     position = Instrument.measurement(
-        "\x1BA0200", """Float property representing the encoder's current position.
+        "\x1BA0200", """Measure the encoder's current position (float).
                         Note that the get_process performs a mapping from the returned
                         value to a float measured in the units specified by :attr:`.ND287.units`.
                         The get_process is modified dynamically as this mapping changes slightly
@@ -56,7 +56,7 @@ class ND287(Instrument):
         dynamic=True
     )
 
-    def __init__(self, adapter, units="mm", **kwargs):
+    def __init__(self, adapter, name="Heidenhain ND287", units="mm", **kwargs):
         """ Initialize the nd287 with a carriage return write termination.
 
         :param: units: Specify the units that the gauge is working in.
@@ -66,7 +66,7 @@ class ND287(Instrument):
 
         super().__init__(
             adapter,
-            "Heidenhain ND287",
+            name,
             includeSCPI=False,
             write_termination="\r",
             **kwargs
@@ -74,7 +74,7 @@ class ND287(Instrument):
 
     @property
     def id(self):
-        """ String identification property for the device.
+        """ Get the string identification property for the device.
         """
         self.write("\x1BA0000")
         id_str = self.read_bytes(37).decode("utf-8")
@@ -82,7 +82,7 @@ class ND287(Instrument):
 
     @property
     def units(self):
-        """ String property representing the unit of measure set on the device.
+        """ Control the unit of measure set on the device.
             Valid values are 'mm' and 'inch' Note that this parameter can only be set
             manually on the device. So this argument only ensures that the instance units
             and physical device settings match. I.e., this property does not change any

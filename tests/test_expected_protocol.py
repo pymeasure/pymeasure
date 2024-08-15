@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,17 +26,26 @@ from pytest import raises
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range
 
 
 class BasicTestInstrument(Instrument):
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Basic Test Instrument")
+    def __init__(self, adapter, name="Basic Test Instrument", **kwargs):
+        super().__init__(adapter, name)
         self.kwargs = kwargs
 
     simple = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Simple property replying with plain floats""",
     )
+
+    limited_control = Instrument.control(
+        "AMP?", "AMP %g A",
+        """Property limited to 0, 10.""",
+        values=(0, 10),
+        validator=strict_range
+    )
+
     with_error_checks = Instrument.control(
         "VOLT?", "VOLT %s V",
         """Property with error checks after both setting and getting""",
@@ -115,14 +124,17 @@ def test_non_empty_read_buffer():
 def test_preprocess_reply_on_values():
     class InstrumentWithPreprocessValues(BasicTestInstrument):
         """Workaround to get preprocess_reply working with protocol tests."""
-        def values(self, command, **kwargs):
-            return super().values(command, preprocess_reply=lambda v: v + "2345", **kwargs)
+        simple2 = Instrument.control(
+            "VOLT?", "VOLT %s V",
+            """Simple property replying with plain floats""",
+            preprocess_reply=lambda v: v + "2345"
+        )
 
     with expected_protocol(
         InstrumentWithPreprocessValues,
         [("VOLT?", "3.1")]
     ) as instr:
-        assert instr.simple == 3.12345
+        assert instr.simple2 == 3.12345
 
 
 class TestConnectionCalls:
@@ -141,3 +153,13 @@ class TestConnectionCalls:
                 connection_attributes={'timeout': 100}
         ) as inst:
             assert inst.adapter.connection.timeout == 100
+
+
+def test_limited_control_raises_validator_exception():
+    """Verify, that the validator's exception is caught."""
+    with expected_protocol(
+            BasicTestInstrument,
+            [],
+    ) as inst:
+        with raises(ValueError, match="not in range"):
+            inst.limited_control = 20

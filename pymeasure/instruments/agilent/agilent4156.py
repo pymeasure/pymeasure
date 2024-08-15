@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
                                               strict_range)
@@ -42,7 +42,7 @@ log.addHandler(logging.NullHandler())
 ######
 
 
-class Agilent4156(Instrument):
+class Agilent4156(SCPIUnknownMixin, Instrument):
     """ Represents the Agilent 4155/4156 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking current-voltage (I-V) measurements.
 
@@ -130,10 +130,11 @@ class Agilent4156(Instrument):
 
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Agilent 4155/4156 Semiconductor Parameter Analyzer",
+                 **kwargs):
         super().__init__(
             adapter,
-            "Agilent 4155/4156 Semiconductor Parameter Analyzer",
+            name,
             **kwargs
         )
 
@@ -425,7 +426,7 @@ class Agilent4156(Instrument):
 ##########
 
 
-class SMU(Instrument):
+class SMU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -624,7 +625,7 @@ class SMU(Instrument):
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
         """
-        if not((self.channel_mode != 'COMM') and (
+        if not ((self.channel_mode != 'COMM') and (
                 self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU function when SMU mode is COMMON, '
@@ -637,7 +638,7 @@ class SMU(Instrument):
     def __validate_compl(self):
         """Validates the instrument compliance for operation in constant mode.
         """
-        if not((self.channel_mode != 'COMM') and (
+        if not ((self.channel_mode != 'COMM') and (
                 self.channel_function == 'CONS')):
             raise ValueError(
                 'Cannot set constant SMU parameters when SMU mode is COMMON, '
@@ -648,7 +649,7 @@ class SMU(Instrument):
         return values
 
 
-class VMU(Instrument):
+class VMU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -706,7 +707,7 @@ class VMU(Instrument):
         self.check_errors()
 
 
-class VSU(Instrument):
+class VSU(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, channel, **kwargs):
         super().__init__(
             adapter,
@@ -802,7 +803,7 @@ class VSU(Instrument):
 #################
 
 
-class VARX(Instrument):
+class VARX(SCPIUnknownMixin, Instrument):
     """ Base class to define sweep variable settings """
 
     def __init__(self, adapter, var_name, **kwargs):
@@ -963,7 +964,7 @@ class VAR2(VARX):
     )
 
 
-class VARD(Instrument):
+class VARD(SCPIUnknownMixin, Instrument):
     """ Class to handle all the definitions needed for VARD.
     VARD is always defined in relation to VAR1.
     """

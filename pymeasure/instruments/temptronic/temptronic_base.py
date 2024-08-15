@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ No automatic safety measures are part of this driver implementation.
 """
 import logging
 import time
-from pymeasure.instruments.instrument import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_range,
                                               strict_range
@@ -121,9 +121,15 @@ class ErrorCode(IntFlag):
     OK = 0  # ok state
 
 
-class ATSBase(Instrument):
+class ATSBase(SCPIUnknownMixin, Instrument):
     """The base class for Temptronic ATSXXX instruments.
     """
+
+    def __init__(self, adapter, name="ATSBase", **kwargs):
+        super().__init__(adapter, name=name, **kwargs)
+
+    def wait_for(self, query_delay=None):
+        super().wait_for(0.05 if query_delay is None else query_delay)
 
     remote_mode = Instrument.setting(
         "%s",
@@ -325,7 +331,6 @@ class ATSBase(Instrument):
 
         :type: :class:`.TemperatureStatusCode`
         """,
-        validator=truncated_range,
         values=[0, 255],
         get_process=lambda v: TemperatureStatusCode(int(v)),
     )
@@ -376,11 +381,9 @@ class ATSBase(Instrument):
          0      None
         ======  ======
 
-        Refere to chapter 4 in the manual
+        Refer to chapter 4 in the manual
 
         """,
-        validator=truncated_range,
-        values=[0, 1023]
     )
 
     copy_active_setup_file = Instrument.setting(
@@ -445,10 +448,8 @@ class ATSBase(Instrument):
         "EROR?",  # it is indeed EROR
         """Read the device-specific error register (16 bits).
 
-        :type: :class:`.ErrorCode`
+        :type: :class:`ErrorCode`
         """,
-        validator=truncated_range,
-        values=[0, int(2**16-1)],
         get_process=lambda v: ErrorCode(int(v)),
     )
 
@@ -521,8 +522,6 @@ class ATSBase(Instrument):
         Hint: Reading will clear register content.
 
         """,
-        validator=strict_range,
-        values=[0, 255]
     )
 
     air_temperature = Instrument.measurement(
@@ -555,9 +554,6 @@ class ATSBase(Instrument):
         map_values=True,
         dynamic=True
     )
-
-    def __init__(self, adapter, name="ATSBase", **kwargs):
-        super().__init__(adapter, name=name, query_delay=0.05, **kwargs)
 
     def reset(self):
         """Reset (force) the System to the Operator screen.
@@ -725,7 +721,7 @@ class ATSBase(Instrument):
         time.sleep(1)
         t = 0
         t_start = time.time()
-        while(not self.at_temperature()):  # assert at temperature
+        while not self.at_temperature():  # assert at temperature
             time.sleep(1)
             t = time.time() - t_start
 
@@ -782,7 +778,7 @@ class ATSBase(Instrument):
     def error_status(self):
         """Returns error status code (maybe used for logging).
 
-        :returns: :class:`.ErrorCode`
+        :returns: :class:`ErrorCode`
         """
         code = self.error_code
         if not code == 0:

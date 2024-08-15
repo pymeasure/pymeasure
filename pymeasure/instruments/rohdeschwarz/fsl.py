@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def _number_or_auto(value):
         return " " + str(value)
 
 
-class FSL(Instrument):
+class FSL(SCPIMixin, Instrument):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
 
@@ -51,8 +51,11 @@ class FSL(Instrument):
     dBm, etc.).
     """
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "Rohde&Schwarz FSL", includeSCPI=True, **kwargs)
+    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
+        super().__init__(
+            adapter, name,
+            **kwargs
+        )
 
     # Frequency settings ---------------------------------------------------------------------------
 

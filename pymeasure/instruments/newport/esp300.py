@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 from time import sleep
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -160,7 +160,7 @@ class Axis:
     units = Instrument.control(
         "SN?", "SN%d",
         """ A string property that controls the displacement units of the
-        axis, which can take values of: enconder count, motor step, millimeter,
+        axis, which can take values of: encoder count, motor step, millimeter,
         micrometer, inches, milli-inches, micro-inches, degree, gradient, radian,
         milliradian, and microradian.
         """,
@@ -231,28 +231,28 @@ class Axis:
             sleep(interval)
 
 
-class ESP300(Instrument):
+class ESP300(SCPIUnknownMixin, Instrument):
     """ Represents the Newport ESP 300 Motion Controller
     and provides a high-level for interacting with the instrument.
 
     By default this instrument is constructed with x, y, and phi
     attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the avalible axes. Axes are controlled
+    can overwrite this depending on the available axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
     class.
     """
 
     error = Instrument.measurement(
         "TE?",
-        """ Reads an error code from the motion controller.
+        """ Get an error code from the motion controller.
         """,
         cast=int
     )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Newport ESP 300 Motion Controller", **kwargs):
         super().__init__(
             adapter,
-            "Newport ESP 300 Motion Controller",
+            name,
             **kwargs
         )
         # Defines default axes, which can be overwritten
@@ -262,13 +262,13 @@ class ESP300(Instrument):
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
-        recived. """
+        received. """
         while self.error != 0:
             continue
 
     @property
     def errors(self):
-        """ Returns a list of error Exceptions that can be later raised, or
+        """ Get a list of error Exceptions that can be later raised, or
         used to diagnose the situation.
         """
         errors = []
@@ -284,7 +284,7 @@ class ESP300(Instrument):
 
     @property
     def axes(self):
-        """ A list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
+        """ Get a list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
         objects that are present. """
         axes = []
         directory = dir(self)

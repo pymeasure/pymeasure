@@ -7,7 +7,7 @@ This section provides instructions for getting up and running quickly with PyMea
 Setting up Python
 =================
 
-The easiest way to install the necessary Python environment for PyMeasure is through the `Anaconda distribution`_, which includes 720 scientific packages. The advantage of using this approach over just relying on the :code:`pip` installer is that it Anaconda correctly installs the required Qt libraries. 
+The easiest way to install the necessary Python environment for PyMeasure is through the `Anaconda distribution`_, which includes 720 scientific packages. The advantage of using this approach over just relying on the :code:`pip` installer is that Anaconda correctly installs the required Qt libraries. 
 
 Download and install the appropriate Python version of `Anaconda`_ for your operating system.
 
@@ -20,7 +20,7 @@ Installing PyMeasure
 Install with conda
 ------------------
 
-If you have the `Anaconda distribution`_ you can use the conda package mangager to easily install PyMeasure and all required dependencies.
+If you have the `Anaconda distribution`_ you can use the conda package manager to easily install PyMeasure and all required dependencies.
 
 Open a terminal and type the following commands (on Windows look for the `Anaconda Prompt` in the Start Menu):
 
@@ -48,6 +48,7 @@ Typically, communication with your instrument will happen using PyVISA, which is
 However, this needs a VISA implementation installed to handle device communication.
 If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
 If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
+
 
 Checking the version
 --------------------

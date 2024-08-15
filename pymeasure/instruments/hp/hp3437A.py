@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,7 +79,7 @@ class Status(StatusBitsBase):
         """Method to decode current range
 
         :param range_undecoded: int to be decoded
-        :return cur_range: float value repesenting the active measurment range
+        :return cur_range: float value representing the active measurement range
         :rtype cur_range: float
 
         """
@@ -174,13 +174,12 @@ class HP3437A(HPLegacyInstrument):
     status_desc = Status
     pb_desc = PackedBits
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Hewlett-Packard HP3437A", **kwargs):
         super().__init__(
             adapter,
-            "Hewlett-Packard HP3437A",
+            name,
             **kwargs,
         )
-        log.info("Initialized HP3437A")
 
     # Definitions for different specifics of this instrument
     RANGE = {
@@ -214,7 +213,7 @@ class HP3437A(HPLegacyInstrument):
         ret_data = PackedBits.from_buffer(bytearray(data))
         return float(ret_data)
 
-    # commands overwriting the base implementaiton
+    # commands overwriting the base implementation
     def read_data(self):
         """
         Reads measured data from instrument, returns a np.array.
@@ -251,7 +250,7 @@ class HP3437A(HPLegacyInstrument):
     def check_errors(self):
         """
         As this instrument does not have a error indication bit,
-        this function alwyas returns an empty list.
+        this function always returns an empty list.
 
         """
         return []
@@ -328,7 +327,7 @@ class HP3437A(HPLegacyInstrument):
     def SRQ_mask(self):
         """Return current SRQ mask, this property can be set,
 
-        bit assigment for SRQ:
+        bit assignment for SRQ:
 
         =========  ==========================
         Bit (dec)  Description
@@ -351,7 +350,7 @@ class HP3437A(HPLegacyInstrument):
     def trigger(self):
         """Return current selected trigger mode, this property can be set,
 
-        Possibe values are:
+        Possible values are:
 
         ===========  ===========================================
         Value        Explanation

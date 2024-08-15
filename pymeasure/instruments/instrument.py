@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,10 @@
 
 import logging
 import time
+from warnings import warn
 
 from .common_base import CommonBase
-from ..adapters import VISAAdapter
+from ..adapters.visa import VISAAdapter
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -58,14 +59,26 @@ class Instrument(CommonBase):
 
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
-    :param includeSCPI: A boolean, which toggles the inclusion of standard SCPI commands
+    :param includeSCPI: An obligatory boolean, which toggles the inclusion of standard SCPI commands
+
+        .. deprecated:: 0.14
+            If True, inherit the :class:`~pymeasure.instruments.generic_types.SCPIMixin` class
+            instead.
+
+    :param preprocess_reply: An optional callable used to preprocess
+        strings received from the instrument. The callable returns the
+        processed string.
+
+        .. deprecated:: 0.11
+            Implement it in the instrument's `read` method instead.
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
     """
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=True,
+    def __init__(self, adapter, name, includeSCPI=None,
+                 preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
@@ -75,11 +88,18 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
+        if includeSCPI is True:
+            warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
+                 "the `SCPIMixin` class instead.", FutureWarning)
+        elif includeSCPI is None:
+            warn("It is deprecated to specify `includeSCPI` implicitly, use "
+                 "`includeSCPI=False` or inherit the `SCPIMixin` class instead.", FutureWarning)
+            includeSCPI = True
         self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
 
-        super().__init__()
+        super().__init__(preprocess_reply=preprocess_reply)
 
         log.info("Initializing %s." % self.name)
 
@@ -92,8 +112,10 @@ class Instrument(CommonBase):
     # SCPI default properties
     @property
     def complete(self):
-        """ This property allows synchronization between a controller and a device. The Operation Complete
-        query places an ASCII character 1 into the device's Output Queue when all pending
+        """Get the synchronization bit.
+
+        This property allows synchronization between a controller and a device. The Operation
+        Complete query places an ASCII character 1 into the device's Output Queue when all pending
         selected device operations have been finished.
         """
         if self.SCPI:
@@ -103,7 +125,7 @@ class Instrument(CommonBase):
 
     @property
     def status(self):
-        """ Requests and returns the status byte and Master Summary Status bit. """
+        """ Get the status byte and Master Summary Status bit. """
         if self.SCPI:
             return self.ask("*STB?").strip()
         else:
@@ -111,7 +133,7 @@ class Instrument(CommonBase):
 
     @property
     def options(self):
-        """ Requests and returns the device options installed. """
+        """ Get the device options installed. """
         if self.SCPI:
             return self.ask("*OPT?").strip()
         else:
@@ -119,9 +141,17 @@ class Instrument(CommonBase):
 
     @property
     def id(self):
-        """ Requests and returns the identification of the instrument. """
+        """ Get the identification of the instrument. """
         if self.SCPI:
             return self.ask("*IDN?").strip()
+        else:
+            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    @property
+    def next_error(self):
+        """Get the next error of the instrument (tuple of code and message)."""
+        if self.SCPI:
+            return self.values("SYST:ERR?")
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
@@ -166,10 +196,10 @@ class Instrument(CommonBase):
         return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
-        :param query_delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         if query_delay:
             time.sleep(query_delay)
@@ -196,14 +226,14 @@ class Instrument(CommonBase):
         log.info(f"Finished shutting down {self.name}")
 
     def check_errors(self):
-        """ Read all errors from the instrument.
+        """Read all errors from the instrument and log them.
 
-        :return: list of error entries
+        :return: List of error entries.
         """
         if self.SCPI:
             errors = []
             while True:
-                err = self.values("SYST:ERR?")
+                err = self.next_error
                 if int(err[0]) != 0:
                     log.error(f"{self.name}: {err[0]}, {err[1]}")
                     errors.append(err)
@@ -212,3 +242,25 @@ class Instrument(CommonBase):
             return errors
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
+
+    def check_get_errors(self):
+        """Check for errors after having gotten a property and log them.
+
+        Called if :code:`check_get_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
+        """
+        return self.check_errors()
+
+    def check_set_errors(self):
+        """Check for errors after having set a property and log them.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+
+        If you override this method, you may choose to raise an Exception for certain errors.
+
+        :return: List of error entries.
+        """
+        return self.check_errors()

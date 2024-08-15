@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 import logging
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     truncated_range,
@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AnritsuMS2090A(Instrument):
+class AnritsuMS2090A(SCPIUnknownMixin, Instrument):
     """Anritsu MS2090A Handheld Spectrum Analyzer."""
 
     def __init__(self, adapter, name="Anritsu MS2090A Handheld Spectrum Analyzer", **kwargs):
@@ -219,7 +219,6 @@ class AnritsuMS2090A(Instrument):
         """
         Return the EMF measurement data for a specified sample number. JSON format.
         """,
-        validator=strict_range,
         values=[1, 16],
     )
 
@@ -242,7 +241,6 @@ class AnritsuMS2090A(Instrument):
         """
         Returns the different set of measurement information depending on the suffix.
         """,
-        validator=truncated_range,
         values=[1, 2]
     )
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,20 @@
 # THE SOFTWARE.
 #
 
-import re
-
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set
+
+from .mksinst import MKSInstrument, RelayChannel
+
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Until StrEnum is broadly available from the standard library"""
+        # Python>3.10 remove it
 
 
 _ion_gauge_status = {"Wait": "W",
@@ -42,14 +52,40 @@ _ion_gauge_status = {"Wait": "W",
                      }
 
 
+class Unit(StrEnum):
+    Torr = "TORR"
+    mbar = "mBAR"
+    Pa = "PASCAL"
+    uHg = "MICRON"
+
+
+class Relay(RelayChannel):
+
+    enabled = Channel.control(
+        "EN{ch}?", "EN{ch}!%s",
+        """Control the relay function or disable the setpoint relay.
+
+        Possible values are True/False to enable/disable pressure based
+        activation of the relay and 'SET' to permanently energize the relay.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={False: "CLEAR",
+                True: "ENABLE",
+                "SET": "SET",
+                },
+        check_set_errors=True,
+    )
+
+
 class PressureChannel(Channel):
     pressure = Channel.measurement(
-        "PR{ch}?", """ Pressure on the channel in units selected on the device""",
+        "PR{ch}?",
+        """Get the pressure on the channel in units selected on the device""",
     )
 
     power_enabled = Channel.control(
         "CP{ch}?", "CP{ch}!%s",
-        """Power status of the channel""",
+        """Control power status of the channel. (bool)""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
@@ -61,23 +97,23 @@ class IonGaugeAndPressureChannel(PressureChannel):
     """Channel having both a pressure and an ion gauge sensor"""
     ion_gauge_status = Channel.measurement(
         "T{ch}?",
-        """Ion gauge status of the channel""",
+        """Get ion gauge status of the channel.""",
         map_values=True,
         values=_ion_gauge_status,
     )
 
 
-class MKS937B(Instrument):
+class MKS937B(MKSInstrument):
     """ MKS 937B vacuum gauge controller
 
     Connection to the device is made through an RS232/RS485 serial connection.
-    The communication protocol of this device is as follows:
 
-    Query: '@<aaa><Command>?;FF' with the response '@<aaa>ACK<Response>;FF'
-    Set command: '@<aaa><Command>!<parameter>;FF' with the response '@<aaa>ACK<Response>;FF'
-    Above <aaa> is an address from 001 to 254 which can be specified upon
-    initialization. Since ';FF' is not supported by pyvisa as terminator this
-    class overloads the device communication methods.
+    The 937B gauge controller can connect up to 6 pressure measurement channels
+    for gauges of various types which includes ionization gauges, Pirani and
+    piezo gauges. Based on the pressure values of the gauges twelve setpoint
+    relays can be energized when certain pressure values are reached. The
+    assignment of the relays to measurement channels is fixed to have two
+    relays for each pressure channel.
 
     :param adapter: pyvisa resource name of the instrument or adapter instance
     :param string name: The name of the instrument.
@@ -85,106 +121,76 @@ class MKS937B(Instrument):
                     (default=253)
     :param kwargs: Any valid key-word argument for Instrument
     """
-    channels = Instrument.ChannelCreator(
-        (IonGaugeAndPressureChannel, PressureChannel) * 3,
-        ("1", "2", "3", "4", "5", "6"),
-    )  # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
+
+    # Channels 1,3,5 have both an ion gauge and a pressure sensor, 2,4,6 only a pressure sensor
+    ch_1 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 1)
+
+    ch_2 = Instrument.ChannelCreator(PressureChannel, 2)
+
+    ch_3 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 3)
+
+    ch_4 = Instrument.ChannelCreator(PressureChannel, 4)
+
+    ch_5 = Instrument.ChannelCreator(IonGaugeAndPressureChannel, 5)
+
+    ch_6 = Instrument.ChannelCreator(PressureChannel, 6)
+
+    relay_1 = Instrument.ChannelCreator(Relay, 1)
+
+    relay_2 = Instrument.ChannelCreator(Relay, 2)
+
+    relay_3 = Instrument.ChannelCreator(Relay, 3)
+
+    relay_4 = Instrument.ChannelCreator(Relay, 4)
+
+    relay_5 = Instrument.ChannelCreator(Relay, 5)
+
+    relay_6 = Instrument.ChannelCreator(Relay, 6)
+
+    relay_7 = Instrument.ChannelCreator(Relay, 7)
+
+    relay_8 = Instrument.ChannelCreator(Relay, 8)
+
+    relay_9 = Instrument.ChannelCreator(Relay, 9)
+
+    relay_10 = Instrument.ChannelCreator(Relay, 10)
+
+    relay_11 = Instrument.ChannelCreator(Relay, 11)
+
+    relay_12 = Instrument.ChannelCreator(Relay, 12)
 
     def __init__(self, adapter, name="MKS 937B vacuum gauge controller", address=253, **kwargs):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
-            read_termination=";",  # in reality its ";FF"
-            # which is, however, invalid for pyvisa. Therefore extra bytes have to
-            # be read in the read() method and the terminators are hardcoded here.
-            write_termination=";FF",
+            address=address,
             **kwargs
         )
-        self.address = address
-        # compiled regular expression for finding numerical values in reply strings
-        self._re_response = re.compile(fr"@{self.address:03d}(?P<ack>ACK)?(?P<msg>.*)")
-
-    def _extract_reply(self, reply):
-        """ preprocess_reply function which tries to extract <Response> from
-        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
-        is returned.
-        :param reply: reply string
-        :returns: string with only the response, or the original string
-        """
-        rvalue = self._re_response.search(reply)
-        if rvalue:
-            return rvalue.group('msg')
-        return reply
-
-    def _prepend_address(self, cmd):
-        """
-        create command string by including the device address
-        """
-        return f"@{self.address:03d}{cmd}"
-
-    def _check_extra_termination(self):
-        """
-        Check the read termination to correspond to the protocol
-        """
-        t = super().read_bytes(2)  # read extra termination chars 'FF'
-        if t != b'FF':
-            raise ValueError(f"unexpected termination string received {t}")
-
-    def read(self):
-        """
-        Reads from the instrument including the correct termination characters
-        """
-        ret = super().read()
-        self._check_extra_termination()
-        return self._extract_reply(ret)
-
-    def write(self, command):
-        """
-        Writes to the instrument including the device address
-
-        :param command: command string to be sent to the instrument
-        """
-        super().write(self._prepend_address(command))
-
-    def check_errors(self):
-        """
-        check reply string for acknowledgement string
-        """
-        ret = self.adapter.read()  # use adapter read to get raw reply
-        reply = self._re_response.search(ret)
-        if reply:
-            if reply.group('ack') == 'ACK':
-                return
-        # no valid acknowledgement message found
-        raise ValueError(f"invalid reply '{ret}' found in check_errors")
 
     serial = Instrument.measurement(
-        "SN?", """ Serial number of the instrument """,
+        "SN?", """Get the serial number of the instrument """,
         cast=str,
     )
 
     all_pressures = Instrument.measurement(
-        "PRZ?", """ Read pressures on all channels in selected units """,
+        "PRZ?", """ Get pressures on all channels in selected units """,
     )
 
     combined_pressure1 = Instrument.measurement(
-        "PC1?", """ Read pressure on channel 1 and its combination sensor """,
+        "PC1?", """ Get pressure on channel 1 and its combination sensor """,
     )
 
     combined_pressure2 = Instrument.measurement(
-        "PC2?", """ Read pressure on channel 2 and its combination sensor """,
+        "PC2?", """ Get pressure on channel 2 and its combination sensor """,
     )
 
     unit = Instrument.control(
         "U?", "U!%s",
-        """Pressure unit used for all pressure readings from the instrument""",
+        """Control pressure unit used for all pressure readings from the instrument.
+
+        Allowed units are Unit.Torr, Unit.mbar, Unit.Pa, Unit.uHg.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={"Torr": "TORR",
-                "mBar": "mBAR",
-                "Pascal": "PASCAL",
-                "Micron": "MICRON",
-                },
+        values={u: u.value for u in Unit},
         check_set_errors=True,
     )

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 
 
-class TDS2000(Instrument):
+class TDS2000(SCPIUnknownMixin, Instrument):
     """ Represents the Tektronix TDS 2000 Oscilloscope
     and provides a high-level for interacting with the instrument
     """
@@ -85,10 +85,10 @@ class TDS2000(Instrument):
                 raise ValueError("Invalid unit ('{}') provided to {}".format(
                                  self.parent, value))
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Tektronix TDS 2000 Oscilloscope", **kwargs):
         super().__init__(
             adapter,
-            "Tektronix TDS 2000 Oscilliscope",
+            name,
             **kwargs
         )
         self.measurement = TDS2000.Measurement(self)

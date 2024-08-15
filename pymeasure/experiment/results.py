@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,7 +69,7 @@ def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format=
     """
     now = datetime.now()
 
-    parameters = procedure.parameter_objects()
+    parameters = procedure.placeholder_objects()
     placeholders = {param.name: param.value for param in parameters.values()}
 
     placeholders["date"] = now.strftime(date_format)
@@ -131,19 +131,8 @@ class CSVFormatter(logging.Formatter):
         """
         super().__init__()
         self.columns = columns
-        self.units = self._parse_columns(columns)
+        self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
-
-    @staticmethod
-    def _parse_columns(columns):
-        """Parse the columns to get units in parenthesis."""
-        units_pattern = r"\((?P<units>[\w/\(\)\*\t]+)\)"
-        units = {}
-        for column in columns:
-            match = re.search(units_pattern, column)
-            if match:
-                units[column] = ureg.Quantity(match.groupdict()['units']).units
-        return units
 
     def format(self, record):
         """Formats a record as csv.
@@ -155,44 +144,45 @@ class CSVFormatter(logging.Formatter):
         line = []
         for x in self.columns:
             value = record.get(x, float("nan"))
-            units = self.units.get(x, None)
-            if units is not None:
-                if isinstance(value, str):
-                    try:
-                        value = ureg.Quantity(value)
-                    except pint.UndefinedUnitError:
-                        log.warning(
-                            f"Value {value} for column {x} cannot be parsed to"
-                            f" unit {units}.")
-                if isinstance(value, pint.Quantity):
-                    try:
-                        line.append(f"{value.m_as(units)}")
-                    except pint.DimensionalityError:
+            if isinstance(value, (float, int, Decimal)) and type(value) is not bool:
+                line.append(f"{value}")
+            else:
+                units = self.units.get(x, None)
+                if units is not None:
+                    if isinstance(value, str):
+                        try:
+                            value = ureg.Quantity(value)
+                        except pint.UndefinedUnitError:
+                            log.warning(
+                                f"Value {value} for column {x} cannot be parsed to"
+                                f" unit {units}.")
+                    if isinstance(value, pint.Quantity):
+                        try:
+                            line.append(f"{value.m_as(units)}")
+                        except pint.DimensionalityError:
+                            line.append("nan")
+                            log.warning(
+                                f"Value {value} for column {x} does not have the "
+                                f"right unit {units}.")
+                    elif isinstance(value, bool):
                         line.append("nan")
                         log.warning(
-                            f"Value {value} for column {x} does not have the "
-                            f"right unit {units}.")
-                elif isinstance(value, bool):
-                    line.append("nan")
-                    log.warning(
-                        f"Boolean for column {x} does not have unit {units}.")
-                elif isinstance(value, (float, int, Decimal)):
-                    line.append(f"{value}")
-                else:
-                    line.append("nan")
-                    log.warning(
-                        f"Value {value} for column {x} does not have the right"
-                        f" type for unit {units}.")
-            else:
-                if isinstance(value, pint.Quantity):
-                    if value.units == ureg.dimensionless:
-                        line.append(f"{value.magnitude}")
+                            f"Boolean for column {x} does not have unit {units}.")
                     else:
-                        self.units[x] = value.to_base_units().units
-                        line.append(f"{value.m_as(self.units[x])}")
-                        log.info(f"Column {x} units was set to {self.units[x]}")
+                        line.append("nan")
+                        log.warning(
+                            f"Value {value} for column {x} does not have the right"
+                            f" type for unit {units}.")
                 else:
-                    line.append(f"{value}")
+                    if isinstance(value, pint.Quantity):
+                        if value.units == ureg.dimensionless:
+                            line.append(f"{value.magnitude}")
+                        else:
+                            self.units[x] = value.to_base_units().units
+                            line.append(f"{value.m_as(self.units[x])}")
+                            log.info(f"Column {x} units was set to {self.units[x]}")
+                    else:
+                        line.append(f"{value}")
         return self.delimiter.join(line)
 
     def format_header(self):
@@ -217,6 +207,7 @@ class Results:
     DELIMITER = ','
     LINE_BREAK = "\n"
     CHUNK_SIZE = 1000
+    ENCODING = "utf-8"
 
     def __init__(self, procedure, data_filename):
         if not isinstance(procedure, Procedure):
@@ -243,7 +234,7 @@ class Results:
             # TODO: Correctly store and retrieve status
         else:
             for filename in self.data_filenames:
-                with open(filename, 'w') as f:
+                with open(filename, 'w', encoding=Results.ENCODING) as f:
                     f.write(self.header())
                     f.write(self.labels())
             self._data = None
@@ -339,7 +330,7 @@ class Results:
             return
 
         for filename in self.data_filenames:
-            with open(filename, 'r+') as f:
+            with open(filename, 'r+', encoding=Results.ENCODING) as f:
                 contents = f.readlines()
                 contents.insert(self._header_count - 1, c_header)
 
@@ -424,11 +415,11 @@ class Results:
         header = ""
         header_read = False
         header_count = 0
-        with open(data_filename) as f:
+        with open(data_filename, "r", encoding=Results.ENCODING) as f:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
-                    header += line.strip() + Results.LINE_BREAK
+                    header += line.strip('\t\v\n\r\f') + Results.LINE_BREAK
                     header_count += 1
                 else:
                     header_read = True
@@ -457,7 +448,10 @@ class Results:
                 comment=Results.COMMENT,
                 header=0,
                 names=self._data.columns,
-                chunksize=Results.CHUNK_SIZE, skiprows=skiprows, iterator=True
+                chunksize=Results.CHUNK_SIZE,
+                skiprows=skiprows,
+                iterator=True,
+                encoding=Results.ENCODING,
             )
             try:
                 tmp_frame = pd.concat(chunks, ignore_index=True)
@@ -480,7 +474,8 @@ class Results:
             self.data_filename,
             comment=Results.COMMENT,
             chunksize=Results.CHUNK_SIZE,
-            iterator=True
+            iterator=True,
+            encoding=Results.ENCODING,
         )
         try:
             self._data = pd.concat(chunks, ignore_index=True)

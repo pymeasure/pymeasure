@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.mksinst.mks937b import MKS937B
+from pymeasure.instruments.mksinst.mks937b import MKS937B, Unit
 
 
 def test_pressure():
@@ -57,21 +57,61 @@ def test_ion_gauge_status_invalid_channel():
             inst.ch_2.ion_gauge_status
 
 
-def test_unit():
-    """Verify the communication of the voltage getter."""
+def test_unit_setter():
+    """Verify the communication of the unit setter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253U!MICRON", "@253ACKMICRON"),
+         (None, b"FF")],
+    ) as inst:
+        inst.unit = Unit.uHg
+
+
+def test_unit_getter():
+    """Verify the communication of the unit getter."""
     with expected_protocol(
         MKS937B,
         [("@253U?", "@253ACKTORR"),
          (None, b"FF")],
     ) as inst:
-        assert inst.unit == "Torr"
+        assert inst.unit == Unit.Torr
 
 
 def test_power_enabled():
-    """Verify the communication of the voltage getter."""
+    """Verify the communication of the channel power getter."""
     with expected_protocol(
         MKS937B,
         [("@253CP1?", "@253ACKON"),
          (None, b"FF")],
     ) as inst:
         assert inst.ch_1.power_enabled is True
+
+
+def test_relay_value():
+    """Verify the communication of the relay setpoint getter."""
+    with expected_protocol(
+        MKS937B,
+        [("@253SP10?", "@253ACK2.00E+0"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_10.setpoint == pytest.approx(2.00e0)
+
+
+def test_relay_direction():
+    """Verify the communication of the relay direction."""
+    with expected_protocol(
+        MKS937B,
+        [("@253SD3?", "@253ACKABOVE"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_3.direction == "ABOVE"
+
+
+def test_relay_enabled():
+    """Verify the communication of the relay enabled property."""
+    with expected_protocol(
+        MKS937B,
+        [("@253EN6?", "@253ACKENABLE"),
+         (None, b"FF")],
+    ) as inst:
+        assert inst.relay_6.enabled is True

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -240,17 +240,28 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
     def fixCase(self, text):
         self.lineEdit().setText(text.toLower())
 
+    def toDouble(self, string):
+        value, success = self.validator.locale().toDouble(string)
+        if not success:
+            raise ValueError('String could not be converted to a double')
+        else:
+            return value
+
+    def toString(self, value, format='g', precision=6):
+        return self.validator.locale().toString(value, format, precision)
+
     def valueFromText(self, text):
+        text = str(text)
+        if self._parameter.units:
+            text = text[:-(len(self._parameter.units) + 1)]
         try:
-            if self._parameter.units:
-                return float(str(text)[:-(len(self._parameter.units) + 1)])
-            else:
-                return float(str(text))
+            val = self.toDouble(text)
         except ValueError:
-            return self._parameter.default
+            val = self._parameter.default
+        return val
 
     def textFromValue(self, value):
-        string = f"{value:g}".replace("e+", "e")
+        string = self.toString(value).replace("e+", "e")
         string = re.sub(r"e(-?)0*(\d+)", r"e\1\2", string)
         return string
 

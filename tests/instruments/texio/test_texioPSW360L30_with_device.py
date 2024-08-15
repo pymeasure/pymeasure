@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ class TestTexioPSW360L30:
     """
 
     ##################################################
-    # Keithley2306 device address goes here:
+    # TEXIO PSW-360L30 device address goes here:
     RESOURCE = "TCPIP::192.168.10.119::2268::SOCKET"
     ##################################################
 

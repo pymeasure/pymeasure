@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,5 +47,5 @@ class ATS525(ATSBase):
         """,
     )
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, name="Temptronic ATS-525 Thermostream", **kwargs)
+    def __init__(self, adapter, name="Temptronic ATS-525 Thermostream", **kwargs):
+        super().__init__(adapter, name, **kwargs)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,14 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 from pymeasure.instruments import Instrument
 from pyvisa.constants import Parity
+
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 def _data_to_temp(data):
@@ -76,12 +82,18 @@ class TC038(Instrument):
     :param int timeout: Timeout in ms.
     """
 
-    def __init__(self, adapter, address=1, timeout=1000,
-                 includeSCPI=False, **kwargs):
-
-        super().__init__(adapter, "TC038", timeout=timeout,
-                         write_termination="\r", read_termination="\r",
-                         parity=Parity.even, **kwargs)
+    def __init__(self, adapter, name="TC038", address=1, timeout=1000,
+                 **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            timeout=timeout,
+            write_termination="\r",
+            read_termination="\r",
+            parity=Parity.even,
+            includeSCPI=False,
+            **kwargs,
+        )
         self.address = address
 
         self.set_monitored_quantity()  # start to monitor the temperature
@@ -100,9 +112,18 @@ class TC038(Instrument):
             raise ConnectionError(errors[0])
         return got
 
-    def check_errors(self):
-        """Read the error from the instrument and return a list of errors."""
-        self.read()
+    def check_set_errors(self):
+        """Check for errors after having set a property.
+
+        Called if :code:`check_set_errors=True` is set for that property.
+        """
+        try:
+            self.read()
+        except ConnectionError as exc:
+            log.exception("Setting a property failed.", exc_info=exc)
+            raise
+        else:
+            return []
 
     def set_monitored_quantity(self, quantity='temperature'):
         """
@@ -119,27 +140,27 @@ class TC038(Instrument):
     setpoint = Instrument.control(
         "WRD" + registers['setpoint'] + ",01",
         "WWR" + registers['setpoint'] + ",01,%s",
-        """The current setpoint of the temperature controller in °C.""",
+        """Control the setpoint of the temperature controller in °C.""",
         get_process=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
         check_set_errors=True,
-        )
+    )
 
     temperature = Instrument.measurement(
         "WRD" + registers['temperature'] + ",01",
-        """The currently measured temperature in °C.""",
+        """Measure the current temperature in °C.""",
         get_process=_data_to_temp
-        )
+    )
 
     monitored_value = Instrument.measurement(
         "WRM",
-        """The currently monitored value. For default it is the current
+        """Measure the currently monitored value. For default it is the current
         temperature in °C.""",
         get_process=_data_to_temp
-        )
+    )
 
     information = Instrument.measurement(
         "INF6",
-        """The information about the device and its capabilites.""",
+        """Get the information about the device and its capabilities.""",
         get_process=lambda got: got[7:-1],
-        )
+    )

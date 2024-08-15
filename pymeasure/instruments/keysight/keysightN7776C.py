@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2021 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 import logging
 import numpy as np
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ WL_RANGE = [1480, 1620]
 LOCK_PW = 1234
 
 
-class KeysightN7776C(Instrument):
+class KeysightN7776C(SCPIUnknownMixin, Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
 
@@ -51,41 +51,48 @@ class KeysightN7776C(Instrument):
         laser.output_enabled = 0
 
     """
-    def __init__(self, adapter, **kwargs):
-        super(KeysightN7776C, self).__init__(
-            adapter, "N7776C Tunable Laser Source", **kwargs)
 
-    locked = Instrument.control(':LOCK?', ':LOCK %g,'+str(LOCK_PW),
-                                """ Boolean property controlling the lock state (True/False) of
-                                the laser source""",
-                                validator=strict_discrete_set,
-                                map_values=True,
-                                values={True: 1, False: 0})
+    def __init__(self, adapter, name="N7776C Tunable Laser Source", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs)
 
-    output_enabled = Instrument.control('SOUR0:POW:STAT?', 'SOUR0:POW:STAT %g',
-                                        """ Boolean Property that controls the state (on/off) of
-                                        the laser source """,
-                                        validator=strict_discrete_set,
-                                        map_values=True,
-                                        values={True: 1, False: 0})
+    locked = Instrument.control(
+        ':LOCK?', ':LOCK %g,' + str(LOCK_PW),
+        """Control the lock state (True/False) of the laser source. (bool)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0}
+    )
 
-    _output_power_mW = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f mW',
-                                          """ Floating point value indicating the laser output power
-                                          in mW.""",
-                                          get_process=lambda v: v*1e3)
+    output_enabled = Instrument.control(
+        'SOUR0:POW:STAT?', 'SOUR0:POW:STAT %g',
+        """Control the state (on/off) of the laser source (bool)""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0}
+    )
 
-    _output_power_dBm = Instrument.control('SOUR0:POW?', 'SOUR0:POW %f dBm',
-                                           """ Floating point value indicating the laser output power
-                                           in dBm.""")
+    _output_power_mW = Instrument.control(
+        'SOUR0:POW?', 'SOUR0:POW %f mW',
+        """Control the laser output power in mW. (float)""",
+        get_process=lambda v: v * 1e3
+    )
 
-    _output_power_unit = Instrument.control('SOUR0:POW:UNIT?', 'SOUR0:POW:UNIT %g',
-                                            """ String parameter controlling the power unit used internally
-                                            by the laser.""",
-                                            map_values=True,
-                                            values={'dBm': 0, 'mW': 1})
+    _output_power_dBm = Instrument.control(
+        'SOUR0:POW?', 'SOUR0:POW %f dBm',
+        """Control the laser output power in dBm. (float)"""
+    )
+
+    _output_power_unit = Instrument.control(
+        'SOUR0:POW:UNIT?', 'SOUR0:POW:UNIT %g',
+        """Control the power unit used internally by the laser. (str)""",
+        map_values=True,
+        values={'dBm': 0, 'mW': 1}
+    )
 
     @property
     def output_power_mW(self):
+        """Control the output power in mW"""
         self._output_power_unit = 'mW'
         return self._output_power_mW
 
@@ -95,6 +102,7 @@ class KeysightN7776C(Instrument):
 
     @property
     def output_power_dBm(self):
+        """Control the output power in dBm."""
         self._output_power_unit = 'dBm'
         return self._output_power_dBm
 
@@ -102,78 +110,85 @@ class KeysightN7776C(Instrument):
     def output_power_dBm(self, new_power):
         self._output_power_dBm = new_power
 
-    trigger_out = Instrument.control('TRIG0:OUTP?', 'TRIG0:OUTP %s',
-                                     """ Specifies if and at which point in a sweep cycle an output trigger
-                                     is generated and arms the module. """,
-                                     validator=strict_discrete_set,
-                                     values=['DIS', 'STF', 'SWF', 'SWST'])
+    trigger_out = Instrument.control(
+        'TRIG0:OUTP?', 'TRIG0:OUTP %s',
+        """ Control if and at which point in a sweep cycle an output trigger
+        is generated and arms the module. """,
+        validator=strict_discrete_set,
+        values=['DIS', 'STF', 'SWF', 'SWST']
+    )
 
-    trigger_in = Instrument.control('TRIG0:INP?', 'TRIG0:INP %s',
-                                    """ Sets the incoming trigger response and arms the module. """,
-                                    validator=strict_discrete_set,
-                                    values=['IGN', 'NEXT', 'SWS'])
+    trigger_in = Instrument.control(
+        'TRIG0:INP?', 'TRIG0:INP %s',
+        """Control the incoming trigger response and arm the module.""",
+        validator=strict_discrete_set,
+        values=['IGN', 'NEXT', 'SWS'])
 
-    wavelength = Instrument.control('sour0:wav?', 'sour0:wav %fnm',
-                                    """ Absolute wavelength of the output light (in nanometers)""",
-                                    validator=strict_range,
-                                    values=WL_RANGE,
-                                    get_process=lambda v: v*1e9)
+    wavelength = Instrument.control(
+        'sour0:wav?', 'sour0:wav %fnm',
+        """Control absolute wavelength of the output light (in nanometers)""",
+        validator=strict_range,
+        values=WL_RANGE,
+        get_process=lambda v: v * 1e9)
 
-    sweep_wl_start = Instrument.control('sour0:wav:swe:star?', 'sour0:wav:swe:star %fnm',
-                                        """ Start Wavelength (in nanometers) for a sweep.""",
-                                        validator=strict_range,
-                                        values=WL_RANGE,
-                                        get_process=lambda v: v*1e9)
+    sweep_wl_start = Instrument.control(
+        'sour0:wav:swe:star?', 'sour0:wav:swe:star %fnm',
+        """Control Start Wavelength (in nanometers) for a sweep.""",
+        validator=strict_range,
+        values=WL_RANGE,
+        get_process=lambda v: v * 1e9)
+
     sweep_wl_stop = Instrument.control('sour0:wav:swe:stop?', 'sour0:wav:swe:stop %fnm',
-                                       """ End Wavelength (in nanometers) for a sweep.""",
+                                       """Control End Wavelength (in nanometers) for a sweep.""",
                                        validator=strict_range,
                                        values=WL_RANGE,
-                                       get_process=lambda v: v*1e9)
+                                       get_process=lambda v: v * 1e9)
 
     sweep_step = Instrument.control('sour0:wav:swe:step?', 'sour0:wav:swe:step %fnm',
-                                    """ Step width of the sweep (in nanometers).""",
+                                    """Control step width of the sweep (in nanometers).""",
                                     validator=strict_range,
-                                    values=[0.0001, WL_RANGE[1]-WL_RANGE[0]],
-                                    get_process=lambda v: v*1e9)
+                                    values=[0.0001, WL_RANGE[1] - WL_RANGE[0]],
+                                    get_process=lambda v: v * 1e9)
     sweep_speed = Instrument.control('sour0:wav:swe:speed?', 'sour0:wav:swe:speed %fnm/s',
-                                     """ Speed of the sweep (in nanometers per second).""",
+                                     """Control speed of the sweep (in nanometers per second).""",
                                      validator=strict_discrete_set,
                                      values=[0.5, 1, 50, 80, 200],
-                                     get_process=lambda v: v*1e9)
+                                     get_process=lambda v: v * 1e9)
     sweep_mode = Instrument.control('sour0:wav:swe:mode?', 'sour0:wav:swe:mode %s',
-                                    """ Sweep mode of the swept laser source """,
+                                    """Control sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
                                     values=['STEP', 'MAN', 'CONT'])
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?', 'sour0:wav:swe:rep %s',
-                                      """Sets the repeat mode. Applies in stepped,continuous and
+                                      """Control the repeat mode. Applies in stepped,continuous and
                                       manual sweep mode.""",
                                       validator=strict_discrete_set,
                                       map_values=True,
                                       values={False: 'ONEW', True: 'TWOW'})
     _sweep_params_consistent = Instrument.measurement(
         'sour0:wav:swe:chec?',
-        """Returns whether the currently set sweep parameters (sweep mode, sweep start,
+        """Get whether the currently set sweep parameters (sweep mode, sweep start,
         stop, width, etc.) are consistent. If there is a
         sweep configuration problem, the laser source is not
         able to pass a wavelength sweep.""")
 
-    sweep_points = Instrument.measurement('sour0:read:points? llog',
-                                          """Returns the number of datapoints that the :READout:DATA?
-                                          command will return.""")
+    sweep_points = Instrument.measurement(
+        'sour0:read:points? llog',
+        """Get the number of datapoints that the :READout:DATA?
+        command will return.""")
 
-    sweep_state = Instrument.control('sour0:wav:swe?', 'sour0:wav:swe %g',
-                                     """ State of the wavelength sweep. Stops, starts, pauses
-                                     or continues a wavelength sweep. Possible state values are
-                                     0 (not running),
-                                     1 (running) and
-                                     2 (paused).
-                                     Refer to the N7776C user manual for exact usage of the
-                                     paused option. """,
-                                     validator=strict_discrete_set,
-                                     values=[0, 1, 2])
+    sweep_state = Instrument.control(
+        'sour0:wav:swe?', 'sour0:wav:swe %g',
+        """Control state of the wavelength sweep. Stops, starts, pauses or continues a
+        wavelength sweep. Possible state values are
+        0 (not running),
+        1 (running) and
+        2 (paused).
+        Refer to the N7776C user manual for exact usage of the paused option. """,
+        validator=strict_discrete_set,
+        values=[0, 1, 2])
 
     wl_logging = Instrument.control('SOUR0:WAV:SWE:LLOG?', 'SOUR0:WAV:SWE:LLOG %g',
-                                    """ State (on/off) of the lambda logging feature of the
+                                    """Control State (on/off) of the lambda logging feature of the
                                     laser source.""",
                                     validator=strict_discrete_set,
                                     map_values=True,

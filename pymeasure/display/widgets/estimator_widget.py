@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ from datetime import datetime, timedelta
 
 from ..thread import StoppableQThread
 from ..Qt import QtCore, QtWidgets
-from .sequencer_widget import SequenceEvaluationException
+from .sequencer_widget import SequenceEvaluationError
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -173,8 +173,8 @@ class EstimatorWidget(QtWidgets.QWidget):
         sequence_length = None
         if hasattr(self._parent, "sequencer"):
             try:
-                sequence = self._parent.sequencer.get_sequence_from_tree()
-            except SequenceEvaluationException:
+                sequence = self._parent.sequencer.get_sequence()
+            except SequenceEvaluationError:
                 sequence_length = 0
             else:
                 sequence_length = len(sequence)

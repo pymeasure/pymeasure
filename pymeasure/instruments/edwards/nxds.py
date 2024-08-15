@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,14 +34,14 @@ class Nxds(Instrument):
     """
 
     enable = Instrument.setting("!C802 %d",
-                                """ Starts/stops pump with default settings.""",
+                                """ Set the pump enabled state with default settings.""",
                                 validator=strict_discrete_set,
                                 values=(0, 1),)
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Edwards NXDS Vacuum Pump", **kwargs):
         super().__init__(
             adapter,
-            "Edwards NXDS Vacuum Pump",
+            name,
             includeSCPI=False,
             **kwargs
         )
