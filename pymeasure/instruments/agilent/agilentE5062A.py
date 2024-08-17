@@ -139,12 +139,21 @@ class VNAChannel(Channel):
 
     sweep_type = Channel.control(
         "SENSe{ch}:SWEep:TYPE?", "SENSe{ch}:SWEep:TYPE %s",
-        """Control the type of the sweep, between 'LINear', 'LOGarithmic',
-        'SEGMent', and 'POWer' (string). Defaults to linear. Note that the API
-        for configuring segment type sweeps is not implememented in this
-        class.""",
+        """Control the type of the sweep (string).
+
+        =======  ===========
+        Setting  Description
+        =======  ===========
+        LIN      Linear
+        LOG      Logarithmic
+        SEGM     Segment
+        POW      Power
+        =======  ===========
+
+        Defaults to linear. Note that the API for configuring segment type
+        sweeps is not implememented in this class.""",
         validator=strict_discrete_set,
-        values=['LINear', 'LOGarithmic', 'SEGMent', 'POWer']
+        values=['LIN', 'LOG', 'SEGM', 'POW']
     )
 
     averaging_enabled = Channel.control(
@@ -264,23 +273,23 @@ class VNAChannel(Channel):
     )
 
     TRACE_FORMAT = [
-        'MLOGarithmic',
-        'PHASe',
-        'GDELay',
-        'SLINear',
-        'SLOGarithmic',
-        'SCOMplex',
-        'SMITh',
-        'SADMittance',
-        'PLINear',
-        'PLOGarithmic',
-        'POLar',
-        'MLINear',
+        'MLOG',
+        'PHAS',
+        'GDEL',
+        'SLIN',
+        'SLOG',
+        'SCOM',
+        'SMIT',
+        'SADM',
+        'PLIN',
+        'PLOG',
+        'POL',
+        'MLIN',
         'SWR',
         'REAL',
-        'IMAGinary',
-        'UPHase',
-        'PPHase'
+        'IMAG',
+        'UPH',
+        'PPH'
     ]
 
     trace_format = Channel.control(
@@ -289,27 +298,27 @@ class VNAChannel(Channel):
         """Control the data format of the *active trace* of the channel
         (str). Default is MLOGarithmic. From the programmer's manual:
 
-        ============  =============================================
-        Setting       Description
-        ============  =============================================
-        MLOGarithmic  Specifies the logarithmic magnitude format.
-        PHASe         Specifies the phase format.
-        GDELay        Specifies the group delay format.
-        SLINear       Specifies the Smith chart format (Lin/Phase).
-        SLOGarithmic  Specifies the Smith chart format (Log/Phase).
-        SCOMplex      Specifies the Smith chart format (Real/Imag).
-        SMITh         Specifies the Smith chart format (R+jX).
-        SADMittance   Specifies the Smith chart format (G+jB).
-        PLINear       Specifies the polar format (Lin).
-        PLOGarithmic  Specifies the polar format (Log).
-        POLar         Specifies the polar format (Re/Im).
-        MLINear       Specifies the linear magnitude format.
-        SWR           Specifies the SWR format.
-        REAL          Specifies the real format.
-        IMAGinary     Specifies the imaginary format.
-        UPHase        Specifies the expanded phase format.
-        PPHase        Specifies the positive phase format.
-        ============  =============================================
+        =======  =============================================
+        Setting  Description
+        =======  =============================================
+        MLOG     Specifies the logarithmic magnitude format.
+        PHAS     Specifies the phase format.
+        GDEL     Specifies the group delay format.
+        SLIN     Specifies the Smith chart format (Lin/Phase).
+        SLOG     Specifies the Smith chart format (Log/Phase).
+        SCOM     Specifies the Smith chart format (Real/Imag).
+        SMIT     Specifies the Smith chart format (R+jX).
+        SADM     Specifies the Smith chart format (G+jB).
+        PLIN     Specifies the polar format (Lin).
+        PLOG     Specifies the polar format (Log).
+        POr      Specifies the polar format (Re/Im).
+        MLI      Specifies the linear magnitude format.
+        SWR      Specifies the SWR format.
+        REAL     Specifies the real format.
+        IMAG     Specifies the imaginary format.
+        UPH      Specifies the expanded phase format.
+        PPH      Specifies the positive phase format.
+        =======  =============================================
 
         """,
         validator=strict_discrete_set,
@@ -493,21 +502,21 @@ class AgilentE5062A(SCPIMixin, Instrument):
         "TRIGger:SOURce?", "TRIGger:SOURce %s",
         """Control the trigger source (str). From the documentation:
 
-        INTernal: Uses the internal trigger to generate continuous triggers
+        INT: Uses the internal trigger to generate continuous triggers
         automatically (default).
 
-        EXTernal: Generates a trigger when the trigger signal is inputted
+        EXT: Generates a trigger when the trigger signal is inputted
         externally via the Ext Trig connector or the handler interface.
 
-        MANual: Generates a trigger when the key operation of [Trigger] -
+        MAN: Generates a trigger when the key operation of [Trigger] -
         Trigger is executed from the front panel.
 
         BUS: Generates a trigger when the ``*TRG`` command is executed.""",
         validator=strict_discrete_set,
         values=[
-            'INTernal',
-            'EXTernal',
-            'MANual',
+            'INT',
+            'EXT',
+            'MAN',
             'BUS'])
 
     def trigger_bus(self):

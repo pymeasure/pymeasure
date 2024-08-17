@@ -188,19 +188,19 @@ def test_ch_sweep_type():
             AgilentE5062A,
             [
                 *initial_comm_pairs(),
-                ("SENSe1:SWEep:TYPE LINear", None),
+                ("SENSe1:SWEep:TYPE LIN", None),
                 ("SENSe1:SWEep:TYPE?", "LIN"),
-                ("SENSe1:SWEep:TYPE LOGarithmic", None),
+                ("SENSe1:SWEep:TYPE LOG", None),
                 ("SENSe1:SWEep:TYPE?", "LOG"),
-                ("SENSe1:SWEep:TYPE SEGMent", None),
+                ("SENSe1:SWEep:TYPE SEGM", None),
                 ("SENSe1:SWEep:TYPE?", "SEGM"),
-                ("SENSe1:SWEep:TYPE POWer", None),
+                ("SENSe1:SWEep:TYPE POW", None),
                 ("SENSe1:SWEep:TYPE?", "POW"),
             ]) as inst:
         ch = inst.channels[1]
-        for t in ['LINear', 'LOGarithmic', 'SEGMent', 'POWer']:
+        for t in ['LIN', 'LOG', 'SEGM', 'POW']:
             ch.sweep_type = t
-            assert ch.sweep_type in t  # returns just the capitalized part
+            assert ch.sweep_type == t  # returns just the capitalized part
 
 
 def test_ch_averaging():
@@ -337,15 +337,15 @@ def test_tr_format():
             AgilentE5062A,
             [
                 *initial_comm_pairs(),
-                ("CALCulate1:FORMat MLOGarithmic", None),
+                ("CALCulate1:FORMat MLOG", None),
                 ("CALCulate1:FORMat?", "MLOG"),
-                ("CALCulate1:FORMat PPHase", None),
+                ("CALCulate1:FORMat PPH", None),
                 ("CALCulate1:FORMat?", "PPH"),
             ]) as inst:
         ch = inst.channels[1]
-        for opt in ["MLOGarithmic", "PPHase"]:
+        for opt in ["MLOG", "PPH"]:
             ch.trace_format = opt
-            assert ch.trace_format in opt
+            assert ch.trace_format == opt
 
 
 def test_data():
@@ -402,18 +402,18 @@ def test_trigger_source():
             AgilentE5062A,
             [
                 *initial_comm_pairs(),
-                ("TRIGger:SOURce INTernal", None),
+                ("TRIGger:SOURce INT", None),
                 ("TRIGger:SOURce?", "INT"),
-                ("TRIGger:SOURce EXTernal", None),
+                ("TRIGger:SOURce EXT", None),
                 ("TRIGger:SOURce?", "EXT"),
-                ("TRIGger:SOURce MANual", None),
-                ("TRIGger:SOURce?", "MANual"),
+                ("TRIGger:SOURce MAN", None),
+                ("TRIGger:SOURce?", "MAN"),
                 ("TRIGger:SOURce BUS", None),
                 ("TRIGger:SOURce?", "BUS")
             ]) as inst:
-        for src in ['INTernal', 'EXTernal', 'MANual', 'BUS']:
+        for src in ['INT', 'EXT', 'MAN', 'BUS']:
             inst.trigger_source = src
-            assert inst.trigger_source in src
+            assert inst.trigger_source == src
 
 
 def test_trigger_continuous():

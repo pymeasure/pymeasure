@@ -126,9 +126,9 @@ def test_ch_sweep_time(agilentE5062A):
 def test_ch_sweep_type(agilentE5062A):
     agilentE5062A.clear()
     for ch in agilentE5062A.channels.values():
-        for t in ['LINear', 'LOGarithmic', 'SEGMent', 'POWer']:
+        for t in ['LIN', 'LOG', 'SEGM', 'POW']:
             ch.sweep_type = t
-            assert ch.sweep_type in t  # returns just the capitalized part
+            assert ch.sweep_type == t  # returns just the capitalized part
     assert not agilentE5062A.pop_err()[0]
 
 
@@ -211,7 +211,7 @@ def test_tr_format(agilentE5062A):
         tr.activate()
         for opt in ch.TRACE_FORMAT:
             ch.trace_format = opt
-            assert ch.trace_format in opt
+            assert ch.trace_format == opt
     assert not agilentE5062A.pop_err()[0]
 
 
@@ -222,7 +222,7 @@ def test_data(agilentE5062A):
         ch.active_traces = 1
         tr = ch.traces[1]
         tr.activate()
-        tr.trace_format = 'SCOMplex'
+        tr.trace_format = 'SCOM'
         real, imag = ch.data
         assert np.size(real) == ch.scan_points
         assert np.size(imag) == ch.scan_points
@@ -233,7 +233,7 @@ def test_frequencies(agilentE5062A):
     agilentE5062A.clear()
     agilentE5062A.display_layout = 'D12_34'
     for ch in agilentE5062A.channels.values():
-        ch.sweep_type = 'LINear'
+        ch.sweep_type = 'LIN'
         freqs = ch.frequencies
         assert np.size(freqs) == ch.scan_points
         assert np.any(np.isclose(ch.start_frequency, freqs))
@@ -255,9 +255,9 @@ def test_abort(agilentE5062A):
 
 def test_trigger_source(agilentE5062A):
     agilentE5062A.clear()
-    for src in ['INTernal', 'EXTernal', 'MANual', 'BUS']:
+    for src in ['INT', 'EXT', 'MAN', 'BUS']:
         agilentE5062A.trigger_source = src
-        assert agilentE5062A.trigger_source in src
+        assert agilentE5062A.trigger_source == src
     assert not agilentE5062A.pop_err()[0]
 
 
