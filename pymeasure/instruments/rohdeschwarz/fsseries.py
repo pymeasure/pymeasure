@@ -356,7 +356,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     @active_channel.setter
     def activate_channel(self, channel):
-        """Activate another open channel.
+        """Activate another open channel. Note: The channel needs to be open on the device!
 
         :param channel: Name of the channel to be activated
         """
