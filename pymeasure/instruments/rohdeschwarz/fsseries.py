@@ -168,7 +168,7 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        self.connection.timeout = timeout
+        self.adapter.connection.timeout = timeout
 
         # multichannel devices
         if self.instrument_channels > 1:
