@@ -28,6 +28,7 @@ import numpy as np
 import pyvisa
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
+import warnings
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -140,21 +141,23 @@ class FSSeries(SCPIMixin, Instrument):
     def instrument_channels(self):
         try:
             response = self.ask("INST:LIST?")
-            print("Raw response:", response)
+            print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
             
             channels = [channel.strip().strip("'") for channel in response.split(',')]
             num_channels = len(channels) // 2
             
-            print(f"""Number of available channels: {num_channels}. You can use read_trace to 
-                  read data from the active channels and use the other channel functions.""")
+            print(f"Number of available channels: {num_channels}. You can use read_trace to" 
+                  "read data from the active channels and use the other channel functions.")
             return num_channels
         except AttributeError:
-            print("The instrument object does not support 'query' or 'ask'.")
+            warnings.warn("The instrument object does not support 'query' or 'ask'.")
+            #print("The instrument object does not support 'query' or 'ask'.")
             return 0
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                print("""INST:LIST? command not supported. Assuming non-multichannel device. 
-                      You are likely unable to use channel functions.""")
+                print("INST:LIST? command not supported or can't establish connection. "
+                      "Assuming non-multi channel device. "
+                      "You are likely unable to use channel functions.")
                 return 0
             else:
                 raise
@@ -167,6 +170,8 @@ class FSSeries(SCPIMixin, Instrument):
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
         measurements, that is added to a device on request. Therefore, not every device has
         this and can change between channels.
+        Remember to "open" the desired channel with create_channel first if not already done 
+        to be able to activate this channel.
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
@@ -306,7 +311,7 @@ class FSSeries(SCPIMixin, Instrument):
     # Channels -------------------------------------------------------------------------------------
     # Please check whether your device supports these functionalities. You can use the helper
     # property available_channels to check if the device supports them.
-    
+
     def create_channel(self, channel_type, channel_name):
         """Create a new channel.
 
