@@ -140,18 +140,17 @@ class FSSeries(SCPIMixin, Instrument):
             response = resource.ask("INST:LIST?")
             print("Raw response:", response)
             
-            # Split the response into a list of channels, divide by 2 because each channel has a name and an identifier
             channels = [channel.strip().strip("'") for channel in response.split(',')]
             num_channels = len(channels) // 2
             
-            print(f"Number of available channels: {num_channels}")
+            print(f"Number of available channels: {num_channels}. You can use read_trace_multichannel to read data from the active channels.")
             return num_channels
         except AttributeError:
-            print("The instrument object does not support 'query' or 'ask'.")
+            print("The instrument object does not support 'query' or 'ask'. Please try to use read_trace_singlechannel.")
             return 0
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                print("INST:LIST? command not supported. Assuming non-multichannel device.")
+                print("INST:LIST? command not supported. Assuming non-multichannel device. Please try to use read_trace_singlechannel")
                 return 0
             else:
                 raise
