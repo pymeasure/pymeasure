@@ -158,7 +158,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     # Traces ---------------------------------------------------------------------------------------
 
-    def read_trace(self, n_trace=1, timeout=25000):
+    def read_trace(self, n_trace=1, timeout=10000):
         """
         Read trace data from the active channel.
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
@@ -172,21 +172,23 @@ class FSSeries(SCPIMixin, Instrument):
 
         # multichannel devices
         if self.instrument_channels > 1:
+            trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
             if (
                 self.active_channel == ("PNO")
                 or self.available_channels.get(self.active_channel) == "PNOISE"
             ):
-                y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))[1::2]
-                x = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))[0::2]
-  
+                y = trace_data[1::2]
+                x = trace_data[0::2]
+
             elif (
                 self.active_channel == ("SAN")
                 or self.available_channels.get(self.active_channel) == "SANALYZER"
             ):
-                y = trace_data = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
+                y = trace_data
                 x = np.linspace(self.freq_start, self.freq_stop, len(y))
 
             return np.array([x, y])
+        
         #singlechannel devices
         else:
             y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
