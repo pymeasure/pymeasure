@@ -29,9 +29,6 @@ import pyvisa
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 import warnings
-import sys
-
-sys.tracebacklimit = 0
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
