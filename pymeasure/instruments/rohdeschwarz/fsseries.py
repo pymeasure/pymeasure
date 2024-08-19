@@ -165,12 +165,25 @@ class FSSeries(SCPIMixin, Instrument):
             else:
                 raise
 
+    # Same function but only returns the number of channels
+    @property
+    def get_instrument_channels(self):
+        try:
+            response = self.ask("INST:LIST?")            
+            channels = [channel.strip().strip("'") for channel in response.split(',')]
+            num_channels = len(channels) // 2
+            return num_channels
+        except AttributeError:
+            return 0
+        except pyvisa.VisaIOError as e:
+            return 0
+
     # Traces ---------------------------------------------------------------------------------------
 
     def read_trace(self, n_trace=1):
         """
         Read trace data from the active channel.
-        Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
+        Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
         measurements, that is added to a device on request. Therefore, not every device has
         this and can change between channels.
         Remember to "open" the desired channel with create_channel first if not already done 
@@ -180,8 +193,8 @@ class FSSeries(SCPIMixin, Instrument):
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
         try:
-            # multichannel devices
-            if self.instrument_channels > 1:
+            # multi channel devices
+            if self.get_instrument_channels > 1:
                 trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
                 if (
                     self.active_channel == ("PNO")
@@ -199,7 +212,7 @@ class FSSeries(SCPIMixin, Instrument):
 
                 return np.array([x, y])
             
-            #singlechannel devices
+            # single channel devices
             else:
                 y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
                 x = np.linspace(self.freq_start, self.freq_stop, len(y))
@@ -207,7 +220,7 @@ class FSSeries(SCPIMixin, Instrument):
 
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                warnings.warn(f"Visa Timeout Error occurred: {e}. There might not be any data in the trace.", RuntimeWarning)
+                warnings.warn(f"Visa Timeout Error occurred: {e} There might not be any data in the trace.", RuntimeWarning)
             else:
                 warnings.warn(f"VisaIOError occurred: {e}", RuntimeWarning)
             raise
