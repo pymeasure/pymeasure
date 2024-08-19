@@ -131,9 +131,10 @@ class FSSeries(SCPIMixin, Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Helper function ------------------------------------------------------------------------------
-    # Since devices are equipped differently, we need functionality to determine the nr of channels
-    # which then determines whether the switching channel command is supported
+    # Helper properties -----------------------------------------------------------------------------
+    # Since devices are equipped differently, we need helper to determine the nr of channels
+    # which then determines whether the switching channel command is supported and how to read
+    # out the traces
 
     @property
     def instrument_channels(self):
@@ -144,14 +145,16 @@ class FSSeries(SCPIMixin, Instrument):
             channels = [channel.strip().strip("'") for channel in response.split(',')]
             num_channels = len(channels) // 2
             
-            print(f"Number of available channels: {num_channels}. You can use read_trace_multichannel to read data from the active channels.")
+            print(f"""Number of available channels: {num_channels}. You can use read_trace to 
+                  read data from the active channels and use the other channel functions.""")
             return num_channels
         except AttributeError:
-            print("The instrument object does not support 'query' or 'ask'. Please try to use read_trace_singlechannel.")
+            print("The instrument object does not support 'query' or 'ask'.")
             return 0
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                print("INST:LIST? command not supported. Assuming non-multichannel device. Please try to use read_trace_singlechannel")
+                print("""INST:LIST? command not supported. Assuming non-multichannel device. 
+                      You are likely unable to use channel functions.""")
                 return 0
             else:
                 raise
@@ -163,7 +166,7 @@ class FSSeries(SCPIMixin, Instrument):
         Read trace data from the active channel.
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
         measurements, that is added to a device on request. Therefore, not every device has
-        this and can change between channels which is why 
+        this and can change between channels.
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
@@ -301,7 +304,9 @@ class FSSeries(SCPIMixin, Instrument):
             self.write(f"FUNC:ZOOM {value}; *WAI")
 
     # Channels -------------------------------------------------------------------------------------
-
+    # Please check whether your device supports these functionalities. You can use the helper
+    # property available_channels to check if the device supports them.
+    
     def create_channel(self, channel_type, channel_name):
         """Create a new channel.
 
