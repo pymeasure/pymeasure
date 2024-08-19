@@ -146,22 +146,19 @@ class FSSeries(SCPIMixin, Instrument):
             channels = [channel.strip().strip("'") for channel in response.split(',')]
             num_channels = len(channels) // 2
             
-            print(f"Number of available channels: {num_channels}. You can use read_trace to" 
+            print(f"Number of available channels: {num_channels}.\n You can use read_trace to " 
                   "read data from the active channels and use the other channel functions.")
-            return num_channels
         except AttributeError:
             warnings.warn("The instrument object does not support 'query' or 'ask'.")
             #print("The instrument object does not support 'query' or 'ask'.")
-            return 0
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
                 warnings.warn(
-                            "Timeout while waiting for 'INST:LIST?' command. "
-                            "INST:LIST? command not supported or can't establish connection. "
+                            "Timeout while waiting for 'INST:LIST?' command.\n "
+                            "INST:LIST? command not supported or can't establish connection.\n "
                             "Assuming non-multi channel device. "
                             "You are likely unable to use channel functions."
                             )
-                return 0
             else:
                 raise
 
