@@ -171,7 +171,6 @@ class FSSeries(SCPIMixin, Instrument):
 
         # multichannel devices
         if self.instrument_channels > 1:
-            trace_data = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
             if (
                 self.active_channel == ("PNO")
                 or self.available_channels.get(self.active_channel) == "PNOISE"
