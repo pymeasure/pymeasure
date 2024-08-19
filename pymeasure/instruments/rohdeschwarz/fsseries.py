@@ -29,6 +29,9 @@ import pyvisa
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 import warnings
+import sys
+
+sys.tracebacklimit = 0
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -139,7 +142,6 @@ class FSSeries(SCPIMixin, Instrument):
 
     @property
     def instrument_channels(self):
-        warnings.simplefilter("always", append=True)
         try:
             response = self.ask("INST:LIST?")
             print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
@@ -190,7 +192,6 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        warnings.simplefilter("always", append=True)
         try:
             # multi channel devices
             if self.get_instrument_channels > 1:
