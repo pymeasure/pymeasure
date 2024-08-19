@@ -149,10 +149,12 @@ class FSSeries(SCPIMixin, Instrument):
             print(f"Number of available channels: {num_channels}\nYou can use read_trace to " 
                   "read data from the active channels and use the other channel functions.")
         except AttributeError:
+            warnings.simplefilter("always")
             warnings.warn("The instrument object does not support 'query' or 'ask'.")
             #print("The instrument object does not support 'query' or 'ask'.")
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
+                warnings.simplefilter("always")
                 warnings.warn(
                             "Timeout while waiting for 'INST:LIST?' command.\n "
                             "INST:LIST? command not supported or can't establish connection.\n "
@@ -217,9 +219,11 @@ class FSSeries(SCPIMixin, Instrument):
 
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
+                warnings.simplefilter("always")
                 warnings.warn(f"Visa Timeout Error occurred: {e} There might not be any data in the trace.", RuntimeWarning)
                 return None
             else:
+                warnings.simplefilter("always")
                 warnings.warn(f"VisaIOError occurred: {e}", RuntimeWarning)
                 return None
             raise
