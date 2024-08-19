@@ -437,9 +437,9 @@ class ChannelCommands(Channel):
         "SERV:CHAN{ch}:TRAC:ACT?",
         "CALC{ch}:PAR%d:SEL",
         """
-        Controls the active trace for a channel. Only displaced traces can be made into
-        being the active trace. If the trace is > the total traces for the channel, set
-        by `total_traces`, this command with not complete and with error (integer).
+        Control the active trace for a channel. Only displaced traces can be made into being the
+        active trace. If the trace is > the total traces for the channel, set by `total_traces`,
+        this command with not complete and with error (integer).
         """,
         cast=int,
         validator=strict_discrete_set,
@@ -535,10 +535,10 @@ class ChannelCommands(Channel):
         "CALC{ch}:DATA:FDAT?",  # read out real/imag data for active trace with corrections
         # "CALC{ch}:DATA:SDAT %e",
         """
-        Gets a formatted data array contains the formatted data (values displayed on VNA) obtained
-        by performing data math operations, measurement parameter conversion, and smoothing on a
-        particular corrected data array. Regardless of the data format, it contains two data
-        elements per measurement point as shown in the following table (array of complex).
+        Get a formatted data array containing the formatted data (values displayed on VNA)
+        obtained by performing data math operations, measurement parameter conversion, and
+        smoothing on a particular corrected data array. Regardless of the data format, it contains
+        two data elements per measurement point as shown in the following table (array of complex).
 
         `formatted_measurement_data` always returns a complex number array based on the format set
         by using `measurement_format` and the currently active trace for the channel.
@@ -768,12 +768,20 @@ class ChannelCommands(Channel):
 
         Returns:
 
+        Something
+
+        Example:
+
+        KeysightE5071C.ch_1.calibration_coefficient("EL",1,2,[1+1j, 1+1j, 1+1j, ...])
+
+        Returns:
+
+        Nothing
+
         """,
     )
 
-    # needs validator
-    # dynamic=True,
-    # values=() # based on options or updated to new values
+    # and "SENS{1-16}:CORR:COEF:SAVE"
 
     start_frequency = Channel.control(
         "SENS{ch}:FREQ:STAR?",
@@ -1013,9 +1021,6 @@ class ChannelCommands(Channel):
 
     # def trigger_continuous(self):
     #     self.write("INIT{self.id}:CONT")
-
-    # write calibration coefficient data arrays "SENS{1-16}:CORR:COEF" pg 548
-    # and "SENS{1-16}:CORR:COEF:SAVE"
 
     markers = Instrument.MultiChannelCreator(
         MarkerCommands, [x + 1 for x in range(1)], prefix="mkr_"
@@ -1307,6 +1312,15 @@ class KeysightE5071C(SCPIMixin, Instrument):
     # trigger source ':TRIGger[:SEQuence]:SOURce {INTernal|EXTernal|MANual|BUS}?'
     # trigger averaging 'TRIG:AVER'
 
+    reset_averaging_on_trigger = Channel.control(
+        "TRIG:AVER?",
+        "TRIG:AVER %d",
+        """
+        Control if averaging is reset on each triggering event (boolean).
+        """,
+        cast=bool,
+    )
+
     # 'TRIG:SCOP {ALL|ACTive}' select channel to be triggered
     # ''
 
@@ -1496,3 +1510,7 @@ class KeysightE5071C(SCPIMixin, Instrument):
         Sets the trigger sequence for all channels to idle state.
         """
         self.write(":ABOR")
+
+    # select cal kit
+    # define cal kit standard
+    # define cal kit standard terms
