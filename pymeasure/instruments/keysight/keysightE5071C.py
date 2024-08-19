@@ -136,6 +136,8 @@ WINDOW_GRAPH_OPTIONS = [
     "D1234__CDEF",
 ]
 
+# byte order mapping definition
+
 
 class TraceException(Exception):
     """
@@ -236,9 +238,24 @@ class TraceCommands(Channel):
 
     # trace scale
     # :DISP:WIND{1-16}:TRAC{1-16}:Y:PDIV
+    scale = Channel.control(
+        "DISP:WIND{{ch}}}:TRAC{tr}:Y:PDIV?",
+        "DISP:WIND{{ch}}}:TRAC{tr}:Y:PDIV %d",
+        """
+
+        """,
+    )
 
     # trace auto scale
     # :DISP:WIND{1-16}:TRAC{1-16}:Y:AUTO
+    auto_scale = Channel.control(
+        "DISP:WIND{{ch}}}:TRAC{tr}:Y:AUTO?",
+        "DISP:WIND{{ch}}}:TRAC{tr}:Y:AUTO %d",
+        """
+
+        """,
+        cast=bool,
+    )
 
     # need trace divisions
 
@@ -723,43 +740,43 @@ class ChannelCommands(Channel):
     # SENSe Commands
 
     # needs to be rewritten to a function
-    # calibration_coefficient = Channel.control(
-    #     "SENS{ch}:CORR:COEF? %s, %i, %i",
-    #     "SENS{ch}:CORR:COEF %s, %i, %i",
-    #     """
-    #     Control the calibration coefficient data for a channel. Requires a tuple in the format of
-    #     `tuple[str, int, int]` for getting the calibration coefficient values or in the format of
-    #     `tuple[str, int, int, list[complex]]` for setting the calibration coefficient.
+    calibration_coefficient = Channel.control(
+        "SENS{ch}:CORR:COEF? %s, %i, %i",
+        "SENS{ch}:CORR:COEF %s, %i, %i, %d",
+        """
+        Control the calibration coefficient data for a channel. Requires a tuple in the format of
+        `tuple[str, int, int]` for getting the calibration coefficient values or in the format of
+        `tuple[str, int, int, list[complex]]` for setting the calibration coefficient.
 
-    #     The first element in the tuple is the coefficient type, being one of the following:
-    #     ES Source match
-    #     ER Reflection tracking
-    #     ED Directivity
-    #     EL Load match
-    #     ET Transmission tracking
-    #     EX Isolation
+        The first element in the tuple is the coefficient type, being one of the following:
+        ES Source match
+        ER Reflection tracking
+        ED Directivity
+        EL Load match
+        ET Transmission tracking
+        EX Isolation
 
-    #     The second element is the response port (int).
+        The second element is the response port (int).
 
-    #     The third element is the stimulus port (int).
+        The third element is the stimulus port (int).
 
-    #     The last element is only needed for writing an array of coefficient values to a channel
-    #     (complex).
+        The last element is only needed for writing an array of coefficient values to a channel
+        (complex).
 
-    #     If the first element is ES Source match, ER Reflection tracking, or ED Directivity, both
-    #     the second and third elements must be the same integer.
+        If the first element is ES Source match, ER Reflection tracking, or ED Directivity, both
+        the second and third elements must be the same integer.
 
-    #     If the first element is EL Load match, ET Transmission tracking, or EX Isolation, both
-    #     the second and third elements must be different integers.
+        If the first element is EL Load match, ET Transmission tracking, or EX Isolation, both
+        the second and third elements must be different integers.
 
-    #     Example:
+        Example:
 
-    #     KeysightE5071C.ch_1.calibration_coefficient("EL",1,2)
+        KeysightE5071C.ch_1.calibration_coefficient("EL",1,2)
 
-    #     Returns:
+        Returns:
 
-    #     """,
-    #     )
+        """,
+    )
 
     # needs validator
     # dynamic=True,
@@ -1011,7 +1028,13 @@ class ChannelCommands(Channel):
         MarkerCommands, [x + 1 for x in range(1)], prefix="mkr_"
     )
 
+    ref_marker = Instrument.MultiChannelCreator(
+        MarkerCommands, [x + 1 for x in range(1)], prefix="ref_mkr_"
+    )
+
     total_markers = 1
+
+    total_ref_markers = 1
 
     def update_number_of_markers(self, number_of_markers=None):
         """
@@ -1265,8 +1288,6 @@ class KeysightE5071C(Instrument):
 
     # trace layout 'DISP:WIND{1-16}:SPL' pg 475
 
-    # disable display 'DISP:ENAB?' {ON|OFF|0|1}
-
     # Display
 
     display_enabled = Instrument.control(
@@ -1369,10 +1390,6 @@ class KeysightE5071C(Instrument):
         cast=int,
     )
 
-    # class to track active channel and active trace in channel
-    # ':SERV:CHAN:ACT?' query only read out of active channel
-    # ':SERV:CHAN{1-16}:TRAC:ACT?' query only read out of active trace for channel
-
     # SYSTem Commands
 
     def emit_beep(self):
@@ -1404,27 +1421,74 @@ class KeysightE5071C(Instrument):
     )
 
     # error stuff
-    # ':STAT:OPER?' Reads out the value of the Operation Status Event Register. (Query only)
-    # 'STAT:OPER:COND?' Reads out the value of the Operation Status Condition Register. (Query only)
-    # ':STAT:OPER:ENAB' Sets the value of the Operation Status Enable Register.
+
+    operation_status_event_register = Instrument.measurement(
+        "STAT:OPER?",
+        """
+        Read out the value of the Operation Status Event Register (string).
+        """,
+    )
+
+    operation_status_condition_register = Instrument.measurement(
+        "STAT:OPER:COND?",
+        """
+        Read out the value of the Operation Status Condition Register (string).
+        """,
+    )
+
+    operation_status_enable_register = Instrument.setting(
+        "STAT:OPER:ENAB %s",
+        """
+        Set the value of the Operation Status Enable Register (string).
+        """,
+    )
+
+    system_warmup_completed = Instrument.measurement(
+        "SYST:TEMP?",
+        """
+        Read out if VNA warm-up satisfies system specifications (boolean).
+        """,
+    )
+
     # 'SYST:ERR?'
-    # ':SYSTem:BACKlight {ON|OFF|1|0}?' Turns on or off LCD backlight,
-    # 'SYST:TEMP' read out if warm-up satisfy specifications of VNA
 
-    # system correction enabled 'SYST:CORR {ON|OFF|0|1}?'
+    system_correction_enabled = Instrument.control(
+        "SYST:CORR?",
+        "SYST:CORR %d",
+        """
+        Control whether system correction enabled on the VNA (boolean).
+        """,
+        cast=bool,
+    )
 
-    # :FORM:DATA
-    # Specifies the format of data transfered
-    # Description
-    # ASCii (preset value) Specifies the ASCII transfer format.
-    # REAL Specifies the IEEE 64-bit floating point binary transfer format.
-    # REAL32 Specifies the IEEE 32-bit floating point binary transfer format
+    data_transfer_format = Instrument.control(
+        "FORM:DATA?",
+        "FORM:DATA %s",
+        """
+        Control the format of the data transfered.
 
-    # :FORM:BORD NORMal or SWAPped
-    # data transfer format is set to the binary transfer format, sets the transfer order of
-    # each byte in data (byte order)
-    # Normal MSB first
-    # Swapped LSB first
+        ============   ===========
+        Values         Description
+        ============   ===========
+
+        ASC            The ASCII transfer format.
+        REAL           The IEEE 64-bit floating point binary transfer format.
+        REAL32         The IEEE 32-bit floating point binary transfer format.
+        """,
+    )
+
+    # needs to be mapped and validated
+    data_transfer_byte_order = Instrument.control(
+        "FORM:BORD?",
+        "FORM:BORD %s",
+        """
+        Control the data transfer format used when `data_transfer_format` is set to the binary
+        transfer format. Valid values are `normal` and `swapped` (string).
+
+        `normal` byte order transfers the MSB (most significant bit) first.
+        `swapped` byte order transfers the LSB (least significant bit) first.
+        """,
+    )
 
     # reset
 
