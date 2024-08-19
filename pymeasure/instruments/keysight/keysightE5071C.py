@@ -26,6 +26,7 @@
 import logging
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -491,9 +492,6 @@ class ChannelCommands(Channel):
         """,
         cast=str,
     )
-
-    # absolute_measurement_source set output port for absolute measurement
-    # ":CALC{1-16}:PAR{1-16}:SPOR?" {1|2}
 
     # CALC{1-16}:DATA:FDAT
     # """
@@ -1066,7 +1064,7 @@ class ChannelCommands(Channel):
             marker.enabled = True
 
 
-class KeysightE5071C(Instrument):
+class KeysightE5071C(SCPIMixin, Instrument):
     """
     Need docstring
     """
@@ -1074,7 +1072,7 @@ class KeysightE5071C(Instrument):
     # pylint: disable=too-many-instance-attributes
     # Nine is reasonable in this case.
 
-    def __init__(self, adapter, name="Keysight E5071C", **kwargs):
+    def __init__(self, adapter, name="VNA", **kwargs):
         super().__init__(adapter, name, includeSCPI=True, **kwargs)
 
         self._manu = ""
@@ -1084,11 +1082,11 @@ class KeysightE5071C(Instrument):
         self._options = ""
         self.number_of_channels = 1
 
-        if name is None:
+        if name == "VNA":
             # written this way to pass 'test_all_instruments.py' while allowing the
             # *IDN? to populate the name of the VNA
             try:
-                self._manu, self._model, self._sn, self._fw = self.id
+                self._manu, self._model, self._sn, self._fw = self.id.split(",")
             except ValueError:
                 self._manu = "Keysight"
                 self._model = "E5071C"
@@ -1097,38 +1095,32 @@ class KeysightE5071C(Instrument):
         else:
             self.name = name
 
-    id = Instrument.measurement(
-        "*IDN?",
-        """Get the identification of the instrument""",
-        cast=str,
-    )
-
     @property
     def manu(self):
         """Get the manufacturer of the instrument."""
         if self._manu == "":
-            self._manu, self._model, self._sn, self._fw = self.id
+            self._manu, self._model, self._sn, self._fw = self.id.split(",")
         return self._manu
 
     @property
     def model(self):
         """Get the model of the instrument."""
         if self._model == "":
-            self._manu, self._model, self._sn, self._fw = self.id
+            self._manu, self._model, self._sn, self._fw = self.id.split(",")
         return self._model
 
     @property
     def fw(self):
         """Get the firmware of the instrument."""
         if self._fw == "":
-            self._manu, self._model, self._sn, self._fw = self.id
+            self._manu, self._model, self._sn, self._fw = self.id.split(",")
         return self._fw
 
     @property
     def sn(self):
         """Get the serial number of the instrument."""
         if self._sn == "":
-            self._manu, self._model, self._sn, self._fw = self.id
+            self._manu, self._model, self._sn, self._fw = self.id.split(",")
         return self._sn
 
     output_enabled = Instrument.control(
