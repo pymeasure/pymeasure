@@ -1,7 +1,7 @@
 # from time import sleep
 
 import pytest
-from pymeasure.instruments.rohdeschwarz.fsl import FSL
+from pymeasure.instruments.rohdeschwarz.fsseries import FSL
 
 pytest.skip("Only works with connected hardware", allow_module_level=True)
 RESOURCE = "TCPIP::141.20.43.231::INSTR"

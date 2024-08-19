@@ -158,7 +158,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     # Traces ---------------------------------------------------------------------------------------
 
-    def read_trace(self, n_trace=1):
+    def read_trace_multichannel(self, n_trace=1):
         """
         Read trace data from the active channel.
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
@@ -171,27 +171,40 @@ class FSSeries(SCPIMixin, Instrument):
         trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
         frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
 
-        # Check for multichannel devices
-        if check_instrument_channels(self) < 2:
+        if (
+            self.active_channel == ("PNO")
+            or self.available_channels.get(self.active_channel) == "PNOISE"
+        ):
+            y = trace_data[1::2]
+            x = trace_data[0::2]
+
+        elif (
+            self.active_channel == ("SAN")
+            or self.available_channels.get(self.active_channel) == "SANALYZER"
+        ):
             y = trace_data
             x = frequency_data
-        else:
-            if (
-                self.active_channel == ("PNO")
-                or self.available_channels.get(self.active_channel) == "PNOISE"
-            ):
-                y = trace_data[1::2]
-                x = trace_data[0::2]
 
-            elif (
-                self.active_channel == ("SAN")
-                or self.available_channels.get(self.active_channel) == "SANALYZER"
-            ):
-                y = trace_data
-                x = frequency_data
+        return np.array([x, y])
+    
+    def read_trace_singlechannel(self, n_trace=1):
+        """
+        Read trace data.
+        Some devices can't change between channels with the usual remote commands. It acts as a
+        single channel device from this perspective which is why the differentiation for reading out
+        the trace is needed. 
 
-            return np.array([x, y])
+        :param n_trace: The trace number (1-6). Default is 1.
+        :return: 1d numpy array of the trace data.
+        """
+        trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
+        frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
 
+        y = trace_data
+        x = frequency_data
+
+        return np.array([x, y])
+    
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",

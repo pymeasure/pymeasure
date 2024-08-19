@@ -23,5 +23,6 @@
 #
 
 from .sfm import SFM
-from .fsl import FSL
+from .fsseries import FSL
+from .fsseries import FSW
 from .hmp import HMP4040
