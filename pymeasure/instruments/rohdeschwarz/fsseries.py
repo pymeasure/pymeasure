@@ -158,7 +158,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     # Traces ---------------------------------------------------------------------------------------
 
-    def read_trace(self, n_trace=1, timeout=10000):
+    def read_trace(self, n_trace=1):
         """
         Read trace data from the active channel.
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
@@ -168,7 +168,6 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        self.adapter.connection.timeout = timeout
 
         # multichannel devices
         if self.instrument_channels > 1:
