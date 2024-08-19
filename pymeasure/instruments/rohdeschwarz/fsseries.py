@@ -176,14 +176,14 @@ class FSSeries(SCPIMixin, Instrument):
                 self.active_channel == ("PNO")
                 or self.available_channels.get(self.active_channel) == "PNOISE"
             ):
-                y = trace_data[1::2]
-                x = trace_data[0::2]
-
+                y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))[1::2]
+                x = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))[0::2]
+  
             elif (
                 self.active_channel == ("SAN")
                 or self.available_channels.get(self.active_channel) == "SANALYZER"
             ):
-                y = trace_data
+                y = trace_data = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
                 x = np.linspace(self.freq_start, self.freq_stop, len(y))
 
             return np.array([x, y])
