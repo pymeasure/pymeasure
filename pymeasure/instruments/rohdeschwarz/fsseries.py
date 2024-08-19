@@ -168,11 +168,10 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
-        trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
-        frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
 
         # multichannel devices
         if self.instrument_channels > 1:
+            trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
             if (
                 self.active_channel == ("PNO")
                 or self.available_channels.get(self.active_channel) == "PNOISE"
@@ -185,12 +184,14 @@ class FSSeries(SCPIMixin, Instrument):
                 or self.available_channels.get(self.active_channel) == "SANALYZER"
             ):
                 y = trace_data
-                x = frequency_data
+                x = np.linspace(self.freq_start, self.freq_stop, len(y))
 
             return np.array([x, y])
         #singlechannel devices
         else:
-            return np.array([frequency_data, trace_data])
+            y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
+            x = np.linspace(self.freq_start, self.freq_stop, len(y))
+        return np.array([x, y])
     
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
