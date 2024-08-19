@@ -132,12 +132,13 @@ class FSSeries(SCPIMixin, Instrument):
         self.write("INIT:CONM; *WAI")
 
     # Helper function ------------------------------------------------------------------------------
-    # Since devices are equipped differently, we need function to determine the nr of channels
+    # Since devices are equipped differently, we need functionality to determine the nr of channels
     # which then determines whether the switching channel command is supported
 
-    def check_instrument_channels(resource):
+    @property
+    def instrument_channels(self):
         try:
-            response = resource.ask("INST:LIST?")
+            response = self.ask("INST:LIST?")
             print("Raw response:", response)
             
             channels = [channel.strip().strip("'") for channel in response.split(',')]
@@ -157,12 +158,12 @@ class FSSeries(SCPIMixin, Instrument):
 
     # Traces ---------------------------------------------------------------------------------------
 
-    def read_trace_multichannel(self, n_trace=1):
+    def read_trace(self, n_trace=1):
         """
         Read trace data from the active channel.
         Multichannel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
         measurements, that is added to a device on request. Therefore, not every device has
-        this and can change between channels. 
+        this and can change between channels which is why 
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
@@ -170,39 +171,26 @@ class FSSeries(SCPIMixin, Instrument):
         trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
         frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
 
-        if (
-            self.active_channel == ("PNO")
-            or self.available_channels.get(self.active_channel) == "PNOISE"
-        ):
-            y = trace_data[1::2]
-            x = trace_data[0::2]
+        # multichannel devices
+        if self.instrument_channels > 1:
+            if (
+                self.active_channel == ("PNO")
+                or self.available_channels.get(self.active_channel) == "PNOISE"
+            ):
+                y = trace_data[1::2]
+                x = trace_data[0::2]
 
-        elif (
-            self.active_channel == ("SAN")
-            or self.available_channels.get(self.active_channel) == "SANALYZER"
-        ):
-            y = trace_data
-            x = frequency_data
+            elif (
+                self.active_channel == ("SAN")
+                or self.available_channels.get(self.active_channel) == "SANALYZER"
+            ):
+                y = trace_data
+                x = frequency_data
 
-        return np.array([x, y])
-    
-    def read_trace_singlechannel(self, n_trace=1):
-        """
-        Read trace data.
-        Some devices can't change between channels with the usual remote commands. It acts as a
-        single channel device from this perspective which is why the differentiation for reading out
-        the trace is needed. 
-
-        :param n_trace: The trace number (1-6). Default is 1.
-        :return: 1d numpy array of the trace data.
-        """
-        trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
-        frequency_data = np.linspace(self.freq_start, self.freq_stop, len(y))
-
-        y = trace_data
-        x = frequency_data
-
-        return np.array([x, y])
+            return np.array([x, y])
+        #singlechannel devices
+        else:
+            return np.array([frequency_data, trace_data])
     
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
