@@ -236,23 +236,20 @@ class TraceCommands(Channel):
         cast=int,
     )
 
-    # trace scale
-    # :DISP:WIND{1-16}:TRAC{1-16}:Y:PDIV
     scale = Channel.control(
         "DISP:WIND{{ch}}}:TRAC{tr}:Y:PDIV?",
         "DISP:WIND{{ch}}}:TRAC{tr}:Y:PDIV %d",
         """
-
+        Control the scale setting per division of a trace in a channel (float).
         """,
+        cast=float,
     )
 
-    # trace auto scale
-    # :DISP:WIND{1-16}:TRAC{1-16}:Y:AUTO
     auto_scale = Channel.control(
         "DISP:WIND{{ch}}}:TRAC{tr}:Y:AUTO?",
         "DISP:WIND{{ch}}}:TRAC{tr}:Y:AUTO %d",
         """
-
+        Control the auto scale setting for a trace in a channel (boolean).
         """,
         cast=bool,
     )
@@ -362,8 +359,6 @@ class MarkerCommands(Channel):
 # :DISP:WIND{1-16}:Y:DIV
 
 # need channel window class (channel window gets again divided into subwindows)
-
-# need port power class
 
 
 class PortCommands(Channel):
