@@ -139,6 +139,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     @property
     def instrument_channels(self):
+        warnings.simplefilter("always", append=True)
         try:
             response = self.ask("INST:LIST?")
             print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
@@ -189,6 +190,7 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
+        warnings.simplefilter("always", append=True)
         try:
             # multi channel devices
             if self.get_instrument_channels > 1:
