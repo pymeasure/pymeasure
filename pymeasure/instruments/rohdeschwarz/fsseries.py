@@ -155,9 +155,12 @@ class FSSeries(SCPIMixin, Instrument):
             return 0
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                print("INST:LIST? command not supported or can't establish connection. "
-                      "Assuming non-multi channel device. "
-                      "You are likely unable to use channel functions.")
+                warnings.warn(
+                            "Timeout while waiting for 'INST:LIST?' command. "
+                            "INST:LIST? command not supported or can't establish connection. "
+                            "Assuming non-multi channel device. "
+                            "You are likely unable to use channel functions."
+                            )
                 return 0
             else:
                 raise
@@ -176,32 +179,39 @@ class FSSeries(SCPIMixin, Instrument):
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
         """
+        try:
+            # multichannel devices
+            if self.instrument_channels > 1:
+                trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
+                if (
+                    self.active_channel == ("PNO")
+                    or self.available_channels.get(self.active_channel) == "PNOISE"
+                ):
+                    y = trace_data[1::2]
+                    x = trace_data[0::2]
 
-        # multichannel devices
-        if self.instrument_channels > 1:
-            trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
-            if (
-                self.active_channel == ("PNO")
-                or self.available_channels.get(self.active_channel) == "PNOISE"
-            ):
-                y = trace_data[1::2]
-                x = trace_data[0::2]
+                elif (
+                    self.active_channel == ("SAN")
+                    or self.available_channels.get(self.active_channel) == "SANALYZER"
+                ):
+                    y = trace_data
+                    x = np.linspace(self.freq_start, self.freq_stop, len(y))
 
-            elif (
-                self.active_channel == ("SAN")
-                or self.available_channels.get(self.active_channel) == "SANALYZER"
-            ):
-                y = trace_data
+                return np.array([x, y])
+            
+            #singlechannel devices
+            else:
+                y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
                 x = np.linspace(self.freq_start, self.freq_stop, len(y))
-
             return np.array([x, y])
-        
-        #singlechannel devices
-        else:
-            y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
-            x = np.linspace(self.freq_start, self.freq_stop, len(y))
-        return np.array([x, y])
-    
+
+        except pyvisa.VisaIOError as e:
+            if e.error_code == pyvisa.constants.StatusCode.error_timeout:
+                warnings.warn(f"Visa Timeout Error occurred: {e}. There might not be any data in the trace.", RuntimeWarning)
+            else:
+                warnings.warn(f"VisaIOError occurred: {e}", RuntimeWarning)
+            raise
+
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",
