@@ -174,7 +174,7 @@ class FSSeries(SCPIMixin, Instrument):
             return num_channels
         except AttributeError:
             return 0
-        except pyvisa.VisaIOError as e:
+        except pyvisa.VisaIOError:
             return 0
 
     # Traces ---------------------------------------------------------------------------------------
@@ -182,11 +182,11 @@ class FSSeries(SCPIMixin, Instrument):
     def read_trace(self, n_trace=1):
         """
         Read trace data from the active channel.
+
         Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
-        measurements, that is added to a device on request. Therefore, not every device has
-        this and can change between channels.
-        Remember to "open" the desired channel with create_channel first if not already done 
-        to be able to activate this channel.
+        measurements, that is added to a device on request. Therefore, not every device has this and
+        can change between channels. Remember to "open" the desired channel with create_channel
+        first if not already done to be able to activate this channel.
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
