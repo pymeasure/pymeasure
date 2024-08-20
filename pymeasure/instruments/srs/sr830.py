@@ -603,6 +603,7 @@ class SR830(Instrument):
                 self.adapter.connection.timeout = standard_timeout
                 ch1_buffer, ch2_buffer = np.nan, np.nan
         else:
+            self.start_buffer(fast=False)
             self.wait_for_buffer(buffer_size, timeout=timeout)
             measured_buffer_count = self.buffer_count
             ch1_buffer = self.get_buffer_bytes(channel=1, start=0, end=measured_buffer_count)
