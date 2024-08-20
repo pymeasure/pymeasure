@@ -48,9 +48,8 @@ class FSSeries(SCPIMixin, Instrument):
     """
     Represents a Rohde&Schwarz FS Series of spectrum analyzers like FSL and FSW.
 
-    All physical values that can be set can either be as a string of a value
-    and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
-    dBm, etc.).
+    All physical values that can be set can either be as a string of a value and a unit (e.g.
+    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
@@ -130,13 +129,13 @@ class FSSeries(SCPIMixin, Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Helper properties ----------------------------------------------------------------------------
-    # Since devices are equipped differently, we need helper to determine the nr of channels
+    # Helper functions -----------------------------------------------------------------------------
+    # Since devices are equipped differently, we need helpers to determine the number of channels
     # which then determines whether the switching channel command is supported and how to read
     # out the traces
 
-    @property
-    def instrument_channels(self):
+    def check_instrument_channel_capability(self):
+        """Check whether the instrument supports multiple channels."""
         try:
             response = self.ask("INST:LIST?")
             print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
@@ -145,8 +144,8 @@ class FSSeries(SCPIMixin, Instrument):
             num_channels = len(channels) // 2
 
             print(
-                f"Number of available channels: {num_channels}\nYou can use read_trace to "
-                "read data from the active channels and use the other channel functions."
+                f"Number of available channels: {num_channels}.\nYou can use read_trace to read"
+                "data from the active channels and use the other channel functions."
             )
         except AttributeError:
             warnings.simplefilter("always")
@@ -164,9 +163,9 @@ class FSSeries(SCPIMixin, Instrument):
             else:
                 raise
 
-    # Same function but only returns the number of channels
     @property
-    def get_instrument_channels(self):
+    def n_instrument_channels(self):
+        """Get number of instrument channels."""
         try:
             response = self.ask("INST:LIST?")
             channels = [channel.strip().strip("'") for channel in response.split(",")]
@@ -193,7 +192,7 @@ class FSSeries(SCPIMixin, Instrument):
         """
         try:
             # multi channel devices
-            if self.get_instrument_channels > 1:
+            if self.n_instrument_channels > 1:
                 trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
                 if (
                     self.active_channel == ("PNO")
@@ -389,19 +388,13 @@ class FSSeries(SCPIMixin, Instrument):
 
     @property
     def active_channel(self):
-        """Return the name of the active channel.
-
-        :return: active channel name
-        :rtype: string
+        """
+        Control the name of the active channel. Note: The channel needs to be open on the device!
         """
         return self.values("INST?")[0]
 
     @active_channel.setter
     def activate_channel(self, channel):
-        """Activate another open channel. Note: The channel needs to be open on the device!
-
-        :param channel: Name of the channel to be activated
-        """
         availabel_channels = [chan for chan in self.available_channels.keys()]
         channel = strict_discrete_set(channel, availabel_channels)
         self.write(f"INST '{channel}'")
