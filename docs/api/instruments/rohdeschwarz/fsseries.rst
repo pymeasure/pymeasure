@@ -134,15 +134,15 @@ Here is an example of a simple script for recording the peak of a signal.
     x, y = fsl.read_trace()
 
 
-.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.fsseries
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSSeries
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.fsl
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSL
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.fsw
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSW
     :members:
     :show-inheritance:
 
