@@ -236,7 +236,7 @@ class Adapter:
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
+        :param is_big_endian: boolean indicating endianness.
         :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
         :return: binary string.
         :rtype: bytes
