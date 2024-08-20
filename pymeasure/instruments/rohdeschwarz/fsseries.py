@@ -228,7 +228,6 @@ class FSSeries(SCPIMixin, Instrument):
                 warnings.simplefilter("always")
                 warnings.warn(f"VisaIOError occurred: {e}", RuntimeWarning)
                 return None
-            raise
 
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
