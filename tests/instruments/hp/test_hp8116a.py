@@ -28,7 +28,11 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.hp import HP8116A
 from pymeasure.instruments.hp.hp8116a import Status
 
-HP8116A.status = property(fget=lambda self: Status(5))
+
+class HP8116AWithMockStatus(HP8116A):
+    @property
+    def status(self):
+        return Status(5)
 
 
 init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
@@ -36,7 +40,7 @@ init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
 
 def test_init():
     with expected_protocol(
-            HP8116A,
+            HP8116AWithMockStatus,
             init_comm,
     ):
         pass  # Verify the expected communication.
@@ -44,7 +48,7 @@ def test_init():
 
 def test_duty_cycle():
     with expected_protocol(
-            HP8116A,
+            HP8116AWithMockStatus,
             init_comm + [(b"IDTY", b"00000035")],
     ) as instr:
         assert instr.duty_cycle == 35
@@ -52,18 +56,18 @@ def test_duty_cycle():
 
 def test_duty_cycle_setter():
     with expected_protocol(
-            HP8116A,
+            HP8116AWithMockStatus,
             init_comm + [(b"DTY 34.5 %", None)],
     ) as instr:
         instr.duty_cycle = 34.5
 
 
 def test_sweep_time():
-    with expected_protocol(HP8116A, init_comm + [("SWT 5 S", None)]) as inst:
+    with expected_protocol(HP8116AWithMockStatus, init_comm + [("SWT 5 S", None)]) as inst:
         # This test tests also the generate_1_2_5_sequence method and truncation.
         inst.sweep_time = 3
 
 
 def test_limit_enabled():
-    with expected_protocol(HP8116A, init_comm + [("L1", None)]) as inst:
+    with expected_protocol(HP8116AWithMockStatus, init_comm + [("L1", None)]) as inst:
         inst.limit_enabled = True
