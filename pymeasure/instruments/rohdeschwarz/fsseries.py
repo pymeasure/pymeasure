@@ -183,9 +183,9 @@ class FSSeries(SCPIMixin, Instrument):
         Read trace data from the active channel.
 
         Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise
-        measurements, that is added to a device on request. Therefore, not every device has this and
-        can change between channels. Remember to "open" the desired channel with create_channel
-        first if not already done to be able to activate this channel.
+        measurements, that is added to a device on request. Therefore, not every device has the
+        capability to  change between channels. Remember to "open" the desired channel with the
+        `create_channel` method first.
 
         :param n_trace: The trace number (1-6). Default is 1.
         :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
