@@ -437,9 +437,8 @@ class FSL(FSSeries):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
 
-    All physical values that can be set can either be as a string of a value
-    and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
-    dBm, etc.).
+    All physical values that can be set can either be as a string of a value and a unit (e.g.
+    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
     pass
@@ -449,9 +448,8 @@ class FSW(FSSeries):
     """
     Represents a Rohde&Schwarz FSW spectrum analyzer.
 
-    All physical values that can be set can either be as a string of a value
-    and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
-    dBm, etc.).
+    All physical values that can be set can either be as a string of a value and a unit (e.g.
+    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
     pass
