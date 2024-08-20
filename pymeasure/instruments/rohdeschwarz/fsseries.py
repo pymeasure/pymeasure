@@ -23,12 +23,13 @@
 #
 
 import logging
+import warnings
 
 import numpy as np
 import pyvisa
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
-import warnings
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -53,10 +54,7 @@ class FSSeries(SCPIMixin, Instrument):
     """
 
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
-        super().__init__(
-            adapter, name,
-            **kwargs
-        )
+        super().__init__(adapter, name, **kwargs)
 
     # Frequency settings ---------------------------------------------------------------------------
 
@@ -132,7 +130,7 @@ class FSSeries(SCPIMixin, Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Helper properties -----------------------------------------------------------------------------
+    # Helper properties ----------------------------------------------------------------------------
     # Since devices are equipped differently, we need helper to determine the nr of channels
     # which then determines whether the switching channel command is supported and how to read
     # out the traces
@@ -142,25 +140,27 @@ class FSSeries(SCPIMixin, Instrument):
         try:
             response = self.ask("INST:LIST?")
             print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
-            
-            channels = [channel.strip().strip("'") for channel in response.split(',')]
+
+            channels = [channel.strip().strip("'") for channel in response.split(",")]
             num_channels = len(channels) // 2
-            
-            print(f"Number of available channels: {num_channels}\nYou can use read_trace to " 
-                  "read data from the active channels and use the other channel functions.")
+
+            print(
+                f"Number of available channels: {num_channels}\nYou can use read_trace to "
+                "read data from the active channels and use the other channel functions."
+            )
         except AttributeError:
             warnings.simplefilter("always")
             warnings.warn("The instrument object does not support 'query' or 'ask'.")
-            #print("The instrument object does not support 'query' or 'ask'.")
+            # print("The instrument object does not support 'query' or 'ask'.")
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
                 warnings.simplefilter("always")
                 warnings.warn(
-                            "Timeout while waiting for 'INST:LIST?' command.\n "
-                            "INST:LIST? command not supported or can't establish connection.\n "
-                            "Assuming non-multi channel device. "
-                            "You are likely unable to use channel functions."
-                            )
+                    "Timeout while waiting for 'INST:LIST?' command.\n "
+                    "INST:LIST? command not supported or can't establish connection.\n "
+                    "Assuming non-multi channel device. "
+                    "You are likely unable to use channel functions."
+                )
             else:
                 raise
 
@@ -168,8 +168,8 @@ class FSSeries(SCPIMixin, Instrument):
     @property
     def get_instrument_channels(self):
         try:
-            response = self.ask("INST:LIST?")            
-            channels = [channel.strip().strip("'") for channel in response.split(',')]
+            response = self.ask("INST:LIST?")
+            channels = [channel.strip().strip("'") for channel in response.split(",")]
             num_channels = len(channels) // 2
             return num_channels
         except AttributeError:
@@ -183,7 +183,7 @@ class FSSeries(SCPIMixin, Instrument):
         """
         Read trace data from the active channel.
 
-        Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise 
+        Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise
         measurements, that is added to a device on request. Therefore, not every device has this and
         can change between channels. Remember to "open" the desired channel with create_channel
         first if not already done to be able to activate this channel.
@@ -210,7 +210,7 @@ class FSSeries(SCPIMixin, Instrument):
                     x = np.linspace(self.freq_start, self.freq_stop, len(y))
 
                 return np.array([x, y])
-            
+
             # single channel devices
             else:
                 y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
@@ -220,7 +220,10 @@ class FSSeries(SCPIMixin, Instrument):
         except pyvisa.VisaIOError as e:
             if e.error_code == pyvisa.constants.StatusCode.error_timeout:
                 warnings.simplefilter("always")
-                warnings.warn(f"Visa Timeout Error occurred: {e} There might not be any data in the trace.", RuntimeWarning)
+                warnings.warn(
+                    f"Visa Timeout Error occurred: {e} There might not be any data in the trace.",
+                    RuntimeWarning,
+                )
                 return None
             else:
                 warnings.simplefilter("always")
@@ -435,6 +438,7 @@ class FSSeries(SCPIMixin, Instrument):
         "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the instrument"
     )
 
+
 class FSL(FSSeries):
     """
     Represents a Rohde&Schwarz FSL spectrum analyzer.
@@ -443,7 +447,9 @@ class FSL(FSSeries):
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
     dBm, etc.).
     """
+
     pass
+
 
 class FSW(FSSeries):
     """
@@ -453,4 +459,5 @@ class FSW(FSSeries):
     and a unit (e.g. "1.2 GHz") or as a float value in the base units (Hz,
     dBm, etc.).
     """
+
     pass
