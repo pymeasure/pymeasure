@@ -61,45 +61,45 @@ class FSSeries(SCPIMixin, Instrument):
     freq_span = Instrument.control(
         "FREQ:SPAN?",
         "FREQ:SPAN %s",
-        "Frequency span in Hz.",
+        "Control frequency span in Hz.",
     )
 
     freq_center = Instrument.control(
         "FREQ:CENT?",
         "FREQ:CENT %s",
-        "Center frequency in Hz.",
+        "Control center frequency in Hz.",
     )
 
     freq_start = Instrument.control(
         "FREQ:STAR?",
         "FREQ:STAR %s",
-        "Start frequency in Hz.",
+        "Control start frequency in Hz.",
     )
 
     freq_stop = Instrument.control(
         "FREQ:STOP?",
         "FREQ:STOP %s",
-        "Stop frequency in Hz.",
+        "Control stop frequency in Hz.",
     )
 
     attenuation = Instrument.control(
         "INP:ATT?",
         "INP:ATT %s",
-        "Attenuation in dB.",
+        "Control attenuation in dB.",
     )
 
     res_bandwidth = Instrument.control(
         "BAND:RES?",
         # There is no space between RES and %s on purpose, see _number_or_auto.
         "BAND:RES%s",
-        "Resolution bandwidth in Hz. Can be set to 'AUTO'",
+        "Control resolution bandwidth in Hz. Can be set to 'AUTO'",
         set_process=_number_or_auto,
     )
 
     video_bandwidth = Instrument.control(
         "BAND:VID?",
         "BAND:VID%s",
-        "Video bandwidth in Hz. Can be set to 'AUTO'",
+        "Control video bandwidth in Hz. Can be set to 'AUTO'",
         set_process=_number_or_auto,
     )
 
@@ -109,14 +109,14 @@ class FSSeries(SCPIMixin, Instrument):
         "SWE:TIME?",
         # No space between TIME and %s on purpose, see _number_or_auto.
         "SWE:TIME%s",
-        "Sweep time in s. Can be set to 'AUTO'.",
+        "Control sweep time in s. Can be set to 'AUTO'.",
         set_process=_number_or_auto,
     )
 
     continuous_sweep = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
-        "Continuous (True) or single sweep (False)",
+        "Control continuous (True) or single sweep (False)",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -234,7 +234,7 @@ class FSSeries(SCPIMixin, Instrument):
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",
-        "Trace mode ('WRIT', 'MAXH', 'MINH', 'AVER' or 'VIEW')",
+        "Control trace mode ('WRIT', 'MAXH', 'MINH', 'AVER' or 'VIEW')",
         validator=strict_discrete_set,
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
@@ -298,14 +298,16 @@ class FSSeries(SCPIMixin, Instrument):
             """Disable a marker."""
             self.write("STAT OFF")
 
-        x = Instrument.control("X?", "X %s", "Position of marker on the frequency axis in Hz.")
+        x = Instrument.control(
+            "X?", "X %s", "Control position of marker on the frequency axis in Hz."
+        )
 
-        y = Instrument.control("Y?", "Y %s", "Amplitude of the marker position in dBm.")
+        y = Instrument.control("Y?", "Y %s", "Control amplitude of the marker position in dBm.")
 
         peak_excursion = Instrument.control(
             "PEXC?",
             "PEXC %s",
-            "Peak excursion in dB.",
+            "Control peak excursion in dB.",
         )
 
         def to_trace(self, n_trace=1):
