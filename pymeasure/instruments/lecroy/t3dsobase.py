@@ -290,10 +290,12 @@ class LecroyT3DSOBase(Instrument):
         auto-calibrate.
         """
         if sequence_on:
+            self.run()
             self.acquisition_type = 'NORM'
             self.wait_for_op()
             self.sequence_status = True
             self.n_sequences = n_sequences
+            self.stop()
 
         else:
             self.sequence_status = False
@@ -303,7 +305,7 @@ class LecroyT3DSOBase(Instrument):
     
         return {'is_on': self.sequence_status,
                  'n_sequences': int(self.n_sequences),
-                'memdepth': float(self.acquisition_mdepth)}
+                'memdepth': self.acquisition_mdepth}
 
 
     def clear_sweeps(self):
@@ -498,6 +500,13 @@ class LecroyT3DSOBase(Instrument):
          Not normally called by user"""
     )
 
+    _waveform_sequence = Instrument.control(
+        # good
+        ":WAVeform:SEQuence?", ":WAVeform:SEQuence %d",
+        """Which sequence to transfer, 0 is all
+         Not normally called by user"""
+    )
+
     waveform_format = Instrument.control(
         #good
         ":WAVeform:WIDTh?", ":WAVeform:WIDTh %s",
@@ -533,7 +542,7 @@ class LecroyT3DSOBase(Instrument):
 
 
 
-    def waveform_data_word(self, source, sparsing=1):
+    def waveform_data_word(self, source, sparsing=1, sequence=0):
         #good
         """ Get the block of sampled data points transmitted using the IEEE 488.2 arbitrary
         block data format. valid sources are C1, C2, C3, C4, F1-4, M1-4
@@ -543,6 +552,8 @@ class LecroyT3DSOBase(Instrument):
         self.waveform_format = "WORD"
         self._waveform_sparsing = sparsing
         self._waveform_source = source
+        if self.sequence_status:
+            self._waveform_sequence = sequence
         data = self.adapter.connection.query_binary_values(f":WAV:DATA?", datatype='h')
 
         return data
