@@ -230,9 +230,11 @@ class FloatParameter(Parameter):
             raise ValueError("FloatParameter given non-float value of "
                              "type '%s'" % type(value))
         if value < self.minimum:
-            raise ValueError("FloatParameter value is below the minimum")
+            raise ValueError("FloatParameter value is below the minimum: "
+                             f"{self.name}'s min is {self.minimum} but got {self.value}")
         elif value > self.maximum:
-            raise ValueError("FloatParameter value is above the maximum")
+            raise ValueError("FloatParameter value is above the maximum: "
+                             f"{self.name}'s max is {self.maximum} but got {self.value}")
         else:
             self._value = value
 
