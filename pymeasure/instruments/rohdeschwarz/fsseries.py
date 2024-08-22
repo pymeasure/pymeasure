@@ -28,7 +28,7 @@ import warnings
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
