@@ -287,7 +287,9 @@ class FSW(FSSeries):
         else:
             warnings.warn("Selected channel can not be read.")
 
-        # Channels -------------------------------------------------------------------------------------
+        return np.array([x, y])
+
+    # Channels -------------------------------------------------------------------------------------
 
     def create_channel(self, channel_type, channel_name):
         """Create a new channel.
