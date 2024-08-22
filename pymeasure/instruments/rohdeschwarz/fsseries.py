@@ -26,7 +26,6 @@ import logging
 import warnings
 
 import numpy as np
-import pyvisa
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
@@ -129,105 +128,7 @@ class FSSeries(SCPIMixin, Instrument):
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
-    # Helper functions -----------------------------------------------------------------------------
-    # Since devices are equipped differently, we need helpers to determine the number of channels
-    # which then determines whether the switching channel command is supported and how to read
-    # out the traces
-
-    def check_instrument_channel_capability(self):
-        """Check whether the instrument supports multiple channels."""
-        try:
-            response = self.ask("INST:LIST?")
-            print("Raw response (in format 'CHANNEL TYPE', 'CHANNEL NAME', ...):", response)
-
-            channels = [channel.strip().strip("'") for channel in response.split(",")]
-            num_channels = len(channels) // 2
-
-            print(
-                f"Number of available channels: {num_channels}.\nYou can use read_trace to read"
-                "data from the active channels and use the other channel functions."
-            )
-        except AttributeError:
-            warnings.simplefilter("always")
-            warnings.warn("The instrument object does not support 'query' or 'ask'.")
-            # print("The instrument object does not support 'query' or 'ask'.")
-        except pyvisa.VisaIOError as e:
-            if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                warnings.simplefilter("always")
-                warnings.warn(
-                    "Timeout while waiting for 'INST:LIST?' command.\n "
-                    "INST:LIST? command not supported or can't establish connection.\n "
-                    "Assuming non-multi channel device. "
-                    "You are likely unable to use channel functions."
-                )
-            else:
-                raise
-
-    @property
-    def n_instrument_channels(self):
-        """Get number of instrument channels."""
-        try:
-            response = self.ask("INST:LIST?")
-            channels = [channel.strip().strip("'") for channel in response.split(",")]
-            num_channels = len(channels) // 2
-            return num_channels
-        except AttributeError:
-            return 0
-        except pyvisa.VisaIOError:
-            return 0
-
     # Traces ---------------------------------------------------------------------------------------
-
-    def read_trace(self, n_trace=1):
-        """
-        Read trace data from the active channel.
-
-        Multi channel devices require a certain software add-on, e.g. FPL-K40 for phase noise
-        measurements, that is added to a device on request. Therefore, not every device has the
-        capability to  change between channels. Remember to "open" the desired channel with the
-        `create_channel` method first.
-
-        :param n_trace: The trace number (1-6). Default is 1.
-        :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
-        """
-        try:
-            # multi channel devices
-            if self.n_instrument_channels > 1:
-                trace_data = np.array(self.values(f"TRAC? TRACE{n_trace}"))
-                if (
-                    self.active_channel == ("PNO")
-                    or self.available_channels.get(self.active_channel) == "PNOISE"
-                ):
-                    y = trace_data[1::2]
-                    x = trace_data[0::2]
-
-                elif (
-                    self.active_channel == ("SAN")
-                    or self.available_channels.get(self.active_channel) == "SANALYZER"
-                ):
-                    y = trace_data
-                    x = np.linspace(self.freq_start, self.freq_stop, len(y))
-
-                return np.array([x, y])
-
-            # single channel devices
-            else:
-                y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
-                x = np.linspace(self.freq_start, self.freq_stop, len(y))
-            return np.array([x, y])
-
-        except pyvisa.VisaIOError as e:
-            if e.error_code == pyvisa.constants.StatusCode.error_timeout:
-                warnings.simplefilter("always")
-                warnings.warn(
-                    f"Visa Timeout Error occurred: {e} There might not be any data in the trace.",
-                    RuntimeWarning,
-                )
-                return None
-            else:
-                warnings.simplefilter("always")
-                warnings.warn(f"VisaIOError occurred: {e}", RuntimeWarning)
-                return None
 
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
@@ -337,9 +238,56 @@ class FSSeries(SCPIMixin, Instrument):
             """
             self.write(f"FUNC:ZOOM {value}; *WAI")
 
-    # Channels -------------------------------------------------------------------------------------
-    # Please check whether your device supports these functionalities. You can use the helper
-    # property available_channels to check if the device supports them.
+
+class FSL(FSSeries):
+    """
+    Represents a Rohde&Schwarz FSL spectrum analyzer.
+
+    All physical values that can be set can either be as a string of a value and a unit (e.g.
+    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
+    """
+
+    def read_trace(self, n_trace=1):
+        """
+        Read trace data.
+
+        :param n_trace: The trace number (1-6). Default is 1.
+        :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
+        """
+        y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
+        x = np.linspace(self.freq_start, self.freq_stop, len(y))
+        return np.array([x, y])
+    
+    pass
+
+
+class FSW(FSSeries):
+    """
+    Represents a Rohde&Schwarz FSW spectrum analyzer.
+
+    All physical values that can be set can either be as a string of a value and a unit (e.g.
+    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
+    """
+
+    def read_trace(self, n_trace=1):
+        """
+        Read trace data of the active trace.
+
+        :param n_trace: The trace number (1-6). Default is 1.
+        :return: 2d numpy array of the trace data, [[frequency], [amplitude]].
+        """
+        trace_data = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
+        if self.available_channels.get(self.active_channel) == "PNOISE":
+            y = trace_data[1::2]
+            x = trace_data[0::2]
+
+        elif self.available_channels.get(self.active_channel) == "SANALYZER":
+            y = trace_data
+            x = np.linspace(self.freq_start, self.freq_stop, len(y))
+        else:
+            warnings.warn("Selected channel can not be read.")
+
+        # Channels -------------------------------------------------------------------------------------
 
     def create_channel(self, channel_type, channel_name):
         """Create a new channel.
@@ -349,7 +297,19 @@ class FSSeries(SCPIMixin, Instrument):
         """
 
         strict_discrete_set(channel_type, ["PNOISE", "SANALYZER"])
-        self.write(f"INST:CRE:NEW {channel_type}, '{channel_name}'")
+        if channel_name == "Spectrum" and channel_type == "PNOISE":
+            raise ValueError("Spectrum is a protected name that needs to be of type SANALYZER.")
+        elif channel_name == "Phase Noise" and channel_type == "SANALYZER":
+            raise ValueError("'Phase Noise' is a protected name that needs to be of type PNOISE.")
+        elif channel_name == "SAN" or channel_name == "PNO":
+            raise ValueError(f"'{channel_name}' name is not allowed due to device limitations.")
+        else:
+            self.write(f"INST:CRE:NEW {channel_type}, '{channel_name}'")
+
+    def delete_channel(self, channel_name):
+        """Deletes an active channel."""
+        strict_discrete_set(channel_name, list((self.available_channels).keys()))
+        self.write(f"INST:DEL '{channel_name}'")
 
     def _channel_list_to_dict(raw):
         """
@@ -373,11 +333,6 @@ class FSSeries(SCPIMixin, Instrument):
         get_process=_channel_list_to_dict,
     )
 
-    def delete_channel(self, channel_name):
-        """Deletes an active channel."""
-        strict_discrete_set(channel_name, list((self.available_channels).keys()))
-        self.write(f"INST:DEL '{channel_name}'")
-
     def select_channel(self, channel_name):
         """Select an open channel
 
@@ -385,12 +340,29 @@ class FSSeries(SCPIMixin, Instrument):
         """
         self.write(f"INST:SEL '{channel_name}'")
 
+    def rename_channel(self, current_name, new_name):
+        """Rename current_name of a channel to a new_name.
+
+        :param current_name: Channel to be renamed
+        :param new_name: New name of the channel
+        """
+        current_name = strict_discrete_set(current_name, list((self.available_channels).keys()))
+        self.write(f"INST:REN '{current_name}', '{new_name}'")
+
     @property
     def active_channel(self):
         """
         Control the name of the active channel. Note: The channel needs to be open on the device!
+        
+        :return: active channel name
+        :rtype: string
         """
-        return self.values("INST?")[0]
+        name = self.values("INST?")[0]
+        if name == "SAN":
+            name = "Spectrum"
+        elif name == "PNO":
+            name = "Phase Noise"
+        return name
 
     @active_channel.setter
     def activate_channel(self, channel):
@@ -405,51 +377,11 @@ class FSSeries(SCPIMixin, Instrument):
         values={True: "SPL", False: "SING"},
         map_values=True,
     )
-
-    def rename_channel(self, current_name, new_name):
-        """Rename current_name of a channel to a new_name.
-
-        :param current_name: Channel to be renamed
-        :param new_name: New name of the channel
-        """
-        current_name = strict_discrete_set(current_name, list((self.available_channels).keys()))
-        self.write(f"INST:REN '{current_name}', '{new_name}'")
-
-    # Phase noise limit lines ----------------------------------------------------------------------
-
-    def phase_noise_trace(self, trace):
-        strict_discrete_range(trace, range(1, 7), 1)
-        self.write(f"CALC:PNL:TRAC {trace}")
-
-    def select_trace(self, trace):
-        strict_discrete_range(trace, range(1, 7), 1)
-
-        self.write(f"DISP:TRAC:SEL {trace}")
-
+    
     # Overview -------------------------------------------------------------------------------------
 
     nominal_level = Instrument.control(
         "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the instrument"
     )
-
-
-class FSL(FSSeries):
-    """
-    Represents a Rohde&Schwarz FSL spectrum analyzer.
-
-    All physical values that can be set can either be as a string of a value and a unit (e.g.
-    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
-    """
-
-    pass
-
-
-class FSW(FSSeries):
-    """
-    Represents a Rohde&Schwarz FSW spectrum analyzer.
-
-    All physical values that can be set can either be as a string of a value and a unit (e.g.
-    "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
-    """
 
     pass
