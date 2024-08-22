@@ -257,7 +257,7 @@ class FSL(FSSeries):
         y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
         x = np.linspace(self.freq_start, self.freq_stop, len(y))
         return np.array([x, y])
-    
+
     pass
 
 
@@ -355,7 +355,7 @@ class FSW(FSSeries):
     def active_channel(self):
         """
         Control the name of the active channel. Note: The channel needs to be open on the device!
-        
+
         :return: active channel name
         :rtype: string
         """
@@ -379,7 +379,7 @@ class FSW(FSSeries):
         values={True: "SPL", False: "SING"},
         map_values=True,
     )
-    
+
     # Overview -------------------------------------------------------------------------------------
 
     nominal_level = Instrument.control(
