@@ -74,7 +74,7 @@ def test_arm():
         assert inst.arm() is True
 
 
-def test_trigger_get_triggerConfig():
+def test_trigger_get_trigger_config():
     with expected_protocol(
         SDS1072CML,
         [
@@ -85,7 +85,7 @@ def test_trigger_get_triggerConfig():
             (b"TRCP?", b"C1:TRCP DC\n"),
         ],
     ) as inst:
-        assert inst.trigger.get_triggerConfig() == {
+        assert inst.trigger.get_trigger_config() == {
             "type": "EDGE",
             "source": "C1",
             "hold_type": "TI",
@@ -97,7 +97,7 @@ def test_trigger_get_triggerConfig():
         }
 
 
-def test_trigger_set_triggerConfig():
+def test_trigger_set_trigger_config():
     with expected_protocol(
         SDS1072CML,
         [
@@ -116,7 +116,7 @@ def test_trigger_set_triggerConfig():
         ],
     ) as inst:
         assert (
-            inst.trigger.set_triggerConfig(
+            inst.trigger.set_trigger_config(
                 **{"source": "EX", "coupling": "DC", "level": 0.5, "slope": "POS"}
             )
             is True
