@@ -38,12 +38,11 @@ class VoltageChannel(Channel):
 
     vertical_division = Channel.control(
         "C{ch}:VDIV?",
-        "C{ch}:VDIV %s",
+        "C{ch}:VDIV %.2eV",
         "Control the vertical sensitivity of a channel in V/divisions.",
         validator=truncated_range,
         values=[2e-3, 10],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
-        set_process=lambda v: "%.2eV" % v,
     )
 
     coupling = Channel.control(
@@ -63,25 +62,22 @@ class VoltageChannel(Channel):
         - voltages: (1d array) the waveform in V
 
         """
-        command = "C{ch}:WF? ALL"
-        self.write(command)
+        self.write("C{ch}:WF? ALL")
         response = self.read_bytes(count=-1, break_on_termchar=True)
-        descriptorDictionnary = self.get_desc()
-
-        print(descriptorDictionnary)
+        descriptor_dictionary = self.get_desc()
         rawWaveform = list(
             struct.unpack_from(
-                "%db" % descriptorDictionnary["numDataPoints"],
+                "%db" % descriptor_dictionary["numDataPoints"],
                 response,
-                offset=descriptorDictionnary["descriptorOffset"],
+                offset=descriptor_dictionary["descriptorOffset"],
             ),
         )
         waveform = [
-            point * descriptorDictionnary["verticalGain"] - descriptorDictionnary["verticalOffset"]
+            point * descriptor_dictionary["verticalGain"] - descriptor_dictionary["verticalOffset"]
             for point in rawWaveform
         ]
         timetags = [
-            i * descriptorDictionnary["horizInterval"] + descriptorDictionnary["horizOffset"]
+            i * descriptor_dictionary["horizInterval"] + descriptor_dictionary["horizOffset"]
             for i in range(len(rawWaveform))
         ]
         return timetags, waveform
@@ -90,8 +86,8 @@ class VoltageChannel(Channel):
         """Get the descriptor of data being sent when querying device for waveform
         Will decode a descriptor if provided one (Raw byte stream), otherwise it will query it
         :return:
-        dict: A dictionnary with the keys:
-        - numDataPoints: the number of poitns in the waveform
+        dict: A dictionary with the keys:
+        - numDataPoints: the number of points in the waveform
         - verticalGain: the voltage increment per code value (in V)
         - verticalOffset: the voltage offset to add to the decoded voltage values
         - horizInterval: the time interval between points in s
@@ -110,7 +106,7 @@ class VoltageChannel(Channel):
         number = int(wfsu.split(",")[3])
         first = int(wfsu.split(",")[5])
         descriptorOffset = 21
-        descriptorDictionnary = {"sparsing": sparsing, "numDataPoints": number, "firstPoint": first}
+        descriptor_dictionary = {"sparsing": sparsing, "numDataPoints": number, "firstPoint": first}
         variables = [
             ("commType", 32, "h"),
             ("commOrder", 34, "h"),
@@ -139,13 +135,13 @@ class VoltageChannel(Channel):
                 descriptor,
                 offset=descriptorOffset + offset,
             )
-            descriptorDictionnary.update({name: value})
+            descriptor_dictionary.update({name: value})
         if descriptor is None:
-            descriptorDictionnary.update({"descriptorOffset": descriptorOffset})
+            descriptor_dictionary.update({"descriptorOffset": descriptorOffset})
         else:
-            descriptorDictionnary.update({"descriptorOffset": descriptorOffset + 346})
+            descriptor_dictionary.update({"descriptorOffset": descriptorOffset + 346})
 
-        return descriptorDictionnary
+        return descriptor_dictionary
 
 
 class TriggerChannel(Channel):
@@ -155,9 +151,9 @@ class TriggerChannel(Channel):
     =========================================
     """
 
-    triggerConfDict = {}
+    trigger_config_dict = {}
 
-    def get_triggerConfig(self):
+    def get_trigger_config(self):
         """Get the current trigger configuration as a dict with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
@@ -172,12 +168,12 @@ class TriggerChannel(Channel):
 
         and updates the internal configuration status
         """
-        self.triggerConfDict.update(self.trigger_setup)
-        self.triggerConfDict.update(self.trigger_level)
-        self.triggerConfDict.update(self.trigger_slope)
-        self.triggerConfDict.update(self.trigger_mode)
-        self.triggerConfDict.update(self.trigger_coupling)
-        return self.triggerConfDict
+        self.trigger_config_dict.update(self.trigger_setup)
+        self.trigger_config_dict.update(self.trigger_level)
+        self.trigger_config_dict.update(self.trigger_slope)
+        self.trigger_config_dict.update(self.trigger_mode)
+        self.trigger_config_dict.update(self.trigger_coupling)
+        return self.trigger_config_dict
 
     trigger_setup = Channel.measurement(
         "TRSE?",
@@ -263,8 +259,8 @@ class TriggerChannel(Channel):
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope
         and updates the interal trigger configuration
         """
-        triggerConfDict = self.get_triggerConfig()
-        # self.triggerConfDict=triggerConfDict
+        trigger_config_dict = self.get_trigger_config()
+        # self.trigger_config_dict=trigger_config_dict
         setProcesses = {
             "setup": lambda dictIn: (
                 dictIn.get("type"),
@@ -292,18 +288,18 @@ class TriggerChannel(Channel):
         }
         if kwargs.get("source") is not None:
             self.id = kwargs["source"]
-        changedValues = [key for key in kwargs if triggerConfDict[key] != kwargs[key]]
+        changedValues = [key for key in kwargs if trigger_config_dict[key] != kwargs[key]]
         processToChange = [
             key for key in setValues if any([value in changedValues for value in setValues[key]])
         ]
         for changedKey in changedValues:
-            triggerConfDict[changedKey] = kwargs[changedKey]
+            trigger_config_dict[changedKey] = kwargs[changedKey]
         for processKey in processToChange:
             self.write(
-                setCommands[processKey] % setProcesses[processKey](triggerConfDict),
+                setCommands[processKey] % setProcesses[processKey](trigger_config_dict),
             )
-        self.triggerConfDict = self.get_triggerConfig()
-        statusFlag = self.triggerConfDict == triggerConfDict
+        self.trigger_config_dict = self.get_trigger_config()
+        statusFlag = self.trigger_config_dict == trigger_config_dict
         return statusFlag
 
 
@@ -321,13 +317,12 @@ class SDS1072CML(SCPIMixin, Instrument):
     channel_2 = Instrument.ChannelCreator(VoltageChannel, "2")
     trigger = Instrument.ChannelCreator(TriggerChannel, "")
 
-    timeDiv = Instrument.control(
+    time_division = Instrument.control(
         ":TDIV?",
-        ":TDIV %s",
+        ":TDIV %.2eS",
         "Set the time division to the closest possible value,rounding downwards.",
         validator=truncated_range,
         values=[5e-9, 50],
-        set_process=lambda v: "%.2eS" % v,
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
     )
 
