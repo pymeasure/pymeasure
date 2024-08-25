@@ -243,7 +243,7 @@ class TriggerChannel(Channel):
         },
     )
 
-    def set_triggerConfig(self, **kwargs):
+    def set_trigger_config(self, **kwargs):
         """Set the current trigger configuration with keys:
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
