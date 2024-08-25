@@ -50,20 +50,20 @@ def test_is_ready_getter():
         assert inst.is_ready is True
 
 
-def test_timeDiv_setter():
+def test_time_division_setter():
     with expected_protocol(
         SDS1072CML,
         [(b":TDIV 1.00e-03S", None)],
     ) as inst:
-        inst.timeDiv = 0.001
+        inst.time_division = 0.001
 
 
-def test_timeDiv_getter():
+def test_time_division_getter():
     with expected_protocol(
         SDS1072CML,
         [(b":TDIV?", b"TDIV 1.00E-03S\n")],
     ) as inst:
-        assert inst.timeDiv == 0.001
+        assert inst.time_division == 0.001
 
 
 def test_arm():
