@@ -51,7 +51,7 @@ class FSSeries(SCPIMixin, Instrument):
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
-    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
+    def __init__(self, adapter, name="Rohde&Schwarz FS series instrument", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     # Frequency settings ---------------------------------------------------------------------------
@@ -247,6 +247,9 @@ class FSL(FSSeries):
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
+    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
     def read_trace(self, n_trace=1):
         """
         Read trace data.
@@ -268,6 +271,9 @@ class FSW(FSSeries):
     All physical values that can be set can either be as a string of a value and a unit (e.g.
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
+
+    def __init__(self, adapter, name="Rohde&Schwarz FSW", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     def read_trace(self, n_trace=1):
         """
