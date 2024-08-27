@@ -32,6 +32,9 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-@deprecated("Import `FSL` class from `pymeasure.instruments.rohdeschwarz` instead.")
+@deprecated(
+    "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is deprecated. Import `FSL` from "
+    " `pymeasure.instruments.rohdeschwarz` instead."
+)
 class FSL(FSL):
     pass
