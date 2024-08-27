@@ -27,7 +27,7 @@ import logging
 import numpy as np
 from pymeasure.instruments.validators import strict_discrete_set
 from pymeasure.instruments import Instrument, SCPIMixin
-from warnings import depricated
+from warnings import deprecated
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -41,7 +41,7 @@ def _number_or_auto(value):
         # There is no space in the set commands, so we have to add it
         return " " + str(value)
 
-@depricated("Please use the FSL class from FSSeries instead.")
+@deprecated("Please use the FSL class from FSSeries instead.")
 class FSL(SCPIMixin, Instrument):
     """    
     Represents a Rohde&Schwarz FSL spectrum analyzer.
@@ -55,10 +55,7 @@ class FSL(SCPIMixin, Instrument):
     """
 
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
-        super().__init__(
-            adapter, name,
-            **kwargs
-        )
+        super().__init__(adapter, name, **kwargs)
 
     # Frequency settings ------------------------------------------------------
 
