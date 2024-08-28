@@ -106,9 +106,11 @@ class Glassman(Instrument):
         GHV.voltage
         
         """
-        print('Setpoint: ', self.voltage_setpoint, ' V')
-        print('Output: ', self.status()["Voltage"], ' V')
-        return
+        vdict = dict()
+        vdict["Setpoint"] = self.voltage_setpoint
+        vdict["Output"] = self.status()["Voltage"]
+        
+        return vdict
     
     @voltage.setter
     def voltage(self, value):
@@ -119,10 +121,11 @@ class Glassman(Instrument):
         
         """
         self.voltage_setpoint = value
-        if self._output and self.status()["Output"] and self.voltage_setpoint > self.voltage_max * 0.02:
-            # If output is off, first setpoint must be < 2% max output
-            self.set_status(voltage=self.voltage_max * 0.02)
-        self.set_status(voltage=self.voltage_setpoint)        
+        
+        if self._output or self.status()["Output"]:
+            # If output is on, re-enable to update voltage value
+            self.enable
+            
         return
         
     @property
@@ -133,9 +136,11 @@ class Glassman(Instrument):
         GHV.current
         
         """
-        print('Setpoint: ', self.current_setpoint, ' A')
-        print('Output: ', self.status()["Current"], ' A')
-        return
+        cdict = dict()
+        cdict["Setpoint"] = self.current_setpoint
+        cdict["Output"] = self.status()["Current"]
+        
+        return cdict
     
     @current.setter
     def current(self, value):
@@ -146,8 +151,10 @@ class Glassman(Instrument):
         
         """
         self.current_setpoint = value
-        if self._output and self.status()["Output"]:
-            self.set_status(current=self.current_setpoint)
+        
+        if self._output or self.status()["Output"]:
+            # If output is on, re-enable to update current value
+            self.enable
         return
         
     @property
@@ -174,7 +181,16 @@ class Glassman(Instrument):
         GHV.enable
         
         """
-        self.set_status(output=True)
+        
+        volt = self.voltage_setpoint
+        
+        # GHV supplies require first output value to be < 2% of max
+        if abs(self.voltage_setpoint) > (self.voltage_max * 0.02):
+            self.set_status(voltage=self.voltage_max * 0.02 * self.polarity, output=True)
+    
+        # Set requested value
+        self.set_status(voltage=volt, output=True)
+        
         return
     
     @property
@@ -305,17 +321,18 @@ class Glassman(Instrument):
             # The maximum value is encoded as the maximum of three hex characters (4095)
             cmd = ""
 
-            # If the voltage is not specified, keep it as is
+            # If the voltage is not specified, set using setpoint
             self.voltage_setpoint = (
                 voltage if voltage is not None else self.voltage_setpoint
             )
+            # Convert voltage value to percentage
             ratio = float((self.voltage_setpoint / self.voltage_max) * self.polarity)
             voltage_int = int(round(self.value_max * ratio))
             self._voltage_setpoint = self.voltage_max * float(voltage_int) / self.value_max
             assert 0.0 <= self._voltage_setpoint <= self.voltage_max
             cmd += format(voltage_int, "03X")
 
-            # If the current is not specified, keep it as is
+            # If the current is not specified, set using setpoint
             self.current_setpoint = (
                 current if current is not None else self.current_setpoint
             )
