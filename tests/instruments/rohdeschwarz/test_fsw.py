@@ -96,7 +96,27 @@ def test_reset():
         [(b"*RST", None)],
     ) as inst:
         assert inst.reset() is None
+    
+def test_auto_all():
+    with expected_protocol(
+        FSW,
+        [(b":ADJ:ALL", None)],
+    ) as inst:
+        assert inst.auto_all() is None
 
+def test_auto_freq():
+    with expected_protocol(
+        FSW,
+        [(b":ADJ:FREQ", None)],
+    ) as inst:
+        assert inst.auto_freq() is None
+
+def test_auto_level():
+    with expected_protocol(
+        FSW,
+        [(b":ADJ:LEV", None)],
+    ) as inst:
+        assert inst.auto_level() is None
 
 def test_create_channel():
     with expected_protocol(
