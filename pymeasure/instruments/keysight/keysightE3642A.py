@@ -26,13 +26,11 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class KeysightE3642A(SCPIMixin, Instrument):
-    """ Represents the Keysight E3642A DC Power Supply interface for interacting with
-    the instrument. """
+    """Represents the Keysight E3642A DC Power Supply interface for interacting with
+    the instrument."""
+
     def __init__(self, adapter, name="Keysight E3642A", **kwargs):
-        super().__init__(
-            adapter, name,
-            **kwargs
-        )
+        super().__init__(adapter, name, **kwargs)
 
     output_enabled = Instrument.control(
         "OUTPUT:STATE?",
@@ -40,7 +38,7 @@ class KeysightE3642A(SCPIMixin, Instrument):
         """Control whether output state is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
-        map_values=True
+        map_values=True,
     )
 
     voltage_setpoint = Instrument.control(
@@ -64,4 +62,3 @@ class KeysightE3642A(SCPIMixin, Instrument):
     def apply(self, voltage_setpoint, current_limit):
         self.voltage_setpoint = voltage_setpoint
         self.current_limit = current_limit
-
