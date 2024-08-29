@@ -294,7 +294,7 @@ class FSW(FSSeries):
             warnings.warn("Selected channel can not be read.")
 
         return np.array([x, y])
-    
+
     # Auto Settings --------------------------------------------------------------------------------
 
     def auto_all(self):
@@ -308,7 +308,7 @@ class FSW(FSSeries):
     def auto_level(self):
         """Adjust reference level automatically."""
         self.write(":ADJ:LEV")
-    
+
     # Channels -------------------------------------------------------------------------------------
 
     def create_channel(self, channel_type, channel_name):
