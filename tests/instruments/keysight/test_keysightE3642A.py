@@ -42,12 +42,12 @@ def test_current_limit_getter(comm_pairs, value):
     ([(b'OUTPUT:STATE 1', None)],
      True),
 ))
-def test_output_state_enabled_setter(comm_pairs, value):
+def test_output_enabled_setter(comm_pairs, value):
     with expected_protocol(
             KeysightE3642A,
             comm_pairs,
     ) as inst:
-        inst.output_state_enabled = value
+        inst.output_enabled = value
 
 
 @pytest.mark.parametrize("comm_pairs, value", (
@@ -58,12 +58,12 @@ def test_output_state_enabled_setter(comm_pairs, value):
       (None, b'1\n')],
      True),
 ))
-def test_output_state_enabled_getter(comm_pairs, value):
+def test_output_enabled_getter(comm_pairs, value):
     with expected_protocol(
             KeysightE3642A,
             comm_pairs,
     ) as inst:
-        assert inst.output_state_enabled == value
+        assert inst.output_enabled == value
 
 
 def test_voltage_setpoint_setter():

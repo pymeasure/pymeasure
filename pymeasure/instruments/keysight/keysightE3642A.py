@@ -34,7 +34,7 @@ class KeysightE3642A(SCPIMixin, Instrument):
             **kwargs
         )
 
-    output_state_enabled = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTPUT:STATE?",
         "OUTPUT:STATE %d",
         """Control whether output state is enabled.""",
