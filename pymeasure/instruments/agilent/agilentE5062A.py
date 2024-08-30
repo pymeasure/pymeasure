@@ -529,7 +529,15 @@ class AgilentE5062A(SCPIMixin, Instrument):
         trigger is in the trigger wait state)"""
         self.write('TRIGger')
 
+    def trigger_single(self):
+        """like trigger(), but the `complete` SCPI property (synchronization
+        bit) waits for the sweep to be complete, which is useful to wait for a
+        sweep to be complete.
+        """
+        self.write('TRIGger:SINGle')
+
     def pop_err(self):
+
         """Pop an error off the error queue. Returns a tuple containing the
         code and error description. An error code 0 indicates success.
 

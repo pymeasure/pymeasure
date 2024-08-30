@@ -462,3 +462,13 @@ def test_trigger():
                 ("TRIGger", None)
             ]) as inst:
         inst.trigger()
+
+
+def test_trigger_single():
+    with expected_protocol(
+            AgilentE5062A,
+            [
+                *initial_comm_pairs(),
+                ("TRIGger:SINGle", None)
+            ]) as inst:
+        inst.trigger_single()

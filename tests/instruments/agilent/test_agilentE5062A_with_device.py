@@ -29,6 +29,7 @@
 # port connection can be anything that is safe for that power level.
 
 import pytest
+from pyvisa.errors import VisaIOError
 from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
 
 import numpy as np
@@ -291,7 +292,7 @@ def test_trigger_bus(agilentE5062A):
         agilentE5062A.abort()   # the trigger needs to be in a hold state for initiate() to work.
         ch.trigger_initiate()
         agilentE5062A.trigger_bus()
-    agilentE5062A.trigger_source = 'INTernal'
+    agilentE5062A.trigger_source = 'INT'
     agilentE5062A.trigger_continuous = True
     assert not agilentE5062A.pop_err()[0]
 
@@ -305,6 +306,36 @@ def test_trigger(agilentE5062A):
         agilentE5062A.abort()   # the trigger needs to be in a hold state for initiate() to work.
         ch.trigger_initiate()
         agilentE5062A.trigger()
-    agilentE5062A.trigger_source = 'INTernal'
+    agilentE5062A.trigger_source = 'INT'
+    agilentE5062A.trigger_continuous = True
+    assert not agilentE5062A.pop_err()[0]
+
+
+def test_trigger_single(agilentE5062A):
+    """trigger_single() is different from trigger() in that the VNA does not
+        return a response to *OPC? (the SCPI complete query) until the sweep is
+        complete.
+
+    """
+
+    def wait_for_complete(vna, attempt=1):
+        try:
+            vna.complete
+        except VisaIOError:     # IO timeout
+            if attempt > 10:
+                raise
+            else:
+                wait_for_complete(vna, attempt=attempt+1)
+
+    agilentE5062A.clear()
+    agilentE5062A.reset()
+    agilentE5062A.trigger_source = 'BUS'
+    for ch in agilentE5062A.channels.values():
+        ch.trigger_continuous = False
+        agilentE5062A.abort()
+        ch.trigger_initiate()
+        agilentE5062A.trigger_single()
+        wait_for_complete(agilentE5062A)
+    agilentE5062A.trigger_source = 'INT'
     agilentE5062A.trigger_continuous = True
     assert not agilentE5062A.pop_err()[0]
