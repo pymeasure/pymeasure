@@ -1,8 +1,0 @@
-============================= test session starts =============================
-platform win32 -- Python 3.12.3, pytest-8.3.2, pluggy-1.5.0
-rootdir: C:\Users\Jeevak\Documents\GitHub\instrument-control
-collected 6 items
-
-buffer_measure_fast_completeTEST.py ......                               [100%]
-
-============================== 6 passed in 6.60s ==============================
