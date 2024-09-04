@@ -28,6 +28,7 @@ from pymeasure.instruments.srs.sr830 import SR830
 import numpy as np
 import numpy.testing as npt
 
+
 def test_id():
     """Verify the communication of the device type."""
     with expected_protocol(
@@ -95,6 +96,7 @@ def test_output_conversion():
         conv = inst.output_conversion("X")
         assert conv(inst.x) == pytest.approx(-2.66e-7)
 
+
 @pytest.mark.parametrize(
     "comm_pairs, args, kwargs, value",
     [
@@ -145,7 +147,7 @@ def test_output_conversion():
                 (b'REST', None),
                 (b'SRAT?', b'4\n'),
                 (
-                    b'FAST2;STRD', 
+                    b'FAST2;STRD',
                     b'9;9;9;9;9;:;:;9;:;9;:;9;9;:;:;:;:;9;:;9;'
                 ),
                 (b'PAUS', b''),
