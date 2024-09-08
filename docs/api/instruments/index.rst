@@ -61,6 +61,7 @@ Instruments by manufacturer:
    racal/index
    razorbill/index
    redpitaya/index
+   rigol/index
    rohdeschwarz/index
    siglenttechnologies/index
    signalrecovery/index
