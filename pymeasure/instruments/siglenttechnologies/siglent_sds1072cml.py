@@ -320,7 +320,7 @@ class SDS1072CML(SCPIMixin, Instrument):
     time_division = Instrument.control(
         ":TDIV?",
         ":TDIV %.2eS",
-        "Controls the time division to the closest possible value,rounding downwards.",
+        "Control the time division to the closest possible value,rounding downwards.",
         validator=truncated_range,
         values=[5e-9, 50],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
@@ -351,7 +351,8 @@ class SDS1072CML(SCPIMixin, Instrument):
         self.write("WAIT %d" % int(time))
 
     def arm(self):
-        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Returns True if the scope is ready and armed."""
+        """Change the acquisition mode from 'STOPPED' to 'SINGLE'.
+        Returns True if the scope is ready and armed."""
         if self.is_ready:
             self.write("ARM")
             return True
