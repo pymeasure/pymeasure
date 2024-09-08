@@ -26,7 +26,7 @@ from pymeasure.instruments import Instrument, Channel,SCPIMixin
 from pymeasure.instruments.validators import truncated_discrete_set
 class VoltageChannel(Channel):
     """A channel of the signal generator"""
-    output_status=Channel.control(
+    output_enabled=Channel.control(
         ":OUTP{ch}?",":OUTP{ch} %s","""Controls the status of the channel.
          True if the channel is on and False if not.""",
         validator=truncated_discrete_set,

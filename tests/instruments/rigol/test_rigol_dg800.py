@@ -88,20 +88,20 @@ def test_channel_1_noise_setter():
     ([(b':OUTP1 ON', None)],
      True),
 ))
-def test_channel_1_output_status_setter(comm_pairs, value):
+def test_channel_1_output_enabled_setter(comm_pairs, value):
     with expected_protocol(
             DG800,
             comm_pairs,
     ) as inst:
-        inst.channel_1.output_status = value
+        inst.channel_1.output_enabled = value
 
 
-def test_channel_1_output_status_getter():
+def test_channel_1_output_enabled_getter():
     with expected_protocol(
             DG800,
             [(b':OUTP1?', b'OFF\n')],
     ) as inst:
-        assert inst.channel_1.output_status is False
+        assert inst.channel_1.output_enabled is False
 
 
 def test_channel_1_pulse_setter():
