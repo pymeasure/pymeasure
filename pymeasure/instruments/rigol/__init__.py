@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .rigol_dg822 import DG822
+from .rigol_dg800 import DG800
