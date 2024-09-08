@@ -1,3 +1,7 @@
+##############################
+RIGOL DG800 WAVEFORM GENERATOR
+##############################
+
 .. autoclass:: pymeasure.instruments.rigol.DG800
     :members:
     :show-inheritance:
