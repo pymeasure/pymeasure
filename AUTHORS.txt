@@ -85,3 +85,4 @@ Nick James Kirkby
 Konrad Gralher
 David Ziliak
 David Sun
+Félix Thouin
