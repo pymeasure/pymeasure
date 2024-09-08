@@ -23,4 +23,3 @@
 #
 
 from .rigol_dg800 import DG800
-
