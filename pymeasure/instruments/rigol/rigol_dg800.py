@@ -58,7 +58,7 @@ class VoltageChannel(Channel):
     )
 
     frequency = Channel.control(
-        ":SOUR{ch}:FREQ?", ":SOUR{ch}:FREQ %f", """ Controls the output frequency (Hz)"""
+        ":SOUR{ch}:FREQ?", ":SOUR{ch}:FREQ %f", """ Control the output frequency (Hz)"""
     )
 
     sync = Channel.control(
@@ -151,7 +151,7 @@ class VoltageChannel(Channel):
     #    )
 
     waveform = Channel.measurement(
-        ":SOUR{ch}:APPL?", """Gets a descriptor of the waveform applied."""
+        ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied."""
     )
 
 
