@@ -32,7 +32,7 @@ class VoltageChannel(Channel):
     output_enabled = Channel.control(
         ":OUTP{ch}?",
         ":OUTP{ch} %s",
-        """Controls the status of the channel.
+        """Control the status of the channel.
          True if the channel is on and False if not.""",
         validator=truncated_discrete_set,
         values={True: "ON", False: "OFF"},
@@ -41,14 +41,14 @@ class VoltageChannel(Channel):
     load = Channel.control(
         ":OUTP{ch}:LOAD?",
         ":OUTP{ch}:LOAD %f",
-        """Controls the output impedance of a given channel.
+        """Control the output impedance of a given channel.
          Returns 9.9e+37 for infinite impedance.""",
     )
 
     high_impedance = Channel.control(
         ":OUTP{ch}:IMP?",
         ":OUTP{ch}:IMP %s",
-        """Controls the output impedance to be HighZ.
+        """Control the output impedance to be HighZ.
         This means displayed voltages will be internally converted to
         correspond that seen by an infinite load, not 50 Ohms.
         See p. 82 of the manual for more information.""",
@@ -64,7 +64,7 @@ class VoltageChannel(Channel):
     sync = Channel.control(
         ":OUTP{ch}:SYNC?",
         ":OUTP{ch}:SYNC %s",
-        """Controls the synchronization flag.
+        """Control the synchronization flag.
           True if the channel triggers the synchronization connector and False if not """,
         validator=truncated_discrete_set,
         values={True: "ON", False: "OFF"},
