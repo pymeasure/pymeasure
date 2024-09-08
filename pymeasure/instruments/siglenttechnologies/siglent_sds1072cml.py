@@ -64,7 +64,7 @@ class VoltageChannel(Channel):
         """
         self.write("C{ch}:WF? ALL")
         response = self.read_bytes(count=-1, break_on_termchar=True)
-        descriptor_dictionary = self.get_desc()
+        descriptor_dictionary = self.get_descriptor()
         rawWaveform = list(
             struct.unpack_from(
                 "%db" % descriptor_dictionary["numDataPoints"],
@@ -82,7 +82,7 @@ class VoltageChannel(Channel):
         ]
         return timetags, waveform
 
-    def get_desc(self, descriptor=None):
+    def get_descriptor(self, descriptor=None):
         """Get the descriptor of data being sent when querying device for waveform
         Will decode a descriptor if provided one (Raw byte stream), otherwise it will query it
         :return:
@@ -320,33 +320,28 @@ class SDS1072CML(SCPIMixin, Instrument):
     time_division = Instrument.control(
         ":TDIV?",
         ":TDIV %.2eS",
-        "Set the time division to the closest possible value,rounding downwards.",
+        "Controls the time division to the closest possible value,rounding downwards.",
         validator=truncated_range,
         values=[5e-9, 50],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
     )
 
-    status = Instrument.control(
+    status = Instrument.measurement(
         "SAST?",
-        None,
         "Get the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process=lambda v: v.split(" ", 1)[-1],
     )
 
-    internal_state = Instrument.control(
+    internal_state = Instrument.measurement(
         "INR?",
-        None,
         "Get the scope's Internal state change register and clears it.",
         get_process=lambda v: v.split(" ", 1)[-1],
     )
 
-    is_ready = Instrument.control(
+    is_ready = Instrument.measurement(
         "SAST?",
-        None,
-        "Get a boolean flat indicating if the scope is ready for the next acquisition",
-        get_process=lambda v: True
-        if (v.split(" ", 1)[-1] in ["Stop", "Ready", "Armed"])
-        else False,
+        "Get whether the scope is ready for the next acquisition (bool)",
+        get_process=lambda v: v.split(" ", 1)[-1] in ["Stop", "Ready", "Armed"],
     )
 
     def wait(self, time):
@@ -356,8 +351,7 @@ class SDS1072CML(SCPIMixin, Instrument):
         self.write("WAIT %d" % int(time))
 
     def arm(self):
-        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Useful to ready scope for the
-        next acquisition"""
+        """Change the acquisition mode from 'STOPPED' to 'SINGLE'. Returns True if the scope is ready and armed."""
         if self.is_ready:
             self.write("ARM")
             return True
@@ -377,16 +371,15 @@ class SDS1072CML(SCPIMixin, Instrument):
 
         """,
         get_process=lambda v: {"sparsing": int(v[1]), "number": int(v[3]), "first": int(v[5])},
-        set_process=lambda dictIn: (
-            dictIn.get("sparsing"),
-            dictIn.get("number"),
-            dictIn.get("first"),
+        set_process=lambda dict_in: (
+            dict_in.get("sparsing"),
+            dict_in.get("number"),
+            dict_in.get("first"),
         ),
     )
 
-    template = Instrument.control(
+    template = Instrument.measurement(
         "TMPL?",
-        None,
         """Get a copy of the template that describes the various logical entities making up a
         complete waveform.
         In particular, the template describes in full detail the variables contained in the
