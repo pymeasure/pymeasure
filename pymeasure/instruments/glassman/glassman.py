@@ -115,7 +115,7 @@ class Glassman(Instrument):
     @voltage.setter
     def voltage(self, value):
         """
-        Set the voltage output on the device in +/- volts
+        Set the voltage setpoint on the device in +/- volts
         
         GHV.voltage = 0.000
         
@@ -185,7 +185,7 @@ class Glassman(Instrument):
         volt = self.voltage_setpoint
         
         # GHV supplies require first output value to be < 2% of max
-        if abs(self.voltage_setpoint) > (self.voltage_max * 0.02):
+        if abs(volt) > (self.voltage_max * 0.02):
             self.set_status(voltage=self.voltage_max * 0.02 * self.polarity, output=True)
     
         # Set requested value
