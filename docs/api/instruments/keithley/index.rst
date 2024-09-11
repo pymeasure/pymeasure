@@ -22,3 +22,4 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley2200
    keithleyDMM6500
    keithley2182
+   keithleyDAQ6510

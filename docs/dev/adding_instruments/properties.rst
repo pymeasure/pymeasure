@@ -22,7 +22,7 @@ PyMeasure comes with three central convenience factory functions for making prop
 You can call them, however, as :code:`Instrument.control`, :code:`Instrument.measurement`, and :code:`Instrument.setting`.
 
 The :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` function returns a property that can only read values from an instrument.
-For example, if our "Extreme 5000" has the :code:`*IDN?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
+For example, if our "Extreme 5000" has the :code:`:TEMP?` command, we can write the following property to be added after the :code:`def __init__` line in our above example class, or added to the class after the fact as in the code here:
 
 .. _Python properties: https://docs.python.org/3/howto/descriptor.html#properties
 
