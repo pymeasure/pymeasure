@@ -132,9 +132,9 @@ class Channel(CommonBase):
         return self.parent.check_set_errors()
 
     # Communication functions
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
-        :param query_delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         self.parent.wait_for(query_delay)

@@ -58,6 +58,7 @@ Andres Ruz-Nieto
 Carlos Martinez
 Scott Candey
 Tom Verbeure
+Juraj Jašík
 Max Herbold
 Alexander Wichers
 Ashok Bruno
@@ -66,6 +67,7 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Bernhard Lang
 Armindo Pinto
 Frank Wu
 Heinz-Alexander Fütterer
@@ -79,3 +81,9 @@ Jannis Kleine-Schönepauck
 Douwe den Blanken
 Till Zürner
 Nick Pelepchan
+J. A. Wilcox
+Nick James Kirkby
+Konrad Gralher
+David Ziliak
+David Sun
+Kévin Petit

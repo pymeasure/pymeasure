@@ -42,6 +42,11 @@ Install PyMeasure in the editable mode.
     pip install -e .
 
 This will allow you to edit the files of PyMeasure and see the changes reflected. Make sure to reset your notebook kernel or Python console when doing so. Now you have your own copy of the development version of PyMeasure installed!
+Depending on your Python installation you may get an error messages saying that the file setup.py is missing or similar. Updating pip may solve the problem
+
+.. code-block:: bash
+
+    python -m pip install pip --upgrade
 
 Working on a new feature
 ========================
