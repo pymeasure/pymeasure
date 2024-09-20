@@ -22,17 +22,40 @@
 # THE SOFTWARE.
 #
 
-from .keithley2000 import Keithley2000
-from .keithley2260B import Keithley2260B
-from .keithley2306 import Keithley2306
-from .keithley2400 import Keithley2400
-from .keithley2450 import Keithley2450
-from .keithley2600 import Keithley2600
-from .keithley2700 import Keithley2700
-from .keithley2750 import Keithley2750
-from .keithley6221 import Keithley6221
-from .keithley6517b import Keithley6517B
-from .keithley2200 import Keithley2200
-from .keithleyDMM6500 import KeithleyDMM6500
-from .keithley2182 import Keithley2182
-from .keithleyDAQ6510 import KeithleyDAQ6510
+import pytest
+import logging
+from pymeasure.instruments.keithley import KeithleyDAQ6510
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+@pytest.fixture(scope="module")
+def daq6510(connected_device_address):
+    instr = KeithleyDAQ6510(connected_device_address)
+    instr.adapter.connection.timeout = 10000
+    return instr
+
+
+@pytest.fixture
+def reset_daq(daq6510):
+    daq6510.clear()
+    daq6510.reset()
+    return daq6510
+
+
+def test_correct_model_by_idn(reset_daq):
+    assert "6510" in reset_daq.id.lower()
+
+
+def test_beep(reset_daq):
+    reset_daq.beep(440, 0.1)
+    assert len(reset_daq.check_errors()) == 0
+
+
+def test_mux(reset_daq):
+    assert reset_daq.use_mux()
+
+
+def test_rear(reset_daq):
+    assert reset_daq.ask(":ROUT:TERM?") == "REAR\n"

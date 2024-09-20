@@ -67,6 +67,7 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Bernhard Lang
 Armindo Pinto
 Frank Wu
 Heinz-Alexander Fütterer
@@ -82,3 +83,6 @@ Till Zürner
 J. A. Wilcox
 Nick James Kirkby
 Konrad Gralher
+David Ziliak
+David Sun
+Kévin Petit
