@@ -34,8 +34,9 @@ log.addHandler(logging.NullHandler())
 class FSL(FSL):
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
         warn(
-            "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is deprecated. Import "
-            "`FSL` from `pymeasure.instruments.rohdeschwarz` instead.",
+            "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "
+            "deprecated since version 0.15. Import `FSL` from "
+            "`pymeasure.instruments.rohdeschwarz` instead.",
             FutureWarning,
         )
         super().__init__(adapter, name, **kwargs)

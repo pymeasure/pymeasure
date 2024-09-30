@@ -1,6 +1,7 @@
 Upcoming version
 ================
 
+- Introduce FSSeries class for Rohde & Schwarz instruments such as FSL (previously stand-alone class), FSW and others from the same product series (@jnnskls, #1156)
 
 Automation
 ----------
