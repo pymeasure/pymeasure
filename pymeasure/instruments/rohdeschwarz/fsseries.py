@@ -35,7 +35,11 @@ log.addHandler(logging.NullHandler())
 
 
 def _number_or_auto(value):
-    # helper for the bandwidth setting
+    # helper for the bandwidth setting & sweep time
+    """
+    Evaluates wether input for bandwidth settings and sweep time is a number (requires space) or 
+    AUTO (requires no space).
+    """
     if isinstance(value, str) and value.upper() == "AUTO":
         return ":AUTO ON"
     else:
@@ -111,7 +115,7 @@ class FSSeries(SCPIMixin, Instrument):
         set_process=_number_or_auto,
     )
 
-    continuous_sweep = Instrument.control(
+    continuous_sweep_enabled = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
         "Control continuous (True) or single sweep (False)",
@@ -133,7 +137,7 @@ class FSSeries(SCPIMixin, Instrument):
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",
-        "Control trace mode ('WRIT', 'MAXH', 'MINH', 'AVER' or 'VIEW')",
+        "Control trace mode ('WRITe', 'MAXHold', 'MINHold', 'AVERage' or 'VIEW')",
         validator=strict_discrete_set,
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )
@@ -260,8 +264,6 @@ class FSL(FSSeries):
         y = np.array(self.values(f"TRAC{n_trace}? TRACE{n_trace}"))
         x = np.linspace(self.freq_start, self.freq_stop, len(y))
         return np.array([x, y])
-
-    pass
 
 
 class FSW(FSSeries):
@@ -405,5 +407,3 @@ class FSW(FSSeries):
     nominal_level = Instrument.control(
         "POW:RLEV?", "POW:RLEV %s", "Control the nominal level of the instrument"
     )
-
-    pass
