@@ -40,7 +40,7 @@ def _number_or_auto(value):
         return ":AUTO ON"
     else:
         # There is no space in the set commands, so we have to add it
-        return " " + str(value)
+        return f" {value}"
 
 
 class FSSeries(SCPIMixin, Instrument):
