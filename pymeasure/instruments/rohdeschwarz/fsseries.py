@@ -37,7 +37,7 @@ log.addHandler(logging.NullHandler())
 def _number_or_auto(value):
     # helper for the bandwidth setting & sweep time
     """
-    Evaluates wether input for bandwidth settings and sweep time is a number (requires space) or 
+    Evaluates wether input for bandwidth settings and sweep time is a number (requires space) or
     AUTO (requires no space).
     """
     if isinstance(value, str) and value.upper() == "AUTO":
