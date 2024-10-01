@@ -201,6 +201,21 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
         self.write("HCSU " + ",".join(arg_strs))
 
+    def vbs_write(self, message: str):
+        """Write a VBS command directly to the device."""
+        query = f"VBS '{message}'"
+        self.write(query)
+
+    def vbs_ask(self, name: str) -> str:
+        """Use VBS to send a query to the device.
+
+        Only the target needs to be specified, a query is formatted by this method.
+
+        Note: the target name is not escaped!
+        """
+        query = f"VBS? 'Return={name}'"
+        return self.ask(query)
+
     def download_image(self, **kwargs):
         """Get a BMP image of oscilloscope screen in bytearray of specified file format.
 
