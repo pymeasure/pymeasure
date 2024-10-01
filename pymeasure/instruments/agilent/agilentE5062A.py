@@ -23,7 +23,8 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin, Channel
-from pymeasure.instruments.validators import strict_range, strict_discrete_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_range, \
+    strict_discrete_set
 
 import numpy as np
 
