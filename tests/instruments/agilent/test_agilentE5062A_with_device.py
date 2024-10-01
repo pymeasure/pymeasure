@@ -114,13 +114,13 @@ def test_ch_scan_points(agilentE5062A):
 def test_ch_sweep_time(agilentE5062A):
     agilentE5062A.clear()
     for ch in agilentE5062A.channels.values():
-        ch.sweep_time_auto = False
-        assert not ch.sweep_time_auto
+        ch.sweep_time_auto_enabled = False
+        assert not ch.sweep_time_auto_enabled
         for t in [1, 2]:
             ch.sweep_time = t
             assert np.isclose(ch.sweep_time, t, rtol=.01)
-        ch.sweep_time_auto = True
-        assert ch.sweep_time_auto
+        ch.sweep_time_auto_enabled = True
+        assert ch.sweep_time_auto_enabled
     assert not agilentE5062A.pop_err()[0]
 
 

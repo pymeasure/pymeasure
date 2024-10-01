@@ -23,9 +23,12 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin, Channel
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_range, strict_discrete_set
 
 import numpy as np
+
+import functools
+
 
 DISPLAY_LAYOUT_OPTIONS = [
         "D1",
@@ -67,6 +70,12 @@ class VNATrace(Channel):
 class VNAChannel(Channel):
     """A measurement channel of the E5061A/E5062A"""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._add_trace(override_id=1)                # add just a single trace to init it all
+        self._update_trace_count(self.active_traces)  # add remaining traces if necessary
+        self._update_power_values(self.attenuation)   # update dynamic limits of power
+
     def _add_trace(self, override_id=None):
         """Internal method that adds a trace to the traces list"""
         tr_id = len(self.traces) + 1 if override_id is None else override_id
@@ -88,17 +97,9 @@ class VNAChannel(Channel):
             -attenuation - 5,
             -attenuation + 10)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # self.traces = []
-        self._add_trace(override_id=1)                # add just a single trace to init it all
-        self._update_trace_count(self.active_traces)  # add remaining traces if necessary
-        self._update_power_values(self.attenuation)   # update dynamic limits of power
-
     start_frequency = Channel.control(
         "SENSe{ch}:FREQuency:STARt?", "SENSe{ch}:FREQuency:STARt %g",
         """Control the start frequency in Hz (float).""",
-        cast=lambda x: int(float(x)),
         validator=strict_range,
         values=[3e5, 3e9]
     )
@@ -106,7 +107,6 @@ class VNAChannel(Channel):
     stop_frequency = Channel.control(
         "SENSe{ch}:FREQuency:STOP?", "SENSe{ch}:FREQuency:STOP %g",
         """Control the stop frequency in Hz (float).""",
-        cast=lambda x: int(float(x)),
         validator=strict_range,
         values=[3e5, 3e9]
     )
@@ -114,20 +114,20 @@ class VNAChannel(Channel):
     scan_points = Channel.control(
         "SENSe{ch}:SWEep:POINts?", "SENSe{ch}:SWEep:POINts %g",
         """Control the number of points used in a sweep (int). Valid range 2 - 1601.""",
-        cast=lambda x: int(float(x)),
-        validator=strict_range,
-        values=[2, 1601]
+        cast=int,
+        validator=functools.partial(strict_discrete_range, step=1),
+        values=range(2, 1602)
     )
 
     sweep_time = Channel.control(
         "SENSe{ch}:SWEep:TIME?", "SENSe{ch}:SWEep:TIME %g",
         """Control the sweep time in seconds (float). The allowable range
         varies on config and the set value is truncated. Note that
-        ``sweep_time_auto`` needs to be ``False`` for changes to this
+        ``sweep_time_auto_enabled`` needs to be ``False`` for changes to this
         property to have an effect."""
     )
 
-    sweep_time_auto = Channel.control(
+    sweep_time_auto_enabled = Channel.control(
         "SENSe{ch}:SWEep:TIME:AUTO?", "SENSe{ch}:SWEep:TIME:AUTO %d",
         """Control whether to automatically set the sweep time (bool). You
         probably want this on to always keep the sweep time to a minimum (given

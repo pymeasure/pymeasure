@@ -174,13 +174,13 @@ def test_ch_sweep_time():
                 ("SENSe1:SWEep:TIME:AUTO?", "1")
             ]) as inst:
         ch = inst.channels[1]
-        ch.sweep_time_auto = False
-        assert not ch.sweep_time_auto
+        ch.sweep_time_auto_enabled = False
+        assert not ch.sweep_time_auto_enabled
         for t in [1, 2]:
             ch.sweep_time = t
             assert np.isclose(ch.sweep_time, t, rtol=.01)
-        ch.sweep_time_auto = True
-        assert ch.sweep_time_auto
+        ch.sweep_time_auto_enabled = True
+        assert ch.sweep_time_auto_enabled
 
 
 def test_ch_sweep_type():
