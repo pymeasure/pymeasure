@@ -73,7 +73,7 @@ class Worker(StoppableThread):
         self.log_level = log_level
 
         global log
-        log = logging.getLogger()
+        log = logging.getLogger(__name__)
         log.setLevel(self.log_level)
         # log.handlers = []  # Remove all other handlers
         # log.addHandler(TopicQueueHandler(self.monitor_queue))
