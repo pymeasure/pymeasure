@@ -102,7 +102,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
     (`link`_).
 
     .. _link: https://cdn.teledynelecroy.com/files/manuals/
-              maui-remote-control-automation_27jul22.pdf
+              maui-remote-control-and-automation-manual.pdf
     """
 
     ch_1 = Instrument.ChannelCreator(TeledyneMAUIChannel, 1)
@@ -115,6 +115,40 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     # Change listed values for existing commands:
     bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS
+
+    def vbs_write(self, message: str):
+        """Write a VBS command directly to the device.
+
+        This class of oscilloscopes also allows the direct usage of Visual Basic
+        Scripting (VBScript). With this method a literal VBS command is sent.
+        You can use the 'MAUI Browser' on the oscilloscope to list all available
+        variables.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_write("app.Display.GridMode = Dual")
+        """
+        query = f"VBS '{message}'"
+        self.write(query)
+
+    def vbs_ask(self, name: str) -> str:
+        """Return the value of a VBS variable.
+
+        Only the target needs to be specified, a query is formatted by this method.
+        Note: the target name is not escaped!
+
+        See :meth:`~vbs_write` for more info.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_ask("app.Display.GridMode")
+        """
+        query = f"VBS? 'Return={name}'"
+        return self.ask(query)
 
     ###############
     #   Trigger   #
@@ -200,21 +234,6 @@ class TeledyneMAUI(TeledyneOscilloscope):
         arg_strs = [keys[key] + "," + value for key, value in kwargs.items()]
 
         self.write("HCSU " + ",".join(arg_strs))
-
-    def vbs_write(self, message: str):
-        """Write a VBS command directly to the device."""
-        query = f"VBS '{message}'"
-        self.write(query)
-
-    def vbs_ask(self, name: str) -> str:
-        """Use VBS to send a query to the device.
-
-        Only the target needs to be specified, a query is formatted by this method.
-
-        Note: the target name is not escaped!
-        """
-        query = f"VBS? 'Return={name}'"
-        return self.ask(query)
 
     def download_image(self, **kwargs):
         """Get a BMP image of oscilloscope screen in bytearray of specified file format.
