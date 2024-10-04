@@ -41,9 +41,13 @@ class LD400P(Instrument):
 
     @classmethod
     def remove_unit_suffix(cls, msg: str) -> str:
-        """Remove known unit suffixes from a msg."""
+        """Remove known unit suffixes from a msg.
+
+        The units of some replies depend on the mode of the device, hence all known
+        units are removed.
+        """
         for suffix in cls.unit_suffixes:
-            msg = msg.rstrip(suffix)
+            msg = msg.replace(suffix, "")
         return msg
 
     def __init__(self, adapter, **kwargs):
@@ -54,27 +58,13 @@ class LD400P(Instrument):
     mode = Instrument.control(
         "MODE?",
         "MODE %s",
-        """The mode of the digital load. Can be one of: 
-        ``("C", "P", "R", "G", "V")`` corresponding to (respectively) constant current, 
+        """The mode of the digital load. Can be one of:
+        ``("C", "P", "R", "G", "V")``, corresponding to (respectively) constant current,
         power, resistance, conductance or voltage (string).
         """,
         validator=strict_discrete_set,
         values=["C", "P", "R", "G", "V"],
-        get_process=lambda v: v.lstrip("MODE "),
-    )
-
-    level_a = Instrument.control(
-        "A?",
-        "A %g",
-        """The A level of the current control mode (float).""",
-        preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.lstrip("A")),
-    )
-
-    level_b = Instrument.control(
-        "B?",
-        "B %g",
-        """The B level of the current control mode (float).""",
-        preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.lstrip("B")),
+        get_process=lambda v: v.replace("MODE ", ""),
     )
 
     level_select = Instrument.control(
@@ -86,27 +76,44 @@ class LD400P(Instrument):
         """,
         validator=strict_discrete_set,
         values=["A", "B", "T", "V", "E"],
-        get_process=lambda v: v.lstrip("LVLSEL "),
+        get_process=lambda v: v.replace("LVLSEL ", ""),
     )
 
-    input = Instrument.control(
+    level_a = Instrument.control(
+        "A?",
+        "A %g",
+        """The A level of the current control mode (float).""",
+        preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.replace("A", "")),
+    )
+
+    level_b = Instrument.control(
+        "B?",
+        "B %g",
+        """The B level of the current control mode (float).""",
+        preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.replace("B", "")),
+    )
+
+    input_enabled = Instrument.control(
         "INP?",
         "INP %d",
-        """The input state of the digital load, can be 'On' (``True``) or 'Off' 
-        (``False``).""",
+        """The input state of the digital load, can be ``True`` (on) or ``False``
+        (off).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
+        preprocess_reply=lambda v: v.replace("INP ", ""),
     )
+
+    # Voltage / current replies are _not_ prefixed by the command, but do have a unit:
 
     voltage = Instrument.measurement(
         "V?",
         """The measured source input voltage (float).""",
-        preprocess_reply=lambda v: v.lstrip("V"),
+        preprocess_reply=lambda v: v.replace("V", ""),
     )
 
     current = Instrument.measurement(
         "I?",
         """The measured load current (float).""",
-        preprocess_reply=lambda v: v.lstrip("A"),
+        preprocess_reply=lambda v: v.replace("A", ""),
     )
