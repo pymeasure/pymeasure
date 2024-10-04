@@ -23,10 +23,11 @@
 #
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
-class LD400P(Instrument):
+class LD400P(SCPIMixin, Instrument):
     """Interface for the LD400P electronic DC load from Aim-TTi.
 
     Note: the LD400 edition doesn't have digital interfacing, only the LD400P does.
@@ -50,15 +51,13 @@ class LD400P(Instrument):
             msg = msg.replace(suffix, "")
         return msg
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, "LD400", **kwargs)
-
-    id = Instrument.measurement("*IDN?", """Reads the instrument identification (string).""")
+    def __init__(self, adapter, name="LD400", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     mode = Instrument.control(
         "MODE?",
         "MODE %s",
-        """The mode of the digital load. Can be one of:
+        """Control the mode of the digital load. Can be one of:
         ``("C", "P", "R", "G", "V")``, corresponding to (respectively) constant current,
         power, resistance, conductance or voltage (string).
         """,
@@ -70,7 +69,7 @@ class LD400P(Instrument):
     level_select = Instrument.control(
         "LVLSEL?",
         "LVLSEL %s",
-        """The selected level of the digital load. Can be one of:
+        """Control the selected level of the digital load. Can be one of:
         ``("A", "B", "T", "V", "E")``, corresponding to (respectively) Level A, Level B,
         Transient, Ext Voltage and Ext TTL (string).
         """,
@@ -82,22 +81,23 @@ class LD400P(Instrument):
     level_a = Instrument.control(
         "A?",
         "A %g",
-        """The A level of the current control mode (float).""",
+        """Control the A level of the current control mode (float).""",
         preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.replace("A", "")),
     )
 
     level_b = Instrument.control(
         "B?",
         "B %g",
-        """The B level of the current control mode (float).""",
+        """Control the B level of the current control mode (float).""",
         preprocess_reply=lambda v: LD400P.remove_unit_suffix(v.replace("B", "")),
     )
 
     input_enabled = Instrument.control(
         "INP?",
         "INP %d",
-        """The input state of the digital load, can be ``True`` (on) or ``False``
-        (off).""",
+        """Control the input state of the digital load, can be ``True`` (on) or
+        ``False`` (off).
+        """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -108,12 +108,12 @@ class LD400P(Instrument):
 
     voltage = Instrument.measurement(
         "V?",
-        """The measured source input voltage (float).""",
+        """Get the measured source input voltage (float).""",
         preprocess_reply=lambda v: v.replace("V", ""),
     )
 
     current = Instrument.measurement(
         "I?",
-        """The measured load current (float).""",
+        """Get the measured load current (float).""",
         preprocess_reply=lambda v: v.replace("A", ""),
     )

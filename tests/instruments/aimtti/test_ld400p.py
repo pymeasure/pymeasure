@@ -66,6 +66,7 @@ def test_level_a():
         inst.level_a = 10.5
         assert inst.level_a == 10.5
 
+
 def test_level_b():
     with expected_protocol(
         LD400P,
@@ -85,7 +86,8 @@ def test_input_enabled():
          ]
     ) as inst:
         inst.input_enabled = True
-        assert inst.input_enabled == True
+        enabled = inst.input_enabled
+        assert enabled and isinstance(enabled, bool)
 
 
 def test_voltage():
