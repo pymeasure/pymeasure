@@ -22,5 +22,40 @@
 # THE SOFTWARE.
 #
 
-from .aimttiPL import PL068P, PL155P, PL303P, PL601P, PL303QMDP, PL303QMTP
-from .ld400p import LD400P
+import pytest
+import time
+
+from pymeasure.instruments.aimtti import LD400P
+
+
+@pytest.fixture(scope="module")
+def instrument(connected_device_address):
+    instr = LD400P(connected_device_address)
+    instr.reset()
+    return instr
+
+
+def test_load(instrument):
+    """
+    Connect the load to a power supply that delivers at least 1V and can supply 200mA
+    Then run tests.
+    """
+    assert 0.9 <= instrument.voltage
+
+    instrument.mode = "C"
+    instrument.level_a = 0.2
+    instrument.level_b = 0.1
+    instrument.level_select = "A"
+
+    time.sleep(0.1)
+
+    assert instrument.mode == "C"
+    assert instrument.level_select == "A"
+
+    instrument.input = "On"
+    time.sleep(2)
+    assert pytest.approx(instrument.current, 0.01) == 0.2
+
+    instrument.level_select = "B"
+    time.sleep(2)
+    assert pytest.approx(instrument.current, 0.01) == 0.1
