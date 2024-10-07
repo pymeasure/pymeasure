@@ -117,3 +117,10 @@ class LD400P(SCPIMixin, Instrument):
         """Get the measured load current (float).""",
         preprocess_reply=lambda v: v.replace("A", ""),
     )
+
+    # Remove SCP properties that don't work on this device:
+    options = None
+    next_error = None
+
+    def check_errors(self):
+        raise NotImplementedError("This method is not available on this device")
