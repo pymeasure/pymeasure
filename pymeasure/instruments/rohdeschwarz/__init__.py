@@ -25,3 +25,4 @@
 from .sfm import SFM
 from .fsl import FSL
 from .hmp import HMP4040
+from .rtb2000 import RTB2002, RTB2004
