@@ -31,9 +31,10 @@ from pymeasure.instruments.aimtti.ld400p import LD400P
 def test_mode():
     with expected_protocol(
         LD400P,
-        [("MODE P", None),
-         ("MODE?", "MODE P"),
-         ]
+        [
+            ("MODE P", None),
+            ("MODE?", "MODE P"),
+        ],
     ) as inst:
         inst.mode = "P"
         assert inst.mode == "P"
@@ -48,9 +49,10 @@ def test_mode_write_invalid():
 def test_level_select():
     with expected_protocol(
         LD400P,
-        [("LVLSEL V", None),
-         ("LVLSEL?", "LVLSEL V"),
-         ]
+        [
+            ("LVLSEL V", None),
+            ("LVLSEL?", "LVLSEL V"),
+        ],
     ) as inst:
         inst.level_select = "V"
         assert inst.level_select == "V"
@@ -59,9 +61,10 @@ def test_level_select():
 def test_level_a():
     with expected_protocol(
         LD400P,
-        [("A 10.5", None),
-         ("A?", "A 10.5W"),
-         ]
+        [
+            ("A 10.5", None),
+            ("A?", "A 10.5W"),
+        ],
     ) as inst:
         inst.level_a = 10.5
         assert inst.level_a == 10.5
@@ -70,9 +73,10 @@ def test_level_a():
 def test_level_b():
     with expected_protocol(
         LD400P,
-        [("B 10.5", None),
-         ("B?", "B 10.5W"),
-         ]
+        [
+            ("B 10.5", None),
+            ("B?", "B 10.5W"),
+        ],
     ) as inst:
         inst.level_b = 10.5
         assert inst.level_b == 10.5
@@ -81,9 +85,10 @@ def test_level_b():
 def test_input_enabled():
     with expected_protocol(
         LD400P,
-        [("INP 1", None),
-         ("INP?", "INP 1"),
-         ]
+        [
+            ("INP 1", None),
+            ("INP?", "INP 1"),
+        ],
     ) as inst:
         inst.input_enabled = True
         enabled = inst.input_enabled
@@ -93,8 +98,9 @@ def test_input_enabled():
 def test_voltage():
     with expected_protocol(
         LD400P,
-        [("V?", "3.14V"),
-         ]
+        [
+            ("V?", "3.14V"),
+        ],
     ) as inst:
         assert inst.voltage == 3.14
 
@@ -102,7 +108,17 @@ def test_voltage():
 def test_current():
     with expected_protocol(
         LD400P,
-        [("I?", "3.14A"),
-         ]
+        [
+            ("I?", "3.14A"),
+        ],
     ) as inst:
         assert inst.current == 3.14
+
+
+def test_options():
+    with expected_protocol(
+        LD400P,
+        [],
+    ) as inst:
+        with pytest.raises(AttributeError):
+            _ = inst.options

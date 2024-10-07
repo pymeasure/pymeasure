@@ -34,11 +34,17 @@ class LD400P(SCPIMixin, Instrument):
 
     The interface is described by the LD400[P] `manual`_.
 
+    The class :class:`~SCPIMixin` is inherited, however the commands `options`,
+    next_error` and `check_errors` do not work for this device.
+
     .. _manual: https://resources.aimtti.com/manuals/
                 LD400+LD400P_Instruction_Manual_EN_48511-1730_8.pdf
     """
 
     unit_suffixes = ["A", "V", "W", "OHM", "SIE", "HZ"]
+
+    def __init__(self, adapter, name="LD400", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     @classmethod
     def remove_unit_suffix(cls, msg: str) -> str:
@@ -51,15 +57,12 @@ class LD400P(SCPIMixin, Instrument):
             msg = msg.replace(suffix, "")
         return msg
 
-    def __init__(self, adapter, name="LD400", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-
     mode = Instrument.control(
         "MODE?",
         "MODE %s",
         """Control the mode of the digital load. Can be one of:
         ``("C", "P", "R", "G", "V")``, corresponding to (respectively) constant current,
-        power, resistance, conductance or voltage (string).
+        power, resistance, conductance, or voltage (string).
         """,
         validator=strict_discrete_set,
         values=["C", "P", "R", "G", "V"],
@@ -117,3 +120,19 @@ class LD400P(SCPIMixin, Instrument):
         """Get the measured load current (float).""",
         preprocess_reply=lambda v: v.replace("A", ""),
     )
+
+    # Remove SCP properties that don't work on this device:
+
+    @property
+    def options(self):
+        """Get options - Not available."""
+        raise AttributeError("No attribute 'options' exists")
+
+    @property
+    def next_error(self):
+        """Get next error - Not available."""
+        raise AttributeError("No attribute 'next_error' exists")
+
+    def check_errors(self):
+        """Not available."""
+        raise NotImplementedError("This method is not available on this device")
