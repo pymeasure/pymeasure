@@ -40,6 +40,8 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         )
         self._set_flags()
 
+    _init_comm_pairs = [("SYST:SENSOR:IDN?", "0, 1, 2, 3, 4, 5")]
+
     wavelength_min = Instrument.measurement(
         "SENS:CORR:WAV? MIN", "Measure minimum wavelength, in nm"
     )

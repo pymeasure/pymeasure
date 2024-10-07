@@ -314,6 +314,13 @@ class ANC300Controller(Instrument):
         # switch console echo off
         self.ask('echo off')
 
+    _init_comm_pairs = [
+        ("", "*" * len("")),
+        (None, "Authorization success"),
+        ("echo off", "> echo off"),
+        (None, "OK"),
+    ]
+
     def check_set_errors(self):
         """Check for errors after having set a property and log them.
 

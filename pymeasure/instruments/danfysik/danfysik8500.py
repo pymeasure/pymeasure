@@ -71,6 +71,8 @@ class Danfysik8500(Instrument):
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
 
+    _init_comm_pairs = [(b"ERRT", None), (b"UNLOCK", None)]
+
     def read(self):
         """ Read the device and raise exceptions if errors are reported by the instrument.
 

@@ -24,11 +24,11 @@
 
 import importlib
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
 
 from pymeasure import instruments
+from pymeasure.adapters import ProtocolAdapter
 from pymeasure.instruments import Instrument, Channel, generic_types
 
 
@@ -98,18 +98,7 @@ for mixin in dir(generic_types):
 proper_adapters = []
 # Instruments with communication in their __init__, which consequently fails.
 need_init_communication = [
-    "SwissArmyFake",
-    "FakeInstrument",
-    "ThorlabsPM100USB",
-    "Keithley2700",
-    "TC038",
-    "Agilent34450A",
-    "AWG401x_AWG",
-    "AWG401x_AFG",
-    "VARX",
-    "HP8116A",
-    "IBeamSmart",
-    "ANC300Controller",
+    "HP8116A",  # it depends on `adapter.connection.read_stb`
 ]
 # Channels which are still an Instrument subclass
 channel_as_instrument_subclass = [
@@ -211,7 +200,8 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
-    cls(adapter=MagicMock())
+
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -221,7 +211,8 @@ def test_name_argument(cls):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
     elif cls.__name__ in channel_as_instrument_subclass:
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
-    inst = cls(adapter=MagicMock(), name="Name_Test")
+
+    inst = cls(adapter=ProtocolAdapter(cls._init_comm_pairs), name="Name_Test")
     assert inst.name == "Name_Test"
 
 
@@ -242,11 +233,12 @@ def test_kwargs_to_adapter(cls):
         pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
+    elif cls.__name__ in ("FakeInstrument", "SwissArmyFake"):
+        pytest.skip("Fake instruments replace the adapter.")
 
-    with pytest.raises(
-        ValueError, match="'kwarg_test' is not a valid attribute for type SerialInstrument"
-    ):
-        cls(SIM_RESOURCE, visa_library="@sim", kwarg_test=True)
+    with pytest.raises(ValueError,
+                       match="'kwarg_test' is not a valid attribute for type SerialInstrument"):
+        cls(adapter=SIM_RESOURCE, visa_library='@sim', kwarg_test=True)
 
 
 @pytest.mark.parametrize("cls", devices)
@@ -260,7 +252,7 @@ def test_includeSCPI_explicitly_set(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    cls(adapter=MagicMock())
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
     # assert that no error is raised
 
 
@@ -275,7 +267,7 @@ def test_includeSCPI_not_set_to_True(cls):
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
-    cls(adapter=MagicMock())
+    cls(adapter=ProtocolAdapter(cls._init_comm_pairs))
     # assert that no error is raised
 
 

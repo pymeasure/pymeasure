@@ -103,6 +103,8 @@ class Instrument(CommonBase):
 
         log.info("Initializing %s." % self.name)
 
+    _init_comm_pairs = []
+
     def __enter__(self):
         return self
 

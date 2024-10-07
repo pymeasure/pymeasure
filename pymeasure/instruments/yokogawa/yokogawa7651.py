@@ -133,6 +133,8 @@ class Yokogawa7651(SCPIUnknownMixin, Instrument):
 
         self.write("H0;E")  # Set no header in output data
 
+    _init_comm_pairs = [("H0;E", None)]
+
     @property
     def id(self):
         """ Get the identification of the instrument """

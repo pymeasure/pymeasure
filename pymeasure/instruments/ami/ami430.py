@@ -68,6 +68,8 @@ class AMI430(SCPIMixin, Instrument):
         self.read()
         self.read()
 
+    _init_comm_pairs = [(None, "welcome"), (None, "connect")]
+
     maximumfield = 1.00
     maximumcurrent = 50.63
 

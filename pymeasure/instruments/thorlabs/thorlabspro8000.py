@@ -40,6 +40,8 @@ class ThorlabsPro8000(SCPIUnknownMixin, Instrument):
         )
         self.write(':SYST:ANSW VALUE')
 
+    _init_comm_pairs = [(':SYST:ANSW VALUE', None)]
+
     # Code for general purpose commands (mother board related)
     slot = Instrument.control(":SLOT?", ":SLOT %d",
                               "Control slot selection. Allowed values are: {}""".format(SLOTS),

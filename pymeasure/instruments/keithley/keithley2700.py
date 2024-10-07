@@ -105,9 +105,10 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
             name,
             **kwargs
         )
-
         self.check_errors()
         self.determine_valid_channels()
+
+    _init_comm_pairs = [("SYST:ERR?", "0,None"), ("*OPT?", "")]  # TODO verify
 
     # Routing commands
     closed_channels = Instrument.control(

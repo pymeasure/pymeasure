@@ -217,6 +217,8 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
 
     channels = Instrument.MultiChannelCreator(ScannerCard2000Channel, list(range(1, 11)))
 
+    _init_comm_pairs = [(b'*LANG SCPI', None)]
+
     def __init__(
         self, adapter, name="Keithley DMM6500 6½-Digit Multimeter", read_termination="\n", **kwargs
     ):

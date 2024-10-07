@@ -95,8 +95,9 @@ class TC038(Instrument):
             **kwargs,
         )
         self.address = address
-
         self.set_monitored_quantity()  # start to monitor the temperature
+
+    _init_comm_pairs = [(b"\x0201010WRS01D0002\x03", b"\x020101OK\x03")]
 
     def write(self, command):
         """Send a `command` in its own protocol."""
