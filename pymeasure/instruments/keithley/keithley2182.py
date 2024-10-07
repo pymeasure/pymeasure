@@ -179,7 +179,7 @@ class Keithley2182(SCPIMixin, KeithleyBuffer, Instrument):
     """
 
     def __init__(self, adapter, name="Keithley 2182 Nanovoltmeter",
-                 read_termination='\r', **kwargs):
+                 read_termination='\n', **kwargs):
         super().__init__(adapter, name, read_termination=read_termination, **kwargs)
 
     ch_1 = Instrument.ChannelCreator(Keithley2182Channel, 1)
