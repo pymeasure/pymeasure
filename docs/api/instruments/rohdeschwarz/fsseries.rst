@@ -1,9 +1,9 @@
 ######################################
-R&S FSL spectrum analyzer
+R&S FS Series spectrum analyzer
 ######################################
 
-Connecting to the instrument via network
-----------------------------------------
+Connecting to an R&S FSL via network
+------------------------------------
 Once connected to the network, the instrument's IP address can be found by
 clicking the "Setup" button and navigating to "General Settings" -> "Network
 Address".  
@@ -133,6 +133,16 @@ Here is an example of a simple script for recording the peak of a signal.
     fsl.single_sweep()
     x, y = fsl.read_trace()
 
-.. autoclass:: pymeasure.instruments.rohdeschwarz.fsl.FSL
+
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSSeries
     :members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSL
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.rohdeschwarz.fsseries.FSW
+    :members:
+    :show-inheritance:
+
