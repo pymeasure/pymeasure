@@ -199,8 +199,8 @@ class Measurement:
         return self.instrument.ask(f"MEASUrement:MEAS{self.number}:YUNIt?")
 
     def __repr__(self):
-        return (f"Measurement(type={self.type}, source1={self.source1}, source2={self.source2}, value={self.value}, "
-                f"xunit={self.xunit}, yunit={self.yunit})")
+        return (f"Measurement(type={self.type}, source1={self.source1}, source2={self.source2}, "
+                f"value={self.value}, xunit={self.xunit}, yunit={self.yunit})")
 
 
 class MSO44Channel(Channel):
@@ -216,21 +216,24 @@ class MSO44Channel(Channel):
 
     scale = Channel.control(
         "CH{ch}:SCAle?", "CH{ch}:SCAle %g",
-        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6 to 10).""",
+        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6 
+        to 10).""",
         validator=strict_range,
         values=[500e-6, 10]
     )
 
     position = Channel.control(
         "CH{ch}:POSition?", "CH{ch}:POSition %g",
-        """Control the vertical position of the channel in divisions (float strictly from -5 to 5).""",
+        """Control the vertical position of the channel in divisions (float strictly from -5 
+        to 5).""",
         validator=strict_range,
         values=[-5, 5]
     )
 
     offset = Channel.control(
         "CH{ch}:OFFSet?", "CH{ch}:OFFSet %g",
-        """Control the vertical offset of the channel in volts (float strictly from -10 to 10).""",
+        """Control the vertical offset of the channel in volts (float strictly from -10 
+        to 10).""",
         validator=strict_range,
         values=[-10, 10]
     )
@@ -244,8 +247,8 @@ class MSO44Channel(Channel):
 
     termination = Channel.control(
         "CH{ch}:TERmination?", "CH{ch}:TERmination %s",
-        """Control the vertical termination of the channel (can be either 50 or 1e6 for 50 Ohm and 1 MOhm 
-        respectively).""",
+        """Control the vertical termination of the channel (can be either 50 or 1e6 for 
+        50 Ohm and 1 MOhm respectively).""",
         validator=strict_discrete_set,
         values=[50, 1e6],
     )
@@ -262,9 +265,9 @@ class MSO44Channel(Channel):
 
     clipping = Channel.measurement(
         "CH{ch}:CLIPping?",
-        """Measure whether the specified channel’s input signal is clipping (exceeding) the channel vertical 
-        scale setting. 0 indicates the channel is not clipping. 1 indicates the channel is 
-        clipping."""
+        """Measure whether the specified channel’s input signal is clipping (exceeding) the 
+        channel vertical scale setting. 0 indicates the channel is not clipping. 1 indicates the 
+        channel is clipping."""
     )
 
 
@@ -309,8 +312,9 @@ class MSO44(SCPIMixin, Instrument):
 
     @trigger_source.setter
     def trigger_source(self, value):
-        valid_options = ['CH1', 'CH2', 'CH3', 'CH4', 'CH1_D', 'CH2_D', 'CH3_D', 'CH4_D', 'MATH1', 'MATH2', 'MATH3',
-                         'MATH4', 'REF1', 'REF2', 'REF3', 'REF4', 'REF1_D', 'REF2_D', 'REF3_D', 'REF4_D']
+        valid_options = ['CH1', 'CH2', 'CH3', 'CH4', 'CH1_D', 'CH2_D', 'CH3_D', 'CH4_D', 'MATH1',
+                         'MATH2', 'MATH3', 'MATH4', 'REF1', 'REF2', 'REF3', 'REF4', 'REF1_D',
+                         'REF2_D', 'REF3_D', 'REF4_D']
         if value not in valid_options:
             raise ValueError(f"Invalid trigger source. Must be one of {', '.join(valid_options)}")
         self.write(f"TRIGger:A:EDGE:SOUrce {value}")
