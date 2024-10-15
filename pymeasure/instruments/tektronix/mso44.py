@@ -216,7 +216,7 @@ class MSO44Channel(Channel):
 
     scale = Channel.control(
         "CH{ch}:SCAle?", "CH{ch}:SCAle %g",
-        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6 
+        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6
         to 10).""",
         validator=strict_range,
         values=[500e-6, 10]
@@ -224,7 +224,7 @@ class MSO44Channel(Channel):
 
     position = Channel.control(
         "CH{ch}:POSition?", "CH{ch}:POSition %g",
-        """Control the vertical position of the channel in divisions (float strictly from -5 
+        """Control the vertical position of the channel in divisions (float strictly from -5
         to 5).""",
         validator=strict_range,
         values=[-5, 5]
@@ -232,7 +232,7 @@ class MSO44Channel(Channel):
 
     offset = Channel.control(
         "CH{ch}:OFFSet?", "CH{ch}:OFFSet %g",
-        """Control the vertical offset of the channel in volts (float strictly from -10 
+        """Control the vertical offset of the channel in volts (float strictly from -10
         to 10).""",
         validator=strict_range,
         values=[-10, 10]
@@ -247,7 +247,7 @@ class MSO44Channel(Channel):
 
     termination = Channel.control(
         "CH{ch}:TERmination?", "CH{ch}:TERmination %s",
-        """Control the vertical termination of the channel (can be either 50 or 1e6 for 
+        """Control the vertical termination of the channel (can be either 50 or 1e6 for
         50 Ohm and 1 MOhm respectively).""",
         validator=strict_discrete_set,
         values=[50, 1e6],
@@ -265,8 +265,8 @@ class MSO44Channel(Channel):
 
     clipping = Channel.measurement(
         "CH{ch}:CLIPping?",
-        """Measure whether the specified channel’s input signal is clipping (exceeding) the 
-        channel vertical scale setting. 0 indicates the channel is not clipping. 1 indicates the 
+        """Measure whether the specified channel’s input signal is clipping (exceeding) the
+        channel vertical scale setting. 0 indicates the channel is not clipping. 1 indicates the
         channel is clipping."""
     )
 
@@ -376,15 +376,19 @@ class MSO44(SCPIMixin, Instrument):
     def get_waveforms(self, sources, start=1, stop=None, encoding="ASCII", width=2):
         """Get the waveform data from the specified sources.
 
-        :param sources: The sources for the waveform data. Must be a list, e.g. ["CH1"] or ["CH1", "CH2", "MATH1"].
-        :param start: The start point for waveform transfer. Ranges from 1 to the record length (default 1).
-        :param stop: The stop point for waveform transfer. Ranges from 1 to the record length (default None = transfer
-                    complete waveforms).
+        :param sources: The sources for the waveform data. Must be a list, e.g. ["CH1"] or
+                ["CH1", "CH2", "MATH1"].
+        :param start: The start point for waveform transfer. Ranges from 1 to the record length
+                (default 1).
+        :param stop: The stop point for waveform transfer. Ranges from 1 to the record length
+                (default None = transfer complete waveforms).
         :param encoding: The encoding for waveform data (string "ASCII" or "BIN").
-        :param width: The byte width for waveform data = number of bytes per point (1 or 2). Default is 2.
+        :param width: The byte width for waveform data = number of bytes per point (1 or 2).
+                Default is 2.
 
-        :return: A tuple containing the sources, encoding, preamble (information such as the horizontal scale, the
-            vertical scale, and other settings in effect when the waveform was created), and data of the waveforms.
+        :return: A tuple containing the sources, encoding, preamble (information such as the
+                horizontal scale, the vertical scale, and other settings in effect when the
+                waveform was created), and data of the waveforms.
 
         .. seealso:: :meth:`process_waveforms`
         """

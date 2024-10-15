@@ -79,8 +79,7 @@ def test_measurement_frequency(reset_mso44):
     assert meas_count == 1
     reset_mso44.start_acquisition()
     reset_mso44.wait_for_idle()
-    freq = meas.value
-    # assert 0 < freq < 1e9
+    meas.value
     reset_mso44.stop_acquisition()
 
 
@@ -95,6 +94,6 @@ def test_measurement_phase(reset_mso44):
     reset_mso44.wait_for_idle()
     reset_mso44.start_acquisition()
     reset_mso44.wait_for_idle()
-    phase = meas.value
+    meas.value
     # assert -180 <= phase <= 180
     reset_mso44.stop_acquisition()
