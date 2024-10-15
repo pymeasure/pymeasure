@@ -557,8 +557,8 @@ class MSO44(SCPIMixin, Instrument):
     def reset(self):
         """Resets the device:
             - Recalls the default instrument setup.
-            - Clears the current *DDT command.
+            - Clears the current DDT command.
             - Disables aliases (:ALIAS:STATE 0).
-            - Disables the user password (for the *PUD command).
+            - Disables the user password (for the PUD command).
         """
         self.write("*RST")
