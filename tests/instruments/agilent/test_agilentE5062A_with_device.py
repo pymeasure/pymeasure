@@ -29,7 +29,6 @@
 # port connection can be anything that is safe for that power level.
 
 import pytest
-from pyvisa.errors import VisaIOError
 from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
 
 import numpy as np

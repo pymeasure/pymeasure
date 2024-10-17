@@ -466,7 +466,6 @@ class AgilentE5062A(SCPIMixin, Instrument):
             vna.wait_for_complete()     # wait until the sweep is complete
 
         # see `agilentE5062A.data` for an example of saving the measurement
-
     """
 
     ch_1 = Instrument.ChannelCreator(VNAChannel, 1)
