@@ -544,13 +544,15 @@ class AgilentE5062A(SCPIMixin, Instrument):
         "TRIGger:SOURce?", "TRIGger:SOURce %s",
         """Control the trigger source (str). From the documentation:
 
-         - INT: Uses the internal trigger to generate continuous triggers
-        automatically (default).
-         - EXT: Generates a trigger when the trigger signal is inputted
-        externally via the Ext Trig connector or the handler interface.
-         - MAN: Generates a trigger when the key operation of [Trigger] -
-        Trigger is executed from the front panel.
-         - BUS: Generates a trigger when the ``*TRG`` command is executed.""",
+        - INT: Uses the internal trigger to generate continuous triggers
+          automatically (default).
+        - EXT: Generates a trigger when the trigger signal is inputted
+          externally via the Ext Trig connector or the handler interface.
+        - MAN: Generates a trigger when the key operation of [Trigger] -
+          Trigger is executed from the front panel.
+        - BUS: Generates a trigger when the ``*TRG`` command is executed.
+
+        """,
         validator=strict_discrete_set,
         values=[
             'INT',
