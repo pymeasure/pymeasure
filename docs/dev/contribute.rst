@@ -13,6 +13,9 @@ New features are added to the development version of PyMeasure, hosted on `GitHu
 .. _Git version control: https://git-scm.com/
 .. _GitHub Desktop: https://git-scm.com/downloads
 
+Make sure :code:`git --version` works from comand line. If you are using Github Desktop, you may need to add Git to your path in each terminal window.
+On windows anaconda prompt it would be :code:`set PATH="C:\Users\<USERNAME>\AppData\Local\GitHubDesktop\app-<#######>\resources\app\git\cmd";%PATH%`
+
 In order to add your feature, you need to first `fork`_ PyMeasure. This will create a copy of the repository under your GitHub account.
 
 .. _fork: https://help.github.com/articles/fork-a-repo/
