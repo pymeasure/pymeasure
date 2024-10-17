@@ -380,6 +380,7 @@ class VNAChannel(Channel):
                 re, im = ch.data
                 s_matrix[:, i] = re + 1j * im
             s_matrix = s_matrix.reshape(-1, 2, 2)  # ready for use with e.g. skrf
+
         """
         self.write(f'CALC{self.id}:DATA:FDAT?')
         numeric_data = self._read_binary_data()
@@ -466,6 +467,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
             vna.wait_for_complete()     # wait until the sweep is complete
 
         # see `agilentE5062A.data` for an example of saving the measurement
+
     """
 
     ch_1 = Instrument.ChannelCreator(VNAChannel, 1)
