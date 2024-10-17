@@ -67,7 +67,7 @@ def initial_comm_pairs():
     return comms
 
 
-def test_ch_active_traces():
+def test_ch_visible_traces():
     with expected_protocol(
             AgilentE5062A,
             [
@@ -81,12 +81,12 @@ def test_ch_active_traces():
                 ("CALC1:PARameter:COUNt 4", None),
                 ("CALC1:PARameter:COUNt?", "4")
             ]) as inst:
-        # test ch active_traces
+        # test ch visible_traces
         ot4 = np.arange(4) + 1
         ch = inst.channels[1]
         for opt in ot4:
-            ch.active_traces = opt
-            assert ch.active_traces == opt
+            ch.visible_traces = opt
+            assert ch.visible_traces == opt
 
 
 def test_ch_traces():
@@ -472,3 +472,15 @@ def test_trigger_single():
                 ("TRIGger:SINGle", None)
             ]) as inst:
         inst.trigger_single()
+
+
+def test_wait_for_complete():
+    with expected_protocol(
+            AgilentE5062A,
+            [
+                *initial_comm_pairs(),
+                ("TRIGger:SINGle", None),
+                ("*OPC?", "1")
+            ]) as inst:
+        inst.trigger_single()
+        inst.wait_for_complete()

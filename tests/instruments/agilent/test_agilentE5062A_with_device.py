@@ -29,7 +29,6 @@
 # port connection can be anything that is safe for that power level.
 
 import pytest
-from pyvisa.errors import VisaIOError
 from pymeasure.instruments.agilent.agilentE5062A import AgilentE5062A
 
 import numpy as np
@@ -59,21 +58,21 @@ def agilentE5062A(connected_device_address):
     return instr
 
 
-def test_ch_active_traces(agilentE5062A):
+def test_ch_visible_traces(agilentE5062A):
     agilentE5062A.clear()
-    # test ch active_traces
+    # test ch visible_traces
     ot4 = np.arange(4) + 1
     for ch in agilentE5062A.channels.values():
         for opt in ot4:
-            ch.active_traces = opt
-            assert ch.active_traces == opt
+            ch.visible_traces = opt
+            assert ch.visible_traces == opt
     assert not agilentE5062A.pop_err()[0]
 
 
 def test_ch_traces(agilentE5062A):
     agilentE5062A.clear()
     for ch in agilentE5062A.channels.values():
-        ch.active_traces = 4
+        ch.visible_traces = 4
         for tr in ch.traces.values():
             for p in ['S11', 'S12', 'S21', 'S22']:
                 tr.parameter = p
@@ -207,7 +206,7 @@ def test_tr_format(agilentE5062A):
     agilentE5062A.clear()
     ch = agilentE5062A.channels[1]
     ch.activate()
-    ch.active_traces = 4
+    ch.visible_traces = 4
     for tr in ch.traces.values():
         tr.activate()
         for opt in ch.TRACE_FORMAT:
@@ -220,7 +219,7 @@ def test_data(agilentE5062A):
     agilentE5062A.clear()
     agilentE5062A.display_layout = 'D12_34'
     for ch in agilentE5062A.channels.values():
-        ch.active_traces = 1
+        ch.visible_traces = 1
         tr = ch.traces[1]
         tr.activate()
         tr.trace_format = 'SCOM'
@@ -317,16 +316,6 @@ def test_trigger_single(agilentE5062A):
         complete.
 
     """
-
-    def wait_for_complete(vna, attempt=1):
-        try:
-            vna.complete
-        except VisaIOError:     # IO timeout
-            if attempt > 10:
-                raise
-            else:
-                wait_for_complete(vna, attempt=attempt+1)
-
     agilentE5062A.clear()
     agilentE5062A.reset()
     agilentE5062A.trigger_source = 'BUS'
@@ -335,7 +324,7 @@ def test_trigger_single(agilentE5062A):
         agilentE5062A.abort()
         ch.trigger_initiate()
         agilentE5062A.trigger_single()
-        wait_for_complete(agilentE5062A)
+        agilentE5062A.wait_for_complete()
     agilentE5062A.trigger_source = 'INT'
     agilentE5062A.trigger_continuous = True
     assert not agilentE5062A.pop_err()[0]
