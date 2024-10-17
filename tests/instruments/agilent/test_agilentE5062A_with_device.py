@@ -317,16 +317,6 @@ def test_trigger_single(agilentE5062A):
         complete.
 
     """
-
-    def wait_for_complete(vna, attempt=1):
-        try:
-            vna.complete
-        except VisaIOError:     # IO timeout
-            if attempt > 10:
-                raise
-            else:
-                wait_for_complete(vna, attempt=attempt+1)
-
     agilentE5062A.clear()
     agilentE5062A.reset()
     agilentE5062A.trigger_source = 'BUS'
@@ -335,7 +325,7 @@ def test_trigger_single(agilentE5062A):
         agilentE5062A.abort()
         ch.trigger_initiate()
         agilentE5062A.trigger_single()
-        wait_for_complete(agilentE5062A)
+        agilentE5062A.wait_for_complete()
     agilentE5062A.trigger_source = 'INT'
     agilentE5062A.trigger_continuous = True
     assert not agilentE5062A.pop_err()[0]

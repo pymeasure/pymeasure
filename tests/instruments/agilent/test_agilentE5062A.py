@@ -472,3 +472,15 @@ def test_trigger_single():
                 ("TRIGger:SINGle", None)
             ]) as inst:
         inst.trigger_single()
+
+
+def test_wait_for_complete():
+    with expected_protocol(
+            AgilentE5062A,
+            [
+                *initial_comm_pairs(),
+                ("TRIGger:SINGle", None),
+                ("*OPC?", "1")
+            ]) as inst:
+        inst.trigger_single()
+        inst.wait_for_complete()
