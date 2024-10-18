@@ -101,6 +101,9 @@ class TeledyneMAUI(TeledyneOscilloscope):
     The manual detailing the API is "MAUI Oscilloscopes Remote Control and Automation Manual"
     (`link`_).
 
+    This class of Teledyne oscilloscopes also support direct VBS commands.
+    See :meth:`~vbs_ask` and :meth:`~vbs_write`.
+
     .. _link: https://cdn.teledynelecroy.com/files/manuals/
               maui-remote-control-and-automation-manual.pdf
     """
