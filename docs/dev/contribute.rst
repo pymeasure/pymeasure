@@ -37,15 +37,20 @@ If you had already installed PyMeasure using :code:`pip`, make sure to uninstall
 
     pip uninstall pymeasure
 
-Install PyMeasure in the editable mode.
+Install PyMeasure in the editable mode and select optional extras.
 
 .. code-block:: bash
 
     cd /path/for/code/pymeasure
-    pip install -e .
+    pip install -e .[tests,docs]
 
-This will allow you to edit the files of PyMeasure and see the changes reflected. Make sure to reset your notebook kernel or Python console when doing so. Now you have your own copy of the development version of PyMeasure installed!
-Depending on your Python installation you may get an error messages saying that the file setup.py is missing or similar. Updating pip may solve the problem
+The ``-e`` will allow you to edit the files of PyMeasure and see the changes reflected.
+The square brackets include extra groups that allow you to run tests and build the documentation locally.
+Make sure to reset your notebook kernel or Python console when doing so.
+Now you have your own copy of the development version of PyMeasure installed!
+
+Depending on your Python installation you may get an error messages saying that the file setup.py is missing or similar.
+Updating pip may solve the problem.
 
 .. code-block:: bash
 
