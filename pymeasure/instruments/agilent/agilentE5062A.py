@@ -26,6 +26,7 @@ from pymeasure.instruments import Instrument, SCPIMixin, Channel
 from pymeasure.instruments.validators import strict_range, strict_discrete_range, \
     strict_discrete_set
 
+from pyvisa.errors import VisaIOError
 import numpy as np
 
 import functools
@@ -73,22 +74,22 @@ class VNAChannel(Channel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._add_trace(override_id=1)                # add just a single trace to init it all
-        self._update_trace_count(self.active_traces)  # add remaining traces if necessary
-        self._update_power_values(self.attenuation)   # update dynamic limits of power
+        self._add_trace(override_id=1)                 # add just a single trace to init it all
+        self._update_trace_count(self.visible_traces)  # add remaining traces if necessary
+        self._update_power_values(self.attenuation)    # update dynamic limits of power
 
     def _add_trace(self, override_id=None):
         """Internal method that adds a trace to the traces list"""
         tr_id = len(self.traces) + 1 if override_id is None else override_id
         self.add_child(VNATrace, tr_id, 'traces', 'tr_')
 
-    def _update_trace_count(self, active_traces):
+    def _update_trace_count(self, visible_traces):
         """Internal method that updates the trace list based on the number
-        of active traces.
+        of visible traces.
         """
-        while len(self.traces) > active_traces:
+        while len(self.traces) > visible_traces:
             self.remove_child(self.traces[max(self.traces.keys())])
-        while len(self.traces) < active_traces:
+        while len(self.traces) < visible_traces:
             self._add_trace()
 
     def _update_power_values(self, attenuation):
@@ -200,12 +201,12 @@ class VNAChannel(Channel):
         self.write("DISP:WIND{ch}:ACT")
 
     @property
-    def active_traces(self):
-        """Control the number of traces active (visible) in the channel (int)."""
+    def visible_traces(self):
+        """Control the number of traces visible in the channel (int)."""
         return int(self.ask("CALC{ch}:PARameter:COUNt?"))
 
-    @active_traces.setter
-    def active_traces(self, value):
+    @visible_traces.setter
+    def visible_traces(self, value):
         value = int(float(value))
         value = strict_range(value, [1, 4])
         self.write("CALC{ch}:PARameter:COUNt %d" % value)
@@ -367,6 +368,19 @@ class VNAChannel(Channel):
 
         Frequency data is accessed via the ``frequencies`` property.
 
+        .. code-block:: python
+
+            # build an s-parameter matrix by measuring the trace data,
+            # where s_matrix[i] = [[S11, S12], [S21, S22]] @ freqs[i]
+            freqs = ch.frequencies
+            s_matrix = np.empty((freqs.size, 4), dtype=np.complex64)
+            for i, tr in enumerate(ch.traces.values()):
+                tr.activate()
+                ch.trace_format = 'POL'
+                re, im = ch.data
+                s_matrix[:, i] = re + 1j * im
+            s_matrix = s_matrix.reshape(-1, 2, 2)  # ready for use with e.g. skrf
+
         """
         self.write(f'CALC{self.id}:DATA:FDAT?')
         numeric_data = self._read_binary_data()
@@ -407,12 +421,15 @@ class AgilentE5062A(SCPIMixin, Instrument):
 
     This VNA has 4 separate channels, each of which has its own sweep. The
     channels are stored in the ``channels`` dictionary. Channels can be enabled
-    even if not displayed. Reading out data happens at the channel level.
+    even if not displayed. Many trace-specific operations, including reading
+    out data, happen at the channel level, but pertain to only the *active
+    trace*.
 
-    Each channel can display up to 4 traces (controlled via the ``active_traces``
-    parameter). Note that each channel also has a ``display_layout`` property
-    that controls the layout of the traces in the channel. The traces are
-    accessed via the ``traces`` dictionary (i.e. ``vna.channels[1].traces[1]``).
+    Each channel can display up to 4 traces (controlled via the
+    ``visible_traces`` parameter). Each channel also has a ``display_layout``
+    property that controls the layout of the traces in the channel. The traces
+    are accessed via the ``traces`` dictionary
+    (i.e. ``vna.channels[1].traces[1]``).
 
     The VNA supports multiple transfer formats. This API only supports the IEEE
     64-bit floating point format. The VNA is configured for this format during
@@ -422,10 +439,34 @@ class AgilentE5062A(SCPIMixin, Instrument):
     This class implements only a subset of the total E5062A functionality. The
     more significant missing functionality includes (TODO):
 
-    - editing the scale of the graphs
+    - editing the scale of the display
     - markers
     - calibration
     - power sweeps
+
+    .. code-block:: python
+
+        # connect to the VNA and make a measurement consisting of 10 averages
+        vna = AgilentE5062A("TCPIP::192.168.2.233::INSTR")
+        ch = vna.channels[1]            # use channel 1
+        ch.visible_traces = 4            # use all 4 traces
+        for i, (tr, parameter) in enumerate(zip(
+                ch.traces.values(),
+                ['S11', 'S12', 'S21', 'S22'])):
+            tr.parameter = parameter
+
+        ch.averages = 10                # use 10x averaging
+        ch.averaging_enabled = True     # turn averaging on
+        ch.trigger_continuous = False   # turn off continuous triggering
+        vna.trigger_source = 'BUS'      # require remote trigger
+        vna.abort()                     # stop the current sweep
+        ch.restart_averaging()          # clear current averaging
+        for _ in range(ch.averages):
+            ch.trigger_initiate()       # arm channel 1 for single sweep
+            vna.trigger_single()        # send a trigger
+            vna.wait_for_complete()     # wait until the sweep is complete
+
+        # see `agilentE5062A.data` for an example of saving the measurement
 
     """
 
@@ -476,7 +517,7 @@ class AgilentE5062A(SCPIMixin, Instrument):
         Note that this splits windows for multiple *channels*, not
         traces. Basic S-param measurements most likely want to use only a
         single channel, but with multuple *traces* instead. See
-        e.g. ``AgilentE5062A.channels[1].active_traces``
+        e.g. ``AgilentE5062A.channels[1].visible_traces``
         """,
         validator=strict_discrete_set,
         values=DISPLAY_LAYOUT_OPTIONS
@@ -503,16 +544,15 @@ class AgilentE5062A(SCPIMixin, Instrument):
         "TRIGger:SOURce?", "TRIGger:SOURce %s",
         """Control the trigger source (str). From the documentation:
 
-        INT: Uses the internal trigger to generate continuous triggers
-        automatically (default).
+        - INT: Uses the internal trigger to generate continuous triggers
+          automatically (default).
+        - EXT: Generates a trigger when the trigger signal is inputted
+          externally via the Ext Trig connector or the handler interface.
+        - MAN: Generates a trigger when the key operation of [Trigger] -
+          Trigger is executed from the front panel.
+        - BUS: Generates a trigger when the ``*TRG`` command is executed.
 
-        EXT: Generates a trigger when the trigger signal is inputted
-        externally via the Ext Trig connector or the handler interface.
-
-        MAN: Generates a trigger when the key operation of [Trigger] -
-        Trigger is executed from the front panel.
-
-        BUS: Generates a trigger when the ``*TRG`` command is executed.""",
+        """,
         validator=strict_discrete_set,
         values=[
             'INT',
@@ -521,28 +561,49 @@ class AgilentE5062A(SCPIMixin, Instrument):
             'BUS'])
 
     def trigger_bus(self):
-        """If the trigger source if BUS and the VNA is waiting for a trigger,
-        generates a trigger"""
+        """If the trigger source is BUS and the VNA is waiting for a trigger
+        (the trigger has been initialized), generate a trigger.
+
+        """
         self.write('*TRG')
 
     def trigger(self):
-        """Regardless of the trigger setting, generates a trigger (if the
-        trigger is in the trigger wait state)"""
+        """Regardless of the trigger setting, generate a trigger (if the
+        trigger has been initialized, i.e. is in the trigger wait state)
+
+        """
         self.write('TRIGger')
 
     def trigger_single(self):
         """like trigger(), but the `complete` SCPI property (synchronization
-        bit) waits for the sweep to be complete, which is useful to wait for a
-        sweep to be complete.
+        bit) waits for the sweep to be complete (see
+        `agilentE5062A.wait_for_complete()`).
+
         """
         self.write('TRIGger:SINGle')
+
+    def wait_for_complete(self, attempt=1, max_attempts=20):
+        """Wait a potentially long time for the synchronization bit.  This is
+        useful in conjunction with `agilentE5062A.trigger_single()` to wait for
+        a single sweep to complete.
+
+        """
+        try:
+            self.complete
+        except VisaIOError:
+            if attempt == max_attempts:
+                raise
+            else:
+                self.wait_for_complete(
+                    attempt=attempt+1,
+                    max_attempts=max_attempts)
 
     def pop_err(self):
 
         """Pop an error off the error queue. Returns a tuple containing the
         code and error description. An error code 0 indicates success.
 
-        The Error queue can be deleted using the standard SCPI
+        The Error queue can be cleared using the standard SCPI
         ``agilentE5062A.clear()`` method.
 
         """

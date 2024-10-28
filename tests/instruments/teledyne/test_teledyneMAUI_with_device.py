@@ -309,6 +309,12 @@ class TestTeledyneMAUI:
         resetted_instrument.trigger_setup(**expected)
         assert resetted_instrument.trigger == expected
 
+    def test_vbs(self, resetted_instrument):
+        """Test reading and writing values through the VBS interface."""
+        resetted_instrument.vbs_write("app.Acquisition.C1.VerScale=0.01")
+        val = resetted_instrument.vbs_ask("app.Acquisition.C1.VerScale")
+        assert val == "0.01\n"
+
 
 if __name__ == "__main__":
     pytest.main()
