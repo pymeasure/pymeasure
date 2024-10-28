@@ -5,13 +5,13 @@ dependencies:
   - cloudpickle=1.6.0
   - numpy=2.1.2
   - pandas=2.2.3
-  - pint=0.24
-  - pyqt=5.15.9
+  # - pint=0.24
+  # - pyqt=5.15.9  # not for py313 compiled
   - pyqtgraph=0.12.4
   - pyserial=3.4
   - pyvisa=1.14.1
   - pyzmq=26.2.0
-  - qt=5.15.8
+  # - qt=5.15.8
 # Development dependencies below
   - pytest-qt=4.2.0
   - pytest-runner=5.2
@@ -23,4 +23,7 @@ dependencies:
   - sphinx=8.1.3
   - sphinx_rtd_theme=3.0.0
 #  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required
-#  - pip  # don't pin, to gain newest conda compatibility fixes
+  - pip  # don't pin, to gain newest conda compatibility fixes
+  - pip:
+    - pyqt5
+    - pint
