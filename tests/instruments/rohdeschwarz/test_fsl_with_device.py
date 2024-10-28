@@ -1,8 +1,6 @@
 import pytest
 from pymeasure.instruments.rohdeschwarz.fsseries import FSL
 
-connected_device_address = "TCPIP::000.00.00.000::INSTR"
-
 pytest.skip("Only works with connected hardware", allow_module_level=True)
 
 

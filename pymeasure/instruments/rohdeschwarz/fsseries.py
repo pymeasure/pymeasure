@@ -35,7 +35,6 @@ log.addHandler(logging.NullHandler())
 
 
 def _number_or_auto(value):
-    # helper for the bandwidth setting & sweep time
     """
     Evaluates wether input for bandwidth settings and sweep time is a number (requires space) or
     AUTO (requires no space).
@@ -137,7 +136,10 @@ class FSSeries(SCPIMixin, Instrument):
     trace_mode = Instrument.control(
         "DISP:TRAC:MODE?",
         "DISP:TRAC:MODE %s",
-        "Control trace mode ('WRITe', 'MAXHold', 'MINHold', 'AVERage' or 'VIEW')",
+        """
+        Control trace mode (Write: 'WRIT', Max Hold: 'MAXH', Min Hold: 'MINH', Average: 'AVER' or
+        View: 'VIEW')
+        """,
         validator=strict_discrete_set,
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
     )

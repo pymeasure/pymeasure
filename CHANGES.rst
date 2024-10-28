@@ -4,6 +4,10 @@ Upcoming version
 - Introduce FSSeries class for Rohde&Schwarz instruments such as FSL (previously stand-alone class), FSW and others from the same product series (@jnnskls, #1156)
   Previously, the instrument class FSL could be imported from :code:`pymeasure/instruments/rohdeschwarz/fsl.py`, which can now be imported from :code:`pymeasure/instruments/rohdeschwarz/fsseries.py` alongside the base class FSSeries and FSW.
 
+Deprecated features
+-------------------
+- The FSL class imported from :code:`pymeasure/instruments/rohdeschwarz/fsl.py` is deprecated, the current version can be found in :code:`pymeasure/instruments/rohdeschwarz/fsseries.py`.
+
 Automation
 ----------
 - Explicitly set encoding to utf8 when writing and reading data to file, allowing the use of special characters.
