@@ -86,4 +86,6 @@ Konrad Gralher
 David Ziliak
 David Sun
 Kévin Petit
+Orion Smedley
+Samuel Simpson
 Isha Sharma
