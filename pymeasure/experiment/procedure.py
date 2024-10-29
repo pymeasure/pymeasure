@@ -284,6 +284,9 @@ class Procedure:
     def should_stop(self):
         raise NotImplementedError('should be monkey patched by a worker')
 
+    def has_next(self):
+        raise NotImplementedError('should be monkey patched by a worker')
+
     def get_estimates(self):
         """ Function that returns estimates that are to be displayed by
         the EstimatorWidget. Must be reimplemented by subclasses. Should
