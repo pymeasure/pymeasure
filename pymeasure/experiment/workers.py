@@ -129,7 +129,7 @@ class Worker(StoppableThread):
         self.emit('error', traceback_str)
         self.update_status(Procedure.FAILED)
 
-    def has_next(self):
+    def is_last(self):
         raise NotImplementedError('should be monkey patched by a manager')
 
     def update_status(self, status):
@@ -167,7 +167,7 @@ class Worker(StoppableThread):
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
-        self.procedure.has_next = self.has_next
+        self.procedure.is_last = self.is_last
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)

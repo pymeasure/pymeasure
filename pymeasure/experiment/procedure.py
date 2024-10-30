@@ -284,8 +284,15 @@ class Procedure:
     def should_stop(self):
         raise NotImplementedError('should be monkey patched by a worker')
 
-    def has_next(self):
-        raise NotImplementedError('should be monkey patched by a worker')
+    def is_last(self) -> bool:
+        """Check if the procedure is the last one in the queue.
+
+        This method must be monkey patched by a worker to provide functionality.
+
+        Returns:
+            bool: True if the procedure is the last one in the queue, False otherwise.
+        """
+        raise NotImplementedError("should be monkey patched by a worker")
 
     def get_estimates(self):
         """ Function that returns estimates that are to be displayed by

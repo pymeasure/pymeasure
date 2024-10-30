@@ -203,7 +203,7 @@ class BaseManager(QtCore.QObject):
                 self._running_experiment = experiment
 
                 self._worker = Worker(experiment.results, port=self.port, log_level=self.log_level)
-                self._worker.has_next = self.experiments.has_next
+                self._worker.is_last = lambda: not self.experiments.has_next()
 
                 self._monitor = Monitor(self._worker.monitor_queue)
                 self._monitor.worker_running.connect(self._running)
