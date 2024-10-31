@@ -87,3 +87,5 @@ David Ziliak
 David Sun
 Kévin Petit
 Sibo Van Gool
+Orion Smedley
+Samuel Simpson
