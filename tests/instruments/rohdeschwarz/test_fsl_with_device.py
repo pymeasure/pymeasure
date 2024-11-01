@@ -1,7 +1,6 @@
 import pytest
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL
 
-pytest.skip("Only works with connected hardware", allow_module_level=True)
+from pymeasure.instruments.rohdeschwarz.fsseries import FSL
 
 
 @pytest.fixture(scope="module")
@@ -49,7 +48,6 @@ def test_create_channels(fsl):
 
 
 def test_activating_channel(fsl):
-
     """Activate the "Test Spectrum" channel and check that the
     channel_type is "SANALYZER" for it."""
 
