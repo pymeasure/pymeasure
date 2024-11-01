@@ -33,7 +33,7 @@ from pint import UndefinedUnitError
 from .parameters import Parameter, Measurable, Metadata
 from pymeasure.units import ureg
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
