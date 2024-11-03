@@ -27,7 +27,7 @@ from pymeasure.instruments.validators import truncated_discrete_set
 
 
 class VoltageChannel(Channel):
-    """A channel of the signal generator"""
+    """Represents a channel of the signal generator."""
 
     output_enabled = Channel.control(
         ":OUTP{ch}?",
@@ -38,6 +38,7 @@ class VoltageChannel(Channel):
         values={True: "ON", False: "OFF"},
         map_values=True,
     )
+
     load = Channel.control(
         ":OUTP{ch}:LOAD?",
         ":OUTP{ch}:LOAD %f",
@@ -61,7 +62,7 @@ class VoltageChannel(Channel):
         ":SOUR{ch}:FREQ?", ":SOUR{ch}:FREQ %f", """ Control the output frequency (Hz)"""
     )
 
-    sync = Channel.control(
+    sync_enabled = Channel.control(
         ":OUTP{ch}:SYNC?",
         ":OUTP{ch}:SYNC %s",
         """Control the synchronization flag.
@@ -75,30 +76,30 @@ class VoltageChannel(Channel):
         ":SOUR{ch}:APPL:SIN %f,%f,%f,%f",
         """
         Set the waveform generator to output a sine of specified parameters
-        :param freq: (int) The frequency of the sine in Hz
-        :param ampl: (float) The peak to peak amplitude of the sine in V
-        :param offset: (float) The DC offset of the sine in V
-        :param phase: (float) The phase offset of the sine in degrees
+        :param int freq: The frequency of the sine in Hz
+        :param float ampl: The peak to peak amplitude of the sine in V
+        :param float offset: The DC offset of the sine in V
+        :param float phase: The phase offset of the sine in degrees
         """,
     )
     square = Channel.setting(
         ":SOUR{ch}:APPL:SQU %f,%f,%f,%f",
         """
         Set the waveform generator to output a square wave of specified parameters
-        :param freq: (int) The frequency of the wave in Hz
-        :param ampl: (float) The peak to peak amplitude of the wave in V
-        :param offset: (float) The DC offset of the wave in V
-        :param phase: (float) The phase offset of the wave in degrees
+        :param int freq: The frequency of the wave in Hz
+        :param float ampl: The peak to peak amplitude of the wave in V
+        :param float offset: The DC offset of the wave in V
+        :param float phase: The phase offset of the wave in degrees
         """,
     )
     triangle = Channel.setting(
         ":SOUR{ch}:APPL:RAMP %f,%f,%f,%f",
         """
         Set the waveform generator to output a triangle wave of specified parameters
-        :param freq: (int) The frequency of the wave in Hz
-        :param ampl: (float) The peak to peak amplitude of the wave in V
-        :param offset: (float) The DC offset of the wave in V
-        :param phase: (float) The phase offset of the wave in degrees
+        :param int freq: The frequency of the wave in Hz
+        :param float ampl: The peak to peak amplitude of the wave in V
+        :param float offset: The DC offset of the wave in V
+        :param float phase: The phase offset of the wave in degrees
         """,
     )
     pulse = Channel.setting(
@@ -106,10 +107,10 @@ class VoltageChannel(Channel):
         """
         Set the waveform generator to output a pulse wave of specified parameters
         Note that the duty cycle is specified using the duty_cycle method.
-        :param freq: (int) The frequency of the wave in Hz
-        :param ampl: (float) The peak to peak amplitude of the wave in V
-        :param offset: (float) The DC offset of the wave in V
-        :param phase: (float) The phase offset of the wave in degrees
+        :param int freq: The frequency of the wave in Hz
+        :param float ampl: The peak to peak amplitude of the wave in V
+        :param float offset: The DC offset of the wave in V
+        :param float phase: The phase offset of the wave in degrees
         """,
     )
 
@@ -117,18 +118,17 @@ class VoltageChannel(Channel):
         ":SOUR{ch}:PULS:DCYC?",
         ":SOUR{ch}:PULS:DCYC %f",
         """
-    Control the duty cycle of pulses out of the waveform generator.
-    :param duty_cycle: (float) The pulse's duty cycle
-    """,
+        Control the duty cycle of pulses out of the waveform generator.
+        :param duty_cycle: (float) The pulse's duty cycle
+        """,
     )
 
     pulse_width = Channel.control(
         ":SOUR{ch}:PULS:WIDT?",
         ":SOUR{ch}:PULS:WIDT %f",
         """
-    Control the pulse width of pulses out of the waveform generator.
-    :param duty_cycle: (float) The pulse's width in seconds
-    """,
+        Set the pulse width of pulses (in seconds) out of the waveform generator.
+        """,
     )
 
     noise = Channel.setting(
@@ -139,16 +139,19 @@ class VoltageChannel(Channel):
         :param offset: (float) The DC offset of the noise in V
         """,
     )
+
     dc = Channel.setting(
         ":SOUR{ch}:APPL:DC 1,1,%f",
         """
-    Set the waveform generator to output a DC voltage of specified parameters
-    :param dc: (float) The output DC voltage in V
-    """,
+        Set the waveform generator to output a DC voltage in V.
+        """,
     )
-    #    pulse=Channel.setting(
-    #
-    #    )
+
+    shape = Channel.control(
+        ":SOUR{ch}:FUNC?",
+        ":SOUR1:FUNC %s",
+        """Control the waveform type of the specified channel.""",
+    )
 
     waveform = Channel.measurement(
         ":SOUR{ch}:APPL?", """Get a descriptor of the waveform applied."""

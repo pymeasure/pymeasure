@@ -1,5 +1,5 @@
 ##############################
-RIGOL DG800 WAVEFORM GENERATOR
+Rigol DG800 waveform generator
 ##############################
 
 .. autoclass:: pymeasure.instruments.rigol.DG800
