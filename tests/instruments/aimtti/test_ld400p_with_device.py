@@ -22,17 +22,40 @@
 # THE SOFTWARE.
 #
 
-from .agilent8257D import Agilent8257D
-from .agilent8722ES import Agilent8722ES
-from .agilentE4408B import AgilentE4408B
-from .agilentE4980 import AgilentE4980
-from .agilentE5062A import AgilentE5062A
-from .agilent34410A import Agilent34410A
-from .agilent34450A import Agilent34450A
-from .agilent4156 import Agilent4156
-from .agilent4294A import Agilent4294A
-from .agilent33220A import Agilent33220A
-from .agilent33500 import Agilent33500
-from .agilent33521A import Agilent33521A
-from .agilentB1500 import AgilentB1500
-from .agilent4284A import Agilent4284A
+import pytest
+import time
+
+from pymeasure.instruments.aimtti import LD400P
+
+
+@pytest.fixture(scope="module")
+def instrument(connected_device_address):
+    instr = LD400P(connected_device_address)
+    instr.reset()
+    return instr
+
+
+def test_load(instrument):
+    """
+    Connect the load to a power supply that delivers at least 1V and can supply 200mA
+    Then run tests.
+    """
+    assert 0.9 <= instrument.voltage
+
+    instrument.mode = "C"
+    instrument.level_a = 0.2
+    instrument.level_b = 0.1
+    instrument.level_select = "A"
+
+    time.sleep(0.1)
+
+    assert instrument.mode == "C"
+    assert instrument.level_select == "A"
+
+    instrument.input = "On"
+    time.sleep(2)
+    assert pytest.approx(instrument.current, 0.01) == 0.2
+
+    instrument.level_select = "B"
+    time.sleep(2)
+    assert pytest.approx(instrument.current, 0.01) == 0.1

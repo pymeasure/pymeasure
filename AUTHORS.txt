@@ -87,3 +87,7 @@ David Ziliak
 David Sun
 Kévin Petit
 Félix Thouin
+Orion Smedley
+Samuel Simpson
+Dawid Maślanka
+

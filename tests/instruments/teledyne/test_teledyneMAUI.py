@@ -117,5 +117,17 @@ def test_attenuation():
         assert instr.ch_1.probe_attenuation == 0.1
 
 
+def test_vbs():
+    with expected_protocol(
+        TeledyneMAUI,
+        [(b"CHDR OFF", None),
+         (b"VBS 'my_command(x)'", None),
+         (b"VBS? 'Return=my_var'", b"0\n"),
+         ]
+    ) as instr:
+        instr.vbs_write("my_command(x)")
+        assert instr.vbs_ask("my_var") == "0\n"
+
+
 if __name__ == '__main__':
     pytest.main()
