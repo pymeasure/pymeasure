@@ -150,12 +150,12 @@ def test_channel_1_square_setter():
         inst.channel_1.square = (500, 1, 0, 0)
 
 
-def test_channel_1_sync_setter():
+def test_channel_1_sync_enabled_setter():
     with expected_protocol(
             DG800,
-            [],
+            [(b':OUTP1:SYNC ON', None)],
     ) as inst:
-        inst.channel_1.sync = True
+        inst.channel_1.sync_enabled = True
 
 
 def test_channel_1_triangle_setter():
