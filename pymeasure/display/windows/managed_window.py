@@ -312,6 +312,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
+            
+            # Reveal in file explorer
+            action_reveal = QtGui.QAction(menu)
+            action_reveal.setText("Reveal in File Explorer")
+            action_reveal.triggered.connect(
+                lambda: self.reveal_in_file_explorer(experiment.results.data_filename))
+            menu.addAction(action_reveal)
 
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
@@ -452,6 +459,25 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             _ = subprocess.Popen(['open', filename])
         else:
             raise Exception("{cls} method open_file_externally does not support {system} OS".format(
+                cls=type(self).__name__, system=system))
+            
+    def reveal_in_file_explorer(self, filename:str) -> None:
+        """ Method to open the file explorer at the location of the given filename.
+
+        Args:
+            filename (str): Path to the file to be revealed in the file explorer.
+        """
+        
+        path = os.path.normpath(filename)
+        system = platform.system()
+        if system == 'Windows':
+            _ = subprocess.Popen(['explorer', '/select,', path], shell=True)
+        elif system == 'Linux':
+            _ = subprocess.Popen(['xdg-open', os.path.dirname(path)])
+        elif system == 'Darwin':
+            _ = subprocess.Popen(['open', '-R', path])
+        else:
+            raise Exception("{cls} method reveal_in_file_explorer does not support {system} OS".format(
                 cls=type(self).__name__, system=system))
 
     def make_procedure(self):
