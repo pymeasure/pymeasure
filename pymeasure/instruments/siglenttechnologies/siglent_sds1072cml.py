@@ -320,7 +320,7 @@ class SDS1072CML(SCPIMixin, Instrument):
     time_division = Instrument.control(
         ":TDIV?",
         ":TDIV %.2eS",
-        "Control the time division to the closest possible value,rounding downwards.",
+        "Control the time division to the closest possible value, rounding downwards, in seconds.",
         validator=truncated_range,
         values=[5e-9, 50],
         get_process=lambda v: float(v.split(" ", 1)[-1][:-1]),
@@ -346,7 +346,8 @@ class SDS1072CML(SCPIMixin, Instrument):
 
     def wait(self, time):
         """Stop the scope from doing anything until it has completed the current acquisition (p.146)
-        param time: time in seconds to wait for
+
+        :param time: time in seconds to wait for
         """
         self.write("WAIT %d" % int(time))
 
