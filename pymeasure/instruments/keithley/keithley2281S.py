@@ -248,14 +248,14 @@ class BatteryTestChannel(Channel):
 
         Args:
             memory_slot (int): Number of memory slot to save model from. Valid values are 1 to 10.
-            model_file_name (str): Name of battery model to save
+            model_file_name (str): Name of battery model to save. '.csv' will be appended by device
 
         Raises:
             ValueError: invalid memory slot given
         """
         if _INTERNAL_MEMORY_SLOTS[0] > memory_slot > _INTERNAL_MEMORY_SLOTS[-1]:
             raise ValueError
-        self.write(f":BATT:MOD:SAVE:USB {memory_slot}, {model_file_name}")
+        self.write(f":BATT:MOD:SAVE:USB {memory_slot}, \"{model_file_name}\"")
 
     @property
     def buffer_data(self) -> pd.DataFrame:
@@ -296,14 +296,14 @@ class BatterySimulationChannel(Channel):
 
         Args:
             memory_slot (int): Number of memory slot to load model to. Valid values are 1 to 10.
-            model_file_name (str): Name of battery model to load
+            model_file_name (str): Name of battery model to load. Omit '.csv'
 
         Raises:
             ValueError: invalid memory slot given
         """
         if _INTERNAL_MEMORY_SLOTS[0] > memory_slot > _INTERNAL_MEMORY_SLOTS[-1]:
             raise ValueError
-        self.write(f":BATT:MOD:LOAD:USB {memory_slot}, {model_file_name}")
+        self.write(f":BATT:MOD:LOAD:USB {memory_slot}, \"{model_file_name}\"")
 
     output_enabled = Instrument.control(
         ":BATT:OUTP?",
