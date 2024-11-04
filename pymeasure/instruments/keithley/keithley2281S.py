@@ -322,19 +322,23 @@ class BatterySimulationChannel(Channel):
         I.e. does the SoC change when charging or discharging.
         """,
         validator=strict_discrete_set,
-        values={"DYNAMIC", "STATIC"},
+        values={"DYNAMIC", "DYN", "STATIC", "STAT"},
     )
 
     capacity_limit = Instrument.control(
         ":BATT:SIM:CAP:LIM?",
         ":BATT:SIM:CAP:LIM %g",
-        """Control maximum capacity of the simulated battery in Ah.""",
+        """
+        Control maximum capacity of the simulated battery in Ah.
+
+        Output needs to be disabled to set this property!
+        """,
         validator=truncated_range,
         values=[0.001, 99],
     )
 
     current_capacity = Instrument.measurement(
-        ":BATT:SIM:CAP",
+        ":BATT:SIM:CAP?",
         """Get the real-time capacity of the simulated battery in Ah.""",
     )
 
@@ -349,7 +353,11 @@ class BatterySimulationChannel(Channel):
     resistance_offset = Instrument.control(
         ":BATT:SIM:RES:OFFS?",
         ":BATT:SIM:RES:OFFS %g",
-        """Control an offset for the internal resistance of the simulated battery.""",
+        """
+        Control an offset for the internal resistance of the simulated battery.
+
+        ESR might not be displayed correctly until display is updated (e.g. via enabled output)
+        """,
         validator=truncated_range,
         values=[-100, 100],
     )
