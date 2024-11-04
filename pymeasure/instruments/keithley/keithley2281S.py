@@ -139,7 +139,7 @@ class PowerSupplyChannel(Channel):
         ":OUTP:STAT %s",
         """Control the output state.""",
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -204,7 +204,7 @@ class BatteryTestChannel(Channel):
         ":BATT:OUTP %s",
         """Control the output state.""",
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -310,7 +310,7 @@ class BatterySimulationChannel(Channel):
         ":BATT:OUTP %s",
         """Control the output state.""",
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
         map_values=True,
     )
 

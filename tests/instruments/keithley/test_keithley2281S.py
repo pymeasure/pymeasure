@@ -62,8 +62,8 @@ def test_ps_output():
         Keithley2281S,
         init_comm
         + [
-            (":OUTP:STAT?", "OFF"),
-            (":OUTP:STAT ON", None),
+            (":OUTP:STAT?", "0"),
+            (":OUTP:STAT 1", None),
         ],
     ) as inst:
         assert inst.ps.output_enabled is False
@@ -76,8 +76,8 @@ def test_bt_output():
         Keithley2281S,
         init_comm
         + [
-            (":BATT:OUTP?", "OFF"),
-            (":BATT:OUTP ON", None),
+            (":BATT:OUTP?", "0"),
+            (":BATT:OUTP 1", None),
         ],
     ) as inst:
         assert inst.bt.output_enabled is False
