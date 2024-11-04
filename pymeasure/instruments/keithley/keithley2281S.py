@@ -444,9 +444,9 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         function_mode = self.function_mode
         if function_mode == "POWER":
             return self.ps.buffer_data
-        elif function_mode == "TEST":
+        if function_mode == "TEST":
             return self.bt.buffer_data
-        elif function_mode == "SIMULATOR":
+        if function_mode == "SIMULATOR":
             return self.bs.buffer_data
 
     display_text_data = Instrument.setting(
