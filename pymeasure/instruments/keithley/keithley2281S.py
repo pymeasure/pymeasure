@@ -261,7 +261,7 @@ class BatteryTestChannel(Channel):
         Raises:
             ValueError: invalid memory slot given
         """
-        if self._INTERNAL_MEMORY_SLOTS[0] > memory_slot > self._INTERNAL_MEMORY_SLOTS[-1]:
+        if _INTERNAL_MEMORY_SLOTS[0] > memory_slot > _INTERNAL_MEMORY_SLOTS[-1]:
             raise ValueError
         self.write(f":BATT:MOD:SAVE:USB {memory_slot}, {model_file_name}")
 
@@ -309,7 +309,7 @@ class BatterySimulationChannel(Channel):
         Raises:
             ValueError: invalid memory slot given
         """
-        if self._INTERNAL_MEMORY_SLOTS[0] > memory_slot > self._INTERNAL_MEMORY_SLOTS[-1]:
+        if _INTERNAL_MEMORY_SLOTS[0] > memory_slot > _INTERNAL_MEMORY_SLOTS[-1]:
             raise ValueError
         self.write(f":BATT:MOD:LOAD:USB {memory_slot}, {model_file_name}")
 
