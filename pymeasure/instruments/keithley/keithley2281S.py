@@ -134,14 +134,6 @@ class PowerSupplyChannel(Channel):
         values=_VOLTAGE_RANGE,
     )
 
-    power_supply_mode = Instrument.control(
-        ":FORM:ELEM:MODE?",
-        ":FORM:ELEM:MODE %s",
-        """Control which power supply mode to use.""",
-        validator=strict_discrete_set,
-        values={"CV", "CC", "OFF"},
-    )
-
     output_enabled = Instrument.control(
         ":OUTP:STAT?",
         ":OUTP:STAT %s",
