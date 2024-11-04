@@ -67,6 +67,7 @@ Sebastien Weber
 Sebastian Neusch
 Ulrich Sauter
 Guus Kuiper
+Bernhard Lang
 Armindo Pinto
 Frank Wu
 Heinz-Alexander Fütterer
@@ -81,6 +82,11 @@ Douwe den Blanken
 Till Zürner
 J. A. Wilcox
 Nick James Kirkby
-Johannes Rothmayr
 Konrad Gralher
 David Ziliak
+David Sun
+Kévin Petit
+Orion Smedley
+Samuel Simpson
+Dawid Maślanka
+Johannes Rothmayr

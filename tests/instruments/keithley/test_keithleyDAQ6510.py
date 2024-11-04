@@ -22,52 +22,61 @@
 # THE SOFTWARE.
 #
 
-
 from pymeasure.test import expected_protocol
-
-from pymeasure.instruments.hp import HP8116A
-from pymeasure.instruments.hp.hp8116a import Status
-
-
-class HP8116AWithMockStatus(HP8116A):
-    @property
-    def status(self):
-        return Status(5)
-
-
-init_comm = [(b"CST", b"x" * 87 + b' ,\r\n')]  # communication during init
+from pymeasure.instruments.keithley import KeithleyDAQ6510
 
 
 def test_init():
     with expected_protocol(
-            HP8116AWithMockStatus,
-            init_comm,
+        KeithleyDAQ6510,
+        [],
     ):
-        pass  # Verify the expected communication.
+        pass
 
 
-def test_duty_cycle():
+def test_current_range_set():
     with expected_protocol(
-            HP8116AWithMockStatus,
-            init_comm + [(b"IDTY", b"00000035")],
-    ) as instr:
-        assert instr.duty_cycle == 35
+            KeithleyDAQ6510,
+            [(b':SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG 1', None)],
+    ) as inst:
+        inst.current_range = 1.0
 
 
-def test_duty_cycle_setter():
+def test_current_range_get():
     with expected_protocol(
-            HP8116AWithMockStatus,
-            init_comm + [(b"DTY 34.5 %", None)],
-    ) as instr:
-        instr.duty_cycle = 34.5
+            KeithleyDAQ6510,
+            [(b':SENS:CURR:RANG?', b'1.0\n')],
+    ) as inst:
+        assert inst.current_range == 1.0
 
 
-def test_sweep_time():
-    with expected_protocol(HP8116AWithMockStatus, init_comm + [("SWT 5 S", None)]) as inst:
-        # This test tests also the generate_1_2_5_sequence method and truncation.
-        inst.sweep_time = 3
+def test_current_nplc_set():
+    with expected_protocol(
+            KeithleyDAQ6510,
+            [(b':SENS:CURR:NPLC 2', None)],
+    ) as inst:
+        inst.current_nplc = 2
 
 
-def test_limit_enabled():
-    with expected_protocol(HP8116AWithMockStatus, init_comm + [("L1", None)]) as inst:
-        inst.limit_enabled = True
+def test_current_nplc_get():
+    with expected_protocol(
+            KeithleyDAQ6510,
+            [(b':SENS:CURR:NPLC?', b'2\n')],
+    ) as inst:
+        assert inst.current_nplc == 2.0
+
+
+def test_id():
+    with expected_protocol(
+            KeithleyDAQ6510,
+            [(b'*IDN?', b'KEITHLEY INSTRUMENTS,MODEL DAQ6510,04591126,1.7.12b\n')],
+    ) as inst:
+        assert inst.id == 'KEITHLEY INSTRUMENTS,MODEL DAQ6510,04591126,1.7.12b'
+
+
+def test_reset():
+    with expected_protocol(
+            KeithleyDAQ6510,
+            [(b'*RST', None)],
+    ) as inst:
+        assert inst.reset() is None
