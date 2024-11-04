@@ -96,7 +96,7 @@ class PowerSupplyChannel(Channel):
     this channel.
     """
 
-    query_buffer_data = Instrument.measurement(
+    _query_buffer_data = Instrument.measurement(
         ':DATA:DATA? "READ,SOUR,REL"',
         """Get the buffer in power supply mode""",
         separator=",",
