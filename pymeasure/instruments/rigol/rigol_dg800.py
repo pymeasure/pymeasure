@@ -127,7 +127,7 @@ class VoltageChannel(Channel):
         ":SOUR{ch}:PULS:WIDT?",
         ":SOUR{ch}:PULS:WIDT %f",
         """
-        Set the pulse width of pulses (in seconds) out of the waveform generator.
+        Control the pulse width of pulses (in seconds) out of the waveform generator.
         """,
     )
 
