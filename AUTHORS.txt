@@ -89,3 +89,4 @@ Kévin Petit
 Orion Smedley
 Samuel Simpson
 Dawid Maślanka
+Emmanuel Ferdman
