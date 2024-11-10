@@ -12,7 +12,8 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    :maxdepth: 2
 
    keysightDSOX1102G
-   keysightN5767A
-   keysightN7776C
    keysightE36312A
    keysightE3631A
+   keysightE5071C
+   keysightN5767A
+   keysightN7776C
