@@ -118,7 +118,7 @@ class VoltageChannel(Channel):
         ":SOUR{ch}:PULS:DCYC?",
         ":SOUR{ch}:PULS:DCYC %f",
         """
-        Control the duty cycle of pulses out of the waveform generator. (float) 
+        Control the duty cycle of pulses out of the waveform generator. (float)
         :param duty_cycle: (float) The pulse's duty cycle
         """,
     )
