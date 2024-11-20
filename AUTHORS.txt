@@ -87,7 +87,9 @@ Konrad Gralher
 David Ziliak
 David Sun
 Kévin Petit
+Félix Thouin
 Orion Smedley
 Samuel Simpson
 Dawid Maślanka
+Felix Thouin
 Emmanuel Ferdman
