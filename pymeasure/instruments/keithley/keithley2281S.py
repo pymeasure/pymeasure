@@ -92,22 +92,24 @@ class PowerSupplyChannel(Channel):
     """
     Power Supply Mode of the device
 
+    The channels are just a virtual representation of the different functions this device offers,
+    but are mutually exclusive!
     Make sure that the parent's instrument `function_mode` property is set to `POWER` before using
     this channel.
     """
 
-    _query_buffer_data = Instrument.measurement(
+    _data_buffer = Instrument.measurement(
         ':DATA:DATA? "READ,SOUR,REL"',
-        """Get the buffer in power supply mode""",
+        """Get the buffer in power supply mode.""",
         separator=",",
     )
 
     @property
     def buffer_data(self) -> pd.DataFrame:
-        """Get the buffer in power supply mode and return its content as a pandas dataframe"""
+        """Get the buffer in power supply mode and return its content as a pandas dataframe."""
         if not self.parent.reading_available:
             return pd.DataFrame({"current": [], "voltage": [], "time": []})
-        data = np.array(self._query_buffer_data, dtype=np.float32)
+        data = np.array(self._data_buffer, dtype=np.float32)
         return pd.DataFrame({"current": data[0::3], "voltage": data[1::3], "time": data[2::3]})
 
     voltage_setpoint = Instrument.control(
@@ -143,7 +145,7 @@ class PowerSupplyChannel(Channel):
         map_values=True,
     )
 
-    conc_nplc = Instrument.control(
+    power_line_cycles = Instrument.control(
         ":SENS:CONC:NPLC?",
         ":SENS:CONC:NPLC %g",
         """
@@ -159,6 +161,8 @@ class BatteryTestChannel(Channel):
     """
     Battery Test Mode of the device
 
+    The channels are just a virtual representation of the different functions this device offers,
+    but are mutually exclusive!
     Make sure that the parent's instrument `function_mode` property is set to `TEST` before using
     this channel.
     """
@@ -228,9 +232,9 @@ class BatteryTestChannel(Channel):
         values=_INTERNAL_MEMORY_SLOTS,
     )
 
-    _query_buffer_data = Instrument.measurement(
+    _data_buffer = Instrument.measurement(
         ':BATT:DATA:DATA? "VOLT, CURR, RES, AH, REL"',
-        """Get the buffer in battery test mode""",
+        """Get the buffer in battery test mode.""",
         separator=",",
     )
 
@@ -244,7 +248,7 @@ class BatteryTestChannel(Channel):
         self.write(f":BATT:TEST:SENS:AH:GMOD:RANG {lower_voltage}, {upper_voltage}")
 
     def save_model_to_usb(self, memory_slot: int, model_file_name: str):
-        """Save battery model to USB
+        """Save battery model to USB.
 
         Args:
             memory_slot (int): Number of memory slot to save model from. Valid values are 1 to 10.
@@ -259,12 +263,12 @@ class BatteryTestChannel(Channel):
 
     @property
     def buffer_data(self) -> pd.DataFrame:
-        """Get the buffer in battery test mode and return its content as a pandas dataframe"""
+        """Get the buffer in battery test mode and return its content as a pandas dataframe."""
         if not self.parent.reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "capacity": [], "resistance": [], "time": []}
             )
-        data = np.array(self._query_buffer_data, dtype=np.float32)
+        data = np.array(self._data_buffer, dtype=np.float32)
         return pd.DataFrame(
             {
                 "voltage": data[0::5],
@@ -280,6 +284,8 @@ class BatterySimulationChannel(Channel):
     """
     Battery Simulation Mode of the device
 
+    The channels are just a virtual representation of the different functions this device offers,
+    but are mutually exclusive!
     Make sure that the parent's instrument `function_mode` property is set to `SIMULATION` before
     using this channel.
     """
@@ -292,7 +298,7 @@ class BatterySimulationChannel(Channel):
     )
 
     def load_model_from_usb(self, memory_slot: int, model_file_name: str):
-        """Load battery model from USB
+        """Load battery model from USB.
 
         Args:
             memory_slot (int): Number of memory slot to load model to. Valid values are 1 to 10.
@@ -314,15 +320,16 @@ class BatterySimulationChannel(Channel):
         map_values=True,
     )
 
-    simulation_mode = Instrument.control(
+    dynamic_soc = Instrument.control(
         ":BATT:SIM:METH?",
         ":BATT:SIM:METH %s",
         """
         Control simulation mode to use.
-        I.e. does the SoC change when charging or discharging.
+        I.e. does the State of Charge (SoC) change when charging or discharging.
         """,
         validator=strict_discrete_set,
-        values={"DYNAMIC", "DYN", "STATIC", "STAT"},
+        values={True: "DYN", False: "STAT"},
+        map_values=True,
     )
 
     capacity_limit = Instrument.control(
@@ -356,7 +363,7 @@ class BatterySimulationChannel(Channel):
         """
         Control an offset for the internal resistance of the simulated battery.
 
-        ESR might not be displayed correctly until display is updated (e.g. via enabled output)
+        ESR might not be displayed correctly until display is updated (e.g. via enabled output).
         """,
         validator=truncated_range,
         values=[-100, 100],
@@ -365,7 +372,7 @@ class BatterySimulationChannel(Channel):
     soc_setpoint = Instrument.control(
         ":BATT:SIM:SOC?",
         ":BATT:SIM:SOC %g",
-        """Control the SoC of the simulated battery.""",
+        """Control the State of Charge (SoC) of the simulated battery.""",
         validator=truncated_range,
         values=[0.0, 100],
     )
@@ -373,7 +380,12 @@ class BatterySimulationChannel(Channel):
     voc_setpoint = Instrument.control(
         ":BATT:SIM:VOC?",
         ":BATT:SIM:VOC %g",
-        """Control the Voc of the simulated battery.""",
+        """
+        Control the Voc (Open Circuit Voltage) of the simulated battery.
+
+        The set voltage will internally be converted to an equivalent State of Charge (SoC) in the
+        device.
+        """,
         validator=truncated_range,
         values=_VOLTAGE_RANGE,
     )
@@ -394,20 +406,20 @@ class BatterySimulationChannel(Channel):
         values=_VOLTAGE_RANGE,
     )
 
-    _query_buffer_data = Instrument.measurement(
+    _data_buffer = Instrument.measurement(
         ':BATT:DATA:DATA? "VOLT, CURR, SOC, RES,REL"',
-        """Get the buffer in battery simulator mode""",
+        """Get the buffer in battery simulator mode.""",
         separator=",",
     )
 
     @property
     def buffer_data(self) -> pd.DataFrame:
-        """Get the buffer in battery simulator mode and return its content as a pandas dataframe"""
+        """Get the buffer in battery simulator mode and return its content as a pandas dataframe."""
         if not self.parent.reading_available:
             return pd.DataFrame(
                 {"current": [], "voltage": [], "soc": [], "resistance": [], "time": []}
             )
-        data = np.array(self._query_buffer_data, dtype=np.float32)
+        data = np.array(self._data_buffer, dtype=np.float32)
         return pd.DataFrame(
             {
                 "voltage": data[0::5],
@@ -456,7 +468,11 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
     function_mode = Instrument.control(
         ":ENTR:FUNC?",
         ":ENTR:FUNC %s",
-        """Control function mode to use.""",
+        """
+        Control function mode to use.
+
+        Valid values are "POWER", "TEST" and "SIMULATOR".
+        """,
         validator=strict_discrete_set,
         values=["POWER", "TEST", "SIMULATOR"],
     )
@@ -515,6 +531,7 @@ class Keithley2281S(SCPIMixin, Instrument, KeithleyBuffer):
         If the battery is discharged below the lower limit, it will be charged with a 10th of
         the set charge current till it reaches the lower limit, then the battery profile will
         be characterized.
+        The function will block until the end of the measurement!
 
         :param lower_voltage: discharge end voltage, set this slightly lower (~0.05V)
                               than in normal operation
