@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.ruff.lint]
-select = ["E"]
+extend-select = ["E"]
 line-length = 100
 
 [project]
