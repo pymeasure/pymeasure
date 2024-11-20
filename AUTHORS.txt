@@ -65,6 +65,7 @@ Ashok Bruno
 Robert Roos
 Sebastien Weber
 Sebastian Neusch
+Felix Thouin
 Ulrich Sauter
 Guus Kuiper
 Bernhard Lang
