@@ -60,7 +60,6 @@ from . import ni
 from . import novanta
 from . import oxfordinstruments
 from . import parker
-from . import philips
 from . import pendulum
 from . import razorbill
 from . import rohdeschwarz
