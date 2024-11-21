@@ -2,6 +2,11 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=8.1.0"]
 build-backend = "setuptools.build_meta"
 
+
+[tool.ruff.lint]
+extend-select = ["E"]
+line-length = 100
+
 [project]
 name = "PyMeasure"
 dynamic = ["version", "readme"]

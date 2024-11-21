@@ -22,21 +22,4 @@
 # THE SOFTWARE.
 #
 
-import logging
-from warnings import warn
-
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-
-class FSL(FSL):
-    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
-        warn(
-            "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "
-            "deprecated since version 0.15. Import `FSL` from "
-            "`pymeasure.instruments.rohdeschwarz` instead.",
-            FutureWarning,
-        )
-        super().__init__(adapter, name, **kwargs)
+from .rigol_dg800 import DG800

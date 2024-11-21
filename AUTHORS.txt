@@ -65,6 +65,7 @@ Ashok Bruno
 Robert Roos
 Sebastien Weber
 Sebastian Neusch
+Felix Thouin
 Ulrich Sauter
 Guus Kuiper
 Bernhard Lang
@@ -86,7 +87,11 @@ Konrad Gralher
 David Ziliak
 David Sun
 Kévin Petit
+Félix Thouin
 Orion Smedley
 Samuel Simpson
+Isha Sharma
 Dawid Maślanka
+Felix Thouin
+Emmanuel Ferdman
 Johannes Rothmayr
