@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +68,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
     The ManagedWindowBase allow user to define a set of widget that display information about the
     experiment. The information displayed may include: plots, tabular view, logging information,...
 
-    This class is not intended to be used directy, but it should be subclassed to provide some
+    This class is not intended to be used directly, but it should be subclassed to provide some
     appropriate widget list. Example of classes usable as element of widget list are:
 
     - :class:`~pymeasure.display.widgets.log_widget.LogWidget`
@@ -313,6 +313,13 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
 
+            # Reveal in file explorer
+            action_reveal = QtGui.QAction(menu)
+            action_reveal.setText("Reveal in File Explorer")
+            action_reveal.triggered.connect(
+                lambda: self.reveal_in_file_explorer(experiment.results.data_filename))
+            menu.addAction(action_reveal)
+
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
             action_save.setText("Save Data File Copy")
@@ -453,6 +460,28 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         else:
             raise Exception("{cls} method open_file_externally does not support {system} OS".format(
                 cls=type(self).__name__, system=system))
+
+    def reveal_in_file_explorer(self, filename: str) -> None:
+        """Method to open the file explorer at the location of the given filename.
+
+        Args:
+            filename (str): Path to the file to be revealed in the file explorer.
+        """
+
+        path = os.path.normpath(filename)
+        system = platform.system()
+        if system == "Windows":
+            _ = subprocess.Popen(["explorer", "/select,", path], shell=True)
+        elif system == "Linux":
+            _ = subprocess.Popen(["xdg-open", os.path.dirname(path)])
+        elif system == "Darwin":
+            _ = subprocess.Popen(["open", "-R", path])
+        else:
+            raise Exception(
+                "{cls} method reveal_in_file_explorer does not support {system} OS".format(
+                    cls=type(self).__name__, system=system
+                )
+            )
 
     def make_procedure(self):
         if not isinstance(self.inputs, InputsWidget):

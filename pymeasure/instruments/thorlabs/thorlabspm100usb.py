@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,14 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class ThorlabsPM100USB(Instrument):
+class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
     def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):

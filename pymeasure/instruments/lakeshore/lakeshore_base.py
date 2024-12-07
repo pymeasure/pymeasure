@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 import logging
+import warnings
 import numpy as np
 from time import sleep, time
 
@@ -35,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 class LakeShoreTemperatureChannel(Channel):
     """ Temperature input channel on a lakeshore temperature monitor. Reads the temperature in
-    kelvin, celcius, or sensor units. Also provides a method to block the program until a given
+    kelvin, celsius, or sensor units. Also provides a method to block the program until a given
     stable temperature is reached.
     """
 
@@ -43,14 +44,24 @@ class LakeShoreTemperatureChannel(Channel):
         'KRDG? {ch}',
         """Read the temperature in kelvin from a channel."""
     )
-    celcius = Instrument.measurement(
+    celsius = Instrument.measurement(
         'CRDG? {ch}',
-        """Read the temperature in celcius from a channel."""
+        """Read the temperature in celsius from a channel."""
     )
     sensor = Instrument.measurement(
         'SRDG? {ch}',
         """Read the temperature in sensor units from a channel."""
     )
+
+    @property
+    def celcius(self):
+        """Access celsius attribute with celcius (sic) property.
+
+        .. deprecated:: 0.14.0
+            Use celsius instead.
+        """
+        warnings.warn("`celcius` is deprecated, use `celsius` instead", FutureWarning)
+        return self.celsius
 
     def wait_for_temperature(self, target, unit='kelvin', accuracy=0.1,
                              interval=1, timeout=360,
@@ -58,8 +69,8 @@ class LakeShoreTemperatureChannel(Channel):
         """ Blocks the program, waiting for the temperature to reach the target
         within the accuracy (%), checking this each interval time in seconds.
 
-        :param target: Target temperature in kelvin, celcius, or sensor units.
-        :param unit: 'kelvin', 'celcius', or 'sensor' specifying the unit
+        :param target: Target temperature in kelvin, celsius, or sensor units.
+        :param unit: 'kelvin', 'celsius', or 'sensor' specifying the unit
                      for queried temperature values.
         :param accuracy: An acceptable percentage deviation between the
                          target and temperature.

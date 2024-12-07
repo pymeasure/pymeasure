@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -108,7 +108,7 @@ class Axis(Channel):
     pattern_up = Instrument.control(
         "getpu", "setpu %s",
         """Control step up pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
@@ -119,7 +119,7 @@ class Axis(Channel):
     pattern_down = Instrument.control(
         "getpd", "setpd %s",
         """Control step down pattern of the piezo drive. 256 values ranging from 0
-        to 255 representing the the sequence of output voltages within one
+        to 255 representing the sequence of output voltages within one
         step of the piezo drive. This property can be set, the set value
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
@@ -138,7 +138,7 @@ class Axis(Channel):
     stepu = Instrument.setting(
         "stepu %d",
         """Set the steps upwards for N steps. Mode must be 'stp' and N must be
-        positive. 0 causes a continous movement until stop is called.
+        positive. 0 causes a continuous movement until stop is called.
 
         .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
         """,
@@ -150,7 +150,7 @@ class Axis(Channel):
     stepd = Instrument.setting(
         "stepd %d",
         """Set the steps downwards for N steps. Mode must be 'stp' and N must be
-        positive. 0 causes a continous movement until stop is called.
+        positive. 0 causes a continuous movement until stop is called.
 
         .. deprecated:: 0.13.0 Use meth:`move_raw` instead.
         """,
@@ -217,7 +217,7 @@ class Axis(Channel):
         # perform the movement
         self.move_raw(steps)
         # wait for the move to finish
-        self.parent.wait_for(abs(steps) / self.frequency)
+        self.wait_for(abs(steps) / self.frequency)
         # ask if movement finished
         self.ask('stepw')
         if gnd:
@@ -231,7 +231,7 @@ class Axis(Channel):
         """
         self.mode = 'cap'
         # wait for the measurement to finish
-        self.parent.wait_for(1)
+        self.wait_for(1)
         # ask if really finished
         self.ask('capw')
         return self.capacity
@@ -246,7 +246,7 @@ class ANC300Controller(Instrument):
     :param axisnames: a list of axis names which will be used to create
         properties with these names
     :param passwd: password for the attocube standard console
-    :param query_delay: delay between sending and reading (default 0.05 sec)
+    :param query_delay: default delay between sending and reading in s (default 0.05)
     :param host: host address of the instrument (e.g. 169.254.0.1)
 
         .. deprecated:: 0.11.2
@@ -408,9 +408,10 @@ class ANC300Controller(Instrument):
                              f"command with message {msg}")
         return self._extract_value(msg)
 
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds.
+            None means :attr:`query_delay`.
         """
-        super().wait_for(query_delay or self.query_delay)
+        super().wait_for(self.query_delay if query_delay is None else query_delay)

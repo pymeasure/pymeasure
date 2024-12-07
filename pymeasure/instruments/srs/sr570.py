@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,12 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
 
-class SR570(Instrument):
+class SR570(SCPIUnknownMixin, Instrument):
 
     def __init__(self, adapter, name="Stanford Research Systems SR570 Lock-in amplifier",
                  **kwargs):

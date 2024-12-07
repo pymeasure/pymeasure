@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,9 @@ from .hp8116a import HP8116A
 from .hp8657b import HP8657B
 from .hp856Xx import HP8560A
 from .hp856Xx import HP8561B
+from .hp8753e import HP8753E
 from .hp11713a import HP11713A
+from .hp437b import HP437B
 from .hpsystempsu import HP6632A
 from .hpsystempsu import HP6633A
 from .hpsystempsu import HP6634A

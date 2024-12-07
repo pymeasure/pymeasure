@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,3 +24,4 @@
 
 from .siglent_spd1168x import SPD1168X
 from .siglent_spd1305x import SPD1305X
+from .siglent_sds1072cml import SDS1072CML

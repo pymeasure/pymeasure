@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -115,6 +115,18 @@ def test_attenuation():
         assert instr.ch_1.probe_attenuation == 100
         instr.ch_1.probe_attenuation = 0.1
         assert instr.ch_1.probe_attenuation == 0.1
+
+
+def test_vbs():
+    with expected_protocol(
+        TeledyneMAUI,
+        [(b"CHDR OFF", None),
+         (b"VBS 'my_command(x)'", None),
+         (b"VBS? 'Return=my_var'", b"0\n"),
+         ]
+    ) as instr:
+        instr.vbs_write("my_command(x)")
+        assert instr.vbs_ask("my_var") == "0\n"
 
 
 if __name__ == '__main__':

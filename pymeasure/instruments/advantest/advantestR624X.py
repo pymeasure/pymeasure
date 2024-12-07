@@ -1,6 +1,6 @@
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 
 import logging
 from enum import IntEnum, IntFlag
-from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
     strict_range
 
@@ -429,7 +429,7 @@ def map_values(value, values):
     return values[strict_discrete_set(value, values)]
 
 
-class AdvantestR624X(Instrument):
+class AdvantestR624X(SCPIUnknownMixin, Instrument):
     """ Represents the Advantest R624X series (channel A and B) SourceMeter and provides a
     high-level interface for interacting with the instrument.
 

@@ -13,6 +13,9 @@ New features are added to the development version of PyMeasure, hosted on `GitHu
 .. _Git version control: https://git-scm.com/
 .. _GitHub Desktop: https://git-scm.com/downloads
 
+Make sure :code:`git --version` works from comand line. If you are using Github Desktop, you may need to add Git to your path in each terminal window.
+On windows anaconda prompt it would be :code:`set PATH="C:\Users\<USERNAME>\AppData\Local\GitHubDesktop\app-<#######>\resources\app\git\cmd";%PATH%`
+
 In order to add your feature, you need to first `fork`_ PyMeasure. This will create a copy of the repository under your GitHub account.
 
 .. _fork: https://help.github.com/articles/fork-a-repo/
@@ -34,14 +37,24 @@ If you had already installed PyMeasure using :code:`pip`, make sure to uninstall
 
     pip uninstall pymeasure
 
-Install PyMeasure in the editable mode.
+Install PyMeasure in the editable mode and select optional extras.
 
 .. code-block:: bash
 
     cd /path/for/code/pymeasure
-    pip install -e .
+    pip install -e .[tests,docs]
 
-This will allow you to edit the files of PyMeasure and see the changes reflected. Make sure to reset your notebook kernel or Python console when doing so. Now you have your own copy of the development version of PyMeasure installed!
+The ``-e`` will allow you to edit the files of PyMeasure and see the changes reflected.
+The square brackets include extra groups that allow you to run tests and build the documentation locally.
+Make sure to reset your notebook kernel or Python console when doing so.
+Now you have your own copy of the development version of PyMeasure installed!
+
+Depending on your Python installation you may get an error messages saying that the file setup.py is missing or similar.
+Updating pip may solve the problem.
+
+.. code-block:: bash
+
+    python -m pip install pip --upgrade
 
 Working on a new feature
 ========================

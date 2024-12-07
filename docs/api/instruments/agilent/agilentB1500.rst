@@ -31,7 +31,7 @@ method/attribute names in this instrument driver.
 ===========     =============================================
 Command         Property/Method
 ===========     =============================================
-``AAD``         :meth:`SMU.adc_type`
+``AAD``         :attr:`SMU.adc_type`
 ``AB``          :meth:`~AgilentB1500.abort`
 ``AIT``         :meth:`~AgilentB1500.adc_setup`
 ``AV``          :meth:`~AgilentB1500.adc_averaging`
@@ -39,7 +39,7 @@ Command         Property/Method
 ``BC``          :meth:`~AgilentB1500.clear_buffer`
 ``CL``          :meth:`SMU.disable`
 ``CM``          :attr:`~AgilentB1500.auto_calibration`
-``CMM``         :meth:`SMU.meas_op_mode`
+``CMM``         :attr:`SMU.meas_op_mode`
 ``CN``          :meth:`SMU.enable`
 ``DI``          :meth:`SMU.force` mode: ``'CURRENT'``
 ``DV``          :meth:`SMU.force` mode: ``'VOLTAGE'``
@@ -47,7 +47,7 @@ Command         Property/Method
 ``ERRX?``       :meth:`~AgilentB1500.check_errors`
 ``FL``          :attr:`SMU.filter`
 ``FMT``         :meth:`~AgilentB1500.data_format`
-``*IDN?``       :meth:`~AgilentB1500.id`
+``*IDN?``       :attr:`~AgilentB1500.id`
 ``*LRN?``       :meth:`~AgilentB1500.query_learn`, |br|
                 multiple methods to read/format settings directly
 ``MI``          :meth:`SMU.sampling_source` mode: ``'CURRENT'``
@@ -137,7 +137,7 @@ IV measurement with 4 SMUs
 
     # read measurement data all at once
     b1500.check_idle() #wait until measurement is finished
-    data = b1500.read_data(2*nop) #Factor 2 beacuse of double sweep
+    data = b1500.read_data(2*nop) #Factor 2 because of double sweep
 
     #alternatively: read measurement data live
     meas = []

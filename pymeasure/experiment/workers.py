@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ class Worker(StoppableThread):
         self.log_level = log_level
 
         global log
-        log = logging.getLogger()
+        log = logging.getLogger(__name__)
         log.setLevel(self.log_level)
         # log.handlers = []  # Remove all other handlers
         # log.addHandler(TopicQueueHandler(self.monitor_queue))
@@ -129,6 +129,9 @@ class Worker(StoppableThread):
         self.emit('error', traceback_str)
         self.update_status(Procedure.FAILED)
 
+    def is_last(self):
+        raise NotImplementedError('should be monkey patched by a manager')
+
     def update_status(self, status):
         self.procedure.status = status
         self.emit('status', status)
@@ -164,6 +167,7 @@ class Worker(StoppableThread):
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
+        self.procedure.is_last = self.is_last
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)
