@@ -65,13 +65,24 @@ class VoltageChannel(Channel):
         self.write("C{ch}:WF? ALL")
         response = self.read_bytes(count=-1, break_on_termchar=True)
         descriptor_dictionary = self.get_descriptor()
-        rawWaveform = list(
-            struct.unpack_from(
-                "%db" % descriptor_dictionary["numDataPoints"],
-                response,
-                offset=descriptor_dictionary["descriptorOffset"],
-            ),
-        )
+        if descriptor_dictionary["numDataPoints"]==0:
+            rawWaveform = list(
+                struct.unpack_from(
+                    "%db" % descriptor_dictionary["pointsScreen"],
+                    response,
+                    offset=descriptor_dictionary["descriptorOffset"],
+                ),
+            )
+        else:
+            rawWaveform = list(
+                struct.unpack_from(
+                    "%db" % descriptor_dictionary["numDataPoints"],
+                    response,
+                    offset=descriptor_dictionary["descriptorOffset"],
+                ),
+            )
+
+
         waveform = [
             point * descriptor_dictionary["verticalGain"] - descriptor_dictionary["verticalOffset"]
             for point in rawWaveform
