@@ -21,16 +21,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-#work in progress by TEM01STAR
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
+
 
 class HP66312A(SCPIMixin, Instrument):
     """ Represents the HP / Agilent / Keysight 66312AA Dynamic Measurement DC Source and
     provides a high-level interface for interacting with the instrument.
 
     .. code-block:: python
-    
+
         source = HP66312A("GPIB::1")
         source.voltage_setpoint = 5
         source.current_limit = 0.2
@@ -52,110 +53,111 @@ class HP66312A(SCPIMixin, Instrument):
             **kwargs
         )
 
-    #Source commands
+    # Source commands
     output_enabled = Instrument.control(
         "OUTP?", "OUTP %s",
-        """Enable[Disable] source output""",
+        """Control Enable[Disable] the source output""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True,
-    )
-    
-    voltage_setpoint = Instrument.control(
-        "VOLT?","VOLT %s",
-        """Output voltage setpoint""",
-    )
-    
-    voltage_trigger_level = Instrument.control(
-        "VOLT:TRIG?", "VOLT:TRIG %s",
-        """Sets the pending triggered voltage level""",
-    )
-    
-    voltage_protection = Instrument.control(
-        "VOLT:PROT?", "VOLT:PROT %s",
-        """Accepts floats or LEV MAX""",
     )
 
-    
+    voltage_setpoint = Instrument.control(
+        "VOLT?", "VOLT %s",
+        """Control output voltage setpoint""",
+    )
+
+    voltage_trigger_level = Instrument.control(
+        "VOLT:TRIG?", "VOLT:TRIG %s",
+        """Control the pending triggered voltage level""",
+    )
+
+    voltage_protection = Instrument.control(
+        "VOLT:PROT?", "VOLT:PROT %s",
+        """Control the voltage protecton limit
+        Accepts floats or LEV MAX""",
+    )
+
     current_limit = Instrument.control(
         "CURR?", "CURR %s",
-        """Output current limit setpoint""",
+        """Control Output current limit setpoint""",
     )
-    
+
     current_trigger_level = Instrument.control(
         "CURR:TRIG?", "CURR:TRIG %s",
-        """Sets the pending triggered current limit""",
+        """Control the pending triggered current limit""",
     )
-    
+
     current_protection_enabled = Instrument.control(
         "CURR:PROT:STAT?", "CURR:PROT:STAT %s",
-        """Disables output if overcurrent is tripped. Off on reset""",
+        """Control current protecton.
+        Disables output if overcurrent is tripped. Off on reset""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True,
     )
-    
+
     # #Measurement commands
     current = Instrument.measurement(
         "MEAS:CURR?",
-        """Measures and returns the DC output current.""",
+        """Measure the DC output current.""",
     )
-    
+
     current_rms = Instrument.measurement(
         "MEAS:CURR:ACDC?",
-        """Measures and returns the AC+DC RMS output current.""",
+        """Measure the AC+DC RMS output current.""",
     )
-    
+
     current_min = Instrument.measurement(
         "MEAS:CURR:MIN?",
-        """Returns the minimum DC output current from a sample.""",
+        """Measure the minimum DC output current from a sample.""",
     )
 
     current_max = Instrument.measurement(
         "MEAS:CURR:MAX?",
-        """Returns the maximum DC output current from a sample.""",
-    )    
-    
+        """Measure the maximum DC output current from a sample.""",
+    )
+
     voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        """Measures and returns the dc output voltage.""",
+        """Measure the dc output voltage.""",
     )
 
     voltage_rms = Instrument.measurement(
         "MEAS:VOLT:ACDC?",
-        """Measures and returns the ac+dc RMs output voltage.""",
+        """Measure the ac+dc RMs output voltage.""",
     )
 
     voltage_min = Instrument.measurement(
         "MEAS:VOLT:MIN?",
-        """Returns the low voltage level from a sample.""",
+        """Measure the low voltage level from a sample.""",
     )
-    
+
     voltage_max = Instrument.measurement(
         "MEAS:VOLT:MAX?",
-        """Returns the high voltage level from a sample.""",
+        """Measure the high voltage level from a sample.""",
     )
 
     # Output Trigger related commands
     def init_single_output_trigger(self):
         """Set the state of the triggering system to "wait-for-trigger".
 
-        The source will change the output levels to voltage_trigger_level and current_trigger_level when it recieves a trigger command.
+        The source will change the output levels to voltage_trigger_level and current_trigger_level.
         It will return to Idle after a single trigger"""
         self.write("INIT:NAME TRAN"),
-        
+
     def enable_cont_output_trigger(self):
         """Set the state of the triggering system to "wait-for-trigger".
 
-        The source will change the output levels to voltage_trigger_level and current_trigger_level when it recieves a trigger command.
+        The source will change the output levels to voltage_trigger_level and current_trigger_level.
         It will return to Idle after a single trigger"""
         self.write("INIT:CONT:NAME TRAN, ON"),
 
     trigger_output = Instrument.setting(
         "*TRG",
-        """Send a single trigger to the instrument""",
+        """Set the trigger once""",
     )
-   
+
     # Display related commands
     display_enabled = Instrument.control(
         "DISP?", "DISP %s",
@@ -167,9 +169,9 @@ class HP66312A(SCPIMixin, Instrument):
 
     display_mode = Instrument.control(
         "DISP:MODE?", "DISP:MODE \"%s\"",
-        """Swap the display between normal and text display modes""",
+        """Control the display, switch between normal and text display modes""",
         validator=strict_discrete_set,
-        values=["NORM", "TEXT"], 
+        values=["NORM", "TEXT"],
     )
 
     displayed_text = Instrument.control(
@@ -189,10 +191,10 @@ class HP66312A(SCPIMixin, Instrument):
         values={True: "REM", False: "LOC"},
         map_values=True,
     )
-    
+
     error = Instrument.measurement(
-    "SYST:ERR?",
-    """Read the next error in the buffer (FIFO)""",
+        "SYST:ERR?",
+        """Read the next error in the buffer (FIFO)""",
     )
 
     remote_lock_enabled = Instrument.control(
@@ -205,12 +207,12 @@ class HP66312A(SCPIMixin, Instrument):
 
     scpi_version = Instrument.measurement(
         "SYST:VERS?",
-        """The SCPI version of the source.""",
+        """Measure the SCPI version of the source.""",
     )
 
     self_test_result = Instrument.measurement(
         "*TST?",
-        """Initiate a self-test of the source and return the result.
+        """Measure a self-test of the source and return the result.
 
         Be sure to set an appropriate connection timeout,
         otherwise the command will fail.""",
