@@ -194,7 +194,7 @@ class HP66312A(SCPIMixin, Instrument):
 
     error = Instrument.measurement(
         "SYST:ERR?",
-        """Read the next error in the buffer (FIFO)""",
+        """Measure the next error in the buffer (FIFO)""",
     )
 
     remote_lock_enabled = Instrument.control(
