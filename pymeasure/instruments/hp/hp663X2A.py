@@ -26,8 +26,8 @@ from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 
-class HP66312A(SCPIMixin, Instrument):
-    """ Represents the HP / Agilent / Keysight 66312AA Dynamic Measurement DC Source and
+class HP663X2A(SCPIMixin, Instrument):
+    """ Represents the HP / Agilent / Keysight 66312A/66332A Dynamic Measurement DC Source and
     provides a high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -221,3 +221,9 @@ class HP66312A(SCPIMixin, Instrument):
     def write(self, command):
         """Write a command to the instrument."""
         super().write(command)
+
+class HP66312A(HP663X2A)
+    pass
+
+class HP66332A(HP663X2A)
+    pass
