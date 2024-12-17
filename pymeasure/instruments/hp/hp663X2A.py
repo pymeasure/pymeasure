@@ -227,5 +227,8 @@ class HP66312A(HP663X2A):
     pass
 
 class HP66332A(HP663X2A):
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2c7ce79be6a95762e260adce7dfca27f5fb521fa
     pass
