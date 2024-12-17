@@ -34,156 +34,158 @@ def test_init():
         pass  # Verify the expected communication.
 
 
-def test_HTR_MB_current_getter():
+def test_HTR_mobo_current_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB0.H1:HTR:SIG:CURR', b'STAT:DEV:MB0.H1:HTR:SIG:CURR:-0.0000A')],
     ) as inst:
-        assert inst.HTR_MB.current == -0.0
+        assert inst.HTR_mobo.current == -0.0
 
 
-def test_HTR_MB_max_power_getter():
+def test_HTR_mobo_max_power_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB0.H1:HTR:PMAX', b'STAT:DEV:MB0.H1:HTR:PMAX:12.5000')],
     ) as inst:
-        assert inst.HTR_MB.max_power == 12.5
+        assert inst.HTR_mobo.max_power == 12.5
 
 
-def test_HTR_MB_power_getter():
+def test_HTR_mobo_power_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB0.H1:HTR:SIG:POWR', b'STAT:DEV:MB0.H1:HTR:SIG:POWR:0.0000W')],
     ) as inst:
-        assert inst.HTR_MB.power == 0.0
+        assert inst.HTR_mobo.power == 0.0
 
 
-def test_HTR_MB_resistance_getter():
+def test_HTR_mobo_resistance_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB0.H1:HTR:RES', b'STAT:DEV:MB0.H1:HTR:RES:50')],
     ) as inst:
-        assert inst.HTR_MB.resistance == 50.0
+        assert inst.HTR_mobo.resistance == 50.0
 
 
-def test_HTR_MB_voltage_getter():
+def test_HTR_mobo_voltage_getter():
     with expected_protocol(
             MercuryiTC,
-            [(b'READ:DEV:MB0.H1:HTR:SIG:VOLT', b'STAT:DEV:MB0.H1:HTR:SIG:VOLT:-0.0292V')],
+            [(b'READ:DEV:MB0.H1:HTR:SIG:VOLT', b'STAT:DEV:MB0.H1:HTR:SIG:VOLT:-0.0481V')],
     ) as inst:
-        assert inst.HTR_MB.voltage == -0.0292
+        assert inst.HTR_mobo.voltage == -0.0481
 
 
-def test_HTR_MB_voltage_limit_getter():
+def test_HTR_mobo_voltage_limit_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB0.H1:HTR:VLIM', b'STAT:DEV:MB0.H1:HTR:VLIM:25')],
     ) as inst:
-        assert inst.HTR_MB.voltage_limit == 25.0
+        assert inst.HTR_mobo.voltage_limit == 25.0
 
 
-def test_TS_MB_control_temperature_getter():
+def test_TS_mobo_control_temperature_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:SIG:TEMP', b'STAT:DEV:MB1.T1:TEMP:SIG:TEMP:330.0725K')],
     ) as inst:
-        assert inst.TS_MB.control_temperature == 330.0725
+        assert inst.TS_mobo.control_temperature == 330.0725
 
 
-def test_TS_MB_loop_D_getter():
+def test_TS_mobo_loop_D_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:D', b'STAT:DEV:MB1.T1:TEMP:LOOP:D:0.0')],
     ) as inst:
-        assert inst.TS_MB.loop_D == 0.0
+        assert inst.TS_mobo.loop_D == 0.0
 
 
-def test_TS_MB_loop_I_getter():
+def test_TS_mobo_loop_I_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:I', b'STAT:DEV:MB1.T1:TEMP:LOOP:I:1.8')],
     ) as inst:
-        assert inst.TS_MB.loop_I == 1.8
+        assert inst.TS_mobo.loop_I == 1.8
 
 
-def test_TS_MB_loop_P_getter():
+def test_TS_mobo_loop_P_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:P', b'STAT:DEV:MB1.T1:TEMP:LOOP:P:3.5')],
     ) as inst:
-        assert inst.TS_MB.loop_P == 3.5
+        assert inst.TS_mobo.loop_P == 3.5
 
 
-def test_TS_MB_loop_PID_enabled_setter():
+def test_TS_mobo_loop_PID_enabled_setter():
     with expected_protocol(
             MercuryiTC,
-            [(b'SET:DEV:MB1.T1:TEMP:LOOP:ENAB:OFF', b'STAT:SET:DEV:MB1.T1:TEMP:LOOP:ENAB:OFF:VALID')],
+            [(b'SET:DEV:MB1.T1:TEMP:LOOP:ENAB:OFF',
+              b'STAT:SET:DEV:MB1.T1:TEMP:LOOP:ENAB:OFF:VALID')],
     ) as inst:
-        inst.TS_MB.loop_PID_enabled = False
+        inst.TS_mobo.loop_PID_enabled = False
 
 
-def test_TS_MB_loop_PID_enabled_getter():
+def test_TS_mobo_loop_PID_enabled_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:ENAB', b'STAT:DEV:MB1.T1:TEMP:LOOP:ENAB:OFF')],
     ) as inst:
-        assert inst.TS_MB.loop_PID_enabled is False
+        assert inst.TS_mobo.loop_PID_enabled is False
 
 
-def test_TS_MB_loop_T_setpoint_getter():
+def test_TS_mobo_loop_T_setpoint_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:TSET', b'STAT:DEV:MB1.T1:TEMP:LOOP:TSET:61.0000K')],
     ) as inst:
-        assert inst.TS_MB.loop_T_setpoint == 61.0
+        assert inst.TS_mobo.loop_T_setpoint == 61.0
 
 
-def test_TS_MB_loop_heater_pcnt_getter():
+def test_TS_mobo_loop_heater_pcnt_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:HSET', b'STAT:DEV:MB1.T1:TEMP:LOOP:HSET:0')],
     ) as inst:
-        assert inst.TS_MB.loop_heater_pcnt == 0.0
+        assert inst.TS_mobo.loop_heater_pcnt == 0.0
 
 
-def test_TS_MB_loop_ramp_enabled_setter():
+def test_TS_mobo_loop_ramp_enabled_setter():
     with expected_protocol(
             MercuryiTC,
-            [(b'SET:DEV:MB1.T1:TEMP:LOOP:RENA:OFF', b'STAT:SET:DEV:MB1.T1:TEMP:LOOP:RENA:OFF:VALID')],
+            [(b'SET:DEV:MB1.T1:TEMP:LOOP:RENA:OFF',
+              b'STAT:SET:DEV:MB1.T1:TEMP:LOOP:RENA:OFF:VALID')],
     ) as inst:
-        inst.TS_MB.loop_ramp_enabled = False
+        inst.TS_mobo.loop_ramp_enabled = False
 
 
-def test_TS_MB_loop_ramp_enabled_getter():
+def test_TS_mobo_loop_ramp_enabled_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:RENA', b'STAT:DEV:MB1.T1:TEMP:LOOP:RENA:OFF')],
     ) as inst:
-        assert inst.TS_MB.loop_ramp_enabled is False
+        assert inst.TS_mobo.loop_ramp_enabled is False
 
 
-def test_TS_MB_loop_ramp_rate_getter():
+def test_TS_mobo_loop_ramp_rate_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:RSET', b'STAT:DEV:MB1.T1:TEMP:LOOP:RSET:5.0000K/m')],
     ) as inst:
-        assert inst.TS_MB.loop_ramp_rate == 5.0
+        assert inst.TS_mobo.loop_ramp_rate == 5.0
 
 
-def test_TS_MB_temperature_getter():
+def test_TS_mobo_temperature_getter():
     with expected_protocol(
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:SIG:TEMP', b'STAT:DEV:MB1.T1:TEMP:SIG:TEMP:330.0725K')],
     ) as inst:
-        assert inst.TS_MB.temperature == 330.0725
+        assert inst.TS_mobo.temperature == 330.0725
 
 
-def test_TS_MB_voltage_getter():
+def test_TS_mobo_voltage_getter():
     with expected_protocol(
             MercuryiTC,
-            [(b'READ:DEV:MB1.T1:TEMP:SIG:VOLT', b'STAT:DEV:MB1.T1:TEMP:SIG:VOLT:223.7550mV')],
+            [(b'READ:DEV:MB1.T1:TEMP:SIG:VOLT', b'STAT:DEV:MB1.T1:TEMP:SIG:VOLT:174.3112mV')],
     ) as inst:
-        assert inst.TS_MB.voltage == 0.223755
+        assert inst.TS_mobo.voltage == 0.17431120000000003
 
 
 def test_identity_getter():
