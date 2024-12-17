@@ -223,7 +223,9 @@ class HP663X2A(SCPIMixin, Instrument):
         super().write(command)
 
 class HP66312A(HP663X2A):
+
     pass
 
 class HP66332A(HP663X2A):
+
     pass
