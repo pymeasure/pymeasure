@@ -270,7 +270,7 @@ class MercuryiTC(Instrument):
         print(controller.TS['DBS.T1'].temperature)
     """
 
-    def __init__(self, adapter, name='Oxford MercuryiTC', **kwargs):
+    def __init__(self, adapter, name='Oxford MercuryiTC', includeSCPI=False, **kwargs):
         super().__init__(
             adapter=adapter,
             name=name,
