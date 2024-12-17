@@ -147,7 +147,7 @@ class TemperatureSensor(Channel):
     loop_ramp_enabled = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:RENA",
         "SET:DEV:{ch}:TEMP:LOOP:RENA:%s",
-        """Controls whether the temperature ramping function is enabled (``True``) or
+        """Control whether the temperature ramping function is enabled (``True``) or
         disabled (``False``).""",
         check_set_errors=True,
         preprocess_reply=lambda v: v.split(":")[-1],
