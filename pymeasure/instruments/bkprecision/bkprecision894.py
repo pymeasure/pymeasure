@@ -88,6 +88,9 @@ class BK894(Instrument):
     def display_measure(self):
         self.write('DISP:PAGE MEAS')
 
+    def display_list(self):
+        self.write('DISP:PAGE LIST')
+
     def clear(self):
         self.write('*CLS')
 
@@ -105,20 +108,41 @@ class BK894(Instrument):
                                     validator=strict_discrete_set,
                                     values=["SEQuence","STEPped"])
 
-
     def list_frequencies(self, freqs):
         formatted = ""
         for f in freqs:
+            if f > 5e5 or f < 20:
+                raise ValueError(f'frequencies must be 20 Hz < v < 500 kHz, got {f}')
             formatted += format(f, '.1e') + ', '
         self.write(f':LIST:FREQuency {formatted} ')
+
+    def list_voltage(self, voltages):
+        formatted = ""
+        for v in voltages:
+            if v > 2 or v < 0.005:
+                raise ValueError(f'AC voltages must be 0.005 < v < 2, got {v}')
+            formatted += format(v, '.1e') + ', '
+        self.write(f':LIST:VOLTage {formatted} ')
+
+    def list_bias_voltage(self, bias_voltages):
+        formatted = ""
+        for v in bias_voltages:
+            if v > 5 or v < -5:
+                raise ValueError(f'bias voltages must be -5 < v < 5, got {v}')
+            formatted += format(v, '.1e') + ', '
+        self.display_measure()
+        self.write(f':LIST:BIAS:VOLTage {formatted} ')
     
     def aperture(self, averages, speed = "MED"):
         self.write(f':APERture {speed}, {averages} ')
         
-    trigger = Instrument.control( "", ":TRIGger[:IMMediate]",
-                                    "Trigger",)
+    def trigger(self):
+        self.write("TRIGger")
 
-    trigger_source = Instrument.control(":TRIGger:SOURce?", ":TRIGger:SOURce %g",
+    def get_latest_measurement(self):
+        return self.ask('FETch?')
+
+    trigger_source = Instrument.control(":TRIGger:SOURce?", ":TRIGger:SOURce %s",
                                     "Aperture/Averaging speed",
                                     validator=strict_discrete_set,
                                     values=["INTernal","EXTernal", "BUS", "HOLD"])
