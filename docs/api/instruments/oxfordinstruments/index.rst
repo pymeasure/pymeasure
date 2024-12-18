@@ -13,3 +13,4 @@ This section contains specific documentation on the Oxford Instruments instrumen
    ITC503
    IPS120_10
    PS120_10
+   MercuryiTC
