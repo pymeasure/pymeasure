@@ -51,11 +51,11 @@ class AFG3152CChannel(Channel):
         ),
     }  # Vpp, Vrms and dBm limits
     UNIT_LIMIT = ["VPP", "VRMS", "DBM"]
-    IMP_LIMIT = [1, 1e4]
     PHASE_LIMIT = {
-        'RAD': [-2*pi, 2*pi],
-        'DEG': [-360, 360]
-        }  # radian and degree limits
+        "DEG": [-180, 180],
+        "RAD": [-pi, pi]
+    }    
+    IMP_LIMIT = [1, 1e4]
 
     shape = Instrument.control(
         "function:shape?",
@@ -114,21 +114,17 @@ class AFG3152CChannel(Channel):
 
     phase_rad = Instrument.control(
         "phase:adjust?", "phase:adjust %e RAD",
-        """ A floating point property that controls the phase in radian units.
-        This property can be set.""",
+        """ Controls the phase in radians (float).""",
         validator=strict_range,
         values=PHASE_LIMIT['RAD']
     )
 
-    phase_deg = Instrument.control(
-        "phase:adjust?", "phase:adjust %e DEG",
-        """ A floating point property that controls the phase in degrees.
-        This property can be set.""",
+    phase_deg = Instrument.setting(
+        "phase:adjust %e DEG",
+        """ Sets the phase in degrees. This variable cannot be read""",
         validator=strict_range,
         values=PHASE_LIMIT['DEG']
     )
-
-    # phase_units =
 
     duty = Instrument.control(
         "pulse:dcycle?",
