@@ -34,7 +34,7 @@ from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:

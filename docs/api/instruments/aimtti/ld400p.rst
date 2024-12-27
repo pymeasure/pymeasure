@@ -1,0 +1,7 @@
+########################
+Aim-TTi Electronic Loads
+########################
+
+.. autoclass:: pymeasure.instruments.aimtti.ld400p.LD400P
+    :members:
+    :show-inheritance:
