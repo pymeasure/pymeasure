@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from math import sqrt, log10, pi
+from math import sqrt, log10
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -50,10 +50,6 @@ class AFG3152CChannel(Channel):
             map(lambda x: round(20 * log10(x / 2 / sqrt(0.1)), 2), [20e-3, 10])
         ),
     }  # Vpp, Vrms and dBm limits
-    PHASE_LIMIT = {
-        "DEG": [-180, 180],
-        "RAD": [-pi, pi]
-    }
     UNIT_LIMIT = ["VPP", "VRMS", "DBM"]
     IMP_LIMIT = [1, 1e4]
 
@@ -73,7 +69,7 @@ class AFG3152CChannel(Channel):
         validator=strict_discrete_set,
         values=UNIT_LIMIT,
     )
-    
+
     amp_vpp = Instrument.control(
         "voltage:amplitude?",
         "voltage:amplitude %eVPP",
@@ -103,24 +99,6 @@ class AFG3152CChannel(Channel):
         "voltage:offset %e",
         """ Control the amplitude offset. It is always in Volt. (float)""",
     )
-
-    # phase degree should not be a query because it always returns rad
-    phase_deg = Instrument.setting(
-        "phase:adjust %e DEG",
-        """ A floating point set comomand that controls
-          the phase in degree units.""",
-        validator=strict_range,
-        values = PHASE_LIMIT['DEG'])
-    
-    phase_rad = Instrument.control(
-        "phase:adjust?", "phase:adjust %e RAD",
-        """ A floating point property that controls the phase in radian units.
-        This property can be set.""",
-        validator=strict_range,
-        values = PHASE_LIMIT['RAD'])
-    
-    # def phase_control(self, val, units):
-
 
     frequency = Instrument.control(
         "frequency:fixed?",
