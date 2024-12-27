@@ -54,7 +54,7 @@ class AFG3152CChannel(Channel):
     PHASE_LIMIT = {
         "DEG": [-180, 180],
         "RAD": [-pi, pi]
-    }    
+    }
     IMP_LIMIT = [1, 1e4]
 
     shape = Instrument.control(
