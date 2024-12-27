@@ -114,16 +114,17 @@ class AFG3152CChannel(Channel):
 
     phase_rad = Instrument.control(
         "phase:adjust?", "phase:adjust %e RAD",
-        """ Controls the phase in radians (float).""",
+        """Controls the phase in radians (float).""",
         validator=strict_range,
         values=PHASE_LIMIT['RAD']
     )
 
-    phase_deg = Instrument.setting(
-        "phase:adjust %e DEG",
-        """ Sets the phase in degrees. This variable cannot be read""",
+    phase_deg = Instrument.control(
+        "phase:adjust?", "phase:adjust %e DEG",
+        """Controls the phase in degrees (float)""",
         validator=strict_range,
-        values=PHASE_LIMIT['DEG']
+        values=PHASE_LIMIT['DEG'],
+        get_process=lambda x: x * 180 / pi
     )
 
     duty = Instrument.control(
