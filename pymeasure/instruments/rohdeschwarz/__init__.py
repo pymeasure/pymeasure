@@ -22,6 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .sfm import SFM
-from .fsl import FSL
+from .fsseries import FSL, FSW
 from .hmp import HMP4040
+from .sfm import SFM
