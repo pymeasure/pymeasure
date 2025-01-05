@@ -53,6 +53,15 @@ class VoltageChannel(Channel):
         dynamic=True,
     )
 
+    output_enabled = Channel.control(
+        "INST:NSEL {ch};:OUTPut?",
+        "OUTPut %d, (@{ch})",
+        """Control whether the channel output is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},
+    )
+
     voltage = Channel.measurement(
         "INST:NSEL {ch};:MEAS:VOLT?",
         """Measure actual voltage of this channel.""",
