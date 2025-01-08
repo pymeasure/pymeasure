@@ -113,7 +113,7 @@ class KeysightE3631A(SCPIMixin, Instrument):
     output_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
-        """Control whether the channel output is enabled (boolean).""",
+        """Control whether the output of the last used channel is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
