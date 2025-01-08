@@ -42,8 +42,8 @@ class Parameter:
         list of strings, this argument can be either a single condition or
         a list of conditions. If the group_by argument is provided as a dict
         this argument is ignored.
-    :description: A string providing a human-friendly description for the 
-		parameter.
+    :description: A string providing a human-friendly description for the
+        parameter.
     """
 
     def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True, description=None):
@@ -73,7 +73,7 @@ class Parameter:
         elif group_by is not None:
             raise TypeError("The provided group_by argument is not valid, should be either a "
                             "string, a list of strings, or a dict with {string: condition} pairs.")
-		
+
         if description is not None and not isinstance(description, str):
             raise TypeError("The provided description argument is not a string.")
         self._description = description
