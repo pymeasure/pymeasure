@@ -26,7 +26,7 @@ import logging
 
 import pyvisa
 import numpy as np
-from pkg_resources import parse_version
+from packaging.version import Version
 
 from .adapter import Adapter
 
@@ -104,7 +104,7 @@ class VISAAdapter(Adapter):
     def has_supported_version():
         """ Returns True if the PyVISA version is greater than 1.8 """
         if hasattr(pyvisa, '__version__'):
-            return parse_version(pyvisa.__version__) >= parse_version('1.8')
+            return Version(pyvisa.__version__) >= Version('1.8')
         else:
             return False
 
