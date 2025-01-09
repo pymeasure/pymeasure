@@ -27,8 +27,10 @@ import time
 
 import logging
 
-import win32com.client  # imports the pywin32 library
-
+try:
+    import win32com.client  # imports the pywin32 library
+except ModuleNotFoundError:
+    print("Could not import win32com, likely on non-windows machine")
 from .adapter import Adapter
 
 log = logging.getLogger(__name__)

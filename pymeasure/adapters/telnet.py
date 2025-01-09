@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-import telnetlib
+import telnetlib3 as telnetlib
 import time
 
 from .adapter import Adapter

@@ -26,8 +26,10 @@
 import time
 
 import logging
-
-import clr
+try:
+    import clr
+except RuntimeError:
+    print('unable to load clr, install it with pythonnet or get on a windows machine')
 import os
 try:
     clr.AddReference('mcl_RUDAT_NET45')
