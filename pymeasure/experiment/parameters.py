@@ -46,7 +46,8 @@ class Parameter:
         parameter.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True, description=None):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True,
+                 description=None):
         self.name = name
         separator = ": "
         if separator in name:
