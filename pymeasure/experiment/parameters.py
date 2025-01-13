@@ -77,7 +77,7 @@ class Parameter:
 
         if description is not None and not isinstance(description, str):
             raise TypeError("The provided description argument is not a string.")
-        self._description = description
+        self.description = description
 
     @property
     def value(self):

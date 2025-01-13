@@ -61,8 +61,8 @@ class Input:
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)
 
-        if hasattr(parameter, '_description') and parameter._description:
-            self.setToolTip(parameter._description)
+        if hasattr(parameter, 'description') and parameter.description:
+            self.setToolTip(parameter.description)
 
     def update_parameter(self):
         """
