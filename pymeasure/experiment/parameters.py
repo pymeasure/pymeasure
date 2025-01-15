@@ -59,7 +59,7 @@ class Parameter:
             self.value = default
         self.default = default
         self.ui_class = ui_class
-        self._help_fields = [('units are', 'units'), 'default']
+        self._help_fields = ['description', ('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -121,6 +121,20 @@ class Parameter:
         """
 
         return value
+
+    def _cli_help_fields(self):
+        message = self.name
+        for field in self._help_fields:
+            if isinstance(field, str):
+                field = ["{} is".format(field), field]
+
+            if hasattr(self, field[1]) and getattr(self, field[1]) is not None:
+                prefix = field[0]
+                value = getattr(self, field[1])
+                message += ", {} {}".format(prefix, value)
+
+        message = message.replace("%", "%%")
+        return message
 
     def __str__(self):
         return str(self._value) if self.is_set() else ''
@@ -239,7 +253,7 @@ class FloatParameter(Parameter):
         super().__init__(name, **kwargs)
         self.decimals = decimals
         self.step = step
-        self._help_fields.append('decimals')
+        self._help_fields.append(('decimals are', 'decimals'))
 
     def convert(self, value):
         if isinstance(value, str):

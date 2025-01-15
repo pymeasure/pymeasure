@@ -116,8 +116,8 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
                                 "is already defined as common options")
             kwargs = {}
             parameter = parameter_objects[name]
-            default, help_fields, _type = parameter.cli_args
-            kwargs['help'] = self._cli_help_fields(parameter.name, parameter, help_fields)
+            default, _, _type = parameter.cli_args
+            kwargs['help'] = parameter._cli_help_fields()
             kwargs['default'] = default
             if _type is not None:
                 kwargs['type'] = _type
