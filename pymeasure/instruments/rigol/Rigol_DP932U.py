@@ -12,9 +12,9 @@ def check_error_decorator(func):
     Logs errors and raises exceptions if the device reports an error.
     """
     def wrapper(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        error = self.check_error()
-        if error != "No error":
+        result = func(self, *args, **kwargs)  # Call the wrapped method
+        error = self.check_error()  # Check for errors
+        if error and error != "No error":
             logging.error(f"Instrument error after {func.__name__}: {error}")
             raise RuntimeError(f"Instrument Error: {error}")
         return result
@@ -31,16 +31,18 @@ class RigolDP932U(SCPIMixin, Instrument):
     and check for errors.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Rigol DP932U Power Supply", **kwargs):
         """
         Initialize the Rigol DP932U DC Power Supply Unit.
 
         :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
         :param kwargs: Additional arguments for instrument initialization.
         """
+
         if not adapter:
             raise ValueError("Adapter cannot be None. Provide a valid communication adapter.")
-        super().__init__(adapter, "Rigol DP932U DC Power Supply", **kwargs)
+        kwargs.pop("name", None)
+        super().__init__(adapter, name, **kwargs)
 
     control_channel = Instrument.control(
         ":INSTrument:NSELect?",
@@ -106,7 +108,6 @@ class RigolDP932U(SCPIMixin, Instrument):
     def measure_voltage(self):
         """
         Measure the voltage of the currently selected channel.
-
         :return: Measured voltage in Volts (float).
         """
         return float(self.ask(":MEASure:VOLTage:DC?"))
@@ -115,7 +116,6 @@ class RigolDP932U(SCPIMixin, Instrument):
     def measure_current(self):
         """
         Measure the current of the currently selected channel.
-
         :return: Measured current in Amps (float).
         """
         return float(self.ask(":MEASure:CURRent:DC?"))
@@ -133,7 +133,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         Query the device identification string.
 
         :return: Identification string (str), including manufacturer,
-         model,serial number, and firmware version.
+         model, serial number, and firmware version.
         """
         return self.ask("*IDN?").strip()
 
