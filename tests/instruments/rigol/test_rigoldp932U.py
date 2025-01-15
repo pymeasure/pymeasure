@@ -1,5 +1,6 @@
+import pytest
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.rigol import RigolDP932U
+from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U
 
 
 def test_init():
@@ -13,7 +14,8 @@ def test_init():
 def test_control_channel_setter():
     with expected_protocol(
         RigolDP932U,
-        [(b':INSTrument:NSELect 1', None)],
+        [(b':INSTrument:NSELect 1', None),
+            (b':INSTrument:NSELect?', b'1\n')],
     ) as inst:
         inst.control_channel = 1
         assert inst.control_channel == 1
@@ -33,7 +35,7 @@ def test_control_voltage_setter():
         [(b':SOURce:VOLTage 5.000', None)],
     ) as inst:
         inst.control_voltage = 5.0
-        assert inst.control_voltage == 5.0
+
 
 
 def test_control_voltage_getter():
@@ -50,7 +52,7 @@ def test_control_current_setter():
         [(b':SOURce:CURRent 1.500', None)],
     ) as inst:
         inst.control_current = 1.5
-        assert inst.control_current == 1.5
+
 
 
 def test_control_current_getter():
@@ -67,7 +69,7 @@ def test_control_output_state_setter():
         [(b':OUTPut:STATe 1', None)],
     ) as inst:
         inst.control_output_state = "ON"
-        assert inst.control_output_state == "ON"
+
 
 
 def test_control_output_state_getter():
@@ -84,7 +86,7 @@ def test_control_connection_mode_setter():
         [(b':OUTPut:PAIR SER', None)],
     ) as inst:
         inst.control_connection_mode = "SER"
-        assert inst.control_connection_mode == "SER"
+
 
 
 def test_control_connection_mode_getter():
@@ -99,12 +101,11 @@ def test_measure_voltage():
     with expected_protocol(
         RigolDP932U,
         [
-            (b':INSTrument:NSELect 1', None),
             (b':MEASure:VOLTage:DC?', b'12.500\n'),
             (b':SYSTem:ERRor?', b'No error\n'),
         ],
     ) as inst:
-        inst.control_channel = 1
+
         assert inst.measure_voltage() == 12.5
 
 
@@ -112,12 +113,11 @@ def test_measure_current():
     with expected_protocol(
         RigolDP932U,
         [
-            (b':INSTrument:NSELect 1', None),
             (b':MEASure:CURRent:DC?', b'0.750\n'),
             (b':SYSTem:ERRor?', b'No error\n'),
         ],
     ) as inst:
-        inst.control_channel = 1
+
         assert inst.measure_current() == 0.75
 
 
@@ -131,8 +131,8 @@ def test_reset():
 
 def test_get_device_id():
     with expected_protocol(
-        RigolDP932U,
-        [(b'*IDN?', b'Rigol,DP932U,123456,1.0.0\n')],
+            RigolDP932U,
+            [(b'*IDN?', b'Rigol,DP932U,123456,1.0.0\n')],
     ) as inst:
         assert inst.get_device_id() == "Rigol,DP932U,123456,1.0.0"
 

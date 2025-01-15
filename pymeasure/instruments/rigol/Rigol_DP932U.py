@@ -109,10 +109,6 @@ class RigolDP932U(SCPIMixin, Instrument):
 
         :return: Measured voltage in Volts (float).
         """
-        if self.control_output_state != "ON":
-            logging.error("Cannot measure voltage: Output is OFF. Enable output first.")
-            return 0.0
-        self.write(f":INSTrument:NSELect {self.control_channel}")
         return float(self.ask(":MEASure:VOLTage:DC?"))
 
     @check_error_decorator
@@ -122,10 +118,6 @@ class RigolDP932U(SCPIMixin, Instrument):
 
         :return: Measured current in Amps (float).
         """
-        if self.control_output_state != "ON":
-            logging.error("Cannot measure current: Output is OFF. Enable output first.")
-            return 0.0
-        self.write(f":INSTrument:NSELect {self.control_channel}")
         return float(self.ask(":MEASure:CURRent:DC?"))
 
     def reset(self):
@@ -140,17 +132,19 @@ class RigolDP932U(SCPIMixin, Instrument):
         """
         Query the device identification string.
 
-        :return: Identification string (str), including manufacturer, model, serial number, and firmware version.
+        :return: Identification string (str), including manufacturer,
+         model,serial number, and firmware version.
         """
-        return self.ask("*IDN?")
+        return self.ask("*IDN?").strip()
 
     def check_error(self):
         """
         Check for system errors.
 
-        :return: Error message (str) or "No error" if the system is operating correctly.
+        :return: Error message (str) or "No error" if the system is
+        operating correctly.
         """
-        error = self.ask(":SYSTem:ERRor?")
+        error = self.ask(":SYSTem:ERRor?").strip()
         if error and "No error" not in error:
             logging.error(f"System Error: {error}")
             raise RuntimeError(f"System Error: {error}")
