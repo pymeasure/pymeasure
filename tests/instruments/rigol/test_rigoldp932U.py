@@ -1,4 +1,3 @@
-import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U
 
@@ -37,7 +36,6 @@ def test_control_voltage_setter():
         inst.control_voltage = 5.0
 
 
-
 def test_control_voltage_getter():
     with expected_protocol(
         RigolDP932U,
@@ -52,7 +50,6 @@ def test_control_current_setter():
         [(b':SOURce:CURRent 1.500', None)],
     ) as inst:
         inst.control_current = 1.5
-
 
 
 def test_control_current_getter():
@@ -71,7 +68,6 @@ def test_control_output_state_setter():
         inst.control_output_state = "ON"
 
 
-
 def test_control_output_state_getter():
     with expected_protocol(
         RigolDP932U,
@@ -86,7 +82,6 @@ def test_control_connection_mode_setter():
         [(b':OUTPut:PAIR SER', None)],
     ) as inst:
         inst.control_connection_mode = "SER"
-
 
 
 def test_control_connection_mode_getter():
@@ -105,7 +100,6 @@ def test_measure_voltage():
             (b':SYSTem:ERRor?', b'No error\n'),
         ],
     ) as inst:
-
         assert inst.measure_voltage() == 12.5
 
 
