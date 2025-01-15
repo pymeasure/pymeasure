@@ -1,4 +1,3 @@
-import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.rigol import RigolDP932U
 

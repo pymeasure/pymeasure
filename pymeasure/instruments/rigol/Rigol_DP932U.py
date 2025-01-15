@@ -5,6 +5,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 # Set up logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
+
 def check_error_decorator(func):
     """
     Decorator to automatically check for errors after executing a method.
@@ -17,19 +18,24 @@ def check_error_decorator(func):
         return result
     return wrapper
 
+
 class RigolDP932U(SCPIMixin, Instrument):
     """
     PyMeasure interface for the Rigol DP932U DC Power Supply Unit.
 
-    This class provides methods to control the active channel, voltage, current, output state, and connection mode of the device.
-    It also includes methods to measure voltage and current, reset the device, and check for errors.
+    This class provides methods to control the active channel,
+    voltage, current, output state, and connection mode of the device.
+    It also includes methods to measure voltage and current, reset the device,
+    and check for errors.
+
     """
 
     def __init__(self, adapter, **kwargs):
         """
         Initialize the Rigol DP932U DC Power Supply Unit.
 
-        :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
+        :param adapter: The communication adapter (e.g., USB or GPIB)
+         to connect to the instrument.
         :param kwargs: Additional arguments for instrument initialization.
         """
         super().__init__(adapter, "Rigol DP932U DC Power Supply", **kwargs)
@@ -74,10 +80,14 @@ class RigolDP932U(SCPIMixin, Instrument):
         ":OUTPut:STATe?",
         ":OUTPut:STATe %s",
         """Control the output state of the selected channel (ON or OFF).
-        Note: When turning output OFF, it will follow the setting in Configuration:Output:CH-Off Mode.
-             Instrument off mode can only be set from the touch panel.  "0 V" will set output to zero when off.  
-             "IMM" will set output to high-impedance when off.
-        :param str value: Output state, either "ON" to enable or "OFF" to disable the output.
+        Note: When turning output OFF, it will follow the setting in
+        Configuration:Output:CH-Off Mode.
+        Instrument off mode can only be set from the touch panel. 
+        "0 V" will set output to zero when off.  
+        "IMM" will set output to high-impedance when off.
+        
+        :param str value: Output state, either "ON" to enable or "OFF" 
+        to disable the output.
         """,
         validator=strict_discrete_set,
         values=["OFF", "ON"],
@@ -106,7 +116,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         if self.control_output_state != "ON":
             logging.error("Cannot measure voltage: Output is OFF. Enable output first.")
             return 0.0
-        self.write(f":INSTrument:NSELect {self.control_channel}")  # Ensure the correct channel is selected
+        self.write(f":INSTrument:NSELect {self.control_channel}")
         return float(self.ask(":MEASure:VOLTage:DC?"))
 
     @check_error_decorator
@@ -132,11 +142,11 @@ class RigolDP932U(SCPIMixin, Instrument):
         self.write("*RST")
         logging.info("Reset complete.")
 
-
     def get_device_id(self):
         """
         Query the device identification string.
-        :return: Identification string (str), including manufacturer, model, serial number, and firmware version.
+        :return: Identification string (str),
+        including manufacturer, model, serial number, and firmware version.
         """
         return self.ask("*IDN?")
 
