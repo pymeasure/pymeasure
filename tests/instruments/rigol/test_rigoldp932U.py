@@ -1,6 +1,18 @@
 import pytest
+import logging
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U
+from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U, check_error_decorator
+
+
+class MockInstrument:
+    @check_error_decorator
+    def mock_method(self):
+        # Simulate calling the instrument and triggering check_error
+        return "method_called"
+
+    @staticmethod
+    def check_error():
+        return "Simulated Error"
 
 
 def test_init():
@@ -17,6 +29,42 @@ def test_init_with_none_adapter():
             match="Adapter cannot be None. Provide a valid communication adapter.",
     ):
         RigolDP932U(None)
+
+
+def test_check_error_decorator_raises_runtime_error(caplog):
+    """Test the decorator raises RuntimeError and logs an error."""
+    caplog.set_level(logging.ERROR)
+    mock_instrument = MockInstrument()
+
+    # Trigger the decorated method and capture logs
+    with pytest.raises(RuntimeError, match="System Error: Simulated Error"):
+        mock_instrument.mock_method()
+
+    print("Captured logs:")
+    for record in caplog.records:
+        print(record.message)
+
+    # Normalize log messages and verify
+    normalized_logs = [record.message.replace("  ", " ") for record in caplog.records]
+    assert any(
+        "System Error after mock_method: Simulated Error" in log
+        for log in normalized_logs
+    )
+
+
+def test_check_error_decorator_no_error():
+    """Test the decorator works when no error is reported."""
+    class NoErrorMockInstrument:
+        @check_error_decorator
+        def mock_method(self):
+            return "method_called"
+
+        @staticmethod
+        def check_error():
+            return "No error"
+
+    mock_instrument = NoErrorMockInstrument()
+    assert mock_instrument.mock_method() == "method_called"
 
 
 def test_control_channel_setter():
