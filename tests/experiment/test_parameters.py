@@ -121,7 +121,8 @@ def test_float_value():
     with pytest.raises(ValueError):
         p.value = '31.3 incorrect units'  # not the correct units
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default', ('decimals are', 'decimals')]
+    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default',
+                             ('decimals are', 'decimals')]
 
 
 def test_float_bounds():
@@ -157,7 +158,8 @@ def test_list_value():
     with pytest.raises(ValueError):
         p.value = 5
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_value_with_units():
@@ -173,7 +175,8 @@ def test_list_value_with_units():
     p.value = 'and four tests'
     assert p.value == 'and four'
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_order():
@@ -181,7 +184,8 @@ def test_list_order():
     # check if order is preserved, choices are internally stored as dict
     assert p.choices == (1, 2.2, 'three', 'and four')
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == ['description', ('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_vector():
