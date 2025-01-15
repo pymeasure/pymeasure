@@ -16,7 +16,7 @@ def check_error_decorator(func):
         error = self.check_error()  # Check for errors
         if error and error != "No error":
             logging.error(f"Instrument error after {func.__name__}: {error}")
-            raise RuntimeError(f"Instrument Error: {error}")  # Ensure prefix matches test expectation
+            raise RuntimeError(f"Instrument Error: {error}")
         return result
     return wrapper
 

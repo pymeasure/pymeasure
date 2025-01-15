@@ -12,7 +12,10 @@ def test_init():
 
 
 def test_init_with_none_adapter():
-    with pytest.raises(ValueError, match="Adapter cannot be None. Provide a valid communication adapter."):
+    with pytest.raises(
+            ValueError,
+            match="Adapter cannot be None. Provide a valid communication adapter.",
+    ):
         RigolDP932U(None)
 
 
