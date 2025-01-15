@@ -120,6 +120,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         """
         return float(self.ask(":MEASure:CURRent:DC?"))
 
+    @check_error_decorator
     def reset(self):
         """
         Resets the device to its factory defaults.
