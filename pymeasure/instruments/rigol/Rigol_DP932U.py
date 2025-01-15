@@ -9,13 +9,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 def check_error_decorator(func):
     """
     Decorator to automatically check for errors after executing a method.
+    Logs errors and raises exceptions if the device reports an error.
     """
     def wrapper(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        error = self.check_error()
-        if error != "No error":
-            logging.error(f"Instrument error after {func.__name__}: {error}")
-        return result
+        try:
+            result = func(self, *args, **kwargs)
+            error = self.check_error()
+            if error != "No error":
+                logging.error(f"Instrument error after {func.__name__}: {error}")
+                raise RuntimeError(f"Instrument Error: {error}")
+            return result
+        except Exception as ex:
+            logging.exception(f"Exception in {func.__name__}: {ex}")
+            raise
     return wrapper
 
 
@@ -27,17 +33,17 @@ class RigolDP932U(SCPIMixin, Instrument):
     voltage, current, output state, and connection mode of the device.
     It also includes methods to measure voltage and current, reset the device,
     and check for errors.
-
     """
 
     def __init__(self, adapter, **kwargs):
         """
         Initialize the Rigol DP932U DC Power Supply Unit.
 
-        :param adapter: The communication adapter (e.g., USB or GPIB)
-         to connect to the instrument.
+        :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
         :param kwargs: Additional arguments for instrument initialization.
         """
+        if not adapter:
+            raise ValueError("Adapter cannot be None. Provide a valid communication adapter.")
         super().__init__(adapter, "Rigol DP932U DC Power Supply", **kwargs)
 
     control_channel = Instrument.control(
@@ -82,12 +88,11 @@ class RigolDP932U(SCPIMixin, Instrument):
         """Control the output state of the selected channel (ON or OFF).
         Note: When turning output OFF, it will follow the setting in
         Configuration:Output:CH-Off Mode.
-        Instrument off mode can only be set from the touch panel. 
-        "0 V" will set output to zero when off.  
+        Instrument off mode can only be set from the touch panel.
+        "0 V" will set output to zero when off.
         "IMM" will set output to high-impedance when off.
-        
-        :param str value: Output state, either "ON" to enable or "OFF" 
-        to disable the output.
+
+        :param str value: Output state, either "ON" to enable or "OFF" to disable the output.
         """,
         validator=strict_discrete_set,
         values=["OFF", "ON"],
@@ -98,6 +103,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         ":OUTPut:PAIR?",
         ":OUTPut:PAIR %s",
         """Control the connection mode (OFF, PAR, or SER).
+
         :param str value: Connection mode, either "OFF", "PAR" (parallel), or "SER" (series).
         """,
         validator=strict_discrete_set,
@@ -130,7 +136,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         if self.control_output_state != "ON":
             logging.error("Cannot measure current: Output is OFF. Enable output first.")
             return 0.0
-        self.write(f":INSTrument:NSELect {self.control_channel}")  # Ensure the correct channel is selected
+        self.write(f":INSTrument:NSELect {self.control_channel}")
         return float(self.ask(":MEASure:CURRent:DC?"))
 
     def reset(self):
@@ -138,64 +144,44 @@ class RigolDP932U(SCPIMixin, Instrument):
         Resets the device to its factory defaults.
         All settings will be cleared, and the instrument will return to its initial state.
         """
-        logging.info("Resetting device to factory defaults...")
-        self.write("*RST")
-        logging.info("Reset complete.")
+        try:
+            logging.info("Resetting Rigol DP932U to factory defaults. Please wait...")
+            self.write("*RST")
+            logging.info("Reset complete.")
+        except Exception as ex:
+            logging.error(f"Failed to reset the device: {ex}")
+            raise
 
     def get_device_id(self):
         """
         Query the device identification string.
-        :return: Identification string (str),
-        including manufacturer, model, serial number, and firmware version.
+
+        :return: Identification string (str), including manufacturer, model, serial number, and firmware version.
         """
         return self.ask("*IDN?")
 
     def check_error(self):
         """
         Check for system errors.
+
         :return: Error message (str) or "No error" if the system is operating correctly.
+        :raises RuntimeError: If the system reports an error.
         """
         error = self.ask(":SYSTem:ERRor?")
         if error and "No error" not in error:
             logging.error(f"System Error: {error}")
+            raise RuntimeError(f"System Error: {error}")
         return error
 
 # Example Usage
 # if __name__ == "__main__":
-#
-#     # Initialize the instrument
 #     dp932u = RigolDP932U("USB0::0x1AB1::0xA4A8::DP9C243100051::INSTR")
-#
-#     # Query device ID
 #     print("Device ID:", dp932u.get_device_id())
-#
-#     # Reset device to factory defaults
 #     dp932u.reset()
-#
-#     # Set and query active channel
 #     dp932u.control_channel = 1
-#     print("Active Channel:", dp932u.control_channel)
-#
-#     # Set voltage and current
-#     dp932u.control_voltage = 3.0  # 5 Volts
-#     dp932u.control_current = 0.25  # 1 Ampere
-#
-#     # Set connection mode to parallel
-#     dp932u.control_connection_mode = "PAR"
-#
-#     # Set connection mode to series
-#     dp932u.control_connection_mode = "SER"
-#
-#     # Set connection mode to off
-#     dp932u.control_connection_mode = "OFF"
-#
-#     # Enable output
+#     dp932u.control_voltage = 5.0
+#     dp932u.control_current = 0.5
 #     dp932u.control_output_state = "ON"
-#     print("Output State:", dp932u.control_output_state)
-#
-#     dp932u.measure_current()
-#     dp932u.measure_voltage()
-#
-#     # Disable output
+#     print("Measured Voltage:", dp932u.measure_voltage())
+#     print("Measured Current:", dp932u.measure_current())
 #     dp932u.control_output_state = "OFF"
-#     print("Output State:", dp932u.control_output_state)
