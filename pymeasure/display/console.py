@@ -162,12 +162,15 @@ class ManagedConsole(QtCore.QCoreApplication):
             (see :class:`~pymeasure.experiment.procedure.Procedure`)
     :param log_channel: :code:`logging.Logger` instance to use for logging output
     :param log_level: logging level
+    :param kwargs: additional keyword arguments to be passed to the
+            :class:`~pymeasure.display.console.ConsoleArgumentParser` constructor
     """
 
     def __init__(self,
                  procedure_class,
                  log_channel='',
                  log_level=logging.INFO,
+                 **kwargs,
                  ):
 
         super().__init__([])
@@ -187,7 +190,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         signal.signal(signal.SIGINT, lambda sig, _: self.abort())
 
         # Parse command line arguments
-        parser = ConsoleArgumentParser(procedure_class)
+        parser = ConsoleArgumentParser(procedure_class, **kwargs)
         args = vars(parser.parse_args())
 
         self.directory = args['result_directory']
