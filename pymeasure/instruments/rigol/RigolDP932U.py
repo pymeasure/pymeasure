@@ -12,16 +12,12 @@ def check_error_decorator(func):
     Logs errors and raises exceptions if the device reports an error.
     """
     def wrapper(self, *args, **kwargs):
-        try:
-            result = func(self, *args, **kwargs)
-            error = self.check_error()
-            if error != "No error":
-                logging.error(f"Instrument error after {func.__name__}: {error}")
-                raise RuntimeError(f"Instrument Error: {error}")
-            return result
-        except Exception as ex:
-            logging.exception(f"Exception in {func.__name__}: {ex}")
-            raise
+        result = func(self, *args, **kwargs)
+        error = self.check_error()
+        if error != "No error":
+            logging.error(f"Instrument error after {func.__name__}: {error}")
+            raise RuntimeError(f"Instrument Error: {error}")
+        return result
     return wrapper
 
 
@@ -59,7 +55,7 @@ class RigolDP932U(SCPIMixin, Instrument):
     )
 
     control_voltage = Instrument.control(
-        ":MEASure[:SCALar][:VOLTage][:DC]?",
+        ":MEASure:VOLTage:DC?",
         ":SOURce:VOLTage %.3f",
         """Control the voltage of the selected channel in Volts (0 to 32).
 
@@ -71,7 +67,7 @@ class RigolDP932U(SCPIMixin, Instrument):
     )
 
     control_current = Instrument.control(
-        ":MEASure[:SCALar]:CURRent[:DC]?",
+        ":MEASure:CURRent:DC?",
         ":SOURce:CURRent %.3f",
         """Control the current of the selected channel in Amps (0 to 3).
 
@@ -86,11 +82,6 @@ class RigolDP932U(SCPIMixin, Instrument):
         ":OUTPut:STATe?",
         ":OUTPut:STATe %s",
         """Control the output state of the selected channel (ON or OFF).
-        Note: When turning output OFF, it will follow the setting in
-        Configuration:Output:CH-Off Mode.
-        Instrument off mode can only be set from the touch panel.
-        "0 V" will set output to zero when off.
-        "IMM" will set output to high-impedance when off.
 
         :param str value: Output state, either "ON" to enable or "OFF" to disable the output.
         """,
@@ -117,7 +108,6 @@ class RigolDP932U(SCPIMixin, Instrument):
         Measure the voltage of the currently selected channel.
 
         :return: Measured voltage in Volts (float).
-        :raises ValueError: If the measurement fails or returns invalid data.
         """
         if self.control_output_state != "ON":
             logging.error("Cannot measure voltage: Output is OFF. Enable output first.")
@@ -131,7 +121,6 @@ class RigolDP932U(SCPIMixin, Instrument):
         Measure the current of the currently selected channel.
 
         :return: Measured current in Amps (float).
-        :raises ValueError: If the measurement fails or returns invalid data.
         """
         if self.control_output_state != "ON":
             logging.error("Cannot measure current: Output is OFF. Enable output first.")
@@ -142,15 +131,10 @@ class RigolDP932U(SCPIMixin, Instrument):
     def reset(self):
         """
         Resets the device to its factory defaults.
-        All settings will be cleared, and the instrument will return to its initial state.
         """
-        try:
-            logging.info("Resetting Rigol DP932U to factory defaults. Please wait...")
-            self.write("*RST")
-            logging.info("Reset complete.")
-        except Exception as ex:
-            logging.error(f"Failed to reset the device: {ex}")
-            raise
+        logging.info("Resetting Rigol DP932U to factory defaults...")
+        self.write("*RST")
+        logging.info("Reset complete.")
 
     def get_device_id(self):
         """
@@ -165,23 +149,9 @@ class RigolDP932U(SCPIMixin, Instrument):
         Check for system errors.
 
         :return: Error message (str) or "No error" if the system is operating correctly.
-        :raises RuntimeError: If the system reports an error.
         """
         error = self.ask(":SYSTem:ERRor?")
         if error and "No error" not in error:
             logging.error(f"System Error: {error}")
             raise RuntimeError(f"System Error: {error}")
         return error
-
-# Example Usage
-# if __name__ == "__main__":
-#     dp932u = RigolDP932U("USB0::0x1AB1::0xA4A8::DP9C243100051::INSTR")
-#     print("Device ID:", dp932u.get_device_id())
-#     dp932u.reset()
-#     dp932u.control_channel = 1
-#     dp932u.control_voltage = 5.0
-#     dp932u.control_current = 0.5
-#     dp932u.control_output_state = "ON"
-#     print("Measured Voltage:", dp932u.measure_voltage())
-#     print("Measured Current:", dp932u.measure_current())
-#     dp932u.control_output_state = "OFF"
