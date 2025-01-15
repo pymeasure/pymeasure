@@ -11,6 +11,11 @@ def test_init():
         pass  # Verify the expected communication
 
 
+def test_init_with_none_adapter():
+    with pytest.raises(ValueError, match="Adapter cannot be None. Provide a valid communication adapter."):
+        RigolDP932U(None)
+
+
 def test_control_channel_setter():
     with expected_protocol(
         RigolDP932U,
@@ -102,6 +107,18 @@ def test_measure_voltage():
         ],
     ) as inst:
         assert inst.measure_voltage() == 12.5
+
+
+def test_decorator_raises_runtime_error():
+    with expected_protocol(
+        RigolDP932U,
+        [
+            (b':MEASure:VOLTage:DC?', b'12.500\n'),
+            (b':SYSTem:ERRor?', b'Error: Voltage out of range\n'),
+        ],
+    ) as inst:
+        with pytest.raises(RuntimeError, match="System Error: Error: Voltage out of range"):
+            inst.measure_voltage()
 
 
 def test_measure_current():
