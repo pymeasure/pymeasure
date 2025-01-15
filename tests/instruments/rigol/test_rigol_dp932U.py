@@ -1,6 +1,6 @@
 import pytest
 from pymeasure.test import expected_protocol
-from src.hardware.Rigol_DP932U import RigolDP932U
+from pymeasure.instruments.rigol import RigolDP932U
 
 
 def test_init():
