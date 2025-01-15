@@ -15,8 +15,8 @@ def check_error_decorator(func):
         result = func(self, *args, **kwargs)  # Call the wrapped method
         error = self.check_error()  # Check for errors
         if error and error != "No error":
-            logging.error(f"Instrument error after {func.__name__}: {error}")
-            raise RuntimeError(f"Instrument Error: {error}")
+            logging.error(f"System Error after  {func.__name__}: {error}")
+            raise RuntimeError(f"System Error: {error}")
         return result
     return wrapper
 

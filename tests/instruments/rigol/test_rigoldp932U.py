@@ -138,10 +138,10 @@ def test_measure_current():
 def test_reset():
     with expected_protocol(
         RigolDP932U,
-            [
-                (b'*RST', None),  # Reset command
-                (b':SYSTem:ERRor?', b'No error\n'),  # Check for errors after reset
-            ],
+        [
+            (b'*RST', None),  # Reset command
+            (b':SYSTem:ERRor?', b'No error\n'),  # Check for errors after reset
+        ],
     ) as inst:
         inst.reset()
 
