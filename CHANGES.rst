@@ -1,17 +1,67 @@
-Upcoming version
-================
+Version 0.15.0 (2025-01-15)
+===========================
+Main items of this new release:
 
-- Introduce FSSeries class for Rohde&Schwarz instruments such as FSL (previously stand-alone class), FSW and others from the same product series (@jnnskls, #1156)
-  Previously, the instrument class FSL could be imported from :code:`pymeasure/instruments/rohdeschwarz/fsl.py`, which can now be imported from :code:`pymeasure/instruments/rohdeschwarz/fsseries.py` alongside the base class FSSeries and FSW.
+- pyproject.toml replaces setup.cfg
+- 12 new instruments
 
 Deprecated features
 -------------------
 - The FSL class imported from :code:`pymeasure/instruments/rohdeschwarz/fsl.py` is deprecated, the current version can be found in :code:`pymeasure/instruments/rohdeschwarz/fsseries.py`.
 
+Instruments
+-----------
+- Add Agilent E5062A (@AlecVercruysse, #1146)
+- Add Hewlett Packard 8753E VNA (@Sionwage, #1004)
+- Add Keithley DAQ6510 (@Aphelion82, #1128)
+- Add Keithley2281S (@PfannenHans, #1054)
+- Add LD400P electronic load (@RobertoRoos, #1168)
+- Add Philips PM6669 Universal Frequency Counter (@dirkjankrijnders, #570)
+- Add Rohde&Schwarz FSSeries class for instruments such as FSL (previously stand-alone class), FSW and others (@jnnskls, #1156)
+  Previously, the instrument class FSL could be imported from :code:`pymeasure/instruments/rohdeschwarz/fsl.py`, which can now be imported from :code:`pymeasure/instruments/rohdeschwarz/fsseries.py` alongside the base class FSSeries and FSW.
+- Add Rigol dg822 waveform generator (@fthouin, #1159)
+- Add Siglent SDS1072CML oscilloscope (@fthouin, #1080, 1195)
+- Add more Thyracont vacuum transducer device types (@dkriegner, #1143)
+
+- Fix Agilent E5062A: docs + rename `active_traces` to `visible_traces` (@AlecVercruysse, #1174)
+- Fix AnritsuMS2090A: Confirm SCPIMixin (@icchalmers, #1191)
+- Fix race condition in test suite due to HP8116A tests (@kpet, #1145)
+- Fix description of :code:`Keithley2000.measure_resistance` method (@J3NZ0L, #1193)
+- Fix test for Keithley6510 (@BenediktBurger, #1135)
+- Fix Kepco BOP power supplies documentation (@JAW90, #1199)
+- Update AFG3152CChannel to docs (@ssimpson-ens, #1176)
+- Update Keysight E3631A with added :code:`output_enabled` property to individual channels (@inonRAAAM, #1209)
+- Update Teledyne with VBS methods (@RobertoRoos, #1166)
+
 Automation
 ----------
 - Explicitly set encoding to utf8 when writing and reading data to file, allowing the use of special characters.
   Previously the encoding was not explicitly set, this could potentially disrupt loading old data-files; if this is required, the encoading can be changed by changing (e.g., monkey-patching) the :code:`pymeasure.experiment.Results.ENCODING` property. (@CasperSchippers, #1123)
+- Add :code:`has_next` method to Procedure class (@Did-Mas, #1185)
+- Change logger from root to module-specific logger. (@mmerlo, #1165)
+
+Documentation
+-------------
+- Fix a couple of typos in procedure.rst (@kpet, #1141)
+- Update contribute.rst also for GitHub Desktop (@bernhardlang, @OrionSmedley, #983, #1171)
+- Fix documentation errors (@msmttchr, @kpet, #1133, #1148)
+- Update InstrumentKit reference (@emmanuel-ferdman, #1187)
+- Change copyright year to 2025 (@BenediktBurger, #1210)
+
+Miscellaneous
+-------------
+- Prepare for v0.14.0 (@BenediktBurger, #1104)
+- add "Reaveal in File Explorer" to browser item context menu (@Did-Mas, #1188)
+- Update numpy 2 test (@CasperSchippers, #1126)
+- Added an install group for building documentation (@RobertoRoos, #1180)
+- Removed setup.cfg, replaced by pyproject.toml (@RobertoRoos, #1182)
+
+New Contributors
+----------------
+@Sionwage, @bernhardlang, @Aphelion82, @kpet, @mmerlo, @OrionSmedley, @ssimpson-ens, @Did-Mas, @emmanuel-ferdman, @icchalmers, @fthouin, @PfannenHans, @dirkjankrijnders, @J3NZ0L, @inonRAAAM, 
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.14.0...v0.15.0
+
 
 Version 0.14.0 (2024-05-22)
 ===========================
