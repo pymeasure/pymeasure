@@ -125,7 +125,8 @@ def test_enable_protection_invalid_ovp():
             inst.enable_protection(ovp=100.0)
         except ValueError as e:
 
-            assert str(e) == "OVP value 100.0 is out of range (0-75 V).", f"Unexpected error message: {e}"
+            expected_ovp_error = "OVP value 100.0 is out of range (0-75 V)."
+            assert str(e) == expected_ovp_error, f"Unexpected error message: {e}"
             print("test_enable_protection_invalid_ovp passed!")
 
 
@@ -139,7 +140,8 @@ def test_enable_protection_invalid_ocp():
             inst.enable_protection(ocp=20.0)
         except ValueError as e:
 
-            assert str(e) == "OCP value 20.0 is out of range (0.4-16 A).", f"Unexpected error message: {e}"
+            expected_ocp_error = "OCP value 20.0 is out of range (0.4-16 A)."
+            assert str(e) == expected_ocp_error, f"Unexpected error message: {e}"
             print("test_enable_protection_invalid_ocp passed!")
 
 
