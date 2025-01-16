@@ -141,7 +141,7 @@ class KepcoKLP75(SCPIMixin, Instrument):
     # Confidence Test
     confidence_test = Instrument.measurement(
         "*TST?",
-        "Perform self-test and return error code.",
+        "Measure the result of the self-test and return the error code.",
         cast=int,
     )
 
