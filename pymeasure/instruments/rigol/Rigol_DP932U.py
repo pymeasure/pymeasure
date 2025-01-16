@@ -107,7 +107,7 @@ class RigolDP932U(SCPIMixin, Instrument):
 
     measure_voltage = Instrument.measurement(
         ":MEASure:VOLTage:DC?",
-        """Measures the voltage of the currently selected channel in Volts.
+        """Measure the voltage of the currently selected channel in Volts.
 
         :return: Measured voltage in Volts (float).
         """
@@ -115,7 +115,7 @@ class RigolDP932U(SCPIMixin, Instrument):
 
     measure_current = Instrument.measurement(
         ":MEASure:CURRent:DC?",
-        """Measures the current of the currently selected channel in Amps.
+        """Measure the current of the currently selected channel in Amps.
 
         :return: Measured current in Amps (float).
         """
