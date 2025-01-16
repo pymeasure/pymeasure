@@ -1,200 +1,186 @@
+# Copyright (c) 2013-2025 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import pytest
-import logging
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U, check_error_decorator
-
-
-class MockInstrument:
-    @check_error_decorator
-    def mock_method(self):
-        # Simulate calling the instrument and triggering check_error
-        return "method_called"
-
-    @staticmethod
-    def check_error():
-        return "Simulated Error"
+from pymeasure.instruments.rigol.Rigol_DP932U import RigolDP932U
 
 
 def test_init():
+    """Test successful initialization of the instrument."""
     with expected_protocol(
         RigolDP932U,
         [],
     ):
-        pass  # Verify the expected communication
+        pass  # Verify no errors occur during initialization
 
 
-def test_init_with_none_adapter():
-    with pytest.raises(
-            ValueError,
-            match="Adapter cannot be None. Provide a valid communication adapter.",
-    ):
-        RigolDP932U(None)
-
-
-def test_check_error_decorator_raises_runtime_error(caplog):
-    """Test the decorator raises RuntimeError and logs an error."""
-    caplog.set_level(logging.ERROR)
-    mock_instrument = MockInstrument()
-
-    # Trigger the decorated method and capture logs
-    with pytest.raises(RuntimeError, match="System Error: Simulated Error"):
-        mock_instrument.mock_method()
-
-    print("Captured logs:")
-    for record in caplog.records:
-        print(record.message)
-
-    # Normalize log messages and verify
-    normalized_logs = [record.message.replace("  ", " ") for record in caplog.records]
-    assert any(
-        "System Error after mock_method: Simulated Error" in log
-        for log in normalized_logs
-    )
-
-
-def test_check_error_decorator_no_error():
-    """Test the decorator works when no error is reported."""
-    class NoErrorMockInstrument:
-        @check_error_decorator
-        def mock_method(self):
-            return "method_called"
-
-        @staticmethod
-        def check_error():
-            return "No error"
-
-    mock_instrument = NoErrorMockInstrument()
-    assert mock_instrument.mock_method() == "method_called"
-
-
-def test_control_channel_setter():
+def test_active_channel_setter():
+    """Test setting the active channel."""
     with expected_protocol(
         RigolDP932U,
-        [(b':INSTrument:NSELect 1', None),
-         (b':INSTrument:NSELect?', b'1\n')],
+        [(b':INSTrument:NSELect 1', None)],
     ) as inst:
-        inst.control_channel = 1
-        assert inst.control_channel == 1
+        inst.active_channel = 1
 
 
-def test_control_channel_getter():
+def test_active_channel_getter():
+    """Test getting the active channel."""
     with expected_protocol(
         RigolDP932U,
         [(b':INSTrument:NSELect?', b'2\n')],
     ) as inst:
-        assert inst.control_channel == 2
+        assert inst.active_channel == 2
 
 
-def test_control_voltage_setter():
+def test_voltage_setter():
+    """Test setting the voltage."""
     with expected_protocol(
         RigolDP932U,
         [(b':SOURce:VOLTage 5.000', None)],
     ) as inst:
-        inst.control_voltage = 5.0
+        inst.voltage = 5.0
 
 
-def test_control_voltage_getter():
+def test_voltage_getter():
+    """Test getting the voltage."""
     with expected_protocol(
         RigolDP932U,
-        [(b':MEASure:VOLTage:DC?', b'3.000\n')],
+        [(b':SOURce:VOLTage?', b'3.000\n')],
     ) as inst:
-        assert inst.control_voltage == 3.0
+        assert inst.voltage == 3.0
 
 
-def test_control_current_setter():
+def test_current_setter():
+    """Test setting the current."""
     with expected_protocol(
         RigolDP932U,
         [(b':SOURce:CURRent 1.500', None)],
     ) as inst:
-        inst.control_current = 1.5
+        inst.current = 1.5
 
 
-def test_control_current_getter():
+def test_current_getter():
+    """Test getting the current."""
     with expected_protocol(
         RigolDP932U,
-        [(b':MEASure:CURRent:DC?', b'1.200\n')],
+        [(b':SOURce:CURRent?', b'1.200\n')],
     ) as inst:
-        assert inst.control_current == 1.2
+        assert inst.current == 1.2
 
 
-def test_control_output_state_setter():
+def test_output_enabled_setter():
+    """Test setting the output enabled state."""
     with expected_protocol(
         RigolDP932U,
         [(b':OUTPut:STATe 1', None)],
     ) as inst:
-        inst.control_output_state = "ON"
+        inst.output_enabled = True
+
+    with expected_protocol(
+        RigolDP932U,
+        [(b':OUTPut:STATe 0', None)],
+    ) as inst:
+        inst.output_enabled = False
 
 
-def test_control_output_state_getter():
+def test_output_enabled_getter():
+    """Test getting the output enabled state."""
+    with expected_protocol(
+        RigolDP932U,
+        [(b':OUTPut:STATe?', b'1\n')],
+    ) as inst:
+        assert inst.output_enabled is True
+
     with expected_protocol(
         RigolDP932U,
         [(b':OUTPut:STATe?', b'0\n')],
     ) as inst:
-        assert inst.control_output_state == "OFF"
+        assert inst.output_enabled is False
 
 
-def test_control_connection_mode_setter():
+def test_connection_mode_setter():
+    """Test setting the connection mode."""
     with expected_protocol(
         RigolDP932U,
         [(b':OUTPut:PAIR SER', None)],
     ) as inst:
-        inst.control_connection_mode = "SER"
+        inst.connection_mode = "SER"
+
+    with expected_protocol(
+        RigolDP932U,
+        [(b':OUTPut:PAIR PAR', None)],
+    ) as inst:
+        inst.connection_mode = "PAR"
 
 
-def test_control_connection_mode_getter():
+def test_connection_mode_getter():
+    """Test getting the connection mode."""
+    with expected_protocol(
+        RigolDP932U,
+        [(b':OUTPut:PAIR?', b'SER\n')],
+    ) as inst:
+        assert inst.connection_mode == "SER"
+
     with expected_protocol(
         RigolDP932U,
         [(b':OUTPut:PAIR?', b'PAR\n')],
     ) as inst:
-        assert inst.control_connection_mode == "PAR"
+        assert inst.connection_mode == "PAR"
 
 
 def test_measure_voltage():
+    """Test measuring voltage."""
     with expected_protocol(
         RigolDP932U,
         [
             (b':MEASure:VOLTage:DC?', b'12.500\n'),
-            (b':SYSTem:ERRor?', b'No error\n'),
         ],
     ) as inst:
-        assert inst.measure_voltage() == 12.5
-
-
-def test_decorator_raises_runtime_error():
-    with expected_protocol(
-        RigolDP932U,
-        [
-            (b':MEASure:VOLTage:DC?', b'12.500\n'),
-            (b':SYSTem:ERRor?', b'Error: Voltage out of range\n'),
-        ],
-    ) as inst:
-        with pytest.raises(RuntimeError, match="System Error: Error: Voltage out of range"):
-            inst.measure_voltage()
+        assert inst.measure_voltage == 12.5
 
 
 def test_measure_current():
+    """Test measuring current."""
     with expected_protocol(
         RigolDP932U,
         [
             (b':MEASure:CURRent:DC?', b'0.750\n'),
-            (b':SYSTem:ERRor?', b'No error\n'),
         ],
     ) as inst:
-        assert inst.measure_current() == 0.75
+        assert inst.measure_current == 0.75
 
 
 def test_reset():
+    """Test resetting the instrument."""
     with expected_protocol(
         RigolDP932U,
         [
-            (b'*RST', None),  # Reset command
-            (b':SYSTem:ERRor?', b'No error\n'),  # Check for errors after reset
+            (b'*RST', None),
         ],
     ) as inst:
         inst.reset()
 
 
 def test_get_device_id():
+    """Test getting the device ID."""
     with expected_protocol(
         RigolDP932U,
         [(b'*IDN?', b'Rigol,DP932U,123456,1.0.0\n')],
@@ -203,6 +189,7 @@ def test_get_device_id():
 
 
 def test_check_error_no_error():
+    """Test checking for errors when no error is present."""
     with expected_protocol(
         RigolDP932U,
         [(b':SYSTem:ERRor?', b'No error\n')],
@@ -211,45 +198,10 @@ def test_check_error_no_error():
 
 
 def test_check_error_with_error():
+    """Test checking for errors when an error is present."""
     with expected_protocol(
         RigolDP932U,
         [(b':SYSTem:ERRor?', b'Error: Voltage out of range\n')],
     ) as inst:
         with pytest.raises(RuntimeError, match="System Error: Error: Voltage out of range"):
             inst.check_error()
-
-
-def test_measure_voltage_with_error():
-    with expected_protocol(
-        RigolDP932U,
-        [
-            (b':MEASure:VOLTage:DC?', b'12.500\n'),
-            (b':SYSTem:ERRor?', b'Error: Voltage measurement failed\n'),
-        ],
-    ) as inst:
-        with pytest.raises(RuntimeError, match="System Error: Error: Voltage measurement failed"):
-            inst.measure_voltage()
-
-
-def test_measure_current_with_error():
-    with expected_protocol(
-        RigolDP932U,
-        [
-            (b':MEASure:CURRent:DC?', b'0.750\n'),
-            (b':SYSTem:ERRor?', b'Error: Current measurement failed\n'),
-        ],
-    ) as inst:
-        with pytest.raises(RuntimeError, match="System Error: Error: Current measurement failed"):
-            inst.measure_current()
-
-
-def test_reset_with_error():
-    with expected_protocol(
-        RigolDP932U,
-        [
-            (b'*RST', None),
-            (b':SYSTem:ERRor?', b'Error: Reset failed\n'),
-        ],
-    ) as inst:
-        with pytest.raises(RuntimeError, match="System Error: Error: Reset failed"):
-            inst.reset()
