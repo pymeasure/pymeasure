@@ -62,7 +62,7 @@ class Keithley2600(SCPIUnknownMixin, Instrument):
         else:
             code = message = err[0]
         log.info(f"ERROR {str(code)},{str(message)} - len {str(len(err))}")
-        return (code, message)
+        return code, message
 
     @property
     def error(self):
@@ -82,7 +82,7 @@ class Channel:
     def write(self, cmd):
         self.instrument.write(f'smu{self.channel}.{cmd}')
 
-    def values(self, cmd, **kwargs):
+    def values(self, cmd):
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
@@ -101,6 +101,18 @@ class Channel:
         """,
         validator=strict_discrete_set,
         values={'OFF': 0, 'ON': 1},
+        map_values=True
+    )
+
+    output_off_mode = Instrument.control(
+        'source.offmode', 'source.offmode=%d',
+        """Property controlling the source output-off mode.""",
+        validator=strict_discrete_set,
+        values={
+            'normal': 0,
+            'zero': 1,
+            'high_z': 2
+        },
         map_values=True
     )
 
