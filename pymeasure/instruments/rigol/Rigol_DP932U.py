@@ -48,7 +48,7 @@ class RigolDP932U(SCPIMixin, Instrument):
     active_channel = Instrument.control(
         ":INSTrument:NSELect?",
         ":INSTrument:NSELect %d",
-        """The currently active channel (1, 2, or 3).
+        """Control the currently active channel (1, 2, or 3).
 
         :param int value: Channel number to set as active.
         :raises ValueError: If the channel number is outside the valid range [1, 3].
@@ -60,7 +60,7 @@ class RigolDP932U(SCPIMixin, Instrument):
     voltage = Instrument.control(
         ":SOURce:VOLTage?",
         ":SOURce:VOLTage %.3f",
-        """The voltage of the selected channel in Volts (0 to 32).
+        """Control the voltage of the selected channel in Volts (0 to 32).
 
         :param float value: Voltage level to set, within the range [0, 32].
         :raises ValueError: If the voltage is outside the valid range.
@@ -72,7 +72,7 @@ class RigolDP932U(SCPIMixin, Instrument):
     current = Instrument.control(
         ":SOURce:CURRent?",
         ":SOURce:CURRent %.3f",
-        """The current of the selected channel in Amps (0 to 3).
+        """Control  the current of the selected channel in Amps (0 to 3).
 
         :param float value: Current level to set, within the range [0, 3].
         :raises ValueError: If the current is outside the valid range.
