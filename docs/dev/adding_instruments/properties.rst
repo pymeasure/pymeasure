@@ -74,7 +74,7 @@ We can use this property to set the voltage to 100 mV, which will send the appro
 
 Finally, the :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function can only set, but not read values.
 
-Using the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` functions, you can create a number of properties for basic measurements and controls.
+Using the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` functions, you can create a number of properties for basic measurements and controls.
 
 The next sections detail additional features of the property factories.
 These allow you to write properties that cover specific ranges, or that have to map between a real value to one used in the command. Furthermore it is shown how to perform more complex processing of return values from your device.
