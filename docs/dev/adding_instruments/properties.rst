@@ -373,7 +373,7 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
 Checking the instrument for errors
 **********************************
 If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
-If those are enabled, the methods :meth:`~pymeasure.instruments.Instrument.check_get_errors` and :meth:`~pymeasure.instruments.Instrument.check_set_errors`, respectively, will be called be called after device communication has concluded.
+If those are enabled, the methods :meth:`~pymeasure.instruments.Instrument.check_get_errors` and :meth:`~pymeasure.instruments.Instrument.check_set_errors`, respectively, will be called after device communication has concluded.
 In the default implementation, for simplicity both methods call :meth:`~pymeasure.instruments.Instrument.check_errors`.
 To read the automatic response of instruments that respond to every set command with an acknowledgment or error, override :meth:`~pymeasure.instruments.Instrument.check_set_errors` as needed.
 
