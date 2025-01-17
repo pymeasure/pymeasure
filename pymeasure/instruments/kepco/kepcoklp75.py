@@ -1,3 +1,27 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2024 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 from enum import IntFlag
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
@@ -81,38 +105,6 @@ class KepcoKLP75(SCPIMixin, Instrument):
         validator=truncated_range,
         values=[_Imin, _Imax],
     )
-
-    def set_safe_output(self, voltage, current):
-        """
-        Safely set the voltage and current output values.
-        Adjusts for power limitations and minimum current.
-
-        Parameters:
-            voltage (float): The desired voltage setpoint (V).
-            current (float): The desired current setpoint (A).
-
-        Raises:
-            RuntimeError: If unable to set the output safely.
-        """
-        # Adjust current if power exceeds the maximum allowed value
-        if voltage * current > self._Pmax:
-            current = self._Pmax / voltage
-            print(f"Adjusted current to {current:.2f} A to stay within power limits.")
-
-        # Ensure the current is within the device's limits
-        current = max(self._Imin, min(current, self._Imax))
-
-        try:
-            # Set the safe output values
-            self.output_enabled = False
-            self.voltage_setpoint = voltage
-            self.current_setpoint = current
-            self.output_enabled = True
-        except Exception as e:
-            self.output_enabled = False
-            raise RuntimeError(
-                f"Failed to set safe output: Voltage={voltage}, Current={current}, Error={e}"
-            )
 
     def enable_protection(self, ovp=None, ocp=None):
         """Enable Overvoltage/Overcurrent Protection
