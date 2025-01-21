@@ -30,17 +30,9 @@ class RigolDP932U(SCPIMixin, Instrument):
     """
     PyMeasure interface for the Rigol DP932U DC Power Supply Unit.
 
-    This class provides methods to control the active channel,
-    voltage, current, output state, and connection mode of the device.
-    It also includes methods to measure voltage and current, reset the device,
-    and check for errors.
-
-    :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
-    :type adapter: str
-    :param name: The name of the instrument.
-    :type name: str
-    :param kwargs: Additional arguments for instrument initialization.
-    :type kwargs: dict
+    This class provides methods to control the active channel, voltage, current,
+    output state, and connection mode of the device. It also includes methods
+    to measure voltage and current, reset the device, and check for errors.
     """
 
     def __init__(self, adapter, name="Rigol DP932U Power Supply", **kwargs):
@@ -48,7 +40,13 @@ class RigolDP932U(SCPIMixin, Instrument):
         Initialize the Rigol DP932U DC Power Supply Unit.
 
         :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
+        :type adapter: str
+
+        :param name: The name of the instrument.
+        :type name: str
+
         :param kwargs: Additional arguments for instrument initialization.
+        :type kwargs: dict
         """
         super().__init__(adapter, name, **kwargs)
 
@@ -58,6 +56,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         """Control the currently active channel (1, 2, or 3).
 
         :param int value: Channel number to set as active.
+
         :raises ValueError: If the channel number is outside the valid range [1, 3].
         """,
         validator=strict_discrete_set,
@@ -70,6 +69,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         """Control the voltage of the selected channel in Volts (0 to 32).
 
         :param float value: Voltage level to set, within the range [0, 32].
+
         :raises ValueError: If the voltage is outside the valid range.
         """,
         validator=strict_range,
@@ -79,9 +79,10 @@ class RigolDP932U(SCPIMixin, Instrument):
     current = Instrument.control(
         ":SOURce:CURRent?",
         ":SOURce:CURRent %.3f",
-        """Control  the current of the selected channel in Amps (0 to 3).
+        """Control the current of the selected channel in Amps (0 to 3).
 
         :param float value: Current level to set, within the range [0, 3].
+
         :raises ValueError: If the current is outside the valid range.
         """,
         validator=strict_range,
@@ -140,8 +141,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         """
         Query the device identification string.
 
-        :return: Identification string (str), including manufacturer,
-         model, serial number, and firmware version.
+        :return: Identification string (str), including manufacturer, model, serial number, and firmware version.
         """
         return self.ask("*IDN?").strip()
 
@@ -149,8 +149,7 @@ class RigolDP932U(SCPIMixin, Instrument):
         """
         Check for system errors.
 
-        :return: Error message (str) or "No error" if the system is
-        operating correctly.
+        :return: Error message (str) or "No error" if the system is operating correctly.
         """
         error = self.ask(":SYSTem:ERRor?").strip()
         if error and "No error" not in error:
