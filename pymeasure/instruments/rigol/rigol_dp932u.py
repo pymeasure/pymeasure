@@ -150,4 +150,3 @@ class RigolDP932U(SCPIMixin, Instrument):
             logging.error(f"System Error: {error}")
             raise RuntimeError(f"System Error: {error}")
         return error
-    
