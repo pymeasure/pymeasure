@@ -34,6 +34,13 @@ class RigolDP932U(SCPIMixin, Instrument):
     voltage, current, output state, and connection mode of the device.
     It also includes methods to measure voltage and current, reset the device,
     and check for errors.
+
+    :param adapter: The communication adapter (e.g., USB or GPIB) to connect to the instrument.
+    :type adapter: str
+    :param name: The name of the instrument.
+    :type name: str
+    :param kwargs: Additional arguments for instrument initialization.
+    :type kwargs: dict
     """
 
     def __init__(self, adapter, name="Rigol DP932U Power Supply", **kwargs):
