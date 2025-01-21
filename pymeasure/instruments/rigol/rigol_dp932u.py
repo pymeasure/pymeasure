@@ -141,7 +141,8 @@ class RigolDP932U(SCPIMixin, Instrument):
         """
         Query the device identification string.
 
-        :return: Identification string (str), including manufacturer, model, serial number, and firmware version.
+        :return: Identification string (str), including manufacturer, model,
+            serial number, and firmware version.
         """
         return self.ask("*IDN?").strip()
 
