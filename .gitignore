@@ -110,3 +110,4 @@ settings.json
 # Vim
 *.swp
 x_gui/
+docs/api/instruments/kepco/kepcoklp75.html
