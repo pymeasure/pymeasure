@@ -101,7 +101,7 @@ class Channel:
         """Property controlling the channel output state (ON, OFF or HIGH_Z)
         """,
         validator=strict_discrete_set,
-        values={'OFF': 0, 'ON': 1, 'HIGH_Z' : 2},
+        values={'OFF': 0, 'ON': 1, 'HIGH_Z': 2},
         map_values=True
     )
 
