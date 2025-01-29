@@ -133,7 +133,6 @@ class Parameter:
                 value = getattr(self, field[1])
                 message += ", {} {}".format(prefix, value)
 
-        message = message.replace("%", "%%")
         return message
 
     def __str__(self):

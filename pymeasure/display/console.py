@@ -117,7 +117,7 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             kwargs = {}
             parameter = parameter_objects[name]
             default, _, _type = parameter.cli_args
-            kwargs['help'] = parameter._cli_help_fields()
+            kwargs['help'] = parameter._cli_help_fields().replace("%", "%%")
             kwargs['default'] = default
             if _type is not None:
                 kwargs['type'] = _type
