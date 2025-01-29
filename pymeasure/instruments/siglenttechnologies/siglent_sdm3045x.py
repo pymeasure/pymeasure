@@ -45,14 +45,13 @@ class SiglentSDM3045X(SCPIMixin, Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=True,
             **kwargs
         )
 
     # Measurement Modes
     measurement_mode = Instrument.control(
-        "CONFigure?",  # Query command to get the current measurement mode
-        "CONFigure:%s",  # Command format to set the measurement mode
+        "CONFigure?",
+        "CONFigure:%s",
         "Set the measurement mode "
         "'VOLT:DC', 'VOLT:AC', 'CURR:DC', 'CURR:AC', 'TEMP', and 'RES'.",
         validator=strict_discrete_set,
@@ -61,29 +60,29 @@ class SiglentSDM3045X(SCPIMixin, Instrument):
 
     # Voltage Measurement
     voltage = Instrument.measurement(
-        "MEASure:VOLT:DC?",  # Query for DC voltage measurement
+        "MEASure:VOLT:DC?",
         "Measure the DC voltage in volts.",
     )
 
     # Current Measurement
     current = Instrument.measurement(
-        "MEASure:CURR:DC?",  # Query for DC current measurement
+        "MEASure:CURR:DC?",
         "Measure the DC current in amperes.",
     )
 
     # Temperature Measurement
     temperature = Instrument.measurement(
-        "MEASure:TEMP?",  # Query for temperature measurement
+        "MEASure:TEMP?",
         "Measure the temperature in Celsius.",
     )
 
     # Set DC Voltage Range
     dc_voltage_range = Instrument.control(
-        "VOLT:RANGe?",  # Query for current DC voltage range
-        "VOLT:RANGe %g",  # Command format to set DC voltage range
+        "VOLT:RANGe?",
+        "VOLT:RANGe %g",
         "Set the DC voltage range in volts.",
         validator=strict_range,
-        values=[0.1, 1000],  # DC voltage range limits (in volts)
+        values=[0.1, 1000],
     )
 
     def reset(self):

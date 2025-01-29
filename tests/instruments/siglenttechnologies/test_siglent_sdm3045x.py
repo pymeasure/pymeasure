@@ -86,7 +86,7 @@ def test_measurement_mode_valid_values():
             SiglentSDM3045X,
             [
                 (f'CONFigure:{mode}', None),
-                (f'CONFigure?', mode.encode())  # Correct f-string usage here
+                ('CONFigure?', mode.encode())
             ]
         ) as inst:
             inst.measurement_mode = mode  # Set the mode
