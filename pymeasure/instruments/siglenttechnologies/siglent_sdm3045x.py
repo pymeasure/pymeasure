@@ -21,11 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import SCPIMixin, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
-class SiglentSDM3045X(Instrument):
+class SiglentSDM3045X(SCPIMixin, Instrument):
     """
     Driver for the Siglent SDM3045X Digital Multimeter.
 
@@ -53,7 +53,7 @@ class SiglentSDM3045X(Instrument):
     measurement_mode = Instrument.control(
         "CONFigure?",  # Query command to get the current measurement mode
         "CONFigure:%s",  # Command format to set the measurement mode
-        "A string property to set the measurement mode. Supported values are "
+        "Set the measurement mode "
         "'VOLT:DC', 'VOLT:AC', 'CURR:DC', 'CURR:AC', 'TEMP', and 'RES'.",
         validator=strict_discrete_set,
         values=["VOLT:DC", "VOLT:AC", "CURR:DC", "CURR:AC", "TEMP", "RES"],
@@ -62,26 +62,26 @@ class SiglentSDM3045X(Instrument):
     # Voltage Measurement
     voltage = Instrument.measurement(
         "MEASure:VOLT:DC?",  # Query for DC voltage measurement
-        "Measures the DC voltage in volts.",
+        "Measure the DC voltage in volts.",
     )
 
     # Current Measurement
     current = Instrument.measurement(
         "MEASure:CURR:DC?",  # Query for DC current measurement
-        "Measures the DC current in amperes.",
+        "Measure the DC current in amperes.",
     )
 
     # Temperature Measurement
     temperature = Instrument.measurement(
         "MEASure:TEMP?",  # Query for temperature measurement
-        "Measures the temperature in Celsius.",
+        "Measure the temperature in Celsius.",
     )
 
     # Set DC Voltage Range
     dc_voltage_range = Instrument.control(
         "VOLT:RANGe?",  # Query for current DC voltage range
         "VOLT:RANGe %g",  # Command format to set DC voltage range
-        "A floating-point property to set the DC voltage range in volts.",
+        "Set the DC voltage range in volts.",
         validator=strict_range,
         values=[0.1, 1000],  # DC voltage range limits (in volts)
     )

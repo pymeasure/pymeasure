@@ -31,8 +31,8 @@ def test_init():
     Test initialization of the Siglent SDM3045X instrument.
     Verifies that the expected communication setup is initialized correctly.
     """
-    with expected_protocol(SiglentSDM3045X, []) as inst:
-        pass  # Verify the expected communication.
+    with expected_protocol(SiglentSDM3045X, []) as _:
+        pass
 
 
 def test_measurement_mode_getter():
@@ -86,7 +86,7 @@ def test_measurement_mode_valid_values():
             SiglentSDM3045X,
             [
                 (f'CONFigure:{mode}', None),
-                (f'CONFigure?', f'{mode}')
+                (f'CONFigure?', mode.encode())  # Correct f-string usage here
             ]
         ) as inst:
             inst.measurement_mode = mode  # Set the mode
