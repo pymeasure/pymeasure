@@ -83,28 +83,15 @@ class KeysightM8194A(Instrument):
             **kwargs
         )
         self.num_channels = 2
-        #self.default_dir = 'C:\\Users\\Administrator\\Documents\\My\ Pictures'
+        self.default_dir = 'C:\\Users\\Administrator\\Pictures'
         num_chan = int(self.num_channels)
         self.mapper = {}
         for i in range(num_chan):
             setattr(self, f'ch{i+1}', Channel(self, i+1,
-                                             trigger=self.trigger,
                                              wait_for_trigger=self.wait_for_trigger,
                                               start_awg = self.start_awg,
                                               stop_awg = self.stop_awg))
             self.mapper[i + 1] = getattr(self,f'ch{i+1}')
-
-        for i in range(num_chan//2):
-            setattr(self, f'marker{i+1}', Marker(self, i+1))
-
-        n_dig = int(self.ask("AWGControl:CONFigure:DNUMber?"))
-        if n_dig > 0:
-            setattr(self, f'ch9', Channel(self, 9,
-                                             trigger=self.trigger,
-                                             wait_for_trigger=self.wait_for_trigger,
-                                              start_awg = self.start_awg,
-                                              stop_awg = self.stop_awg))
-            self.mapper[9] = getattr(self, f'ch9')
 
 
     def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
@@ -174,10 +161,10 @@ class KeysightM8194A(Instrument):
 
     @property
     def waveform_list(self):
-        return self.ask(':MMEM:CAT?').split(',')
+        return self.ask(':MMEM:CAT?').replace('"','').split(',')
 
     filedir = Instrument.control(
-        ":MMEM:CDIR?", ":MMEM:CDIR %s",
+        ":MMEM:CDIR?", ':MMEM:CDIR "%s"',
         """ A string property that sets where we are writing wf files.""",
     )
     @staticmethod
@@ -193,6 +180,7 @@ class KeysightM8194A(Instrument):
         to_transferstr = '#' + str(len(str(l))) + str(l) + to_transferstr
 
         return to_transferstr
+    
     def transfer_array_to_file(self, array, filename):
         """
         Takes an array and saves it to the Documents folder of M8194A
@@ -201,21 +189,28 @@ class KeysightM8194A(Instrument):
         array_min = np.min(array)
         if array_max > 1 or array_min < -1:
             raise ValueError("Array must be normalized between -1 and 1")
-        array = np.array(array) + 1
-        array *= 256
-        array = np.array(array).astype(np.uint8)
-        default_path = self.default_dir + filename +".bin"
-        self.adapter.write_binary_values(f':MMEM:DATA "{default_path}"',
-                                         array,
-                                         datatype='B',
-                                         is_big_endian=False)
+        array = (np.array(array) + 1)/2
+        array *= 255
+        array -= 128
+        array = np.array(array).astype(np.int8)
+        self.filedir = self.default_dir
+        if filename + '.bin' in self.waveform_list:
+            self.delete_waveform_file(awg, 'testwf')
+        default_path = self.default_dir + '\\'+ filename +".bin"
+        self.adapter.write_binary_values(f':MMEM:DATA "{default_path}", ',
+                                            array,
+                                            datatype='b',
+                                            is_big_endian=False)
 
 
     def delete_waveform_file(self, name):
         """
-        Deletes waveform at file location name
+        Deletes waveform in the default directory (you have no choice) with
+        name (no suffix).
         """
-        self.write(':MMEM:DEL "%s"' % name)
+        default_path = self.default_dir + '\\'+ name +".bin"
+        self.write(f':MMEM:DEL "{default_path}"')
+
 
     def all_off(self):
         for key, item in self.mapper.items():
@@ -237,7 +232,9 @@ class KeysightM8194A(Instrument):
 
     def load_waveform_from_file(self, filename,  channel):
         """
-        Loads a waveform at pathtofile to the waveform list with name.
+        Loads a waveform at pathtofile to the waveform list with name. Do not try and 
+        use this unless you have dumped the file with self.transfer_array_to_file.
         """
-        self.write(f':TRAC{channel}:IMP 1, "{self.filedir}\\{filename}.bin", BIN8, IONLy, ON, ALEN')
+        default_path = self.default_dir + '\\'+ filename +".bin"
+        self.write(f':TRAC{channel}:IMP 1, "{default_path}", BIN8, IONLy, ON, ALEN')
 
