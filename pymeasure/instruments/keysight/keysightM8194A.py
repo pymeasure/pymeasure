@@ -195,7 +195,8 @@ class KeysightM8194A(Instrument):
         array = np.array(array).astype(np.int8)
         self.filedir = self.default_dir
         if filename + '.bin' in self.waveform_list:
-            self.delete_waveform_file(awg, 'testwf')
+            self.delete_waveform_file(filename)
+            print('deleting')
         default_path = self.default_dir + '\\'+ filename +".bin"
         self.adapter.write_binary_values(f':MMEM:DATA "{default_path}", ',
                                             array,
