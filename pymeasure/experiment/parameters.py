@@ -59,7 +59,7 @@ class Parameter:
             self.value = default
         self.default = default
         self.ui_class = ui_class
-        self._help_fields = ['description', ('units are', 'units'), 'default']
+        self._help_fields = [('units are', 'units'), 'default']
 
         self.group_by = {}
         if isinstance(group_by, dict):
@@ -123,15 +123,19 @@ class Parameter:
         return value
 
     def _cli_help_fields(self):
-        message = self.name
+        message = f"{self.name}:\n"
+        if (description := self.description) is not None:
+            if not description.endswith("."):
+                description += "."
+            message += f"{description}\n"
+
         for field in self._help_fields:
             if isinstance(field, str):
-                field = ["{} is".format(field), field]
+                field = (f"{field} is", field)
 
-            if hasattr(self, field[1]) and getattr(self, field[1]) is not None:
-                prefix = field[0]
-                value = getattr(self, field[1])
-                message += ", {} {}".format(prefix, value)
+            if (value := getattr(self, field[1], None)) is not None:
+                prefix = field[0].capitalize()
+                message += f"\n{prefix} {value}."
 
         return message
 
