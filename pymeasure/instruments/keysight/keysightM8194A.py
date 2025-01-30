@@ -44,6 +44,19 @@ class Channel(object):
         return self.instrument.values("output%d:%s" % (
                                       self.number, command), **kwargs)
 
+    @property
+    def output(self):
+        return self.instrument.ask(":OUTP%d?" % self.number)
+
+    @output.setter
+    def output(self, state):
+        if not isinstance(state, bool):
+            raise TypeError("Can only set output with boolean values")
+        if state:
+            self.enable()
+        else:
+            self.disable()
+
     def enable(self):
         self.instrument.write(":OUTP%d ON" % self.number)
 
