@@ -135,6 +135,9 @@ class Parameter:
 
             if (value := getattr(self, field[1], None)) is not None:
                 prefix = field[0].capitalize()
+                if isinstance(value, str):
+                    value = f'"{value}"'
+
                 message += f"\n{prefix} {value}."
 
         return message

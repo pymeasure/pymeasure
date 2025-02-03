@@ -102,11 +102,9 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
         special_options = copy.deepcopy(self.special_options)
         special_opts_group = self.add_argument_group("Common options")
         for option, kwargs in special_options.items():
-            help_fields = [('units are', 'units')] + kwargs['help_fields']
-            desc = kwargs['desc']
+            help_fields = [('units are', 'units')] + kwargs.pop('help_fields')
+            desc = kwargs.pop('desc')
             kwargs['help'] = self._cli_help_fields(desc, kwargs, help_fields)
-            del kwargs['help_fields']
-            del kwargs['desc']
             special_opts_group.add_argument("--" + option, **kwargs)
 
         experiment_opts_group = self.add_argument_group("Experiment options")
@@ -124,29 +122,26 @@ class ConsoleArgumentParser(argparse.ArgumentParser):
             experiment_opts_group.add_argument("--" + name, **kwargs)
 
     @staticmethod
-    def _cli_help_fields(name, inst, help_fields):
-        def hasattr_dict(inst, key):
-            return key in inst
+    def _cli_help_fields(description, kwargs, help_fields):
+        if not isinstance(kwargs, dict):
+            raise ValueError("kwargs must be a dictionary")
 
-        def getattr_dict(inst, key):
-            return inst[key]
+        message = ""
+        if isinstance(description, str):
+            if not description.endswith("."):
+                description += "."
+            message += description
 
-        if isinstance(inst, dict):
-            hasattribute = hasattr_dict
-            getattribute = getattr_dict
-        else:
-            hasattribute = hasattr
-            getattribute = getattr
-
-        message = name
         for field in help_fields:
             if isinstance(field, str):
-                field = ["{} is".format(field), field]
+                field = (f"{field} is", field)
 
-            if hasattribute(inst, field[1]) and getattribute(inst, field[1]) is not None:
-                prefix = field[0]
-                value = getattribute(inst, field[1])
-                message += ", {} {}".format(prefix, value)
+            if (value := kwargs.get(field[1])) is not None:
+                prefix = field[0].capitalize()
+                if isinstance(value, str):
+                    value = f'"{value}"'
+
+                message += f" {prefix} {value}."
 
         message = message.replace("%", "%%")
         return message
