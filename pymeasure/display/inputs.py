@@ -61,6 +61,8 @@ class Input:
         if hasattr(parameter, 'units') and parameter.units:
             self.setSuffix(" %s" % parameter.units)
 
+        self.setToolTip(parameter._cli_help_fields())
+
     def update_parameter(self):
         """
         Update the parameter value with the Input GUI element's current value.

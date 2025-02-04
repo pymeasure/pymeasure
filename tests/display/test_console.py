@@ -89,5 +89,5 @@ class TestArgHelpString:
             if desc in help_line:
                 break
         assert desc in help_line
-        assert 'default' in help_line
+        assert 'default' in help_line.lower()
         assert str(default_value) in help_line
