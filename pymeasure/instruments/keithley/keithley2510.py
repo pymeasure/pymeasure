@@ -240,8 +240,10 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
         self.config_buffer(points=points, delay=delay)  #
         self.start_buffer()
 
+        print("Waiting for buffer to fill...")
         self.wait_for_buffer()
 
+        print("Checking temperature stability")
         if self.max_temperature - self.min_temperature > tolerance:
             return False
         else:
@@ -273,14 +275,20 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
 
 # Example usage
 if __name__ == "__main__":
-    tec_gpib_address = "GPIB:10"
+    tec_gpib_address = "GPIB::10"
+    print("Creating Keithley 2510 object")
     tec = Keithley2510(tec_gpib_address)
 
+    print("Setting temperature protection range")
     tec.temperature_protection_range = (0, 70)
+    print("Enabling temperature protection")
     tec.enable_temperature_protection()
+    print("Setting temperature setpoint")
     tec.temperature_setpoint = 55
+    print("Enabling source")
     tec.enable_source()
 
+    print("Waiting for temperature to stabilise")
     tec.wait_for_temperature_stable()
 
     print("Temperature stable!")
