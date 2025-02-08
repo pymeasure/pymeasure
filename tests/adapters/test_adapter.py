@@ -64,7 +64,7 @@ def test_del(adapter):
 
 def test_write(fake):
     fake.write("abc")
-    assert fake._buffer == "abc"
+    assert fake._buffer == "abc\n"
 
 
 def test_write_bytes(fake):
@@ -73,13 +73,27 @@ def test_write_bytes(fake):
 
 
 def test_read(fake):
-    fake._buffer = "abc"
+    fake._buffer = "abc\n"
     assert fake.read() == "abc"
 
 
 def test_read_bytes(fake):
     fake._buffer = "abc"
     assert fake.read_bytes(5) == b"abc"
+
+
+def test_read_multiple_messages(fake):
+    fake._buffer = "abc\ndef\n"
+    assert fake.read() == "abc"
+    assert fake._buffer == 'def\n'
+    assert fake.read() == "def"
+    assert len(fake._buffer) == 0
+
+
+def test_write_multiple_messages(fake):
+    fake.write("abc")
+    fake.write("def")
+    assert fake._buffer == 'abc\ndef\n'
 
 
 @pytest.mark.parametrize("method, args", (['_write', ['5']],
