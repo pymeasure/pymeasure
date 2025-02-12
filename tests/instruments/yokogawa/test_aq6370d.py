@@ -76,6 +76,22 @@ def test_sweep_mode_getter():
         assert inst.sweep_mode == "REPEAT"
 
 
+def test_sensitivity_setter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe 3", None)],
+    ) as inst:
+        inst.sensitivity = "HIGH1"
+
+
+def test_sensitivity_getter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe?", b"3\n")],
+    ) as inst:
+        assert inst.sensitivity == "HIGH1"
+
+
 @pytest.mark.parametrize(
     "comm_pairs, value",
     (
@@ -144,14 +160,6 @@ def test_wavelength_stop_setter():
         [(b":SENSe:WAVelength:STOP 9e-07", None)],
     ) as inst:
         inst.wavelength_stop = 9e-07
-
-
-def test_sensitivity():
-    with expected_protocol(
-        AQ6370D,
-        [(b":SENSe:SENSe HIGH1", None)],
-    ) as inst:
-        inst.sensitivity = "HIGH1"
 
 
 def test_delete_trace():
