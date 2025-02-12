@@ -146,6 +146,14 @@ def test_wavelength_stop_setter():
         inst.wavelength_stop = 9e-07
 
 
+def test_sensitivity():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe HIGH1", None)],
+    ) as inst:
+        inst.sensitivity = "HIGH1"
+
+
 def test_delete_trace():
     with expected_protocol(
         AQ6370D,
