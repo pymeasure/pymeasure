@@ -24,12 +24,13 @@
 
 from time import sleep, time
 
+import numpy as np
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
-from pymeasure.instruments.keithley.buffer import KeithleyBuffer
 
 
-class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
+class Keithley2510(SCPIMixin, Instrument):
     """Represents the Keithley 2510 TEC Sourcemeter and provides a high-level interface for
     interacting with the instrument.
     """
@@ -55,7 +56,7 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
     temperature_setpoint = Instrument.control(
         ":SOURce:TEMPerature?",
         ":SOURce:TEMPerature %g",
-        """A floating point property that controls the temperature setpoint in degrees centigrade,
+        """A floating point property that controls the temperature setpoint, in degrees centigrade,
         which can take values from -50 to 225.""",
         validator=truncated_range,
         values=[-50, 225],
@@ -117,97 +118,12 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
     def temperature_protection_range(self):
         """A double tuple property that controls the lower and upper temperature limits in degrees
         centigrade, which can take values from -50 to 250."""
-        return (self.temperature_protection_low(), self.temperature_protection_high())
+        return (self.temperature_protection_low, self.temperature_protection_high)
 
     @temperature_protection_range.setter
-    def temperature_protection_range_setter(self, temp_range):
+    def temperature_protection_range(self, temp_range):
         self.temperature_protection_low = temp_range[0]
         self.temperature_protection_high = temp_range[1]
-
-    #######################
-    # Buffer calculations #
-    #######################
-
-    means = Instrument.measurement(
-        ":CALC3:FORM MEAN;:CALC3:DATA?;",
-        """ Reads the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list. """,
-    )
-    maximums = Instrument.measurement(
-        ":CALC3:FORM MAX;:CALC3:DATA?;",
-        """ Returns the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list. """,
-    )
-    minimums = Instrument.measurement(
-        ":CALC3:FORM MIN;:CALC3:DATA?;",
-        """ Returns the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list. """,
-    )
-    standard_devs = Instrument.measurement(
-        ":CALC3:FORM SDEV;:CALC3:DATA?;",
-        """ Returns the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list. """,
-    )
-
-    @property
-    def mean_temperature(self):
-        """Returns the mean temperature from the buffer"""
-        return self.means[0]
-
-    @property
-    def max_temperature(self):
-        """Returns the maximum temperature from the buffer"""
-        return self.maximums[0]
-
-    @property
-    def min_temperature(self):
-        """Returns the minimum temperature from the buffer"""
-        return self.minimums[0]
-
-    @property
-    def std_temperature(self):
-        """Returns the temperature standard deviation from the buffer"""
-        return self.standard_devs[0]
-
-    @property
-    def mean_voltage(self):
-        """Returns the mean voltage from the buffer"""
-        return self.means[1]
-
-    @property
-    def max_voltage(self):
-        """Returns the maximum voltage from the buffer"""
-        return self.maximums[1]
-
-    @property
-    def min_voltage(self):
-        """Returns the minimum voltage from the buffer"""
-        return self.minimums[1]
-
-    @property
-    def std_voltage(self):
-        """Returns the voltage standard deviation from the buffer"""
-        return self.standard_devs[1]
-
-    @property
-    def mean_current(self):
-        """Returns the mean current from the buffer"""
-        return self.means[2]
-
-    @property
-    def max_current(self):
-        """Returns the maximum current from the buffer"""
-        return self.maximums[2]
-
-    @property
-    def min_current(self):
-        """Returns the minimum current from the buffer"""
-        return self.minimums[2]
-
-    @property
-    def std_current(self):
-        """Returns the current standard deviation from the buffer"""
-        return self.standard_devs[2]
 
     ###########
     # Methods #
@@ -230,24 +146,24 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
         self.write(":SOURce:TEMPerature:PROTection:STATe OFF")
 
     def is_temperature_stable(self, tolerance=0.1, period=10, points=64):
-        """Determines whether the temperature is stable to within :code:``tolerance`` degrees
-        centigrade over :code:``period`` seconds using the Keithley's internal buffer."""
+        """Determines whether the temperature is stable over a specified period.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :param points: Number of points to collect within the period.
+        :return: True if stable, False otherwise.
+        """
 
         delay = period / points
-        if self.trigger_delay != delay or self.buffer_points != points:
-            self.stop_buffer()
-            self.reset_buffer()
-        self.config_buffer(points=points, delay=delay)  #
-        self.start_buffer()
 
-        print("Waiting for buffer to fill...")
-        self.wait_for_buffer()
+        temp_array = []
 
-        print("Checking temperature stability")
-        if self.max_temperature - self.min_temperature > tolerance:
-            return False
-        else:
-            return True
+        for i in range(points):
+            temp_array.append(self.temperature)
+            sleep(delay)
+
+        return np.all(abs(temp_array - self.temperature_setpoint) < tolerance)
 
     def wait_for_temperature_stable(
         self,
@@ -255,40 +171,39 @@ class Keithley2510(KeithleyBuffer, SCPIMixin, Instrument):
         period=10,
         points=64,
         should_stop=lambda: False,
-        timeout=60,
-        interval=0.1,
+        timeout=64,
     ):
-        """Blocks the program, waiting for the temperature to be stable. This function
-        returns early if the :code:`should_stop` function returns True or the timeout is reached
-        before the temperature is stable.
+        """Blocks the program, waiting for the temperature to stabilize.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :param points: Number of points to collect within the period.
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds.
         """
 
-        t = time()
         delay = period / points
-        while not self.is_temperature_stable():
-            sleep(delay)
+
+        temp_array = points * [None]
+
+        t_start = time()
+
+        while time() - t_start < timeout:
+
+            temp_array.insert(0, self.temperature)
+            del temp_array[-1]
+
+            if temp_array[-1]:
+                mean_temp = np.mean(temp_array)
+                if np.all(abs(temp_array - mean_temp) < tolerance):
+                    print("Temperature stable!")
+                    return True
+
             if should_stop():
-                return
-            if (time() - t) > timeout:
-                raise Exception("Timed out waiting for temperature to stabilize.")
+                print("Stopped waiting for temperature stability.")
+                return False
 
+            sleep(delay)
 
-# Example usage
-if __name__ == "__main__":
-    tec_gpib_address = "GPIB::10"
-    print("Creating Keithley 2510 object")
-    tec = Keithley2510(tec_gpib_address)
-
-    print("Setting temperature protection range")
-    tec.temperature_protection_range = (0, 70)
-    print("Enabling temperature protection")
-    tec.enable_temperature_protection()
-    print("Setting temperature setpoint")
-    tec.temperature_setpoint = 55
-    print("Enabling source")
-    tec.enable_source()
-
-    print("Waiting for temperature to stabilise")
-    tec.wait_for_temperature_stable()
-
-    print("Temperature stable!")
+        raise TimeoutError("Timed out waiting for temperature to stabilize.")
