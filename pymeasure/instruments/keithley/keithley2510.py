@@ -45,9 +45,9 @@ class Keithley2510(SCPIMixin, Instrument):
     source_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
-        """A boolean property that controls whether the source is enabled, takes values True or
-        False. The convenience methods :meth:`~.Keithley2510.enable_source` and
-        :meth:`~.Keithley2510.disable_source` can also be used.""",
+        """Control whether the source is enabled. Takes values True or False.
+        The convenience methods :meth:`~.Keithley2510.enable_source`
+        and :meth:`~.Keithley2510.disable_source` can also be used.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -56,8 +56,8 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_setpoint = Instrument.control(
         ":SOURce:TEMPerature?",
         ":SOURce:TEMPerature %g",
-        """A floating point property that controls the temperature setpoint, in degrees centigrade,
-        which can take values from -50 to 225.""",
+        """Control the temperature setpoint, in degrees centigrade.
+        Takes values from -50 to 225.""",
         validator=truncated_range,
         values=[-50, 225],
     )
@@ -68,17 +68,17 @@ class Keithley2510(SCPIMixin, Instrument):
 
     temperature = Instrument.measurement(
         ":MEASure:TEMPerature?",
-        """Query the temperature measured using the thermistor, in degrees centigrade.""",
+        """Measure the temperature using the thermistor, in degrees centigrade.""",
     )
 
     current = Instrument.measurement(
         ":MEASure:CURRent?",
-        """Query the DC current through the thermoelectric cooler, in Amps.""",
+        """Measure the DC current through the thermoelectric cooler, in Amps.""",
     )
 
     voltage = Instrument.measurement(
         ":MEASure:VOLTage?",
-        """Query the DC voltage through the thermoelectric cooler, in Volts.""",
+        """Measure the DC voltage through the thermoelectric cooler, in Volts.""",
     )
 
     ##########################
@@ -88,9 +88,9 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_protection_enabled = Instrument.control(
         ":SOURce:TEMPerature:PROTection:STATe?",
         ":SOURce:TEMPerature:PROTection:STATe %d",
-        """A boolean property that controls whether temperature protection is enabled. The 
-        convenience methods :meth:`~.Keithley2510.enable_temperature_protection` and
-        :meth:`~.Keithley2510.disable_temperature_protection` can also be used.""",
+        """Control whether temperature protection is enabled. Takes values True or False.
+        The convenience methods :meth:`~.Keithley2510.enable_temperature_protection`
+        and :meth:`~.Keithley2510.disable_temperature_protection` can also be used.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -99,8 +99,8 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_protection_low = Instrument.control(
         ":SOURce:TEMPerature:PROTection:LOW?",
         ":SOURce:TEMPerature:PROTection:LOW %g",
-        """A floating point property that controls the lower temperature limit in degrees
-        centigrade, which can take values from -50 to 250.""",
+        """Control the lower temperature limit in degrees centigrade.
+        Takes values from -50 to 250.""",
         validator=truncated_range,
         values=[-50, 250],
     )
@@ -108,16 +108,16 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_protection_high = Instrument.control(
         ":SOURce:TEMPerature:PROTection:HIGH?",
         ":SOURce:TEMPerature:PROTection:HIGH %g",
-        """A floating point property that controls the upper temperature limit in degrees
-        centigrade, which can take values from -50 to 250.""",
+        """Control the upper temperature limit in degrees centigrade.
+        Takes values from -50 to 250.""",
         validator=truncated_range,
         values=[-50, 250],
     )
 
     @property
     def temperature_protection_range(self):
-        """A double tuple property that controls the lower and upper temperature limits in degrees
-        centigrade, which can take values from -50 to 250."""
+        """Control the lower and upper temperature limits in degrees centigrade.
+        Two-tuple of floats (lower_limit, upper_limit) which can take values from -50 to 250."""
         return (self.temperature_protection_low, self.temperature_protection_high)
 
     @temperature_protection_range.setter
@@ -146,7 +146,7 @@ class Keithley2510(SCPIMixin, Instrument):
         self.write(":SOURce:TEMPerature:PROTection:STATe OFF")
 
     def is_temperature_stable(self, tolerance=0.1, period=10, points=64):
-        """Determines whether the temperature is stable over a specified period.
+        """Determine whether the temperature is stable over a specified period.
 
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
@@ -173,7 +173,7 @@ class Keithley2510(SCPIMixin, Instrument):
         should_stop=lambda: False,
         timeout=64,
     ):
-        """Blocks the program, waiting for the temperature to stabilize.
+        """Block the program, waiting for the temperature to stabilize.
 
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
