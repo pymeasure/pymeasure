@@ -108,6 +108,16 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: int(x),
     )
 
+    sensitivity = Instrument.control(
+        ":SENSe:SENSe?",
+        ":SENSe:SENSe %s",
+        """Control the sweep sensitivity
+        (str 'NHLD', 'NAUT', 'NORM', 'MID', 'HIGH1', 'HIGH2', 'HIGH3')""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"NHLD": 0, "NAUT": 1, "MID": 2, "HIGH1": 3, "HIGH2": 4, "HIGH3": 5, "NORM": 6},
+    )
+
     # Wavelength settings (all assuming wavelength mode, not frequency mode) -----------------------
 
     wavelength_center = Instrument.control(
@@ -223,6 +233,29 @@ class AQ6370Series(SCPIMixin, Instrument):
 
 
 # subclasses of specific instruments ---------------------------------------------------------------
+
+
+class AQ6370E(AQ6370Series):
+    """Represents Yokogawa AQ6370E optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+
+    sensitivity_level = Instrument.control(
+        ":SENSe:SENSe:LEVel?",
+        ":SENSe:SENSe:LEVel %g",
+        """Control the sweep sensitivity by specifying the sensitivity level you want to measure at,
+        in dBm. The sensitivity closest to that level, and the sweep speed are automatically
+        selected.""",
+    )
+
+    pass
 
 
 class AQ6370D(AQ6370Series):

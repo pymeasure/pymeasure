@@ -42,9 +42,12 @@ class Parameter:
         list of strings, this argument can be either a single condition or
         a list of conditions. If the group_by argument is provided as a dict
         this argument is ignored.
+    :description: A string providing a human-friendly description for the
+        parameter.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True):
+    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True,
+                 description=None):
         self.name = name
         separator = ": "
         if separator in name:
@@ -71,6 +74,10 @@ class Parameter:
         elif group_by is not None:
             raise TypeError("The provided group_by argument is not valid, should be either a "
                             "string, a list of strings, or a dict with {string: condition} pairs.")
+
+        if description is not None and not isinstance(description, str):
+            raise TypeError("The provided description argument is not a string.")
+        self.description = description
 
     @property
     def value(self):
@@ -114,6 +121,26 @@ class Parameter:
         """
 
         return value
+
+    def _cli_help_fields(self):
+        message = f"{self.name}:\n"
+        if (description := self.description) is not None:
+            if not description.endswith("."):
+                description += "."
+            message += f"{description}\n"
+
+        for field in self._help_fields:
+            if isinstance(field, str):
+                field = (f"{field} is", field)
+
+            if (value := getattr(self, field[1], None)) is not None:
+                prefix = field[0].capitalize()
+                if isinstance(value, str):
+                    value = f'"{value}"'
+
+                message += f"\n{prefix} {value}."
+
+        return message
 
     def __str__(self):
         return str(self._value) if self.is_set() else ''
@@ -232,7 +259,7 @@ class FloatParameter(Parameter):
         super().__init__(name, **kwargs)
         self.decimals = decimals
         self.step = step
-        self._help_fields.append('decimals')
+        self._help_fields.append(('decimals are', 'decimals'))
 
     def convert(self, value):
         if isinstance(value, str):
