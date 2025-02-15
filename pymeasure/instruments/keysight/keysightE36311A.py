@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2024 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -38,8 +38,8 @@ class VoltageChannel(Channel):
         "VOLT %g, (@{ch})",
         """Control the output voltage of this channel, range depends on channel.""",
         validator=strict_range,
-        values=[0, 25],
         dynamic=True,
+        values=[0, 25],
     )
 
     current_limit = Channel.control(
@@ -47,8 +47,8 @@ class VoltageChannel(Channel):
         "CURR %g, (@{ch})",
         """Control the current limit of this channel, range depends on channel.""",
         validator=strict_range,
-        values=[0, 1],
         dynamic=True,
+        values=[0, 6],
     )
 
     voltage = Channel.measurement(
@@ -71,13 +71,13 @@ class VoltageChannel(Channel):
     )
 
 
-class KeysightE36312A(SCPIMixin, Instrument):
-    """ Represents the Keysight E36312A Power supply
+class KeysightE36311A(SCPIUnknownMixin, Instrument):
+    """ Represents the Keysight E36311A Power supply
     interface for interacting with the instrument.
 
     .. code-block:: python
 
-        supply = KeysightE36312A(resource)
+        supply = KeysightE36311A(resource)
         supply.ch_1.voltage_setpoint=10
         supply.ch_1.current_limit=0.1
         supply.ch_1.output_enabled=True
@@ -90,9 +90,15 @@ class KeysightE36312A(SCPIMixin, Instrument):
 
     ch_3 = Instrument.ChannelCreator(VoltageChannel, 3)
 
-    def __init__(self, adapter, name="Keysight E36312A", **kwargs):
+    def __init__(self, adapter, name="Keysight E36311A", **kwargs):
         super().__init__(
             adapter, name, **kwargs
         )
         self.channels[1].voltage_setpoint_values = [0, 6]
         self.channels[1].current_limit_values = [0, 5]
+
+        self.channels[2].voltage_setpoint_values = [0, 25]
+        self.channels[2].current_limit_values = [0, 1]
+
+        self.channels[3].voltage_setpoint_values = [0, -25]
+        self.channels[3].current_limit_values = [0, 1]
