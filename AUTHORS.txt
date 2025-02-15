@@ -95,4 +95,5 @@ Dawid Maślanka
 Felix Thouin
 Emmanuel Ferdman
 Johannes Rothmayr
+Fred Gillard
 Dimitrios Simatos
