@@ -41,9 +41,9 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     """ Represents the Keithley 2450 SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
-    NOTE: Buffer handling for the Keithley 2450 model is currently unsupported.
-    The instrument can be used in emulation mode as a 2400 model if its
-    command set is set to "SCPI 2400" through the instrument's system settings.
+    NOTE: The default buffer handling SCPI command set of the Keithley 2450 model
+    is currently unsupported. The instrument works if made to emulate a 2400 model
+    by setting its command set to "SCPI 2400" through the instrument's system settings.
 
     .. code-block:: python
 
