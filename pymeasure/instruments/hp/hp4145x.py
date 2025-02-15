@@ -31,9 +31,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def mode_assert_lambda(v, parent, expected_mode):
-    assert parent.mode == expected_mode
-    return v
 
 
 def check_errors_user_mode_value(cmd_str):
@@ -64,6 +61,13 @@ def check_errors_user_mode_value(cmd_str):
         log.error(f"HP4145x: Measurement Error - {data_status}, {errors[data_status]} "
                   f"on channel {channels[channel]}")
     return value
+
+
+def mode_assert_lambda(parent, mode):
+    def func(v):
+        assert parent.mode == mode
+        return v
+    return func
 
 
 class VS(Channel):
@@ -116,6 +120,11 @@ class SMU(Channel):
     _voltage_max = 100
     _voltage_compliance = 0.0
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.voltage_set_process = mode_assert_lambda(self.parent, "USER_MODE")
+        self.voltage_get_process = lambda v: mode_assert_lambda(self.parent, "USER_MODE")(check_errors_user_mode_value(v))
+
     """
     A SMU channel of the HP4145x Instrument
     """
@@ -133,9 +142,8 @@ class SMU(Channel):
         validator=strict_range,
         values=[0, 100 if _voltage_range == 0 else _voltage_range],
         dynamic=True,
-        # set_process=lambda v: modeAssertLambda(v, super(HP4145x), "USER_MODE"),
-        # get_process=lambda v: modeAssertLambda(v, super(HP4145x), "USER_MODE")
-        get_process=check_errors_user_mode_value
+        set_process=None,
+        get_process=None,
     )
 
     current = Channel.control(
@@ -218,7 +226,7 @@ class HP4145x(Instrument):
             **kwargs,
         )
 
-        self.mode = self._mode
+        # self.mode = self._mode
 
     @property
     def mode(self):
