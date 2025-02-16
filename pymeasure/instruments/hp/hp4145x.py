@@ -31,8 +31,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-
-
 def check_errors_user_mode_value(cmd_str):
     data_status = cmd_str[0]
     channel = cmd_str[1]
@@ -65,10 +63,24 @@ def check_errors_user_mode_value(cmd_str):
 
 def mode_assert_lambda(parent, mode):
     def func(v):
-        assert parent.mode == mode
+        if parent.mode != mode:
+            raise RuntimeError(f"Mode must be '{mode}' but is {parent.mode}")
         return v
+
     return func
 
+class Status(IntEnum):
+    DATA_READY = 0b00000001
+    SYNTAX_ERROR = 0b00000010
+    END_STATUS = 0b00000100
+    ILLEGAL_PROGRAM = 0b00001000
+    BUSY = 0b00010000
+    SELF_TEST_FAIL = 0b00100000
+    RQS = 0b01000000
+    EMERGENCY = 0b10000000
+    FIXTURE_LID_OPEN = 0b10000010
+    SMU_SHUT_DOWN = 0b10001000
+    POWER_FAILURE = 0b10100000
 
 class VS(Channel):
     voltage = Channel.setting(
@@ -123,7 +135,8 @@ class SMU(Channel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.voltage_set_process = mode_assert_lambda(self.parent, "USER_MODE")
-        self.voltage_get_process = lambda v: mode_assert_lambda(self.parent, "USER_MODE")(check_errors_user_mode_value(v))
+        self.voltage_get_process = lambda v: mode_assert_lambda(self.parent, "USER_MODE")(
+            check_errors_user_mode_value(v))
 
     """
     A SMU channel of the HP4145x Instrument
@@ -239,3 +252,32 @@ class HP4145x(Instrument):
             self.write("US")
         else:
             self.write("DE")
+
+    @property
+    def status(self):
+        return self.adapter.connection.read_stb()
+
+    def reset(self):
+        self.adapter.connection.clear()
+
+    def clear(self):
+        """ Clears the HP-IB buffer of the device and status bit 1 (Data Ready) """
+        self.write("BC")
+
+    def check_errors(self):
+        errors = []
+        error_status = [Status.EMERGENCY, Status.SYNTAX_ERROR, Status.BUSY, Status.ILLEGAL_PROGRAM]
+        while True:
+            status = self.status
+            if any(es & status for es in error_status):
+                for es in error_status:
+                    if status & es:
+                        log.error(f"HP4145x: {es}")
+                        errors.append(es)
+            else:
+                break
+        return errors
+
+    # integration_time = Instrument.setting(
+    #     ""
+    # )
