@@ -33,7 +33,7 @@ from collections import Counter, namedtuple, OrderedDict
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range,
                                               strict_discrete_range)
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,7 +43,7 @@ log.addHandler(logging.NullHandler())
 ######################################
 
 
-class AgilentB1500(SCPIUnknownMixin, Instrument):
+class AgilentB1500(SCPIMixin, Instrument):
     """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking different kinds of
     measurements.
