@@ -92,11 +92,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         return QueryLearn.query_learn_header(
             self.ask, query_type, self._smu_references, **kwargs)
 
-    def reset(self):
-        """ Resets the instrument to default settings (``*RST``)
-        """
-        self.write("*RST")
-
     def query_modules(self):
         """ Queries module models from the instrument.
         Returns dictionary of channel and module type.
@@ -200,9 +195,9 @@ class AgilentB1500(SCPIMixin, Instrument):
                 f"Agilent B1500 Error {error[0]}: {error[1]}")
 
     def check_idle(self):
-        """ Check if instrument is idle (``*OPC?``)
+        """ Check if instrument is idle (``*OPC?``). Alias for :meth:`~.SCPIMixin.complete`.
         """
-        self.ask("*OPC?")
+        return self.complete()
 
     def clear_buffer(self):
         """ Clear output data buffer (``BC``) """
