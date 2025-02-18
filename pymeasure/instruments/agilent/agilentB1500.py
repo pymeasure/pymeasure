@@ -113,7 +113,9 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
             'B1511B': 'MPSMU',
             'B1510A': 'HPSMU',
             'B1514A': 'MCSMU',
-            'B1520A': 'MFCMU'
+            'B1520A': 'MFCMU',
+            'B1530A': 'WGFMU',
+            'B1520A/N1301A': 'MFCMU',
         }
         out = {}
         for i, module in enumerate(modules):
