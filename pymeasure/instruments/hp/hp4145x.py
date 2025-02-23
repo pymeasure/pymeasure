@@ -103,7 +103,7 @@ class VS(Channel):
     voltage = Channel.setting(
         "DS {ch}, %f",
         """
-        Controls the output voltage of on of the VS channels.
+        Set the output voltage of on of the VS channels.
 
         .. warning::
             Only works with mode == 'USER_MODE' of instrument. In 'SYSTEM_MODE' no
@@ -127,6 +127,9 @@ class VS(Channel):
 
     @property
     def disabled(self):
+        """
+        Control the disabling of the respective channel. Returns only the internal state (can't read the instrument).
+        """
         return self._disabled
 
     @disabled.setter
@@ -192,7 +195,7 @@ class VM(Channel):
     voltage = Channel.measurement(
         "TV {ch}",
         """
-        Measures the voltage of one of the VM channels.
+        Measure the voltage of one of the VM channels.
 
         .. warning::
             Only works with mode == 'USER_MODE' of instrument. In 'SYSTEM_MODE' no
@@ -204,6 +207,9 @@ class VM(Channel):
 
     @property
     def disabled(self):
+        """
+        Control the disabling of the respective channel. Returns only the internal state (can't read the instrument).
+        """
         return self._disabled
 
     @disabled.setter
@@ -337,6 +343,9 @@ class SMU(Channel):
 
     @property
     def disabled(self):
+        """
+        Control the disabling of the respective channel. Returns only the internal state (can't read the instrument).
+        """
         return self._disabled
 
     @disabled.setter
@@ -521,6 +530,55 @@ class SMU(Channel):
         self.check_errors()
 
 
+# class VARx(Channel):
+#     _start = 0
+#     _stop = 0
+#     _step = 0
+#     _sweep_mode = 0
+#
+#     _source_mode = 0
+#     _source_modes = {}
+#     _compliance = 0
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#         if self.id == 1:
+#             self._source_modes = {'V': 'VR', 'I': 'IR'}
+#         else:
+#             self._source_modes = {'V': 'VP', 'I': 'IP'}
+#
+#     def channel_mode(self):
+#         """
+#         Set the source mode of the channel.
+#
+#         Implicitly writes/flushes :attr:`channel_function`, :attr:`current_name` and :attr:`voltage_name`.
+#
+#         .. code-block:: python
+#
+#             hp4145a.SMU2.voltage_name = "VCE2"
+#             hp4145a.SMU2.current_name = "ICE2"
+#             hp4145a.SMU2.channel_function = "VAR2"
+#             hp4145a.SMU2.channel_mode = "V"
+#         """
+#
+#         for k, v in self._channel_modes.items():
+#             if v == self._channel_mode:
+#                 return k
+#
+#     @channel_mode.setter
+#     def channel_mode(self, value):
+#         self._channel_mode = self._channel_modes[strict_discrete_set(value, self._channel_modes)]
+#
+#         self._disabled = False
+#         if not self.manual_flush:
+#             self.write(self.insert_id("DE CH {ch}, '%s', '%s', %d, %d" %
+#                                       (self._voltage_name, self._current_name, self._channel_mode,
+#                                        self._channel_function)))
+#
+#
+
+
 class HP4145x(Instrument):
     SMU1: SMU = Instrument.ChannelCreator(SMU, 1)
     SMU2: SMU = Instrument.ChannelCreator(SMU, 2)
@@ -547,7 +605,7 @@ class HP4145x(Instrument):
 
     def flush_channel_definition(self):
         """
-        Flushes the channel definitions of all sub channels. Only required with :attr:`manual_flush` True.
+        Control the flushing the channel definitions of all sub channels. Only required with :attr:`manual_flush` True.
         """
         self.SMU1.flush_channel_definition()
         self.SMU2.flush_channel_definition()
@@ -560,6 +618,9 @@ class HP4145x(Instrument):
 
     @property
     def manual_flush(self):
+        """
+        Control the manual flushing of channels 'channel definition'
+        """
         return self._manual_flush
 
     @manual_flush.setter
@@ -577,6 +638,10 @@ class HP4145x(Instrument):
 
     @property
     def mode(self):
+        """
+        Control the mode of the instrument. Either 'USER_MODE' - user controls manually all SMUs and voltage sources
+        or 'SYSTEM_MODE' where the analyzer gets configured to sweep automatically the resources on it's own.
+        """
         return self._mode
 
     @mode.setter
@@ -589,10 +654,16 @@ class HP4145x(Instrument):
 
     @property
     def status(self):
+        """
+        Get the VISA status byte.
+        """
         stb = self.adapter.connection.read_stb()
         return stb if type(stb) is int else 0
 
     def reset(self):
+        """
+        Reset the device of all user config.
+        """
         self.adapter.connection.clear()
 
     def clear(self):
@@ -644,7 +715,7 @@ class HP4145x(Instrument):
     data_ready_srq = Instrument.setting(
         "DR%d",
         """
-        Sets the data ready enablement of the bit of the status byte.
+        Set the data ready enablement of the bit of the status byte.
         """,
         values=[True, False],
         validator=strict_discrete_set,
@@ -661,7 +732,7 @@ class HP4145x(Instrument):
 
     def get_trace(self, name):
         """
-        Returns the list of values for the given variable name. Name is the same as defined in the channel definition.
+        Return the list of values for the given variable name. Name is the same as defined in the channel definition.
         """
         self.write(f"DO '%s'" % name)
 

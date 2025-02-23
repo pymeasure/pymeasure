@@ -5,3 +5,15 @@ HP 4145x Semiconductor Parameter Analyzer
 .. autoclass:: pymeasure.instruments.hp.HP4145x
     :members:
     :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp4145x.SMU
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp4145x.VS
+    :members:
+    :show-inheritance:
+
+.. autoclass:: pymeasure.instruments.hp.hp4145x.VM
+    :members:
+    :show-inheritance:
