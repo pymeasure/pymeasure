@@ -146,7 +146,8 @@ class Keithley2510(SCPIMixin, Instrument):
         self.write(":SOURce:TEMPerature:PROTection:STATe OFF")
 
     def is_temperature_stable(self, tolerance=0.1, period=10, points=64):
-        """Determine whether the temperature is stable over a specified period.
+        """Determine whether the temperature is stable at the temperature setpoint over a specified
+        period.
 
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
@@ -173,7 +174,7 @@ class Keithley2510(SCPIMixin, Instrument):
         should_stop=lambda: False,
         timeout=64,
     ):
-        """Block the program, waiting for the temperature to stabilize.
+        """Block the program, waiting for the temperature to stabilize at the temperature setpoint.
 
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
@@ -185,23 +186,22 @@ class Keithley2510(SCPIMixin, Instrument):
 
         delay = period / points
 
-        temp_array = points * [None]
+        temp_array = np.full(points, np.inf)
 
+        count = 0
         t_start = time()
 
         while time() - t_start < timeout:
 
-            temp_array.insert(0, self.temperature)
-            del temp_array[-1]
+            temp_array[count % points] = self.temperature
 
-            if temp_array[-1]:
-                mean_temp = np.mean(temp_array)
-                if np.all(abs(temp_array - mean_temp) < tolerance):
-                    return True
+            if np.all(abs(temp_array - self.temperature_setpoint) < tolerance):
+                return True
 
             if should_stop():
                 return False
 
             sleep(delay)
+            count += 1
 
         raise TimeoutError("Timed out waiting for temperature to stabilize.")
