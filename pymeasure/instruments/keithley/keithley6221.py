@@ -95,7 +95,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     shield_connection = Instrument.control(
         ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
-        """ A string property that controls 
+        """ A string property that controls
         to whom the shield is connected, default to 'output-low'.
         Valid values are 'guard' and 'output-low'. """,
         validator=strict_discrete_set,
@@ -161,7 +161,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_unit = Instrument.control(
         ":UNIT:VOLT:DC?", ":UNIT:VOLT:DC %s",
-        """ A string property that controls the reading unit. 
+        """ A string property that controls the reading unit.
         Valid values are 'V', 'Ohms', 'W' and 'Siemens' """,
         validator=strict_discrete_set,
         values={"V": "V", "Ohms": "OHMS", "W": "W", "Siemens": "SIEM"},
@@ -177,8 +177,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_low_source = Instrument.control(
         ":SOUR:DELT:LOW?", ":SOUR:DELT:LOW %g",
-        """ A floating point property that controls the delta 
-        low source value in Amps. By default, 
+        """ A floating point property that controls the delta
+        low source value in Amps. By default,
         the low source value is minus the high source value.""",
         validator=truncated_range,
         values=[-0.105, 0]
@@ -186,8 +186,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_delay = Instrument.control(
         ":SOUR:DELT:DELay?", ":SOUR:DELT:DELay %s",
-        """ A floating point property that controls the delta delay 
-        in seconds. Can be a value between 0 and 9999.999, 
+        """ A floating point property that controls the delta delay
+        in seconds. Can be a value between 0 and 9999.999,
         or "INF" for infinite delay.""",
         validator=joined_validators(truncated_range, strict_discrete_set),
         values=([0, 9999.999], ["INF"]),
@@ -195,8 +195,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_cycles = Instrument.control(
         ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
-        """ An integer property that controls the number of cycles 
-        to run for the delta measurements. Can be a value 
+        """ An integer property that controls the number of cycles
+        to run for the delta measurements. Can be a value
         between 1 and 65536, or "INF" for infinite cycles.""",
         validator=joined_validators(truncated_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
@@ -204,8 +204,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_measurement_sets = Instrument.control(
         ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
-        """ An integer property that controls the number of 
-        measurement sets to repeat for delta measurements. Can be 
+        """ An integer property that controls the number of
+        measurement sets to repeat for delta measurements. Can be
         a value between 1 and 65536, or "INF" for infinite sets.""",
         validator=joined_validators(truncated_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
@@ -213,8 +213,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_compliance_abort = Instrument.control(
         ":SOUR:DELT:CAB?", ":SOUR:DELT:CAB %s",
-        """ A boolean property that controls whether the 
-        compliance abort is turned on or off. 
+        """ A boolean property that controls whether the
+        compliance abort is turned on or off.
         Valid values True (on) or False (off). """,
         values={True: "ON", False: "OFF"},
         map_values=True,
@@ -222,8 +222,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_cold_switch = Instrument.control(
         ":SOUR:DELT:CSW?", ":SOUR:DELT:CSW %s",
-        """ A boolean property that controls whether the 
-        cold switching mode is turned on or off. 
+        """ A boolean property that controls whether the
+        cold switching mode is turned on or off.
         Valid values True (on) or False (off). """,
         values={True: "ON", False: "OFF"},
         map_values=True,
@@ -231,8 +231,8 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_buffer_points = Instrument.control(
         "TRAC:POIN?", "TRAC:POIN %d",
-        """ A integer property that controls the size of the buffer. 
-        (Buffer size should be the same value as Delta count.) 
+        """ A integer property that controls the size of the buffer.
+        (Buffer size should be the same value as Delta count.)
         Can be a value between 1 and 1000000. """,
         validator=truncated_range,
         values=[1, 1000000]
