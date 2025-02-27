@@ -45,7 +45,7 @@ class Keithley2510(SCPIMixin, Instrument):
     source_enabled = Instrument.control(
         "OUTPut?",
         "OUTPut %d",
-        """Control whether the source is enabled. Takes values True or False.
+        """Control whether the source is enabled (bool).
         The convenience methods :meth:`~.Keithley2510.enable_source`
         and :meth:`~.Keithley2510.disable_source` can also be used.""",
         validator=strict_discrete_set,
@@ -197,11 +197,9 @@ class Keithley2510(SCPIMixin, Instrument):
             if temp_array[-1]:
                 mean_temp = np.mean(temp_array)
                 if np.all(abs(temp_array - mean_temp) < tolerance):
-                    print("Temperature stable!")
                     return True
 
             if should_stop():
-                print("Stopped waiting for temperature stability.")
                 return False
 
             sleep(delay)
