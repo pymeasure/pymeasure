@@ -30,7 +30,7 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set, joined_validators
 
 from .buffer import KeithleyBuffer
 
@@ -152,6 +152,102 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         Valid values are True or False. """,
         values={True: 1, False: 0},
         map_values=True,
+    )
+
+    ##############
+    # DELTA MODE #
+    ##############
+
+    delta_unit = Instrument.control(
+        ":UNIT:VOLT:DC?", ":UNIT:VOLT:DC %s",
+        """ A string property that controls the reading unit. Valid values are 'V', 'Ohms', 'W' and 'Siemens' """,
+        validator=strict_discrete_set,
+        values={"V": "V", "Ohms": "OHMS", "W": "W", "Siemens": "SIEM"},
+        map_values=True
+    )
+
+    delta_high_source = Instrument.control(
+        ":SOUR:DELT:HIGH?", ":SOUR:DELT:HIGH %g",
+        """ A floating point property that controls the delta high source value in Amps. """,
+        validator=truncated_range,
+        values=[0, 0.105]
+    )
+
+    delta_low_source = Instrument.control(
+        ":SOUR:DELT:LOW?", ":SOUR:DELT:LOW %g",
+        """ A floating point property that controls the delta low source value in Amps. By default, the low source value is minus the high source value.""",
+        validator=truncated_range,
+        values=[-0.105, 0]
+    )
+
+    delta_delay = Instrument.control(
+        ":SOUR:DELT:DELay?", ":SOUR:DELT:DELay %s",
+        """ A floating point property that controls the delta delay in seconds. Can be a value between 0 and 9999.999, or "INF" for infinite delay.""",
+        validator=joined_validators(truncated_range, strict_discrete_set),
+        values=([0, 9999.999], ["INF"]),
+    )
+
+    delta_cycles = Instrument.control( 
+        ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
+        """ An integer property that controls the number of cycles to run for the delta measurements. Can be a value between 1 and 65536, or "INF" for infinite cycles.""",
+        validator=joined_validators(truncated_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_measurement_sets = Instrument.control( 
+        ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
+        """ An integer property that controls the number of measurement sets to repeat for the delta measurements. Can be a value between 1 and 65536, or "INF" for infinite sets.""",
+        validator=joined_validators(truncated_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_compliance_abort = Instrument.control(
+        ":SOUR:DELT:CAB?", ":SOUR:DELT:CAB %s",
+        """ A boolean property that controls whether the compliance abort is turned on or off. Valid values True (on) or False (off). """,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    delta_cold_switch = Instrument.control(
+        ":SOUR:DELT:CSW?", ":SOUR:DELT:CSW %s",
+        """ A boolean property that controls whether the cold switching mode is turned on or off. Valid values True (on) or False (off). """,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    delta_buffer_points = Instrument.control(
+        "TRAC:POIN?", "TRAC:POIN %d",
+        """ A integer property that controls the size of the buffer. (Buffer size should be the same value as Delta count.) Can be a value between 1 and 1000000. """,
+        validator=truncated_range,
+        values=[1, 1000000]
+    )
+
+    def delta_arm(self):
+        """ Arms delta. """
+        self.write(":SOUR:DELT:ARM")
+
+    def delta_start(self):
+        """ Starts delta measurements. """
+        self.write(":INIT:IMM")
+
+    def delta_abort(self):
+        """ Stops Delta and places the Model 2182A in the local mode. """
+        self.write(":SOUR:SWE:ABOR")
+
+    delta_sense = Instrument.measurement(
+        ":SENS:DATA?",
+        """ Gets the latest delta results.(Model 2182/2182A Delta reading) """
+    )
+
+    delta_recall = Instrument.measurement(
+        ":TRAC:DATA?",
+        """ Read Delta readings stored in 622x buffer."""
+    )
+
+    delta_verify = Instrument.measurement(
+        ":SOUR:DELT:NVPR?",
+        """ Queries connection to 2182A. """,
+        cast=bool,
     )
 
     ##################
