@@ -24,7 +24,48 @@
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
+from pymeasure.instruments.validators import strict_discrete_set
+
 
 class TSL570(SCPIMixin, Instrument):
     """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
     interacting with the instrument."""
+
+    def __init__(self):
+        """Set the device to use SCPI commands."""
+        Instrument.write(self, ":SYSTem:COMMunicate:CODe 1")
+
+    shutter_closed = Instrument.control(
+        ":POWer:SHUTter?",
+        ":POWer:SHUTter %d",
+        """A boolean property that controls whether shutter is closed.""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    wavelength = Instrument.control(
+        ":WAVelength?", ":WAVelength %e", """Set the output wavelength, in m."""
+    )
+
+    frequency = Instrument.control(
+        ":FREQuency?", "FREQuency %e", """Set the output wavelength in optical frequency, in Hz."""
+    )
+
+    # TODO
+    # power_setpoint
+    # power_reading
+    # power_unit
+    # wavelength_start
+    # wavelength_stop
+    # wavelength_step
+    # frequency_start
+    # frequency_stop
+    # frequency_step
+    # sweep_mode
+    # sweep_speed
+    # sweep_dwell
+    # sweep_delay
+    # single_sweep
+    # repeat_sweep
+    # sweep_status
