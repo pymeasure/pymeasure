@@ -202,6 +202,6 @@ class Keithley2510(SCPIMixin, Instrument):
                 return False
 
             sleep(delay)
-            count += 1
+            count = count + 1
 
         raise TimeoutError("Timed out waiting for temperature to stabilize.")
