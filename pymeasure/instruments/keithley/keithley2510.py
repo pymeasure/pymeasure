@@ -172,7 +172,7 @@ class Keithley2510(SCPIMixin, Instrument):
         period=10,
         points=64,
         should_stop=lambda: False,
-        timeout=64,
+        timeout=60,
     ):
         """Block the program, waiting for the temperature to stabilize at the temperature setpoint.
 
