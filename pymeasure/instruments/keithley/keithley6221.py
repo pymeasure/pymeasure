@@ -93,6 +93,15 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True
     )
 
+    shield_connection = Instrument.control(
+        ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
+        """ A string property that controls to whom the shield is connected, default to 'output-low'.
+        Valid values are 'guard' and 'output-low'. """,
+        validator=strict_discrete_set,
+        values={"guard": "GUARd", "output-low": "OLOW"},
+        map_values=True
+    )
+
     source_delay = Instrument.control(
         ":SOUR:DEL?", ":SOUR:DEL %g",
         """ A floating point property that sets a manual delay for the source
