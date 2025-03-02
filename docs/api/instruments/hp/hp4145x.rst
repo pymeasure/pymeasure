@@ -1,6 +1,6 @@
-####################
+#########################################
 HP 4145x Semiconductor Parameter Analyzer
-####################
+#########################################
 
 .. autoclass:: pymeasure.instruments.hp.HP4145x
     :members:
