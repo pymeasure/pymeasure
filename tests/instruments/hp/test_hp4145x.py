@@ -143,6 +143,7 @@ def test_vm_disabled(channel):
     ) as instr:
         getattr(instr, f"VM{channel}").disabled = True
 
+
 @pytest.mark.parametrize("channel", range(1, 3))
 def test_vs_disabled(channel):
     with expected_protocol(
@@ -153,3 +154,12 @@ def test_vs_disabled(channel):
     ) as instr:
         getattr(instr, f"VS{channel}").disabled = True
 
+
+def test_get_trace():
+    with expected_protocol(
+            HP4145x,
+            [
+                ("DO 'IC'", "N 54.00,N 55.00")
+            ],
+    ) as instr:
+        assert instr.get_trace('IC') == [54.00, 55.00]
