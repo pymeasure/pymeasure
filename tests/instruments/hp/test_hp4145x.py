@@ -78,17 +78,23 @@ def test_auto_calibrate(value):
         instr.auto_calibrate = value
 
 
-@pytest.mark.parametrize("source_function, source_function_id", [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
+@pytest.mark.parametrize("source_function, source_function_id",
+                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
 @pytest.mark.parametrize("source_mode, source_mode_id", [("V", 1), ("I", 2), ("COM", 3)])
 @pytest.mark.parametrize("channel", range(1, 5))
-def test_channel_mode_and_channel_function(channel, source_mode, source_mode_id, source_function, source_function_id):
+def test_channel_mode_and_channel_function(channel, source_mode, source_mode_id, source_function,
+                                           source_function_id):
     with expected_protocol(
             HP4145x,
             [
-                ("DE CH %d, '%s', '%s', %d, %d" % (channel, "VBE", f"I{channel}", 3, 3), None),
-                ("DE CH %d, '%s', '%s', %d, %d" % (channel, "VBE", "IB", 3, 3), None),
-                ("DE CH %d, '%s', '%s', %d, %d" % (channel, "VBE", "IB", 3, source_function_id), None),
-                ("DE CH %d, '%s', '%s', %d, %d" % (channel, "VBE", "IB", source_mode_id, source_function_id), None)
+                ("DE CH %d, '%s', '%s', %d, %d" %
+                 (channel, "VBE", f"I{channel}", 3, 3), None),
+                ("DE CH %d, '%s', '%s', %d, %d" %
+                 (channel, "VBE", "IB", 3, 3), None),
+                ("DE CH %d, '%s', '%s', %d, %d" %
+                 (channel, "VBE", "IB", 3, source_function_id), None),
+                ("DE CH %d, '%s', '%s', %d, %d" %
+                 (channel, "VBE", "IB", source_mode_id, source_function_id), None)
             ],
     ) as instr:
         getattr(instr, f"SMU{channel}").voltage_name = "VBE"
@@ -97,7 +103,8 @@ def test_channel_mode_and_channel_function(channel, source_mode, source_mode_id,
         getattr(instr, f"SMU{channel}").channel_mode = source_mode
 
 
-@pytest.mark.parametrize("source_function, source_function_id", [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
+@pytest.mark.parametrize("source_function, source_function_id",
+                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
 @pytest.mark.parametrize("channel", range(1, 3))
 def test_channel_function_vs(channel, source_function, source_function_id):
     with expected_protocol(
