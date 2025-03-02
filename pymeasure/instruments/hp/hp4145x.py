@@ -25,7 +25,8 @@ import logging
 from enum import IntEnum
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, strict_range
+from pymeasure.instruments.validators import (strict_discrete_set, truncated_discrete_set,
+                                              strict_range)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -34,7 +35,6 @@ log.addHandler(logging.NullHandler())
 def check_errors_user_mode_value(cmd_str):
     data_status = cmd_str[0]
     channel = cmd_str[1]
-    measurement_mode = cmd_str[2]
     value = float(cmd_str[4:])
 
     errors = {
@@ -147,8 +147,9 @@ class VS(Channel):
 
     @disabled.setter
     def disabled(self, value):
-        if value != True:
-            raise ValueError("Channel can only be disabled, it gets enabled implicitly with the other functions")
+        if not value:
+            raise ValueError(
+                "Channel can only be disabled, it gets enabled implicitly with the other functions")
         self._disabled = True
         self.write("DE VS {ch}")
         self.check_set_errors()
@@ -166,7 +167,8 @@ class VS(Channel):
     @channel_function.setter
     def channel_function(self, value):
         self._disabled = False
-        self._channel_function = self._channel_functions[strict_discrete_set(value, self._channel_functions)]
+        self._channel_function = self._channel_functions[strict_discrete_set(
+            value, self._channel_functions)]
 
         if value == 'VAR1':
             self.parent.VAR1.disabled = False
@@ -212,7 +214,6 @@ class VM(Channel):
             Only works with mode == 'USER_MODE' of instrument. In 'SYSTEM_MODE' no
             direct access is allowed.
         """
-        value = 0.0
         if self.parent.mode == 'USER_MODE':
             value = float(self.ask(f"TV {self.id + 4}"))
         else:
@@ -235,8 +236,9 @@ class VM(Channel):
     @disabled.setter
     def disabled(self, value):
         self._disabled = True
-        if value != True:
-            raise ValueError("Channel can only be disabled, it gets enabled implicitly with the other functions")
+        if not value:
+            raise ValueError(
+                "Channel can only be disabled, it gets enabled implicitly with the other functions")
 
         self.write("DE VM {ch}")
 
@@ -276,7 +278,8 @@ class SMU(Channel):
     _voltage_range = 0
     _voltage_ranges = {0: 0, 20: 1, 40: 2, 100: 3}
     _current_range = 0
-    _current_ranges = {0: 0, 1e-9: 1, 10e-9: 2, 100e-9: 3, 1e-6: 4, 10e-6: 5, 100e-6: 6, 1e-3: 7, 10e-3: 8, 100e-3: 9}
+    _current_ranges = {0: 0, 1e-9: 1, 10e-9: 2, 100e-9: 3,
+                       1e-6: 4, 10e-6: 5, 100e-6: 6, 1e-3: 7, 10e-3: 8, 100e-3: 9}
 
     _current_max = 100e-3
     _current_compliance = 0.0
@@ -332,7 +335,8 @@ class SMU(Channel):
         value = strict_range(value, [0, max_voltage])
 
         if self.parent.mode == 'USER_MODE':
-            self.write("DV {ch}, %d, %f, %f" % (self._voltage_range, value, self._current_compliance))
+            self.write("DV {ch}, %d, %f, %f" %
+                       (self._voltage_range, value, self._current_compliance))
         else:
             # SYSTEM_MODE
             if self._channel_function == self._channel_functions['CONST']:
@@ -369,7 +373,8 @@ class SMU(Channel):
         value = strict_range(value, [0, max_current])
 
         if self.parent.mode == 'USER_MODE':
-            self.write("DI {ch}, %d, %f, %f" % (self._current_range, value, self._voltage_compliance))
+            self.write("DI {ch}, %d, %f, %f" %
+                       (self._current_range, value, self._voltage_compliance))
         else:
             # SYSTEM_MODE
             if self._channel_function == self._channel_functions['CONST']:
@@ -383,14 +388,16 @@ class SMU(Channel):
     @property
     def disabled(self):
         """
-        Set the disabling of the respective channel. Returns only the internal state (can't read the instrument).
+        Set the disabling of the respective channel. Returns only the internal state (can't read
+        the instrument).
         """
         raise LookupError("Property can not be read.")
 
     @disabled.setter
     def disabled(self, value):
-        if value != True:
-            raise ValueError("Channel can only be disabled, it gets enabled implicitly with the other functions")
+        if not value:
+            raise ValueError(
+                "Channel can only be disabled, it gets enabled implicitly with the other functions")
 
         self._disabled = True
         self.write("DE CH {ch}")
@@ -406,7 +413,8 @@ class SMU(Channel):
 
     @voltage_range.setter
     def voltage_range(self, value):
-        self._voltage_range = self._voltage_ranges[truncated_discrete_set(value, self._voltage_ranges)]
+        self._voltage_range = self._voltage_ranges[truncated_discrete_set(
+            value, self._voltage_ranges)]
 
     @property
     def current_range(self):
@@ -419,7 +427,8 @@ class SMU(Channel):
 
     @current_range.setter
     def current_range(self, value):
-        self._current_range = self._current_ranges[truncated_discrete_set(value, self._current_ranges)]
+        self._current_range = self._current_ranges[truncated_discrete_set(
+            value, self._current_ranges)]
 
     @property
     def current_compliance(self):
@@ -516,14 +525,16 @@ class SMU(Channel):
 
         Not applicable in 'USER_MODE'.
 
-        Implicitly writes/flushes :attr:`channel_mode`, :attr:`current_name` and :attr:`voltage_name`.
+        Implicitly writes/flushes :attr:`channel_mode`,
+        :attr:`current_name` and :attr:`voltage_name`.
         Returns not the actual state of the instrument but the state of the object.
         """
         raise LookupError("Property can not be read.")
 
     @channel_function.setter
     def channel_function(self, value):
-        self._channel_function = self._channel_functions[strict_discrete_set(value, self._channel_functions)]
+        self._channel_function = self._channel_functions[strict_discrete_set(
+            value, self._channel_functions)]
 
         if value == 'VAR1':
             self.parent.VAR1.disabled = False
@@ -541,7 +552,8 @@ class SMU(Channel):
 
         Not applicable in 'USER_MODE'.
 
-        Implicitly writes/flushes :attr:`channel_function`, :attr:`current_name` and :attr:`voltage_name`.
+        Implicitly writes/flushes :attr:`channel_function`, :attr:`current_name`
+        and :attr:`voltage_name`.
 
         .. code-block:: python
 
@@ -568,7 +580,8 @@ class SMU(Channel):
         """
         if not self._disabled:
             self.write(self.insert_id("DE CH {ch}, '%s', '%s', %d, %d" %
-                                      (self._voltage_name, self._current_name, self._channel_mode, self._channel_function)))
+                                      (self._voltage_name, self._current_name, self._channel_mode,
+                                       self._channel_function)))
             self.check_errors()
 
     def flush_source_setup(self):
@@ -897,7 +910,8 @@ class HP4145x(Instrument):
 
     def flush_channel_definition(self):
         """
-        Flush the channel definitions of all sub channels. Only required with :attr:`manual_flush` True.
+        Flush the channel definitions of all sub channels.
+        Only required with :attr:`manual_flush` True.
         """
         self.SMU1.flush_channel_definition()
         self.SMU2.flush_channel_definition()
@@ -910,7 +924,8 @@ class HP4145x(Instrument):
 
     def flush_source_setup(self):
         """
-        Flush the channel definitions of all sub channels. Only required with :attr:`manual_flush` True.
+        Flush the channel definitions of all sub channels.
+        Only required with :attr:`manual_flush` True.
         """
         self.VAR1.flush_source_setup()
         self.VAR2.flush_source_setup()
@@ -945,8 +960,10 @@ class HP4145x(Instrument):
     @property
     def mode(self):
         """
-        Control the mode of the instrument. Either 'USER_MODE' - user controls manually all SMUs and voltage sources
-        or 'SYSTEM_MODE' where the analyzer gets configured to sweep automatically the resources on it's own.
+        Control the mode of the instrument. Either 'USER_MODE' -
+        user controls manually all SMUs and voltage sources
+        or 'SYSTEM_MODE' where the analyzer gets configured to sweep
+        automatically the resources on it's own.
         """
         return self._mode
 
@@ -979,7 +996,6 @@ class HP4145x(Instrument):
     def check_errors(self):
         errors = []
         error_status = [Status.EMERGENCY, Status.SYNTAX_ERROR, Status.BUSY, Status.ILLEGAL_PROGRAM]
-        emergency_status = [Status.POWER_FAILURE, Status.FIXTURE_LID_OPEN, Status.SMU_SHUT_DOWN]
         while (errors[0].value & Status.EMERGENCY.value) is False if len(errors) > 0 else True:
             # mask out RQS (always set with other bits)
             status = self.status & ~Status.RQS
@@ -999,7 +1015,8 @@ class HP4145x(Instrument):
     integration_time = Instrument.setting(
         "IT%d",
         """
-        Set the integration time. 'SHORT' no integration at all, 'MEDIUM' 16 samples per measurement and 'LONG'
+        Set the integration time. 'SHORT' no integration at all,
+        'MEDIUM' 16 samples per measurement and 'LONG'
         256 samples per measurement.
         """,
         map_values=True,
@@ -1029,8 +1046,9 @@ class HP4145x(Instrument):
     def data_ready_srq(self, value):
         value = strict_discrete_set(value, [True, False])
         self.write("DR%d" % value)
-        # retrieve status once (instrument issues for unknown reasons returns illegal program sometimes)
-        ret = self.status
+        # retrieve status once
+        # (instrument issues for unknown reasons returns illegal program sometimes)
+        self.status()
 
     def self_test(self):
         """
@@ -1042,12 +1060,14 @@ class HP4145x(Instrument):
 
     def get_trace(self, name):
         """
-        Return the list of values for the given variable name. Name is the same as defined in the channel definition.
+        Return the list of values for the given variable name.
+        Name is the same as defined in the channel definition.
 
-        Returns measurement data in the same order as executed. In case a VAR2 is used, there is VAR1 steps * VAR2 steps
+        Returns measurement data in the same order as executed.
+        In case a VAR2 is used, there is VAR1 steps * VAR2 steps
         results, that you have to split.
         """
-        self.write(f"DO '%s'" % name)
+        self.write("DO '%s'" % name)
 
         result = self.read().replace("\r", "").replace("\n", "")
         removed_status = filter(None, result.replace("N", "").replace("C", "")
@@ -1075,7 +1095,7 @@ class HP4145x(Instrument):
         check_set_errors=True
     )
 
-    def select_graphics_mode(self, mode, *args, **kwargs):
+    def select_graphics_mode(self, mode, **kwargs):
         """
         Selects and configures the respective graphics mode.
 
