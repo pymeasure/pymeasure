@@ -167,7 +167,6 @@ class Keithley2510(SCPIMixin, Instrument):
         self,
         tolerance=0.1,
         period=10,
-        points=64,
         should_stop=lambda: False,
         timeout=60,
     ):
@@ -178,26 +177,22 @@ class Keithley2510(SCPIMixin, Instrument):
         :param period: Time period over which stability is checked, in seconds.
         :param should_stop: Function that returns True to stop waiting.
         :param timeout: Maximum waiting time, in seconds.
+        :return: True when stable, False if stopped by should_stop.
+        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
         """
 
-        delay = period / points
+        t_start_timeout = time()
+        t_start_period = time()
 
-        temp_array = np.full(points, np.inf)
+        while time() - t_start_timeout < timeout:
 
-        count = 0
-        t_start = time()
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                t_start_period = time()
 
-        while time() - t_start < timeout:
-
-            temp_array[count % points] = self.temperature
-
-            if np.all(abs(temp_array - self.temperature_setpoint) < tolerance):
+            if time() - t_start_period >= period:
                 return True
 
             if should_stop():
                 return False
-
-            sleep(delay)
-            count = count + 1
 
         raise TimeoutError("Timed out waiting for temperature to stabilize.")
