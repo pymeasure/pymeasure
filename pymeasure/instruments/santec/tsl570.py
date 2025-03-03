@@ -24,12 +24,16 @@
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
-from pymeasure.instruments.validators import strict_discrete_set
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 
 class TSL570(SCPIMixin, Instrument):
     """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
     interacting with the instrument."""
+
+    # TODO: I am unsure of the implementation of the validators. I have implemented them according
+    #       to my interpretation of the documentation, but this will need to be tested with the
+    #       instrument to validate this.
 
     def __init__(self):
         """Set the device to use SCPI commands."""
@@ -44,12 +48,91 @@ class TSL570(SCPIMixin, Instrument):
         map_values=True,
     )
 
+    # --- Wavelength control ---
+
+    wavelength_min = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MINimum?",
+        """Get the minimum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    wavelength_max = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MAXimum?",
+        """Get the maximum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    wavelength_start = Instrument.control(
+        ":WAVelength:SWEep:STARt?",
+        ":WAVelength:SWEep:STARt %e",
+        """Control the sweep start wavelength, in m.""",
+        validator=truncated_range,
+        values=[wavelength_min, wavelength_max],
+    )
+
+    wavelength_stop = Instrument.control(
+        ":WAVelength:SWEep:STOP?",
+        ":WAVelength:SWEep:STOP %e",
+        """Control the sweep stop wavelength, in m.""",
+        validator=truncated_range,
+        values=[wavelength_min, wavelength_max],
+    )
+
     wavelength = Instrument.control(
-        ":WAVelength?", ":WAVelength %e", """Set the output wavelength, in m."""
+        ":WAVelength?",
+        ":WAVelength %e",
+        """Control the output wavelength, in m.""",
+        validator=truncated_range,
+        values=[wavelength_start, wavelength_stop],
+    )
+
+    # --- Optical frequency control ---
+
+    frequency_min = Instrument.measurement(
+        ":FREQency:SWEep:RANGe:MINimum?",
+        """Get the minimum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_max = Instrument.measurement(
+        ":FREQency:SWEep:RANGe:MAXimum?",
+        """Get the maximum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_start = Instrument.control(
+        ":FREQency:SWEep:STARt?",
+        ":FREQency:SWEep:STARt %e",
+        """Control the sweep start frequency, in m.""",
+        validator=truncated_range,
+        values=[frequency_min, frequency_max],
+    )
+
+    frequency_stop = Instrument.control(
+        ":FREQency:SWEep:STOP?",
+        ":FREQency:SWEep:STOP %e",
+        """Control the sweep stop frequency, in m.""",
+        validator=truncated_range,
+        values=[frequency_min, frequency_max],
     )
 
     frequency = Instrument.control(
-        ":FREQuency?", "FREQuency %e", """Set the output wavelength in optical frequency, in Hz."""
+        ":FREQency?",
+        ":FREQency %e",
+        """Control the output frequency, in m.""",
+        validator=truncated_range,
+        values=[frequency_start, frequency_stop],
+    )
+
+    # --- Optical power control ---
+
+    power_unit = Instrument.control(
+        ":POWer:UNIT?",
+        ":POWer:UNIT %d",
+        """Control the unit of power, dBm or mW.""",
+        validator=strict_discrete_set,
+        values={"dBm": 0, "mW": 1},
+        map_values=True,
     )
 
     # TODO
