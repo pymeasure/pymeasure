@@ -22,9 +22,7 @@
 # THE SOFTWARE.
 #
 
-from time import sleep, time
-
-import numpy as np
+from time import time
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
