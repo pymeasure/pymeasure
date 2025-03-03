@@ -24,7 +24,7 @@
 
 from pymeasure.instruments import Instrument, SCPIMixin
 
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
 class TSL570(SCPIMixin, Instrument):
@@ -38,15 +38,6 @@ class TSL570(SCPIMixin, Instrument):
     def __init__(self):
         """Set the device to use SCPI commands."""
         Instrument.write(self, ":SYSTem:COMMunicate:CODe 1")
-
-    shutter_closed = Instrument.control(
-        ":POWer:SHUTter?",
-        ":POWer:SHUTter %d",
-        """A boolean property that controls whether shutter is closed.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
 
     # --- Wavelength control ---
 
@@ -66,7 +57,7 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength:SWEep:STARt?",
         ":WAVelength:SWEep:STARt %e",
         """Control the sweep start wavelength, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[wavelength_min, wavelength_max],
     )
 
@@ -74,7 +65,7 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength:SWEep:STOP?",
         ":WAVelength:SWEep:STOP %e",
         """Control the sweep stop wavelength, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[wavelength_min, wavelength_max],
     )
 
@@ -82,7 +73,7 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength?",
         ":WAVelength %e",
         """Control the output wavelength, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[wavelength_start, wavelength_stop],
     )
 
@@ -104,7 +95,7 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQency:SWEep:STARt?",
         ":FREQency:SWEep:STARt %e",
         """Control the sweep start frequency, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[frequency_min, frequency_max],
     )
 
@@ -112,7 +103,7 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQency:SWEep:STOP?",
         ":FREQency:SWEep:STOP %e",
         """Control the sweep stop frequency, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[frequency_min, frequency_max],
     )
 
@@ -120,11 +111,20 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQency?",
         ":FREQency %e",
         """Control the output frequency, in m.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[frequency_start, frequency_stop],
     )
 
     # --- Optical power control ---
+
+    shutter_closed = Instrument.control(
+        ":POWer:SHUTter?",
+        ":POWer:SHUTter %d",
+        """A boolean property that controls whether shutter is closed.""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
 
     power_unit = Instrument.control(
         ":POWer:UNIT?",
@@ -133,6 +133,27 @@ class TSL570(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"dBm": 0, "mW": 1},
         map_values=True,
+    )
+
+    @property
+    def power_range(self):
+        if self.power_unit == "dBm":
+            return [-15, 13]
+        elif self.power_unit == "mW":
+            return [10 ** (-1.5), 10 ** (1.3)]
+
+    power_setpoint = Instrument.control(
+        ":POWer?",
+        ":Power %e",
+        """Control the output optical power, units defined by power_unit.""",
+        validator=strict_range,
+        values=power_range,
+        dynamic=True,
+    )
+
+    power = Instrument.measurement(
+        ":POWer:ACTual?",
+        """Measure the monitored optical power, units defined by power_unit.""",
     )
 
     # TODO
