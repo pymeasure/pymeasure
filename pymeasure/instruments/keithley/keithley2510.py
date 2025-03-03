@@ -27,7 +27,7 @@ from time import sleep, time
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
 class Keithley2510(SCPIMixin, Instrument):
@@ -56,9 +56,9 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_setpoint = Instrument.control(
         ":SOURce:TEMPerature?",
         ":SOURce:TEMPerature %g",
-        """Control the temperature setpoint, in degrees centigrade.
-        Takes values from -50 to 225.""",
-        validator=truncated_range,
+        """Control the temperature setpoint, in degrees centigrade
+        (float strictly from -50 to 225)""",
+        validator=strict_range,
         values=[-50, 225],
     )
 
@@ -99,18 +99,18 @@ class Keithley2510(SCPIMixin, Instrument):
     temperature_protection_low = Instrument.control(
         ":SOURce:TEMPerature:PROTection:LOW?",
         ":SOURce:TEMPerature:PROTection:LOW %g",
-        """Control the lower temperature limit in degrees centigrade.
-        Takes values from -50 to 250.""",
-        validator=truncated_range,
+        """Control the lower temperature limit in degrees centigrade
+        (float strictly from -50 to 225)""",
+        validator=strict_range,
         values=[-50, 250],
     )
 
     temperature_protection_high = Instrument.control(
         ":SOURce:TEMPerature:PROTection:HIGH?",
         ":SOURce:TEMPerature:PROTection:HIGH %g",
-        """Control the upper temperature limit in degrees centigrade.
-        Takes values from -50 to 250.""",
-        validator=truncated_range,
+        """Control the upper temperature limit in degrees centigrade
+        (float strictly from -50 to 225)""",
+        validator=strict_range,
         values=[-50, 250],
     )
 
