@@ -145,26 +145,23 @@ class Keithley2510(SCPIMixin, Instrument):
         """Disable temperature protection."""
         self.write(":SOURce:TEMPerature:PROTection:STATe OFF")
 
-    def is_temperature_stable(self, tolerance=0.1, period=10, points=64):
+    def check_temperature_stability(self, tolerance=0.1, period=10, points=64):
         """Determine whether the temperature is stable at the temperature setpoint over a specified
         period.
 
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
         :param period: Time period over which stability is checked, in seconds.
-        :param points: Number of points to collect within the period.
         :return: True if stable, False otherwise.
         """
 
-        delay = period / points
+        t_start = time()
 
-        temp_array = []
+        while time() - t_start < period:
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                return False
 
-        for i in range(points):
-            temp_array.append(self.temperature)
-            sleep(delay)
-
-        return np.all(abs(temp_array - self.temperature_setpoint) < tolerance)
+        return True
 
     def wait_for_temperature_stable(
         self,
@@ -179,7 +176,6 @@ class Keithley2510(SCPIMixin, Instrument):
         :param tolerance: Maximum allowed deviation from temperature setpoint,
             in degrees Centigrade.
         :param period: Time period over which stability is checked, in seconds.
-        :param points: Number of points to collect within the period.
         :param should_stop: Function that returns True to stop waiting.
         :param timeout: Maximum waiting time, in seconds.
         """
