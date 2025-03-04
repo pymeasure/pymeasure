@@ -23,21 +23,89 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import (
+    strict_range,
+    strict_discrete_range,
+    strict_discrete_set,
+)
 
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+
+class InstrumentError(Exception):
+    """Exception raised for errors reported by the instrument."""
+
+
+def evaluated_strict_range(value, values):
+    print(values)
+    print(values())
+    print(dir(values))
+    return strict_range(value, values)
 
 
 class TSL570(SCPIMixin, Instrument):
     """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
     interacting with the instrument."""
 
-    # TODO: I am unsure of the implementation of the validators. I have implemented them according
-    #       to my interpretation of the documentation, but this will need to be tested with the
-    #       instrument to validate this.
-
-    def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
+    def __init__(self, adapter, name="Santec TSL-570", **kwargs):
         super().__init__(adapter, name, **kwargs)
-        Instrument.write(self, ":SYSTem:COMMunicate:CODe 1")  # Set the device to use SCPI commands
+        self.write(":SYSTem:COMMunicate:CODe 1")  # Set the device to use SCPI commands
+
+    def clear_error_queue(self):
+        """Clears the device error queue by reading until no errors remain."""
+        while True:
+            err = self.ask(":SYSTem:ERRor?")
+            try:
+                err_code, err_msg = err.split(",", 1)
+            except ValueError:
+                # If the response doesn't split as expected, break out
+                break
+            # if err_code is 0 no errors remain, break out
+            if int(err_code) == 0:
+                break
+
+    def check_set_errors(self):
+        """Checks the device for error."""
+        err = self.ask(":SYSTem:ERRor?")
+        try:
+            err_code, err_msg = err.split(",", 1)
+        except Exception:
+            # if splitting fails, just return an empty list.
+            return []
+        # err_code is 0 only if there is no error
+        if int(err_code) != 0:
+            raise InstrumentError(f"{err_code}: {err_msg}")
+        return []
+
+    # --- Optical power control ---
+
+    output_enabled = Instrument.control(
+        ":POWer:STATe?",
+        ":POWer:STATe %d",
+        """Control whether output is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    power_unit = Instrument.control(
+        ":POWer:UNIT?",
+        ":POWer:UNIT %d",
+        """Control the unit of power (str dBm or mW)""",
+        validator=strict_discrete_set,
+        values={"dBm": 0, "mW": 1},
+        map_values=True,
+    )
+
+    power_setpoint = Instrument.control(
+        ":POWer?",
+        ":Power %e",
+        """Control the output optical power, units defined by power_unit.""",
+        check_set_errors=True,
+    )
+
+    power_reading = Instrument.measurement(
+        ":POWer:ACTual?",
+        """Measure the monitored optical power, units defined by power_unit.""",
+    )
 
     # --- Wavelength control ---
 
@@ -53,98 +121,182 @@ class TSL570(SCPIMixin, Instrument):
         at the current sweep speed.""",
     )
 
+    wavelength = Instrument.control(
+        ":WAVelength?",
+        ":WAVelength %e",
+        """Control the output wavelength, in m.""",
+        check_set_errors=True,
+    )
+
     wavelength_start = Instrument.control(
         ":WAVelength:SWEep:STARt?",
         ":WAVelength:SWEep:STARt %e",
         """Control the sweep start wavelength, in m.""",
+        check_set_errors=True,
     )
 
     wavelength_stop = Instrument.control(
         ":WAVelength:SWEep:STOP?",
         ":WAVelength:SWEep:STOP %e",
         """Control the sweep stop wavelength, in m.""",
+        check_set_errors=True,
     )
 
-    wavelength = Instrument.control(
-        ":WAVelength?",
-        ":WAVelength %e",
-        """Control the output wavelength, in m.""",
+    wavelength_step = Instrument.control(
+        ":WAVelength:SWEep:STEP?",
+        ":WAVelength:SWEep:STEP %e",
+        """Control the sweep step wavelength when in step sweep mode, in m.""",
+        check_set_errors=True,
     )
 
     # --- Optical frequency control ---
 
     frequency_min = Instrument.measurement(
-        ":FREQency:SWEep:RANGe:MINimum?",
+        ":FREQuency:SWEep:RANGe:MINimum?",
         """Get the minimum frequency in the configurable sweep range
         at the current sweep speed.""",
     )
 
     frequency_max = Instrument.measurement(
-        ":FREQency:SWEep:RANGe:MAXimum?",
+        ":FREQuency:SWEep:RANGe:MAXimum?",
         """Get the maximum frequency in the configurable sweep range
         at the current sweep speed.""",
     )
 
+    frequency = Instrument.control(
+        ":FREQuency?",
+        ":FREQuency %e",
+        """Control the output frequency, in m.""",
+        check_set_errors=True,
+    )
+
     frequency_start = Instrument.control(
-        ":FREQency:SWEep:STARt?",
-        ":FREQency:SWEep:STARt %e",
+        ":FREQuency:SWEep:STARt?",
+        ":FREQuency:SWEep:STARt %e",
         """Control the sweep start frequency, in m.""",
+        check_set_errors=True,
     )
 
     frequency_stop = Instrument.control(
-        ":FREQency:SWEep:STOP?",
-        ":FREQency:SWEep:STOP %e",
+        ":FREQuency:SWEep:STOP?",
+        ":FREQuency:SWEep:STOP %e",
         """Control the sweep stop frequency, in m.""",
+        check_set_errors=True,
     )
 
-    frequency = Instrument.control(
-        ":FREQency?",
-        ":FREQency %e",
-        """Control the output frequency, in m.""",
+    frequency_step = Instrument.control(
+        ":FREQuency:SWEep:STEP?",
+        ":FREQuency:SWEep:STEP %e",
+        """Control the sweep step frequency when in step sweep mode, in m.""",
+        check_set_errors=True,
     )
 
-    # --- Optical power control ---
+    # --- Sweep settings ---
 
-    shutter_closed = Instrument.control(
-        ":POWer:SHUTter?",
-        ":POWer:SHUTter %d",
-        """A boolean property that controls whether shutter is closed.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
+    def start_sweep(self):
+        """Start a single wavelength sweep."""
+        self.write(":WAVelength:SWEep 1")
+
+    def start_repeat(self):
+        """Start repeated wavelength sweeps."""
+        self.write(":WAVelength:SWEep:REPeat")
+
+    def stop_sweep(self):
+        """Stop the wavelength sweep."""
+        self.write(":WAVelength:SWEep 0")
+
+    sweep_staus = Instrument.measurement(
+        "WAVelength:SWEep?",
+        """Get the current sweep status, "Stopped", "Running", "Standing by trigger",
+        or "Preparation for sweep start".""",
+        values={
+            "Stopped": 0,
+            "Running": 1,
+            "Standing by trigger": 3,
+            "Preparation for sweep start": 4,
+        },
         map_values=True,
     )
 
-    power_unit = Instrument.control(
-        ":POWer:UNIT?",
-        ":POWer:UNIT %d",
-        """Control the unit of power, dBm or mW.""",
+    sweep_mode = Instrument.control(
+        ":WAVelength:SWEep:MODe?",
+        ":WAVelength:SWEep:MODe %d",
+        """Control the sweep mode.""",
         validator=strict_discrete_set,
-        values={"dBm": 0, "mW": 1},
+        values={
+            "Stepped One-way": 0,
+            "Continuous One-way:": 1,
+            "Stepped Two-way": 2,
+            "Continuous Two-way": 3,
+        },
         map_values=True,
     )
 
-    power_setpoint = Instrument.control(
-        ":POWer?",
-        ":Power %e",
-        """Control the output optical power, units defined by power_unit.""",
+    # Properties to independantly control sweep pattern (stepped vs continuous)
+    # and routing (one-way vs two-way)
+
+    @property
+    def sweep_pattern(self):
+        """Control the sweep pattern, "Stepped" or "Continuous"."""
+        return self.sweep_mode.split()[0]
+
+    @sweep_pattern.setter
+    def sweep_pattern(self, pattern):
+        self.sweep_mode = " ".join([pattern, self.sweep_mode.split()[1]])
+
+    @property
+    def sweep_routing(self):
+        """Control the sweep routing, "One-way" or "Two-way"."""
+        return self.sweep_mode.split()[1]
+
+    @sweep_routing.setter
+    def sweep_routing(self, routing):
+        self.sweep_mode = " ".join([self.sweep_mode.split()[0], routing])
+
+    sweep_speed = Instrument.control(
+        ":WAVelength:SWEep:SPEed?",
+        ":WAVelength:SWEep:SPEed %d",
+        """Control the sweep speed, in nm/s (int one of 1, 2, 5, 10, 20, 50, 100, 200).""",
+        validator=strict_discrete_set,
+        values={1, 2, 5, 10, 20, 50, 100, 200},
     )
 
-    power_reading = Instrument.measurement(
-        ":POWer:ACTual?",
-        """Measure the monitored optical power, units defined by power_unit.""",
+    sweep_dwell = Instrument.control(
+        ":WAVelength:SWEep:DWELl?",
+        ":WAVelength:SWEep:DWELl %g",
+        """Control the wait time between consequent steps in step sweep mode, in s.
+        Does not include time for wavelength tuning. (float strictly in range 0 to 999.9)""",
+        validator=strict_range,
+        values=[0, 999.9],
     )
 
-    # TODO
-    # sweep_mode
-    # sweep_speed
-    # sweep_dwell
-    # sweep_delay
-    # single_sweep
-    # repeat_sweep
-    # sweep_status
+    sweep_delay = Instrument.control(
+        ":WAVelength:SWEep:DELay?",
+        ":WAVelength:SWEep:DELay %g",
+        """Control the wait time between consequent scans, in s.
+        (float strictly in range 0 to 999.9)""",
+        validator=strict_range,
+        values=[0, 999.9],
+    )
+
+    sweep_cycles = Instrument.control(
+        ":WAVelength:SWEep:CYCLes?",
+        ":WAVelength:SWEep:CYCLes %d",
+        """Control the number of sweep repetitions.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, step=1),
+        values=[0, 999],
+    )
+
+    sweep_count = Instrument.measurement(
+        ":WAVelength:SWEep:COUNt?", """Get the current number of completed sweeps."""
+    )
 
 
 if __name__ == "__main__":
-    laser = TSL570("GPIB1::8::INSTR")
-
+    laser = TSL570("GPIB0::8::INSTR")
+    laser.wavelength = 1550e-9
+    print(laser.wavelength)
     laser.wavelength = 1500e-9
+    print(laser.wavelength)
+    laser.wavelength = 1450e-9
+    print(laser.wavelength)
