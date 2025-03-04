@@ -57,24 +57,18 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength:SWEep:STARt?",
         ":WAVelength:SWEep:STARt %e",
         """Control the sweep start wavelength, in m.""",
-        validator=strict_range,
-        values=[wavelength_min, wavelength_max],
     )
 
     wavelength_stop = Instrument.control(
         ":WAVelength:SWEep:STOP?",
         ":WAVelength:SWEep:STOP %e",
         """Control the sweep stop wavelength, in m.""",
-        validator=strict_range,
-        values=[wavelength_min, wavelength_max],
     )
 
     wavelength = Instrument.control(
         ":WAVelength?",
         ":WAVelength %e",
         """Control the output wavelength, in m.""",
-        validator=strict_range,
-        values=[wavelength_start, wavelength_stop],
     )
 
     # --- Optical frequency control ---
@@ -95,24 +89,18 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQency:SWEep:STARt?",
         ":FREQency:SWEep:STARt %e",
         """Control the sweep start frequency, in m.""",
-        validator=strict_range,
-        values=[frequency_min, frequency_max],
     )
 
     frequency_stop = Instrument.control(
         ":FREQency:SWEep:STOP?",
         ":FREQency:SWEep:STOP %e",
         """Control the sweep stop frequency, in m.""",
-        validator=strict_range,
-        values=[frequency_min, frequency_max],
     )
 
     frequency = Instrument.control(
         ":FREQency?",
         ":FREQency %e",
         """Control the output frequency, in m.""",
-        validator=strict_range,
-        values=[frequency_start, frequency_stop],
     )
 
     # --- Optical power control ---
@@ -135,20 +123,10 @@ class TSL570(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    @property
-    def power_range(self):
-        if self.power_unit == "dBm":
-            return [-15, 13]
-        elif self.power_unit == "mW":
-            return [10 ** (-1.5), 10 ** (1.3)]
-
     power_setpoint = Instrument.control(
         ":POWer?",
         ":Power %e",
         """Control the output optical power, units defined by power_unit.""",
-        validator=strict_range,
-        values=power_range,
-        dynamic=True,
     )
 
     power_reading = Instrument.measurement(
