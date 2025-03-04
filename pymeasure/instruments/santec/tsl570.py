@@ -35,9 +35,9 @@ class TSL570(SCPIMixin, Instrument):
     #       to my interpretation of the documentation, but this will need to be tested with the
     #       instrument to validate this.
 
-    def __init__(self):
-        """Set the device to use SCPI commands."""
-        Instrument.write(self, ":SYSTem:COMMunicate:CODe 1")
+    def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        Instrument.write(self, ":SYSTem:COMMunicate:CODe 1")  # Set the device to use SCPI commands
 
     # --- Wavelength control ---
 
@@ -151,21 +151,12 @@ class TSL570(SCPIMixin, Instrument):
         dynamic=True,
     )
 
-    power = Instrument.measurement(
+    power_reading = Instrument.measurement(
         ":POWer:ACTual?",
         """Measure the monitored optical power, units defined by power_unit.""",
     )
 
     # TODO
-    # power_setpoint
-    # power_reading
-    # power_unit
-    # wavelength_start
-    # wavelength_stop
-    # wavelength_step
-    # frequency_start
-    # frequency_stop
-    # frequency_step
     # sweep_mode
     # sweep_speed
     # sweep_dwell
@@ -173,3 +164,9 @@ class TSL570(SCPIMixin, Instrument):
     # single_sweep
     # repeat_sweep
     # sweep_status
+
+
+if __name__ == "__main__":
+    laser = TSL570("GPIB1::8::INSTR")
+
+    laser.wavelength = 1500e-9
