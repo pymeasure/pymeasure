@@ -34,13 +34,6 @@ class InstrumentError(Exception):
     """Exception raised for errors reported by the instrument."""
 
 
-def evaluated_strict_range(value, values):
-    print(values)
-    print(values())
-    print(dir(values))
-    return strict_range(value, values)
-
-
 class TSL570(SCPIMixin, Instrument):
     """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
     interacting with the instrument."""
@@ -48,32 +41,13 @@ class TSL570(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Santec TSL-570", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.write(":SYSTem:COMMunicate:CODe 1")  # Set the device to use SCPI commands
+        self.check_errors()  # Clear the error queue
 
-    def clear_error_queue(self):
-        """Clears the device error queue by reading until no errors remain."""
-        while True:
-            err = self.ask(":SYSTem:ERRor?")
-            try:
-                err_code, err_msg = err.split(",", 1)
-            except ValueError:
-                # If the response doesn't split as expected, break out
-                break
-            # if err_code is 0 no errors remain, break out
-            if int(err_code) == 0:
-                break
-
-    def check_set_errors(self):
-        """Checks the device for error."""
-        err = self.ask(":SYSTem:ERRor?")
-        try:
-            err_code, err_msg = err.split(",", 1)
-        except Exception:
-            # if splitting fails, just return an empty list.
-            return []
-        # err_code is 0 only if there is no error
-        if int(err_code) != 0:
-            raise InstrumentError(f"{err_code}: {err_msg}")
-        return []
+    def check_instr_errors(self):
+        """Checks the instrument for errors, and raises an exeption if any are present."""
+        errors = self.check_errors()
+        if errors:
+            raise InstrumentError(errors)
 
     # --- Optical power control ---
 
@@ -99,7 +73,7 @@ class TSL570(SCPIMixin, Instrument):
         ":POWer?",
         ":Power %e",
         """Control the output optical power, units defined by power_unit.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     power_reading = Instrument.measurement(
@@ -125,28 +99,28 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength?",
         ":WAVelength %e",
         """Control the output wavelength, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     wavelength_start = Instrument.control(
         ":WAVelength:SWEep:STARt?",
         ":WAVelength:SWEep:STARt %e",
         """Control the sweep start wavelength, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     wavelength_stop = Instrument.control(
         ":WAVelength:SWEep:STOP?",
         ":WAVelength:SWEep:STOP %e",
         """Control the sweep stop wavelength, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     wavelength_step = Instrument.control(
         ":WAVelength:SWEep:STEP?",
         ":WAVelength:SWEep:STEP %e",
         """Control the sweep step wavelength when in step sweep mode, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     # --- Optical frequency control ---
@@ -167,28 +141,28 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQuency?",
         ":FREQuency %e",
         """Control the output frequency, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     frequency_start = Instrument.control(
         ":FREQuency:SWEep:STARt?",
         ":FREQuency:SWEep:STARt %e",
         """Control the sweep start frequency, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     frequency_stop = Instrument.control(
         ":FREQuency:SWEep:STOP?",
         ":FREQuency:SWEep:STOP %e",
         """Control the sweep stop frequency, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     frequency_step = Instrument.control(
         ":FREQuency:SWEep:STEP?",
         ":FREQuency:SWEep:STEP %e",
         """Control the sweep step frequency when in step sweep mode, in m.""",
-        check_set_errors=True,
+        check_instr_errors=True,
     )
 
     # --- Sweep settings ---
