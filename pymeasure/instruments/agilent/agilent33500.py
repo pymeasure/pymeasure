@@ -52,8 +52,7 @@ class Agilent33500Channel(Channel):
     shape = Instrument.control(
         "SOUR{ch}:FUNC?",
         "SOUR{ch}:FUNC %s",
-        """ A string property that controls the output waveform. Can be set to:
-        SIN<USOID>, SQU<ARE>, TRI<ANGLE>, RAMP, PULS<E>, PRBS,  NOIS<E>, ARB, DC. """,
+        """ A string property that controls the output waveform.""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
@@ -63,8 +62,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FREQ?",
         "SOUR{ch}:FREQ %f",
         """ A floating point property that controls the frequency of the output
-        waveform in Hz, from 1 uHz to 120 MHz (maximum range, can be lower depending
-        on your device), depending on the specified function. """,
+        waveform in Hz, depending on the specified function. """,
         validator=strict_range,
         values=[1e-6, 120e6],
         dynamic=True,
@@ -74,8 +72,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT?",
         "SOUR{ch}:VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 10e-3 V to 10 V. Depends on the output
-        impedance.""",
+        output waveform in V. Depends on the output impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
         dynamic=True,
@@ -95,8 +92,8 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:OFFS?",
         "SOUR{ch}:VOLT:OFFS %f",
         """ A floating point property that controls the voltage offset of the
-        output waveform in V, from 0 V to 4.995 V, depending on the set
-        voltage amplitude (maximum offset = (Vmax - voltage) / 2).
+        output waveform in V, depending on the set voltage amplitude
+        (maximum offset = (Vmax - voltage) / 2).
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
@@ -107,8 +104,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:HIGH?",
         "SOUR{ch}:VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
-        output waveform in V, from -4.999 V to 5 V (must be higher than low
-        voltage by at least 1 mV).""",
+        output waveform in V (must be higher than low voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.999, 5],
         dynamic=True,
@@ -118,8 +114,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:VOLT:LOW?",
         "SOUR{ch}:VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
-        output waveform in V, from -5 V to 4.999 V (must be lower than high
-        voltage by at least 1 mV).""",
+        output waveform in V, (must be lower than high voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.999],
         dynamic=True,
@@ -139,9 +134,9 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:SQU:DCYC?",
         "SOUR{ch}:FUNC:SQU:DCYC %f",
         """ A floating point property that controls the duty cycle of a square
-        waveform function in percent, from 0.01% to 99.98%.
-        The duty cycle is limited by the frequency and the minimal pulse width of
-        16 ns. See manual for more details.""",
+        waveform function in percent.
+        The duty cycle is limited by the frequency and the minimal pulse. See
+        manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
         dynamic=True,
@@ -161,10 +156,9 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:PER?",
         "SOUR{ch}:FUNC:PULS:PER %e",
         """ A floating point property that controls the period of a pulse
-        waveform function in seconds, ranging from 33 ns to 1 Ms. Can be set
-        and overwrites the frequency for *all* waveforms. If the period is
-        shorter than the pulse width + the edge time, the edge time and pulse
-        width will be adjusted accordingly. """,
+        waveform function in seconds. Can be set and overwrites the frequency
+        for *all* waveforms. If the period is shorter than the pulse width +
+        the edge time, the edge time and pulse width will be adjusted accordingly. """,
         validator=strict_range,
         values=[33e-9, 1e6],
         dynamic=True,
@@ -185,8 +179,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:WIDT?",
         "SOUR{ch}:FUNC:PULS:WIDT %e",
         """ A floating point property that controls the width of a pulse
-        waveform function in seconds, ranging from 16 ns to 1e6 s, within a
-        set of restrictions depending on the period.""",
+        waveform function in seconds, within a set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
         dynamic=True,
@@ -207,8 +200,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:PULS:TRAN:BOTH %e",
         """ A floating point property that controls the edge time in
         seconds for both the rising and falling edges. It is defined as the
-        time between the 10% and 90% thresholds of the edge.
-        Valid values are between 8.4 ns to 1 µs.""",
+        time between the 10% and 90% thresholds of the edge.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
         dynamic=True,
@@ -231,7 +223,6 @@ class Agilent33500Channel(Channel):
         """ Sets the expected load resistance (should be the load impedance connected
         to the output. The output impedance is always 50 Ohm, this setting can be used
         to correct the displayed voltage for loads unmatched to 50 Ohm.
-        Valid values are between 1 and 10 kOhm or INF for high impedance.
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
         """,
@@ -263,8 +254,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:BURS:INT:PER?",
         "SOUR{ch}:BURS:INT:PER %e",
         """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s.""",
+        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.""",
         validator=strict_range,
         values=[1e-6, 8000],
         dynamic=True,
@@ -274,8 +264,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:BURS:NCYC?",
         "SOUR{ch}:BURS:NCYC %d",
         """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 100000. This can be
-        set. """,
+        when a burst is triggered. This can be set. """,
         validator=strict_range,
         values=range(1, 100000),
         dynamic=True,
@@ -427,8 +416,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     shape = Instrument.control(
         "FUNC?",
         "FUNC %s",
-        """ A string property that controls the output waveform. Can be set to:
-        SIN<USOID>, SQU<ARE>, TRI<ANGLE>, RAMP, PULS<E>, PRBS,  NOIS<E>, ARB, DC. """,
+        """ A string property that controls the output waveform.""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
@@ -438,8 +426,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "FREQ?",
         "FREQ %f",
         """ A floating point property that controls the frequency of the output
-        waveform in Hz, from 1 uHz to 120 MHz (maximum range, can be lower depending
-        on your device), depending on the specified function.""",
+        waveform in Hz, depending on the specified function.""",
         validator=strict_range,
         values=[1e-6, 120e6],
         dynamic=True,
@@ -449,8 +436,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "VOLT?",
         "VOLT %f",
         """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 10e-3 V to 10 V. Depends on the output
-        impedance.""",
+        output waveform in V. Depends on the output impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
         dynamic=True,
@@ -470,8 +456,8 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "VOLT:OFFS?",
         "VOLT:OFFS %f",
         """ A floating point property that controls the voltage offset of the
-        output waveform in V, from 0 V to 4.995 V, depending on the set
-        voltage amplitude (maximum offset = (Vmax - voltage) / 2).
+        output waveform in V, depending on the set voltage amplitude
+        (maximum offset = (Vmax - voltage) / 2).
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
@@ -482,8 +468,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "VOLT:HIGH?",
         "VOLT:HIGH %f",
         """ A floating point property that controls the upper voltage of the
-        output waveform in V, from -4.999 V to 5 V (must be higher than low
-        voltage by at least 1 mV).""",
+        output waveform in V (must be higher than low voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.999, 5],
         dynamic=True,
@@ -493,8 +478,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "VOLT:LOW?",
         "VOLT:LOW %f",
         """ A floating point property that controls the lower voltage of the
-        output waveform in V, from -5 V to 4.999 V (must be lower than high
-        voltage by at least 1 mV).""",
+        output waveform in V (must be lower than high voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.999],
         dynamic=True,
@@ -514,9 +498,9 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "FUNC:SQU:DCYC?",
         "FUNC:SQU:DCYC %f",
         """ A floating point property that controls the duty cycle of a square
-        waveform function in percent, from 0.01% to 99.98%.
-        The duty cycle is limited by the frequency and the minimal pulse width of
-        16 ns. See manual for more details.""",
+        waveform function in percent.
+        The duty cycle is limited by the frequency and the minimal pulse. See
+        manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
         dynamic=True,
@@ -536,10 +520,9 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "FUNC:PULS:PER?",
         "FUNC:PULS:PER %e",
         """ A floating point property that controls the period of a pulse
-        waveform function in seconds, ranging from 33 ns to 1e6 s. Can be set
-        and overwrites the frequency for *all* waveforms. If the period is
-        shorter than the pulse width + the edge time, the edge time and pulse
-        width will be adjusted accordingly. """,
+        waveform function in seconds. Can be set and overwrites the frequency
+        for *all* waveforms. If the period is shorter than the pulse width +
+        the edge time, the edge time and pulse width will be adjusted accordingly. """,
         validator=strict_range,
         values=[33e-9, 1e6],
         dynamic=True,
@@ -560,8 +543,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "FUNC:PULS:WIDT?",
         "FUNC:PULS:WIDT %e",
         """ A floating point property that controls the width of a pulse
-        waveform function in seconds, ranging from 16 ns to 1 Ms, within a
-        set of restrictions depending on the period.""",
+        waveform function in seconds, within a set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
         dynamic=True,
@@ -582,8 +564,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "FUNC:PULS:TRAN:BOTH %e",
         """ A floating point property that controls the edge time in
         seconds for both the rising and falling edges. It is defined as the
-        time between the 10% and 90% thresholds of the edge.
-        Valid values are between 8.4 ns to 1 µs.""",
+        time between the 10% and 90% thresholds of the edge.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
         dynamic=True,
@@ -606,7 +587,6 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         """ Sets the expected load resistance (should be the load impedance connected
         to the output. The output impedance is always 50 Ohm, this setting can be used
         to correct the displayed voltage for loads unmatched to 50 Ohm.
-        Valid values are between 1 and 10 kOhm or INF for high impedance.
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
         """,
@@ -638,8 +618,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "BURS:INT:PER?",
         "BURS:INT:PER %e",
         """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.
-        Valid values are 1 µs to 8000 s.""",
+        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.""",
         validator=strict_range,
         values=[1e-6, 8000],
         dynamic=True,
@@ -649,8 +628,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         "BURS:NCYC?",
         "BURS:NCYC %d",
         """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 100000. This can be
-        set. """,
+        when a burst is triggered. This can be set. """,
         validator=strict_range,
         values=range(1, 100000),
         dynamic=True,
