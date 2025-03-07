@@ -22,9 +22,15 @@
 # THE SOFTWARE.
 #
 
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightE36312A import KeysightE36312A
-from .keysightE3631A import KeysightE3631A
-from .keysight81160A import Keysight81160A
+from pymeasure.instruments import Instrument
+from pymeasure.instruments.agilent import Agilent33500
+from pymeasure.instruments.agilent.agilent33500 import Agilent33500Channel
+
+
+class Keysight81160AChannel(Agilent33500Channel):
+    pass
+
+
+class Keysight81160A(Agilent33500):
+    ch_1 = Instrument.ChannelCreator(Keysight81160AChannel, 1)
+    ch_2 = Instrument.ChannelCreator(Keysight81160AChannel, 2)
