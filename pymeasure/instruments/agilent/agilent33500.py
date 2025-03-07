@@ -52,7 +52,7 @@ class Agilent33500Channel(Channel):
     shape = Instrument.control(
         "SOUR{ch}:FUNC?",
         "SOUR{ch}:FUNC %s",
-        """ A string property that controls the output waveform.""",
+        """ Control the output waveform shape (str).""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
@@ -61,8 +61,7 @@ class Agilent33500Channel(Channel):
     frequency = Instrument.control(
         "SOUR{ch}:FREQ?",
         "SOUR{ch}:FREQ %f",
-        """ A floating point property that controls the frequency of the output
-        waveform in Hz, depending on the specified function. """,
+        """ Control the waveform frequency in Hz (float). Depends on the specified shape.""",
         validator=strict_range,
         values=[1e-6, 120e6],
         dynamic=True,
@@ -71,8 +70,7 @@ class Agilent33500Channel(Channel):
     amplitude = Instrument.control(
         "SOUR{ch}:VOLT?",
         "SOUR{ch}:VOLT %f",
-        """ A floating point property that controls the voltage amplitude of the
-        output waveform in V. Depends on the output impedance.""",
+        """ Control the voltage amplitude in Volts (float).""",
         validator=strict_range,
         values=[10e-3, 10],
         dynamic=True,
@@ -81,8 +79,7 @@ class Agilent33500Channel(Channel):
     amplitude_unit = Instrument.control(
         "SOUR{ch}:VOLT:UNIT?",
         "SOUR{ch}:VOLT:UNIT %s",
-        """ A string property that controls the units of the amplitude. Valid
-        values are VPP (default), VRMS, and DBM.""",
+        """ Control the amplitude units (string, strictly 'VPP', 'VRMS', or 'DBM').""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
         dynamic=True,
@@ -91,10 +88,7 @@ class Agilent33500Channel(Channel):
     offset = Instrument.control(
         "SOUR{ch}:VOLT:OFFS?",
         "SOUR{ch}:VOLT:OFFS %f",
-        """ A floating point property that controls the voltage offset of the
-        output waveform in V, depending on the set voltage amplitude
-        (maximum offset = (Vmax - voltage) / 2).
-        """,
+        """ Control the voltage offset in Volts (float).""",
         validator=strict_range,
         values=[-4.995, +4.995],
         dynamic=True,
@@ -103,8 +97,7 @@ class Agilent33500Channel(Channel):
     voltage_high = Instrument.control(
         "SOUR{ch}:VOLT:HIGH?",
         "SOUR{ch}:VOLT:HIGH %f",
-        """ A floating point property that controls the upper voltage of the
-        output waveform in V (must be higher than low voltage by at least 1 mV).""",
+        """ Control the upper voltage level in Volts (float).""",
         validator=strict_range,
         values=[-4.999, 5],
         dynamic=True,
@@ -113,8 +106,7 @@ class Agilent33500Channel(Channel):
     voltage_low = Instrument.control(
         "SOUR{ch}:VOLT:LOW?",
         "SOUR{ch}:VOLT:LOW %f",
-        """ A floating point property that controls the lower voltage of the
-        output waveform in V, (must be lower than high voltage by at least 1 mV).""",
+        """ Control the lower voltage level in Volts (float).""",
         validator=strict_range,
         values=[-5, 4.999],
         dynamic=True,
@@ -123,9 +115,7 @@ class Agilent33500Channel(Channel):
     phase = Instrument.control(
         "SOUR{ch}:PHAS?",
         "SOUR{ch}:PHAS %f",
-        """ A floating point property that controls the phase of the output
-        waveform in degrees, from -360 degrees to 360 degrees. Not available
-        for arbitrary waveforms or noise.""",
+        """ Control the waveform phase in degrees (float, truncated from -360 to 360).""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -133,10 +123,7 @@ class Agilent33500Channel(Channel):
     square_dutycycle = Instrument.control(
         "SOUR{ch}:FUNC:SQU:DCYC?",
         "SOUR{ch}:FUNC:SQU:DCYC %f",
-        """ A floating point property that controls the duty cycle of a square
-        waveform function in percent.
-        The duty cycle is limited by the frequency and the minimal pulse. See
-        manual for more details.""",
+        """ Control the square wave duty cycle in percent (float).""",
         validator=strict_range,
         values=[0.01, 99.98],
         dynamic=True,
@@ -145,8 +132,7 @@ class Agilent33500Channel(Channel):
     ramp_symmetry = Instrument.control(
         "SOUR{ch}:FUNC:RAMP:SYMM?",
         "SOUR{ch}:FUNC:RAMP:SYMM %f",
-        """ A floating point property that controls the symmetry percentage
-        for the ramp waveform, from 0.0% to 100.0%.""",
+        """ Control the ramp waveform symmetry in percent (float, truncated from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -155,10 +141,9 @@ class Agilent33500Channel(Channel):
     pulse_period = Instrument.control(
         "SOUR{ch}:FUNC:PULS:PER?",
         "SOUR{ch}:FUNC:PULS:PER %e",
-        """ A floating point property that controls the period of a pulse
-        waveform function in seconds. Can be set and overwrites the frequency
-        for *all* waveforms. If the period is shorter than the pulse width +
-        the edge time, the edge time and pulse width will be adjusted accordingly. """,
+        """ Control the pulse period in seconds (float). Overwrites frequency.
+        If the period is shorter than the pulse width + the edge time, the edge
+        time and pulse width are adjusted.""",
         validator=strict_range,
         values=[33e-9, 1e6],
         dynamic=True,
@@ -167,9 +152,8 @@ class Agilent33500Channel(Channel):
     pulse_hold = Instrument.control(
         "SOUR{ch}:FUNC:PULS:HOLD?",
         "SOUR{ch}:FUNC:PULS:HOLD %s",
-        """ A string property that controls if either the pulse width or the
-        duty cycle is retained when changing the period or frequency of the
-        waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
+        """ Control whether pulse width or duty cycle is maintained when the
+        period or frequency of the waveform is changed (str).""",
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
         dynamic=True,
@@ -178,8 +162,7 @@ class Agilent33500Channel(Channel):
     pulse_width = Instrument.control(
         "SOUR{ch}:FUNC:PULS:WIDT?",
         "SOUR{ch}:FUNC:PULS:WIDT %e",
-        """ A floating point property that controls the width of a pulse
-        waveform function in seconds, within a set of restrictions depending on the period.""",
+        """ Control the pulse width in seconds (float).""",
         validator=strict_range,
         values=[16e-9, 1e6],
         dynamic=True,
@@ -188,8 +171,7 @@ class Agilent33500Channel(Channel):
     pulse_dutycycle = Instrument.control(
         "SOUR{ch}:FUNC:PULS:DCYC?",
         "SOUR{ch}:FUNC:PULS:DCYC %f",
-        """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent, from 0% to 100%.""",
+        """ Control the pulse duty cycle in percent (float, truncated from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -198,9 +180,7 @@ class Agilent33500Channel(Channel):
     pulse_transition = Instrument.control(
         "SOUR{ch}:FUNC:PULS:TRAN?",
         "SOUR{ch}:FUNC:PULS:TRAN:BOTH %e",
-        """ A floating point property that controls the edge time in
-        seconds for both the rising and falling edges. It is defined as the
-        time between the 10% and 90% thresholds of the edge.""",
+        """ Control the pulse edge time (both rising and falling) in seconds (float).""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
         dynamic=True,
@@ -209,8 +189,7 @@ class Agilent33500Channel(Channel):
     output = Instrument.control(
         "OUTP{ch}?",
         "OUTP{ch} %d",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off')
-        the output of the function generator.""",
+        """ Control the output state (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
@@ -220,20 +199,16 @@ class Agilent33500Channel(Channel):
     output_load = Instrument.control(
         "OUTP{ch}:LOAD?",
         "OUTP{ch}:LOAD %s",
-        """ Sets the expected load resistance (should be the load impedance connected
-        to the output. The output impedance is always 50 Ohm, this setting can be used
-        to correct the displayed voltage for loads unmatched to 50 Ohm.
-        No validator is used since both numeric and string inputs are accepted,
-        thus a value outside the range will not return an error.
-        """,
+        """ Control the expected load resistance in Ohms (str or float). The output impedance
+        is always 50 Ohm, this setting can be used to correct the displayed voltage for
+        loads unmatched to 50 Ohm.""",
         dynamic=True,
     )
 
     burst_state = Instrument.control(
         "SOUR{ch}:BURS:STAT?",
         "SOUR{ch}:BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False).""",
+        """ Control the burst mode state (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -243,8 +218,7 @@ class Agilent33500Channel(Channel):
     burst_mode = Instrument.control(
         "SOUR{ch}:BURS:MODE?",
         "SOUR{ch}:BURS:MODE %s",
-        """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>.""",
+        """ Control the burst mode type (str, strictly 'TRIG<GERED>' or 'GAT<ED>').""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
         dynamic=True,
@@ -253,8 +227,7 @@ class Agilent33500Channel(Channel):
     burst_period = Instrument.control(
         "SOUR{ch}:BURS:INT:PER?",
         "SOUR{ch}:BURS:INT:PER %e",
-        """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.""",
+        """ Control the period of subsequent bursts in seconds (float).""",
         validator=strict_range,
         values=[1e-6, 8000],
         dynamic=True,
@@ -263,8 +236,7 @@ class Agilent33500Channel(Channel):
     burst_ncycles = Instrument.control(
         "SOUR{ch}:BURS:NCYC?",
         "SOUR{ch}:BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. This can be set. """,
+        """ Control the number of cycles to be output when a burst is triggered (int).""",
         validator=strict_range,
         values=range(1, 100000),
         dynamic=True,
@@ -273,17 +245,15 @@ class Agilent33500Channel(Channel):
     arb_file = Instrument.control(
         "SOUR{ch}:FUNC:ARB?",
         "SOUR{ch}:FUNC:ARB %s",
-        """ A string property that selects the arbitrary signal from the volatile
-        memory of the device. String has to match an existing arb signal in volatile
-        memory (set by :meth:`data_arb`).""",
+        """ Control the arbitrary signal to use from the volatile memory of the device.""",
         dynamic=True,
     )
 
     arb_advance = Instrument.control(
         "SOUR{ch}:FUNC:ARB:ADV?",
         "SOUR{ch}:FUNC:ARB:ADV %s",
-        """ A string property that selects how the device advances from data point
-        to data point. Can be set to 'TRIG<GER>' or 'SRAT<E>' (default). """,
+        """ Control how the device advances from data point to data point (str).
+        Can be set to 'TRIG<GER>' or 'SRAT<E>' (default).""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGER", "SRAT", "SRATE"],
     )
@@ -291,8 +261,8 @@ class Agilent33500Channel(Channel):
     arb_filter = Instrument.control(
         "SOUR{ch}:FUNC:ARB:FILT?",
         "SOUR{ch}:FUNC:ARB:FILT %s",
-        """ A string property that selects the filter setting for arbitrary signals.
-        Can be set to 'NORM<AL>', 'STEP' and 'OFF'. """,
+        """ Control the filter setting for arbitrary signals (str).
+        Can be set to 'NORM<AL>', 'STEP' and 'OFF'.""",
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
     )
@@ -300,9 +270,8 @@ class Agilent33500Channel(Channel):
     arb_srate = Instrument.control(
         "SOUR{ch}:FUNC:ARB:SRAT?",
         "SOUR{ch}:FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected
-        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device).""",
+        """ Control the sample rate of the currently selected arbitrary signal in Sa/s (float).
+        Valid values range from 1 µSa/s to 250 MSa/s (maximum range, device-dependent).""",
         validator=strict_range,
         values=[1e-6, 250e6],
     )
@@ -416,7 +385,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     shape = Instrument.control(
         "FUNC?",
         "FUNC %s",
-        """ A string property that controls the output waveform.""",
+        """ Control the output waveform shape (str).""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
@@ -425,8 +394,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     frequency = Instrument.control(
         "FREQ?",
         "FREQ %f",
-        """ A floating point property that controls the frequency of the output
-        waveform in Hz, depending on the specified function.""",
+        """ Control the waveform frequency in Hz (float). Depends on the specified shape.""",
         validator=strict_range,
         values=[1e-6, 120e6],
         dynamic=True,
@@ -435,8 +403,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     amplitude = Instrument.control(
         "VOLT?",
         "VOLT %f",
-        """ A floating point property that controls the voltage amplitude of the
-        output waveform in V. Depends on the output impedance.""",
+        """ Control the voltage amplitude in Volts (float).""",
         validator=strict_range,
         values=[10e-3, 10],
         dynamic=True,
@@ -445,8 +412,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     amplitude_unit = Instrument.control(
         "VOLT:UNIT?",
         "VOLT:UNIT %s",
-        """ A string property that controls the units of the amplitude. Valid
-        values are VPP (default), VRMS, and DBM.""",
+        """ Control the amplitude units (string, strictly 'VPP', 'VRMS', or 'DBM').""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
         dynamic=True,
@@ -455,10 +421,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     offset = Instrument.control(
         "VOLT:OFFS?",
         "VOLT:OFFS %f",
-        """ A floating point property that controls the voltage offset of the
-        output waveform in V, depending on the set voltage amplitude
-        (maximum offset = (Vmax - voltage) / 2).
-        """,
+        """ Control the voltage offset in Volts (float).""",
         validator=strict_range,
         values=[-4.995, +4.995],
         dynamic=True,
@@ -467,8 +430,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     voltage_high = Instrument.control(
         "VOLT:HIGH?",
         "VOLT:HIGH %f",
-        """ A floating point property that controls the upper voltage of the
-        output waveform in V (must be higher than low voltage by at least 1 mV).""",
+        """ Control the upper voltage level in Volts (float).""",
         validator=strict_range,
         values=[-4.999, 5],
         dynamic=True,
@@ -477,8 +439,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     voltage_low = Instrument.control(
         "VOLT:LOW?",
         "VOLT:LOW %f",
-        """ A floating point property that controls the lower voltage of the
-        output waveform in V (must be lower than high voltage by at least 1 mV).""",
+        """ Control the lower voltage level in Volts (float).""",
         validator=strict_range,
         values=[-5, 4.999],
         dynamic=True,
@@ -487,9 +448,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     phase = Instrument.control(
         "PHAS?",
         "PHAS %f",
-        """ A floating point property that controls the phase of the output
-        waveform in degrees, from -360 degrees to 360 degrees. Not available
-        for arbitrary waveforms or noise.""",
+        """ Control the waveform phase in degrees (float, truncated from -360 to 360).""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -497,10 +456,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     square_dutycycle = Instrument.control(
         "FUNC:SQU:DCYC?",
         "FUNC:SQU:DCYC %f",
-        """ A floating point property that controls the duty cycle of a square
-        waveform function in percent.
-        The duty cycle is limited by the frequency and the minimal pulse. See
-        manual for more details.""",
+        """ Control the square wave duty cycle in percent (float).""",
         validator=strict_range,
         values=[0.01, 99.98],
         dynamic=True,
@@ -509,8 +465,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     ramp_symmetry = Instrument.control(
         "FUNC:RAMP:SYMM?",
         "FUNC:RAMP:SYMM %f",
-        """ A floating point property that controls the symmetry percentage
-        for the ramp waveform, from 0.0% to 100.0%.""",
+        """ Control the ramp waveform symmetry in percent (float, truncated from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -519,10 +474,9 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     pulse_period = Instrument.control(
         "FUNC:PULS:PER?",
         "FUNC:PULS:PER %e",
-        """ A floating point property that controls the period of a pulse
-        waveform function in seconds. Can be set and overwrites the frequency
-        for *all* waveforms. If the period is shorter than the pulse width +
-        the edge time, the edge time and pulse width will be adjusted accordingly. """,
+        """ Control the pulse period in seconds (float). Overwrites frequency.
+        If the period is shorter than the pulse width + the edge time, the edge
+        time and pulse width are adjusted.""",
         validator=strict_range,
         values=[33e-9, 1e6],
         dynamic=True,
@@ -531,9 +485,8 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     pulse_hold = Instrument.control(
         "FUNC:PULS:HOLD?",
         "FUNC:PULS:HOLD %s",
-        """ A string property that controls if either the pulse width or the
-        duty cycle is retained when changing the period or frequency of the
-        waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
+        """ Control whether pulse width or duty cycle is maintained when the
+        period or frequency of the waveform is changed (str).""",
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
         dynamic=True,
@@ -542,8 +495,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     pulse_width = Instrument.control(
         "FUNC:PULS:WIDT?",
         "FUNC:PULS:WIDT %e",
-        """ A floating point property that controls the width of a pulse
-        waveform function in seconds, within a set of restrictions depending on the period.""",
+        """ Control the pulse width in seconds (float).""",
         validator=strict_range,
         values=[16e-9, 1e6],
         dynamic=True,
@@ -552,8 +504,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     pulse_dutycycle = Instrument.control(
         "FUNC:PULS:DCYC?",
         "FUNC:PULS:DCYC %f",
-        """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent, from 0% to 100%.""",
+        """ Control the pulse duty cycle in percent (float, truncated from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -562,9 +513,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     pulse_transition = Instrument.control(
         "FUNC:PULS:TRAN?",
         "FUNC:PULS:TRAN:BOTH %e",
-        """ A floating point property that controls the edge time in
-        seconds for both the rising and falling edges. It is defined as the
-        time between the 10% and 90% thresholds of the edge.""",
+        """ Control the pulse edge time (both rising and falling) in seconds (float).""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
         dynamic=True,
@@ -573,8 +522,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     output = Instrument.control(
         "OUTP?",
         "OUTP %d",
-        """ A boolean property that turns on (True, 'on') or off (False, 'off')
-        the output of the function generator.""",
+        """ Control the output state (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
@@ -584,20 +532,16 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     output_load = Instrument.control(
         "OUTP:LOAD?",
         "OUTP:LOAD %s",
-        """ Sets the expected load resistance (should be the load impedance connected
-        to the output. The output impedance is always 50 Ohm, this setting can be used
-        to correct the displayed voltage for loads unmatched to 50 Ohm.
-        No validator is used since both numeric and string inputs are accepted,
-        thus a value outside the range will not return an error.
-        """,
+        """ Control the expected load resistance in Ohms (str or float). The output impedance
+        is always 50 Ohm, this setting can be used to correct the displayed voltage for
+        loads unmatched to 50 Ohm.""",
         dynamic=True,
     )
 
     burst_state = Instrument.control(
         "BURS:STAT?",
         "BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False).""",
+        """ Control the burst mode state (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -607,8 +551,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     burst_mode = Instrument.control(
         "BURS:MODE?",
         "BURS:MODE %s",
-        """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>.""",
+        """ Control the burst mode type (str, strictly 'TRIG<GERED>' or 'GAT<ED>').""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
         dynamic=True,
@@ -617,8 +560,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     burst_period = Instrument.control(
         "BURS:INT:PER?",
         "BURS:INT:PER %e",
-        """ A floating point property that controls the period of subsequent bursts.
-        Has to follow the equation burst_period > (burst_ncycles / frequency) + 1 µs.""",
+        """ Control the period of subsequent bursts in seconds (float).""",
         validator=strict_range,
         values=[1e-6, 8000],
         dynamic=True,
@@ -627,8 +569,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     burst_ncycles = Instrument.control(
         "BURS:NCYC?",
         "BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. This can be set. """,
+        """ Control the number of cycles to be output when a burst is triggered (int).""",
         validator=strict_range,
         values=range(1, 100000),
         dynamic=True,
@@ -637,17 +578,15 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     arb_file = Instrument.control(
         "FUNC:ARB?",
         "FUNC:ARB %s",
-        """ A string property that selects the arbitrary signal from the volatile
-        memory of the device. String has to match an existing arb signal in volatile
-        memory (set by :meth:`data_arb`).""",
+        """ Control the arbitrary signal to use from the volatile memory of the device.""",
         dynamic=True,
     )
 
     arb_advance = Instrument.control(
         "FUNC:ARB:ADV?",
         "FUNC:ARB:ADV %s",
-        """ A string property that selects how the device advances from data point
-        to data point. Can be set to 'TRIG<GER>' or 'SRAT<E>' (default). """,
+        """ Control how the device advances from data point to data point (str).
+        Can be set to 'TRIG<GER>' or 'SRAT<E>' (default).""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGER", "SRAT", "SRATE"],
     )
@@ -655,8 +594,8 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     arb_filter = Instrument.control(
         "FUNC:ARB:FILT?",
         "FUNC:ARB:FILT %s",
-        """ A string property that selects the filter setting for arbitrary signals.
-        Can be set to 'NORM<AL>', 'STEP' and 'OFF'. """,
+        """ Control the filter setting for arbitrary signals (str).
+        Can be set to 'NORM<AL>', 'STEP' and 'OFF'.""",
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
     )
@@ -696,9 +635,8 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     arb_srate = Instrument.control(
         "FUNC:ARB:SRAT?",
         "FUNC:ARB:SRAT %f",
-        """ An floating point property that sets the sample rate of the currently selected
-        arbitrary signal. Valid values are 1 µSa/s to 250 MSa/s (maximum range, can be lower
-        depending on your device).""",
+        """ Control the sample rate of the currently selected arbitrary signal in Sa/s (float).
+        Valid values range from 1 µSa/s to 250 MSa/s (maximum range, device-dependent).""",
         validator=strict_range,
         values=[1e-6, 250e6],
     )
@@ -811,9 +749,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     trigger_source = Instrument.control(
         "TRIG:SOUR?",
         "TRIG:SOUR %s",
-        """ A string property that controls the trigger source. Valid values
-        are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
-        command).""",
+        """ Control the trigger source (str).""",
         validator=strict_discrete_set,
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
     )
@@ -821,9 +757,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
     ext_trig_out = Instrument.control(
         "OUTP:TRIG?",
         "OUTP:TRIG %d",
-        """ A boolean property that controls whether the trigger out signal is
-        active (True) or not (False). This signal is output from the Ext Trig
-        connector on the rear panel in Burst and Wobbel mode.""",
+        """ Control whether the trigger out signal is active (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
