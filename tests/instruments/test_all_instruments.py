@@ -114,12 +114,7 @@ need_init_communication = [
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
-    "AdvantestR6245",
-    "AdvantestR6246",
-    "Agilent33500",
-    "Agilent33500Channel",
     "Agilent33521A",
-    "Agilent34450A",
     "Agilent8257D",
     "Agilent8722ES",
     "AgilentB1500",
@@ -148,9 +143,6 @@ grandfathered_docstring_instruments = [
     "Keithley6221",
     "Keithley6517B",
     "KeysightDSOX1102G",
-    "LakeShore421",
-    "LakeShoreTemperatureChannel",
-    "LakeShoreHeaterChannel",
     "IPS120_10",
     "ITC503",
     "PS120_10",
