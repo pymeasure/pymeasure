@@ -702,8 +702,7 @@ class Agilent33500(SCPIMixin, Instrument):
 
     display = Instrument.setting(
         "DISP:TEXT '%s'",
-        """ A string property which is displayed on the front panel of
-        the device.""",
+        """ Set text to be displayed on the front panel of the device (string).""",
     )
 
     def clear_display(self):
