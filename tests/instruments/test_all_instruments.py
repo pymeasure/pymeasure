@@ -114,8 +114,6 @@ need_init_communication = [
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
-    "AdvantestR624X",
-    "SMUChannel",  # AdvantestR624X
     "AdvantestR6245",
     "AdvantestR6246",
     "Agilent33500",
