@@ -159,7 +159,6 @@ grandfathered_docstring_instruments = [
     "IPS120_10",
     "ITC503",
     "PS120_10",
-    "ParkerGV6",
     "FSL",
     "SFM",
     "DSP7265",
