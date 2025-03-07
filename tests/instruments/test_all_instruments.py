@@ -120,7 +120,6 @@ grandfathered_docstring_instruments = [
     "SMUChannel",  # AdvantestR624X
     "AdvantestR6245",
     "AdvantestR6246",
-    "Agilent33220A",
     "Agilent33500",
     "Agilent33500Channel",
     "Agilent33521A",
