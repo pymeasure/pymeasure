@@ -56,6 +56,7 @@ class Agilent33500Channel(Channel):
         SIN<USOID>, SQU<ARE>, TRI<ANGLE>, RAMP, PULS<E>, PRBS,  NOIS<E>, ARB, DC. """,
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
+        dynamic=True,
     )
 
     frequency = Instrument.control(
@@ -66,6 +67,7 @@ class Agilent33500Channel(Channel):
         on your device), depending on the specified function. """,
         validator=strict_range,
         values=[1e-6, 120e6],
+        dynamic=True,
     )
 
     amplitude = Instrument.control(
@@ -76,6 +78,7 @@ class Agilent33500Channel(Channel):
         impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
+        dynamic=True,
     )
 
     amplitude_unit = Instrument.control(
@@ -85,6 +88,7 @@ class Agilent33500Channel(Channel):
         values are VPP (default), VRMS, and DBM.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
+        dynamic=True,
     )
 
     offset = Instrument.control(
@@ -96,6 +100,7 @@ class Agilent33500Channel(Channel):
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
+        dynamic=True,
     )
 
     voltage_high = Instrument.control(
@@ -106,6 +111,7 @@ class Agilent33500Channel(Channel):
         voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.999, 5],
+        dynamic=True,
     )
 
     voltage_low = Instrument.control(
@@ -116,6 +122,7 @@ class Agilent33500Channel(Channel):
         voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.999],
+        dynamic=True,
     )
 
     phase = Instrument.control(
@@ -137,6 +144,7 @@ class Agilent33500Channel(Channel):
         16 ns. See manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
+        dynamic=True,
     )
 
     ramp_symmetry = Instrument.control(
@@ -146,6 +154,7 @@ class Agilent33500Channel(Channel):
         for the ramp waveform, from 0.0% to 100.0%.""",
         validator=strict_range,
         values=[0, 100],
+        dynamic=True,
     )
 
     pulse_period = Instrument.control(
@@ -158,6 +167,7 @@ class Agilent33500Channel(Channel):
         width will be adjusted accordingly. """,
         validator=strict_range,
         values=[33e-9, 1e6],
+        dynamic=True,
     )
 
     pulse_hold = Instrument.control(
@@ -168,6 +178,7 @@ class Agilent33500Channel(Channel):
         waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
+        dynamic=True,
     )
 
     pulse_width = Instrument.control(
@@ -178,6 +189,7 @@ class Agilent33500Channel(Channel):
         set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
+        dynamic=True,
     )
 
     pulse_dutycycle = Instrument.control(
@@ -187,6 +199,7 @@ class Agilent33500Channel(Channel):
         waveform function in percent, from 0% to 100%.""",
         validator=strict_range,
         values=[0, 100],
+        dynamic=True,
     )
 
     pulse_transition = Instrument.control(
@@ -198,6 +211,7 @@ class Agilent33500Channel(Channel):
         Valid values are between 8.4 ns to 1 µs.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
+        dynamic=True,
     )
 
     output = Instrument.control(
@@ -208,6 +222,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        dynamic=True,
     )
 
     output_load = Instrument.control(
@@ -220,6 +235,7 @@ class Agilent33500Channel(Channel):
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
         """,
+        dynamic=True,
     )
 
     burst_state = Instrument.control(
@@ -230,6 +246,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        dynamic=True,
     )
 
     burst_mode = Instrument.control(
@@ -239,6 +256,7 @@ class Agilent33500Channel(Channel):
         are: TRIG<GERED>, GAT<ED>.""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+        dynamic=True,
     )
 
     burst_period = Instrument.control(
@@ -249,6 +267,7 @@ class Agilent33500Channel(Channel):
         Valid values are 1 µs to 8000 s.""",
         validator=strict_range,
         values=[1e-6, 8000],
+        dynamic=True,
     )
 
     burst_ncycles = Instrument.control(
@@ -259,6 +278,7 @@ class Agilent33500Channel(Channel):
         set. """,
         validator=strict_range,
         values=range(1, 100000),
+        dynamic=True,
     )
 
     arb_file = Instrument.control(
@@ -267,6 +287,7 @@ class Agilent33500Channel(Channel):
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
         memory (set by :meth:`data_arb`).""",
+        dynamic=True,
     )
 
     arb_advance = Instrument.control(
@@ -410,6 +431,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         SIN<USOID>, SQU<ARE>, TRI<ANGLE>, RAMP, PULS<E>, PRBS,  NOIS<E>, ARB, DC. """,
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
+        dynamic=True,
     )
 
     frequency = Instrument.control(
@@ -420,6 +442,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         on your device), depending on the specified function.""",
         validator=strict_range,
         values=[1e-6, 120e6],
+        dynamic=True,
     )
 
     amplitude = Instrument.control(
@@ -430,6 +453,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         impedance.""",
         validator=strict_range,
         values=[10e-3, 10],
+        dynamic=True,
     )
 
     amplitude_unit = Instrument.control(
@@ -439,6 +463,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         values are VPP (default), VRMS, and DBM.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
+        dynamic=True,
     )
 
     offset = Instrument.control(
@@ -450,6 +475,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         """,
         validator=strict_range,
         values=[-4.995, +4.995],
+        dynamic=True,
     )
 
     voltage_high = Instrument.control(
@@ -460,6 +486,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-4.999, 5],
+        dynamic=True,
     )
 
     voltage_low = Instrument.control(
@@ -470,6 +497,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         voltage by at least 1 mV).""",
         validator=strict_range,
         values=[-5, 4.999],
+        dynamic=True,
     )
 
     phase = Instrument.control(
@@ -491,6 +519,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         16 ns. See manual for more details.""",
         validator=strict_range,
         values=[0.01, 99.98],
+        dynamic=True,
     )
 
     ramp_symmetry = Instrument.control(
@@ -500,6 +529,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         for the ramp waveform, from 0.0% to 100.0%.""",
         validator=strict_range,
         values=[0, 100],
+        dynamic=True,
     )
 
     pulse_period = Instrument.control(
@@ -512,6 +542,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         width will be adjusted accordingly. """,
         validator=strict_range,
         values=[33e-9, 1e6],
+        dynamic=True,
     )
 
     pulse_hold = Instrument.control(
@@ -522,6 +553,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
+        dynamic=True,
     )
 
     pulse_width = Instrument.control(
@@ -532,6 +564,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         set of restrictions depending on the period.""",
         validator=strict_range,
         values=[16e-9, 1e6],
+        dynamic=True,
     )
 
     pulse_dutycycle = Instrument.control(
@@ -541,6 +574,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         waveform function in percent, from 0% to 100%.""",
         validator=strict_range,
         values=[0, 100],
+        dynamic=True,
     )
 
     pulse_transition = Instrument.control(
@@ -552,6 +586,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         Valid values are between 8.4 ns to 1 µs.""",
         validator=strict_range,
         values=[8.4e-9, 1e-6],
+        dynamic=True,
     )
 
     output = Instrument.control(
@@ -562,6 +597,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        dynamic=True,
     )
 
     output_load = Instrument.control(
@@ -574,6 +610,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         No validator is used since both numeric and string inputs are accepted,
         thus a value outside the range will not return an error.
         """,
+        dynamic=True,
     )
 
     burst_state = Instrument.control(
@@ -584,6 +621,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        dynamic=True,
     )
 
     burst_mode = Instrument.control(
@@ -593,6 +631,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         are: TRIG<GERED>, GAT<ED>.""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
+        dynamic=True,
     )
 
     burst_period = Instrument.control(
@@ -603,6 +642,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         Valid values are 1 µs to 8000 s.""",
         validator=strict_range,
         values=[1e-6, 8000],
+        dynamic=True,
     )
 
     burst_ncycles = Instrument.control(
@@ -613,6 +653,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         set. """,
         validator=strict_range,
         values=range(1, 100000),
+        dynamic=True,
     )
 
     arb_file = Instrument.control(
@@ -621,6 +662,7 @@ class Agilent33500(SCPIUnknownMixin, Instrument):
         """ A string property that selects the arbitrary signal from the volatile
         memory of the device. String has to match an existing arb signal in volatile
         memory (set by :meth:`data_arb`).""",
+        dynamic=True,
     )
 
     arb_advance = Instrument.control(
