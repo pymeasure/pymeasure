@@ -129,7 +129,6 @@ grandfathered_docstring_instruments = [
     "AgilentB1500",
     "AgilentE4408B",
     "AgilentE4980",
-    "Ametek7270",
     "DPSeriesMotorController",
     "AnritsuMS2090A",
     "SM7045D",
