@@ -115,7 +115,7 @@ class Agilent33500Channel(Channel):
     phase = Instrument.control(
         "SOUR{ch}:PHAS?",
         "SOUR{ch}:PHAS %f",
-        """ Control the waveform phase in degrees (float, truncated from -360 to 360).""",
+        """ Control the waveform phase in degrees (float, from -360 to 360).""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -132,7 +132,7 @@ class Agilent33500Channel(Channel):
     ramp_symmetry = Instrument.control(
         "SOUR{ch}:FUNC:RAMP:SYMM?",
         "SOUR{ch}:FUNC:RAMP:SYMM %f",
-        """ Control the ramp waveform symmetry in percent (float, truncated from 0 to 100).""",
+        """ Control the ramp waveform symmetry in percent (float, from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -171,7 +171,7 @@ class Agilent33500Channel(Channel):
     pulse_dutycycle = Instrument.control(
         "SOUR{ch}:FUNC:PULS:DCYC?",
         "SOUR{ch}:FUNC:PULS:DCYC %f",
-        """ Control the pulse duty cycle in percent (float, truncated from 0 to 100).""",
+        """ Control the pulse duty cycle in percent (float, from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -448,7 +448,7 @@ class Agilent33500(SCPIMixin, Instrument):
     phase = Instrument.control(
         "PHAS?",
         "PHAS %f",
-        """ Control the waveform phase in degrees (float, truncated from -360 to 360).""",
+        """ Control the waveform phase in degrees (float, from -360 to 360).""",
         validator=strict_range,
         values=[-360, 360],
     )
@@ -465,7 +465,7 @@ class Agilent33500(SCPIMixin, Instrument):
     ramp_symmetry = Instrument.control(
         "FUNC:RAMP:SYMM?",
         "FUNC:RAMP:SYMM %f",
-        """ Control the ramp waveform symmetry in percent (float, truncated from 0 to 100).""",
+        """ Control the ramp waveform symmetry in percent (float, from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
@@ -504,7 +504,7 @@ class Agilent33500(SCPIMixin, Instrument):
     pulse_dutycycle = Instrument.control(
         "FUNC:PULS:DCYC?",
         "FUNC:PULS:DCYC %f",
-        """ Control the pulse duty cycle in percent (float, truncated from 0 to 100).""",
+        """ Control the pulse duty cycle in percent (float, from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
         dynamic=True,
