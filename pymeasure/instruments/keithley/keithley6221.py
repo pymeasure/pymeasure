@@ -93,13 +93,12 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True
     )
 
-    shield_connection = Instrument.control(
+    shield_to_guard_enabled = Instrument.control(
         ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
-        """ A string property that controls
-        to whom the shield is connected, default to 'output-low'.
-        Valid values are 'guard' and 'output-low'. """,
-        validator=strict_discrete_set,
-        values={"guard": "GUARd", "output-low": "OLOW"},
+        """ Control if shield is connected to the guard(boolean).
+        
+        If not, the shield is connected to the output-low.""",
+        values={True: "GUAR", False: "OLOW"},
         map_values=True
     )
 
