@@ -101,7 +101,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     shield_to_guard_enabled = Instrument.control(
         ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
         """ Control if shield is connected to the guard(boolean).
-        
+
         If not, the shield is connected to the output-low.""",
         values={True: "GUAR", False: "OLOW"},
         map_values=True
@@ -174,8 +174,9 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     delta_high_source = Instrument.control(
         ":SOUR:DELT:HIGH?", ":SOUR:DELT:HIGH %g",
         """Control the delta high source value in A (float strictly from 0 to 0.105).
-        
-        Set high source value will automatically set the low source value to minus the high source value.""",
+
+        Set high source value will automatically set the low source value 
+        to minus the high source value.""",
         validator=strict_range,
         values=[0, 0.105]
     )
@@ -199,14 +200,16 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_cycles = Instrument.control(
         ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
-        """Control the number of cycles to run for the delta measurements (integer strictly from 1 to 65536, or "INF").""",
+        """Control the number of cycles to run for the delta measurements 
+        (integer strictly from 1 to 65536, or "INF").""",
         validator=joined_validators(strict_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
     )
 
     delta_measurement_sets = Instrument.control(
         ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
-        """Control the number of measurement sets to repeat for delta measurements (integer strictly from 1 to 65536, or "INF").""",
+        """Control the number of measurement sets to repeat for delta measurements 
+        (integer strictly from 1 to 65536, or "INF").""",
         validator=joined_validators(strict_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
     )
@@ -216,7 +219,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         """Control if compliance abort is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process={1:"ON", 0:"OFF"}.get
+        get_process={1: "ON", 0: "OFF"}.get
     )
 
     delta_cold_switch_enabled = Instrument.control(
@@ -224,7 +227,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         """Control if cold switching mode is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process={1:"ON", 0:"OFF"}.get
+        get_process={1: "ON", 0: "OFF"}.get
     )
 
     delta_buffer_points = Instrument.control(
