@@ -211,14 +211,14 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         values=([1, 65536], ["INF"]),
     )
 
-    delta_compliance_abort = Instrument.control(
+    delta_compliance_abort_enabled = Instrument.control(
         ":SOUR:DELT:CAB?", ":SOUR:DELT:CAB %s",
         """Control if compliance abort is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
         map_values=True,
     )
 
-    delta_cold_switch = Instrument.control(
+    delta_cold_switch_enabled = Instrument.control(
         ":SOUR:DELT:CSW?", ":SOUR:DELT:CSW %s",
         """Control if cold switching mode is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
@@ -251,12 +251,12 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         """Get the latest delta reading results from 2182/2182A."""
     )
 
-    delta_recall = Instrument.measurement(
+    delta_values = Instrument.measurement(
         ":TRAC:DATA?",
         """Get delta sense readings stored in 6221 buffer."""
     )
 
-    delta_verify = Instrument.measurement(
+    delta_connected = Instrument.measurement(
         ":SOUR:DELT:NVPR?",
         """Get connection status to 2182A.""",
         cast=bool,
