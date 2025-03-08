@@ -903,7 +903,7 @@ class VSU(HpMeasurementChannel):
 # SWEEP VARIABLES
 #################
 
-ys
+
 def valid_iv(channel_mode, voltagevalues, currentvalues):
     if channel_mode == 'V':
         values = voltagevalues
