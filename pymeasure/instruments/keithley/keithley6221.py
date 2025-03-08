@@ -175,7 +175,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:DELT:HIGH?", ":SOUR:DELT:HIGH %g",
         """Control the delta high source value in A (float strictly from 0 to 0.105).
 
-        Set high source value will automatically set the low source value 
+        Set high source value will automatically set the low source value
         to minus the high source value.""",
         validator=strict_range,
         values=[0, 0.105]
@@ -200,7 +200,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_cycles = Instrument.control(
         ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
-        """Control the number of cycles to run for the delta measurements 
+        """Control the number of cycles to run for the delta measurements
         (integer strictly from 1 to 65536, or "INF").""",
         validator=joined_validators(strict_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
@@ -208,7 +208,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     delta_measurement_sets = Instrument.control(
         ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
-        """Control the number of measurement sets to repeat for delta measurements 
+        """Control the number of measurement sets to repeat for delta measurements
         (integer strictly from 1 to 65536, or "INF").""",
         validator=joined_validators(strict_range, strict_discrete_set),
         values=([1, 65536], ["INF"]),
