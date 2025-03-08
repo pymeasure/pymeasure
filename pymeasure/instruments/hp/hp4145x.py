@@ -903,6 +903,277 @@ class VSU(HpMeasurementChannel):
 # SWEEP VARIABLES
 #################
 
+class VARX(Channel):
+    """ Base class to define sweep variable settings."""
+
+    def __init__(self, parent, id, **kwargs):
+        super().__init__(
+            parent,
+            id.upper(),
+            **kwargs
+        )
+
+        self._start = 0
+        self._stop = 0
+        self._step = 0
+
+        self._sweep_mode = 'LINEAR'
+        self._sweep_modes = {'LINEAR': 1, 'LOG10': 2, 'LOG25': 3, 'LOG50': 4}
+
+        self._channel_mode = "V"
+        if self.id == 1:
+            self._channel_modes = {'V': 'VR', 'I': 'IR'}
+        else:
+            self._channel_modes = {'V': 'VP', 'I': 'IP'}
+        self._compliance = 0
+
+        self.manual_flush = False
+        self.disabled = True
+
+    @property
+    def channel_mode(self):
+        """Control the channel mode."""
+        raise LookupError("Property can't be read")
+
+    @channel_mode.setter
+    def channel_mode(self, value):
+        self._channel_mode = strict_discrete_set(value, self._source_modes)
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    @property
+    def start(self):
+        """
+        Set the start value for this sweep axis.
+
+        .. code-block:: python
+
+            instr.var1.start = 0
+        """
+        raise LookupError("Property can not be read.")
+
+    @start.setter
+    def start(self, value):
+        self._start = value
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    @property
+    def step(self):
+        """
+        Set the step value for this sweep axis. Not applicable with :attr:`sweep_mode` != 'LINEAR'
+
+        .. code-block:: python
+
+            instr.var1.step = 0.1
+        """
+        raise LookupError("Property can not be read.")
+
+    @step.setter
+    def step(self, value):
+        self._step = value
+
+        self.disabled = False
+
+        if self._sweep_mode != 'LINEAR':
+            raise RuntimeError("Step not allowed with logarithmic sweep modes.")
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    @property
+    def compliance(self):
+        """Control the sweep COMPLIANCE value. Either current or voltage depending on the set
+        :attr:`channel_function`.
+
+        .. code-block:: python
+
+            instr.var1.compliance = 0.1
+        """
+        raise LookupError("Property can not be read.")
+
+    @compliance.setter
+    def compliance(self, value):
+        self._compliance = value
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    def flush_source_setup(self):
+        """
+        Flushes the channel definition manually in case the :attr:`manual_flush` option is set.
+
+        Not applicable in 'USER_MODE'.
+        """
+        pass
+
+
+class VAR1(VARX):
+    """ Class to handle all the specific definitions needed for VAR1.
+    Most COMon methods are inherited from base class.
+    """
+
+    def __init__(self, parent, **kwargs):
+        super().__init__(
+            parent,
+            "VAR1",
+            **kwargs
+        )
+
+    @property
+    def sweep_mode(self):
+        """
+        Set the sweep mode for the respective variable 'LINEAR', 'LOG10', 'LOG25' and 'LOG50' are
+        allowed.
+        """
+        raise LookupError("Property can not be read.")
+
+    @sweep_mode.setter
+    def sweep_mode(self, value):
+        self._sweep_mode = strict_discrete_set(value, self._sweep_modes)
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    @property
+    def stop(self):
+        """
+        Set the stop value for this sweep axis.
+        """
+        raise LookupError("Property can not be read.")
+
+    @stop.setter
+    def stop(self, value):
+        self._stop = value
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
+
+    def flush_source_setup(self):
+        """
+        Flushes the channel definition manually in case the :attr:`manual_flush` option is set.
+
+        Not applicable in 'USER_MODE'.
+        """
+        if not self.disabled:
+            if self._sweep_mode == self._sweep_modes['LINEAR']:
+                self.write(self.insert_id("SS %s%d,%f,%f,%f,%f" %
+                                          (self._channel_modes[self._channel_mode],
+                                           self._sweep_modes[self._sweep_mode],
+                                           self._start,
+                                           self._stop,
+                                           self._step,
+                                           self._compliance)))
+            else:
+                self.write(self.insert_id("SS %s%d,%f,%f,%f" %
+                                          (self._channel_modes[self._channel_mode],
+                                           self._sweep_modes[self._sweep_mode],
+                                           self._start,
+                                           self._stop,
+                                           self._compliance)))
+            self.check_set_errors()
+
+
+class VAR2(VARX):
+    """ Class to handle all the specific definitions needed for VAR2.
+    COMon methods are imported from base class.
+    """
+
+    def __init__(self, adapter, **kwargs):
+        super().__init__(
+            adapter,
+            "VAR2",
+            **kwargs
+        )
+
+    def flush_source_setup(self):
+        """
+        Flushes the channel definition manually in case the :attr:`manual_flush` option is set.
+
+        Not applicable in 'USER_MODE'.
+        """
+        if not self.disabled:
+            self.write(f"SS {self._channel_modes[self._channel_mode]}{self._start},"
+                       f"{self._step},{self._compliance}")
+            self.check_set_errors()
+
+
+class VARD(Channel):
+    """ Class to handle all the definitions needed for VARD.
+    VARD is always defined in relation to VAR1.
+    """
+
+    def __init__(self, parent, id="VARD", **kwargs):
+        super().__init__(
+            parent,
+            id,
+            **kwargs
+        )
+
+    offset = Instrument.setting(
+        "FS %f",
+        """
+        Control the OFFSET value of VARD.
+        For each step of sweep, the output values of VAR1' are determined by the
+        following equation: VARD = VAR1 + OFFSet
+        You use this COMand only if there is an SMU or VSU whose function is VARD.
+
+        .. code-block:: python
+
+            instr.vard.offset = 1
+        """)
+
+    ratio = Instrument.setting(
+        "RT %f",
+        """
+        Control the RATIO of VAR1'.
+        For each step of sweep, the output values of VAR1' are determined by the
+        following equation: VAR1’ = VAR1 * RATio
+        You use this COMand only if there is an SMU or VSU whose function
+        (FCTN) is VAR1'.
+
+        .. code-block:: python
+
+            instr.vard.ratio = 1
+        """
+    )
+
+    @property
+    def compliance(self):
+        """Control the sweep COMPLIANCE value of VARD.
+
+        .. code-block:: python
+
+            instr.vard.compliance = 0.1
+        """
+        value = self.ask(":PAGE:MEAS:VARD:COMP?")
+        self.check_errors()
+        return value
+
 
 def valid_iv(channel_mode, voltagevalues, currentvalues):
     if channel_mode == 'V':
