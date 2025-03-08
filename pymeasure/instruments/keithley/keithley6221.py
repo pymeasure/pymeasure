@@ -216,6 +216,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         """Control if compliance abort is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
         map_values=True,
+        get_process={1:"ON", 0:"OFF"}.get
     )
 
     delta_cold_switch_enabled = Instrument.control(
@@ -223,6 +224,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         """Control if cold switching mode is enabled (boolean).""",
         values={True: "ON", False: "OFF"},
         map_values=True,
+        get_process={1:"ON", 0:"OFF"}.get
     )
 
     delta_buffer_points = Instrument.control(
