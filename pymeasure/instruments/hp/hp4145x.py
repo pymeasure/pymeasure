@@ -687,7 +687,7 @@ class HpMeasurementChannel(Channel):
     @property
     def current(self):
         """
-        Controls the output current of on of the SMU channels.
+        Control the output current of on of the SMU channels.
         Automatically puts the SMU into force current mode once set.
 
         .. code-block:: python
@@ -849,6 +849,9 @@ class SMU(HpMeasurementChannel):
 
     @property
     def voltage(self):
+        """
+        Control the output voltage in 'USER_MODE'.
+        """
         return super().voltage
 
     @voltage.setter
@@ -858,6 +861,9 @@ class SMU(HpMeasurementChannel):
 
     @property
     def current(self):
+        """
+        Control the output current in 'USER_MODE'.
+        """
         return super().current
 
     @current.setter
