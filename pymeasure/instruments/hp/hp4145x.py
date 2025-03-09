@@ -24,7 +24,7 @@
 import time
 import os
 import json
-from enum import IntEnum
+from enum import IntFlag
 
 import numpy as np
 import pandas as pd
@@ -74,7 +74,7 @@ def check_errors_user_mode_value(cmd_str):
     return value
 
 
-class Status(IntEnum):
+class Status(IntFlag):
     DATA_READY = 0b00000001
     SYNTAX_ERROR = 0b00000010
     END_STATUS = 0b00000100
@@ -178,6 +178,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
 
     def __init__(self, adapter, name="hp 4155/4156 Semiconductor Parameter Analyzer",
                  **kwargs):
+        kwargs.setdefault('timeout', 100000)
         super().__init__(
             adapter,
             name,
@@ -239,8 +240,8 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         Flush the channel definitions of all sub channels.
         Only required with :attr:`manual_flush` True.
         """
-        self.VAR1.flush_source_setup()
-        self.VAR2.flush_source_setup()
+        self.var1.flush_source_setup()
+        self.var2.flush_source_setup()
         self.smu1.flush_source_setup()
         self.smu2.flush_source_setup()
         self.smu3.flush_source_setup()
@@ -292,6 +293,24 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         values=np.arange(0, 650, 0.01),
         check_set_errors=True
     )
+
+    auto_calibrate = Instrument.setting(
+        "CA%d",
+        """
+        Set the instrument to automatically calibrate internally every 15minutes.
+        """,
+        values=[True, False],
+        validator=strict_discrete_set,
+        check_set_errors=True
+    )
+
+    def self_test(self):
+        """
+        Execute the self test and return pass/fail.
+        """
+        self.write("SF")
+        status = self.status
+        return (not (status & Status.SELF_TEST_FAIL)) and (status & Status.END_STATUS)
 
     def stop(self):
         """Stop the ongoing measurement.
@@ -372,6 +391,35 @@ class HP4145x(SCPIUnknownMixin, Instrument):
                 setattr(obj, setting, value)
                 time.sleep(0.1)
 
+    def select_graphics_mode(self, mode, **kwargs):
+        """
+        Selects and configures the respective graphics mode.
+
+        For mode == 'MATRIX' provide parameter 'channel_name'.
+        """
+
+        if mode != "MATRIX":
+            raise ValueError("No graphics mode apart of matrix is supported")
+
+        if mode == "MATRIX":
+            channel_name = kwargs.get("channel_name")
+            self.write(f"SM DM3 MX '{channel_name}'")
+
+    @property
+    def data_ready_srq(self):
+        """
+        Set the data ready enablement of the bit of the status byte.
+        """
+        raise LookupError("Property can not be read.")
+
+    @data_ready_srq.setter
+    def data_ready_srq(self, value):
+        value = strict_discrete_set(value, [True, False])
+        self.write("DR%d" % value)
+        # retrieve status once
+        # (instrument issues for unknown reasons returns illegal program sometimes)
+        self.adapter.connection.read_stb()
+
     def get_data(self, name, number=1, path=None):
         """
         Return the dataframe of values for the given variable name.
@@ -384,11 +432,13 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         If you provide a :code:`number=n` it will stack the columns of
         into a 2D data frame with 'n' number of columns.
 
+        Requires the analyzer to be in MATRIX grahpics mode :attr:`select_grahpics_mode`.
+
         :param path: Path for optional data export to CSV.
         :param number: Number of columns for VAR2 usage.
         :param name: Name of axis to dump
         """
-        self.write("DO '%s'" % name)
+        self.write(f"DO '{name}'")
 
         result = self.read().replace("\r", "").replace("\n", "")
         removed_status = filter(None, result.replace("N", "").replace("C", "")
@@ -447,7 +497,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
     def check_errors(self):
         errors = []
         error_status = [Status.EMERGENCY, Status.SYNTAX_ERROR, Status.BUSY, Status.ILLEGAL_PROGRAM]
-        while (errors[0].value & Status.EMERGENCY.value) is False if len(errors) > 0 else True:
+        while (Status.EMERGENCY not in errors[0]) is False if len(errors) > 0 else True:
             # mask out RQS (always set with other bits)
             status = self.status & ~Status.RQS
             if any(es & status for es in error_status):
@@ -909,7 +959,7 @@ class VARX(Channel):
     def __init__(self, parent, id, **kwargs):
         super().__init__(
             parent,
-            id.upper(),
+            id,
             **kwargs
         )
 
@@ -937,7 +987,7 @@ class VARX(Channel):
 
     @channel_mode.setter
     def channel_mode(self, value):
-        self._channel_mode = strict_discrete_set(value, self._source_modes)
+        self._channel_mode = strict_discrete_set(value, self._channel_modes)
 
         self.disabled = False
 
@@ -1032,7 +1082,7 @@ class VAR1(VARX):
     def __init__(self, parent, **kwargs):
         super().__init__(
             parent,
-            "VAR1",
+            1,
             **kwargs
         )
 
@@ -1080,21 +1130,14 @@ class VAR1(VARX):
         Not applicable in 'USER_MODE'.
         """
         if not self.disabled:
-            if self._sweep_mode == self._sweep_modes['LINEAR']:
-                self.write(self.insert_id("SS %s%d,%f,%f,%f,%f" %
-                                          (self._channel_modes[self._channel_mode],
-                                           self._sweep_modes[self._sweep_mode],
-                                           self._start,
-                                           self._stop,
-                                           self._step,
-                                           self._compliance)))
+            if self._sweep_mode == "LINEAR":
+                self.write(self.insert_id(f"SS {self._channel_modes[self._channel_mode]}"
+                                          f"{self._sweep_modes[self._sweep_mode]},{self._start:f},"
+                                          f"{self._stop:f},{self._step:f},{self._compliance}"))
             else:
-                self.write(self.insert_id("SS %s%d,%f,%f,%f" %
-                                          (self._channel_modes[self._channel_mode],
-                                           self._sweep_modes[self._sweep_mode],
-                                           self._start,
-                                           self._stop,
-                                           self._compliance)))
+                self.write(self.insert_id(f"SS {self._channel_modes[self._channel_mode]}"
+                                          f"{self._sweep_modes[self._sweep_mode]},{self._start:f},"
+                                          f"{self._stop:f},{self._compliance}"))
             self.check_set_errors()
 
 
@@ -1106,9 +1149,10 @@ class VAR2(VARX):
     def __init__(self, adapter, **kwargs):
         super().__init__(
             adapter,
-            "VAR2",
+            2,
             **kwargs
         )
+        self._steps = 1
 
     def flush_source_setup(self):
         """
@@ -1117,9 +1161,27 @@ class VAR2(VARX):
         Not applicable in 'USER_MODE'.
         """
         if not self.disabled:
-            self.write(f"SS {self._channel_modes[self._channel_mode]}{self._start},"
-                       f"{self._step},{self._compliance}")
+            self.write(f"SS {self._channel_modes[self._channel_mode]}{self._start:f},"
+                       f"{self._step:f},{self._steps:f},{self._compliance:f}")
             self.check_set_errors()
+
+    @property
+    def steps(self):
+        """
+        Set the steps value for this sweep axis.
+        """
+        raise LookupError("Property can not be read.")
+
+    @steps.setter
+    def steps(self, value):
+        self._steps = value
+
+        self.disabled = False
+
+        if not self.manual_flush:
+            self.flush_source_setup()
+
+        self.check_set_errors()
 
 
 class VARD(Channel):
@@ -1139,7 +1201,7 @@ class VARD(Channel):
         """
         Control the OFFSET value of VARD.
         For each step of sweep, the output values of VAR1' are determined by the
-        following equation: VARD = VAR1 + OFFSet
+        following equation: VAR1' = VAR1 + OFFSet
         You use this COMand only if there is an SMU or VSU whose function is VARD.
 
         .. code-block:: python
@@ -1152,7 +1214,7 @@ class VARD(Channel):
         """
         Control the RATIO of VAR1'.
         For each step of sweep, the output values of VAR1' are determined by the
-        following equation: VAR1’ = VAR1 * RATio
+        following equation: VAR1' = VAR1 * RATio
         You use this COMand only if there is an SMU or VSU whose function
         (FCTN) is VAR1'.
 
@@ -1161,18 +1223,6 @@ class VARD(Channel):
             instr.vard.ratio = 1
         """
     )
-
-    @property
-    def compliance(self):
-        """Control the sweep COMPLIANCE value of VARD.
-
-        .. code-block:: python
-
-            instr.vard.compliance = 0.1
-        """
-        value = self.ask(":PAGE:MEAS:VARD:COMP?")
-        self.check_errors()
-        return value
 
 
 def valid_iv(channel_mode, voltagevalues, currentvalues):

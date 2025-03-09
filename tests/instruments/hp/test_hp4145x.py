@@ -24,36 +24,10 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-
 from pymeasure.instruments.hp import HP4145x
 
-
-@pytest.mark.parametrize("channel", range(1, 5))
-def test_voltage_and_current_compliance(channel):
-    with expected_protocol(
-            HP4145x,
-            [
-                ("US", None),
-                ("DV %s, 0, %f, %f" % (channel, 99.9, 10e-3), None)
-            ],
-    ) as instr:
-        instr.mode = 'USER_MODE'
-        getattr(instr, f"SMU{channel}").current_compliance = 10e-3
-        getattr(instr, f"SMU{channel}").voltage = 99.9
-
-
-@pytest.mark.parametrize("channel", range(1, 5))
-def test_current_and_voltage_compliance(channel):
-    with expected_protocol(
-            HP4145x,
-            [
-                ("US", None),
-                ("DI %s, 0, %f, %f" % (channel, 10e-3, 10), None)
-            ],
-    ) as instr:
-        instr.mode = 'USER_MODE'
-        getattr(instr, f"SMU{channel}").voltage_compliance = 10
-        getattr(instr, f"SMU{channel}").current = 10e-3
+import numpy as np
+import pandas as pd
 
 
 @pytest.mark.parametrize("integ_time, value", [("SHORT", 1), ("MEDIUM", 2), ("LONG", 3)])
@@ -78,12 +52,12 @@ def test_auto_calibrate(value):
         instr.auto_calibrate = value
 
 
-@pytest.mark.parametrize("source_function, source_function_id",
-                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
-@pytest.mark.parametrize("source_mode, source_mode_id", [("V", 1), ("I", 2), ("COM", 3)])
+@pytest.mark.parametrize("channel_function, channel_function_id",
+                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VARD", 4)])
+@pytest.mark.parametrize("channel_mode, channel_mode_id", [("V", 1), ("I", 2), ("COM", 3)])
 @pytest.mark.parametrize("channel", range(1, 5))
-def test_channel_mode_and_channel_function(channel, source_mode, source_mode_id, source_function,
-                                           source_function_id):
+def test_channel_mode_and_channel_function(channel, channel_mode, channel_mode_id, channel_function,
+                                           channel_function_id):
     with expected_protocol(
             HP4145x,
             [
@@ -92,19 +66,19 @@ def test_channel_mode_and_channel_function(channel, source_mode, source_mode_id,
                 ("DE CH %d, '%s', '%s', %d, %d" %
                  (channel, "VBE", "IB", 3, 3), None),
                 ("DE CH %d, '%s', '%s', %d, %d" %
-                 (channel, "VBE", "IB", 3, source_function_id), None),
+                 (channel, "VBE", "IB", 3, channel_function_id), None),
                 ("DE CH %d, '%s', '%s', %d, %d" %
-                 (channel, "VBE", "IB", source_mode_id, source_function_id), None)
+                 (channel, "VBE", "IB", channel_mode_id, channel_function_id), None)
             ],
     ) as instr:
-        getattr(instr, f"SMU{channel}").voltage_name = "VBE"
-        getattr(instr, f"SMU{channel}").current_name = "IB"
-        getattr(instr, f"SMU{channel}").channel_function = source_function
-        getattr(instr, f"SMU{channel}").channel_mode = source_mode
+        getattr(instr, f"smu{channel}").voltage_name = "VBE"
+        getattr(instr, f"smu{channel}").current_name = "IB"
+        getattr(instr, f"smu{channel}").channel_function = channel_function
+        getattr(instr, f"smu{channel}").channel_mode = channel_mode
 
 
 @pytest.mark.parametrize("source_function, source_function_id",
-                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VAR1'", 4)])
+                         [("VAR1", 1), ("VAR2", 2), ("CONST", 3), ("VARD", 4)])
 @pytest.mark.parametrize("channel", range(1, 3))
 def test_channel_function_vs(channel, source_function, source_function_id):
     with expected_protocol(
@@ -114,8 +88,8 @@ def test_channel_function_vs(channel, source_function, source_function_id):
                 ("DE VS %d, '%s', %d" % (channel, "VBE", source_function_id), None),
             ],
     ) as instr:
-        getattr(instr, f"VS{channel}").voltage_name = "VBE"
-        getattr(instr, f"VS{channel}").channel_function = source_function
+        getattr(instr, f"vsu{channel}").voltage_name = "VBE"
+        getattr(instr, f"vsu{channel}").channel_function = source_function
 
 
 @pytest.mark.parametrize("channel", range(1, 3))
@@ -126,7 +100,7 @@ def test_channel_function_vm(channel):
                 ("DE VM %d, '%s'" % (channel, "VBE"), None)
             ],
     ) as instr:
-        getattr(instr, f"VM{channel}").voltage_name = "VBE"
+        getattr(instr, f"vmu{channel}").voltage_name = "VBE"
 
 
 @pytest.mark.parametrize("channel", range(1, 5))
@@ -137,7 +111,7 @@ def test_smu_disabled(channel):
                 ("DE CH %d" % (channel), None)
             ],
     ) as instr:
-        getattr(instr, f"SMU{channel}").disabled = True
+        getattr(instr, f"smu{channel}").disable()
 
 
 @pytest.mark.parametrize("channel", range(1, 3))
@@ -148,7 +122,7 @@ def test_vm_disabled(channel):
                 ("DE VM %d" % (channel), None)
             ],
     ) as instr:
-        getattr(instr, f"VM{channel}").disabled = True
+        getattr(instr, f"vmu{channel}").disable()
 
 
 @pytest.mark.parametrize("channel", range(1, 3))
@@ -159,14 +133,14 @@ def test_vs_disabled(channel):
                 ("DE VS %d" % (channel), None)
             ],
     ) as instr:
-        getattr(instr, f"VS{channel}").disabled = True
+        getattr(instr, f"vsu{channel}").disable()
 
 
-def test_get_trace():
+def test_get_data():
     with expected_protocol(
             HP4145x,
             [
                 ("DO 'IC'", "N 54.00,N 55.00")
             ],
     ) as instr:
-        assert instr.get_trace('IC') == [54.00, 55.00]
+        assert instr.get_data('IC').equals(pd.DataFrame(data=np.array([54.00, 55.00]), index=None))
