@@ -253,7 +253,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         "%s",
         """Set the integration time.
 
-        - Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`
+        Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`
         for 256 averages
 
         .. code-block:: python
@@ -775,14 +775,9 @@ class SMU(HpMeasurementChannel):
 
         You use this COMand only if :meth:`~.SMU.channel_function`
         is :code:`CONST` and also :meth:`~.SMU.channel_mode` should not be :code:`COM`.
-
-        :param const_value: Voltage in (-100V, 100V) and current in (-100mA, 100mA). Voltage or
-        current depends on if :meth:`~.SMU.channel_mode` is set to :code:`V` or :code:`I`.
-
         .. code-block:: python
 
             instr.smu1.constant_value = 1
-
         """
         raise LookupError("Property can't be read")
 
