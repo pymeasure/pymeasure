@@ -420,7 +420,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         # (instrument issues for unknown reasons returns illegal program sometimes)
         self.adapter.connection.read_stb()
 
-    def get_data(self, name, number=1, path=None):
+    def get_data(self, name, number=1, header=None, index=None, path=None):
         """
         Return the dataframe of values for the given variable name.
         Name is the same as defined in the channel definition.
@@ -435,8 +435,9 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         Requires the analyzer to be in MATRIX grahpics mode :attr:`select_grahpics_mode`.
 
         :param path: Path for optional data export to CSV.
-        :param number: Number of columns for VAR2 usage.
         :param name: Name of axis to dump
+        :param header: List of headers in case multiple values are given (overwrites number)
+        :param number: Number of columns for VAR2 usage.
         """
         self.write(f"DO '{name}'")
 
@@ -446,15 +447,20 @@ class HP4145x(SCPIUnknownMixin, Instrument):
 
         data = np.array([float(x) for x in removed_status])
 
-        if number != 1:
-            data.reshape(int(len(data) / number), number)
+        if number != 1 and header is None:
+            data = data.reshape(number, int(len(data) / number))
+            header = np.arange(number)
+            df = pd.DataFrame(data=dict(zip(header, data)))
 
-        df = pd.DataFrame(data=data, index=None)
+        if header is not None:
+            data = data.reshape(len(header), int(len(data) / len(header)))
+            df = pd.DataFrame(data=dict(zip(header, data)), index=index)
+
         if path is not None:
             _, ext = os.path.splitext(path)
             if ext != ".csv":
                 path = path + ".csv"
-            df.to_csv(path, index=False)
+            df.to_csv(path, index=True)
 
         return df
 
