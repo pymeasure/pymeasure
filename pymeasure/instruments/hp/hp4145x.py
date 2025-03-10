@@ -176,7 +176,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
 
     """
 
-    def __init__(self, adapter, name="hp 4155/4156 Semiconductor Parameter Analyzer",
+    def __init__(self, adapter, name="HP 4145A/4145B Semiconductor Parameter Analyzer",
                  **kwargs):
         kwargs.setdefault('timeout', 100000)
         super().__init__(
@@ -250,7 +250,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         self.vsu2.flush_source_setup()
 
     integration_time = Instrument.setting(
-        "%s",
+    "SS %s",
         """Set the integration time.
 
         Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`
