@@ -72,7 +72,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     sensitivity = Instrument.control(  # NOTE: only for IMODE = 1.
         "SEN", "SEN %d",
-        """Control the sensitivity range in Volts (float, truncated_discrete_set, values from 2 nV to 1 V).""",
+        """Control the sensitivity range in Volts (float truncated to values from 2 nV to 1 V).""",
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
         map_values=True,
@@ -82,7 +82,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     slope = Instrument.control(
         "SLOPE", "SLOPE %d",
-        """Control the filter slope in dB/octave (integer, truncated_discrete_set, values 6, 12, 18, 24).""",
+        """Control the filter slope in dB/octave (integer truncated to values 6, 12, 18, 24).""",
         validator=truncated_discrete_set,
         values=[6, 12, 18, 24],
         map_values=True,
@@ -91,7 +91,8 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
         "TC", "TC %d",
-        """Control the time constant in seconds (float, truncated_discrete_set, values from 10 microseconds to 100,000 seconds).""",
+        """Control the time constant in seconds
+        (float truncated to values from 10 microseconds to 100,000 seconds).""",
         validator=truncated_discrete_set,
         values=TIME_CONSTANTS,
         map_values=True,
@@ -154,7 +155,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     harmonic = Instrument.control(
         "REFN", "REFN %d",
-        """Control the reference harmonic mode (integer, truncated_discrete_set, values from 1 to 127).""",
+        """Control the reference harmonic mode (integer truncated to values from 1 to 127).""",
         validator=truncated_discrete_set,
         values=list(range(1, 128)),
         check_set_errors=True,
@@ -162,7 +163,8 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     phase = Instrument.control(
         "REFP.", "REFP. %g",
-        """Control the reference harmonic phase in degrees (float, modular_range, values from 0 to 360).""",
+        """Control the reference harmonic phase in degrees
+        (float, modular_range, values from 0 to 360).""",
         validator=modular_range,
         values=[0, 360],
         check_set_errors=True,
@@ -186,7 +188,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
-        """Control the output value on DAC1 in Volts (float, truncated_range, values from -10 to 10).""",
+        """Control the output value on DAC1 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
@@ -194,7 +196,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
-        """Control the output value on DAC2 in Volts (float, truncated_range, values from -10 to 10).""",
+        """Control the output value on DAC2 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
@@ -202,7 +204,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
-        """Control the output value on DAC3 in Volts (float, truncated_range, values from -10 to 10).""",
+        """Control the output value on DAC3 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
@@ -210,7 +212,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
-        """Control the output value on DAC4 in Volts (float, truncated_range, values from -10 to 10).""",
+        """Control the output value on DAC4 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,

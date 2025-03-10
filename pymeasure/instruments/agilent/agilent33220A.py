@@ -97,7 +97,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
-        """Control the voltage amplitude of the output waveform (float, strict from 10e-3 to 10).""",
+        """Control the voltage amplitude of the output waveform (float strict from 10e-3 to 10).""",
         validator=strict_range,
         values=[10e-3, 10],
     )
