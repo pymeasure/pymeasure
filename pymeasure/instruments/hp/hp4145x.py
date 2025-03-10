@@ -451,10 +451,11 @@ class HP4145x(SCPIUnknownMixin, Instrument):
             data = data.reshape(number, int(len(data) / number))
             header = np.arange(number)
             df = pd.DataFrame(data=dict(zip(header, data)))
-
-        if header is not None:
+        elif header is not None:
             data = data.reshape(len(header), int(len(data) / len(header)))
             df = pd.DataFrame(data=dict(zip(header, data)), index=index)
+        else:
+            df = pd.DataFrame(data=data)
 
         if path is not None:
             _, ext = os.path.splitext(path)
@@ -768,9 +769,9 @@ class SMU(HpMeasurementChannel):
         """
         if not self._disabled:
             if self._channel_mode == 'V':
-                self.write(f"SS VC {'{ch}'}, {self._value}, {self._compliance}")
+                self.write(f"SS VC {'{ch}'}, {self._value:f}, {self._compliance:f}")
             elif self._channel_mode == 'I':
-                self.write(f"SS IC {'{ch}'}, {self._value}, {self._compliance}")
+                self.write(f"SS IC {'{ch}'}, {self._value:f}, {self._compliance:f}")
             self.check_errors()
 
     @property
@@ -854,7 +855,7 @@ class SMU(HpMeasurementChannel):
 
     @voltage.setter
     def voltage(self, value):
-        self._voltage_write_command = f"DV {'{ch}'}, 0, %f, {self.compliance}"
+        self._voltage_write_command = f"DV {'{ch}'}, 0, %f, {self.compliance:f}"
         super().voltage = value
 
     @property
@@ -866,7 +867,7 @@ class SMU(HpMeasurementChannel):
 
     @current.setter
     def current(self, value):
-        self._current_write_command = f"DI {'{ch}'}, 0, %f, {self.compliance}"
+        self._current_write_command = f"DI {'{ch}'}, 0, %f, {self.compliance:f}"
         super().current = value
 
     def __validate_cons(self):
@@ -879,20 +880,20 @@ class SMU(HpMeasurementChannel):
                 'or when SMU function is not CONSTANT.'
             )
         else:
-            values = valid_iv(self.channel_mode, self._voltage_values, self._current_values)
+            values = valid_iv(self._channel_mode, self._voltage_values, self._current_values)
         return values
 
     def __validate_compl(self):
         """Validates the instrument compliance for operation in constant mode.
         """
-        if not ((self.channel_mode != 'COM') and (
-                self.channel_function == 'CONST')):
+        if not ((self._channel_mode != 'COM') and (
+                self._channel_function == 'CONST')):
             raise ValueError(
                 'Cannot set constant SMU parameters when SMU mode is COMON, '
                 'or when SMU function is not CONSTANT.'
             )
         else:
-            values = valid_compliance(self.channel_mode)
+            values = valid_compliance(self._channel_mode)
         return values
 
 
@@ -941,7 +942,7 @@ class VSU(HpMeasurementChannel):
         """
         if not self._disabled:
             if self._channel_function == 'CONST':
-                self.write(f"SS SC {'{ch}'}, {self._value}")
+                self.write(f"SS SC {'{ch}'}, {self._value:f}")
 
     def flush_channel_definition(self):
         """
@@ -1137,11 +1138,11 @@ class VAR1(VARX):
             if self._sweep_mode == "LINEAR":
                 self.write(self.insert_id(f"SS {self._channel_modes[self._channel_mode]}"
                                           f"{self._sweep_modes[self._sweep_mode]},{self._start:f},"
-                                          f"{self._stop:f},{self._step:f},{self._compliance}"))
+                                          f"{self._stop:f},{self._step:f},{self._compliance:f}"))
             else:
                 self.write(self.insert_id(f"SS {self._channel_modes[self._channel_mode]}"
                                           f"{self._sweep_modes[self._sweep_mode]},{self._start:f},"
-                                          f"{self._stop:f},{self._compliance}"))
+                                          f"{self._stop:f},{self._compliance:f}"))
             self.check_set_errors()
 
 
