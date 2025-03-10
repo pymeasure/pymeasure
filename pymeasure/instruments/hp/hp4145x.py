@@ -497,7 +497,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         self.adapter.connection.clear()
 
     def clear(self):
-        """ Clears the HP-IB buffer of the device and status bit 1 (Data Ready) """
+        """ Clear the HP-IB buffer of the device and status bit 1 (Data Ready) """
         self.write("BC")
 
     def check_errors(self):
@@ -567,7 +567,6 @@ class HpMeasurementChannel(Channel):
 
         Defaults to VS[1..2]. Must be unique otherwise the instrument returns a 'PROGRAM_ERROR'.
 
-        Returns not the actual state of the instrument but the state of the object.
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
 
@@ -637,7 +636,6 @@ class HpMeasurementChannel(Channel):
         Set the source function, values "VAR1", "VAR2", "CONST" or "VAR1'" are allowed.
 
         Implicitly writes/flushs :attr:`voltage_name`.
-        Returns not the actual state of the instrument but the state of the object.
         """
         raise LookupError("Property can not be read.")
 
@@ -831,7 +829,6 @@ class SMU(HpMeasurementChannel):
 
         Defaults to VS[1..2]. Must be unique otherwise the instrument returns a 'PROGRAM_ERROR'.
 
-        Returns not the actual state of the instrument but the state of the object.
         If input is greater than 6 characters long or starts with a number,
         the name is autocorrected and prepended with 'a'. Event is logged.
 
