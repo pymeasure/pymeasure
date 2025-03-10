@@ -133,7 +133,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     remote_mode = Instrument.setting(
         "%s",
-        """``True`` disables TS GUI but displays a “Return to local" switch.""",
+        """Control whether it is in remote mode.""",
         validator=strict_discrete_set,
         values={True: "%RM", False: r"%GL"},
         map_values=True
@@ -154,7 +154,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     dut_mode = Instrument.control(
         "DUTM?", "DUTM %g",
-        """ ``On`` enables DUT mode, ``OFF`` enables air mode
+        """Control DUT mode ("On" or "OFF")
 
         :type: string
 
@@ -245,7 +245,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_limit_air_high = Instrument.control(
         "ULIM?", "ULIM %g",
-        """upper air temperature limit.
+        """Control upper air temperature limit.
 
         :type: float
 
@@ -258,7 +258,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_limit_air_dut = Instrument.control(
         "ADMD?", "ADMD %g",
-        """Air to DUT temperature limit.
+        """Get air to DUT temperature limit.
 
         :type: float
 
@@ -271,7 +271,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_setpoint = Instrument.control(
         "SETP?", "SETP %g",
-        """Set or get selected setpoint's temperature.
+        """Control selected setpoint's temperature.
 
         :type: float
 
@@ -287,7 +287,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_setpoint_window = Instrument.control(
         "WNDW?", "WNDW %g",
-        """Setpoint's temperature window.
+        """Control setpoint's temperature window.
 
         :type: float
 
@@ -302,7 +302,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
     temperature_soak_time = Instrument.control(
         "SOAK?", "SOAK %g",
         """
-        Set the soak time for the currently selected setpoint.
+        Control the soak time for the currently selected setpoint.
 
         :type: float
 
@@ -316,7 +316,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature = Instrument.measurement(
         "TEMP?",
-        """Read current temperature with 0.1 °C resolution.
+        """Get current temperature with 0.1 °C resolution.
 
         :type: float
 
@@ -327,7 +327,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_condition_status_code = Instrument.measurement(
         "TECR?",
-        """Temperature condition status register.
+        """Get temperature condition status register.
 
         :type: :class:`.TemperatureStatusCode`
         """,
@@ -337,7 +337,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     set_point_number = Instrument.control(
         "SETN?", "SETN %g",
-        """Select a setpoint to be the current setpoint.
+        """Control the setpoint index to be the current setpoint.
 
         :type: int
 
@@ -350,7 +350,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     local_lockout = Instrument.setting(
         "%s",
-        """``True`` disables TS GUI, ``False`` enables it.
+        """Control whether to lock locally: ``True`` disables TS GUI, ``False`` enables it.
         """,
         validator=strict_discrete_set,
         values={True: r"%LL", False: r"%GL"},
@@ -359,7 +359,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     auxiliary_condition_code = Instrument.measurement(
         "AUXC?",
-        """Read out auxiliary condition status register.
+        """Get out auxiliary condition status register.
 
         :type: int
 
@@ -388,7 +388,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     copy_active_setup_file = Instrument.setting(
         "CFIL %g",
-        """Copy active setup file (0) to setup n (1 - 12).
+        """Set active setup file (0) to copy to setup n (1 - 12).
 
         :type: int
         """,
@@ -398,7 +398,8 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     compressor_enable = Instrument.setting(
         "COOL %g",
-        """ ``True`` enables compressors, ``False`` disables it.
+        """Control whether the compressor is enabled:
+        ``True`` enables compressors, ``False`` disables it.
 
         :type: Boolean
 
@@ -410,7 +411,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     total_cycle_count = Instrument.control(
         "CYCC?", "CYCC %g",
-        """Set or read current cycle count (1 - 9999).
+        """Control current cycle count (1 - 9999).
 
         :type: int
 
@@ -423,7 +424,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     cycling_enable = Instrument.setting(
         "CYCL %g",
-        """CYCL Start/stop cycling.
+        """Control whether cycling is enabled.
 
         :type: bool
 
@@ -437,7 +438,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     current_cycle_count = Instrument.measurement(
         "CYCL?",
-        """Read the number of cycles to do
+        """Get the number of cycles to do
 
         :type: int
 
@@ -446,7 +447,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     error_code = Instrument.measurement(
         "EROR?",  # it is indeed EROR
-        """Read the device-specific error register (16 bits).
+        """Get the device-specific error register (16 bits).
 
         :type: :class:`ErrorCode`
         """,
@@ -455,13 +456,13 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     nozzle_air_flow_rate = Instrument.measurement(
         "FLWR?",
-        """Read main nozzle air flow rate in scfm.
+        """Get main nozzle air flow rate in scfm.
         """
     )
 
     main_air_flow_rate = Instrument.measurement(
         "FLRL?",
-        """Read main nozzle air flow rate in liters/sec.
+        """Get main nozzle air flow rate in liters/sec.
         """
     )
 
@@ -495,7 +496,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     dynamic_temperature_setpoint = Instrument.measurement(
         "SETD?",
-        """Read the dynamic temperature setpoint.
+        """Get the dynamic temperature setpoint.
 
         :type: float
         """
@@ -503,7 +504,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     load_setup_file = Instrument.setting(
         "SFIL %g",
-        """loads setup file SFIL.
+        """Set which setup file to load and load it.
 
         Valid range is between 1 to 12.
 
@@ -515,7 +516,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     temperature_event_status = Instrument.measurement(
         "TESR?",
-        """ temperature event status register.
+        """Get temperature event status register.
 
         :type: :class:`.TemperatureStatusCode`
 
@@ -526,7 +527,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     air_temperature = Instrument.measurement(
         "TMPA?",
-        """Read air temperature in 0.1 °C increments.
+        """Get air temperature in 0.1 °C increments.
 
         :type: float
         """
@@ -534,7 +535,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     dut_temperature = Instrument.measurement(
         "TMPD?",
-        """Read DUT temperature, in 0.1 °C increments.
+        """Get DUT temperature, in 0.1 °C increments.
 
         :type: float
 
@@ -543,7 +544,7 @@ class ATSBase(SCPIUnknownMixin, Instrument):
 
     mode = Instrument.measurement(
         "WHAT?",
-        """Returns a string indicating what the system is doing at the time the query is processed.
+        """Get a string indicating what the system is doing at the time the query is processed.
 
         :type: string
 

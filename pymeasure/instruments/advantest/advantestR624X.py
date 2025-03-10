@@ -962,7 +962,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
     self_test = Instrument.measurement(
         "*tst?",
-        """ A query command that runs a self-test and reads the result (``*TST?``).
+        """Get the result of self test after running it.
         """,
         cast=int,
     )
@@ -1885,7 +1885,7 @@ class SMUChannel(Channel):
 
     measurement_count = Channel.measurement(
         "nub_0{ch}?",
-        """ Measaure the number of measurements contained in the measurement
+        """ Measure the number of measurements contained in the measurement
         data buffer (``NUB?``). """,
         cast=int
     )

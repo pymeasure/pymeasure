@@ -72,9 +72,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     sensitivity = Instrument.control(  # NOTE: only for IMODE = 1.
         "SEN", "SEN %d",
-        """ A floating point property that controls the sensitivity
-        range in Volts, which can take discrete values from 2 nV to
-        1 V. This property can be set. """,
+        """Control the sensitivity range in Volts (float truncated to values from 2 nV to 1 V).""",
         validator=truncated_discrete_set,
         values=SENSITIVITIES,
         map_values=True,
@@ -84,9 +82,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     slope = Instrument.control(
         "SLOPE", "SLOPE %d",
-        """ A integer property that controls the filter slope in
-        dB/octave, which can take the values 6, 12, 18, or 24 dB/octave.
-        This property can be set. """,
+        """Control the filter slope in dB/octave (integer truncated to values 6, 12, 18, 24).""",
         validator=truncated_discrete_set,
         values=[6, 12, 18, 24],
         map_values=True,
@@ -95,134 +91,156 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     time_constant = Instrument.control(  # NOTE: only for NOISEMODE = 0
         "TC", "TC %d",
-        """ A floating point property that controls the time constant
-        in seconds, which takes values from 10 microseconds to 100,000
-        seconds. This property can be set. """,
+        """Control the time constant in seconds
+        (float truncated to values from 10 microseconds to 100,000 seconds).""",
         validator=truncated_discrete_set,
         values=TIME_CONSTANTS,
         map_values=True,
         check_set_errors=True,
     )
 
-    x = Instrument.measurement("X.",
-                               """ Reads the X value in Volts """,
-                               get_process=check_read_not_empty,
-                               )
-    y = Instrument.measurement("Y.",
-                               """ Reads the Y value in Volts """,
-                               get_process=check_read_not_empty,
-                               )
-    x1 = Instrument.measurement("X1.",
-                                """ Reads the first harmonic X value in Volts """,
-                                get_process=check_read_not_empty,
-                                )
-    y1 = Instrument.measurement("Y1.",
-                                """ Reads the first harmonic Y value in Volts """,
-                                get_process=check_read_not_empty,
-                                )
-    x2 = Instrument.measurement("X2.",
-                                """ Reads the second harmonic X value in Volts """,
-                                get_process=check_read_not_empty,
-                                )
-    y2 = Instrument.measurement("Y2.",
-                                """ Reads the second harmonic Y value in Volts """,
-                                get_process=check_read_not_empty,
-                                )
-    xy = Instrument.measurement("XY.",
-                                """ Reads both the X and Y values in Volts """,
-                                get_process=check_read_not_empty,
-                                )
-    mag = Instrument.measurement("MAG.",
-                                 """ Reads the magnitude in Volts """,
-                                 get_process=check_read_not_empty,
-                                 )
+    x = Instrument.measurement(
+        "X.",
+        """Get X value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
 
-    theta = Instrument.measurement("PHA.",
-                                   """ Reads the signal phase in degrees """,
-                                   get_process=check_read_not_empty,
-                                   )
+    y = Instrument.measurement(
+        "Y.",
+        """Get Y value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    x1 = Instrument.measurement(
+        "X1.",
+        """Get first harmonic X value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    y1 = Instrument.measurement(
+        "Y1.",
+        """Get first harmonic Y value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    x2 = Instrument.measurement(
+        "X2.",
+        """Get second harmonic X value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    y2 = Instrument.measurement(
+        "Y2.",
+        """Get second harmonic Y value in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    xy = Instrument.measurement(
+        "XY.",
+        """Get both X and Y values in Volts (float, tuple).""",
+        get_process=check_read_not_empty,
+    )
+
+    mag = Instrument.measurement(
+        "MAG.",
+        """Get magnitude in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    theta = Instrument.measurement(
+        "PHA.",
+        """Get signal phase in degrees (float).""",
+        get_process=check_read_not_empty,
+    )
 
     harmonic = Instrument.control(
         "REFN", "REFN %d",
-        """ An integer property that represents the reference
-        harmonic mode control, taking values from 1 to 127.
-        This property can be set. """,
+        """Control the reference harmonic mode (integer truncated to values from 1 to 127).""",
         validator=truncated_discrete_set,
         values=list(range(1, 128)),
         check_set_errors=True,
     )
+
     phase = Instrument.control(
         "REFP.", "REFP. %g",
-        """ A floating point property that represents the reference
-        harmonic phase in degrees. This property can be set. """,
+        """Control the reference harmonic phase in degrees
+        (float, modular_range, values from 0 to 360).""",
         validator=modular_range,
         values=[0, 360],
         check_set_errors=True,
     )
+
     voltage = Instrument.control(
         "OA.", "OA. %g",
-        """ A floating point property that represents the voltage
-        in Volts. This property can be set. """,
+        """Control the voltage in Volts (float, truncated_range, values from 0 to 5).""",
         validator=truncated_range,
         values=[0, 5],
         check_set_errors=True,
     )
+
     frequency = Instrument.control(
         "OF.", "OF. %g",
-        """ A floating point property that represents the lock-in
-        frequency in Hz. This property can be set. """,
+        """Control the lock-in frequency in Hz (float, truncated_range, values from 0 to 2.5e5).""",
         validator=truncated_range,
         values=[0, 2.5e5],
         check_set_errors=True,
     )
+
     dac1 = Instrument.control(
         "DAC. 1", "DAC. 1 %g",
-        """ A floating point property that represents the output
-        value on DAC1 in Volts. This property can be set. """,
+        """Control the output value on DAC1 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
     )
+
     dac2 = Instrument.control(
         "DAC. 2", "DAC. 2 %g",
-        """ A floating point property that represents the output
-        value on DAC2 in Volts. This property can be set. """,
+        """Control the output value on DAC2 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
     )
+
     dac3 = Instrument.control(
         "DAC. 3", "DAC. 3 %g",
-        """ A floating point property that represents the output
-        value on DAC3 in Volts. This property can be set. """,
+        """Control the output value on DAC3 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
     )
+
     dac4 = Instrument.control(
         "DAC. 4", "DAC. 4 %g",
-        """ A floating point property that represents the output
-        value on DAC4 in Volts. This property can be set. """,
+        """Control the output value on DAC4 in Volts (float truncated to values from -10 to 10).""",
         validator=truncated_range,
         values=[-10, 10],
         check_set_errors=True,
     )
-    adc1 = Instrument.measurement("ADC. 1",
-                                  """ Reads the input value of ADC1 in Volts """,
-                                  get_process=check_read_not_empty,
-                                  )
-    adc2 = Instrument.measurement("ADC. 2",
-                                  """ Reads the input value of ADC2 in Volts """,
-                                  get_process=check_read_not_empty,
-                                  )
-    adc3 = Instrument.measurement("ADC. 3",
-                                  """ Reads the input value of ADC3 in Volts """,
-                                  get_process=check_read_not_empty,
-                                  )
-    adc4 = Instrument.measurement("ADC. 4",
-                                  """ Reads the input value of ADC4 in Volts """,
-                                  get_process=check_read_not_empty,
-                                  )
+
+    adc1 = Instrument.measurement(
+        "ADC. 1",
+        """Get the input value of ADC1 in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    adc2 = Instrument.measurement(
+        "ADC. 2",
+        """Get the input value of ADC2 in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    adc3 = Instrument.measurement(
+        "ADC. 3",
+        """Get the input value of ADC3 in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
+
+    adc4 = Instrument.measurement(
+        "ADC. 4",
+        """Get the input value of ADC4 in Volts (float).""",
+        get_process=check_read_not_empty,
+    )
 
     def __init__(self, adapter, name="Ametek DSP 7270",
                  read_termination='\x00',
@@ -300,6 +318,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     @property
     def auto_gain(self):
+        """Control whether automatic gain is enabled (bool)."""
         return int(self.ask("AUTOMATIC")) == 1
 
     @auto_gain.setter
