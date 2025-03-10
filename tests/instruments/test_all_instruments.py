@@ -141,7 +141,6 @@ grandfathered_docstring_instruments = [
     "SR570",
     "SR830",
     "SR860",
-    "TexioPSW360L30",
     "IonGaugeAndPressureChannel",
     "PressureChannel",
     "SequenceEntry",
