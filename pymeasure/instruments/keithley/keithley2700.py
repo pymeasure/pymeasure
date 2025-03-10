@@ -283,7 +283,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     @property
     def error(self):
         """Get the next error from the queue.
-        
+
         .. deprecated:: 0.15
             Use `next_error` instead.
         """
