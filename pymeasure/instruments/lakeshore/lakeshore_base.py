@@ -42,20 +42,20 @@ class LakeShoreTemperatureChannel(Channel):
 
     kelvin = Instrument.measurement(
         'KRDG? {ch}',
-        """Read the temperature in kelvin from a channel."""
+        """Get the temperature in kelvin from a channel."""
     )
     celsius = Instrument.measurement(
         'CRDG? {ch}',
-        """Read the temperature in celsius from a channel."""
+        """Get the temperature in celsius from a channel."""
     )
     sensor = Instrument.measurement(
         'SRDG? {ch}',
-        """Read the temperature in sensor units from a channel."""
+        """Get the temperature in sensor units from a channel."""
     )
 
     @property
     def celcius(self):
-        """Access celsius attribute with celcius (sic) property.
+        """Get celsius attribute with celcius (sic) property.
 
         .. deprecated:: 0.14.0
             Use celsius instead.
@@ -103,23 +103,24 @@ class LakeShoreHeaterChannel(Channel):
 
     output = Instrument.measurement(
         'HTR? {ch}',
-        """Query the heater output in percent of the max."""
+        """Get the heater output in percent of the max."""
     )
     mout = Instrument.control(
         'MOUT? {ch}',
         'MOUT {ch},%f',
-        """Manual heater output in percent."""
+        """Control manual heater output in percent."""
     )
     range = Instrument.control(
         'RANGE? {ch}',
         'RANGE {ch},%i',
-        """String property controlling heater range, which can take the
+        """Control heater range, which can take the
        values: off, low, medium, and high.""",
         validator=strict_discrete_set,
         values={'off': 0, 'low': 1, 'medium': 2, 'high': 3},
         map_values=True)
+
     setpoint = Instrument.control(
         'SETP? {ch}', 'SETP {ch},%f',
-        """A floating point property that control the setpoint temperature
+        """Control the setpoint temperature
         in the preferred units of the control loop sensor."""
     )

@@ -84,13 +84,13 @@ class LakeShore421(Instrument):
 
     field_raw = Instrument.measurement(
         "FIELD?",
-        """ Returns the field in the current units and multiplier
+        """ Get the field in the current units and multiplier
         """,
     )
 
     field_multiplier = Instrument.measurement(
         "FIELDM?",
-        """ Returns the field multiplier for the returned magnetic field.
+        """ Get the field multiplier for the returned magnetic field.
         """,
         values=MULTIPLIERS,
         map_values=True,
@@ -98,14 +98,14 @@ class LakeShore421(Instrument):
 
     @property
     def field(self):
-        """ Returns the field in the current units. This property takes into
-        account the field multiplier. Returns np.nan if field is out of range.
+        """ Get the field in the current units. This property takes into
+        account the field multiplier. Get np.nan if field is out of range.
         """
         return self._raw_to_field(self.field_raw, "field_multiplier")
 
     unit = Instrument.control(
         "UNIT?", "UNIT %s",
-        """ A string property that controls the units used by the gaussmeter.
+        """ Control (string) the units used by the gaussmeter.
         Valid values are G (Gauss), T (Tesla). """,
         validator=strict_discrete_set,
         values=UNITS,
@@ -113,7 +113,7 @@ class LakeShore421(Instrument):
 
     field_range_raw = Instrument.control(
         "RANGE?", "RANGE %d",
-        """ A integer property that controls the field range of the
+        """ Control (integer) the field range of the
         meter. Valid values are 0 (highest) to 3 (lowest). """,
         validator=truncated_discrete_set,
         values=range(4),
@@ -122,7 +122,7 @@ class LakeShore421(Instrument):
 
     @property
     def field_range(self):
-        """ A floating point property that controls the field range of the
+        """ Control (floating) the field range of the
         meter in the current unit (G or T). Valid values are 30e3, 3e3, 300,
         30 (when in Gauss), or 0.003, 0.03, 0.3, and 3 (when in Tesla).
         """
@@ -143,7 +143,7 @@ class LakeShore421(Instrument):
 
     auto_range = Instrument.control(
         "AUTO?", "AUTO %d",
-        """ A boolean property that controls the auto-range option of the
+        """ Control the auto-range option of the
         meter. Valid values are True and False. Note that the auto-range is
         relatively slow and might not suffice for rapid measurements.
         """,
@@ -154,7 +154,7 @@ class LakeShore421(Instrument):
 
     fast_mode = Instrument.control(
         "FAST?", "FAST %d",
-        """ A boolean property that controls the fast-mode option of the
+        """ Control the fast-mode option of the
         meter. Valid values are True and False. When enabled, the relative
         mode, Max Hold mode, alarms, and autorange are disabled. """,
         validator=strict_discrete_set,
@@ -164,7 +164,7 @@ class LakeShore421(Instrument):
 
     field_mode = Instrument.control(
         "ACDC?", "ACDC %d",
-        """ A string property that controls whether the gaussmeter measures
+        """ Control whether the gaussmeter measures
         AC or DC magnetic fields. Valid values are "AC" and "DC". """,
         validator=strict_discrete_set,
         values={"DC": 0, "AC": 1},
@@ -188,7 +188,7 @@ class LakeShore421(Instrument):
 
     probe_type = Instrument.measurement(
         "TYPE?",
-        """ Returns type of field-probe used with the gaussmeter. Possible
+        """ Get type of field-probe used with the gaussmeter. Possible
         values are High Sensitivity, High Stability, or Ultra-High Sensitivity.
         """,
         values=PROBE_TYPES,
@@ -197,12 +197,12 @@ class LakeShore421(Instrument):
 
     serial_number = Instrument.measurement(
         "SNUM?",
-        """ Returns the serial number of the probe. """
+        """ Get the serial number of the probe. """
     )
 
     display_filter_enabled = Instrument.control(
         "FILT?", "FILT %d",
-        """ A boolean property that controls the display filter to make it
+        """ Control the display filter to make it
         more readable when the probe is exposed to a noisy field. The filter
         function makes a linear average of 8 readings and settles in
         approximately 2 seconds. """,
@@ -213,7 +213,7 @@ class LakeShore421(Instrument):
 
     front_panel_locked = Instrument.control(
         "LOCK?", "LOCK %d",
-        """ A boolean property that locks or unlocks all front panel entries
+        """ Control the lock state of all front panel entries
         except pressing the Alarm key to silence alarms. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -222,7 +222,7 @@ class LakeShore421(Instrument):
 
     front_panel_brightness = Instrument.control(
         "BRIGT?", "BRIGT %d",
-        """ An integer property that controls the brightness of the from panel
+        """ Control (integer) the brightness of the from panel
         display. Valid values are 0 (dimmest) to 7 (brightest). """,
         validator=strict_discrete_set,
         values=range(8),
@@ -231,7 +231,7 @@ class LakeShore421(Instrument):
     # MAX HOLD
     max_hold_enabled = Instrument.control(
         "MAX?", "MAX %d",
-        """ A boolean property that enables or disables the Max Hold function to
+        """ Control the Max Hold function to
         store the largest field since the last reset (with max_hold_reset). """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -240,14 +240,14 @@ class LakeShore421(Instrument):
 
     max_hold_field_raw = Instrument.measurement(
         "MAXR?",
-        """ Returns the largest field since the last reset in the current units
+        """ Get the largest field since the last reset in the current units
         and multiplier.
         """,
     )
 
     max_hold_multiplier = Instrument.measurement(
         "FIELDM?",
-        """ Returns the multiplier for the returned max hold field.
+        """ Get the multiplier for the returned max hold field.
         """,
         values=MULTIPLIERS,
         map_values=True,
@@ -255,7 +255,7 @@ class LakeShore421(Instrument):
 
     @property
     def max_hold_field(self):
-        """ Returns the largest field since the last reset in the current units.
+        """ Get the largest field since the last reset in the current units.
         This property takes into account the field multiplier. Returns np.nan if
         field is out of range.
         """
@@ -268,7 +268,7 @@ class LakeShore421(Instrument):
     # RELATIVE MODE
     relative_mode_enabled = Instrument.control(
         "REL?", "REL %d",
-        """ A boolean property that enables or disables the relative mode to
+        """ Control the relative mode to
         see small variations with respect to a given setpoint. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -277,13 +277,13 @@ class LakeShore421(Instrument):
 
     relative_field_raw = Instrument.measurement(
         "RELR?",
-        """ Returns the relative field in the current units and the current
+        """ Get the relative field in the current units and the current
         multiplier. """,
     )
 
     relative_multiplier = Instrument.measurement(
         "RELRM?",
-        """ Returns the relative field multiplier for the returned magnetic
+        """ Get the relative field multiplier for the returned magnetic
         field. """,
         values=MULTIPLIERS,
         map_values=True,
@@ -291,7 +291,7 @@ class LakeShore421(Instrument):
 
     @property
     def relative_field(self):
-        """ Returns the relative field in the current units. This property
+        """ Get the relative field in the current units. This property
         takes into account the field multiplier. Returns np.nan if field is
         out of range.
         """
@@ -299,20 +299,20 @@ class LakeShore421(Instrument):
 
     relative_setpoint_raw = Instrument.control(
         "RELS?", "RELS %g",
-        """ Property that controls the setpoint for the relative field mode in
+        """ Control the setpoint for the relative field mode in
         the current units and multiplier. """,
     )
 
     relative_setpoint_multiplier = Instrument.measurement(
         "RELRM?",
-        """ Returns the multiplier for the setpoint field. """,
+        """ Get the multiplier for the setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
     )
 
     @property
     def relative_setpoint(self):
-        """ Property that controls the setpoint for the relative field mode in
+        """ Control the setpoint for the relative field mode in
         the current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.relative_setpoint_raw, "relative_setpoint_multiplier")
 
@@ -323,7 +323,7 @@ class LakeShore421(Instrument):
     # ALARM MODE
     alarm_mode_enabled = Instrument.control(
         "ALARM?", "ALARM %d",
-        """ A boolean property that enables or disables the alarm mode. """,
+        """ Control the alarm mode. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -331,7 +331,7 @@ class LakeShore421(Instrument):
 
     alarm_audible = Instrument.control(
         "ALMB?", "ALMB %d",
-        """ A boolean property that enables or disables the audible alarm
+        """ Control the audible alarm
         beeper. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -340,7 +340,7 @@ class LakeShore421(Instrument):
 
     alarm_in_out = Instrument.control(
         "ALMB?", "ALMB %d",
-        """ A string property that controls whether an active alarm is caused
+        """ Control whether an active alarm is caused
         when the field reading is inside ("Inside") or outside ("Outside") of
         the high and low setpoint values. """,
         validator=strict_discrete_set,
@@ -350,36 +350,36 @@ class LakeShore421(Instrument):
 
     alarm_active = Instrument.measurement(
         "ALMS?",
-        """ A boolean property that returns whether the alarm is triggered. """,
+        """ Get whether the alarm is triggered. """,
         values={True: 1, False: 0},
         map_values=True,
     )
 
     alarm_sort_enabled = Instrument.control(
         "ALMSORT?", "ALMSORT %d",
-        """ A boolean property that enables or disables the alarm Sort Pass/Fail
+        """ Control the alarm Sort Pass/Fail
         function. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
 
-    alarm_low_raw = Instrument.measurement(
+    alarm_low_raw = Instrument.control(
         "ALML?", "ALML %g",
-        """ Property that controls the lower setpoint for the alarm mode in the
+        """ Control the lower setpoint for the alarm mode in the
         current units and multiplier. """,
     )
 
     alarm_low_multiplier = Instrument.measurement(
         "ALMLM?",
-        """ Returns the multiplier for the lower alarm setpoint field. """,
+        """ Get the multiplier for the lower alarm setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
     )
 
     @property
     def alarm_low(self):
-        """ Property that controls the lower setpoint for the alarm mode in the
+        """ Control the lower setpoint for the alarm mode in the
         current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.alarm_low_raw, "alarm_low_multiplier")
 
@@ -387,22 +387,22 @@ class LakeShore421(Instrument):
     def alarm_low(self, value):
         self.alarm_low_raw = self._field_to_raw(value, "alarm_low_multiplier")
 
-    alarm_high_raw = Instrument.measurement(
+    alarm_high_raw = Instrument.control(
         "ALMH?", "ALMH %g",
-        """ Property that controls the upper setpoint for the alarm mode in the
+        """ Control the upper setpoint for the alarm mode in the
         current unit and multiplier. """,
     )
 
     alarm_high_multiplier = Instrument.measurement(
         "ALMHM?",
-        """ Returns the multiplier for the upper alarm setpoint field. """,
+        """ Get the multiplier for the upper alarm setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
     )
 
     @property
     def alarm_high(self):
-        """ Property that controls the upper setpoint for the alarm mode in the
+        """ Control the upper setpoint for the alarm mode in the
         current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.alarm_high_raw, "alarm_high_multiplier")
 
@@ -411,7 +411,7 @@ class LakeShore421(Instrument):
         self.alarm_high_raw = self._field_to_raw(value, "alarm_high_multiplier")
 
     def shutdown(self):
-        """ Closes the serial connection to the system. """
+        """ Close the serial connection to the system. """
         self.adapter.connection.close()
         super().shutdown()
 
