@@ -109,7 +109,7 @@ These adapter arguments are not written to tests.
 If you have arguments for the instrument itself, e.g. a RS485 address, you may give it as a keyword argument.
 These additional keyword arguments are included in the tests.
 
-Now we can use :code:`inst` as if it was created the normal way, i.e. :code:`inst = TC038(adapter)`, where ``adapter`` is some resource string.
+Now we can use :code:`inst` as if it were created the normal way, i.e. :code:`inst = TC038(adapter)`, where ``adapter`` is some resource string.
 Having gotten and set some properties, and called some methods, we can write the tests to a file.
 
 .. testcode:: generator
