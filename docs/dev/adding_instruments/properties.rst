@@ -92,7 +92,8 @@ In the examples below we assume you have imported the validators.
 
     from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range, truncated_discrete_set
 
-In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device. The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` function also provides means to achieve this.
+In many situations you will also need to process the return string in order to extract the wanted quantity or process a value before sending it to the device.
+The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>` and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` functions also provide means to achieve this.
 
 In a restricted range
 ---------------------
