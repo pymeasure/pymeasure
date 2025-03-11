@@ -22,7 +22,22 @@
 # THE SOFTWARE.
 #
 
-from .fsseries import FSL, FSW
-from .hmp import HMP4040
-from .sfm import SFM
-from .hmc import HMC8043
+# import pytest
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.rohdeschwarz.hmc import HMC8043
+
+def test_voltage():
+    with expected_protocol(
+        HMC8043,
+        [(":VOLT 0.345", None),
+         (":VOLT?", "0.3000")],
+    ) as inst:
+        inst.ch1.voltage_setpoint = 0.345
+        assert inst.ch1.voltage == 0.3
+
+def test_beep():
+    with expected_protocol(
+        HMC8043,
+        [("system:beep", None)],
+    ) as inst:
+        inst.beep()
