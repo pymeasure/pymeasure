@@ -26,6 +26,9 @@ import logging
 import time
 import traceback
 from queue import Queue
+from typing import Iterable, Sequence
+
+import numpy as np
 
 from .listeners import Recorder
 from .procedure import Procedure
@@ -115,9 +118,32 @@ class Worker(StoppableThread):
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
-            self.recorder.handle(record)
+            if self._should_record_be_iterated(record):
+                log.debug("Iterating results before handling")
+
+                lengths = [len(value) for value in record.values()]
+                if not all(length == lengths[0] for length in lengths):
+                    log.warning(
+                        f"Potential data loss: not all data columns have the same length (check your emitted results)"
+                    )
+
+                for index in range(lengths[0]):
+                    data = {key: value[index] for key, value in record.items()}
+                    self.recorder.handle(data)
+            else:
+                self.recorder.handle(record)
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
+
+    def _should_record_be_iterated(self, record) -> bool:
+        """
+        A record (dictionary) should be iterated if all values are sequences (lists, tuples, numpy arrays, etc.).
+        """
+        sequence_types = (Sequence, np.ndarray)
+        type_exceptions = (str, bytes)
+        return all(
+            isinstance(value, sequence_types) and not isinstance(value, type_exceptions) for value in record.values()
+        )
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
