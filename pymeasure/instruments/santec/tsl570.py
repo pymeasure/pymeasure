@@ -264,13 +264,3 @@ class TSL570(SCPIMixin, Instrument):
     sweep_count = Instrument.measurement(
         ":WAVelength:SWEep:COUNt?", """Get the current number of completed sweeps."""
     )
-
-
-if __name__ == "__main__":
-    laser = TSL570("GPIB0::8::INSTR")
-    laser.wavelength = 1550e-9
-    print(laser.wavelength)
-    laser.wavelength = 1500e-9
-    print(laser.wavelength)
-    laser.wavelength = 1450e-9
-    print(laser.wavelength)
