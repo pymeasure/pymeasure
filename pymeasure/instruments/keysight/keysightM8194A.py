@@ -106,6 +106,8 @@ class KeysightM8194A(Instrument):
                                               stop_awg = self.stop_awg))
             self.mapper[i + 1] = getattr(self,f'ch{i+1}')
 
+        self.filedir = self.default_dir
+
 
     def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
         """ Wait until the triggering has finished or timeout is reached.
@@ -206,7 +208,6 @@ class KeysightM8194A(Instrument):
         array *= 255
         array -= 128
         array = np.array(array).astype(np.int8)
-        self.filedir = self.default_dir
         if filename + '.bin' in self.waveform_list:
             self.delete_waveform_file(filename)
             print('deleting')
