@@ -25,6 +25,7 @@
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.agilent import Agilent33500
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500Channel
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 WF_SHAPES = ["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"]
 FREQUENCY_RANGE = [1e-6, 5e8]
@@ -117,6 +118,34 @@ class Keysight81160AChannel(Agilent33500Channel):
     burst_ncycles_values = BURST_NCYCLES
     burst_ncycles_set_command = ":BURS{ch}:NCYC %d"
     burst_ncycles_get_command = ":BURS{ch}:NCYC?"
+
+    limit_state = Instrument.control(
+        ":VOLT{ch}:LIM:STAT?",
+        ":VOLT{ch}:LIM:STAT %s",
+        """ Control the limit state (string).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        dynamic=True,
+    )
+
+    limit_high = Instrument.control(
+        ":VOLT{ch}:LIM:HIGH?",
+        ":VOLT{ch}:LIM:HIGH %f",
+        """ Control the high-level voltage limit (float).""",
+        validator=strict_range,
+        values=LIMIT_HIGH_RANGE,
+        dynamic=True,
+    )
+
+    limit_low = Instrument.control(
+        ":VOLT{ch}:LIM:LOW?",
+        ":VOLT{ch}:LIM:LOW %f",
+        """ Control the low-level voltage limit (float).""",
+        validator=strict_range,
+        values=LIMIT_LOW_RANGE,
+        dynamic=True,
+    )
 
 
 class Keysight81160A(Agilent33500):
