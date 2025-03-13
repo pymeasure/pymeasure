@@ -73,7 +73,7 @@ class TSL570(SCPIMixin, Instrument):
         ":POWer?",
         ":Power %e",
         """Control the output optical power, units defined by power_unit.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     power_reading = Instrument.measurement(
@@ -99,28 +99,28 @@ class TSL570(SCPIMixin, Instrument):
         ":WAVelength?",
         ":WAVelength %e",
         """Control the output wavelength, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     wavelength_start = Instrument.control(
         ":WAVelength:SWEep:STARt?",
         ":WAVelength:SWEep:STARt %e",
         """Control the sweep start wavelength, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     wavelength_stop = Instrument.control(
         ":WAVelength:SWEep:STOP?",
         ":WAVelength:SWEep:STOP %e",
         """Control the sweep stop wavelength, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     wavelength_step = Instrument.control(
         ":WAVelength:SWEep:STEP?",
         ":WAVelength:SWEep:STEP %e",
         """Control the sweep step wavelength when in step sweep mode, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     # --- Optical frequency control ---
@@ -141,28 +141,28 @@ class TSL570(SCPIMixin, Instrument):
         ":FREQuency?",
         ":FREQuency %e",
         """Control the output frequency, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     frequency_start = Instrument.control(
         ":FREQuency:SWEep:STARt?",
         ":FREQuency:SWEep:STARt %e",
         """Control the sweep start frequency, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     frequency_stop = Instrument.control(
         ":FREQuency:SWEep:STOP?",
         ":FREQuency:SWEep:STOP %e",
         """Control the sweep stop frequency, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     frequency_step = Instrument.control(
         ":FREQuency:SWEep:STEP?",
         ":FREQuency:SWEep:STEP %e",
         """Control the sweep step frequency when in step sweep mode, in m.""",
-        check_instr_errors=True,
+        values_kwargs={"check_instr_errors": True},
     )
 
     # --- Sweep settings ---
@@ -199,7 +199,7 @@ class TSL570(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={
             "Stepped One-way": 0,
-            "Continuous One-way:": 1,
+            "Continuous One-way": 1,
             "Stepped Two-way": 2,
             "Continuous Two-way": 3,
         },
