@@ -147,6 +147,43 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
+    memory_free = Instrument.measurement(
+        ":DATA{ch}:NVOL:FREE?",
+        """ Get the number of free non-volatile memory slots to store user waveforms (int).""",
+        dynamic=True,
+    )
+
+    waveforms = Instrument.measurement(
+        ":DATA{ch}:NVOL:CAT?",
+        """ Get the available user waveforms in memory (list[str]).""",
+        preprocess_reply=lambda v: v.replace('"', "").replace("\n", "").split(","),
+        dynamic=True,
+    )
+
+    volatile_waveform = Instrument.setting(
+        ":DATA{ch}:DAC VOLATILE, %s",
+        """ Set the volatile waveform data (str).""",
+        dynamic=True,
+    )
+
+    def save_waveform(self, waveform, name):
+        """
+        Save a waveform to the generator's nonvolatile memory.
+
+        :param waveform: The waveform data.
+        :param name: The name of the waveform.
+        """
+        self.volatile_waveform = waveform
+        self.write(f":DATA{self.id}:COPY {name}, VOLATILE")
+
+    def delete_waveform(self, name):
+        """
+        Delete a waveform from the generator's nonvolatile memory.
+
+        :param name: The name of the waveform.
+        """
+        self.write(f":DATA{self.id}:DEL {name.upper()}")
+
 
 class Keysight81160A(Agilent33500):
     ch_1 = Instrument.ChannelCreator(Keysight81160AChannel, 1)
