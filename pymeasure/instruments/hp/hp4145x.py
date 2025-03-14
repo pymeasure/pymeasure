@@ -250,7 +250,7 @@ class HP4145x(SCPIUnknownMixin, Instrument):
         self.vsu2.flush_source_setup()
 
     integration_time = Instrument.setting(
-    "SS %s",
+        "SS %s",
         """Set the integration time.
 
         Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`

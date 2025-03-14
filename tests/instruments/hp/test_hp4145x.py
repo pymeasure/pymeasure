@@ -35,7 +35,7 @@ def test_integration_time(integ_time, value):
     with expected_protocol(
             HP4145x,
             [
-                ("IT%d" % (value), None)
+                ("SS IT%d" % (value), None)
             ],
     ) as instr:
         instr.integration_time = integ_time
