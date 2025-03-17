@@ -28,10 +28,7 @@ from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
 )
-
-
-class InstrumentError(Exception):
-    """Exception raised for errors reported by the instrument."""
+from pymeasure.errors import Error
 
 
 class TSL570(SCPIMixin, Instrument):
@@ -47,7 +44,7 @@ class TSL570(SCPIMixin, Instrument):
         """Checks the instrument for errors, and raises an exeption if any are present."""
         errors = self.check_errors()
         if errors:
-            raise InstrumentError(errors)
+            raise Error(errors)
 
     # --- Optical power control ---
 
