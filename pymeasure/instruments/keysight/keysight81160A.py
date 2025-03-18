@@ -155,6 +155,17 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
+    coupling = Instrument.control(
+        ":TRAC:CHAN{ch}?",
+        ":TRAC:CHAN{ch} %s",
+        """ Control the channel coupling (string). ``:TRAC:CHAN1 ON`` to copy values from
+        channel 1 to channel 2.""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        dynamic=True,
+    )
+
     waveforms = Instrument.measurement(
         ":DATA{ch}:NVOL:CAT?",
         """ Get the available user waveforms in memory (list[str]).""",
