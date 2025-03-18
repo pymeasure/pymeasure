@@ -40,10 +40,12 @@ PULSE_DUTYCYCLE_RANGE = [1.5e-1, 99.99]
 PULSE_TRANSITION_RANGE = [1e-9, 1e3]
 BURST_PERIOD = [3.03e-9, 1e6]
 BURST_NCYCLES = [2, 2.147483647e9]
+TRIGGER_COUNT = [1, 2.147483647e9]
 LIMIT_HIGH_RANGE = [-9.99, 10]
 LIMIT_LOW_RANGE = [-10, 9.99]
 STATES = ["ON", "OFF"]
 IMPEDANCE_RANGE = [3e-1, 1e6]
+TRIGGER_MODES = ["IMM", "INT2", "EXT", "MAN"]
 
 
 class Keysight81160AChannel(Agilent33500Channel):
@@ -163,6 +165,26 @@ class Keysight81160AChannel(Agilent33500Channel):
     volatile_waveform = Instrument.setting(
         ":DATA{ch}:DAC VOLATILE, %s",
         """ Set the volatile waveform data (str).""",
+        dynamic=True,
+    )
+
+    trigger_mode = Instrument.control(
+        ":ARM:SOUR{ch}?",
+        ":ARM:SOUR{ch} %s",
+        """ Control the triggering mode (string).""",
+        validator=strict_discrete_set,
+        values=TRIGGER_MODES,
+        dynamic=True,
+    )
+
+    trigger_count = Instrument.control(
+        ":TRIG{ch}:COUN?",
+        ":TRIG{ch}:COUN %d",
+        """ Control the number of cycles to be output when a burst is triggered (int). Enable burst state if number > 1.
+        
+        Short form of burst_ncycles and burst_state = True""",
+        validator=strict_range,
+        values=TRIGGER_COUNT,
         dynamic=True,
     )
 
