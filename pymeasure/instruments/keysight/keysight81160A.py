@@ -28,7 +28,8 @@ from pymeasure.instruments.agilent.agilent33500 import Agilent33500Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 WF_SHAPES = ["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"]
-FREQUENCY_RANGE = [1e-6, 5e8]
+FREQUENCY_SIN_RANGE = [1e-6, 500e6]
+FREQUENCY_RANGE = [1e-6, 330e6]
 AMPLITUDE_RANGE = [0.05, 5]
 OFFSET_RANGE = [-4.995, 4.995]
 VOLTAGE_HIGH_RANGE = [-4.95, 5.0]
@@ -53,7 +54,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     shape_get_command = ":FUNC{ch}?"
     shape_set_command = ":FUNC{ch} %s"
 
-    frequency_values = FREQUENCY_RANGE
+    frequency_values = FREQUENCY_SIN_RANGE
     frequency_get_command = ":FREQ{ch}?"
     frequency_set_command = ":FREQ{ch} %f"
 
@@ -223,7 +224,7 @@ class Keysight81160A(Agilent33500):
     ch_2 = Instrument.ChannelCreator(Keysight81160AChannel, 2)
 
     shape_values = WF_SHAPES
-    frequency_values = FREQUENCY_RANGE
+    frequency_values = FREQUENCY_SIN_RANGE
     amplitude_values = AMPLITUDE_RANGE
     offset_values = OFFSET_RANGE
     voltage_high_values = VOLTAGE_HIGH_RANGE
