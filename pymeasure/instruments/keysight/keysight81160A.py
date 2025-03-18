@@ -156,7 +156,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     waveforms = Instrument.measurement(
         ":DATA{ch}:NVOL:CAT?",
         """ Get the available user waveforms in memory (list[str]).""",
-        preprocess_reply=lambda v: v.replace('"', "").replace("\n", "").split(","),
+        preprocess_reply=lambda v: v.replace('"', "").replace("\n", ""),
         dynamic=True,
     )
 
