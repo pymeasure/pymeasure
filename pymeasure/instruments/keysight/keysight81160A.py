@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.agilent import Agilent33500
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500Channel
@@ -284,3 +286,54 @@ class Keysight81160A(Agilent33500):
     burst_period_values = BURST_PERIOD
     burst_ncycles_values = BURST_NCYCLES
     arb_file_get_command = ":FUNC:USER?"
+
+
+#####################
+# UTILITY FUNCTIONS #
+#####################
+
+
+def generate_pulse_sequence(pulse_voltage, dc_voltage, return_to_zero=False, plot=False):
+    max_dac = 2**13 - 1
+    if pulse_voltage < 0 and dc_voltage <= 0:
+        max_dac = -max_dac
+
+    dc_dac = int(dc_voltage / pulse_voltage * max_dac)
+
+    total_num = 20000  # number of points in the waveform
+    rise_num = 100 // 30  # number of points in the rump
+    hold_num = (500 // 3) * 100 // 84  # number of points in the hold
+    fall_num = int(
+        rise_num / pulse_voltage * (pulse_voltage - dc_voltage)
+    )  # number of points in the fall
+
+    points = np.zeros(total_num)
+
+    pulse_rise_start = 100
+    pulse_rise_end = pulse_rise_start + rise_num
+
+    pulse_hold_start = pulse_rise_end
+    pulse_hold_end = pulse_hold_start + hold_num
+
+    pulse_fall_start = pulse_hold_end
+    pulse_fall_end = pulse_fall_start + fall_num
+
+    points[pulse_rise_start:pulse_rise_end] = np.linspace(0, max_dac, rise_num)
+    points[pulse_hold_start:pulse_hold_end] = max_dac
+    points[pulse_fall_start:pulse_fall_end] = np.linspace(max_dac, dc_dac, fall_num)
+
+    points[pulse_fall_end:] = dc_dac
+
+    if return_to_zero:
+        points[-1] = 0
+
+    if plot:
+        import matplotlib.pyplot as plt
+
+        plt.plot(points)
+
+    return points
+
+
+def array_to_string(array):
+    return ",".join(map(lambda x: str(round(x)), array))
