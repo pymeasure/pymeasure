@@ -220,6 +220,37 @@ class Keysight81160AChannel(Agilent33500Channel):
         """
         self.write(f":DATA{self.id}:DEL {name.upper()}")
 
+    def apply_dc(self, voltage):
+        self.write(f":APPL:DC DEF, DEF, {voltage}")
+
+    def apply_dc(self, voltage):
+        self.write(f":APPL{self.id}:DC DEF, DEF, {voltage}")
+
+    def apply_noise(self, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self.write(f":APPL{self.id}:NOIS DEF, {amplitude}, {offset}")
+
+    def apply_noise(self, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self.write(f":APPL{self.id}:NOIS DEF, {amplitude}, {offset}")
+
+    def apply_pulse(self, frequency, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self.write(f":APPL{self.id}:PULS {frequency}, {amplitude}, {offset}")
+
+    def apply_sin(self, frequency, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self._check_sin_params(frequency, amplitude)
+        self.write(f":APPL{self.id}:SIN {frequency}, {amplitude}, {offset}")
+
+    def apply_square(self, frequency, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self.write(f":APPL{self.id}:SQU {frequency}, {amplitude}, {offset}")
+
+    def apply_user_waveform(self, frequency, amplitude, offset):
+        self._check_voltages(amplitude, offset)
+        self.write(f":APPL{self.id}:USER {frequency}, {amplitude}, {offset}")
+
     def _check_voltages(self, amplitude, offset):
         if abs(amplitude) + abs(offset) > MAX_VOLTAGE:
             raise ValueError(f"Amplitude + offset exceed maximal voltage of {MAX_VOLTAGE} V.")
