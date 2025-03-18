@@ -106,7 +106,7 @@ class AFG3152CChannel(Channel):
 
     frequency = Instrument.control(
         "frequency:fixed?",
-        "frequency:fixed %e",
+        "frequency:fixed %f",
         """ Control the frequency. (float)""",
         validator=strict_range,
         values=FREQ_LIMIT,
