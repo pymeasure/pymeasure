@@ -31,8 +31,7 @@ class AgilentB2980(SCPIUnknownMixin, Instrument):
 
     TODO: fix all code bellow
     
-    Implemented measurements: voltage_dc, voltage_ac, current_dc, current_ac, resistance,
-    resistance_4w
+    Implemented measurements: voltage_dc, current_dc, resistance, charge
     """
     def __init__(self, adapter, name="Agilent/Keysight B2980 Electrometer", **kwargs):
         super().__init__(
@@ -42,13 +41,9 @@ class AgilentB2980(SCPIUnknownMixin, Instrument):
     # only the most simple functions are implemented
     voltage_dc = Instrument.measurement("MEAS:VOLT:DC? DEF,DEF", "Get DC voltage, in Volts")
 
-    voltage_ac = Instrument.measurement("MEAS:VOLT:AC? DEF,DEF", "Get AC voltage, in Volts")
-
     current_dc = Instrument.measurement("MEAS:CURR:DC? DEF,DEF", "Get DC current, in Amps")
-
-    current_ac = Instrument.measurement("MEAS:CURR:AC? DEF,DEF", "Get AC current, in Amps")
 
     resistance = Instrument.measurement("MEAS:RES? DEF,DEF", "Get Resistance, in Ohms")
 
-    resistance_4w = Instrument.measurement(
-        "MEAS:FRES? DEF,DEF", "Get Four-wires (remote sensing) resistance, in Ohms")
+    charge = Instrument.measurement("MEAS:RES? DEF,DEF", "Get Charge, in Coulomb")
+    
