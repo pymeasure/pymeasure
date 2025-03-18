@@ -47,6 +47,8 @@ LIMIT_LOW_RANGE = [-10, 9.99]
 STATES = ["ON", "OFF"]
 IMPEDANCE_RANGE = [3e-1, 1e6]
 TRIGGER_MODES = ["IMM", "INT2", "EXT", "MAN"]
+MAX_VOLTAGE = 5.0
+SIN_AMPL_BORDER = 3.0
 
 
 class Keysight81160AChannel(Agilent33500Channel):
@@ -217,6 +219,17 @@ class Keysight81160AChannel(Agilent33500Channel):
         :param name: The name of the waveform.
         """
         self.write(f":DATA{self.id}:DEL {name.upper()}")
+
+    def _check_voltages(self, amplitude, offset):
+        if abs(amplitude) + abs(offset) > MAX_VOLTAGE:
+            raise ValueError(f"Amplitude + offset exceed maximal voltage of {MAX_VOLTAGE} V.")
+
+    def _check_sin_params(self, frequency, amplitude):
+        if frequency > FREQUENCY_RANGE[-1] and amplitude > SIN_AMPL_BORDER:
+            raise ValueError(
+                f"Frequency of higher than {FREQUENCY_RANGE[-1]} Hz is only supported for sin with"
+                + f" amplitude below {SIN_AMPL_BORDER} V."
+            )
 
 
 class Keysight81160A(Agilent33500):
