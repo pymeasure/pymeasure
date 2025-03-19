@@ -24,12 +24,25 @@
 
 import pytest
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2980
+from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
 
 
-@pytest.mark.parametrize("freq", [40, 140E6])
-def test_set_start_freq(freq):
-    """ Test Agilent B2980 xyz setter """
-    with expected_protocol(AgilentB2980, [(f"STAR {freq:.0f} HZ", None), ],) as inst:
-        inst.start_frequency = freq
-
+def test_current():
+    """Verify the communication of the current getter."""
+    with expected_protocol(
+        AgilentB2987,
+        [(":CURR 0.345", None),
+         (":CURR?", "0.3000")],
+    ) as inst:
+        inst.current = 0.345
+        assert inst.current == 0.3
+        
+def test_voltage():
+    """Verify the communication of the voltage getter."""
+    with expected_protocol(
+        AgilentB2987,
+        [(":VOLT 0.545", None),
+         (":VOLT?", "0.5000")],
+    ) as inst:
+        inst.current = 0.545
+        assert inst.current == 0.5

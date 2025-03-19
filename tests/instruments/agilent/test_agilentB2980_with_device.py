@@ -23,17 +23,55 @@
 #
 
 # Tested using SCPI over USB. call signature:
-# $ pytest test_agilentB2980_with_device.py --device-address ''
-#
+# $ pytest test_agilentB2980_with_device.py --device-address USB0::0x2A8D::0x9B01::MY61390198::INSTR
+# test is for B2987A/B model
 
 
 import pytest
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2980
+from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
+from time import sleep
+# from pyvisa.errors import VisaIOError
 
+@pytest.fixture(scope="module")
+def agilentB2987(connected_device_address):
+    instr = AgilentB2987(connected_device_address)
+    return instr
+    
+def test_id(agilentB2987):
+    vendor, model, serial_number, firmware_version = agilentB2987.id.split(",")
+    # assert vendor == "Keysight Technologies"
+    assert model[:5] == "B2987" # omit letter at the end of model
+    
+def test_battery(agilentB2987):
+    battery_level = agilentB2987.battery_level
+    assert 0 <= battery_level <= 100
 
-@pytest.mark.parametrize("freq", [40, 140E6])
-def test_set_start_freq(freq):
-    """ Test Agilent B2980 xyz setter """
-    with expected_protocol(AgilentB2980, [(f"STAR {freq:.0f} HZ", None), ],) as inst:
-        inst.start_frequency = freq
+    battery_cycles = agilentB2987.battery_cycles
+    assert battery_cycles >= 0
+
+    battery_selftest = agilentB2987.battery_selftest
+    assert battery_selftest in [0, 1]
+
+# def test_current_dc(agilentB2987):
+    # current_dc = agilentB2987.current_dc
+    # assert current_dc == 0
+
+def test_output_states(agilentB2987):
+    output_state = agilentB2987.output_state
+    assert output_state in [0, 1]
+
+    on_states = [1, '1', 'ON']
+    off_states = [0, '0', 'OFF']
+    
+    for state in on_states:
+        agilentB2987.output_state = state
+        output_state = agilentB2987.output_state
+        assert output_state == 1
+
+    sleep(1)
+
+    for state in off_states:
+        agilentB2987.output_state = state
+        output_state = agilentB2987.output_state
+        assert output_state == 0
 
