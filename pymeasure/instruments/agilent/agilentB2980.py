@@ -55,7 +55,7 @@ class AgilentB2981(Instrument):
     Implemented measurements: current
     TODO: add more measurement modes
     """
-    def __init__(self, adapter, name="Agilent/Keysight B2980A/B Femto/Picoammeter", **kwargs):
+    def __init__(self, adapter, name="Agilent/Keysight B2981A/B Femto/Picoammeter", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -71,7 +71,7 @@ class AgilentB2983(AgilentB2981, AgilentB298xBattery):
     Represent the Agilent/Keysight B2983A/B series, Femto/Picoammeter.
     Battery operation is possible.
     """
-    def __init__(self, adapter, name="Agilent/Keysight B2981A/B Femto/Picoammeter", **kwargs):
+    def __init__(self, adapter, name="Agilent/Keysight B2983A/B Femto/Picoammeter", **kwargs):
         super().__init__(
             adapter,
             name,
