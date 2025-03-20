@@ -26,6 +26,10 @@ import logging
 import time
 import traceback
 from queue import Queue
+from typing import Any, Sequence
+
+import numpy as np
+import pandas as pd
 
 from .listeners import Recorder
 from .procedure import Procedure
@@ -116,8 +120,36 @@ class Worker(StoppableThread):
             pass  # No dumps defined
         if topic == 'results':
             self.recorder.handle(record)
+        elif topic == 'batch results':
+            if isinstance(record, pd.DataFrame):
+                log.error('Support for DataFrames when emitting batch results is not available yet.')
+                self.stop()
+            elif self._is_dictionary_of_sequences(record):
+                lengths = [len(value) for value in record.values()]
+                if not all(length == lengths[0] for length in lengths):
+                    log.warning(f'Potential data loss: not all data columns have the same length (check your emitted results)')
+
+                for index in range(lengths[0]):
+                    # Handle the records one by one.
+                    data = {key: value[index] for key, value in record.items()}
+                    self.recorder.handle(data)
+            else:
+                log.error(f'Unsupported type ({type(record)}) for batch results.')
+                self.stop()
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
+
+    def _is_dictionary_of_sequences(self, record: Any) -> bool:
+        """
+        Checks if the record is a dictionary of sequences, there are a couple data types that we do not want to treat as
+        sequences, such as strings and bytes. This function will return False if any of the values in the dictionary are
+        strings or bytes or not a sequence.
+        """
+        sequence_types = (Sequence, np.ndarray)
+        type_exceptions = (str, bytes)
+        if not isinstance(record, dict):
+            return False
+        return all(isinstance(value, sequence_types) and not isinstance(value, type_exceptions) for value in record.values())
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
