@@ -121,11 +121,7 @@ class Worker(StoppableThread):
         if topic == 'results':
             self.recorder.handle(record)
         elif topic == 'batch results':
-            if isinstance(record, pd.DataFrame):
-                log.error(
-                    'Support for DataFrames when emitting batch results is not available yet.')
-                self.stop()
-            elif self._is_dictionary_of_sequences(record):
+            if self._is_dictionary_of_sequences(record):
                 lengths = [len(value) for value in record.values()]
                 if not all(length == lengths[0] for length in lengths):
                     log.warning(
