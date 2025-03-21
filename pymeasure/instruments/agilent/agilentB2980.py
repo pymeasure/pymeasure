@@ -27,12 +27,11 @@ from pymeasure.instruments.validators import truncated_range, strict_discrete_se
 
 class AgilentB298xAmmeter(SCPIMixin, Instrument):
     """
-    Represent the Agilent/Keysight B298xA/B series, Femto/Picoammeter functions.
-    Implemented measurements: current
+    Agilent/Keysight B298xA/B series, Femto/Picoammeter functions.
     """
-    input_enabled =  Instrument.control(
+    input_enabled = Instrument.control(
         ":INP?", ":INP %d",
-        """Control the instrument input is enabled (boolean).""",
+        """Control the instrument input (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},        
@@ -41,7 +40,8 @@ class AgilentB298xAmmeter(SCPIMixin, Instrument):
     zero_correction =  Instrument.control(
         ":INP:ZCOR?", ":INP:ZCOR %d",
         """
-        Enables or disables zero correct function for the current or charge measurement (boolean).
+        Control the zero correct function for current or charge measurement (boolean).
+        
         B2981/B2983 supports current measurement only.
         """,
         validator=strict_discrete_set,
@@ -51,11 +51,11 @@ class AgilentB298xAmmeter(SCPIMixin, Instrument):
 
 class AgilentB298xElectrometer(Instrument):
     """
-    Represent the Agilent/Keysight B298xA/B series, Electrometer/High Resistance Meter functions.
+    Agilent/Keysight B298xA/B series, Electrometer/High Resistance Meter functions.
     """
-    output_enabled =  Instrument.control(
+    output_enabled = Instrument.control(
         ":OUTP?", ":OUTP %d",
-        """Control the instrument source output is enabled (boolean).""",
+        """Control the instrument source output (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},        
@@ -63,24 +63,25 @@ class AgilentB298xElectrometer(Instrument):
 
 class AgilentB298xBattery(Instrument):
     """
-    Support for the Battery option of the B2983/7 models.
+    Battery functions of the B2983/7 models.
     """
-    battery_level =  Instrument.measurement(
+    battery_level = Instrument.measurement(
         ":SYST:BATT?",
-        """Return the percentage of the remaining battery capacity.""",
+        """Get the percentage of the remaining battery capacity.""",
     )
     
-    battery_cycles =  Instrument.measurement(
+    battery_cycles = Instrument.measurement(
         ":SYST:BATT:CYCL?",
-        """Returns the battery cycle count.""",
+        """Get the battery cycle count.""",
     )
     
     battery_selftest =  Instrument.measurement(
         ":SYST:BATT:TEST?",
-        """Performs self-test on the battery and returns the result.
-            0: test passed
-            1: test failed
-           If battery self-test fail, a 1 is returned and an error is stored in the error queue.""",
+        """Self-test off the battery.
+        
+            0: passed
+            1: failed
+        """,
     )
 
 ##########################
@@ -88,7 +89,7 @@ class AgilentB298xBattery(Instrument):
 ##########################
 class AgilentB2981(AgilentB298xAmmeter):
     """
-    Represent the Agilent/Keysight B2981A/B series, Femto/Picoammeter.
+    Agilent/Keysight B2981A/B series, Femto/Picoammeter.
     """
     def __init__(self, adapter, name="Agilent/Keysight B2981A/B Femto/Picoammeter", **kwargs):
         super().__init__(
@@ -99,8 +100,7 @@ class AgilentB2981(AgilentB298xAmmeter):
 
 class AgilentB2983(AgilentB298xAmmeter, AgilentB298xBattery):
     """
-    Represent the Agilent/Keysight B2983A/B series, Femto/Picoammeter.
-    Battery operation is possible.
+    Agilent/Keysight B2983A/B series, Femto/Picoammeter.
     """
     def __init__(self, adapter, name="Agilent/Keysight B2983A/B Femto/Picoammeter", **kwargs):
         super().__init__(
@@ -111,7 +111,7 @@ class AgilentB2983(AgilentB298xAmmeter, AgilentB298xBattery):
 
 class AgilentB2985(AgilentB298xAmmeter, AgilentB298xElectrometer):
     """
-    Represent the Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
+    Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     """
     def __init__(self, adapter, name="Agilent/Keysight B2985A/B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
@@ -122,8 +122,7 @@ class AgilentB2985(AgilentB298xAmmeter, AgilentB298xElectrometer):
 
 class AgilentB2987(AgilentB298xAmmeter, AgilentB298xElectrometer, AgilentB298xBattery):
     """
-    Represent the Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
-    Battery operation is possible.
+    Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     """
     def __init__(self, adapter, name="Agilent/Keysight B2987A/B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
