@@ -119,25 +119,31 @@ class Worker(StoppableThread):
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
-            self.recorder.handle(record)
+            self.handle_record(record)
         elif topic == 'batch results':
-            if self._is_dictionary_of_sequences(record):
-                lengths = [len(value) for value in record.values()]
-                if not all(length == lengths[0] for length in lengths):
-                    log.warning(
-                        'Potential data loss: not all data columns have the same length '
-                        '(check your emitted results)'
-                    )
-
-                for index in range(lengths[0]):
-                    # Handle the records one by one.
-                    data = {key: value[index] for key, value in record.items()}
-                    self.recorder.handle(data)
-            else:
-                log.error(f'Unsupported type ({type(record)}) for batch results.')
-                self.stop()
+            self.handle_batch_record(record)
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
+
+    def handle_record(self, record: dict[str, Any]) -> None:
+        self.recorder.handle(record)
+
+    def handle_batch_record(self, record: Any) -> None:
+        if self._is_dictionary_of_sequences(record):
+            lengths = list(len(value) for value in record.values())
+            if not all(length == lengths[0] for length in lengths):
+                log.warning(
+                    'Potential data loss: not all data columns have the same length '
+                    '(check your emitted results)'
+                )
+
+            for index in range(lengths[0]):
+                # Handle the records one by one.
+                data = {key: value[index] for key, value in record.items()}
+                self.recorder.handle(data)
+        else:
+            log.error(f'Unsupported type ({type(record)}) for batch results.')
+            self.stop()
 
     def _is_dictionary_of_sequences(self, record: Any) -> bool:
         """
