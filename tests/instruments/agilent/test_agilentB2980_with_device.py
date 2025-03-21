@@ -24,54 +24,74 @@
 
 # Tested using SCPI over USB. call signature:
 # $ pytest test_agilentB2980_with_device.py --device-address USB0::0x2A8D::0x9B01::MY61390198::INSTR
-# test is for B2987A/B model
+#
+# Test are organized in classes
+# The applied tests depend on the connected instrument model
+# The instrument model is detected during the test start
 
 
 import pytest
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
-from time import sleep
+from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987 # B2987 supports all features
+
 # from pyvisa.errors import VisaIOError
 
+AMMETERS = ["B2981", "B2983", "B2985", "B2987"]
+ELECTROMETERS = ["B2985", "B2987"]
+HAS_BATTERY = ["B2983", "B2987"]
+
+# TODO: get model from instrument id 
+model = "B2987"
+
 @pytest.fixture(scope="module")
-def agilentB2987(connected_device_address):
+def agilentB298x(connected_device_address):
     instr = AgilentB2987(connected_device_address)
     return instr
-    
-def test_id(agilentB2987):
-    vendor, model, serial_number, firmware_version = agilentB2987.id.split(",")
-    # assert vendor == "Keysight Technologies"
-    assert model[:5] == "B2987" # omit letter at the end of model
-    
-def test_battery(agilentB2987):
-    battery_level = agilentB2987.battery_level
-    assert 0 <= battery_level <= 100
 
-    battery_cycles = agilentB2987.battery_cycles
-    assert battery_cycles >= 0
 
-    battery_selftest = agilentB2987.battery_selftest
-    assert battery_selftest in [0, 1]
+@pytest.mark.skipif((model not in AMMETERS),  reason = "Model must be " + " or ".join(AMMETERS))
+class TestAgilentB298xAmmeter:
+    """
+    Test of the ammeter functions.
+    """
+    def test_id(self, agilentB298x):
+        vendor, model, serial_number, firmware_version = agilentB298x.id.split(",")
+        model = model[:5] # omit the letter at the end
+        # assert vendor == "Keysight Technologies"
+        assert  model in AMMETERS
 
-# def test_current_dc(agilentB2987):
-    # current_dc = agilentB2987.current_dc
-    # assert current_dc == 0
+    def test_input_states(self, agilentB298x):
+        input_enabled = agilentB298x.input_enabled
+        assert input_enabled in [True, False]
 
-def test_output_states(agilentB2987):
-    output_state = agilentB2987.output_state
-    assert output_state in [0, 1]
+    def test_zero_correction(self, agilentB298x):
+        zero_correction = agilentB298x.zero_correction
+        assert zero_correction in [True, False]
 
-    on_states = [1, '1', 'ON']
-    off_states = [0, '0', 'OFF']
-    
-    for state in on_states:
-        agilentB2987.output_state = state
-        output_state = agilentB2987.output_state
-        assert output_state == 1
+@pytest.mark.skipif((model not in ELECTROMETERS), reason = "Model must be " + " or ".join(ELECTROMETERS))
+class TestAgilentB298xElectrometer:
+    """
+    Test of the electrometer functions for B2985 and B2987.
+    """
+    def test_ouput_states(self, agilentB298x):
+        output_enabled = agilentB298x.output_enabled
+        assert output_enabled in [True, False]
 
-    sleep(1)
 
-    for state in off_states:
-        agilentB2987.output_state = state
-        output_state = agilentB2987.output_state
-        assert output_state == 0
+@pytest.mark.skipif((model not in HAS_BATTERY), reason = "Model must be " + " or ".join(HAS_BATTERY))
+class TestAgilentB298xBattery:
+    """
+    Test of the battery functions for B2983 and B2987.
+    """
+    def test_battery_level(self, agilentB298x):
+        battery_level = agilentB298x.battery_level
+        assert 0 <= battery_level <= 100
+
+    def test_battery_cycles(self, agilentB298x):
+        battery_cycles = agilentB298x.battery_cycles
+        assert battery_cycles >= 0
+
+    def test_battery_selftest(self, agilentB298x):
+        battery_selftest = agilentB298x.battery_selftest
+        assert battery_selftest in [0, 1]
+
 

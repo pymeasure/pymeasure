@@ -25,12 +25,46 @@
 from pymeasure.instruments import SCPIMixin, Instrument
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
+class AgilentB298xAmmeter(SCPIMixin, Instrument):
+    """
+    Represent the Agilent/Keysight B298xA/B series, Femto/Picoammeter functions.
+    Implemented measurements: current
+    """
+    input_enabled =  Instrument.control(
+        ":INP?", ":INP %d",
+        """Control the instrument input is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},        
+        )
+
+    zero_correction =  Instrument.control(
+        ":INP:ZCOR?", ":INP:ZCOR %d",
+        """
+        Enables or disables zero correct function for the current or charge measurement (boolean).
+        B2981/B2983 supports current measurement only.
+        """,
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},        
+        )
+
+class AgilentB298xElectrometer(Instrument):
+    """
+    Represent the Agilent/Keysight B298xA/B series, Electrometer/High Resistance Meter functions.
+    """
+    output_enabled =  Instrument.control(
+        ":OUTP?", ":OUTP %d",
+        """Control the instrument source output is enabled (boolean).""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={True: 1, False: 0},        
+        )
 
 class AgilentB298xBattery(Instrument):
     """
     Support for the Battery option of the B2983/7 models.
     """
-    
     battery_level =  Instrument.measurement(
         ":SYST:BATT?",
         """Return the percentage of the remaining battery capacity.""",
@@ -47,13 +81,14 @@ class AgilentB298xBattery(Instrument):
             0: test passed
             1: test failed
            If battery self-test fail, a 1 is returned and an error is stored in the error queue.""",
-        )
+    )
 
-class AgilentB2981(Instrument):
+##########################
+# Instrument definitions #
+##########################
+class AgilentB2981(AgilentB298xAmmeter):
     """
     Represent the Agilent/Keysight B2981A/B series, Femto/Picoammeter.
-    Implemented measurements: current
-    TODO: add more measurement modes
     """
     def __init__(self, adapter, name="Agilent/Keysight B2981A/B Femto/Picoammeter", **kwargs):
         super().__init__(
@@ -62,11 +97,7 @@ class AgilentB2981(Instrument):
             **kwargs
         )
 
-    # current measurement 
-    current_dc = Instrument.measurement(":MEAS:CURR:DC?", "Get DC current, in Amps")
-
-
-class AgilentB2983(AgilentB2981, AgilentB298xBattery):
+class AgilentB2983(AgilentB298xAmmeter, AgilentB298xBattery):
     """
     Represent the Agilent/Keysight B2983A/B series, Femto/Picoammeter.
     Battery operation is possible.
@@ -78,29 +109,25 @@ class AgilentB2983(AgilentB2981, AgilentB298xBattery):
             **kwargs
         )
 
-class AgilentB2985(AgilentB2981):
+class AgilentB2985(AgilentB298xAmmeter, AgilentB298xElectrometer):
     """
     Represent the Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     """
-    output_enabled =  Instrument.control(
-        ":OUTP:STAT?", ":OUTP:STAT %s",
-        """Enables or disables the source output (string strictly in '0', '1', 'ON', 'OFF').""",
-        
-        validator=strict_discrete_set,
-        values={'ON':1, 'OFF':0, '1':1, '0':0, 0:0, 1:1}
+    def __init__(self, adapter, name="Agilent/Keysight B2985A/B Electrometer/High Resistance Meter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
         )
 
-
-class AgilentB2987(AgilentB2985, AgilentB298xBattery):
+class AgilentB2987(AgilentB298xAmmeter, AgilentB298xElectrometer, AgilentB298xBattery):
     """
     Represent the Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     Battery operation is possible.
     """
-    
     def __init__(self, adapter, name="Agilent/Keysight B2987A/B Electrometer/High Resistance Meter", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
-    
