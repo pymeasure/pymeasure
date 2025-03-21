@@ -26,6 +26,9 @@ import logging
 import time
 import traceback
 from queue import Queue
+from typing import Any, Sequence
+
+import numpy as np
 
 from .listeners import Recorder
 from .procedure import Procedure
@@ -115,9 +118,46 @@ class Worker(StoppableThread):
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
-            self.recorder.handle(record)
+            self.handle_record(record)
+        elif topic == 'batch results':
+            self.handle_batch_record(record)
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
+
+    def handle_record(self, record: dict[str, Any]) -> None:
+        self.recorder.handle(record)
+
+    def handle_batch_record(self, record: Any) -> None:
+        if self._is_dictionary_of_sequences(record):
+            lengths = list(len(value) for value in record.values())
+            if not all(length == lengths[0] for length in lengths):
+                log.error(
+                    'Data loss detected: not all sequences in the batch have the same length.'
+                )
+                self.stop()
+                return
+
+            for index in range(lengths[0]):
+                # Handle the records one by one.
+                single_record = {key: value[index] for key, value in record.items()}
+                self.handle_record(single_record)
+        else:
+            log.error(f'Unsupported type ({type(record)}) for batch results.')
+            self.stop()
+
+    def _is_dictionary_of_sequences(self, record: Any) -> bool:
+        """
+        Checks if the record is a dictionary of sequences, there are a couple data types that we do
+        not want to treat as sequences, such as strings and bytes. This function will return False
+        if any of the values in the dictionary are strings or bytes or not a sequence.
+        """
+        sequence_types = (Sequence, np.ndarray)
+        type_exceptions = (str, bytes)
+        if not isinstance(record, dict):
+            return False
+        return all(
+            isinstance(value, sequence_types) and not isinstance(value, type_exceptions) for value
+            in record.values())
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
