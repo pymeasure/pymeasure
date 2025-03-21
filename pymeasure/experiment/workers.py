@@ -132,15 +132,16 @@ class Worker(StoppableThread):
         if self._is_dictionary_of_sequences(record):
             lengths = list(len(value) for value in record.values())
             if not all(length == lengths[0] for length in lengths):
-                log.warning(
-                    'Potential data loss: not all data columns have the same length '
-                    '(check your emitted results)'
+                log.error(
+                    'Data loss detected: not all sequences in the batch have the same length.'
                 )
+                self.stop()
+                return
 
             for index in range(lengths[0]):
                 # Handle the records one by one.
-                data = {key: value[index] for key, value in record.items()}
-                self.recorder.handle(data)
+                single_record = {key: value[index] for key, value in record.items()}
+                self.handle_record(single_record)
         else:
             log.error(f'Unsupported type ({type(record)}) for batch results.')
             self.stop()
