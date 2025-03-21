@@ -29,7 +29,6 @@ from queue import Queue
 from typing import Any, Sequence
 
 import numpy as np
-import pandas as pd
 
 from .listeners import Recorder
 from .procedure import Procedure
