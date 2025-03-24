@@ -66,6 +66,12 @@ class TestAgilentB298xAmmeter:
     def test_zero_correction(self, agilentB298x):
         zero_correction = agilentB298x.zero_correction
         assert zero_correction in [True, False]
+        
+    def test_current(self, agilentB298x):
+        zero_correction = agilentB298x.current
+        assert zero_correction in [True, False]
+        
+        
 
 @pytest.mark.skipif((model not in ELECTROMETERS), reason = "Model must be " + " or ".join(ELECTROMETERS))
 class TestAgilentB298xElectrometer:

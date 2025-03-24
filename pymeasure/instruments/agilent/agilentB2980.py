@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
+
 from pymeasure.instruments import SCPIMixin, Instrument
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set
+
 
 class AgilentB298xAmmeter(SCPIMixin, Instrument):
     """
@@ -34,20 +36,26 @@ class AgilentB298xAmmeter(SCPIMixin, Instrument):
         """Control the instrument input (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0},        
+        values={True: 1, False: 0},
         )
 
-    zero_correction =  Instrument.control(
+    zero_correction = Instrument.control(
         ":INP:ZCOR?", ":INP:ZCOR %d",
         """
         Control the zero correct function for current or charge measurement (boolean).
-        
+
         B2981/B2983 supports current measurement only.
         """,
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0},        
+        values={True: 1, False: 0},
         )
+
+    current = Instrument.measurement(
+        ":MEAS:CURR?",
+        """Executes a spot (one-shot) current measurement ."""
+        )
+
 
 class AgilentB298xElectrometer(Instrument):
     """
@@ -58,8 +66,19 @@ class AgilentB298xElectrometer(Instrument):
         """Control the instrument source output (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, False: 0},        
+        values={True: 1, False: 0},
         )
+
+    measure = Instrument.measurement(
+        ":MEAS?",
+        """
+        Executes a spot (one-shot) measurement for the parameters specified.
+
+        Measurement conditions must be set before executing this command.
+        Each data is separated by a comma.
+        """
+        )
+
 
 class AgilentB298xBattery(Instrument):
     """
@@ -69,16 +88,16 @@ class AgilentB298xBattery(Instrument):
         ":SYST:BATT?",
         """Get the percentage of the remaining battery capacity.""",
     )
-    
+
     battery_cycles = Instrument.measurement(
         ":SYST:BATT:CYCL?",
         """Get the battery cycle count.""",
     )
-    
-    battery_selftest =  Instrument.measurement(
+
+    battery_selftest = Instrument.measurement(
         ":SYST:BATT:TEST?",
         """Self-test off the battery.
-        
+
             0: passed
             1: failed
         """,
@@ -87,6 +106,8 @@ class AgilentB298xBattery(Instrument):
 ##########################
 # Instrument definitions #
 ##########################
+
+
 class AgilentB2981(AgilentB298xAmmeter):
     """
     Agilent/Keysight B2981A/B series, Femto/Picoammeter.
@@ -97,6 +118,7 @@ class AgilentB2981(AgilentB298xAmmeter):
             name,
             **kwargs
         )
+
 
 class AgilentB2983(AgilentB298xAmmeter, AgilentB298xBattery):
     """
@@ -109,22 +131,28 @@ class AgilentB2983(AgilentB298xAmmeter, AgilentB298xBattery):
             **kwargs
         )
 
+
 class AgilentB2985(AgilentB298xAmmeter, AgilentB298xElectrometer):
     """
     Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     """
-    def __init__(self, adapter, name="Agilent/Keysight B2985A/B Electrometer/High Resistance Meter", **kwargs):
+    def __init__(self, adapter,
+                 name="Agilent/Keysight B2985A/B Electrometer/High Resistance Meter",
+                 **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
 
+
 class AgilentB2987(AgilentB298xAmmeter, AgilentB298xElectrometer, AgilentB298xBattery):
     """
     Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
     """
-    def __init__(self, adapter, name="Agilent/Keysight B2987A/B Electrometer/High Resistance Meter", **kwargs):
+    def __init__(self, adapter,
+                 name="Agilent/Keysight B2987A/B Electrometer/High Resistance Meter",
+                 **kwargs):
         super().__init__(
             adapter,
             name,
