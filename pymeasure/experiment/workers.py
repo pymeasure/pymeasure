@@ -26,7 +26,7 @@ import logging
 import time
 import traceback
 from queue import Queue
-from typing import Any, Sequence
+from typing import Any, Sequence, Dict
 
 import numpy as np
 
@@ -124,7 +124,7 @@ class Worker(StoppableThread):
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
 
-    def handle_record(self, record: dict[str, Any]) -> None:
+    def handle_record(self, record: Dict[str, Any]) -> None:
         self.recorder.handle(record)
 
     def handle_batch_record(self, record: Any) -> None:
@@ -157,7 +157,8 @@ class Worker(StoppableThread):
             return False
         return all(
             isinstance(value, sequence_types) and not isinstance(value, type_exceptions) for value
-            in record.values())
+            in record.values()
+        )
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
