@@ -21,12 +21,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from __future__ import annotations
 
 import logging
 import time
 import traceback
 from queue import Queue
-from typing import Any, Sequence, Dict
+from typing import Any, Sequence
 
 import numpy as np
 
@@ -98,7 +99,7 @@ class Worker(StoppableThread):
                 self.context = None
                 self.publisher = None
 
-    def join(self, timeout=0):
+    def join(self, timeout: int = 0):
         try:
             super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
@@ -106,7 +107,7 @@ class Worker(StoppableThread):
             self.stop()
             super().join(0)
 
-    def emit(self, topic, record):
+    def emit(self, topic: str, record: Any):
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
@@ -124,10 +125,10 @@ class Worker(StoppableThread):
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
 
-    def handle_record(self, record: Dict[str, Any]) -> None:
+    def handle_record(self, record: dict[str, Any]):
         self.recorder.handle(record)
 
-    def handle_batch_record(self, record: Any) -> None:
+    def handle_batch_record(self, record: Any):
         if self._is_dictionary_of_sequences(record):
             lengths = list(len(value) for value in record.values())
             if not all(length == lengths[0] for length in lengths):
@@ -173,7 +174,7 @@ class Worker(StoppableThread):
     def is_last(self):
         raise NotImplementedError('should be monkey patched by a manager')
 
-    def update_status(self, status):
+    def update_status(self, status: int):
         self.procedure.status = status
         self.emit('status', status)
 
