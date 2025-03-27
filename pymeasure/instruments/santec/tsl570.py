@@ -40,7 +40,7 @@ class TSL570(SCPIMixin, Instrument):
     command_set = Instrument.control(
         ":SYSTem:COMMunicate:CODe?",
         ":SYSTem:COMMunicate:CODe %d",
-        """Control the command set (str Legacy of SCPI).
+        """Control the command set, "Legacy" or "SCPI".
         Legacy commands use units of nm and THz for wavelength and optical frequency respectively.
         SCPI commands use units of m and Hz for wavelength and optical frequency respectively.""",
         validator=strict_discrete_set,
@@ -74,7 +74,7 @@ class TSL570(SCPIMixin, Instrument):
         check_set_errors=True,
     )
 
-    power_reading = Instrument.measurement(
+    power = Instrument.measurement(
         ":POWer:ACTual?",
         """Measure the monitored optical power, units defined by power_unit.""",
     )
@@ -93,7 +93,7 @@ class TSL570(SCPIMixin, Instrument):
         at the current sweep speed.""",
     )
 
-    wavelength = Instrument.control(
+    wavelength_setpoint = Instrument.control(
         ":WAVelength?",
         ":WAVelength %e",
         """Control the output wavelength, in m.""",
@@ -135,7 +135,7 @@ class TSL570(SCPIMixin, Instrument):
         at the current sweep speed.""",
     )
 
-    frequency = Instrument.control(
+    frequency_setpoint = Instrument.control(
         ":FREQuency?",
         ":FREQuency %e",
         """Control the output frequency, in m.""",
@@ -193,7 +193,8 @@ class TSL570(SCPIMixin, Instrument):
     sweep_mode = Instrument.control(
         ":WAVelength:SWEep:MODe?",
         ":WAVelength:SWEep:MODe %d",
-        """Control the sweep mode.""",
+        """Control the sweep mode, "Stepped One-Way", "Continuous One-Way", "Stepped Two-Way",
+        or "Continuous Two-way".""",
         validator=strict_discrete_set,
         values={
             "Stepped One-way": 0,
