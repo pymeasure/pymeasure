@@ -51,7 +51,7 @@ class AgilentB2980SeriesAmmeter(SCPIMixin, Instrument):
 
     input_enabled = Instrument.control(
         ":INP?", ":INP %d",
-        """Control the instrument input (boolean).""",
+        """Control whether the instrument input is enabled (boolean).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0}
