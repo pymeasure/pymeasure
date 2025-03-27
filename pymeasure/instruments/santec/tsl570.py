@@ -22,12 +22,52 @@
 # THE SOFTWARE.
 #
 
+from enum import IntEnum
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
     strict_range,
     strict_discrete_range,
     strict_discrete_set,
 )
+
+
+class SweepStatus(IntEnum):
+    STOPPED = 0
+    RUNNING = 1
+    STANDING_BY_TRIGGER = 3
+    PREPARATION_FOR_SWEEP_START = 4
+
+
+class SweepMode(IntEnum):
+    STEPPED_ONE_WAY = 0
+    CONTINUOUS_ONE_WAY = 1
+    STEPPED_TWO_WAY = 2
+    CONTINUOUS_TWO_WAY = 3
+
+
+class SweepRouting(IntEnum):
+    ONE_WAY = 0
+    TWO_WAY = 1
+
+
+class SweepPattern(IntEnum):
+    STEPPED = 0
+    CONTINUOUS = 1
+
+
+def mode_to_pattern(mode: SweepMode) -> SweepPattern:
+    # For mode values 0 and 2, the pattern is STEPPED; for 1 and 3, it's CONTINUOUS.
+    return SweepPattern(mode % 2)
+
+
+def mode_to_routing(mode: SweepMode) -> SweepRouting:
+    # For mode values 0 and 1, the routing is ONE_WAY; for 2 and 3, it's TWO_WAY.
+    return SweepRouting(mode // 2)
+
+
+def combine_pattern_routing(pattern: SweepPattern, routing: SweepRouting) -> SweepMode:
+    # The composite mode is determined by the routing times 2 plus the pattern.
+    return SweepMode(routing.value * 2 + pattern.value)
 
 
 class TSL570(SCPIMixin, Instrument):
@@ -179,52 +219,45 @@ class TSL570(SCPIMixin, Instrument):
 
     sweep_staus = Instrument.measurement(
         "WAVelength:SWEep?",
-        """Get the current sweep status, "Stopped", "Running", "Standing by trigger",
-        or "Preparation for sweep start".""",
-        values={
-            "Stopped": 0,
-            "Running": 1,
-            "Standing by trigger": 3,
-            "Preparation for sweep start": 4,
-        },
-        map_values=True,
+        """Get the current sweep status as an enum.""",
+        validator=strict_discrete_set,
+        values={0, 1, 3, 4},
+        get_process=lambda v: SweepStatus(v),  # Convert raw value to enum
+        set_process=lambda v: v.value,  # Convert enum to its integer value
     )
 
     sweep_mode = Instrument.control(
         ":WAVelength:SWEep:MODe?",
         ":WAVelength:SWEep:MODe %d",
-        """Control the sweep mode, "Stepped One-Way", "Continuous One-Way", "Stepped Two-Way",
-        or "Continuous Two-way".""",
+        """Control the sweep mode.""",
         validator=strict_discrete_set,
-        values={
-            "Stepped One-way": 0,
-            "Continuous One-way": 1,
-            "Stepped Two-way": 2,
-            "Continuous Two-way": 3,
-        },
-        map_values=True,
+        values={0, 1, 2, 3},
+        get_process=lambda v: SweepMode(v),
+        set_process=lambda v: v.value,
     )
 
     # Properties to independantly control sweep pattern (stepped vs continuous)
     # and routing (one-way vs two-way)
 
     @property
-    def sweep_pattern(self):
-        """Control the sweep pattern, "Stepped" or "Continuous"."""
-        return self.sweep_mode.split()[0]
+    def sweep_pattern(self) -> SweepPattern:
+        """Return the current sweep pattern as a SweepPattern enum."""
+        return mode_to_pattern(self.sweep_mode)
 
     @sweep_pattern.setter
-    def sweep_pattern(self, pattern):
-        self.sweep_mode = " ".join([pattern, self.sweep_mode.split()[1]])
+    def sweep_pattern(self, pattern: SweepPattern):
+        current_routing = mode_to_routing(self.sweep_mode)
+        self.sweep_mode = combine_pattern_routing(pattern, current_routing)
 
     @property
-    def sweep_routing(self):
-        """Control the sweep routing, "One-way" or "Two-way"."""
-        return self.sweep_mode.split()[1]
+    def sweep_routing(self) -> SweepRouting:
+        """Return the current sweep routing as a SweepRouting enum."""
+        return mode_to_routing(self.sweep_mode)
 
     @sweep_routing.setter
-    def sweep_routing(self, routing):
-        self.sweep_mode = " ".join([self.sweep_mode.split()[0], routing])
+    def sweep_routing(self, routing: SweepRouting):
+        current_pattern = mode_to_pattern(self.sweep_mode)
+        self.sweep_mode = combine_pattern_routing(current_pattern, routing)
 
     sweep_speed = Instrument.control(
         ":WAVelength:SWEep:SPEed?",
