@@ -219,14 +219,14 @@ class TSL570(SCPIMixin, Instrument):
 
     sweep_staus = Instrument.measurement(
         "WAVelength:SWEep?",
-        """Get the current sweep status as an enum.""",
+        """Get the current sweep status as a SweepStatus enum.""",
         get_process=lambda v: SweepStatus(v),
     )
 
     sweep_mode = Instrument.control(
         ":WAVelength:SWEep:MODe?",
         ":WAVelength:SWEep:MODe %d",
-        """Control the sweep mode.""",
+        """Control the sweep mode as a SweepMode enum.""",
         get_process=lambda v: SweepMode(v),
         set_process=lambda v: v.value,
     )
@@ -236,7 +236,7 @@ class TSL570(SCPIMixin, Instrument):
 
     @property
     def sweep_pattern(self) -> SweepPattern:
-        """Return the current sweep pattern as a SweepPattern enum."""
+        """Control the sweep pattern as a SweepPattern enum."""
         return mode_to_pattern(self.sweep_mode)
 
     @sweep_pattern.setter
@@ -246,7 +246,7 @@ class TSL570(SCPIMixin, Instrument):
 
     @property
     def sweep_routing(self) -> SweepRouting:
-        """Return the current sweep routing as a SweepRouting enum."""
+        """Control the sweep routing as a SweepRouting enum."""
         return mode_to_routing(self.sweep_mode)
 
     @sweep_routing.setter
