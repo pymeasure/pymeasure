@@ -59,8 +59,7 @@ class AgilentB2980SeriesAmmeter(SCPIMixin, Instrument):
 
     zero_corrected = Instrument.control(
         ":INP:ZCOR?", ":INP:ZCOR %d",
-        """
-        Control the zero correct function for current/charge measurement (boolean).
+        """Control the zero correct function for current/charge measurement (boolean).
 
         B2981/B2983 supports current measurement only.
         """,
@@ -203,15 +202,15 @@ class AgilentB298xSource(Channel):
     voltage = Channel.control(
         ":SOUR:VOLT?", ":SOUR:VOLT %g",
         """Control the output voltage of the source.""",
-        check_set_errors=True
+        check_set_errors=False
         )
 
     range = Channel.control(
         ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %s",
         """Control the output voltage range of the source.""",
         validator=joined_validators(strict_discrete_set, truncated_range),
-        values=[['MIN', 'MAX', 'DEF'], [-1050, 1050]],
-        check_set_errors=True
+        values=[['MIN', 'MAX', 'DEF'], [-1000, 1000]],
+        check_set_errors=False
         )
 
 
