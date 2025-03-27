@@ -229,6 +229,12 @@ class PrologixAdapter(VISAAdapter):
             super().write("++addr %d" % self.address, **kwargs)
         super().write(command, **kwargs)
 
+    def _write_bytes(self, content, **kwargs):
+        if self.address is not None:
+            super().write("++addr %d" % self.address, **kwargs)
+        content += b'\x0d'
+        return super()._write_bytes(content, **kwargs)
+
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`.write_binary_values`.
 
@@ -281,6 +287,10 @@ class PrologixAdapter(VISAAdapter):
         if not prologix:
             self.write("++read eoi")
         return super()._read()
+
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+        self.write("++read eoi")
+        return super()._read_bytes(count, break_on_termchar, **kwargs)
 
     def gpib(self, address, **kwargs):
         """ Return a PrologixAdapter object that references the GPIB
