@@ -37,15 +37,24 @@ class TSL570(SCPIMixin, Instrument):
 
     def __init__(self, adapter, name="Santec TSL-570", **kwargs):
         super().__init__(adapter, name, **kwargs)
-        self.write(":SYSTem:COMMunicate:CODe 1")  # Set the device to use SCPI commands
         self.check_errors()  # Clear the error queue
 
     def check_instr_errors(self):
-        """Checks the instrument for errors, and raises an exeption if any are present."""
+        """Check the instrument for errors, and raise an exception if any are present."""
         errors = self.check_errors()
         if errors:
             raise Error(errors)
 
+    command_set = Instrument.control(
+        ":SYSTem:COMMunicate:CODe?",
+        ":SYSTem:COMMunicate:CODe %d",
+        """Control the command set (str Legacy of SCPI).
+        Legacy commands use units of nm and THz for wavelength and optical frequency respectively.
+        SCPI commands use units of m and Hz for wavelength and optical frequency respectively.""",
+        validator=strict_discrete_set,
+        values={"Legacy": 0, "SCPI": 1},
+        map_values=True,
+    )
     # --- Optical power control ---
 
     output_enabled = Instrument.control(
