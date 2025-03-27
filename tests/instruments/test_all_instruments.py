@@ -111,7 +111,6 @@ need_init_communication = [
     "IBeamSmart",
     "ANC300Controller",
     "Keithley2281S",
-    "TSL570",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
@@ -228,7 +227,8 @@ def test_kwargs_to_adapter(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning")
+    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning"
+)
 def test_includeSCPI_explicitly_set(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
@@ -241,7 +241,8 @@ def test_includeSCPI_explicitly_set(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning")
+    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning"
+)
 def test_includeSCPI_not_set_to_True(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
