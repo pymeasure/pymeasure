@@ -104,7 +104,7 @@ def test_write_bytes():
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              (b"something", None)],
     ) as adapter:
-        adapter.write_bytes(b"something")
+        adapter.write_bytes(b"something\r")
 
 
 @pytest.mark.parametrize(
