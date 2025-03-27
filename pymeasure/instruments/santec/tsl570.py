@@ -55,17 +55,17 @@ class SweepPattern(IntEnum):
     CONTINUOUS = 1
 
 
-def mode_to_pattern(mode: SweepMode) -> SweepPattern:
+def mode_to_pattern(mode):
     # For mode values 0 and 2, the pattern is STEPPED; for 1 and 3, it's CONTINUOUS.
     return SweepPattern(mode % 2)
 
 
-def mode_to_routing(mode: SweepMode) -> SweepRouting:
+def mode_to_routing(mode):
     # For mode values 0 and 1, the routing is ONE_WAY; for 2 and 3, it's TWO_WAY.
     return SweepRouting(mode // 2)
 
 
-def combine_pattern_routing(pattern: SweepPattern, routing: SweepRouting) -> SweepMode:
+def combine_pattern_routing(pattern, routing):
     # The composite mode is determined by the routing times 2 plus the pattern.
     return SweepMode(routing.value * 2 + pattern.value)
 
@@ -220,18 +220,13 @@ class TSL570(SCPIMixin, Instrument):
     sweep_staus = Instrument.measurement(
         "WAVelength:SWEep?",
         """Get the current sweep status as an enum.""",
-        validator=strict_discrete_set,
-        values={0, 1, 3, 4},
-        get_process=lambda v: SweepStatus(v),  # Convert raw value to enum
-        set_process=lambda v: v.value,  # Convert enum to its integer value
+        get_process=lambda v: SweepStatus(v),
     )
 
     sweep_mode = Instrument.control(
         ":WAVelength:SWEep:MODe?",
         ":WAVelength:SWEep:MODe %d",
         """Control the sweep mode.""",
-        validator=strict_discrete_set,
-        values={0, 1, 2, 3},
         get_process=lambda v: SweepMode(v),
         set_process=lambda v: v.value,
     )
