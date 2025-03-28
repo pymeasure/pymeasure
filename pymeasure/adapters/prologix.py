@@ -283,6 +283,14 @@ class PrologixAdapter(VISAAdapter):
         return super()._read()
 
     def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+        """Read bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
         self.write("++read eoi")
         return super()._read_bytes(count, break_on_termchar, **kwargs)
 
