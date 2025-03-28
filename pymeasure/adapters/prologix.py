@@ -25,6 +25,7 @@ import time
 from warnings import warn
 
 from pymeasure.adapters import VISAAdapter
+from pyvisa.constants import *
 
 
 class PrologixAdapter(VISAAdapter):
@@ -291,7 +292,10 @@ class PrologixAdapter(VISAAdapter):
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        self.write("++read eoi")
+        avail = self.connection.get_visa_attribute(VI_ATTR_ASRL_AVAIL_NUM)
+        if avail == 0:
+            # nothing buffered, need to request data from Prologix
+            self.write("++read eoi")
         return super()._read_bytes(count, break_on_termchar, **kwargs)
 
     def gpib(self, address, **kwargs):
