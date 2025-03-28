@@ -25,7 +25,7 @@ import time
 from warnings import warn
 
 from pymeasure.adapters import VISAAdapter
-from pyvisa.constants import *
+from pyvisa.constants import VI_ATTR_ASRL_AVAIL_NUM
 
 
 class PrologixAdapter(VISAAdapter):
