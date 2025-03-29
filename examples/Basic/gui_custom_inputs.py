@@ -36,11 +36,9 @@ python gui_custom_inputs.py
 
 import sys
 import random
-import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtWidgets, fromUi
 from pymeasure.display.windows import ManagedWindow
 
