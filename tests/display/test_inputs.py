@@ -241,8 +241,12 @@ class TestScientificInput:
             p.assert_called_once_with(5.0)
 
     @pytest.mark.parametrize("locale, decimalSep", [
-        [QtCore.QLocale(QtCore.QLocale.English, QtCore.QLocale.LatinScript, QtCore.QLocale.UnitedKingdom), "."],
-        [QtCore.QLocale(QtCore.QLocale.Dutch, QtCore.QLocale.LatinScript, QtCore.QLocale.Netherlands), ","],
+        [QtCore.QLocale(QtCore.QLocale.English,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.UnitedKingdom), "."],
+        [QtCore.QLocale(QtCore.QLocale.Dutch,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.Netherlands), ","],
     ])
     def test_locale_settings(self, qtbot, locale, decimalSep):
         assert locale.decimalPoint() == decimalSep
