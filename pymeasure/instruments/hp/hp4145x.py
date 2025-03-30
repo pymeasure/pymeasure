@@ -29,7 +29,7 @@ from enum import IntFlag
 import numpy as np
 import pandas as pd
 
-from pymeasure.instruments import Channel, Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               truncated_discrete_set,
                                               strict_range)
@@ -88,437 +88,6 @@ class Status(IntFlag):
     POWER_FAILURE = 0b10100000
 
 
-class HP4145x(SCPIUnknownMixin, Instrument):
-    """ Represents the HP 4145A/4145B Semiconductor Parameter Analyzer
-    and provides a high-level interface for taking current-voltage (I-V) measurements.
-
-    .. code-block:: python
-
-        from pymeasure.instruments.hp import HP4145x
-
-        # explicitly define r/w terminations; set sufficiently large timeout or None.
-        smu = HP4145x("GPIB0::25", read_termination = '\\n', write_termination = '\\n',
-                          timeout=None)
-
-        # reset the instrument
-        smu.reset()
-
-        # define configuration file for instrument and load config
-        smu.configure("configuration_file.json")
-
-        # save data variables, some or all of which are defined in the json config file.
-        smu.save(['VC', 'IC', 'VB', 'IB'])
-
-        # take measurements
-        status = smu.measure()
-
-        # measured data is a pandas dataframe and can be exported to csv.
-        data = smu.get_data(path='./t1.csv')
-
-    The JSON file is an ascii text configuration file that defines the settings of each channel
-    on the instrument. The JSON file is used to configure the instrument using the convenience
-    function :meth:`~.HP4145x.configure` as shown in the example above. For example, the
-    instrument setup for a bipolar transistor measurement is shown below.
-
-    .. code-block:: json
-
-         {
-                "SMU1": {
-                    "voltage_name" : "VC",
-                    "current_name" : "IC",
-                    "channel_function" : "VAR1",
-                    "channel_mode" : "V",
-                    "series_resistance" : "0OHM"
-                },
-
-                "SMU2": {
-                    "voltage_name" : "VB",
-                    "current_name" : "IB",
-                    "channel_function" : "VAR2",
-                    "channel_mode" : "I",
-                    "series_resistance" : "0OHM"
-                },
-
-                "SMU3": {
-                    "voltage_name" : "VE",
-                    "current_name" : "IE",
-                    "channel_function" : "CONST",
-                    "channel_mode" : "V",
-                    "constant_value" : 0,
-                    "compliance" : 0.1
-                },
-
-                 "SMU4": {
-                    "voltage_name" : "VS",
-                    "current_name" : "IS",
-                    "channel_function" : "CONST",
-                    "channel_mode" : "V",
-                    "constant_value" : 0,
-                    "compliance" : 0.1
-                },
-
-                "VAR1": {
-                    "start" : 1,
-                    "stop" : 2,
-                    "step" : 0.1,
-                    "spacing" : "LINEAR",
-                    "compliance" : 0.1
-                },
-
-                "VAR2": {
-                    "start" : 0,
-                    "step" : 10e-6,
-                    "points" : 3,
-                    "compliance" : 2
-
-                }
-            }
-
-    """
-
-    def __init__(self, adapter, name="HP 4145A/4145B Semiconductor Parameter Analyzer",
-                 **kwargs):
-        kwargs.setdefault('timeout', 100000)
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
-
-        self._mode = None
-        self.smu1 = SMU(self, 1)
-        self.smu2 = SMU(self, 2)
-        self.smu3 = SMU(self, 3)
-        self.smu4 = SMU(self, 4)
-        self.vmu1 = VMU(self, 1)
-        self.vmu2 = VMU(self, 2)
-        self.vsu1 = VSU(self, 1)
-        self.vsu2 = VSU(self, 2)
-        self.var1 = VAR1(self)
-        self.var2 = VAR2(self)
-        self.vard = VARD(self)
-
-        self._manual_flush = False
-
-    @property
-    def manual_flush(self):
-        """
-        Control the manual flushing of channels 'channel definition'
-        """
-        return self._manual_flush
-
-    @manual_flush.setter
-    def manual_flush(self, value):
-        self.smu1.manual_flush = value
-        self.smu2.manual_flush = value
-        self.smu3.manual_flush = value
-        self.smu4.manual_flush = value
-        self.vmu1.manual_flush = value
-        self.vmu2.manual_flush = value
-        self.vsu1.manual_flush = value
-        self.vsu2.manual_flush = value
-        self.var1.manual_flush = value
-        self.var2.manual_flush = value
-        self._manual_flush = value
-
-    def flush_channel_definition(self):
-        """
-        Flush the channel definitions of all sub channels.
-        Only required with :attr:`manual_flush` True.
-        """
-        self.smu1.flush_channel_definition()
-        self.smu2.flush_channel_definition()
-        self.smu3.flush_channel_definition()
-        self.smu4.flush_channel_definition()
-        self.vmu1.flush_channel_definition()
-        self.vmu2.flush_channel_definition()
-        self.vsu1.flush_channel_definition()
-        self.vsu2.flush_channel_definition()
-
-    def flush_source_setup(self):
-        """
-        Flush the channel definitions of all sub channels.
-        Only required with :attr:`manual_flush` True.
-        """
-        self.var1.flush_source_setup()
-        self.var2.flush_source_setup()
-        self.smu1.flush_source_setup()
-        self.smu2.flush_source_setup()
-        self.smu3.flush_source_setup()
-        self.smu4.flush_source_setup()
-        self.vsu1.flush_source_setup()
-        self.vsu2.flush_source_setup()
-
-    integration_time = Instrument.setting(
-        "SS %s",
-        """Set the integration time.
-
-        Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`
-        for 256 averages
-
-        .. code-block:: python
-
-            instr.integration_time = "MEDIUM"
-        """,
-        validator=strict_discrete_set,
-        values={'SHORT': 'IT1', 'MEDIUM': 'IT2', 'LONG': 'IT3'},
-        map_values=True,
-        check_set_errors=True
-    )
-
-    delay_time = Instrument.setting(
-        "DT %f",
-        """Set the measurement delay time in seconds,
-        which can take the values from 0 to 6.5s in 1ms steps.
-
-        .. code-block:: python
-
-            instr.delay_time = 1 # delay time of 1-sec
-        """,
-        validator=truncated_discrete_set,
-        values=np.arange(0, 6.5, 0.001),
-        check_set_errors=True
-    )
-
-    hold_time = Instrument.setting(
-        "HT %f",
-        """Set the measurement hold time in seconds,
-        which can take the values from 0 to 650s in 10ms steps.
-
-        .. code-block:: python
-
-            instr.hold_time = 2 # hold time of 2-secs.
-        """,
-        validator=truncated_discrete_set,
-        values=np.arange(0, 650, 0.01),
-        check_set_errors=True
-    )
-
-    auto_calibrate = Instrument.setting(
-        "CA%d",
-        """
-        Set the instrument to automatically calibrate internally every 15minutes.
-        """,
-        values=[True, False],
-        validator=strict_discrete_set,
-        check_set_errors=True
-    )
-
-    def self_test(self):
-        """
-        Execute the self test and return pass/fail.
-        """
-        self.write("SF")
-        status = self.status
-        return (not (status & Status.SELF_TEST_FAIL)) and (status & Status.END_STATUS)
-
-    def stop(self):
-        """Stop the ongoing measurement.
-
-        .. code-block:: python
-
-            instr.stop()
-        """
-        self.write("MD ME4")
-
-    def measure(self, continuous=False):
-        """
-        Perform a measurement.
-
-        .. code-block::python
-
-            instr.measure() # for normale measurement (single)
-            instr.measure(continuous=True) # for repeated infinite measurement
-        """
-        if continuous:
-            self.write("MD ME2")
-        else:
-            self.write("MD ME1")
-
-    def disable_all(self):
-        """ Disable all channels in the instrument.
-
-        .. code-block:: python
-
-            instr.disable_all()
-        """
-        self.smu1.reset_settings()
-        self.smu2.reset_settings()
-        self.smu3.reset_settings()
-        self.smu4.reset_settings()
-        self.vmu1.reset_settings()
-        self.vmu2.reset_settings()
-
-    def configure(self, config_file):
-        """ Configure the channel setup and sweep using a JSON configuration file.
-
-        (JSON is the `JavaScript Object Notation`_)
-
-        .. _`JavaScript Object Notation`: https://www.json.org/
-
-        :param config_file: JSON file to configure instrument channels.
-
-        .. code-block:: python
-
-            instr.configure('config.json')
-        """
-        self.disable_all()
-        obj_dict = {'SMU1': self.smu1,
-                    'SMU2': self.smu2,
-                    'SMU3': self.smu3,
-                    'SMU4': self.smu4,
-                    'VMU1': self.vmu1,
-                    'VMU2': self.vmu2,
-                    'VSU1': self.vsu1,
-                    'VSU2': self.vsu2,
-                    'VAR1': self.var1,
-                    'VAR2': self.var2,
-                    'VARD': self.vard
-                    }
-        with open(config_file) as stream:
-            try:
-                instr_settings = json.load(stream)
-            except json.JSONDecodeError as e:
-                print(e)
-
-        # replace dict keys with Instrument objects
-        new_settings_dict = {}
-        for key, value in instr_settings.items():
-            new_settings_dict[obj_dict[key]] = value
-
-        for obj, setup in new_settings_dict.items():
-            for setting, value in setup.items():
-                setattr(obj, setting, value)
-                time.sleep(0.1)
-
-    def select_graphics_mode(self, mode, **kwargs):
-        """
-        Selects and configures the respective graphics mode.
-
-        For mode == 'MATRIX' provide parameter 'channel_name'.
-        """
-
-        if mode != "MATRIX":
-            raise ValueError("No graphics mode apart of matrix is supported")
-
-        if mode == "MATRIX":
-            channel_name = kwargs.get("channel_name")
-            self.write(f"SM DM3 MX '{channel_name}'")
-
-    @property
-    def data_ready_srq(self):
-        """
-        Set the data ready enablement of the bit of the status byte.
-        """
-        raise LookupError("Property can not be read.")
-
-    @data_ready_srq.setter
-    def data_ready_srq(self, value):
-        value = strict_discrete_set(value, [True, False])
-        self.write("DR%d" % value)
-        # retrieve status once
-        # (instrument issues for unknown reasons returns illegal program sometimes)
-        self.adapter.connection.read_stb()
-
-    def get_data(self, name, number=1, header=None, index=None, path=None):
-        """
-        Return the dataframe of values for the given variable name.
-        Name is the same as defined in the channel definition.
-
-        Returns measurement data in the same order as executed.
-        In case a VAR2 is used, there is VAR1 steps * VAR2 steps
-        results, that you have to split.
-
-        If you provide a :code:`number=n` it will stack the columns of
-        into a 2D data frame with 'n' number of columns.
-
-        Requires the analyzer to be in MATRIX grahpics mode :attr:`select_grahpics_mode`.
-
-        :param path: Path for optional data export to CSV.
-        :param name: Name of axis to dump
-        :param header: List of headers in case multiple values are given (overwrites number)
-        :param number: Number of columns for VAR2 usage.
-        """
-        self.write(f"DO '{name}'")
-
-        result = self.read().replace("\r", "").replace("\n", "")
-        removed_status = filter(None, result.replace("N", "").replace("C", "")
-                                .replace("T", "").replace("X", "").replace("L", "").split(","))
-
-        data = np.array([float(x) for x in removed_status])
-
-        if number != 1 and header is None:
-            data = data.reshape(number, int(len(data) / number))
-            header = np.arange(number)
-            df = pd.DataFrame(data=dict(zip(header, data)))
-        elif header is not None:
-            data = data.reshape(len(header), int(len(data) / len(header)))
-            df = pd.DataFrame(data=dict(zip(header, data)), index=index)
-        else:
-            df = pd.DataFrame(data=data)
-
-        if path is not None:
-            _, ext = os.path.splitext(path)
-            if ext != ".csv":
-                path = path + ".csv"
-            df.to_csv(path, index=True)
-
-        return df
-
-    @property
-    def mode(self):
-        """
-        Control the mode of the instrument. Either 'USER_MODE' -
-        user controls manually all SMUs and voltage sources
-        or 'SYSTEM_MODE' where the analyzer gets configured to sweep
-        automatically the resources on it's own.
-        """
-        return self._mode
-
-    @mode.setter
-    def mode(self, value):
-        self._mode = strict_discrete_set(value, ['USER_MODE', 'SYSTEM_MODE'])
-        if self._mode == 'USER_MODE':
-            self.write("US")
-        else:
-            self.write("DE")
-
-    @property
-    def status(self):
-        """
-        Get the VISA status byte.
-        """
-        stb = self.adapter.connection.read_stb()
-        return stb if type(stb) is int else 0
-
-    def reset(self):
-        """
-        Reset the device of all user config.
-        """
-        self.adapter.connection.clear()
-
-    def clear(self):
-        """ Clear the HP-IB buffer of the device and status bit 1 (Data Ready) """
-        self.write("BC")
-
-    def check_errors(self):
-        errors = []
-        error_status = [Status.EMERGENCY, Status.SYNTAX_ERROR, Status.BUSY, Status.ILLEGAL_PROGRAM]
-        while (Status.EMERGENCY not in errors[0]) is False if len(errors) > 0 else True:
-            # mask out RQS (always set with other bits)
-            status = self.status & ~Status.RQS
-            if any(es & status for es in error_status):
-                for es in error_status:
-                    if status & es and es == Status.EMERGENCY:
-                        log.error(f"HP4145x: {Status(status).value} - {Status(status).name}")
-                        errors.append(Status(status))
-                        break
-                    elif status & es:
-                        log.error(f"HP4145x: {es.value} - {es.name}")
-                        errors.append(es)
-            else:
-                break
-        return errors
 
 
 def check_current_voltage_name(name):
@@ -537,7 +106,7 @@ class HpMeasurementChannel(Channel):
     """Offers some COMon properties."""
 
     def __init__(self, parent, id):
-        super().__init__(parent, id)
+        super().__init__(parent, int(str(id)[-1]))
         self.manual_flush = False
 
         self._voltage_name = "VS"
@@ -676,8 +245,12 @@ class HpMeasurementChannel(Channel):
         else:
             raise LookupError("Property can not be read.")
 
-    @voltage.setter
-    def voltage(self, value):
+    @property
+    def voltage_setpoint(self):
+        raise LookupError("Property can not be read.")
+
+    @voltage_setpoint.setter
+    def voltage_setpoint(self, value):
         if self._voltage_write_command is not None:
             value = strict_range(value, [0, self._max_voltage])
             if self.parent.mode == 'USER_MODE':
@@ -712,8 +285,12 @@ class HpMeasurementChannel(Channel):
         else:
             raise LookupError("Property can not be read.")
 
-    @current.setter
-    def current(self, value):
+    @property
+    def current_setpoint(self):
+        raise LookupError("Property can not be read.")
+
+    @current_setpoint.setter
+    def current_setpoint(self, value):
         if self._current_write_value is not None:
             value = strict_range(value, [0, self._max_current])
             if self.parent.mode == 'USER_MODE':
@@ -728,11 +305,10 @@ class HpMeasurementChannel(Channel):
 class SMU(HpMeasurementChannel):
     """SMU of hp 4145A/4145B Semiconductor Parameter Analyzer"""
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
             parent,
-            id,
-            **kwargs
+            id
         )
 
         self._compliance = 0.0
@@ -849,26 +425,40 @@ class SMU(HpMeasurementChannel):
     @property
     def voltage(self):
         """
-        Control the output voltage in 'USER_MODE'.
+        Measure the output voltage in 'USER_MODE'.
         """
         return super().voltage
 
-    @voltage.setter
-    def voltage(self, value):
+    @property
+    def voltage_setpoint(self):
+        """
+        Set the output voltage in 'USER_MODE'.
+        """
+        raise LookupError("Property can not be read.")
+
+    @voltage_setpoint.setter
+    def voltage_setpoint(self, value):
         self._voltage_write_command = f"DV {'{ch}'}, 0, %f, {self.compliance:f}"
-        super().voltage = value
+        super().voltage_setpoint = value
 
     @property
     def current(self):
         """
-        Control the output current in 'USER_MODE'.
+        Measure the output current in 'USER_MODE'.
         """
         return super().current
 
-    @current.setter
-    def current(self, value):
+    @property
+    def current_setpoint(self):
+        """
+        Set the output current in 'USER_MODE'.
+        """
+        raise LookupError("Property can not be read.")
+
+    @current_setpoint.setter
+    def current_setpoint(self, value):
         self._current_write_command = f"DI {'{ch}'}, 0, %f, {self.compliance:f}"
-        super().current = value
+        super().current_setpoint = value
 
     def __validate_cons(self):
         """Validates the instrument settings for operation in constant mode.
@@ -900,11 +490,10 @@ class SMU(HpMeasurementChannel):
 class VMU(HpMeasurementChannel):
     """VMU of hp 4155/4156 Semiconductor Parameter Analyzer"""
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
             parent,
-            id,
-            **kwargs
+            id
         )
         self._channel_modes = {'V': 1}
         self._voltage_name = f"VM{self.id}"
@@ -961,11 +550,10 @@ class VSU(HpMeasurementChannel):
 class VARX(Channel):
     """ Base class to define sweep variable settings."""
 
-    def __init__(self, parent, id, **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
             parent,
-            id,
-            **kwargs
+            id
         )
 
         self._start = 0
@@ -1084,11 +672,10 @@ class VAR1(VARX):
     Most COMon methods are inherited from base class.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
             parent,
-            1,
-            **kwargs
+            id
         )
 
     @property
@@ -1151,11 +738,10 @@ class VAR2(VARX):
     COMon methods are imported from base class.
     """
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
-            adapter,
-            2,
-            **kwargs
+            parent,
+            id
         )
         self._steps = 1
 
@@ -1194,11 +780,10 @@ class VARD(Channel):
     VARD is always defined in relation to VAR1.
     """
 
-    def __init__(self, parent, id="VARD", **kwargs):
+    def __init__(self, parent, id):
         super().__init__(
             parent,
-            id,
-            **kwargs
+            "VARD"
         )
 
     offset = Instrument.setting(
@@ -1250,3 +835,405 @@ def valid_compliance(channel_mode):
         raise ValueError(
             'Channel is not in V or I mode. It might be disabled.')
     return values
+
+
+class HP4145x(Instrument):
+    """ Represents the HP 4145A/4145B Semiconductor Parameter Analyzer
+    and provides a high-level interface for taking current-voltage (I-V) measurements.
+
+    .. code-block:: python
+
+        from pymeasure.instruments.hp import HP4145x
+
+        # explicitly define r/w terminations; set sufficiently large timeout or None.
+        smu = HP4145x("GPIB0::25", read_termination = '\\n', write_termination = '\\n',
+                          timeout=None)
+
+        # reset the instrument
+        smu.reset()
+
+        # define configuration file for instrument and load config
+        smu.configure("configuration_file.json")
+
+        # measured data is a pandas dataframe and can be exported to csv.
+        data = smu.get_data(path='./t1.csv')
+
+    The JSON file is an ascii text configuration file that defines the settings of each channel
+    on the instrument. The JSON file is used to configure the instrument using the convenience
+    function :meth:`~.HP4145x.configure` as shown in the example above. For example, the
+    instrument setup for a bipolar transistor measurement is shown below.
+
+    .. code-block:: json
+
+         {
+                "SMU1": {
+                    "voltage_name" : "VC",
+                    "current_name" : "IC",
+                    "channel_function" : "VAR1",
+                    "channel_mode" : "V"
+                },
+
+                "SMU2": {
+                    "voltage_name" : "VB",
+                    "current_name" : "IB",
+                    "channel_function" : "VAR2",
+                    "channel_mode" : "I"
+                },
+
+                "SMU3": {
+                    "voltage_name" : "VE",
+                    "current_name" : "IE",
+                    "channel_function" : "CONST",
+                    "channel_mode" : "V",
+                    "constant_value" : 0,
+                    "compliance" : 0.1
+                },
+
+                 "SMU4": {
+                    "voltage_name" : "VS",
+                    "current_name" : "IS",
+                    "channel_function" : "CONST",
+                    "channel_mode" : "V",
+                    "constant_value" : 0,
+                    "compliance" : 0.1
+                },
+
+                "VAR1": {
+                    "start" : 1,
+                    "stop" : 2,
+                    "step" : 0.1,
+                    "spacing" : "LINEAR",
+                    "compliance" : 0.1
+                },
+
+                "VAR2": {
+                    "start" : 0,
+                    "step" : 10e-6,
+                    "steps" : 5
+                    "compliance" : 2
+                }
+            }
+
+    """
+
+    smu1: SMU = Instrument.ChannelCreator(SMU, "smu1")
+    smu2: SMU = Instrument.ChannelCreator(SMU, "smu2")
+    smu3: SMU = Instrument.ChannelCreator(SMU, "smu3")
+    smu4: SMU = Instrument.ChannelCreator(SMU, "smu4")
+
+    vmu1: VMU = Instrument.ChannelCreator(VMU, "vmu1")
+    vmu2: VMU = Instrument.ChannelCreator(VMU, "vmu2")
+
+    vsu1: VSU = Instrument.ChannelCreator(VSU, "vsu1")
+    vsu2: VSU = Instrument.ChannelCreator(VSU, "vsu2")
+
+    var1: VAR1 = Instrument.ChannelCreator(VAR1, "var1")
+    var2: VAR2 = Instrument.ChannelCreator(VAR2, "var2")
+    vard: VARD = Instrument.ChannelCreator(VARD, "vard")
+
+
+    def __init__(self, adapter, name="HP 4145A/4145B Semiconductor Parameter Analyzer",
+                 **kwargs):
+        kwargs.setdefault('timeout', 100000)
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+        self._mode = None
+        self._manual_flush = False
+
+        print(self.channels)
+
+    @property
+    def manual_flush(self):
+        """
+        Control the manual flushing of channels 'channel definition'
+        """
+        return self._manual_flush
+
+    @manual_flush.setter
+    def manual_flush(self, value):
+        for channel in self.channels:
+            channel.manual_flush = value
+        self._manual_flush = value
+
+    def flush_channel_definition(self):
+        """
+        Flush the channel definitions of all sub channels.
+        Only required with :attr:`manual_flush` True.
+        """
+        for channel in self.channels:
+            if hasattr(channel, 'flush_channel_definition'):
+                channel.flush_channel_definition()
+
+    def flush_source_setup(self):
+        """
+        Flush the channel definitions of all sub channels.
+        Only required with :attr:`manual_flush` True.
+        """
+        for channel in self.channels:
+            if hasattr(channel, 'flush_source_setup'):
+                channel.flush_source_setup()
+
+    integration_time = Instrument.setting(
+        "SS %s",
+        """Set the integration time.
+
+        Values: :code:`SHORT` for no averages, :code:`MEDIUM` for 16 averages and :code:`LONG`
+        for 256 averages
+
+        .. code-block:: python
+
+            instr.integration_time = "MEDIUM"
+        """,
+        validator=strict_discrete_set,
+        values={'SHORT': 'IT1', 'MEDIUM': 'IT2', 'LONG': 'IT3'},
+        map_values=True,
+        check_set_errors=True
+    )
+
+    delay_time = Instrument.setting(
+        "DT %f",
+        """Set the measurement delay time in seconds,
+        which can take the values from 0 to 6.5s in 1ms steps.
+
+        .. code-block:: python
+
+            instr.delay_time = 1 # delay time of 1-sec
+        """,
+        validator=truncated_discrete_set,
+        values=np.arange(0, 6.5, 0.001),
+        check_set_errors=True
+    )
+
+    hold_time = Instrument.setting(
+        "HT %f",
+        """Set the measurement hold time in seconds,
+        which can take the values from 0 to 650s in 10ms steps.
+
+        .. code-block:: python
+
+            instr.hold_time = 2 # hold time of 2-secs.
+        """,
+        validator=truncated_discrete_set,
+        values=np.arange(0, 650, 0.01),
+        check_set_errors=True
+    )
+
+    auto_calibrate = Instrument.setting(
+        "CA%d",
+        """
+        Set the instrument to automatically calibrate internally every 15minutes.
+        """,
+        values=[True, False],
+        validator=strict_discrete_set,
+        check_set_errors=True
+    )
+
+    def self_test(self):
+        """
+        Execute the self test and return pass/fail.
+        """
+        self.write("SF")
+        status = self.status
+        return (not (status & Status.SELF_TEST_FAIL)) and (status & Status.END_STATUS)
+
+    def stop(self):
+        """Stop the ongoing measurement.
+
+        .. code-block:: python
+
+            instr.stop()
+        """
+        self.write("MD ME4")
+
+    def measure(self, continuous=False):
+        """
+        Perform a measurement.
+
+        .. code-block::python
+
+            instr.measure() # for normale measurement (single)
+            instr.measure(continuous=True) # for repeated infinite measurement
+        """
+        if continuous:
+            self.write("MD ME2")
+        else:
+            self.write("MD ME1")
+
+    def disable_all(self):
+        """ Disable all channels in the instrument.
+
+        .. code-block:: python
+
+            instr.disable_all()
+        """
+        for channel in self.channels:
+            if hasattr(channel, 'reset_settings'):
+                channel.reset_settings()
+
+    def configure(self, config_file):
+        """ Configure the channel setup and sweep using a JSON configuration file.
+
+        (JSON is the `JavaScript Object Notation`_)
+
+        .. _`JavaScript Object Notation`: https://www.json.org/
+
+        :param config_file: JSON file to configure instrument channels.
+
+        .. code-block:: python
+
+            instr.configure('config.json')
+        """
+        self.disable_all()
+        obj_dict = {'SMU1': self.smu1,
+                    'SMU2': self.smu2,
+                    'SMU3': self.smu3,
+                    'SMU4': self.smu4,
+                    'VMU1': self.vmu1,
+                    'VMU2': self.vmu2,
+                    'VSU1': self.vsu1,
+                    'VSU2': self.vsu2,
+                    'VAR1': self.var1,
+                    'VAR2': self.var2,
+                    'VARD': self.vard
+                    }
+        with open(config_file) as stream:
+            try:
+                instr_settings = json.load(stream)
+            except json.JSONDecodeError as e:
+                print(e)
+
+        # replace dict keys with Instrument objects
+        new_settings_dict = {}
+        for key, value in instr_settings.items():
+            new_settings_dict[obj_dict[key]] = value
+
+        for obj, setup in new_settings_dict.items():
+            for setting, value in setup.items():
+                setattr(obj, setting, value)
+                time.sleep(0.1)
+
+    def set_graphics_mode(self, mode, **kwargs):
+        """
+        Set and configure 'MATRIX' graphics mode.
+        """
+        channel_name = kwargs.get("channel_name")
+        self.write(f"SM DM3 MX '{channel_name}'")
+
+    @property
+    def data_ready_srq(self):
+        """
+        Set the data ready enablement of the bit of the status byte.
+        """
+        raise LookupError("Property can not be read.")
+
+    @data_ready_srq.setter
+    def data_ready_srq(self, value):
+        value = strict_discrete_set(value, [True, False])
+        self.write("DR%d" % value)
+        # retrieve status once
+        # (instrument issues for unknown reasons returns illegal program sometimes)
+        self.adapter.connection.read_stb()
+
+    def get_data(self, name, number=1, header=None, index=None, path=None):
+        """
+        Return the dataframe of values for the given variable name.
+        Name is the same as defined in the channel definition.
+
+        Returns measurement data in the same order as executed.
+        In case a VAR2 is used, there is VAR1 steps * VAR2 steps
+        results, that you have to split.
+
+        If you provide a :code:`number=n` it will stack the columns of
+        into a 2D data frame with 'n' number of columns.
+
+        Requires the analyzer to be in MATRIX grahpics mode :attr:`select_grahpics_mode`.
+
+        :param path: Path for optional data export to CSV.
+        :param name: Name of axis to dump
+        :param header: List of headers in case multiple values are given (overwrites number)
+        :param number: Number of columns for VAR2 usage.
+        """
+        self.write(f"DO '{name}'")
+
+        result = self.read().replace("\r", "").replace("\n", "")
+        removed_status = filter(None, result.replace("N", "").replace("C", "")
+                                .replace("T", "").replace("X", "").replace("L", "").split(","))
+
+        data = np.array([float(x) for x in removed_status])
+
+        if number != 1 and header is None:
+            data = data.reshape(number, int(len(data) / number))
+            header = np.arange(number)
+            df = pd.DataFrame(data=dict(zip(header, data)))
+        elif header is not None:
+            data = data.reshape(len(header), int(len(data) / len(header)))
+            df = pd.DataFrame(data=dict(zip(header, data)), index=index)
+        else:
+            df = pd.DataFrame(data=data)
+
+        if path is not None:
+            _, ext = os.path.splitext(path)
+            if ext != ".csv":
+                path = path + ".csv"
+            df.to_csv(path, index=True)
+
+        return df
+
+    @property
+    def mode(self):
+        """
+        Control the mode of the instrument. Either 'USER_MODE' -
+        user controls manually all SMUs and voltage sources
+        or 'SYSTEM_MODE' where the analyzer gets configured to sweep
+        automatically the resources on it's own.
+        """
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        self._mode = strict_discrete_set(value, ['USER_MODE', 'SYSTEM_MODE'])
+        if self._mode == 'USER_MODE':
+            self.write("US")
+        else:
+            self.write("DE")
+
+    @property
+    def status(self):
+        """
+        Get the VISA status byte.
+        """
+        stb = self.adapter.connection.read_stb()
+        return stb if type(stb) is int else 0
+
+    def reset(self):
+        """
+        Reset the device of all user config.
+        """
+        self.adapter.connection.clear()
+
+    def clear(self):
+        """ Clear the HP-IB buffer of the device and status bit 1 (Data Ready) """
+        self.write("BC")
+
+    def check_errors(self):
+        errors = []
+        error_status = [Status.EMERGENCY, Status.SYNTAX_ERROR, Status.BUSY, Status.ILLEGAL_PROGRAM]
+        while (Status.EMERGENCY not in errors[0]) is False if len(errors) > 0 else True:
+            # mask out RQS (always set with other bits)
+            status = self.status & ~Status.RQS
+            if any(es & status for es in error_status):
+                for es in error_status:
+                    if status & es and es == Status.EMERGENCY:
+                        log.error(f"HP4145x: {Status(status).value} - {Status(status).name}")
+                        errors.append(Status(status))
+                        break
+                    elif status & es:
+                        log.error(f"HP4145x: {es.value} - {es.name}")
+                        errors.append(es)
+            else:
+                break
+        return errors
