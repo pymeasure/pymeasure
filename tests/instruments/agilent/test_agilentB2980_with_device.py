@@ -22,25 +22,20 @@
 # THE SOFTWARE.
 #
 
+# disconnect all cables from the unit before starting the test
+#
 # Tested using SCPI over USB. call signature:
 # $ pytest test_agilentB2980_with_device.py --device-address USB0::0x2A8D::0x9B01::MY61390198::INSTR
 #
-# Test are organized in classes
-# The applied tests depend on the connected instrument model
-# The instrument model is detected during the test start
-
+# Test was performed with B2987B
+#
 
 import pytest
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987 # B2987 supports all features
-
+from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987  # B2987 supports all features
 # from pyvisa.errors import VisaIOError
 
-AMMETERS = ["B2981", "B2983", "B2985", "B2987"]
-ELECTROMETERS = ["B2985", "B2987"]
-HAS_BATTERY = ["B2983", "B2987"]
+SUPPORTED_MODEL = 'B2987'
 
-# TODO: get model from instrument id 
-model = "B2987"
 
 @pytest.fixture(scope="module")
 def agilentB298x(connected_device_address):
@@ -48,56 +43,63 @@ def agilentB298x(connected_device_address):
     return instr
 
 
-@pytest.mark.skipif((model not in AMMETERS),  reason = "Model must be " + " or ".join(AMMETERS))
-class TestAgilentB298xAmmeter:
-    """
-    Test of the ammeter functions.
-    """
-    def test_id(self, agilentB298x):
-        vendor, model, serial_number, firmware_version = agilentB298x.id.split(",")
-        model = model[:5] # omit the letter at the end
-        # assert vendor == "Keysight Technologies"
-        assert  model in AMMETERS
+class TestResetandID:
+    def test_reset(self, agilentB298x):
+        agilentB298x.clear()
+        agilentB298x.reset()
+        assert len(agilentB298x.check_errors()) == 0
 
-    def test_input_states(self, agilentB298x):
+    def test_device_id(self, agilentB298x):
+        vendor, device_id, serial_number, firmware_version = agilentB298x.id.split(',')
+        assert SUPPORTED_MODEL in device_id
+
+
+class TestAgilentB298x:
+    """Test of the ammeter functions."""
+
+    def test_input_enabled(self, agilentB298x):
         input_enabled = agilentB298x.input_enabled
-        assert input_enabled in [True, False]
+        assert type(input_enabled) is bool
 
-    def test_zero_correction(self, agilentB298x):
-        zero_correction = agilentB298x.zero_correction
-        assert zero_correction in [True, False]
-        
+    def test_zero_corrected(self, agilentB298x):
+        zero_corrected = agilentB298x.zero_corrected
+        assert type(zero_corrected) is bool
+
     def test_current(self, agilentB298x):
-        zero_correction = agilentB298x.current
-        assert zero_correction in [True, False]
-        
-        
+        current = agilentB298x.current
+        assert type(current) is float
 
-@pytest.mark.skipif((model not in ELECTROMETERS), reason = "Model must be " + " or ".join(ELECTROMETERS))
-class TestAgilentB298xElectrometer:
-    """
-    Test of the electrometer functions for B2985 and B2987.
-    """
-    def test_ouput_states(self, agilentB298x):
-        output_enabled = agilentB298x.output_enabled
-        assert output_enabled in [True, False]
+    @pytest.mark.parametrize("range", ['MIN', 'MAX', 'DEF', 'UP', 'DOWN', 2E-3, 1, 0])
+    def test_current_range(self, agilentB298x, range):
+        agilentB298x.current_range = range
+        current_range = agilentB298x.current_range
+        assert 2E-12 <= current_range <= 20E-3
 
 
-@pytest.mark.skipif((model not in HAS_BATTERY), reason = "Model must be " + " or ".join(HAS_BATTERY))
+class TestAgilentB298xTrigger:
+    """Test of the source functions for B2985 and B2987."""
+    pass
+
+
+class TestAgilentB298xSource:
+    """Test of the source functions for B2985 and B2987."""
+
+    def test_enabled(self, agilentB298x):
+        enabled = agilentB298x.source.enabled
+        assert enabled in [True, False]
+
+
 class TestAgilentB298xBattery:
-    """
-    Test of the battery functions for B2983 and B2987.
-    """
-    def test_battery_level(self, agilentB298x):
-        battery_level = agilentB298x.battery_level
-        assert 0 <= battery_level <= 100
+    """Test of the battery functions of B2983 and B2987."""
 
-    def test_battery_cycles(self, agilentB298x):
-        battery_cycles = agilentB298x.battery_cycles
-        assert battery_cycles >= 0
+    def test_level(self, agilentB298x):
+        level = agilentB298x.battery.level
+        assert 0 <= level <= 100
 
-    def test_battery_selftest(self, agilentB298x):
-        battery_selftest = agilentB298x.battery_selftest
-        assert battery_selftest in [0, 1]
+    def test_cycles(self, agilentB298x):
+        cycles = agilentB298x.battery.cycles
+        assert cycles >= 0
 
-
+    def test_selftest_passed(self, agilentB298x):
+        selftest_passed = agilentB298x.battery.selftest_passed
+        assert type(selftest_passed) is bool

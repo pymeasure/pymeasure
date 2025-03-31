@@ -27,7 +27,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
 
 
-class TestAgilentB298xAmmeter:
+class TestAgilentB298x:
     """Tests of the ammeter functions"""
 
     @pytest.mark.parametrize("state", [0, 1])
@@ -91,10 +91,6 @@ class TestAgilentB298xAmmeter:
         ) as inst:
             inst.function = state
             assert state == inst.function
-
-
-class TestAgilentB298xElectrometer:
-    """Tests of the electrometer functions"""
 
     def test_charge(self):
         """Verify the communication of the charge getter."""

@@ -36,10 +36,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AgilentB2980SeriesAmmeter(SCPIMixin, Instrument):
-    """A class representing the Agilent/Keysight B2980A/B series Femto/Picoammeterss."""
+class AgilentB298x(SCPIMixin, Instrument):
+    """A class representing the Agilent/Keysight B2980A/B series Picoammeters/Electrometers."""
+
+    HAS_SOURCE = False
+    HAS_BATTERY = False
+
     def __init__(self, adapter,
-                 name="Agilent/Keysight B2980A/B series Picoammeter",
+                 name="Agilent/Keysight B2980A/B series",
                  **kwargs):
         super().__init__(
             adapter,
@@ -48,6 +52,12 @@ class AgilentB2980SeriesAmmeter(SCPIMixin, Instrument):
         )
 
         self.add_child(AgilentB298xTrigger, attr_name='trigger')
+
+        if self.HAS_SOURCE:
+            self.add_child(AgilentB298xSource, attr_name='source')
+
+        if self.HAS_BATTERY:
+            self.add_child(AgilentB298xBattery, attr_name='battery')
 
     input_enabled = Instrument.control(
         ":INP?", ":INP %d",
@@ -93,29 +103,12 @@ class AgilentB2980SeriesAmmeter(SCPIMixin, Instrument):
         ":FUNC?", ":FUNC '%s'",
         """Control the measurement function.
 
-        ('CURR') for ammeters
         ('CURR', 'CHAR', 'VOLT', 'RES') for electrometers
         """,
         validator=strict_discrete_set,
-        values=['CURR'],
+        values=['CURR', 'CHAR', 'VOLT', 'RES'],
         dynamic=True
         )
-
-
-class AgilentB2980SeriesElectrometer(AgilentB2980SeriesAmmeter):
-    """A class representing the Agilent/Keysight B2980A/B series Electrometers."""
-    def __init__(self, adapter,
-                 name="Agilent/Keysight B2980A/B series Electrometer",
-                 **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
-
-        self.add_child(AgilentB298xSource, attr_name='source')
-
-    function_values = ['CURR', 'CHAR', 'VOLT', 'RES']
 
     charge = Instrument.measurement(
         ":MEAS:CHAR?",
@@ -254,27 +247,31 @@ class AgilentB298xBattery(Channel):
 ##########################
 
 
-class AgilentB2981(AgilentB2980SeriesAmmeter):
+class AgilentB2981(AgilentB298x):
     """Agilent/Keysight B2981A/B series, Femto/Picoammeter."""
-    pass
+    HAS_SOURCE = False
+    HAS_BATTERY = False
 
 
-class AgilentB2983(AgilentB2980SeriesAmmeter):
+class AgilentB2983(AgilentB298x):
     """Agilent/Keysight B2983A/B series, Femto/Picoammeter.
 
     Has battery operation.
     """
-    battery = Instrument.ChannelCreator(AgilentB298xBattery, "battery")
+    HAS_SOURCE = False
+    HAS_BATTERY = True
 
 
-class AgilentB2985(AgilentB2980SeriesElectrometer):
+class AgilentB2985(AgilentB298x):
     """Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter."""
-    pass
+    HAS_SOURCE = True
+    HAS_BATTERY = False
 
 
-class AgilentB2987(AgilentB2980SeriesElectrometer):
+class AgilentB2987(AgilentB298x):
     """Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
 
     Has battery operation.
     """
-    battery = Instrument.ChannelCreator(AgilentB298xBattery, "battery")
+    HAS_SOURCE = True
+    HAS_BATTERY = True
