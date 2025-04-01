@@ -40,7 +40,7 @@ class TelnetAdapter(Adapter):
         see here, <https://pyvisa.readthedocs.io/en/latest/introduction/names.html>
     """
 
-    def __init__(self, host, port=0, query_delay=0, preprocess_reply=None,
+    def __init__(self, host, port=0,
                  **kwargs):
         raise NotImplementedError(
             "The TelnetAdapter has been removed, as the telnetlib module is deprecated. "

@@ -65,17 +65,6 @@ def test_nested_adapter():
     assert a.manager == a0.manager
 
 
-def test_nested_adapter_query_delay():
-    query_delay = 10
-    with pytest.warns(FutureWarning, match="query_delay"):
-        a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n",
-                         query_delay=query_delay)
-        a = VISAAdapter(a0)
-    assert a.resource_name == SIM_RESOURCE
-    assert a.connection == a0.connection
-    assert a.query_delay == query_delay
-
-
 def test_ProtocolAdapter():
     with expected_protocol(
             VISAAdapter,

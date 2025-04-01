@@ -46,17 +46,6 @@ class VISAAdapter(Adapter):
         or GPIB address integer that identifies the target of the connection
     :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
         string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
-    :param preprocess_reply: An optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
-    :param float query_delay: Time in s to wait after writing and before reading.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `wait_for` method instead.
-
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
@@ -83,15 +72,9 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='', preprocess_reply=None,
-                 query_delay=0, log=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply, log=log)
-        if query_delay:
-            warn(("Parameter `query_delay` is deprecated. "
-                  "Implement in Instrument's `wait_for` instead."),
-                 FutureWarning)
-            kwargs.setdefault("query_delay", query_delay)
-        self.query_delay = query_delay
+    def __init__(self, resource_name, visa_library='',
+                 log=None, **kwargs):
+        super().__init__(log=log)
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes
@@ -102,7 +85,6 @@ class VISAAdapter(Adapter):
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
             self.manager = resource_name.manager
-            self.query_delay = resource_name.query_delay
             return
         elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name

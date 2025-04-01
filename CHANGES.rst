@@ -1,3 +1,11 @@
+Upcoming Version
+================
+
+Removed
+-------
+- Remove deprecated Adapter and Instrument parameters :code:`preprocess_reply`, :code:`query_delay`
+
+
 Version 0.15.0 (2025-01-15)
 ===========================
 Main items of this new release:

@@ -50,12 +50,6 @@ def test_init_log():
     assert adapter.log == logging.getLogger("parent.Adapter")
 
 
-def test_deprecated_preprocess_reply():
-    with pytest.warns(FutureWarning):
-        adapter = Adapter(preprocess_reply=lambda v: v)
-    assert adapter.preprocess_reply is not None
-
-
 def test_del(adapter):
     adapter.connection = mock.MagicMock()
     adapter.__del__()
@@ -126,13 +120,10 @@ def test_write_binary_values():
 
 def test_adapter_preprocess_reply():
     with pytest.warns(FutureWarning):
-        a = FakeAdapter(preprocess_reply=lambda v: v[1:])
+        a = FakeAdapter()
         assert str(a) == "<FakeAdapter>"
-        assert a.values("R42.1") == [42.1]
-        assert a.values("A4,3,2") == [4, 3, 2]
         assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
         assert a.values("15", preprocess_reply=lambda v: v) == [15]
-        a = FakeAdapter()
         assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]
 
 

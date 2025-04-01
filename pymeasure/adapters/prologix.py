@@ -43,19 +43,6 @@ class PrologixAdapter(VISAAdapter):
         that identifies the connection to the Prologix device itself, for example
         "ASRL5" for the 5th COM port.
     :param address: Integer GPIB address of the desired instrument.
-    :param rw_delay: An optional delay to set between a write and read call for
-        slow to respond instruments.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `wait_for` method instead.
-
-    :param preprocess_reply: optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
     :param auto: Enable or disable read-after-write and address instrument to listen.
     :param eoi: Enable or disable EOI assertion.
     :param eos: Set command termination string (CR+LF, CR, LF, or "")
@@ -91,15 +78,10 @@ class PrologixAdapter(VISAAdapter):
 
     """
 
-    def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None, auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
+    def __init__(self, resource_name, address=None, serial_timeout=None,
+                 auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
                  **kwargs):
         # for legacy rw_delay: prefer new style over old one.
-        if rw_delay:
-            warn(("Parameter `rw_delay` is deprecated. "
-                  "Implement in Instrument's `wait_for` instead."),
-                 FutureWarning)
-            kwargs['query_delay'] = rw_delay
         if serial_timeout:
             warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
                  FutureWarning)
@@ -109,7 +91,6 @@ class PrologixAdapter(VISAAdapter):
                              'timeout': 500,
                              'write_termination': "\n",
                          },
-                         preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
         if not isinstance(resource_name, PrologixAdapter):

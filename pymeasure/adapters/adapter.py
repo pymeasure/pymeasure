@@ -37,30 +37,18 @@ class Adapter:
 
     This class should only be inherited from.
 
-    :param preprocess_reply: An optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments just to be cooperative.
     """
 
-    def __init__(self, preprocess_reply=None, log=None, **kwargs):
+    def __init__(self, log=None, **kwargs):
         super().__init__(**kwargs)
-        self.preprocess_reply = preprocess_reply
         self.connection = None
         if log is None:
             self.log = logging.getLogger("Adapter")
         else:
             self.log = log.getChild("Adapter")
         self.log.addHandler(logging.NullHandler())
-        if preprocess_reply is not None:
-            warn(("Parameter `preprocess_reply` is deprecated in Adapter. "
-                 "Implement it in the instrument instead."),
-                 FutureWarning)
 
     def __del__(self):
         """Close connection upon garbage collection of the device."""
@@ -172,8 +160,6 @@ class Adapter:
         :param cast: A type to cast the result
         :param preprocess_reply: optional callable used to preprocess values
             received from the instrument. The callable returns the processed string.
-            If not specified, the Adapter default is used if available, otherwise no
-            preprocessing is done.
         :returns: A list of the desired type, or strings where the casting fails
         """
         warn("`Adapter.values` is deprecated, call `Instrument.values` instead.",
@@ -181,8 +167,6 @@ class Adapter:
         results = str(self.ask(command)).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        elif callable(self.preprocess_reply):
-            results = self.preprocess_reply(results)
         results = results.split(separator)
         for i, result in enumerate(results):
             try:

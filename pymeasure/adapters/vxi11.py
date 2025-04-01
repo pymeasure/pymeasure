@@ -45,13 +45,10 @@ class VXI11Adapter(Adapter):
         Use VISAAdapter instead.
 
     :param host: string containing the visa connection information.
-    :param preprocess_reply: (deprecated) optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
     """
 
-    def __init__(self, host, preprocess_reply=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply,
-                         query_delay=kwargs.pop('query_delay', 0))
+    def __init__(self, host, **kwargs):
+        super().__init__()
         warn("Deprecated, use VISAAdapter instead.", FutureWarning)
         # Filter valid arguments that can be passed to vxi instrument
         valid_args = ["name", "client_id", "term_char"]
