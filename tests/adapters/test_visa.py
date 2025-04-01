@@ -150,18 +150,3 @@ class TestReadBytes:
         adapter.write("*IDN?")
         # `break_on_termchar=False` is default value
         assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
-
-
-def test_visa_adapter(adapter):
-    assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"
-
-    with pytest.warns(FutureWarning):
-        assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0"
-
-    adapter.write("*IDN?")
-    assert adapter.read() == "SCPI,MOCK,VERSION_1.0"
-
-
-def test_visa_adapter_ask_values(adapter):
-    with pytest.warns(FutureWarning):
-        assert adapter.ask_values(":VOLT:IMM:AMPL?", separator=",") == [1.0]

@@ -179,55 +179,6 @@ class VISAAdapter(Adapter):
                         return bytes(result)
                     raise
 
-    def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting
-        ASCII response
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        return self.connection.query(command)
-
-    def ask_values(self, command, **kwargs):
-        """ Writes a command to the instrument and returns a list of formatted
-        values from the result. This leverages the `query_ascii_values` method
-        in PyVISA.
-
-        .. deprecated:: 0.11
-            Call `Instrument.values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param \\**kwargs: Key-word arguments to pass onto `query_ascii_values`
-        :returns: Formatted response of the instrument.
-        """
-        warn("`Adapter.ask_values` is deprecated, call `Instrument.values` instead.",
-             FutureWarning)
-
-        return self.connection.query_ascii_values(command, **kwargs)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
-
-        .. deprecated:: 0.11
-            Call `Instrument.binary_values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
-             FutureWarning)
-        self.connection.write(command)
-        binary = self.connection.read_raw()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
-
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Block until a SRQ, and leave the bit high
 

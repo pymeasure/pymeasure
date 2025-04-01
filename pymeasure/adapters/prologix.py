@@ -185,18 +185,6 @@ class PrologixAdapter(VISAAdapter):
         """
         self.write('++rst')
 
-    def ask(self, command):
-        """ Ask the Prologix controller.
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to instrument
-        """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        self.write(command)
-        return self.read()
-
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
