@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class AgilentB298x(SCPIMixin, Instrument):
+class AgilentB2980(SCPIMixin, Instrument):
     """A class representing the Agilent/Keysight B2980A/B series Picoammeters/Electrometers."""
 
     HAS_SOURCE = False
@@ -51,13 +51,13 @@ class AgilentB298x(SCPIMixin, Instrument):
             **kwargs
         )
 
-        self.add_child(AgilentB298xTrigger, attr_name='trigger')
+        self.add_child(AgilentB2980Trigger, attr_name='trigger')
 
         if self.HAS_SOURCE:
-            self.add_child(AgilentB298xSource, attr_name='source')
+            self.add_child(AgilentB2980Source, attr_name='source')
 
         if self.HAS_BATTERY:
-            self.add_child(AgilentB298xBattery, attr_name='battery')
+            self.add_child(AgilentB2980Battery, attr_name='battery')
 
     input_enabled = Instrument.control(
         ":INP?", ":INP %d",
@@ -159,7 +159,7 @@ class AgilentB298x(SCPIMixin, Instrument):
         )
 
 
-class AgilentB298xSource(Channel):
+class AgilentB2980Source(Channel):
     """A class representing the B298x source functions."""
 
     enabled = Channel.control(
@@ -207,7 +207,7 @@ class AgilentB298xSource(Channel):
         )
 
 
-class AgilentB298xTrigger(Channel):
+class AgilentB2980Trigger(Channel):
     """A class representing the B298x trigger functions."""
 
     def init(self, action='ALL'):
@@ -216,7 +216,7 @@ class AgilentB298xTrigger(Channel):
         self.write(f":INIT:{action}")
 
 
-class AgilentB298xBattery(Channel):
+class AgilentB2980Battery(Channel):
     """A class representing the B298x battery functions."""
 
     def insert_id(self, command):
@@ -247,13 +247,13 @@ class AgilentB298xBattery(Channel):
 ##########################
 
 
-class AgilentB2981(AgilentB298x):
+class AgilentB2981(AgilentB2980):
     """Agilent/Keysight B2981A/B series, Femto/Picoammeter."""
     HAS_SOURCE = False
     HAS_BATTERY = False
 
 
-class AgilentB2983(AgilentB298x):
+class AgilentB2983(AgilentB2980):
     """Agilent/Keysight B2983A/B series, Femto/Picoammeter.
 
     Has battery operation.
@@ -262,13 +262,13 @@ class AgilentB2983(AgilentB298x):
     HAS_BATTERY = True
 
 
-class AgilentB2985(AgilentB298x):
+class AgilentB2985(AgilentB2980):
     """Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter."""
     HAS_SOURCE = True
     HAS_BATTERY = False
 
 
-class AgilentB2987(AgilentB298x):
+class AgilentB2987(AgilentB2980):
     """Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
 
     Has battery operation.
