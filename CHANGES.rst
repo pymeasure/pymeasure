@@ -5,6 +5,7 @@ Removed
 -------
 - Remove deprecated Adapter and Instrument parameters :code:`preprocess_reply`, :code:`query_delay`
 - Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
+- Remove deprecated Telnet Adapter
 
 
 Version 0.15.0 (2025-01-15)
