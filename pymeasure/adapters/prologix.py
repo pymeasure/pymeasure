@@ -78,14 +78,9 @@ class PrologixAdapter(VISAAdapter):
 
     """
 
-    def __init__(self, resource_name, address=None, serial_timeout=None,
+    def __init__(self, resource_name, address=None,
                  auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
                  **kwargs):
-        # for legacy rw_delay: prefer new style over old one.
-        if serial_timeout:
-            warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
-                 FutureWarning)
-            kwargs['timeout'] = serial_timeout
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
