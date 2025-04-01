@@ -23,10 +23,8 @@
 #
 
 import logging
-from warnings import warn
 
 import pyvisa
-import numpy as np
 
 from .adapter import Adapter
 from .protocol import ProtocolAdapter
@@ -72,8 +70,7 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='',
-                 log=None, **kwargs):
+    def __init__(self, resource_name, visa_library="", log=None, **kwargs):
         super().__init__(log=log)
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name

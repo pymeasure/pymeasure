@@ -23,7 +23,6 @@
 #
 
 import logging
-from warnings import warn
 
 import numpy as np
 from copy import copy

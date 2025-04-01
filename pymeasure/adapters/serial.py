@@ -41,9 +41,7 @@ class SerialAdapter(Adapter):
     :param \\**kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port,
-                 write_termination="", read_termination="",
-                 **kwargs):
+    def __init__(self, port, write_termination="", read_termination="", **kwargs):
         super().__init__()
         if isinstance(port, serial.SerialBase):
             self.connection = port
