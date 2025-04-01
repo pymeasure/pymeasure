@@ -36,11 +36,9 @@ python gui_custom_inputs.py
 
 import sys
 import random
-import tempfile
 from time import sleep
 
 from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
-from pymeasure.experiment import Results
 from pymeasure.display.Qt import QtWidgets, fromUi
 from pymeasure.display.windows import ManagedWindow
 
@@ -87,28 +85,28 @@ class MainWindow(ManagedWindow):
             procedure_class=TestProcedure,
             displays=['iterations', 'delay', 'seed'],
             x_axis='Iteration',
-            y_axis='Random Number'
+            y_axis='Random Number',
+            sequencer=True,
         )
         self.setWindowTitle('GUI Example')
 
     def _setup_ui(self):
+        # After the default setup_ui method, replace the inputs widget with
+        # the custom widget
         super()._setup_ui()
         self.inputs.hide()
         self.inputs = fromUi('gui_custom_inputs.ui')
 
-    def queue(self):
-        filename = tempfile.mktemp()
-
+    def make_procedure(self):
+        # Overwrite the make_procedure method that creates the procedure and
+        # sets the parameters based on the custom input-widget
         procedure = TestProcedure()
+
         procedure.seed = str(self.inputs.seed.text())
         procedure.iterations = self.inputs.iterations.value()
         procedure.delay = self.inputs.delay.value()
 
-        results = Results(procedure, filename)
-
-        experiment = self.new_experiment(results)
-
-        self.manager.queue(experiment)
+        return procedure
 
 
 if __name__ == "__main__":
