@@ -40,8 +40,3 @@ try:
     from pymeasure.adapters.prologix import PrologixAdapter
 except ImportError:
     log.warning("PySerial library could not be loaded")
-
-try:
-    from pymeasure.adapters.vxi11 import VXI11Adapter
-except ImportError:
-    log.warning("VXI-11 library could not be loaded")
