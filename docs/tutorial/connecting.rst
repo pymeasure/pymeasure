@@ -87,15 +87,6 @@ Therefore, new :class:`PrologixAdapter <pymeasure.adapters.PrologixAdapter>` ins
     sourcemeter = Keithley2400(adapter)  # at GPIB address 7
     multimeter = Keithley2000(adapter.gpib(9))  # at GPIB address 9
 
-Some equipment may require the vxi-11 protocol for communication. An example would be a Agilent E5810B ethernet to GPIB bridge.
-To use this type equipment the python-vxi11 library has to be installed which is part of the extras package requirements. ::
-
-   from pymeasure.adapters import VXI11Adapter
-   from pymeasure.instruments import Instrument
-
-   adapter = VXI11Adapter("TCPIP::192.168.0.100::inst0::INSTR")
-   instr = Instrument(adapter, "my_instrument")
-
 .. _connection_settings:
 
 Modifying connection settings
