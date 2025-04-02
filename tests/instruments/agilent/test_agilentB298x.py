@@ -24,10 +24,10 @@
 
 import pytest
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
+from pymeasure.instruments.agilent.agilentB298x import AgilentB2987
 
 
-class TestAgilentB2980:
+class TestagilentB298x:
     """Tests of the ammeter functions"""
 
     @pytest.mark.parametrize("state", [0, 1])
@@ -151,7 +151,7 @@ class TestAgilentB2980:
 
 
 <<<<<<< Updated upstream
-class TestAgilentB2980Source:
+class TestagilentB298xSource:
 =======
 class TestAgilentB298xOutput:
 >>>>>>> Stashed changes
@@ -210,7 +210,7 @@ class TestAgilentB298xOutput:
             assert inst.output.range in ['MIN', 1000]
 
 
-class TestAgilentB2980Trigger:
+class TestagilentB298xTrigger:
     """Tests of the trigger functions"""
 
     SUB_SYSTEM = [':TRIG', ':ARM']
@@ -266,7 +266,7 @@ class TestAgilentB2980Trigger:
     # def test_output_enabled(self):
 
 
-class TestAgilentB2980Battery:
+class TestagilentB298xBattery:
     """Tests of the battery functions"""
 
     def test_battery_level(self):
