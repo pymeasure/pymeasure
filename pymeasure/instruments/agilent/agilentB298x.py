@@ -36,9 +36,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-<<<<<<< Updated upstream
-class AgilentB2980(SCPIMixin, Instrument):
-=======
 class AgilentB298xTrigger(Channel):
     """A class representing the B298x trigger functions."""
 
@@ -307,7 +304,6 @@ class AgilentB298xBattery(Channel):
 
 
 class AgilentB298x(SCPIMixin, Instrument):
->>>>>>> Stashed changes
     """A class representing the Agilent/Keysight B2980A/B series Picoammeters/Electrometers."""
 
     HAS_SOURCE = False
@@ -322,18 +318,11 @@ class AgilentB298x(SCPIMixin, Instrument):
             **kwargs
         )
 
-<<<<<<< Updated upstream
-        self.add_child(AgilentB2980Trigger, attr_name='trigger')
-
-        if self.HAS_SOURCE:
-            self.add_child(AgilentB2980Source, attr_name='source')
-=======
         if self.HAS_SOURCE:
             self.add_child(AgilentB298xOutput, attr_name='output')
->>>>>>> Stashed changes
 
         if self.HAS_BATTERY:
-            self.add_child(AgilentB2980Battery, attr_name='battery')
+            self.add_child(AgilentB298xBattery, attr_name='battery')
 
     trigger = Instrument.ChannelCreator(AgilentB298xTrigger, "trigger")
 
@@ -437,65 +426,7 @@ class AgilentB298x(SCPIMixin, Instrument):
         )
 
 
-<<<<<<< Updated upstream
-class AgilentB2980Source(Channel):
-    """A class representing the B298x source functions."""
-
-    enabled = Channel.control(
-        ":OUTP?", ":OUTP %d",
-        """Control the voltage source output (boolean).""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={True: 1, False: 0}
-        )
-
-    low_state = Channel.control(
-        ":OUTP:LOW?", ":OUTP:LOW %s",
-        """Control the source low terminal state ('FLO', 'COMM').""",
-        validator=strict_discrete_set,
-        values=['FLO', 'COMM']
-        )
-
-    off_state = Channel.control(
-        ":OUTP:OFF:MODE?", ":OUTP:OFF:MODE %s",
-        """Control the source condition after output off (ZERO|HIZ|NORM).
-
-        HIGH Z: • Output relay: off (open)
-                • The voltage source setting is not changed.
-                • This status is available only when the 20 V range is used.
-        NORMAL: • Output voltage: 0 V
-                • Output relay: off (open)
-        ZERO:   • Output voltage: 0 V in the present voltage range
-        """,
-        validator=strict_discrete_set,
-        values=['ZERO', 'HIZ', 'NORM']
-        )
-
-    voltage = Channel.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT %g",
-        """Control the output voltage of the source.""",
-        check_set_errors=False
-        )
-
-    range = Channel.control(
-        ":SOUR:VOLT:RANG?", ":SOUR:VOLT:RANG %s",
-        """Control the output voltage range of the source.""",
-        validator=joined_validators(strict_discrete_set, truncated_range),
-        values=[['MIN', 'MAX', 'DEF'], [-1000, 1000]],
-        check_set_errors=False
-        )
-
-
-class AgilentB2980Trigger(Channel):
-    """A class representing the B298x trigger functions."""
-
-    def init(self, action='ALL'):
-        """Init trigger."""
-        strict_discrete_set(action, ['ALL', 'ACQ', 'TRAN'])
-        self.write(f":INIT:{action}")
-
-
-class AgilentB2980Battery(Channel):
+class AgilentB298xBattery(Channel):
     """A class representing the B298x battery functions."""
 
     def insert_id(self, command):
@@ -521,20 +452,18 @@ class AgilentB2980Battery(Channel):
     )
 
 
-=======
->>>>>>> Stashed changes
 ##########################
 # Instrument definitions #
 ##########################
 
 
-class AgilentB2981(AgilentB2980):
+class AgilentB2981(AgilentB298x):
     """Agilent/Keysight B2981A/B series, Femto/Picoammeter."""
     HAS_SOURCE = False
     HAS_BATTERY = False
 
 
-class AgilentB2983(AgilentB2980):
+class AgilentB2983(AgilentB298x):
     """Agilent/Keysight B2983A/B series, Femto/Picoammeter.
 
     Has battery operation.
@@ -543,13 +472,13 @@ class AgilentB2983(AgilentB2980):
     HAS_BATTERY = True
 
 
-class AgilentB2985(AgilentB2980):
+class AgilentB2985(AgilentB298x):
     """Agilent/Keysight B2985A/B series Femto/Picoammeter Electrometer/High Resistance Meter."""
     HAS_SOURCE = True
     HAS_BATTERY = False
 
 
-class AgilentB2987(AgilentB2980):
+class AgilentB2987(AgilentB298x):
     """Agilent/Keysight B2987A/B series Femto/Picoammeter Electrometer/High Resistance Meter.
 
     Has battery operation.

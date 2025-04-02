@@ -150,11 +150,7 @@ class TestagilentB298x:
             assert state == inst.voltage_range
 
 
-<<<<<<< Updated upstream
-class TestagilentB298xSource:
-=======
 class TestAgilentB298xOutput:
->>>>>>> Stashed changes
     """Tests of the source functions"""
 
     @pytest.mark.parametrize("state", [0, 1])
