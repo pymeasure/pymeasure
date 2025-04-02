@@ -58,7 +58,7 @@ class AgilentB298xTrigger(Channel):
         strict_discrete_set(action, ['ALL', 'ACQ', 'TRAN'])
         self.write(f":INIT:{action}")
 
-    arm_once_bypassed = Channel.control(
+    arm_bypass_once = Channel.control(
         ":ARM:BYP?", ":ARM:BYP %s",
         """Control the bypass for the event detector in the arm layer (boolean).""",
         validator=strict_discrete_set,
@@ -147,7 +147,7 @@ class AgilentB298xTrigger(Channel):
         values={True: 1, False: 0}
         )
 
-    once_bypassed = Channel.control(
+    bypass_once = Channel.control(
         ":TRIG:BYP?", ":TRIG:BYP %s",
         """Control the bypass for the event detector in the trigger layer. (boolean).""",
         validator=strict_discrete_set,

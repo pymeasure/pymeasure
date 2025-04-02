@@ -209,25 +209,27 @@ class TestAgilentB298xOutput:
 class TestagilentB298xTrigger:
     """Tests of the trigger functions"""
 
-    SUB_SYSTEM = [':TRIG', ':ARM']
-
-    # def test_init(self):
-        # """Verify the communication of the trigger init method."""
-        # with expected_protocol(
-            # AgilentB2987,
-            # [(":INIT")]
-        # ) as inst:
-            # assert inst.trigger.init() == 38
-
-    @pytest.mark.parametrize("state", ['OFF', 'ONCE'])
-    def test_once_bypassed(self, state):
+    @pytest.mark.parametrize("state", ['ALL', 'ACQ', 'TRAN'])
+    def test_init(self, state):
         """Verify the communication of the trigger init method."""
         with expected_protocol(
             AgilentB2987,
-            [(f":TRIG:BYP {state}", None),
-             (":TRIG:BYP?", state)]
+            [(f":INIT:{state}", None)]
         ) as inst:
-            assert type(inst.trigger.once_bypassed) is bool
+            inst.trigger.init(state)
+
+
+    @pytest.mark.parametrize("state", ['OFF', 'ONCE'])
+    def test_arm_bypass_once(self, state):
+        """Verify the communication of the arm_bypass_once getter/setter."""
+        mapping = {'OFF': False, 'ONCE': True}
+        with expected_protocol(
+            AgilentB2987,
+            [(f":ARM:BYP {state}", None),
+             (":ARM:BYP?", state)]
+        ) as inst:
+            inst.trigger.arm_bypass_once = mapping[state]
+            assert inst.trigger.arm_bypass_once == mapping[state]
         
         
         
@@ -247,7 +249,19 @@ class TestagilentB298xTrigger:
     # def test_test_is_idle(self):
 
     
-    # def test_bypass(self):
+    @pytest.mark.parametrize("state", ['OFF', 'ONCE'])
+    def test_bypass_once(self, state):
+        """Verify the communication of the arm bypass_once getter/setter."""
+        mapping = {'OFF': False, 'ONCE': True}
+        with expected_protocol(
+            AgilentB2987,
+            [(f":TRIG:BYP {state}", None),
+             (":TRIG:BYP?", state)]
+        ) as inst:
+            inst.trigger.bypass_once = mapping[state]
+            assert inst.trigger.bypass_once == mapping[state]
+
+
 
     # def test_count(self):
 
