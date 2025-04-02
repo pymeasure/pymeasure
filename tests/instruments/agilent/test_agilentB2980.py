@@ -27,7 +27,7 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987
 
 
-class TestAgilentB2980:
+class TestAgilentB298x:
     """Tests of the ammeter functions"""
 
     @pytest.mark.parametrize("state", [0, 1])
@@ -150,7 +150,7 @@ class TestAgilentB2980:
             assert state == inst.voltage_range
 
 
-class TestAgilentB2980Source:
+class TestAgilentB298xSource:
     """Tests of the source functions"""
 
     @pytest.mark.parametrize("state", [0, 1])
@@ -206,12 +206,12 @@ class TestAgilentB2980Source:
             assert inst.source.range in ['MIN', 1000]
 
 
-class TestAgilentB2980Trigger:
+class TestAgilentB298xTrigger:
     """Tests of the trigger functions"""
     pass
 
 
-class TestAgilentB2980Battery:
+class TestAgilentB298xBattery:
     """Tests of the battery functions"""
 
     def test_battery_level(self):
