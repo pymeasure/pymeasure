@@ -23,7 +23,7 @@
 #
 
 import enum
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -60,7 +60,7 @@ limits = {
     "HP6674A": {"Volt_lim": 61.425, "OVP_lim": 72.0, "Cur_lim": 35.83}}
 
 
-class HP6641A(SCPIUnknownMixin, Instrument):
+class HP6641A(SCPIMixin, Instrument):
     """ Represents the HP / Agilent 6641A
     provides a high-level interface for interacting with the instrument.
 
@@ -87,36 +87,36 @@ class HP6641A(SCPIUnknownMixin, Instrument):
     def __init__(self, adapter, name="HP6641A", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    set_voltage = Instrument.control(
+    voltage_setpoint = Instrument.control(
         "VOLT?", "VOLT %g",
-        "Set and Get the voltage programmed level",
+        "Control the voltage setpoint in Volts (float).",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["Volt_lim"]]
     )
 
-    set_ovp = Instrument.control(
+    ovp_setpoint = Instrument.control(
         "VOLT:PROT?", "VOLT:PROT %g",
-        "Set and Get overvoltage protection and programmed level",
+        "Control the Over Voltage Protection setpoint in Volts (float).",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["OVP_lim"]]
     )
 
-    set_current = Instrument.control(
+    current_setpoint = Instrument.control(
         "CURR?", "CURR %g",
-        "Set and Get the current programmed level",
+        "Control the current setpoint in Amperes (float).",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["Cur_lim"]]
     )
 
-    meas_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "MEAS:VOLT?",
         "Measure the voltage at the power supply's sense terminals"
     )
 
-    meas_current = Instrument.measurement(
+    current = Instrument.measurement(
         "MEAS:CURR?",
         "Measure the current at the power supply's sense terminals"
     )
@@ -191,9 +191,9 @@ class HP6674A(HP6641A):
     provides a high-level interface for interacting with the instrument.
     """
 
-    set_voltage_values = [0, limits["HP6674A"]["Volt_lim"]]
-    set_ovp_values = [0, limits["HP6674A"]["OVP_lim"]]
-    set_current_values = [0, limits["HP6674A"]["Cur_lim"]]
+    voltage_setpoint_values = [0, limits["HP6674A"]["Volt_lim"]]
+    ovp_setpoint_values = [0, limits["HP6674A"]["OVP_lim"]]
+    current_setpoint_values = [0, limits["HP6674A"]["Cur_lim"]]
 
     def __init__(self, adapter, name="HP6674A", **kwargs):
         super().__init__(adapter, name, **kwargs)
