@@ -121,7 +121,7 @@ class HP6641A(SCPIMixin, Instrument):
         "Measure the current at the power supply's sense terminals"
     )
 
-    output = Instrument.control(
+    output_enabled = Instrument.control(
         "OUTP:STAT?", "OUTP:STAT %g",
         "Control the power supply output and Read back the programmed value",
         validator=strict_discrete_set,

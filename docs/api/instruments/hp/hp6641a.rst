@@ -1,0 +1,7 @@
+####################
+HP 6641A Power Supply
+####################
+
+.. autoclass:: pymeasure.instruments.hp.HP6641A
+    :members:
+    :show-inheritance:
