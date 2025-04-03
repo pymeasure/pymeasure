@@ -59,6 +59,7 @@ Instruments by manufacturer:
    philips/index
    pendulum/index
    proterial/index
+   ptw/index
    racal/index
    razorbill/index
    redpitaya/index
