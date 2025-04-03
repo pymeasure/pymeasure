@@ -28,32 +28,33 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 class OperationStatus(enum.Flag):
     """Operation Status."""
-    CAL = 1<<0
-    WTG = 1<<5
-    CV = 1<<8
-    CC = 1<<10
+    CAL = 1 << 0
+    WTG = 1 << 5
+    CV = 1 << 8
+    CC = 1 << 10
 
 class QuestionableStatus(enum.Flag):
     """Questionable Status."""
-    OV = 1<<0
-    OC = 1<<1
-    OT = 1<<4
-    RI = 1<<9
-    UNR = 1<<10
+    OV = 1 << 0
+    OC = 1 << 1
+    OT = 1 << 4
+    RI = 1 << 9
+    UNR = 1 << 10
 
 class StandardEventStatus(enum.Flag):
     """Standard Event Status."""
-    OPC = 1<<0
-    QYE = 1<<2
-    DDE = 1<<3
-    EXE = 1<<4
-    CME = 1<<5
-    PON = 1<<7
+    OPC = 1 << 0
+    QYE = 1 << 2
+    DDE = 1 << 3
+    EXE = 1 << 4
+    CME = 1 << 5
+    PON = 1 << 7
 
 limits = {
     "HP6641A": {"Volt_lim": 8.190, "OVP_lim": 8.8, "Cur_lim": 20.475},
     "HP6673A": {"Volt_lim": 35.831, "OVP_lim": 42.0, "Cur_lim": 61.43},
     "HP6674A": {"Volt_lim": 61.425, "OVP_lim": 72.0, "Cur_lim": 35.83}}
+
 
 class HP6641A(SCPIUnknownMixin, Instrument):
     """ Represents the HP / Agilent 6641A
@@ -167,6 +168,7 @@ class HP6641A(SCPIUnknownMixin, Instrument):
         standard_event_status = StandardEventStatus(int(self.ask("*ESR?")))
         return operation_status, questionable_status, standard_event_status
 
+
 class HP6673A(HP6641A):
     """ Represents the HP / Agilent 6674A
     provides a high-level interface for interacting with the instrument.
@@ -178,6 +180,7 @@ class HP6673A(HP6641A):
 
     def __init__(self, adapter, name="HP6673A", **kwargs):
         super().__init__(adapter, name, **kwargs)
+
 
 class HP6674A(HP6641A):
     """ Represents the HP / Agilent 6674A
