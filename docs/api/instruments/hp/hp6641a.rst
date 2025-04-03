@@ -1,9 +1,11 @@
 ####################
-System Power Supply (664xA, 665xA, 667xA, 668xA, and 669xA):
-HP 6641A 
-HP 6673A
-HP 6674A
+System Power Supply (664xA, 665xA, 667xA, 668xA, and 669xA)
 ####################
+
+
+*Note:*
+	* Implemented HP6641A, HP6673A, HP6674A.
+
 
 .. autoclass:: pymeasure.instruments.hp.hp6641a.HP6641A
     :members:

@@ -15,6 +15,7 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    hp34401A
    hp3437A
    hp3478A
+   hp6641a
    hp8116A
    hp856xx
    hp8657B
