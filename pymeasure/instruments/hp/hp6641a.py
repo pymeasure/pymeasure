@@ -26,12 +26,14 @@ import enum
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
+
 class OperationStatus(enum.Flag):
     """Operation Status."""
     CAL = 1 << 0
     WTG = 1 << 5
     CV = 1 << 8
     CC = 1 << 10
+
 
 class QuestionableStatus(enum.Flag):
     """Questionable Status."""
@@ -41,6 +43,7 @@ class QuestionableStatus(enum.Flag):
     RI = 1 << 9
     UNR = 1 << 10
 
+
 class StandardEventStatus(enum.Flag):
     """Standard Event Status."""
     OPC = 1 << 0
@@ -49,6 +52,7 @@ class StandardEventStatus(enum.Flag):
     EXE = 1 << 4
     CME = 1 << 5
     PON = 1 << 7
+
 
 limits = {
     "HP6641A": {"Volt_lim": 8.190, "OVP_lim": 8.8, "Cur_lim": 20.475},
