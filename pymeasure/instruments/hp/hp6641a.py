@@ -89,7 +89,7 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     set_voltage = Instrument.control(
         "VOLT?", "VOLT %g",
-        "Program the voltage and Read back the programmed level",
+        "Set and Get the voltage programmed level",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["Volt_lim"]]
@@ -97,7 +97,7 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     set_ovp = Instrument.control(
         "VOLT:PROT?", "VOLT:PROT %g",
-        "Program the overvoltage protection and Read back the programmed level",
+        "Set and Get overvoltage protection and programmed level",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["OVP_lim"]]
@@ -105,7 +105,7 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     set_current = Instrument.control(
         "CURR?", "CURR %g",
-        "Program the current and Read back the programmed level",
+        "Set and Get the current programmed level",
         dynamic=True,
         validator=strict_range,
         values=[0, limits["HP6641A"]["Cur_lim"]]
@@ -113,17 +113,17 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     meas_voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        "Returns the voltage measured at the power supply's sense terminals"
+        "Measure the voltage at the power supply's sense terminals"
     )
 
     meas_current = Instrument.measurement(
         "MEAS:CURR?",
-        "Returns the current measured at the power supply's sense terminals"
+        "Measure the current at the power supply's sense terminals"
     )
 
     output = Instrument.control(
         "OUTP:STAT?", "OUTP:STAT %g",
-        "Enables or disables the power supply output and Read back the programmed value",
+        "Control the power supply output and Read back the programmed value",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -131,7 +131,7 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     disp_mode_text = Instrument.control(
         "DISP:MODE?", "DISP:MODE %s",
-        "Switches the display between its normal metering mode and a mode in which\
+        "Set and Get display mode between its normal metering mode and a mode in which\
         it displays text sent by the user",
         validator=strict_discrete_set,
         values=DISP_MAPPINGS,
@@ -140,17 +140,17 @@ class HP6641A(SCPIUnknownMixin, Instrument):
 
     disp_text = Instrument.control(
         "DISP:TEXT?", "DISP:TEXT \"%s\"",
-        "Allows character strings to be sent to display or read from",
+        "Set and Get character strings to/from display",
     )
 
     scpi_version = Instrument.measurement(
         "SYST:VERS?",
-        """The SCPI version of the multimeter.""",
+        """Get SCPI version of the multimeter.""",
     )
 
     self_test_result = Instrument.measurement(
         "*TST?",
-        """Initiate a self-test of the multimeter and return the result.
+        """Get self-test result.
 
         Be sure to set an appropriate connection timeout,
         otherwise the command will fail.""",
