@@ -70,14 +70,14 @@ class HP6641A(SCPIMixin, Instrument):
         psu = hp6641a.HP6641A(instr);
         psu.clear()
         psu.remote_control_enabled = True
-        psu.set_voltage = 3.3
-        psu.set_current = 1.5
-        psu.set_ovp = 8.0
-        psu.output = 1
+        psu.voltage_setpoint = 3.3
+        psu.current_setpoint = 1.5
+        psu.ovp_setpoint = 8.0
+        psu.output_enabled = 1
         print(f'read errors: {psu.pop_err()}')
         while True:
-            print(f'output voltage: {psu.meas_voltage}')
-            print(f'output current: {psu.meas_current}')
+            print(f'output voltage: {psu.voltage}')
+            print(f'output current: {psu.current}')
             time.sleep(1)
     """
 
