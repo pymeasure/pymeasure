@@ -25,13 +25,13 @@
 # disconnect all cables from the unit before starting the test
 #
 # Tested using SCPI over USB. call signature:
-# $ pytest test_agilentB2980_with_device.py --device-address USB0::0x2A8D::0x9B01::MY61390198::INSTR
+# $ pytest test_agilentB298x_with_device.py --device-address USB0::0x2A8D::0x9B01::MY61390198::INSTR
 #
 # Test was performed with B2987B
 #
 
 import pytest
-from pymeasure.instruments.agilent.agilentB2980 import AgilentB2987  # B2987 supports all features
+from pymeasure.instruments.agilent.agilentB298x import AgilentB2987  # B2987 supports all features
 # from pyvisa.errors import VisaIOError
 
 SUPPORTED_MODEL = 'B2987'
@@ -43,18 +43,35 @@ def agilentB298x(connected_device_address):
     return instr
 
 
+<<<<<<< Updated upstream
 class TestResetandID:
     def test_reset(self, agilentB298x):
         agilentB298x.clear()
         agilentB298x.reset()
         assert len(agilentB298x.check_errors()) == 0
+=======
+@pytest.fixture
+def resetted_b298x_with_input_enabled(agilentB298x):
+    agilentB298x.clear()
+    agilentB298x.reset()
+    agilentB298x.input_enabled = True
+    agilentB298x.output.enabled = True
+    return agilentB298x
+
+
+class TestAgilentB298xResetAndID:
+    def test_reset(self, agilentB298x):
+        agilentB298x.clear()
+        agilentB298x.reset()
+        assert len(agilentB298x.check_errors()) == 0
+>>>>>>> Stashed changes
 
     def test_device_id(self, agilentB298x):
         vendor, device_id, serial_number, firmware_version = agilentB298x.id.split(',')
         assert SUPPORTED_MODEL in device_id
 
 
-class TestAgilentB298x:
+class TestagilentB298x:
     """Test of the ammeter functions."""
 
     def test_input_enabled(self, agilentB298x):
@@ -76,20 +93,31 @@ class TestAgilentB298x:
         assert 2E-12 <= current_range <= 20E-3
 
 
-class TestAgilentB298xTrigger:
+class TestagilentB298xTrigger:
     """Test of the source functions for B2985 and B2987."""
-    pass
+
+    def test_when_init_trigger_called_then_no_error(self, resetted_b298x_with_input_enabled):
+        resetted_b298x_with_input_enabled.trigger.init()
+        assert len(resetted_b298x_with_input_enabled.check_errors()) == 0
 
 
-class TestAgilentB298xSource:
+<<<<<<< Updated upstream
+class TestagilentB298xSource:
     """Test of the source functions for B2985 and B2987."""
 
     def test_enabled(self, agilentB298x):
         enabled = agilentB298x.source.enabled
+=======
+class TestAgilentB298xOutput:
+    """Test of the source functions for B2985 and B2987."""
+
+    def test_enabled(self, agilentB298x):
+        enabled = agilentB298x.output.enabled
+>>>>>>> Stashed changes
         assert enabled in [True, False]
 
 
-class TestAgilentB298xBattery:
+class TestagilentB298xBattery:
     """Test of the battery functions of B2983 and B2987."""
 
     def test_level(self, agilentB298x):
