@@ -28,6 +28,7 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 BOOL_MAPPINGS = {True: 1, False: 0}
 
+
 class AgilentE4418BChannel(Channel):
     """Implementation of a base Agilent E4418B channel"""
 
@@ -71,7 +72,7 @@ class AgilentE4418BChannel(Channel):
         dynamic=False,
         validator=strict_range,
         values=[1, 4],
-        get_process=lambda l: int(l[1])
+        get_process=lambda getlist: int(getlist[1])
     )
 
     frequency = Instrument.control(
