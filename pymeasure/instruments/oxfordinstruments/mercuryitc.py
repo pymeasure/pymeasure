@@ -75,7 +75,7 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1].replace("K", "")
     )
 
-    loop_PID_enabled = Channel.control(
+    control_loop_PID_enabled = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:ENAB",
         "SET:DEV:{ch}:TEMP:LOOP:ENAB:%s",
         """Control whether the control-loop heater is controlled by
@@ -87,7 +87,7 @@ class TemperatureSensor(Channel):
         map_values=True
     )
 
-    loop_P = Channel.control(
+    control_loop_P = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:P",
         "SET:DEV:{ch}:TEMP:LOOP:P:%g",
         """Control the proportional term, P, of the control loop.""",
@@ -95,7 +95,7 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1]
     )
 
-    loop_I = Channel.control(
+    control_loop_I = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:I",
         "SET:DEV:{ch}:TEMP:LOOP:I:%g",
         """Control the integral term, I, of the control loop.""",
@@ -103,7 +103,7 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1]
     )
 
-    loop_D = Channel.control(
+    control_loop_D = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:D",
         "SET:DEV:{ch}:TEMP:LOOP:D:%g",
         """Control the derivative term, D, of the control loop.""",
@@ -111,7 +111,7 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1]
     )
 
-    loop_T_setpoint = Channel.control(
+    control_loop_temperature_setpoint = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:TSET",
         "SET:DEV:{ch}:TEMP:LOOP:TSET:%g",
         """Control the control loop temperature setpoint, in Kelvin (in the range
@@ -122,7 +122,7 @@ class TemperatureSensor(Channel):
         values=[0, 2000]
     )
 
-    loop_heater_pcnt = Channel.control(
+    control_loop_heater_percent = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:HSET",
         "SET:DEV:{ch}:TEMP:LOOP:HSET:%g",
         """Control the heater percentage when output configured to manual mode
@@ -133,7 +133,7 @@ class TemperatureSensor(Channel):
         values=[0, 100]
     )
 
-    loop_ramp_rate = Channel.control(
+    control_loop_ramp_rate = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:RSET",
         "SET:DEV:{ch}:TEMP:LOOP:RSET:%g",
         """Control the control loop ramp rate, in K/min, if enabled (in the
@@ -144,7 +144,7 @@ class TemperatureSensor(Channel):
         values=[0, 100000]
     )
 
-    loop_ramp_enabled = Channel.control(
+    control_loop_ramp_enabled = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:RENA",
         "SET:DEV:{ch}:TEMP:LOOP:RENA:%s",
         """Control whether the temperature ramping function is enabled (``True``) or
@@ -285,14 +285,14 @@ class MercuryiTC(Instrument):
         """Get identity of unit."""
     )
 
-    TS_mobo = Instrument.ChannelCreator(
+    TS_MB = Instrument.ChannelCreator(
         TemperatureSensor,
         "MB1.T1",
         prefix="TS",
         collection="TS"
         )
 
-    HTR_mobo = Instrument.ChannelCreator(
+    HTR_MB = Instrument.ChannelCreator(
         Heater,
         "MB0.H1",
         prefix="HTR",
