@@ -136,7 +136,7 @@ def test_TS_MB_control_loop_temperature_setpoint_getter():
             MercuryiTC,
             [(b'READ:DEV:MB1.T1:TEMP:LOOP:TSET', b'STAT:DEV:MB1.T1:TEMP:LOOP:TSET:61.0000K')],
     ) as inst:
-        assert inst.TS_MB.control_loop_T_setpoint == 61.0
+        assert inst.TS_MB.control_loop_temperature_setpoint == 61.0
 
 
 def test_TS_MB_control_loop_heater_percent_getter():
