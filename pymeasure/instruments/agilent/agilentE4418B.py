@@ -53,7 +53,6 @@ class AgilentE4418BChannel(Channel):
     averaging = Instrument.control(
         "SENS{ch}:AVER:COUN?", "SENS{ch}:AVER:COUN %i",
         "Control averaging (int).",
-        dynamic=False,
         validator=strict_range,
         values=[0, 1024]
     )
@@ -69,7 +68,6 @@ class AgilentE4418BChannel(Channel):
     resolution = Instrument.control(
         "CONF{ch}?", "CONF{ch} DEF,%i",
         "Control resolution (int)",
-        dynamic=False,
         validator=strict_range,
         values=[1, 4],
         get_process=lambda getlist: int(getlist[1])
@@ -78,7 +76,6 @@ class AgilentE4418BChannel(Channel):
     frequency = Instrument.control(
         "SENS{ch}:FREQ?", "SENS{ch}:FREQ %iMHZ",
         "Control frequency in MHz (int)",
-        dynamic=False,
         validator=strict_range,
         values=[1, 999900]
     )
@@ -143,7 +140,6 @@ class AgilentE4418B(SCPIMixin, Instrument):
     unit = Instrument.control(
         "UNIT:POW?", "UNIT:POW %s",
         "Control measure unit (str).",
-        dynamic=False,
         validator=strict_discrete_set,
         values={"W", "DBM", "DB"}
     )
