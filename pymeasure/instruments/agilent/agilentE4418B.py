@@ -52,7 +52,7 @@ class AgilentE4418BChannel(Channel):
 
     averaging = Instrument.control(
         "SENS{ch}:AVER:COUN?", "SENS{ch}:AVER:COUN %i",
-        "Control averaging (int).",
+        "Control averaging (int)",
         validator=strict_range,
         values=[0, 1024]
     )
@@ -139,7 +139,7 @@ class AgilentE4418B(SCPIMixin, Instrument):
 
     unit = Instrument.control(
         "UNIT:POW?", "UNIT:POW %s",
-        "Control measure unit (str).",
+        "Control measure unit (str)",
         validator=strict_discrete_set,
         values={"W", "DBM", "DB"}
     )
