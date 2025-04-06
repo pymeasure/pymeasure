@@ -23,10 +23,8 @@
 #
 
 import logging
-from warnings import warn
 
 import pyvisa
-import numpy as np
 
 from .adapter import Adapter
 from .protocol import ProtocolAdapter
@@ -46,17 +44,6 @@ class VISAAdapter(Adapter):
         or GPIB address integer that identifies the target of the connection
     :param visa_library: PyVISA VisaLibrary Instance, path of the VISA library or VisaLibrary spec
         string (``@py`` or ``@ivi``). If not given, the default for the platform will be used.
-    :param preprocess_reply: An optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
-    :param float query_delay: Time in s to wait after writing and before reading.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `wait_for` method instead.
-
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments for configuring the PyVISA connection.
 
@@ -83,15 +70,8 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library='', preprocess_reply=None,
-                 query_delay=0, log=None, **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply, log=log)
-        if query_delay:
-            warn(("Parameter `query_delay` is deprecated. "
-                  "Implement in Instrument's `wait_for` instead."),
-                 FutureWarning)
-            kwargs.setdefault("query_delay", query_delay)
-        self.query_delay = query_delay
+    def __init__(self, resource_name, visa_library="", log=None, **kwargs):
+        super().__init__(log=log)
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
             self.connection.write_raw = self.connection.write_bytes
@@ -102,7 +82,6 @@ class VISAAdapter(Adapter):
             self.resource_name = getattr(resource_name, "resource_name", None)
             self.connection = resource_name.connection
             self.manager = resource_name.manager
-            self.query_delay = resource_name.query_delay
             return
         elif isinstance(resource_name, int):
             resource_name = "GPIB0::%d::INSTR" % resource_name
@@ -196,55 +175,6 @@ class VISAAdapter(Adapter):
                     if exc.error_code == pyvisa.constants.StatusCode.error_timeout:
                         return bytes(result)
                     raise
-
-    def ask(self, command):
-        """ Writes the command to the instrument and returns the resulting
-        ASCII response
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        return self.connection.query(command)
-
-    def ask_values(self, command, **kwargs):
-        """ Writes a command to the instrument and returns a list of formatted
-        values from the result. This leverages the `query_ascii_values` method
-        in PyVISA.
-
-        .. deprecated:: 0.11
-            Call `Instrument.values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param \\**kwargs: Key-word arguments to pass onto `query_ascii_values`
-        :returns: Formatted response of the instrument.
-        """
-        warn("`Adapter.ask_values` is deprecated, call `Instrument.values` instead.",
-             FutureWarning)
-
-        return self.connection.query_ascii_values(command, **kwargs)
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
-
-        .. deprecated:: 0.11
-            Call `Instrument.binary_values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
-             FutureWarning)
-        self.connection.write(command)
-        binary = self.connection.read_raw()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
 
     def wait_for_srq(self, timeout=25, delay=0.1):
         """ Block until a SRQ, and leave the bit high
