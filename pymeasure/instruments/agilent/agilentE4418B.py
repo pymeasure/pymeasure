@@ -22,11 +22,23 @@
 # THE SOFTWARE.
 #
 
+import enum
 from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 BOOL_MAPPINGS = {True: 1, False: 0}
+
+
+class ConditionStatus(enum.Flag):
+    """Condition Status bits"""
+    Channel_A_sensor_connected = 1 << 1
+    Channel_B_sensor_connected = 1 << 2
+    Channel_A_sensor_error = 1 << 3
+    Channel_B_sensor_error = 1 << 4
+    Channel_A_sensor_Front_Rear = 1 << 5
+    Channel_B_sensor_Front_Rear = 1 << 6
+    Front_Panel_key_press = 1 << 14
 
 
 class AgilentE4418BChannel(Channel):
@@ -156,6 +168,12 @@ class AgilentE4418B(SCPIMixin, Instrument):
     disp_enable = Instrument.control(
         "DISP:ENAB?", "DISP:ENAB %d",
         "Control display enable. (bool)",
+    )
+
+    status_condition = Instrument.measurement(
+    "STAT:DEV:COND?",
+    "Get condition status",
+    get_process=lambda status: ConditionStatus(int(status))
     )
 
 
