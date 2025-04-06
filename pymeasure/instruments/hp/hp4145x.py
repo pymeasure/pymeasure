@@ -88,8 +88,6 @@ class Status(IntFlag):
     POWER_FAILURE = 0b10100000
 
 
-
-
 def check_current_voltage_name(name):
     if (len(name) > 6) or not name[0].isalpha():
         new_name = 'a' + name[:5]
@@ -936,7 +934,6 @@ class HP4145x(Instrument):
     var1: VAR1 = Instrument.ChannelCreator(VAR1, "var1")
     var2: VAR2 = Instrument.ChannelCreator(VAR2, "var2")
     vard: VARD = Instrument.ChannelCreator(VARD, "vard")
-
 
     def __init__(self, adapter, name="HP 4145A/4145B Semiconductor Parameter Analyzer",
                  **kwargs):
