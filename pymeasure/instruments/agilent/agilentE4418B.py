@@ -66,9 +66,17 @@ class AgilentE4418BChannel(Channel):
         map_values=True
     )
 
-    resolution = Instrument.control(
-        "CONF{ch}?", "CONF{ch} DEF,%i",
-        "Control resolution (int)",
+    averaging_auto_enabled = Instrument.control(
+        "SENS{ch}:AVER:COUN:AUTO?", "SENS{ch}:AVER:COUN:AUTO %i",
+        "Control auto averaging",
+        validator=strict_discrete_set,
+        values=BOOL_MAPPINGS,
+        map_values=True
+    )
+
+    display_resolution = Instrument.control(
+        "DISP:WIND{ch}:RES?", "DISP:WIND{ch}:RES %i",
+        "Control display resolution (int)",
         validator=strict_range,
         values=[1, 4],
         get_process=lambda getlist: int(getlist[1])
@@ -111,7 +119,7 @@ class AgilentE4418B(SCPIMixin, Instrument):
         print(f'readB offset: {pm.channels[2].offset}')
         print(f'readB averaging: {pm.channels[2].averaging}')
         pm.channels[2].averaging_enabled = False
-        pm.channels[2].resolution = 2
+        pm.channels[2].display_resolution = 2
         print(f'readB resolution: {pm.channels[2].resolution}')
         pm.channels[2].frequency = 50
         print(f'readB frequency: {pm.channels[2].frequency}')
