@@ -54,7 +54,8 @@ class AgilentE4418BChannel(Channel):
         "SENS{ch}:AVER:COUN?", "SENS{ch}:AVER:COUN %i",
         "Control averaging (int)",
         validator=strict_range,
-        values=[0, 1024]
+        values=[0, 1024],
+        cast=int
     )
 
     averaging_enabled = Instrument.control(
