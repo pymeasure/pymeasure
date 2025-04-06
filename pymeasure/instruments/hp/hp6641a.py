@@ -69,7 +69,6 @@ class HP6641A(SCPIMixin, Instrument):
         instr =  vxi11.Instrument("192.168.88.116", "gpib0,6")
         psu = hp6641a.HP6641A(instr);
         psu.clear()
-        psu.remote_control_enabled = True
         psu.voltage_setpoint = 3.3
         psu.current_setpoint = 1.5
         psu.ovp_setpoint = 8.0
