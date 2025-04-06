@@ -23,6 +23,7 @@
 #
 
 
+from abc import ABC
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -32,12 +33,12 @@ class Agilent8648(SCPIMixin, Instrument):
     provides a high-level interface for interacting with the instrument.
     """
 
-    def __init__(self, adapter, name="", **kwargs):
-        raise NotImplementedError
-
     BOOL_MAPPINGS = {True: 1, False: 0}
     DISP_MAPPINGS = {True: "TEXT", False: "NORM"}
     AMPL_LIMITS = [-136.0, 22]
+
+    def __init__(self, adapter, name="Agilent 8648", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     output_enabled = Instrument.control(
         "OUTPUT:STAT?", "OUTPUT:STAT %g",
