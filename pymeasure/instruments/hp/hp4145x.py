@@ -247,6 +247,9 @@ class HpMeasurementChannel(Channel):
 
     @property
     def voltage_setpoint(self):
+        """
+        Set the voltage of one of the channels.
+        """
         raise LookupError("Property can not be read.")
 
     @voltage_setpoint.setter
@@ -265,7 +268,7 @@ class HpMeasurementChannel(Channel):
     @property
     def current(self):
         """
-        Control the output current of on of the SMU channels.
+        Measure the output current of on of the SMU channels.
         Automatically puts the SMU into force current mode once set.
 
         .. code-block:: python
@@ -287,6 +290,9 @@ class HpMeasurementChannel(Channel):
 
     @property
     def current_setpoint(self):
+        """
+        Set the current of one of the channels.
+        """
         raise LookupError("Property can not be read.")
 
     @current_setpoint.setter
