@@ -223,7 +223,7 @@ class Agilent8648(SCPIMixin, Instrument):
 class Agilent8648A(Agilent8648):
     """
     Represents the Agilent 8648A signal generator
-    
+
     .. code-block:: python
 
         fg = agilent8648.Agilent8648B(vxi11.Instrument("192.168.88.116", "gpib0,19"));
@@ -245,10 +245,11 @@ class Agilent8648A(Agilent8648):
         print(f'read frequency_ref: {fg.frequency_ref}')
         fg.frequency_ref_enabled = False
         print(f'read frequency_ref_enabled: {fg.frequency_ref_enabled}')
-        
+
         fg.output_enabled = True
         print(f'read output_enabled: {fg.output_enabled}')
     """
+
     def __init__(self, adapter, name="Agilent 8648A", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
