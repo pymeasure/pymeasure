@@ -502,7 +502,6 @@ def test_apply_square_channel(keysight81160A, frequency, amplitude, channel):
     assert amplitude == keysight81160A.channels[channel].amplitude
 
 
-@pytest.mark.new
 @pytest.mark.parametrize("frequency", FREQUENCY_RANGE)
 @pytest.mark.parametrize("amplitude", AMPLITUDE_RANGE)
 @pytest.mark.parametrize("channel", CHANNELS)
