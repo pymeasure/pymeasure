@@ -74,10 +74,10 @@ class AgilentE4418BChannel(Channel):
     )
 
     frequency = Instrument.control(
-        "SENS{ch}:FREQ?", "SENS{ch}:FREQ %iMHZ",
-        "Control frequency in MHz (int)",
+        "SENS{ch}:FREQ?", "SENS{ch}:FREQ %iHZ",
+        "Control frequency in Hz (int)",
         validator=strict_range,
-        values=[1, 999900]
+        values=[1000, 999900000000]
     )
 
     offset = Instrument.control(
