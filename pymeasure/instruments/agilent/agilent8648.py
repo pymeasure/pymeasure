@@ -32,6 +32,9 @@ class Agilent8648(SCPIMixin, Instrument):
     provides a high-level interface for interacting with the instrument.
     """
 
+    def __init__(self, adapter, name="", **kwargs):
+        raise NotImplementedError
+
     BOOL_MAPPINGS = {True: 1, False: 0}
     DISP_MAPPINGS = {True: "TEXT", False: "NORM"}
     AMPL_LIMITS = [-136.0, 22]
@@ -264,6 +267,7 @@ class Agilent8648B(Agilent8648):
 
     frequency_values = [9000, 2000000000]
     frequency_ref_values = [9000, 2000000000]
+
 
 class Agilent8648C(Agilent8648):
     """Represents the Agilent 8648C signal generator"""
