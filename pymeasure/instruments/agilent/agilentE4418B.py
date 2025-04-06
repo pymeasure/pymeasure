@@ -171,9 +171,9 @@ class AgilentE4418B(SCPIMixin, Instrument):
     )
 
     status_condition = Instrument.measurement(
-    "STAT:DEV:COND?",
-    "Get condition status",
-    get_process=lambda status: ConditionStatus(int(status))
+        "STAT:DEV:COND?",
+        "Get condition status",
+        get_process=lambda status: ConditionStatus(int(status))
     )
 
 
