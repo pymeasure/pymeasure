@@ -165,12 +165,23 @@ class HP6641A(SCPIMixin, Instrument):
         error_desc = error_desc_str.strip('"')
         return error_code, error_desc
 
-    def get_status(self):
-        """Read Operation, Questionable, Standard Event Status."""
-        operation_status = OperationStatus(int(self.ask("STAT:OPER:COND?")))
-        questionable_status = QuestionableStatus(int(self.ask("STAT:QUES:COND?")))
-        standard_event_status = StandardEventStatus(int(self.ask("*ESR?")))
-        return operation_status, questionable_status, standard_event_status
+    status_operation = Instrument.measurement(
+        "STAT:OPER:COND?",
+        "Get Operation Status.",
+        get_process=lambda status: OperationStatus(int(status))
+    )
+
+    status_questionable = Instrument.measurement(
+        "STAT:QUES:COND?",
+        "Get Questionable Status.",
+        get_process=lambda status: QuestionableStatus(int(status))
+    )
+
+    status_standard_event = Instrument.measurement(
+        "*ESR?",
+        "Get Standard Event Status.",
+        get_process=lambda status: StandardEventStatus(int(status))
+    )
 
 
 class HP6673A(HP6641A):
