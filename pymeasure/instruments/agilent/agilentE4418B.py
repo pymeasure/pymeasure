@@ -118,8 +118,7 @@ class AgilentE4418B(SCPIMixin, Instrument):
         pm = agilentE4418B.AgilentE4419B(instr);
         pm.reset()
         pm.clear()
-        pm.remote_control_enabled = True
-        pm.unit = "W"
+        pm.unit = "DBM"
         read_unit = pm.unit
         print(f'readB unit: {read_unit}')
         pm.powerref_enabled = True
