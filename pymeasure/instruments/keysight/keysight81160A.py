@@ -46,7 +46,7 @@ BURST_NCYCLES = [2, 2.147483647e9]
 TRIGGER_COUNT = [1, 2.147483647e9]
 LIMIT_HIGH_RANGE = [-9.99, 10]
 LIMIT_LOW_RANGE = [-10, 9.99]
-STATES = ["ON", "OFF"]
+BOOLEANS = [True, False]
 IMPEDANCE_RANGE = [3e-1, 1e6]
 TRIGGER_MODES = ["IMM", "INT2", "EXT", "MAN"]
 MAX_VOLTAGE = 5.0
@@ -111,7 +111,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     output_load_set_command = ":OUTP{ch}:LOAD %e"
     output_load_get_command = ":OUTP{ch}:LOAD?"
 
-    burst_state_values = STATES
+    burst_state_values = BOOLEANS
     burst_state_set_command = ":BURS{ch}:STAT %s"
     burst_state_get_command = ":BURS{ch}:STAT?"
 
@@ -126,13 +126,13 @@ class Keysight81160AChannel(Agilent33500Channel):
     burst_ncycles_set_command = ":BURS{ch}:NCYC %d"
     burst_ncycles_get_command = ":BURS{ch}:NCYC?"
 
-    limit_state = Instrument.control(
+    limit_state_enabled = Instrument.control(
         ":VOLT{ch}:LIM:STAT?",
         ":VOLT{ch}:LIM:STAT %s",
         """ Control the limit state (string).""",
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        values={True: 1, False: 0},
         dynamic=True,
     )
 
@@ -160,14 +160,14 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
-    coupling = Instrument.control(
+    coupling_enabled = Instrument.control(
         ":TRAC:CHAN{ch}?",
         ":TRAC:CHAN{ch} %s",
         """ Control the channel coupling (string). ``:TRAC:CHAN1 ON`` to copy values from
         channel 1 to channel 2.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={True: 1, "on": 1, "ON": 1, False: 0, "off": 0, "OFF": 0},
+        values={True: 1, False: 0},
         dynamic=True,
     )
 

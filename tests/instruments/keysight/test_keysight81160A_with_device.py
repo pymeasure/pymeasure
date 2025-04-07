@@ -40,7 +40,6 @@ from pymeasure.instruments.keysight.keysight81160A import (
     PULSE_TRANSITION_RANGE,
     PULSE_WIDTH_RANGE,
     SQUARE_DUTYCYCLE_RANGE,
-    STATES,
     TRIGGER_COUNT,
     TRIGGER_MODES,
     VOLTAGE_HIGH_RANGE,
@@ -107,7 +106,7 @@ def test_get_instrument_id(keysight81160A):
 
 
 def test_turn_on(keysight81160A):
-    keysight81160A.output = "on"
+    keysight81160A.output = True
     assert keysight81160A.output
 
 
@@ -349,7 +348,7 @@ def test_output_load_channel(keysight81160A, channel, output_load):
     assert output_load == keysight81160A.channels[channel].output_load
 
 
-@pytest.mark.parametrize("boolean", STATES)
+@pytest.mark.parametrize("boolean", BOOLEANS)
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_burst_state_channel(keysight81160A, boolean, channel):
     keysight81160A.channels[channel].burst_state = boolean
@@ -394,16 +393,16 @@ def test_uploaded_user_waveform_channel(keysight81160A, channel):
 
 @pytest.mark.parametrize("state", BOOLEANS)
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_coupling_channel(keysight81160A, state, channel):
-    keysight81160A.channels[channel].coupling = state
-    assert state == keysight81160A.channels[channel].coupling
+def test_coupling_enabled_channel(keysight81160A, state, channel):
+    keysight81160A.channels[channel].coupling_enabled = state
+    assert state == keysight81160A.channels[channel].coupling_enabled
 
 
 @pytest.mark.parametrize("state", BOOLEANS)
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_limit_state_channel(keysight81160A, state, channel):
-    keysight81160A.channels[channel].limit_state = state
-    assert state == keysight81160A.channels[channel].limit_state
+def test_limit_state_enabled_channel(keysight81160A, state, channel):
+    keysight81160A.channels[channel].limit_state_enabled = state
+    assert state == keysight81160A.channels[channel].limit_state_enabled
 
 
 @pytest.mark.parametrize("limit_high", LIMIT_HIGH_RANGE)
