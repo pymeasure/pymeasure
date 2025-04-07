@@ -98,4 +98,7 @@ Johannes Rothmayr
 Fred Gillard
 Dimitrios Simatos
 Dongkai Pan
+Julian van Doorn
+Jörg Wunsch
+Falk Korndörfer
 Sergey Ilyev
