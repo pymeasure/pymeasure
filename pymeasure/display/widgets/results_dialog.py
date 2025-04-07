@@ -100,8 +100,6 @@ class ResultsDialog(QtWidgets.QFileDialog):
                 results = Results.load(str(filename))
             except ValueError:
                 return
-            except Exception as e:
-                raise e
             for widget in self.preview_widget_list:
                 widget.clear_widget()
                 widget.load(widget.new_curve(results))
