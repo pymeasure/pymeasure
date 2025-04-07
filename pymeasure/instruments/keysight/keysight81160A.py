@@ -129,7 +129,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_state_enabled = Instrument.control(
         ":VOLT{ch}:LIM:STAT?",
         ":VOLT{ch}:LIM:STAT %s",
-        """ Control the limit state (string).""",
+        """Control the limit state (string).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -139,7 +139,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_high = Instrument.control(
         ":VOLT{ch}:LIM:HIGH?",
         ":VOLT{ch}:LIM:HIGH %f",
-        """ Control the high-level voltage limit (float).""",
+        """Control the high-level voltage limit (float).""",
         validator=strict_range,
         values=LIMIT_HIGH_RANGE,
         dynamic=True,
@@ -148,7 +148,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_low = Instrument.control(
         ":VOLT{ch}:LIM:LOW?",
         ":VOLT{ch}:LIM:LOW %f",
-        """ Control the low-level voltage limit (float).""",
+        """Control the low-level voltage limit (float).""",
         validator=strict_range,
         values=LIMIT_LOW_RANGE,
         dynamic=True,
@@ -156,14 +156,14 @@ class Keysight81160AChannel(Agilent33500Channel):
 
     memory_free = Instrument.measurement(
         ":DATA{ch}:NVOL:FREE?",
-        """ Get the number of free non-volatile memory slots to store user waveforms (int).""",
+        """Get the number of free non-volatile memory slots to store user waveforms (int).""",
         dynamic=True,
     )
 
     coupling_enabled = Instrument.control(
         ":TRAC:CHAN{ch}?",
         ":TRAC:CHAN{ch} %s",
-        """ Control the channel coupling (string). ``:TRAC:CHAN1 ON`` to copy values from
+        """Control the channel coupling (string). ``:TRAC:CHAN1 ON`` to copy values from
         channel 1 to channel 2.""",
         validator=strict_discrete_set,
         map_values=True,
@@ -173,21 +173,21 @@ class Keysight81160AChannel(Agilent33500Channel):
 
     waveforms = Instrument.measurement(
         ":DATA{ch}:NVOL:CAT?",
-        """ Get the available user waveforms in memory (list[str]).""",
+        """Get the available user waveforms in memory (list[str]).""",
         preprocess_reply=lambda v: v.replace('"', "").replace("\n", ""),
         dynamic=True,
     )
 
     volatile_waveform = Instrument.setting(
         ":DATA{ch}:DAC VOLATILE, %s",
-        """ Set the volatile waveform data (str).""",
+        """Set the volatile waveform data (str).""",
         dynamic=True,
     )
 
     trigger_mode = Instrument.control(
         ":ARM:SOUR{ch}?",
         ":ARM:SOUR{ch} %s",
-        """ Control the triggering mode (string).""",
+        """Control the triggering mode (string).""",
         validator=strict_discrete_set,
         values=TRIGGER_MODES,
         dynamic=True,
@@ -196,7 +196,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     trigger_count = Instrument.control(
         ":TRIG{ch}:COUN?",
         ":TRIG{ch}:COUN %d",
-        """ Control the number of cycles to be output when a burst is triggered (int). Enable burst
+        """Control the number of cycles to be output when a burst is triggered (int). Enable burst
         state if number > 1.
 
         Short form of burst_ncycles and burst_state = True""",
