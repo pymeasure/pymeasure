@@ -196,8 +196,9 @@ class Keysight81160AChannel(Agilent33500Channel):
     trigger_count = Instrument.control(
         ":TRIG{ch}:COUN?",
         ":TRIG{ch}:COUN %d",
-        """ Control the number of cycles to be output when a burst is triggered (int). Enable burst state if number > 1.
-        
+        """ Control the number of cycles to be output when a burst is triggered (int). Enable burst
+        state if number > 1.
+
         Short form of burst_ncycles and burst_state = True""",
         validator=strict_range,
         values=TRIGGER_COUNT,
@@ -223,14 +224,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         self.write(f":DATA{self.id}:DEL {name.upper()}")
 
     def apply_dc(self, voltage):
-        self.write(f":APPL:DC DEF, DEF, {voltage}")
-
-    def apply_dc(self, voltage):
         self.write(f":APPL{self.id}:DC DEF, DEF, {voltage}")
-
-    def apply_noise(self, amplitude, offset):
-        self._check_voltages(amplitude, offset)
-        self.write(f":APPL{self.id}:NOIS DEF, {amplitude}, {offset}")
 
     def apply_noise(self, amplitude, offset):
         self._check_voltages(amplitude, offset)
