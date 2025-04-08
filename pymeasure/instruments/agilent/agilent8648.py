@@ -41,7 +41,7 @@ class Agilent8648(SCPIMixin, Instrument):
 
     output_enabled = Instrument.control(
         "OUTPUT:STAT?", "OUTPUT:STAT %g",
-        "Control output",
+        "Control output enable.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -49,14 +49,14 @@ class Agilent8648(SCPIMixin, Instrument):
 
     power = Instrument.control(
         "POW:AMPL?", "POW:AMPL %g",
-        "Control output power in dBm",
+        "Control output power in dBm.",
         validator=strict_range,
         values=AMPL_LIMITS
     )
 
     attenuator_automatic_enabled = Instrument.control(
         "POW:ATT:AUTO?", "OUTPUT:STAT %g",
-        "Control attenuator automatic",
+        "Control attenuator automatic.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -64,14 +64,14 @@ class Agilent8648(SCPIMixin, Instrument):
 
     power_ref = Instrument.control(
         "POW:REF?", "POW:REF %g",
-        "Control power reference in dBm",
+        "Control power reference in dBm.",
         validator=strict_range,
         values=AMPL_LIMITS
     )
 
     power_ref_enabled = Instrument.control(
         "POW:REF:STAT?", "POW:REF:STAT %g",
-        "Control power reference",
+        "Control power reference.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -79,7 +79,7 @@ class Agilent8648(SCPIMixin, Instrument):
 
     frequency = Instrument.control(
         "FREQ:CW?", "FREQ:CW %gHZ",
-        "Control output CW frequency in Hz",
+        "Control output CW frequency in Hz.",
         dynamic=True,
         validator=strict_range,
         values=[]
@@ -87,7 +87,7 @@ class Agilent8648(SCPIMixin, Instrument):
 
     frequency_ref = Instrument.control(
         "FREQ:REF?", "FREQ:REF %gHZ",
-        "Control output CW frequency reference in Hz",
+        "Control output CW frequency reference in Hz.",
         dynamic=True,
         validator=strict_range,
         values=[],
@@ -96,7 +96,7 @@ class Agilent8648(SCPIMixin, Instrument):
 
     frequency_ref_enabled = Instrument.control(
         "FREQ:REF:STAT?", "FREQ:REF:STAT %g",
-        "Control frequency reference enable",
+        "Control frequency reference enable.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -104,14 +104,14 @@ class Agilent8648(SCPIMixin, Instrument):
 
     am_depth = Instrument.control(
         "AM:DEPT?", "AM:DEPT %g",
-        "Control AM depth in %",
+        "Control AM depth in %.",
         validator=strict_range,
         values=[0, 99.9],
     )
 
     am_enabled = Instrument.control(
         "AM:STAT?", "AM:STAT %g",
-        "Control AM enable",
+        "Control AM enable.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -119,35 +119,35 @@ class Agilent8648(SCPIMixin, Instrument):
 
     am_source = Instrument.control(
         "AM:SOUR?", "AM:SOUR %s",
-        "Control AM source (str)",
+        "Control AM source (str).",
         validator=strict_discrete_set,
         values={"INT", "INT2", "EXT", "INT,EXT"}
     )
 
     am_int_frequency = Instrument.control(
         "AM:INT:FREQ?", "AM:INT:FREQ %gHZ",
-        "Control INT frequency",
+        "Control INT frequency.",
         validator=strict_discrete_set,
         values={"1000", "400"}
     )
 
     am_ext_coupling = Instrument.control(
         "AM:EXT:COUP?", "AM:EXT:COUP %s",
-        "Control external coupling for AM (str)",
+        "Control external coupling for AM (str).",
         validator=strict_discrete_set,
         values={"DC", "AC"}
     )
 
     fm_deviation = Instrument.control(
         "FM:DEV?", "FM:DEV %gHZ",
-        "Control FM deviation in Hz",
+        "Control FM deviation in Hz.",
         validator=strict_range,
         values=[10000, 99900],
     )
 
     fm_enabled = Instrument.control(
         "FM:STAT?", "FM:STAT %g",
-        "Control FM enable",
+        "Control FM enable.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -155,35 +155,35 @@ class Agilent8648(SCPIMixin, Instrument):
 
     fm_source = Instrument.control(
         "FM:SOUR?", "FM:SOUR %s",
-        "Control FM source (str)",
+        "Control FM source (str).",
         validator=strict_discrete_set,
         values={"INT", "INT2", "EXT", "INT,EXT"}
     )
 
     fm_int_frequency = Instrument.control(
         "FM:INT:FREQ?", "FM:INT:FREQ %gHZ",
-        "Control INT frequency",
+        "Control INT frequency.",
         validator=strict_discrete_set,
         values={"1000", "400"}
     )
 
     fm_ext_coupling = Instrument.control(
         "FM:EXT:COUP?", "FM:EXT:COUP %s",
-        "Control external coupling for FM (str)",
+        "Control external coupling for FM (str).",
         validator=strict_discrete_set,
         values={"DC", "AC"}
     )
 
     pm_deviation = Instrument.control(
         "PM:DEV?", "PM:DEV %gRAD",
-        "Control PM deviation in radian",
+        "Control PM deviation in radian.",
         validator=strict_range,
         values=[0, 10],
     )
 
     fm_enabled = Instrument.control(
         "PM:STAT?", "PM:STAT %g",
-        "Control PM enable",
+        "Control PM enable.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -191,34 +191,34 @@ class Agilent8648(SCPIMixin, Instrument):
 
     pm_source = Instrument.control(
         "PM:SOUR?", "PM:SOUR %s",
-        "Control PM source (str)",
+        "Control PM source (str).",
         validator=strict_discrete_set,
         values={"INT", "INT2", "EXT", "INT,EXT"}
     )
 
     pm_int_frequency = Instrument.control(
         "PM:INT:FREQ?", "PM:INT:FREQ %gHZ",
-        "Control INT frequency",
+        "Control INT frequency.",
         validator=strict_discrete_set,
         values={"1000", "400"}
     )
 
     pm_ext_coupling = Instrument.control(
         "PM:EXT:COUP?", "PM:EXT:COUP %s",
-        "Control external coupling for PM (str)",
+        "Control external coupling for PM (str).",
         validator=strict_discrete_set,
         values={"DC", "AC"}
     )
 
     status_modulator_input = Instrument.measurement(
         "STAT:QUES:MOD:COND?",
-        "Get the condition of modulation input",
+        "Get the condition of modulation input.",
         get_process=lambda status: bool(status)
     )
 
     status_rpp = Instrument.measurement(
         "STAT:QUES:POW:COND?",
-        "Get the condition of status power protection",
+        "Get the condition of status power protection.",
         get_process=lambda status: bool(status)
     )
 
@@ -229,7 +229,7 @@ class Agilent8648A(Agilent8648):
 
     .. code-block:: python
 
-        fg = agilent8648.Agilent8648B(vxi11.Instrument("192.168.88.116", "gpib0,19"));
+        fg = Agilent8648A(vxi11.Instrument("192.168.88.116", "gpib0,19"));
         fg.reset()
         fg.clear()
 
