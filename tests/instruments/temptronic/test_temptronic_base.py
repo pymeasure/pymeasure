@@ -24,8 +24,8 @@
 
 from time import perf_counter_ns
 
-from pymeasure.test import expected_protocol
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
+from pymeasure.test import expected_protocol
 
 
 def test_check_query_delay():
