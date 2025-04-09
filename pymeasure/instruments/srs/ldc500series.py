@@ -181,7 +181,6 @@ class LDC500Series(SCPIMixin, Instrument):
 
             "LOW", "10kHz", "100Hz"
             "HIGH", "1.2mhz", "5kHz"
-        
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
