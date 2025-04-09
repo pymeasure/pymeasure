@@ -81,7 +81,7 @@ class LDC500Series(SCPIMixin, Instrument):
         "SMOD?",
         "SMOD %s",
         """Control the laser diode control mode, (str "CC" or "CP").
-        
+
         If the laser is on when ``ld_mode`` is changed, the controller performs a *bumpless
         transfer* to switch control modes on-the-fly.
 
@@ -133,10 +133,9 @@ class LDC500Series(SCPIMixin, Instrument):
 
         .. csv-table::
             :header: , LDC500, LDC501, LDC502
-        
+
             "HIGH", "100mA", "500mA", "2000mA"
             "LOW", "50mA", "250mA", "1000mA"
-        
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
@@ -179,7 +178,7 @@ class LDC500Series(SCPIMixin, Instrument):
 
         .. csv-table::
             :header: , CC, CP
-        
+
             "LOW", "10kHz", "100Hz"
             "HIGH", "1.2mhz", "5kHz"
         
@@ -242,12 +241,12 @@ class LDC500Series(SCPIMixin, Instrument):
         """Control the photodiode responsivity, in uA/mW (float).
 
         Changing ``pd_responsivity``, either directly or via ``pd_calibrate``, indirectly changes:
-        
+
         - ``pd_current_setpoint`` and ``pd_current_limit`` if ``pd_units == "mW"``
         - ``pd_power_setpoint`` and ``pd_power_limit`` if ``pd_units == "uA"``
-        
+
         This is to maintain the relationships:
-        
+
         - ``pd_current_setpoint = pd_power_setpoint x responsivity``
         - ``pd_current_limit = pd_power_limit x responsivity``
         """,
