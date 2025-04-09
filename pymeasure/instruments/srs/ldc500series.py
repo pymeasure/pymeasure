@@ -278,7 +278,7 @@ class LDC500Series(SCPIMixin, Instrument):
         when ``ld_mode == "CP"`` and ``photodiode_units == "mW"`` (float).
 
         If ``pd_power_limit`` is reduced below ``pd_power_setpoint``,
-        ``pd_power_setpoint`` is "dragged" down with ``pd_power_limit.""",
+        ``pd_power_setpoint`` is "dragged" down with ``pd_power_limit``.""",
     )
 
     # ================================================
@@ -328,7 +328,7 @@ class LDC500Series(SCPIMixin, Instrument):
     tec_current_setpoint = Instrument.control(
         "TCUR?",
         "TCUR %g",
-        """Control the TEC current setpoint, in A, when ``tec_mode == "CC" (float).""",
+        """Control the TEC current setpoint, in A, when ``tec_mode == "CC"`` (float).""",
         check_set_errors=True,  # TODO: Check that this works
     )
 
