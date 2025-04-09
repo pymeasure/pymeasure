@@ -64,6 +64,7 @@ Instruments by manufacturer:
    redpitaya/index
    rigol/index
    rohdeschwarz/index
+   santec/index
    siglenttechnologies/index
    signalrecovery/index
    srs/index
