@@ -60,7 +60,7 @@ limits = {
     "HP6674A": {"Volt_lim": 61.425, "OVP_lim": 72.0, "Cur_lim": 35.83}}
 
 
-class HP6641A(SCPIMixin, Instrument):
+class HP66xxA_Base(SCPIMixin, Instrument):
     """ Represents the HP / Agilent 6641A
     provides a high-level interface for interacting with the instrument.
 
@@ -112,17 +112,17 @@ class HP6641A(SCPIMixin, Instrument):
 
     voltage = Instrument.measurement(
         "MEAS:VOLT?",
-        "Measure the voltage at the power supply's sense terminals"
+        "Measure the voltage at the power supply's sense terminals in Volts."
     )
 
     current = Instrument.measurement(
         "MEAS:CURR?",
-        "Measure the current at the power supply's sense terminals"
+        "Measure the current at the power supply's sense terminals in Amps."
     )
 
     output_enabled = Instrument.control(
         "OUTP:STAT?", "OUTP:STAT %g",
-        "Control the power supply output and Read back the programmed value",
+        "Control the power supply output and Read back the programmed value.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
@@ -130,8 +130,8 @@ class HP6641A(SCPIMixin, Instrument):
 
     disp_mode_text = Instrument.control(
         "DISP:MODE?", "DISP:MODE %s",
-        "Set and Get display mode between its normal metering mode and a mode in which\
-        it displays text sent by the user",
+        "Control display mode between its normal metering mode and a mode in which\
+        it displays text sent by the user.",
         validator=strict_discrete_set,
         values=DISP_MAPPINGS,
         map_values=True
@@ -139,12 +139,12 @@ class HP6641A(SCPIMixin, Instrument):
 
     disp_text = Instrument.control(
         "DISP:TEXT?", "DISP:TEXT \"%s\"",
-        "Set and Get character strings to/from display",
+        "Control character strings to/from display.",
     )
 
     scpi_version = Instrument.measurement(
         "SYST:VERS?",
-        """Get SCPI version of the multimeter.""",
+        "Get SCPI version of the power supply.",
     )
 
     self_test_result = Instrument.measurement(
@@ -183,27 +183,57 @@ class HP6641A(SCPIMixin, Instrument):
     )
 
 
-class HP6673A(HP6641A):
-    """ Represents the HP / Agilent 6674A
+class HP6641A(HP66xxA_Base):
+    """ Represents the HP / Agilent 6641A
     provides a high-level interface for interacting with the instrument.
+
+    .. code-block:: python
+
+        instr =  vxi11.Instrument("192.168.88.116", "gpib0,6")
+        psu = hp6641a.HP6641A(instr);
+        psu.clear()
+        psu.voltage_setpoint = 3.3
+        psu.current_setpoint = 1.5
+        psu.ovp_setpoint = 8.0
+        psu.output_enabled = 1
+        print(f'read errors: {psu.pop_err()}')
+        while True:
+            print(f'output voltage: {psu.voltage}')
+            print(f'output current: {psu.current}')
+            time.sleep(1)
     """
 
-    set_voltage_values = [0, limits["HP6673A"]["Volt_lim"]]
-    set_ovp_values = [0, limits["HP6673A"]["OVP_lim"]]
-    set_current_values = [0, limits["HP6673A"]["Cur_lim"]]
+    set_voltage_values = [0, limits["HP6641A"]["Volt_lim"]]
+    set_ovp_values = [0, limits["HP6641A"]["OVP_lim"]]
+    set_current_values = [0, limits["HP6641A"]["Cur_lim"]]
 
-    def __init__(self, adapter, name="HP6673A", **kwargs):
+    def __init__(self, adapter, name="HP6641A", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
 
-class HP6674A(HP6641A):
+class HP6673A(HP66xxA_Base):
     """ Represents the HP / Agilent 6674A
     provides a high-level interface for interacting with the instrument.
     """
 
-    voltage_setpoint_values = [0, limits["HP6674A"]["Volt_lim"]]
-    ovp_setpoint_values = [0, limits["HP6674A"]["OVP_lim"]]
-    current_setpoint_values = [0, limits["HP6674A"]["Cur_lim"]]
+    name = "HP6673A"
+    set_voltage_values = [0, limits[name]["Volt_lim"]]
+    set_ovp_values = [0, limits[name]["OVP_lim"]]
+    set_current_values = [0, limits[name]["Cur_lim"]]
 
-    def __init__(self, adapter, name="HP6674A", **kwargs):
+    def __init__(self, adapter, name=name, **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+
+class HP6674A(HP66xxA_Base):
+    """ Represents the HP / Agilent 6674A
+    provides a high-level interface for interacting with the instrument.
+    """
+
+    name = "HP6674A"
+    voltage_setpoint_values = [0, limits[name]["Volt_lim"]]
+    ovp_setpoint_values = [0, limits[name]["OVP_lim"]]
+    current_setpoint_values = [0, limits[name]["Cur_lim"]]
+
+    def __init__(self, adapter, name=name, **kwargs):
         super().__init__(adapter, name, **kwargs)
