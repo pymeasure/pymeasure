@@ -82,14 +82,6 @@ def test_HTR_MB_voltage_limit_getter():
         assert inst.HTR_MB.voltage_limit == 25.0
 
 
-def test_TS_MB_control_temperature_getter():
-    with expected_protocol(
-            MercuryiTC,
-            [(b'READ:DEV:MB1.T1:TEMP:SIG:TEMP', b'STAT:DEV:MB1.T1:TEMP:SIG:TEMP:330.0725K')],
-    ) as inst:
-        assert inst.TS_MB.control_temperature == 330.0725
-
-
 def test_TS_MB_control_loop_D_getter():
     with expected_protocol(
             MercuryiTC,

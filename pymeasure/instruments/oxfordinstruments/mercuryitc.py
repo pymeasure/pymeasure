@@ -69,12 +69,6 @@ class TemperatureSensor(Channel):
         get_process=lambda v: v*1e-3
     )
 
-    control_temperature = Channel.measurement(
-        "READ:DEV:{ch}:TEMP:SIG:TEMP",
-        """Get the control temperature, in Kelvin.""",
-        preprocess_reply=lambda v: v.split(":")[-1].replace("K", "")
-    )
-
     control_loop_PID_enabled = Channel.control(
         "READ:DEV:{ch}:TEMP:LOOP:ENAB",
         "SET:DEV:{ch}:TEMP:LOOP:ENAB:%s",
