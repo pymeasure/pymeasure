@@ -89,6 +89,30 @@ class PrologixAdapter(VISAAdapter):
         sudo udevadm control --reload-rules
         sudo udevadm trigger
 
+    Since the Prologix adapter uses the same communication channel (an USB
+    CDC) for both, communication with the adapter itself, as well as
+    communication over GPIB, certain things need to be kept in mind:
+
+    - Operations that need to read from GPIB use the standard :meth:`read`
+      method.
+
+    - Operations that just read responses from the Prologix itself need to
+      add the parameter :code:`prologix=True` to :meth:`read`; this avoids
+      requesting data from GPIB. This is also necessary when the adapter is
+      put into "listen-only" mode, where all GPIB traffic is automatically
+      being passed up.
+
+    - Binary data must be passed to the bus using :meth:`write_binary_values`.
+      This takes care of properly escaping those binary values that would
+      otherwise be interpreted by the Prologix adapter. Note that the default
+      for :meth:`write_binary_values` are to assume floating-point binary
+      data, and prepend IEEE headers. In order to pass just plain bytes to the
+      adapter, tune the :code:`datatype` and :code:`header_fmt` parameters:
+
+      .. code::
+
+         multimeter.write_binary_values('W', [addr], datatype='B', header_fmt='empty')
+
     """
 
     def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
