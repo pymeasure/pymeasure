@@ -1,6 +1,6 @@
-####################
-PTW UNIDOS dosemeter
-####################
+#################################
+PTW UNIDOS Tango/Romeo dosemeters
+#################################
 
 .. autoclass:: pymeasure.instruments.ptw.ptwUNIDOS
     :members:

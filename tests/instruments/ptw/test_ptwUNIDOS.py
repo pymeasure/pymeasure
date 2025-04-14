@@ -29,16 +29,20 @@ from pymeasure.instruments.validators import truncated_range
 
 # JSON and methods are tested with the device
 
+RANGES = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH']
+LEVELS = ['LOW', 'MEDIUM', 'HIGH']
 
-def test_autostart_level():
+
+@pytest.mark.parametrize("level", LEVELS)
+def test_autostart_level(level):
     """Verify the communication of the autostart_level getter/setter."""
     with expected_protocol(
         ptwUNIDOS,
-        [('ASL;LOW', 'ASL;LOW'),
-         ('ASL', 'ASL;MEDIUM')],
+        [(f'ASL;{level}', f'ASL;{level}'),
+         ('ASL', f'ASL;{level}')],
     ) as inst:
-        inst.autostart_level = 'LOW'
-        assert inst.autostart_level == 'MEDIUM'
+        inst.autostart_level = level
+        assert inst.autostart_level == level
 
 
 def test_id():
@@ -99,15 +103,16 @@ def test_meas_result():
                                     'error': '0x0'}
 
 
-def test_range():
+@pytest.mark.parametrize("range", RANGES)
+def test_range(range):
     """Verify the communication of the range getter/setter."""
     with expected_protocol(
         ptwUNIDOS,
-        [("RGE;MEDIUM", "RGE;MEDIUM"),
-         ("RGE", "RGE;HIGH")],
+        [(f"RGE;{range}", f"RGE;{range}"),
+         ("RGE", f"RGE;{range}")],
     ) as inst:
-        inst.range = 'MEDIUM'
-        assert inst.range == 'HIGH'
+        inst.range = range
+        assert inst.range == range
 
 
 def test_range_max():
@@ -145,9 +150,9 @@ def test_selftest_result():
         assert inst.selftest_result == {'status': 'Passed',
                                         'time_remaining': 0,
                                         'time_total': 89000,
-                                        'LOW': 1.366e-10,
-                                        'MEDIUM': 1.5e-09,
-                                        'HIGH': 1.35e-08}
+                                        'low': 1.366e-10,
+                                        'medium': 1.5e-09,
+                                        'high': 1.35e-08}
 
 
 def test_serial_number():
@@ -238,12 +243,12 @@ def test_write_enabled():
         assert inst.write_enabled is False
 
 
-def test_zero_result():
-    """Verify the communication of the zero_result getter."""
+def test_zero_status():
+    """Verify the communication of the zero_status getter."""
     with expected_protocol(
         ptwUNIDOS,
         [('NUS', 'NUS;Passed;0;82000')]
     ) as inst:
-        assert inst.zero_result == {'status': 'Passed',
+        assert inst.zero_status == {'status': 'Passed',
                                     'time_remaining': 0.0,
                                     'time_total': 82000.0}

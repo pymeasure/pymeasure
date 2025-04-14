@@ -36,6 +36,10 @@ from time import sleep
 
 RANGES = ['VERY_LOW', 'LOW', 'MEDIUM', 'HIGH']
 LEVELS = ['LOW', 'MEDIUM', 'HIGH']
+STATUS = ['RES', 'MEAS', 'HOLD', 'INT', 'INTHLD', 'ZERO',
+          'AUTO', 'AUTO_MEAS', 'AUTO_HOLD', 'EOM', 'WAIT',
+          'INIT', 'ERROR', 'SELF_TEST', 'TST']
+
 
 ############
 # FIXTURES #
@@ -107,17 +111,15 @@ class TestPTWUnidosProperties:
         assert type(result['status']) is str
         assert type(result['time_remaining']) is float
         assert type(result['time_total']) is float
-        assert type(result['LOW']) is float
-        assert type(result['MEDIUM']) is float
-        assert type(result['HIGH']) is float
+        assert type(result['low']) is float
+        assert type(result['medium']) is float
+        assert type(result['high']) is float
 
     def test_serial_number(self, unidos):
         assert type(unidos.serial_number) is int
 
     def test_status(self, unidos):
-        assert unidos.status in ['RES', 'MEAS', 'HOLD', 'INT', 'INTHLD', 'ZERO',
-                                 'AUTO', 'AUTO_MEAS', 'AUTO_HOLD', 'EOM', 'WAIT',
-                                 'INIT', 'ERROR', 'SELF_TEST', 'TST']
+        assert unidos.status in STATUS
 
     def test_tfi(self, unidos):
         assert type(unidos.tfi) is str
@@ -142,8 +144,8 @@ class TestPTWUnidosProperties:
         unidos.voltage = voltage
         assert unidos.voltage == voltage
 
-    def test_zero_result(self, unidos):
-        result = unidos.zero_result
+    def test_zero_status(self, unidos):
+        result = unidos.zero_status
         assert type(result['status']) is str
         assert type(result['time_remaining']) is float
         assert type(result['time_total']) is float
