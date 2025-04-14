@@ -51,6 +51,7 @@ IMPEDANCE_RANGE = [3e-1, 1e6]
 TRIGGER_MODES = ["IMM", "INT2", "EXT", "MAN"]
 MAX_VOLTAGE = 5.0
 SIN_AMPL_BORDER = 3.0
+MAX_DAC_VALUE = 8191
 
 
 class Keysight81160AChannel(Agilent33500Channel):
@@ -178,12 +179,6 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
-    volatile_waveform = Instrument.setting(
-        ":DATA{ch}:DAC VOLATILE, %s",
-        """Set the volatile waveform data (str).""",
-        dynamic=True,
-    )
-
     trigger_mode = Instrument.control(
         ":ARM:SOUR{ch}?",
         ":ARM:SOUR{ch} %s",
@@ -205,6 +200,43 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
+    def _preprocess_waveform(self, data):
+        """
+        Convert a waveform data to int values (from -'MAX_DAC_VALUE' to 'MAX_DAC_VALUE').
+
+        :param data: waveform voltage data (array-like).
+        :return: waveform voltage data as int values (array-like).
+        """
+        data_normed = data / data.max()
+        data_int = np.round(data_normed * MAX_DAC_VALUE).astype(int)
+
+        return data_int
+
+    @property
+    def waveform_volatile(self):
+        """
+        Get volatile waveform data.
+
+        :return: waveform data (array-like).
+        """
+        return self._waveform_volatile
+
+    @waveform_volatile.setter
+    def waveform_volatile(self, waveform):
+        """
+        Set volatile waveform data for arbitrary waveform generation.
+
+        :param waveform: The waveform data to be set (array-like).
+        """
+        self._waveform_volatile = np.array(waveform, dtype=np.float64)
+        waveform_int = self._preprocess_waveform(self._waveform_volatile)
+        self.write_binary_values(
+            command=f":DATA{self.id}:DAC VOLATILE,",
+            values=waveform_int,
+            datatype="h",
+            is_big_endian=True,
+        )
+
     def save_waveform(self, waveform, name):
         """
         Save a waveform to the generator's nonvolatile memory.
@@ -212,7 +244,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         :param waveform: The waveform data.
         :param name: The name of the waveform.
         """
-        self.volatile_waveform = waveform
+        self.waveform_volatile = waveform
         self.write(f":DATA{self.id}:COPY {name}, VOLATILE")
 
     def delete_waveform(self, name):
