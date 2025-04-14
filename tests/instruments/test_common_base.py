@@ -445,18 +445,6 @@ def test_values(value, kwargs, result):
     assert cb.values(value, **kwargs) == result
 
 
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
-        assert cb.values("x5x") == [5]
-
-
-def test_values_global_preprocess_reply():
-    cb = CommonBaseTesting(FakeAdapter())
-    cb.preprocess_reply = lambda v: v.strip("x")
-    assert cb.values("x5x") == [5]
-
-
 def test_binary_values(fake):
     fake.read_binary_values = fake.read
     assert fake.binary_values("123") == "123"
