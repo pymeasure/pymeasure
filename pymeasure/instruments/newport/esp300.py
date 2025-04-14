@@ -297,8 +297,6 @@ class ESP300(SCPIUnknownMixin, Instrument):
                     axes.append(item)
             except TypeError:
                 continue
-            except Exception as e:
-                raise e
         return axes
 
     def enable(self):
