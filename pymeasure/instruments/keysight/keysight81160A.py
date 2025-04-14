@@ -256,26 +256,65 @@ class Keysight81160AChannel(Agilent33500Channel):
         self.write(f":DATA{self.id}:DEL {name.upper()}")
 
     def apply_dc(self, voltage):
+        """
+        Apply a DC voltage.
+
+        :param voltage: Voltage to be applied (float).
+        """
         self.write(f":APPL{self.id}:DC DEF, DEF, {voltage}")
 
     def apply_noise(self, amplitude, offset):
+        """
+        Apply noise to the output.
+
+        :param amplitude: The amplitude of the noise (float).
+        :param offset: The offset voltage (float).
+        """
         self._check_voltages(amplitude, offset)
         self.write(f":APPL{self.id}:NOIS DEF, {amplitude}, {offset}")
 
     def apply_pulse(self, frequency, amplitude, offset):
+        """
+        Apply a pulse waveform.
+
+        :param frequency: Frequency of the pulse (float).
+        :param amplitude: Amplitude of the pulse (float).
+        :param offset: Offset voltage (float).
+        """
         self._check_voltages(amplitude, offset)
         self.write(f":APPL{self.id}:PULS {frequency}, {amplitude}, {offset}")
 
     def apply_sin(self, frequency, amplitude, offset):
+        """
+        Apply a sine waveform.
+
+        :param frequency: Frequency of the sine wave (float).
+        :param amplitude: Amplitude of the sine wave (float).
+        :param offset: Offset voltage (float).
+        """
         self._check_voltages(amplitude, offset)
         self._check_sin_params(frequency, amplitude)
         self.write(f":APPL{self.id}:SIN {frequency}, {amplitude}, {offset}")
 
     def apply_square(self, frequency, amplitude, offset):
+        """
+        Apply a square waveform.
+
+        :param frequency: Frequency of the square wave (float).
+        :param amplitude: Amplitude of the square wave (float).
+        :param offset: Offset voltage (float).
+        """
         self._check_voltages(amplitude, offset)
         self.write(f":APPL{self.id}:SQU {frequency}, {amplitude}, {offset}")
 
     def apply_user_waveform(self, frequency, amplitude, offset):
+        """
+        Apply a user-defined waveform.
+
+        :param frequency: Frequency of the user waveform (float).
+        :param amplitude: Amplitude of the user waveform (float).
+        :param offset: Offset voltage (float).
+        """
         self._check_voltages(amplitude, offset)
         self.write(f":APPL{self.id}:USER {frequency}, {amplitude}, {offset}")
 
