@@ -428,6 +428,7 @@ wrong format of the parameter',
         '''Control the write permission.
 
         :type: bool
+
         The result of the request/release has to be checked afterwards.
 
         .. important:: The UNIDOS has to be in viewer mode (closed lock symbol on the display).
