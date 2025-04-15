@@ -46,8 +46,6 @@ from pymeasure.instruments.keysight.keysight81160A import (
     VOLTAGE_LOW_RANGE,
     WF_SHAPES,
     Keysight81160A,
-    array_to_string,
-    generate_pulse_sequence,
 )
 
 pytest.skip("Only works with connected hardware", allow_module_level=True)
@@ -382,10 +380,9 @@ def test_uploaded_user_waveform_channel(keysight81160A, channel):
     ch = keysight81160A.channels[channel]
     if not ch.memory_free:
         assert False
-    waveform = generate_pulse_sequence(pulse_voltage=1, dc_voltage=0)
-    waveform_string = array_to_string(waveform)
+    waveform = [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
     name = "TEST_USER"
-    ch.save_waveform(waveform=waveform_string, name=name)
+    ch.save_waveform(waveform=waveform, name=name)
     assert name in ch.waveforms
     ch.delete_waveform(name)
     assert name not in ch.waveforms
