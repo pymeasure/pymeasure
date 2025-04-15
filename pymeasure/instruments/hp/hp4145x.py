@@ -101,7 +101,7 @@ def check_current_voltage_name(name):
 ##########
 
 class HpMeasurementChannel(Channel):
-    """Offers some COMon properties."""
+    """Offers some common properties."""
 
     def __init__(self, parent, id):
         super().__init__(parent, int(str(id)[-1]))
