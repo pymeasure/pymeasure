@@ -446,13 +446,6 @@ class SMU(HpMeasurementChannel):
         super().voltage_setpoint = value
 
     @property
-    def current(self):
-        """
-        Measure the output current in 'USER_MODE'.
-        """
-        return super().current
-
-    @property
     def current_setpoint(self):
         """
         Set the output current in 'USER_MODE'.
@@ -751,7 +744,7 @@ class VAR2(VARX):
 
     def flush_source_setup(self):
         """
-        Flushes the channel definition manually in case the :attr:`manual_flush` option is set.
+        Flush the channel definition manually in case the :attr:`manual_flush` option is set.
 
         Not applicable in 'USER_MODE'.
         """
