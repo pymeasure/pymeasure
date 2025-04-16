@@ -3,11 +3,6 @@ import pytest
 from pymeasure.errors import Error
 from pymeasure.instruments.srs import LDC500Series
 
-##################################
-# LDC501 device address goes here:
-connected_device_address = "GPIB0::12::INSTR"
-##################################
-
 
 @pytest.fixture(scope="module")
 def ldc501(connected_device_address):
