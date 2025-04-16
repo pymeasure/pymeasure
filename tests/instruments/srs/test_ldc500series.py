@@ -55,7 +55,7 @@ def test_ld_enabled_getter():
 # --- ld_mode ---
 def test_ld_mode_setter():
     with expected_protocol(
-        LDC500Series, [(b"SMOD CP", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"SMOD CP", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.ld_mode = "CP"
 
@@ -74,7 +74,7 @@ def test_ld_current_getter():
 # --- ld_current_setpoint ---
 def test_ld_current_setpoint_setter():
     with expected_protocol(
-        LDC500Series, [(b"SILD 15", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"SILD 15", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.ld_current_setpoint = 15
 
@@ -87,7 +87,7 @@ def test_ld_current_setpoint_getter():
 # --- ld_current_limit ---
 def test_ld_current_limit_setter():
     with expected_protocol(
-        LDC500Series, [(b"SILM 20", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"SILM 20", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.ld_current_limit = 20
 
@@ -295,7 +295,7 @@ def test_tec_current_getter():
 # --- tec_current_setpoint ---
 def test_tec_current_setpoint_setter():
     with expected_protocol(
-        LDC500Series, [(b"TCUR 0.3", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TCUR 0.3", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_current_setpoint = 0.3
 
@@ -348,7 +348,7 @@ def test_tec_thermometer_raw_getter():
 # --- tec_temperature_setpoint ---
 def test_tec_temperature_setpoint_setter():
     with expected_protocol(
-        LDC500Series, [(b"TEMP 30", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TEMP 30", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_temperature_setpoint = 30
 
@@ -361,7 +361,7 @@ def test_tec_temperature_setpoint_getter():
 # --- tec_temperature_low_limit ---
 def test_tec_temperature_low_limit_setter():
     with expected_protocol(
-        LDC500Series, [(b"TMIN 15", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TMIN 15", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_temperature_low_limit = 15
 
@@ -374,7 +374,7 @@ def test_tec_temperature_low_limit_getter():
 # --- tec_temperature_high_limit ---
 def test_tec_temperature_high_limit_setter():
     with expected_protocol(
-        LDC500Series, [(b"TMAX 35", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TMAX 35", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_temperature_high_limit = 35
 
@@ -390,9 +390,11 @@ def test_tec_temperature_limits_setter():
         LDC500Series,
         [
             (b"TMIN 15", None),
-            (b"SYST:ERR?", "0,No error\n"),
+            (b"LEXE?", b"0"),
+            (b"LCME?", b"0"),
             (b"TMAX 35", None),
-            (b"SYST:ERR?", "0,No error\n"),
+            (b"LEXE?", b"0"),
+            (b"LCME?", b"0"),
         ],
     ) as inst:
         inst.tec_temperature_limits = (15, 35)
@@ -406,7 +408,7 @@ def test_tec_temperature_limits_getter():
 # --- tec_resistance_setpoint ---
 def test_tec_resistance_setpoint_setter():
     with expected_protocol(
-        LDC500Series, [(b"TRTH 2", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TRTH 2", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_resistance_setpoint = 2
 
@@ -419,7 +421,7 @@ def test_tec_resistance_setpoint_getter():
 # --- tec_resistance_low_limit ---
 def test_tec_resistance_low_limit_setter():
     with expected_protocol(
-        LDC500Series, [(b"TRMN 1", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TRMN 1", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_resistance_low_limit = 1
 
@@ -432,7 +434,7 @@ def test_tec_resistance_low_limit_getter():
 # --- tec_resistance_high_limit ---
 def test_tec_resistance_high_limit_setter():
     with expected_protocol(
-        LDC500Series, [(b"TRMX 3", None), (b"SYST:ERR?", b"0,No error\n")]
+        LDC500Series, [(b"TRMX 3", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
     ) as inst:
         inst.tec_resistance_high_limit = 3
 
@@ -448,9 +450,11 @@ def test_tec_resistance_limits_setter():
         LDC500Series,
         [
             (b"TRMN 1", None),
-            (b"SYST:ERR?", "0,No error\n"),
+            (b"LEXE?", b"0"),
+            (b"LCME?", b"0"),
             (b"TRMX 3", None),
-            (b"SYST:ERR?", "0,No error\n"),
+            (b"LEXE?", b"0"),
+            (b"LCME?", b"0"),
         ],
     ) as inst:
         inst.tec_resistance_limits = (1, 3)
