@@ -183,7 +183,9 @@ def test_pd_current_getter():
 
 # --- pd_current_setpoint ---
 def test_pd_current_setpoint_setter():
-    with expected_protocol(LDC500Series, [(b"SIPD 1500", None)]) as inst:
+    with expected_protocol(
+        LDC500Series, [(b"SIPD 1500", None), (b"LEXE?", b"0"), (b"LCME?", b"0")]
+    ) as inst:
         inst.pd_current_setpoint = 1500
 
 
@@ -307,12 +309,12 @@ def test_tec_current_setpoint_getter():
 
 # --- tec_current_limit ---
 def test_tec_current_limit_setter():
-    with expected_protocol(LDC500Series, [(b"TCUR 0.4", None)]) as inst:
+    with expected_protocol(LDC500Series, [(b"TILM 0.4", None)]) as inst:
         inst.tec_current_limit = 0.4
 
 
 def test_tec_current_limit_getter():
-    with expected_protocol(LDC500Series, [(b"TLIM?", b"0.4\n")]) as inst:
+    with expected_protocol(LDC500Series, [(b"TILM?", b"0.4\n")]) as inst:
         assert inst.tec_current_limit == 0.4
 
 
