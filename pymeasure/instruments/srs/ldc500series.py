@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
+from time import sleep
 from enum import IntEnum
 
+from pymeasure.errors import Error
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -91,10 +93,15 @@ class LDC500Series(SCPIMixin, Instrument):
 
     def check_set_errors(self):
         """Check for errors after having set a property, and raise an error if any are present."""
+        # FIXME: The LDC500 has a delay between a command being executed and an error being logged.
+        #        *OPC? didn't work to wait for the previous command, so instead as short a delay
+        #        as possible has been put in. It's not a nice solution and any ideas would be
+        #        appreciated.
+        sleep(0.015)
         errors = self.check_errors()
         if errors == [0, 0]:
             return []
-        raise Exception(f"Error setting value: {errors}")
+        raise Error(f"Error setting value: {errors}")
 
     # =================
     # === INTERLOCK ===
@@ -153,7 +160,7 @@ class LDC500Series(SCPIMixin, Instrument):
         "SILD?",
         "SILD %g",
         """Control the laser diode current setpoint, in mA, when ``ld_mode == "CC"`` (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     ld_current_limit = Instrument.control(
@@ -165,7 +172,7 @@ class LDC500Series(SCPIMixin, Instrument):
         If ``ld_current_limit`` is reduced below ``ld_current_setpoint``,
         ``ld_current_setpoint`` is "dragged" down with ``ld_current_limit``.
         """,
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     ld_current_range = Instrument.control(
@@ -263,8 +270,7 @@ class LDC500Series(SCPIMixin, Instrument):
         "SIPD %g",
         """Control the photodiode current setpoint, in uA,
         when ``ld_mode == "CP"`` and ``photodiode_units == "uA"`` (float).""",
-        validator=strict_range,
-        values=(0, 5000),
+        check_set_errors=True,
     )
 
     pd_current_limit = Instrument.control(
@@ -373,12 +379,12 @@ class LDC500Series(SCPIMixin, Instrument):
         "TCUR?",
         "TCUR %g",
         """Control the TEC current setpoint, in A, when ``tec_mode == "CC"`` (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     tec_current_limit = Instrument.control(
-        "TLIM?",
-        "TCUR %g",
+        "TILM?",
+        "TILM %g",
         """Control the TEC current limit, in A (float strictly in range -4.5 to 4.5).
 
         If ``tec_current_limit`` is reduced below ``tec_current_setpoint``,
@@ -420,21 +426,21 @@ class LDC500Series(SCPIMixin, Instrument):
         "TEMP?",
         "TEMP %g",
         """Control the TEC temperature setpoint, in °C (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     tec_temperature_low_limit = Instrument.control(
         "TMIN?",
         "TMIN %g",
         """Control the TEC low temperature limit, in °C (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     tec_temperature_high_limit = Instrument.control(
         "TMAX?",
         "TMAX %g",
         """Control the TEC high temperature limit, in °C (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     @property
@@ -452,21 +458,21 @@ class LDC500Series(SCPIMixin, Instrument):
         "TRTH?",
         "TRTH %g",
         """Control the TEC resistance setpoint, in kΩ (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     tec_resistance_low_limit = Instrument.control(
         "TRMN?",
         "TRMN %g",
         """Control the TEC low resistance limit, in kΩ (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     tec_resistance_high_limit = Instrument.control(
         "TRMX?",
         "TRMX %g",
         """Control the TEC high resistance limit, in kΩ (float).""",
-        check_set_errors=True,  # TODO: Check that this works
+        check_set_errors=True,
     )
 
     @property
