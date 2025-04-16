@@ -56,6 +56,37 @@ class LDC500Series(SCPIMixin, Instrument):
     def __init__(self, adapter, name="LDC500Series laser diode controller", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
+    # =================================
+    # === OVERIDE NON-SCPI COMMANDS ===
+    # =================================
+
+    options = None
+
+    last_execution_error = Instrument.measurement(
+        "LEXE?",
+        """Get the last execution error code. This also resets the execution error code to 0.""",
+    )
+
+    last_command_error = Instrument.measurement(
+        "LCME?",
+        """Get the last command error code. This also resets the execution error code to 0.""",
+    )
+
+    def check_errors(self):
+        """Read all errors from the instrument.
+
+        :return: List of error entries.
+        """
+        errors = []
+        for err in [self.last_execution_error, self.last_command_error]:
+            if int(err) != 0:
+                errors.append(err)
+        return errors
+
+    # =================
+    # === INTERLOCK ===
+    # =================
+
     interlock_closed = Instrument.measurement(
         "ILOC?",
         """Get the status of the interlock, True if closed, False if open.
