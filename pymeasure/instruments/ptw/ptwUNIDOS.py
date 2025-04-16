@@ -222,7 +222,7 @@ wrong format of the parameter',
         "PTW",
         '''Get the dosemeter ID.
 
-        :type: list of str
+        :return: list of str
 
         .. [name, type number, firmware version, hardware revision]
         '''
@@ -244,7 +244,7 @@ wrong format of the parameter',
         "MAC",
         '''Get the dosemeter MAC address.
 
-        :type: str
+        :return: str
         '''
         )
 
@@ -252,7 +252,7 @@ wrong format of the parameter',
         "MV",
         '''Get the measurement results.
 
-        :type: dict
+        :return: dict
         :dict keys: ``status``,
                     ``charge``,
                     ``dose``,
@@ -289,7 +289,7 @@ wrong format of the parameter',
         "MVM",
         '''Get the max value of the current measurement range.
 
-        :type: dict
+        :return: dict
         :dict keys: ``range``,
                     ``current``,
                     ``doserate``,
@@ -305,7 +305,7 @@ wrong format of the parameter',
         "MVR",
         '''Get the resolution of the measurement range.
 
-        :type: dict
+        :return: dict
         :dict keys: ``range``,
                     ``charge``,
                     ``dose``,
@@ -345,7 +345,7 @@ wrong format of the parameter',
         "SER",
         '''Get the dosemeter serial number.
 
-        :type: int
+        :return: int
         ''',
         cast=int
         )
@@ -354,7 +354,7 @@ wrong format of the parameter',
         "S",
         '''Get the measurement status.
 
-        :type: str
+        :return: str
 
         The status string has of one of the following values: ``RES``,
         ``MEAS``, ``HOLD``, ``INT``, ``INTHLD``, ``ZERO``, ``AUTO``,
@@ -367,7 +367,7 @@ wrong format of the parameter',
         "TFI",
         '''Get the telegram failure information.
 
-        :type: str
+        :return: str
 
         The property provides information about the last failed command with HTTP request.
         '''
@@ -446,7 +446,7 @@ wrong format of the parameter',
         "NUS",
         '''Get the status of the zero correction measurement.
 
-        :type: dict
+        :return: dict
         :dict keys:  ``status``,
                      ``time_remaining``,
                      ``time_total``
@@ -464,8 +464,8 @@ wrong format of the parameter',
     def read_detector(self, guid='ALL'):
         '''Read the properties of the requested detector.
 
-        :param str guid: optional, id of the detector. A list of all
-            detectors is returned if ommitted.
+        :param str guid: optional, ID of the detector. A list of all
+            detectors is returned if *guid* is not passed.
 
         :type: dict or list of dict
         :dict keys: ``calibrationFactor``,
@@ -507,7 +507,7 @@ wrong format of the parameter',
         "REC",
         '''Get the ethernet configuration.
 
-        :type: dict
+        :return: dict
         :dict keys: ``dns``,
                     ``ipv4``,
                     ``ipv6``
@@ -519,7 +519,7 @@ wrong format of the parameter',
         "RHR",
         '''Get the measurement history.
 
-        :type: list of dict
+        :return: list of dict
         :dict keys: ``date``,
                     ``detector``,
                     ``dose``,
@@ -534,7 +534,7 @@ wrong format of the parameter',
         "RMR",
         '''Get the measurement parameters.
 
-        :type: dict
+        :return: dict
         :dict keys: ``correction``,
                     ``detectorGuid``,
                     ``highResolution``,
@@ -557,7 +557,7 @@ wrong format of the parameter',
         "RIR",
         '''Get the system information.
 
-        :type: dict
+        :return: dict
         :dict keys: ``calibrationDate``,
                     ``debugBuild``,
                     ``features``,
@@ -578,7 +578,7 @@ wrong format of the parameter',
         "RSR",
         '''Get the system settings.
 
-        :type: dict
+        :return: dict
         :dict keys: ``brightness``,
                     ``date``,
                     ``keyboardSound``,
@@ -596,7 +596,7 @@ wrong format of the parameter',
         "RAC",
         '''Get the WLAN access point configuration.
 
-        :type: dict
+        :return: dict
         :dict keys: ``enabled``,
                     ``ssid``
         ''',
