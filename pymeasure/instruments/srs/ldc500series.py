@@ -23,6 +23,7 @@
 #
 
 from enum import IntEnum
+
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -60,28 +61,40 @@ class LDC500Series(SCPIMixin, Instrument):
     # === OVERIDE NON-SCPI COMMANDS ===
     # =================================
 
-    options = None
+    @property
+    def options(self):
+        """Not implemented, raises ``NotImplementedError``"""
+        raise NotImplementedError("options not implemented in LDC500series")
+
+    def next_error(self):
+        """Not implemented, raises: ``NotImplementedError``"""
+        raise NotImplementedError("next_error not implemented in LDC500series")
 
     last_execution_error = Instrument.measurement(
         "LEXE?",
         """Get the last execution error code. This also resets the execution error code to 0.""",
+        cast=int,
     )
 
     last_command_error = Instrument.measurement(
         "LCME?",
         """Get the last command error code. This also resets the execution error code to 0.""",
+        cast=int,
     )
 
     def check_errors(self):
         """Read all errors from the instrument.
 
-        :return: List of error entries.
+        :return: List of [``last_execution_error``, ``last_command_error``]
         """
-        errors = []
-        for err in [self.last_execution_error, self.last_command_error]:
-            if int(err) != 0:
-                errors.append(err)
-        return errors
+        return [self.last_execution_error, self.last_command_error]
+
+    def check_set_errors(self):
+        """Check for errors after having set a property, and raise an error if any are present."""
+        errors = self.check_errors()
+        if errors == [0, 0]:
+            return []
+        raise Exception(f"Error setting value: {errors}")
 
     # =================
     # === INTERLOCK ===
