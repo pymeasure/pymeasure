@@ -260,9 +260,9 @@ class Keysight81160AChannel(Agilent33500Channel):
 
         :param waveform: The waveform data.
         :param name: The name that will be used to identify the waveform in memory,
-        up to 12 characters. The first character must be a letter (A-Z), but the remaining
-        characters can be numbers (0-9) or the underscore character ('_').
-        Blank spaces are not allowed.
+            up to 12 characters. The first character must be a letter (A-Z), but the remaining
+            characters can be numbers (0-9) or the underscore character ('_').
+            Blank spaces are not allowed.
         """
         self.waveform_volatile = waveform
         self.write(f":DATA{self.id}:COPY {name}, VOLATILE")
