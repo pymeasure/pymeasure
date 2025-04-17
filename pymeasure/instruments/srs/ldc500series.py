@@ -119,11 +119,24 @@ class LDC500Series(LDC500SeriesBase):
         self.tec = LDC500SeriesTECSubsystem(self)
 
 
-class LDC500SeriesLDSubsystem(LDC500SeriesBase):
+class LDC500SeriesSubsystem:
+    """Base class for LDC500Series subsystems (LD, PD, TEC)."""
+
+    def __init__(self, parent: LDC500SeriesBase):
+        self._parent = parent
+        self.adapter = parent.adapter
+        self.ask = parent.ask
+        self.write = parent.write
+        self.values = parent.values
+        self.check_errors = parent.check_errors
+        self.check_set_errors = parent.check_set_errors
+
+
+class LDC500SeriesLDSubsystem(LDC500SeriesSubsystem):
     """Subsystem of LDC500Series for control of the laser-diode (LD)."""
 
     def __init__(self, parent: LDC500Series):
-        super().__init__(parent.adapter, "LDC500Series LD")
+        super().__init__(parent)
         self._parent = parent
 
     enabled = Instrument.control(
@@ -245,11 +258,11 @@ class LDC500SeriesLDSubsystem(LDC500SeriesBase):
     )
 
 
-class LDC500SeriesPDSubsystem(LDC500SeriesBase):
+class LDC500SeriesPDSubsystem(LDC500SeriesSubsystem):
     """Subsystem of LDC500Series for control of the photodiode (PD)."""
 
     def __init__(self, parent: LDC500Series):
-        super().__init__(parent.adapter, "LDC500Series PD")
+        super().__init__(parent)
         self._parent = parent
 
     units = Instrument.control(
@@ -343,11 +356,11 @@ class LDC500SeriesPDSubsystem(LDC500SeriesBase):
     )
 
 
-class LDC500SeriesTECSubsystem(LDC500SeriesBase):
+class LDC500SeriesTECSubsystem(LDC500SeriesSubsystem):
     """Subsystem of LDC500Series for control of the thermo-electric-controller (TEC)."""
 
     def __init__(self, parent: LDC500Series):
-        super().__init__(parent.adapter, "LDC500Series TEC")
+        super().__init__(parent)
         self._parent = parent
 
     enabled = Instrument.control(
