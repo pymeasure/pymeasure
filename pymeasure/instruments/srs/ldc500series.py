@@ -30,7 +30,7 @@ from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
-class ThemometerType(IntEnum):
+class ThermometerType(IntEnum):
     """Enumerator of thermometer types supported by the SRS LDC500Series."""
 
     NTC10UA = 0
@@ -395,7 +395,7 @@ class LDC500SeriesTECSubsystem(LDC500SeriesBase):
         "TSNR?",
         "TSNR %d",
         """Control the temperature sensor type (ThermometerType enum).""",
-        get_process=lambda t: ThemometerType(t),
+        get_process=lambda t: ThermometerType(t),
         set_process=lambda t: t.value,
     )
 
