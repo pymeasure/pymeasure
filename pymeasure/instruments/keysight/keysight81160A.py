@@ -154,7 +154,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         dynamic=True,
     )
 
-    memory_free = Instrument.measurement(
+    free_memory_slots = Instrument.measurement(
         ":DATA{ch}:NVOL:FREE?",
         """Get the number of free non-volatile memory slots to store user waveforms (int).""",
     )

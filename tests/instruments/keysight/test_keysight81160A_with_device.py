@@ -375,7 +375,7 @@ def test_burst_ncycles_channel(keysight81160A, burst_ncycles, channel):
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_uploaded_user_waveform_channel(keysight81160A, channel):
     ch = keysight81160A.channels[channel]
-    if not ch.memory_free:
+    if not ch.free_memory_slots:
         assert False
     waveform = [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
     name = "TEST_USER"
