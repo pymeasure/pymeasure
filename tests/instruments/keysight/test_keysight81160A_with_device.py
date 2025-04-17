@@ -48,9 +48,6 @@ from pymeasure.instruments.keysight.keysight81160A import (
     Keysight81160A,
 )
 
-pytest.skip("Only works with connected hardware", allow_module_level=True)
-
-
 ############
 # FIXTURES #
 ############
