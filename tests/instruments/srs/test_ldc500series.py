@@ -38,7 +38,7 @@ def test_init():
 
 def test_interlock_closed_getter():
     with expected_protocol(LDC500Series, [(b"ILOC?", b"CLOSED\n")]) as inst:
-        assert inst.interlock_closed is True
+        assert inst.ld.interlock_closed is True
 
 
 # --- ld_enabled ---
