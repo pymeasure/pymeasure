@@ -134,7 +134,6 @@ class Keysight81160AChannel(Agilent33500Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
-        dynamic=True,
     )
 
     limit_high = Instrument.control(
@@ -158,7 +157,6 @@ class Keysight81160AChannel(Agilent33500Channel):
     memory_free = Instrument.measurement(
         ":DATA{ch}:NVOL:FREE?",
         """Get the number of free non-volatile memory slots to store user waveforms (int).""",
-        dynamic=True,
     )
 
     coupling_enabled = Instrument.control(
@@ -169,14 +167,12 @@ class Keysight81160AChannel(Agilent33500Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
-        dynamic=True,
     )
 
     waveforms = Instrument.measurement(
         ":DATA{ch}:NVOL:CAT?",
         """Get the available user waveforms in memory (list[str]).""",
         preprocess_reply=lambda v: v.replace('"', "").replace("\n", ""),
-        dynamic=True,
     )
 
     trigger_mode = Instrument.control(
