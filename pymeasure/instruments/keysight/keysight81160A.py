@@ -22,12 +22,17 @@
 # THE SOFTWARE.
 #
 
+import logging
+
 import numpy as np
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.agilent import Agilent33500
 from pymeasure.instruments.agilent.agilent33500 import Agilent33500Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 WF_SHAPES = ["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"]
 FREQUENCY_SIN_RANGE = [1e-6, 500e6]
@@ -55,6 +60,10 @@ MAX_DAC_VALUE = 8191
 
 
 class Keysight81160AChannel(Agilent33500Channel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._waveform_volatile = None
+
     shape_values = WF_SHAPES
     shape_get_command = ":FUNC{ch}?"
     shape_set_command = ":FUNC{ch} %s"
@@ -213,8 +222,15 @@ class Keysight81160AChannel(Agilent33500Channel):
         """
         Get volatile waveform data.
 
-        :return: waveform data (array-like).
+        Warning: This property may not reflect the current device volatile waveform. It only returns
+        the waveform previously set via this driver. If the device has been power-cycled, modified
+        externally, or if no waveform was set, the returned value may be invalid or None.
+
+        :return: waveform data (array-like) or None if not set.
         """
+        log.warning(
+            "The waveform may be out of sync with the true device waveform. See docs for details."
+        )
         return self._waveform_volatile
 
     @waveform_volatile.setter
