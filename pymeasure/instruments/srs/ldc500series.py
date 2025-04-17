@@ -42,26 +42,11 @@ class ThemometerType(IntEnum):
     AD590 = 6
 
 
-class LDC500Series(SCPIMixin, Instrument):
-    """Represents an SRS LDC500Series laser diode controller
-    and provides a high-level interface for interacting with the instrument.
-
-    Glossary:
-
-        - CC: Constant Current Mode
-        - CP: Constant Power Mode
-        - CT: Constant Temperature Mode
-        - LD: Laser diode
-        - PD: Photodiode
-        - TEC: Thermo-electric controller
-    """
+class LDC500SeriesBase(SCPIMixin, Instrument):
+    """Base class for LDC500Series classes."""
 
     def __init__(self, adapter, name="LDC500Series laser diode controller", **kwargs):
         super().__init__(adapter, name, **kwargs)
-
-    # =================================
-    # === OVERIDE NON-SCPI COMMANDS ===
-    # =================================
 
     @property
     def options(self):
@@ -104,10 +89,6 @@ class LDC500Series(SCPIMixin, Instrument):
             return []
         raise Error(f"Error setting value: {errors}")
 
-    # =================
-    # === INTERLOCK ===
-    # =================
-
     interlock_closed = Instrument.measurement(
         "ILOC?",
         """Get the status of the interlock, True if closed, False if open.
@@ -116,11 +97,36 @@ class LDC500Series(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    # ================================
-    # === LASER DIODE (LD) CONTROL ===
-    # ================================
 
-    ld_enabled = Instrument.control(
+class LDC500Series(LDC500SeriesBase):
+    """Represents an SRS LDC500Series laser diode controller
+    and provides a high-level interface for interacting with the instrument.
+
+    Glossary:
+
+        - CC: Constant Current Mode
+        - CP: Constant Power Mode
+        - CT: Constant Temperature Mode
+        - LD: Laser diode
+        - PD: Photodiode
+        - TEC: Thermo-electric controller
+    """
+
+    def __init__(self, adapter, name="LDC500Series", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        self.ld = LDC500SeriesLDSubsystem(self)
+        self.pd = LDC500SeriesPDSubsystem(self)
+        self.tec = LDC500SeriesTECSubsystem(self)
+
+
+class LDC500SeriesLDSubsystem(LDC500SeriesBase):
+    """Subsystem of LDC500Series for control of the laser-diode (LD)."""
+
+    def __init__(self, parent: LDC500Series):
+        super().__init__(parent.adapter, "LDC500Series LD")
+        self._parent = parent
+
+    enabled = Instrument.control(
         "LDON?",
         "LDON %s",
         """Control whether the laser diode current source is enabled (bool).""",
@@ -129,19 +135,19 @@ class LDC500Series(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    ld_mode = Instrument.control(
+    mode = Instrument.control(
         "SMOD?",
         "SMOD %s",
         """Control the laser diode control mode, (str "CC" or "CP").
 
-        If the laser is on when ``ld_mode`` is changed, the controller performs a *bumpless
+        If the laser is on when ``mode`` is changed, the controller performs a *bumpless
         transfer* to switch control modes on-the-fly.
 
-        If ``ld_mode`` is changed from "CC" to "CP", the present value of the photodiode current
+        If ``mode`` is changed from "CC" to "CP", the present value of the photodiode current
         (or equivalently optical power) is measured and the CP setpoint is set to this measurement.
         If the measured photodiode current or power exceed the setpoint limit, an error is thrown.
 
-        If the ``ld_mode`` is changed from "CP" to "CC", the present value of the laser current is
+        If the ``mode`` is changed from "CP" to "CC", the present value of the laser current is
         measured and the CC setpoint set to this measurement. Note that, by hardware design, the
         measured laser current can never exceed the setpoint limit.
         """,
@@ -152,31 +158,31 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- direct ld current control ---
 
-    ld_current = Instrument.measurement(
+    current = Instrument.measurement(
         "RILD?",
         """Measure the laser diode current, in mA (float).""",
     )
 
-    ld_current_setpoint = Instrument.control(
+    current_setpoint = Instrument.control(
         "SILD?",
         "SILD %g",
-        """Control the laser diode current setpoint, in mA, when ``ld_mode == "CC"`` (float).""",
+        """Control the laser diode current setpoint, in mA, when ``mode == "CC"`` (float).""",
         check_set_errors=True,
     )
 
-    ld_current_limit = Instrument.control(
+    current_limit = Instrument.control(
         "SILM?",
         "SILM %g",
         """Control the laser diode current limit, in mA (float).
 
-        The ouput current is clamped to never exceed ``ld_current_limit`` under any conditions.
-        If ``ld_current_limit`` is reduced below ``ld_current_setpoint``,
-        ``ld_current_setpoint`` is "dragged" down with ``ld_current_limit``.
+        The ouput current is clamped to never exceed ``current_limit`` under any conditions.
+        If ``current_limit`` is reduced below ``current_setpoint``,
+        ``current_setpoint`` is "dragged" down with ``current_limit``.
         """,
         check_set_errors=True,
     )
 
-    ld_current_range = Instrument.control(
+    current_range = Instrument.control(
         "RNGE?",
         "RNGE %s",
         """Control the laser diode current range (str "HIGH" or "LOW").
@@ -195,12 +201,12 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- ld voltage control ---
 
-    ld_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "RVLD?",
         """Measure the laser diode voltage, in V (float).""",
     )
 
-    ld_voltage_limit = Instrument.control(
+    voltage_limit = Instrument.control(
         "SVLM?",
         "SVLM %g",
         """Control the laser diode voltage limit, in V (float strictly in range 0.1 to 10).
@@ -211,7 +217,7 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- ld modulation ---
 
-    ld_modulation_enabled = Instrument.control(
+    modulation_enabled = Instrument.control(
         "MODU?",
         "MODU %s",
         """Control whether analog modulation of the laser diode is enabled (bool)""",
@@ -220,13 +226,13 @@ class LDC500Series(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    ld_modulation_bandwidth = Instrument.control(
+    modulation_bandwidth = Instrument.control(
         "SIBW?",
         "SIBW %s",
         """Control the laser diode modulation bandwidth (str "HIGH" or "LOW").
 
         The analog modulation input is DC coupled, with the –3 dB roll-off frequency dependent on
-        ``ld_mode`` and ``ld_modulation_bandwidth``:
+        ``mode`` and ``modulation_bandwidth``:
 
         .. csv-table::
             :header: , CC, CP
@@ -238,11 +244,15 @@ class LDC500Series(SCPIMixin, Instrument):
         values=("HIGH", "LOW"),
     )
 
-    # ===============================
-    # === PHOTODIODE (PD) CONTROL ===
-    # ===============================
 
-    pd_units = Instrument.control(
+class LDC500SeriesPDSubsystem(LDC500SeriesBase):
+    """Subsystem of LDC500Series for control of the photodiode (PD)."""
+
+    def __init__(self, parent: LDC500Series):
+        super().__init__(parent.adapter, "LDC500Series PD")
+        self._parent = parent
+
+    units = Instrument.control(
         "PDMW?",
         "PDMW %s",
         """Control the CP photodiode units (str "mW" or "uA").""",
@@ -251,7 +261,7 @@ class LDC500Series(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    pd_bias = Instrument.control(
+    bias = Instrument.control(
         "BIAS?",
         "BIAS %g",
         """Control the photodiode bias (float strictly in range 0 to 5).""",
@@ -261,82 +271,86 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- pd current control ---
 
-    pd_current = Instrument.measurement(
+    current = Instrument.measurement(
         "RIPD?",
         """Measure the photodiode current, in uA (float).""",
     )
 
-    pd_current_setpoint = Instrument.control(
+    current_setpoint = Instrument.control(
         "SIPD?",
         "SIPD %g",
         """Control the photodiode current setpoint, in uA,
-        when ``ld_mode == "CP"`` and ``photodiode_units == "uA"`` (float).""",
+        when ``mode == "CP"`` and ``photodiode_units == "uA"`` (float).""",
         check_set_errors=True,
     )
 
-    pd_current_limit = Instrument.control(
+    current_limit = Instrument.control(
         "PILM?",
         "PILM %g",
         """Control the photodiode current limit, in uA,
-        when ``ld_mode == "CP"`` and ``photodiode_units == "uA"`` (float).""",
+        when ``mode == "CP"`` and ``photodiode_units == "uA"`` (float).""",
         validator=strict_range,
         values=(0, 5000),
     )
 
     # --- pd power control ---
 
-    pd_responsivity = Instrument.control(
+    responsivity = Instrument.control(
         "RESP?",
         "RESP %g",
         """Control the photodiode responsivity, in uA/mW (float).
 
-        Changing ``pd_responsivity``, either directly or via ``pd_calibrate``, indirectly changes:
+        Changing ``responsivity``, either directly or via ``calibrate``, indirectly changes:
 
-        - ``pd_current_setpoint`` and ``pd_current_limit`` if ``pd_units == "mW"``
-        - ``pd_power_setpoint`` and ``pd_power_limit`` if ``pd_units == "uA"``
+        - ``current_setpoint`` and ``current_limit`` if ``units == "mW"``
+        - ``power_setpoint`` and ``power_limit`` if ``units == "uA"``
 
         This is to maintain the relationships:
 
-        - ``pd_current_setpoint = pd_power_setpoint x responsivity``
-        - ``pd_current_limit = pd_power_limit x responsivity``
+        - ``current_setpoint = power_setpoint x responsivity``
+        - ``current_limit = power_limit x responsivity``
         """,
     )
 
-    def pd_calibrate(self, power):
-        """Set the photodiode responsivity, ``pd_responsivity``, via a real time power measurement.
+    def calibrate(self, power):
+        """Set the photodiode responsivity, ``responsivity``, via a real time power measurement.
 
         Parmeters:
             power (float): Real time power measurement, in mW."""
 
         self.write("CALP %g" % power)
 
-    pd_power = Instrument.measurement(
+    power = Instrument.measurement(
         "RWPD?",
         """Measure the photodiode power, in mW (float).""",
     )
 
-    pd_power_setpoint = Instrument.control(
+    power_setpoint = Instrument.control(
         "SWPD?",
         "SWPD %g",
         """Control the photodiode optical power setpoint, in mW,
-        when ``ld_mode == "CP"`` and ``photodiode_units == "mW"`` (float).""",
+        when ``mode == "CP"`` and ``photodiode_units == "mW"`` (float).""",
     )
 
-    pd_power_limit = Instrument.control(
+    power_limit = Instrument.control(
         "PWLM?",
         "PWLM %g",
         """Control the photodiode power limit, in mW,
-        when ``ld_mode == "CP"`` and ``photodiode_units == "mW"`` (float).
+        when ``mode == "CP"`` and ``photodiode_units == "mW"`` (float).
 
-        If ``pd_power_limit`` is reduced below ``pd_power_setpoint``,
-        ``pd_power_setpoint`` is "dragged" down with ``pd_power_limit``.""",
+        If ``power_limit`` is reduced below ``power_setpoint``,
+        ``power_setpoint`` is "dragged" down with ``power_limit``.""",
     )
 
-    # ================================================
-    # === THERMO-ELECTRIC CONTROLLER (TEC) CONTROL ===
-    # ================================================
 
-    tec_enabled = Instrument.control(
+class LDC500SeriesTECSubsystem(LDC500SeriesBase):
+    """Subsystem of LDC500Series for control of the thermo-electric-controller (TEC)."""
+
+    def __init__(self, parent: LDC500Series):
+        super().__init__(parent.adapter, "LDC500Series TEC")
+        self._parent = parent
+
+    enabled = Instrument.control(
         "TEON?",
         "TEON %d",
         """Control whether the laser diode current source is enabled (bool).""",
@@ -345,23 +359,23 @@ class LDC500Series(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    tec_mode = Instrument.control(
+    mode = Instrument.control(
         "TMOD?",
         "TMOD %s",
         """Control the TEC control mode (str "CC" or "CT").
 
-        If the TEC is on when ``tec_mode`` is changed, the controller performs a *bumpless transfer*
+        If the TEC is on when ``mode`` is changed, the controller performs a *bumpless transfer*
         to swich control modes on-the-fly.
 
-        If ``tec_mode`` is changed from "CT" to "CC", the present value of the TEC current is
+        If ``mode`` is changed from "CT" to "CC", the present value of the TEC current is
         measured, and the CC setpoint is set to this measurement.
 
-        If ``tec_mode`` is changed from "CC" to "CT", the present value of the temperature sensor
+        If ``mode`` is changed from "CC" to "CT", the present value of the temperature sensor
         is measured, and the CT setpoint is set to this measurement.
         """,
     )
 
-    tec_thermometer_type = Instrument.control(
+    thermometer_type = Instrument.control(
         "TSNR?",
         "TSNR %d",
         """Control the temperature sensor type (ThermometerType enum).""",
@@ -371,25 +385,25 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- tec current control ---
 
-    tec_current = Instrument.measurement(
+    current = Instrument.measurement(
         "TIRD?",
         """Measure the TEC current, in A.""",
     )
 
-    tec_current_setpoint = Instrument.control(
+    current_setpoint = Instrument.control(
         "TCUR?",
         "TCUR %g",
-        """Control the TEC current setpoint, in A, when ``tec_mode == "CC"`` (float).""",
+        """Control the TEC current setpoint, in A, when ``mode == "CC"`` (float).""",
         check_set_errors=True,
     )
 
-    tec_current_limit = Instrument.control(
+    current_limit = Instrument.control(
         "TILM?",
         "TILM %g",
         """Control the TEC current limit, in A (float strictly in range -4.5 to 4.5).
 
-        If ``tec_current_limit`` is reduced below ``tec_current_setpoint``,
-        ``tec_current_setpoint`` is *dragged* down with ``tec_current_limit``.
+        If ``current_limit`` is reduced below ``current_setpoint``,
+        ``current_setpoint`` is *dragged* down with ``current_limit``.
         """,
         validator=strict_range,
         values=(-4.5, 4.5),
@@ -397,12 +411,12 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- tec voltage control ---
 
-    tec_voltage = Instrument.measurement(
+    voltage = Instrument.measurement(
         "TVRD?",
         """Measure the TEC voltage, in V (float).""",
     )
 
-    tec_voltage_limit = Instrument.control(
+    voltage_limit = Instrument.control(
         "TVLM?",
         "TVLM %g",
         """Control the TEC voltage limit, in V (float strictly in range -8.5 to 8.5).""",
@@ -412,32 +426,32 @@ class LDC500Series(SCPIMixin, Instrument):
 
     # --- tec temperature control ---
 
-    tec_temperature = Instrument.measurement(
+    temperature = Instrument.measurement(
         "TTRD?",
         """Measure the TEC temperature, in °C (float).""",
     )
 
-    tec_thermometer_raw = Instrument.measurement(
+    thermometer_raw = Instrument.measurement(
         "TRAW?",
         """Measure the raw thermometer reading,
         kΩ, V, or μA depending on the sensor type (float).""",
     )
 
-    tec_temperature_setpoint = Instrument.control(
+    temperature_setpoint = Instrument.control(
         "TEMP?",
         "TEMP %g",
         """Control the TEC temperature setpoint, in °C (float).""",
         check_set_errors=True,
     )
 
-    tec_temperature_low_limit = Instrument.control(
+    temperature_low_limit = Instrument.control(
         "TMIN?",
         "TMIN %g",
         """Control the TEC low temperature limit, in °C (float).""",
         check_set_errors=True,
     )
 
-    tec_temperature_high_limit = Instrument.control(
+    temperature_high_limit = Instrument.control(
         "TMAX?",
         "TMAX %g",
         """Control the TEC high temperature limit, in °C (float).""",
@@ -445,31 +459,31 @@ class LDC500Series(SCPIMixin, Instrument):
     )
 
     @property
-    def tec_temperature_limits(self):
+    def temperature_limits(self):
         """Control the TEC temperature limits, in °C (two-tuple of floats)."""
-        return (self.tec_temperature_low_limit, self.tec_temperature_high_limit)
+        return (self.temperature_low_limit, self.temperature_high_limit)
 
-    @tec_temperature_limits.setter
-    def tec_temperature_limits(self, temp_limits):
-        self.tec_temperature_low_limit, self.tec_temperature_high_limit = temp_limits
+    @temperature_limits.setter
+    def temperature_limits(self, temp_limits):
+        self.temperature_low_limit, self.temperature_high_limit = temp_limits
 
     # --- tec resistance control ---
 
-    tec_resistance_setpoint = Instrument.control(
+    resistance_setpoint = Instrument.control(
         "TRTH?",
         "TRTH %g",
         """Control the TEC resistance setpoint, in kΩ (float).""",
         check_set_errors=True,
     )
 
-    tec_resistance_low_limit = Instrument.control(
+    resistance_low_limit = Instrument.control(
         "TRMN?",
         "TRMN %g",
         """Control the TEC low resistance limit, in kΩ (float).""",
         check_set_errors=True,
     )
 
-    tec_resistance_high_limit = Instrument.control(
+    resistance_high_limit = Instrument.control(
         "TRMX?",
         "TRMX %g",
         """Control the TEC high resistance limit, in kΩ (float).""",
@@ -477,10 +491,10 @@ class LDC500Series(SCPIMixin, Instrument):
     )
 
     @property
-    def tec_resistance_limits(self):
+    def resistance_limits(self):
         """Control the TEC resistance limits, in kΩ (two-tuple of floats)."""
-        return (self.tec_resistance_low_limit, self.tec_resistance_high_limit)
+        return (self.resistance_low_limit, self.resistance_high_limit)
 
-    @tec_resistance_limits.setter
-    def tec_resistance_limits(self, res_limits):
-        self.tec_resistance_low_limit, self.tec_resistance_high_limit = res_limits
+    @resistance_limits.setter
+    def resistance_limits(self, res_limits):
+        self.resistance_low_limit, self.resistance_high_limit = res_limits
