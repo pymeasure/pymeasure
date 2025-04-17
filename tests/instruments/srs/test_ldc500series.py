@@ -280,12 +280,12 @@ def test_tec_mode_getter():
 # --- tec_thermometer_type ---
 def test_tec_thermometer_type_setter():
     with expected_protocol(LDC500Series, [(b"TSNR 0", None)]) as inst:
-        inst.tec.thermometer_type = ThemometerType.NTC10UA
+        inst.tec.thermometer_type = ThermometerType.NTC10UA
 
 
 def test_tec_thermometer_type_getter():
     with expected_protocol(LDC500Series, [(b"TSNR?", b"0\n")]) as inst:
-        assert inst.tec.thermometer_type == ThemometerType.NTC10UA
+        assert inst.tec.thermometer_type == ThermometerType.NTC10UA
 
 
 # --- tec_current ---
