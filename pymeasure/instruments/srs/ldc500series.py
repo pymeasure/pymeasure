@@ -89,20 +89,31 @@ class LDC500SeriesBase(SCPIMixin, Instrument):
             return []
         raise Error(f"Error setting value: {errors}")
 
-    interlock_closed = Instrument.measurement(
-        "ILOC?",
-        """Get the status of the interlock, True if closed, False if open.
-        Laser will only operate with a closed interlock.""",
-        values={True: "CLOSED", False: "OPEN"},
-        map_values=True,
-    )
-
 
 class LDC500Series(LDC500SeriesBase):
     """Represents an SRS LDC500Series laser diode controller
     and provides a high-level interface for interacting with the instrument.
 
+    Attributes
+    ----------
+    ld : LDC500SeriesLDSubsystem
+        Provides access to laser diode control (e.g. ``ldc.ld.mode``)
+    pd : LDC500SeriesPDSubsystem
+        Provides access to photodiode control (e.g. ``ldc.pd.power``)
+    tec : LDC500SeriesTECSubsystem
+        Provides access to TEC control (e.g. ``ldc.tec.current``)
+
+    Example
+    ~~~~~~~
+
+    .. code-block:: python
+
+        ldc = LDC500Series("GPIB::5")
+        ldc.ld.enabled = True
+        temperature = ldc.tec.temperature
+
     Glossary:
+    ~~~~~~~~~
 
         - CC: Constant Current Mode
         - CP: Constant Power Mode
@@ -119,25 +130,19 @@ class LDC500Series(LDC500SeriesBase):
         self.tec = LDC500SeriesTECSubsystem(self)
 
 
-class LDC500SeriesSubsystem:
-    """Base class for LDC500Series subsystems (LD, PD, TEC)."""
-
-    def __init__(self, parent: LDC500SeriesBase):
-        self._parent = parent
-        self.adapter = parent.adapter
-        self.ask = parent.ask
-        self.write = parent.write
-        self.values = parent.values
-        self.check_errors = parent.check_errors
-        self.check_set_errors = parent.check_set_errors
-
-
-class LDC500SeriesLDSubsystem(LDC500SeriesSubsystem):
+class LDC500SeriesLDSubsystem(LDC500SeriesBase):
     """Subsystem of LDC500Series for control of the laser-diode (LD)."""
 
-    def __init__(self, parent: LDC500Series):
-        super().__init__(parent)
-        self._parent = parent
+    def __init__(self, adapter, name="LDC500Series LD Subsystem", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+    interlock_closed = Instrument.measurement(
+        "ILOC?",
+        """Get the status of the interlock, True if closed, False if open.
+        Laser will only operate with a closed interlock.""",
+        values={True: "CLOSED", False: "OPEN"},
+        map_values=True,
+    )
 
     enabled = Instrument.control(
         "LDON?",
@@ -258,12 +263,11 @@ class LDC500SeriesLDSubsystem(LDC500SeriesSubsystem):
     )
 
 
-class LDC500SeriesPDSubsystem(LDC500SeriesSubsystem):
+class LDC500SeriesPDSubsystem(LDC500SeriesBase):
     """Subsystem of LDC500Series for control of the photodiode (PD)."""
 
-    def __init__(self, parent: LDC500Series):
-        super().__init__(parent)
-        self._parent = parent
+    def __init__(self, adapter, name="LDC500Series PD Subsystem", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     units = Instrument.control(
         "PDMW?",
@@ -356,12 +360,11 @@ class LDC500SeriesPDSubsystem(LDC500SeriesSubsystem):
     )
 
 
-class LDC500SeriesTECSubsystem(LDC500SeriesSubsystem):
+class LDC500SeriesTECSubsystem(LDC500SeriesBase):
     """Subsystem of LDC500Series for control of the thermo-electric-controller (TEC)."""
 
-    def __init__(self, parent: LDC500Series):
-        super().__init__(parent)
-        self._parent = parent
+    def __init__(self, adapter, name="LDC500Series TEC Subsystem", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     enabled = Instrument.control(
         "TEON?",
