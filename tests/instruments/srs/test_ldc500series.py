@@ -23,7 +23,7 @@
 #
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.srs.ldc500series import LDC500Series, ThemometerType
+from pymeasure.instruments.srs.ldc500series import LDC500Series, ThermometerType
 
 
 def test_init():
