@@ -130,7 +130,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_state_enabled = Instrument.control(
         ":VOLT{ch}:LIM:STAT?",
         ":VOLT{ch}:LIM:STAT %s",
-        """Control the limit state (string).""",
+        """Control whether the state limit is enabled (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -140,7 +140,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_high = Instrument.control(
         ":VOLT{ch}:LIM:HIGH?",
         ":VOLT{ch}:LIM:HIGH %f",
-        """Control the high-level voltage limit (float).""",
+        """Control the high-level voltage limit in Volts (float).""",
         validator=strict_range,
         values=LIMIT_HIGH_RANGE,
         dynamic=True,
@@ -149,7 +149,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     limit_low = Instrument.control(
         ":VOLT{ch}:LIM:LOW?",
         ":VOLT{ch}:LIM:LOW %f",
-        """Control the low-level voltage limit (float).""",
+        """Control the low-level voltage limit in Volts (float).""",
         validator=strict_range,
         values=LIMIT_LOW_RANGE,
         dynamic=True,
@@ -164,8 +164,8 @@ class Keysight81160AChannel(Agilent33500Channel):
     coupling_enabled = Instrument.control(
         ":TRAC:CHAN{ch}?",
         ":TRAC:CHAN{ch} %s",
-        """Control the channel coupling (string). ``:TRAC:CHAN1 ON`` to copy values from
-        channel 1 to channel 2.""",
+        """Control whether the channel coupling is enabled (bool). 'True' to copy values from this
+        channel to another one.""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -182,7 +182,7 @@ class Keysight81160AChannel(Agilent33500Channel):
     trigger_mode = Instrument.control(
         ":ARM:SOUR{ch}?",
         ":ARM:SOUR{ch} %s",
-        """Control the triggering mode (string).""",
+        """Control the triggering mode (string, strictly 'IMM', 'INT2', 'EXT' or 'MAN').""",
         validator=strict_discrete_set,
         values=TRIGGER_MODES,
         dynamic=True,
@@ -242,7 +242,10 @@ class Keysight81160AChannel(Agilent33500Channel):
         Save a waveform to the generator's nonvolatile memory.
 
         :param waveform: The waveform data.
-        :param name: The name of the waveform.
+        :param name: The name that will be used to identify the waveform in memory,
+        up to 12 characters. The first character must be a letter (A-Z), but the remaining
+        characters can be numbers (0-9) or the underscore character ('_').
+        Blank spaces are not allowed.
         """
         self.waveform_volatile = waveform
         self.write(f":DATA{self.id}:COPY {name}, VOLATILE")
@@ -251,7 +254,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         """
         Delete a waveform from the generator's nonvolatile memory.
 
-        :param name: The name of the waveform.
+        :param name: The name of the user-defined waveform to be deleted.
         """
         self.write(f":DATA{self.id}:DEL {name.upper()}")
 
