@@ -51,12 +51,12 @@ class LDC500SeriesBase(SCPIMixin, Instrument):
     @property
     def options(self):
         """Get options not implemented, raises ``NotImplementedError``"""
-        raise NotImplementedError("options not implemented in LDC500series")
+        raise NotImplementedError("options not implemented in LDC500series.")
 
     @property
     def next_error(self):
         """Get next error not implemented, raises: ``NotImplementedError``"""
-        raise NotImplementedError("next_error not implemented in LDC500series")
+        raise NotImplementedError("next_error not implemented in LDC500series.")
 
     last_execution_error = Instrument.measurement(
         "LEXE?",
