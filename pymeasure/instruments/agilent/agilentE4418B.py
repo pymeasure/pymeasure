@@ -81,7 +81,8 @@ class AgilentE4418BChannel(Channel):
 
     averaging_auto_enabled = Instrument.control(
         "SENS{ch}:AVER:COUN:AUTO?", "SENS{ch}:AVER:COUN:AUTO %i",
-        "Control auto averaging (auto-filtering) enabled. The device will automatically select the optimal filtration settings.",
+        """Control auto averaging (auto-filtering) enabled.
+        The device will automatically select the optimal filtration settings.""",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
