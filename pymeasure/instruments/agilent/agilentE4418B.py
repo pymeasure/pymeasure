@@ -44,7 +44,7 @@ class ConditionStatus(enum.Flag):
 class AgilentE4418BChannel(Channel):
     """Implementation of a base Agilent E4418B channel"""
 
-    def abort(self):
+    def abort_wait_for_trigger(self):
         """Abort channel - remove the specified channel from the
         “wait-for-trigger” state and places it in the “idle” state."""
         self.write("ABOR{ch}")
@@ -58,9 +58,9 @@ class AgilentE4418BChannel(Channel):
         "Measure power. Units of measurement can be set and read using the 'unit' parameter."
     )
 
-    fetc = Instrument.measurement(
+    measurement_value = Instrument.measurement(
         "FETC{ch}?",
-        "Get the lower window’s measurement."
+        "Get the window’s measurement."
     )
 
     averaging = Instrument.control(
@@ -81,7 +81,7 @@ class AgilentE4418BChannel(Channel):
 
     averaging_auto_enabled = Instrument.control(
         "SENS{ch}:AVER:COUN:AUTO?", "SENS{ch}:AVER:COUN:AUTO %i",
-        "Control auto averaging (auto-filtering) enabled.",
+        "Control auto averaging (auto-filtering) enabled. The device will automatically select the optimal filtration settings.",
         validator=strict_discrete_set,
         values=BOOL_MAPPINGS,
         map_values=True
