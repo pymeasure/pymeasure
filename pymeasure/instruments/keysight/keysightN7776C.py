@@ -249,6 +249,20 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
                         datatype=u'd'))
 
+    def lambda_zero(self):
+        """
+        Executes a wavelength zero.
+        Keysight N777-C Series Tunable Laser Family Programming Guide, p. 71
+        """
+        self.write('sour0:wav:corr:zero')
+
+    def align_cavity(self):
+        """
+        Realigns the laser cavity.
+        Keysight N777-C Series Tunable Laser Family Programming Guide, p. 71
+        """
+        self.write('sour0:wav:corr:ara')
+
     def close(self):
         """
         Fully closes the connection to the instrument through the adapter connection.
