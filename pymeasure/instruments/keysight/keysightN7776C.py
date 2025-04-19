@@ -162,7 +162,7 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
                                       values=[0, 65535])
 
     sweep_dwell_ms = Instrument.control('SOUR0:WAV:SWE:DWEL?', 'SOUR0:WAV:SWE:DWEL %gMS',
-                                      """ Control the dwell time in millisecond. Can only be used when sweep mode is STEP. Cannot be set while a sweep is running."",
+                                      """ Control the dwell time in millisecond. Can only be used when sweep mode is STEP. Cannot be set while a sweep is running.""",
                                       validator=strict_range,
                                       values=[0, 100000], get_process=lambda v: v * 1e3)
     
