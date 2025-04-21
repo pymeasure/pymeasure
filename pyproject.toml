@@ -87,3 +87,9 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false
