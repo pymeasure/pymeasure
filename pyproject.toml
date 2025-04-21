@@ -41,6 +41,7 @@ dependencies = [
     "pyvisa>=1.9",
     "pyserial>=2.7",
     "pyqtgraph>=0.12",
+    "qtpy>=2.4",
 ]
 
 [project.optional-dependencies]
