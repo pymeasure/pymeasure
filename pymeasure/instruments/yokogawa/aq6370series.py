@@ -156,6 +156,16 @@ class AQ6370Series(SCPIMixin, Instrument):
         dynamic=True,
     )
 
+    resolution_bandwidth = Instrument.control(
+        ":SENSe:BWIDth:RESolution?",
+        ":SENSe:BWIDth:RESolution %g",
+        """Control the measurement resolution
+        (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
+        validator=strict_discrete_set,
+        values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
+        dynamic=True,
+    )
+
     # Trace operations -----------------------------------------------------------------------------
 
     active_trace = Instrument.control(
@@ -218,18 +228,6 @@ class AQ6370Series(SCPIMixin, Instrument):
         performed, returns query error.
         """
         return self.write(":CALCulate:DATA?")
-
-    # Resolution -----------------------------------------------------------------------------------
-
-    resolution_bandwidth = Instrument.control(
-        ":SENSe:BWIDth:RESolution?",
-        ":SENSe:BWIDth:RESolution %g",
-        """Control the measurement resolution
-        (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
-        validator=strict_discrete_set,
-        values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
-        dynamic=True,
-    )
 
 
 # subclasses of specific instruments ---------------------------------------------------------------
