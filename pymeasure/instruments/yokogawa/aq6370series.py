@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 
 import logging
+from time import time
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -36,7 +37,7 @@ class AQ6370Series(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    # Initiate and abort sweep ---------------------------------------------------------------------
+    # Control sweep status -------------------------------------------------------------------------
 
     def abort(self):
         """Stop operations such as measurements and calibration."""
@@ -45,6 +46,33 @@ class AQ6370Series(SCPIMixin, Instrument):
     def initiate_sweep(self):
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
+
+    sweep_complete = Instrument.measurement(
+        ":STATus:OPERation:CONDition?",
+        """Get the completion status of the sweep (bool, True if complete).""",
+        get_process=lambda x: bool(int(x) & 1),
+    )
+
+    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=300):
+        """Block the program, waiting for the sweep to complete.
+
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds. Defaults to 300.
+        :return: True when stable, False if stopped by should_stop.
+        :return: True when sweep completed, False if stopped by should_stop.
+        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
+        """
+
+        t0 = time()
+        while not self.sweep_complete:
+
+            if should_stop():
+                return False
+
+            if time() - t0 > timeout:
+                raise TimeoutError("Timed out waiting for sweep to run.")
+
+        return True
 
     # Leveling -------------------------------------------------------------------------------------
 
