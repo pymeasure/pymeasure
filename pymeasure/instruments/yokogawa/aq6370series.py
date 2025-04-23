@@ -57,8 +57,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         """Block the program, waiting for the sweep to complete.
 
         :param should_stop: Function that returns True to stop waiting.
-        :param timeout: Maximum waiting time, in seconds. Defaults to 300.
-        :return: True when stable, False if stopped by should_stop.
+        :param timeout: Maximum waiting time, in seconds.
         :return: True when sweep completed, False if stopped by should_stop.
         :raises TimeoutError: If the temperature does not stabilize within the timeout period.
         """
