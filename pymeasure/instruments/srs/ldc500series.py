@@ -26,7 +26,7 @@ from time import sleep
 from enum import IntEnum
 
 from pymeasure.errors import Error
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument, SCPIMixin, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -42,95 +42,7 @@ class ThermometerType(IntEnum):
     AD590 = 6
 
 
-class LDC500SeriesBase(SCPIMixin, Instrument):
-    """Base class for LDC500Series classes."""
-
-    def __init__(self, adapter, name="LDC500Series laser diode controller", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-
-    @property
-    def options(self):
-        """Get options not implemented, raises ``NotImplementedError``"""
-        raise NotImplementedError("options not implemented in LDC500series.")
-
-    @property
-    def next_error(self):
-        """Get next error not implemented, raises: ``NotImplementedError``"""
-        raise NotImplementedError("next_error not implemented in LDC500series.")
-
-    last_execution_error = Instrument.measurement(
-        "LEXE?",
-        """Get the last execution error code. This also resets the execution error code to 0.""",
-        cast=int,
-    )
-
-    last_command_error = Instrument.measurement(
-        "LCME?",
-        """Get the last command error code. This also resets the execution error code to 0.""",
-        cast=int,
-    )
-
-    def check_errors(self):
-        """Read all errors from the instrument.
-
-        :return: List of [``last_execution_error``, ``last_command_error``]
-        """
-        return [self.last_execution_error, self.last_command_error]
-
-    def check_set_errors(self):
-        """Check for errors after having set a property, and raise an error if any are present."""
-        # FIXME: The LDC500 has a delay between a command being executed and an error being logged.
-        #        *OPC? didn't work to wait for the previous command, so instead as short a delay
-        #        as possible has been put in. It's not a nice solution and any ideas would be
-        #        appreciated.
-        sleep(0.015)
-        errors = self.check_errors()
-        if errors == [0, 0]:
-            return []
-        raise Error(f"Error setting value: {errors}")
-
-
-class LDC500Series(LDC500SeriesBase):
-    """Represents an SRS LDC500Series laser diode controller
-    and provides a high-level interface for interacting with the instrument.
-
-    Attributes
-    ----------
-    ld : LDC500SeriesLDSubsystem
-        Provides access to laser diode control (e.g. ``ldc.ld.mode``)
-    pd : LDC500SeriesPDSubsystem
-        Provides access to photodiode control (e.g. ``ldc.pd.power``)
-    tec : LDC500SeriesTECSubsystem
-        Provides access to TEC control (e.g. ``ldc.tec.current``)
-
-    Example
-    ~~~~~~~
-
-    .. code-block:: python
-
-        ldc = LDC500Series("GPIB::5")
-        ldc.ld.enabled = True
-        temperature = ldc.tec.temperature
-
-    Glossary:
-    ~~~~~~~~~
-
-        - CC: Constant Current Mode
-        - CP: Constant Power Mode
-        - CT: Constant Temperature Mode
-        - LD: Laser diode
-        - PD: Photodiode
-        - TEC: Thermo-electric controller
-    """
-
-    def __init__(self, adapter, name="LDC500Series", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-        self.ld = LDC500SeriesLDSubsystem(self)
-        self.pd = LDC500SeriesPDSubsystem(self)
-        self.tec = LDC500SeriesTECSubsystem(self)
-
-
-class LDC500SeriesLDSubsystem(LDC500SeriesBase):
+class LDC500SeriesLD(Channel):
     """Subsystem of LDC500Series for control of the laser-diode (LD)."""
 
     def __init__(self, adapter, name="LDC500Series LD Subsystem", **kwargs):
@@ -263,7 +175,7 @@ class LDC500SeriesLDSubsystem(LDC500SeriesBase):
     )
 
 
-class LDC500SeriesPDSubsystem(LDC500SeriesBase):
+class LDC500SeriesPD(Channel):
     """Subsystem of LDC500Series for control of the photodiode (PD)."""
 
     def __init__(self, adapter, name="LDC500Series PD Subsystem", **kwargs):
@@ -360,7 +272,7 @@ class LDC500SeriesPDSubsystem(LDC500SeriesBase):
     )
 
 
-class LDC500SeriesTECSubsystem(LDC500SeriesBase):
+class LDC500SeriesTEC(Channel):
     """Subsystem of LDC500Series for control of the thermo-electric-controller (TEC)."""
 
     def __init__(self, adapter, name="LDC500Series TEC Subsystem", **kwargs):
@@ -514,3 +426,85 @@ class LDC500SeriesTECSubsystem(LDC500SeriesBase):
     @resistance_limits.setter
     def resistance_limits(self, res_limits):
         self.resistance_low_limit, self.resistance_high_limit = res_limits
+
+
+class LDC500Series(SCPIMixin, Instrument):
+    """Represents an SRS LDC500Series laser diode controller
+    and provides a high-level interface for interacting with the instrument.
+
+    Attributes
+    ----------
+    ld : LDC500SeriesLDSubsystem
+        Provides access to laser diode control (e.g. ``ldc.ld.mode``)
+    pd : LDC500SeriesPDSubsystem
+        Provides access to photodiode control (e.g. ``ldc.pd.power``)
+    tec : LDC500SeriesTECSubsystem
+        Provides access to TEC control (e.g. ``ldc.tec.current``)
+
+    Example
+    ~~~~~~~
+
+    .. code-block:: python
+
+        ldc = LDC500Series("GPIB::5")
+        ldc.ld.enabled = True
+        temperature = ldc.tec.temperature
+
+    Glossary:
+    ~~~~~~~~~
+
+        - CC: Constant Current Mode
+        - CP: Constant Power Mode
+        - CT: Constant Temperature Mode
+        - LD: Laser diode
+        - PD: Photodiode
+        - TEC: Thermo-electric controller
+    """
+
+    def __init__(self, adapter, name="LDC500Series", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+    @property
+    def options(self):
+        """Get options not implemented, raises ``NotImplementedError``"""
+        raise NotImplementedError("options not implemented in LDC500series.")
+
+    @property
+    def next_error(self):
+        """Get next error not implemented, raises: ``NotImplementedError``"""
+        raise NotImplementedError("next_error not implemented in LDC500series.")
+
+    last_execution_error = Instrument.measurement(
+        "LEXE?",
+        """Get the last execution error code. This also resets the execution error code to 0.""",
+        cast=int,
+    )
+
+    last_command_error = Instrument.measurement(
+        "LCME?",
+        """Get the last command error code. This also resets the execution error code to 0.""",
+        cast=int,
+    )
+
+    def check_errors(self):
+        """Read all errors from the instrument.
+
+        :return: List of [``last_execution_error``, ``last_command_error``]
+        """
+        return [self.last_execution_error, self.last_command_error]
+
+    def check_set_errors(self):
+        """Check for errors after having set a property, and raise an error if any are present."""
+        # FIXME: The LDC500 has a delay between a command being executed and an error being logged.
+        #        *OPC? didn't work to wait for the previous command, so instead as short a delay
+        #        as possible has been put in. It's not a nice solution and any ideas would be
+        #        appreciated.
+        sleep(0.015)
+        errors = self.check_errors()
+        if errors == [0, 0]:
+            return []
+        raise Error(f"Error setting value: {errors}")
+
+    ld = Instrument.ChannelCreator(LDC500SeriesLD, "")
+    pd = Instrument.ChannelCreator(LDC500SeriesPD, "")
+    tec = Instrument.ChannelCreator(LDC500SeriesTEC, "")
