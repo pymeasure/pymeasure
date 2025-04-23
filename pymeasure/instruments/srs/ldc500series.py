@@ -31,7 +31,19 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
 class ThermometerType(IntEnum):
-    """Enumerator of thermometer types supported by the SRS LDC500Series."""
+    """Enumerator of thermometer types supported by the SRS LDC500Series.
+    (NTC - negative temperature coefficient; RTD - Resistance temperature detector)
+
+    Members:
+
+        - **NTC10UA**  : 10 µA excitation for NTC thermistor.
+        - **NTC100UA** : 100 µA excitation for NTC thermistor.
+        - **NTC1MA**   : 1 mA excitation for NTC thermistor.
+        - **NTCAUTO**  : Automatically detects optimal excitation for NTC.
+        - **RTD**      : Typically Pt-100 or other PTC sensors
+        - **LM335**    : LM335 and compatible temperature-to-voltage transducers.
+        - **AD590**    : AD590 and compatible temperature-to-current transducers.
+    """
 
     NTC10UA = 0
     NTC100UA = 1
@@ -43,9 +55,9 @@ class ThermometerType(IntEnum):
 
 
 class LDC500SeriesLD(Channel):
-    """Subsystem of LDC500Series for control of the laser-diode (LD)."""
+    """LDC500Series channel for control of the laser-diode (LD)."""
 
-    def __init__(self, adapter, name="LDC500Series LD Subsystem", **kwargs):
+    def __init__(self, adapter, name="LDC500Series LD Channel", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     interlock_closed = Instrument.measurement(
@@ -176,9 +188,9 @@ class LDC500SeriesLD(Channel):
 
 
 class LDC500SeriesPD(Channel):
-    """Subsystem of LDC500Series for control of the photodiode (PD)."""
+    """LDC500Series channel for control of the photodiode (PD)."""
 
-    def __init__(self, adapter, name="LDC500Series PD Subsystem", **kwargs):
+    def __init__(self, adapter, name="LDC500Series PD Channel", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     units = Instrument.control(
@@ -273,9 +285,9 @@ class LDC500SeriesPD(Channel):
 
 
 class LDC500SeriesTEC(Channel):
-    """Subsystem of LDC500Series for control of the thermo-electric-controller (TEC)."""
+    """LDC500Series channel for control of the thermo-electric-controller (TEC)."""
 
-    def __init__(self, adapter, name="LDC500Series TEC Subsystem", **kwargs):
+    def __init__(self, adapter, name="LDC500Series TEC Channel", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     enabled = Instrument.control(
@@ -431,34 +443,6 @@ class LDC500SeriesTEC(Channel):
 class LDC500Series(SCPIMixin, Instrument):
     """Represents an SRS LDC500Series laser diode controller
     and provides a high-level interface for interacting with the instrument.
-
-    Attributes
-    ----------
-    ld : LDC500SeriesLDSubsystem
-        Provides access to laser diode control (e.g. ``ldc.ld.mode``)
-    pd : LDC500SeriesPDSubsystem
-        Provides access to photodiode control (e.g. ``ldc.pd.power``)
-    tec : LDC500SeriesTECSubsystem
-        Provides access to TEC control (e.g. ``ldc.tec.current``)
-
-    Example
-    ~~~~~~~
-
-    .. code-block:: python
-
-        ldc = LDC500Series("GPIB::5")
-        ldc.ld.enabled = True
-        temperature = ldc.tec.temperature
-
-    Glossary:
-    ~~~~~~~~~
-
-        - CC: Constant Current Mode
-        - CP: Constant Power Mode
-        - CT: Constant Temperature Mode
-        - LD: Laser diode
-        - PD: Photodiode
-        - TEC: Thermo-electric controller
     """
 
     def __init__(self, adapter, name="LDC500Series", **kwargs):
