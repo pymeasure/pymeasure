@@ -207,7 +207,7 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_GAIN,
         map_values=True
     )
-    sensitvity = Instrument.control(
+    sensitivity = Instrument.control(
         "SCAL?", "SCAL %d",
         """ A floating point property that controls the sensitivity in Volts,
         which can take discrete values from 2 nV to 1 V. Values are truncated
@@ -231,9 +231,9 @@ class SR860(SCPIUnknownMixin, Instrument):
         """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
         18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
-        values=range(0, 3)
+        values=range(0, 4)
     )
-    filer_synchronous = Instrument.control(
+    filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
         """A string property that represents the synchronous filter.
         This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
