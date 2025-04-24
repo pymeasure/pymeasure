@@ -151,6 +151,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_REFERENCETRIGGERMODE,
         map_values=True
     )
+    reference_source_trigger = reference_triggermode
+
     reference_externalinput = Instrument.control(
         "REFZ?", "REFZ&d",
         """A string property that represents the external reference input.
@@ -175,6 +177,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_VOLTAGE_MODE,
         map_values=True
     )
+    input_config = input_voltage_mode
+
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
         """A string property that represents the input coupling.
@@ -191,6 +195,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_SHIELDS,
         map_values=True
     )
+    input_grounding = input_shields
+
     input_range = Instrument.control(
         "IRNG?", "IRNG %d",
         """A string property that represents the input range.
