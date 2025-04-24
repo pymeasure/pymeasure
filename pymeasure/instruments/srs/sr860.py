@@ -30,10 +30,10 @@ from pymeasure.instruments import Instrument, SCPIUnknownMixin
 class SR860(SCPIUnknownMixin, Instrument):
 
     SENSITIVITIES = [
-        1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-        50e-3, 100e-3, 200e-3, 500e-3, 1
+        1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
+        0.001, 0.0005, 0.0002, 0.0001, 5e-05, 2e-05, 1e-05,
+        5e-06, 2e-06, 1e-06, 5e-07, 2e-07, 1e-07, 5e-08,
+        2e-08, 1e-08, 5e-09, 2e-09, 1e-09
     ]
     TIME_CONSTANTS = [
         1e-6, 3e-6, 10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
