@@ -57,9 +57,6 @@ class ThermometerType(IntEnum):
 class LDC500SeriesLD(Channel):
     """LDC500Series channel for control of the laser-diode (LD)."""
 
-    def __init__(self, adapter, name="LDC500Series LD Channel", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-
     interlock_closed = Instrument.measurement(
         "ILOC?",
         """Get the status of the interlock, True if closed, False if open.
@@ -190,9 +187,6 @@ class LDC500SeriesLD(Channel):
 class LDC500SeriesPD(Channel):
     """LDC500Series channel for control of the photodiode (PD)."""
 
-    def __init__(self, adapter, name="LDC500Series PD Channel", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-
     units = Instrument.control(
         "PDMW?",
         "PDMW %s",
@@ -286,9 +280,6 @@ class LDC500SeriesPD(Channel):
 
 class LDC500SeriesTEC(Channel):
     """LDC500Series channel for control of the thermo-electric-controller (TEC)."""
-
-    def __init__(self, adapter, name="LDC500Series TEC Channel", **kwargs):
-        super().__init__(adapter, name, **kwargs)
 
     enabled = Instrument.control(
         "TEON?",
