@@ -643,16 +643,22 @@ class CommonBase:
             return property(fget, fset)
 
     @staticmethod
-    def measurement(get_command, docs, values=(), map_values=None,
-                    get_process=lambda v: v,
-                    command_process=None,
-                    check_get_errors=False, dynamic=False,
-                    preprocess_reply=None,
-                    separator=',',
-                    maxsplit=-1,
-                    cast=float,
-                    values_kwargs=None,
-                    **kwargs):
+    def measurement(
+        get_command,
+        docs,
+        values=(),
+        map_values=False,
+        get_process=lambda v: v,
+        command_process=None,
+        check_get_errors=False,
+        dynamic=False,
+        preprocess_reply=None,
+        separator=",",
+        maxsplit=-1,
+        cast=float,
+        values_kwargs=None,
+        **kwargs,
+    ):
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -713,11 +719,16 @@ class CommonBase:
                                   )
 
     @staticmethod
-    def setting(set_command, docs,
-                validator=lambda x, y: x, values=(), map_values=False,
-                set_process=lambda v: v,
-                check_set_errors=False, dynamic=False,
-                ):
+    def setting(
+        set_command,
+        docs,
+        validator=lambda x, y: x,
+        values=(),
+        map_values=False,
+        set_process=lambda v: v,
+        check_set_errors=False,
+        dynamic=False,
+    ):
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
