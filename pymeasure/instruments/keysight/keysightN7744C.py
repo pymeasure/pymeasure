@@ -23,7 +23,6 @@
 #
 
 import logging
-import numpy as np
 from pymeasure.instruments import Instrument, SCPIUnknownMixin, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -41,7 +40,7 @@ class MPPMChannel(Channel):
 
     power = Channel.measurement(
         "READ{ch}:POWer?",
-        """Reads the current power meter value of this channel.""",
+        """Measure the current power meter value of this channel.""",
     )
 
     power_unit = Channel.control(
@@ -87,14 +86,16 @@ class MPPMChannel(Channel):
 
     state = Channel.control(
         "SENSe{ch}:FUNCtion:STATe?", "SENSe{ch}:FUNCtion:STATe %s",
-        """Enables/Disables the logging, MinMax, or stability data acquisition function mode.""",
+        """Control the logging, MinMax, or stability data acquisition function mode.""",
         validator=strict_discrete_set,
         values=['LOGGing', 'LOGG', 'STABility', 'STAB', 'MINMax', 'MINM', 'STOP', 'START']
     )
 
     logging_parameters = Channel.control(
-        "SENSe{ch}:FUNCtion:PARameter:LOGGing?", "SENSe{ch}:FUNCtion:PARameter:LOGGing %g,%gS",
-        """Control the number of data points and the averaging time for the logging data acquisition function."""
+        "SENSe{ch}:FUNCtion:PARameter:LOGGing?",
+        "SENSe{ch}:FUNCtion:PARameter:LOGGing %g,%gS",
+        """Control the number of data points and the averaging time for the logging data 
+        acquisition function."""
         # get_process=lambda v: tuple(float(x) for x in v.split(','))
     )
 
@@ -119,7 +120,8 @@ class KeysightN7744C(SCPIUnknownMixin, Instrument):
     channel_4 = Instrument.ChannelCreator(MPPMChannel, 4)
 
     zero_all = Instrument.control(
-        "SENSe:CORRection:COLLect:ZERO:ALL?", "SENSe:CORRection:COLLect:ZERO:ALL",
+        "SENSe:CORRection:COLLect:ZERO:ALL?",
+        "SENSe:CORRection:COLLect:ZERO:ALL",
         """Control the electrical offsets for all power meter channels."""
     )
 
@@ -130,7 +132,7 @@ class KeysightN7744C(SCPIUnknownMixin, Instrument):
     )
 
     error = Instrument.measurement(
-        "SYSTem:ERRor?", """Returns the next error from the error queue."""
+        "SYSTem:ERRor?", """Get the next error from the error queue."""
     )
 
     wavelength_all = Instrument.setting(
