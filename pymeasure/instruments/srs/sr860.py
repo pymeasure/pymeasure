@@ -25,6 +25,7 @@
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 from pymeasure.instruments import Instrument
+import warnings
 
 
 class SR860(Instrument):
@@ -222,6 +223,17 @@ class SR860(Instrument):
         values=SENSITIVITIES,
         map_values=True
     )
+    
+    @property
+    def sensitvity(self):
+        """Access sensitivity attribute with sensitvity (sic) property.
+        
+        .. deprecated:: 0.15.0
+            Use sensitivity instead.
+        """
+        warnings.warn("`sensitvity` is deprecated, use sensitivity instead", FutureWarning)
+        return self.sensitivity
+
     time_constant = Instrument.control(
         "OFLT?", "OFLT %d",
         """ A floating point property that controls the time constant
@@ -247,6 +259,17 @@ class SR860(Instrument):
         values=INPUT_FILTER,
         map_values=True
     )
+
+    @property
+    def filer_synchronous(self):
+        """Access filter_synchronous attribute with filer_synchronous (sic) property.
+        
+        .. deprecated:: 0.15.0
+            Use filter_synchronous instead.
+        """
+        warnings.warn("`filer_synchronous` is deprecated, use filter_synchronous instead", FutureWarning)
+        return self.filter_synchronous
+
     filter_advanced = Instrument.control(
         "ADVFILT?", "ADVFIL %d",
         """A string property that represents the advanced filter.
