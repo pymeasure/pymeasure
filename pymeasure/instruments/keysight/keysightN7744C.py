@@ -36,6 +36,9 @@ class MPPMChannel(Channel):
     wavelength = Channel.control(
         "SENSe{ch}:POWer:WAVelength?", "SENSe{ch}:POWer:WAVelength %gNM",
         """Control the sensor wavelength of this channel.""",
+        validator=strict_range,
+        values=[1250, 1650],
+        get_process=lambda v: v / 1e-9
     )
 
     power = Channel.measurement(
