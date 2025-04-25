@@ -23,7 +23,7 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument, SCPIUnknownMixin, Channel
+from pymeasure.instruments import Instrument, SCPIMixin, Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ class MPPMChannel(Channel):
     )
 
 
-class KeysightN7744C(SCPIUnknownMixin, Instrument):
+class KeysightN7744C(SCPIMixin, Instrument):
     """
     This represents the Keysight N7744C Optical Multiport Power Meter interface.
 
