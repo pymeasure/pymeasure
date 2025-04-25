@@ -150,3 +150,9 @@ class KeysightN7744C(SCPIMixin, Instrument):
     def reboot(self):
         """Reboots the instrument."""
         self.write('SYSTem:REBoot')
+
+    def close(self):
+        """
+        Fully closes the connection to the instrument through the adapter connection.
+        """
+        self.adapter.close()
