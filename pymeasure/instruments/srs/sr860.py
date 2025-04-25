@@ -223,15 +223,18 @@ class SR860(Instrument):
         values=SENSITIVITIES,
         map_values=True
     )
-    
+
     @property
     def sensitvity(self):
         """Access sensitivity attribute with sensitvity (sic) property.
-        
+
         .. deprecated:: 0.15.0
             Use sensitivity instead.
         """
-        warnings.warn("`sensitvity` is deprecated, use sensitivity instead", FutureWarning)
+        warnings.warn(
+            "`sensitvity` is deprecated, use sensitivity instead",
+            FutureWarning
+            )
         return self.sensitivity
 
     time_constant = Instrument.control(
@@ -263,11 +266,14 @@ class SR860(Instrument):
     @property
     def filer_synchronous(self):
         """Access filter_synchronous attribute with filer_synchronous (sic) property.
-        
+
         .. deprecated:: 0.15.0
             Use filter_synchronous instead.
         """
-        warnings.warn("`filer_synchronous` is deprecated, use filter_synchronous instead", FutureWarning)
+        warnings.warn(
+            "`filer_synchronous` is deprecated, use filter_synchronous instead",
+            FutureWarning
+            )
         return self.filter_synchronous
 
     filter_advanced = Instrument.control(
