@@ -242,16 +242,23 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     ###############
 
     acquisition_type = Instrument.control(
-        "ACQW?", "ACQW %s",
+        "ACQW?",
+        "ACQW %s",
         """Control the type of data acquisition.
 
         Can be 'normal', 'peak', 'average', 'highres'.
         """,
         validator=strict_discrete_set,
-        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
-                "highres": "HIGH_RES"},
+        values={
+            "normal": "SAMPLING",
+            "peak": "PEAK_DETECT",
+            "average": "AVERAGE",
+            "highres": "HIGH_RES",
+        },
         map_values=True,
-        get_process=lambda v: [v[0].lower(), int(v[1])] if len(v) == 2 and v[0] == "AVERAGE" else v
+        get_process_list=lambda v: [v[0].lower(), int(v[1])]
+        if len(v) == 2 and v[0] == "AVERAGE"
+        else v,
     )
 
     acquisition_average = Instrument.control(

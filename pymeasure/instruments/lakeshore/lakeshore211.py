@@ -116,7 +116,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
             strict_discrete_set(v[0], vs[0]), strict_discrete_set(v[1], vs[1])),
         values=[list(AnalogMode), list(AnalogRange)],
         # These are the vs values in the validator lambda
-        get_process=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
+        get_process_list=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
         cast=int
     )
 

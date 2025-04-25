@@ -1958,7 +1958,7 @@ class HP856Xx(Instrument):
         """,
         maxsplit=4,
         cast=int,
-        get_process=tuple
+        get_process_list=tuple
     )
 
     def plot(self, p1x, p1y, p2x, p2y):
