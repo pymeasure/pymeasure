@@ -439,6 +439,8 @@ class LDC500Series(SCPIMixin, Instrument):
     def __init__(self, adapter, name="LDC500Series", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
+        self._check_set_errors_delay = 0.015
+
     @property
     def options(self):
         """Get options not implemented, raises ``NotImplementedError``"""
@@ -470,11 +472,10 @@ class LDC500Series(SCPIMixin, Instrument):
 
     def check_set_errors(self):
         """Check for errors after having set a property, and raise an error if any are present."""
-        # FIXME: The LDC500 has a delay between a command being executed and an error being logged.
-        #        *OPC? didn't work to wait for the previous command, so instead as short a delay
-        #        as possible has been put in. It's not a nice solution and any ideas would be
-        #        appreciated.
-        sleep(0.015)
+        # The LDC500 has a delay between a command being executed and an error being logged.
+        # A default delay of 15 ms has been put in to account for it.
+        # This delay can be modified through the _check_set_errors_delay property.
+        sleep(self._check_set_errors_delay)
         errors = self.check_errors()
         if errors == [0, 0]:
             return []
