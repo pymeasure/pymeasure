@@ -94,7 +94,7 @@ class MPPMChannel(Channel):
     logging_parameters = Channel.control(
         "SENSe{ch}:FUNCtion:PARameter:LOGGing?",
         "SENSe{ch}:FUNCtion:PARameter:LOGGing %g,%gS",
-        """Control the number of data points and the averaging time for the logging data 
+        """Control the number of data points and the averaging time for the logging data
         acquisition function."""
         # get_process=lambda v: tuple(float(x) for x in v.split(','))
     )
