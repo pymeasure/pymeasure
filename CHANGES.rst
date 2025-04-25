@@ -1,3 +1,11 @@
+Upcoming release
+================
+
+Changed features
+----------------
+- :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore. Use :code:`get_process_list` parameter instead.
+
+
 Version 0.15.0 (2025-01-15)
 ===========================
 Main items of this new release:

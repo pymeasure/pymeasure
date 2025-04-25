@@ -443,6 +443,7 @@ class CommonBase:
         values=(),
         map_values=False,
         get_process=lambda v: v,
+        get_process_list=lambda v: v,
         set_process=lambda v: v,
         command_process=None,
         check_set_errors=False,
@@ -470,8 +471,9 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
+        :param get_process_list: A function that takes the value list and processes it.
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param command_process: A function that takes a command and allows processing
@@ -586,7 +588,7 @@ class CommonBase:
                         'for Instrument.control'.format(type(values))
                     )
             else:
-                vals = get_process(vals)
+                vals = get_process_list(vals)
                 return vals
 
         def fset(self,
@@ -649,6 +651,7 @@ class CommonBase:
         values=(),
         map_values=False,
         get_process=lambda v: v,
+        get_process_list=lambda v: v,
         command_process=None,
         check_get_errors=False,
         dynamic=False,
@@ -669,8 +672,9 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
+        :param get_process_list: A function that takes the value list and processes it.
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
 
@@ -708,6 +712,7 @@ class CommonBase:
                                   values=values,
                                   map_values=map_values,
                                   get_process=get_process,
+                                  get_process_list=get_process_list,
                                   command_process=command_process,
                                   check_get_errors=check_get_errors,
                                   dynamic=dynamic,

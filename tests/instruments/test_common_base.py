@@ -703,7 +703,7 @@ def test_control_get_process_list(dynamic):
     class Fake(CommonBaseTesting):
         x = CommonBase.control(
             "G", "%d", "doc",
-            get_process=lambda v: [v[0] + 1, *v, len(v)],
+            get_process_list=lambda v: [v[0] + 1, *v, len(v)],
             dynamic=dynamic,
         )
 
