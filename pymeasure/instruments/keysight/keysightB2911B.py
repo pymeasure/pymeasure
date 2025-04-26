@@ -23,25 +23,22 @@
 #
 
 import logging
-from pymeasure.instruments import Instrument
-from .keysightB2901B import KeysightB2901B, SMUChannel
+from .keysightB2901B import KeysightB2901B
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class KeysightB2902B(KeysightB2901B):
+class KeysightB2911B(KeysightB2901B):
     """
-    This represents the Keysight B2902B Source-Measure Unit interface.
+    This represents the Keysight B2911B Source-Measure Unit interface.
 
     .. code-block:: python
 
-        smu = KeysightB2902B(address)
+        smu = KeysightB2911B(address)
 
     """
 
-    def __init__(self, adapter, name="Keysight B2902B Source-Measure Unit", **kwargs):
+    def __init__(self, adapter, name="Keysight B2911B Source-Measure Unit", **kwargs):
         super().__init__(
             adapter, name, **kwargs)
-
-    channel_2 = Instrument.ChannelCreator(SMUChannel, 2)
