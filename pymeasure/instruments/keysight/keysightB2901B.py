@@ -30,76 +30,97 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+OPERATING_MODES = ['VOLT', 'CURR']
+
+
 class SMUChannel(Channel):
     """A channel of the source-measure unit."""
 
-    wavelength = Channel.control(
-        "SENSe{ch}:POWer:WAVelength?", "SENSe{ch}:POWer:WAVelength %gNM",
-        """Control the sensor wavelength of this channel.""",
-        validator=strict_range,
-        values=[1250, 1650],
-        get_process=lambda v: v / 1e-9
-    )
-
-    power = Channel.measurement(
-        "READ{ch}:POWer?",
-        """Measure the current power meter value of this channel.""",
-    )
-
-    power_unit = Channel.control(
-        "SENSe{ch}:POWer:UNIT?", "SENSe{ch}:POWer:UNIT %g",
-        """Control the sensor wavelength of this channel.""",
+    output_enabled = Instrument.control(
+        'OUTPut{ch}:STATe?', 'OUTPut{ch}:STATe %g',
+        """Control the output state (on/off) of the SMU channel (bool)""",
         validator=strict_discrete_set,
         map_values=True,
-        values={'dBm': 0, 'Watt': 1}
+        values={True: 1, False: 0}
     )
 
-    range = Channel.control(
-        "SENSe{ch}:POWer:RANGe?", "SENSe{ch}:POWer:RANGe %g",
-        """Control the range setting for the channel.""",
-        validator=strict_range,
-        values=[-30, 10]
+    source_voltage = Instrument.control(
+        "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude?",
+        "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude %g",
+        """Control output voltage in volt."""
     )
 
-    auto_range = Channel.control(
-        "SENSe{ch}:POWer:RANGe:AUTO?", "SENSe{ch}:POWer:RANGe:AUTO %g",
-        """Control whether automatic power ranging is being used by the channel.""",
+    source_voltage_auto_range = Channel.control(
+        "SOURce{ch}:VOLTage:RANGe:AUTO?", "SOURce{ch}:VOLTage:RANGe:AUTO %g",
+        """Control the automatic output voltage ranging function.""",
         validator=strict_discrete_set,
         map_values=True,
         values={False: 0, True: 1}
     )
 
-    averaging_time = Channel.control(
-        "SENSe{ch}:POWer:ATIMe?", "SENSe{ch}:POWer:ATIMe %g",
-        """Control the averaging time of the channel.""",
+    sense_voltage = Instrument.measurement(
+        "MEASure:VOLTage? (@{ch})",
+        """Measure sense voltage in volt."""
     )
 
-    auto_gain = Channel.control(
-        "SENSe{ch}:POWer:GAIN:AUTO?", "SENSe{ch}:POWer:GAIN:AUTO %g",
-        """Control the Auto Gain of the channel.""",
+    sense_voltage_limit = Instrument.control(
+        "SENSe{ch}:VOLTage:PROTection:LEVel?",
+        "SENSe{ch}:VOLTage:PROTection:LEVel %g",
+        """Control compliance voltage when operating in current mode."""
+    )
+
+    sense_voltage_auto_range = Channel.control(
+        "SENSe{ch}:VOLTage:RANGe:AUTO?", "SENSe{ch}:VOLTage:RANGe:AUTO %g",
+        """Control the automatic voltage-measurement ranging function.""",
         validator=strict_discrete_set,
         map_values=True,
         values={False: 0, True: 1}
     )
 
-    zero = Channel.control(
-        "SENSe{ch}:CORRection:COLLect:ZERO?", "SENSe{ch}:CORRection:COLLect:ZERO",
-        """Control the electrical offsets of the channel.""",
+    sense_voltage_averaging_time = Channel.control(
+        "SENSe{ch}:VOLTage:APERture?", "SENSe{ch}:VOLTage:APERture %g",
+        """Control the voltage-measurement averaging time of the channel in seconds.""",
+        validator=strict_range,
+        values=[8e-6, 2]
     )
 
-    state = Channel.control(
-        "SENSe{ch}:FUNCtion:STATe?", "SENSe{ch}:FUNCtion:STATe %s",
-        """Control the logging, MinMax, or stability data acquisition function mode.""",
+    source_current = Instrument.control(
+        "SOURce{ch}:CURRent:LEVel:IMMediate:AMPLitude?",
+        "SOURce{ch}:CURRent:LEVel:IMMediate:AMPLitude %g",
+        """Control output current in ampere."""
+    )
+
+    sense_current = Instrument.measurement(
+        "MEASure:CURRent? (@{ch})",
+        """Measure sense current in ampere."""
+    )
+
+    sense_current_limit = Instrument.control(
+        "SENSe{ch}:CURRent:PROTection:LEVel?",
+        "SENSe{ch}:CURRent:PROTection:LEVel %g",
+        """Control current limit when operating in voltage mode."""
+    )
+
+    sense_current_auto_range = Channel.control(
+        "SENSe{ch}:CURRent:RANGe:AUTO?", "SENSe{ch}:CURRent:RANGe:AUTO %g",
+        """Control the automatic current-measurement ranging function.""",
         validator=strict_discrete_set,
-        values=['LOGGing', 'LOGG', 'STABility', 'STAB', 'MINMax', 'MINM', 'STOP', 'START']
+        map_values=True,
+        values={False: 0, True: 1}
     )
 
-    logging_parameters = Channel.control(
-        "SENSe{ch}:FUNCtion:PARameter:LOGGing?",
-        "SENSe{ch}:FUNCtion:PARameter:LOGGing %g,%gS",
-        """Control the number of data points and the averaging time for the logging data
-        acquisition function."""
-        # get_process=lambda v: tuple(float(x) for x in v.split(','))
+    sense_current_averaging_time = Channel.control(
+        "SENSe{ch}:CURRent:APERture?", "SENSe{ch}:CURRent:APERture %g",
+        """Control the current-measurement averaging time of the channel in seconds.""",
+        validator=strict_range,
+        values=[8e-6, 2]
+    )
+
+    operating_mode = Instrument.control(
+        "SOURce{ch}:FUNCtion:MODE?", "SOURce{ch}:FUNCtion:MODE %s",
+        """Control the operating mode of the SMU.""",
+        validator=strict_discrete_set,
+        values=OPERATING_MODES
     )
 
 
@@ -119,31 +140,17 @@ class KeysightB2901B(SCPIMixin, Instrument):
 
     channel_1 = Instrument.ChannelCreator(SMUChannel, 1)
 
-    zero_all = Instrument.control(
-        "SENSe:CORRection:COLLect:ZERO:ALL?",
-        "SENSe:CORRection:COLLect:ZERO:ALL",
-        """Control the electrical offsets for all power meter channels."""
-    )
-
     time = Instrument.control(
         "SYSTem:TIME?", "SYSTem:TIME %g,%g,%g",
         """Control the  the instrument’s internal time."""
-        # get_process=lambda v: tuple(float(x) for x in v.split(','))
-    )
-
-    error = Instrument.measurement(
-        "SYSTem:ERRor?", """Get the next error from the error queue."""
-    )
-
-    wavelength_all = Instrument.setting(
-        "SENSe:POWer:WAVelength:ALL %gNM",
-        """Control the sensor wavelength of this channel."""
     )
 
     def preset(self):
         """Sets the insrument to its standard settings. The stored settings are deleted."""
         self.write('SYSTem:PRESet')
 
-    def reboot(self):
-        """Reboots the instrument."""
-        self.write('SYSTem:REBoot')
+    def close(self):
+        """
+        Fully closes the connection to the instrument through the adapter connection.
+        """
+        self.adapter.close()
