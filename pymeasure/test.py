@@ -22,15 +22,25 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
 from contextlib import contextmanager
+
+from typing import Any, Generator, Optional, TypeVar, Union
 
 from pymeasure.adapters.protocol import ProtocolAdapter
 
 
+Inst = TypeVar("Inst")
+
+
 @contextmanager
-def expected_protocol(instrument_cls, comm_pairs,
-                      connection_attributes=None, connection_methods=None,
-                      **kwargs):
+def expected_protocol(
+    instrument_cls: type[Inst],
+    comm_pairs: list[tuple[Union[str, bytes, None], Union[str, bytes, None]]],
+    connection_attributes: Optional[dict[str, Any]] = None,
+    connection_methods: Optional[dict[str, Any]] = None,
+    **kwargs,
+) -> Generator[Inst, Any, None]:
     """Context manager that checks sent/received instrument commands without a
     device connected.
 
