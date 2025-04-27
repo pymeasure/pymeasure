@@ -48,9 +48,6 @@ tcp = [
     "pyzmq>=16.0.2",
     "cloudpickle>=0.3.1",
 ]
-python-vxi11 = [
-    "python-vxi11>=0.9",
-]
 tests = [
     "pytest>=3.3.0",
     "pytest-cov>=4.1.0",
