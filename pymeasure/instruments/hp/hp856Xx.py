@@ -1104,7 +1104,7 @@ class HP856Xx(Instrument):
 
         """,
         cast=ErrorCode,
-        get_process=lambda v: v if isinstance(v, list) else []
+        get_process=lambda value: [],
     )
 
     elapsed_time = Instrument.measurement(

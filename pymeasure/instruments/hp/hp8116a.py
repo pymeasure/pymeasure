@@ -54,7 +54,7 @@ def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
         'CST', identifier + '%d', docs,
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
+        get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
         set_process=lambda x: int(inverted ^ x),
         **kwargs
     )
