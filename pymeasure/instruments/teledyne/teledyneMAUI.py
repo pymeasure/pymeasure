@@ -203,7 +203,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
     hardcopy_setup_current = Instrument.measurement(
         "HCSU?",
         """Get current hardcopy config.""",
-        get_process=_results_list_to_dict,
+        get_process_list=_results_list_to_dict,
     )
 
     def hardcopy_setup(self, **kwargs):

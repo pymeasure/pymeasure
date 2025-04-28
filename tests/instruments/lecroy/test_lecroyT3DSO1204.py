@@ -379,6 +379,15 @@ def test_math_define():
         assert instr.math_define == ["EQN", "'C2*C4'"]
 
 
+def test_acquisition_type_average():
+    with expected_protocol(
+        LeCroyT3DSO1204,
+        [("CHDR OFF", None),
+         ("ACQW?", "AVERAGE, 5")]
+    ) as instr:
+        assert instr.acquisition_type == ["average", 5]
+
+
 def test_math_vdiv():
     with expected_protocol(
             LeCroyT3DSO1204,

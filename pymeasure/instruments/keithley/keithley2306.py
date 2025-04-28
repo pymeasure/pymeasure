@@ -353,7 +353,7 @@ class Keithley2306Channel(Channel):
     last_readings = Channel.measurement(
         ":FETCH{ch}:ARR?",
         """A floating point array property that returns the last readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
     reading = Channel.measurement(
@@ -379,7 +379,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:VOLT?",
         """A floating point array property that triggers and returns
         voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
     measured_current = Channel.measurement(
@@ -392,7 +392,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:CURR?",
         """A floating point array property that triggers and returns
         current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
     dvm_voltage = Channel.measurement(
@@ -405,7 +405,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:DVM?",
         """A floating point array property that triggers and returns
         DVM voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
     pulse_current = Channel.measurement(
@@ -417,7 +417,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:PCUR?",
         """A floating point array property that triggers and returns
         pulse current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
     long_integration_current = Channel.measurement(
@@ -430,7 +430,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:LINT?",
         """A floating point array property that triggers and returns
         long integration current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process_list=lambda v: v if isinstance(v, list) else [v]
     )
 
 

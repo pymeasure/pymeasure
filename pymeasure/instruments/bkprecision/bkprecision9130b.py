@@ -56,7 +56,7 @@ class BKPrecision9130B(SCPIUnknownMixin, Instrument):
         values {CHANNEL_NUMS}. (int)""",
         validator=strict_discrete_set,
         values=CHANNEL_NUMS,
-        get_process=lambda x: int(x[2])
+        get_process_list=lambda x: int(x[2])
     )
 
     def __init__(self, adapter, name="BK Precision 9130B Source", **kwargs):

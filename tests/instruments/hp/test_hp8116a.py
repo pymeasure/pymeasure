@@ -71,3 +71,20 @@ def test_sweep_time():
 def test_limit_enabled():
     with expected_protocol(HP8116AWithMockStatus, init_comm + [("L1", None)]) as inst:
         inst.limit_enabled = True
+
+
+def test_limit_enabled_getter():
+    with expected_protocol(
+        HP8116AWithMockStatus,
+        init_comm
+        + [
+            (
+                "CST",
+                "M1,CT0,T1,W1,H0,A0,L0,C0,D1,B"
+                # HACK do not show full response due to implementation details.
+                # "UR 001 #,RPT 100 MS,STA 1.00 KHZ,STP 100 KHZ,"
+                # "SWT 50.0 MS,MRK 1.00 KHZ,FRQ 1.00 KHZ,DTY 50 %,WID 100 US,AMP 1.00V,OFS 100 MV",
+            ),
+        ],
+    ) as inst:
+        assert inst.limit_enabled is False

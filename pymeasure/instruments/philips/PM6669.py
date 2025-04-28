@@ -179,7 +179,7 @@ PM6669.measurement_time = Instrument.control(
     """Control the measurement time in seconds""",
     validator=strict_range,
     values=[0, 10],
-    get_process=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
+    get_process_list=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
 )
 
 PM6669.freerun_enabled = Instrument.control(
@@ -189,7 +189,7 @@ PM6669.freerun_enabled = Instrument.control(
     validator=strict_discrete_set,
     values={True: "ON", False: "OFF"},
     map_values=True,
-    get_process=lambda x: (x[1].split("\n")[0][5:] == " ON")
+    get_process_list=lambda x: (x[1].split("\n")[0][5:] == " ON")
     if x[0].startswith("MTIME") is True
     else 0,
 )
@@ -202,14 +202,14 @@ PM6669.measurement_timeout = Instrument.control(
         this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0,
+    get_process_list=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0,
 )
 
 PM6669.SRQMask = Instrument.control(
     "BUS?",
     "MSR %i",
     """Control the SRQ mask""",
-    get_process=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
+    get_process_list=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
 )
 
 PM6669.measurement_settings = Instrument.measurement(

@@ -275,7 +275,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     trace_marker = Instrument.control(
         "TMK?", "TMK %f",
         "Control the trace marker with a wavelength.  Returns the trace wavelength and power.",
-        get_process=_parse_trace_peak
+        get_process_list=_parse_trace_peak
     )
 
     @property

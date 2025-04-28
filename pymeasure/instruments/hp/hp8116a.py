@@ -54,7 +54,7 @@ def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
         'CST', identifier + '%d', docs,
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda x: inverted ^ bool(int(x[state_index][1])),
+        get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
         set_process=lambda x: int(inverted ^ x),
         **kwargs
     )
@@ -265,7 +265,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=OPERATING_MODES,
         map_values=True,
-        get_process=lambda x: HP8116A.OPERATING_MODES_INV[x[0]]
+        get_process_list=lambda x: HP8116A.OPERATING_MODES_INV[x[0]]
     )
 
     control_mode = Instrument.control(
@@ -276,7 +276,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=CONTROL_MODES,
         map_values=True,
-        get_process=lambda x: HP8116A.CONTROL_MODES_INV[x[1]]
+        get_process_list=lambda x: HP8116A.CONTROL_MODES_INV[x[1]]
     )
 
     trigger_slope = Instrument.control(
@@ -287,7 +287,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
         map_values=True,
-        get_process=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]]
+        get_process_list=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]]
     )
 
     shape = Instrument.control(
@@ -298,7 +298,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
-        get_process=lambda x: HP8116A.SHAPES_INV[x[3]]
+        get_process_list=lambda x: HP8116A.SHAPES_INV[x[3]]
     )
 
     haversine_enabled = _boolean_control(
