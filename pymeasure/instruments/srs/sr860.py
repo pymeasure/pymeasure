@@ -228,7 +228,7 @@ class SR860(Instrument):
     def sensitvity(self):
         """Access sensitivity attribute with sensitvity (sic) property.
 
-        .. deprecated:: 0.15.0
+        .. deprecated:: 0.16.0
             Use sensitivity instead.
         """
         warnings.warn(
@@ -267,7 +267,7 @@ class SR860(Instrument):
     def filer_synchronous(self):
         """Access filter_synchronous attribute with filer_synchronous (sic) property.
 
-        .. deprecated:: 0.15.0
+        .. deprecated:: 0.16.0
             Use filter_synchronous instead.
         """
         warnings.warn(
