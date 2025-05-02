@@ -1,3 +1,11 @@
+Upcoming Release
+================
+
+Deprecated
+----------
+- Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
+- Replaced :code:`filer_synchronous` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`filter_synchronous`
+
 Version 0.15.0 (2025-01-15)
 ===========================
 Main items of this new release:
