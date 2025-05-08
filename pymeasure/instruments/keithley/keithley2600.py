@@ -70,29 +70,28 @@ class Keithley2600(SCPIUnknownMixin, Instrument):
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
+
 class Channel:
+
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
 
     def ask(self, cmd):
-        return float(self.instrument.ask(f"print(smu{self.channel}.{cmd})"))
+        return float(self.instrument.ask(f'print(smu{self.channel}.{cmd})'))
 
     def write(self, cmd):
-        self.instrument.write(f"smu{self.channel}.{cmd}")
+        self.instrument.write(f'smu{self.channel}.{cmd}')
 
     def values(self, cmd, **kwargs):
-        """Reads a set of values from the instrument through the adapter,
+        """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(f"print(smu{self.channel}.{cmd})")
+        return self.instrument.values(f'print(smu{self.channel}.{cmd})')
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values(
-            f"print(smu{self.channel}.{cmd})",
-            header_bytes,
-            dtype,
-        )
+        return self.instrument.binary_values('print(smu%s.%s)' %
+                                             (self.channel, cmd,), header_bytes, dtype)
 
     def check_errors(self):
         return self.instrument.check_errors()
@@ -116,12 +115,11 @@ class Channel:
     )
 
     measure_nplc = Instrument.control(
-        "measure.nplc",
-        "measure.nplc=%f",
+        'measure.nplc', 'measure.nplc=%f',
         """ Property controlling the nplc value """,
         validator=truncated_range,
         values=[0.001, 25],
-        map_values=True,
+        map_values=True
     )
 
     ###############
@@ -217,7 +215,7 @@ class Channel:
     #######################
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
-        """C onfigures the measurement of voltage.
+        """ Configures the measurement of voltage.
         :param nplc: Number of power line cycles (NPLC) from 0.001 to 25
         :param voltage: Upper limit of voltage in Volts, from -200 V to 200 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
@@ -237,8 +235,8 @@ class Channel:
         :param current: Upper limit of current in Amps, from -1.5 A to 1.5 A
         :param auto_range: Enables auto_range if True, else uses the set current
         """
-        log.info("%s is sourcing current." % self.channel)
-        self.source_mode = 'current'
+        log.info("%s is measuring current." % self.channel)
+        self.write('measure.i()')
         self.write('measure.nplc=%f' % nplc)
         if auto_range:
             self.write('measure.autorangei=1')
@@ -247,22 +245,23 @@ class Channel:
         self.check_errors()
 
     def auto_range_source(self):
-        """Configures the source to use an automatic range."""
-        if self.source_mode == "current":
-            self.write("source.autorangei=1")
+        """ Configures the source to use an automatic range.
+        """
+        if self.source_mode == 'current':
+            self.write('source.autorangei=1')
         else:
-            self.write("source.autorangev=1")
+            self.write('source.autorangev=1')
 
     def apply_current(self, current_range=None, compliance_voltage=0.1):
-        """Configures the instrument to apply a source current, and
+        """ Configures the instrument to apply a source current, and
         uses an auto range unless a current range is specified.
         The compliance voltage is also set.
         :param compliance_voltage: A float in the correct range for a
                                    :attr:`~.Keithley2600.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2600.current_range` value or None
         """
-        log.info(f"{self.channel} is sourcing current.")
-        self.source_mode = "current"
+        log.info("%s is sourcing current." % self.channel)
+        self.source_mode = 'current'
         if current_range is None:
             self.auto_range_source()
         else:
@@ -279,8 +278,8 @@ class Channel:
                                    :attr:`~.Keithley2600.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2600.voltage_range` value or None
         """
-        log.info(f"{self.channel} is sourcing voltage.")
-        self.source_mode = "voltage"
+        log.info("%s is sourcing voltage." % self.channel)
+        self.source_mode = 'voltage'
         if voltage_range is None:
             self.auto_range_source()
         else:
