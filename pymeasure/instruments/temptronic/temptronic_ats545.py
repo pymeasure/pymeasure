@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,6 @@ November, 2015
 """
 
 from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-from pymeasure.instruments.instrument import Instrument
-from pymeasure.instruments.validators import truncated_range
 
 
 class ATS545(ATSBase):
@@ -53,31 +51,11 @@ class ATS545(ATSBase):
 
     """
 
-    temperature_limit_air_low = Instrument.control(
-        "LLIM?", "LLIM %g",
-        """Control lower air temperature limit.
+    temperature_limit_air_low_values = [-80, 25]
 
-        :type: float
-
-        Valid range between -80 to 25 (°C). Setpoints below current value cause
-        “out of range” error in TS.
-        """,
-        validator=truncated_range,
-        values=[-80, 25]
-    )
-
-    mode = Instrument.measurement(
-        "WHAT?",
-        """Returns an integer indicating what the system is doing at the time the query is processed.
-        10 = on Operator screen (manual mode)
-        0 = on Cycle screen (program mode)
-        63 = initial state after power-up
-        """,
-        values={'manual': 10,  # 5  in ATSbase
-                'program': 0,  # 6 in ATSbase
-                'initial': 63},  # after power up, reading is 63
-        map_values=True
-    )
+    mode_values = {'manual': 10,    # 5 in ATSbase
+                   'program': 0,    # 6 in ATSbase
+                   'initial': 63},  # after power up, reading is 63
 
     def next_setpoint(self):
         """not implemented in ATS545
@@ -86,5 +64,5 @@ class ATS545(ATSBase):
         """
         raise NotImplementedError
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(adapter, name="Temptronic ATS-545 Thermostream", **kwargs)
+    def __init__(self, adapter, name="Temptronic ATS-545 Thermostream", **kwargs):
+        super().__init__(adapter, name, **kwargs)

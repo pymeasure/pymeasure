@@ -1,6 +1,88 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=8.1.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E"]
+
+[project]
+name = "PyMeasure"
+dynamic = ["version", "readme"]
+authors = [
+    {name = "PyMeasure Developers"}
+]
+description = "Scientific measurement library for instruments, experiments, and live-plotting"
+requires-python = ">=3.8"
+keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.6.1,<3",
+    "pandas>=0.14,<3",
+    "pint",
+    "pyvisa>=1.9",
+    "pyserial>=2.7",
+    "pyqtgraph>=0.12",
+]
+
+[project.optional-dependencies]
+tcp = [
+    "pyzmq>=16.0.2",
+    "cloudpickle>=0.3.1",
+]
+python-vxi11 = [
+    "python-vxi11>=0.9",
+]
+tests = [
+    "pytest>=3.3.0",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=2.4.0",
+    "pyvisa-sim>=0.4.0",
+]
+# install pyqt or pyside manually as desired
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx_rtd_theme>=1.1.0",
+]
+
+[project.urls]
+Repository = "https://github.com/pymeasure/pymeasure"
+Issues = "https://github.com/pymeasure/pymeasure/issues"
+Documentation = "https://pymeasure.readthedocs.io"
+
+[tool.setuptools]
+packages = ["pymeasure"]
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst", "CHANGES.rst"]}
 
 [tool.setuptools_scm]
 # write_to = "pymeasure/_version.py"
+
+#[tool.flake8]
+## See .flake8, as it does not support pyproject.toml
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"

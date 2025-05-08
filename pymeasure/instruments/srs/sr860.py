@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,15 +25,16 @@
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 from pymeasure.instruments import Instrument
+import warnings
 
 
 class SR860(Instrument):
 
     SENSITIVITIES = [
-        1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-        50e-3, 100e-3, 200e-3, 500e-3, 1
+        1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
+        0.001, 0.0005, 0.0002, 0.0001, 5e-05, 2e-05, 1e-05,
+        5e-06, 2e-06, 1e-06, 5e-07, 2e-07, 1e-07, 5e-08,
+        2e-08, 1e-08, 5e-09, 2e-09, 1e-09
     ]
     TIME_CONSTANTS = [
         1e-6, 3e-6, 10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
@@ -151,6 +152,8 @@ class SR860(Instrument):
         values=INPUT_REFERENCETRIGGERMODE,
         map_values=True
     )
+    reference_source_trigger = reference_triggermode
+
     reference_externalinput = Instrument.control(
         "REFZ?", "REFZ&d",
         """A string property that represents the external reference input.
@@ -175,6 +178,8 @@ class SR860(Instrument):
         values=INPUT_VOLTAGE_MODE,
         map_values=True
     )
+    input_config = input_voltage_mode
+
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
         """A string property that represents the input coupling.
@@ -191,6 +196,8 @@ class SR860(Instrument):
         values=INPUT_SHIELDS,
         map_values=True
     )
+    input_grounding = input_shields
+
     input_range = Instrument.control(
         "IRNG?", "IRNG %d",
         """A string property that represents the input range.
@@ -207,7 +214,7 @@ class SR860(Instrument):
         values=INPUT_GAIN,
         map_values=True
     )
-    sensitvity = Instrument.control(
+    sensitivity = Instrument.control(
         "SCAL?", "SCAL %d",
         """ A floating point property that controls the sensitivity in Volts,
         which can take discrete values from 2 nV to 1 V. Values are truncated
@@ -216,6 +223,20 @@ class SR860(Instrument):
         values=SENSITIVITIES,
         map_values=True
     )
+
+    @property
+    def sensitvity(self):
+        """Access sensitivity attribute with sensitvity (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use sensitivity instead.
+        """
+        warnings.warn(
+            "`sensitvity` is deprecated, use sensitivity instead",
+            FutureWarning
+            )
+        return self.sensitivity
+
     time_constant = Instrument.control(
         "OFLT?", "OFLT %d",
         """ A floating point property that controls the time constant
@@ -231,9 +252,9 @@ class SR860(Instrument):
         """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
         18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
-        values=range(0, 3)
+        values=range(0, 4)
     )
-    filer_synchronous = Instrument.control(
+    filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
         """A string property that represents the synchronous filter.
         This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
@@ -241,6 +262,20 @@ class SR860(Instrument):
         values=INPUT_FILTER,
         map_values=True
     )
+
+    @property
+    def filer_synchronous(self):
+        """Access filter_synchronous attribute with filer_synchronous (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use filter_synchronous instead.
+        """
+        warnings.warn(
+            "`filer_synchronous` is deprecated, use filter_synchronous instead",
+            FutureWarning
+            )
+        return self.filter_synchronous
+
     filter_advanced = Instrument.control(
         "ADVFILT?", "ADVFIL %d",
         """A string property that represents the advanced filter.
@@ -280,28 +315,28 @@ class SR860(Instrument):
     sine_amplitudepreset1 = Instrument.control(
         "PSTA? 0", "PSTA0, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A1 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A2 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
-        This property can be set.""",
+        This property can be set.""",  # noqa: E501
         validator=truncated_range,
         values=[1e-9, 2]
     )
@@ -335,7 +370,7 @@ class SR860(Instrument):
     )
 
     aux_out_1 = Instrument.control(
-        "AUXV? 0", "AUXV 1, %f",
+        "AUXV? 0", "AUXV 0, %f",
         """ A floating point property that controls the output of Aux output 1 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -346,7 +381,7 @@ class SR860(Instrument):
     dac1 = aux_out_1
 
     aux_out_2 = Instrument.control(
-        "AUXV? 1", "AUXV 2, %f",
+        "AUXV? 1", "AUXV 1, %f",
         """ A floating point property that controls the output of Aux output 2 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -357,7 +392,7 @@ class SR860(Instrument):
     dac2 = aux_out_2
 
     aux_out_3 = Instrument.control(
-        "AUXV? 2", "AUXV 3, %f",
+        "AUXV? 2", "AUXV 2, %f",
         """ A floating point property that controls the output of Aux output 3 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -368,7 +403,7 @@ class SR860(Instrument):
     dac3 = aux_out_3
 
     aux_out_4 = Instrument.control(
-        "AUXV? 3", "AUXV 4, %f",
+        "AUXV? 3", "AUXV 3, %f",
         """ A floating point property that controls the output of Aux output 4 in
         Volts, taking values between -10.5 V and +10.5 V.
         This property can be set.""",
@@ -410,17 +445,43 @@ class SR860(Instrument):
         """retrieve 2 or 3 parameters at once
         parameters can be chosen by index, or enumeration as follows:
 
-        j enumeration parameter     j enumeration parameter
-
-        0 X           X output      9 YNOise      Ynoise
-        1 Y           Youtput      10 OUT1        Aux Out1
-        2 R           R output     11 OUT2        Aux Out2
-        3 THeta       θ output     12 PHAse       Reference Phase
-        4 IN1         Aux In1      13 SAMp        Sine Out Amplitude
-        5 IN2         Aux In2      14 LEVel       DC Level
-        6 IN3         Aux In3      15 FInt        Int. Ref. Frequency
-        7 IN4         Aux In4      16 FExt        Ext. Ref. Frequency
-        8 XNOise      Xnoise
+        +--------+-------------+------------------------+
+        | index  | enumeration | parameter              |
+        +========+=============+========================+
+        | 0      | X           | X output               |
+        +--------+-------------+------------------------+
+        | 1      | Y           | Y output               |
+        +--------+-------------+------------------------+
+        | 2      | R           | R output               |
+        +--------+-------------+------------------------+
+        | 3      | THeta       | θ output               |
+        +--------+-------------+------------------------+
+        | 4      | IN1         | Aux In1                |
+        +--------+-------------+------------------------+
+        | 5      | IN2         | Aux In2                |
+        +--------+-------------+------------------------+
+        | 6      | IN3         | Aux In3                |
+        +--------+-------------+------------------------+
+        | 7      | IN4         | Aux In4                |
+        +--------+-------------+------------------------+
+        | 8      | XNOise      | Xnoise                 |
+        +--------+-------------+------------------------+
+        | 9      | YNOise      | Ynoise                 |
+        +--------+-------------+------------------------+
+        | 10     | OUT1        | Aux Out1               |
+        +--------+-------------+------------------------+
+        | 11     | OUT2        | Aux Out2               |
+        +--------+-------------+------------------------+
+        | 12     | PHAse       | Reference Phase        |
+        +--------+-------------+------------------------+
+        | 13     | SAMp        | Sine Out Amplitude     |
+        +--------+-------------+------------------------+
+        | 14     | LEVel       | DC Level               |
+        +--------+-------------+------------------------+
+        | 15     | FInt        | Int. Ref. Frequency    |
+        +--------+-------------+------------------------+
+        | 16     | FExt        | Ext. Ref. Frequency    |
+        +--------+-------------+------------------------+
 
         :param val1: parameter enumeration/index
         :param val2: parameter enumeration/index
@@ -432,17 +493,25 @@ class SR860(Instrument):
             val3 = None
         """
         if val3 is None:
-            return self.adapter.values(
+            return self.values(
                 command=f"SNAP? {val1}, {val2}",
                 separator=",",
                 cast=float,
             )
         else:
-            return self.adapter.values(
+            return self.values(
                 command=f"SNAP? {val1}, {val2}, {val3}",
                 separator=",",
                 cast=float,
             )
+
+    def snap_all(self):
+        """snap X,Y,R,THETA parameters at once"""
+        return self.values(
+            command="SNAPD?",
+            separator=",",
+            cast=float,
+        )
 
     gettimebase = Instrument.measurement(
         "TBSTAT?",
@@ -521,7 +590,7 @@ class SR860(Instrument):
     strip_chart_dat1 = Instrument.control(
         "CGRF? 0", "CGRF 0, %i",
         """A integer property that turns the strip chart graph of data channel 1 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -529,7 +598,7 @@ class SR860(Instrument):
     strip_chart_dat2 = Instrument.control(
         "CGRF? 1", "CGRF 1, %i",
         """A integer property that turns the strip chart graph of data channel 2 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -537,7 +606,7 @@ class SR860(Instrument):
     strip_chart_dat3 = Instrument.control(
         "CGRF? 2", "CGRF 2, %i",
         """A integer property that turns the strip chart graph of data channel 1 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -545,7 +614,7 @@ class SR860(Instrument):
     strip_chart_dat4 = Instrument.control(
         "CGRF? 3", "CGRF 3, %i",
         """A integer property that turns the strip chart graph of data channel 4 off(i=0) or on(i=1).
-        """,
+        """,  # noqa: E501
         validator=strict_discrete_set,
         values=ON_OFF_VALUES,
         map_values=True
@@ -559,9 +628,11 @@ class SR860(Instrument):
         values=range(0, 16)
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SR860 Lock-in amplifier",
+                 **kwargs):
         super().__init__(
-            resourceName,
-            "Stanford Research Systems SR860 Lock-in amplifier",
+            adapter,
+            name,
+            includeSCPI=False,
             **kwargs
         )

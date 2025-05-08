@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,18 @@
 
 import logging
 import time
+from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, RangeException
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.errors import RangeException
+from pymeasure.instruments.validators import (
+    truncated_range,
+    strict_range,
+    strict_discrete_set,
+    joined_validators
+)
 
 from .buffer import KeithleyBuffer
 
@@ -36,8 +43,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley6221(Instrument, KeithleyBuffer):
-    """ Represents the Keithely 6221 AC and DC current source and provides a
+class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
+    """ Represents the Keithley 6221 AC and DC current source and provides a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -71,6 +78,12 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     """
 
+    def __init__(self, adapter, name="Keithley 6221 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs)
+
     ##########
     # OUTPUT #
     ##########
@@ -82,6 +95,15 @@ class Keithley6221(Instrument, KeithleyBuffer):
         :meth:`~.Keithley6221.disable_source` can also be used.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
+        map_values=True
+    )
+
+    shield_to_guard_enabled = Instrument.control(
+        ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
+        """ Control if shield is connected to the guard(boolean).
+
+        If not, the shield is connected to the output-low.""",
+        values={True: "GUAR", False: "OLOW"},
         map_values=True
     )
 
@@ -135,6 +157,114 @@ class Keithley6221(Instrument, KeithleyBuffer):
         Valid values are True or False. """,
         values={True: 1, False: 0},
         map_values=True,
+    )
+
+    ##############
+    # DELTA MODE #
+    ##############
+
+    delta_unit = Instrument.control(
+        ":UNIT:VOLT:DC?", ":UNIT:VOLT:DC %s",
+        """Control the reading unit (string strictly in 'V', 'Ohms', 'W' and 'Siemens').""",
+        validator=strict_discrete_set,
+        values={"V": "V", "Ohms": "OHMS", "W": "W", "Siemens": "SIEM"},
+        map_values=True
+    )
+
+    delta_high_source = Instrument.control(
+        ":SOUR:DELT:HIGH?", ":SOUR:DELT:HIGH %g",
+        """Control the delta high source value in A (float strictly from 0 to 0.105).
+
+        Set high source value will automatically set the low source value
+        to minus the high source value.""",
+        validator=strict_range,
+        values=[0, 0.105]
+    )
+
+    delta_low_source = Instrument.control(
+        ":SOUR:DELT:LOW?", ":SOUR:DELT:LOW %g",
+        """Control the delta low source value in A (float strictly from -0.105 to 0).
+
+        Usually no need to manually set this. By default,
+        the low source value is minus the high source value.""",
+        validator=strict_range,
+        values=[-0.105, 0]
+    )
+
+    delta_delay = Instrument.control(
+        ":SOUR:DELT:DELay?", ":SOUR:DELT:DELay %s",
+        """Control the delta delay in seconds (float strictly from 0 to 9999.999, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([0, 9999.999], ["INF"]),
+    )
+
+    delta_cycles = Instrument.control(
+        ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
+        """Control the number of cycles to run for the delta measurements
+        (integer strictly from 1 to 65536, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_measurement_sets = Instrument.control(
+        ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
+        """Control the number of measurement sets to repeat for delta measurements
+        (integer strictly from 1 to 65536, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_compliance_abort_enabled = Instrument.control(
+        ":SOUR:DELT:CAB?", ":SOUR:DELT:CAB %s",
+        """Control if compliance abort is enabled (boolean).""",
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process={1: "ON", 0: "OFF"}.get
+    )
+
+    delta_cold_switch_enabled = Instrument.control(
+        ":SOUR:DELT:CSW?", ":SOUR:DELT:CSW %s",
+        """Control if cold switching mode is enabled (boolean).""",
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process={1: "ON", 0: "OFF"}.get
+    )
+
+    delta_buffer_points = Instrument.control(
+        "TRAC:POIN?", "TRAC:POIN %d",
+        """ Control the size of the buffer (integer strictly from 1 to 1000000).
+
+        Buffer size should be the same value as Delta count.""",
+        validator=strict_range,
+        values=[1, 1000000]
+    )
+
+    def delta_arm(self):
+        """ Arm delta. """
+        self.write(":SOUR:DELT:ARM")
+
+    def delta_start(self):
+        """ Start delta measurements. """
+        self.write(":INIT:IMM")
+
+    def delta_abort(self):
+        """ Stop delta and place the Model 2182A in the local mode. """
+        self.write(":SOUR:SWE:ABOR")
+
+    delta_sense = Instrument.measurement(
+        ":SENS:DATA?",
+        """Get the latest delta reading results from 2182/2182A."""
+    )
+
+    delta_values = Instrument.measurement(
+        ":TRAC:DATA?",
+        """Get delta sense readings stored in 6221 buffer."""
+    )
+
+    delta_connected = Instrument.measurement(
+        ":SOUR:DELT:NVPR?",
+        """Get connection status to 2182A.""",
+        cast=bool,
     )
 
     ##################
@@ -224,6 +354,18 @@ class Keithley6221(Instrument, KeithleyBuffer):
         values={True: 1, False: 0},
         map_values=True,
     )
+    waveform_phasemarker_phase = Instrument.control(
+        ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %g",
+        """ A numerical property that controls the phase of the phase marker.""",
+        validator=truncated_range,
+        values=[-180, 180],
+    )
+    waveform_phasemarker_line = Instrument.control(
+        ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %d",
+        """ A numerical property that controls the line of the phase marker.""",
+        validator=truncated_range,
+        values=[1, 6],
+    )
 
     def waveform_arm(self):
         """ Arm the current waveform function. """
@@ -271,11 +413,6 @@ class Keithley6221(Instrument, KeithleyBuffer):
         # Select the newly made arbitrary waveform as waveform function
         self.waveform_function = "arbitrary%d" % location
 
-    def __init__(self, adapter, **kwargs):
-        super().__init__(
-            adapter, "Keithley 6221 SourceMeter", **kwargs
-        )
-
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
         configuration of the instrument. """
@@ -316,25 +453,8 @@ class Keithley6221(Instrument, KeithleyBuffer):
 
     @property
     def error(self):
-        """ Returns a tuple of an error code and message from a
-        single error. """
-        err = self.values(":system:error?")
-        if len(err) < 2:
-            err = self.read()  # Try reading again
-        code = err[0]
-        message = err[1].replace('"', '')
-        return (code, message)
-
-    def check_errors(self):
-        """ Logs any system errors reported by the instrument.
-        """
-        code, message = self.error
-        while code != 0:
-            t = time.time()
-            log.info("Keithley 6221 reported error: %d, %s" % (code, message))
-            code, message = self.error
-            if (time.time() - t) > 10:
-                log.warning("Timed out for Keithley 6221 error retrieval.")
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
 
     def reset(self):
         """ Resets the instrument and clears the queue.  """
@@ -398,6 +518,7 @@ class Keithley6221(Instrument, KeithleyBuffer):
         """ Disables the output. """
         log.info("Shutting down %s." % self.name)
         self.disable_source()
+        super().shutdown()
 
     ###############
     # Status bits #

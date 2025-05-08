@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,14 @@
 import re
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Agilent34450A(Instrument):
+class Agilent34450A(SCPIUnknownMixin, Instrument):
     """
     Represent the HP/Agilent/Keysight 34450A and related multimeters.
 
@@ -319,28 +319,31 @@ class Agilent34450A(Instrument):
     # Temperature (C) #
     ###################
 
-    temperature = Instrument.measurement(":READ?",
-                                         """ Reads a temperature measurement in Celsius, based on the
-                                         active :attr:`~.Agilent34450A.mode`. """
-                                         )
+    temperature = Instrument.measurement(
+        ":READ?",
+        """ Reads a temperature measurement in Celsius, based on the active :attr:`~.Agilent34450A.mode`.
+        """  # noqa: E501
+    )
 
     #############
     # Diode (V) #
     #############
 
-    diode = Instrument.measurement(":READ?",
-                                   """ Reads a diode measurement in Volts, based on the
-                                   active :attr:`~.Agilent34450A.mode`. """
-                                   )
+    diode = Instrument.measurement(
+        ":READ?",
+        """ Reads a diode measurement in Volts, based on the active :attr:`~.Agilent34450A.mode`.
+        """
+    )
 
     ###################
     # Capacitance (F) #
     ###################
 
-    capacitance = Instrument.measurement(":READ?",
-                                         """ Reads a capacitance measurement in Farads,
-                                         based on the active :attr:`~.Agilent34450A.mode`. """
-                                         )
+    capacitance = Instrument.measurement(
+        ":READ?",
+        """ Reads a capacitance measurement in Farads, based on the active :attr:`~.Agilent34450A.mode`.
+        """  # noqa: E501
+    )
     capacitance_range = Instrument.control(
         ":SENS:CAP:RANG?", ":SENS:CAP:RANG:AUTO 0;:SENS:CAP:RANG %s",
         """ A property that controls the capacitance range
@@ -367,12 +370,11 @@ class Agilent34450A(Instrument):
                                         based on the active :attr:`~.Agilent34450A.mode`. """
                                         )
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="HP/Agilent/Keysight 34450A Multimeter", **kwargs):
         super().__init__(
-            adapter, "HP/Agilent/Keysight 34450A Multimeter", **kwargs
+            adapter, name, timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
-        self.adapter.connection.timeout = 10000
         self.check_errors()
 
     def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
@@ -456,7 +458,7 @@ class Agilent34450A(Instrument):
                 self.resistance_4w_range = resistance_range
         else:
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
-                             "resistance meaurement.")
+                             "resistance measurement.")
 
     def configure_frequency(self, measured_from="voltage_ac",
                             measured_from_range="AUTO", aperture="DEF"):

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,8 @@
 #
 
 import pyvisa
+from serial.tools import list_ports
+from serial.serialutil import SerialException
 
 
 def list_resources():
@@ -41,7 +43,7 @@ def list_resources():
     rm = pyvisa.ResourceManager()
     instrs = rm.list_resources()
     for n, instr in enumerate(instrs):
-        # trying to catch errors in comunication
+        # trying to catch errors in communication
         try:
             res = rm.open_resource(instr)
             # try to avoid errors from *idn?
@@ -56,5 +58,33 @@ def list_resources():
         except pyvisa.VisaIOError as e:
             print(n, ":", instr, ":", "Visa IO Error: check connections")
             print(e)
+        except SerialException as e:
+            print(n, ":", instr, ":", "Serial port Error")
+            print(e)
     rm.close()
     return instrs
+
+
+def find_serial_port(vendor_id=None, product_id=None, serial_number=None):
+    """Find the VISA port name of the first serial device with the given USB information.
+
+    Use `None` as a value if you do not want to check for that parameter.
+
+    .. code-block:: python
+
+        resource_name = find_serial_port(vendor_id=1256, serial_number="SN12345")
+        dmm = Agilent34410(resource_name)
+
+    :param int vid: Vendor ID.
+    :param int pid: Product ID.
+    :param str sn: Serial number.
+    :return str: Port as a VISA string for a serial device (e.g. "ASRL5" or "ASRL/dev/ttyACM5").
+    """
+    for port in sorted(list_ports.comports()):
+        if ((vendor_id is None or port.vid == vendor_id)
+                and (product_id is None or port.pid == product_id)
+                and (serial_number is None or port.serial_number == str(serial_number))):
+            # remove "COM" from windows serial port names.
+            port_name = port.device.replace("COM", "")
+            return "ASRL" + port_name
+    raise AttributeError("No device found for the given data.")

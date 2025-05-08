@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,18 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
 
 
-class SR570(Instrument):
+class SR570(SCPIUnknownMixin, Instrument):
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SR570 Lock-in amplifier",
+                 **kwargs):
         super().__init__(
-            resourceName,
-            "Stanford Research Systems SR570 Lock-in amplifier",
+            adapter,
+            name,
             **kwargs
         )
 
@@ -70,7 +71,7 @@ class SR570(Instrument):
         amplifier, which takes discrete values in a 1-2-5 sequence.
         Values are truncated to the closest allowed value if not exact.
         Allowed values range from 1 pA/V to 1 mA/V.""",
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=SENSITIVITIES,
         map_values=True)
 
@@ -78,7 +79,7 @@ class SR570(Instrument):
         "FLTT %d",
         """ A string that sets the filter type.
         Allowed values are: {}""".format(FILT_TYPES),
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=FILT_TYPES,
         map_values=True)
 
@@ -88,7 +89,7 @@ class SR570(Instrument):
         amplifier, which takes a discrete value in a 1-3 sequence.
         Values are truncated to the closest allowed value if not exact.
         Allowed values range from 0.03 Hz to 1 MHz.""",
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=FREQUENCIES,
         map_values=True)
 
@@ -98,7 +99,7 @@ class SR570(Instrument):
         amplifier, which takes a discrete value in a 1-3 sequence.
         Values are truncated to the closest allowed value if not exact.
         Allowed values range from 0.03 Hz to 1 MHz.""",
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=FREQUENCIES,
         map_values=True)
 
@@ -107,7 +108,7 @@ class SR570(Instrument):
         """ A floating point value in V that sets the bias voltage level of the
         amplifier, in the [-5V,+5V] limits.
         The values are up to 1 mV precision level.""",
-        validators=truncated_range,
+        validator=truncated_range,
         values=BIAS_LIMITS,
         set_process=lambda v: int(1000 * v))
 
@@ -117,7 +118,7 @@ class SR570(Instrument):
         of the offset current of the amplifier, in the [1pA,5mA] limits.
         The offset current takes discrete values in a 1-2-5 sequence.
         Values are truncated to the closest allowed value if not exact. """,
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=OFFSET_CURRENTS,
         map_values=True)
 
@@ -125,7 +126,7 @@ class SR570(Instrument):
         "IOSN %d",
         """ An string that sets the offset current sign.
         Allowed values are: 'positive' and 'negative'. """,
-        validators=strict_discrete_set,
+        validator=strict_discrete_set,
         values={'positive': 1, 'negative': 0},
         map_values=True)
 
@@ -133,7 +134,7 @@ class SR570(Instrument):
         "GNMD %d",
         """ A string that sets the gain mode.
         Allowed values are: {}""".format(GAIN_MODES),
-        validators=truncated_discrete_set,
+        validator=truncated_discrete_set,
         values=GAIN_MODES,
         map_values=True)
 
@@ -141,7 +142,7 @@ class SR570(Instrument):
         "INVT %d",
         """ An boolean sets the signal invert sense.
         Allowed values are: True (inverted) and False (not inverted). """,
-        validators=strict_discrete_set,
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True)
 

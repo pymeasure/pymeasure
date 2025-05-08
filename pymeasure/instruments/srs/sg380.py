@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,11 @@
 # THE SOFTWARE.
 
 #
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import truncated_range
 
 
-class SG380(Instrument):
+class SG380(SCPIUnknownMixin, Instrument):
 
     MOD_TYPES_VALUES = ['AM', 'FM', 'PM', 'SWEEP', 'PULSE', 'BLANK', 'IQ']
 
@@ -50,10 +50,11 @@ class SG380(Instrument):
         in Hz. This property can be set. """
     )
 
-    def __init__(self, resourceName, **kwargs):
+    def __init__(self, adapter, name="Stanford Research Systems SG380 RF Signal Generator",
+                 **kwargs):
         super().__init__(
-            resourceName,
-            "Stanford Research Systems SG380 RF Signal Generator",
+            adapter,
+            name,
             **kwargs
         )
 

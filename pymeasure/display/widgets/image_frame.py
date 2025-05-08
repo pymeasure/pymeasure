@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ class ImageFrame(PlotFrame):
     to plot also axis Z using colors
     """
     ResultsClass = ResultsImage
-    z_axis_changed = QtCore.QSignal(str)
+    z_axis_changed = QtCore.Signal(str)
 
     def __init__(self, x_axis, y_axis, z_axis=None,
                  refresh_time=0.2, check_status=True, parent=None):

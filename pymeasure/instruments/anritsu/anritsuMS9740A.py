@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,36 +37,37 @@ log.addHandler(logging.NullHandler())
 class AnritsuMS9740A(AnritsuMS9710C):
     """Anritsu MS9740A Optical Spectrum Analyzer."""
 
-    def __init__(self, adapter, **kwargs):
+    def __init__(self, adapter, name="Anritsu MS9740A Optical Spectrum Analyzer", **kwargs):
         """Constructor."""
         self.analysis_mode = None
         super().__init__(
-            adapter, name="Anritsu MS9740A Optical Spectrum Analyzer", **kwargs)
+            adapter, name, **kwargs)
 
     ####################################
     # Spectrum Parameters - Wavelength #
     ####################################
 
     resolution = Instrument.control(
-        "RES?", "RES %s", "Resolution (nm)",
+        "RES?", "RES %s", "Control Resolution (nm)",
         validator=truncated_discrete_set,
         values=[0.03, 0.05, 0.07, 0.1, 0.2, 0.5, 1.0],
     )
 
     resolution_vbw = Instrument.control(
-        "VBW?", "VBW %s", "Video Bandwidth Resolution",
+        "VBW?", "VBW %s", "Control Video Bandwidth Resolution",
         validator=strict_discrete_set,
         values=["1MHz", "100kHz", "10kHz", "2kHz", "1kHz", "200Hz", "100Hz", "10Hz"]
     )
 
     average_sweep = Instrument.control(
         "AVS?", "AVS %d",
-        "Nr. of averages to make on a sweep (1-1000), with 1 being a single (non-averaged) sweep",
+        """Control number of averages to make on a sweep (1-1000),
+        with 1 being a single (non-averaged) sweep""",
         validator=truncated_range, values=[1, 1000]
     )
 
     sampling_points = Instrument.control(
-        "MPT?", "MPT %d", "Number of sampling points",
+        "MPT?", "MPT %d", "Control number of sampling points",
         validator=truncated_discrete_set,
         values=[51, 101, 251, 501, 1001, 2001, 5001, 10001, 20001, 50001],
         get_process=lambda v: int(v)
@@ -78,7 +79,7 @@ class AnritsuMS9740A(AnritsuMS9710C):
 
     data_memory_select = Instrument.control(
         "TTP?", "TTP %s",
-        "Memory Data Select.",
+        "Control Memory Data Select.",
         validator=strict_discrete_set,
         values=["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
     )
