@@ -100,7 +100,7 @@ def test_fake_instrument():
     fake = FakeInstrument()
     fake.write("Testing")
     assert fake.read() == "Testing"
-    assert fake.read() == ""
+    assert len(fake.adapter._buffer) == 0
     assert fake.values("5") == [5]
 
 
