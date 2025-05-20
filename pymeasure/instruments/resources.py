@@ -24,6 +24,7 @@
 
 import pyvisa
 from serial.tools import list_ports
+from serial.serialutil import SerialException
 
 
 def list_resources():
@@ -56,6 +57,9 @@ def list_resources():
                 print(n, ":", instr, ":", idn)
         except pyvisa.VisaIOError as e:
             print(n, ":", instr, ":", "Visa IO Error: check connections")
+            print(e)
+        except SerialException as e:
+            print(n, ":", instr, ":", "Serial port Error")
             print(e)
     rm.close()
     return instrs

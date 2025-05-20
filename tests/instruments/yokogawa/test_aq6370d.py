@@ -483,6 +483,22 @@ def test_initiate_sweep():
         assert inst.initiate_sweep() is None
 
 
+def test_abort():
+    with expected_protocol(
+        AQ6370D,
+        [(b":ABORt", None)],
+    ) as inst:
+        assert inst.abort() is None
+
+
+def test_sweep_complete():
+    with expected_protocol(
+        AQ6370D,
+        [(b":STATus:OPERation:CONDition?", b"13\n")],
+    ) as inst:
+        assert inst.sweep_complete is True
+
+
 def test_reset():
     with expected_protocol(
         AQ6370D,
