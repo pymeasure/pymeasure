@@ -21,22 +21,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
 
-from .adapter import Adapter, FakeAdapter
-
-from .protocol import ProtocolAdapter
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
-
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
+from .ptwUNIDOS import ptwUNIDOS
