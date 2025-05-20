@@ -65,17 +65,6 @@ def test_nested_adapter():
     assert a.manager == a0.manager
 
 
-def test_nested_adapter_query_delay():
-    query_delay = 10
-    with pytest.warns(FutureWarning, match="query_delay"):
-        a0 = VISAAdapter(SIM_RESOURCE, visa_library='@sim', read_termination="\n",
-                         query_delay=query_delay)
-        a = VISAAdapter(a0)
-    assert a.resource_name == SIM_RESOURCE
-    assert a.connection == a0.connection
-    assert a.query_delay == query_delay
-
-
 def test_ProtocolAdapter():
     with expected_protocol(
             VISAAdapter,
@@ -161,18 +150,3 @@ class TestReadBytes:
         adapter.write("*IDN?")
         # `break_on_termchar=False` is default value
         assert adapter.read_bytes(-1) == b"SCPI,MOCK,VERSION_1.0\nSCPI,MOCK,VERSION_1.0\n"
-
-
-def test_visa_adapter(adapter):
-    assert repr(adapter) == f"<VISAAdapter(resource='{SIM_RESOURCE}')>"
-
-    with pytest.warns(FutureWarning):
-        assert adapter.ask("*IDN?") == "SCPI,MOCK,VERSION_1.0"
-
-    adapter.write("*IDN?")
-    assert adapter.read() == "SCPI,MOCK,VERSION_1.0"
-
-
-def test_visa_adapter_ask_values(adapter):
-    with pytest.warns(FutureWarning):
-        assert adapter.ask_values(":VOLT:IMM:AMPL?", separator=",") == [1.0]
