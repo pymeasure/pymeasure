@@ -133,10 +133,7 @@ class AgilentB2981(SCPIMixin, Instrument):
 
     data_buffer_size = Instrument.measurement(
         ":SYST:DATA:QUAN?",
-        """Get the data buffer size.
-
-        :return: int
-        """,
+        """Get the data buffer size (int).""",
         cast=int
         )
 
