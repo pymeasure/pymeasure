@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 
 import logging
+from time import time
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -36,7 +37,7 @@ class AQ6370Series(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    # Initiate and abort sweep ---------------------------------------------------------------------
+    # Control sweep status -------------------------------------------------------------------------
 
     def abort(self):
         """Stop operations such as measurements and calibration."""
@@ -45,6 +46,32 @@ class AQ6370Series(SCPIMixin, Instrument):
     def initiate_sweep(self):
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
+
+    sweep_complete = Instrument.measurement(
+        ":STATus:OPERation:CONDition?",
+        """Get the completion status of the sweep (bool, True if complete).""",
+        get_process=lambda x: bool(int(x) & 1),
+    )
+
+    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=300):
+        """Block the program, waiting for the sweep to complete.
+
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds.
+        :return: True when sweep completed, False if stopped by should_stop.
+        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
+        """
+
+        t0 = time()
+        while not self.sweep_complete:
+
+            if should_stop():
+                return False
+
+            if time() - t0 > timeout:
+                raise TimeoutError("Timed out waiting for sweep to run.")
+
+        return True
 
     # Leveling -------------------------------------------------------------------------------------
 
@@ -108,6 +135,16 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: int(x),
     )
 
+    sensitivity = Instrument.control(
+        ":SENSe:SENSe?",
+        ":SENSe:SENSe %s",
+        """Control the sweep sensitivity
+        (str 'NHLD', 'NAUT', 'NORM', 'MID', 'HIGH1', 'HIGH2', 'HIGH3')""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"NHLD": 0, "NAUT": 1, "MID": 2, "HIGH1": 3, "HIGH2": 4, "HIGH3": 5, "NORM": 6},
+    )
+
     # Wavelength settings (all assuming wavelength mode, not frequency mode) -----------------------
 
     wavelength_center = Instrument.control(
@@ -143,6 +180,16 @@ class AQ6370Series(SCPIMixin, Instrument):
         "Control the measurement stop wavelength (float from 50e-9 to 2250e-9 in m).",
         validator=strict_range,
         values=[600e-9, 2250e-9],
+        dynamic=True,
+    )
+
+    resolution_bandwidth = Instrument.control(
+        ":SENSe:BWIDth:RESolution?",
+        ":SENSe:BWIDth:RESolution %g",
+        """Control the measurement resolution
+        (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
+        validator=strict_discrete_set,
+        values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
         dynamic=True,
     )
 
@@ -209,20 +256,31 @@ class AQ6370Series(SCPIMixin, Instrument):
         """
         return self.write(":CALCulate:DATA?")
 
-    # Resolution -----------------------------------------------------------------------------------
-
-    resolution_bandwidth = Instrument.control(
-        ":SENSe:BWIDth:RESolution?",
-        ":SENSe:BWIDth:RESolution %g",
-        """Control the measurement resolution
-        (float in m, discrete values: [0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9] m).""",
-        validator=strict_discrete_set,
-        values=[0.02e-9, 0.05e-9, 0.1e-9, 0.2e-9, 0.5e-9, 1e-9, 2e-9],
-        dynamic=True,
-    )
-
 
 # subclasses of specific instruments ---------------------------------------------------------------
+
+
+class AQ6370E(AQ6370Series):
+    """Represents Yokogawa AQ6370E optical spectrum analyzer."""
+
+    sweep_speed = Instrument.control(
+        ":SENSe:SWEep:SPEed?",
+        ":SENSe:SWEep:SPEed %d",
+        "Control the sweep speed (str '1x' or '2x' for double speed).",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"1x": 0, "2x": 1},
+    )
+
+    sensitivity_level = Instrument.control(
+        ":SENSe:SENSe:LEVel?",
+        ":SENSe:SENSe:LEVel %g",
+        """Control the sweep sensitivity by specifying the sensitivity level you want to measure at,
+        in dBm. The sensitivity closest to that level, and the sweep speed are automatically
+        selected.""",
+    )
+
+    pass
 
 
 class AQ6370D(AQ6370Series):

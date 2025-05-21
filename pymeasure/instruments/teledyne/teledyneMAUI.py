@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -101,8 +101,11 @@ class TeledyneMAUI(TeledyneOscilloscope):
     The manual detailing the API is "MAUI Oscilloscopes Remote Control and Automation Manual"
     (`link`_).
 
+    This class of Teledyne oscilloscopes also support direct VBS commands.
+    See :meth:`~vbs_ask` and :meth:`~vbs_write`.
+
     .. _link: https://cdn.teledynelecroy.com/files/manuals/
-              maui-remote-control-automation_27jul22.pdf
+              maui-remote-control-and-automation-manual.pdf
     """
 
     ch_1 = Instrument.ChannelCreator(TeledyneMAUIChannel, 1)
@@ -115,6 +118,40 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     # Change listed values for existing commands:
     bwlimit_values = TeledyneMAUIChannel.BANDWIDTH_LIMITS
+
+    def vbs_write(self, message: str):
+        """Write a VBS command directly to the device.
+
+        This class of oscilloscopes also allows the direct usage of Visual Basic
+        Scripting (VBScript). With this method a literal VBS command is sent.
+        You can use the 'MAUI Browser' on the oscilloscope to list all available
+        variables.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_write("app.Display.GridMode = Dual")
+        """
+        query = f"VBS '{message}'"
+        self.write(query)
+
+    def vbs_ask(self, name: str) -> str:
+        """Return the value of a VBS variable.
+
+        Only the target needs to be specified, a query is formatted by this method.
+        Note: the target name is not escaped!
+
+        See :meth:`~vbs_write` for more info.
+
+        A very basic example of usage:
+
+        .. code:: python
+
+           instrument.vbs_ask("app.Display.GridMode")
+        """
+        query = f"VBS? 'Return={name}'"
+        return self.ask(query)
 
     ###############
     #   Trigger   #

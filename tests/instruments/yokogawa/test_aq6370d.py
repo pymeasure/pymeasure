@@ -76,6 +76,22 @@ def test_sweep_mode_getter():
         assert inst.sweep_mode == "REPEAT"
 
 
+def test_sensitivity_setter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe 3", None)],
+    ) as inst:
+        inst.sensitivity = "HIGH1"
+
+
+def test_sensitivity_getter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe?", b"3\n")],
+    ) as inst:
+        assert inst.sensitivity == "HIGH1"
+
+
 @pytest.mark.parametrize(
     "comm_pairs, value",
     (
@@ -465,6 +481,22 @@ def test_initiate_sweep():
         [(b":INITiate:IMMediate", None)],
     ) as inst:
         assert inst.initiate_sweep() is None
+
+
+def test_abort():
+    with expected_protocol(
+        AQ6370D,
+        [(b":ABORt", None)],
+    ) as inst:
+        assert inst.abort() is None
+
+
+def test_sweep_complete():
+    with expected_protocol(
+        AQ6370D,
+        [(b":STATus:OPERation:CONDition?", b"13\n")],
+    ) as inst:
+        assert inst.sweep_complete is True
 
 
 def test_reset():

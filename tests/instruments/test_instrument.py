@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -137,12 +137,6 @@ def test_init_includeSCPI_implicit_warning():
 def test_init_includeSCPI_explicit_warning():
     with pytest.warns(FutureWarning, match="includeSCPI"):
         Instrument("COM1", "def", visa_library="@sim", includeSCPI=True)
-
-
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        inst = Instrument(FakeAdapter(), "name", preprocess_reply=lambda v: v.strip("x"))
-        assert inst.values("x5x") == [5]
 
 
 def test_instrument_in_context():

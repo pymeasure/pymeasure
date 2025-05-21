@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,13 +97,6 @@ class CommonBase:
 
     This class contains everything needed for pymeasure's property creator
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
-
-    :param preprocess_reply: An optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
@@ -126,14 +119,9 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self, preprocess_reply=None, **kwargs):
+    def __init__(self, **kwargs):
         self._special_names = self._setup_special_names()
         self._create_channels()
-        if preprocess_reply is not None:
-            warn(("Parameter `preprocess_reply` is deprecated. "
-                  "Implement it in the instrument, e.g. in `read`, instead."),
-                 FutureWarning)
-        self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
 
     class BaseChannelCreator:
@@ -406,8 +394,6 @@ class CommonBase:
         results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        elif callable(self.preprocess_reply):
-            results = self.preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:

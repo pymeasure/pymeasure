@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -463,8 +463,21 @@ class VSH(SmartlineV2):
     hotcathode = Instrument.ChannelCreator(HotCathode)
 
 
+class VSM(SmartlineV2):
+    """Vacuum transmitter of VSM series with both piece and cold cathode sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)
+    coldcathode = Instrument.ChannelCreator(ColdCathode)
+
+
 class VSR(SmartlineV2):
     """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
 
     piezo = Instrument.ChannelCreator(Piezo)
     pirani = Instrument.ChannelCreator(Pirani)
+
+
+class VSP(SmartlineV2):
+    """Vacuum transmitter of VSP/VCP series with a piezo sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -472,12 +472,12 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
             self.current_range = max_current
 
     def measure_resistance(self, max_resistance=10e6, wires=2):
-        """ Configures the instrument to measure voltage,
-        based on a maximum voltage to set the range, and
-        a boolean flag to determine if DC or AC is required.
+        """ Configures the instrument to measure resistance,
+        based on a maximum resistance to set the range, and
+        the number of wires utilized.
 
-        :param max_voltage: A voltage in Volts to set the voltage range
-        :param ac: False for DC voltage, and True for AC voltage
+        :param max_resistance: A resistance in ohms to set the resistance range
+        :param wires: Number of wires employed (2 or 4)
         """
         if wires == 2:
             self.mode = 'resistance'
@@ -487,7 +487,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
             self.resistance_4W_range = max_resistance
         else:
             raise ValueError("Keithley 2000 only supports 2 or 4 wire"
-                             "resistance measurements.")
+                             " resistance measurements.")
 
     def measure_period(self):
         """ Configures the instrument to measure the period. """
