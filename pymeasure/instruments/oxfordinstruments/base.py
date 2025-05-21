@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -106,7 +106,7 @@ class OxfordInstrumentsBase(Instrument):
                 if e_visa.args == self.timeoutError.args:
                     pass
                 else:
-                    raise e_visa
+                    raise
 
         # No valid response has been received within the maximum allowed number of attempts
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "

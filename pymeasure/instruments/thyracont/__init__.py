@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,4 +23,4 @@
 #
 
 from .smartline_v1 import SmartlineV1
-from .smartline_v2 import SmartlineV2, VSR, VSH
+from .smartline_v2 import SmartlineV2, VSH, VSM, VSP, VSR

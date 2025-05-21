@@ -59,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyMeasure'
-copyright = '2013-2022, PyMeasure Developers'
+copyright = '2013-2025, PyMeasure Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -270,7 +270,7 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 # Automatically mock optional packages
-autodoc_mock_imports = ['zmq', 'cloudpickle', 'vxi11', 'pyvirtualbench']
+autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 
 
 def setup(app):

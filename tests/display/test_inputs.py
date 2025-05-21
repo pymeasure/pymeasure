@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -241,8 +241,12 @@ class TestScientificInput:
             p.assert_called_once_with(5.0)
 
     @pytest.mark.parametrize("locale, decimalSep", [
-        [QtCore.QLocale(31, 7, 224), "."],  # UK locale for period
-        [QtCore.QLocale(30, 7, 151), ","],  # NL locale for comma
+        [QtCore.QLocale(QtCore.QLocale.English,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.UnitedKingdom), "."],
+        [QtCore.QLocale(QtCore.QLocale.Dutch,
+                        QtCore.QLocale.LatinScript,
+                        QtCore.QLocale.Netherlands), ","],
     ])
     def test_locale_settings(self, qtbot, locale, decimalSep):
         assert locale.decimalPoint() == decimalSep

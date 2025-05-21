@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -443,18 +443,6 @@ def test_ask_writes_and_reads():
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
-
-
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
-        assert cb.values("x5x") == [5]
-
-
-def test_values_global_preprocess_reply():
-    cb = CommonBaseTesting(FakeAdapter())
-    cb.preprocess_reply = lambda v: v.strip("x")
-    assert cb.values("x5x") == [5]
 
 
 def test_binary_values(fake):

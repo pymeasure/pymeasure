@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -68,12 +68,12 @@ class ProtocolAdapter(Adapter):
     :param connection_methods: Dictionary of method names of the connection and their return values.
     """
 
-    def __init__(self, comm_pairs=None, preprocess_reply=None,
+    def __init__(self, comm_pairs=None,
                  connection_attributes=None,
                  connection_methods=None,
                  **kwargs):
         """Generate the adapter and initialize internal buffers."""
-        super().__init__(preprocess_reply=preprocess_reply, **kwargs)
+        super().__init__(**kwargs)
         # Setup communication
         if comm_pairs is None:
             comm_pairs = []

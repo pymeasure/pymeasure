@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ from .config import get_config, set_mpl_rcparams
 from pymeasure.log import setup_logging, console_log
 from pymeasure.experiment import Results, Worker
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 try:

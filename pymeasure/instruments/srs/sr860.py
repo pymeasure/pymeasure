@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,17 @@
 
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument
+import warnings
 
 
-class SR860(SCPIUnknownMixin, Instrument):
+class SR860(Instrument):
 
     SENSITIVITIES = [
-        1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9,
-        500e-9, 1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6,
-        200e-6, 500e-6, 1e-3, 2e-3, 5e-3, 10e-3, 20e-3,
-        50e-3, 100e-3, 200e-3, 500e-3, 1
+        1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
+        0.001, 0.0005, 0.0002, 0.0001, 5e-05, 2e-05, 1e-05,
+        5e-06, 2e-06, 1e-06, 5e-07, 2e-07, 1e-07, 5e-08,
+        2e-08, 1e-08, 5e-09, 2e-09, 1e-09
     ]
     TIME_CONSTANTS = [
         1e-6, 3e-6, 10e-6, 30e-6, 100e-6, 300e-6, 1e-3, 3e-3, 10e-3,
@@ -151,6 +152,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_REFERENCETRIGGERMODE,
         map_values=True
     )
+    reference_source_trigger = reference_triggermode
+
     reference_externalinput = Instrument.control(
         "REFZ?", "REFZ&d",
         """A string property that represents the external reference input.
@@ -175,6 +178,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_VOLTAGE_MODE,
         map_values=True
     )
+    input_config = input_voltage_mode
+
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
         """A string property that represents the input coupling.
@@ -191,6 +196,8 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_SHIELDS,
         map_values=True
     )
+    input_grounding = input_shields
+
     input_range = Instrument.control(
         "IRNG?", "IRNG %d",
         """A string property that represents the input range.
@@ -207,7 +214,7 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_GAIN,
         map_values=True
     )
-    sensitvity = Instrument.control(
+    sensitivity = Instrument.control(
         "SCAL?", "SCAL %d",
         """ A floating point property that controls the sensitivity in Volts,
         which can take discrete values from 2 nV to 1 V. Values are truncated
@@ -216,6 +223,20 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=SENSITIVITIES,
         map_values=True
     )
+
+    @property
+    def sensitvity(self):
+        """Access sensitivity attribute with sensitvity (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use sensitivity instead.
+        """
+        warnings.warn(
+            "`sensitvity` is deprecated, use sensitivity instead",
+            FutureWarning
+            )
+        return self.sensitivity
+
     time_constant = Instrument.control(
         "OFLT?", "OFLT %d",
         """ A floating point property that controls the time constant
@@ -231,9 +252,9 @@ class SR860(SCPIUnknownMixin, Instrument):
         """A integer property that sets the filter slope to 6 dB/oct(i=0), 12 DB/oct(i=1),
         18 dB/oct(i=2), 24 dB/oct(i=3).""",
         validator=strict_discrete_set,
-        values=range(0, 3)
+        values=range(0, 4)
     )
-    filer_synchronous = Instrument.control(
+    filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
         """A string property that represents the synchronous filter.
         This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
@@ -241,6 +262,20 @@ class SR860(SCPIUnknownMixin, Instrument):
         values=INPUT_FILTER,
         map_values=True
     )
+
+    @property
+    def filer_synchronous(self):
+        """Access filter_synchronous attribute with filer_synchronous (sic) property.
+
+        .. deprecated:: 0.16.0
+            Use filter_synchronous instead.
+        """
+        warnings.warn(
+            "`filer_synchronous` is deprecated, use filter_synchronous instead",
+            FutureWarning
+            )
+        return self.filter_synchronous
+
     filter_advanced = Instrument.control(
         "ADVFILT?", "ADVFIL %d",
         """A string property that represents the advanced filter.
@@ -470,6 +505,14 @@ class SR860(SCPIUnknownMixin, Instrument):
                 cast=float,
             )
 
+    def snap_all(self):
+        """snap X,Y,R,THETA parameters at once"""
+        return self.values(
+            command="SNAPD?",
+            separator=",",
+            cast=float,
+        )
+
     gettimebase = Instrument.measurement(
         "TBSTAT?",
         """Returns the current 10 MHz timebase source."""
@@ -590,5 +633,6 @@ class SR860(SCPIUnknownMixin, Instrument):
         super().__init__(
             adapter,
             name,
+            includeSCPI=False,
             **kwargs
         )

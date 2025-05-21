@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 import pyvisa
 from serial.tools import list_ports
+from serial.serialutil import SerialException
 
 
 def list_resources():
@@ -56,6 +57,9 @@ def list_resources():
                 print(n, ":", instr, ":", idn)
         except pyvisa.VisaIOError as e:
             print(n, ":", instr, ":", "Visa IO Error: check connections")
+            print(e)
+        except SerialException as e:
+            print(n, ":", instr, ":", "Serial port Error")
             print(e)
     rm.close()
     return instrs

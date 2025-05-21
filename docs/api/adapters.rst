@@ -46,26 +46,6 @@ Prologix adapter
     :show-inheritance:
     :private-members: _format_binary_values
 
-==============
-VXI-11 adapter
-==============
-
-.. autoclass:: pymeasure.adapters.VXI11Adapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance: 
-
-==============
-Telnet adapter
-==============
-
-.. autoclass:: pymeasure.adapters.TelnetAdapter
-    :members:
-    :undoc-members:
-    :inherited-members:
-    :show-inheritance:
-
 =============
 Test adapters
 =============

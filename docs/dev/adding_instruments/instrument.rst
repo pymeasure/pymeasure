@@ -45,19 +45,12 @@ All standard instruments should be child class of :class:`Instrument <pymeasure.
 
 The most basic instrument, for our "Extreme 5000" example starts like this:
 
-.. testsetup::
-
-    # Behind the scene, replace Instrument with FakeInstrument to enable
-    # doctesting simple usage cases (default doctest group)
-    from pymeasure.instruments.fakes import FakeInstrument as Instrument
-
-
 .. testcode::
 
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2024 PyMeasure Developers
+    # Copyright (c) 2013-2025 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -78,7 +71,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     # THE SOFTWARE.
     #
 
-    # from pymeasure.instruments import Instrument
+    from pymeasure.instruments import Instrument
 
 This is a minimal instrument definition:
 
