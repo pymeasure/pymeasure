@@ -129,6 +129,18 @@ grandfathered_docstring_instruments = [
     "HP6632A",
     "HP6633A",
     "HP6634A",
+    "Keithley2000",
+    "Keithley2306",
+    "Keithley2306Channel",
+    "BatteryChannel",  # Keithley2306
+    "Step",  # Keithley2306
+    "Relay",  # Keithley2306
+    "Keithley2450",
+    "Keithley2600",
+    "Keithley2700",
+    "Keithley2750",
+    "Keithley6221",
+    "Keithley6517B",
     "KeysightDSOX1102G",
     "IPS120_10",
     "ITC503",
@@ -192,7 +204,8 @@ def test_kwargs_to_adapter(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning")
+    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning"
+)
 def test_includeSCPI_explicitly_set(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
@@ -205,7 +218,8 @@ def test_includeSCPI_explicitly_set(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning")
+    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning"
+)
 def test_includeSCPI_not_set_to_True(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
