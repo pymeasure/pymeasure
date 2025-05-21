@@ -1,6 +1,12 @@
 Upcoming Release
 ================
 
+Removed
+-------
+- Remove deprecated Adapter and Instrument parameters :code:`preprocess_reply`, :code:`query_delay`
+- Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
+- Remove deprecated Telnet and VXI adapters
+
 Deprecated
 ----------
 - Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`

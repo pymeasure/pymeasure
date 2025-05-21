@@ -21,22 +21,25 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
 
-from .adapter import Adapter, FakeAdapter
+# Tested using SCPI over telnet (via ethernet). call signature:
+# $ pytest test_agilentE4980A_with_device.py --device-address "TCPIP0::172.23.19.101::INSTR"
+#
+# tested with a Keysight E4980A LCR Meter
 
-from .protocol import ProtocolAdapter
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+import pytest
+from pymeasure.instruments.agilent.agilentE4980 import AgilentE4980
 
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
 
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
+@pytest.fixture(scope="module")
+def agilentE4980(connected_device_address):
+    instr = AgilentE4980(connected_device_address)
+    return instr
+
+
+@pytest.mark.parametrize("freq", [40, 1E6])
+def test_frequency(agilentE4980, freq):
+    """Test Agilent E4980 frequency getter/setter."""
+    agilentE4980.frequency = freq
+    assert freq == agilentE4980.frequency

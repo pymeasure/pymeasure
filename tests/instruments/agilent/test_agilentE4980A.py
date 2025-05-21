@@ -21,22 +21,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
 
-from .adapter import Adapter, FakeAdapter
+import pytest
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.agilent.agilentE4980 import AgilentE4980
 
-from .protocol import ProtocolAdapter
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-try:
-    from pymeasure.adapters.visa import VISAAdapter
-    from pymeasure.adapters.prologix import PrologixAdapter
-except ImportError:
-    log.warning("PyVISA library could not be loaded")
-
-try:
-    from pymeasure.adapters.serial import SerialAdapter
-except ImportError:
-    log.warning("PySerial library could not be loaded")
+@pytest.mark.parametrize("freq", [40, 1E6])
+def test_frequency(freq):
+    """Test Agilent E4980 frequency getter/setter."""
+    with expected_protocol(
+        AgilentE4980,
+        [("FORM ASC", None),
+         (f":FREQ:CW {freq:g}", None),
+         (":FREQ:CW?", freq)
+         ],
+    ) as inst:
+        inst.frequency = freq
+        assert freq == inst.frequency

@@ -25,19 +25,93 @@ import logging
 from time import time
 
 from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
+from pyvisa.util import from_binary_block
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class Trace(Channel):
+    def delete(self):
+        """Delete data of the trace."""
+        self.write(":TRACe:DELETE {ch}")
+
+    mode = Channel.control(
+        ":TRACe:ATTRibute:{ch}?",
+        ":TRACe:ATTRibute:{ch} %s",
+        """Control the mode of the trace.""",
+        values=["WRITE", "FIX", "MAX", "MIN", "RAVG", "CALC"],
+        cast=int,
+        get_process=lambda v: ["WRITE", "FIX", "MAX", "MIN", "RAVG", "CALC"][v],
+    )
+
+    sample_number = Channel.measurement(
+        ":TRACe:DATA:SNUMber? {ch}",
+        """Get the number of samples.""",
+        cast=int,
+    )
+
+    def get_axis_data(self, axis="Y", samples=None):
+        """Get the data of an axi in m (X) or displayed units (Y).
+
+        :param samples: Optionally tuple of the slice to retrieve, e.g. [0, 10]
+        """
+        if samples is None:
+            area = ""
+        else:
+            area = f",{samples[0]+1},{samples[1]}"
+        return self.values(f":TRACE:{axis}? {{ch}}{area}")
+
+
 class AQ6370Series(SCPIMixin, Instrument):
     """Represents Yokogawa AQ6370 Series of optical spectrum analyzer."""
 
-    def __init__(self, adapter, name="Yokogawa AQ3670D OSA", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+    def __init__(
+        self,
+        adapter,
+        name="Yokogawa AQ3670D OSA",
+        baud_rate=115200,
+        **kwargs,
+    ):
+        super().__init__(
+            adapter,
+            name,
+            asrl={
+                "read_termination": "\r\n",
+                "write_termination": "\r\n",
+                "baud_rate": baud_rate,
+            },
+            gpib={"read_termination": "\n", "write_termination": "\n"},
+            tcpip={
+                "read_termination": "\r\n",
+                "write_termination": "\r\n",
+                "port": 10001,  # configurable
+            },
+            **kwargs,
+        )
+
+    TRA = Instrument.ChannelCreator(Trace, "TRA")
+    TRB = Instrument.ChannelCreator(Trace, "TRB")
+    TRC = Instrument.ChannelCreator(Trace, "TRC")
+    TRD = Instrument.ChannelCreator(Trace, "TRD")
+    TRE = Instrument.ChannelCreator(Trace, "TRE")
+    TRF = Instrument.ChannelCreator(Trace, "TRF")
+    TRG = Instrument.ChannelCreator(Trace, "TRG")
+
+    def authenticate_ethernet(self, username, password=""):
+        """Authenticate for an ethernet connection."""
+        # Open the connection. It has to be closed at the end.
+        assert self.ask(f'OPEN "{username}"') == "AUTHENTICATE CRAM-MD5."
+        # Encrypted password transfer is possible.
+        assert self.ask(password) == "READY"
 
     # Control sweep status -------------------------------------------------------------------------
+
+    def trigger(self):
+        """Perform a single sweep according to previous conditions."""
+        self.write("*TRG")  # "Trigger"
 
     def abort(self):
         """Stop operations such as measurements and calibration."""
@@ -183,6 +257,15 @@ class AQ6370Series(SCPIMixin, Instrument):
         dynamic=True,
     )
 
+    wavelength_automatic_center = Instrument.control(
+        ":calc:mark:max:scenter:auto?",
+        ":calc:mark:max:scenter:auto %s",
+        """Control whether the wavelength center follows the maximum (bool).""",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
     resolution_bandwidth = Instrument.control(
         ":SENSe:BWIDth:RESolution?",
         ":SENSe:BWIDth:RESolution %g",
@@ -256,6 +339,31 @@ class AQ6370Series(SCPIMixin, Instrument):
         """
         return self.write(":CALCulate:DATA?")
 
+    # Calculate
+    calc_result = Instrument.measurement(
+        ":CALCulate:DATA?",
+        """Get the results of the last analysis.""",
+    )
+
+    transfer_format = Instrument.control(
+        ":FORMat:DATA?",
+        ":FORMat:DATA %s",
+        """Control the data transfer format. It returns to default ASCII at reset.""",
+        values=["ASCII", "REAL,32", "REAL,64"],
+    )
+
+    def get_binary_data(self, bitness=64):
+        header = self.read_bytes(2)
+        assert (
+            chr(header[0]) == "#"
+        ), f"header does not start with #, but with {header!r}"
+        length_of_length_indicator = int(chr(header[1]))
+        length = int(self.read_bytes(length_of_length_indicator).decode())
+        data = self.read_bytes(length)
+        return from_binary_block(
+            data, datatype="d" if bitness == 64 else "f", is_big_endian=False
+        )
+
 
 # subclasses of specific instruments ---------------------------------------------------------------
 
@@ -294,7 +402,6 @@ class AQ6370D(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6370C(AQ6370Series):
@@ -308,7 +415,6 @@ class AQ6370C(AQ6370Series):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6373(AQ6370Series):
@@ -330,7 +436,6 @@ class AQ6373(AQ6370Series):
         5e-9,
         10e-9,
     ]
-    pass
 
 
 class AQ6373B(AQ6373):
@@ -344,7 +449,6 @@ class AQ6373B(AQ6373):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass
 
 
 class AQ6375(AQ6370Series):
@@ -362,7 +466,6 @@ class AQ6375(AQ6370Series):
         1e-9,
         2e-9,
     ]
-    pass
 
 
 class AQ6375B(AQ6375):
@@ -376,4 +479,3 @@ class AQ6375B(AQ6375):
         map_values=True,
         values={"1x": 0, "2x": 1},
     )
-    pass

@@ -602,7 +602,7 @@ class Agilent33500(SCPIMixin, Instrument):
     # TODO: This implementation is currently not working. Do not know why.
     # arb_period = Instrument.control(
     #     "FUNC:ARB:PER?", "FUNC:ARB:PER %e",
-    #     """ A floating point property that controls the period of the arbitrary signal.
+    #     """ Control (float) the period of the arbitrary signal.
     #     Limited by number of signal points. Check for instrument errors when setting
     #     this property.""",
     #     validator=strict_range,
@@ -611,7 +611,7 @@ class Agilent33500(SCPIMixin, Instrument):
     #
     # arb_frequency = Instrument.control(
     #     "FUNC:ARB:FREQ?", "FUNC:ARB:FREQ %f",
-    #     """ A floating point property that controls the frequency of the arbitrary signal.
+    #     """ Control (float) the frequency of the arbitrary signal.
     #     Limited by number of signal points. Check for instrument
     #     errors when setting this property.""",
     #     validator=strict_range,
@@ -625,7 +625,7 @@ class Agilent33500(SCPIMixin, Instrument):
     #
     # arb_voltage = Instrument.control(
     #     "FUNC:ARB:PTP?", "FUNC:ARB:PTP %f",
-    #     """ An floating point property that sets the peak-to-peak voltage for the
+    #     """ Control (float) the peak-to-peak voltage for the
     #     currently selected arbitrary signal. Valid values are 1 mV to 10 V. This can be
     #     set. """,
     #     validator=strict_range,
