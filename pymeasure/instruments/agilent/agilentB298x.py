@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Battery(SCPIMixin, Instrument):
+class BatteryMixin:
     """A class representing the B2983/7 battery functions."""
 
     def __init__(self, adapter,
