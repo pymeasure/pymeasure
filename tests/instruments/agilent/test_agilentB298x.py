@@ -28,7 +28,7 @@ from pymeasure.instruments.agilent.agilentB298x import AgilentB2987
 
 
 TRIGGER_LAYERS = {'ALL': 'all',
-                  'ACQ': 'acquire',
+                  'ACQ': 'acquisition',
                   'TRAN': 'transient',
                   }
 
@@ -142,34 +142,82 @@ class TestAmmeter:
             assert inst.data_buffer_size == 14
 
 
-@pytest.mark.parametrize("layer", ['ALL', 'ACQ', 'TRAN'])
 class TestTrigger:
     """Tests of the trigger methods"""
 
-    def test_abort(self, layer):
-        """Verify the communication of the abort method with action."""
+    def test_abort(self):
+        """Verify the communication of the abort method."""
         with expected_protocol(
             AgilentB2987,
-            [(f":ABOR:{layer}", None)]
+            [(":ABOR:ALL", None)]
         ) as inst:
-            inst.abort(layer)
+            inst.abort()
 
-    def test_arm(self, layer):
-        """Verify the communication of the arm method with action."""
+    def test_abort_aquisition(self):
+        """Verify the communication of the abort_acqisition method."""
         with expected_protocol(
             AgilentB2987,
-            [(f":ARM:{layer}", None)]
+            [(":ABOR:ACQ", None)]
         ) as inst:
-            inst.arm(layer)
+            inst.abort_acquisition()
 
-    def test_init(self, layer):
-        """Verify the communication of the trigger init method with action."""
+    def test_abort_transient(self):
+        """Verify the communication of the abort_transient method."""
         with expected_protocol(
             AgilentB2987,
-            [(f":INIT:{layer}", None)]
+            [(":ABOR:TRAN", None)]
         ) as inst:
-            inst.init(layer)
+            inst.abort_transient()
 
+    def test_arm(self):
+        """Verify the communication of the arm method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":ARM:ALL", None)]
+        ) as inst:
+            inst.arm()
+
+    def test_arm_acquisition(self):
+        """Verify the communication of the arm_acquisition method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":ARM:ACQ", None)]
+        ) as inst:
+            inst.arm_acquisition()
+
+    def test_arm_transient(self):
+        """Verify the communication of the arm_transient method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":ARM:TRAN", None)]
+        ) as inst:
+            inst.arm_transient()
+
+    def test_init(self):
+        """Verify the communication of the trigger init method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":INIT:ALL", None)]
+        ) as inst:
+            inst.init()
+
+    def test_init_acquisition(self):
+        """Verify the communication of the trigger init_acquisition method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":INIT:ACQ", None)]
+        ) as inst:
+            inst.init_acquisition()
+
+    def test_init_transient(self):
+        """Verify the communication of the trigger init_transient method."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":INIT:TRAN", None)]
+        ) as inst:
+            inst.init_transient()
+
+    @pytest.mark.parametrize("layer", ["ALL", "ACQ", "TRAN"])
     @pytest.mark.parametrize("state", [True, False])
     def test_trigger_is_idle(self, layer, state):
         """Verify the communication of the trigger idle getter/setter."""

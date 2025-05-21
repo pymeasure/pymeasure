@@ -40,7 +40,7 @@ TEST_TRIGGER = True
 TEST_SOURCE = True
 TEST_BATTERY = True
 
-TRIGGER_LAYERS = ['acquire', 'transient']
+TRIGGER_LAYERS = ['acquisition', 'transient']
 TRIGGER_SUB_SYSTEMS = ['arm', 'trigger']
 
 
@@ -59,7 +59,7 @@ def resetted_b298x(agilentB298x):
 
 @pytest.fixture
 def b298x_idle(agilentB298x):
-    agilentB298x.abort('ALL')
+    agilentB298x.abort()
     agilentB298x.trigger_all_is_idle
     agilentB298x.source_enabled = True
     agilentB298x.input_enabled = True
@@ -113,20 +113,43 @@ class TestAmmeter:
 
 
 @pytest.mark.skipif(not TEST_TRIGGER, reason="Trigger system tests skipped by user")
-@pytest.mark.parametrize("layer", ['ALL', 'ACQ', 'TRAN'])
 class TestTrigger:
     """Test of the trigger methods."""
 
-    def test_abort(self, agilentB298x, layer):
-        agilentB298x.abort(layer)
+    def test_abort(self, agilentB298x):
+        agilentB298x.abort()
         assert len(agilentB298x.check_errors()) == 0
 
-    def test_arm(self, agilentB298x, layer):
-        agilentB298x.arm(layer)
+    def test_abort_aquisition(self, agilentB298x):
+        agilentB298x.abort_acquisition()
         assert len(agilentB298x.check_errors()) == 0
 
-    def test_init(self, b298x_idle, agilentB298x, layer):
-        b298x_idle.init(layer)
+    def test_abort_transient(self, agilentB298x):
+        agilentB298x.abort_transient()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_arm(self, agilentB298x):
+        agilentB298x.arm()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_arm_aquisition(self, agilentB298x):
+        agilentB298x.arm_acquisition()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_arm_transient(self, agilentB298x):
+        agilentB298x.arm_transient()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_init(self, b298x_idle, agilentB298x):
+        b298x_idle.init()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_init_aquisition(self, b298x_idle, agilentB298x):
+        b298x_idle.init_acquisition()
+        assert len(agilentB298x.check_errors()) == 0
+
+    def test_init_transient(self, b298x_idle, agilentB298x):
+        b298x_idle.init_transient()
         assert len(agilentB298x.check_errors()) == 0
 
 
