@@ -68,7 +68,7 @@ class TexioPSW360L30(Keithley2260B):
         super().__init__(adapter, name, **kwargs)
 
     def check_errors(self):
-        """ Logs any system errors reported by the instrument.
+        """ Log any system errors reported by the instrument.
         """
         code, message = self.next_error
         while code != 0:
