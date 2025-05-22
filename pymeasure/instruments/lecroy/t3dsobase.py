@@ -422,6 +422,13 @@ class LecroyT3DSOBase(Instrument):
         Yes, you read that right, first letter capitalized, full word.""",
     )
 
+    @property
+    def is_trigger_ready(self) -> bool:
+        if self.run_state == 'Ready':
+            return True
+        else:
+            return False
+
     def run(self):
         #good
         """ Starts repetitive acquisitions. This is the same as pressing the Run key on the front panel."""
