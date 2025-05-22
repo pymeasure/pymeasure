@@ -89,7 +89,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     current = Instrument.measurement(
         ":MEAS?",
         """ Get the current in Amps, if configured for this reading.
-        """, get_process=extract_value
+        """, get_process_list=extract_value
     )
 
     current_range = Instrument.control(
@@ -123,7 +123,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     voltage = Instrument.measurement(
         ":MEAS:VOLT?",
         """ Get the voltage in Volts, if configured for this reading.
-        """, get_process=extract_value
+        """, get_process_list=extract_value
     )
 
     voltage_range = Instrument.control(
@@ -165,7 +165,7 @@ class Keithley6517B(KeithleyBuffer, SCPIMixin, Instrument):
     resistance = Instrument.measurement(
         ":READ?",
         """ Get the resistance in Ohms, if configured for this reading.
-        """, get_process=extract_value
+        """, get_process_list=extract_value
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",

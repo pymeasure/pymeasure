@@ -126,7 +126,7 @@ class Argos(Instrument):
         "Control the crystal temperature setpoint in °C.",
         separator="\n\r",
         cast=str,  # type: ignore
-        get_process=generate_state_extraction_method(0),
+        get_process_list=generate_state_extraction_method(0),
         validator=strict_range,
         values=[30, 100],
         check_set_errors=True,
@@ -138,7 +138,7 @@ class Argos(Instrument):
         "Control the etalon angle in degrees.",
         separator="\n\r",
         cast=str,  # type: ignore
-        get_process=generate_state_extraction_method(1),
+        get_process_list=generate_state_extraction_method(1),
         validator=strict_range,
         values=[-12, 12],
         check_set_errors=True,
@@ -150,7 +150,7 @@ class Argos(Instrument):
         "Control the seed source tuning voltage.",
         separator="\n\r",
         cast=str,  # type: ignore
-        get_process=generate_state_extraction_method(2),
+        get_process_list=generate_state_extraction_method(2),
         validator=strict_range,
         values=[0, 5],
         check_set_errors=True,
@@ -161,5 +161,5 @@ class Argos(Instrument):
         "Get the current crystal temperature in °C.",
         separator="\n\r",
         cast=str,  # type: ignore
-        get_process=generate_state_extraction_method(3),
+        get_process_list=generate_state_extraction_method(3),
     )

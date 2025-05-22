@@ -76,7 +76,7 @@ class Channel():
         """ A string to label the channel. Labels with more than 10 characters are truncated to 10
         characters. May contain commonly used ASCII characters. Lower case characters are converted
         to upper case.""",
-        get_process=lambda v: str(v[1:-1])
+        get_process_list=lambda v: str(v[1:-1])
     )
 
     offset = Instrument.control(

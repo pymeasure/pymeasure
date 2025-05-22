@@ -687,6 +687,19 @@ def test_control_get_process(dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process_list(dynamic):
+    class Fake(CommonBaseTesting):
+        x = CommonBase.control(
+            "G", "%d", "doc",
+            get_process_list=lambda v: [v[0] + 1, *v, len(v)],
+            dynamic=dynamic,
+        )
+
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+        assert inst.x == [1, 0, 1, 2, 3.4, 4]
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
 def test_control_preprocess_reply_property(dynamic):
     # test setting preprocess_reply at property-level
     class Fake(FakeBase):

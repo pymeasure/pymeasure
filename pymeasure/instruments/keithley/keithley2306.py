@@ -353,7 +353,7 @@ class Keithley2306Channel(Channel):
     last_readings = Channel.measurement(
         ":FETCH{ch}:ARR?",
         """Get the last readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     reading = Channel.measurement(
@@ -379,7 +379,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:VOLT?",
         """Get (floating)
         voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     measured_current = Channel.measurement(
@@ -392,7 +392,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:CURR?",
         """Get (floating)
         current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     dvm_voltage = Channel.measurement(
@@ -405,7 +405,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:DVM?",
         """Get (floating)
         DVM voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     pulse_current = Channel.measurement(
@@ -417,7 +417,7 @@ class Keithley2306Channel(Channel):
         ":MEAS{ch}:ARR:PCUR?",
         """Get (floating)
         pulse current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     long_integration_current = Channel.measurement(
@@ -429,7 +429,7 @@ class Keithley2306Channel(Channel):
     long_integration_currents = Channel.measurement(
         ":MEAS{ch}:ARR:LINT?",
         """Get the current readings after a triggering a long integrateion. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
 
