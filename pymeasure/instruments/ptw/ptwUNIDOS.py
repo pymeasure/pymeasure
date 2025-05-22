@@ -264,16 +264,18 @@ wrong format of the parameter",
                     ``voltage``,
                     ``error``
         """,
-        get_process=lambda v: {"status": v[0],
-                               "charge": float(str(v[1]) + str(v[2])),
-                               "dose": float(str(v[1]) + str(v[2])),
-                               "current": float(str(v[5]) + str(v[6])),
-                               "doserate": float(str(v[5]) + str(v[6])),
-                               "timebase": v[9],   # timebase for doserate
-                               "time": v[10],  # measurement time
-                               "voltage": v[12],  # detector voltage
-                               "error": v[14]}  # error flags 0x0 ... 0xffff
-        )
+        get_process_list=lambda v: {
+            "status": v[0],
+            "charge": float(str(v[1]) + str(v[2])),
+            "dose": float(str(v[1]) + str(v[2])),
+            "current": float(str(v[5]) + str(v[6])),
+            "doserate": float(str(v[5]) + str(v[6])),
+            "timebase": v[9],  # timebase for doserate
+            "time": v[10],  # measurement time
+            "voltage": v[12],  # detector voltage
+            "error": v[14],
+        },  # error flags 0x0 ... 0xffff
+    )
 
     range = Instrument.control(
         "RGE", "RGE;%s",
@@ -296,11 +298,13 @@ wrong format of the parameter",
                     ``doserate``,
                     ``timebase``
         """,
-        get_process=lambda v: {"range": v[0],
-                               "current": float(str(v[1]) + str(v[2])),
-                               "doserate": float(str(v[1]) + str(v[2])),
-                               "timebase": v[5]},  # timebase for doserate
-        )
+        get_process_list=lambda v: {
+            "range": v[0],
+            "current": float(str(v[1]) + str(v[2])),
+            "doserate": float(str(v[1]) + str(v[2])),
+            "timebase": v[5],
+        },  # timebase for doserate
+    )
 
     range_res = Instrument.measurement(
         "MVR",
@@ -314,13 +318,15 @@ wrong format of the parameter",
                     ``doserate``,
                     ``timebase``
         """,
-        get_process=lambda v: {"range": v[0],
-                               "charge": float(str(v[1]) + str(v[2])),
-                               "dose": float(str(v[1]) + str(v[2])),
-                               "current": float(str(v[5]) + str(v[6])),
-                               "doserate": float(str(v[5]) + str(v[6])),
-                               "timebase": v[9]},  # timebase for doserate
-        )
+        get_process_list=lambda v: {
+            "range": v[0],
+            "charge": float(str(v[1]) + str(v[2])),
+            "dose": float(str(v[1]) + str(v[2])),
+            "current": float(str(v[5]) + str(v[6])),
+            "doserate": float(str(v[5]) + str(v[6])),
+            "timebase": v[9],
+        },  # timebase for doserate
+    )
 
     selftest_result = Instrument.measurement(
         "ASS",
@@ -334,13 +340,15 @@ wrong format of the parameter",
                     ``medium``,
                     ``high``
         """,
-        get_process=lambda v: {"status": v[0],
-                               "time_remaining": v[1],
-                               "time_total": v[2],
-                               "low": float(str(v[4]) + str(v[5])),
-                               "medium": float(str(v[9]) + str(v[10])),
-                               "high": float(str(v[14]) + str(v[15]))}
-        )
+        get_process_list=lambda v: {
+            "status": v[0],
+            "time_remaining": v[1],
+            "time_total": v[2],
+            "low": float(str(v[4]) + str(v[5])),
+            "medium": float(str(v[9]) + str(v[10])),
+            "high": float(str(v[14]) + str(v[15])),
+        },
+    )
 
     serial_number = Instrument.measurement(
         "SER",
@@ -428,7 +436,7 @@ wrong format of the parameter",
         set_process=lambda v: "" if (v) else f";{int(v)}",  # "TOK" = request write permission
                                                             # "TOK;0" = release write permision
                                                             # "TOK;1" = get status
-        get_process=lambda v: True if (v[1] == "true") else False,
+        get_process_list=lambda v: True if (v[1] == "true") else False,
         check_set_errors=True
         )
 
@@ -441,10 +449,8 @@ wrong format of the parameter",
                      ``time_remaining``,
                      ``time_total``
         """,
-        get_process=lambda v: {"status": v[0],
-                               "time_remaining": v[1],
-                               "time_total": v[2]}
-        )
+        get_process_list=lambda v: {"status": v[0], "time_remaining": v[1], "time_total": v[2]},
+    )
 
 ###################################
 # JSON configuration structure    #
@@ -502,7 +508,7 @@ wrong format of the parameter",
                     ``ipv4``,
                     ``ipv6``
         """,
-        get_process=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     measurement_history = Instrument.measurement(
@@ -517,7 +523,9 @@ wrong format of the parameter",
                     ``id``,
                     ``kTotal``
         """,
-        get_process=lambda v: json.loads(",".join(v)) if v != "[]" else []
+        cast=str,
+        get_process=lambda v: json.loads(v) if v != "[]" else [],
+        get_process_list=lambda v: json.loads(",".join(v)),
         )
 
     measurement_parameters = Instrument.measurement(
@@ -540,7 +548,7 @@ wrong format of the parameter",
                     ``triggerReset``,
                     ``triggerSensitivity``
         """,
-        get_process=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     system_info = Instrument.measurement(
@@ -561,7 +569,7 @@ wrong format of the parameter",
                     ``testTemperature``,
                     ``typeNumber``
         """,
-        get_process=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     system_settings = Instrument.measurement(
@@ -579,7 +587,7 @@ wrong format of the parameter",
                     ``timezone``,
                     ``volume``
         """,
-        get_process=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     wlan_config = Instrument.measurement(
@@ -590,5 +598,5 @@ wrong format of the parameter",
         :dict keys: ``enabled``,
                     ``ssid``
         """,
-        get_process=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
