@@ -50,7 +50,7 @@ class AgilentE4980(SCPIUnknownMixin, Instrument):
     impedance = Instrument.measurement(
         ":FETCH?",
         "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
-        get_process=lambda x: x[:2])
+        get_process_list=lambda x: x[:2])
 
     mode = Instrument.control("FUNCtion:IMPedance:TYPE?", "FUNCtion:IMPedance:TYPE %s",
                               """

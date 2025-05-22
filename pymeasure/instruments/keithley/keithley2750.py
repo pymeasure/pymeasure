@@ -56,7 +56,7 @@ class Keithley2750(SCPIMixin, Instrument):
     """
 
     closed_channels = Instrument.measurement(
-        ":ROUTe:CLOSe?", "Get the list of closed channels.", get_process=clean_closed_channels
+        ":ROUTe:CLOSe?", "Get the list of closed channels.", get_process_list=clean_closed_channels
     )
 
     def __init__(self, adapter, name="Keithley 2750 Multimeter/Switch System", **kwargs):

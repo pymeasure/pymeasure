@@ -75,5 +75,5 @@ class Fluke7341(Instrument):
     id = Instrument.measurement("*ver",
                                 """Get the instrument model.""",
                                 cast=str,
-                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
+                                get_process_list=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
                                 )

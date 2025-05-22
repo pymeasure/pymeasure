@@ -7,6 +7,10 @@ Removed
 - Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
 - Remove deprecated Telnet and VXI adapters
 
+Changed features
+----------------
+- :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore, only to a single value. Use :code:`get_process_list` parameter instead for processing a list of values.
+
 Deprecated
 ----------
 - Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
