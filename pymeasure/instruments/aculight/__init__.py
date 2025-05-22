@@ -22,30 +22,4 @@
 # THE SOFTWARE.
 #
 
-"""
-Implementation of an interface class for ThermoStream® Systems devices.
-Reference Document for implementation:
-ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
-Interface & Applications Manual
-Revision E
-September, 2019
-"""
-
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-from pymeasure.instruments.instrument import Instrument
-
-
-class ATS525(ATSBase):
-    """Represent the TemptronicATS525 instruments.
-    """
-
-    temperature_limit_air_low_values = [-60, 25]
-
-    system_current = Instrument.measurement(
-        "AMPS?",
-        """Get operating current.
-        """,
-    )
-
-    def __init__(self, adapter, name="Temptronic ATS-525 Thermostream", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+from .argos import Argos

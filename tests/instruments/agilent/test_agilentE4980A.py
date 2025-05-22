@@ -22,30 +22,20 @@
 # THE SOFTWARE.
 #
 
-"""
-Implementation of an interface class for ThermoStream® Systems devices.
-Reference Document for implementation:
-ATS-515/615, ATS 525/625 & ATS 535/635 ThermoStream® Systems
-Interface & Applications Manual
-Revision E
-September, 2019
-"""
-
-from pymeasure.instruments.temptronic.temptronic_base import ATSBase
-from pymeasure.instruments.instrument import Instrument
+import pytest
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.agilent.agilentE4980 import AgilentE4980
 
 
-class ATS525(ATSBase):
-    """Represent the TemptronicATS525 instruments.
-    """
-
-    temperature_limit_air_low_values = [-60, 25]
-
-    system_current = Instrument.measurement(
-        "AMPS?",
-        """Get operating current.
-        """,
-    )
-
-    def __init__(self, adapter, name="Temptronic ATS-525 Thermostream", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+@pytest.mark.parametrize("freq", [40, 1E6])
+def test_frequency(freq):
+    """Test Agilent E4980 frequency getter/setter."""
+    with expected_protocol(
+        AgilentE4980,
+        [("FORM ASC", None),
+         (f":FREQ:CW {freq:g}", None),
+         (":FREQ:CW?", freq)
+         ],
+    ) as inst:
+        inst.frequency = freq
+        assert freq == inst.frequency
