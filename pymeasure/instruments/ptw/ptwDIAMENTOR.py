@@ -146,13 +146,13 @@ class ptwDIAMENTOR(Instrument):
     is_calibrated = Instrument.measurement(
         "CRC",
         """Get the calibration status (bool).""",
-        get_process=lambda v: not int(v[1])
+        get_process_list=lambda v: not int(v[1])
         )
 
     is_eeprom_ok = Instrument.measurement(
         "CRC",
         """Get the EEPROM CRC ok status (bool).""",
-        get_process=lambda v: not int(v[0][3])
+        get_process_list=lambda v: not int(v[0][3])
         )
 
     pressure = Instrument.control(
@@ -189,7 +189,7 @@ class ptwDIAMENTOR(Instrument):
         The units of ``dap`` and ``dap_rate`` depend on the :attr:`dap_unit` property.
         Time is in seconds.
         """,
-        get_process=lambda v: {"dap": float(v[0][1:]),
+        get_process_list=lambda v: {"dap": float(v[0][1:]),
                                "dap_rate": float(v[1]),
                                "time": 60*int(v[2]) + int(v[3])
                                }
