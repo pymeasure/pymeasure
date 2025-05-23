@@ -190,9 +190,9 @@ class ptwDIAMENTOR(Instrument):
         Time is in seconds.
         """,
         get_process_list=lambda v: {"dap": float(v[0][1:]),
-                               "dap_rate": float(v[1]),
-                               "time": 60*int(v[2]) + int(v[3])
-                               }
+                                    "dap_rate": float(v[1]),
+                                    "time": 60*int(v[2]) + int(v[3])
+                                    }
         )
 
     serial_number = Instrument.measurement(
