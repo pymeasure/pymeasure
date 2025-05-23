@@ -431,7 +431,7 @@ class TestTriggerPropertiesAllLayer:
 class TestElectrometer:
     """Tests of the electrometer functions"""
 
-    @pytest.mark.parametrize("function", ['CURR', 'CHAR', 'VOLT', 'RES'])
+    @pytest.mark.parametrize("function", ['CURR', 'CHAR', 'VOLT'])
     def test_function(self, function):
         """Verify the communication of the function getter/setter."""
         with expected_protocol(
@@ -441,6 +441,16 @@ class TestElectrometer:
         ) as inst:
             inst.function = function
             assert function == inst.function
+
+    def test_function_res(self):
+        """Verify the communication of the function getter/setter if 'RES'."""
+        with expected_protocol(
+            AgilentB2987,
+            [(":FUNC 'RES'", None),
+             (":FUNC?", '"VOLT","CURR","RES"')]
+        ) as inst:
+            inst.function = "RES"
+            assert ['VOLT', 'CURR', 'RES'] == inst.function
 
     def test_charge(self):
         """Verify the communication of the charge getter."""

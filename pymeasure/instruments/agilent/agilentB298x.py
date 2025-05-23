@@ -655,7 +655,8 @@ class AgilentB2985(AgilentB2981):
         """,
         validator=strict_discrete_set,
         values=['CURR', 'CHAR', 'VOLT', 'RES'],
-        get_process=lambda v: [x.strip('"') for x in v] if type(v) is list else v.strip('"'),
+        get_process=lambda v: v.strip('"'),
+        get_process_list=lambda v: [x.strip('"') for x in v],
         )
 
     charge = Instrument.measurement(
