@@ -371,13 +371,21 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+Tweaking command strings
+************************
+If you need to tweak
+
+* the :code:`set_command` string immediately before the value to set is inserted via string formatting (:code:`%g` etc.), or
+* the :code:`get_command` string before sending it to the device,
+
+use the `dynamic properties`_.
+
 Checking the instrument for errors
 **********************************
 If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
 If those are enabled, the methods :meth:`~pymeasure.instruments.Instrument.check_get_errors` and :meth:`~pymeasure.instruments.Instrument.check_set_errors`, respectively, will be called after device communication has concluded.
 In the default implementation, for simplicity both methods call :meth:`~pymeasure.instruments.Instrument.check_errors`.
 To read the automatic response of instruments that respond to every set command with an acknowledgment or error, override :meth:`~pymeasure.instruments.Instrument.check_set_errors` as needed.
-
 
 Using multiple values
 *********************
@@ -536,3 +544,137 @@ Another use case involves maintaining compatibility between instruments with com
 
 In the above example, :code:`MultimeterA` and :code:`MultimeterB` use a different command to read the voltage, but the rest of the behaviour is identical.
 :code:`MultimeterB` can be defined subclassing :code:`MultimeterA` and just implementing the difference.
+
+
+Property creator parameters and their execution
+===============================================
+
+The property creators call :func:`~pymeasure.instruments.common_base.CommonBase.values`, which in turn calls :func:`ask`.
+The :func:`ask` method again calls other functions, among them :func:`write` and :func:`read`.
+The following enumerations and examples illuminate the whole process.
+
+Getting a value
+***************
+
+If you read a property (e.g. :code:`some_value = inst.power`), pymeasure executes the following steps according to the different arguments to :func:`~pymeasure.instruments.common_base.CommonBase.control`:
+
+1. The callable :code:`command_process` modifies the string :code:`get_command`. This feature is deprecated, use `dynamic properties`_ instead.
+2. The property creator calls :func:`~pymeasure.instruments.common_base.CommonBase.values` with the modified :code:`get_command` and :code:`values_kwargs` as keyword arguments.
+    A. :func:`~pymeasure.instruments.common_base.CommonBase.values` calls in turn :func:`~pymeasure.instruments.common_base.CommonBase.ask`, handing it all further arguments.
+        * This modified command string is sent to the device via the instruments :func:`write` method, which calls the Adapter's `write` method.
+        * :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls :func:`~pymeasure.instruments.Instrument.wait_for` waiting for some time, if :code:`"query_delay"` was in the :code:`values_kwargs`.
+        * :func:`~pymeasure.instruments.common_base.CommonBase.ask` calls the instrument's :func:`read` method, reading the response string of the device.
+        * It returns the response string to :func:`~pymeasure.instruments.common_base.CommonBase.values`.
+    B. The callable :code:`preprocess_reply` modifies the response received.
+    C. The preprocessed string is split at the :code:`separator`, at most :code:`maxsplit` times.
+    D. Each element of that splitted string is casted with :code:`cast`, typically to :code:`float`.
+    E. Now, :func:`~pymeasure.instruments.common_base.CommonBase.values` returns that list of casted values to the property creator.
+
+3. If :code:`check_get_errors is True`, :func:`~pymeasure.instruments.Instrument.check_get_errors` is called.
+4. If :func:`~pymeasure.instruments.common_base.CommonBase.values` returned more than one value, the callable :code:`get_process` is applied to the whole list and the result is returned.
+5. Otherwise, :code:`get_process` is applied to that single value.
+6. If :code:`map_values is True`, the value is mapped according to the :code:`values` parameter. If it is a dictionary, the value is looked up in the dictionary's values and the corresponding key is returned. If it is a list, the value is considered the index of that list and :code:`values[int(value)]` is returned.
+
+For example (here we use :meth:`~pymeasure.instruments.common_base.CommonBase.measurement` to focus on the getter)
+
+.. testcode::
+    :hide:
+
+    from pymeasure.instruments.fakes import FakeInstrument as Instrument  # load again the fake
+
+.. testcode:: 
+
+    class PropertyGetterInstrument(Instrument):
+
+        modify_get_command = Instrument.measurement(
+            get_command="command",  # original command
+            docs="Get the modified command string. This is deprecated in favor of dynamic properties.",
+            command_process=lambda c: c + " modified",
+        )
+
+        value_options = Instrument.measurement(
+            get_command="0,1,2,3rem",  # this is the response of the device in this example
+            docs="Remove the last three elements and split at comma, but at most two times",
+            preprocess_reply=lambda reply: reply[:-3],
+            separator=",",
+            maxsplit=2,
+            cast=int,
+        )
+
+        mapping_options = Instrument.measurement(
+            get_command="2",  # this is the response of the device in this example
+            docs="Cast to int, double the value and use that as an index for a list",
+            values=["zero", "first", "second", "third", "fourth"],
+            cast=int,
+            get_process=lambda value: 2 * value,
+            map_values=True,
+        )
+
+will lead to the following:
+
+.. doctest::
+
+    >>> inst = PropertyGetterInstrument()
+    >>> inst.modify_get_command
+    'command modified'
+    >>> inst.value_options
+    [0, 1, '2,3']
+    >>> inst.mapping_options
+    'fourth'
+
+Setting a Value
+***************
+
+Similarly, setting a property to some ``value`` uses several steps:
+
+1. The property creator calculates a new ``value`` calling ``validator(value, values)``. A validator might truncate the value to an allowed range of values.
+2. It applies the callable ``set_process`` to the modified ``value``.
+3. If ``map_values is True``, it maps the ``value`` via ``values`` to some new ``value``.
+4. It modifies the ``set_command`` by calling the callable ``command_process``. This feature is deprecated, use `dynamic properties`_ instead.
+5. It formats ``set_command`` with ``%`` string formatting and the ``value`` to generate a ``command`` string.
+6. It calls :func:`write` with the ``command`` string, such that the command is sent to the device.
+7. If ``check_set_errors is True``, it calls the :func:`check_set_errors` method.
+
+For example (here we use :meth:`~pymeasure.instruments.common_base.CommonBase.setting` to focus on the setter)
+
+
+.. testcode::
+
+    class PropertySetterInstrument(Instrument):
+
+        validated_setting = Instrument.setting(
+            set_command="validated: %f",  # write a float after validation and processing
+            docs="Validate input values",
+            values=[0, 20],
+            validator=truncated_range,  # cuts the value to be inside the range indicated by values.
+        )
+
+        processed_setting = Instrument.setting(
+            set_command="processed: %i",  # write an integer after validation and processing
+            docs="Set some value after processing it.",
+            set_process=lambda value: int(value * 3),
+        )
+
+        mapping_setting = Instrument.setting(
+            set_command="mapped command: %s",  # write a string after validation and processing
+            docs="Map a python value to a string for the device.",
+            values={True: "On",
+                    False: "Off"},
+            map_values=True,
+        )
+
+
+.. doctest::
+
+    >>> inst = PropertySetterInstrument()
+    >>> inst.validated_setting = 30
+    >>> inst.read()  # returns in this example the written command
+    'validated: 20.000000'
+    >>> inst.processed_setting = 1.5
+    >>> inst.read()  # returns in this example the written command
+    'processed: 4'
+    >>> inst.mapping_setting = True
+    >>> inst.read()  # returns in this example the written command
+    'mapped command: On'
+
+
