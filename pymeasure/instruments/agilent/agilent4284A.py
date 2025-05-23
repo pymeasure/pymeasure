@@ -54,7 +54,7 @@ class Agilent4284ASpot(Channel):
 
     enabled = Channel.control(
         ":CORR:SPOT{ch}:STAT?", ":CORR:SPOT{ch}:STAT %d",
-        """Enable this spot correction (bool).""",
+        """Control this spot correction (bool).""",
         map_values=True,
         values={True: 1, False: 0}
         )
@@ -100,21 +100,21 @@ class Agilent4284ACorrection(Channel):
 
     open_enabled = Channel.control(
         ":CORR:OPEN:STAT?", ":CORR:OPEN:STAT %d",
-        """Enable the OPEN correction (bool).""",
+        """Control the OPEN correction (bool).""",
         map_values=True,
         values={True: 1, False: 0}
         )
 
     short_enabled = Channel.control(
         ":CORR:SHOR:STAT?", ":CORR:SHOR:STAT %d",
-        """Enable the SHORT correction (bool).""",
+        """Control the SHORT correction (bool).""",
         map_values=True,
         values={True: 1, False: 0}
         )
 
     load_enabled = Channel.control(
         ":CORR:LOAD:STAT?", ":CORR:LOAD:STAT %d",
-        """Enable the LOAD correction (bool).""",
+        """Control the LOAD correction (bool).""",
         map_values=True,
         values={True: 1, False: 0}
         )
