@@ -41,6 +41,7 @@ dependencies = [
     "pyvisa>=1.9",
     "pyserial>=2.7",
     "pyqtgraph>=0.12",
+    "qtpy>=2.4",
 ]
 
 [project.optional-dependencies]
@@ -83,3 +84,9 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false
