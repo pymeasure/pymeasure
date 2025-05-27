@@ -82,9 +82,9 @@ class Agilent4284ASpot(Channel):
 class Agilent4284ACorrection(Channel):
     """A class representing the correction functions."""
 
-    spot1 = Instrument.ChannelCreator(Agilent4284ASpot, 1, collection="spots")
-    spot2 = Instrument.ChannelCreator(Agilent4284ASpot, 2, collection="spots")
-    spot3 = Instrument.ChannelCreator(Agilent4284ASpot, 3, collection="spots")
+    spot1 = Channel.ChannelCreator(Agilent4284ASpot, 1, collection="spots")
+    spot2 = Channel.ChannelCreator(Agilent4284ASpot, 2, collection="spots")
+    spot3 = Channel.ChannelCreator(Agilent4284ASpot, 3, collection="spots")
 
     def measure_open(self):
         """Measure the OPEN correction standard."""
