@@ -22,11 +22,18 @@
 # THE SOFTWARE.
 #
 
-from .keysight81160A import Keysight81160A
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightE3631A import KeysightE3631A
-from .keysightE36312A import KeysightE36312A
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightN7744C import KeysightN7744C
-from .keysightN7745C import KeysightN7745C
+import pytest
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.keysight.keysightN7744C import KeysightN7744C
+
+
+@pytest.mark.parametrize("channel", [1, 2, 3, 4])
+def test_wavelength(channel):
+    """Verify the wavelength setpoint setter and getter."""
+    with expected_protocol(
+        KeysightN7744C,
+        [(f"SENSe{channel}:POWer:WAVelength 1550NM", None),
+         (f"SENSe{channel}:POWer:WAVelength?", "1.55e-6")],
+    ) as inst:
+        inst.channels[channel].wavelength = 1550
+        assert inst.channels[channel].wavelength == pytest.approx(1550.0)
