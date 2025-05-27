@@ -25,7 +25,7 @@
 import logging
 from time import sleep
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -35,6 +35,112 @@ IMPEDANCE_MODES = (
     "CPD", "CPQ", "CPG", "CPRP", "CSD", "CSQ", "CSRS", "LPQ", "LPD", "LPG", "LPRP",
     "LSD", "LSQ", "LSRS", "RX", "ZTD", "ZTR", "GB", "YTD", "YTR"
 )
+
+
+class Agilent4284ASpot(Channel):
+    """A class representing the spot correction functions."""
+
+    def measure_open(self):
+        """Measure the OPEN correction standard of this spot."""
+        self.write(":CORR:SPOT{ch}:OPEN")
+
+    def measure_short(self):
+        """Measure the SHORT correction standard of this spot."""
+        self.write(":CORR:SPOT{ch}:SHOR")
+
+    def measure_load(self):
+        """Measure the LOAD correction standard of this spot."""
+        self.write(":CORR:SPOT{ch}:LOAD")
+
+    enabled = Channel.control(
+        ":CORR:SPOT{ch}:STAT?", ":CORR:SPOT{ch}:STAT %d",
+        """Control this spot correction (bool).""",
+        map_values=True,
+        values={True: 1, False: 0}
+        )
+
+    frequency = Channel.control(
+        ":CORR:SPOT{ch}:FREQ?", ":CORR:SPOT{ch}:FREQ %g",
+        """Control the frequency of this spot in Hz.""",
+        )
+
+    load_function = Channel.control(
+        ":CORR:SPOT{ch}:LOAD:STAN?", ":CORR:SPOT{ch}:LOAD:STAN %s",
+        """Control the LOAD standard of this spot.
+
+        :type: str, strictly in  ``CPD``, ``CPQ``, ``CPG``, ``CPRP``, ``CSD``, ``CSQ``, ``CSRS``,
+               ``LPQ``, ``LPD``, ``LPG``, ``LPRP``, ``LSD``, ``LSQ``, ``LSRS``,
+               ``RX``, ``ZTD``, ``ZTR``, ``GB``, ``YTD``, ``YTR``
+
+        See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
+        """,
+        validator=strict_discrete_set,
+        values=IMPEDANCE_MODES
+        )
+
+
+class Agilent4284ACorrection(Channel):
+    """A class representing the correction functions."""
+
+    spot1 = Channel.ChannelCreator(Agilent4284ASpot, 1, collection="spots")
+    spot2 = Channel.ChannelCreator(Agilent4284ASpot, 2, collection="spots")
+    spot3 = Channel.ChannelCreator(Agilent4284ASpot, 3, collection="spots")
+
+    def measure_open(self):
+        """Measure the OPEN correction standard."""
+        self.write(":CORR:OPEN")
+
+    def measure_short(self):
+        """Measure the SHORT correction standard."""
+        self.write(":CORR:SHOR")
+
+    def measure_load(self):
+        """Measure the LOAD correction standard."""
+        self.write(":CORR:LOAD")
+
+    open_enabled = Channel.control(
+        ":CORR:OPEN:STAT?", ":CORR:OPEN:STAT %d",
+        """Control the OPEN correction (bool).""",
+        map_values=True,
+        values={True: 1, False: 0}
+        )
+
+    short_enabled = Channel.control(
+        ":CORR:SHOR:STAT?", ":CORR:SHOR:STAT %d",
+        """Control the SHORT correction (bool).""",
+        map_values=True,
+        values={True: 1, False: 0}
+        )
+
+    load_enabled = Channel.control(
+        ":CORR:LOAD:STAT?", ":CORR:LOAD:STAT %d",
+        """Control the LOAD correction (bool).""",
+        map_values=True,
+        values={True: 1, False: 0}
+        )
+
+    load_function = Channel.control(
+        ":CORR:LOAD:TYPE?", ":CORR:LOAD:TYPE %s",
+        """Control the spot LOAD standard.
+
+        :type: str, strictly in  ``CPD``, ``CPQ``, ``CPG``, ``CPRP``, ``CSD``, ``CSQ``, ``CSRS``,
+               ``LPQ``, ``LPD``, ``LPG``, ``LPRP``, ``LSD``, ``LSQ``, ``LSRS``,
+               ``RX``, ``ZTD``, ``ZTR``, ``GB``, ``YTD``, ``YTR``
+
+        See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
+        """,
+        validator=strict_discrete_set,
+        values=IMPEDANCE_MODES
+        )
+
+    cable_length = Channel.control(
+        ":CORR:LENG?", ":CORR:LENG %d",
+        """
+        Control the correction setting for cable length in meters, (int strictly 0, 1, 2 or 4).
+        """,
+        validator=strict_discrete_set,
+        values=[0, 1, 2, 4]
+        )
 
 
 class Agilent4284A(SCPIMixin, Instrument):
@@ -56,6 +162,11 @@ class Agilent4284A(SCPIMixin, Instrument):
         )                                       # at 10 kHz, 1 kHz, and 100 Hz
         agilent.enable_high_power()             # Enable upper current, voltage, and
                                                   bias limits, if properly configured.
+
+        agilent.correction.open_enabled = True     # Enable the OPEN correction
+        agilent.correction.spot1.enabled = True    # Enable the correction for SPOT1
+        agilent.correction.spot1.frequency = 10e3  # Set SPOT1 frequency to 10 kHz
+        agilent.correction.spot1.measure_open()    # Measure the OPEN structure for SPOT1
     """
 
     def __init__(self, adapter, name="Agilent 4284A LCR meter", **kwargs):
@@ -65,11 +176,14 @@ class Agilent4284A(SCPIMixin, Instrument):
         super().__init__(adapter, name, **kwargs)
         self._set_ranges(0)
 
+    correction = Instrument.ChannelCreator(Agilent4284ACorrection)
+
     frequency = Instrument.control(
         "FREQ?", "FREQ %g",
         """Control AC frequency in Hertz, from 20 Hz to 1 MHz.""",
         validator=strict_range,
         values=(20, 1e6),
+        dynamic=True
     )
 
     ac_current = Instrument.control(
