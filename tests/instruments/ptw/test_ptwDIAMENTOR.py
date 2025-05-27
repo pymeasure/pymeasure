@@ -28,7 +28,6 @@ from pymeasure.instruments.ptw.ptwDIAMENTOR import ptwDIAMENTOR
 
 
 def test_baudrate():
-    """Verify the communication of the baudrate getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("BR4", "BR4"),
@@ -39,7 +38,6 @@ def test_baudrate():
 
 
 def test_selftest_passed():
-    """Verify the communication of the selftest_passed getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("TST", ""),
@@ -53,7 +51,6 @@ def test_selftest_passed():
 
 
 def test_constancy_check_passed():
-    """Verify the communication of the constancy_check_passed getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("G", "GP"),
@@ -64,7 +61,6 @@ def test_constancy_check_passed():
 
 
 def test_is_calibrated():
-    """Verify the communication of the is_calibrated getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("CRC", "CRC0,0"),
@@ -75,7 +71,6 @@ def test_is_calibrated():
 
 
 def test_is_eeprom_ok():
-    """Verify the communication of the is_eeprom_ok getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("CRC", "CRC0,1"),
@@ -87,7 +82,6 @@ def test_is_eeprom_ok():
 
 @pytest.mark.parametrize("pressure", [500, 1500])
 def test_pressure(pressure):
-    """Verify the communication of the pressure getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [(f"PRE{pressure:04d}", f"PRE{pressure:04d}"),
@@ -98,7 +92,6 @@ def test_pressure(pressure):
 
 
 def test_id():
-    """Verify the communication of the ID getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [('PTW', 'CRS 1.2.4')],
@@ -107,7 +100,6 @@ def test_id():
 
 
 def test_measurement():
-    """Verify the communication of the measurement getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("M", "M9999.99,8888.88,222,33,eeee.ee,ffff.ff,mmm,ss,34567")],
@@ -119,7 +111,6 @@ def test_measurement():
 
 
 def test_serial_number():
-    """Verify the communication of the serial number getter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("SER", "SER345678")]
@@ -129,7 +120,6 @@ def test_serial_number():
 
 @pytest.mark.parametrize("temperature", [0, 1, 30])
 def test_temperature(temperature):
-    """Verify the communication of the temperature getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [(f"TMPA{temperature:02d}", f"TMPA{temperature:02d}"),
@@ -140,7 +130,6 @@ def test_temperature(temperature):
 
 
 def test_dap_unit():
-    """Verify the communication of the dap_unit getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("U", "U1"),
@@ -152,7 +141,6 @@ def test_dap_unit():
 
 
 def test_calibration_factor():
-    """Verify the communication of the calibration_factor getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("KA4.3000E09", "KA4.3000E09"),
@@ -164,7 +152,6 @@ def test_calibration_factor():
 
 
 def test_correction_factor():
-    """Verify the communication of the correction_factor getter/setter."""
     with expected_protocol(
         ptwDIAMENTOR,
         [("KFA", "KFA1.010"),
