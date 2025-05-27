@@ -135,7 +135,9 @@ class Agilent4284ACorrection(Channel):
 
     cable_length = Channel.control(
         ":CORR:LENG?", ":CORR:LENG %d",
-        """Control the correction setting for cable length in meters, (int strictly 0, 1, 2 or 4).""",
+        """
+        Control the correction setting for cable length in meters, (int strictly 0, 1, 2 or 4).
+        """,
         validator=strict_discrete_set,
         values=[0, 1, 2, 4]
         )
