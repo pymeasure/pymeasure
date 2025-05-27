@@ -246,6 +246,12 @@ class LecroyMAUIBase(Instrument):
         values=[-0.82, 0.82]
     )
 
+    is_trigger_ready = Instrument.measurement("vbs? 'return = app.acquisition.IsTriggerReady'",
+                                             """Parameter to indicate if the scope is ready to acquire.
+                                             It is not the case that wait_until_idle will wait until the scope is ready to acquire,
+                                             that is, the trigger state is Ready.""",
+                                              )
+
     @property
     def sampling_strategy(self):
         strategy = self.ask("vbs? 'return = app.acquisition.horizontal.Maximize'")
