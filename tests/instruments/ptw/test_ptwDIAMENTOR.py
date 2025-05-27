@@ -37,15 +37,15 @@ def test_baudrate():
         assert inst.baudrate == 9600
 
 
-def test_selftest_passed():
+def test_execute_selftest():
     with expected_protocol(
         ptwDIAMENTOR,
         [("TST", ""),
          ("TST", "E1")],
     ) as inst:
-        assert inst.selftest_passed is True
+        inst.execute_selftest()
         try:
-            assert inst.selftest_passed is False
+            inst.execute_selftest()
         except ValueError:
             pass
 

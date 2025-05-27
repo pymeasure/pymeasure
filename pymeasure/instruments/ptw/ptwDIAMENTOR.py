@@ -101,6 +101,13 @@ class ptwDIAMENTOR(Instrument):
         """Reset the dose and charge measurement values."""
         self.ask("RES")
 
+    def execute_selftest(self):
+        """Execute the DIAMENTOR selftest.
+
+        :raises: *ValueError* if selftest fails
+        """
+        self.ask("TST")
+
 ##############
 # Properties #
 ##############
@@ -123,16 +130,6 @@ class ptwDIAMENTOR(Instrument):
                 },
         check_set_errors=True,
         get_process=lambda v: int(v[2])
-        )
-
-    selftest_passed = Instrument.measurement(
-        "TST",
-        """Get the DIAMENTOR selftest result (bool).
-
-        :raises: *ValueError* if selftest fails
-
-        """,
-        get_process=lambda v: True if v == "" else False,
         )
 
     constancy_check_passed = Instrument.measurement(

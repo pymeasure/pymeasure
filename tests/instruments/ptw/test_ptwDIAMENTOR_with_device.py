@@ -41,14 +41,21 @@ def diamentor(connected_device_address, baud_rate=9600):
     return instr
 
 
+class TestPTWDiamentorMethods:
+    """Tests for PTW DIAMENTOR dosemeter methods."""
+
+    def test_execute_selftest(self, diamentor):
+        diamentor.execute_selftest()
+
+    def test_reset(self, diamentor):
+        diamentor.reset()
+
+
 class TestPTWDiamentorProperties:
     """Tests for PTW DIAMENTOR dosemeter properties."""
 
     def test_baudrate(self, diamentor):
         assert diamentor.baudrate in BAUD_RATES
-
-    def test_selftest_passed(self, diamentor):
-        assert type(diamentor.selftest_passed) is bool
 
     def test_constancy_check_passed(self, diamentor):
         assert type(diamentor.constancy_check_passed) is bool
