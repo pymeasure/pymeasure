@@ -76,6 +76,22 @@ def test_sweep_mode_getter():
         assert inst.sweep_mode == "REPEAT"
 
 
+def test_sensitivity_setter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe 3", None)],
+    ) as inst:
+        inst.sensitivity = "HIGH1"
+
+
+def test_sensitivity_getter():
+    with expected_protocol(
+        AQ6370D,
+        [(b":SENSe:SENSe?", b"3\n")],
+    ) as inst:
+        assert inst.sensitivity == "HIGH1"
+
+
 @pytest.mark.parametrize(
     "comm_pairs, value",
     (
@@ -467,6 +483,22 @@ def test_initiate_sweep():
         assert inst.initiate_sweep() is None
 
 
+def test_abort():
+    with expected_protocol(
+        AQ6370D,
+        [(b":ABORt", None)],
+    ) as inst:
+        assert inst.abort() is None
+
+
+def test_sweep_complete():
+    with expected_protocol(
+        AQ6370D,
+        [(b":STATus:OPERation:CONDition?", b"13\n")],
+    ) as inst:
+        assert inst.sweep_complete is True
+
+
 def test_reset():
     with expected_protocol(
         AQ6370D,
@@ -481,3 +513,84 @@ def test_set_level_position_to_max():
         [(b":CALCulate:MARKer:MAXimum:SRLevel", None)],
     ) as inst:
         assert inst.set_level_position_to_max() is None
+
+
+def test_id():
+    with expected_protocol(
+        AQ6370D,
+        [(b"*IDN?", b"YOKOGAWA,AQ6370D,90Y403996,02.08")],
+    ) as inst:
+        assert inst.id == "YOKOGAWA,AQ6370D,90Y403996,02.08"
+
+
+def test_clear():
+    with expected_protocol(AQ6370D, [(b"*CLS", None)]) as inst:
+        inst.clear()
+
+
+def test_status():
+    with expected_protocol(AQ6370D, [(b"*STB?", b"xyz")]) as inst:
+        assert inst.status == "xyz"
+
+
+def test_calc_result():
+    with expected_protocol(
+        AQ6370D, [(":CALCulate:DATA?", "123,456,789,123,456,789,012")]
+    ) as inst:
+        assert inst.calc_result == [123, 456, 789, 123, 456, 789, 12]
+
+
+def test_transfer_format_getter():
+    with expected_protocol(AQ6370D, [(":FORMat:DATA?", "ASCII")]) as inst:
+        assert inst.transfer_format == "ASCII"
+
+
+def test_transfer_format_setter():
+    with expected_protocol(AQ6370D, [(":FORMat:DATA ASCII", None)]) as inst:
+        inst.transfer_format = "ASCII"
+
+
+def test_get_binary_data():
+    with expected_protocol(AQ6370D, [(None, b"#18\x9a\x99\x99?\x9a\x99Y@")]) as inst:
+        assert pytest.approx([1.2, 3.4]) == inst.get_binary_data(bitness=32)
+
+
+def test_trace_delete():
+    with expected_protocol(AQ6370D, [(":TRACe:DELETE TRB", None)]) as inst:
+        inst.TRB.delete()
+
+
+def test_trace_mode_getter():
+    with expected_protocol(AQ6370D, [(":TRACe:ATTRibute:TRA?", "0")]) as inst:
+        assert inst.TRA.mode == "WRITE"
+
+
+def test_trace_mode_setter():
+    with expected_protocol(AQ6370D, [(":TRACe:ATTRibute:TRA WRITE", None)]) as inst:
+        inst.TRA.mode = "WRITE"
+
+
+def test_trace_sample_number():
+    with expected_protocol(AQ6370D, [(":TRACe:DATA:SNUMber? TRA", "50001")]) as inst:
+        assert inst.TRA.sample_number == 50001
+
+
+def test_trace_get_x_data():
+    # from manual
+    with expected_protocol(
+        AQ6370D,
+        [(":TRACE:X? TRA", "+1.55000000E-006,+1.55001000E-006,+1.55002000E-006")],
+    ) as inst:
+        assert inst.TRA.get_axis_data("X") == [1.55e-6, 1.55001e-6, 1.55002e-6]
+
+
+def test_trace_get_y_data_of_area():
+    with expected_protocol(
+        AQ6370D,
+        [(":TRACE:Y? TRA,1,3", "+1.55000000E-006,+1.55001000E-006,+1.55002000E-006")],
+    ) as inst:
+        assert inst.TRA.get_axis_data("Y", samples=(0, 3)) == [
+            1.55e-6,
+            1.55001e-6,
+            1.55002e-6,
+        ]

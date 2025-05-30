@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -139,12 +139,6 @@ def test_init_includeSCPI_explicit_warning():
         Instrument("COM1", "def", visa_library="@sim", includeSCPI=True)
 
 
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        inst = Instrument(FakeAdapter(), "name", preprocess_reply=lambda v: v.strip("x"))
-        assert inst.values("x5x") == [5]
-
-
 def test_instrument_in_context():
     with Instrument("abc", "def", visa_library="@sim") as instr:
         pass
@@ -195,7 +189,7 @@ class TestWaiting:
     @pytest.fixture()
     def instr(self):
         class Faked(Instrument):
-            def wait_for(self, query_delay=0):
+            def wait_for(self, query_delay=None):
                 self.waited = query_delay
         return Faked(ProtocolAdapter(), name="faked")
 
@@ -208,7 +202,7 @@ class TestWaiting:
     def test_ask_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
         instr.ask("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
     def test_ask_calls_wait_with_delay(self, instr):
         instr.adapter.comm_pairs = [("abc", "resp")]
@@ -218,7 +212,7 @@ class TestWaiting:
     def test_binary_values_calls_wait(self, instr):
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
-        assert instr.waited == 0
+        assert instr.waited is None
 
 
 @pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),

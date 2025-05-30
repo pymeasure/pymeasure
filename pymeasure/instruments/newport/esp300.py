@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -297,8 +297,6 @@ class ESP300(SCPIUnknownMixin, Instrument):
                     axes.append(item)
             except TypeError:
                 continue
-            except Exception as e:
-                raise e
         return axes
 
     def enable(self):

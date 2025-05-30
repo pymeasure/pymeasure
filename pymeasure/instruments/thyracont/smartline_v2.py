@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +99,7 @@ class Pirani(SensorChannel):
         preprocess_reply=lambda msg: msg.strip("W"),
         separator="A",
         cast=int,
-        get_process=lambda vals: (vals[0], vals[1] / 4),
+        get_process_list=lambda vals: (vals[0], vals[1] / 4),
     )
 
 
@@ -266,7 +266,7 @@ class SmartlineV2(Instrument):
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")
 
-    def ask(self, command_message, query_delay=0):
+    def ask(self, command_message, query_delay=None):
         """Ask for some value and check that the response matches the original command.
 
         :param str command_message: Access code, command, length, and content.
@@ -276,14 +276,14 @@ class SmartlineV2(Instrument):
         self.wait_for(query_delay)
         return self.read(command_message[1:3])
 
-    def ask_manually(self, accessCode, command, data="", query_delay=0):
+    def ask_manually(self, accessCode, command, data="", query_delay=None):
         """
         Send a message to the transmitter and return its answer.
 
         :param accessCode: How to access the device.
         :param command: Command to send to the device.
         :param data: Data for the command.
-        :param int query_delay: Time to wait between writing and reading.
+        :param float query_delay: Time to wait between writing and reading in seconds.
         :return str: Response from the device after error checking.
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")
@@ -451,8 +451,8 @@ class SmartlineV2(Instrument):
         "0OH00", "Measure the operating hours.",
         separator="C",
         cast=int,
-        get_process=lambda vals: vals / 4 if isinstance(vals, int) else [v / 4 for v in vals],
-        # TODO simplify once #740 is merged.
+        get_process=lambda val: val / 4,
+        get_process_list=lambda vals: [v / 4 for v in vals],
     )
 
 
@@ -463,8 +463,21 @@ class VSH(SmartlineV2):
     hotcathode = Instrument.ChannelCreator(HotCathode)
 
 
+class VSM(SmartlineV2):
+    """Vacuum transmitter of VSM series with both piece and cold cathode sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)
+    coldcathode = Instrument.ChannelCreator(ColdCathode)
+
+
 class VSR(SmartlineV2):
     """Vacuum transmitter of VSR/VCR series with both a piezo and a pirani sensor."""
 
     piezo = Instrument.ChannelCreator(Piezo)
     pirani = Instrument.ChannelCreator(Pirani)
+
+
+class VSP(SmartlineV2):
+    """Vacuum transmitter of VSP/VCP series with a piezo sensor."""
+
+    piezo = Instrument.ChannelCreator(Piezo)

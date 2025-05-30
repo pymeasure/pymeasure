@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -161,6 +161,6 @@ class TC038(Instrument):
 
     information = Instrument.measurement(
         "INF6",
-        """Get the information about the device and its capabilites.""",
+        """Get the information about the device and its capabilities.""",
         get_process=lambda got: got[7:-1],
     )

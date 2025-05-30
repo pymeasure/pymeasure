@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,21 +24,11 @@
 
 import logging
 
-from pyqtgraph.Qt import QtGui, QtCore, QtWidgets, loadUiType  # noqa: F401
+from qtpy import QtCore, QtGui, QtWidgets  # noqa: F401
+from qtpy.uic import loadUiType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-# Should be removed when PySide2 provides QtWidgets.QApplication.exec() or when support for PySide2
-# is dropped (https://doc.qt.io/qtforpython/porting_from2.html#class-function-deprecations)
-if not hasattr(QtWidgets.QApplication, 'exec'):
-    QtWidgets.QApplication.exec = QtWidgets.QApplication.exec_
-if not hasattr(QtCore.QCoreApplication, 'exec'):
-    QtCore.QCoreApplication.exec = QtCore.QCoreApplication.exec_
-if not hasattr(QtWidgets.QMenu, 'exec'):
-    def exec(self, *args, **kwargs):
-        self.exec_(*args, **kwargs)
-    QtWidgets.QMenu.exec = exec
 
 
 def fromUi(*args, **kwargs):

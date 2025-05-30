@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1172,7 +1172,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         and last channel in the list.
         Examples: ``1``, ``1,3,5``, ``1:2, 7:8``, or ``1:10``.
         """,
-        get_process=lambda x: x[-1].replace(")", ""),
+        get_process_list=lambda x: x[-1].replace(")", ""),
         separator="@",
     )
 

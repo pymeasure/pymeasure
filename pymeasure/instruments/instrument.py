@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,12 +65,6 @@ class Instrument(CommonBase):
             If True, inherit the :class:`~pymeasure.instruments.generic_types.SCPIMixin` class
             instead.
 
-    :param preprocess_reply: An optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
@@ -78,7 +72,6 @@ class Instrument(CommonBase):
 
     # noinspection PyPep8Naming
     def __init__(self, adapter, name, includeSCPI=None,
-                 preprocess_reply=None,
                  **kwargs):
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
@@ -99,7 +92,7 @@ class Instrument(CommonBase):
         self.isShutdown = False
         self.name = name
 
-        super().__init__(preprocess_reply=preprocess_reply)
+        super().__init__()
 
         log.info("Initializing %s." % self.name)
 
@@ -196,10 +189,10 @@ class Instrument(CommonBase):
         return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay=None):
         """Wait for some time. Used by 'ask' to wait before reading.
 
-        :param query_delay: Delay between writing and reading in seconds.
+        :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         if query_delay:
             time.sleep(query_delay)

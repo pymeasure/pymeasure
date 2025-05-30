@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,9 +66,10 @@ def find_devices_in_module(module):
             # Some non-required driver dependencies may not be installed on test computer,
             # for example ni.VirtualBench
             pass
-        except OSError:
+        except (OSError, AttributeError):
             # On Windows instruments.ni.daqmx can raise an OSError before ModuleNotFoundError
             # when checking installed driver files
+            # it raises an AttributeError under Python 312
             pass
     return devices, channels
 
@@ -109,94 +110,35 @@ need_init_communication = [
     "HP8116A",
     "IBeamSmart",
     "ANC300Controller",
-]
-# Channels which are still an Instrument subclass
-channel_as_instrument_subclass = [
-    "SMU",  # agilent/agilent4156
-    "VMU",  # agilent/agilent4156
-    "VSU",  # agilent/agilent4156
-    "VARX",  # agilent/agilent4156
-    "VAR1",  # agilent/agilent4156
-    "VAR2",  # agilent/agilent4156
-    "VARD",  # agilent/agilent4156
+    "Keithley2281S",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
-    "AWG401x_AFG",
-    "AWG401x_AWG",
-    "AdvantestR624X",
-    "SMUChannel",  # AdvantestR624X
-    "AdvantestR6245",
-    "AdvantestR6246",
-    "Agilent33220A",
-    "Agilent33500",
-    "Agilent33500Channel",
     "Agilent33521A",
-    "Agilent34450A",
-    "Agilent4156",
-    "SMU",  # agilent/agilent4156
-    "VMU",  # agilent/agilent4156
-    "VSU",  # agilent/agilent4156
-    "VARX",  # agilent/agilent4156
-    "VAR1",  # agilent/agilent4156
-    "VAR2",  # agilent/agilent4156
-    "VARD",  # agilent/agilent4156
     "Agilent8257D",
     "Agilent8722ES",
     "AgilentB1500",
     "AgilentE4408B",
     "AgilentE4980",
-    "Ametek7270",
-    "DPSeriesMotorController",
     "AnritsuMS2090A",
-    "SM7045D",
+    "DPSeriesMotorController",
     "HP3437A",
     "HP34401A",
     "HP3478A",
     "HP6632A",
     "HP6633A",
     "HP6634A",
-    "HP8116A",
-    "Keithley2000",
-    "Keithley2306",
-    "Keithley2306Channel",
-    "BatteryChannel",  # Keithley2306
-    "Step",  # Keithley2306
-    "Relay",  # Keithley2306
-    "Keithley2400",
-    "Keithley2450",
-    "Keithley2600",
-    "Keithley2700",
-    "Keithley2750",
-    "Keithley6221",
-    "Keithley6517B",
     "KeysightDSOX1102G",
-    "LakeShore421",
-    "LakeShoreTemperatureChannel",
-    "LakeShoreHeaterChannel",
     "IPS120_10",
     "ITC503",
     "PS120_10",
-    "ParkerGV6",
-    "FSL",
     "SFM",
-    "DSP7265",
     "SG380",
-    "SR510",
+    "SM7045D",
     "SR570",
     "SR830",
     "SR860",
-    "ATS525",
-    "ATS545",
-    "ATSBase",
-    "ECO560",
-    "TexioPSW360L30",
-    "IonGaugeAndPressureChannel",
-    "PressureChannel",
-    "SequenceEntry",
-    "ChannelBase",
-    "ChannelAWG",
-    "ChannelAFG",
+    "SR510",
 ]
 
 
@@ -207,8 +149,6 @@ def test_adapter_arg(cls):
         pytest.skip(f"{cls.__name__} does not accept an Adapter instance.")
     elif cls.__name__ in need_init_communication:
         pytest.skip(f"{cls.__name__} requires communication in init.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
     cls(adapter=MagicMock())
@@ -219,8 +159,6 @@ def test_name_argument(cls):
     "Test that every instrument accepts a name argument."
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     inst = cls(adapter=MagicMock(), name="Name_Test")
     assert inst.name == "Name_Test"
 
@@ -238,8 +176,6 @@ def test_kwargs_to_adapter(cls):
     """Verify that kwargs are accepted and handed to the adapter."""
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
@@ -251,12 +187,11 @@ def test_kwargs_to_adapter(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning")
+    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning"
+)
 def test_includeSCPI_explicitly_set(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 
@@ -266,12 +201,11 @@ def test_includeSCPI_explicitly_set(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning")
+    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning"
+)
 def test_includeSCPI_not_set_to_True(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
         pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ in channel_as_instrument_subclass:
-        pytest.skip(f"{cls.__name__} is a channel, not an instrument.")
     elif cls.__name__ == "Instrument":
         pytest.skip("`Instrument` requires a `name` parameter.")
 

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -214,7 +214,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               "SYST:TIME %s",
                               """Control the time on board
                               time should be given as a datetime.time object""",
-                              get_process=lambda _tstr:
+                              get_process_list=lambda _tstr:
                               datetime.time(*[int(split) for split in _tstr]),
                               set_process=lambda _time:
                               _time.strftime('%H,%M,%S'),
@@ -224,7 +224,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               "SYST:DATE %s",
                               """Control the date on board
                               date should be given as a datetime.date object""",
-                              get_process=lambda dstr:
+                              get_process_list=lambda dstr:
                               datetime.date(*[int(split) for split in dstr]),
                               set_process=lambda date: date.strftime('%Y,%m,%d'),
                               )

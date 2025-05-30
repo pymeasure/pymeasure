@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -491,8 +491,7 @@ class HP3478A(HPLegacyInstrument):
         cal_data = []
         for addr in range(0, 256):
             # To fetch one nibble: 'W<address>', where address is a raw 8-bit number.
-            cmd = bytes([ord('W'), addr])
-            self.write_bytes(cmd)
+            self.write_binary_values('W', [addr], datatype='B', header_fmt="empty")
             rvalue = self.read_bytes(1)[0]
             # 'W' command reads a nibble from the SRAM, but then adds a value of 64 to return
             # it as an ASCII value.

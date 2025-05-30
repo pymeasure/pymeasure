@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -244,6 +244,13 @@ class TestHP856Xx:
                 [("ERR?", "112,101,111")],
         ) as instr:
             assert instr.errors == [ErrorCode(112), ErrorCode(101), ErrorCode(111)]
+
+    def test_empty_errors(self):
+        with expected_protocol(
+                HP856Xx,
+                [("ERR?", "")],
+        ) as instr:
+            assert instr.errors == []
 
     def test_elapsed_time(self):
         with expected_protocol(

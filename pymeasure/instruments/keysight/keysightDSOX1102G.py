@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ class Channel():
         """ A string to label the channel. Labels with more than 10 characters are truncated to 10
         characters. May contain commonly used ASCII characters. Lower case characters are converted
         to upper case.""",
-        get_process=lambda v: str(v[1:-1])
+        get_process_list=lambda v: str(v[1:-1])
     )
 
     offset = Instrument.control(

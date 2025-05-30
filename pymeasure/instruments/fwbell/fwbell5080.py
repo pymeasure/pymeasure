@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,9 @@
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
-from numpy import array, float64
 from time import sleep
+
+import numpy as np
 
 
 class FWBell5080(SCPIMixin, Instrument):
@@ -127,7 +128,7 @@ class FWBell5080(SCPIMixin, Instrument):
             raise Exception("F.W. Bell 5080 does not support samples less than 1.")
         else:
             data = [self.field for i in range(int(samples))]
-            return array(data, dtype=float64)
+            return np.array(data, dtype=np.float64)
 
     def auto_range(self):
         """ Enables the auto range functionality. """

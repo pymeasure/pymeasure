@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -445,18 +445,6 @@ def test_values(value, kwargs, result):
     assert cb.values(value, **kwargs) == result
 
 
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
-        assert cb.values("x5x") == [5]
-
-
-def test_values_global_preprocess_reply():
-    cb = CommonBaseTesting(FakeAdapter())
-    cb.preprocess_reply = lambda v: v.strip("x")
-    assert cb.values("x5x") == [5]
-
-
 def test_binary_values(fake):
     fake.read_binary_values = fake.read
     assert fake.binary_values("123") == "123"
@@ -696,6 +684,19 @@ def test_control_get_process(dynamic):
     assert fake.read() == 'JUNK5'
     fake.x = 5
     assert fake.x == 5
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process_list(dynamic):
+    class Fake(CommonBaseTesting):
+        x = CommonBase.control(
+            "G", "%d", "doc",
+            get_process_list=lambda v: [v[0] + 1, *v, len(v)],
+            dynamic=dynamic,
+        )
+
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+        assert inst.x == [1, 0, 1, 2, 3.4, 4]
 
 
 @pytest.mark.parametrize("dynamic", [False, True])

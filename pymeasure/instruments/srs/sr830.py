@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -436,9 +436,9 @@ class SR830(Instrument):
         """ Returns a function that can be used to determine
         the signal from the channel output (X, Y, or R)
         """
-        offset, expand = self.get_scaling(channel)
+        offset, _ = self.get_scaling(channel)
         sensitivity = self.sensitivity
-        return lambda x: (x / (10. * expand) + offset) * sensitivity
+        return lambda x: x + offset / 100 * sensitivity
 
     @property
     def sample_frequency(self):
