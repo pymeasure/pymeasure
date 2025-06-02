@@ -175,6 +175,29 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         but increases the number of usable digits. """
     )
 
+
+
+    ####################
+    # Diode (V)       #
+    ####################
+
+    diode_bias = Instrument.control(
+        ":SENS:DIOD:BIAS:LEV?",
+        ":SENS:DIOD:BIAS:LEV %g",
+        '''Control the diode bias in Amps.
+            Options are 1e-5, 1e-4, 1e-3, and 1e-2.
+        ''',
+        validator=strict_discrete_set,
+        values=[1e-5, 1e-4, 1e-3, 1e-2]                         
+    )
+
+    diode = Instrument.measurement(
+        ":MEAS:DIOD?",
+        '''Read the diode voltage (Volts) if configured for this reading.'''
+    )
+
+
+
     ####################
     # Methods        #
     ####################
@@ -232,6 +255,21 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         else:
             self.current_range = current
         self.check_errors()
+
+
+    
+    def measure_diode(self, bias=1e-3):
+        """ Configure the measurement of Diode.
+
+        :param bias: Diode bias setting for measurement in Amps. Options are 1e-5, 1e-4, 1e-3, and 1e-2.
+                        Default diode bias is 1 mA.
+        """
+        
+        self.write(':SENS:FUNC "DIOD";')
+        self.diode_bias = bias
+        self.check_errors()
+
+
 
     def open_channel(self, channel):
         """
