@@ -23,3 +23,4 @@
 #
 
 from .kepcobop import KepcoBOP3612
+from .kepcoklp75 import KepcoKLP75
