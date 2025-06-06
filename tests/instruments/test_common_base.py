@@ -695,7 +695,7 @@ def test_control_get_process_list(dynamic):
             dynamic=dynamic,
         )
 
-    # override the get_process_list should only work when dynamic
+    # override get_process_list should only work when dynamic
     Fake.x_get_process_list = lambda v: [0, "2"]
 
     with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
