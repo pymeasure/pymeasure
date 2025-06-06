@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 from .buffer import KeithleyBuffer
@@ -33,8 +33,56 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+"""
+to implement
+channels as properties
+autogenerate channel list
+
+get current model of mux card
+
+possible implement full measurements via a "measure" class?
+so daq.measure.voltage
+"""
+
+
+
+
+class MuxChannel(Channel):
+    """mux relay channels"""
+
+    def __init__(self, chan_number):
+        self._chan_num = chan_number
+
+
+    @property
+    def closed(self):
+        raise NotImplementedError
+        
+        # pymeasure driver does not have a way to read this. but implementation may be possible
+        self.daq_driver.close_channel(self.channel_number)
+
+
+    def closed(self, chanstate):
+        chanstate=bool(chanstate)
+
+        if chanstate is True:
+            self.daq_driver.close_channel(self.channel_number)
+        else:
+            self.daq_driver.open_channel(self.channel_number)
+
+
+class ModuleCard():
+    # should this inherit from channel or something?
+    def __init__(self, slot):
+        pass
+
+    @property
+    def module_id(self):
+        # gets the id of the 
+
+
 class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
-    """ Represents the Keithley DAQ6510 Data Acquisition Logging Multimeter System
+    """Represents the Keithley DAQ6510 Data Acquisition Logging Multimeter System
     and provides a high-level interface for interacting with the instrument.
 
     .. code-block:: python
@@ -63,25 +111,31 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
             **kwargs
         )
 
+        self.mux_channels = None
+        self.cards = ["slot1":None, "slot2":None]
+
+        self.cards = self._detect_cards
+
     sense_mode = Instrument.control(
-        ":SENS:FUNC?", ":SENS:FUNC \"%s\"",
+        ":SENS:FUNC?",
+        ':SENS:FUNC "%s"',
         """ Control the reading mode, which can take the values 'current' or 'voltage'.
         The convenience methods :meth:`~.KeithleyDAQ6510.sense_current` and
         :meth:`~.KeithleyDAQ6510.sense_voltage` can also be used. """,
         validator=strict_discrete_set,
-        values={'current': 'CURR', 'voltage': 'VOLT'},
-        map_values=True
+        values={"current": "CURR", "voltage": "VOLT"},
+        map_values=True,
+    )
+
+    take_measurement = Instrument.measurement(
+        ":READ?",
+        """ Take the currently configured measurement, if configured for this reading.
+        """,
     )
 
     ###############
     # Current (A) #
     ###############
-
-    current = Instrument.measurement(
-        ":READ?",
-        """ Measure the current in Amps, if configured for this reading.
-        """
-    )
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
@@ -90,7 +144,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         available ranges are 100E-6 to 3A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[10E-6, 3]
+        values=[10e-6, 3],
     )
 
     current_nplc = Instrument.control(
@@ -100,18 +154,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         Takes values from 5E-4 to 15 (60 Hz) or 12 (50 Hz or 400 Hz). The smallest value is the
         shortest time, and results in the fastest reading rate, but increases the reading noise
         and decreases the number of usable digits. The largest value is the longest time, and
-        results in the lowest reading rate, but increases the number of usable digits. """
+        results in the lowest reading rate, but increases the number of usable digits. """,
     )
 
     ###############
     # Voltage (V) #
     ###############
-
-    voltage = Instrument.measurement(
-        ":READ?",
-        """ Measure the voltage in Volts, if configured for this reading.
-        """
-    )
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
@@ -119,7 +167,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         available ranges are 100E-3 V to 1000 V. If the measurement function is AC, available
         ranges are 100E-3 to 750 V. Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[100E-3, 1000]
+        values=[100e-3, 1000],
     )
 
     voltage_nplc = Instrument.control(
@@ -130,18 +178,12 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         The smallest value is the shortest time, and results in the fastest reading rate,
         but increases the reading noise and decreases the number of usable digits.
         The largest value is the longest time, and results in the lowest reading rate,
-        but increases the number of usable digits. """
+        but increases the number of usable digits. """,
     )
 
     ####################
     # Resistance (Ohm) #
     ####################
-
-    resistance = Instrument.measurement(
-        ":READ?",
-        """ Measure the resistance in Ohms, if configured for this reading.
-        """
-    )
 
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
@@ -152,7 +194,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         with offset compensation on, the available ranges are 1 to 10E3 Ohms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
-        values=[1, 100E6]
+        values=[1, 100e6],
     )
 
     offset_compensated = Instrument.control(
@@ -161,7 +203,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         Valid values are OFF, ON, and AUTO. """,
         validator=strict_discrete_set,
         values=["OFF", "ON", "AUTO"],
-        map_values=False
+        map_values=False,
     )
 
     resistance_nplc = Instrument.control(
@@ -172,10 +214,8 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         The smallest value is the shortest time, and results in the fastest reading rate,
         but increases the reading noise and decreases the number of usable digits.
         The largest value is the longest time, and results in the lowest reading rate,
-        but increases the number of usable digits. """
+        but increases the number of usable digits. """,
     )
-
-
 
     ####################
     # Diode (V)       #
@@ -184,26 +224,26 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     diode_bias = Instrument.control(
         ":SENS:DIOD:BIAS:LEV?",
         ":SENS:DIOD:BIAS:LEV %g",
-        '''Control the diode bias in Amps.
+        """Control the diode bias in Amps.
             Options are 1e-5, 1e-4, 1e-3, and 1e-2.
-        ''',
+        """,
         validator=strict_discrete_set,
-        values=[1e-5, 1e-4, 1e-3, 1e-2]                         
+        values=[1e-5, 1e-4, 1e-3, 1e-2],
     )
-
-    diode = Instrument.measurement(
-        ":MEAS:DIOD?",
-        '''Read the diode voltage (Volts) if configured for this reading.'''
-    )
-
-
 
     ####################
     # Methods        #
     ####################
 
-    def measure_resistance(self, nplc=1, resistance=100e6, auto_range=True):
-        """ Configure the measurement of resistance.
+    def _detect_cards(self):
+        """
+        detects what addon cards are currently connected, inits their class, and populates the mux channel list
+        """
+        cards = ["slot1":None, "slot2":None]
+        return cards
+
+    def configure_resistance_measurement(self, nplc=1, resistance=100e6, auto_range=True):
+        """Configure the measurement of resistance.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -220,8 +260,8 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
             self.resistance_range = resistance
         self.check_errors()
 
-    def measure_voltage(self, nplc=1, voltage=1000, auto_range=True):
-        """ Configure the measurement of voltage.
+    def configure_voltage_measurement(self, nplc=1, voltage=1000, auto_range=True):
+        """Configure the measurement of voltage.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -231,15 +271,15 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
                            else uses the set voltage.
         """
         log.info(f"{self.name} is measuring voltage.")
-        self.write(f":SENS:FUNC \"VOLT\";:SENS:VOLT:NPLC {nplc};")
+        self.write(f':SENS:FUNC "VOLT";:SENS:VOLT:NPLC {nplc};')
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO ON;")
         else:
             self.voltage_range = voltage
         self.check_errors()
 
-    def measure_current(self, nplc=1, current=3, auto_range=True):
-        """ Configure the measurement of current.
+    def configure_current_measurement(self, nplc=1, current=3, auto_range=True):
+        """Configure the measurement of current.
 
         :param nplc: Number of power line cycles (NPLC) from 5E-4 to 15 (60 Hz)
                      or 12 (50 Hz or 400 Hz).
@@ -249,27 +289,24 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
                            else uses the set current.
         """
         log.info(f"{self.name} is measuring current.")
-        self.write(f":SENS:FUNC \"CURR\";:SENS:CURR:NPLC {nplc};")
+        self.write(f':SENS:FUNC "CURR";:SENS:CURR:NPLC {nplc};')
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO ON;")
         else:
             self.current_range = current
         self.check_errors()
+        
 
-
-    
     def measure_diode(self, bias=1e-3):
-        """ Configure the measurement of Diode.
+        """Configure the measurement of Diode.
 
         :param bias: Diode bias setting for measurement in Amps. Options are 1e-5, 1e-4, 1e-3, and 1e-2.
                         Default diode bias is 1 mA.
         """
-        
+
         self.write(':SENS:FUNC "DIOD";')
         self.diode_bias = bias
         self.check_errors()
-
-
 
     def open_channel(self, channel):
         """
@@ -278,6 +315,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param channel: Channel to be set to open.
         """
         self.write(f":ROUT:OPEN (@{channel})")
+        self.check_errors()
 
     def close_channel(self, channel):
         """
@@ -286,24 +324,26 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :param channel: Channel to be set to closed.
         """
         self.write(f":ROUT:CLOS (@{channel})")
+        self.check_errors()
 
-    def open_channels(self, channel_list):
-        """
-        Configure multiple channels to be open.
+    # todo: implement these with a native list
+    # def open_channels(self, channel_list):
+    #     """
+    #     Configure multiple channels to be open.
 
-        :param channel_list: List of channels to be set to open.
-        """
-        for channel in channel_list:
-            self.open_channel(channel)
+    #     :param channel_list: List of channels to be set to open.
+    #     """
+    #     for channel in channel_list:
+    #         self.open_channel(channel)
 
-    def close_channels(self, channel_list):
-        """
-        Configure multiple channels to be closed.
+    # def close_channels(self, channel_list):
+    #     """
+    #     Configure multiple channels to be closed.
 
-        :param channel_list: List of channels to be set to closed.
-        """
-        for channel in channel_list:
-            self.close_channel(channel)
+    #     :param channel_list: List of channels to be set to closed.
+    #     """
+    #     for channel in channel_list:
+    #         self.close_channel(channel)
 
     def beep(self, frequency, duration):
         """
@@ -314,3 +354,4 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         :return: None
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
+        self.check_errors()
