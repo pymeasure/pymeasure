@@ -695,8 +695,14 @@ def test_control_get_process_list(dynamic):
             dynamic=dynamic,
         )
 
+    # override get_process_list should only work when dynamic
+    Fake.x_get_process_list = lambda v: [0, "2"]
+
     with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
-        assert inst.x == [1, 0, 1, 2, 3.4, 4]
+        if dynamic:
+            assert inst.x == [0, "2"]
+        else:
+            assert inst.x == [1, 0, 1, 2, 3.4, 4]
 
 
 @pytest.mark.parametrize("dynamic", [False, True])

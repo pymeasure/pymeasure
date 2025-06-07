@@ -105,6 +105,7 @@ class CommonBase:
                          'values',
                          'map_values',
                          'get_process',
+                         'get_process_list',
                          'command_process',
                          'check_get_errors')
 
@@ -535,6 +536,7 @@ class CommonBase:
                  values=values,
                  map_values=map_values,
                  get_process=get_process,
+                 get_process_list=get_process_list,
                  command_process=command_process,
                  check_get_errors=check_get_errors,
                  ):

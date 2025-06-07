@@ -9,4 +9,5 @@ This section contains specific documentation on the PTW Freiburg GmbH instrument
 .. toctree::
    :maxdepth: 2
 
+   ptwDIAMENTOR
    ptwUNIDOS
