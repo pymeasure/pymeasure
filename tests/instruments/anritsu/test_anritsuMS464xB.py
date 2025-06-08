@@ -25,7 +25,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.anritsu import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B,\
+from pymeasure.instruments.anritsu import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B, \
     AnritsuMS4645B, AnritsuMS4647B
 
 
