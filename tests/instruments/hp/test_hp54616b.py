@@ -22,19 +22,24 @@
 # THE SOFTWARE.
 #
 
-from .hp33120A import HP33120A
-from .hp34401A import HP34401A
-from .hp3478A import HP3478A
-from .hp3437A import HP3437A
-from .hp8116a import HP8116A
-from .hp8657b import HP8657B
-from .hp856Xx import HP8560A
-from .hp856Xx import HP8561B
-from .hp8753e import HP8753E
-from .hp11713a import HP11713A
-from .hp437b import HP437B
-from .hpsystempsu import HP6632A
-from .hpsystempsu import HP6633A
-from .hpsystempsu import HP6634A
-from .hp54616B import HP54616B
-from .hplegacyinstrument import HPLegacyInstrument
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.hp import HP54616B
+
+
+def test_frequency():
+    with expected_protocol(
+            HP54616B,
+            [(b":ACQ:COMP 100", None),
+             (b":ACQ:COMP?", 100)],
+    ) as instr:
+        instr.acquire_complete = 100
+        assert instr.acquire_complete == 100
+
+def test_identity():
+    with expected_protocol(
+            HP54616B,
+            [(b"*IDN?", "HEWLETT-PACKARD,54616B,0,A.02.30")],
+    ) as instr:
+        assert instr.id == "HEWLETT-PACKARD,54616B,0,A.02.30"
