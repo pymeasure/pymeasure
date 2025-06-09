@@ -54,7 +54,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     """
 
     def __init__(self, adapter, name="Agilent B1500 Semiconductor Parameter Analyzer", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
         self._smu_names = {}
         self._smu_references = {}
 
