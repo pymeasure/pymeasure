@@ -1,5 +1,29 @@
-from pymeasure.instruments import Instrument, SCPIUnknownMixin, Channel
-from pymeasure.adapters import SerialAdapter
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2025 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+from pymeasure.instruments import Instrument, Channel
+from pymeasure.adapters import Adapter
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
 
@@ -36,7 +60,31 @@ class MainChannel(Channel):
 
     waveform = Instrument.setting(
         "{ch}w%i",
-        "Set the waveform of the channel.",
+        """Set the waveform of the channel.
+
+        The waveform must be one of the following:
+
+        - SINE
+        - SQUARE
+        - PULSE
+        - TRIANGLE
+        - SAWTOOTH_RISE
+        - SAWTOOTH_FALL
+        - DC
+        - PULSE_LORENTZ
+        - MULTITONE
+        - RANDOM_NOISE
+        - ELECTROCARDIOGRAM
+        - PULSE_TRAPEZ
+        - PULSE_SINC
+        - PULSE_NARROW
+        - GAUSSIAN_NOISE
+        - AMP_MOD
+        - FREQ_MOD
+        - ARB1
+        - ARB2
+        - ARB3
+        """,
         validator=strict_discrete_set,
         map_values=True,
         values=WAVEFORMS,
@@ -140,7 +188,30 @@ class SubsidiaryChannel(Channel):
 
     waveform = Instrument.setting(
         "{ch}w%i",
-        "Set the waveform of the channel.",
+        """Set the waveform of the channel.
+
+        The waveform must be one of the following:
+
+        - SINE
+        - SQUARE
+        - TRIANGLE
+        - SAWTOOTH_RISE
+        - SAWTOOTH_FALL
+        - DC
+        - PULSE_LORENTZ
+        - MULTITONE
+        - RANDOM_NOISE
+        - ELECTROCARDIOGRAM
+        - PULSE_TRAPEZ
+        - PULSE_SINC
+        - PULSE_NARROW
+        - GAUSSIAN_NOISE
+        - AMP_MOD
+        - FREQ_MOD
+        - ARB1
+        - ARB2
+        - ARB3
+        """,
         validator=strict_discrete_set,
         map_values=True,
         values=WAVEFORMS,
@@ -187,22 +258,20 @@ class SubsidiaryChannel(Channel):
     )
 
 
-class FY3200S(SCPIUnknownMixin, Instrument):
+class FY3200S(Instrument):
     """Class to control the Feeltech FY3200S arbitrary waveform generator"""
 
-    def __init__(self, adapter: SerialAdapter, name: str = "FY3200s AWG", **kwargs):
+    def __init__(self, adapter: Adapter | str, name: str = "FY3200s AWG", **kwargs):
         """Initialize the instrument with a SerialAdapter
-        :param adapter: SerialAdapter for the connection. The write termination has to be \\n
+        :param adapter: Adapter or string for the connection.
         :type adapter: SerialAdapter
         :param name: Instrument name
         :type name: str
         """
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter, name, includeSCPI=False, write_termination="\n", **kwargs)
 
     main_channel = Instrument.ChannelCreator(MainChannel, "b")
     subsidiary_channel = Instrument.ChannelCreator(SubsidiaryChannel, "d")
-
-    model = Instrument.measurement("a", "Get the model of the AWG.")
 
     frequency = Instrument.measurement(
         "ce",
@@ -215,12 +284,26 @@ class FY3200S(SCPIUnknownMixin, Instrument):
     )
 
     def save(self, pos: int):
+        """
+        Save the current settings to a specified position.
+
+        :param pos: The position to save the settings (must be an integer between 0 and 9).
+        :type pos: int
+        :raises ValueError: If the position is not in the range 0-9.
+        """
         if pos not in range(10):
             raise ValueError("Save position must be an integer between 0 and 9")
         else:
             self.write("bs%i" % pos)
 
     def load(self, pos: int):
+        """
+        Load the settings from a specified position.
+
+        :param pos: The position to load the settings from (must be an integer between 0 and 9).
+        :type pos: int
+        :raises ValueError: If the position is not in the range 0-9.
+        """
         if pos not in range(10):
             raise ValueError("Load position must be an integer between 0 and 9")
         else:
@@ -229,4 +312,4 @@ class FY3200S(SCPIUnknownMixin, Instrument):
     @property
     def id(self):
         """Get the identification of the instrument."""
-        return "Feeltech FY3200S arbitrary waveform generator"
+        return self.ask("a")

@@ -3,7 +3,9 @@ from pymeasure.instruments.feeltech import FY3200S
 
 
 def test_init():
-    with expected_protocol(FY3200S, []) as instr:
+    with expected_protocol(
+        FY3200S, [("a", "Feeltech FY3200S arbitrary waveform generator")]
+    ) as instr:
         assert instr.id == "Feeltech FY3200S arbitrary waveform generator"
 
 
