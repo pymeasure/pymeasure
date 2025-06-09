@@ -23,7 +23,6 @@
 #
 
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.adapters import Adapter
 from pymeasure.instruments.validators import strict_discrete_range, strict_discrete_set
 
 
@@ -261,7 +260,7 @@ class SubsidiaryChannel(Channel):
 class FY3200S(Instrument):
     """Class to control the Feeltech FY3200S arbitrary waveform generator"""
 
-    def __init__(self, adapter: Adapter | str, name: str = "FY3200s AWG", **kwargs):
+    def __init__(self, adapter, name: str = "FY3200s AWG", **kwargs):
         """Initialize the instrument with a SerialAdapter
         :param adapter: Adapter or string for the connection.
         :type adapter: SerialAdapter
