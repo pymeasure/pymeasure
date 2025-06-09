@@ -1625,7 +1625,7 @@ class ADCType(CustomIntEnum):
 
     HSADC = (0,)  #: High-speed ADC
     HRADC = (1,)  #: High-resolution ADC
-    HSADC_PULSED = (2,)  #: High-resolution ADC for pulsed measurements
+    HSADC_PULSED = (2,)  #: High-speed ADC for pulsed measurements
 
     def __str__(self):
         return str(self.name).replace("_", " ")
@@ -1637,8 +1637,8 @@ class ADCMode(CustomIntEnum):
 
     AUTO = 0  #:
     MANUAL = 1  #:
-    PLC = 2  #:
-    TIME = 3  #:
+    PLC = 2  #: Power line cycle mode
+    TIME = 3  #: Measurement time mode
 
 
 class AutoManual(CustomIntEnum):
@@ -1659,20 +1659,30 @@ class MeasMode(CustomIntEnum):
 class MeasOpMode(CustomIntEnum):
     """Measurement Operation Mode"""
 
-    COMPLIANCE_SIDE = 0  #:
+    COMPLIANCE_SIDE = 0
+    """
+    Measures current in the voltage source operation or voltage in the current source operation.
+    """
     CURRENT = 1  #:
     VOLTAGE = 2  #:
     FORCE_SIDE = 3  #:
-    COMPLIANCE_AND_FORCE_SIDE = 4  #:
+    """
+    Measures current in the current sourceoperation or voltage in the voltage source operation.
+    """
+    COMPLIANCE_AND_FORCE_SIDE = 4
+    """
+    Current and voltage synchronous measurement. Measurement result contains the compliance side
+    data and the force side data in this order.
+    """
 
 
 class SweepMode(CustomIntEnum):
     """Sweep Mode"""
 
-    LINEAR_SINGLE = 1  #:
-    LOG_SINGLE = 2  #:
-    LINEAR_DOUBLE = 3  #:
-    LOG_DOUBLE = 4  #:
+    LINEAR_SINGLE = 1  #: Linear sweep (single stair, start to stop.)
+    LOG_SINGLE = 2  #: Log sweep (single stair, start to stop.)
+    LINEAR_DOUBLE = 3  #: Linear sweep (double stair, start to stop to start.)
+    LOG_DOUBLE = 4  #: Log sweep (double stair, start to stop to start.)
 
 
 class SamplingMode(CustomIntEnum):
@@ -1723,9 +1733,9 @@ class CompliancePolarity(CustomIntEnum):
 class WaitTimeType(CustomIntEnum):
     """Wait time type"""
 
-    SMU_SOURCE = 1  #:
-    SMU_MEASUREMENT = 2  #:
-    CMU_MEASUREMENT = 3  #:
+    SMU_SOURCE = 1  #: wait before changing the output value
+    SMU_MEASUREMENT = 2  #: wait before starting the measurement
+    CMU_MEASUREMENT = 3  #: wait before starting the measurement
 
 
 ###############################################################################
