@@ -296,18 +296,31 @@ class HP54616B(SCPIMixin, Instrument):
         """Stop oscilloscope"""
         self.write(":STOP")
 
-    def get_waveform_data(self,count):
+    def get_waveform_data(self,**kwargs):
         """Command to read waveform data after digitization.
         :param int Number of Bytes to save
         """
         self.write(":WAV:DATA?")
-        read_data = self.read_bytes(count)
+        read_data = self.read(**kwargs)
         return read_data
 
     ###############
     # Acquire #
     ###############
 
+    # The :ACQUIRE:COMPLETE command specifies the completion criteria for an acquisition. 
+    # The parameter determines what percentage of the time buckets need to be "full" 
+    # before an acquisition is considered complete. 
+    # If you are in the NORMAL mode the instrument only needs one data bit per time bucket 
+    # for that time bucket to be considered full. 
+    # In order for the time bucket to be considered full in the AVERAGE or ENVELOPE modes 
+    # a specified number of data points (COUNT) must be acquired.
+    # The range for the COMPLETE command is 0 to 100 and indicates the percentage of time buckets 
+    # that must be "full" before the acquisition is considered complete. 
+    # If the complete value is set to 100%, all time buckets must contain
+    # data for the acquisition to be considered complete. 
+    # If the complete value is set to 0 then one acquisition cycle will take place.
+    # The COMPLETE query returns the completion criteria for the currently selected mode.
     acquire_complete = Instrument.control(
         get_command=":ACQ:COMP?",
         set_command=":ACQ:COMP %d",
@@ -320,7 +333,7 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_count = Instrument.control(
         get_command=":ACQ:COUN?",
         set_command=":ACQ:COUN %d",
-        docs="""Control acquire count""",
+        docs="""Control number of averaged values in acquire type = average""",
         validator=strict_range,
         values=[1, 256],
         map_values=False,
@@ -329,7 +342,7 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_points = Instrument.control(
         get_command=":ACQ:POIN?",
         set_command=None,
-        docs="""Control acquire points""",
+        docs="""Get acquire points""",
         validator=strict_range,
         values=[1, 4000],
         map_values=False,
