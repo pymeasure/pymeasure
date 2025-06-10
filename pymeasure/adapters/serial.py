@@ -75,12 +75,7 @@ class SerialAdapter(Adapter):
         :returns str: ASCII response of the instrument (read_termination is removed first).
         """
         read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
-        # Python>3.8 this shorter form is possible:
-        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
-        if self.read_termination:
-            return read.split(self.read_termination)[0]
-        else:
-            return read
+        return read.removesuffix(self.read_termination) if self.read_termination else read
 
     def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read a certain number of bytes from the instrument.
