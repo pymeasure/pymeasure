@@ -555,11 +555,15 @@ def test_control_validator(dynamic):
         )
 
     fake = Fake()
+    fake.x_validator = truncated_range  # works only if dynamic
     fake.x = 5
     assert fake.read() == '5'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError):
+    if not dynamic:
+        with pytest.raises(ValueError):
+            fake.x = 20
+    else:
         fake.x = 20
 
 
@@ -575,8 +579,12 @@ def test_control_validator_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_map_values = False  # works only if dynamic
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '5'  # no mapping
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     with pytest.raises(ValueError):
@@ -595,12 +603,19 @@ def test_control_dict_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_values = {1: 1, 20: 2, 5: 3}
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '3'
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     fake.x = 20
-    assert fake.read() == '3'
+    if dynamic:
+        assert fake.read() == '2'
+    else:
+        assert fake.read() == '3'
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -662,10 +677,18 @@ def test_control_process(dynamic):
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v
+    fake.x_set_process = lambda v: v
     fake.x = 10e-3
-    assert fake.read() == '10'
+    if dynamic:
+        assert fake.read() == '0'
+    else:
+        assert fake.read() == '10'
     fake.x = 30e-3
-    assert fake.x == 30e-3
+    if dynamic:
+        assert fake.x == 0
+    else:
+        assert fake.x == 30e-3
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -680,10 +703,14 @@ def test_control_get_process(dynamic):
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v  # works only if dynamic
     fake.x = 5
     assert fake.read() == 'JUNK5'
-    fake.x = 5
-    assert fake.x == 5
+    fake.x = 6
+    if dynamic:
+        assert fake.x == 'JUNK6'
+    else:
+        assert fake.x == 6
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -725,7 +752,7 @@ def test_control_preprocess_reply_property(dynamic):
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
-    assert type(fake.x) == int
+    assert type(fake.x) is int
 
 
 def test_control_kwargs_handed_to_values():
