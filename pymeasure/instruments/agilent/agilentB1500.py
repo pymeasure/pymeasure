@@ -361,13 +361,15 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.data_names = {}  # no header
             self.smu_names = smu_names
 
-        def check_status(self, status_string, name=False, cmu=False):
+        def check_status(self, status_string, name=None, cmu=False):
             """Check returned status of instrument. If not null or end of
             data, message is written to log.info.
 
             :param status_string: Status string returned by the instrument
                                   when reading data.
             :type status_string: str
+            :param name: Name of the SMU channel, defaults to None
+            :type name: str, optional
             :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             :type cmu: bool, optional
             """
@@ -377,7 +379,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     ("Agilent B1500: check_status not possible for status {}").format(status_string)
                 )
 
-            if name is False:
+            if name is None:
                 name = ""
             else:
                 name = f" {name}"
