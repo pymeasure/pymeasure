@@ -175,6 +175,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         self.write("DZ")
 
+    def restore_settings(self):
+        """Restores the settings of all channels to the state before
+        using `force_gnd`. (``RZ``)
+        """
+        self.write("RZ")
+
     def check_errors(self):
         """Check for errors (``ERRX?``)"""
         error = self.ask("ERRX?")
@@ -998,6 +1004,12 @@ class SMU:
         """Force 0V immediately. Current Settings can be restored with
         ``RZ`` (not implemented). (``DZ``)"""
         self.write("DZ %d" % self.channel)
+
+    def restore_settings(self):
+        """Restores the settings of the channel to the state before
+        using `force_gnd`. (``RZ``)
+        """
+        self.write("RZ %d" % self.channel)
 
     @property
     def filter(self):
