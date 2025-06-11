@@ -614,3 +614,256 @@ class HP54616B(SCPIMixin, Instrument):
         values={"on":"ON","off":"OFF"},
         map_values=True,
     )
+
+    ###############
+    # Measure #
+    ###############
+
+    measure_all = Instrument.measurement(
+        get_command=":MEAS:ALL?",
+        set_command=None,
+        docs="""Measure all results""",
+    )
+
+    measure_define_delay = Instrument.measurement(
+        get_command=":MEAS:DEF? DEL",
+        set_command=":MEAS:DEF DEL %s",
+        docs="""Set edge numbers to use for delay measurement in the format <edge1>,<edge2>""",
+    )
+
+    measure_delay = Instrument.measurement(
+        get_command=":MEAS:DEL?",
+        set_command=":MEAS:DEL",
+        docs="""Measure edge to edge delay""",
+    )
+
+    measure_dutycycle = Instrument.measurement(
+        get_command=":MEAS:DUTY?",
+        set_command=":MEAS:DUTY",
+        docs="""Measure dutycycle""",
+    )
+
+    measure_falltime = Instrument.measurement(
+        get_command=":MEAS:FALL?",
+        set_command=":MEAS:FALL",
+        docs="""Measure 90-10 fall time in seconds""",
+    )
+
+    measure_frequency = Instrument.measurement(
+        get_command=":MEAS:FREQ?",
+        set_command=":MEAS:FREQ",
+        docs="""Measure frequency in Hertz""",
+    )
+
+    measure_lower = Instrument.measurement(
+        get_command=":MEAS:LOW?",
+        set_command=":MEAS:LOW %s",
+        docs="""Set lower voltage threshold""",
+    )
+
+    measure_nwidth = Instrument.measurement(
+        get_command=":MEAS:NWID?",
+        set_command=":MEAS:NWID",
+        docs="""Measure negative pulse width in seconds""",
+    )
+
+    measure_overshoot = Instrument.measurement(
+        get_command=":MEAS:OVER?",
+        set_command=":MEAS:OVER",
+        docs="""Measure overshoot in percentage""",
+    )
+
+    measure_period = Instrument.measurement(
+        get_command=":MEAS:PER?",
+        set_command=":MEAS:PER",
+        docs="""Measure period in seconds""",
+    )
+
+    measure_phase = Instrument.measurement(
+        get_command=":MEAS:PHAS?",
+        set_command=":MEAS:PHAS",
+        docs="""Measure phase angle in degrees""",
+    )
+
+    measure_preshoot = Instrument.measurement(
+        get_command=":MEAS:PRES?",
+        set_command=":MEAS:PRES",
+        docs="""Measure percent of preshoot""",
+    )
+
+    measure_pstart = Instrument.measurement(
+        get_command=":MEAS:PSTA?",
+        set_command=":MEAS:PSTA",
+        docs="""Measure relative position of time marker 1 in degrees""",
+    )
+
+    measure_pstop = Instrument.measurement(
+        get_command=":MEAS:PSTO?",
+        set_command=":MEAS:PSTO",
+        docs="""Measure relative position of time marker 2 in degrees""",
+    )
+
+    measure_pwidth = Instrument.measurement(
+        get_command=":MEAS:PWID?",
+        set_command=":MEAS:PWID",
+        docs="""Measure positive pulse width in seconds""",
+    )
+
+    measure_risetime = Instrument.measurement(
+        get_command=":MEAS:RISE?",
+        set_command=":MEAS:RISE",
+        docs="""Measure rise time in seconds""",
+    )
+
+    measure_scratch = Instrument.measurement(
+        get_command=None,
+        set_command=":MEAS:SCR",
+        docs="""Set the display to clear the measurement results""",
+    )
+
+    measure_set100 = Instrument.measurement(
+        get_command=None,
+        set_command=":MEAS:SET100",
+        docs="""Set 100""",
+    )
+
+    measure_set360 = Instrument.measurement(
+        get_command=None,
+        set_command=":MEAS:SET360",
+        docs="""Set 360""",
+    )
+
+    measure_show = Instrument.control(
+        get_command=":MEAS:SHOW?",
+        set_command=":MEAS:SHOW %s",
+        docs="""Set measurement to show""",
+        validator=strict_discrete_set,
+        values={"on":"ON","off":"OFF"},
+        map_values=True,
+    )
+
+    measure_source = Instrument.control(
+        get_command=":MEAS:SOUR?",
+        set_command=":MEAS:SOUR %u",
+        docs="""Set measurement source""",
+        validator=strict_range,
+        values=[1,2],
+        map_values=False,
+    )
+
+    measure_thresholds = Instrument.measurement(
+        get_command=":MEAS:THR?",
+        set_command=":MEAS:THR %s",
+        docs="""Measure 10-90% time, 20-80% time and voltage between thresholds""",
+        validator=strict_discrete_set,
+        values={"t1090":"T1090","t2080":"T2080","voltage":"VOLT"},
+        map_values=True,
+    )
+
+    measure_tstart = Instrument.control(
+        get_command=":MEAS:TSTA?",
+        set_command=":MEAS:TSTA %s",
+        docs="""Set time of start marker in seconds""",
+    )
+
+    measure_tstop = Instrument.control(
+        get_command=":MEAS:TSTO?",
+        set_command=":MEAS:TSTO %s",
+        docs="""Set time of stop marker in seconds""",
+    )
+
+    measure_tvolt = Instrument.measurement(
+        get_command=":MEAS:TVOL?",
+        set_command=None,
+        docs="""Measure TVOLT <tvolt_argument> ::= positive or negative voltage level that the waveform must cross. <slope> ::= direction of the waveform when <tvolt_argument> is crossed. <occurrence> ::= number of crossings to be reported. <return_value> ::= time in seconds of specified voltage crossing in NR3 format""",
+    )
+
+    measure_upper = Instrument.control(
+        get_command=":MEAS:UPP?",
+        set_command=":MEAS:UPP %s",
+        docs="""Set upper voltage threshold""",
+    )
+
+    measure_vamplitude = Instrument.measurement(
+        get_command=":MEAS:VAMP?",
+        set_command=":MEAS:VAMP",
+        docs="""Measure amplitude of selected waveform in volts""",
+    )
+
+    measure_vaverage = Instrument.measurement(
+        get_command=":MEAS:VAV?",
+        set_command=":MEAS:VAV",
+        docs="""Measure average voltage""",
+    )
+
+    measure_vbase = Instrument.measurement(
+        get_command=":MEAS:VBAS?",
+        set_command=":MEAS:VBAS",
+        docs="""Measure voltage at base of selected waveform""",
+    )
+
+    measure_vdelta = Instrument.measurement(
+        get_command=":MEAS:VDELta?",
+        set_command=None,
+        docs="""Measure voltage difference between marker 1 and 2""",
+    )
+
+    measure_vmax = Instrument.measurement(
+        get_command=":MEAS:VMAX?",
+        set_command=":MEAS:VMAX",
+        docs="""Measure maximum voltage of selected waveform""",
+    )
+
+    measure_vmin = Instrument.measurement(
+        get_command=":MEAS:VMIN?",
+        set_command=":MEAS:VMIN",
+        docs="""Measure minimum voltage of selected waveform""",
+    )
+
+    measure_vpp = Instrument.measurement(
+        get_command=":MEAS:VPP?",
+        set_command=":MEAS:VPP",
+        docs="""Measure peak-to-peak voltage of selected waveform""",
+    )
+
+    measure_vpstart = Instrument.control(
+        get_command=":MEAS:VPSTA?",
+        set_command=":MEAS:VPSTA %s",
+        docs="""Set relative position of voltage marker 1 in percent""",
+    )
+
+    measure_vpstop = Instrument.control(
+        get_command=":MEAS:VPSTO?",
+        set_command=":MEAS:VPSTO %s",
+        docs="""Set relative position of voltage marker 2 in percent""",
+    )
+
+    measure_vrms = Instrument.measurement(
+        get_command=":MEAS:VRMS?",
+        set_command=":MEAS:VRMS",
+        docs="""Measure dc RMS voltage""",
+    )
+
+    measure_vstart = Instrument.control(
+        get_command=":MEAS:VSTA?",
+        set_command=":MEAS:VSTA %s",
+        docs="""Set voltage value of voltage marker 1""",
+    )
+
+    measure_vstart = Instrument.control(
+        get_command=":MEAS:VSTO?",
+        set_command=":MEAS:VSTO %s",
+        docs="""Set voltage value of voltage marker 2""",
+    )
+
+    measure_vtime = Instrument.measurement(
+        get_command=":MEAS:VTIM %s",
+        set_command=None,
+        docs="""Measure time from trigger in seconds""",
+    )
+
+    measure_vtop = Instrument.measurement(
+        get_command=":MEAS:VTOP?",
+        set_command=":MEAS:VTOP",
+        docs="""Measure voltage at top of the waveform""",
+    )
