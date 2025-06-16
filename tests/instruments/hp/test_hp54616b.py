@@ -43,3 +43,14 @@ def test_identity():
             [(b"*IDN?", "HEWLETT-PACKARD,54616B,0,A.02.30")],
     ) as instr:
         assert instr.id == "HEWLETT-PACKARD,54616B,0,A.02.30"
+
+def test_channel_setup():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN1:SET?", "CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;BWLIMIT OFF;INVERT OFF;VERNIER OFF;PROBE X1;PMODE AUT;INPUT ONEM;PROTECT ON")],
+    ) as instr:
+        # Checking keys of channel config dict
+        channel_dict = instr.ch1.current_configuration
+        expected_channel_dict_keys = ["CHAN", 'RANGE', 'OFFSET', 'COUP', 'BWLIMIT', 'INVERT', 'VERNIER', 'PROBE', 'PMODE', 'INPUT', 'PROTECT']
+        for key in channel_dict:
+            assert key in expected_channel_dict_keys

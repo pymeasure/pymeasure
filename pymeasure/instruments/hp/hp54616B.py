@@ -27,11 +27,10 @@ from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 class Channel():
-    """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
+    """ Implementation of a Hewlett Packard HP54616B channel
 
-    Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
-
-    BOOLS = {True: 1, False: 0}
+    Implementation modeled on Channel object of Keysight DSOX1102G Oscilloscope channel
+    which was originally modelled on Tektronix AFG3152C instrument. """
 
     ###############
     # Channel #
@@ -55,7 +54,7 @@ class Channel():
         map_values=True
     )
 
-    input = Instrument.control(
+    input_impedance = Instrument.control(
         get_command=":INP?",
         set_command=":INP %s",
         docs="""Control input impedance to either 50 or 1M Ohm""",
@@ -89,7 +88,7 @@ class Channel():
         map_values=True
     )
 
-    probe = Instrument.control(
+    probe_attenuation = Instrument.control(
         get_command=":PROB?",
         set_command=":PROB %s",
         docs="""Control the probe attenuation""",
@@ -108,7 +107,7 @@ class Channel():
     )
 
     # TODO: Add validator for the NR3 format
-    range = Instrument.control(
+    vertical_range = Instrument.control(
         get_command=":RANG?",
         set_command=":RANG %s",
         docs="""Control the range for voltage""",
@@ -120,7 +119,7 @@ class Channel():
         docs="""Get the channel setup""",
     )
 
-    protect = Instrument.control(
+    vernier = Instrument.control(
         get_command=":VERN?",
         set_command=":VERN %s",
         docs="""Control the enable vernier option""",
@@ -137,7 +136,7 @@ class Channel():
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(":CHAN%u:%s" % (
+        return self.instrument.values(":CHAN%u%s" % (
             self.number, command), **kwargs)
 
     def ask(self, command):
@@ -146,98 +145,92 @@ class Channel():
     def write(self, command):
         self.instrument.write(":CHAN%u:%s" % (self.number, command))
 
-    # def setup(self, bwlimit=None, coupling=None, display=None, invert=None, label=None, offset=None,
-    #           probe_attenuation=None, vertical_range=None, scale=None):
-    #     """ Setup channel. Unspecified settings are not modified. Modifying values such as
-    #     probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation and
-    #     make multiple consecutive calls to setup() if needed.
+    def setup(self, bwlimit=None, coupling=None, input_impedance=None, invert=None, offset=None,
+              pmode=None, probe_attenuation=None, vertical_range=None, vernier=None):
+        """ Setup channel. Unspecified settings are not modified. Modifying values such as
+        probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation.
 
-    #     :param bwlimit: A boolean, which enables 25 MHz internal low-pass filter.
-    #     :param coupling: "ac" or "dc".
-    #     :param display: A boolean, which enables channel display.
-    #     :param invert: A boolean, which enables input signal inversion.
-    #     :param label: Label string with max. 10 commonly used ASCII characters.
-    #     :param offset: Numerical value represented at center of screen, must be inside
-    #         the legal range.
-    #     :param probe_attenuation: Probe attenuation values from 0.1 to 1000.
-    #     :param vertical_range: Full-scale vertical axis of the selected channel. When using 1:1
-    #         probe attenuation, legal values for the range are  from 8mV to 40 V. If the probe
-    #         attenuation is changed, the range value is multiplied by the probe attenuation factor.
-    #     :param scale: Units per division. """
+        :param bwlimit: A boolean, which enables 25 MHz internal low-pass filter.
+        :param coupling: "ac" or "dc".
+        :param input_impedance: A boolean, changes input impedance.
+        :param invert: A boolean, which enables input signal inversion.
+        :param offset: Numerical value represented at center of screen.
+        :param pmode: Sets the probe mode to automatic or manual.
+        :param probe_attenuation: Controls the probe attenuation.
+        :param vertical_range: Full-scale vertical axis of the selected channel.
+        :param vernier: Control the enable vernier option. """
 
-    #     if vertical_range is not None and scale is not None:
-    #         log.warning(
-    #             'Both "vertical_range" and "scale" are specified. Specified "scale" has priority.')
+        if bwlimit is not None:
+            self.bwlimit = bwlimit
+        if coupling is not None:
+            self.coupling = coupling
+        if input_impedance is not None:
+            self.input_impedance = input_impedance
+        if invert is not None:
+            self.invert = invert
+        if offset is not None:
+            self.offset = offset
+        if pmode is not None:
+            self.pmode = pmode
+        if probe_attenuation is not None:
+            self.probe_attenuation = probe_attenuation
+        if vertical_range is not None:
+            self.vertical_range = vertical_range
+        if vernier is not None:
+            self.vernier = vernier
 
-    #     if probe_attenuation is not None:
-    #         self.probe_attenuation = probe_attenuation
-    #     if bwlimit is not None:
-    #         self.bwlimit = bwlimit
-    #     if coupling is not None:
-    #         self.coupling = coupling
-    #     if display is not None:
-    #         self.display = display
-    #     if invert is not None:
-    #         self.invert = invert
-    #     if label is not None:
-    #         self.label = label
-    #     if offset is not None:
-    #         self.offset = offset
-    #     if vertical_range is not None:
-    #         self.range = vertical_range
-    #     if scale is not None:
-    #         self.scale = scale
+    @property
+    def current_configuration(self):
+        """ Read channel configuration as a dict containing the following keys:
+            - "CHAN": channel number (int)
+            - "RANGE": vertical range (float)
+            - "OFFSET": vertical offset (float)
+            - "COUP": "dc" or "ac" coupling (str)
+            - "BWLIMIT": bandwidth limiting enabled (bool)
+            - "INVERT": inverted (bool) 
+            - "VERNIER": vernier "on" or "off" (bool)
+            - "PROBE": probe attenuation (str)
+            - "PMODE": prove mode "auto" or "manual" (str)
+            - "INPUT": input impedance FIFT or ONEM (str)
+            - "PROTECT": protect channel "on" or "off" (bool)
+        """
 
-    # @property
-    # def current_configuration(self):
-    #     """ Read channel configuration as a dict containing the following keys:
-    #         - "CHAN": channel number (int)
-    #         - "OFFS": vertical offset (float)
-    #         - "RANG": vertical range (float)
-    #         - "COUP": "dc" or "ac" coupling (str)
-    #         - "IMP": input impedance (str)
-    #         - "DISP": currently displayed (bool)
-    #         - "BWL": bandwidth limiting enabled (bool)
-    #         - "INV": inverted (bool)
-    #         - "UNIT": unit (str)
-    #         - "PROB": probe attenuation (float)
-    #         - "PROB:SKEW": skew factor (float)
-    #         - "STYP": probe signal type (str)
-    #     """
+        ch_setup_raw = self.setup_summary
 
-    #     # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and
-    #     # to query the configuration details, we actually need to ask ":channelX?", without a
-    #     # second ":"
-    #     ch_setup_raw = self.instrument.ask(":CHAN%d?" % self.number).strip("\n")
+        # ch_setup_raw hat the following format:
+        # CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;BWLIMIT OFF;
+        # INVERT OFF;VERNIER OFF;PROBE X1;PMODE AUT;INPUT ONEM;PROTECT ON
 
-    #     # ch_setup_raw hat the following format:
-    #     # :CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;
-    #     # INV 0;LAB "1";UNIT VOLT;PROB +10E+00;PROB:SKEW +0.00E+00;STYP SING
+        # Cut out the "CHANx:" at beginning and split string
+        ch_setup_splitted = ch_setup_raw[6:].split(";")
 
-    #     # Cut out the ":CHANx:" at beginning and split string
-    #     ch_setup_splitted = ch_setup_raw[7:].split(";")
+        # Create dict of setup parameters
+        ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
 
-    #     # Create dict of setup parameters
-    #     ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
+        # Add "CHAN" key
+        ch_setup_dict["CHAN"] = ch_setup_raw[4]
+        print(ch_setup_dict)
 
-    #     # Add "CHAN" key
-    #     ch_setup_dict["CHAN"] = ch_setup_raw[5]
-
-    #     # Convert values to specific type
-    #     to_str = ["COUP", "IMP", "UNIT", "STYP"]
-    #     to_bool = ["DISP", "BWL", "INV"]
-    #     to_float = ["OFFS", "PROB", "PROB:SKEW", "RANG"]
-    #     to_int = ["CHAN"]
-    #     for key in ch_setup_dict:
-    #         if key in to_str:
-    #             ch_setup_dict[key] = str(ch_setup_dict[key])
-    #         elif key in to_bool:
-    #             ch_setup_dict[key] = (ch_setup_dict[key] == "1")
-    #         elif key in to_float:
-    #             ch_setup_dict[key] = float(ch_setup_dict[key])
-    #         elif key in to_int:
-    #             ch_setup_dict[key] = int(ch_setup_dict[key])
-    #     return ch_setup_dict
+        # Convert values to specific type
+        to_str = ["COUP", "PROBE", "PMODE", "INPUT"]
+        to_bool = ["BWLIMIT", "INVERT", "VERNIER", "PROTECT"]
+        to_float = ["RANGE", "OFFSET"]
+        to_int = ["CHAN"]
+        for key in ch_setup_dict:
+            if key in to_str:
+                ch_setup_dict[key] = str(ch_setup_dict[key])
+            elif key in to_bool:
+                if (ch_setup_dict[key] == "ON"):
+                    ch_setup_dict[key] = True
+                elif (ch_setup_dict[key] == "OFF"):
+                    ch_setup_dict[key] = False
+                else:
+                    raise Exception("Boolean should be either \"ON\" or \"OFF\". Setup value is neither.")
+            elif key in to_float:
+                ch_setup_dict[key] = float(ch_setup_dict[key])
+            elif key in to_int:
+                ch_setup_dict[key] = int(ch_setup_dict[key])
+        return ch_setup_dict
 
 class HP54616B(SCPIMixin, Instrument):
     """ Represents the Hewlett Packard HP54616B Oscilloscope
@@ -619,115 +612,115 @@ class HP54616B(SCPIMixin, Instrument):
     # Measure #
     ###############
 
-    measure_all = Instrument.measurement(
+    measure_all = Instrument.control(
         get_command=":MEAS:ALL?",
         set_command=None,
         docs="""Measure all results""",
     )
 
-    measure_define_delay = Instrument.measurement(
+    measure_define_delay = Instrument.control(
         get_command=":MEAS:DEF? DEL",
         set_command=":MEAS:DEF DEL %s",
         docs="""Set edge numbers to use for delay measurement in the format <edge1>,<edge2>""",
     )
 
-    measure_delay = Instrument.measurement(
+    measure_delay = Instrument.control(
         get_command=":MEAS:DEL?",
         set_command=":MEAS:DEL",
         docs="""Measure edge to edge delay""",
     )
 
-    measure_dutycycle = Instrument.measurement(
+    measure_dutycycle = Instrument.control(
         get_command=":MEAS:DUTY?",
         set_command=":MEAS:DUTY",
         docs="""Measure dutycycle""",
     )
 
-    measure_falltime = Instrument.measurement(
+    measure_falltime = Instrument.control(
         get_command=":MEAS:FALL?",
         set_command=":MEAS:FALL",
         docs="""Measure 90-10 fall time in seconds""",
     )
 
-    measure_frequency = Instrument.measurement(
+    measure_frequency = Instrument.control(
         get_command=":MEAS:FREQ?",
         set_command=":MEAS:FREQ",
         docs="""Measure frequency in Hertz""",
     )
 
-    measure_lower = Instrument.measurement(
+    measure_lower = Instrument.control(
         get_command=":MEAS:LOW?",
         set_command=":MEAS:LOW %s",
         docs="""Set lower voltage threshold""",
     )
 
-    measure_nwidth = Instrument.measurement(
+    measure_nwidth = Instrument.control(
         get_command=":MEAS:NWID?",
         set_command=":MEAS:NWID",
         docs="""Measure negative pulse width in seconds""",
     )
 
-    measure_overshoot = Instrument.measurement(
+    measure_overshoot = Instrument.control(
         get_command=":MEAS:OVER?",
         set_command=":MEAS:OVER",
         docs="""Measure overshoot in percentage""",
     )
 
-    measure_period = Instrument.measurement(
+    measure_period = Instrument.control(
         get_command=":MEAS:PER?",
         set_command=":MEAS:PER",
         docs="""Measure period in seconds""",
     )
 
-    measure_phase = Instrument.measurement(
+    measure_phase = Instrument.control(
         get_command=":MEAS:PHAS?",
         set_command=":MEAS:PHAS",
         docs="""Measure phase angle in degrees""",
     )
 
-    measure_preshoot = Instrument.measurement(
+    measure_preshoot = Instrument.control(
         get_command=":MEAS:PRES?",
         set_command=":MEAS:PRES",
         docs="""Measure percent of preshoot""",
     )
 
-    measure_pstart = Instrument.measurement(
+    measure_pstart = Instrument.control(
         get_command=":MEAS:PSTA?",
         set_command=":MEAS:PSTA",
         docs="""Measure relative position of time marker 1 in degrees""",
     )
 
-    measure_pstop = Instrument.measurement(
+    measure_pstop = Instrument.control(
         get_command=":MEAS:PSTO?",
         set_command=":MEAS:PSTO",
         docs="""Measure relative position of time marker 2 in degrees""",
     )
 
-    measure_pwidth = Instrument.measurement(
+    measure_pwidth = Instrument.control(
         get_command=":MEAS:PWID?",
         set_command=":MEAS:PWID",
         docs="""Measure positive pulse width in seconds""",
     )
 
-    measure_risetime = Instrument.measurement(
+    measure_risetime = Instrument.control(
         get_command=":MEAS:RISE?",
         set_command=":MEAS:RISE",
         docs="""Measure rise time in seconds""",
     )
 
-    measure_scratch = Instrument.measurement(
+    measure_scratch = Instrument.control(
         get_command=None,
         set_command=":MEAS:SCR",
         docs="""Set the display to clear the measurement results""",
     )
 
-    measure_set100 = Instrument.measurement(
+    measure_set100 = Instrument.control(
         get_command=None,
         set_command=":MEAS:SET100",
         docs="""Set 100""",
     )
 
-    measure_set360 = Instrument.measurement(
+    measure_set360 = Instrument.control(
         get_command=None,
         set_command=":MEAS:SET360",
         docs="""Set 360""",
@@ -751,7 +744,7 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=False,
     )
 
-    measure_thresholds = Instrument.measurement(
+    measure_thresholds = Instrument.control(
         get_command=":MEAS:THR?",
         set_command=":MEAS:THR %s",
         docs="""Measure 10-90% time, 20-80% time and voltage between thresholds""",
@@ -772,7 +765,7 @@ class HP54616B(SCPIMixin, Instrument):
         docs="""Set time of stop marker in seconds""",
     )
 
-    measure_tvolt = Instrument.measurement(
+    measure_tvolt = Instrument.control(
         get_command=":MEAS:TVOL?",
         set_command=None,
         docs="""Measure TVOLT <tvolt_argument> ::= positive or negative voltage level that the waveform must cross. <slope> ::= direction of the waveform when <tvolt_argument> is crossed. <occurrence> ::= number of crossings to be reported. <return_value> ::= time in seconds of specified voltage crossing in NR3 format""",
@@ -784,43 +777,43 @@ class HP54616B(SCPIMixin, Instrument):
         docs="""Set upper voltage threshold""",
     )
 
-    measure_vamplitude = Instrument.measurement(
+    measure_vamplitude = Instrument.control(
         get_command=":MEAS:VAMP?",
         set_command=":MEAS:VAMP",
         docs="""Measure amplitude of selected waveform in volts""",
     )
 
-    measure_vaverage = Instrument.measurement(
+    measure_vaverage = Instrument.control(
         get_command=":MEAS:VAV?",
         set_command=":MEAS:VAV",
         docs="""Measure average voltage""",
     )
 
-    measure_vbase = Instrument.measurement(
+    measure_vbase = Instrument.control(
         get_command=":MEAS:VBAS?",
         set_command=":MEAS:VBAS",
         docs="""Measure voltage at base of selected waveform""",
     )
 
-    measure_vdelta = Instrument.measurement(
+    measure_vdelta = Instrument.control(
         get_command=":MEAS:VDELta?",
         set_command=None,
         docs="""Measure voltage difference between marker 1 and 2""",
     )
 
-    measure_vmax = Instrument.measurement(
+    measure_vmax = Instrument.control(
         get_command=":MEAS:VMAX?",
         set_command=":MEAS:VMAX",
         docs="""Measure maximum voltage of selected waveform""",
     )
 
-    measure_vmin = Instrument.measurement(
+    measure_vmin = Instrument.control(
         get_command=":MEAS:VMIN?",
         set_command=":MEAS:VMIN",
         docs="""Measure minimum voltage of selected waveform""",
     )
 
-    measure_vpp = Instrument.measurement(
+    measure_vpp = Instrument.control(
         get_command=":MEAS:VPP?",
         set_command=":MEAS:VPP",
         docs="""Measure peak-to-peak voltage of selected waveform""",
@@ -838,7 +831,7 @@ class HP54616B(SCPIMixin, Instrument):
         docs="""Set relative position of voltage marker 2 in percent""",
     )
 
-    measure_vrms = Instrument.measurement(
+    measure_vrms = Instrument.control(
         get_command=":MEAS:VRMS?",
         set_command=":MEAS:VRMS",
         docs="""Measure dc RMS voltage""",
@@ -856,13 +849,13 @@ class HP54616B(SCPIMixin, Instrument):
         docs="""Set voltage value of voltage marker 2""",
     )
 
-    measure_vtime = Instrument.measurement(
+    measure_vtime = Instrument.control(
         get_command=":MEAS:VTIM %s",
         set_command=None,
         docs="""Measure time from trigger in seconds""",
     )
 
-    measure_vtop = Instrument.measurement(
+    measure_vtop = Instrument.control(
         get_command=":MEAS:VTOP?",
         set_command=":MEAS:VTOP",
         docs="""Measure voltage at top of the waveform""",
