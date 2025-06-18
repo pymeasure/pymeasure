@@ -194,7 +194,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     def check_idle(self):
         """Check if instrument is idle (``*OPC?``). Alias for :meth:`~.SCPIMixin.complete`."""
-        return self.complete()
+        return self.complete
 
     def clear_buffer(self):
         """Clear output data buffer (``BC``)"""
