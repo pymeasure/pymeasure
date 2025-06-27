@@ -204,17 +204,17 @@ class OphirBase(OphirCommunication):
         get_process=lambda v: v[v[0]],
     )
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the device, for example after a head change."""
         return self.ask("RE")
 
-    def start_streaming(self, downsampling=0):
+    def start_streaming(self, downsampling: int = 0) -> None:
         """Start streaming mode, where the device sends every `downsampling` measurement."""
         RS232 = True  # TODO make the check
         if RS232:
             # only for RS232 kommunication. Only needed once.
             self.ask("DU")  # full DUplex, necessary for streaming mode
-        self.ask("CS1{downsampling if downsampling else ''}")
+        self.ask(f"CS1{downsampling if downsampling else ''}")
         # Continuous Send. CS {int(on/off)} {every X measurement} {response format}
 
     def stop_streaming(self):
@@ -289,7 +289,6 @@ class OphirBase(OphirCommunication):
         return values
 
     # Wavelength
-    # TODO all the wavelength stuff. How to implement it well?
     @property
     def wavelength_options(self):
         """Get a list of all wavelengths or a list of the wavelength limits."""
@@ -329,7 +328,7 @@ class OphirBase(OphirCommunication):
         return self.ask("AW")  # All Wavelengths
 
     """
-        TODO
+        # Additional commands not yet implemented
         WE erase a wavelength from the list
         WI set the wavelength to index
         WL set currently active wavelength to value
@@ -404,7 +403,7 @@ class OphirBase(OphirCommunication):
         # not Pulsar
     )
 
-    def save_head_configuration(self, config):
+    def save_head_configuration(self, config: str) -> None:
         """
         Save selected sensor configuration.
 
