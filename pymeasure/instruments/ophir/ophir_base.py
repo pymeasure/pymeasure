@@ -201,7 +201,7 @@ class OphirBase(OphirCommunication):
         check_set_errors=True,
         values={9600: 1, 19200: 2, 38400: 3, 300: 4, 1200: 5, 4800: 6},
         map_values=True,
-        get_process=lambda v: v[v[0]],
+        get_process_list=lambda v: v[v[0]],
     )
 
     def reset(self) -> None:
@@ -311,7 +311,7 @@ class OphirBase(OphirCommunication):
         # AW, WI not available for NOVA I
         cast=str,
         map_values=True,
-        get_process=lambda v: v[int(v[1]) + 1]
+        get_process_list=lambda v: v[int(v[1]) + 1]
         if v[0] == "DISCRETE"
         else v[int(v[3] + 3)],
         check_set_errors=True,
@@ -341,7 +341,7 @@ class OphirBase(OphirCommunication):
         "DQ",
         "DQ%i",  # Diffuser Query
         """Control pyroelectric sensors diffuser.""",
-        get_process=lambda v: v[int(v[0])],
+        get_process_list=lambda v: v[int(v[0])],
         cast=str,
         values={"IN": 2, "OUT": 1},
         map_values=True,
@@ -353,7 +353,7 @@ class OphirBase(OphirCommunication):
         "FQ",
         "FQ%i",  # Filter Query
         """Control photodiode sensors filter.""",
-        get_process=lambda v: v[int(v[0])],
+        get_process_list=lambda v: v[int(v[0])],
         cast=str,
         values={"IN": 2, "OUT": 1},
         map_values=True,
@@ -368,7 +368,7 @@ class OphirBase(OphirCommunication):
         map_values=True,
         cast=str,
         check_set_errors=True,
-        get_process=lambda v: v[int(v[0])],
+        get_process_list=lambda v: v[int(v[0])],
     )
 
     bc20_mode = Instrument.control(
@@ -376,7 +376,7 @@ class OphirBase(OphirCommunication):
         "BQ%i",  # Bc20 Query
         """Control BC20 sensor mode. Some devices can use `mode` as well.""",
         cast=str,
-        get_process=lambda v: v[int(v[0])],
+        get_process_list=lambda v: v[int(v[0])],
         values={"HOLD": 1, "CONTINUOUS": 2},
         map_values=True,
         check_set_errors=True,
@@ -388,7 +388,7 @@ class OphirBase(OphirCommunication):
         "UT%i",
         """Control the threshold of the sensor as fraction (4 decimals),
         returns current, min, and max.""",
-        get_process=lambda vs: [v / 10000 for v in vs],
+        get_process_list=lambda vs: [v / 10000 for v in vs],
         set_process=lambda v: round(v * 10000),
         check_set_errors=True,
         # not Pulsar
@@ -435,7 +435,7 @@ class OphirBase(OphirCommunication):
         "ZQ",  # Zero Query
         """Get the status of the zeroing process.""",
         cast=str,
-        get_process=lambda v: " ".join(v),
+        get_process_list=lambda v: " ".join(v),
     )
 
     def save_zero(self):
@@ -454,7 +454,7 @@ class OphirBase(OphirCommunication):
         "PL%i",
         """Control the maximum pulse length for measurement.""",
         cast=str,
-        get_process=lambda v: (v[int(v[0])], v[1:]),
+        get_process_list=lambda v: (v[int(v[0])], v[1:]),
         check_set_errors=True,
         dynamic=True,
         # not Pulsar
@@ -464,7 +464,7 @@ class OphirBase(OphirCommunication):
         "ET",
         "ET%i",
         """Control the energy threshold of the sensor, returns a list of possible values.""",
-        get_process=lambda v: (v[int(v[0])], v[1:]),
+        get_process_list=lambda v: (v[int(v[0])], v[1:]),
         cast=str,
         values={"LOW": 1, "MEDIUM": 2, "HIGH": 3},
         map_values=True,
@@ -499,7 +499,7 @@ class OphirBase(OphirCommunication):
     exposure_energy = Instrument.measurement(
         "EE",
         """Get exposure energy in J, count of pulses, and time in s.""",
-        get_process=lambda v: [*v[:2], v[2] / 10],
+        get_process_list=lambda v: [*v[:2], v[2] / 10],
         # not Pulsar
     )
 
@@ -515,7 +515,7 @@ class OphirBase(OphirCommunication):
         "BT",  # BeamTrack
         """Get the position (x,y) and spot size in mm.""",
         cast=str,
-        get_process=lambda v: [float(v[3]), float(v[5]), float(v[7])],
+        get_process_list=lambda v: [float(v[3]), float(v[5]), float(v[7])],
         # not Pulsar
     )
 
