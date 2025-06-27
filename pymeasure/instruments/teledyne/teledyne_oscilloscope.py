@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -227,7 +227,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values=BANDWIDTH_LIMITS,
-        get_process=_results_list_to_dict,
+        get_process_list=_results_list_to_dict,
         dynamic=True,
     )
 
@@ -573,7 +573,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Set the internal low-pass filter for all channels.""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
-        get_process=_results_list_to_dict,
+        get_process_list=_results_list_to_dict,
         dynamic=True,
     )
 
@@ -657,7 +657,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         Note that the oscilloscope may provide less than the specified nb of points.
         """,
         validator=strict_range,
-        get_process=lambda vals: vals[vals.index("NP") + 1],
+        get_process_list=lambda vals: vals[vals.index("NP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -669,7 +669,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
                SP = 4 sends 1 point every 4 data points.
         """,
         validator=strict_range,
-        get_process=lambda vals: vals[vals.index("SP") + 1],
+        get_process_list=lambda vals: vals[vals.index("SP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -679,7 +679,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         For waveforms acquired in sequence mode, this refers to the relative address in the
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
-        get_process=lambda vals: vals[vals.index("FP") + 1],
+        get_process_list=lambda vals: vals[vals.index("FP") + 1],
         values=[0, sys.maxsize]
     )
 
@@ -966,7 +966,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
     _trigger_select = Instrument.control(
         "TRSE?", _trigger_select_normal_command,
         """Control the trigger, see :meth:`~trigger_select()` documentation.""",
-        get_process=_trigger_select_get_process,
+        get_process_list=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_vals,
         dynamic=True
@@ -1132,5 +1132,5 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Set the intensity level of the grid or the trace in percent """,
         validator=_intensity_validator,
         values=[[0, 100], [0, 100]],
-        get_process=lambda v: {v[0]: v[1], v[2]: v[3]}
+        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]}
     )

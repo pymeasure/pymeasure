@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.anritsu import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B,\
+from pymeasure.instruments.anritsu import AnritsuMS464xB, AnritsuMS4642B, AnritsuMS4644B, \
     AnritsuMS4645B, AnritsuMS4647B
 
 

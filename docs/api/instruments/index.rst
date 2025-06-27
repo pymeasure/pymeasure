@@ -21,6 +21,7 @@ Instruments by manufacturer:
    :maxdepth: 2
 
    activetechnologies/index
+   aculight/index
    advantest/index
    agilent/index
    aimtti/index
@@ -56,12 +57,16 @@ Instruments by manufacturer:
    novanta/index
    oxfordinstruments/index
    parker/index
+   philips/index
    pendulum/index
    proterial/index
+   ptw/index
    racal/index
    razorbill/index
    redpitaya/index
+   rigol/index
    rohdeschwarz/index
+   santec/index
    siglenttechnologies/index
    signalrecovery/index
    srs/index

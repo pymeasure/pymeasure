@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -112,7 +112,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     # Routing commands
     closed_channels = Instrument.control(
         "ROUTe:MULTiple:CLOSe?", "ROUTe:MULTiple:CLOSe %s",
-        """ Parameter that controls the opened and closed channels.
+        """ Control the opened and closed channels.
         All mentioned channels are closed, other channels will be opened.
         """,
         validator=clist_validator,
@@ -127,7 +127,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     open_channels = Instrument.setting(
         "ROUTe:MULTiple:OPEN %s",
-        """ A parameter that opens the specified list of channels. Can only
+        """ Set the specified list of channels. Can only
         be set.
         """,
         validator=clist_validator,
@@ -282,6 +282,11 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     @property
     def error(self):
+        """Get the next error from the queue.
+
+        .. deprecated:: 0.15
+            Use `next_error` instead.
+        """
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
@@ -291,7 +296,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     options = Instrument.measurement(
         "*OPT?",
-        """Property that lists the installed cards in the Keithley 2700.
+        """Get the lists of the installed cards in the Keithley 2700.
         Returns a dict with the integer card numbers on the position.""",
         cast=False
     )
@@ -302,7 +307,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
 
     text_enabled = Instrument.control(
         "DISP:TEXT:STAT?", "DISP:TEXT:STAT %d",
-        """ A boolean property that controls whether a text message can be
+        """ Control (boolean) whether a text message can be
         shown on the display of the Keithley 2700.
         """,
         values={True: 1, False: 0},
@@ -310,7 +315,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
     )
     display_text = Instrument.control(
         "DISP:TEXT:DATA?", "DISP:TEXT:DATA '%s'",
-        """ A string property that controls the text shown on the display of
+        """ Control (string) the text shown on the display of
         the Keithley 2700. Text can be up to 12 ASCII characters and must be
         enabled to show.
         """,

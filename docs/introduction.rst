@@ -38,4 +38,4 @@ These features are explored in the :doc:`Using a graphical interface <tutorial/g
     :alt: ManagedWindow Running Example
 
 The GUIs are not restricted to the instruments included in this package. Any python instrument may be used.
-For example,  `this script <https://github.com/pymeasure/pymeasure/tree/master/examples/Basic/gui_foreign_instrument.py>`_ demonstrates how to use an `InstrumentKit <instrumentkit.readthedocs.io/>`_ instrument.
+For example,  `this script <https://github.com/pymeasure/pymeasure/tree/master/examples/Basic/gui_foreign_instrument.py>`_ demonstrates how to use an `InstrumentKit <https://instrumentkit.readthedocs.io>`_ instrument.

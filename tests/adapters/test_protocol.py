@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +47,7 @@ def test_to_bytes(input, output):
 
 def test_to_bytes_invalid():
     with raises(TypeError):
-        to_bytes(5.5j)
+        to_bytes(5.5j)  # type: ignore
 
 
 def test_protocol_instantiation():

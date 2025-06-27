@@ -2,6 +2,12 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=8.1.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E"]
+
 [project]
 name = "PyMeasure"
 dynamic = ["version", "readme"]
@@ -9,7 +15,7 @@ authors = [
     {name = "PyMeasure Developers"}
 ]
 description = "Scientific measurement library for instruments, experiments, and live-plotting"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
 license = {text = "MIT"}
 classifiers = [
@@ -21,7 +27,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,15 +41,13 @@ dependencies = [
     "pyvisa>=1.9",
     "pyserial>=2.7",
     "pyqtgraph>=0.12",
+    "qtpy>=2.4",
 ]
 
 [project.optional-dependencies]
 tcp = [
     "pyzmq>=16.0.2",
     "cloudpickle>=0.3.1",
-]
-python-vxi11 = [
-    "python-vxi11>=0.9",
 ]
 tests = [
     "pytest>=3.3.0",
@@ -81,3 +84,9 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false

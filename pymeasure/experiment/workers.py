@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from __future__ import annotations
 
 import logging
 import time
 import traceback
 from queue import Queue
+from typing import Any, Sequence
+
+import numpy as np
 
 from .listeners import Recorder
 from .procedure import Procedure
@@ -95,7 +99,7 @@ class Worker(StoppableThread):
                 self.context = None
                 self.publisher = None
 
-    def join(self, timeout=0):
+    def join(self, timeout: int = 0):
         try:
             super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
@@ -103,7 +107,7 @@ class Worker(StoppableThread):
             self.stop()
             super().join(0)
 
-    def emit(self, topic, record):
+    def emit(self, topic: str, record: Any):
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
@@ -115,9 +119,47 @@ class Worker(StoppableThread):
         except (NameError, AttributeError):
             pass  # No dumps defined
         if topic == 'results':
-            self.recorder.handle(record)
+            self.handle_record(record)
+        elif topic == 'batch results':
+            self.handle_batch_record(record)
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
+
+    def handle_record(self, record: dict[str, Any]):
+        self.recorder.handle(record)
+
+    def handle_batch_record(self, record: Any):
+        if self._is_dictionary_of_sequences(record):
+            lengths = list(len(value) for value in record.values())
+            if not all(length == lengths[0] for length in lengths):
+                log.error(
+                    'Data loss detected: not all sequences in the batch have the same length.'
+                )
+                self.stop()
+                return
+
+            for index in range(lengths[0]):
+                # Handle the records one by one.
+                single_record = {key: value[index] for key, value in record.items()}
+                self.handle_record(single_record)
+        else:
+            log.error(f'Unsupported type ({type(record)}) for batch results.')
+            self.stop()
+
+    def _is_dictionary_of_sequences(self, record: Any) -> bool:
+        """
+        Checks if the record is a dictionary of sequences, there are a couple data types that we do
+        not want to treat as sequences, such as strings and bytes. This function will return False
+        if any of the values in the dictionary are strings or bytes or not a sequence.
+        """
+        sequence_types = (Sequence, np.ndarray)
+        type_exceptions = (str, bytes)
+        if not isinstance(record, dict):
+            return False
+        return all(
+            isinstance(value, sequence_types) and not isinstance(value, type_exceptions) for value
+            in record.values()
+        )
 
     def handle_abort(self):
         log.exception("User stopped Worker execution prematurely")
@@ -129,7 +171,10 @@ class Worker(StoppableThread):
         self.emit('error', traceback_str)
         self.update_status(Procedure.FAILED)
 
-    def update_status(self, status):
+    def is_last(self):
+        raise NotImplementedError('should be monkey patched by a manager')
+
+    def update_status(self, status: int):
         self.procedure.status = status
         self.emit('status', status)
 
@@ -164,6 +209,7 @@ class Worker(StoppableThread):
         # route Procedure methods & log
         self.procedure.should_stop = self.should_stop
         self.procedure.emit = self.emit
+        self.procedure.is_last = self.is_last
 
         log.info("Worker started running an instance of %r", self.procedure.__class__.__name__)
         self.update_status(Procedure.RUNNING)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +99,7 @@ class Pirani(SensorChannel):
         preprocess_reply=lambda msg: msg.strip("W"),
         separator="A",
         cast=int,
-        get_process=lambda vals: (vals[0], vals[1] / 4),
+        get_process_list=lambda vals: (vals[0], vals[1] / 4),
     )
 
 
@@ -451,8 +451,8 @@ class SmartlineV2(Instrument):
         "0OH00", "Measure the operating hours.",
         separator="C",
         cast=int,
-        get_process=lambda vals: vals / 4 if isinstance(vals, int) else [v / 4 for v in vals],
-        # TODO simplify once #740 is merged.
+        get_process=lambda val: val / 4,
+        get_process_list=lambda vals: [v / 4 for v in vals],
     )
 
 

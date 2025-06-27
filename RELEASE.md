@@ -11,6 +11,9 @@
     * Adapt the format and structure to the previous release message:
     * Divide the entries into categories and try to begin entries with "New", "Add", "Fix" or "Remove" as appropriate. (This could also be automated by the above generator with some labeling effort on our part)
     * We also remove the PR URLs as they clutter the log and condense the new contributors list.
+    * Helpful regex entries:
+      * For the PR URLs: `by (@[\w-]+) in https://github.com/pymeasure/pymeasure/pull/(\d+)` to `($1, #$2)`.
+      * For new contributors: ` made their first contribution in https://github.com/pymeasure/pymeasure/pull/\d+` to `, `
 4. Update the version number in CITATION.cff
     * On the line starting with `version: `, replace the current version number with the new version number 
 5. Push the changes up as a PR

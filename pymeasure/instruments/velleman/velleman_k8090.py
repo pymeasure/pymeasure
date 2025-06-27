@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -127,7 +127,7 @@ class VellemanK8090(Instrument):
         Get firmware version, as (year - 2000, week). E.g. ``(10, 1)``
         """,
         cast=int,
-        get_process=lambda v: (v[2], v[3]) if len(v) > 3 and v[0] == 0x71 else None,
+        get_process_list=lambda v: (v[2], v[3]) if len(v) > 3 and v[0] == 0x71 else None,
     )
 
     status = Instrument.measurement(
@@ -143,7 +143,7 @@ class VellemanK8090(Instrument):
         * Timer state: the state of each relay timer
         """,
         cast=int,
-        get_process=_get_process_status,
+        get_process_list=_get_process_status,
     )
 
     switch_on = Instrument.setting(

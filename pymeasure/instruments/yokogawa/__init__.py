@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,6 @@
 # THE SOFTWARE.
 #
 
+from .aq6370series import AQ6370Series, AQ6370C, AQ6370D, AQ6370E, AQ6373, AQ6373B, AQ6375, AQ6375B
 from .yokogawa7651 import Yokogawa7651
 from .yokogawags200 import YokogawaGS200

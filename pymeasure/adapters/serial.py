@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,21 +36,13 @@ class SerialAdapter(Adapter):
     serial communication to instrument
 
     :param port: Serial port
-    :param preprocess_reply: An optional callable used to preprocess strings
-        received from the instrument. The callable returns the processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
     :param write_termination: String appended to messages before writing them.
     :param read_termination: String expected at end of read message and removed.
     :param \\**kwargs: Any valid key-word argument for serial.Serial
     """
 
-    def __init__(self, port, preprocess_reply=None,
-                 write_termination="", read_termination="",
-                 **kwargs):
-        super().__init__(preprocess_reply=preprocess_reply)
+    def __init__(self, port, write_termination="", read_termination="", **kwargs):
+        super().__init__()
         if isinstance(port, serial.SerialBase):
             self.connection = port
         else:
@@ -83,12 +75,7 @@ class SerialAdapter(Adapter):
         :returns str: ASCII response of the instrument (read_termination is removed first).
         """
         read = self._read_bytes(-1, break_on_termchar=True, **kwargs).decode()
-        # Python>3.8 this shorter form is possible:
-        # self._read_bytes(-1).decode().removesuffix(self.read_termination)
-        if self.read_termination:
-            return read.split(self.read_termination)[0]
-        else:
-            return read
+        return read.removesuffix(self.read_termination) if self.read_termination else read
 
     def _read_bytes(self, count, break_on_termchar, **kwargs):
         """Read a certain number of bytes from the instrument.

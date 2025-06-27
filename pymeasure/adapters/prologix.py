@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 import time
-from warnings import warn
 
 from pymeasure.adapters import VISAAdapter
+from pyvisa.constants import VI_ATTR_ASRL_AVAIL_NUM
 
 
 class PrologixAdapter(VISAAdapter):
@@ -42,19 +42,6 @@ class PrologixAdapter(VISAAdapter):
         that identifies the connection to the Prologix device itself, for example
         "ASRL5" for the 5th COM port.
     :param address: Integer GPIB address of the desired instrument.
-    :param rw_delay: An optional delay to set between a write and read call for
-        slow to respond instruments.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `wait_for` method instead.
-
-    :param preprocess_reply: optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
     :param auto: Enable or disable read-after-write and address instrument to listen.
     :param eoi: Enable or disable EOI assertion.
     :param eos: Set command termination string (CR+LF, CR, LF, or "")
@@ -88,27 +75,40 @@ class PrologixAdapter(VISAAdapter):
         sudo udevadm control --reload-rules
         sudo udevadm trigger
 
+    Since the Prologix adapter uses the same communication channel (an USB
+    CDC) for both, communication with the adapter itself, as well as
+    communication over GPIB, certain things need to be kept in mind:
+
+    - Operations that need to read from GPIB use the standard :meth:`read`
+      method.
+
+    - Operations that just read responses from the Prologix itself need to
+      add the parameter :code:`prologix=True` to :meth:`read`; this avoids
+      requesting data from GPIB. This is also necessary when the adapter is
+      put into "listen-only" mode, where all GPIB traffic is automatically
+      being passed up.
+
+    - Binary data must be passed to the bus using :meth:`write_binary_values`.
+      This takes care of properly escaping those binary values that would
+      otherwise be interpreted by the Prologix adapter. Note that the default
+      for :meth:`write_binary_values` are to assume floating-point binary
+      data, and prepend IEEE headers. In order to pass just plain bytes to the
+      adapter, tune the :code:`datatype` and :code:`header_fmt` parameters:
+
+      .. code::
+
+         multimeter.write_binary_values('W', [addr], datatype='B', header_fmt='empty')
+
     """
 
-    def __init__(self, resource_name, address=None, rw_delay=0, serial_timeout=None,
-                 preprocess_reply=None, auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
+    def __init__(self, resource_name, address=None,
+                 auto=False, eoi=True, eos="\n", gpib_read_timeout=None,
                  **kwargs):
-        # for legacy rw_delay: prefer new style over old one.
-        if rw_delay:
-            warn(("Parameter `rw_delay` is deprecated. "
-                  "Implement in Instrument's `wait_for` instead."),
-                 FutureWarning)
-            kwargs['query_delay'] = rw_delay
-        if serial_timeout:
-            warn("Parameter `serial_timeout` is deprecated. Use `timeout` in ms instead",
-                 FutureWarning)
-            kwargs['timeout'] = serial_timeout
         super().__init__(resource_name,
                          asrl={
                              'timeout': 500,
                              'write_termination': "\n",
                          },
-                         preprocess_reply=preprocess_reply,
                          **kwargs)
         self.address = address
         if not isinstance(resource_name, PrologixAdapter):
@@ -203,18 +203,6 @@ class PrologixAdapter(VISAAdapter):
         """
         self.write('++rst')
 
-    def ask(self, command):
-        """ Ask the Prologix controller.
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to instrument
-        """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        self.write(command)
-        return self.read()
-
     def write(self, command, **kwargs):
         """Write a string command to the instrument appending `write_termination`.
 
@@ -281,6 +269,21 @@ class PrologixAdapter(VISAAdapter):
         if not prologix:
             self.write("++read eoi")
         return super()._read()
+
+    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+        """Read bytes from the instrument.
+
+        :param int count: Number of bytes to read. A value of -1 indicates to
+            read from the whole read buffer.
+        :param bool break_on_termchar: Stop reading at a termination character.
+        :param \\**kwargs: Keyword arguments for the connection itself.
+        :returns bytes: Bytes response of the instrument (including termination).
+        """
+        avail = self.connection.get_visa_attribute(VI_ATTR_ASRL_AVAIL_NUM)
+        if avail == 0:
+            # nothing buffered, need to request data from Prologix
+            self.write("++read eoi")
+        return super()._read_bytes(count, break_on_termchar, **kwargs)
 
     def gpib(self, address, **kwargs):
         """ Return a PrologixAdapter object that references the GPIB

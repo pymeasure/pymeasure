@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,14 +48,14 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         self.set_defaults()
 
     def read(self):
-        """ Overwrites the Instrument.read command to provide the correct
+        """ Overwrite the Instrument.read command to provide the correct
         functionality
         """
         # TODO seems to be broken as it does not make sense see issue #623
         return re.sub(r'\r\n\n(>|\?)? ', '', "\n".join(self.readlines()))
 
     def set_defaults(self):
-        """ Sets up the default values for the motor, which
+        """ Set up the default values for the motor, which
         is run upon construction
         """
         self.echo = False
@@ -66,7 +66,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         self.velocity = 3
 
     def reset(self):
-        """ Resets the motor controller while blocking and
+        """ Reset the motor controller while blocking and
         (CAUTION) resets the absolute position value of the motor
         """
         self.write("RESET")
@@ -84,18 +84,17 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
 
     @property
     def status(self):
-        """ Returns a list of the motor status in readable format """
+        """ Get a list of the motor status in readable format """
         return self.ask("TASF").split("\r\n\n")
 
     def is_moving(self):
-        """ Returns True if the motor is currently moving """
+        """ Return True if the motor is currently moving """
         return self.position is None
 
     @property
     def angle(self):
-        """ Returns the angle in degrees based on the position
+        """ Control the angle in degrees based on the position
         and whether relative or absolute positioning is enabled,
-        returning None on error
         """
         position = self.position
         if position is not None:
@@ -105,14 +104,11 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
 
     @angle.setter
     def angle(self, angle):
-        """ Gives the motor a setpoint in degrees based on an
-        angle from a relative or absolution position
-        """
         self.position = int(angle * self.degrees_per_count**-1)
 
     @property
     def angle_error(self):
-        """ Returns the angle error in degrees based on the
+        """ Get the angle error in degrees based on the
         position error, or returns None on error
         """
         position_error = self.position_error
@@ -123,8 +119,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
 
     @property
     def position(self):
-        """ Returns an integer number of counts that correspond to
-        the angular position where 1 revolution equals 4000 counts
+        """ Control the angular position in counts, 4000 per revolution (int).
         """
         match = re.search(r'(?<=TPE)-?\d+', self.ask("TPE"))
         if match is None:
@@ -133,15 +128,12 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
             return int(match.group(0))
 
     @position.setter
-    def position(self, counts):  # in counts: 4000 count = 1 rev
-        """ Gives the motor a setpoint in counts where 4000 counts
-        equals 1 revolution
-        """
+    def position(self, counts):
         self.write("D" + str(int(counts)))
 
     @property
     def position_error(self):
-        """ Returns the error in the number of counts that corresponds
+        """ Get the error in the number of counts that corresponds
         to the error in the angular position where 1 revolution equals
         4000 counts
         """
@@ -152,33 +144,33 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
             return int(match.group(0))
 
     def move(self):
-        """ Initiates the motor to move to the setpoint """
+        """ Initiate the motor to move to the setpoint """
         self.write("GO")
 
     def stop(self):
-        """ Stops the motor during movement """
+        """ Stop the motor during movement """
         self.write("S")
 
     def kill(self):
-        """ Stops the motor """
+        """ Stop the motor """
         self.write("K")
 
     def use_absolute_position(self):
-        """ Sets the motor to accept setpoints from an absolute
+        """ Set the motor to accept setpoints from an absolute
         zero position
         """
         self.write("MA1")
         self.write("MC0")
 
     def use_relative_position(self):
-        """ Sets the motor to accept setpoints that are relative
+        """ Set the motor to accept setpoints that are relative
         to the last position
         """
         self.write("MA0")
         self.write("MC0")
 
     def set_hardware_limits(self, positive=True, negative=True):
-        """ Enables (True) or disables (False) the hardware
+        """ Enable (True) or disables (False) the hardware
         limits for the motor
         """
         if positive and negative:
@@ -191,7 +183,7 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
             self.write("LH0")
 
     def set_software_limits(self, positive, negative):
-        """ Sets the software limits for motion based on
+        """ Set the software limits for motion based on
         the count unit where 4000 counts is 1 revolution
         """
         self.write("LSPOS%d" % int(positive))
@@ -199,13 +191,11 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
 
     @property
     def echo(self):
-        pass
+        """Set whether the echoing of all commands sent to the instrument is enabled (bool)."""
+        raise NotImplementedError
 
     @echo.setter
     def echo(self, enable=False):
-        """ Enables (True) or disables (False) the echoing
-        of all commands that are sent to the instrument
-        """
         if enable:
             self.write("ECHO1")
         else:
@@ -213,31 +203,31 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
 
     @property
     def acceleration(self):
+        """ Set the acceleration setpoint in revolutions per second
+        squared.
+        """
         pass  # TODO: Implement acceleration return value
 
     @acceleration.setter
     def acceleration(self, acceleration):
-        """ Sets the acceleration setpoint in revolutions per second
-        squared
-        """
         self.write("A" + str(float(acceleration)))
 
     @property
     def average_acceleration(self):
+        """ Set the average acceleration setpoint in revolutions
+        per second squared.
+        """
         pass  # TODO: Implement average_acceleration return value
 
     @average_acceleration.setter
     def average_acceleration(self, acceleration):
-        """ Sets the average acceleration setpoint in revolutions
-        per second squared
-        """
         self.write("AA" + str(float(acceleration)))
 
     @property
     def velocity(self):
+        """ Set the velocity setpoint in revolutions per second."""
         pass  # TODO: Implement velocity return value
 
     @velocity.setter
     def velocity(self, velocity):  # in revs/s
-        """ Sets the velocity setpoint in revolutions per second """
         self.write("V" + str(float(velocity)))

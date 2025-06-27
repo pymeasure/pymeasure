@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -203,6 +203,7 @@ class BaseManager(QtCore.QObject):
                 self._running_experiment = experiment
 
                 self._worker = Worker(experiment.results, port=self.port, log_level=self.log_level)
+                self._worker.is_last = lambda: not self.experiments.has_next()
 
                 self._monitor = Monitor(self._worker.monitor_queue)
                 self._monitor.worker_running.connect(self._running)
