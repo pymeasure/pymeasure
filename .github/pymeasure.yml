@@ -18,7 +18,7 @@ dependencies:
   - pytest=7.2.0
   - pytest-cov=4.1.0
   - pyvisa-sim==0.6.0
-  - flake8=6.0.0
+  - flake8=7.3.0
   - setuptools_scm # don't pin, to get newest features
   - sphinx=7.4.7
   - sphinx_rtd_theme=3.0.0
