@@ -103,8 +103,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v1
         with:
-          # ternary operator: if python-version == 3.12 use pymeasure_python312.yml else use pymeasure.yml
-          environment-file: ${{ (matrix.python-version == '3.12' || matrix.python-version == '3.13') && '.github/pymeasure_python312.yml' || '.github/pymeasure.yml'}}
+          environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
