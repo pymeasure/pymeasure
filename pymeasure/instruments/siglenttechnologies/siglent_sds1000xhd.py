@@ -415,7 +415,7 @@ class WaveformChannel(Channel):
             #       f"trdl={trdl}, tdiv={tdiv}, vcode_per={vcode_per}, adc_bit={adc_bit}")
             
             # Get the waveform points and confirm the number of waveform slice reads
-            points = self.parent.acquisition_points
+            points = self.parent.acq_points
             one_piece_num = self.max_point
             read_times = math.ceil(points / one_piece_num)
 
@@ -791,37 +791,6 @@ class TriggerChannel(Channel):
     - LINE: Line frequency trigger
     """
 
-    trigger_config_dict = {}
-
-    def get_trigger_config(self):
-        """Get the current trigger configuration as a dict with keys:
-        - "type": trigger type (EDGE, SLOPe, PULSe, VIDeo, etc.)
-        - "mode": behavior of the trigger (AUTO, NORMal, SINGle, STOP)
-        - "source": trigger source (C1, C2, C3, C4, EX, EX5, LINE)
-        - "level": Level at which the trigger will be set (float)
-        - "slope": (POSitive, NEGative, RFALl) for EDGE triggers
-        - "coupling": (DC, AC, LFREJect, HFREJect) Coupling to the trigger channel
-
-        Returns the internal configuration status
-        """
-        config = {}
-        config.update(self.trigger_type)
-        config.update(self.trigger_mode)
-        
-        # Get trigger-type specific settings
-        trigger_type = config.get("type", "EDGE")
-        if trigger_type == "EDGE":
-            config.update(self.edge_source)
-            config.update(self.edge_level)
-            config.update(self.edge_slope)
-            config.update(self.edge_coupling)
-        elif trigger_type == "SLOPe":
-            config.update(self.slope_source)
-            # Add other slope-specific parameters as needed
-        
-        self.trigger_config_dict = config
-        return self.trigger_config_dict
-
     frequency = Channel.measurement(
         ":TRIGger:FREQuency?",
         docs="""Get the current trigger frequency from the hardware frequency counter.
@@ -1085,7 +1054,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
     # Trigger subsystem
     trigger = Instrument.ChannelCreator(TriggerChannel, "")
 
-    acquire_acquisition_mode = Instrument.control(
+    acq_acquisition_mode = Instrument.control(
         ":ACQuire:AMODe?",
         ":ACQuire:AMODe %s",
         """Control sets the rate of waveform capture.
@@ -1096,7 +1065,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_interpolation = Instrument.control(
+    acq_interpolation = Instrument.control(
         ":ACQuire:INTerpolation?",
         ":ACQuire:INTerpolation %s",
         "Control acquisition interpolation method (ON selects sinx/x (sinc) "
@@ -1107,7 +1076,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_memory_mgmt = Instrument.control(
+    acq_memory_mgmt = Instrument.control(
         ":ACQuire:MMANagement?",
         ":ACQuire:MMANagement %s",
         """Control memory management mode.
@@ -1123,7 +1092,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_plot_mode = Instrument.control(
+    acq_plot_mode = Instrument.control(
         ":ACQuire:MODE?",
         ":ACQuire:MODE %s",
         """Control the acquisition mode of the oscilloscope.
@@ -1138,7 +1107,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_memory_depth = Instrument.control(
+    acq_memory_depth = Instrument.control(
         ":ACQuire:MDEPth?",
         ":ACQuire:MDEPth %s",
         """Control the memory depth.
@@ -1155,7 +1124,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_num_acquisitions = Instrument.control(
+    acq_num_acquisitions = Instrument.control(
         ":ACQuire:NUMAcq?",
         ":ACQuire:NUMAcq %d",
         """Controls the number of waveform acquisitions that
@@ -1167,13 +1136,13 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: int(v),
     )
 
-    acquisition_points = Instrument.measurement(
+    acq_points = Instrument.measurement(
         ":ACQuire:POINts?",
         "Get the number of sampled points of the current waveform on the screen.",
         get_process=lambda v: int(v),
     )
 
-    acquire_resolution = Instrument.control(
+    acq_resolution = Instrument.control(
         ":ACQuire:RESolution?",
         ":ACQuire:RESolution %s",
         "Control the ADC resolution for SDS1000X HD oscilloscope (8Bits or 10Bits).",
@@ -1182,7 +1151,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_sequence_mode = Instrument.control(
+    acq_sequence_mode = Instrument.control(
         ":ACQuire:SEQuence?",
         ":ACQuire:SEQuence %s",
         "Control sequence acquisition mode (ON/OFF).",
@@ -1192,7 +1161,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: v.strip(),
     )
 
-    acquire_sequence_count = Instrument.control(
+    acq_sequence_count = Instrument.control(
         ":ACQuire:SEQuence:COUNt?",
         ":ACQuire:SEQuence:COUNt %d",
         """Control the number of memory segments to acquire.
@@ -1206,7 +1175,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: int(v),
     )
 
-    acquire_sample_rate = Instrument.control(
+    acq_sample_rate = Instrument.control(
         ":ACQuire:SRATe?",
         ":ACQuire:SRATe %.3e",
         """Control the sampling rate in samples per second.
@@ -1216,7 +1185,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: float(v),
     )
 
-    acquire_type = Instrument.control(
+    acq_type = Instrument.control(
         ":ACQuire:TYPE?",
         ":ACQuire:TYPE %s",
         """Control the acquisition type.
