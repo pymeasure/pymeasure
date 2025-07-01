@@ -444,9 +444,6 @@ class WaveformChannel(Channel):
                 data_start = block_start + 2 + data_digit
                 recv_byte += recv_rtn[data_start:]
 
-            # Print debug information about received data
-            # print(f"Received data size: {len(recv_byte)} bytes")
-
             # Unpack signed byte data
             if adc_bit > 8:
                 # Calculate actual length of data received and adjust points if needed
@@ -485,6 +482,155 @@ class WaveformChannel(Channel):
             raise
 
 
+class AdvancedMeasurementItem(Channel):
+    """
+    Represents an advanced measurement item in the SDS1000xHD oscilloscope.
+    
+    This class provides controls for enabling/disabling the measurement item,
+    setting its source, and retrieving its value.
+    """
+
+    enabled = Channel.control(
+        ":MEASure:ADVanced:P{ch}?",
+        ":MEASure:ADVanced:P{ch} %s",
+        "Control whether the advanced measurement item is enabled (ON/OFF).",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process=lambda v: v.strip(),
+    )
+
+    source1 = Channel.control(
+        ":MEASure:ADVanced:P{ch}:SOURce1?",
+        ":MEASure:ADVanced:P{ch}:SOURce1 %s",
+        "Control the first source for the advanced measurement item.",
+        validator=strict_discrete_set,
+        values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
+                "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+                "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
+        get_process=lambda v: v.strip(),
+    )
+
+    source2 = Channel.control(
+        ":MEASure:ADVanced:P{ch}:SOURce2?",
+        ":MEASure:ADVanced:P{ch}:SOURce2 %s",
+        """Control the second source for the advanced measurement item.
+        This is used for measurements that require two sources.
+        """,
+        validator=strict_discrete_set,
+        values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
+                "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
+                "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
+        get_process=lambda v: v.strip(),
+    )
+
+    statistics_all = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? ALL",
+        "Returns all the statistics",
+        get_process=lambda v: v.strip(),
+    )
+
+    # Individual statistics measurements
+    statistics_all = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? ALL",
+        """Get all statistics for the advanced measurement item.
+        Returns all statistical data when statistics are enabled, or 'OFF' when disabled.
+        """,
+        get_process=lambda v: v.strip(),
+    )
+
+    statistics_current = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? CURRent",
+        """Get the current value of the statistics for the advanced measurement item.
+        Returns the current statistical value in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: (float(v.strip())
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    statistics_mean = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? MEAN",
+        """Get the mean value of the statistics for the advanced measurement item.
+        Returns the mean statistical value in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: (float(v.strip())
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    statistics_maximum = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? MAXimum",
+        """Get the maximum value of the statistics for the advanced measurement item.
+        Returns the maximum statistical value in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: (float(v.strip())
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    statistics_minimum = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? MINimum",
+        """Get the minimum value of the statistics for the advanced measurement item.
+        Returns the minimum statistical value in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: (float(v.strip())
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    statistics_stddev = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? STDev",
+        """Get the standard deviation of the statistics for the advanced measurement item.
+        Returns the standard deviation in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: (float(v.strip())
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    statistics_count = Channel.measurement(
+        ":MEASure:ADVanced:P{ch}:STATistics? COUNt",
+        """Get the count of measurements used for statistics calculation.
+        Returns the number of measurements used to calculate the statistical data.
+        """,
+        get_process=lambda v: (int(float(v.strip()))
+                               if isinstance(v, str) and v.strip() != "OFF" 
+                               else (v.strip() if isinstance(v, str) else v)),
+    )
+
+    type = Channel.control(
+        ":MEASure:ADVanced:P{ch}:TYPE?",
+        ":MEASure:ADVanced:P{ch}:TYPE %s",
+        """Control the type of advanced measurement.
+        This command sets the type of advanced measurement to be performed.
+        The query returns the current measurement type.
+        Values:
+            PKPK|MAX|MIN|AMPL|TOP|BASE|LEVELX|CMEAN|MEAN|
+            STDEV|VSTD|RMS|CRMS|MEDIAN|CMEDIAN|OVSN|FPRE|
+            OVSP|RPRE|PER|FREQ|TMAX|TMIN|PWID|NWID|DUTY|
+            NDUTY|WID|NBWID|DELAY|TIMEL|RISE|FALL|RISE10T90|
+            FALL90T10|CCJ|PAREA|NAREA|AREA|ABSAREA|CYCLES|
+            REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW
+            |FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
+            ACArea|ABSACArea|PSLOPE|NSLOPE|TSR|TSF|THR|THF
+        """,
+        validator=strict_discrete_set,
+        values=[f"P{i}" for i in range(1, 13)],
+        get_process=lambda v: v.strip(),
+    )
+
+    value = Channel.control(
+        ":MEASure:ADVanced:P{ch}:VALue?",
+        ":MEASure:ADVanced:P{ch}:VALue %.6e",
+        """Get the value of the advanced measurement item.
+        This command retrieves the current value of the advanced measurement item.
+        The value is returned in NR3 format (e.g., 1.23E+2).
+        """,
+        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v)
+    )
+
+
 class MeasureChannel(Channel):
     """
     Unified measurement class for SDS1000xHD oscilloscope.
@@ -493,6 +639,50 @@ class MeasureChannel(Channel):
     It provides a comprehensive interface for all measurement operations on the SDS1000xHD.
     """
 
+    enabled = Channel.control(
+        ":MEASure?",
+        ":MEASure %s",
+        "Control the state of the measurement function (ON/OFF).",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process=lambda v: v.strip(),
+    )
+
+    mode = Channel.control(
+        ":MEASure:MODE?",
+        ":MEASure:MODE %s",
+        "Control the measurement mode (SIMPle or ADVanced).",
+        validator=strict_discrete_set,
+        values=["SIMPle", "ADVanced"],
+        get_process=lambda v: v.strip(),
+    )
+
+    advanced_line_number = Channel.control(
+        ":MEASure:ADVanced:LINenumber?",
+        ":MEASure:ADVanced:LINenumber %d",
+        "Control the total number of advanced measurement items displayed.",
+        validator=truncated_range,
+        values=[1, 12],
+        get_process=lambda v: int(v),
+    )
+
+    advanced_measurements = Channel.MultiChannelCreator(
+        AdvancedMeasurementItem,
+        list(range(1, 13)),  # P1 through P12
+        prefix="advanced_p"
+    )
+
+    statistics_enabled = Channel.control(
+        ":MEASure:ADVanced:STATistics?",
+        ":MEASure:ADVanced:STATistics %s",
+        "Control whether statistics are enabled for measurements.",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process=lambda v: v.strip(),
+    )
+
     # Simple measurement properties
     simple_source = Channel.control(
         ":MEASure:SIMPle:SOURce?",
@@ -500,42 +690,51 @@ class MeasureChannel(Channel):
         "Control the source for simple measurements.",
         validator=strict_discrete_set,
         values=["CHANnel1", "CHANnel2", "CHANnel3", "CHANnel4",
-                "FUNCtion1", "FUNCtion2", "FUNCtion3", "FUNCtion4",
-                "MEMory1", "MEMory2", "MEMory3", "MEMory4"],
+                "FUNCtion1", "FUNCtion2", "FUNCtion3", "FUNCtion4"],
         get_process=lambda v: v.strip(),
     )
 
-    # Gate control properties
-    gate_a = Channel.control(
-        ":MEASure:GATE:GA?",
-        ":MEASure:GATE:GA %.6e",
-        "Control gate A position in seconds.",
-        get_process=lambda v: float(v),
-    )
+    def get_simple_value(self, measurement_type):
+        """Get the value of a specific simple measurement type.
+        This method retrieves the current value of the specified simple measurement type.
+        Args:
+            measurement_type (str): The measurement type to query. Valid values are:
+                PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+                STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+                OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+                NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+                FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+                REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+                NACArea, ACArea, ABSACArea, ALL
+                
+                Note: ALL returns all measurement values of all measurement types 
+                except for delay measurements.
+        
+        Returns:
+            float or str: The measurement value in NR3 format (e.g., 1.23E+2) for 
+                         individual measurements, or a string containing all values 
+                         when measurement_type is "ALL".
+        
+        Example:
+            # Get maximum value
+            max_val = measure.get_simple_value("MAX")
+            # Get all measurements
+            all_vals = measure.get_simple_value("ALL")
+        """
+        response = self.ask(f":MEASure:SIMPle:VALue? {measurement_type}")
+        if measurement_type == "ALL":
+            return response.strip()
+        else:
+            return float(response.strip()) if isinstance(response, str) else float(response)
 
-    gate_b = Channel.control(
-        ":MEASure:GATE:GB?",
-        ":MEASure:GATE:GB %.6e",
-        "Control gate B position in seconds.",
-        get_process=lambda v: float(v),
-    )
-
-    # Threshold control properties
-    threshold_source = Channel.control(
-        ":MEASure:THReshold:SOURce?",
-        ":MEASure:THReshold:SOURce %s",
-        "Control the threshold source.",
-        validator=strict_discrete_set,
-        values=["CHANnel1", "CHANnel2", "CHANnel3", "CHANnel4"],
-        get_process=lambda v: v.strip(),
-    )
-
-    threshold_type = Channel.control(
-        ":MEASure:THReshold:TYPE?",
-        ":MEASure:THReshold:TYPE %s",
-        "Control the threshold type (ABSolute or PERCent).",
-        validator=strict_discrete_set,
-        values=["ABSolute", "PERCent"],
+    simple_value_all = Channel.measurement(
+        ":MEASure:SIMPle:VALue? ALL",
+        """Get all simple measurement values.
+        This command retrieves all measurement values of all measurement types 
+        except for delay measurements.
+        Returns:
+            str: All measurement values in a formatted string.
+        """,
         get_process=lambda v: v.strip(),
     )
 
@@ -543,236 +742,40 @@ class MeasureChannel(Channel):
     def clear_simple(self):
         """Clear simple measurements."""
         self.write(":MEASure:SIMPle:CLEar")
-
-    def set_simple_item(self, item, state):
-        """Set measurement item on/off.
+    
+    def set_simple_item(self, item, state="ON"):
+        """Set the simple measurement item.
+        
+        This command sets the type of simple measurement and its state.
         
         Args:
-            item (str): Measurement item (MEAN, RMS, PK2PK, MAX, MIN, etc.)
-            state (str): "ON" or "OFF"
+            item (str): The measurement item to set. Valid values are:
+                PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+                STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+                OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+                NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+                FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+                REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+                NACArea, ACArea, ABSACArea
+            state (str): The state of the measurement item (ON or OFF).
+                        Defaults to "ON".
+        
+        Example:
+            # Add maximum measurement to the simple measurements window
+            measure.set_item("MAX", "ON")
+            # Remove frequency measurement from the simple measurements window  
+            measure.set_item("FREQ", "OFF")
         """
         self.write(f":MEASure:SIMPle:ITEM {item},{state}")
-
-    def get_simple_value(self, item):
-        """Get measurement value for a specific item.
-        
-        Args:
-            item (str): Measurement item (MEAN, RMS, PK2PK, MAX, MIN, etc.)
-            
-        Returns:
-            float or None: Measurement value or None if failed
-        """
-        try:
-            result = self.ask(f":MEASure:SIMPle:ITEM? {item}")
-            return float(result.strip())
-        except (ValueError, AttributeError):
-            return None
-
+    
     # Advanced measurement methods
     def clear_advanced(self):
         """Clear advanced measurements."""
         self.write(":MEASure:ADVanced:CLEar")
 
-    def set_advanced_line_number(self, number):
-        """Set the number of measurement lines displayed.
-        
-        Args:
-            number (int): Number of lines (1-8)
-        """
-        if 1 <= number <= 8:
-            self.write(f":MEASure:ADVanced:LINenumber {number}")
-        else:
-            raise ValueError("Line number must be between 1 and 8")
-
-    def configure_advanced_parameter(self, position, measurement_type, source1, source2=None):
-        """Configure an advanced measurement parameter using programming guide format.
-        
-        Args:
-            position (int): Parameter position (1-8)
-            measurement_type (str): Type of measurement (MEAN, RMS, PK2PK, etc.)
-            source1 (str): Primary source channel
-            source2 (str, optional): Secondary source channel for dual measurements
-        """
-        if not 1 <= position <= 8:
-            raise ValueError("Position must be between 1 and 8")
-            
-        # Use programming guide format: separate commands for type and sources
-        self.write(f":MEASure:ADVanced:P{position}:TYPE {measurement_type}")
-        self.write(f":MEASure:ADVanced:P{position}:SOURce1 {source1}")
-        if source2:
-            self.write(f":MEASure:ADVanced:P{position}:SOURce2 {source2}")
-
-    def enable_advanced_parameter(self, position, state):
-        """Enable or disable a measurement parameter.
-        
-        Args:
-            position (int): Parameter position (1-8)
-            state (str): "ON" or "OFF"
-        """
-        if not 1 <= position <= 8:
-            raise ValueError("Position must be between 1 and 8")
-        self.write(f":MEASure:ADVanced:P{position} {state}")
-
-    def get_advanced_parameter_value(self, position):
-        """Get the value of a measurement parameter.
-        
-        Args:
-            position (int): Parameter position (1-8)
-            
-        Returns:
-            float or None: Measurement value or None if failed
-        """
-        if not 1 <= position <= 8:
-            raise ValueError("Position must be between 1 and 8")
-            
-        try:
-            result = self.ask(f":MEASure:ADVanced:P{position}:VALue?")
-            return float(result.strip())
-        except (ValueError, AttributeError):
-            return None
-
-    # Statistics methods
-    def enable_advanced_statistics(self, position, state):
-        """Enable or disable statistics for a measurement parameter.
-        
-        Args:
-            position (int): Parameter position (1-8)
-            state (str): "ON" or "OFF"
-        """
-        if not 1 <= position <= 8:
-            raise ValueError("Position must be between 1 and 8")
-        self.write(f":MEASure:ADVanced:P{position}:STATistics {state}")
-
-    def reset_advanced_statistics(self):
-        """Reset measurement statistics."""
-        self.write(":MEASure:ADVanced:STATistics:RESet")
-
-    def set_advanced_statistics_style(self, style):
-        """Set the statistics display style.
-        
-        Args:
-            style (str): "RELative", "ABSolute", or "DISPlay"
-        """
-        if style in ["RELative", "ABSolute", "DISPlay"]:
-            self.write(f":MEASure:ADVanced:STATistics:STYLe {style}")
-        else:
-            raise ValueError("Style must be 'RELative', 'ABSolute', or 'DISPlay'")
-
-    # Threshold methods
-    def set_absolute_thresholds(self, high, middle, low):
-        """Set absolute threshold values.
-        
-        Args:
-            high (float): High threshold in volts
-            middle (float): Middle threshold in volts
-            low (float): Low threshold in volts
-        """
-        self.write(":MEASure:THReshold:TYPE ABSolute")
-        self.write(f":MEASure:THReshold:ABSolute:HIGH {high}")
-        self.write(f":MEASure:THReshold:ABSolute:MIDDle {middle}")
-        self.write(f":MEASure:THReshold:ABSolute:LOW {low}")
-
-    def set_percent_thresholds(self, high, middle, low):
-        """Set percentage threshold values.
-        
-        Args:
-            high (float): High threshold percentage (0-100)
-            middle (float): Middle threshold percentage (0-100)
-            low (float): Low threshold percentage (0-100)
-        """
-        self.write(":MEASure:THReshold:TYPE PERCent")
-        self.write(f":MEASure:THReshold:PERCent:HIGH {high}")
-        self.write(f":MEASure:THReshold:PERCent:MIDDle {middle}")
-        self.write(f":MEASure:THReshold:PERCent:LOW {low}")
-
-    # Convenience methods for compatibility    def clear(self):
-        """Clear measurements in current mode."""
-        if self.mode == "SIMPle":
-            self.clear_simple()
-        else:
-            self.clear_advanced()
-
-    def set_item(self, item, state):
-        """Set measurement item on/off (simple mode)."""
-        self.set_simple_item(item, state)
-
-    def get_value(self, item):
-        """Get measurement value for a specific item (simple mode)."""
-        return self.get_simple_value(item)
-
-    def configure_parameter(self, position, measurement_type, source1, source2=None):
-        """Configure an advanced measurement parameter."""
-        self.configure_advanced_parameter(position, measurement_type, source1, source2)
-
-    def enable_parameter(self, position, state):
-        """Enable or disable a measurement parameter (advanced mode)."""
-        self.enable_advanced_parameter(position, state)
-
-    def get_parameter_value(self, position):
-        """Get the value of a measurement parameter (advanced mode)."""
-        return self.get_advanced_parameter_value(position)
-
-    def set_line_number(self, number):
-        """Set the number of measurement lines displayed."""
-        self.set_advanced_line_number(number)
-
-    def enable_statistics(self, position, state):
-        """Enable or disable statistics for a measurement parameter."""
-        self.enable_advanced_statistics(position, state)
-
     def reset_statistics(self):
-        """Reset measurement statistics."""
-        self.reset_advanced_statistics()
-
-    def set_statistics_style(self, style):
-        """Set the statistics display style."""
-        self.set_advanced_statistics_style(style)
-
-    @property
-    def statistics_enabled(self):
-        """Check if statistics are enabled."""
-        try:
-            result = self.ask(":MEASure:ADVanced:STATistics?")
-            return result.strip().upper() == "ON"
-        except Exception:
-            return False
-
-    @statistics_enabled.setter
-    def statistics_enabled(self, value):
-        """Enable or disable statistics."""
-        state = "ON" if value else "OFF"
-        self.write(f":MEASure:ADVanced:STATistics {state}")
-
-    def get_statistics_values(self):
-        """Get statistics values for measurements.
-        
-        Returns:
-            dict: Dictionary with statistics keys (CURRENT, AVERAGE, MIN, MAX, etc.)
-        """
-        stats = {}
-        try:
-            # Get statistics for first available measurement
-            current = self.ask(":MEASure:ADVanced:STATistics:CURRent?")
-            if current and current.strip():
-                stats["CURRENT"] = float(current)
-                
-            average = self.ask(":MEASure:ADVanced:STATistics:AVERage?")
-            if average and average.strip():
-                stats["AVERAGE"] = float(average)
-                
-            minimum = self.ask(":MEASure:ADVanced:STATistics:MINimum?")
-            if minimum and minimum.strip():
-                stats["MIN"] = float(minimum)
-                
-            maximum = self.ask(":MEASure:ADVanced:STATistics:MAXimum?")
-            if maximum and maximum.strip():
-                stats["MAX"] = float(maximum)
-                
-        except Exception:
-            # Return empty dict if statistics are not available
-            pass
-            
-        return stats
+        """Reset statistics for advanced measurements."""
+        self.write(":MEASure:ADVanced:STATistics:RESet")
 
 
 class TriggerChannel(Channel):
@@ -1313,45 +1316,9 @@ class SDS1000xHD(SCPIMixin, Instrument):
         get_process=lambda v: float(v),
     )
 
-    measure_enabled = Channel.control(
-        ":MEASure?",
-        ":MEASure %s",
-        "Control the state of the measurement function (ON/OFF).",
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-        get_process=lambda v: v.strip(),
-    )
-
-    measure_mode = Channel.control(
-        ":MEASure:MODE?",
-        ":MEASure:MODE %s",
-        "Control the measurement mode (SIMPle or ADVanced).",
-        validator=strict_discrete_set,
-        values=["SIMPle", "ADVanced"],
-        get_process=lambda v: v.strip(),
-    )
-
     def auto_setup(self):
         """Perform automatic setup of the oscilloscope."""
         self.write(":AUToset")
-
-    def get_screenshot(self, filename=None):
-        """Get a screenshot of the oscilloscope display.
-
-        Args:
-            filename (str, optional): Filename to save the screenshot to.
-                If not provided, returns binary PNG data.
-
-        Returns:
-            bytes or None: Binary PNG data if no filename provided, None otherwise.
-        """
-        if filename:
-            self.write(f":SAVE:IMAGe '{filename}'")
-            return None
-        else:
-            self.write(":PRINt?")
-            return self.read_raw()
 
     def clear_sweeps_acq(self):
         """Clear accumulated sweeps using ACQuire command."""
