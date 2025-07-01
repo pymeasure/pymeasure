@@ -738,35 +738,34 @@ class MeasureChannel(Channel):
         get_process=lambda v: v.strip(),
     )
 
+    simple_item = Channel.setting(
+        ":MEASure:SIMPle:ITEM %s,%s",
+        """Set the simple measurement item.
+        
+        This command sets the type of simple measurement and its state.
+        Takes a tuple of (item, state) where:
+        - item (str): The measurement item to set. Valid values are:
+            PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+            STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+            OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+            NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+            FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+            REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+            NACArea, ACArea, ABSACArea
+        - state (str): The state of the measurement item (ON or OFF).
+        
+        Example:
+            # Add maximum measurement to the simple measurements window
+            measure.simple_item = ("MAX", "ON")
+            # Remove frequency measurement from the simple measurements window  
+            measure.simple_item = ("FREQ", "OFF")
+        """
+    )
+
     # Simple measurement methods
     def clear_simple(self):
         """Clear simple measurements."""
         self.write(":MEASure:SIMPle:CLEar")
-    
-    def set_simple_item(self, item, state="ON"):
-        """Set the simple measurement item.
-        
-        This command sets the type of simple measurement and its state.
-        
-        Args:
-            item (str): The measurement item to set. Valid values are:
-                PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
-                STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
-                OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
-                NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
-                FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
-                REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
-                NACArea, ACArea, ABSACArea
-            state (str): The state of the measurement item (ON or OFF).
-                        Defaults to "ON".
-        
-        Example:
-            # Add maximum measurement to the simple measurements window
-            measure.set_item("MAX", "ON")
-            # Remove frequency measurement from the simple measurements window  
-            measure.set_item("FREQ", "OFF")
-        """
-        self.write(f":MEASure:SIMPle:ITEM {item},{state}")
     
     # Advanced measurement methods
     def clear_advanced(self):
