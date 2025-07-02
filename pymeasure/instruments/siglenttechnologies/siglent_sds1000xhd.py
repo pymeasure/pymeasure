@@ -1012,7 +1012,7 @@ class TriggerChannel(Channel):
         self.write(":TRIGger:STOP")
 
 
-class SDS1000xHD(SCPIMixin, Instrument):
+class SDS1000XHD(SCPIMixin, Instrument):
     """
     ==============================================
     Represents the SIGLENT SDS1000xHD Oscilloscope
