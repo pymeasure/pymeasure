@@ -124,9 +124,11 @@ class AnalogChannel(Channel):
 
     unit = Channel.control(
         ":CHANnel{ch}:UNIT?",
-        ":CHANnel{ch}:UNIT %s",        "Control the channel unit (V, A).",
+        ":CHANnel{ch}:UNIT %s",
+        "Control the channel unit (V, A).",
         validator=strict_discrete_set,
-        values=["V", "A"],        get_process=lambda v: v.strip(),
+        values=["V", "A"],
+        get_process=lambda v: v.strip(),
     )
 
 
@@ -143,7 +145,6 @@ class WaveformChannel(Channel):
 
     def __init__(self, parent, id):
         """Initialize the WaveformChannel with automatic source setting.
-        
         Args:
             parent: Parent instrument instance
             id: Channel identifier (e.g., "C1", "C2", "F1", "D0", etc.)
@@ -179,8 +180,8 @@ class WaveformChannel(Channel):
         ":WAVeform:STARt?",
         ":WAVeform:STARt %d",
         """Control the starting data point for waveform transfer.
-        This command specifies the starting data point for waveform transfer 
-        using the query :WAVeform:DATA?. The value range is related to the 
+        This command specifies the starting data point for waveform transfer
+        using the query :WAVeform:DATA?. The value range is related to the
         current waveform point and the value set by the command :WAVeform:POINt.
         Value in NR1 format (integer with no decimal point).""",
         validator=truncated_range,
@@ -192,11 +193,11 @@ class WaveformChannel(Channel):
         ":WAVeform:INTerval?",
         ":WAVeform:INTerval %d",
         """Control the interval between data points for waveform transfer.
-        This command sets the interval between data points for waveform transfer 
-        using the query :WAVeform:DATA?. The query returns the interval between 
+        This command sets the interval between data points for waveform transfer
+        using the query :WAVeform:DATA?. The query returns the interval between
         data points for waveform transfer.
         Value in NR1 format (integer with no decimal point).
-        Note: The value range is related to the values set by the commands 
+        Note: The value range is related to the values set by the commands
         :WAVeform:POINt and :WAVeform:STARt.
         """,
         get_process=lambda v: int(v),
@@ -206,8 +207,8 @@ class WaveformChannel(Channel):
         ":WAVeform:POINt?",
         ":WAVeform:POINt %d",
         """Control the number of waveform points to be transferred with :WAVeform:DATA?.
-        This command sets the number of waveform points to be transferred with the 
-        query :WAVeform:DATA?. The query returns the number of waveform points to be 
+        This command sets the number of waveform points to be transferred with the
+        query :WAVeform:DATA?. The query returns the number of waveform points to be
         transferred.
         Value in NR1 format (integer with no decimal point).
         Note: The value range is related to the current waveform point.
@@ -218,7 +219,7 @@ class WaveformChannel(Channel):
     max_point = Channel.measurement(
         ":WAVeform:MAXPoint?",
         """Get the maximum points of one piece when reading waveform data in pieces.
-        This query returns the maximum points of one piece, when it needs to read 
+        This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
         Returns:
@@ -233,11 +234,9 @@ class WaveformChannel(Channel):
         """Control the output format for the transfer of waveform data.
         This command sets the current output format for the transfer of
         waveform data. The query returns the current output format.
-        
         Values:
             - "BYTE": 8-bit data transfer format
             - "WORD": 16-bit data transfer format (upper byte transmitted first)
-        
         Note: When the vertical resolution is set to 10 bit or the ADC bit is
         more than 8bit, it must be set to WORD before transferring waveform data.
         """,
@@ -248,10 +247,8 @@ class WaveformChannel(Channel):
 
     def _parse_preamble_descriptor(self, raw_data):
         """Parse the binary preamble descriptor data.
-        
         Args:
             raw_data (bytes): Raw binary data from :WAVeform:PREamble? command
-            
         Returns:
             dict: Parsed descriptor data with the same format as get_descriptor
         """
@@ -259,33 +256,33 @@ class WaveformChannel(Channel):
             # Find the start of the binary data after the header
             if isinstance(raw_data, str):
                 raw_data = raw_data.encode('latin-1')
-            
+
             # Check if we have a proper binary data block
             if b'#' not in raw_data:
                 raise ValueError("No binary data block found in response")
-                
+
             recv = raw_data[raw_data.find(b'#') + 11:]
-            
+
             # Check if we have enough data
             min_required_length = 0x14c  # Minimum length needed for all fields
             if len(recv) < min_required_length:
                 raise ValueError(f"Insufficient data: got {len(recv)} bytes, "
                                  f"need at least {min_required_length}")
-            
+
             # Time division enumeration from the programming guide
             tdiv_enum = [200e-12, 500e-12, 1e-9,
                          2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9, 500e-9,
                          1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6,
                          1e-3, 2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3,
                          1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-            
+
             # Extract binary data from specific offsets with bounds checking
             def safe_extract(data, start, end):
                 if end >= len(data):
                     raise ValueError(f"Data truncated: trying to read bytes {start}:{end} "
                                      f"from {len(data)} bytes")
                 return data[start:end + 1]
-            
+
             v_scale = safe_extract(recv, 0x9c, 0x9f)
             v_offset = safe_extract(recv, 0xa0, 0xa3)
             interval = safe_extract(recv, 0xb0, 0xb3)
@@ -294,7 +291,7 @@ class WaveformChannel(Channel):
             delay = safe_extract(recv, 0xb4, 0xbb)
             tdiv = safe_extract(recv, 0x144, 0x145)
             probe = safe_extract(recv, 0x148, 0x14b)
-            
+
             # Unpack the values with error checking
             interval_val = struct.unpack('f', interval)[0]
             delay_val = struct.unpack('d', delay)[0]
@@ -305,7 +302,7 @@ class WaveformChannel(Channel):
             vcode_per = struct.unpack('f', code_per_div)[0]
             adc_bit_val = struct.unpack('h', adc_bit)[0]
             tdiv_val = tdiv_enum[tdiv_index] if 0 <= tdiv_index < len(tdiv_enum) else 1e-6
-            
+
             return {
                 'vdiv': vdiv,
                 'voffset': voffset,
@@ -316,7 +313,7 @@ class WaveformChannel(Channel):
                 'adc_bit': adc_bit_val,
                 'probe': probe_val
             }
-            
+
         except (struct.error, IndexError, KeyError, ValueError) as e:
             # Fallback values if parsing fails
             print(f"Warning: Failed to parse preamble descriptor: {e}")
@@ -387,7 +384,7 @@ class WaveformChannel(Channel):
 
         This method retrieves waveform data from the oscilloscope using the preamble
         property to get descriptor information about the waveform format.
-        
+
         Returns:
             tuple: A tuple containing (time_values, volt_values) where:
                 - time_values: List of time values in seconds
@@ -400,7 +397,7 @@ class WaveformChannel(Channel):
 
             # Set up waveform source and get preamble information
             self.start_point = 0  # Reset start point to 0
-            
+
             # Get waveform descriptor information using the preamble property
             preamble_data = self.preamble
             vdiv = preamble_data['vdiv']
@@ -410,10 +407,7 @@ class WaveformChannel(Channel):
             tdiv = preamble_data['tdiv']
             vcode_per = preamble_data['vcode_per']
             adc_bit = preamble_data['adc_bit']
-            
-            # print(f"Preamble data: vdiv={vdiv}, offset={ofst}, interval={interval}, "
-            #       f"trdl={trdl}, tdiv={tdiv}, vcode_per={vcode_per}, adc_bit={adc_bit}")
-            
+
             # Get the waveform points and confirm the number of waveform slice reads
             points = self.parent.acq_points
             one_piece_num = self.max_point
@@ -423,7 +417,7 @@ class WaveformChannel(Channel):
             # greater than the maximum number of slice reads
             if points > one_piece_num:
                 self.point = one_piece_num
-                
+
             # Choose the format of the data returned
             self.width = "BYTE"
             if adc_bit > 8:
@@ -485,7 +479,7 @@ class WaveformChannel(Channel):
 class AdvancedMeasurementItem(Channel):
     """
     Represents an advanced measurement item in the SDS1000xHD oscilloscope.
-    
+    ===========================================================
     This class provides controls for enabling/disabling the measurement item,
     setting its source, and retrieving its value.
     """
@@ -545,7 +539,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the current statistical value in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -555,7 +549,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the mean statistical value in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -565,7 +559,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the maximum statistical value in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -575,7 +569,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the minimum statistical value in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -585,7 +579,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the standard deviation in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -595,7 +589,7 @@ class AdvancedMeasurementItem(Channel):
         Returns the number of measurements used to calculate the statistical data.
         """,
         get_process=lambda v: (int(float(v.strip()))
-                               if isinstance(v, str) and v.strip() != "OFF" 
+                               if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
@@ -634,7 +628,7 @@ class AdvancedMeasurementItem(Channel):
 class MeasureChannel(Channel):
     """
     Unified measurement class for SDS1000xHD oscilloscope.
-    
+    ===========================================================
     This class combines Simple, Advanced, Gate, and Threshold measurement functionality.
     It provides a comprehensive interface for all measurement operations on the SDS1000xHD.
     """
@@ -706,15 +700,15 @@ class MeasureChannel(Channel):
                 FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
                 REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
                 NACArea, ACArea, ABSACArea, ALL
-                
-                Note: ALL returns all measurement values of all measurement types 
+
+                Note: ALL returns all measurement values of all measurement types
                 except for delay measurements.
-        
+
         Returns:
-            float or str: The measurement value in NR3 format (e.g., 1.23E+2) for 
-                         individual measurements, or a string containing all values 
+            float or str: The measurement value in NR3 format (e.g., 1.23E+2) for
+                         individual measurements, or a string containing all values
                          when measurement_type is "ALL".
-        
+
         Example:
             # Get maximum value
             max_val = measure.get_simple_value("MAX")
@@ -730,7 +724,7 @@ class MeasureChannel(Channel):
     simple_value_all = Channel.measurement(
         ":MEASure:SIMPle:VALue? ALL",
         """Get all simple measurement values.
-        This command retrieves all measurement values of all measurement types 
+        This command retrieves all measurement values of all measurement types
         except for delay measurements.
         Returns:
             str: All measurement values in a formatted string.
@@ -741,7 +735,7 @@ class MeasureChannel(Channel):
     simple_item = Channel.setting(
         ":MEASure:SIMPle:ITEM %s,%s",
         """Set the simple measurement item.
-        
+
         This command sets the type of simple measurement and its state.
         Takes a tuple of (item, state) where:
         - item (str): The measurement item to set. Valid values are:
@@ -753,11 +747,11 @@ class MeasureChannel(Channel):
             REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
             NACArea, ACArea, ABSACArea
         - state (str): The state of the measurement item (ON or OFF).
-        
+
         Example:
             # Add maximum measurement to the simple measurements window
             measure.simple_item = ("MAX", "ON")
-            # Remove frequency measurement from the simple measurements window  
+            # Remove frequency measurement from the simple measurements window
             measure.simple_item = ("FREQ", "OFF")
         """
     )
@@ -766,7 +760,7 @@ class MeasureChannel(Channel):
     def clear_simple(self):
         """Clear simple measurements."""
         self.write(":MEASure:SIMPle:CLEar")
-    
+
     # Advanced measurement methods
     def clear_advanced(self):
         """Clear advanced measurements."""
@@ -793,7 +787,7 @@ class TriggerChannel(Channel):
     frequency = Channel.measurement(
         ":TRIGger:FREQuency?",
         docs="""Get the current trigger frequency from the hardware frequency counter.
-        Returns the value of hardware frequency counter in hertz if available. 
+        Returns the value of hardware frequency counter in hertz if available.
         The default precision is 3 digits, maximum valid precision is 7 digits.
         Use ":FORMat:DATA" command to set the data precision.
         Returns:
@@ -806,24 +800,24 @@ class TriggerChannel(Channel):
         ":TRIGger:MODE?",
         ":TRIGger:MODE %s",
         """Control the trigger mode.
-        AUTO: The oscilloscope begins to search for the trigger signal that meets the 
-              conditions. If the trigger signal is satisfied, the running state shows 
-              Trig'd, and the interface shows stable waveform. Otherwise, the running 
+        AUTO: The oscilloscope begins to search for the trigger signal that meets the
+              conditions. If the trigger signal is satisfied, the running state shows
+              Trig'd, and the interface shows stable waveform. Otherwise, the running
               state always shows Auto, and the interface shows unstable waveform.
-        NORMal: The oscilloscope enters the wait trigger state and begins to search for 
-                trigger signals that meet the conditions. If the trigger signal is 
-                satisfied, the running state shows Trig'd, and the interface shows 
-                stable waveform. Otherwise, the running state shows Ready, and the 
-                interface displays the last triggered waveform (previous trigger) or 
+        NORMal: The oscilloscope enters the wait trigger state and begins to search for
+                trigger signals that meet the conditions. If the trigger signal is
+                satisfied, the running state shows Trig'd, and the interface shows
+                stable waveform. Otherwise, the running state shows Ready, and the
+                interface displays the last triggered waveform (previous trigger) or
                 does not display the waveform (no previous trigger).
-        SINGle: The backlight of SINGLE key lights up, the oscilloscope enters the 
-                waiting trigger state and begins to search for the trigger signal that 
-                meets the conditions. If the trigger signal is satisfied, the running 
-                state shows Trig'd, and the interface shows stable waveform. Then, the 
-                oscilloscope stops scanning, the RUN/STOP key becomes red, and the 
-                running status shows Stop. Otherwise, the running state shows Ready, 
+        SINGle: The backlight of SINGLE key lights up, the oscilloscope enters the
+                waiting trigger state and begins to search for the trigger signal that
+                meets the conditions. If the trigger signal is satisfied, the running
+                state shows Trig'd, and the interface shows stable waveform. Then, the
+                oscilloscope stops scanning, the RUN/STOP key becomes red, and the
+                running status shows Stop. Otherwise, the running state shows Ready,
                 and the interface does not display the waveform.
-        FTRIG: Force to acquire a frame regardless of whether the input signal meets 
+        FTRIG: Force to acquire a frame regardless of whether the input signal meets
                the trigger conditions or not.
         """,
         validator=strict_discrete_set,
@@ -854,16 +848,16 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:COUPling %s",
         """Control the coupling mode of the edge trigger.
         - DC: DC coupling allows dc and ac signals into the trigger path.
-        - AC: AC coupling places a high-pass filter in the trigger path, removing 
-              dc offset voltage from the trigger waveform. Use AC coupling to get 
+        - AC: AC coupling places a high-pass filter in the trigger path, removing
+              dc offset voltage from the trigger waveform. Use AC coupling to get
               a stable edge trigger when your waveform has a large dc offset.
-        - HFREJect: High-frequency rejection filter that adds a low-pass filter 
-                    in the trigger path to remove high-frequency components from 
-                    the trigger waveform. Use to remove high-frequency noise, such 
+        - HFREJect: High-frequency rejection filter that adds a low-pass filter
+                    in the trigger path to remove high-frequency components from
+                    the trigger waveform. Use to remove high-frequency noise, such
                     as AM or FM broadcast stations, from the trigger path.
-        - LFREJect: Low frequency rejection filter adds a high-pass filter in 
-                    series with the trigger waveform to remove any unwanted 
-                    low-frequency components from a trigger waveform, such as 
+        - LFREJect: Low frequency rejection filter adds a high-pass filter in
+                    series with the trigger waveform to remove any unwanted
+                    low-frequency components from a trigger waveform, such as
                     power line frequencies, that can interfere with proper triggering.
         """,
         validator=strict_discrete_set,
@@ -890,7 +884,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:HLDTime %.6e",
         """Control the holdoff time for edge trigger.
         This command sets the holdoff time of the edge trigger in seconds.
-        The holdoff time determines how long to wait after a trigger event before 
+        The holdoff time determines how long to wait after a trigger event before
         allowing the next trigger to occur.
         Range: 8.00E-09 to 3.00E+01 seconds (NR3 format - float with decimal point and exponent)
         """,
@@ -905,9 +899,9 @@ class TriggerChannel(Channel):
         """Control the holdoff type for edge trigger.
         This command selects the holdoff type of the edge trigger.
         - OFF: Turn off the holdoff
-        - EVENts: The number of trigger events that the oscilloscope counts 
+        - EVENts: The number of trigger events that the oscilloscope counts
                   before re-arming the trigger circuitry
-        - TIME: The amount of time that the oscilloscope waits before 
+        - TIME: The amount of time that the oscilloscope waits before
                 re-arming the trigger circuitry
         """,
         validator=strict_discrete_set,
@@ -920,7 +914,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:HSTart %s",
         """Control the initial position of the edge trigger holdoff.
         This command defines the initial position of the edge trigger holdoff.
-        - LAST_TRIG: The initial position of holdoff is the first time point 
+        - LAST_TRIG: The initial position of holdoff is the first time point
                      satisfying the trigger condition.
         - ACQ_START: The initial position of holdoff is time of the last trigger.
         """,
@@ -933,7 +927,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:IMPedance?",
         ":TRIGger:EDGE:IMPedance %s",
         """Control the impedance of the edge trigger source.
-        This command sets the edge trigger source impedance, which is only 
+        This command sets the edge trigger source impedance, which is only
         valid when the source is EXT or EXT/5.
         - ONEMeg: 1 MOhm impedance
         - FIFTy: 50 Ohm impedance
@@ -975,7 +969,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:SLOPe %s",
         """Control the slope of the edge trigger.
         - RISing: Triggers on rising edge
-        - FALLing: Triggers on falling edge  
+        - FALLing: Triggers on falling edge
         - ALTernate: Triggers on alternating edges
         """,
         validator=strict_discrete_set,
@@ -994,7 +988,7 @@ class TriggerChannel(Channel):
         - LINE: Line frequency trigger
         """,
         validator=strict_discrete_set,
-        values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7", 
+        values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "EX", "EX5", "LINE"],
         get_process=lambda v: v.strip(),
     )
@@ -1029,7 +1023,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
     measurements, and trigger control.
     """
 
-    def __init__(self, adapter, name="Siglent SDS1000xHD Oscilloscope", timeout=2000, 
+    def __init__(self, adapter, name="Siglent SDS1000xHD Oscilloscope", timeout=2000,
                  chunk_size=20*1024*1024, **kwargs):
         super().__init__(adapter, name, timeout=timeout, chunk_size=chunk_size, **kwargs)
 
@@ -1037,7 +1031,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
     channel_2 = Instrument.ChannelCreator(AnalogChannel, "2")
     channel_3 = Instrument.ChannelCreator(AnalogChannel, "3")  # For 4-channel models
     channel_4 = Instrument.ChannelCreator(AnalogChannel, "4")  # For 4-channel models
-    
+
     # Waveform channels for all sources: analog channels (C1-C4), function channels (F1-F4),
     # and digital channels (D0-D15)
     waveform_channels = Instrument.MultiChannelCreator(
@@ -1047,7 +1041,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
          "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
         prefix="wf_"
     )
-    
+
     # Measurement subsystem
     measure = Instrument.ChannelCreator(MeasureChannel, "")
     # Trigger subsystem
@@ -1057,7 +1051,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":ACQuire:AMODe?",
         ":ACQuire:AMODe %s",
         """Control sets the rate of waveform capture.
-        This command can provide a high-speed waveform capture rate to help capture signal 
+        This command can provide a high-speed waveform capture rate to help capture signal
         anomalies""",
         validator=strict_discrete_set,
         values=["FAST", "SLOW"],
@@ -1079,12 +1073,12 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":ACQuire:MMANagement?",
         ":ACQuire:MMANagement %s",
         """Control memory management mode.
-        
-        AUTO: Maintain maximum sampling rate, automatically set memory depth and 
+
+        AUTO: Maintain maximum sampling rate, automatically set memory depth and
               sampling rate according to time base.
-        FSRate: Fixed Sampling Rate mode - maintain specified sampling rate and 
+        FSRate: Fixed Sampling Rate mode - maintain specified sampling rate and
                 automatically set memory depth according to time base.
-        FMDepth: Fixed Memory Depth mode - automatically set sampling rate 
+        FMDepth: Fixed Memory Depth mode - automatically set sampling rate
                  according to storage depth and time base.""",
         validator=strict_discrete_set,
         values=["AUTO", "FSRate", "FMDepth"],
@@ -1095,11 +1089,11 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":ACQuire:MODE?",
         ":ACQuire:MODE %s",
         """Control the acquisition mode of the oscilloscope.
-        
+
         YT mode plots amplitude (Y) vs. time (T).
         XY mode plots channel X vs. channel Y, commonly referred to as a Lissajous curve.
-        ROLL mode plots amplitude (Y) vs. time (T) as in YT mode, but begins to write 
-        the waveforms from the right-hand side of the display. This is similar to a 
+        ROLL mode plots amplitude (Y) vs. time (T) as in YT mode, but begins to write
+        the waveforms from the right-hand side of the display. This is similar to a
         "strip chart" recording and is ideal for low-frequency signals.""",
         validator=strict_discrete_set,
         values=["YT", "XY", "ROLL"],
@@ -1115,8 +1109,8 @@ class SDS1000xHD(SCPIMixin, Instrument):
         - Dual-Channel: 10k, 100k, 1M, 10M, 50M
         - Four-Channel: 10k, 100k, 1M, 10M, 25M
         AUTO mode automatically selects appropriate depth based on timebase and channels.
-        Note: Turning on digital channels or setting acquisition type to AVERage/ERES 
-        or setting acquisition mode to roll will limit the memory depth. Refer to the 
+        Note: Turning on digital channels or setting acquisition type to AVERage/ERES
+        or setting acquisition mode to roll will limit the memory depth. Refer to the
         user manual for single and dual channel mode definitions.""",
         validator=strict_discrete_set,
         values=["AUTO", "10k", "100k", "1M", "10M", "25M", "50M", "100M"],
@@ -1164,10 +1158,10 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":ACQuire:SEQuence:COUNt?",
         ":ACQuire:SEQuence:COUNt %d",
         """Control the number of memory segments to acquire.
-        The command sets the number of memory segments to acquire. The maximum number 
+        The command sets the number of memory segments to acquire. The maximum number
         of segments may be limited by the memory depth of your oscilloscope.
         The query returns the current count setting.
-        Value in NR1 format (integer, no decimal point). The range varies by model 
+        Value in NR1 format (integer, no decimal point). The range varies by model
         and current timebase - see user manual for details.""",
         validator=truncated_range,
         values=[1, 10000],
@@ -1179,7 +1173,7 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":ACQuire:SRATe %.3e",
         """Control the sampling rate in samples per second.
         This command sets the sampling rate when in the fixed sampling rate mode.
-        If the set value is greater than the settable value, it will automatically 
+        If the set value is greater than the settable value, it will automatically
         match to the settable value. The query returns the current sampling rate.""",
         get_process=lambda v: float(v),
     )
@@ -1212,11 +1206,11 @@ class SDS1000xHD(SCPIMixin, Instrument):
         ":TIMebase:REFerence?",
         ":TIMebase:REFerence %s",
         """Control the horizontal reference strategy for delay value changes.
-        
+
         DELay: When the time base is changed, the horizontal delay value remains fixed.
                The waveform expands/contracts around the center of the display.
-        POSition: When the time base is changed, the horizontal delay remains fixed 
-                  to the grid position on the display. The waveform expands/contracts 
+        POSition: When the time base is changed, the horizontal delay remains fixed
+                  to the grid position on the display. The waveform expands/contracts
                   around the position of the horizontal display.""",
         validator=strict_discrete_set,
         values=["DELay", "POSition"],
@@ -1276,8 +1270,8 @@ class SDS1000xHD(SCPIMixin, Instrument):
         """Control the horizontal scale per division for the zoomed window in seconds per division.
         This command sets the zoomed window horizontal scale (seconds/division).
         The query returns the current zoomed window scale setting.
-        Note: The scale of the zoomed window cannot be greater than that of the main window. 
-        If you set the value greater than the main window scale, it will automatically be 
+        Note: The scale of the zoomed window cannot be greater than that of the main window.
+        If you set the value greater than the main window scale, it will automatically be
         set to the same value as the main window.""",
         validator=truncated_range,
         values=[200e-12, 1000],
