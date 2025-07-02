@@ -222,8 +222,6 @@ class WaveformChannel(Channel):
         This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
-        Returns:
-            int: Maximum points of one piece in NR1 format (integer with no decimal point).
         """,
         get_process=lambda v: float(v)
     )
@@ -234,11 +232,6 @@ class WaveformChannel(Channel):
         """Control the output format for the transfer of waveform data.
         This command sets the current output format for the transfer of
         waveform data. The query returns the current output format.
-        Values:
-            - "BYTE": 8-bit data transfer format
-            - "WORD": 16-bit data transfer format (upper byte transmitted first)
-        Note: When the vertical resolution is set to 10 bit or the ADC bit is
-        more than 8bit, it must be set to WORD before transferring waveform data.
         """,
         validator=strict_discrete_set,
         values=["BYTE", "WORD"],
@@ -479,7 +472,7 @@ class WaveformChannel(Channel):
 class AdvancedMeasurementItem(Channel):
     """
     Represents an advanced measurement item in the SDS1000xHD oscilloscope.
-    ===========================================================
+    ========================================================================
     This class provides controls for enabling/disabling the measurement item,
     setting its source, and retrieving its value.
     """
@@ -600,14 +593,14 @@ class AdvancedMeasurementItem(Channel):
         This command sets the type of advanced measurement to be performed.
         The query returns the current measurement type.
         Values:
-            PKPK|MAX|MIN|AMPL|TOP|BASE|LEVELX|CMEAN|MEAN|
-            STDEV|VSTD|RMS|CRMS|MEDIAN|CMEDIAN|OVSN|FPRE|
-            OVSP|RPRE|PER|FREQ|TMAX|TMIN|PWID|NWID|DUTY|
-            NDUTY|WID|NBWID|DELAY|TIMEL|RISE|FALL|RISE10T90|
-            FALL90T10|CCJ|PAREA|NAREA|AREA|ABSAREA|CYCLES|
-            REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW
-            |FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
-            ACArea|ABSACArea|PSLOPE|NSLOPE|TSR|TSF|THR|THF
+        PKPK|MAX|MIN|AMPL|TOP|BASE|LEVELX|CMEAN|MEAN|
+        STDEV|VSTD|RMS|CRMS|MEDIAN|CMEDIAN|OVSN|FPRE|
+        OVSP|RPRE|PER|FREQ|TMAX|TMIN|PWID|NWID|DUTY|
+        NDUTY|WID|NBWID|DELAY|TIMEL|RISE|FALL|RISE10T90|
+        FALL90T10|CCJ|PAREA|NAREA|AREA|ABSAREA|CYCLES|
+        REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW
+        |FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
+        ACArea|ABSACArea|PSLOPE|NSLOPE|TSR|TSF|THR|THF
         """,
         validator=strict_discrete_set,
         values=[f"P{i}" for i in range(1, 13)],
@@ -692,28 +685,22 @@ class MeasureChannel(Channel):
         """Get the value of a specific simple measurement type.
         This method retrieves the current value of the specified simple measurement type.
         Args:
-            measurement_type (str): The measurement type to query. Valid values are:
-                PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
-                STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
-                OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
-                NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
-                FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
-                REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
-                NACArea, ACArea, ABSACArea, ALL
+        measurement_type (str): The measurement type to query. Valid values are:
+        PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+        STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+        OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+        NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+        FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+        REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+        NACArea, ACArea, ABSACArea, ALL
 
-                Note: ALL returns all measurement values of all measurement types
-                except for delay measurements.
+        Note: ALL returns all measurement values of all measurement types
+        except for delay measurements.
 
         Returns:
-            float or str: The measurement value in NR3 format (e.g., 1.23E+2) for
-                         individual measurements, or a string containing all values
-                         when measurement_type is "ALL".
-
-        Example:
-            # Get maximum value
-            max_val = measure.get_simple_value("MAX")
-            # Get all measurements
-            all_vals = measure.get_simple_value("ALL")
+        float or str: The measurement value in NR3 format (e.g., 1.23E+2) for
+        individual measurements, or a string containing all values
+        when measurement_type is "ALL".
         """
         response = self.ask(f":MEASure:SIMPle:VALue? {measurement_type}")
         if measurement_type == "ALL":
@@ -725,10 +712,7 @@ class MeasureChannel(Channel):
         ":MEASure:SIMPle:VALue? ALL",
         """Get all simple measurement values.
         This command retrieves all measurement values of all measurement types
-        except for delay measurements.
-        Returns:
-            str: All measurement values in a formatted string.
-        """,
+        except for delay measurements.""",
         get_process=lambda v: v.strip(),
     )
 
@@ -739,20 +723,14 @@ class MeasureChannel(Channel):
         This command sets the type of simple measurement and its state.
         Takes a tuple of (item, state) where:
         - item (str): The measurement item to set. Valid values are:
-            PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
-            STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
-            OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
-            NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
-            FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
-            REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
-            NACArea, ACArea, ABSACArea
+        PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+        STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+        OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+        NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+        FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+        REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+        NACArea, ACArea, ABSACArea
         - state (str): The state of the measurement item (ON or OFF).
-
-        Example:
-            # Add maximum measurement to the simple measurements window
-            measure.simple_item = ("MAX", "ON")
-            # Remove frequency measurement from the simple measurements window
-            measure.simple_item = ("FREQ", "OFF")
         """
     )
 
@@ -790,8 +768,6 @@ class TriggerChannel(Channel):
         Returns the value of hardware frequency counter in hertz if available.
         The default precision is 3 digits, maximum valid precision is 7 digits.
         Use ":FORMat:DATA" command to set the data precision.
-        Returns:
-            float: Trigger frequency in Hz (NR3 format with decimal point and exponent)
         """,
         get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
     )
@@ -799,27 +775,7 @@ class TriggerChannel(Channel):
     mode = Channel.control(
         ":TRIGger:MODE?",
         ":TRIGger:MODE %s",
-        """Control the trigger mode.
-        AUTO: The oscilloscope begins to search for the trigger signal that meets the
-              conditions. If the trigger signal is satisfied, the running state shows
-              Trig'd, and the interface shows stable waveform. Otherwise, the running
-              state always shows Auto, and the interface shows unstable waveform.
-        NORMal: The oscilloscope enters the wait trigger state and begins to search for
-                trigger signals that meet the conditions. If the trigger signal is
-                satisfied, the running state shows Trig'd, and the interface shows
-                stable waveform. Otherwise, the running state shows Ready, and the
-                interface displays the last triggered waveform (previous trigger) or
-                does not display the waveform (no previous trigger).
-        SINGle: The backlight of SINGLE key lights up, the oscilloscope enters the
-                waiting trigger state and begins to search for the trigger signal that
-                meets the conditions. If the trigger signal is satisfied, the running
-                state shows Trig'd, and the interface shows stable waveform. Then, the
-                oscilloscope stops scanning, the RUN/STOP key becomes red, and the
-                running status shows Stop. Otherwise, the running state shows Ready,
-                and the interface does not display the waveform.
-        FTRIG: Force to acquire a frame regardless of whether the input signal meets
-               the trigger conditions or not.
-        """,
+        """Control the trigger mode.""",
         validator=strict_discrete_set,
         values=["AUTO", "NORMal", "SINGle", "FTRIG"],
         get_process=lambda v: v.strip(),
@@ -828,8 +784,7 @@ class TriggerChannel(Channel):
     status = Channel.measurement(
         ":TRIGger:STATus?",
         docs="""Get the current trigger status.
-        Returns the current trigger state such as STOP, READY, ARM, TD, WAIT, etc.
-        """,
+        Returns the current trigger state such as STOP, READY, ARM, TD, WAIT, etc.""",
         get_process=lambda v: v.strip(),
     )
 
@@ -846,20 +801,7 @@ class TriggerChannel(Channel):
     edge_coupling = Channel.control(
         ":TRIGger:EDGE:COUPling?",
         ":TRIGger:EDGE:COUPling %s",
-        """Control the coupling mode of the edge trigger.
-        - DC: DC coupling allows dc and ac signals into the trigger path.
-        - AC: AC coupling places a high-pass filter in the trigger path, removing
-              dc offset voltage from the trigger waveform. Use AC coupling to get
-              a stable edge trigger when your waveform has a large dc offset.
-        - HFREJect: High-frequency rejection filter that adds a low-pass filter
-                    in the trigger path to remove high-frequency components from
-                    the trigger waveform. Use to remove high-frequency noise, such
-                    as AM or FM broadcast stations, from the trigger path.
-        - LFREJect: Low frequency rejection filter adds a high-pass filter in
-                    series with the trigger waveform to remove any unwanted
-                    low-frequency components from a trigger waveform, such as
-                    power line frequencies, that can interfere with proper triggering.
-        """,
+        """Control the coupling mode of the edge trigger.""",
         validator=strict_discrete_set,
         values=["DC", "AC", "LFREJect", "HFREJect"],
         get_process=lambda v: v.strip(),
@@ -872,7 +814,6 @@ class TriggerChannel(Channel):
         This command sets the number of holdoff events of the edge trigger.
         The holdoff event count determines how many trigger events to ignore
         before allowing the next trigger to occur.
-        Range: 1 to 100000000 (NR1 format - integer with no decimal point)
         """,
         validator=truncated_range,
         values=[1, 100000000],
@@ -886,7 +827,6 @@ class TriggerChannel(Channel):
         This command sets the holdoff time of the edge trigger in seconds.
         The holdoff time determines how long to wait after a trigger event before
         allowing the next trigger to occur.
-        Range: 8.00E-09 to 3.00E+01 seconds (NR3 format - float with decimal point and exponent)
         """,
         validator=truncated_range,
         values=[8e-9, 30],
@@ -896,14 +836,7 @@ class TriggerChannel(Channel):
     edge_hld_off = Channel.control(
         ":TRIGger:EDGE:HOLDoff?",
         ":TRIGger:EDGE:HOLDoff %s",
-        """Control the holdoff type for edge trigger.
-        This command selects the holdoff type of the edge trigger.
-        - OFF: Turn off the holdoff
-        - EVENts: The number of trigger events that the oscilloscope counts
-                  before re-arming the trigger circuitry
-        - TIME: The amount of time that the oscilloscope waits before
-                re-arming the trigger circuitry
-        """,
+        """Control the holdoff type for edge trigger.""",
         validator=strict_discrete_set,
         values=["OFF", "EVENts", "TIME"],
         get_process=lambda v: v.strip(),
@@ -912,12 +845,7 @@ class TriggerChannel(Channel):
     edge_hld_start = Channel.control(
         ":TRIGger:EDGE:HSTart?",
         ":TRIGger:EDGE:HSTart %s",
-        """Control the initial position of the edge trigger holdoff.
-        This command defines the initial position of the edge trigger holdoff.
-        - LAST_TRIG: The initial position of holdoff is the first time point
-                     satisfying the trigger condition.
-        - ACQ_START: The initial position of holdoff is time of the last trigger.
-        """,
+        """Control the initial position of the edge trigger holdoff.""",
         validator=strict_discrete_set,
         values=["LAST_TRIG", "ACQ_START"],
         get_process=lambda v: v.strip(),
@@ -926,12 +854,7 @@ class TriggerChannel(Channel):
     edge_impedance = Channel.control(
         ":TRIGger:EDGE:IMPedance?",
         ":TRIGger:EDGE:IMPedance %s",
-        """Control the impedance of the edge trigger source.
-        This command sets the edge trigger source impedance, which is only
-        valid when the source is EXT or EXT/5.
-        - ONEMeg: 1 MOhm impedance
-        - FIFTy: 50 Ohm impedance
-        """,
+        """Control the impedance of the edge trigger source.""",
         validator=strict_discrete_set,
         values=["ONEMeg", "FIFTy"],
         get_process=lambda v: v.strip(),
@@ -945,7 +868,7 @@ class TriggerChannel(Channel):
         The query returns the current trigger level value of the edge trigger.
         For SDS1000X HD models, the range is:
         [-4.1*vertical_scale-vertical_offset, 4.1*vertical_scale-vertical_offset]
-        Value in NR3 format (float with decimal point and exponent).
+        See programming manual for other models.
         """,
         get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
     )
@@ -953,11 +876,7 @@ class TriggerChannel(Channel):
     edge_noise_reject = Channel.control(
         ":TRIGger:EDGE:NREJect?",
         ":TRIGger:EDGE:NREJect %s",
-        """Control the noise rejection for edge trigger.
-        This command sets the state of the noise rejection for the edge trigger.
-        - ON: Enable noise rejection
-        - OFF: Disable noise rejection
-        """,
+        """Control the noise rejection for edge trigger.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
@@ -967,11 +886,7 @@ class TriggerChannel(Channel):
     edge_slope = Channel.control(
         ":TRIGger:EDGE:SLOPe?",
         ":TRIGger:EDGE:SLOPe %s",
-        """Control the slope of the edge trigger.
-        - RISing: Triggers on rising edge
-        - FALLing: Triggers on falling edge
-        - ALTernate: Triggers on alternating edges
-        """,
+        """Control the slope of the edge trigger.""",
         validator=strict_discrete_set,
         values=["RISing", "FALLing", "ALTernate"],
         get_process=lambda v: v.strip(),
@@ -980,13 +895,7 @@ class TriggerChannel(Channel):
     edge_source = Channel.control(
         ":TRIGger:EDGE:SOURce?",
         ":TRIGger:EDGE:SOURce %s",
-        """Control the trigger source of the edge trigger.
-        - C1, C2, C3, C4: Analog channel inputs
-        - D0-D15: Digital channel inputs (if available)
-        - EX: External trigger input
-        - EX5: External trigger input divided by 5
-        - LINE: Line frequency trigger
-        """,
+        """Control the trigger source of the edge trigger.""",
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "EX", "EX5", "LINE"],
@@ -1120,7 +1029,7 @@ class SDS1000XHD(SCPIMixin, Instrument):
     acq_num_acquisitions = Instrument.control(
         ":ACQuire:NUMAcq?",
         ":ACQuire:NUMAcq %d",
-        """Controls the number of waveform acquisitions that
+        """Control the number of waveform acquisitions that
         have occurred since starting acquisition. This value is reset to
         zero when any acquisition,horizontal, or vertical arguments
         that affect the waveform are changed.""",
