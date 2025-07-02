@@ -343,15 +343,15 @@ class WaveformChannel(Channel):
         voltage codes per division, ADC bit depth, and probe attenuation factor.
         This uses the same binary parsing approach as the get_descriptor method.
         Returns:
-            dict: A dictionary with the following keys:
-                - vdiv: Voltage per division (float)
-                - voffset: Voltage offset (float)
-                - interval: Time interval between points (float)
-                - trdl: Trigger delay (float)
-                - tdiv: Time per division (float)
-                - vcode_per: Voltage codes per division (float)
-                - adc_bit: ADC bit depth (int)
-                - probe: Probe attenuation factor (float)
+        dict: A dictionary with the following keys:
+        - vdiv: Voltage per division (float)
+        - voffset: Voltage offset (float)
+        - interval: Time interval between points (float)
+        - trdl: Trigger delay (float)
+        - tdiv: Time per division (float)
+        - vcode_per: Voltage codes per division (float)
+        - adc_bit: ADC bit depth (int)
+        - probe: Probe attenuation factor (float)
         """
         self._ensure_source_set()
         try:
@@ -598,8 +598,8 @@ class AdvancedMeasurementItem(Channel):
         OVSP|RPRE|PER|FREQ|TMAX|TMIN|PWID|NWID|DUTY|
         NDUTY|WID|NBWID|DELAY|TIMEL|RISE|FALL|RISE10T90|
         FALL90T10|CCJ|PAREA|NAREA|AREA|ABSAREA|CYCLES|
-        REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW
-        |FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
+        REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW|
+        FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
         ACArea|ABSACArea|PSLOPE|NSLOPE|TSR|TSF|THR|THF
         """,
         validator=strict_discrete_set,
