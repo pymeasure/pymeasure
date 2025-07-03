@@ -196,7 +196,7 @@ class Experiment:
                 ax = plot['ax']
                 if plot['type'] == 'plot':
                     x, y = plot['args'][0], plot['args'][1]
-                    if type(y) == str:
+                    if isinstance(y, str):
                         y = [y]
                     for yname, line in zip(y, ax.lines):
                         self.update_line(ax, line, x, yname)
