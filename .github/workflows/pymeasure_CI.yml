@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pymeasure requirements
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: .github/pymeasure.yml
           cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
@@ -58,7 +58,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pymeasure requirements
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: .github/pymeasure.yml
           create-args: python=${{ matrix.python-version }}
@@ -101,7 +101,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install pymeasure requirements
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v2
         with:
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
