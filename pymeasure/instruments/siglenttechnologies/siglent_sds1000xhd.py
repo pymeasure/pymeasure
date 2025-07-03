@@ -134,7 +134,7 @@ class AnalogChannel(Channel):
 
 class WaveformChannel(Channel):
     """
-    Waveform channel for SDS1000xHD oscilloscope.
+    Waveform channel for SDS1000XHD oscilloscope.
     ===========================================================
     This class provides methods to retrieve waveform data from the oscilloscope.
     The waveform record contains two portions: the preamble and waveform data.
@@ -142,17 +142,6 @@ class WaveformChannel(Channel):
     the waveform data is the actual data acquired for each point in the specified source.
     Both must be read separately using dedicated commands.
     """
-
-    def __init__(self, parent, id):
-        """Initialize the WaveformChannel with automatic source setting.
-        Args:
-            parent: Parent instrument instance
-            id: Channel identifier (e.g., "C1", "C2", "F1", "D0", etc.)
-        """
-        super().__init__(parent, id)
-        # Store the ID for later automatic source setting
-        # We'll set the source automatically when first accessed, not during initialization
-        self._auto_source_id = id
 
     source = Channel.control(
         ":WAVeform:SOURce?",
@@ -164,17 +153,6 @@ class WaveformChannel(Channel):
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
         get_process=lambda v: v.strip(),
     )
-
-    @property
-    def source_with_auto_set(self):
-        """Get the source, automatically setting it if needed."""
-        self._ensure_source_set()
-        return self.source
-
-    @source_with_auto_set.setter
-    def source_with_auto_set(self, value):
-        """Set the source."""
-        self.source = value
 
     start_point = Channel.control(
         ":WAVeform:STARt?",
@@ -245,95 +223,51 @@ class WaveformChannel(Channel):
         Returns:
             dict: Parsed descriptor data with the same format as get_descriptor
         """
-        try:
-            # Find the start of the binary data after the header
-            if isinstance(raw_data, str):
-                raw_data = raw_data.encode('latin-1')
+        # Find the start of the binary data after the header
+        if isinstance(raw_data, str):
+            raw_data = raw_data.encode('latin-1')
 
-            # Check if we have a proper binary data block
-            if b'#' not in raw_data:
-                raise ValueError("No binary data block found in response")
+        # Locate the binary data block
+        recv = raw_data[raw_data.find(b'#') + 11:]
 
-            recv = raw_data[raw_data.find(b'#') + 11:]
+        # Time division enumeration from the programming guide
+        tdiv_enum = [200e-12, 500e-12, 1e-9,
+                     2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9, 500e-9,
+                     1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6,
+                     1e-3, 2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3,
+                     1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
-            # Check if we have enough data
-            min_required_length = 0x14c  # Minimum length needed for all fields
-            if len(recv) < min_required_length:
-                raise ValueError(f"Insufficient data: got {len(recv)} bytes, "
-                                 f"need at least {min_required_length}")
+        # Extract binary data from specific offsets
+        v_scale = recv[0x9c:0xa0]
+        v_offset = recv[0xa0:0xa4]
+        interval = recv[0xb0:0xb4]
+        code_per_div = recv[0xa4:0xa8]
+        adc_bit = recv[0xac:0xae]
+        delay = recv[0xb4:0xbc]
+        tdiv = recv[0x144:0x146]
+        probe = recv[0x148:0x14c]
 
-            # Time division enumeration from the programming guide
-            tdiv_enum = [200e-12, 500e-12, 1e-9,
-                         2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200e-9, 500e-9,
-                         1e-6, 2e-6, 5e-6, 10e-6, 20e-6, 50e-6, 100e-6, 200e-6, 500e-6,
-                         1e-3, 2e-3, 5e-3, 10e-3, 20e-3, 50e-3, 100e-3, 200e-3, 500e-3,
-                         1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+        # Unpack the values
+        interval_val = struct.unpack('f', interval)[0]
+        delay_val = struct.unpack('d', delay)[0]
+        tdiv_index = struct.unpack('h', tdiv)[0]
+        probe_val = struct.unpack('f', probe)[0]
+        vdiv = struct.unpack('f', v_scale)[0] * probe_val
+        voffset = struct.unpack('f', v_offset)[0] * probe_val
+        vcode_per = struct.unpack('f', code_per_div)[0]
+        adc_bit_val = struct.unpack('h', adc_bit)[0]
+        tdiv_val = tdiv_enum[tdiv_index] if 0 <= tdiv_index < len(tdiv_enum) else 1e-6
 
-            # Extract binary data from specific offsets with bounds checking
-            def safe_extract(data, start, end):
-                if end >= len(data):
-                    raise ValueError(f"Data truncated: trying to read bytes {start}:{end} "
-                                     f"from {len(data)} bytes")
-                return data[start:end + 1]
-
-            v_scale = safe_extract(recv, 0x9c, 0x9f)
-            v_offset = safe_extract(recv, 0xa0, 0xa3)
-            interval = safe_extract(recv, 0xb0, 0xb3)
-            code_per_div = safe_extract(recv, 0xa4, 0xa7)
-            adc_bit = safe_extract(recv, 0xac, 0xad)
-            delay = safe_extract(recv, 0xb4, 0xbb)
-            tdiv = safe_extract(recv, 0x144, 0x145)
-            probe = safe_extract(recv, 0x148, 0x14b)
-
-            # Unpack the values with error checking
-            interval_val = struct.unpack('f', interval)[0]
-            delay_val = struct.unpack('d', delay)[0]
-            tdiv_index = struct.unpack('h', tdiv)[0]
-            probe_val = struct.unpack('f', probe)[0]
-            vdiv = struct.unpack('f', v_scale)[0] * probe_val
-            voffset = struct.unpack('f', v_offset)[0] * probe_val
-            vcode_per = struct.unpack('f', code_per_div)[0]
-            adc_bit_val = struct.unpack('h', adc_bit)[0]
-            tdiv_val = tdiv_enum[tdiv_index] if 0 <= tdiv_index < len(tdiv_enum) else 1e-6
-
-            return {
-                'vdiv': vdiv,
-                'voffset': voffset,
-                'interval': interval_val,
-                'trdl': delay_val,
-                'tdiv': tdiv_val,
-                'vcode_per': vcode_per,
-                'adc_bit': adc_bit_val,
-                'probe': probe_val
-            }
-
-        except (struct.error, IndexError, KeyError, ValueError) as e:
-            # Fallback values if parsing fails
-            print(f"Warning: Failed to parse preamble descriptor: {e}")
-            return {
-                'vdiv': 1.0,
-                'voffset': 0.0,
-                'interval': 1e-6,
-                'trdl': 0.0,
-                'tdiv': 1e-6,
-                'vcode_per': 25.0,
-                'adc_bit': 8,
-                'probe': 1.0
-            }
-
-    def _ensure_source_set(self):
-        """Ensure the source is set to match the channel ID if it's a valid source."""
-        if hasattr(self, '_auto_source_id') and self._auto_source_id and \
-           self._auto_source_id in ["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
-                                    "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
-                                    "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"]:
-            try:
-                # Always set the source to the channel ID without checking current value
-                # This avoids potential issues with reading the current source state
-                self.source = self._auto_source_id
-            except Exception:
-                # If setting source fails, continue without error
-                pass
+        return {
+            'vdiv': vdiv,
+            'voffset': voffset,
+            'interval': interval_val,
+            'trdl': delay_val,
+            'tdiv': tdiv_val,
+            'vcode_per': vcode_per,
+            'adc_bit': adc_bit_val,
+            'probe': probe_val
+        }
 
     @property
     def preamble(self):
@@ -353,24 +287,10 @@ class WaveformChannel(Channel):
         - adc_bit: ADC bit depth (int)
         - probe: Probe attenuation factor (float)
         """
-        self._ensure_source_set()
-        try:
-            # Get raw binary data from the instrument using the same approach as get_descriptor
-            self.write(":WAVeform:PREamble?")
-            raw_data = self.read_bytes(-1)
-            return self._parse_preamble_descriptor(raw_data)
-        except Exception as e:
-            print(f"Warning: Failed to get preamble data: {e}")
-            return {
-                'vdiv': 1.0,
-                'voffset': 0.0,
-                'interval': 1e-6,
-                'trdl': 0.0,
-                'tdiv': 1e-6,
-                'vcode_per': 25.0,
-                'adc_bit': 8,
-                'probe': 1.0
-            }
+        # Get raw binary data from the instrument using the same approach as get_descriptor
+        self.write(":WAVeform:PREamble?")
+        raw_data = self.read_bytes(-1)
+        return self._parse_preamble_descriptor(raw_data)
 
     def get_data(self):
         """Get the waveform data from the oscilloscope for the current source.
@@ -383,90 +303,84 @@ class WaveformChannel(Channel):
                 - time_values: List of time values in seconds
                 - volt_values: List of voltage values in volts
         """
-        self._ensure_source_set()
-        try:
-            # Constants - same as reference script
-            HORI_NUM = 10
+        # Constants - same as reference script
+        HORI_NUM = 10
 
-            # Set up waveform source and get preamble information
-            self.start_point = 0  # Reset start point to 0
+        # Set up waveform source and get preamble information
+        self.start_point = 0  # Reset start point to 0
 
-            # Get waveform descriptor information using the preamble property
-            preamble_data = self.preamble
-            vdiv = preamble_data['vdiv']
-            ofst = preamble_data['voffset']
-            interval = preamble_data['interval']
-            trdl = preamble_data['trdl']
-            tdiv = preamble_data['tdiv']
-            vcode_per = preamble_data['vcode_per']
-            adc_bit = preamble_data['adc_bit']
+        # Get waveform descriptor information using the preamble property
+        preamble_data = self.preamble
+        vdiv = preamble_data['vdiv']
+        ofst = preamble_data['voffset']
+        interval = preamble_data['interval']
+        trdl = preamble_data['trdl']
+        tdiv = preamble_data['tdiv']
+        vcode_per = preamble_data['vcode_per']
+        adc_bit = preamble_data['adc_bit']
 
-            # Get the waveform points and confirm the number of waveform slice reads
-            points = self.parent.acq_points
-            one_piece_num = self.max_point
-            read_times = math.ceil(points / one_piece_num)
+        # Get the waveform points and confirm the number of waveform slice reads
+        points = self.parent.acq_points
+        one_piece_num = self.max_point
+        read_times = math.ceil(points / one_piece_num)
 
-            # Set the number of read points per slice, if the waveform points is
-            # greater than the maximum number of slice reads
-            if points > one_piece_num:
-                self.point = one_piece_num
+        # Set the number of read points per slice, if the waveform points is
+        # greater than the maximum number of slice reads
+        if points > one_piece_num:
+            self.point = one_piece_num
 
-            # Choose the format of the data returned
-            self.width = "BYTE"
-            if adc_bit > 8:
-                self.width = "WORD"
+        # Choose the format of the data returned
+        self.width = "BYTE"
+        if adc_bit > 8:
+            self.width = "WORD"
 
-            # Get the waveform data for each slice
-            recv_byte = b''
-            for i in range(0, read_times):
-                start = i * one_piece_num
-                # Set the starting point of each slice
-                self.start_point = start
-                # Get the waveform data of each slice
-                self.write("WAV:DATA?")
-                recv_rtn = self.read_bytes(-1, break_on_termchar=True).rstrip()
-                # Splice each waveform data based on data block information
-                block_start = recv_rtn.find(b'#')
-                data_digit = int(recv_rtn[block_start + 1:block_start + 2])
-                data_start = block_start + 2 + data_digit
-                recv_byte += recv_rtn[data_start:]
+        # Get the waveform data for each slice
+        recv_byte = b''
+        for i in range(0, read_times):
+            start = i * one_piece_num
+            # Set the starting point of each slice
+            self.start_point = start
+            # Get the waveform data of each slice
+            self.write("WAV:DATA?")
+            recv_rtn = self.read_bytes(-1, break_on_termchar=True).rstrip()
+            # Splice each waveform data based on data block information
+            block_start = recv_rtn.find(b'#')
+            data_digit = int(recv_rtn[block_start + 1:block_start + 2])
+            data_start = block_start + 2 + data_digit
+            recv_byte += recv_rtn[data_start:]
 
-            # Unpack signed byte data
-            if adc_bit > 8:
-                # Calculate actual length of data received and adjust points if needed
-                actual_points = len(recv_byte) // 2  # 2 bytes per point for WORD format
-                # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
-                if actual_points * 2 != len(recv_byte):
-                    # warning_msg = (f"Warning: Buffer size {len(recv_byte)} is not exactly "
-                    #                f"twice the number of points {actual_points}")
-                    # print(warning_msg)
-                    # Truncate buffer to ensure it's exactly divisible by 2
-                    truncated_bytes = len(recv_byte) - (len(recv_byte) % 2)
-                    recv_byte = recv_byte[:truncated_bytes]
-                    actual_points = len(recv_byte) // 2
+        # Unpack signed byte data
+        if adc_bit > 8:
+            # Calculate actual length of data received and adjust points if needed
+            actual_points = len(recv_byte) // 2  # 2 bytes per point for WORD format
+            # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
+            if actual_points * 2 != len(recv_byte):
+                # warning_msg = (f"Warning: Buffer size {len(recv_byte)} is not exactly "
+                #                f"twice the number of points {actual_points}")
+                # print(warning_msg)
+                # Truncate buffer to ensure it's exactly divisible by 2
+                truncated_bytes = len(recv_byte) - (len(recv_byte) % 2)
+                recv_byte = recv_byte[:truncated_bytes]
+                actual_points = len(recv_byte) // 2
 
-                convert_data = struct.unpack("%dh" % actual_points, recv_byte)
-            else:
-                # Calculate actual length of data received and adjust points if needed
-                actual_points = len(recv_byte)  # 1 byte per point for BYTE format
-                # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
-                convert_data = struct.unpack("%db" % actual_points, recv_byte)
-            del recv_byte
-            gc.collect()
+            convert_data = struct.unpack("%dh" % actual_points, recv_byte)
+        else:
+            # Calculate actual length of data received and adjust points if needed
+            actual_points = len(recv_byte)  # 1 byte per point for BYTE format
+            # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
+            convert_data = struct.unpack("%db" % actual_points, recv_byte)
+        del recv_byte
+        gc.collect()
 
-            # Calculate the voltage value and time value
-            time_value = []
-            volt_value = []
-            for idx in range(0, len(convert_data)):
-                volt_value.append(convert_data[idx] / vcode_per * float(vdiv) - float(ofst))
-                time_data = -(float(tdiv) * HORI_NUM / 2) + idx * interval + float(trdl)
-                time_value.append(time_data)
+        # Calculate the voltage value and time value
+        time_value = []
+        volt_value = []
+        for idx in range(0, len(convert_data)):
+            volt_value.append(convert_data[idx] / vcode_per * float(vdiv) - float(ofst))
+            time_data = -(float(tdiv) * HORI_NUM / 2) + idx * interval + float(trdl)
+            time_value.append(time_data)
 
-            return time_value, volt_value
-
-        except Exception as e:
-            print(f"Error during waveform data acquisition: {e}")
-            raise
+        return time_value, volt_value
 
 
 class AdvancedMeasurementItem(Channel):
