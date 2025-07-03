@@ -24,7 +24,7 @@
 
 import logging
 import numpy as np
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ WL_RANGE = [1480, 1620]
 LOCK_PW = 1234
 
 
-class KeysightN7776C(SCPIUnknownMixin, Instrument):
+class KeysightN7776C(SCPIMixin, Instrument):
     """
     This represents the Keysight N7776C Tunable Laser Source interface.
 
@@ -149,21 +149,25 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
                                     validator=strict_range,
                                     values=[0.0001, WL_RANGE[1] - WL_RANGE[0]],
                                     get_process=lambda v: v * 1e9)
+
     sweep_speed = Instrument.control('sour0:wav:swe:speed?', 'sour0:wav:swe:speed %fnm/s',
                                      """Control speed of the sweep (in nanometers per second).""",
                                      validator=strict_discrete_set,
-                                     values=[0.5, 1, 50, 80, 200],
+                                     values=[0.5, 1, 2, 5, 10, 20, 40, 50, 80, 100, 150, 160, 200],
                                      get_process=lambda v: v * 1e9)
+
     sweep_mode = Instrument.control('sour0:wav:swe:mode?', 'sour0:wav:swe:mode %s',
                                     """Control sweep mode of the swept laser source """,
                                     validator=strict_discrete_set,
                                     values=['STEP', 'MAN', 'CONT'])
+
     sweep_twoway = Instrument.control('sour0:wav:swe:rep?', 'sour0:wav:swe:rep %s',
                                       """Control the repeat mode. Applies in stepped,continuous and
                                       manual sweep mode.""",
                                       validator=strict_discrete_set,
                                       map_values=True,
                                       values={False: 'ONEW', True: 'TWOW'})
+
     _sweep_params_consistent = Instrument.measurement(
         'sour0:wav:swe:chec?',
         """Get whether the currently set sweep parameters (sweep mode, sweep start,
@@ -175,6 +179,19 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         'sour0:read:points? llog',
         """Get the number of datapoints that the :READout:DATA?
         command will return.""")
+
+    sweep_cycles = Instrument.control('SOUR0:WAV:SWE:CYCL?', 'SOUR0:WAV:SWE:CYCL %g',
+                                      """Control number of sweep cycles. Cannot be set while a
+                                      sweep is running.""",
+                                      validator=strict_range,
+                                      values=[0, 65535])
+
+    sweep_dwell_ms = Instrument.control('SOUR0:WAV:SWE:DWEL?', 'SOUR0:WAV:SWE:DWEL %gMS',
+                                        """Control the dwell time in millisecond. Can only be
+                                        used when sweep mode is STEP. Cannot be set while a
+                                        sweep is running.""",
+                                        validator=strict_range,
+                                        values=[0, 100000], get_process=lambda v: v * 1e3)
 
     sweep_state = Instrument.control(
         'sour0:wav:swe?', 'sour0:wav:swe %g',
@@ -248,6 +265,18 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         # Using pyvisa's method bypassing the normal read.
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
                         datatype=u'd'))
+
+    def lambda_zero(self):
+        """
+        Executes a wavelength zero.
+        """
+        self.write('sour0:wav:corr:zero')
+
+    def align_cavity(self):
+        """
+        Optimizes the laser cavity alignment.
+        """
+        self.write('sour0:wav:corr:ara')
 
     def close(self):
         """
