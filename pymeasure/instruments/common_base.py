@@ -24,10 +24,31 @@
 
 from inspect import getmembers
 import logging
+from typing import Any, Callable, cast, Optional, Protocol, Union, Sequence, TypeVar
 from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+IdType = Union[int, str, None]
+
+
+class Child(Protocol):
+    parent: "CommonBase"
+    id: IdType
+    _name: str
+    _protected: bool
+    _collection: str
+
+    def __init__(self, parent: "CommonBase", id: IdType, **kwargs) -> None: ...
+
+
+child = TypeVar("child", bound=Child)
+T = TypeVar("T")
+V0 = TypeVar("V0")
+Vs = TypeVar("Vs")
+V2 = TypeVar("V2")
 
 
 class DynamicProperty(property):
@@ -125,6 +146,20 @@ class CommonBase:
         self._create_channels()
         super().__init__(**kwargs)
 
+    def write(self, command: str, **kwargs) -> None: ...
+
+    def write_bytes(self, content: bytes, **kwargs) -> None: ...
+
+    def read(self, **kwargs) -> str: ...
+
+    def read_bytes(self, count: int, **kwargs) -> bytes: ...
+
+    def write_binary_values(
+        self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
+    ): ...
+
+    def read_binary_values(self, **kwargs) -> Any: ...
+
     class BaseChannelCreator:
         """Base class for ChannelCreator and MultiChannelCreator.
 
@@ -132,13 +167,18 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, **kwargs):
-            try:
-                self.valid_class = issubclass(cls, CommonBase)
-            except TypeError:
-                self.valid_class = False
-            self.pairs = ()
+        pairs: Sequence[tuple[type[Child], IdType]] = ()
+        kwargs: dict
+
+        def __init__(self, **kwargs) -> None:
             self.kwargs = kwargs
+
+        def check_for_valid_class(self, cls: Any) -> bool:
+            try:
+                valid_class = issubclass(cls, CommonBase)
+            except TypeError:
+                valid_class = False
+            return valid_class
 
     class ChannelCreator(BaseChannelCreator):
         """Add a single channel to the parent class.
@@ -166,9 +206,9 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, id=None, **kwargs):
-            super().__init__(cls=cls, **kwargs)
-            if (isinstance(id, (str, int)) or id is None) and self.valid_class:
+        def __init__(self, cls: type[Child], id: IdType = None, **kwargs):
+            super().__init__(**kwargs)
+            if (isinstance(id, (str, int)) or id is None) and self.check_for_valid_class(cls):
                 self.pairs = ((cls, id),)
             else:
                 raise ValueError("Invalid definition of class '{cls}' and id '{id}'.")
@@ -201,18 +241,24 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls, id=None, prefix="ch_", **kwargs):
-            super().__init__(cls=cls, **kwargs)
+        def __init__(
+            self,
+            cls: Union[type[Child], Sequence[type[Child]]],
+            id: IdType = None,
+            prefix: Optional[str] = "ch_",
+            **kwargs,
+        ) -> None:
+            super().__init__(**kwargs)
             if isinstance(id, (list, tuple)) and isinstance(cls, (list, tuple)):
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
-            elif isinstance(id, (list, tuple)) and self.valid_class:
-                self.pairs = list(zip((cls,) * len(id), id))
+            elif isinstance(id, (list, tuple)) and self.check_for_valid_class(cls):
+                self.pairs = list(zip((cast(type[Child], cls),) * len(id), id))
             else:
                 raise ValueError("Invalid definition of classes '{cls}' and ids '{id}'.")
             self.kwargs.setdefault("prefix", prefix)
 
-    def _setup_special_names(self):
+    def _setup_special_names(self) -> list[str]:
         """ Return list of class/instance special names.
 
         Compute the list of special names based on the list of
@@ -233,7 +279,7 @@ class CommonBase:
         return special_names
 
     @staticmethod
-    def get_channels(cls):
+    def get_channels(cls: type["CommonBase"]) -> list[tuple[str, "CommonBase.BaseChannelCreator"]]:
         """Return a list of all the Instrument's ChannelCreator and MultiChannelCreator instances"""
         class_members = getmembers(cls)
 
@@ -244,7 +290,7 @@ class CommonBase:
         return channels
 
     @staticmethod
-    def get_channel_pairs(cls):
+    def get_channel_pairs(cls: type["CommonBase"]):
         """Return a list of all the Instrument's channel pairs"""
         channel_pairs = []
         for name, creator in CommonBase.get_channels(cls):
@@ -252,7 +298,7 @@ class CommonBase:
                 channel_pairs.append(pair)
         return channel_pairs
 
-    def _create_channels(self):
+    def _create_channels(self) -> None:
         """Create channel interfaces for all the Instrument's channel pairs."""
         for name, creator in CommonBase.get_channels(self.__class__):
             for cls, id in creator.pairs:
@@ -268,26 +314,33 @@ class CommonBase:
                     raise ValueError("Invalid class '{creator}' for channel creation.")
                 child._protected = True
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """ Add reserved_prefix in front of special variables."""
         if hasattr(self, '_special_names'):
             if name in self._special_names:
                 name = self.__reserved_prefix + name
         super().__setattr__(name, value)
 
-    def __getattribute__(self, name):
+    def __getattribute__(self, name: str) -> Any:
         """ Prevent read access to variables with special names used to
         support dynamic property behaviour."""
         if name in ('_special_names', '__dict__'):
             return super().__getattribute__(name)
         if hasattr(self, '_special_names'):
             if name in self._special_names:
-                raise AttributeError(
-                    f"{name} is a reserved variable name and it cannot be read")
+                raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
 
     # Channel management
-    def add_child(self, cls, id=None, collection="channels", prefix="ch_", attr_name="", **kwargs):
+    def add_child(
+        self,
+        cls: type[child],
+        id: IdType = None,
+        collection: str = "channels",
+        prefix: Optional[str] = "ch_",
+        attr_name: Optional[str] = "",
+        **kwargs,
+    ) -> child:
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the id in the
@@ -342,7 +395,7 @@ class CommonBase:
             child._name = collection
         return child
 
-    def remove_child(self, child):
+    def remove_child(self, child: type[Child]) -> None:
         """Remove the child from the instrument and the corresponding collection.
 
         :param child: Instance of the child to delete.
@@ -355,7 +408,7 @@ class CommonBase:
         delattr(self, child._name)
 
     # Communication functions
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: Optional[float] = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         Implement in subclass!
@@ -364,7 +417,7 @@ class CommonBase:
         """
         raise NotImplementedError("Implement in subclass!")
 
-    def ask(self, command, query_delay=None):
+    def ask(self, command: str, query_delay: Optional[float] = None) -> str:
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
@@ -375,8 +428,15 @@ class CommonBase:
         self.wait_for(query_delay)
         return self.read()
 
-    def values(self, command, separator=',', cast=float, preprocess_reply=None, maxsplit=-1,
-               **kwargs):
+    def values(
+        self,
+        command: str,
+        separator: str = ",",
+        cast: Callable[[str], T] = float,
+        preprocess_reply: Optional[Callable[[str], str]] = None,
+        maxsplit: int = -1,
+        **kwargs,
+    ) -> list[T]:
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -386,19 +446,20 @@ class CommonBase:
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
             the device into a list.
-        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+        :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
-        :param cast: A type to cast each element of the splitted string.
+        :param cast: A type to cast each element of the split string.
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
         :returns: A list of the desired type, or strings where the casting fails.
         """
-        results = self.ask(command, **kwargs).strip()
+        results: list[Any]
+        response = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
-            results = preprocess_reply(results)
-        results = results.split(separator, maxsplit=maxsplit)
+            response = preprocess_reply(response)
+        results = response.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
-                if cast == bool:
+                if cast is bool:
                     # Need to cast to float first since results are usually
                     # strings and bool of a non-empty string is always True
                     results[i] = bool(float(result))
@@ -408,7 +469,7 @@ class CommonBase:
                 pass  # Keep as string
         return results
 
-    def binary_values(self, command, query_delay=None, **kwargs):
+    def binary_values(self, command: str, query_delay: Optional[float] = None, **kwargs):
         """ Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.
@@ -423,26 +484,26 @@ class CommonBase:
     # Property creators
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
-        get_command,
-        set_command,
-        docs,
-        validator=lambda v, vs: v,
-        values=(),
-        map_values=False,
-        get_process=lambda v: v,
-        get_process_list=lambda v: v,
-        set_process=lambda v: v,
-        command_process=None,
-        check_set_errors=False,
-        check_get_errors=False,
-        dynamic=False,
-        preprocess_reply=None,
-        separator=',',
-        maxsplit=-1,
-        cast=float,
-        values_kwargs=None,
-        **kwargs
-    ):
+        get_command: Union[str, None],
+        set_command: Union[str, None],
+        docs: str,
+        validator: Callable[[Any, Vs], V2] = lambda v, vs: v,
+        values: Vs = (),
+        map_values: bool = False,
+        get_process: Callable[[Any], Any] = lambda v: v,
+        get_process_list: Callable[[list[Any]], Any] = lambda v: v,
+        set_process: Callable[[V2], Any] = lambda v: v,
+        command_process: Optional[Callable] = None,
+        check_set_errors: bool = False,
+        check_get_errors: bool = False,
+        dynamic: bool = False,
+        preprocess_reply: Optional[Callable[[str], str]] = None,
+        separator: str = ",",
+        maxsplit: int = -1,
+        cast: Callable[[str], T] = float,
+        values_kwargs: Optional[dict] = None,
+        **kwargs,
+    ) -> Union[property, DynamicProperty]:
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.
@@ -478,9 +539,9 @@ class CommonBase:
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
             the device into a list.
-        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+        :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
-        :param cast: A type to cast each element of the splitted string.
+        :param cast: A type to cast each element of the split string.
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
@@ -531,15 +592,16 @@ class CommonBase:
         else:
             warn("Do not use `command_process`, use a dynamic property instead.", FutureWarning)
 
-        def fget(self,
-                 get_command=get_command,
-                 values=values,
-                 map_values=map_values,
-                 get_process=get_process,
-                 get_process_list=get_process_list,
-                 command_process=command_process,
-                 check_get_errors=check_get_errors,
-                 ):
+        def fget(
+            self: "CommonBase",
+            get_command: Optional[str] = get_command,
+            values: Vs = values,
+            map_values: bool = map_values,
+            get_process: Callable[[Any], Any] = get_process,
+            get_process_list: Callable[[list[Any]], Any] = get_process_list,
+            command_process=command_process,
+            check_get_errors: bool = check_get_errors,
+        ) -> Any:
             if get_command is None:
                 raise LookupError("Property can not be read.")
             vals = self.values(command_process(get_command),
@@ -579,45 +641,45 @@ class CommonBase:
                 vals = get_process_list(vals)
                 return vals
 
-        def fset(self,
-                 value,
-                 set_command=set_command,
-                 validator=validator,
-                 values=values,
-                 map_values=map_values,
-                 set_process=set_process,
-                 command_process=command_process,
-                 check_set_errors=check_set_errors,
-                 ):
-
+        def fset(
+            self: "CommonBase",
+            value: V0,
+            set_command: Optional[str] = set_command,
+            validator: Callable[[V0, Vs], V2] = validator,
+            values: Vs = values,
+            map_values: bool = map_values,
+            set_process: Callable[[V2], Any] = set_process,
+            command_process=command_process,
+            check_set_errors: bool = check_set_errors,
+        ) -> None:
             if set_command is None:
                 raise LookupError("Property can not be set.")
 
-            value = set_process(validator(value, values))
+            val = set_process(validator(value, values))
             if not map_values:
                 pass
             elif isinstance(values, (list, tuple, range)):
-                value = values.index(value)
+                val = values.index(val)
             elif isinstance(values, dict):
-                value = values[value]
+                val = values[val]
             else:
                 raise ValueError(
                     'Values of type `{}` are not allowed '
                     'for CommonBase.control'.format(type(values))
                 )
-            self.write(command_process(set_command) % value)
+            self.write(command_process(set_command) % val)
             if check_set_errors:
                 try:
                     error_list = self.check_set_errors()
                 except Exception as exc:
                     log.error("Exception raised while setting a property with the command "
-                              f"""'{command_process(set_command) % value}': '{str(exc)}'.""")
+                              f"""'{command_process(set_command) % val}': '{str(exc)}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
                     log.error(
                         "Error received after trying to set a property with the command "
-                        f"""'{command_process(set_command) % value}': '{"', '".join(errors)}'."""
+                        f"""'{command_process(set_command) % val}': '{"', '".join(errors)}'."""
                     )
 
         # Add the specified document string to the getter
@@ -634,22 +696,22 @@ class CommonBase:
 
     @staticmethod
     def measurement(
-        get_command,
-        docs,
-        values=(),
-        map_values=False,
-        get_process=lambda v: v,
-        get_process_list=lambda v: v,
-        command_process=None,
-        check_get_errors=False,
-        dynamic=False,
-        preprocess_reply=None,
-        separator=",",
-        maxsplit=-1,
-        cast=float,
-        values_kwargs=None,
+        get_command: str,
+        docs: str,
+        values: Any = (),
+        map_values: bool = False,
+        get_process: Callable[[Any], Any] = lambda v: v,
+        get_process_list: Callable[[list[Any]], Any] = lambda v: v,
+        command_process: Optional[Callable] = None,
+        check_get_errors: bool = False,
+        dynamic: bool = False,
+        preprocess_reply: Optional[Callable[[str], str]] = None,
+        separator: str = ",",
+        maxsplit: int = -1,
+        cast: Callable[[str], T] = float,
+        values_kwargs: Optional[dict] = None,
         **kwargs,
-    ):
+    ) -> Union[property, DynamicProperty]:
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -677,9 +739,9 @@ class CommonBase:
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
             the device into a list.
-        :param maxsplit: The string returned by the device is splitted at most `maxsplit` times.
+        :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
-        :param cast: A type to cast each element of the splitted string.
+        :param cast: A type to cast each element of the split string.
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         :param \\**kwargs: Keyword arguments for :meth:`values`.
 
@@ -713,15 +775,15 @@ class CommonBase:
 
     @staticmethod
     def setting(
-        set_command,
-        docs,
-        validator=lambda x, y: x,
-        values=(),
-        map_values=False,
-        set_process=lambda v: v,
-        check_set_errors=False,
-        dynamic=False,
-    ):
+        set_command: str,
+        docs: str,
+        validator: Callable[[Any, Vs], Any] = lambda x, y: x,
+        values: Vs = (),
+        map_values: bool = False,
+        set_process: Callable[[Any], Any] = lambda v: v,
+        check_set_errors: bool = False,
+        dynamic: bool = False,
+    ) -> Union[property, DynamicProperty]:
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.
@@ -752,14 +814,14 @@ class CommonBase:
                                   dynamic=dynamic,
                                   )
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """Read all errors from the instrument and log them.
 
         :return: List of error entries.
         """
         raise NotImplementedError("Implement it in a subclass.")
 
-    def check_get_errors(self):
+    def check_get_errors(self) -> list:
         """Check for errors after having gotten a property and log them.
 
         Called if :code:`check_get_errors=True` is set for that property.
@@ -770,7 +832,7 @@ class CommonBase:
         """
         raise NotImplementedError("Implement it in a subclass.")
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.

@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 import logging
-from typing import cast, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 from unittest.mock import MagicMock
 from warnings import warn
 
@@ -37,11 +37,13 @@ BYTABLE = Union[bytes, bytearray, str, list[int], tuple[int, ...], int, float]
 
 
 def to_bytes(
-    command: Optional[BYTABLE],
-) -> Optional[Union[bytearray, bytes]]:
+    command: BYTABLE,
+) -> bytes:
     """Change `command` to a bytes object"""
-    if isinstance(command, (bytes, bytearray)):
+    if isinstance(command, bytes):
         return command
+    elif isinstance(command, bytearray):
+        return bytes(command)
     elif command is None:
         return None
     elif isinstance(command, str):
@@ -77,8 +79,8 @@ class ProtocolAdapter(Adapter):
     def __init__(
         self,
         comm_pairs: Optional[Sequence[tuple[Union[BYTABLE, None], Union[BYTABLE, None]]]] = None,
-        connection_attributes=None,
-        connection_methods=None,
+        connection_attributes: Optional[dict] = None,
+        connection_methods: Optional[dict] = None,
         **kwargs,
     ):
         """Generate the adapter and initialize internal buffers."""
@@ -91,14 +93,16 @@ class ProtocolAdapter(Adapter):
         for pair in comm_pairs:
             if len(pair) != 2:
                 raise ValueError(f'Comm_pairs element {pair} does not have two elements!')
-        self._read_buffer: Optional[Union[bytearray, bytes]] = None
-        self._write_buffer: Optional[Union[bytearray, bytes]] = None
+        self._read_buffer: Optional[bytes] = None
+        self._write_buffer: Optional[bytes] = None
         self.comm_pairs = comm_pairs
         self._index = 0
         # Setup attributes
         self._setup_connection(connection_attributes, connection_methods)
 
-    def _setup_connection(self, connection_attributes, connection_methods):
+    def _setup_connection(
+        self, connection_attributes: Optional[dict], connection_methods: Optional[dict]
+    ) -> None:
         self.connection = MagicMock()
         if connection_attributes is not None:
             for key, value in connection_attributes.items():
@@ -107,14 +111,14 @@ class ProtocolAdapter(Adapter):
             for key, value in connection_methods.items():
                 getattr(self.connection, key).return_value = value
 
-    def _write(self, command, **kwargs):
+    def _write(self, command: str, **kwargs) -> None:
         """Compare the command with the expected one and fill the read."""
         self._write_bytes(to_bytes(command))
         assert self._write_buffer is None, (
             f"Written bytes '{self._write_buffer}' do not match expected "
             f"'{self.comm_pairs[self._index][0]}'.")
 
-    def _write_bytes(self, content, **kwargs):
+    def _write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content`. If a command is full, fill the read."""
         if self._write_buffer is None:
             self._write_buffer = content
@@ -124,7 +128,7 @@ class ProtocolAdapter(Adapter):
             p_write, p_read = self.comm_pairs[self._index]
         except IndexError:
             raise ValueError(f"No communication pair left to write {content}.")
-        if self._write_buffer == to_bytes(p_write):
+        if p_write is not None and self._write_buffer == to_bytes(p_write):
             assert self._read_buffer is None, (
                 f"Unread response '{self._read_buffer}' present when writing. "
                 "Maybe a property's 'check_set_errors' is not accounted for, "
@@ -132,7 +136,8 @@ class ProtocolAdapter(Adapter):
             )
             # Clear the write buffer
             self._write_buffer = None
-            self._read_buffer = to_bytes(p_read)
+            if p_read is not None:
+                self._read_buffer = to_bytes(p_read)
             self._index += 1
         # If _write_buffer does _not_ agree with p_write, this is not cause for
         # concern, because you can in principle compose a message over several writes.
@@ -143,7 +148,7 @@ class ProtocolAdapter(Adapter):
         """Return an already present or freshly fetched read buffer as a string."""
         return self._read_bytes(-1).decode("utf-8")
 
-    def _read_bytes(self, count, break_on_termchar=False, **kwargs) -> Union[bytes, bytearray]:
+    def _read_bytes(self, count: int, break_on_termchar: bool = False, **kwargs) -> bytes:
         """Read `count` number of bytes from the buffer.
 
         :param int count: Number of bytes to read. If -1, return the buffer.
@@ -171,7 +176,7 @@ class ProtocolAdapter(Adapter):
                 else "Unexpected read without prior write.")
             assert p_read is not None, "Communication pair cannot be (None, None)."
             self._index += 1
-            p_read = cast(bytes, to_bytes(p_read))
+            p_read = to_bytes(p_read)
             if count == -1 or count >= len(p_read):
                 # _read_buffer is already empty, no action required.
                 return p_read
@@ -179,7 +184,7 @@ class ProtocolAdapter(Adapter):
                 self._read_buffer = p_read[count:]
                 return p_read[:count]
 
-    def flush_read_buffer(self):
+    def flush_read_buffer(self) -> None:
         """ Flush and discard the input buffer
 
         As detailed by pyvisa, discard the read buffer contents and if data was present
