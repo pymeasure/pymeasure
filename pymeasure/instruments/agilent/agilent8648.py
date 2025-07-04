@@ -33,6 +33,7 @@ class Agilent8648(SCPIMixin, Instrument):
     """
 
     BOOL_MAPPINGS = {True: 1, False: 0}
+    ACDC_MAPPINGS = {True: "AC", False: "DC"}
     DISP_MAPPINGS = {True: "TEXT", False: "NORM"}
     AMPL_LIMITS = [-136.0, 22]
 
@@ -131,11 +132,12 @@ class Agilent8648(SCPIMixin, Instrument):
         values={"1000", "400"}
     )
 
-    am_ext_coupling = Instrument.control(
+    am_ext_ac_coupling_enabled = Instrument.control(
         "AM:EXT:COUP?", "AM:EXT:COUP %s",
-        "Control external coupling for AM (str).",
+        "Control external coupling for AM.",
         validator=strict_discrete_set,
-        values={"DC", "AC"}
+        values=ACDC_MAPPINGS,
+        map_values=True
     )
 
     fm_deviation = Instrument.control(
@@ -167,11 +169,12 @@ class Agilent8648(SCPIMixin, Instrument):
         values={"1000", "400"}
     )
 
-    fm_ext_coupling = Instrument.control(
+    fm_ext_ac_coupling_enabled = Instrument.control(
         "FM:EXT:COUP?", "FM:EXT:COUP %s",
-        "Control external coupling for FM (str).",
+        "Control external coupling for FM.",
         validator=strict_discrete_set,
-        values={"DC", "AC"}
+        values=ACDC_MAPPINGS,
+        map_values=True
     )
 
     pm_deviation = Instrument.control(
@@ -203,11 +206,12 @@ class Agilent8648(SCPIMixin, Instrument):
         values={"1000", "400"}
     )
 
-    pm_ext_coupling = Instrument.control(
+    pm_ext_ac_coupling_enabled = Instrument.control(
         "PM:EXT:COUP?", "PM:EXT:COUP %s",
-        "Control external coupling for PM (str).",
+        "Control external coupling for PM.",
         validator=strict_discrete_set,
-        values={"DC", "AC"}
+        values=ACDC_MAPPINGS,
+        map_values=True
     )
 
     status_modulator_input = Instrument.measurement(
