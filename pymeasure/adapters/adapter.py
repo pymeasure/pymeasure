@@ -134,19 +134,24 @@ class Adapter:
 
     # Binary format methods
     def read_binary_values(self, header_bytes=0, termination_bytes=None,
-                           dtype=np.float32, **kwargs):
+                           dtype=np.float32, sep="", **kwargs):
         """ Returns a numpy array from a query for binary data
 
         :param int header_bytes: Number of bytes to ignore in header.
         :param int termination_bytes: Number of bytes to strip at end of message or None.
         :param dtype: The NumPy data type to format the values with.
-        :param \\**kwargs: Further arguments for the NumPy fromstring method.
+        :param string sep: Separator between chars. If given, use fromstring, otherwise frombytes.
+        :param \\**kwargs: Further arguments for the NumPy fromstring / frombytes method.
         :returns: NumPy array of values
+        :raises ValueError: if the data buffer is empty or malformed
         """
         binary = self.read_bytes(-1)
         # header = binary[:header_bytes]
         data = binary[header_bytes:termination_bytes]
-        return np.fromstring(data, dtype=dtype, **kwargs)
+        if sep == "":
+            return np.frombuffer(data, dtype=dtype, **kwargs)
+        else:
+            return np.fromstring(data, dtype=dtype, sep=sep, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`Adapter.write_binary_values`.
