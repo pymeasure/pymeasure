@@ -54,3 +54,10 @@ def test_channel_setup():
         expected_channel_dict_keys = ["CHAN", 'RANGE', 'OFFSET', 'COUP', 'BWLIMIT', 'INVERT', 'VERNIER', 'PROBE', 'PMODE', 'INPUT', 'PROTECT']
         for key in channel_dict:
             assert key in expected_channel_dict_keys
+
+def test_channel_voltage_offset():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN1:OFFS 5.00000E-01", None)],
+    ) as instr:
+        instr.ch1.offset = 0.5

@@ -26,6 +26,9 @@ from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
+def float_to_nr3(input: float):
+    return "{:.5E}".format(input)
+
 class Channel():
     """ Implementation of a Hewlett Packard HP54616B channel
 
@@ -72,11 +75,11 @@ class Channel():
         map_values=True
     )
 
-    # TODO: Add validator for the NR3 format
     offset = Instrument.control(
         get_command=":OFFS?",
         set_command=":OFFS %s",
         docs="""Control the offset in volts""",
+        set_process=float_to_nr3
     )
 
     pmode = Instrument.control(
@@ -106,11 +109,11 @@ class Channel():
         map_values=True
     )
 
-    # TODO: Add validator for the NR3 format
     vertical_range = Instrument.control(
         get_command=":RANG?",
         set_command=":RANG %s",
         docs="""Control the range for voltage""",
+        set_process=float_to_nr3
     )
 
     setup_summary = Instrument.control(
@@ -140,10 +143,10 @@ class Channel():
             self.number, command), **kwargs)
 
     def ask(self, command):
-        self.instrument.ask(":CHANl%u:%s" % (self.number, command))
+        self.instrument.ask(":CHANl%u%s" % (self.number, command))
 
     def write(self, command):
-        self.instrument.write(":CHAN%u:%s" % (self.number, command))
+        self.instrument.write(":CHAN%u%s" % (self.number, command))
 
     def setup(self, bwlimit=None, coupling=None, input_impedance=None, invert=None, offset=None,
               pmode=None, probe_attenuation=None, vertical_range=None, vernier=None):
@@ -369,11 +372,11 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=True
     ) 
 
-    # TODO: Add validator for the NR3 format
     channel2_skew = Instrument.control(
         get_command=":CHAN2:SKEW?",
         set_command=":CHAN2:SKEW %s",
         docs="""Control channel 2 skew.""",
+        set_process=float_to_nr3
     ) 
 
     ###############
@@ -561,11 +564,11 @@ class HP54616B(SCPIMixin, Instrument):
     # Timebase #
     ###############
 
-    # TODO: Add validator for the NR3 format
     timebase_delay = Instrument.control(
         get_command=":TIM:DEL?",
         set_command=":TIM:DEL %s",
         docs="""Control timebase delay""",
+        set_process=float_to_nr3
     )
 
     timebase_mode = Instrument.control(
@@ -577,11 +580,11 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    # TODO: Add validator for the NR3 format
     timebase_range = Instrument.control(
         get_command=":TIM:RANG?",
         set_command=":TIM:RANG %s",
         docs="""Control timebase range""",
+        set_process=float_to_nr3
     )
 
     timebase_reference = Instrument.control(
