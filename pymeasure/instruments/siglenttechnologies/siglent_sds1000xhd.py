@@ -500,6 +500,7 @@ class AdvancedMeasurementItem(Channel):
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
+    # TODO : modify values to match the actual values used by the instrument
     type = Channel.control(
         ":MEASure:ADVanced:P{ch}:TYPE?",
         ":MEASure:ADVanced:P{ch}:TYPE %s",
