@@ -61,3 +61,10 @@ def test_channel_voltage_offset():
             [(b":CHAN1:OFFS 5.00000E-01", None)],
     ) as instr:
         instr.ch1.offset = 0.5
+
+def test_display_pixel():
+    with expected_protocol(
+            HP54616B,
+            [(b":DISP:PIX 1 1 1", None)],
+    ) as instr:
+        instr.display_pixel = "1 1 1"

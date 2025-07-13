@@ -299,6 +299,25 @@ class HP54616B(SCPIMixin, Instrument):
         self.write(":WAV:DATA?")
         read_data = self.read(**kwargs)
         return read_data
+    
+    def get_display_pixel(self, x, y, **kwargs):
+        message = f":DISP:PIX? {x},{y}"
+        print(message)
+        self.write(message) 
+        read_data = self.read(**kwargs)
+        return read_data
+    
+    def set_display_pixel(self, x, y, intensity, **kwargs):
+        message = f":DISP:PIX {x},{y},{intensity}"
+        if not (0 <= x <= 511):
+            raise Exception(f"x pixel value is {x} which is outside expected range [0,511]")
+        if not (0 <= y <= 303):
+            raise Exception(f"y pixel value is {y} which is outside expected range [0,303]")
+        self.write(message, **kwargs)
+
+    def erase_pixel_memory(self, pmem_index, **kwargs):
+        message = f":ERAS PMEM{pmem_index}"
+        self.write(message, **kwargs)
 
     ###############
     # Acquire #
@@ -441,9 +460,9 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=False,
     )
 
-    # Only 1 values can be set at a time so a string will have to be passed
+    # Only 1 value can be set at a time so a string will have to be passed
     display_pixel = Instrument.control(
-        get_command=":DISP:PIX? %s",
+        get_command=None,
         set_command=":DISP:PIX %s",
         docs="""Control pixel on display""",
     )
