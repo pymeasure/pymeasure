@@ -33,98 +33,68 @@ ETX = chr(3)
 INITIALIZATION = (f"{STX}28,j{ETX}", f"{STX}28,160,30,0,|")
 
 
-def checksum(string_to_check):
-    ascii_sum = 0
-    for char in string_to_check:
-        ascii_sum += ord(char)  # add ascii values together
-
-    csb1 = 0x100 - ascii_sum  # two's complement
-    csb2 = 0x7F & csb1  # bitwise AND 0x7F: truncate to the last 7 bits
-    csb3 = 0x40 | csb2  # bitwise OR 0x40: set bit 6
-    return chr(csb3)
-
-
 class TestSpellmanXRV:
     """Tests for the Spellman XRV HV power supplies"""
 
-    @pytest.mark.parametrize("baudrate, mapping",
-                             [(9600, 1),
-                              (19200, 2),
-                              (38400, 3),
-                              (57600, 4),
-                              (115200, 5)])
-    def test_baudrate(self, baudrate, mapping):
-        set_cmd = f"07,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "07,$,"
-        set_got_csum = checksum(set_got)
+    @pytest.mark.parametrize("baudrate, mapping, set_csum",
+                             [(9600, 1, "P"),
+                              (19200, 2, "O"),
+                              (38400, 3, "N"),
+                              (57600, 4, "M"),
+                              (115200, 5, "L")])
+    def test_baudrate(self, baudrate, mapping, set_csum):
+        set_cmd = f"07,{mapping},{set_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}07,$,]"),
              ],
         ) as inst:
             inst.baudrate = baudrate
 
-    @pytest.mark.parametrize("voltage_setpoint, mapping",
-                             [(0, 0),
-                              (19.54, 1),
-                              (50e3, 1280),
-                              (160000, 4095)])
-    def test_voltage_setpoint(self, voltage_setpoint, mapping):
-        set_cmd = f"10,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "10,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "14,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"14,{mapping},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("voltage_setpoint, mapping, set_csum, got_csum",
+                             [(0, 0, "W", "S"),
+                              (19.54, 1, "V", "R"),
+                              (50e3, 1280, "|", "x"),
+                              (160000, 4095, "u", "q")])
+    def test_voltage_setpoint(self, voltage_setpoint, mapping, set_csum, got_csum):
+        set_cmd = f"10,{mapping},{set_csum}"
+        get_got = f"14,{mapping},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}10,$,c"),
+             (f"{STX}14,o{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.voltage_setpoint = voltage_setpoint
             assert voltage_setpoint == pytest.approx(inst.voltage_setpoint, abs=0.5*160e3/4095)
 
-    @pytest.mark.parametrize("current_setpoint, mapping", [(0, 0), (0.0035, 478), (30e-3, 4095)])
-    def test_current_setpoint(self, current_setpoint, mapping):
-        set_cmd = f"11,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "11,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "15,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"15,{mapping},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("current_setpoint, mapping, set_csum, got_csum",
+                             [(0, 0, "V", "R"),
+                              (0.0035, 478, "c", "_"),
+                              (30e-3, 4095, "t", "p")])
+    def test_current_setpoint(self, current_setpoint, mapping, set_csum, got_csum):
+        set_cmd = f"11,{mapping},{set_csum}"
+        get_got = f"15,{mapping},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}11,$,b"),
+             (f"{STX}15,n{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.current_setpoint = current_setpoint
             assert current_setpoint == pytest.approx(inst.current_setpoint, abs=0.5*30e-3/4095)
 
     def test_analog_monitor(self):
-        get_cmd = "19,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "19,1234,2977,3783,512,768,6,7,899,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}19,j{ETX}", f"{STX}19,1234,2977,3783,512,768,6,7,899,~"),
              ],
         ) as inst:
             got = inst.analog_monitor
@@ -138,65 +108,59 @@ class TestSpellmanXRV:
         assert got["preheat"] == 7
         assert got["anode_current"] == pytest.approx(1.2*0.03*899/4095)
 
-    @pytest.mark.parametrize("hv_on_timer", [0, 1.6, 300.67, 1e3, 2.565e4])
-    def test_hv_on_timer(self, hv_on_timer):
-        get_cmd = "21,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"21,{hv_on_timer:f},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("hv_on_timer, got_csum",
+                             [(0, "G"),
+                              (1.6, "@"),
+                              (300.67, "W"),
+                              (1e3, "v"),
+                              (2.565e4, "u")])
+    def test_hv_on_timer(self, hv_on_timer, got_csum):
+        get_got = f"21,{hv_on_timer:f},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}21,q{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert hv_on_timer == inst.hv_on_timer
 
-    @pytest.mark.parametrize("status, mapping", [
-        (StatusCode.HV_ENABLED, "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.INTERLOCK_1_CLOSED, "0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.INTERLOCK_2_CLOSED, "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.ECR_MODE_ACTIVE, "0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.POWER_SUPPLY_FAULT, "0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.LOCAL_MODE, "0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.FILAMENT_ENABLED, "0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.LARGE_FILAMENT, "0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0"),
-        (StatusCode.XRAYS_EMINENT, "0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0"),
-        (StatusCode.LARGE_FILAMENT_CONFIRMATION, "0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0"),
-        (StatusCode.SMALL_FILAMENT_CONFIRMATION, "0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0"),
-        (StatusCode.RESERVED1, "0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0"),
-        (StatusCode.RESERVED2, "0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0"),
-        (StatusCode.RESERVED3, "0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0"),
-        (StatusCode.RESERVED4, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0"),
-        (StatusCode.POWER_SUPPLY_READY, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0"),
-        (StatusCode.INTERNAL_INTERLOCK_CLOSED, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"),
-        (2**17-1, "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"),
+    @pytest.mark.parametrize("status, mapping, got_csum", [
+        (StatusCode.HV_ENABLED, "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.INTERLOCK_1_CLOSED, "0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.INTERLOCK_2_CLOSED, "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.ECR_MODE_ACTIVE, "0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.POWER_SUPPLY_FAULT, "0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.LOCAL_MODE, "0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.FILAMENT_ENABLED, "0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.LARGE_FILAMENT, "0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.XRAYS_EMINENT, "0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0", "S"),
+        (StatusCode.LARGE_FILAMENT_CONFIRMATION, "0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0", "S"),
+        (StatusCode.SMALL_FILAMENT_CONFIRMATION, "0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0", "S"),
+        (StatusCode.RESERVED1, "0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0", "S"),
+        (StatusCode.RESERVED2, "0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0", "S"),
+        (StatusCode.RESERVED3, "0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0", "S"),
+        (StatusCode.RESERVED4, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0", "S"),
+        (StatusCode.POWER_SUPPLY_READY, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0", "S"),
+        (StatusCode.INTERNAL_INTERLOCK_CLOSED, "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1", "S"),
+        (2**17-1, "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1", "C"),
         ])
-    def test_status(self, status, mapping):
-        get_cmd = "22,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"22,{mapping},"
-        get_got_csum = checksum(get_got)
+    def test_status(self, status, mapping, got_csum):
+        get_got = f"22,{mapping},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}22,p{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert status == inst.status
 
     def test_dsp(self):
-        get_cmd = "23,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "23,SWM9999-999,56234,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}23,o{ETX}", f"{STX}23,SWM9999-999,56234,`"),
              ],
         ) as inst:
             got = inst.dsp
@@ -204,15 +168,10 @@ class TestSpellmanXRV:
             assert 56234 == got["version"]
 
     def test_configuration(self):
-        get_cmd = "27,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "27,1,2,3,4,5,6,7,8,9,10,11,12,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}27,k{ETX}", f"{STX}27,1,2,3,4,5,6,7,8,9,10,11,12,X"),
              ],
         ) as inst:
             got = inst.configuration
@@ -229,15 +188,10 @@ class TestSpellmanXRV:
             assert got["watchdog_timer"] == 12
 
     def test_scaling(self):
-        get_cmd = "28,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "28,160,30,0,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}28,j{ETX}", f"{STX}28,160,30,0,|"),
              ],
         ) as inst:
             got = inst.scaling
@@ -246,191 +200,154 @@ class TestSpellmanXRV:
             assert got["polarity"] == 0
 
     def test_reset_hv_on_timer(self):
-        get_cmd = "30,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "30,$,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}30,q{ETX}", f"{STX}30,$,a"),
              ],
         ) as inst:
             inst.reset_hv_on_timer()
 
     def test_reset_errors(self):
-        get_cmd = "31,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "31,$,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}31,p{ETX}", f"{STX}31,$,`"),
              ],
         ) as inst:
             inst.reset_errors()
 
-    @pytest.mark.parametrize("power_limits", [(110, 20), (3000, 1568), (4500, 3000)])
-    def test_power_limits(self, power_limits):
-        set_cmd = f"97,{power_limits[0]},{power_limits[1]},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "97,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "38,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"38,{power_limits[0]},{power_limits[1]},3,4,5,6,"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("power_limits, set_csum, got_csum",
+                             [((110, 20), "X", "["),
+                              ((3000, 1568), "u", "x"),
+                              ((4500, 3000), "@", "C")])
+    def test_power_limits(self, power_limits, set_csum, got_csum):
+        set_cmd = f"97,{power_limits[0]},{power_limits[1]},{set_csum}"
+        get_got = f"38,{power_limits[0]},{power_limits[1]},3,4,5,6,{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}97,$,T"),
+             (f"{STX}38,i{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.power_limits = power_limits
             assert power_limits == tuple(inst.power_limits)
 
     def test_fpga(self):
-        get_cmd = "43,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "43,SWM00199-001,3261,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}43,m{ETX}", f"{STX}43,SWM00199-001,3261,Q"),
              ],
         ) as inst:
             got = inst.fpga
             assert got["part_number"] == "SWM00199-001"
             assert got["version"] == 3261
 
-    @pytest.mark.parametrize("errors, mapping", [
+    @pytest.mark.parametrize("errors, mapping, got_csum", [
         (ErrorCode.NO_ERROR,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "r"),
         (ErrorCode.FILAMENT_SELECT_FAULT,
-            "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.OVER_TEMP_APPROACH,
-            "0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.OVER_VOLTAGE,
-            "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.UNDER_VOLTAGE,
-            "0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.OVER_CURRENT,
-            "0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.UNDER_CURRENT,
-            "0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.OVER_TEMP_ANODE,
-            "0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.OVER_TEMP_CATHODE,
-            "0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.INVERTER_FAULT_ANODE,
-            "0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.INVERTER_FAULT_CATHODE,
-            "0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.FILAMENT_FEEDBACK_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.ANODE_ARC,
-            "0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.CATHODE_ARC,
-            "0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.CABLE_CONNECT_ANODE_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.CABLE_CONNECT_CATHODE_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.AC_LINE_MON_ANODE_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.AC_LINE_MON_CATHODE_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.DC_RAIL_MON_ANODE_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.DC_RAIL_MON_FAULT_CATHODE,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0", "q"),
         (ErrorCode.LVPS_NEG_15_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0", "q"),
         (ErrorCode.LVPS_POS_15_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0", "q"),
         (ErrorCode.WATCH_DOG_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0", "q"),
         (ErrorCode.BOARD_OVER_TEMP,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0", "q"),
         (ErrorCode.OVERPOWER_FAULT,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0", "q"),
         (ErrorCode.KV_DIFF,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0", "q"),
         (ErrorCode.MA_DIFF,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0", "q"),
         (ErrorCode.INVERTER_NOT_READY,
-            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"),
+            "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1", "q"),
         (2**27-1,
-            "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"),
+            "1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1", "W"),
         ])
-    def test_errors(self, errors, mapping):
-        get_cmd = "68,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"68,{mapping},"
-        get_got_csum = checksum(get_got)
+    def test_errors(self, errors, mapping, got_csum):
+        get_got = f"68,{mapping},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}68,f{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert errors == inst.errors
 
-    @pytest.mark.parametrize("output_enabled, mapping", [(True, 1), (False, 0)])
-    def test_output_enabled(self, output_enabled, mapping):
-        set_cmd = f"98,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "98,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "22,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"22,{mapping},0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("output_enabled, mapping, set_csum, got_csum",
+                             [(True, 1, "F", "Q"),
+                              (False, 0, "G", "R")])
+    def test_output_enabled(self, output_enabled, mapping, set_csum, got_csum):
+        set_cmd = f"98,{mapping},{set_csum}"
+        get_got = f"22,{mapping},0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}98,$,S"),
+             (f"{STX}22,p{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.output_enabled = output_enabled
             assert output_enabled == inst.output_enabled
 
     def test_voltage(self):
-        get_cmd = "60,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "60,4095,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}60,n{ETX}", f"{STX}60,4095,p"),
              ],
         ) as inst:
             assert 1.2*160000 == inst.voltage
 
     def test_system_voltages(self):
-        get_cmd = "69,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "69,1,2,3,4,5,6,7,8,9,10,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}69,e{ETX}", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
              ],
         ) as inst:
             got = inst.system_voltages
@@ -446,17 +363,17 @@ class TestSpellmanXRV:
         assert got["lvps_pos"] == 9*0.00427407
         assert got["lvps_neg"] == 10*0.00576703
 
-    @pytest.mark.parametrize("temperature", [0, 156, 4095])
-    def test_temperature(self, temperature):
-        get_cmd = "69,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"69,{temperature},0,23,24,"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("temperature, got_csum",
+                             [(0, "J"),
+                              (156, "^"),
+                              (4095, "h")])
+    def test_temperature(self, temperature, got_csum):
+        get_got = f"69,{temperature},0,23,24,{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}69,e{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert 0.05911815*temperature == inst.temperature
@@ -465,76 +382,66 @@ class TestSpellmanXRV:
 class TestChannelFilament:
     """Tests for the 'filament' channel functions."""
 
-    @pytest.mark.parametrize("limit", [0, 367, 4095])
-    def test_limit(self, limit):
-        set_cmd = f"12,{limit},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "12,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "16,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"16,{limit},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("limit, set_csum, got_csum",
+                             [(0, "U", "Q"),
+                              (367, "e", "a"),
+                              (4095, "s", "o")])
+    def test_limit(self, limit, set_csum, got_csum):
+        set_cmd = f"12,{limit},{set_csum}"
+        get_got = f"16,{limit},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}12,$,a"),
+             (f"{STX}16,m{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.filament.limit = limit
             assert limit == inst.filament.limit
 
-    @pytest.mark.parametrize("preheat", [0, 987, 4095])
-    def test_preheat(self, preheat):
-        set_cmd = f"13,{preheat},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "13,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "17,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"17,{preheat},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("preheat, set_csum, got_csum",
+                             [(0, "T", "P"),
+                              (987, "\\", "X"),
+                              (4095, "r", "n")])
+    def test_preheat(self, preheat, set_csum, got_csum):
+        set_cmd = f"13,{preheat},{set_csum}"
+        get_got = f"17,{preheat},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}13,$,`"),
+             (f"{STX}17,l{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.filament.preheat = preheat
             assert preheat == inst.filament.preheat
 
-    @pytest.mark.parametrize("size, mapping", [("large", 1), ("small", 0)])
-    def test_size(self, size, mapping):
-        set_cmd = f"32,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "32,$,"
-        set_got_csum = checksum(set_got)
+    @pytest.mark.parametrize("size, mapping, set_csum",
+                             [("large", 1, "R"),
+                              ("small", 0, "S")])
+    def test_size(self, size, mapping, set_csum):
+        set_cmd = f"32,{mapping},{set_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}32,$,_"),
              ],
         ) as inst:
             inst.filament.size = size
 
-    @pytest.mark.parametrize("enabled, mapping", [(True, 1), (False, 0)])
-    def test_enabled(self, enabled, mapping):
-        set_cmd = f"70,{mapping},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "70,$,"
-        set_got_csum = checksum(set_got)
+    @pytest.mark.parametrize("enabled, mapping, set_csum",
+                             [(True, 1, "P"),
+                              (False, 0, "Q")])
+    def test_enabled(self, enabled, mapping, set_csum):
+        set_cmd = f"70,{mapping},{set_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}70,$,]"),
              ],
         ) as inst:
             inst.filament.enabled = enabled
@@ -543,60 +450,47 @@ class TestChannelFilament:
 class TestChannelUnscaled:
     """Tests for the 'unscaled' channel functions."""
 
-    @pytest.mark.parametrize("voltage_setpoint", [0, 367, 4095])
-    def test_voltage_setpoint(self, voltage_setpoint):
-        set_cmd = f"10,{voltage_setpoint},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "10,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "14,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"14,{voltage_setpoint},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("voltage_setpoint, set_csum, got_csum",
+                             [(0, "W", "S"),
+                              (367, "g", "c"),
+                              (4095, "u", "q")])
+    def test_voltage_setpoint(self, voltage_setpoint, set_csum, got_csum):
+        set_cmd = f"10,{voltage_setpoint},{set_csum}"
+        get_got = f"14,{voltage_setpoint},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}10,$,c"),
+             (f"{STX}14,o{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.unscaled.voltage_setpoint = voltage_setpoint
             assert voltage_setpoint == inst.unscaled.voltage_setpoint
 
-    @pytest.mark.parametrize("current_setpoint", [0, 183, 4095])
-    def test_current_setpoint(self, current_setpoint):
-        set_cmd = f"11,{current_setpoint},"
-        set_cmd_csum = checksum(set_cmd)
-        set_got = "11,$,"
-        set_got_csum = checksum(set_got)
-
-        get_cmd = "15,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"15,{current_setpoint},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("current_setpoint, set_csum, got_csum",
+                             [(0, "V", "R"),
+                              (183, "j", "f"),
+                              (4095, "t", "p")])
+    def test_current_setpoint(self, current_setpoint, set_csum, got_csum):
+        set_cmd = f"11,{current_setpoint},{set_csum}"
+        get_got = f"15,{current_setpoint},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{set_cmd_csum}{ETX}", f"{STX}{set_got}{set_got_csum}"),
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}{set_cmd}{ETX}", f"{STX}11,$,b"),
+             (f"{STX}15,n{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.unscaled.current_setpoint = current_setpoint
             assert current_setpoint == inst.unscaled.current_setpoint
 
     def test_analog_monitor(self):
-        get_cmd = "19,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "19,1,2,3,4,5,6,7,8,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}19,j{ETX}", f"{STX}19,1,2,3,4,5,6,7,8,f"),
              ],
         ) as inst:
             got = inst.unscaled.analog_monitor
@@ -610,46 +504,41 @@ class TestChannelUnscaled:
         assert got["preheat"] == 7
         assert got["anode_current"] == 8
 
-    @pytest.mark.parametrize("voltage", [0, 298, 4095])
-    def test_voltage(self, voltage):
-        get_cmd = "60,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"60,{voltage},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("voltage, got_csum",
+                             [(0, "R"),
+                              (298, "_"),
+                              (4095, "p")])
+    def test_voltage(self, voltage, got_csum):
+        get_got = f"60,{voltage},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}60,n{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert voltage == inst.unscaled.voltage
 
-    @pytest.mark.parametrize("lvps_monitor", [0, 1768, 4095])
-    def test_lvps_monitor(self, lvps_monitor):
-        get_cmd = "65,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = f"65,{lvps_monitor},"
-        get_got_csum = checksum(get_got)
+    @pytest.mark.parametrize("lvps_monitor, got_csum",
+                             [(0, "M"),
+                              (1768, "g"),
+                              (4095, "k")])
+    def test_lvps_monitor(self, lvps_monitor, got_csum):
+        get_got = f"65,{lvps_monitor},{got_csum}"
 
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}65,i{ETX}", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert lvps_monitor == inst.unscaled.lvps_monitor
 
     def test_system_voltages(self):
-        get_cmd = "69,"
-        get_cmd_csum = checksum(get_cmd)
-        get_got = "69,1,2,3,4,5,6,7,8,9,10,"
-        get_got_csum = checksum(get_got)
-
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{get_cmd}{get_cmd_csum}{ETX}", f"{STX}{get_got}{get_got_csum}"),
+             (f"{STX}69,e{ETX}", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
              ],
         ) as inst:
             got = inst.unscaled.system_voltages
