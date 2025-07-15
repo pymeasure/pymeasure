@@ -233,6 +233,9 @@ class SpellmanXRV(Instrument):
 
     checksum_enabled = True  # RS232 and USB
 
+    filament = Instrument.ChannelCreator(Filament)
+    unscaled = Instrument.ChannelCreator(UnscaledData)
+
     def __init__(self, adapter,
                  name="Spellman XRV HV Power Supply",
                  query_delay=0.15,
@@ -402,10 +405,6 @@ class SpellmanXRV(Instrument):
             "preheat": int(v[6]),
             "anode_current": adc_amps_per_bit*int(v[7]),
             }
-
-    filament = Instrument.ChannelCreator(Filament)
-
-    unscaled = Instrument.ChannelCreator(UnscaledData)
 
     baudrate = Instrument.setting(
         "07,%d",
