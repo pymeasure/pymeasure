@@ -408,9 +408,7 @@ class SpellmanXRV(Instrument):
 
     baudrate = Instrument.setting(
         "07,%d",
-        """Set the baud rate.
-
-        :type: int, strictly in ``9600``, ``19200``, ``38400``, ``57600``, ``115200``
+        """Set the baud rate (int, strictly in ``9600``, ``19200``, ``38400``, ``57600``, ``115200``).
         """,
         validator=strict_discrete_set,
         map_values=True,
