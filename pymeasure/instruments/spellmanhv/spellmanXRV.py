@@ -255,7 +255,8 @@ class SpellmanXRV(Instrument):
 
         self.set_scaling()
 
-    def checksum(self, string_to_check):
+    @staticmethod
+    def checksum(string_to_check):
         """Calculate the checksum.
 
         :param string_to_check: string to calculate the checksum from
