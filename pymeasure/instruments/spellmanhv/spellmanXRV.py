@@ -465,7 +465,7 @@ class SpellmanXRV(Instrument):
 
     status = Instrument.measurement(
         "22",
-        """Get the power supply status (enum).""",
+        """Get the power supply status (:code:`StatusCode` enum).""",
         get_process_list=lambda v: StatusCode(int(''.join(map(str, (v[::-1]))), 2)),
         cast=int
         )
