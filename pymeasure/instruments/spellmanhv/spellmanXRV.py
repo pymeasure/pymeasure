@@ -330,7 +330,6 @@ class SpellmanXRV(Instrument):
 
             if got_checksum is not calculated_checksum:
                 string = f"Checksum error: expected '{calculated_checksum}', got '{got_checksum}'."
-                print(string)
                 raise ConnectionError(string)
 
         return response[0].partition(",")[2]  # remove command from response
