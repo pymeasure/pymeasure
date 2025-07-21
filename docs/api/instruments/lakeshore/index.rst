@@ -12,6 +12,7 @@ This section contains specific documentation on the Lake Shore Cryogenics instru
    lakeshore211
    lakeshore224
    lakeshore331
+   lakeshore340
    lakeshore421
    lakeshore425
 
