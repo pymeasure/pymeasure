@@ -1,5 +1,5 @@
 #####################################
-Lake Shore 340 Temperature Controller
+Lake Shore 3xx Temperature Controller
 #####################################
 
 .. autoclass:: pymeasure.instruments.lakeshore.LakeShore340
