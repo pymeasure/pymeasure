@@ -108,7 +108,7 @@ class Keithley2510(SCPIMixin, Instrument):
 
     @property
     def temperature_protection_range(self):
-        """Control the lower and upper temperature limits through the tuple
+        """Control the lower and upper temperature limits in degrees centigrade through the tuple
         (lower_limit, upper_limit)."""
         return (self.temperature_protection_low, self.temperature_protection_high)
 
