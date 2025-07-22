@@ -52,7 +52,7 @@ class LakeShore331(SCPIMixin, Instrument):
     output_1 = Instrument.ChannelCreator(LakeShoreHeaterChannel, 1)
 
     output_2 = Instrument.ChannelCreator(LakeShoreHeaterChannel, 2)
-    
+
     def __init__(self,
                  adapter,
                  name="Lakeshore Model 336 Temperature Controller",
