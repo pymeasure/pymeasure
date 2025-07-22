@@ -40,7 +40,8 @@ class LakeShore3xx(SCPIMixin, Instrument):
     The LS 340 has two input channels (A and B) and one output channel (1).
     Following extension cards can be used:
     * 3465 Single Capacitance Input Option Card adds one channel (C).
-    * 3462 Dual Standard Input Option Card or 3464 Dual Thermocouple Input Option Card adds two channels (C and D).
+    * 3462 Dual Standard Input Option Card adds two channels (C and D).
+    * 3464 Dual Thermocouple Input Option Card adds two channels (C and D).
     * 3468 Eight Channel Input Option Card adds eight channels (C1-C4, D1-D4).
 
     The LS 350 has four input channels (A, B, C and D) and four output channels (1, 2, 3 and 4).
