@@ -16,6 +16,9 @@ Installing Python and PyMeasure are demonstrated in the :doc:`Quick Start guide 
 
 PyMeasure is currently under active development, so please report any issues you experience on our `Issues page`_.
 
+.. image:: https://img.shields.io/pypi/pyversions/pymeasure
+   :alt: PyPI - Python Version
+
 .. image:: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml/badge.svg
     :target: https://github.com/pymeasure/pymeasure/actions/workflows/pymeasure_CI.yml
 
@@ -31,6 +34,9 @@ PyMeasure is currently under active development, so please report any issues you
 
 .. image:: https://anaconda.org/conda-forge/pymeasure/badges/downloads.svg
    :target: https://anaconda.org/conda-forge/pymeasure
+
+.. image:: https://codecov.io/gh/pymeasure/pymeasure/graph/badge.svg
+   :target: https://codecov.io/gh/pymeasure/pymeasure
 
 .. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
