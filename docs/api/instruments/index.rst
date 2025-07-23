@@ -38,6 +38,7 @@ Instruments by manufacturer:
    deltaelektronica/index
    edwards/index
    eurotest/index
+   feeltech/index
    fluke/index
    fwbell/index
    heidenhain/index
