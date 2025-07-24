@@ -87,3 +87,19 @@ def test_temperature_protection_range():
     ) as inst:
         inst.temperature_protection_range = (5, 100)
         assert inst.temperature_protection_range == (5, 100)
+
+
+def test_temperature_pid():
+    with expected_protocol(
+        Keithley2510,
+        [
+            (b":SOURce:TEMPerature:LCONstants:GAIN 1", None),
+            (b":SOURce:TEMPerature:LCONstants:INTegral 2", None),
+            (b":SOURce:TEMPerature:LCONstants:DERivative 3", None),
+            (b":SOURce:TEMPerature:LCONstants:GAIN?", 1),
+            (b":SOURce:TEMPerature:LCONstants:INTegral?", 2),
+            (b":SOURce:TEMPerature:LCONstants:DERivative?", 3),
+        ],
+    ) as inst:
+        inst.temperature_pid = (1, 2, 3)
+        assert inst.temperature_pid == (1, 2, 3)
