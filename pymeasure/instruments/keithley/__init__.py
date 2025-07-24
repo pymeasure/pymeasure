@@ -38,3 +38,4 @@ from .keithley6517b import Keithley6517B
 from .keithleyDMM6500 import KeithleyDMM6500
 from .keithley2182 import Keithley2182
 from .keithleyDAQ6510 import KeithleyDAQ6510
+from .keithley4200 import Keithley4200
