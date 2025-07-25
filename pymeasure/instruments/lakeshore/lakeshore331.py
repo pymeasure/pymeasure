@@ -30,12 +30,9 @@ from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureC
 
 
 class LakeShore331(SCPIMixin, Instrument):
-    """.. deprecated:: v0.16.0
-    Use LakeShore3xx instead.
-
-    Represents the Lake Shore 331 Temperature Controller and provides
-    a high-level interface for interacting with the instrument. Note that the
-    331 provides two input channels (A and B) and two output channels (1 and 2).
+    """Represents the Lake Shore 331 Temperature Controller and provides
+    a high-level interface for interacting with the instrument.
+    Note that the 331 provides two input channels (A and B) and two output channels (1 and 2).
     This driver makes use of the :ref:`LakeShoreChannels`.
 
     .. code-block:: python
@@ -47,6 +44,9 @@ class LakeShore331(SCPIMixin, Instrument):
         controller.output_1.heater_range = 'low'    # Change the heater range to low.
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
         print(controller.input_A.kelvin             # Print the temperature at sensor A.
+
+    .. deprecated:: v0.16.0
+    Use LakeShore3xx instead.
     """
     input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
 
