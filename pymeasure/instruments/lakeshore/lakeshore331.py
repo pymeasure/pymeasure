@@ -46,7 +46,7 @@ class LakeShore331(SCPIMixin, Instrument):
         print(controller.input_A.kelvin             # Print the temperature at sensor A.
 
     .. deprecated:: v0.16.0
-    Use LakeShore3xx instead.
+        Use LakeShore3xx instead.
     """
     input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
 
