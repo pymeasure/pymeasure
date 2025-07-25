@@ -58,7 +58,7 @@ class LakeShore3xx(SCPIMixin, Instrument):
         controller.output_1.setpoint = 50           # Change the loop 1 setpoint to 50 K
         controller.output_1.heater_range = 'low'    # Change the heater range to low.
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
-        print(controller.input_A.temperature)       # Print the temperature at sensor A.
+        print(controller.input_A.kelvin)            # Print the temperature at sensor A.
     """
     input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
     input_B = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'B')
