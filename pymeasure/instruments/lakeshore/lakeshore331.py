@@ -30,8 +30,7 @@ from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureC
 
 
 class LakeShore331(SCPIMixin, Instrument):
-    """ 
-    .. deprecated:: v0.16.0
+    """.. deprecated:: v0.16.0
     Use LakeShore3xx instead.
 
     Represents the Lake Shore 331 Temperature Controller and provides
