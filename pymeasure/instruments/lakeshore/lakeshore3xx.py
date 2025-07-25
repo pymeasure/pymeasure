@@ -83,9 +83,9 @@ class LakeShore3xx(SCPIMixin, Instrument):
                  name="Lakeshore Model 3xx Temperature Controller",
                  read_termination="\r\n",
                  **kwargs):
-        kwargs.setdefault('read_termination', read_termination)
         super().__init__(
             adapter,
             name,
+            read_termination=read_termination,
             **kwargs
         )
