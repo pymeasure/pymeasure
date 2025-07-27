@@ -23,3 +23,4 @@
 #
 
 from .rigol_dg800 import DG800
+from .rigol_dm3068 import RigolDM3068
