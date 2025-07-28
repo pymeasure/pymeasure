@@ -25,3 +25,4 @@
 import pint
 
 ureg = pint.get_application_registry()
+ureg.define('@alias ohm = Ohm')
