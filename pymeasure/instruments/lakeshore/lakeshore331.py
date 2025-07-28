@@ -45,7 +45,7 @@ class LakeShore331(SCPIMixin, Instrument):
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
         print(controller.input_A.kelvin             # Print the temperature at sensor A.
 
-    .. deprecated:: v0.16.0
+    .. deprecated:: 0.16.0
         Use LakeShore3xx instead.
     """
     input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
