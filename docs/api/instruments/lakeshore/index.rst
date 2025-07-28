@@ -5,6 +5,7 @@ Lake Shore Cryogenics
 #####################
 
 This section contains specific documentation on the Lake Shore Cryogenics instruments that are implemented. If you are interested in an instrument not included, please consider :doc:`adding the instrument </dev/adding_instruments/index>`.
+lakeshore3xx is a general class for Lake Shore temperature controllers of the series 3xx (like 325, 331, 334, 336, 340, 350). 
 
 .. toctree::
    :maxdepth: 2
@@ -12,6 +13,7 @@ This section contains specific documentation on the Lake Shore Cryogenics instru
    lakeshore211
    lakeshore224
    lakeshore331
+   lakeshore3xx
    lakeshore421
    lakeshore425
 
