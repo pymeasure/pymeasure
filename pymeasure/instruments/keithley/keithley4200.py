@@ -53,8 +53,7 @@ class SMU(Channel):
 
     def disable(self):
         """Disable the SMU."""
-        ch = self.id
-        self.write(f"US;DV{ch}")
+        self.write("US;DV{ch}")
         self.check_set_errors()
 
     voltage = Channel.control(
