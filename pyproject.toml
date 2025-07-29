@@ -2,12 +2,6 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=8.1.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.ruff]
-line-length = 100
-
-[tool.ruff.lint]
-extend-select = ["E"]
-
 [project]
 name = "PyMeasure"
 dynamic = ["version", "readme"]
@@ -84,6 +78,12 @@ line-length = 100
 
 [tool.isort]
 profile = "black"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E", "E9", "F63", "F7", "F82", "W",]
 
 [tool.pyright.defineConstant]
 PYQT5 = true
