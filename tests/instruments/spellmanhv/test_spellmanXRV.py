@@ -417,10 +417,10 @@ class TestChannelFilament:
             inst.filament.preheat = preheat
             assert preheat == inst.filament.preheat
 
-    @pytest.mark.parametrize("size, mapping, set_csum",
-                             [("large", 1, "R"),
-                              ("small", 0, "S")])
-    def test_size(self, size, mapping, set_csum):
+    @pytest.mark.parametrize("enabled, mapping, set_csum",
+                             [(True, 1, "R"),
+                              (False, 0, "S")])
+    def test_large_size_enabled(self, enabled, mapping, set_csum):
         set_cmd = f"32,{mapping},{set_csum}"
 
         with expected_protocol(
@@ -429,7 +429,7 @@ class TestChannelFilament:
              (f"{STX}{set_cmd}", f"{STX}32,$,_"),
              ],
         ) as inst:
-            inst.filament.size = size
+            inst.filament.large_size_enabled = enabled
 
     @pytest.mark.parametrize("enabled, mapping, set_csum",
                              [(True, 1, "P"),

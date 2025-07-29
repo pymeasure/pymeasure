@@ -109,12 +109,12 @@ class Filament(Channel):
         get_process_list=lambda v: int(v[0]),
         )
 
-    size = Channel.setting(
+    large_size_enabled = Channel.setting(
         "32,%d",
-        """Set the filament size (str, strictly ``large`` or ``small``)""",
+        """Set the large filament state (bool)""",
         map_values=True,
         validator=strict_discrete_set,
-        values={"large": 1, "small": 0},
+        values={True: 1, False: 0},
         check_set_errors=True,
         )
 
