@@ -324,7 +324,7 @@ class SpellmanXRV(Instrument):
         if not got.startswith(STX):
             raise ConnectionError("Expected <STX> at begin of received message.")
 
-        response = got.strip(STX).rpartition(",")
+        response = got[1:].rpartition(",")
 
         if self.checksum_enabled:
             string_to_check = response[0] + response[1]
