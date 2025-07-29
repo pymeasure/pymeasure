@@ -97,7 +97,7 @@ class Adapter:
         self.log.debug("READ:%s", read)
         return read
 
-    def read_bytes(self, count: int =-1, break_on_termchar: bool = False, **kwargs) -> bytes:
+    def read_bytes(self, count: int = -1, break_on_termchar: bool = False, **kwargs) -> bytes:
         """Read a certain number of bytes from the instrument.
 
         Do not override in a subclass!

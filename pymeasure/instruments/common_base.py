@@ -328,10 +328,8 @@ class CommonBase:
             return super().__getattribute__(name)
         if hasattr(self, '_special_names'):
             if name in self._special_names:
-                raise AttributeError(
-                    f"{name} is a reserved variable name and it cannot be read")
+                raise AttributeError(f"{name} is a reserved variable name and it cannot be read")
         return super().__getattribute__(name)
-
 
     # Channel management
     def add_child(
@@ -704,7 +702,7 @@ class CommonBase:
         map_values: bool = False,
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
-        command_process: Optional[Callable]=None,
+        command_process: Optional[Callable] = None,
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Optional[Callable[[str], str]] = None,
@@ -779,7 +777,7 @@ class CommonBase:
     def setting(
         set_command: str,
         docs: str,
-        validator: Callable[[Any, Vs], Any]=lambda x, y: x,
+        validator: Callable[[Any, Vs], Any] = lambda x, y: x,
         values: Vs = (),
         map_values: bool = False,
         set_process: Callable[[Any], Any] = lambda v: v,
