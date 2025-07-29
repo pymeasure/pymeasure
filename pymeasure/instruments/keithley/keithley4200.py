@@ -56,10 +56,9 @@ class SMU(Channel):
         self.write("US;DV{ch}")
         self.check_set_errors()
 
-    voltage = Channel.control(
-        "US;TV{ch}",
+    source_voltage = Channel.setting(
         "US;DV{ch},%d,%g,%g",  # range, value, compliance
-        """Control the output voltage and current compliance (int, float, float).
+        """Set range, output voltage and current compliance (int, float, float).
 
         Voltage is in Volts and current in Amps.
 
@@ -77,20 +76,19 @@ class SMU(Channel):
             - 4: 200 mV range, only with a preamplifier
             - 5: 2 V range, only with a preamplifier
 
-        :return: dict
-        :dict keys: ``value``, ``status``
-
         """,
         check_set_errors=True,
-        get_process=lambda v: dict(value=float(v[3:]),
-                                   status=str(v[:3]),
-                                   ),
         )
 
-    current = Channel.control(
-        "US;TI{ch}",
+    voltage = Channel.measurement(
+        "US;TV{ch}",
+        """Measure the voltage in Volts (float).""",
+        get_process=lambda v: float(v[3:]),
+        )
+
+    source_current = Channel.setting(
         "US;DI{ch},%d,%g,%g",  # range, value, compliance
-        """Control the output current and voltage compliance (int, float, float).
+        """Set range, output current and voltage compliance (int, float, float).
 
         Current is in Amps and voltage in Volts.
 
@@ -116,14 +114,14 @@ class SMU(Channel):
             - 12: 10 pA range, only with a preamplifier
             - 13: 100 pA range, only with a preamplifier
 
-        :return: dict
-        :dict keys: ``value``, ``status``
-
         """,
         check_set_errors=True,
-        get_process=lambda v: dict(value=float(v[3:]),
-                                   status=str(v[:3]),
-                                   ),
+        )
+
+    current = Channel.measurement(
+        "US;TI{ch}",
+        """Measure the current in Amps.""",
+        get_process=lambda v: float(v[3:]),
         )
 
 

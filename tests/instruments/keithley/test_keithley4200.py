@@ -46,39 +46,48 @@ class TestKeithley4200SMU:
          (1, 1.345E2, 1e-6),
          (5, -25.45E1, 3e-3),
          ])
-    def test_voltage(self, ch, range, voltage, compliance):
+    def test_source_voltage(self, ch, range, voltage, compliance):
         with expected_protocol(
             Keithley4200,
             [INITIALIZATION,
              (f"US;DV{ch},{range:d},{voltage:g},{compliance:g}", "ACK"),
-             (f"US;TV{ch}", f"NAV {voltage}"),
              ],
         ) as inst:
-            inst.smu[ch].voltage = (range, voltage, compliance)
-            got = inst.smu[ch].voltage
+            inst.smu[ch].source_voltage = (range, voltage, compliance)
 
-        assert voltage == got["value"]
-        assert "NAV" == got["status"]
+    @pytest.mark.parametrize("voltage", [0, 1.345E2, -25.45E1])
+    def test_voltage(self, ch, voltage):
+        with expected_protocol(
+            Keithley4200,
+            [INITIALIZATION,
+             (f"US;TV{ch}", f"NAV{voltage}"),
+             ],
+        ) as inst:
+            assert voltage == inst.smu[ch].voltage
 
     @pytest.mark.parametrize("range, current, compliance", [
          (0, 0, 12.1),
          (2, 1.345, 1.3e1),
          (4, -2.5E-6, 23.34),
          ])
-    def test_current(self, ch, range, current, compliance):
-        got = ""
+    def test_source_current(self, ch, range, current, compliance):
         with expected_protocol(
             Keithley4200,
             [INITIALIZATION,
              (f"US;DI{ch},{range:d},{current:g},{compliance:g}", "ACK"),
-             (f"US;TI{ch}", f"CBI {current}"),
              ],
         ) as inst:
-            inst.smu[ch].current = (range, current, compliance)
-            got = inst.smu[ch].current
+            inst.smu[ch].source_current = (range, current, compliance)
 
-        assert current == got["value"]
-        assert "CBI" == got["status"]
+    @pytest.mark.parametrize("current", [0, 1.345, -2.5E-6])
+    def test_current(self, ch, current):
+        with expected_protocol(
+            Keithley4200,
+            [INITIALIZATION,
+             (f"US;TI{ch}", f"CBI{current}"),
+             ],
+        ) as inst:
+            assert current == inst.smu[ch].current
 
 
 class TestKeithley4200:

@@ -67,22 +67,20 @@ class TestKeithley4200SMU:
     def test_voltage(self, keithley4200, voltage):
         keithley4200.clear()
         assert keithley4200.status == StatusCode.NONE
-        keithley4200.smu1.voltage = (0, voltage, 1e-3)  # range, value, compliance
+        keithley4200.smu1.source_voltage = (0, voltage, 1e-3)  # range, value, compliance
         assert keithley4200.status == StatusCode.NONE
         got = keithley4200.smu1.voltage
         assert keithley4200.status == StatusCode.DATA_READY
-        assert got["value"] == pytest.approx(voltage, rel=1e-3, abs=1e-4)
-        assert got["status"] == "NAV"
+        assert got == pytest.approx(voltage, rel=1e-3, abs=1e-4)
 
         # The voltage setting has to be applied again after a measurement if we change the
         # measured quantity.
-        keithley4200.smu1.voltage = (0, voltage, 1e-3)  # range, value, compliance
+        keithley4200.smu1.source_voltage = (0, voltage, 1e-3)  # range, value, compliance
         got = keithley4200.smu1.current
         assert keithley4200.status == StatusCode.DATA_READY
 
         # With open terminals we should always get ~0A as current measurement result.
-        assert abs(got["value"]) == pytest.approx(0, rel=1e-3, abs=1e-4)
-        assert got["status"] == "NAI"
+        assert abs(got) == pytest.approx(0, rel=1e-3, abs=1e-4)
         keithley4200.clear()
 
     @pytest.mark.parametrize("current", [1e-3, -0.0256, 1.467e-2, 1.243e-6])
@@ -90,21 +88,19 @@ class TestKeithley4200SMU:
         compliance = 1
         keithley4200.clear()
         assert keithley4200.status == StatusCode.NONE
-        keithley4200.smu1.current = (0, current, compliance)  # range, value, compliance
+        keithley4200.smu1.source_current = (0, current, compliance)  # range, value, compliance
         assert keithley4200.status == StatusCode.NONE
         got = keithley4200.smu1.current
         assert keithley4200.status == StatusCode.DATA_READY
-        # With open terminals we should always get ~0A and a compliance error.
-        assert got["value"] == pytest.approx(0, abs=1e-6)
-        assert got["status"] == "CAI"
+        # With open terminals we should always get ~0A.
+        assert got == pytest.approx(0, abs=1e-6)
 
         # The current setting has to be applied again after a measurement if we change the
         # measured quantity.
-        keithley4200.smu1.current = (0, current, compliance)  # range, value, compliance
+        keithley4200.smu1.source_current = (0, current, compliance)  # range, value, compliance
         got = keithley4200.smu1.voltage
         assert keithley4200.status == StatusCode.DATA_READY
 
         # With open terminals we should always get the compliance as voltage measurement result
-        assert abs(got["value"]) == pytest.approx(compliance, rel=1e-3, abs=1e-4)
-        assert got["status"] == "CAV"
+        assert abs(got) == pytest.approx(compliance, rel=1e-3, abs=1e-4)
         keithley4200.clear()
