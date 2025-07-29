@@ -82,8 +82,7 @@ class TestSpellmanXRV:
 
     def test_dsp(self, spellman):
         dsp = spellman.dsp
-        assert type(dsp["part_number"]) is str
-        assert type(dsp["version"]) is int
+        assert type(dsp) is list
 
     def test_configuration(self, spellman):
         configuration = spellman.configuration
@@ -115,8 +114,7 @@ class TestSpellmanXRV:
 
     def test_fpga(self, spellman):
         fpga = spellman.fpga
-        assert type(fpga["part_number"]) is str
-        assert type(fpga["version"]) is int
+        assert type(fpga) is list
 
     def test_errors(self, spellman):
         errors = spellman.errors

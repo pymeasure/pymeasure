@@ -475,14 +475,7 @@ class SpellmanXRV(Instrument):
 
     dsp = Instrument.measurement(
         "23",
-        """Get the DSP part number and version.
-
-        :return: dict
-
-        :dict keys: ``part_number``, ``version``
-        """,
-        get_process_list=lambda v: {"part_number": v[0],
-                                    "version": int(v[1])},
+        """Get the DSP part number and version (list).""",
         )
 
     configuration = Instrument.measurement(
@@ -561,14 +554,7 @@ class SpellmanXRV(Instrument):
 
     fpga = Instrument.measurement(
         "43",
-        """Get the FPGA part number and version.
-
-        :return: dict
-
-        :dict keys: ``part_number``, ``version``
-        """,
-        get_process_list=lambda v: {"part_number": v[0],
-                                    "version": int(v[1])},
+        """Get the FPGA part number and version (list).""",
         )
 
     errors = Instrument.measurement(

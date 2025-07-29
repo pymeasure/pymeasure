@@ -163,8 +163,7 @@ class TestSpellmanXRV:
              ],
         ) as inst:
             got = inst.dsp
-            assert "SWM9999-999" == got["part_number"]
-            assert 56234 == got["version"]
+            assert ["SWM9999-999", 56234] == got
 
     def test_configuration(self):
         with expected_protocol(
@@ -242,8 +241,7 @@ class TestSpellmanXRV:
              ],
         ) as inst:
             got = inst.fpga
-            assert got["part_number"] == "SWM00199-001"
-            assert got["version"] == 3261
+            assert ["SWM00199-001", 3261] == got
 
     @pytest.mark.parametrize("errors, mapping, got_csum", [
         (ErrorCode.NO_ERROR,
