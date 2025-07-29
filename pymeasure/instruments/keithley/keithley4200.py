@@ -56,7 +56,7 @@ class SMU(Channel):
         self.write("US;DV{ch}")
         self.check_set_errors()
 
-    source_voltage = Channel.setting(
+    voltage_setpoint = Channel.setting(
         "US;DV{ch},%d,%g,%g",  # range, value, compliance
         """Set range, output voltage and current compliance (int, float, float).
 
@@ -86,7 +86,7 @@ class SMU(Channel):
         get_process=lambda v: float(v[3:]),
         )
 
-    source_current = Channel.setting(
+    current_setpoint = Channel.setting(
         "US;DI{ch},%d,%g,%g",  # range, value, compliance
         """Set range, output current and voltage compliance (int, float, float).
 

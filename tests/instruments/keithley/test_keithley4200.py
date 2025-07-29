@@ -46,14 +46,14 @@ class TestKeithley4200SMU:
          (1, 1.345E2, 1e-6),
          (5, -25.45E1, 3e-3),
          ])
-    def test_source_voltage(self, ch, range, voltage, compliance):
+    def test_voltage_setpoint(self, ch, range, voltage, compliance):
         with expected_protocol(
             Keithley4200,
             [INITIALIZATION,
              (f"US;DV{ch},{range:d},{voltage:g},{compliance:g}", "ACK"),
              ],
         ) as inst:
-            inst.smu[ch].source_voltage = (range, voltage, compliance)
+            inst.smu[ch].voltage_setpoint = (range, voltage, compliance)
 
     @pytest.mark.parametrize("voltage", [0, 1.345E2, -25.45E1])
     def test_voltage(self, ch, voltage):
@@ -70,14 +70,14 @@ class TestKeithley4200SMU:
          (2, 1.345, 1.3e1),
          (4, -2.5E-6, 23.34),
          ])
-    def test_source_current(self, ch, range, current, compliance):
+    def test_current_setpoint(self, ch, range, current, compliance):
         with expected_protocol(
             Keithley4200,
             [INITIALIZATION,
              (f"US;DI{ch},{range:d},{current:g},{compliance:g}", "ACK"),
              ],
         ) as inst:
-            inst.smu[ch].source_current = (range, current, compliance)
+            inst.smu[ch].current_setpoint = (range, current, compliance)
 
     @pytest.mark.parametrize("current", [0, 1.345, -2.5E-6])
     def test_current(self, ch, current):

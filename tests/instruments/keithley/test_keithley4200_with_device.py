@@ -67,7 +67,7 @@ class TestKeithley4200SMU:
     def test_voltage(self, keithley4200, voltage):
         keithley4200.clear()
         assert keithley4200.status == StatusCode.NONE
-        keithley4200.smu1.source_voltage = (0, voltage, 1e-3)  # range, value, compliance
+        keithley4200.smu1.voltage_setpoint = (0, voltage, 1e-3)  # range, value, compliance
         assert keithley4200.status == StatusCode.NONE
         got = keithley4200.smu1.voltage
         assert keithley4200.status == StatusCode.DATA_READY
@@ -75,7 +75,7 @@ class TestKeithley4200SMU:
 
         # The voltage setting has to be applied again after a measurement if we change the
         # measured quantity.
-        keithley4200.smu1.source_voltage = (0, voltage, 1e-3)  # range, value, compliance
+        keithley4200.smu1.voltage_setpoint = (0, voltage, 1e-3)  # range, value, compliance
         got = keithley4200.smu1.current
         assert keithley4200.status == StatusCode.DATA_READY
 
@@ -88,7 +88,7 @@ class TestKeithley4200SMU:
         compliance = 1
         keithley4200.clear()
         assert keithley4200.status == StatusCode.NONE
-        keithley4200.smu1.source_current = (0, current, compliance)  # range, value, compliance
+        keithley4200.smu1.current_setpoint = (0, current, compliance)  # range, value, compliance
         assert keithley4200.status == StatusCode.NONE
         got = keithley4200.smu1.current
         assert keithley4200.status == StatusCode.DATA_READY
@@ -97,7 +97,7 @@ class TestKeithley4200SMU:
 
         # The current setting has to be applied again after a measurement if we change the
         # measured quantity.
-        keithley4200.smu1.source_current = (0, current, compliance)  # range, value, compliance
+        keithley4200.smu1.current_setpoint = (0, current, compliance)  # range, value, compliance
         got = keithley4200.smu1.voltage
         assert keithley4200.status == StatusCode.DATA_READY
 
