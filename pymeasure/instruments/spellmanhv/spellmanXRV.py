@@ -22,12 +22,17 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from enum import IntFlag
+
 from pyvisa.constants import InterfaceType
 
+from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.validators import strict_discrete_set, strict_range
+
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
+
+STX = chr(2)
+ETX = chr(3)
 
 
 class StatusCode(IntFlag):
@@ -228,9 +233,6 @@ class UnscaledData(Channel):
 class SpellmanXRV(Instrument):
     """A class representing the Spellman XRV series high voltage power supplies."""
 
-    STX = chr(2)
-    ETX = chr(3)
-
     checksum_enabled = True  # RS232 and USB
 
     filament = Instrument.ChannelCreator(Filament)
@@ -244,7 +246,8 @@ class SpellmanXRV(Instrument):
         super().__init__(
             adapter, name,
             asrl={'baud_rate': baud_rate},
-            read_termination=self.ETX,
+            read_termination=ETX,
+            write_termination=ETX,
             includeSCPI=False,
             timeout=2000,
             **kwargs)
@@ -299,9 +302,9 @@ class SpellmanXRV(Instrument):
         command_with_comma = command + ","
         if self.checksum_enabled:
             checksum = self.checksum(command_with_comma)
-            super().write(f"{self.STX}{command_with_comma}{checksum}{self.ETX}")
+            super().write(f"{STX}{command_with_comma}{checksum}")
         else:
-            super().write(f"{self.STX}{command_with_comma}{self.ETX}")
+            super().write(f"{STX}{command_with_comma}")
 
     def wait_for(self, query_delay=0):
         """Wait for some time.
@@ -318,10 +321,10 @@ class SpellmanXRV(Instrument):
         """
         got = super().read()
 
-        if not got.startswith(self.STX):
+        if not got.startswith(STX):
             raise ConnectionError("Expected <STX> at begin of received message.")
 
-        response = got.strip(self.STX).rpartition(",")
+        response = got.strip(STX).rpartition(",")
 
         if self.checksum_enabled:
             string_to_check = response[0] + response[1]

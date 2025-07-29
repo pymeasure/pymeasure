@@ -27,10 +27,9 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.spellmanhv.spellmanXRV import SpellmanXRV, StatusCode, ErrorCode
 
 STX = chr(2)
-ETX = chr(3)
 
 # communication during class initialization
-INITIALIZATION = (f"{STX}28,j{ETX}", f"{STX}28,160,30,0,|")
+INITIALIZATION = (f"{STX}28,j", f"{STX}28,160,30,0,|")
 
 
 class TestSpellmanXRV:
@@ -48,7 +47,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}07,$,]"),
+             (f"{STX}{set_cmd}", f"{STX}07,$,]"),
              ],
         ) as inst:
             inst.baudrate = baudrate
@@ -65,8 +64,8 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}10,$,c"),
-             (f"{STX}14,o{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}10,$,c"),
+             (f"{STX}14,o", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.voltage_setpoint = voltage_setpoint
@@ -83,8 +82,8 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}11,$,b"),
-             (f"{STX}15,n{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}11,$,b"),
+             (f"{STX}15,n", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.current_setpoint = current_setpoint
@@ -94,7 +93,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}19,j{ETX}", f"{STX}19,1234,2977,3783,512,768,6,7,899,~"),
+             (f"{STX}19,j", f"{STX}19,1234,2977,3783,512,768,6,7,899,~"),
              ],
         ) as inst:
             got = inst.analog_monitor
@@ -120,7 +119,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}21,q{ETX}", f"{STX}{get_got}"),
+             (f"{STX}21,q", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert hv_on_timer == inst.hv_on_timer
@@ -151,7 +150,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}22,p{ETX}", f"{STX}{get_got}"),
+             (f"{STX}22,p", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert status == inst.status
@@ -160,7 +159,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}23,o{ETX}", f"{STX}23,SWM9999-999,56234,`"),
+             (f"{STX}23,o", f"{STX}23,SWM9999-999,56234,`"),
              ],
         ) as inst:
             got = inst.dsp
@@ -171,7 +170,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}27,k{ETX}", f"{STX}27,1,2,3,4,5,6,7,8,9,10,11,12,X"),
+             (f"{STX}27,k", f"{STX}27,1,2,3,4,5,6,7,8,9,10,11,12,X"),
              ],
         ) as inst:
             got = inst.configuration
@@ -191,7 +190,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}28,j{ETX}", f"{STX}28,160,30,0,|"),
+             (f"{STX}28,j", f"{STX}28,160,30,0,|"),
              ],
         ) as inst:
             got = inst.scaling
@@ -203,7 +202,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}30,q{ETX}", f"{STX}30,$,a"),
+             (f"{STX}30,q", f"{STX}30,$,a"),
              ],
         ) as inst:
             inst.reset_hv_on_timer()
@@ -212,7 +211,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}31,p{ETX}", f"{STX}31,$,`"),
+             (f"{STX}31,p", f"{STX}31,$,`"),
              ],
         ) as inst:
             inst.reset_errors()
@@ -228,8 +227,8 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}97,$,T"),
-             (f"{STX}38,i{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}97,$,T"),
+             (f"{STX}38,i", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.power_limits = power_limits
@@ -239,7 +238,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}43,m{ETX}", f"{STX}43,SWM00199-001,3261,Q"),
+             (f"{STX}43,m", f"{STX}43,SWM00199-001,3261,Q"),
              ],
         ) as inst:
             got = inst.fpga
@@ -312,7 +311,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}68,f{ETX}", f"{STX}{get_got}"),
+             (f"{STX}68,f", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert errors == inst.errors
@@ -327,8 +326,8 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}98,$,S"),
-             (f"{STX}22,p{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}98,$,S"),
+             (f"{STX}22,p", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.output_enabled = output_enabled
@@ -338,7 +337,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}60,n{ETX}", f"{STX}60,4095,p"),
+             (f"{STX}60,n", f"{STX}60,4095,p"),
              ],
         ) as inst:
             assert 1.2*160000 == inst.voltage
@@ -347,7 +346,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}69,e{ETX}", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
+             (f"{STX}69,e", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
              ],
         ) as inst:
             got = inst.system_voltages
@@ -373,7 +372,7 @@ class TestSpellmanXRV:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}69,e{ETX}", f"{STX}{get_got}"),
+             (f"{STX}69,e", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert 0.05911815*temperature == inst.temperature
@@ -393,8 +392,8 @@ class TestChannelFilament:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}12,$,a"),
-             (f"{STX}16,m{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}12,$,a"),
+             (f"{STX}16,m", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.filament.limit = limit
@@ -411,8 +410,8 @@ class TestChannelFilament:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}13,$,`"),
-             (f"{STX}17,l{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}13,$,`"),
+             (f"{STX}17,l", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.filament.preheat = preheat
@@ -427,7 +426,7 @@ class TestChannelFilament:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}32,$,_"),
+             (f"{STX}{set_cmd}", f"{STX}32,$,_"),
              ],
         ) as inst:
             inst.filament.size = size
@@ -441,7 +440,7 @@ class TestChannelFilament:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}70,$,]"),
+             (f"{STX}{set_cmd}", f"{STX}70,$,]"),
              ],
         ) as inst:
             inst.filament.enabled = enabled
@@ -461,8 +460,8 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}10,$,c"),
-             (f"{STX}14,o{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}10,$,c"),
+             (f"{STX}14,o", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.unscaled.voltage_setpoint = voltage_setpoint
@@ -479,8 +478,8 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}{set_cmd}{ETX}", f"{STX}11,$,b"),
-             (f"{STX}15,n{ETX}", f"{STX}{get_got}"),
+             (f"{STX}{set_cmd}", f"{STX}11,$,b"),
+             (f"{STX}15,n", f"{STX}{get_got}"),
              ],
         ) as inst:
             inst.unscaled.current_setpoint = current_setpoint
@@ -490,7 +489,7 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}19,j{ETX}", f"{STX}19,1,2,3,4,5,6,7,8,f"),
+             (f"{STX}19,j", f"{STX}19,1,2,3,4,5,6,7,8,f"),
              ],
         ) as inst:
             got = inst.unscaled.analog_monitor
@@ -514,7 +513,7 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}60,n{ETX}", f"{STX}{get_got}"),
+             (f"{STX}60,n", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert voltage == inst.unscaled.voltage
@@ -529,7 +528,7 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}65,i{ETX}", f"{STX}{get_got}"),
+             (f"{STX}65,i", f"{STX}{get_got}"),
              ],
         ) as inst:
             assert lvps_monitor == inst.unscaled.lvps_monitor
@@ -538,7 +537,7 @@ class TestChannelUnscaled:
         with expected_protocol(
             SpellmanXRV,
             [INITIALIZATION,
-             (f"{STX}69,e{ETX}", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
+             (f"{STX}69,e", f"{STX}69,1,2,3,4,5,6,7,8,9,10,o"),
              ],
         ) as inst:
             got = inst.unscaled.system_voltages
