@@ -65,7 +65,7 @@ class SMU(Channel):
         .. code::
 
             inst = Keithley4200("TCPIP::192.168.1.1::1225::SOCKET")
-            inst.smu1.voltage = (0, 3.3, 1e-2)  # (range, value, compliance)
+            inst.smu1.voltage_setpoint = (0, 3.3, 1e-2)  # (range, value, compliance)
             # Set SMU1 to output 3.3 V in autorange with 10 mA current compliance
 
         Voltage source range:
@@ -95,7 +95,7 @@ class SMU(Channel):
         .. code::
 
             inst = Keithley4200("TCPIP::192.168.1.1::1225::SOCKET")
-            inst.smu1.voltage = (9, 55e-3, 10)  # (range, value, compliance)
+            inst.smu1.current_setpoint = (9, 55e-3, 10)  # (range, value, compliance)
             # Set SMU1 to output 55 mA in 100 mA range with 10 V voltage compliance
 
         Current source range:
