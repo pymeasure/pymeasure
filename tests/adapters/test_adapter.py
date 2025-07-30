@@ -25,6 +25,7 @@
 import logging
 from unittest import mock
 
+import numpy as np
 import pytest
 
 from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
@@ -86,9 +87,15 @@ def test_not_implemented_methods(adapter, method, args):
         getattr(adapter, method)(*args)
 
 
-def test_read_binary_values():
-    a = ProtocolAdapter([(None, "1 2")])
-    assert list(a.read_binary_values(dtype=int, sep=" ")) == pytest.approx([1, 2])
+@pytest.mark.parametrize("response, options, result", (
+    ("1,2", dict(dtype=int, sep=","), [1, 2]),
+    (b"\x01\x02", dict(dtype=np.uint8), [1, 2]),
+    (b'\x01\x02\x03\x04\x05', dict(dtype=np.uint8, count=3), [1, 2, 3]),
+    ("abcdefgh", {}, [1.6777999e+22, 4.371022e+24]),
+))
+def test_read_binary_values(response, options, result):
+    a = ProtocolAdapter([(None, response)])
+    assert list(a.read_binary_values(**options)) == pytest.approx(result)
 
 
 def test_write_binary_values():
