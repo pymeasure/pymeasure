@@ -30,9 +30,6 @@ from time import sleep, time
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 
 class LakeShoreTemperatureChannel(Channel):
     """ Temperature input channel on a lakeshore temperature monitor. Reads the temperature in
@@ -123,4 +120,33 @@ class LakeShoreHeaterChannel(Channel):
         'SETP? {ch}', 'SETP {ch},%f',
         """Control the setpoint temperature
         in the preferred units of the control loop sensor."""
+    )
+
+    ramp = Instrument.control(
+        'RAMP? {ch}',
+        'RAMP {ch}, %d, %f',
+        """Control the ramp settings. Needs and replies a tuple (0/1, rate)""",
+    )
+
+    @property
+    def ramp_enabled(self):
+        return self.ramp[0]
+
+    @ramp_enabled.setter
+    def ramp_enabled(self, value: bool):
+        ramp_rate = self.ramp_rate
+        self.ramp = value, ramp_rate
+
+    @property
+    def ramp_rate(self):
+        return self.ramp[1]
+
+    @ramp_rate.setter
+    def ramp_rate(self, value: float):
+        ramp_enabled = int(self.ramp_enabled)
+        self.ramp = ramp_enabled, value
+
+    rampst = Instrument.measurement(
+        'RAMPST? {ch}',
+        """Returns the ramp status. 0: loop is not ramping, 1: loop is ramping."""
     )
