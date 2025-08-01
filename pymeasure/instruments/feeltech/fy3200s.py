@@ -116,7 +116,7 @@ class MainChannel(Channel):
     duty_cycle = Instrument.control(
         "{ch}\ncd",
         "{ch}d%i",
-        "Set the duty cycle (percentage) of the channel",
+        "Control the duty cycle (percentage) of the channel",
         validator=step_validator(1),
         values=(1, 99),
         get_process=lambda x: float(x.strip("cd")),
@@ -243,7 +243,7 @@ class SubsidiaryChannel(Channel):
     duty_cycle = Instrument.control(
         "{ch}\ncd",
         "{ch}d%i",
-        "Set the duty cycle (percentage) of the channel",
+        "Control the duty cycle (percentage) of the channel",
         validator=step_validator(1),
         values=(1, 99),
         get_process=lambda x: float(x.strip("cd")),
