@@ -27,20 +27,25 @@ import logging
 from ..curves import ResultsImage
 from ..Qt import QtCore
 from .plot_frame import PlotFrame
+import pyqtgraph as pg
+from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class ImageFrame(PlotFrame):
-    """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
+    """Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to plot also axis Z using colors
     """
+
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.Signal(str)
+    item_updated = QtCore.Signal()
 
-    def __init__(self, x_axis, y_axis, z_axis=None,
-                 refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None
+    ):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
@@ -51,8 +56,15 @@ class ImageFrame(PlotFrame):
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)' % units)
+            self.plot.setTitle(label + " (%s)" % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)
+
+    def set_colormap(self, colormap):
+        """Sets the colormap for the image plot"""
+        for item in self.plot.items:
+            if isinstance(item, self.ResultsClass):
+                item.set_colormap(colormap)
+        self.update_curves()
