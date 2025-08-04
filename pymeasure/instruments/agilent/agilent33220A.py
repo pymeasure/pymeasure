@@ -266,8 +266,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the Agilent 33220A"
-                    + " to finish the triggering."
+                    "Timeout expired while waiting for the Agilent 33220A to finish the triggering."
                 )
 
             if should_stop():
