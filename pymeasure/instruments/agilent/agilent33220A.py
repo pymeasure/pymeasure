@@ -88,23 +88,18 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
     )
 
     frequency = Instrument.control(
-        "FREQ?", "FREQ %s",
-        """Control the frequency of the output waveform, depending on the method
-        valid range depends on the current shape and supplying out-of-bound values will silently
-        be clipped by the device (float, strict from 1e-6 to 20e+6).""",
-        validator=strict_range,
-        values=[1e-6, 20e+6],
+        "FREQ?", "FREQ %f",
+        """Control the frequency of the output waveform. Depending on the output shape, the
+        supported frequency range changes. Supplying out-of-bound values may silently be clipped
+        by the device (float, in Hz)"""
     )
 
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
-        """Control the amplitude of the output waveform. Depending on amplitude unit this
-        is Volt (peak-to-peak), Volt (RMS) or dBm and the range changes accordingly. The limits
-        also depend on the configured output termination (50 Ohm to High Impedance changes
-        by a factor of 2). Supplying out-of-bound values will silently be clipped by the device
-        (float strict from -53.05 (minimal dbm) to 19.9 (maximal VPP)).""",
-        validator=strict_range,
-        values=[-53.05, 19.9],
+        """Control the amplitude of the output waveform. Depending on amplitude unit, the unit
+        is Volt (peak-to-peak), Volt (RMS) or dBm. The limits depend on the configured output
+        termination (50 Ohm to High Impedance changes by a factor of 2) and the offset.
+        Supplying out-of-bound values may silently be clipped by the device (float, in V or dBm)"""
     )
 
     amplitude_unit = Instrument.control(
@@ -118,29 +113,23 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     offset = Instrument.control(
         "VOLT:OFFS?", "VOLT:OFFS %f",
-        """Control the voltage offset of the output waveform (float, strict from -9.95 to 9.95).
-        The offset is in Volts and limited by the amplitude setting and output termination.
-        Supplying out-of-bound values will silently be clipped by the device.""",
-        validator=strict_range,
-        values=[-9.95, +9.95],
+        """Control the voltage offset of the output waveform. This is limited by the amplitude
+        and output termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_high = Instrument.control(
         "VOLT:HIGH?", "VOLT:HIGH %f",
-        """Control the upper voltage of the output waveform (float, strict from -9.93 to 9.95).
-        The limits depend on the output termination. Supplying out-of-bound values will
-        silently be clipped by the device. The high voltage must be higher than the low voltage.""",
-        validator=strict_range,
-        values=[-9.93, 9.95],
+        """Control the upper voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_low = Instrument.control(
         "VOLT:LOW?", "VOLT:LOW %f",
-        """Control the lower voltage of the output waveform (float, strict from -9.95 to 9.93).
-        The limits depend on the output termination. Supplying out-of-bound values will
-        silently be clipped by the device. The low voltage must be lower than the high voltage.""",
-        validator=strict_range,
-        values=[-9.95, 9.93],
+        """Control the lower voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     square_dutycycle = Instrument.control(
