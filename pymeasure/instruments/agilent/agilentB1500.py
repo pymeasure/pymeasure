@@ -181,6 +181,24 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         self.write("RZ")
 
+    control_mode = Instrument.control(
+        "ERMOD?",
+        "ERMOD %s",
+        """Control mode for the digital I/O ports. (``ERMOD``)""",
+        get_process=lambda v: ControlMode(v),
+        set_process=lambda v: ControlMode(v).value,
+    )
+
+    def set_port_connection(self, port, status):
+        """Sets the connection status for a specific port. (``ERSSP``)
+
+        :param port: Port number
+        :type port: PgSelectorPort
+        :param status: Connection status
+        :type status: PgSelectorConnectionStatus
+        """
+        self.write(f"ERSSP {port.value}, {status.value}")
+
     def check_errors(self):
         """Check for errors (``ERRX?``)"""
         error = self.ask("ERRX?")
@@ -1662,6 +1680,18 @@ class AutoManual(CustomIntEnum):
     MANUAL = 1  #:
 
 
+class ControlMode(CustomIntEnum):
+    """Control mode for the digital I/O ports"""
+
+    GENERAL = 0  #: General purpose control mode (default)
+    SMU_PGU_SELECTOR = 1  #: 16440A SMU/PGU selector (B1500A-A04) control mode
+    N1258A_N1259A = 2  #: N1258A/N1259A module selector control mode
+    N1265A = 4  #: N1265A Ultra High Current Expander/Fixture control mode
+    N1266A = 8  #: N1266A High Voltage Source Monitor Unit Current Expander control mode
+    N1268A = 16  #: N1268A Ultra High Voltage Expander control mode
+    N1272A = 32  #: N1272A Device Capacitance Selector control mode
+
+
 class MeasMode(CustomIntEnum):
     """Measurement Mode"""
 
@@ -1688,6 +1718,24 @@ class MeasOpMode(CustomIntEnum):
     Current and voltage synchronous measurement. Measurement result contains the compliance side
     data and the force side data in this order.
     """
+
+
+class PgSelectorPort(CustomIntEnum):
+    """Output port of SMU/PG selector"""
+
+    OUTPUT_1_FIRST = 0  # Output 1 on the first selector
+    OUTPUT_2_FIRST = 1  # Output 2 on the first selector
+    OUTPUT_1_SECOND = 2  # Output 1 on the second selector
+    OUTPUT_2_SECOND = 3  # Output 2 on the second selector
+
+
+class PgSelectorConnectionStatus(CustomIntEnum):
+    """Connection status of I/O port"""
+
+    NO_CONNECTION = 0  # All open. Breaks connection. Initial setting
+    SMU_ON = 1  # SMU on. Makes connection to the SMU input.
+    PGU_ON = 2  # PGU on. Makes connection to the PGU input.
+    PGU_OPEN = 3  # PGU open. Made by opening the semiconductor relay installed on the PGU on port.
 
 
 class SweepMode(CustomIntEnum):
