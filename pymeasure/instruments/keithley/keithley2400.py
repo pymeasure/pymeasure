@@ -30,7 +30,7 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
 
@@ -100,9 +100,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:DEL?",
         ":SOUR:DEL %g",
         """Control a manual delay for the source after the output is turned on
-        before a measurement is taken (float truncated 0 to 999.9999).
+        before a measurement is taken (float strictly from 0 to 999.9999).
         When this property is set, the auto delay is turned off.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 999.9999],
     )
 
@@ -161,9 +161,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
         ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
-        """Control the measurement current range in Amps (float, truncated from -1.05 to 1.05).
+        """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
         Auto-range is disabled when this property is set.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[-1.05, 1.05],
     )
 
@@ -171,32 +171,34 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:CURR:NPLC?",
         ":SENS:CURR:NPLC %g",
         """Control (floating) the number of power line cycles (NPLC)
-        for the DC current measurements, which sets the integration period
-        and measurement speed (float, from 0.01 to 10).""",
+        for the DC current measurements, which sets the integration period and measurement speed
+        (float, from strictly from 0.01 to 10.)""",
+        validator=strict_range,
+        values=[0.01, 10],
     )
 
     compliance_current = Instrument.control(
         ":SENS:CURR:PROT?",
         ":SENS:CURR:PROT %g",
-        """Control the compliance current in Amps (float, truncated -1.05 to 1.05).""",
-        validator=truncated_range,
+        """Control the compliance current in Amps (float, strictly from -1.05 to 1.05).""",
+        validator=strict_range,
         values=[-1.05, 1.05],
     )
 
     source_current = Instrument.control(
         ":SOUR:CURR?",
         ":SOUR:CURR:LEV %g",
-        """Control the source current in Amps (float, truncated from -1.05 to 1.05).""",
-        validator=truncated_range,
+        """Control the source current in Amps (float, strictly from -1.05 to 1.05).""",
+        validator=strict_range,
         values=[-1.05, 1.05],
     )
 
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?",
         ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
-        """Control the source current range in Amps (float, truncated from -1.05 to 1.05).
+        """Control the source current range in Amps (float, strictly from -1.05 to 1.05).
         Auto-range is disabled when this property is set.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[-1.05, 1.05],
     )
 
@@ -211,9 +213,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
         ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
-        """Control the measurement voltage range in Volts (float, truncated from -210 to 210).
+        """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
         Auto-range is disabled when this property is set.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[-210, 210],
     )
 
@@ -222,14 +224,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:VOLT:NPLC %g",
         """Control the number of power line cycles (NPLC) for the DC voltage measurements,
         which sets the integration period and measurement speed
-        (float, from 0.01 to 10).""",
+        (float, from strictly from 0.01 to 10.)""",
+        validator=strict_range,
+        values=[0.01, 10],
     )
 
     compliance_voltage = Instrument.control(
         ":SENS:VOLT:PROT?",
         ":SENS:VOLT:PROT %g",
-        """Control the compliance voltage in Volts (float, truncated from -210 to 210).""",
-        validator=truncated_range,
+        """Control the compliance voltage in Volts (float, strictly from -210 to 210).""",
+        validator=strict_range,
         values=[-210, 210],
     )
 
@@ -240,9 +244,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?",
         ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
-        """Control the source voltage range in Volts (float, truncated from -210 to 210).
+        """Control the source voltage range in Volts (float, strictly from -210 to 210).
         Auto-range is disabled when this property is set.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[-210, 210],
     )
 
@@ -259,9 +263,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
         ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """Control the resistance range in Ohms (float, truncated from 0 to 210e6).
+        """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
         Auto-range is disabled when this property is set.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 210e6],
     )
 
@@ -270,7 +274,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:RES:NPLC %g",
         """Control the number of power line cycles (NPLC) for the 2-wire resistance measurements,
         which sets the integration period and measurement speed
-        (float, from 0.01 to 10.)""",
+        (float, from strictly from 0.01 to 10.)""",
+        validator=strict_range,
+        values=[0.01, 10],
     )
 
     wires = Instrument.control(
@@ -286,9 +292,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     buffer_points = Instrument.control(
         ":TRAC:POIN?",
         ":TRAC:POIN %d",
-        """Control the number of buffer points (int, truncated from 1 to 2500).
+        """Control the number of buffer points (int, strictly from 1 to 2500).
         This does not represent actual points in the buffer, but the configuration value.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[1, 2500],
         cast=int,
     )
@@ -324,8 +330,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     trigger_count = Instrument.control(
         ":TRIG:COUN?",
         ":TRIG:COUN %d",
-        """Control the trigger count (integer, truncated from 1 to 2500).""",
-        validator=truncated_range,
+        """Control the trigger count (integer, strictly from 1 to 2500).""",
+        validator=strict_range,
         values=[1, 2500],
         cast=int,
     )
@@ -333,8 +339,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     trigger_delay = Instrument.control(
         ":TRIG:SEQ:DEL?",
         ":TRIG:SEQ:DEL %g",
-        """Control the trigger delay in seconds (float, truncated from 0 to 999.9999).""",
-        validator=truncated_range,
+        """Control the trigger delay in seconds (float, strictly from 0 to 999.9999).""",
+        validator=strict_range,
         values=[0, 999.9999],
     )
 
@@ -355,8 +361,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:AVER:COUNT?",
         ":SENS:AVER:COUNT %d",
         """Control the number of readings that are acquired and stored in the filter buffer
-        (int, truncated from 1 to 100).""",
-        validator=truncated_range,
+        (int, strictly from 1 to 100).""",
+        validator=strict_range,
         values=[1, 100],
         cast=int,
     )
