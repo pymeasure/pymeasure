@@ -283,11 +283,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SYSTEM:RSENSE?",
         ":SYSTEM:RSENSE %d",
         """Control the number of wires in use for resistance measurements
-        (integer, strictly 2 or 4).""",
+        (int, strictly 2 or 4).""",
         validator=strict_discrete_set,
         values={4: 1, 2: 0},
         map_values=True,
     )
+
+    ##########
+    # Buffer #
+    ##########
 
     buffer_points = Instrument.control(
         ":TRAC:POIN?",
@@ -330,7 +334,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     trigger_count = Instrument.control(
         ":TRIG:COUN?",
         ":TRIG:COUN %d",
-        """Control the trigger count (integer, strictly from 1 to 2500).""",
+        """Control the trigger count (int, strictly from 1 to 2500).""",
         validator=strict_range,
         values=[1, 2500],
         cast=int,
