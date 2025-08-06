@@ -189,6 +189,16 @@ class AgilentB1500(SCPIMixin, Instrument):
         set_process=lambda v: ControlMode(v).value,
     )
 
+    spgu_mode = Instrument.control(
+        "SIM?",
+        "SIM %d",
+        """Control mode for the Semiconductor Pulse Generator Unit (SPGU). (``SIM``)
+        The setting is effective for the all SPGU modules installed in the B1500. This
+        command also triggers 0 V output of the SPGU channels which output switch has been ON.""",
+        get_process=lambda v: SPGUOperationMode(v),
+        set_process=lambda v: SPGUOperationMode(v).value,
+    )
+
     def set_port_connection(self, port, status):
         """Sets the connection status for a specific port. (``ERSSP``)
 
@@ -198,6 +208,40 @@ class AgilentB1500(SCPIMixin, Instrument):
         :type status: PgSelectorConnectionStatus
         """
         self.write(f"ERSSP {port.value}, {status.value}")
+
+    def set_spgu_output(self, mode, condition=None):
+        """Sets the operating mode for SPGU channel outputs. This setting applies to
+        all SPGU modules installed in the B1500. (``SPRM``)
+
+        :param mode: SPGU operation mode
+        :type mode: SPGUOperationMode
+        :param condition: Output condition
+        :type condition: int or float or None
+        """
+        mode = SPGUChannelOutputMode.get(mode)
+
+        if mode == SPGUChannelOutputMode.COUNT:
+            if not (1 <= condition <= 1_000_000):
+                raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
+
+        elif mode == SPGUChannelOutputMode.DURATION:
+            if not (1e-6 <= condition <= 31_556_926):
+                raise ValueError(
+                    "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
+                    "when mode is DURATION."
+                )
+
+        self.write(f"SPRM {mode.value}, {int(condition)}")
+
+    def get_spgu_output(self):
+        """Gets the current operating mode and condition for SPGU channel outputs. (``SPRM?``)
+
+        :return: Tuple of (mode, condition)
+        :rtype: tuple
+        """
+        response = self.ask("SPRM?")
+        mode, condition = response.split(",")
+        return SPGUChannelOutputMode(int(mode)), float(condition) if condition else None
 
     def check_errors(self):
         """Check for errors (``ERRX?``)"""
@@ -1776,6 +1820,33 @@ class SamplingPostOutput(CustomIntEnum):
 
     BASE = 1  #:
     BIAS = 2  #:
+
+
+class SPGUOperationMode(CustomIntEnum):
+    """Operation mode of Semiconductor Pulse Generator Unit (SPGU)"""
+
+    PG = 0  #: PG (pulse output) mode
+    ALWG = 1  #: ALWG (arbitrary linear wave output) mode
+
+
+class SPGUChannelOutputMode(CustomIntEnum):
+    """Operating mode for SPGU channel outputs"""
+
+    FREE_RUN = 0
+    """
+    Free Run mode. Continues outputting until the ``SPP`` command is executed. The condition
+    parameter is not required.
+    """
+    COUNT = 1
+    """
+    Count mode. Outputs the number of pulses (when set to PG mode with the ``SIM 0`` command), or
+    the number of sequences (when set to ALWG mode with the ``SIM 1`` command) specified by
+    the condition parameter.
+    """
+    DURATION = 2
+    """
+    Duration mode. Outputs for a duration specified by the condition parameter.
+    """
 
 
 class StaircaseSweepPostOutput(CustomIntEnum):
