@@ -284,7 +284,7 @@ class LDC500SeriesTEC(Channel):
     enabled = Instrument.control(
         "TEON?",
         "TEON %d",
-        """Control whether the laser diode current source is enabled (bool).""",
+        """Control whether the TEC current source is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
