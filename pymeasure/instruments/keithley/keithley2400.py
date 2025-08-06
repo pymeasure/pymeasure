@@ -39,6 +39,26 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+SOURCE_MAP = {
+    "current": "CURR",
+    "voltage": "VOLT",
+}
+
+
+MEASURE_MAP = {
+    "current": "CURR",
+    "voltage": "VOLT",
+    "resistance": "RES",
+}
+
+
+REV_MEASURE_MAP = {
+    "CURR": "current",
+    "VOLT": "voltage",
+    "RES": "resistance",
+}
+
+
 class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     """Represent the Keithley 2400 SourceMeter and provide a
     high-level interface for interacting with the instrument.
@@ -65,6 +85,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
+    ##########
+    # SOURCE #
+    ##########
+
     source_mode = Instrument.control(
         ":SOUR:FUNC?",
         ":SOUR:FUNC %s",
@@ -72,7 +96,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The convenience methods :meth:`~.Keithley2400.apply_current`
         and :meth:`~.Keithley2400.apply_voltage` can also be used.""",
         validator=strict_discrete_set,
-        values={"current": "CURR", "voltage": "VOLT"},
+        values=SOURCE_MAP,
         map_values=True,
     )
 
@@ -143,20 +167,43 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    measure_concurent_functions = Instrument.control(
-        ":SENS:FUNC:CONC?",
-        ":SENS:FUNC:CONC %d",
-        """Control the ability to measure more than one function simultaneously (bool).""",
+    ###########
+    # MEASURE #
+    ###########
+
+    measurement_mode = Instrument.control(
+        ":SENS:FUNC?",
+        ":SENS:FUNC:CONC OFF;:SENS:FUNC %s",
+        """Control the measurement mode (str, strictly 'current', 'voltage', or 'resistance').""",
         validator=strict_discrete_set,
-        values={True: 1, False: 0},
+        values=MEASURE_MAP,
         map_values=True,
+    )
+
+    concurrent_measurement_modes = Instrument.control(
+        ":SENS:FUNC?",
+        ":SENS:FUNC:CONC ON;:SENS:FUNC %s",
+        """Control concurrent measurement modes
+        (list of str, strictly composed of 'current', 'voltage', and/or 'resistance'""",
+        set_process=lambda m_list: ",".join([f"'{MEASURE_MAP[m]}'" for m in m_list]),
+        get_process=lambda s: [
+            REV_MEASURE_MAP[m.replace("'", "").replace('"', "")] for m in s.split(",")
+        ],
+    )  # TODO: Do this explicitly, it's not readable as is
+
+    measurement = Instrument.measurement(
+        "READ?",
+        """Measure the currently selected measurement mode (float or list of floats).""",
     )
 
     ###############
     # Current (A) #
     ###############
 
-    current = Instrument.measurement(":READ?", """Get the current in Amps if configured (float).""")
+    current = Instrument.measurement(
+        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'CURR';:READ?",
+        """Measure the current in Amps (float).""",
+    )  # TODO: use get_process to return nan for no reading
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
@@ -207,8 +254,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ###############
 
     voltage = Instrument.measurement(
-        ":READ?", """Get the voltage in Volts if configured (float)."""
-    )
+        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'VOLT';:READ?",
+        """Measure the voltage in Volts (float).""",
+    )  # TODO: use get_process to return nan for no reading
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
@@ -255,10 +303,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ####################
 
     resistance = Instrument.measurement(
-        ":READ?",
-        """Get the resistance in Ohms, if configured for this reading.
-        """,
-    )
+        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'RES';:READ?",
+        """Get the resistance in Ohms (float).""",
+    )  # TODO: use get_process to return nan for no reading
 
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
