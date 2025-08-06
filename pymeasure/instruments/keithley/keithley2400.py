@@ -691,6 +691,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         return self.ask("status:queue?;")
 
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
+        warn("Currently non-functional.", FutureWarning)
+
         num = int(float(stopI - startI) / float(stepI)) + 1
         currRange = 1.2 * max(abs(stopI), abs(startI))
         # self.write(":SOUR:CURR 0.0")
@@ -718,6 +720,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         return zip(currents, data)
 
     def RvsIaboutZero(self, minI, maxI, stepI, compliance, delay=10.0e-3):
+        warn("Currently non-functional.", FutureWarning)
+
         data = []
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay))
         data.extend(self.RvsI(minI, maxI, stepI, compliance=compliance, delay=delay, backward=True))
