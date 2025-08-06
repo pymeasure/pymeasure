@@ -91,6 +91,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:CLE:AUTO?",
         ":SOUR:CLE:AUTO %d",
         """Control whether auto output-off is activated (bool).""",
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -109,6 +110,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:DEL:AUTO?",
         ":SOUR:DEL:AUTO %d",
         """Control the auto delay (bool).""",
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -118,6 +120,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SYST:AZER:STAT %s",
         """Control whether the auto zero option is enabled
         (bool or str, True (enabled), False (disabled), or 'ONCE' (force immediate)).""",
+        validator=strict_discrete_set,
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
     )
@@ -135,6 +138,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SYST:LFR:AUTO?",
         ":SYST:LFR:AUTO %d",
         """Control the auto line frequency (bool).""",
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -143,6 +147,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:FUNC:CONC?",
         ":SENS:FUNC:CONC %d",
         """Control the ability to measure more than one function simultaneously (bool).""",
+        validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
