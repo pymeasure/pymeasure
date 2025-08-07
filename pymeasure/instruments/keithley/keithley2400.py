@@ -40,22 +40,15 @@ log.addHandler(logging.NullHandler())
 
 
 SOURCE_MAP = {
-    "current": "CURR",
-    "voltage": "VOLT",
+    "current": "CURR:DC",
+    "voltage": "VOLT:DC",
 }
 
 
 MEASURE_MAP = {
-    "current": "CURR",
-    "voltage": "VOLT",
+    "current": "CURR:DC",
+    "voltage": "VOLT:DC",
     "resistance": "RES",
-}
-
-
-REV_MEASURE_MAP = {
-    "CURR": "current",
-    "VOLT": "voltage",
-    "RES": "resistance",
 }
 
 
@@ -180,30 +173,57 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    concurrent_measurement_modes = Instrument.control(
-        ":SENS:FUNC?",
-        ":SENS:FUNC:CONC ON;:SENS:FUNC %s",
+    @property
+    def concurrent_measurement_modes(self):
         """Control concurrent measurement modes
-        (list of str, strictly composed of 'current', 'voltage', and/or 'resistance'""",
-        set_process=lambda m_list: ",".join([f"'{MEASURE_MAP[m]}'" for m in m_list]),
-        get_process=lambda s: [
-            REV_MEASURE_MAP[m.replace("'", "").replace('"', "")] for m in s.split(",")
-        ],
-    )  # TODO: Do this explicitly, it's not readable as is
+        (list of str, strictly composed of 'current', 'voltage', and/or 'resistance'"""
+        rev_measure_map = {v: k for k, v in MEASURE_MAP.items()}
 
-    measurement = Instrument.measurement(
-        "READ?",
-        """Measure the currently selected measurement mode (float or list of floats).""",
-    )
+        values = self.values(":SENS:FUNC?")
+        values = [v.replace('"', "").replace("'", "") for v in values]
+        mode_list = [rev_measure_map[v] for v in values]
+        return mode_list
+
+    @concurrent_measurement_modes.setter
+    def concurrent_measurement_modes(self, mode_list):
+        self.write(":SENS:FUNC:CONC ON")
+        self.write(":SENS:FUNC:OFF 'CURR:DC','VOLT:DC','RES'")
+        for m in mode_list:
+            self.write(f":SENS:FUNC: '{MEASURE_MAP[m]}'")
+
+    @property
+    def measure_all(self):
+        """Measure current, voltage, resistance, time, and status as a dict:
+        {
+            'current': `float`,
+            'voltage': `float`,
+            'resistance': `float`,
+            'time': `float`,
+            'status': `int`
+        }.
+        Each value is nan if the instrument is not configured for that quantity."""
+        self.write(":FORM:ELEM CURR,VOLT,RES,TIME,STAT;")
+        values = self.values(":READ?")
+        values = [float("nan") if v == 9.91e37 else v for v in values]
+
+        return {
+            "current": values[0],
+            "voltage": values[1],
+            "resistance": values[2],
+            "time": values[3],
+            "status": int(values[4]),
+        }
 
     ###############
     # Current (A) #
     ###############
 
     current = Instrument.measurement(
-        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'CURR';:READ?",
-        """Measure the current in Amps (float).""",
-    )  # TODO: use get_process to return nan for no reading
+        ":FORM:ELEM CURR;:READ?",
+        """Measure the current in Amps (float).
+        Returns nan if instrument not configured to source or measure current.""",
+        get_process=lambda v: float("nan") if v == 9.91e37 else v,
+    )
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
@@ -254,9 +274,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ###############
 
     voltage = Instrument.measurement(
-        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'VOLT';:READ?",
-        """Measure the voltage in Volts (float).""",
-    )  # TODO: use get_process to return nan for no reading
+        ":FORM:ELEM VOLT;:READ?",
+        """Measure the voltage in Volts (float).
+        Returns nan if instrument not configured to source or measure voltage.""",
+        get_process=lambda v: float("nan") if v == 9.91e37 else v,
+    )
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
@@ -303,9 +325,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ####################
 
     resistance = Instrument.measurement(
-        ":SENS:FUNC:CONC OFF;:SENS:FUNC 'RES';:READ?",
-        """Get the resistance in Ohms (float).""",
-    )  # TODO: use get_process to return nan for no reading
+        ":FORM:ELEM VOLT;:READ?",
+        """Get the resistance in Ohms (float).
+        Returns nan if instrument not configured to measure resistance.""",
+        get_process=lambda v: float("nan") if v == 9.91e37 else v,
+    )
 
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
