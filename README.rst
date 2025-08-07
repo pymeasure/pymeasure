@@ -12,6 +12,9 @@ PyMeasure is currently under active development, so please report any issues you
 
 .. _Issues page: https://github.com/pymeasure/pymeasure/issues
 
+Project Information
+-------------------
+
 PyMeasure is tested with continuous-integration on Linux, macOS, and Windows for all supported Python versions.
 
 .. image:: https://img.shields.io/pypi/pyversions/pymeasure
@@ -35,6 +38,13 @@ PyMeasure is tested with continuous-integration on Linux, macOS, and Windows for
 
 .. image:: https://codecov.io/gh/pymeasure/pymeasure/graph/badge.svg
    :target: https://codecov.io/gh/pymeasure/pymeasure
+
+Related Projects
+----------------
+
+- `LECO Protocol <https://github.com/pymeasure/leco-protocol>`_: Open standard for laboratory equipment communication using modern protocols
+- `pyleco <https://github.com/pymeasure/pyleco>`_: Python library implementing LECO for distributed instrument control systems
+- `Python Lab Automation Landscape <https://github.com/pymeasure/python-lab-automation-landscape>`_: Curated collection of Python tools for laboratory automation and instrumentation
 
 
 Quick start
