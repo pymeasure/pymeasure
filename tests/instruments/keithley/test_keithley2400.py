@@ -22,9 +22,24 @@
 # THE SOFTWARE.
 #
 
+import math
+
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.keithley import Keithley2400
+
+
+SOURCE_MAP = {
+    "current": "CURR:DC",
+    "voltage": "VOLT:DC",
+}
+
+
+MEASURE_MAP = {
+    "current": "CURR:DC",
+    "voltage": "VOLT:DC",
+    "resistance": "RES",
+}
 
 
 def test_id():
@@ -36,14 +51,604 @@ def test_id():
 
 
 def test_next_error():
-    with expected_protocol(Keithley2400,
-                           [("SYST:ERR?", '-113, "Undefined header"')],
-                           ) as inst:
+    with expected_protocol(
+        Keithley2400,
+        [("SYST:ERR?", '-113, "Undefined header"')],
+    ) as inst:
         assert inst.next_error == [-113, ' "Undefined header"']
 
 
+##########
+# SOURCE #
+##########
+
+
+def test_source_enabled_getter():
+    with expected_protocol(
+        Keithley2400,
+        [("OUTP?", 1)],
+    ) as inst:
+        assert inst.source_enabled is True
+
+
+def test_source_enabled_setter():
+    with expected_protocol(
+        Keithley2400,
+        [("OUTP 0", None)],
+    ) as inst:
+        inst.source_enabled = False
+
+
 def test_enable_source():
-    with expected_protocol(Keithley2400,
-                           [("OUTPUT ON", None)],
-                           ) as inst:
+    with expected_protocol(
+        Keithley2400,
+        [("OUTP 1", None)],
+    ) as inst:
         inst.enable_source()
+
+
+def test_source_mode_getter():
+    for k, v in SOURCE_MAP.items():
+        with expected_protocol(
+            Keithley2400,
+            [(":SOUR:FUNC?", v)],
+        ) as inst:
+            assert inst.source_mode == k
+
+
+def test_source_mode_setter():
+    for k, v in SOURCE_MAP.items():
+        with expected_protocol(
+            Keithley2400,
+            [(f":SOUR:FUNC {v}", None)],
+        ) as inst:
+            inst.source_mode = k
+
+
+def test_auto_output_off_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CLE:AUTO?", 0)],
+    ) as inst:
+        assert inst.auto_output_off is False
+
+
+def test_auto_output_off_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CLE:AUTO 1", None)],
+    ) as inst:
+        inst.auto_output_off = True
+
+
+def test_source_delay_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:DEL?", 0.1)],
+    ) as inst:
+        assert inst.source_delay == 0.1
+
+
+def test_source_delay_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:DEL 0.1", None)],
+    ) as inst:
+        inst.source_delay = 0.1
+
+
+def test_source_delay_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:DEL:AUTO?", 1)],
+    ) as inst:
+        assert inst.source_delay_auto is True
+
+
+def test_source_delay_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:DEL:AUTO 0", None)],
+    ) as inst:
+        inst.source_delay_auto = False
+
+
+def test_auto_zero_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:AZER:STAT?", "ONCE")],
+    ) as inst:
+        assert inst.auto_zero == "ONCE"
+
+
+def test_auto_zero_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:AZER:STAT 0", None)],
+    ) as inst:
+        inst.auto_zero = False
+
+
+def test_line_frequency_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR?", 50)],
+    ) as inst:
+        assert inst.line_frequency == 50
+
+
+def test_line_frequency_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR 60", None)],
+    ) as inst:
+        inst.line_frequency = 60
+
+
+def test_auto_line_frequency_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR:AUTO?", 1)],
+    ) as inst:
+        assert inst.line_frequency_auto is True
+
+
+def test_auto_line_frequency_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR:AUTO 0", None)],
+    ) as inst:
+        inst.line_frequency_auto = False
+
+
+###########
+# MEASURE #
+###########
+
+
+def test_measurement_mode_getter():
+    for k, v in MEASURE_MAP.items():
+        with expected_protocol(
+            Keithley2400,
+            [(":SENS:FUNC?", v)],
+        ) as inst:
+            assert inst.measurement_mode == k
+
+
+def test_measurement_mode_setter():
+    for k, v in MEASURE_MAP.items():
+        with expected_protocol(
+            Keithley2400,
+            [(f":SENS:FUNC:CONC OFF;:SENS:FUNC {v}", None)],
+        ) as inst:
+            inst.measurement_mode = k
+
+
+def test_concurrent_measurement_modes_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:FUNC?", '"CURR:DC","VOLT:DC","RES"')],
+    ) as inst:
+        assert inst.concurrent_measurement_modes == ["current", "voltage", "resistance"]
+
+
+def test_concurrent_measurement_modes_setter():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SENS:FUNC:CONC ON", None),
+            (":SENS:FUNC:OFF 'CURR:DC','VOLT:DC','RES'", None),
+            (":SENS:FUNC 'CURR:DC'", None),
+            (":SENS:FUNC 'VOLT:DC'", None),
+            (":SENS:FUNC 'RES'", None),
+        ],
+    ) as inst:
+        inst.concurrent_measurement_modes = ["current", "voltage", "resistance"]
+
+
+def test_all_measurements():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM CURR,VOLT,RES,TIME,STAT", None), (":READ?", "0.1,0.2,9.91e37,1234,5678\n")],
+    ) as inst:
+        result = inst.all_measurements
+        assert result["current"] == 0.1
+        assert result["voltage"] == 0.2
+        assert math.isnan(result["resistance"])
+        assert result["time"] == 1234
+        assert result["status"] == 5678
+
+
+###############
+# Current (A) #
+###############
+
+
+def test_current():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM CURR;:READ?", 0.5)],
+    ) as inst:
+        assert inst.current == 0.5
+
+
+def test_current_nan():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM CURR;:READ?", 9.91e37)],
+    ) as inst:
+        assert math.isnan(inst.current)
+
+
+def test_current_range_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:RANG?", 0.5)],
+    ) as inst:
+        assert inst.current_range == 0.5
+
+
+def test_current_range_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:RANG 0.5", None)],
+    ) as inst:
+        inst.current_range = 0.5
+
+
+def test_current_range_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:RANG:AUTO?", 1)],
+    ) as inst:
+        assert inst.current_range_auto is True
+
+
+def test_current_range_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:RANG:AUTO 0", None)],
+    ) as inst:
+        inst.current_range_auto = False
+
+
+def test_current_nplc_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:NPLC?", 1)],
+    ) as inst:
+        assert inst.current_nplc == 1
+
+
+def test_current_nplc_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:NPLC 0.1", None)],
+    ) as inst:
+        inst.current_nplc = 0.1
+
+
+def test_compliance_current_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:PROT?", 0.5)],
+    ) as inst:
+        assert inst.compliance_current == 0.5
+
+
+def test_compliance_current_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:CURR:PROT 0.5", None)],
+    ) as inst:
+        inst.compliance_current = 0.5
+
+
+def test_source_current_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR?", 0.5)],
+    ) as inst:
+        assert inst.source_current == 0.5
+
+
+def test_source_current_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR 0.5", None)],
+    ) as inst:
+        inst.source_current = 0.5
+
+
+def test_source_current_range_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR:RANG?", 0.5)],
+    ) as inst:
+        assert inst.source_current_range == 0.5
+
+
+def test_source_current_range_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR:RANG 0.5", None)],
+    ) as inst:
+        inst.source_current_range = 0.5
+
+
+def test_source_current_range_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR:RANG:AUTO?", 1)],
+    ) as inst:
+        assert inst.source_current_range_auto is True
+
+
+def test_source_current_range_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:CURR:RANG:AUTO 0", None)],
+    ) as inst:
+        inst.source_current_range_auto = False
+
+
+def test_apply_current():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SOUR:FUNC CURR:DC", None),
+            (":SOUR:CURR:RANG:AUTO 1", None),
+            (":SENS:VOLT:PROT 0.1", None),
+        ],
+    ) as inst:
+        inst.apply_current()
+
+
+def test_measure_current():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SENS:FUNC:CONC OFF;:SENS:FUNC CURR:DC", None),
+            (":SENS:CURR:NPLC 1", None),
+            (":SENS:CURR:RANG:AUTO 1", None),
+        ],
+    ) as inst:
+        inst.measure_current()
+
+
+###############
+# Voltage (V) #
+###############
+
+
+def test_voltage():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM VOLT;:READ?", 0.5)],
+    ) as inst:
+        assert inst.voltage == 0.5
+
+
+def test_voltage_nan():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM VOLT;:READ?", 9.91e37)],
+    ) as inst:
+        assert math.isnan(inst.voltage)
+
+
+def test_voltage_range_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:RANG?", 0.5)],
+    ) as inst:
+        assert inst.voltage_range == 0.5
+
+
+def test_voltage_range_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:RANG 0.5", None)],
+    ) as inst:
+        inst.voltage_range = 0.5
+
+
+def test_voltage_range_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:RANG:AUTO?", 1)],
+    ) as inst:
+        assert inst.voltage_range_auto is True
+
+
+def test_voltage_range_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:RANG:AUTO 0", None)],
+    ) as inst:
+        inst.voltage_range_auto = False
+
+
+def test_voltage_nplc_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:NPLC?", 1)],
+    ) as inst:
+        assert inst.voltage_nplc == 1
+
+
+def test_voltage_nplc_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:NPLC 0.1", None)],
+    ) as inst:
+        inst.voltage_nplc = 0.1
+
+
+def test_compliance_voltage_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:PROT?", 0.5)],
+    ) as inst:
+        assert inst.compliance_voltage == 0.5
+
+
+def test_compliance_voltage_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:VOLT:PROT 0.5", None)],
+    ) as inst:
+        inst.compliance_voltage = 0.5
+
+
+def test_source_voltage_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT?", 0.5)],
+    ) as inst:
+        assert inst.source_voltage == 0.5
+
+
+def test_source_voltage_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT 0.5", None)],
+    ) as inst:
+        inst.source_voltage = 0.5
+
+
+def test_source_voltage_range_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT:RANG?", 0.5)],
+    ) as inst:
+        assert inst.source_voltage_range == 0.5
+
+
+def test_source_voltage_range_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT:RANG 0.5", None)],
+    ) as inst:
+        inst.source_voltage_range = 0.5
+
+
+def test_source_voltage_range_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT:RANG:AUTO?", 1)],
+    ) as inst:
+        assert inst.source_voltage_range_auto is True
+
+
+def test_source_voltage_range_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SOUR:VOLT:RANG:AUTO 0", None)],
+    ) as inst:
+        inst.source_voltage_range_auto = False
+
+
+def test_apply_voltage():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SOUR:FUNC VOLT:DC", None),
+            (":SOUR:VOLT:RANG:AUTO 1", None),
+            (":SENS:CURR:PROT 0.1", None),
+        ],
+    ) as inst:
+        inst.apply_voltage()
+
+
+def test_measure_voltage():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SENS:FUNC:CONC OFF;:SENS:FUNC VOLT:DC", None),
+            (":SENS:VOLT:NPLC 1", None),
+            (":SENS:VOLT:RANG:AUTO 1", None),
+        ],
+    ) as inst:
+        inst.measure_voltage()
+
+
+####################
+# Resistance (Ohm) #
+####################
+
+
+def test_resistance():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM RES;:READ?", 0.5)],
+    ) as inst:
+        assert inst.resistance == 0.5
+
+
+def test_resistance_nan():
+    with expected_protocol(
+        Keithley2400,
+        [(":FORM:ELEM RES;:READ?", 9.91e37)],
+    ) as inst:
+        assert math.isnan(inst.resistance)
+
+
+def test_resistance_range_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:RANG?", 0.5)],
+    ) as inst:
+        assert inst.resistance_range == 0.5
+
+
+def test_resistance_range_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:RANG 0.5", None)],
+    ) as inst:
+        inst.resistance_range = 0.5
+
+
+def test_resistance_range_auto_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:RANG:AUTO?", 1)],
+    ) as inst:
+        assert inst.resistance_range_auto is True
+
+
+def test_resistance_range_auto_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:RANG:AUTO 0", None)],
+    ) as inst:
+        inst.resistance_range_auto = False
+
+
+def test_resistance_nplc_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:NPLC?", 1)],
+    ) as inst:
+        assert inst.resistance_nplc == 1
+
+
+def test_resistance_nplc_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SENS:RES:NPLC 0.1", None)],
+    ) as inst:
+        inst.resistance_nplc = 0.1
+
+
+def test_measure_resistance():
+    with expected_protocol(
+        Keithley2400,
+        [
+            (":SENS:FUNC:CONC OFF;:SENS:FUNC RES", None),
+            (":SENS:RES:NPLC 1", None),
+            (":SENS:RES:RANG:AUTO 1", None),
+        ],
+    ) as inst:
+        inst.measure_resistance()

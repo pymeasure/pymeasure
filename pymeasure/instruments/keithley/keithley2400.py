@@ -82,6 +82,19 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # SOURCE #
     ##########
 
+    # Source properties #
+
+    source_enabled = Instrument.control(
+        "OUTP?",
+        "OUTP %d",
+        """Control whether the source is enabled (bool).
+        The convenience methods :meth:`~.Keithley2400.enable_source`
+        and :meth:`~.Keithley2400.disable_source` can also be used.""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
     source_mode = Instrument.control(
         ":SOUR:FUNC?",
         ":SOUR:FUNC %s",
@@ -90,17 +103,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         and :meth:`~.Keithley2400.apply_voltage` can also be used.""",
         validator=strict_discrete_set,
         values=SOURCE_MAP,
-        map_values=True,
-    )
-
-    source_enabled = Instrument.control(
-        "OUTPut?",
-        "OUTPut %d",
-        """Control whether the source is enabled (bool).
-        The convenience methods :meth:`~.Keithley2400.enable_source`
-        and :meth:`~.Keithley2400.disable_source` can also be used.""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -142,27 +144,21 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    line_frequency = Instrument.control(
-        ":SYST:LFR?",
-        ":SYST:LFR %d",
-        """Control the line frequency in Hertz (int, strictly 50 or 60).""",
-        validator=strict_discrete_set,
-        values=[50, 60],
-        cast=int,
-    )
+    # Source methods #
 
-    line_frequency_auto = Instrument.control(
-        ":SYST:LFR:AUTO?",
-        ":SYST:LFR:AUTO %d",
-        """Control the auto line frequency (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
+    def enable_source(self):
+        """Enable the source."""
+        self.source_enabled = True
 
-    ###########
-    # MEASURE #
-    ###########
+    def disable_source(self):
+        """Disable the source."""
+        self.source_enabled = False
+
+    ###############
+    # MEASUREMENT #
+    ###############
+
+    # measurement properties #
 
     measurement_mode = Instrument.control(
         ":SENS:FUNC?",
@@ -189,10 +185,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.write(":SENS:FUNC:CONC ON")
         self.write(":SENS:FUNC:OFF 'CURR:DC','VOLT:DC','RES'")
         for m in mode_list:
-            self.write(f":SENS:FUNC: '{MEASURE_MAP[m]}'")
+            self.write(f":SENS:FUNC '{MEASURE_MAP[m]}'")
 
     @property
-    def measure_all(self):
+    def all_measurements(self):
         """Measure current, voltage, resistance, time, and status as a dict:
         {
             'current': `float`,
@@ -202,7 +198,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             'status': `int`
         }.
         Each value is nan if the instrument is not configured for that quantity."""
-        self.write(":FORM:ELEM CURR,VOLT,RES,TIME,STAT;")
+        self.write(":FORM:ELEM CURR,VOLT,RES,TIME,STAT")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
 
@@ -218,6 +214,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Current (A) #
     ###############
 
+    # Current measurement properties #
+
     current = Instrument.measurement(
         ":FORM:ELEM CURR;:READ?",
         """Measure the current in Amps (float).
@@ -227,19 +225,29 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     current_range = Instrument.control(
         ":SENS:CURR:RANG?",
-        ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
+        ":SENS:CURR:RANG %g",
         """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
-        Auto-range is disabled when this property is set.""",
+        When set, the range selected will be the most sensitive range that will accommodate the
+        set value, and Auto-range is disabled.""",
         validator=strict_range,
         values=[-1.05, 1.05],
+    )
+
+    current_range_auto = Instrument.control(
+        ":SENS:CURR:RANG:AUTO?",
+        ":SENS:CURR:RANG:AUTO %g",
+        """Control the measurement current auto-range (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?",
         ":SENS:CURR:NPLC %g",
-        """Control (floating) the number of power line cycles (NPLC)
-        for the DC current measurements, which sets the integration period and measurement speed
-        (float, from strictly from 0.01 to 10.)""",
+        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        Note that this is a global command, implicitly setting
+        :attr:`~.Keithley2400.voltage_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
         validator=strict_range,
         values=[0.01, 10],
     )
@@ -252,9 +260,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-1.05, 1.05],
     )
 
+    # Current source properties #
+
     source_current = Instrument.control(
         ":SOUR:CURR?",
-        ":SOUR:CURR:LEV %g",
+        ":SOUR:CURR %g",
         """Control the source current in Amps (float, strictly from -1.05 to 1.05).""",
         validator=strict_range,
         values=[-1.05, 1.05],
@@ -262,16 +272,71 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     source_current_range = Instrument.control(
         ":SOUR:CURR:RANG?",
-        ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
+        ":SOUR:CURR:RANG %g",
         """Control the source current range in Amps (float, strictly from -1.05 to 1.05).
-        Auto-range is disabled when this property is set.""",
+        When set, the range selected will be the most sensitive range that will accommodate the
+        set value, and Auto-range is disabled.""",
         validator=strict_range,
         values=[-1.05, 1.05],
     )
 
+    source_current_range_auto = Instrument.control(
+        ":SOUR:CURR:RANG:AUTO?",
+        ":SOUR:CURR:RANG:AUTO %g",
+        """Control the souce current auto-range (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    # Current methods #
+
+    def apply_current(self, current_range=None, compliance_voltage=0.1):
+        """Configure the sourcing of current.
+
+        :param current_range: A :attr:`~.Keithley2400.source_current_range` foat value or None.
+        :param compliance_voltage: A :attr:`~.Keithley2400.compliance_voltage` float value.
+        """
+        log.info("%s is sourcing current." % self.name)
+        self.source_mode = "current"
+        if current_range is None:
+            self.source_current_range_auto = True
+        else:
+            self.source_current_range = current_range
+        self.compliance_voltage = compliance_voltage
+
+    def measure_current(self, current_range=None, nplc=1):
+        """Configure the measurement of current.
+
+        :param current_range: A :attr:`~.Keithley2400.current_range` value, or None for auto-range
+        :param nplc: A :attr:`~.Keithley2400.current_nplc` value
+        """
+        log.info("%s is measuring current." % self.name)
+        self.measurement_mode = "current"
+        self.current_nplc = nplc
+        if current_range is None:
+            self.current_range_auto = True
+        else:
+            self.current_range = current_range
+
+    def ramp_to_current(self, target_current, steps=30, pause=20e-3):
+        """Ramp to a target current from the set current value over
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_current: A current in Amps
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+        currents = np.linspace(self.source_current, target_current, steps)
+        for current in currents:
+            self.source_current = current
+            time.sleep(pause)
+
     ###############
     # Voltage (V) #
     ###############
+
+    # Voltage measurement properties #
 
     voltage = Instrument.measurement(
         ":FORM:ELEM VOLT;:READ?",
@@ -282,19 +347,29 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?",
-        ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
+        ":SENS:VOLT:RANG %g",
         """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
-        Auto-range is disabled when this property is set.""",
+        When set, the range selected will be the most sensitive range that will accommodate the
+        set value, and Auto-range is disabled.""",
         validator=strict_range,
         values=[-210, 210],
+    )
+
+    voltage_range_auto = Instrument.control(
+        ":SENS:VOLT:RANG:AUTO?",
+        ":SENS:VOLT:RANG:AUTO %g",
+        """Control the measurement voltage auto-range (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?",
         ":SENS:VOLT:NPLC %g",
-        """Control the number of power line cycles (NPLC) for the DC voltage measurements,
-        which sets the integration period and measurement speed
-        (float, from strictly from 0.01 to 10.)""",
+        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        Note that this is a global command, implicitly setting
+        :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
         validator=strict_range,
         values=[0.01, 10],
     )
@@ -307,25 +382,86 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-210, 210],
     )
 
+    # Voltage source properties #
+
     source_voltage = Instrument.control(
-        ":SOUR:VOLT?", ":SOUR:VOLT:LEV %g", """Control the source voltage in Volts (float)."""
+        ":SOUR:VOLT?",
+        ":SOUR:VOLT %g",
+        """Control the source voltage in Volts (float, strictly from -210 to 210).""",
+        validator=strict_range,
+        values=[-210, 210],
     )
 
     source_voltage_range = Instrument.control(
         ":SOUR:VOLT:RANG?",
-        ":SOUR:VOLT:RANG:AUTO 0;:SOUR:VOLT:RANG %g",
+        ":SOUR:VOLT:RANG %g",
         """Control the source voltage range in Volts (float, strictly from -210 to 210).
-        Auto-range is disabled when this property is set.""",
+        When set, the range selected will be the most sensitive range that will accommodate the
+        set value, and Auto-range is disabled.""",
         validator=strict_range,
         values=[-210, 210],
     )
+
+    source_voltage_range_auto = Instrument.control(
+        ":SOUR:VOLT:RANG:AUTO?",
+        ":SOUR:VOLT:RANG:AUTO %g",
+        """Control the souce voltage auto-range (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    # Voltage methods #
+
+    def apply_voltage(self, voltage_range=None, compliance_current=0.1):
+        """Configure the sourcing of voltage.
+
+        :param voltage_range: A :attr:`~.Keithley2400.source_voltage_range` foat value or None.
+        :param compliance_current: A :attr:`~.Keithley2400.compliance_current` float value.
+        """
+        log.info("%s is sourcing voltage." % self.name)
+        self.source_mode = "voltage"
+        if voltage_range is None:
+            self.source_voltage_range_auto = True
+        else:
+            self.source_voltage_range = voltage_range
+        self.compliance_current = compliance_current
+
+    def measure_voltage(self, voltage_range=None, nplc=1):
+        """Configure the measurement of voltage.
+
+        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value, or None for auto-range
+        :param nplc: A :attr:`~.Keithley2400.voltage_nplc` value
+        """
+        log.info("%s is measuring voltage." % self.name)
+        self.measurement_mode = "voltage"
+        self.voltage_nplc = nplc
+        if voltage_range is None:
+            self.voltage_range_auto = True
+        else:
+            self.voltage_range = voltage_range
+
+    def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
+        """Ramp to a target voltage from the set voltage value over
+        a certain number of linear steps, each separated by a pause duration.
+
+        :param target_voltage: A voltage in Amps
+        :param steps: An integer number of steps
+        :param pause: A pause duration in seconds to wait between steps
+        """
+        voltages = np.linspace(self.source_voltage, target_voltage, steps)
+        for voltage in voltages:
+            self.source_voltage = voltage
+            time.sleep(pause)
 
     ####################
     # Resistance (Ohm) #
     ####################
 
+    # Resistance measurement properties #
+
     resistance = Instrument.measurement(
-        ":FORM:ELEM VOLT;:READ?",
+        ":FORM:ELEM RES;:READ?",
         """Get the resistance in Ohms (float).
         Returns nan if instrument not configured to measure resistance.""",
         get_process=lambda v: float("nan") if v == 9.91e37 else v,
@@ -333,32 +469,49 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?",
-        ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
+        ":SENS:RES:RANG %g",
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
-        Auto-range is disabled when this property is set.""",
+        When set, the range selected will be the most sensitive range that will accommodate the
+        set value, and Auto-range is disabled.""",
         validator=strict_range,
         values=[0, 210e6],
+    )
+
+    resistance_range_auto = Instrument.control(
+        ":SENS:RES:RANG:AUTO?",
+        ":SENS:RES:RANG:AUTO %g",
+        """Control the measurement resistance auto-range (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?",
         ":SENS:RES:NPLC %g",
-        """Control the number of power line cycles (NPLC) for the 2-wire resistance measurements,
-        which sets the integration period and measurement speed
-        (float, from strictly from 0.01 to 10.)""",
+        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        Note that this is a global command, implicitly setting
+        :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.voltage_nplc`""",
         validator=strict_range,
         values=[0.01, 10],
     )
 
-    wires = Instrument.control(
-        ":SYSTEM:RSENSE?",
-        ":SYSTEM:RSENSE %d",
-        """Control the number of wires in use for resistance measurements
-        (int, strictly 2 or 4).""",
-        validator=strict_discrete_set,
-        values={4: 1, 2: 0},
-        map_values=True,
-    )
+    # Resistance methods #
+
+    def measure_resistance(self, resistance_range=None, nplc=1):
+        """Configure the measurement of resistance.
+
+        :param resistance_range: A :attr:`~.Keithley2400.resistance_range` value,
+            or None for auto-range
+        :param nplc: A :attr:`~.Keithley2400.resistance_nplc` value
+        """
+        log.info("%s is measuring resistance." % self.name)
+        self.measurement_mode = "resistance"
+        self.resistance_nplc = nplc
+        if resistance_range is None:
+            self.resistance_range_auto = True
+        else:
+            self.resistance_range = resistance_range
 
     ##########
     # Buffer #
@@ -398,6 +551,66 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         buffer data (list of floats).""",
     )
 
+    @property
+    def mean_voltage(self):
+        """Get the mean voltage from the buffer (float)."""
+        return self.means[0]
+
+    @property
+    def max_voltage(self):
+        """Get the maximum voltage from the buffer (float)."""
+        return self.maximums[0]
+
+    @property
+    def min_voltage(self):
+        """Get the minimum voltage from the buffer (float)."""
+        return self.minimums[0]
+
+    @property
+    def std_voltage(self):
+        """Get the voltage standard deviation from the bufferv."""
+        return self.standard_devs[0]
+
+    @property
+    def mean_current(self):
+        """Get the mean current from the buffer (float)."""
+        return self.means[1]
+
+    @property
+    def max_current(self):
+        """Get the maximum current from the buffer (float)."""
+        return self.maximums[1]
+
+    @property
+    def min_current(self):
+        """Get the minimum current from the buffer (float)."""
+        return self.minimums[1]
+
+    @property
+    def std_current(self):
+        """Get the current standard deviation from the buffer (float)."""
+        return self.standard_devs[1]
+
+    @property
+    def mean_resistance(self):
+        """Get the mean resistance from the buffer (float)."""
+        return self.means[2]
+
+    @property
+    def max_resistance(self):
+        """Get the maximum resistance from the buffer (float)."""
+        return self.maximums[2]
+
+    @property
+    def min_resistance(self):
+        """Get the minimum resistance from the buffer (float)."""
+        return self.minimums[2]
+
+    @property
+    def std_resistance(self):
+        """Get the resistance standard deviation from the buffer (float)."""
+        return self.standard_devs[2]
+
     ###########
     # Trigger #
     ###########
@@ -418,228 +631,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_range,
         values=[0, 999.9999],
     )
-
-    ###########
-    # Filters #
-    ###########
-
-    filter_type = Instrument.control(
-        ":SENS:AVER:TCON?",
-        ":SENS:AVER:TCON %s",
-        """Control the filter's type (str, strictly 'REP' or 'MOV'.""",
-        validator=strict_discrete_set,
-        values=["REP", "MOV"],
-        map_values=False,
-    )
-
-    filter_count = Instrument.control(
-        ":SENS:AVER:COUNT?",
-        ":SENS:AVER:COUNT %d",
-        """Control the number of readings that are acquired and stored in the filter buffer
-        (int, strictly from 1 to 100).""",
-        validator=strict_range,
-        values=[1, 100],
-        cast=int,
-    )
-
-    filter_state = Instrument.control(
-        ":SENS:AVER?",
-        ":SENS:AVER %s",
-        """Control if the filter is active (str, strictly 'ON' or 'OFF').""",
-        validator=strict_discrete_set,
-        values=["ON", "OFF"],
-        map_values=False,
-    )
-
-    #####################
-    # Output subsystem #
-    #####################
-
-    output_off_state = Instrument.control(
-        ":OUTP:SMOD?",
-        ":OUTP:SMOD %s",
-        """Control the output-off state of the SourceMeter
-        (str, strictly 'HIMP', 'NORM', 'ZERO', or 'GUAR').
-        HIMP : output relay is open, disconnects external circuitry.
-        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
-        full scale of the present current range.
-        ZERO : V-Source is selected and set to 0V, compliance is set to the
-        programmed Source I value or to 0.5% full scale of the present current
-        range, whichever is greater.
-        GUAR : I-Source is selected and set to 0A""",
-        validator=strict_discrete_set,
-        values=["HIMP", "NORM", "ZERO", "GUAR"],
-        map_values=False,
-    )
-
-    ####################
-    # Methods        #
-    ####################
-
-    def enable_source(self):
-        """Enable the source."""
-        self.write("OUTPUT ON")
-
-    def disable_source(self):
-        """Disable the source."""
-        self.write("OUTPUT OFF")
-
-    def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
-        """Configure the measurement of resistance.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param resistance: Upper limit of resistance in Ohms, from -210 MOhms to 210 MOhms
-        :param auto_range: Enables auto_range if True, else uses the set resistance
-        """
-        log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;:FORM:ELEM RES;" % nplc)
-        if auto_range:
-            self.write(":SENS:RES:RANG:AUTO 1;")
-        else:
-            self.resistance_range = resistance
-        self.check_errors()
-
-    def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
-        """Configure the measurement of voltage.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
-        :param auto_range: Enables auto_range if True, else uses the set voltage
-        """
-        log.info("%s is measuring voltage." % self.name)
-        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;:FORM:ELEM VOLT;" % nplc)
-        if auto_range:
-            self.write(":SENS:VOLT:RANG:AUTO 1;")
-        else:
-            self.voltage_range = voltage
-        self.check_errors()
-
-    def measure_current(self, nplc=1, current=1.05e-4, auto_range=True):
-        """Configure the measurement of current.
-
-        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
-        :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
-        :param auto_range: Enables auto_range if True, else uses the set current
-        """
-        log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
-        if auto_range:
-            self.write(":SENS:CURR:RANG:AUTO 1;")
-        else:
-            self.current_range = current
-        self.check_errors()
-
-    def auto_range_source(self):
-        """Configure the source to use an automatic range."""
-        if self.source_mode == "current":
-            self.write(":SOUR:CURR:RANG:AUTO 1")
-        else:
-            self.write(":SOUR:VOLT:RANG:AUTO 1")
-
-    def apply_current(self, current_range=None, compliance_voltage=0.1):
-        """Configure the instrument to apply a source current, and
-        uses an auto range unless a current range is specified.
-        The compliance voltage is also set.
-
-        :param compliance_voltage: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_voltage`
-        :param current_range: A :attr:`~.Keithley2400.current_range` value or None
-        """
-        log.info("%s is sourcing current." % self.name)
-        self.source_mode = "current"
-        if current_range is None:
-            self.auto_range_source()
-        else:
-            self.source_current_range = current_range
-        self.compliance_voltage = compliance_voltage
-        self.check_errors()
-
-    def apply_voltage(self, voltage_range=None, compliance_current=0.1):
-        """Configure the instrument to apply a source voltage, and
-        uses an auto range unless a voltage range is specified.
-        The compliance current is also set.
-
-        :param compliance_current: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_current`
-        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
-        """
-        log.info("%s is sourcing voltage." % self.name)
-        self.source_mode = "voltage"
-        if voltage_range is None:
-            self.auto_range_source()
-        else:
-            self.source_voltage_range = voltage_range
-        self.compliance_current = compliance_current
-        self.check_errors()
-
-    def beep(self, frequency, duration):
-        """Sound a system beep.
-
-        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
-
-    def triad(self, base_frequency, duration):
-        """Sound a musical triad using the system beep.
-
-        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.beep(base_frequency, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 5.0 / 4.0, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 6.0 / 4.0, duration)
-
-    display_enabled = Instrument.control(
-        ":DISP:ENAB?",
-        ":DISP:ENAB %d",
-        """Control whether or not the display of the
-        sourcemeter is enabled. Valid values are True and False.""",
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    @property
-    def error(self):
-        """Get the next error from the queue.
-
-        .. deprecated:: 0.15
-            Use `next_error` instead.
-        """
-        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
-        return self.next_error
-
-    def reset(self):
-        """Reset the instrument and clear the queue."""
-        self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
-
-    def ramp_to_current(self, target_current, steps=30, pause=20e-3):
-        """Ramp to a target current from the set current value over
-        a certain number of linear steps, each separated by a pause duration.
-
-        :param target_current: A current in Amps
-        :param steps: An integer number of steps
-        :param pause: A pause duration in seconds to wait between steps
-        """
-        currents = np.linspace(self.source_current, target_current, steps)
-        for current in currents:
-            self.source_current = current
-            time.sleep(pause)
-
-    def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
-        """Ramp to a target voltage from the set voltage value over
-        a certain number of linear steps, each separated by a pause duration.
-
-        :param target_voltage: A voltage in Amps
-        :param steps: An integer number of steps
-        :param pause: A pause duration in seconds to wait between steps
-        """
-        voltages = np.linspace(self.source_voltage, target_voltage, steps)
-        for voltage in voltages:
-            self.source_voltage = voltage
-            time.sleep(pause)
 
     def trigger(self):
         """Execute a bus trigger, which can be used when
@@ -713,70 +704,185 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Disable the output trigger for the Trigger layer"""
         self.write(":TRIG:OUTP NONE")
 
-    @property
-    def mean_voltage(self):
-        """Get the mean voltage from the buffer (float)."""
-        return self.means[0]
+    ###########
+    # Filters #
+    ###########
+
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?",
+        ":SENS:AVER:TCON %s",
+        """Control the filter's type (str, strictly 'REP' or 'MOV'.""",
+        validator=strict_discrete_set,
+        values=["REP", "MOV"],
+        map_values=False,
+    )
+
+    filter_count = Instrument.control(
+        ":SENS:AVER:COUNT?",
+        ":SENS:AVER:COUNT %d",
+        """Control the number of readings that are acquired and stored in the filter buffer
+        (int, strictly from 1 to 100).""",
+        validator=strict_range,
+        values=[1, 100],
+        cast=int,
+    )
+
+    filter_state = Instrument.control(
+        ":SENS:AVER?",
+        ":SENS:AVER %s",
+        """Control if the filter is active (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    ####################
+    # Output subsystem #
+    ####################
+
+    output_off_state = Instrument.control(
+        ":OUTP:SMOD?",
+        ":OUTP:SMOD %s",
+        """Control the output-off state of the SourceMeter
+        (str, strictly 'HIMP', 'NORM', 'ZERO', or 'GUAR').
+        HIMP : output relay is open, disconnects external circuitry.
+        NORM : V-Source is selected and set to 0V, Compliance is set to 0.5%
+        full scale of the present current range.
+        ZERO : V-Source is selected and set to 0V, compliance is set to the
+        programmed Source I value or to 0.5% full scale of the present current
+        range, whichever is greater.
+        GUAR : I-Source is selected and set to 0A""",
+        validator=strict_discrete_set,
+        values=["HIMP", "NORM", "ZERO", "GUAR"],
+        map_values=False,
+    )
+
+    ######
+    # UI #
+    ######
+
+    # UI properties #
+
+    display_enabled = Instrument.control(
+        ":DISP:ENAB?",
+        ":DISP:ENAB %d",
+        """Control whether or not the display of the
+        sourcemeter is enabled. Valid values are True and False.""",
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    # UI methods #
+
+    def beep(self, frequency, duration):
+        """Sound a system beep.
+
+        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+        """
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
+
+    def triad(self, base_frequency, duration):
+        """Sound a musical triad using the system beep.
+
+        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+        """
+        self.beep(base_frequency, duration)
+        time.sleep(duration)
+        self.beep(base_frequency * 5.0 / 4.0, duration)
+        time.sleep(duration)
+        self.beep(base_frequency * 6.0 / 4.0, duration)
+
+    ########
+    # MISC #
+    ########
+
+    # Misc properties #
+
+    wires = Instrument.control(
+        ":SYSTEM:RSENSE?",
+        ":SYSTEM:RSENSE %d",
+        """Control the number of wires in use for sourcing voltage, measuring voltage,
+        or measuring resistance (int, strictly 2 or 4).""",
+        validator=strict_discrete_set,
+        values={4: 1, 2: 0},
+        map_values=True,
+    )
+
+    line_frequency = Instrument.control(
+        ":SYST:LFR?",
+        ":SYST:LFR %d",
+        """Control the line frequency in Hertz (int, strictly 50 or 60).""",
+        validator=strict_discrete_set,
+        values=[50, 60],
+        cast=int,
+    )
+
+    line_frequency_auto = Instrument.control(
+        ":SYST:LFR:AUTO?",
+        ":SYST:LFR:AUTO %d",
+        """Control the auto line frequency (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    # Misc methods #
+
+    def reset(self):
+        """Reset the instrument and clear the queue."""
+        self.write("status:queue:clear;*RST;:stat:pres;:*CLS;")
+
+    def range_auto_source(self):
+        """Configure the presently selected source to use an automatic range."""
+        if self.source_mode == "current":
+            self.write(":SOUR:CURR:RANG:AUTO 1")
+        else:
+            self.write(":SOUR:VOLT:RANG:AUTO 1")
+
+    def use_rear_terminals(self):
+        """Enable the rear terminals for measurement, and disable the front terminals."""
+        self.write(":ROUT:TERM REAR")
+
+    def use_front_terminals(self):
+        """Enable the front terminals for measurement, and disable the rear terminals."""
+        self.write(":ROUT:TERM FRON")
+
+    def shutdown(self):
+        """Ensure that the current or voltage is turned to zero and disable the output."""
+        log.info("Shutting down %s." % self.name)
+        if self.source_mode == "current":
+            self.ramp_to_current(0.0)
+        else:
+            self.ramp_to_voltage(0.0)
+        self.stop_buffer()
+        self.disable_source()
+        super().shutdown()
+
+    ##############
+    # Deprecated #
+    ##############
 
     @property
-    def max_voltage(self):
-        """Get the maximum voltage from the buffer (float)."""
-        return self.maximums[0]
+    def error(self):
+        """Get the next error from the queue.
 
-    @property
-    def min_voltage(self):
-        """Get the minimum voltage from the buffer (float)."""
-        return self.minimums[0]
-
-    @property
-    def std_voltage(self):
-        """Get the voltage standard deviation from the bufferv."""
-        return self.standard_devs[0]
-
-    @property
-    def mean_current(self):
-        """Get the mean current from the buffer (float)."""
-        return self.means[1]
-
-    @property
-    def max_current(self):
-        """Get the maximum current from the buffer (float)."""
-        return self.maximums[1]
-
-    @property
-    def min_current(self):
-        """Get the minimum current from the buffer (float)."""
-        return self.minimums[1]
-
-    @property
-    def std_current(self):
-        """Get the current standard deviation from the buffer (float)."""
-        return self.standard_devs[1]
-
-    @property
-    def mean_resistance(self):
-        """Get the mean resistance from the buffer (float)."""
-        return self.means[2]
-
-    @property
-    def max_resistance(self):
-        """Get the maximum resistance from the buffer (float)."""
-        return self.maximums[2]
-
-    @property
-    def min_resistance(self):
-        """Get the minimum resistance from the buffer (float)."""
-        return self.minimums[2]
-
-    @property
-    def std_resistance(self):
-        """Get the resistance standard deviation from the buffer (float)."""
-        return self.standard_devs[2]
+        .. deprecated:: 0.15
+            Use `next_error` instead.
+        """
+        warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
+        return self.next_error
 
     def status(self):
         return self.ask("status:queue?;")
 
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
+        # Fred Gillard, fg-lumentum:
+        #   I would seriously consider removing this method, it doesn't work and is undocumented.
+        #   Internal sweeps offer a fractional time advantage over a sweep managed through python,
+        #   but due to the complex configuration required more care needs to be taken in setting
+        #   one up than shown here.
         warn("Currently non-functional.", FutureWarning)
 
         num = int(float(stopI - startI) / float(stepI)) + 1
@@ -818,22 +924,3 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         )
         self.disable_source()
         return data
-
-    def use_rear_terminals(self):
-        """Enable the rear terminals for measurement, and disable the front terminals."""
-        self.write(":ROUT:TERM REAR")
-
-    def use_front_terminals(self):
-        """Enable the front terminals for measurement, and disable the rear terminals."""
-        self.write(":ROUT:TERM FRON")
-
-    def shutdown(self):
-        """Ensure that the current or voltage is turned to zero and disable the output."""
-        log.info("Shutting down %s." % self.name)
-        if self.source_mode == "current":
-            self.ramp_to_current(0.0)
-        else:
-            self.ramp_to_voltage(0.0)
-        self.stop_buffer()
-        self.disable_source()
-        super().shutdown()
