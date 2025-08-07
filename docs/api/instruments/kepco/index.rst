@@ -10,3 +10,4 @@ This section contains specific documentation on the Kepco Inc. power supplies in
     :maxdepth: 2
 
     KepcoBOP
+    kepcoklp75
