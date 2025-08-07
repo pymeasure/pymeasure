@@ -169,36 +169,28 @@ def test_auto_zero_setter():
         inst.auto_zero = False
 
 
-def test_line_frequency_getter():
+def test_output_off_state_getter():
     with expected_protocol(
         Keithley2400,
-        [(":SYST:LFR?", 50)],
+        [(":OUTP:SMOD?", "HIMP")],
     ) as inst:
-        assert inst.line_frequency == 50
+        assert inst.output_off_state == "HIMP"
 
 
-def test_line_frequency_setter():
+def test_output_off_state_setter():
     with expected_protocol(
         Keithley2400,
-        [(":SYST:LFR 60", None)],
+        [(":OUTP:SMOD ZERO", None)],
     ) as inst:
-        inst.line_frequency = 60
+        inst.output_off_state = "ZERO"
 
 
-def test_auto_line_frequency_getter():
+def test_auto_range_source():
     with expected_protocol(
         Keithley2400,
-        [(":SYST:LFR:AUTO?", 1)],
+        [(":SOUR:FUNC?", "CURR:DC"), (":SOUR:CURR:RANG:AUTO 1", None)],
     ) as inst:
-        assert inst.line_frequency_auto is True
-
-
-def test_auto_line_frequency_setter():
-    with expected_protocol(
-        Keithley2400,
-        [(":SYST:LFR:AUTO 0", None)],
-    ) as inst:
-        inst.line_frequency_auto = False
+        inst.auto_range_source()
 
 
 ###########
@@ -206,33 +198,33 @@ def test_auto_line_frequency_setter():
 ###########
 
 
-def test_measurement_mode_getter():
+def test_measure_mode_getter():
     for k, v in MEASURE_MAP.items():
         with expected_protocol(
             Keithley2400,
             [(":SENS:FUNC?", v)],
         ) as inst:
-            assert inst.measurement_mode == k
+            assert inst.measure_mode == k
 
 
-def test_measurement_mode_setter():
+def test_measure_mode_setter():
     for k, v in MEASURE_MAP.items():
         with expected_protocol(
             Keithley2400,
             [(f":SENS:FUNC:CONC OFF;:SENS:FUNC {v}", None)],
         ) as inst:
-            inst.measurement_mode = k
+            inst.measure_mode = k
 
 
-def test_concurrent_measurement_modes_getter():
+def test_concurrent_measure_modes_getter():
     with expected_protocol(
         Keithley2400,
         [(":SENS:FUNC?", '"CURR:DC","VOLT:DC","RES"')],
     ) as inst:
-        assert inst.concurrent_measurement_modes == ["current", "voltage", "resistance"]
+        assert inst.concurrent_measure_modes == ["current", "voltage", "resistance"]
 
 
-def test_concurrent_measurement_modes_setter():
+def test_concurrent_measure_modes_setter():
     with expected_protocol(
         Keithley2400,
         [
@@ -243,15 +235,15 @@ def test_concurrent_measurement_modes_setter():
             (":SENS:FUNC 'RES'", None),
         ],
     ) as inst:
-        inst.concurrent_measurement_modes = ["current", "voltage", "resistance"]
+        inst.concurrent_measure_modes = ["current", "voltage", "resistance"]
 
 
-def test_all_measurements():
+def test_measure_all():
     with expected_protocol(
         Keithley2400,
         [(":FORM:ELEM CURR,VOLT,RES,TIME,STAT", None), (":READ?", "0.1,0.2,9.91e37,1234,5678\n")],
     ) as inst:
-        result = inst.all_measurements
+        result = inst.measure_all()
         assert result["current"] == 0.1
         assert result["voltage"] == 0.2
         assert math.isnan(result["resistance"])
@@ -652,3 +644,117 @@ def test_measure_resistance():
         ],
     ) as inst:
         inst.measure_resistance()
+
+
+##########
+# BUFFER #
+##########
+
+
+# TODO: Test with instr first
+
+
+###########
+# TRIGGER #
+###########
+
+
+# TODO: Test with instr first
+
+
+##########
+# FILTER #
+##########
+
+
+# TODO: Test with instr first
+
+
+######
+# UI #
+######
+
+
+def test_display_enabled_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":DISP:ENAB?", 1)],
+    ) as inst:
+        assert inst.display_enabled is True
+
+
+def test_display_enabled_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":DISP:ENAB 0", None)],
+    ) as inst:
+        inst.display_enabled = False
+
+
+########
+# MISC #
+########
+
+
+def test_wires_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:RSEN?", 0)],
+    ) as inst:
+        assert inst.wires == 2
+
+
+def test_wires_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:RSEN 1", None)],
+    ) as inst:
+        inst.wires = 4
+
+
+def test_line_frequency_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR?", 50)],
+    ) as inst:
+        assert inst.line_frequency == 50
+
+
+def test_line_frequency_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR 60", None)],
+    ) as inst:
+        inst.line_frequency = 60
+
+
+def test_auto_line_frequency_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR:AUTO?", 1)],
+    ) as inst:
+        assert inst.line_frequency_auto is True
+
+
+def test_auto_line_frequency_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":SYST:LFR:AUTO 0", None)],
+    ) as inst:
+        inst.line_frequency_auto = False
+
+
+def test_terminals_getter():
+    with expected_protocol(
+        Keithley2400,
+        [(":ROUT:TERM?", "FRON")],
+    ) as inst:
+        assert inst.terminals == "front"
+
+
+def test_terminals_setter():
+    with expected_protocol(
+        Keithley2400,
+        [(":ROUT:TERM REAR", None)],
+    ) as inst:
+        inst.terminals = "rear"
