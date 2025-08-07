@@ -57,6 +57,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
         self._smu_names = {}
         self._smu_references = {}
+        self._spgu_names = {}
+        self._spgu_references = {}
 
     @property
     def smu_references(self):
@@ -153,6 +155,37 @@ class AgilentB1500(SCPIMixin, Instrument):
                 setattr(
                     self, "smu" + str(i), self.initialize_smu(channel, smu_type, "SMU" + str(i))
                 )
+                i += 1
+
+    def initialize_spgu(self, channel, name):
+        """Initializes SPGU instance by calling :class:`.SPGU`.
+
+        :param channel: SPGU channel
+        :type channel: int
+        :param spgu_type: SPGU type, e.g. ``'HRSPGU'``
+        :type spgu_type: str
+        :param name: SPGU name for pymeasure (data output etc.)
+        :type name: str
+        :return: SPGU instance
+        :rtype: :class:`.SPGU`
+        """
+        if channel in (list(range(101, 1101, 100)) + list(range(102, 1102, 100))):
+            channel = int(str(channel))
+        self._spgu_names[channel] = name
+        spgu_reference = SPGU(self, channel, name)
+        self._spgu_references[channel] = spgu_reference
+        return spgu_reference
+
+    def initialize_all_spgus(self):
+        """Initialize all SPGUs by querying available modules and creating
+        a SPGU class instance for each.
+        SPGUs are accessible via attributes ``.spgu1`` etc.
+        """
+        modules = self.query_modules()
+        i = 1
+        for channel, module_type in modules.items():
+            if module_type == "SPGU":
+                setattr(self, "spgu" + str(i), self.initialize_spgu(channel, "SPGU" + str(i)))
                 i += 1
 
     def pause(self, pause_seconds):
@@ -1664,6 +1697,49 @@ class SMUCurrentRanging:
         # set range attributes
         self.output = Ranging(supported_output_ranges, ranges)
         self.meas = Ranging(supported_meas_ranges, ranges, fixed_ranges=True)
+
+
+######################################
+# SPGU Setup
+######################################
+
+
+class SPGU:
+    """Provides specific methods for the SPGU module of the Agilent B1500 mainframe
+
+    :param parent: Instance of the B1500 mainframe class
+    :type parent: :class:`.AgilentB1500`
+    :param int channel: Channel number of the SPGU
+    """
+
+    def __init__(self, parent, channel, name, **kwargs):
+        # to allow garbage collection for cyclic references
+        self._b1500 = weakref.proxy(parent)
+        channel = strict_discrete_set(channel, range(1, 5))
+        self.channel = channel
+        self.name = name
+        self.ch1 = SPGUChannel(self, int(str(self.channel) + "01"))
+        self.ch2 = SPGUChannel(self, int(str(self.channel) + "02"))
+
+    def write(self, string):
+        """Wraps :meth:`.Instrument.write` method of B1500."""
+        self._b1500.write(string)
+
+    def ask(self, string):
+        """Wraps :meth:`~.Instrument.ask` method of B1500."""
+        return self._b1500.ask(string)
+
+
+class SPGUChannel:
+    def __init__(self, parent, channel_number):
+        """Provides specific methods for the SPGU subchannels
+
+        :param parent: Instance of the SPGU class
+        :type parent: :class:`.SPGU`
+        :param int channel: Subchannel number of the SPGU channel
+        """
+        self._spgu = weakref.proxy(parent)
+        self.channel = channel_number
 
 
 class CustomIntEnum(IntEnum):
