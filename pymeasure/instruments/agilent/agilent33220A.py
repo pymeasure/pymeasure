@@ -88,18 +88,18 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
     )
 
     frequency = Instrument.control(
-        "FREQ?", "FREQ %s",
-        """Control the frequency of the output waveform, depending on the method
-        (float, strict from 1e-6 to 5e+6).""",
-        validator=strict_range,
-        values=[1e-6, 5e+6],
+        "FREQ?", "FREQ %f",
+        """Control the frequency of the output waveform. Depending on the output shape, the
+        supported frequency range changes. Supplying out-of-bound values may silently be clipped
+        by the device (float, in Hz)"""
     )
 
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
-        """Control the voltage amplitude of the output waveform (float strict from 10e-3 to 10).""",
-        validator=strict_range,
-        values=[10e-3, 10],
+        """Control the amplitude of the output waveform. Depending on amplitude unit, the unit
+        is Volt (peak-to-peak), Volt (RMS) or dBm. The limits depend on the configured output
+        termination (50 Ohm to High Impedance changes by a factor of 2) and the offset.
+        Supplying out-of-bound values may silently be clipped by the device (float, in V or dBm)"""
     )
 
     amplitude_unit = Instrument.control(
@@ -113,26 +113,23 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     offset = Instrument.control(
         "VOLT:OFFS?", "VOLT:OFFS %f",
-        """Control the voltage offset of the output waveform (float, strict from -4.995 to 4.995).
-        The offset is in Volts and limited by the amplitude setting.""",
-        validator=strict_range,
-        values=[-4.995, +4.995],
+        """Control the voltage offset of the output waveform. This is limited by the amplitude
+        and output termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_high = Instrument.control(
         "VOLT:HIGH?", "VOLT:HIGH %f",
-        """Control the upper voltage of the output waveform (float, strict from -4.99 to 5).
-        The high voltage must be higher than the low voltage.""",
-        validator=strict_range,
-        values=[-4.99, 5],
+        """Control the upper voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_low = Instrument.control(
         "VOLT:LOW?", "VOLT:LOW %f",
-        """Control the lower voltage of the output waveform (float, strict from -5 to 4.99).
-        The low voltage must be lower than the high voltage.""",
-        validator=strict_range,
-        values=[-5, 4.99],
+        """Control the lower voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     square_dutycycle = Instrument.control(
@@ -258,8 +255,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the Agilent 33220A" +
-                    " to finish the triggering."
+                    "Timeout expired while waiting for the Agilent 33220A to finish the triggering."
                 )
 
             if should_stop():
