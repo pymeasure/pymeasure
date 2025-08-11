@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - cloudpickle=1.6.0
-  - numpy >1, <=2.1.2
+  - numpy >1
   - pandas=2.2.3
   - pint=0.24.4
   - pyqt=5.15.11
