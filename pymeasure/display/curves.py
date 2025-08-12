@@ -85,7 +85,7 @@ class ResultsImage(pg.ImageItem):
         self.yend = getattr(self.results.procedure, self.y + "_end")
         self.ystep = getattr(self.results.procedure, self.y + "_step")
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep))
-        self.img_data = np.zeros((self.ysize, self.xsize))
+        self.img_data = np.full((self.ysize, self.xsize), np.nan, dtype=float)
         self.force_reload = force_reload
         self.colormap = colormap
 
@@ -98,14 +98,19 @@ class ResultsImage(pg.ImageItem):
         # use numpy array operations to arrange the data more efficiently
         data = self.results.data
         z_data = data[self.z].to_numpy(dtype=np.float64)
-
-        self.img_data.ravel()[: z_data.size] = z_data
-        print(self.img_data.shape, z_data.shape, self.xsize * self.ysize)
+        x_data = data[self.x].to_numpy(dtype=np.float64)
+        y_data = data[self.y].to_numpy(dtype=np.float64)
 
         # set image data
         if len(z_data) != 0:
+            x_unique = np.unique(x_data)
+            y_unique = np.unique(y_data)
+            x_ids = np.searchsorted(x_unique, x_data)
+            y_ids = np.searchsorted(y_unique, y_data)
+
+            self.img_data[y_ids, x_ids] = z_data
             self.setImage(
-                image=self.img_data,
+                image=self.img_data.T,
                 rect=[
                     self.xstart - self.xstep / 2,
                     self.ystart - self.ystep / 2,
