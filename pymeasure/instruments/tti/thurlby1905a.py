@@ -98,7 +98,7 @@ class Thurlby1905a(Instrument):
 
     @property
     def read_measurement(self):
-        """Parse and translate the direct output from the instrument
+        """Get the output from the instrument
 
         :returns: the reading from the instrument
         :rtype: float
