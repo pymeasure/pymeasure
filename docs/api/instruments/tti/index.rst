@@ -1,4 +1,4 @@
-.. module:: pymeasure.instruments.fluke
+.. module:: pymeasure.instruments.tti
 
 ###########################
 Thurlby Thandar Instruments
