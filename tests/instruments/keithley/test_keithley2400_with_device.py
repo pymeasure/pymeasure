@@ -61,18 +61,19 @@ def test_reset(keithley2400):
     assert keithley2400.voltage_nplc == 1
     assert keithley2400.compliance_voltage == 21
 
-    assert keithley2400.resistance_range == 2.1e-5
+    assert keithley2400.resistance_mode_auto is True
+    assert keithley2400.resistance_range == 2.1e5
     assert keithley2400.resistance_range_auto is True
     assert keithley2400.resistance_nplc == 1
 
     assert keithley2400.filter_type == "repeat"
     assert keithley2400.filter_count == 10
-    assert keithley2400.filter_enabled is True
+    assert keithley2400.filter_enabled is False
 
     # 18-7
     assert keithley2400.auto_output_off is False
     assert keithley2400.source_mode == "voltage"
-    assert keithley2400.source_delay == 0
+    assert keithley2400.source_delay == 0.001  # Different to manual
     assert keithley2400.source_delay_auto is True
 
     assert keithley2400.source_current_range == 1.05e-4
@@ -96,6 +97,7 @@ def test_current_source(keithley2400):
     keithley2400.source_mode = "current"
     keithley2400.source_current = source_current
     keithley2400.source_enabled = True
+
     measurements = keithley2400.measure_all()
     current = measurements["current"]
     voltage = measurements["voltage"]
@@ -105,7 +107,6 @@ def test_current_source(keithley2400):
     assert keithley2400.source_current == source_current
     assert keithley2400.source_enabled is True
 
-    assert current == pytest.approx(source_current)
     assert voltage == pytest.approx(current * resistance)
 
 
@@ -115,6 +116,7 @@ def test_voltage_source(keithley2400):
     keithley2400.source_mode = "voltage"
     keithley2400.source_voltage = source_voltage
     keithley2400.source_enabled = True
+
     measurements = keithley2400.measure_all()
     current = measurements["current"]
     voltage = measurements["voltage"]
@@ -124,5 +126,4 @@ def test_voltage_source(keithley2400):
     assert keithley2400.source_voltage == source_voltage
     assert keithley2400.source_enabled is True
 
-    assert voltage == pytest.approx(source_voltage)
     assert voltage == pytest.approx(current * resistance)

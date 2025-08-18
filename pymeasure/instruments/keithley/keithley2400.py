@@ -58,13 +58,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     """
 
     SOURCE_MAP = {
-        "current": "CURR:DC",
-        "voltage": "VOLT:DC",
+        "current": "CURR",
+        "voltage": "VOLT",
     }
 
     MEASURE_MAP = {
-        "current": "CURR:DC",
-        "voltage": "VOLT:DC",
+        "current": "CURR",
+        "voltage": "VOLT",
         "resistance": "RES",
     }
 
@@ -215,7 +215,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # Measurement methods #
 
-    def measure_all(self):
+    def measure_all(self, resistance_mode_auto=False):
         """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently,
         returning as the dict:
             {
@@ -226,15 +226,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
                 'status': `int`
             }
         """
-        self.write(":SENS:FUNC:CONC ON")
-        self.write(":SENS:FUNC 'CURR:DC','VOLT:DC','RES'")
-        self.write(":FORM:ELEM CURR,VOLT,RES,TIME,STAT")
+        self.resistance_mode_auto = resistance_mode_auto
+        self.write(":SENS:FUNC:ALL")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
 
         return {
-            "current": values[0],
-            "voltage": values[1],
+            "voltage": values[0],
+            "current": values[1],
             "resistance": values[2],
             "time": values[3],
             "status": int(values[4]),
@@ -249,6 +248,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     current = Instrument.measurement(
         ":MEAS:CURR?",
         """Measure the current in Amps (float).""",
+        get_process_list=lambda v: v[1],
     )
 
     current_range = Instrument.control(
@@ -341,6 +341,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     voltage = Instrument.measurement(
         ":MEAS:VOLT?",
         """Measure the voltage in Volts (float).""",
+        get_process_list=lambda v: v[0],
     )
 
     voltage_range = Instrument.control(
@@ -433,6 +434,17 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     resistance = Instrument.measurement(
         ":MEAS:RES?",
         """Measure the resistance in Ohms (float).""",
+        get_process_list=lambda v: v[3],
+    )
+
+    resistance_mode_auto = Instrument.control(
+        ":SENS:RES:MODE?",
+        ":SENS:RES:MODE %s",
+        """Control the resistance mode auto status (bool).
+        When `True`, `source_current` and `voltage_range` depends on the `resistance_range`
+        selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
+        values={True: "AUTO", False: "MAN"},
+        map_values=True,
     )
 
     resistance_range = Instrument.control(

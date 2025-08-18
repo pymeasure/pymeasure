@@ -189,15 +189,14 @@ def test_measure_all():
     with expected_protocol(
         Keithley2400,
         [
-            (":SENS:FUNC:CONC ON", None),
-            (":SENS:FUNC 'CURR:DC','VOLT:DC','RES'", None),
-            (":FORM:ELEM CURR,VOLT,RES,TIME,STAT", None),
+            (":SENS:RES:MODE MAN", None),
+            (":SENS:FUNC:ALL", None),
             (":READ?", "0.1,0.2,9.91e37,1234,5678\n"),
         ],
     ) as inst:
         result = inst.measure_all()
-        assert result["current"] == 0.1
-        assert result["voltage"] == 0.2
+        assert result["voltage"] == 0.1
+        assert result["current"] == 0.2
         assert math.isnan(result["resistance"])
         assert result["time"] == 1234
         assert result["status"] == 5678
