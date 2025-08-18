@@ -46,17 +46,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     .. code-block:: python
 
         keithley = Keithley2400("GPIB::1")
+        keithley.reset()                        # Resets the instrument
 
         keithley.source_mode = "current"        # Sets up to source current
-        keithley.source_current_range = 10e-3   # Sets the source current range to 10 mA
-        keithley.compliance_voltage = 10        # Sets the compliance voltage to 10 V
-        keithley.source_current = 0             # Sets the source current to 0 mA
         keithley.source_enabled = True          # Enables the source output
 
         keithley.ramp_to_current(5e-3)          # Ramps the current to 5 mA
         print(keithley.voltage)                 # Prints the voltage in Volts
 
-        keithley.reset()                        # Reset the instrument
+        keithley.reset()                        # Resets the instrument
     """
 
     SOURCE_MAP = {
@@ -218,8 +216,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Measurement methods #
 
     def measure_all(self):
-        """Measure current, voltage, resistance, time, and status concurrently.
-        returns:
+        """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently,
+        returning as the dict:
             {
                 'current': `float`,
                 'voltage': `float`,
@@ -227,7 +225,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
                 'time': `float`,
                 'status': `int`
             }
-        """  # TODO: Use the proper docstring format
+        """
         self.write(":SENS:FUNC:CONC ON")
         self.write(":SENS:FUNC 'CURR:DC','VOLT:DC','RES'")
         self.write(":FORM:ELEM CURR,VOLT,RES,TIME,STAT")
