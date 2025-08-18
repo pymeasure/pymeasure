@@ -33,6 +33,7 @@ import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -251,13 +252,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param condition: Output condition
         :type condition: int or float or None
         """
-        mode = SPGUChannelOutputMode.get(mode)
+        mode = SPGUOutputMode.get(mode)
 
-        if mode == SPGUChannelOutputMode.COUNT:
+        if mode == SPGUOutputMode.COUNT:
             if not (1 <= condition <= 1_000_000):
                 raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
 
-        elif mode == SPGUChannelOutputMode.DURATION:
+        elif mode == SPGUOutputMode.DURATION:
             if not (1e-6 <= condition <= 31_556_926):
                 raise ValueError(
                     "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
@@ -274,7 +275,16 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         response = self.ask("SPRM?")
         mode, condition = response.split(",")
-        return SPGUChannelOutputMode(int(mode)), float(condition) if condition else None
+        return SPGUOutputMode(int(mode)), float(condition) if condition else None
+
+    period = Instrument.control(
+        "SPPER?",
+        "SPPER %f",
+        """Control the pulse period for SPGU channels (``SPPER``) in seconds (float). 
+        Applies to all installed SPGU modules""",
+        validator=strict_range,
+        values=[2e-8, 10],
+    )
 
     def check_errors(self):
         """Check for errors (``ERRX?``)"""
@@ -1729,6 +1739,10 @@ class SPGU:
         """Wraps :meth:`~.Instrument.ask` method of B1500."""
         return self._b1500.ask(string)
 
+    def start_output(self):
+        """Start SPGU output (``SRP``)"""
+        self.write("SRP")
+
 
 class SPGUChannel:
     def __init__(self, parent, channel_number):
@@ -1740,6 +1754,126 @@ class SPGUChannel:
         """
         self._spgu = weakref.proxy(parent)
         self.channel = channel_number
+
+    def write(self, string):
+        """Wraps :meth:`.Instrument.write` method of SPGU."""
+        self._spgu.write(string)
+
+    def ask(self, string):
+        """Wraps :meth:`~.Instrument.ask` method of SPGU."""
+        return self._spgu.ask(string)
+
+    def enable(self):
+        """Enable SPGU Channel (``CN``)"""
+        self._spgu.write("CN %d" % self.channel)
+
+    def disable(self):
+        """Disable SPGU Channel (``CL``)"""
+        self._spgu.write("CL %d" % self.channel)
+
+    @property
+    def load_impedance(self):
+        """Control the load impedance (``SER``) in Ohm (float)."""
+        return self._spgu.ask(f"SER? {self.channel}")
+
+    @load_impedance.setter
+    def load_impedance(self, value):
+        self._spgu.write(f"SER {self.channel}, {value}")
+
+    def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
+        """Sets the output voltage of the SPGU channel. (``SPV``)
+
+        :param source: Signal source for the output voltage,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: `SPGUSignalSource` or int
+        :param base_voltage: Pulse base voltage or DC output voltage in V, defaults to 0
+        :type base_voltage: float, optional
+        :param peak_voltage: Pulse peak voltage in V, defaults to 0
+        :type peak_voltage: float, optional
+        """
+        source = SPGUSignalSource.get(source).value
+        base_voltage = strict_range(base_voltage, (-40, 40))
+        peak_voltage = strict_range(peak_voltage, (-40, 40))
+        self._spgu.write(f"SPV {self.channel}, {source}, {base_voltage}, {peak_voltage}")
+
+    def get_output_voltage(self, source=1):
+        """Gets the output voltage of the specified signal source. (``SPV?``)"""
+        source = SPGUSignalSource.get(source).value
+        response = self._spgu.ask(f"SPV? {self.channel}, {source}")
+        base_voltage, peak_voltage = map(float, response.split(","))
+        return base_voltage, peak_voltage
+
+    @property
+    def output_mode(self):
+        """Control the output mode of the SPGU channel. (``SPM``)
+        The SPGU operating mode must be set to PG with the SIM 0 command before setting the
+        output mode.
+
+        :param mode: Output mode
+        :type mode: :class:`.SPGUChannelOutputMode` or int
+        """
+        return self._spgu.ask(f"SPM? {self.channel}")
+
+    @output_mode.setter
+    def output_mode(self, mode):
+        mode = SPGUChannelOutputMode.get(mode).value
+        self._spgu.write(f"SPM {self.channel}, {mode}")
+
+    def set_pulse_timings(
+        self,
+        source=1,
+        delay=0,
+        width=1e-7,
+        rise_time=2e-8,
+        fall_time=None,
+    ):
+        """Sets the timing parameters for the SPGU channel. (``SPT``)
+        The SPGU operating mode must be set to PG with the ``SIM 0`` command before setting
+        the pulse timings.
+
+        :param source: Signal source for the pulse timings,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: SPGUSignalSource or int
+        :param delay: Pulse delay in seconds, defaults to 0
+        :type delay: float, optional
+        :param width: Pulse width in seconds, defaults to 1e-7
+        :type width: float, optional
+        :param rise_time: Pulse rise time in seconds, defaults to 2e-8
+        :type rise_time: float, optional
+        :param fall_time: Pulse fall time in seconds, defaults to rise_time
+        :type fall_time: float, optional
+        """
+        source = SPGUSignalSource.get(source).value
+        if source == SPGUSignalSource.DC:
+            raise ValueError("Pulse timings can only be set for pulse sources.")
+        command = f"SPT {self.channel}, {source}, {delay}, {width}, {rise_time}"
+        if fall_time is not None:
+            command += f", {fall_time}"
+        self._spgu.write(command)
+
+    def get_pulse_timings(self, source=1):
+        """Gets the timing parameters for the SPGU channel. (``SPT?``)
+        The SPGU operating mode must be set to PG with the SIM 0 command before getting the pulse
+        timings.
+
+        :param source: Signal source for the pulse timings,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: SPGUSignalSource or int
+        :return: Tuple of (delay, width, rise_time, fall_time)
+        :rtype: tuple
+        """
+        source = SPGUSignalSource.get(source).value
+        response = self._spgu.ask(f"SPT? {self.channel}, {source}")
+        return tuple(map(float, response.split(",")))
+
+    def apply_setup(self):
+        """Applies the current setup to the SPGU channel.(``SPUPD``)
+
+        Depends on the b1500.spgu_mode (``SIM``)
+        PG mode: output base voltage set by ``SPV`` command
+        ALWG mode: output initial value of waveform
+        """
+        self._spgu.write(f"SPUPD {self.channel}")
 
 
 class CustomIntEnum(IntEnum):
@@ -1898,6 +2032,23 @@ class SamplingPostOutput(CustomIntEnum):
     BIAS = 2  #:
 
 
+class SPGUChannelOutputMode(CustomIntEnum):
+    """Output mode of SPGU channel"""
+
+    DC = 0  #: DC output mode
+    SIGNAL_SOURCE_1 = 1  #: 2-level pulse output mode using pulse signal source 1
+    SIGNAL_SOURCE_2 = 2  #: 2-level pulse output mode using pulse signal source 2
+    SIGNAL_SOURCE_1_2 = 3  #: 3-level pulse output mode using pulse signal source 1 and 2
+
+
+class SPGUSignalSource(CustomIntEnum):
+    """Signal source for SPGU"""
+
+    DC = 0
+    PULSE_SIGNAL_1 = 1
+    PULSE_SIGNAL_2 = 2
+
+
 class SPGUOperationMode(CustomIntEnum):
     """Operation mode of Semiconductor Pulse Generator Unit (SPGU)"""
 
@@ -1905,7 +2056,7 @@ class SPGUOperationMode(CustomIntEnum):
     ALWG = 1  #: ALWG (arbitrary linear wave output) mode
 
 
-class SPGUChannelOutputMode(CustomIntEnum):
+class SPGUOutputMode(CustomIntEnum):
     """Operating mode for SPGU channel outputs"""
 
     FREE_RUN = 0
