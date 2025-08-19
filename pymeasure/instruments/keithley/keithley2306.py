@@ -35,7 +35,7 @@ class Keithley2306Channel(Channel):
 
     enabled = Channel.control(
         ":OUTPUT{ch}:STAT?", ":OUTPUT{ch}:STAT %d",
-        """A boolean property that controls whether the output is enabled, takes
+        """Control (boolean) whether the output is enabled, takes
         values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -44,7 +44,7 @@ class Keithley2306Channel(Channel):
 
     bandwidth = Channel.control(
         ":OUTPUT{ch}:BAND?", ":OUTPUT{ch}:BAND %s",
-        """A string property that controls the output bandwidth when the output
+        """Control (string) the output bandwidth when the output
         is enabled and the current range is set to 5 A. Takes values 'HIGH' or
         'LOW'. If the output is disabled or the current range is set to 5 mA the
         bandwidth is 'LOW'. """,
@@ -55,7 +55,7 @@ class Keithley2306Channel(Channel):
 
     sense_mode = Channel.control(
         ":SENS{ch}:FUNC?", ":SENS{ch}:FUNC \"%s\"",
-        """A string property that controls the channel sense mode, which can
+        """Control (string) the channel sense mode, which can
         take the values 'voltage', 'current', 'dvm', 'pulse_current',
         or 'long_integration'. """,
         validator=strict_discrete_set,
@@ -67,7 +67,7 @@ class Keithley2306Channel(Channel):
 
     nplc = Channel.control(
         ":SENS{ch}:NPLC?", ":SENS{ch}:NPLC %g",
-        """A floating point property that controls the number of power line
+        """Control (floating) the number of power line
         cycles (NPLC) for voltage, current, and DVM measurements. Takes
         values from 0.01 to 10. """,
         validator=truncated_range,
@@ -76,7 +76,7 @@ class Keithley2306Channel(Channel):
 
     average_count = Channel.control(
         ":SENS{ch}:AVER?", ":SENS{ch}:AVER %d",
-        """An integer property that controls the average count for voltage,
+        """Control (integer) the average count for voltage,
         current, and DVM measurements. Takes values from 1 to 10. """,
         validator=truncated_range,
         values=[1, 10],
@@ -84,7 +84,7 @@ class Keithley2306Channel(Channel):
 
     current_range = Channel.control(
         ":SENS{ch}:CURR:RANG?", ":SENS{ch}:CURR:RANG %g",
-        """A floating point property that controls the current range which
+        """Control (floating) the current range which
         takes values of 5 mA and 5 A (or 500 mA and 5 A for the 2306-PJ).""",
         validator=strict_discrete_set,
         values=[0.005, 0.5, 5],
@@ -92,7 +92,7 @@ class Keithley2306Channel(Channel):
 
     current_range_auto = Channel.control(
         ":SENS{ch}:CURR:RANG:AUTO?", ":SENS{ch}:CURR:RANG:AUTO %d",
-        """A boolean point property that controls whether current range
+        """Control (boolean) whether current range
         is in auto mode. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -101,7 +101,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_average_count = Channel.control(
         ":SENS{ch}:PCUR:AVER?", ":SENS{ch}:PCUR:AVER %d",
-        """An integer property that controls the average count for pulse
+        """Control (integer) the average count for pulse
         current measurements. Takes values from 1 to either 100 if
         pulse_current_measure_enabled is set to True, 5000 otherwise. """,
         validator=truncated_range,
@@ -110,7 +110,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_measure_enabled = Channel.control(
         ":SENS{ch}:PCUR:SYNC?", ":SENS{ch}:PCUR:SYNC %d",
-        """A boolean property that controls whether pulse current
+        """Control (boolean) whether pulse current
         measurements are enabled (True) or whether the channel is in
         digitization mode (False). """,
         validator=strict_discrete_set,
@@ -120,7 +120,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_trigger_delay = Channel.control(
         ":SENS{ch}:PCUR:SYNC:DEL?", ":SENS{ch}:PCUR:SYNC:DEL %g",
-        """A floating point property that controls the pulse current trigger
+        """Control (floating) the pulse current trigger
         delay in seconds. Takes values from 0 to either 0.1 if
         pulse_current_measure_enabled is set to True, 5 otherwise.""",
         validator=truncated_range,
@@ -129,7 +129,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_trigger_level = Channel.control(
         ":SENS{ch}:PCUR:SYNC:TLEV?", ":SENS{ch}:PCUR:SYNC:TLEV %g",
-        """A floating point property that controls the pulse current trigger
+        """Control (floating) the pulse current trigger
         level in amps. Takes values between 0 and 5.""",
         validator=truncated_range,
         values=[0, 5],
@@ -137,7 +137,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_mode = Channel.control(
         ":SENS{ch}:PCUR:MODE?", ":SENS{ch}:PCUR:MODE %s",
-        """A string property that controls the pulse current measurement
+        """Control (string) the pulse current measurement
         mode, which can take the values 'high', 'low', or 'average'. """,
         validator=strict_discrete_set,
         values={'high': 'HIGH', 'low': 'LOW', 'average': 'AVER'},
@@ -150,7 +150,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_time_high = Channel.control(
         ":SENS{ch}:PCUR:TIME:HIGH?", ":SENS{ch}:PCUR:TIME:HIGH %g",
-        """A floating point property that controls the integration time (in
+        """Control (floating) the integration time (in
         seconds) for high pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
@@ -159,7 +159,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_time_low = Channel.control(
         ":SENS{ch}:PCUR:TIME:LOW?", ":SENS{ch}:PCUR:TIME:LOW %g",
-        """A floating point property that controls the integration time (in
+        """Control (floating) the integration time (in
         seconds) for low pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
@@ -168,7 +168,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_time_average = Channel.control(
         ":SENS{ch}:PCUR:TIME:AVER?", ":SENS{ch}:PCUR:TIME:AVER %g",
-        """A floating point property that controls the integration time (in
+        """Control (floating) the integration time (in
         seconds) for average pulse measurements. Takes on values between
         33.33333e-06 and 0.8333. """,
         validator=truncated_range,
@@ -177,7 +177,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_time_digitize = Channel.control(
         ":SENS{ch}:PCUR:TIME:DIG?", ":SENS{ch}:PCUR:TIME:DIG %g",
-        """A floating point property that controls the integration time (in
+        """Control (floating) the integration time (in
         seconds) for digitizing or burst pulse measurements. Takes on values
         between 33.33333e-06 and 0.8333. """,
         validator=truncated_range,
@@ -186,7 +186,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_fast_enabled = Channel.control(
         ":SENS{ch}:PCUR:FAST?", ":SENS{ch}:PCUR:FAST %d",
-        """A boolean property that controls whether pulse current fast readings
+        """Control (boolean) whether pulse current fast readings
         are enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -195,7 +195,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_search_enabled = Channel.control(
         ":SENS{ch}:PCUR:SEAR?", ":SENS{ch}:PCUR:SEAR %d",
-        """A boolean property that controls whether pulse current search
+        """Control (boolean) whether pulse current search
         is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -204,7 +204,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_detect_enabled = Channel.control(
         ":SENS{ch}:PCUR:DET?", ":SENS{ch}:PCUR:DET %d",
-        """A boolean property that controls whether pulse current detection
+        """Control (boolean) whether pulse current detection
         mode is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -213,7 +213,7 @@ class Keithley2306Channel(Channel):
 
     pulse_current_timeout = Channel.control(
         ":SENS{ch}:PCUR:TOUT?", ":SENS{ch}:PCUR:TOUT %g",
-        """A floating point property that controls the pulse current timeout
+        """Control (floating) the pulse current timeout
         in seconds, which takes on values between 0.005 and 32. """,
         validator=truncated_range,
         values=[0.005, 32],
@@ -221,7 +221,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_trigger_edge = Channel.control(
         ":SENS{ch}:LINT:TEDG?", ":SENS{ch}:LINT:TEDG %s",
-        """A string property that controls the long integration trigger edge,
+        """Control (string) the long integration trigger edge,
          which can take the values 'rising', 'falling', or 'neither'. """,
         validator=strict_discrete_set,
         values={'rising': 'RISING', 'falling': 'FALLING', 'neither': 'NEITHER'},
@@ -230,7 +230,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_time = Channel.control(
         ":SENS{ch}:LINT:TIME?", ":SENS{ch}:LINT:TIME %g",
-        """A floating point property that controls the long integration time
+        """Control (floating) the long integration time
         in seconds, which takes on values in the range of 0.850 for 60 Hz and
          0.840 for 50 Hz up to 60. """,
         validator=truncated_range,
@@ -243,7 +243,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_trigger_level = Channel.control(
         ":SENS{ch}:LINT:TLEV?", ":SENS{ch}:LINT:TLEV %g",
-        """A floating point property that controls the long integration trigger
+        """Control (floating) the long integration trigger
         level in amps, which takes values between 0 and 5. """,
         validator=truncated_range,
         values=[0, 5],
@@ -251,7 +251,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_timeout = Channel.control(
         ":SENS{ch}:LINT:TOUT?", ":SENS{ch}:LINT:TOUT %g",
-        """A floating point property that controls the long integration timeout
+        """Control (floating) the long integration timeout
         in seconds, which takes values between 1 and 63. """,
         validator=truncated_range,
         values=[1, 63],
@@ -259,7 +259,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_fast_enabled = Channel.control(
         ":SENS{ch}:LINT:FAST?", ":SENS{ch}:LINT:FAST %d",
-        """A boolean property that controls whether long integration fast
+        """Control (boolean) whether long integration fast
         readings are enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -268,7 +268,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_search_enabled = Channel.control(
         ":SENS{ch}:LINT:SEAR?", ":SENS{ch}:LINT:SEAR %d",
-        """A boolean property that controls whether long integration search
+        """Control (boolean) whether long integration search
         is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -277,7 +277,7 @@ class Keithley2306Channel(Channel):
 
     long_integration_detect_enabled = Channel.control(
         ":SENS{ch}:LINT:DET?", ":SENS{ch}:LINT:DET %d",
-        """A boolean property that controls whether long integration detection
+        """Control (boolean) whether long integration detection
         mode is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -286,7 +286,7 @@ class Keithley2306Channel(Channel):
 
     source_voltage = Channel.control(
         ":SOUR{ch}:VOLT?", ":SOUR{ch}:VOLT %g",
-        """A floating point property that controls the source voltage in volts,
+        """Control (floating) the source voltage in volts,
         which takes values between 0 and 15. """,
         validator=truncated_range,
         values=[0, 15],
@@ -294,7 +294,7 @@ class Keithley2306Channel(Channel):
 
     source_voltage_protection = Channel.control(
         ":SOUR{ch}:VOLT:PROT?", ":SOUR{ch}:VOLT:PROT %g",
-        """A floating point property that controls the source voltage protection
+        """Control (floating) the source voltage protection
         offset in volts, which takes values between 0 and 8. """,
         validator=truncated_range,
         values=[0, 8],
@@ -302,7 +302,7 @@ class Keithley2306Channel(Channel):
 
     source_voltage_protection_enabled = Channel.measurement(
         ":SOUR{ch}:VOLT:PROT:STAT?",
-        """A boolean property that returns the source voltage protection state.
+        """Get (boolean) the source voltage protection state.
         If this property is True, the source has been shut off in accordance
         with the source voltage protection settings. If this property is False,
         the source has not been shut off due to voltage protection. """,
@@ -311,7 +311,7 @@ class Keithley2306Channel(Channel):
 
     source_voltage_protection_clamp_enabled = Channel.control(
         ":SOUR{ch}:VOLT:PROT:CLAM?", ":SOUR{ch}:VOLT:PROT:CLAM %d",
-        """A boolean property that controls whether source voltage protection
+        """Control (boolean) whether source voltage protection
         clamp is enabled. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -320,7 +320,7 @@ class Keithley2306Channel(Channel):
 
     source_current_limit = Channel.control(
         ":SOUR{ch}:CURR?", ":SOUR{ch}:CURR %g",
-        """A floating point property that controls the source current limit in
+        """Control (floating) the source current limit in
         amps, which takes values between 0.006 and 5. """,
         validator=truncated_range,
         values=[0.006, 5],
@@ -328,7 +328,7 @@ class Keithley2306Channel(Channel):
 
     source_current_limit_type = Channel.control(
         ":SOUR{ch}:CURR:TYPE?", ":SOUR{ch}:CURR:TYPE %s",
-        """A string property that controls source current limit type, which can
+        """Control (string) source current limit type, which can
         take the values 'limit' or 'trip'. """,
         validator=strict_discrete_set,
         values={'limit': 'LIM', 'trip': 'TRIP'},
@@ -337,7 +337,7 @@ class Keithley2306Channel(Channel):
 
     source_current_limit_enabled = Channel.measurement(
         ":SOUR{ch}:CURR:STAT?",
-        """A boolean property that returns the source current limit state. If
+        """Get (boolean) the source current limit state. If
         this property is True, the source is in either in current limit mode,
         or has tripped (shut off), based on the `source_current_limit_type`
         setting. If this property is False, the source is not being limited and
@@ -347,90 +347,89 @@ class Keithley2306Channel(Channel):
 
     last_reading = Channel.measurement(
         ":FETCH{ch}?",
-        """A floating point property that returns the last reading. """
+        """Get (floating) the last reading. """
     )
 
     last_readings = Channel.measurement(
         ":FETCH{ch}:ARR?",
-        """A floating point array property that returns the last readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        """Get the last readings. """,
+        get_process=lambda v: [v],
     )
 
     reading = Channel.measurement(
         ":READ{ch}?",
-        """A floating point property that triggers and returns a reading
+        """Get (floating) a reading
         in accordance with sense_mode. """
     )
 
     readings = Channel.measurement(
         ":READ{ch}:ARR?",
-        """A floating point array property that triggers and returns readings
+        """Get (floating) readings
         in accordance with sense_mode. """,
         get_process=lambda v: v if isinstance(v, list) else [v]
     )
 
     measured_voltage = Channel.measurement(
         ":MEAS{ch}:VOLT?",
-        """A floating point property that triggers and returns a voltage
+        """Get (floating) a voltage
         reading. """
     )
 
     measured_voltages = Channel.measurement(
         ":MEAS{ch}:ARR:VOLT?",
-        """A floating point array property that triggers and returns
+        """Get (floating)
         voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     measured_current = Channel.measurement(
         ":MEAS{ch}:CURR?",
-        """A floating point property that triggers and returns a current
+        """Get (floating) a current
         reading. """
     )
 
     measured_currents = Channel.measurement(
         ":MEAS{ch}:ARR:CURR?",
-        """A floating point array property that triggers and returns
+        """Get (floating)
         current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     dvm_voltage = Channel.measurement(
         ":MEAS{ch}:DVM?",
-        """A floating point property that triggers and returns a DVM voltage
+        """Get (floating) a DVM voltage
         reading. """
     )
 
     dvm_voltages = Channel.measurement(
         ":MEAS{ch}:ARR:DVM?",
-        """A floating point array property that triggers and returns
+        """Get (floating)
         DVM voltage readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     pulse_current = Channel.measurement(
         ":MEAS{ch}:PCUR?",
-        """A floating point property that returns a pulse current reading. """
+        """Get (floating) a pulse current reading. """
     )
 
     pulse_currents = Channel.measurement(
         ":MEAS{ch}:ARR:PCUR?",
-        """A floating point array property that triggers and returns
+        """Get (floating)
         pulse current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        get_process=lambda v: [v],
     )
 
     long_integration_current = Channel.measurement(
         ":MEAS{ch}:LINT?",
-        """A floating point property that returns a long integration current
+        """Get (floating) a long integration current
         reading. """
     )
 
     long_integration_currents = Channel.measurement(
         ":MEAS{ch}:ARR:LINT?",
-        """A floating point array property that triggers and returns
-        long integration current readings. """,
-        get_process=lambda v: v if isinstance(v, list) else [v]
+        """Get the current readings after a triggering a long integrateion. """,
+        get_process=lambda v: [v],
     )
 
 
@@ -439,7 +438,7 @@ class BatteryChannel(Keithley2306Channel):
 
     impedance = Keithley2306Channel.control(
         ":OUTPUT{ch}:IMP?", ":OUTPUT{ch}:IMP %g",
-        """A floating point property that controls the output impedance in ohms.
+        """Control (floating) the output impedance in ohms.
         Takes values from 0 to 1, in 10 milliohm steps.""",
         validator=truncated_range,
         values=[0, 1],
@@ -447,7 +446,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_enabled = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP?", ":SENS{ch}:PCUR:STEP %d",
-        """A boolean property that controls whether a series of pulse current
+        """Control (boolean) whether a series of pulse current
         step measurements is enabled.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -456,7 +455,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_up_count = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:UP?", ":SENS{ch}:PCUR:STEP:UP %d",
-        """An integer property that controls the number of up steps. Takes
+        """Control (integer) the number of up steps. Takes
         values from 0 to 20 (max is both up and down combined). """,
         validator=truncated_range,
         values=[0, 20],
@@ -464,7 +463,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_down_count = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:DOWN?", ":SENS{ch}:PCUR:STEP:DOWN %d",
-        """An integer property that controls the number of down steps. Takes
+        """Control (integer) the number of down steps. Takes
         values from 0 to 20 (max is both up and down combined). """,
         validator=truncated_range,
         values=[0, 20],
@@ -472,7 +471,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_time = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:TIME?", ":SENS{ch}:PCUR:STEP:TIME %g",
-        """A floating point property that controls the integration time for up
+        """Control (floating) the integration time for up
         plus down steps in seconds. Takes values from 33.33333e-06 to 100e-3. """,
         validator=truncated_range,
         values=[33.33333e-06, 100e-3],
@@ -480,7 +479,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_timeout = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:TOUT?", ":SENS{ch}:PCUR:STEP:TOUT %g",
-        """A floating point property that controls the integration timeout for
+        """Control (floating) the integration timeout for
         pulse current steps in seconds (for all but the first step). Takes values
         from 2e-3 to 200e-3. """,
         validator=truncated_range,
@@ -489,7 +488,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_timeout_initial = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:TOUT:INIT?", ":SENS{ch}:PCUR:STEP:TOUT:INIT %g",
-        """A floating point property that controls the integration timeout for
+        """Control (floating) the integration timeout for
         the initial pulse current step in seconds. Takes values from 10e-3
         to 60. """,
         validator=truncated_range,
@@ -498,7 +497,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_delay = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:DEL?", ":SENS{ch}:PCUR:STEP:DEL %g",
-        """A floating point property that controls the pulse current step delay
+        """Control (floating) the pulse current step delay
         in seconds. Takes values from 0 to 100e-3 in 10e-6 increments. """,
         validator=truncated_range,
         values=[0, 100e-3],
@@ -506,7 +505,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_step_range = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:STEP:RANG?", ":SENS{ch}:PCUR:STEP:RANG %g",
-        """A floating point property that controls the pulse current step trigger
+        """Control (floating) the pulse current step trigger
         level range in amps. Takes values of 100e-3, 1, or 5. """,
         validator=strict_discrete_set,
         values=[100e-3, 1, 5],
@@ -514,7 +513,7 @@ class BatteryChannel(Keithley2306Channel):
 
     pulse_current_trigger_level_range = Keithley2306Channel.control(
         ":SENS{ch}:PCUR:SYNC:TLEV:RANG?", ":SENS{ch}:PCUR:SYNC:TLEV:RANG %g",
-        """A floating point property that controls the pulse current trigger
+        """Control (floating) the pulse current trigger
         level range in amps. Takes values of 100e-3, 1, or 5. """,
         validator=strict_discrete_set,
         values=[100e-3, 1, 5],
@@ -522,7 +521,7 @@ class BatteryChannel(Keithley2306Channel):
 
     long_integration_trigger_level_range = Keithley2306Channel.control(
         ":SENS{ch}:LINT:TLEV:RANG?", ":SENS{ch}:LINT:TLEV:RANG %g",
-        """A floating point property that controls the long integration trigger
+        """Control (floating) the long integration trigger
         level range in amps. Takes values of 100e-3, 1, or 5. """,
         validator=strict_discrete_set,
         values=[100e-3, 1, 5],
@@ -544,7 +543,7 @@ class Step(Channel):
     placeholder = 'step'
     trigger_level = Channel.control(
         ":SENS:PCUR:STEP:TLEV{step}?", ":SENS:PCUR:STEP:TLEV{step} %g",
-        """A floating point property that controls the pulse current step trigger
+        """Control (floating) the pulse current step trigger
         level range in amps. Takes values from 0 up to the range set via
         pulse_current_step_range.""",
         validator=truncated_range,
@@ -560,7 +559,7 @@ class Relay(Channel):
 
     closed = Channel.control(
         ":OUTP:REL{ch}?", ":OUTP:REL{ch} %s",
-        """A boolean property that controls whether the relay is closed (True)
+        """Control (boolean) whether the relay is closed (True)
         or open (False). """,
         validator=strict_discrete_set,
         values={True: 'ONE', False: 'ZERO'},
@@ -587,7 +586,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
 
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
-        """A boolean property that controls whether the display is enabled,
+        """Control (boolean) whether the display is enabled,
         takes values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -596,7 +595,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
 
     display_brightness = Instrument.control(
         ":DISP:BRIG?", ":DISP:BRIG %g",
-        """A floating point property that controls the display brightness,
+        """Control (floating) the display brightness,
         takes values beteween 0.0 and 1.0. A blank display is 0.0,
         1/4 brightness is for values less or equal to 0.25, otherwise 1/2
         brightness for values less than or equal to 0.5, otherwise 3/4
@@ -608,7 +607,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
 
     display_channel = Instrument.control(
         ":DISP:CHAN?", ":DISP:CHAN %d",
-        """An integer property that controls the display channel, takes
+        """Control (integer) the display channel, takes
         values 1 or 2. """,
         validator=strict_discrete_set,
         values=[1, 2],
@@ -616,14 +615,14 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
 
     display_text_data = Instrument.control(
         ":DISP:TEXT:DATA?", ":DISP:TEXT:DATA \"%s\"",
-        """A string property that control text to be displayed, takes strings
+        """Control text to be displayed, takes strings
         up to 32 characters. """,
         get_process=lambda v: v.replace('"', '')
     )
 
     display_text_enabled = Instrument.control(
         ":DISP:TEXT:STAT?", ":DISP:TEXT:STAT %d",
-        """A boolean property that controls whether display text is enabled,
+        """Control (boolean) whether display text is enabled,
         takes values True or False. """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -632,7 +631,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
 
     both_channels_enabled = Instrument.setting(
         ":BOTHOUT%s",
-        """A boolean setting that controls whether both channel outputs are
+        """Set  whether both channel outputs are
         enabled, takes values of True or False. """,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},

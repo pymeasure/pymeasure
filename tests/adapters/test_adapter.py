@@ -25,6 +25,7 @@
 import logging
 from unittest import mock
 
+import numpy as np
 import pytest
 
 from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
@@ -48,12 +49,6 @@ def test_init(adapter):
 def test_init_log():
     adapter = Adapter(log=logging.getLogger("parent"))
     assert adapter.log == logging.getLogger("parent.Adapter")
-
-
-def test_deprecated_preprocess_reply():
-    with pytest.warns(FutureWarning):
-        adapter = Adapter(preprocess_reply=lambda v: v)
-    assert adapter.preprocess_reply is not None
 
 
 def test_del(adapter):
@@ -92,54 +87,21 @@ def test_not_implemented_methods(adapter, method, args):
         getattr(adapter, method)(*args)
 
 
-def test_ask_deprecation_warning():
-    a = FakeAdapter()
-    with pytest.warns(FutureWarning):
-        assert a.ask("abc") == "abc"
-
-
-@pytest.mark.parametrize("value, kwargs, result",
-                         (("5,6,7", {}, [5, 6, 7]),
-                          ("5.6.7", {'separator': '.'}, [5, 6, 7]),
-                          ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
-                          ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
-                          ("0,5,7.1", {'cast': bool}, [False, True, True]),
-                          ))
-def test_adapter_values(value, kwargs, result):
-    a = FakeAdapter()
-    with pytest.warns(FutureWarning):
-        assert a.values(value, **kwargs) == result
-
-
-def test_read_binary_values():
-    a = ProtocolAdapter([(None, "1 2")])
-    assert list(a.read_binary_values(dtype=int, sep=" ")) == pytest.approx([1, 2])
+@pytest.mark.parametrize("response, options, result", (
+    ("1,2", dict(dtype=int, sep=","), [1, 2]),
+    (b"\x01\x02", dict(dtype=np.uint8), [1, 2]),
+    (b'\x01\x02\x03\x04\x05', dict(dtype=np.uint8, count=3), [1, 2, 3]),
+    ("abcdefgh", {}, [1.6777999e+22, 4.371022e+24]),
+))
+def test_read_binary_values(response, options, result):
+    a = ProtocolAdapter([(None, response)])
+    assert list(a.read_binary_values(**options)) == pytest.approx(result)
 
 
 def test_write_binary_values():
     """Test write_binary_values in the ieee header format."""
     a = ProtocolAdapter([(b'CMD#212\x00\x00\x80?\x00\x00\x00@\x00\x00@@\n', None)])
     a.write_binary_values("CMD", [1, 2, 3], termination="\n")
-
-
-def test_adapter_preprocess_reply():
-    with pytest.warns(FutureWarning):
-        a = FakeAdapter(preprocess_reply=lambda v: v[1:])
-        assert str(a) == "<FakeAdapter>"
-        assert a.values("R42.1") == [42.1]
-        assert a.values("A4,3,2") == [4, 3, 2]
-        assert a.values("TV 1", preprocess_reply=lambda v: v.split()[0]) == ['TV']
-        assert a.values("15", preprocess_reply=lambda v: v) == [15]
-        a = FakeAdapter()
-        assert a.values("V 3.4", preprocess_reply=lambda v: v.split()[1]) == [3.4]
-
-
-def test_binary_values_deprecation_warning():
-    a = FakeAdapter()
-    with pytest.warns(FutureWarning):
-        a.binary_values("abcdefgh")
 
 
 class TestLoggingForTestGenerator:

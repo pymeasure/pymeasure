@@ -43,7 +43,7 @@ class ATS525(ATSBase):
 
     system_current = Instrument.measurement(
         "AMPS?",
-        """Operating current.
+        """Get operating current.
         """,
     )
 

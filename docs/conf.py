@@ -23,10 +23,7 @@ from pymeasure.instruments.instrument import Instrument
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
 if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-
     html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -59,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyMeasure'
-copyright = '2013-2022, PyMeasure Developers'
+copyright = '2013-2025, PyMeasure Developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -270,7 +267,7 @@ texinfo_documents = [
 # texinfo_no_detailmenu = False
 
 # Automatically mock optional packages
-autodoc_mock_imports = ['zmq', 'cloudpickle', 'vxi11', 'pyvirtualbench']
+autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 
 
 def setup(app):

@@ -47,7 +47,7 @@ def test_to_bytes(input, output):
 
 def test_to_bytes_invalid():
     with raises(TypeError):
-        to_bytes(5.5j)
+        to_bytes(5.5j)  # type: ignore
 
 
 def test_protocol_instantiation():

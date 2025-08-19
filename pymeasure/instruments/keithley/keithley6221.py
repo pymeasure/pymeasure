@@ -30,7 +30,12 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import (
+    truncated_range,
+    strict_range,
+    strict_discrete_set,
+    joined_validators
+)
 
 from .buffer import KeithleyBuffer
 
@@ -85,7 +90,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     source_enabled = Instrument.control(
         "OUTPut?", "OUTPut %d",
-        """A boolean property that controls whether the source is enabled, takes
+        """Control (boolean) whether the source is enabled, takes
         values True or False. The convenience methods :meth:`~.Keithley6221.enable_source` and
         :meth:`~.Keithley6221.disable_source` can also be used.""",
         validator=strict_discrete_set,
@@ -93,9 +98,18 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True
     )
 
+    shield_to_guard_enabled = Instrument.control(
+        ":OUTPut:ISHield?", ":OUTPut:ISHield %s",
+        """ Control if shield is connected to the guard(boolean).
+
+        If not, the shield is connected to the output-low.""",
+        values={True: "GUAR", False: "OLOW"},
+        map_values=True
+    )
+
     source_delay = Instrument.control(
         ":SOUR:DEL?", ":SOUR:DEL %g",
-        """ A floating point property that sets a manual delay for the source
+        """ Control (floating) a manual delay for the source
         after the output is turned on before a measurement is taken. When this
         property is set, the auto delay is turned off. Valid values are
         between 1e-3 [seconds] and 999999.999 [seconds].""",
@@ -105,7 +119,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     output_low_grounded = Instrument.control(
         ":OUTP:LTE?", "OUTP:LTE %d",
-        """ A boolean property that controls whether the low output of the triax
+        """ Control (boolean) whether the low output of the triax
         connection is connected to earth ground (True) or is floating (False). """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -118,20 +132,20 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     source_current = Instrument.control(
         ":SOUR:CURR?", ":SOUR:CURR %g",
-        """ A floating point property that controls the source current
+        """ Control (floating) the source current
         in Amps. """,
         validator=truncated_range,
         values=[-0.105, 0.105]
     )
     source_compliance = Instrument.control(
         ":SOUR:CURR:COMP?", ":SOUR:CURR:COMP %g",
-        """A floating point property that controls the compliance of the current
+        """Control (floating) the compliance of the current
         source in Volts. valid values are in range 0.1 [V] to 105 [V].""",
         validator=truncated_range,
         values=[0.1, 105])
     source_range = Instrument.control(
         ":SOUR:CURR:RANG?", ":SOUR:CURR:RANG:AUTO 0;:SOUR:CURR:RANG %g",
-        """ A floating point property that controls the source current
+        """ Control (floating) the source current
         range in Amps, which can take values between -0.105 A and +0.105 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -139,10 +153,118 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     )
     source_auto_range = Instrument.control(
         ":SOUR:CURR:RANG:AUTO?", ":SOUR:CURR:RANG:AUTO %d",
-        """ A boolean property that controls the auto range of the current source.
+        """ Control (boolean) the auto range of the current source.
         Valid values are True or False. """,
         values={True: 1, False: 0},
         map_values=True,
+    )
+
+    ##############
+    # DELTA MODE #
+    ##############
+
+    delta_unit = Instrument.control(
+        ":UNIT:VOLT:DC?", ":UNIT:VOLT:DC %s",
+        """Control the reading unit (string strictly in 'V', 'Ohms', 'W' and 'Siemens').""",
+        validator=strict_discrete_set,
+        values={"V": "V", "Ohms": "OHMS", "W": "W", "Siemens": "SIEM"},
+        map_values=True
+    )
+
+    delta_high_source = Instrument.control(
+        ":SOUR:DELT:HIGH?", ":SOUR:DELT:HIGH %g",
+        """Control the delta high source value in A (float strictly from 0 to 0.105).
+
+        Set high source value will automatically set the low source value
+        to minus the high source value.""",
+        validator=strict_range,
+        values=[0, 0.105]
+    )
+
+    delta_low_source = Instrument.control(
+        ":SOUR:DELT:LOW?", ":SOUR:DELT:LOW %g",
+        """Control the delta low source value in A (float strictly from -0.105 to 0).
+
+        Usually no need to manually set this. By default,
+        the low source value is minus the high source value.""",
+        validator=strict_range,
+        values=[-0.105, 0]
+    )
+
+    delta_delay = Instrument.control(
+        ":SOUR:DELT:DELay?", ":SOUR:DELT:DELay %s",
+        """Control the delta delay in seconds (float strictly from 0 to 9999.999, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([0, 9999.999], ["INF"]),
+    )
+
+    delta_cycles = Instrument.control(
+        ":SOUR:DELT:COUN?", ":SOUR:DELT:COUN %s",
+        """Control the number of cycles to run for the delta measurements
+        (integer strictly from 1 to 65536, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_measurement_sets = Instrument.control(
+        ":SOUR:SWEep:COUN?", ":SOUR:SWEep:COUN %s",
+        """Control the number of measurement sets to repeat for delta measurements
+        (integer strictly from 1 to 65536, or "INF").""",
+        validator=joined_validators(strict_range, strict_discrete_set),
+        values=([1, 65536], ["INF"]),
+    )
+
+    delta_compliance_abort_enabled = Instrument.control(
+        ":SOUR:DELT:CAB?", ":SOUR:DELT:CAB %s",
+        """Control if compliance abort is enabled (boolean).""",
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process={1: "ON", 0: "OFF"}.get
+    )
+
+    delta_cold_switch_enabled = Instrument.control(
+        ":SOUR:DELT:CSW?", ":SOUR:DELT:CSW %s",
+        """Control if cold switching mode is enabled (boolean).""",
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+        get_process={1: "ON", 0: "OFF"}.get
+    )
+
+    delta_buffer_points = Instrument.control(
+        "TRAC:POIN?", "TRAC:POIN %d",
+        """ Control the size of the buffer (integer strictly from 1 to 1000000).
+
+        Buffer size should be the same value as Delta count.""",
+        validator=strict_range,
+        values=[1, 1000000]
+    )
+
+    def delta_arm(self):
+        """ Arm delta. """
+        self.write(":SOUR:DELT:ARM")
+
+    def delta_start(self):
+        """ Start delta measurements. """
+        self.write(":INIT:IMM")
+
+    def delta_abort(self):
+        """ Stop delta and place the Model 2182A in the local mode. """
+        self.write(":SOUR:SWE:ABOR")
+
+    delta_sense = Instrument.measurement(
+        ":SENS:DATA?",
+        """Get the latest delta reading results from 2182/2182A."""
+    )
+
+    delta_values = Instrument.measurement(
+        ":TRAC:DATA?",
+        """Get delta sense readings stored in 6221 buffer."""
+    )
+
+    delta_connected = Instrument.measurement(
+        ":SOUR:DELT:NVPR?",
+        """Get connection status to 2182A.""",
+        cast=bool,
     )
 
     ##################
@@ -151,7 +273,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     waveform_function = Instrument.control(
         ":SOUR:WAVE:FUNC?", ":SOUR:WAVE:FUNC %s",
-        """ A string property that controls the selected wave function. Valid
+        """ Control (string) the selected wave function. Valid
         values are "sine", "ramp", "square", "arbitrary1", "arbitrary2",
         "arbitrary3" and "arbitrary4". """,
         values={
@@ -168,28 +290,28 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     waveform_frequency = Instrument.control(
         ":SOUR:WAVE:FREQ?", ":SOUR:WAVE:FREQ %g",
-        """A floating point property that controls the frequency of the
+        """Control (floating) the frequency of the
         waveform in Hertz. Valid values are in range 1e-3 to 1e5. """,
         validator=truncated_range,
         values=[1e-3, 1e5]
     )
     waveform_amplitude = Instrument.control(
         ":SOUR:WAVE:AMPL?", ":SOUR:WAVE:AMPL %g",
-        """A floating point property that controls the (peak) amplitude of the
+        """Control (floating) the (peak) amplitude of the
         waveform in Amps. Valid values are in range 2e-12 to 0.105. """,
         validator=truncated_range,
         values=[2e-12, 0.105]
     )
     waveform_offset = Instrument.control(
         ":SOUR:WAVE:OFFS?", ":SOUR:WAVE:OFFS %g",
-        """A floating point property that controls the offset of the waveform
+        """Control (floating) the offset of the waveform
         in Amps. Valid values are in range -0.105 to 0.105. """,
         validator=truncated_range,
         values=[-0.105, 0.105]
     )
     waveform_dutycycle = Instrument.control(
         ":SOUR:WAVE:DCYC?", ":SOUR:WAVE:DCYC %g",
-        """A floating point property that controls the duty-cycle of the
+        """Control (floating) the duty-cycle of the
         waveform in percent for the square and ramp waves. Valid values are in
         range 0 to 100. """,
         validator=truncated_range,
@@ -197,7 +319,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     )
     waveform_duration_time = Instrument.control(
         ":SOUR:WAVE:DUR:TIME?", ":SOUR:WAVE:DUR:TIME %g",
-        """A floating point property that controls the duration of the
+        """Control (floating) the duration of the
         waveform in seconds. Valid values are in range 100e-9 to 999999.999.
         """,
         validator=truncated_range,
@@ -205,7 +327,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     )
     waveform_duration_cycles = Instrument.control(
         ":SOUR:WAVE:DUR:CYCL?", ":SOUR:WAVE:DUR:CYCL %g",
-        """A floating point property that controls the duration of the
+        """Control (floating) the duration of the
         waveform in cycles. Valid values are in range 1e-3 to 99999999900.
         """,
         validator=truncated_range,
@@ -219,14 +341,14 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     waveform_ranging = Instrument.control(
         ":SOUR:WAVE:RANG?", ":SOUR:WAVE:RANG %s",
-        """ A string property that controls the source ranging of the
+        """ Control (string) the source ranging of the
         waveform. Valid values are "best" and "fixed". """,
         values={"best": "BEST", "fixed": "FIX"},
         map_values=True,
     )
     waveform_use_phasemarker = Instrument.control(
         ":SOUR:WAVE:PMAR:STAT?", ":SOUR:WAVE:PMAR:STAT %s",
-        """ A boolean property that controls whether the phase marker option
+        """ Control (boolean) whether the phase marker option
         is turned on or of. Valid values True (on) or False (off). Other
         settings for the phase marker have not yet been implemented.""",
         values={True: 1, False: 0},
@@ -234,13 +356,13 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
     )
     waveform_phasemarker_phase = Instrument.control(
         ":SOUR:WAVE:PMAR?", ":SOUR:WAVE:PMAR %g",
-        """ A numerical property that controls the phase of the phase marker.""",
+        """ Control (numerical) the phase of the phase marker.""",
         validator=truncated_range,
         values=[-180, 180],
     )
     waveform_phasemarker_line = Instrument.control(
         ":SOUR:WAVE:PMAR:OLIN?", ":SOUR:WAVE:PMAR:OLIN %d",
-        """ A numerical property that controls the line of the phase marker.""",
+        """ Control (numerical) the line of the phase marker.""",
         validator=truncated_range,
         values=[1, 6],
     )
@@ -323,7 +445,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     display_enabled = Instrument.control(
         ":DISP:ENAB?", ":DISP:ENAB %d",
-        """ A boolean property that controls whether or not the display of the
+        """ Control (boolean) whether or not the display of the
         sourcemeter is enabled. Valid values are True and False. """,
         values={True: 1, False: 0},
         map_values=True,
@@ -331,6 +453,11 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     @property
     def error(self):
+        """Get the next error from the queue.
+
+        .. deprecated:: 0.15
+            Use `next_error` instead.
+        """
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
@@ -404,7 +531,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     measurement_event_enabled = Instrument.control(
         ":STAT:MEAS:ENAB?", ":STAT:MEAS:ENAB %d",
-        """ An integer value that controls which measurement events are
+        """ Control which measurement events are
         registered in the Measurement Summary Bit (MSB) status bit. Refer to
         the Model 6220/6221 Reference Manual for more information about
         programming the status bits.
@@ -416,7 +543,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     operation_event_enabled = Instrument.control(
         ":STAT:OPER:ENAB?", ":STAT:OPER:ENAB %d",
-        """ An integer value that controls which operation events are
+        """ Control which operation events are
         registered in the Operation Summary Bit (OSB) status bit. Refer to
         the Model 6220/6221 Reference Manual for more information about
         programming the status bits.
@@ -428,7 +555,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     questionable_event_enabled = Instrument.control(
         ":STAT:QUES:ENAB?", ":STAT:QUES:ENAB %d",
-        """ An integer value that controls which questionable events are
+        """ Control which questionable events are
         registered in the Questionable Summary Bit (QSB) status bit. Refer to
         the Model 6220/6221 Reference Manual for more information about
         programming the status bits.
@@ -440,7 +567,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     standard_event_enabled = Instrument.control(
         "ESE?", "ESE %d",
-        """ An integer value that controls which standard events are
+        """ Control which standard events are
         registered in the Event Summary Bit (ESB) status bit. Refer to
         the Model 6220/6221 Reference Manual for more information about
         programming the status bits.
@@ -452,7 +579,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     srq_event_enabled = Instrument.control(
         "*SRE?", "*SRE %d",
-        """ An integer value that controls which event registers trigger the
+        """ Control which event registers trigger the
         Service Request (SRQ) status bit. Refer to the Model 6220/6221
         Reference Manual for more information about programming the status
         bits.
@@ -464,7 +591,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     measurement_events = Instrument.measurement(
         ":STAT:MEAS?",
-        """ An integer value that reads which measurement events have been
+        """ Get which measurement events have been
         registered in the Measurement event registers. Refer to the Model
         6220/6221 Reference Manual for more information about programming
         the status bits. Reading this value clears the register.
@@ -474,7 +601,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     operation_events = Instrument.measurement(
         ":STAT:OPER?",
-        """ An integer value that reads which operation events have been
+        """ Get which operation events have been
         registered in the Operation event registers. Refer to the Model
         6220/6221 Reference Manual for more information about programming
         the status bits. Reading this value clears the register.
@@ -484,7 +611,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     questionable_events = Instrument.measurement(
         ":STAT:QUES?",
-        """ An integer value that reads which questionable events have been
+        """ Get which questionable events have been
         registered in the Questionable event registers. Refer to the Model
         6220/6221 Reference Manual for more information about programming
         the status bits. Reading this value clears the register.
@@ -494,7 +621,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     standard_events = Instrument.measurement(
         "*ESR?",
-        """ An integer value that reads which standard events have been
+        """ Get which standard events have been
         registered in the Standard event registers. Refer to the Model
         6220/6221 Reference Manual for more information about programming
         the status bits. Reading this value clears the register.

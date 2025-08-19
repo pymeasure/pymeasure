@@ -356,7 +356,7 @@ class FSW(FSSeries):
     available_channels = Instrument.measurement(
         "INST:LIST?",
         "Measure open channel names and corresponding types",
-        get_process=_channel_list_to_dict,
+        get_process_list=_channel_list_to_dict,
     )
 
     def select_channel(self, channel_name):

@@ -96,3 +96,12 @@ Felix Thouin
 Emmanuel Ferdman
 Johannes Rothmayr
 Fred Gillard
+Dimitrios Simatos
+Dongkai Pan
+Julian van Doorn
+Jörg Wunsch
+Falk Korndörfer
+Henk Vergone
+Sergey Ilyev
+Alfons Schuck
+Patrick Mischke

@@ -97,13 +97,6 @@ class CommonBase:
 
     This class contains everything needed for pymeasure's property creator
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
-
-    :param preprocess_reply: An optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
     """
 
     # Variable holding the list of DynamicProperty parameters that are configurable
@@ -112,6 +105,7 @@ class CommonBase:
                          'values',
                          'map_values',
                          'get_process',
+                         'get_process_list',
                          'command_process',
                          'check_get_errors')
 
@@ -126,14 +120,9 @@ class CommonBase:
     # Prefix used to store reserved variables
     __reserved_prefix = "___"
 
-    def __init__(self, preprocess_reply=None, **kwargs):
+    def __init__(self, **kwargs):
         self._special_names = self._setup_special_names()
         self._create_channels()
-        if preprocess_reply is not None:
-            warn(("Parameter `preprocess_reply` is deprecated. "
-                  "Implement it in the instrument, e.g. in `read`, instead."),
-                 FutureWarning)
-        self.preprocess_reply = preprocess_reply
         super().__init__(**kwargs)
 
     class BaseChannelCreator:
@@ -406,8 +395,6 @@ class CommonBase:
         results = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             results = preprocess_reply(results)
-        elif callable(self.preprocess_reply):
-            results = self.preprocess_reply(results)
         results = results.split(separator, maxsplit=maxsplit)
         for i, result in enumerate(results):
             try:
@@ -443,6 +430,7 @@ class CommonBase:
         values=(),
         map_values=False,
         get_process=lambda v: v,
+        get_process_list=lambda v: v,
         set_process=lambda v: v,
         command_process=None,
         check_set_errors=False,
@@ -470,8 +458,9 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
+        :param get_process_list: A function that takes the value list and processes it.
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param command_process: A function that takes a command and allows processing
@@ -547,6 +536,7 @@ class CommonBase:
                  values=values,
                  map_values=map_values,
                  get_process=get_process,
+                 get_process_list=get_process_list,
                  command_process=command_process,
                  check_get_errors=check_get_errors,
                  ):
@@ -586,7 +576,7 @@ class CommonBase:
                         'for Instrument.control'.format(type(values))
                     )
             else:
-                vals = get_process(vals)
+                vals = get_process_list(vals)
                 return vals
 
         def fset(self,
@@ -643,16 +633,23 @@ class CommonBase:
             return property(fget, fset)
 
     @staticmethod
-    def measurement(get_command, docs, values=(), map_values=None,
-                    get_process=lambda v: v,
-                    command_process=None,
-                    check_get_errors=False, dynamic=False,
-                    preprocess_reply=None,
-                    separator=',',
-                    maxsplit=-1,
-                    cast=float,
-                    values_kwargs=None,
-                    **kwargs):
+    def measurement(
+        get_command,
+        docs,
+        values=(),
+        map_values=False,
+        get_process=lambda v: v,
+        get_process_list=lambda v: v,
+        command_process=None,
+        check_get_errors=False,
+        dynamic=False,
+        preprocess_reply=None,
+        separator=",",
+        maxsplit=-1,
+        cast=float,
+        values_kwargs=None,
+        **kwargs,
+    ):
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -663,8 +660,9 @@ class CommonBase:
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
             interpreted as a map
-        :param get_process: A function that take a value and allows processing
+        :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
+        :param get_process_list: A function that takes the value list and processes it.
         :param command_process: A function that take a command and allows processing
             before executing the command, for getting
 
@@ -702,6 +700,7 @@ class CommonBase:
                                   values=values,
                                   map_values=map_values,
                                   get_process=get_process,
+                                  get_process_list=get_process_list,
                                   command_process=command_process,
                                   check_get_errors=check_get_errors,
                                   dynamic=dynamic,
@@ -713,11 +712,16 @@ class CommonBase:
                                   )
 
     @staticmethod
-    def setting(set_command, docs,
-                validator=lambda x, y: x, values=(), map_values=False,
-                set_process=lambda v: v,
-                check_set_errors=False, dynamic=False,
-                ):
+    def setting(
+        set_command,
+        docs,
+        validator=lambda x, y: x,
+        values=(),
+        map_values=False,
+        set_process=lambda v: v,
+        check_set_errors=False,
+        dynamic=False,
+    ):
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.

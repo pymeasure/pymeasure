@@ -1,3 +1,22 @@
+Upcoming Release
+================
+
+Removed
+-------
+- Remove support for Python 3.8
+- Remove deprecated Adapter and Instrument parameters :code:`preprocess_reply`, :code:`query_delay`
+- Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
+- Remove deprecated Telnet and VXI adapters
+
+Changed features
+----------------
+- :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore, only to a single value. Use :code:`get_process_list` parameter instead for processing a list of values.
+
+Deprecated
+----------
+- Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
+- Replaced :code:`filer_synchronous` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`filter_synchronous`
+
 Version 0.15.0 (2025-01-15)
 ===========================
 Main items of this new release:

@@ -445,18 +445,6 @@ def test_values(value, kwargs, result):
     assert cb.values(value, **kwargs) == result
 
 
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
-        assert cb.values("x5x") == [5]
-
-
-def test_values_global_preprocess_reply():
-    cb = CommonBaseTesting(FakeAdapter())
-    cb.preprocess_reply = lambda v: v.strip("x")
-    assert cb.values("x5x") == [5]
-
-
 def test_binary_values(fake):
     fake.read_binary_values = fake.read
     assert fake.binary_values("123") == "123"
@@ -567,11 +555,15 @@ def test_control_validator(dynamic):
         )
 
     fake = Fake()
+    fake.x_validator = truncated_range  # works only if dynamic
     fake.x = 5
     assert fake.read() == '5'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError):
+    if not dynamic:
+        with pytest.raises(ValueError):
+            fake.x = 20
+    else:
         fake.x = 20
 
 
@@ -587,8 +579,12 @@ def test_control_validator_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_map_values = False  # works only if dynamic
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '5'  # no mapping
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     with pytest.raises(ValueError):
@@ -607,12 +603,19 @@ def test_control_dict_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_values = {1: 1, 20: 2, 5: 3}
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '3'
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     fake.x = 20
-    assert fake.read() == '3'
+    if dynamic:
+        assert fake.read() == '2'
+    else:
+        assert fake.read() == '3'
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -674,10 +677,18 @@ def test_control_process(dynamic):
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v
+    fake.x_set_process = lambda v: v
     fake.x = 10e-3
-    assert fake.read() == '10'
+    if dynamic:
+        assert fake.read() == '0'
+    else:
+        assert fake.read() == '10'
     fake.x = 30e-3
-    assert fake.x == 30e-3
+    if dynamic:
+        assert fake.x == 0
+    else:
+        assert fake.x == 30e-3
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -692,10 +703,33 @@ def test_control_get_process(dynamic):
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v  # works only if dynamic
     fake.x = 5
     assert fake.read() == 'JUNK5'
-    fake.x = 5
-    assert fake.x == 5
+    fake.x = 6
+    if dynamic:
+        assert fake.x == 'JUNK6'
+    else:
+        assert fake.x == 6
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process_list(dynamic):
+    class Fake(CommonBaseTesting):
+        x = CommonBase.control(
+            "G", "%d", "doc",
+            get_process_list=lambda v: [v[0] + 1, *v, len(v)],
+            dynamic=dynamic,
+        )
+
+    # override get_process_list should only work when dynamic
+    Fake.x_get_process_list = lambda v: [0, "2"]
+
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+        if dynamic:
+            assert inst.x == [0, "2"]
+        else:
+            assert inst.x == [1, 0, 1, 2, 3.4, 4]
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -718,7 +752,7 @@ def test_control_preprocess_reply_property(dynamic):
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
-    assert type(fake.x) == int
+    assert type(fake.x) is int
 
 
 def test_control_kwargs_handed_to_values():

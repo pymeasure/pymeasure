@@ -106,7 +106,7 @@ class OxfordInstrumentsBase(Instrument):
                 if e_visa.args == self.timeoutError.args:
                     pass
                 else:
-                    raise e_visa
+                    raise
 
         # No valid response has been received within the maximum allowed number of attempts
         raise OxfordVISAError(f"Retried {self.max_attempts} times without getting a valid "

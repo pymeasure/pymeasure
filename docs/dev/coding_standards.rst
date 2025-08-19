@@ -29,8 +29,10 @@ If there are conflicts between :code:`black`/:code:`darker`'s output and flake8 
 .. _darker: https://github.com/akaihola/darker
 .. _E203: https://www.flake8rules.com/rules/E203.html
 
-There are no plans to support type hinting in PyMeasure code. This adds a lot of additional code to manage, without a clear advantage for this project. 
-Type documentation should be placed in the docstring where not clear from the variable name.
+You may add type hints as you see fit.
+All type hints should adhere to the guidelines set out in the `typing`_ package.
+
+.. _typing: https://docs.python.org/3/library/typing.html
 
 Documentation
 =============
@@ -60,7 +62,7 @@ Most importantly:
 * Optionally, after a blank line, include more detailed information.
 * For functions and methods, you can add documentation on their parameters using the `reStructuredText docstring format <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#info-field-lists>`__.
 
-Specific to properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property, as it is not visible after import, whether a property is gettable ("Get" or "Measure"), settable ("Set"), or both ("Control").
+Specific to properties, start them with "Control", "Get", "Measure", or "Set" to indicate the kind of property, as it is not visible after import, whether a property is gettable ("Get" or "Measure", e.g. for a :meth:`measurement`), settable ("Set", for a :meth:`setting`), or both ("Control", for a :meth:`control`).
 In addition, it is useful to add type and information about :ref:`validators` (if applicable) at the end of the summary line, see the docstrings shown in examples throughout the :ref:`adding-instruments` section.
 For example a docstring could be :code:`"""Control the voltage in Volts (float strictly from -1 to 1)."""`.
 

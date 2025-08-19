@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -203,7 +203,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
     hardcopy_setup_current = Instrument.measurement(
         "HCSU?",
         """Get current hardcopy config.""",
-        get_process=_results_list_to_dict,
+        get_process_list=_results_list_to_dict,
     )
 
     def hardcopy_setup(self, **kwargs):

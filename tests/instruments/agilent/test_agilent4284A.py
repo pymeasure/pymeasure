@@ -26,6 +26,10 @@ import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.agilent import Agilent4284A
 
+IMPEDANCE_MODES = ("CPD", "CPQ", "CPG", "CPRP", "CSD", "CSQ", "CSRS",
+                   "LPQ", "LPD", "LPG", "LPRP", "LSD", "LSQ", "LSRS",
+                   "RX", "ZTD", "ZTR", "GB", "YTD", "YTR")
+
 
 @pytest.mark.parametrize("frequency", [20, 100, 1e4, 1e6])
 def test_frequency(frequency):
@@ -56,9 +60,7 @@ def test_high_power_mode(power_mode):
         assert bool(power_mode) == inst.high_power_enabled
 
 
-@pytest.mark.parametrize("impedance_mode", [
-    "CPD", "CPQ", "CPG", "CPRP", "CSD", "CSQ", "CSRS", "LPQ", "LPD", "LPG", "LPRP",
-    "LSD", "LSQ", "LSRS", "RX", "ZTD", "ZTR", "GB", "YTD", "YTR"])
+@pytest.mark.parametrize("impedance_mode", IMPEDANCE_MODES)
 def test_impedance_mode(impedance_mode):
     with expected_protocol(
         Agilent4284A,
@@ -119,3 +121,147 @@ def sweep_measurement(param_list):
         assert results[0] == [0.5,] * 11
         assert results[1] == [-0.785,] * 11
         assert results[2] == param_list[2]
+
+
+class TestCorrection:
+    """Tests for the correction functions."""
+
+    def test_measure_open(self):
+        with expected_protocol(
+            Agilent4284A,
+            [(":CORR:OPEN", None)]
+        ) as inst:
+            inst.correction.measure_open()
+
+    def test_measure_short(self):
+        with expected_protocol(
+            Agilent4284A,
+            [(":CORR:SHOR", None)]
+        ) as inst:
+            inst.correction.measure_short()
+
+    def test_measure_load(self):
+        with expected_protocol(
+            Agilent4284A,
+            [(":CORR:LOAD", None)]
+        ) as inst:
+            inst.correction.measure_load()
+
+    @pytest.mark.parametrize("state", [True, False])
+    def test_open_enabled(self, state):
+        mapping = {True: 1, False: 0}
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:OPEN:STAT {mapping[state]}", None),
+             (":CORR:OPEN:STAT?", mapping[state])]
+        ) as inst:
+            inst.correction.open_enabled = state
+            state == inst.correction.open_enabled
+
+    @pytest.mark.parametrize("state", [True, False])
+    def test_short_enabled(self, state):
+        mapping = {True: 1, False: 0}
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SHOR:STAT {mapping[state]}", None),
+             (":CORR:SHOR:STAT?", mapping[state])]
+        ) as inst:
+            inst.correction.short_enabled = state
+            state == inst.correction.short_enabled
+
+    @pytest.mark.parametrize("state", [True, False])
+    def test_load_enabled(self, state):
+        mapping = {True: 1, False: 0}
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:LOAD:STAT {mapping[state]}", None),
+             (":CORR:LOAD:STAT?", mapping[state])]
+        ) as inst:
+            inst.correction.load_enabled = state
+            state == inst.correction.load_enabled
+
+    @pytest.mark.parametrize("impedance_mode", IMPEDANCE_MODES)
+    def test_load_function(self, impedance_mode):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:LOAD:TYPE {impedance_mode}", None),
+             (":CORR:LOAD:TYPE?", impedance_mode)]
+        ) as inst:
+            inst.correction.load_function = impedance_mode
+            impedance_mode == inst.correction.load_function
+
+    @pytest.mark.parametrize("cable_length", [0, 1, 2, 4])
+    def test_cable_length(self, cable_length):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:LENG {cable_length}", None),
+             (":CORR:LENG?", cable_length)]
+        ) as inst:
+            inst.correction.cable_length = cable_length
+            cable_length == inst.correction.cable_length
+
+    @pytest.mark.parametrize("cable_length", [-1, 1.1, 3, 2e1])
+    def test_cable_length_validator(self, cable_length):
+        with pytest.raises(ValueError):
+            with expected_protocol(
+                Agilent4284A,
+                [(f":CORR:LENG {cable_length}", None)],
+            ) as inst:
+                inst.correction.cable_length = cable_length
+
+
+@pytest.mark.parametrize("spot", [1, 2, 3])
+class TestSpotCorrection:
+    """Tests for the spot correction functions."""
+
+    def test_measure_open(self, spot):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:OPEN", None)]
+        ) as inst:
+            inst.correction.spots[spot].measure_open()
+
+    def test_measure_short(self, spot):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:SHOR", None)]
+        ) as inst:
+            inst.correction.spots[spot].measure_short()
+
+    def test_measure_load(self, spot):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:LOAD", None)]
+        ) as inst:
+            inst.correction.spots[spot].measure_load()
+
+    @pytest.mark.parametrize("state", [True, False])
+    def test_spot_enabled(self, spot, state):
+        mapping = {True: 1, False: 0}
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:STAT {mapping[state]}", None),
+             (f":CORR:SPOT{spot}:STAT?", mapping[state])]
+        ) as inst:
+            inst.correction.spots[spot].enabled = state
+            state == inst.correction.spots[spot].enabled
+
+    @pytest.mark.parametrize("frequency", [20, 100, 1e4, 1e6])
+    def test_spot_frequency(self, spot, frequency):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:FREQ?", frequency),
+             (f":CORR:SPOT{spot}:FREQ {frequency:g}", None),],
+        ) as inst:
+            assert frequency == inst.correction.spots[spot].frequency
+            inst.correction.spots[spot].frequency = frequency
+
+    @pytest.mark.parametrize("impedance_mode", IMPEDANCE_MODES)
+    def test_spot_load_function(self, spot, impedance_mode):
+        with expected_protocol(
+            Agilent4284A,
+            [(f":CORR:SPOT{spot}:LOAD:STAN {impedance_mode}", None),
+             (f":CORR:SPOT{spot}:LOAD:STAN?", impedance_mode)]
+        ) as inst:
+            inst.correction.spots[spot].load_function = impedance_mode
+            impedance_mode == inst.correction.spots[spot].load_function

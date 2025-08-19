@@ -16,6 +16,7 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley2306
    keithley2400
    keithley2450
+   keithley2510
    keithley2600
    keithley2700
    keithley2750
@@ -24,3 +25,4 @@ This section contains specific documentation on the Keithley instruments that ar
    keithleyDMM6500
    keithley2182
    keithleyDAQ6510
+   keithley4200

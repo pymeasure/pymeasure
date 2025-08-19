@@ -245,6 +245,13 @@ class TestHP856Xx:
         ) as instr:
             assert instr.errors == [ErrorCode(112), ErrorCode(101), ErrorCode(111)]
 
+    def test_empty_errors(self):
+        with expected_protocol(
+                HP856Xx,
+                [("ERR?", "")],
+        ) as instr:
+            assert instr.errors == []
+
     def test_elapsed_time(self):
         with expected_protocol(
                 HP856Xx,
