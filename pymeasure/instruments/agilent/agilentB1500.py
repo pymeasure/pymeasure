@@ -1690,6 +1690,10 @@ class SPGU:
         """Start SPGU output (``SRP``)"""
         self.write("SRP")
 
+    def stop_output(self):
+        """Stop SPGU output (``SPP``). The channel outputs the base voltage."""
+        self.write("SPP")
+
     operation_mode = Instrument.control(
         "SIM?",
         "SIM %d",
