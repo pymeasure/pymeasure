@@ -87,9 +87,6 @@ def test_reset(keithley2400):
     # 18-9
     assert keithley2400.auto_zero is True
 
-    # 18-11
-    # TODO: Trigger
-
 
 def test_current_source(keithley2400):
     source_current = 10e-3

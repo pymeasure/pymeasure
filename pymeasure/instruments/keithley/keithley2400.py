@@ -71,6 +71,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
+        # Ensures the data format is as expected. Setting `:FORM:ELEM` to anything else after
+        # initialization will break some part of the functionality.
+        # If comms in the init is undesirable, could put the formatter before any measurements
+        # e.g. for current, ":FORM:ELEM CURR;:MEAS:CURR?". I opted against this to reduce the
+        # number of commands sent to the instrument.
+        self.write(":FORM:ELEM VOLT, CURR, RES, TIME, STAT")
+
     ##########
     # SOURCE #
     ##########
@@ -122,7 +129,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control whether the auto zero option is enabled
         (bool or str, True (enabled), False (disabled), or 'ONCE' (force immediate)).""",
         validator=strict_discrete_set,
-        values={True: 1, False: 0, "ONCE": "ONCE"},
+        values={True: 1, False: 0, "once": "ONCE"},
         map_values=True,
     )
 
@@ -144,10 +151,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "normal": "NORM",
             "zero": "ZERO",
             "guard": "GUAR",
-            "HIMP": "HIMP",  # Included for backwards compatibility
-            "NORM": "NORM",  # ''
-            "ZERO": "ZERO",  # ''
-            "GUAR": "GUAR",  # ''
         },
         map_values=True,
     )
@@ -188,8 +191,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values={
             "repeat": "REP",
             "moving": "MOV",
-            "REP": "REP",  # Included for backwards compatibility
-            "MOV": "MOV",  # ''
         },
         map_values=True,
     )

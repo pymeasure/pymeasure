@@ -27,10 +27,13 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.keithley import Keithley2400
 
 
+INIT_COMMS = (":FORM:ELEM VOLT, CURR, RES, TIME, STAT", None)
+
+
 def test_buffer_points_getter():
     with expected_protocol(
         Keithley2400,
-        [(":TRAC:POIN?", 500)],
+        [INIT_COMMS, (":TRAC:POIN?", 500)],
     ) as inst:
         assert inst.buffer_points == 500
 
@@ -38,6 +41,6 @@ def test_buffer_points_getter():
 def test_buffer_points_setter():
     with expected_protocol(
         Keithley2400,
-        [(":TRAC:POIN 500", None)],
+        [INIT_COMMS, (":TRAC:POIN 500", None)],
     ) as inst:
         inst.buffer_points = 500
