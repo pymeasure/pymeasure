@@ -254,6 +254,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         mode = SPGUOutputMode.get(mode)
 
+        if mode == SPGUOutputMode.FREE_RUN:
+            self.write(f"SPRM {mode.value}")
+            return
+
+        if condition is None:
+            raise ValueError(f"Condition must be specified when mode is {mode}")
+
         if mode == SPGUOutputMode.COUNT:
             if not (1 <= condition <= 1_000_000):
                 raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
