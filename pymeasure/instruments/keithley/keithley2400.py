@@ -159,6 +159,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:CLE:AUTO?",
         ":SOUR:CLE:AUTO %d",
         """Control whether auto output-off is activated (bool).
+
         .. warning::
            With auto output-off disabled (False), the output will remain on after
            a source-measure operation is performed.""",
@@ -217,13 +218,18 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Measurement methods #
 
     def measure_all(self, resistance_mode_auto=False):
-        """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently,
-        returning as the dict:
-        {'current': `float`,
-        'voltage': `float`,
-        'resistance': `float`,
-        'time': `float`,
-        'status': `int`}
+        """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently.
+
+        Returns
+        -------
+        dict
+            {
+                'current': float,
+                'voltage': float,
+                'resistance': float,
+                'time': float,
+                'status': int
+            }
         """
         self.resistance_mode_auto = resistance_mode_auto
         self.write(":SENS:FUNC:ALL")
