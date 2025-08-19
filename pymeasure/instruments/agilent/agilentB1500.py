@@ -33,7 +33,6 @@ import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -1707,7 +1706,7 @@ class SPGU:
     period = Instrument.control(
         "SPPER?",
         "SPPER %f",
-        """Control the pulse period for SPGU channels (``SPPER``) in seconds (float). 
+        """Control the pulse period for SPGU channels (``SPPER``) in seconds (float).
         Applies to all installed SPGU modules""",
         validator=strict_range,
         values=[2e-8, 10],
