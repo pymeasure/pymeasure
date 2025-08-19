@@ -217,21 +217,23 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # Measurement methods #
 
-    def measure_all(self, resistance_mode_auto=False):
+    def measure_all(self):
         """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently.
+
+        .. note::
+           Sets `resistance_mode_auto` to False
 
         Returns
         -------
         dict
-            {
-                'current': float,
-                'voltage': float,
-                'resistance': float,
-                'time': float,
-                'status': int
-            }
+            Dictionary with the following keys:
+            - 'current' (float): Measured current in A.
+            - 'voltage' (float): Measured voltage in V.
+            - 'resistance' (float): Measured resistance in Ohms.
+            - 'time' (float): Measurement time in s.
+            - 'status' (int): Instrument status flag.
         """
-        self.resistance_mode_auto = resistance_mode_auto
+        self.resistance_mode_auto = False
         self.write(":SENS:FUNC:ALL")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
