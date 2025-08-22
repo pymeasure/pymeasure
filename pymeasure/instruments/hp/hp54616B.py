@@ -23,11 +23,12 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
+
 
 def float_to_nr3(input: float):
     return "{:.5E}".format(input)
+
 
 class Channel():
     """ Implementation of a Hewlett Packard HP54616B channel
@@ -44,7 +45,7 @@ class Channel():
         set_command=":BW %s",
         docs="""Control channel bandwidth limit""",
         validator=strict_discrete_set,
-        values={"on":"ON", "off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True
     )
 
@@ -53,7 +54,7 @@ class Channel():
         set_command=":COUP %s",
         docs="""Control channel coupling to AC, DC or GND""",
         validator=strict_discrete_set,
-        values={"ac":"AC", "dc": "DC", "gnd": "GND"},
+        values={"ac": "AC", "dc": "DC", "gnd": "GND"},
         map_values=True
     )
 
@@ -62,7 +63,7 @@ class Channel():
         set_command=":INP %s",
         docs="""Control input impedance to either 50 or 1M Ohm""",
         validator=strict_discrete_set,
-        values={"50":"FIFT","1M":"ONEM"},
+        values={"50": "FIFT", "1M": "ONEM"},
         map_values=True
     )
 
@@ -71,7 +72,7 @@ class Channel():
         set_command=":INV %s",
         docs="""Control a boolean parameter that inverts of the input signal""",
         validator=strict_discrete_set,
-        values={"on":"ON","off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True
     )
 
@@ -87,7 +88,7 @@ class Channel():
         set_command=":PMOD %s",
         docs="""Control the probe mode""",
         validator=strict_discrete_set,
-        values={"auto":"AUT","manual":"MAN"},
+        values={"auto": "AUT", "manual": "MAN"},
         map_values=True
     )
 
@@ -96,7 +97,7 @@ class Channel():
         set_command=":PROB %s",
         docs="""Control the probe attenuation""",
         validator=strict_discrete_set,
-        values={"x1":"X1","x10":"X10","x100":"X100"},
+        values={"x1": "X1", "x10": "X10", "x100": "X100"},
         map_values=True
     )
 
@@ -105,7 +106,7 @@ class Channel():
         set_command=":PROT %s",
         docs="""Control the protect option for channel""",
         validator=strict_discrete_set,
-        values={"off":"OFF","on":"ON"},
+        values={"off": "OFF", "on": "ON"},
         map_values=True
     )
 
@@ -127,7 +128,7 @@ class Channel():
         set_command=":VERN %s",
         docs="""Control the enable vernier option""",
         validator=strict_discrete_set,
-        values={"off":"OFF","on":"ON"},
+        values={"off": "OFF", "on": "ON"},
         map_values=True
     )
 
@@ -190,7 +191,7 @@ class Channel():
             - "OFFSET": vertical offset (float)
             - "COUP": "dc" or "ac" coupling (str)
             - "BWLIMIT": bandwidth limiting enabled (bool)
-            - "INVERT": inverted (bool) 
+            - "INVERT": inverted (bool)
             - "VERNIER": vernier "on" or "off" (bool)
             - "PROBE": probe attenuation (str)
             - "PMODE": prove mode "auto" or "manual" (str)
@@ -212,7 +213,6 @@ class Channel():
 
         # Add "CHAN" key
         ch_setup_dict["CHAN"] = ch_setup_raw[4]
-        print(ch_setup_dict)
 
         # Convert values to specific type
         to_str = ["COUP", "PROBE", "PMODE", "INPUT"]
@@ -228,12 +228,14 @@ class Channel():
                 elif (ch_setup_dict[key] == "OFF"):
                     ch_setup_dict[key] = False
                 else:
-                    raise Exception("Boolean should be either \"ON\" or \"OFF\". Setup value is neither.")
+                    raise Exception("Boolean should be either \"ON\" or \"OFF\". "
+                                    "Setup value is neither.")
             elif key in to_float:
                 ch_setup_dict[key] = float(ch_setup_dict[key])
             elif key in to_int:
                 ch_setup_dict[key] = int(ch_setup_dict[key])
         return ch_setup_dict
+
 
 class HP54616B(SCPIMixin, Instrument):
     """ Represents the Hewlett Packard HP54616B Oscilloscope
@@ -241,8 +243,8 @@ class HP54616B(SCPIMixin, Instrument):
     """
 
     def __init__(self, adapter, name="Hewlett Packard HP 54616B Oscilloscope", **kwargs):
-        super().__init__(adapter,name,timeout=6000,**kwargs)
-                # Account for setup time for timebase_mode, waveform_points_mode
+        super().__init__(adapter, name, timeout=6000, **kwargs)
+        # Account for setup time for timebase_mode, waveform_points_mode
         self.ch1 = Channel(self, 1)
         self.ch2 = Channel(self, 2)
 
@@ -255,7 +257,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DITH %s",
         docs="""Control the enable dither option""",
         validator=strict_discrete_set,
-        values={"on":"ON", "off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True,
     )
 
@@ -292,20 +294,19 @@ class HP54616B(SCPIMixin, Instrument):
         """Stop oscilloscope"""
         self.write(":STOP")
 
-    def get_waveform_data(self,**kwargs):
+    def get_waveform_data(self, **kwargs):
         """Command to read waveform data after digitization.
         """
         self.write(":WAV:DATA?")
         read_data = self.read(**kwargs)
         return read_data
-    
+
     def get_display_pixel(self, x, y, **kwargs):
         message = f":DISP:PIX? {x},{y}"
-        print(message)
-        self.write(message) 
+        self.write(message)
         read_data = self.read(**kwargs)
         return read_data
-    
+
     def set_display_pixel(self, x, y, intensity, **kwargs):
         message = f":DISP:PIX {x},{y},{intensity}"
         if not (0 <= x <= 511):
@@ -322,17 +323,17 @@ class HP54616B(SCPIMixin, Instrument):
     # Acquire #
     ###############
 
-    # The :ACQUIRE:COMPLETE command specifies the completion criteria for an acquisition. 
-    # The parameter determines what percentage of the time buckets need to be "full" 
-    # before an acquisition is considered complete. 
-    # If you are in the NORMAL mode the instrument only needs one data bit per time bucket 
-    # for that time bucket to be considered full. 
-    # In order for the time bucket to be considered full in the AVERAGE or ENVELOPE modes 
+    # The :ACQUIRE:COMPLETE command specifies the completion criteria for an acquisition.
+    # The parameter determines what percentage of the time buckets need to be "full"
+    # before an acquisition is considered complete.
+    # If you are in the NORMAL mode the instrument only needs one data bit per time bucket
+    # for that time bucket to be considered full.
+    # In order for the time bucket to be considered full in the AVERAGE or ENVELOPE modes
     # a specified number of data points (COUNT) must be acquired.
-    # The range for the COMPLETE command is 0 to 100 and indicates the percentage of time buckets 
-    # that must be "full" before the acquisition is considered complete. 
+    # The range for the COMPLETE command is 0 to 100 and indicates the percentage of time buckets
+    # that must be "full" before the acquisition is considered complete.
     # If the complete value is set to 100%, all time buckets must contain
-    # data for the acquisition to be considered complete. 
+    # data for the acquisition to be considered complete.
     # If the complete value is set to 0 then one acquisition cycle will take place.
     # The COMPLETE query returns the completion criteria for the currently selected mode.
     acquire_complete = Instrument.control(
@@ -375,7 +376,7 @@ class HP54616B(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"normal": "NORM", "average": "AVER", "peak": "PEAK"},
         map_values=True,
-    )  
+    )
 
     ###############
     # Channel #
@@ -386,16 +387,16 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":CHAN:MATH %s",
         docs="""Control math channel setup. Options are off, plus, subtract.""",
         validator=strict_discrete_set,
-        values={"off":"OFF","plus":"PLUS","subtract":"SUBT"},
+        values={"off": "OFF", "plus": "PLUS", "subtract": "SUBT"},
         map_values=True
-    ) 
+    )
 
     channel2_skew = Instrument.control(
         get_command=":CHAN2:SKEW?",
         set_command=":CHAN2:SKEW %s",
         docs="""Control channel 2 skew.""",
         set_process=float_to_nr3
-    ) 
+    )
 
     ###############
     # Display #
@@ -415,7 +416,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:CONN %s",
         docs="""Control display connect""",
         validator=strict_range,
-        values={"on":"ON","off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True,
     )
 
@@ -424,7 +425,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:GRID %s",
         docs="""Control display grid""",
         validator=strict_discrete_set,
-        values={"on":"ON","off":"OFF","simple":"SIMP","tv":"TV"},
+        values={"on": "ON", "off": "OFF", "simple": "SIMP", "tv": "TV"},
         map_values=True,
     )
 
@@ -433,7 +434,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:INV %s",
         docs="""Control option to invert display""",
         validator=strict_discrete_set,
-        values={"on":"ON","off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True,
     )
 
@@ -448,7 +449,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:PAL %u",
         docs="""Control palette of display""",
         validator=strict_range,
-        values=[0,6],
+        values=[0, 6],
         map_values=False,
     )
 
@@ -464,7 +465,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:ROW %u",
         docs="""Control row of display""",
         validator=strict_range,
-        values=[1,20],
+        values=[1, 20],
         map_values=False,
     )
 
@@ -479,7 +480,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":DISP:SOUR %s",
         docs="""Control display source""",
         validator=strict_discrete_set,
-        values={"pmemory1":"PMEM1","pmemory2":"PMEM2"},
+        values={"pmemory1": "PMEM1", "pmemory2": "PMEM2"},
         map_values=True,
     )
 
@@ -492,7 +493,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":WAV:BYT %s",
         docs="""Control waveform byteorder. Options are lsbfirst and msbfirst.""",
         validator=strict_discrete_set,
-        values={"lsbfirst":"LSBF","msbfirst":"MSBF"},
+        values={"lsbfirst": "LSBF", "msbfirst": "MSBF"},
         map_values=True,
     )
 
@@ -501,16 +502,28 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":WAV:FORM %s",
         docs="""Control waveform format. Options are ascii, word and byte.""",
         validator=strict_discrete_set,
-        values={"ascii":"ASC","word":"WORD","byte":"BYTE"},
+        values={"ascii": "ASC", "word": "WORD", "byte": "BYTE"},
         map_values=True,
     )
 
     waveform_points = Instrument.control(
         get_command=":WAV:POIN?",
         set_command=":WAV:POIN %s",
-        docs="""Control number of waveform points. Options are 100, 200, 250, 400, 500, 800, 1000, 2000, 4000, 5000""",
+        docs="""Control number of waveform points.
+            Options are 100, 200, 250, 400, 500, 800, 1000, 2000, 4000, 5000""",
         validator=strict_discrete_set,
-        values={100:100,200:200,250:250,400:400,500:500,800:800,1000:1000,2000:2000,4000:4000,5000:5000},
+        values={
+            100: 100,
+            200: 200,
+            250: 250,
+            400: 400,
+            500: 500,
+            800: 800,
+            1000: 1000,
+            2000: 2000,
+            4000: 4000,
+            5000: 5000
+        },
         map_values=True,
     )
 
@@ -525,7 +538,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":WAV:SOUR CHAN%s",
         docs="""Control waveform source channel""",
         validator=strict_range,
-        values=[1,2],
+        values=[1, 2],
         map_values=False,
     )
 
@@ -587,7 +600,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":TIM:MODE %s",
         docs="""Control timebase mode. Options are normal, delayed, xy and roll.""",
         validator=strict_discrete_set,
-        values={"normal":"NORM","delayed":"DEL","xy":"XY","roll":"ROLL"},
+        values={"normal": "NORM", "delayed": "DEL", "xy": "XY", "roll": "ROLL"},
         map_values=True,
     )
 
@@ -603,7 +616,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":TIM:REF %s",
         docs="""Control timebase reference""",
         validator=strict_discrete_set,
-        values={"left":"LEFT","center":"CENT","right":"RIGH"},
+        values={"left": "LEFT", "center": "CENT", "right": "RIGH"},
         map_values=True,
     )
 
@@ -618,7 +631,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":TIM:VERN %s",
         docs="""Control timebase vernier""",
         validator=strict_discrete_set,
-        values={"on":"ON","off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True,
     )
 
@@ -745,7 +758,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":MEAS:SHOW %s",
         docs="""Set measurement to show""",
         validator=strict_discrete_set,
-        values={"on":"ON","off":"OFF"},
+        values={"on": "ON", "off": "OFF"},
         map_values=True,
     )
 
@@ -754,7 +767,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":MEAS:SOUR %u",
         docs="""Set measurement source""",
         validator=strict_range,
-        values=[1,2],
+        values=[1, 2],
         map_values=False,
     )
 
@@ -763,7 +776,7 @@ class HP54616B(SCPIMixin, Instrument):
         set_command=":MEAS:THR %s",
         docs="""Measure 10-90% time, 20-80% time and voltage between thresholds""",
         validator=strict_discrete_set,
-        values={"t1090":"T1090","t2080":"T2080","voltage":"VOLT"},
+        values={"t1090": "T1090", "t2080": "T2080", "voltage": "VOLT"},
         map_values=True,
     )
 
@@ -777,12 +790,6 @@ class HP54616B(SCPIMixin, Instrument):
         get_command=":MEAS:TSTO?",
         set_command=":MEAS:TSTO %s",
         docs="""Set time of stop marker in seconds""",
-    )
-
-    measure_tvolt = Instrument.control(
-        get_command=":MEAS:TVOL?",
-        set_command=None,
-        docs="""Measure TVOLT <tvolt_argument> ::= positive or negative voltage level that the waveform must cross. <slope> ::= direction of the waveform when <tvolt_argument> is crossed. <occurrence> ::= number of crossings to be reported. <return_value> ::= time in seconds of specified voltage crossing in NR3 format""",
     )
 
     measure_upper = Instrument.control(
