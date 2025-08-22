@@ -200,7 +200,7 @@ class Channel():
 
         ch_setup_raw = self.setup_summary
 
-        # ch_setup_raw hat the following format:
+        # ch_setup_raw has the following format:
         # CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;BWLIMIT OFF;
         # INVERT OFF;VERNIER OFF;PROBE X1;PMODE AUT;INPUT ONEM;PROTECT ON
 
@@ -294,7 +294,6 @@ class HP54616B(SCPIMixin, Instrument):
 
     def get_waveform_data(self,**kwargs):
         """Command to read waveform data after digitization.
-        :param int Number of Bytes to save
         """
         self.write(":WAV:DATA?")
         read_data = self.read(**kwargs)
@@ -418,13 +417,6 @@ class HP54616B(SCPIMixin, Instrument):
         validator=strict_range,
         values={"on":"ON","off":"OFF"},
         map_values=True,
-    )
-
-    # TODO test the transmission of binary block data
-    display_data = Instrument.control(
-        get_command=":DISP:DATA?",
-        set_command=":DISP:DATA %s",
-        docs="""Control display data provided in binary block data""",
     )
 
     display_grid = Instrument.control(
