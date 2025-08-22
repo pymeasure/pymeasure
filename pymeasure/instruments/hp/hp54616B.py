@@ -144,7 +144,7 @@ class Channel():
             self.number, command), **kwargs)
 
     def ask(self, command):
-        self.instrument.ask(":CHANl%u%s" % (self.number, command))
+        self.instrument.ask(":CHAN%u%s" % (self.number, command))
 
     def write(self, command):
         self.instrument.write(":CHAN%u%s" % (self.number, command))
