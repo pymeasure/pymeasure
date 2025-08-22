@@ -49,13 +49,38 @@ def test_identity():
 def test_channel_setup():
     with expected_protocol(
             HP54616B,
-            [(b":CHAN1:SET?", "CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;BWLIMIT OFF;INVERT OFF;VERNIER OFF;PROBE X1;PMODE AUT;INPUT ONEM;PROTECT ON")],
+            [(b":CHAN1:SET?",
+              "CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;"
+              "BWLIMIT OFF;INVERT OFF;VERNIER OFF;PROBE X1;PMODE AUT;INPUT ONEM;PROTECT ON"),
+                (b":CHAN1:BW ON", None),
+                (b":CHAN1:COUP DC", None),
+                (b":CHAN1:INP FIFT", None),
+                (b":CHAN1:INV ON", None),
+                (b":CHAN1:OFFS 4.20000E+00", None),
+                (b":CHAN1:PMOD AUT", None),
+                (b":CHAN1:PROB X1", None),
+                (b":CHAN1:RANG 1.25000E+00", None),
+                (b":CHAN1:VERN OFF", None),
+             ],
     ) as instr:
         # Checking keys of channel config dict
         channel_dict = instr.ch1.current_configuration
-        expected_channel_dict_keys = ["CHAN", 'RANGE', 'OFFSET', 'COUP', 'BWLIMIT', 'INVERT', 'VERNIER', 'PROBE', 'PMODE', 'INPUT', 'PROTECT']
+        expected_channel_dict_keys = ["CHAN", 'RANGE', 'OFFSET', 'COUP', 'BWLIMIT', 'INVERT',
+                                      'VERNIER', 'PROBE', 'PMODE', 'INPUT', 'PROTECT']
         for key in channel_dict:
             assert key in expected_channel_dict_keys
+
+        instr.ch1.setup(
+            bwlimit="on",
+            coupling="dc",
+            input_impedance="50",
+            invert="on",
+            offset=4.2,
+            pmode="auto",
+            probe_attenuation="x1",
+            vertical_range=1.25,
+            vernier="off"
+        )
 
 
 def test_channel_voltage_offset():
