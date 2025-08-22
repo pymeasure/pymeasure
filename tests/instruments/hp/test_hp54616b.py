@@ -37,12 +37,14 @@ def test_frequency():
         instr.acquire_complete = 100
         assert instr.acquire_complete == 100
 
+
 def test_identity():
     with expected_protocol(
             HP54616B,
             [(b"*IDN?", "HEWLETT-PACKARD,54616B,0,A.02.30")],
     ) as instr:
         assert instr.id == "HEWLETT-PACKARD,54616B,0,A.02.30"
+
 
 def test_channel_setup():
     with expected_protocol(
@@ -55,12 +57,14 @@ def test_channel_setup():
         for key in channel_dict:
             assert key in expected_channel_dict_keys
 
+
 def test_channel_voltage_offset():
     with expected_protocol(
             HP54616B,
             [(b":CHAN1:OFFS 5.00000E-01", None)],
     ) as instr:
         instr.ch1.offset = 0.5
+
 
 def test_display_pixel():
     with expected_protocol(
@@ -69,9 +73,26 @@ def test_display_pixel():
     ) as instr:
         instr.display_pixel = "1 1 1"
 
+
 def test_waveform_format():
     with expected_protocol(
             HP54616B,
             [(b":WAV:FORM?", "ASC")],
     ) as instr:
         assert instr.waveform_format == "ascii"
+
+
+def test_channel1_coupling():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN1:COUP?", "AC")],
+    ) as instr:
+        assert instr.ch1.coupling == "ac"
+
+
+def test_channel2_coupling():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN2:COUP?", "DC")],
+    ) as instr:
+        assert instr.ch2.coupling == "dc"
