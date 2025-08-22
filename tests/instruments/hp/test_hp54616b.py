@@ -68,3 +68,10 @@ def test_display_pixel():
             [(b":DISP:PIX 1 1 1", None)],
     ) as instr:
         instr.display_pixel = "1 1 1"
+
+def test_waveform_format():
+    with expected_protocol(
+            HP54616B,
+            [(b":WAV:FORM?", "ASC")],
+    ) as instr:
+        assert instr.waveform_format == "ascii"
