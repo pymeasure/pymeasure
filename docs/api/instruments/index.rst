@@ -81,6 +81,6 @@ Instruments by manufacturer:
    thorlabs/index
    thyracont/index
    toptica/index
-   tti/index 
+   thurlby/index 
    velleman/index
    yokogawa/index

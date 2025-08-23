@@ -25,7 +25,8 @@
 import pytest
 
 from pymeasure.errors import Error, RangeError
-from pymeasure.instruments.tti import Thurlby1905a
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.thurlby import Thurlby1905a
 
 
 @pytest.mark.parametrize(
@@ -38,7 +39,7 @@ from pymeasure.instruments.tti import Thurlby1905a
     ],
 )
 def test_translate_positive_reading(reading, expected):
-    assert Thurlby1905a._translate(reading) == expected
+    assert Thurlby1905a._parse(reading) == expected
 
 
 @pytest.mark.parametrize(
@@ -51,40 +52,79 @@ def test_translate_positive_reading(reading, expected):
     ],
 )
 def test_translate_negative_reading(reading, expected):
-    assert Thurlby1905a._translate(reading) == expected
+    assert Thurlby1905a._parse(reading) == expected
 
 
 def test_measurement_too_short():
     """all meaurements must be exactly 10 bytes long"""
     with pytest.raises(ValueError):
         # 9 bytes long
-        _ = Thurlby1905a._translate("R- 0.6   ")
+        _ = Thurlby1905a._parse("R- 0.6   ")
 
 
 def test_measurement_too_long():
     """all meaurements must be exactly 10 bytes long"""
     with pytest.raises(ValueError):
         # 11 bytes long
-        _ = Thurlby1905a._translate("R  1.655500")
+        _ = Thurlby1905a._parse("R  1.655500")
 
 
 def test_overrange():
     with pytest.raises(RangeError):
-        _ = Thurlby1905a._translate("M   OR    ")
+        _ = Thurlby1905a._parse("M   OR    ")
 
 
 def test_general_error():
     with pytest.raises(Error):
-        _ = Thurlby1905a._translate("M   ERROR ")
+        _ = Thurlby1905a._parse("M   ERROR ")
 
 
 def test_unknown_message():
     """only recognised messages are 'OR' and 'ERROR'"""
     with pytest.raises(Error):
-        _ = Thurlby1905a._translate("M   T56   ")
+        _ = Thurlby1905a._parse("M   T56   ")
 
 
 def test_unknown_measurement_type():
     """only allowed measurement types are 'M' (Message) or 'R' (Reading)"""
     with pytest.raises(Error):
-        _ = Thurlby1905a._translate("Q   T56   ")
+        _ = Thurlby1905a._parse("Q   T56   ")
+
+
+@pytest.mark.parametrize(
+    "serial_out, expected",
+    [
+        ("R  997.40 ", 997.4),
+        ("R- 1.0008 ", -1.0008),
+    ],
+)
+def test_measurement_direct(serial_out, expected):
+    with expected_protocol(
+        Thurlby1905a,
+        [
+            (None, serial_out),
+        ],
+    ) as instr:
+        assert instr.measurement == expected
+
+
+@pytest.mark.parametrize(
+    "serial_out, exception",
+    [
+        ("M   OR    ", RangeError),
+        ("M   ERROR ", Error),
+        ("M   JUNK  ", Error),
+        ("N   MGH   ", Error),
+        ("R 123.40", ValueError),  # Too short: 8 bytes, must be 10 bytes long
+        ("R-  555.40 ", ValueError),  # Too long: 12 bytes, must be 10 bytes long
+    ],
+)
+def test_raises_exception_on_measurement(serial_out, exception):
+    with pytest.raises(exception):
+        with expected_protocol(
+            Thurlby1905a,
+            [
+                (None, serial_out),
+            ],
+        ) as instr:
+            _ = instr.measurement

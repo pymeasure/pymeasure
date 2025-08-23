@@ -22,63 +22,79 @@
 # THE SOFTWARE.
 #
 
-import logging
-
 from pymeasure.errors import Error, RangeError
 from pymeasure.instruments import Instrument
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 class Thurlby1905a(Instrument):
     """Represents the Thurlby 1905a intelligent digital multimeter
 
+    This instrument only provides measurement output via an RS-232 serial port.
+    The serial port can only be read from, not written to.
+
+    Earlier models had a Baud rate of 2400, later ones 9600.
+
     .. code-block python
 
-        from pymeasure.instruments.tti import Thurlby1905a
+        from pymeasure.instruments.thurlby import Thurlby1905a
 
-        dmm = Thurlby1905a("ASRL/dev/ttyACM0::INSTR", baud_rate=2400)
-        output = dmm.read_measurement
+        dmm = Thurlby1905a("ASRL/dev/ttyACM0::INSTR")
+        output = dmm.measurement
 
     """
 
     def __init__(self, adapter, name="Thurlby 1905a", **kwargs):
-        kwargs.setdefault("read_termination", "\r")
         super().__init__(
             adapter,
             name,
             includeSCPI=False,
+            read_termination="\r",
             **kwargs,
         )
 
     @staticmethod
-    def _translate(measurement):
+    def _parse(measurement):
+        """Get the output reading from the instrument.
+
+        :param measurement: the reading from the serial port
+        :type measurement: str
+
+        :return: the interpreted reading
+        :rtype: float
+
+        The first byte of a measurement determines what type it is:
+
+        * A valid reading. First byte: 'R'.
+        * A message. First byte: 'M'.
+
+        All measurements, excluding termination characters, are 10 bytes long.
+
+        Example readings:
+
+        ============ ===============
+        Reading      Returns
+        ============ ===============
+        'R  000.00 ' 0.0
+        'R  997.628' 997.628
+        'R- 000.00 ' -0.0
+        'R-  01.800' -1.8
+        ============ ===============
+
+        Example messages:
+
+        ============ ============================================================
+        Message      Meaning
+        ============ ============================================================
+        'M   OR    ' Over range
+        'M   ERROR ' Error
+        'M  Cd  00 ' The insruments software version (issued briefly at power-up)
+
+        """
+
         # Easier to test if a static method
-        #
-        # There are two types of measurements. A valid reading 'R' or a message 'M'.
-        # All measurements, excluding termination characters, are 10 bytes long.
-        #
-        # Examples:
-        #  Valid reading of -0.0
-        #   'R- 000.00 '
-        #
-        #  Valid reading of 997.628
-        #   'R  997.628'
-        #
-        # A message is anything other than a reading:
-        #
-        #  Over Range
-        #   'M   OR    '
-        #
-        #  An error
-        #   'M   ERROR '
-        #
-        # The instruments software version, issued, briefly, at power-up:
-        #   'M  Cd  00 '
 
         if len(measurement) != 10:
-            raise ValueError("Measurement '%s' is not expected 10 bytes long." % measurement)
+            raise ValueError(f"Measurement '{measurement}' is not the expected 10 bytes long.")
 
         measurement_type = measurement[0]
         body = measurement[1:].replace(" ", "")
@@ -94,10 +110,10 @@ class Thurlby1905a(Instrument):
             else:
                 raise Error(body)
 
-        raise Error("Unknown type of measurement '%s'." % measurement)
+        raise Error(f"Unknown type of measurement '{measurement}'.")
 
     @property
-    def read_measurement(self):
+    def measurement(self):
         """Get the output from the instrument
 
         :returns: the reading from the instrument
@@ -107,4 +123,4 @@ class Thurlby1905a(Instrument):
         :raises RangeError: If input exceeds selected measurement range of instrument
         :raises Error: If unknown message or measurement type
         """
-        return Thurlby1905a._translate(self.read())
+        return Thurlby1905a._parse(self.read())
