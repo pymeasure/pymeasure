@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from time import sleep
+from time import time, sleep
 from enum import IntEnum
 
 from pymeasure.errors import Error
@@ -284,7 +284,7 @@ class LDC500SeriesTEC(Channel):
     enabled = Instrument.control(
         "TEON?",
         "TEON %d",
-        """Control whether the laser diode current source is enabled (bool).""",
+        """Control whether the TEC current source is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -429,6 +429,58 @@ class LDC500SeriesTEC(Channel):
     @resistance_limits.setter
     def resistance_limits(self, res_limits):
         self.resistance_low_limit, self.resistance_high_limit = res_limits
+
+    def check_temperature_stability(self, tolerance=0.1, period=10, points=64):
+        """Determine whether the temperature is stable at the temperature setpoint over a specified
+        period.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :return: True if stable, False otherwise.
+        """
+
+        t_start = time()
+
+        while time() - t_start < period:
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                return False
+
+        return True
+
+    def wait_for_temperature_stable(
+        self,
+        tolerance=0.1,
+        period=10,
+        should_stop=lambda: False,
+        timeout=60,
+    ):
+        """Block the program, waiting for the temperature to stabilize at the temperature setpoint.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds.
+        :return: True when stable, False if stopped by should_stop.
+        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
+        """
+
+        t_start_timeout = time()
+        t_start_period = time()
+
+        while time() - t_start_timeout < timeout:
+
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                t_start_period = time()
+
+            if time() - t_start_period >= period:
+                return True
+
+            if should_stop():
+                return False
+
+        raise TimeoutError("Timed out waiting for temperature to stabilize.")
 
 
 class LDC500Series(SCPIMixin, Instrument):
