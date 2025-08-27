@@ -23,17 +23,21 @@
 #
 
 import logging
-import weakref
-import time
 import re
+import time
+import weakref
+from collections import Counter, OrderedDict, namedtuple
+from enum import IntEnum
+
 import numpy as np
 import pandas as pd
-from enum import IntEnum
-from collections import Counter, namedtuple, OrderedDict
-from pymeasure.instruments.validators import (strict_discrete_set,
-                                              strict_range,
-                                              strict_discrete_range)
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+
+from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.validators import (
+    strict_discrete_range,
+    strict_discrete_set,
+    strict_range,
+)
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -43,31 +47,27 @@ log.addHandler(logging.NullHandler())
 ######################################
 
 
-class AgilentB1500(SCPIUnknownMixin, Instrument):
-    """ Represents the Agilent B1500 Semiconductor Parameter Analyzer
+class AgilentB1500(SCPIMixin, Instrument):
+    """Represents the Agilent B1500 Semiconductor Parameter Analyzer
     and provides a high-level interface for taking different kinds of
     measurements.
     """
 
     def __init__(self, adapter, name="Agilent B1500 Semiconductor Parameter Analyzer", **kwargs):
-        super().__init__(
-            adapter,
-            name,
-            **kwargs
-        )
+        super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
         self._smu_names = {}
         self._smu_references = {}
+        self._spgu_names = {}
+        self._spgu_references = {}
 
     @property
     def smu_references(self):
-        """Returns all SMU instances.
-        """
+        """Returns all SMU instances."""
         return self._smu_references.values()
 
     @property
     def smu_names(self):
-        """Returns all SMU names.
-        """
+        """Returns all SMU names."""
         return self._smu_names
 
     def query_learn(self, query_type):
@@ -89,46 +89,41 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :param query_type: Query type (number according to manual)
         :type query_type: int or str
         """
-        return QueryLearn.query_learn_header(
-            self.ask, query_type, self._smu_references, **kwargs)
-
-    def reset(self):
-        """ Resets the instrument to default settings (``*RST``)
-        """
-        self.write("*RST")
+        return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
 
     def query_modules(self):
-        """ Queries module models from the instrument.
+        """Queries module models from the instrument.
         Returns dictionary of channel and module type.
 
         :return: Channel:Module Type
         :rtype: dict
         """
-        modules = self.ask('UNT?')
-        modules = modules.split(';')
+        modules = self.ask("UNT?")
+        modules = modules.split(";")
         module_names = {
-            'B1525A': 'SPGU',
-            'B1517A': 'HRSMU',
-            'B1511A': 'MPSMU',
-            'B1511B': 'MPSMU',
-            'B1510A': 'HPSMU',
-            'B1514A': 'MCSMU',
-            'B1520A': 'MFCMU'
+            "B1525A": "SPGU",
+            "B1517A": "HRSMU",
+            "B1511A": "MPSMU",
+            "B1511B": "MPSMU",
+            "B1510A": "HPSMU",
+            "B1514A": "MCSMU",
+            "B1520A": "MFCMU",
+            "B1530A": "WGFMU",
+            "B1520A/N1301A": "MFCMU",
         }
         out = {}
         for i, module in enumerate(modules):
-            module = module.split(',')
-            if not module[0] == '0':
+            module = module.split(",")
+            if not module[0] == "0":
                 try:
                     out[i + 1] = module_names[module[0]]
                     # i+1: channels start at 1 not at 0
                 except Exception:
-                    raise NotImplementedError(
-                        f'Module {module[0]} is not implemented yet!')
+                    raise NotImplementedError(f"Module {module[0]} is not implemented yet!")
         return out
 
     def initialize_smu(self, channel, smu_type, name):
-        """ Initializes SMU instance by calling :class:`.SMU`.
+        """Initializes SMU instance by calling :class:`.SMU`.
 
         :param channel: SMU channel
         :type channel: int
@@ -139,9 +134,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :return: SMU instance
         :rtype: :class:`.SMU`
         """
-        if channel in (
-                list(range(101, 1101, 100))
-                + list(range(102, 1102, 100))):
+        if channel in (list(range(101, 1101, 100)) + list(range(102, 1102, 100))):
             channel = int(str(channel)[0:-2])
             # subchannels not relevant for SMU/CMU
         channel = strict_discrete_set(channel, range(1, 11))
@@ -151,21 +144,52 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         return smu_reference
 
     def initialize_all_smus(self):
-        """ Initialize all SMUs by querying available modules and creating
+        """Initialize all SMUs by querying available modules and creating
         a SMU class instance for each.
         SMUs are accessible via attributes ``.smu1`` etc.
         """
         modules = self.query_modules()
         i = 1
         for channel, smu_type in modules.items():
-            if 'SMU' in smu_type:
-                setattr(self, 'smu' + str(i),
-                        self.initialize_smu(
-                            channel, smu_type, 'SMU' + str(i)))
+            if "SMU" in smu_type:
+                setattr(
+                    self, "smu" + str(i), self.initialize_smu(channel, smu_type, "SMU" + str(i))
+                )
+                i += 1
+
+    def initialize_spgu(self, channel, name):
+        """Initializes SPGU instance by calling :class:`.SPGU`.
+
+        :param channel: SPGU channel
+        :type channel: int
+        :param spgu_type: SPGU type, e.g. ``'HRSPGU'``
+        :type spgu_type: str
+        :param name: SPGU name for pymeasure (data output etc.)
+        :type name: str
+        :return: SPGU instance
+        :rtype: :class:`.SPGU`
+        """
+        if channel in (list(range(101, 1101, 100)) + list(range(102, 1102, 100))):
+            channel = int(str(channel))
+        self._spgu_names[channel] = name
+        spgu_reference = SPGU(self, channel, name)
+        self._spgu_references[channel] = spgu_reference
+        return spgu_reference
+
+    def initialize_all_spgus(self):
+        """Initialize all SPGUs by querying available modules and creating
+        a SPGU class instance for each.
+        SPGUs are accessible via attributes ``.spgu1`` etc.
+        """
+        modules = self.query_modules()
+        i = 1
+        for channel, module_type in modules.items():
+            if module_type == "SPGU":
+                setattr(self, "spgu" + str(i), self.initialize_spgu(channel, "SPGU" + str(i)))
                 i += 1
 
     def pause(self, pause_seconds):
-        """ Pauses Command Execution for given time in seconds (``PA``)
+        """Pauses Command Execution for given time in seconds (``PA``)
 
         :param pause_seconds: Seconds to pause
         :type pause_seconds: int
@@ -173,128 +197,176 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         self.write("PA %d" % pause_seconds)
 
     def abort(self):
-        """ Aborts the present operation but channels may still output
+        """Aborts the present operation but channels may still output
         current/voltage (``AB``)
         """
         self.write("AB")
 
     def force_gnd(self):
-        """ Force 0V on all channels immediately. Current Settings can
+        """Force 0V on all channels immediately. Current Settings can
         be restored with RZ. (``DZ``)
         """
         self.write("DZ")
 
-    def check_errors(self):
-        """ Check for errors (``ERRX?``)
+    def restore_settings(self):
+        """Restores the settings of all channels to the state before
+        using `force_gnd`. (``RZ``)
         """
+        self.write("RZ")
+
+    control_mode = Instrument.control(
+        "ERMOD?",
+        "ERMOD %s",
+        """Control mode for the digital I/O ports. (``ERMOD``)""",
+        get_process=lambda v: ControlMode(v),
+        set_process=lambda v: ControlMode(v).value,
+    )
+
+    def set_port_connection(self, port, status):
+        """Sets the connection status for a specific port. (``ERSSP``)
+
+        :param port: Port number
+        :type port: PgSelectorPort
+        :param status: Connection status
+        :type status: PgSelectorConnectionStatus
+        """
+        self.write(f"ERSSP {port.value}, {status.value}")
+
+    def check_errors(self):
+        """Check for errors (``ERRX?``)"""
         error = self.ask("ERRX?")
         error = re.match(
-            r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)',
-            error).groups()
+            r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error
+        ).groups()
         if int(error[0]) == 0:
             return
         else:
-            raise OSError(
-                f"Agilent B1500 Error {error[0]}: {error[1]}")
+            raise OSError(f"Agilent B1500 Error {error[0]}: {error[1]}")
 
     def check_idle(self):
-        """ Check if instrument is idle (``*OPC?``)
-        """
-        self.ask("*OPC?")
+        """Check if instrument is idle (``*OPC?``). Alias for :meth:`~.SCPIMixin.complete`."""
+        return self.complete
 
     def clear_buffer(self):
-        """ Clear output data buffer (``BC``) """
+        """Clear output data buffer (``BC``)"""
         self.write("BC")
 
     def clear_timer(self):
-        """ Clear timer count (``TSR``) """
+        """Clear timer count (``TSR``)"""
         self.write("TSR")
 
     def send_trigger(self):
-        """ Send trigger to start measurement (except High Speed Spot)
+        """Send trigger to start measurement (except High Speed Spot)
         (``XE``)"""
         self.write("XE")
 
     @property
     def auto_calibration(self):
-        """ Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)
+        """Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)
 
         :type: bool
         """
-        response = self.query_learn(31)['CM']
+        response = self.query_learn(31)["CM"]
         response = bool(int(response))
         return response
 
     @auto_calibration.setter
     def auto_calibration(self, setting):
         setting = int(setting)
-        self.write('CM %d' % setting)
+        self.write("CM %d" % setting)
         self.check_errors()
 
     ######################################
     # Data Formatting
     ######################################
 
-    class _data_formatting_generic():
-        """ Format data output head of measurement value into user
+    class _data_formatting_generic:
+        """Format data output head of measurement value into user
         readable values
 
         :param str output_format_str: Format string of measurement value
         :param dict smu_names: Dictionary of channel and SMU name
         """
 
-        channels = {"A": 101, "B": 201, "C": 301, "D": 401, "E": 501,
-                    "F": 601, "G": 701, "H": 801, "I": 901, "J": 1001,
-                    "a": 102, "b": 202, "c": 302, "d": 402, "e": 502,
-                    "f": 602, "g": 702, "h": 802, "i": 902, "j": 1002,
-                    "V": "GNDU", "Z": "MISC"}
+        channels = {
+            "A": 101,
+            "B": 201,
+            "C": 301,
+            "D": 401,
+            "E": 501,
+            "F": 601,
+            "G": 701,
+            "H": 801,
+            "I": 901,
+            "J": 1001,
+            "a": 102,
+            "b": 202,
+            "c": 302,
+            "d": 402,
+            "e": 502,
+            "f": 602,
+            "g": 702,
+            "h": 802,
+            "i": 902,
+            "j": 1002,
+            "V": "GNDU",
+            "Z": "MISC",
+        }
         status = {
-            'W': 'First or intermediate sweep step data',
-            'E': 'Last sweep step data',
-            'T': 'Another channel reached its compliance setting.',
-            'C': 'This channel reached its compliance setting',
-            'V': ('Measurement data is over the measurement range/Sweep was '
-                  'aborted by automatic stop function or power compliance. '
-                  'D will be 199.999E+99 (no meaning).'),
-            'X': ('One or more channels are oscillating. Or source output did '
-                  'not settle before measurement.'),
-            'F': 'SMU is in the force saturation condition.',
-            'G': ('Linear/Binary search measurement: Target value was not '
-                  'found within the search range. '
-                  'Returns source output value. '
-                  'Quasi-pulsed spot measurement: '
-                  'The detection time was over the limit.'),
-            'S': ('Linear/Binary search measurement: The search measurement '
-                  'was stopped. Returns source output value. '
-                  'Quasi-pulsed spot measurement: Output slew rate was too '
-                  'slow to perform the settling detection. '
-                  'Or quasi-pulsed source channel reached compliance before '
-                  'the source output voltage changed 10V '
-                  'from the start voltage.'),
-            'U': 'CMU is in the NULL loop unbalance condition.',
-            'D': 'CMU is in the IV amplifier saturation condition.'
+            "W": "First or intermediate sweep step data",
+            "E": "Last sweep step data",
+            "T": "Another channel reached its compliance setting.",
+            "C": "This channel reached its compliance setting",
+            "V": (
+                "Measurement data is over the measurement range/Sweep was "
+                "aborted by automatic stop function or power compliance. "
+                "D will be 199.999E+99 (no meaning)."
+            ),
+            "X": (
+                "One or more channels are oscillating. Or source output did "
+                "not settle before measurement."
+            ),
+            "F": "SMU is in the force saturation condition.",
+            "G": (
+                "Linear/Binary search measurement: Target value was not "
+                "found within the search range. "
+                "Returns source output value. "
+                "Quasi-pulsed spot measurement: "
+                "The detection time was over the limit."
+            ),
+            "S": (
+                "Linear/Binary search measurement: The search measurement "
+                "was stopped. Returns source output value. "
+                "Quasi-pulsed spot measurement: Output slew rate was too "
+                "slow to perform the settling detection. "
+                "Or quasi-pulsed source channel reached compliance before "
+                "the source output voltage changed 10V "
+                "from the start voltage."
+            ),
+            "U": "CMU is in the NULL loop unbalance condition.",
+            "D": "CMU is in the IV amplifier saturation condition.",
         }
         smu_status = {
-            1: 'A/D converter overflowed.',
-            2: 'Oscillation of force or saturation current.',
-            4: 'Another unit reached its compliance setting.',
-            8: 'This unit reached its compliance setting.',
-            16: 'Target value was not found within the search range.',
-            32: 'Search measurement was automatically stopped.',
-            64: 'Invalid data is returned. D is not used.',
-            128: 'End of data'
+            1: "A/D converter overflowed.",
+            2: "Oscillation of force or saturation current.",
+            4: "Another unit reached its compliance setting.",
+            8: "This unit reached its compliance setting.",
+            16: "Target value was not found within the search range.",
+            32: "Search measurement was automatically stopped.",
+            64: "Invalid data is returned. D is not used.",
+            128: "End of data",
         }
         cmu_status = {
-            1: 'A/D converter overflowed.',
-            2: 'CMU is in the NULL loop unbalance condition.',
-            4: 'CMU is in the IV amplifier saturation condition.',
-            64: 'Invalid data is returned. D is not used.',
-            128: 'End of data'
+            1: "A/D converter overflowed.",
+            2: "CMU is in the NULL loop unbalance condition.",
+            4: "CMU is in the IV amplifier saturation condition.",
+            64: "Invalid data is returned. D is not used.",
+            128: "End of data",
         }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
         def __init__(self, smu_names, output_format_str):
-            """ Stores parameters of the chosen output format
+            """Stores parameters of the chosen output format
             for later usage in reading and processing instrument data.
 
             Data Names: e.g. "Voltage (V)" or "Current Measurement (A)"
@@ -304,8 +376,8 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                 self.size = sizes[output_format_str]
             except Exception:
                 raise NotImplementedError(
-                    ("Data Format {} is not "
-                     "implemented so far.").format(output_format_str))
+                    ("Data Format {} is not implemented so far.").format(output_format_str)
+                )
             self.format = output_format_str
             data_names_C = {
                 "V": "Voltage (V)",
@@ -322,7 +394,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                 "D": "Dissipation factor",
                 "Q": "Quality factor",
                 "X": "Sampling index",
-                "T": "Time (s)"
+                "T": "Time (s)",
             }
             data_names_G = {
                 "V": "Voltage Measurement (V)",
@@ -330,42 +402,43 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                 "v": "Voltage Output (V)",
                 "i": "Current Output (A)",
                 "f": "Frequency (Hz)",
-                "z": "invalid data"
+                "z": "invalid data",
             }
-            if output_format_str in ['FMT1', 'FMT5', 'FMT11', 'FMT15']:
+            if output_format_str in ["FMT1", "FMT5", "FMT11", "FMT15"]:
                 self.data_names = {**data_names_C, **data_names_CG}
-            elif output_format_str in ['FMT21', 'FMT25']:
+            elif output_format_str in ["FMT21", "FMT25"]:
                 self.data_names = {**data_names_G, **data_names_CG}
             else:
                 self.data_names = {}  # no header
             self.smu_names = smu_names
 
-        def check_status(self, status_string, name=False, cmu=False):
+        def check_status(self, status_string, name=None, cmu=False):
             """Check returned status of instrument. If not null or end of
             data, message is written to log.info.
 
             :param status_string: Status string returned by the instrument
                                   when reading data.
             :type status_string: str
+            :param name: Name of the SMU channel, defaults to None
+            :type name: str, optional
             :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             :type cmu: bool, optional
             """
+
             def log_failed():
                 log.info(
-                    ('Agilent B1500: check_status not '
-                     'possible for status {}').format(status_string))
+                    ("Agilent B1500: check_status not possible for status {}").format(status_string)
+                )
 
-            if name is False:
-                name = ''
+            if name is None:
+                name = ""
             else:
-                name = f' {name}'
+                name = f" {name}"
 
-            status = re.search(
-                r'(?P<number>[0-9]*)(?P<letter>[ A-Z]*)',
-                status_string)
+            status = re.search(r"(?P<number>[0-9]*)(?P<letter>[ A-Z]*)", status_string)
             # depending on FMT, status may be a letter or up to 3 digits
-            if len(status.group('number')) > 0:
-                status = int(status.group('number'))
+            if len(status.group("number")) > 0:
+                status = int(status.group("number"))
                 if status in (0, 128):
                     # 0: no error; 128: End of data
                     return
@@ -375,16 +448,15 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                     status_dict = self.smu_status
                 for index, digit in enumerate(bin(status)[2:]):
                     # [2:] to chop off 0b
-                    if digit == '1':
-                        log.info('Agilent B1500{}: {}'.format(
-                            name, status_dict[2**index]))
-            elif len(status.group('letter')) > 0:
-                status = status.group('letter')
+                    if digit == "1":
+                        log.info("Agilent B1500{}: {}".format(name, status_dict[2**index]))
+            elif len(status.group("letter")) > 0:
+                status = status.group("letter")
                 status = status.strip()  # remove whitespaces
-                if status not in ['N', 'W', 'E']:
+                if status not in ["N", "W", "E"]:
                     try:
                         status = self.status[status]
-                        log.info(f'Agilent B1500{name}: {status}')
+                        log.info(f"Agilent B1500{name}: {status}")
                     except KeyError:
                         log_failed()
             else:
@@ -409,9 +481,9 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                 # subchannels not relevant for SMU/CMU
             try:
                 smu_name = self.smu_names[channel]
-                if 'SMU' in smu_name:
+                if "SMU" in smu_name:
                     self.check_status(status_string, name=smu_name, cmu=False)
-                if 'CMU' in smu_name:
+                if "CMU" in smu_name:
                     self.check_status(status_string, name=smu_name, cmu=True)
                 return smu_name
             except KeyError:
@@ -419,14 +491,13 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
                 return channel
 
     class _data_formatting_FMT1(_data_formatting_generic):
-        """ Data formatting for FMT1 format
-        """
+        """Data formatting for FMT1 format"""
 
         def __init__(self, smu_names={}, output_format_string="FMT1"):
             super().__init__(smu_names, output_format_string)
 
         def format_single(self, element):
-            """ Format single measurement value
+            """Format single measurement value
 
             :param element: Single measurement value read from the instrument
             :type element: str
@@ -446,21 +517,19 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
             return (status, channel, data_name, value)
 
     class _data_formatting_FMT11(_data_formatting_FMT1):
-        """ Data formatting for FMT11 format (based on FMT1)
-        """
+        """Data formatting for FMT11 format (based on FMT1)"""
 
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
-        """ Data formatting for FMT21 format
-        """
+        """Data formatting for FMT21 format"""
 
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT21")
 
         def format_single(self, element):
-            """ Format single measurement value
+            """Format single measurement value
 
             :param element: Single measurement value read from the instrument
             :type element: str
@@ -480,7 +549,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
             return (status, channel, data_name, value)
 
     def _data_formatting(self, output_format_str, smu_names={}):
-        """ Return data formatting class for given data format string
+        """Return data formatting class for given data format string
 
         :param output_format_str: Data output format, e.g. ``FMT21``
         :type output_format_str: str
@@ -492,21 +561,22 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         classes = {
             "FMT1": self._data_formatting_FMT1,
             "FMT11": self._data_formatting_FMT11,
-            "FMT21": self._data_formatting_FMT21
+            "FMT21": self._data_formatting_FMT21,
         }
         try:
             format_class = classes[output_format_str]
         except KeyError:
-            log.error((
-                "Data Format {} is not implemented "
-                "so far. Please set appropriate Data Format."
-            ).format(output_format_str))
+            log.error(
+                (
+                    "Data Format {} is not implemented so far. Please set appropriate Data Format."
+                ).format(output_format_str)
+            )
             return
         else:
             return format_class(smu_names=smu_names)
 
     def data_format(self, output_format, mode=0):
-        """ Specifies data output format. Check Documentation for parameters.
+        """Specifies data output format. Check Documentation for parameters.
         Should be called once per session to set the data format for
         interpreting the measurement values read from the instrument.
         (``FMT``)
@@ -520,25 +590,23 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :type mode: int, optional
         """
         # restrict to implemented formats
-        output_format = strict_discrete_set(
-            output_format, [1, 11, 21])
+        output_format = strict_discrete_set(output_format, [1, 11, 21])
         # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
         mode = strict_range(mode, range(0, 11))
         self.write("FMT %d, %d" % (output_format, mode))
         self.check_errors()
         if self._smu_names == {}:
             print(
-                'No SMU names available for formatting, '
-                'instead channel numbers will be used. '
-                'Call data_format after initializing all SMUs.'
+                "No SMU names available for formatting, "
+                "instead channel numbers will be used. "
+                "Call data_format after initializing all SMUs."
             )
             log.info(
-                'No SMU names available for formatting, '
-                'instead channel numbers will be used. '
-                'Call data_format after initializing all SMUs.'
+                "No SMU names available for formatting, "
+                "instead channel numbers will be used. "
+                "Call data_format after initializing all SMUs."
             )
-        self._data_format = self._data_formatting(
-            "FMT%d" % output_format, self._smu_names)
+        self._data_format = self._data_formatting("FMT%d" % output_format, self._smu_names)
 
     ######################################
     # Measurement Settings
@@ -546,20 +614,20 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
 
     @property
     def parallel_meas(self):
-        """ Enable/Disable parallel measurements.
+        """Enable/Disable parallel measurements.
             Effective for SMUs using HSADC and measurement modes 1,2,10,18.
             (``PAD``)
 
         :type: bool
         """
-        response = self.query_learn(110)['PAD']
+        response = self.query_learn(110)["PAD"]
         response = bool(int(response))
         return response
 
     @parallel_meas.setter
     def parallel_meas(self, setting):
         setting = int(setting)
-        self.write('PAD %d' % setting)
+        self.write("PAD %d" % setting)
         self.check_errors()
 
     def query_meas_settings(self):
@@ -569,12 +637,11 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         return self.query_learn_header(31)
 
     def query_meas_mode(self):
-        """Read settings for ``MM`` command (part of 31) from the instrument.
-        """
-        return self.query_learn_header(31, single_command='MM')
+        """Read settings for ``MM`` command (part of 31) from the instrument."""
+        return self.query_learn_header(31, single_command="MM")
 
     def meas_mode(self, mode, *args):
-        """ Set Measurement mode of channels. Measurements will be taken in
+        """Set Measurement mode of channels. Measurements will be taken in
         the same order as the SMU references are passed. (``MM``)
 
         :param mode: Measurement mode
@@ -598,12 +665,11 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
     # ADC Setup: AAD, AIT, AV, AZ
 
     def query_adc_setup(self):
-        """Read ADC settings (55, 56) from the instrument.
-        """
+        """Read ADC settings (55, 56) from the instrument."""
         return {**self.query_learn_header(55), **self.query_learn_header(56)}
 
-    def adc_setup(self, adc_type, mode, N=''):
-        """ Set up operation mode and parameters of ADC for each ADC type.
+    def adc_setup(self, adc_type, mode, N=""):
+        """Set up operation mode and parameters of ADC for each ADC type.
         (``AIT``)
         Defaults:
 
@@ -620,19 +686,19 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
 
         adc_type = ADCType.get(adc_type)
         mode = ADCMode.get(mode)
-        if (adc_type == ADCType['HRADC']) and (mode == ADCMode['TIME']):
+        if (adc_type == ADCType["HRADC"]) and (mode == ADCMode["TIME"]):
             raise ValueError("Time ADC mode is not available for HRADC")
         command = "AIT %d, %d" % (adc_type.value, mode.value)
-        if not N == '':
-            if mode == ADCMode['TIME']:
-                command += (", %g" % N)
+        if not N == "":
+            if mode == ADCMode["TIME"]:
+                command += ", %g" % N
             else:
-                command += (", %d" % N)
+                command += ", %d" % N
         self.write(command)
         self.check_errors()
 
-    def adc_averaging(self, number, mode='Auto'):
-        """ Set number of averaging samples of the HSADC. (``AV``)
+    def adc_averaging(self, number, mode="Auto"):
+        """Set number of averaging samples of the HSADC. (``AV``)
 
         Defaults: N=1, Auto
 
@@ -652,40 +718,39 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
 
     @property
     def adc_auto_zero(self):
-        """ Enable/Disable ADC zero function. Halves the
+        """Enable/Disable ADC zero function. Halves the
         integration time, if off. (``AZ``)
 
         :type: bool
         """
-        response = self.query_learn(56)['AZ']
+        response = self.query_learn(56)["AZ"]
         response = bool(int(response))
         return response
 
     @adc_auto_zero.setter
     def adc_auto_zero(self, setting):
         setting = int(setting)
-        self.write('AZ %d' % setting)
+        self.write("AZ %d" % setting)
         self.check_errors()
 
     @property
     def time_stamp(self):
-        """ Enable/Disable Time Stamp function. (``TSC``)
+        """Enable/Disable Time Stamp function. (``TSC``)
 
         :type: bool
         """
-        response = self.query_learn(60)['TSC']
+        response = self.query_learn(60)["TSC"]
         response = bool(int(response))
         return response
 
     @time_stamp.setter
     def time_stamp(self, setting):
         setting = int(setting)
-        self.write('TSC %d' % setting)
+        self.write("TSC %d" % setting)
         self.check_errors()
 
     def query_time_stamp_setting(self):
-        """Read time stamp settings (60) from the instrument.
-        """
+        """Read time stamp settings (60) from the instrument."""
         return self.query_learn_header(60)
 
     def wait_time(self, wait_type, N, offset=0):
@@ -699,7 +764,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :type offset: int, optional
         """
         wait_type = WaitTimeType.get(wait_type).value
-        self.write('WAT %d, %g, %d' % (wait_type, N, offset))
+        self.write("WAT %d, %g, %d" % (wait_type, N, offset))
         self.check_errors()
 
     ######################################
@@ -712,9 +777,10 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         """
         return self.query_learn_header(33)
 
-    def sweep_timing(self, hold, delay, step_delay=0, step_trigger_delay=0,
-                     measurement_trigger_delay=0):
-        """ Sets Hold Time, Delay Time and Step Delay Time for
+    def sweep_timing(
+        self, hold, delay, step_delay=0, step_trigger_delay=0, measurement_trigger_delay=0
+    ):
+        """Sets Hold Time, Delay Time and Step Delay Time for
         staircase or multi channel sweep measurement. (``WT``)
         If not set, all parameters are 0.
 
@@ -733,17 +799,18 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         hold = strict_discrete_range(hold, (0, 655.35), 0.01)
         delay = strict_discrete_range(delay, (0, 65.535), 0.0001)
         step_delay = strict_discrete_range(step_delay, (0, 1), 0.0001)
-        step_trigger_delay = strict_discrete_range(
-            step_trigger_delay, (0, delay), 0.0001)
+        step_trigger_delay = strict_discrete_range(step_trigger_delay, (0, delay), 0.0001)
         measurement_trigger_delay = strict_discrete_range(
-            measurement_trigger_delay, (0, 65.535), 0.0001)
-        self.write("WT %g, %g, %g, %g, %g" %
-                   (hold, delay, step_delay, step_trigger_delay,
-                    measurement_trigger_delay))
+            measurement_trigger_delay, (0, 65.535), 0.0001
+        )
+        self.write(
+            "WT %g, %g, %g, %g, %g"
+            % (hold, delay, step_delay, step_trigger_delay, measurement_trigger_delay)
+        )
         self.check_errors()
 
-    def sweep_auto_abort(self, abort, post='START'):
-        """ Enables/Disables the automatic abort function.
+    def sweep_auto_abort(self, abort, post="START"):
+        """Enables/Disables the automatic abort function.
         Also sets the post measurement condition. (``WM``)
 
         :param abort: Enable/Disable automatic abort
@@ -763,18 +830,17 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
     ######################################
 
     def query_sampling_settings(self):
-        """Reads Sampling Measurement settings (47) from the instrument.
-        """
+        """Reads Sampling Measurement settings (47) from the instrument."""
         return self.query_learn_header(47)
 
     @property
     def sampling_mode(self):
-        """ Set linear or logarithmic sampling mode. (``ML``)
+        """Set linear or logarithmic sampling mode. (``ML``)
 
         :type: :class:`.SamplingMode`
         """
         response = self.query_learn(47)
-        response = response['ML']
+        response = response["ML"]
         return SamplingMode(response)
 
     @sampling_mode.setter
@@ -784,7 +850,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         self.check_errors()
 
     def sampling_timing(self, hold_bias, interval, number, hold_base=0):
-        """ Sets Timing Parameters for the Sampling Measurement (``MT``)
+        """Sets Timing Parameters for the Sampling Measurement (``MT``)
 
         :param hold_bias: Bias hold time
         :type hold_bias: float
@@ -795,40 +861,36 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :param hold_base: Base hold time, defaults to 0
         :type hold_base: float, optional
         """
-        n_channels = self.query_meas_settings()['Measurement Channels']
-        n_channels = len(n_channels.split(', '))
+        n_channels = self.query_meas_settings()["Measurement Channels"]
+        n_channels = len(n_channels.split(", "))
         if interval >= 0.002:
             hold_bias = strict_discrete_range(hold_bias, (0, 655.35), 0.01)
             interval = strict_discrete_range(interval, (0, 65.535), 0.001)
         else:
             try:
-                hold_bias = strict_discrete_range(
-                    hold_bias, (-0.09, -0.0001), 0.0001)
+                hold_bias = strict_discrete_range(hold_bias, (-0.09, -0.0001), 0.0001)
             except ValueError as error1:
                 try:
-                    hold_bias = strict_discrete_range(
-                        hold_bias, (0, 655.35), 0.01)
+                    hold_bias = strict_discrete_range(hold_bias, (0, 655.35), 0.01)
                 except ValueError as error2:
                     raise ValueError(
-                        'Bias hold time does not match either '
-                        + 'of the two possible specifications: '
-                        + f'{error1} {error2}')
+                        "Bias hold time does not match either "
+                        + "of the two possible specifications: "
+                        + f"{error1} {error2}"
+                    )
             if interval >= 0.0001 + 0.00002 * (n_channels - 1):
-                interval = strict_discrete_range(interval,
-                                                 (0, 0.00199), 0.00001)
+                interval = strict_discrete_range(interval, (0, 0.00199), 0.00001)
             else:
-                raise ValueError(
-                    f'Sampling interval {interval} is too short.')
+                raise ValueError(f"Sampling interval {interval} is too short.")
         number = strict_discrete_range(number, (0, int(100001 / n_channels)), 1)
         # ToDo: different restrictions apply for logarithmic sampling!
         hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
 
-        self.write("MT %g, %g, %d, %g" %
-                   (hold_bias, interval, number, hold_base))
+        self.write("MT %g, %g, %d, %g" % (hold_bias, interval, number, hold_base))
         self.check_errors()
 
-    def sampling_auto_abort(self, abort, post='Bias'):
-        """ Enables/Disables the automatic abort function.
+    def sampling_auto_abort(self, abort, post="Bias"):
+        """Enables/Disables the automatic abort function.
         Also sets the post measurement condition. (``MSC``)
 
         :param abort: Enable/Disable automatic abort
@@ -848,7 +910,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
     ######################################
 
     def read_data(self, number_of_points):
-        """ Reads all data from buffer and returns Pandas DataFrame.
+        """Reads all data from buffer and returns Pandas DataFrame.
         Specify number of measurement points for correct splitting of
         the data list.
 
@@ -858,12 +920,12 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         :rtype: pd.DataFrame
         """
         data = self.read()
-        data = data.split(',')
+        data = data.split(",")
         data = np.array(data)
         data = np.split(data, number_of_points)
         data = pd.DataFrame(data=data)
         data = data.applymap(self._data_format.format_single)
-        heads = data.iloc[[0]].applymap(lambda x: ' '.join(x[1:3]))
+        heads = data.iloc[[0]].applymap(lambda x: " ".join(x[1:3]))
         # channel & data_type
         heads = heads.to_numpy().tolist()  # 2D List
         heads = heads[0]  # first row
@@ -872,7 +934,7 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         return data
 
     def read_channels(self, nchannels):
-        """ Reads data for 1 measurement point from the buffer. Specify number
+        """Reads data for 1 measurement point from the buffer. Specify number
         of measurement channels + sweep sources (depending on data
         output setting).
 
@@ -883,9 +945,9 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         """
         data = self.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
-        data = data.rstrip('\r,')
+        data = data.rstrip("\r,")
         # ',' if more data in buffer, '\r' if last data point
-        data = data.split(',')
+        data = data.split(",")
         data = map(self._data_format.format_single, data)
         data = tuple(data)
         return data
@@ -910,13 +972,14 @@ class AgilentB1500(SCPIUnknownMixin, Instrument):
         """Read measruement ranging status (32) for all SMUs."""
         return self.query_learn_header(32)
 
+
 ######################################
 # SMU Setup
 ######################################
 
 
-class SMU():
-    """ Provides specific methods for the SMUs of the Agilent B1500 mainframe
+class SMU:
+    """Provides specific methods for the SMUs of the Agilent B1500 mainframe
 
     :param parent: Instance of the B1500 mainframe class
     :type parent: :class:`.AgilentB1500`
@@ -932,8 +995,19 @@ class SMU():
         self.channel = channel
         smu_type = strict_discrete_set(
             smu_type,
-            ['HRSMU', 'MPSMU', 'HPSMU', 'MCSMU', 'HCSMU',
-             'DHCSMU', 'HVSMU', 'UHCU', 'HVMCU', 'UHVU'])
+            [
+                "HRSMU",
+                "MPSMU",
+                "HPSMU",
+                "MCSMU",
+                "HCSMU",
+                "DHCSMU",
+                "HVSMU",
+                "UHCU",
+                "HVMCU",
+                "UHVU",
+            ],
+        )
         self.voltage_ranging = SMUVoltageRanging(smu_type)
         self.current_ranging = SMUCurrentRanging(smu_type)
         self.name = name
@@ -942,18 +1016,15 @@ class SMU():
     # Wrappers of B1500 communication methods
     ##########################################
     def write(self, string):
-        """Wraps :meth:`.Instrument.write` method of B1500.
-        """
+        """Wraps :meth:`.Instrument.write` method of B1500."""
         self._b1500.write(string)
 
     def ask(self, string):
-        """Wraps :meth:`~.Instrument.ask` method of B1500.
-        """
+        """Wraps :meth:`~.Instrument.ask` method of B1500."""
         return self._b1500.ask(string)
 
     def query_learn(self, query_type, command):
-        """Wraps :meth:`~.AgilentB1500.query_learn` method of B1500.
-        """
+        """Wraps :meth:`~.AgilentB1500.query_learn` method of B1500."""
         response = self._b1500.query_learn(query_type)
         # query_learn returns settings of all smus
         # pick setting for this smu only
@@ -961,9 +1032,9 @@ class SMU():
         return response
 
     def check_errors(self):
-        """Wraps :meth:`~.AgilentB1500.check_errors` method of B1500.
-        """
+        """Wraps :meth:`~.AgilentB1500.check_errors` method of B1500."""
         return self._b1500.check_errors()
+
     ##########################################
 
     def _query_status_raw(self):
@@ -975,37 +1046,43 @@ class SMU():
         return self._b1500.query_learn_header(str(self.channel))
 
     def enable(self):
-        """ Enable Source/Measurement Channel (``CN``)"""
+        """Enable Source/Measurement Channel (``CN``)"""
         self.write("CN %d" % self.channel)
 
     def disable(self):
-        """ Disable Source/Measurement Channel (``CL``)"""
+        """Disable Source/Measurement Channel (``CL``)"""
         self.write("CL %d" % self.channel)
 
     def force_gnd(self):
-        """ Force 0V immediately. Current Settings can be restored with
+        """Force 0V immediately. Current Settings can be restored with
         ``RZ`` (not implemented). (``DZ``)"""
         self.write("DZ %d" % self.channel)
 
+    def restore_settings(self):
+        """Restores the settings of the channel to the state before
+        using `force_gnd`. (``RZ``)
+        """
+        self.write("RZ %d" % self.channel)
+
     @property
     def filter(self):
-        """ Enables/Disables SMU Filter. (``FL``)
+        """Enables/Disables SMU Filter. (``FL``)
 
         :type: bool
         """
         # different than other SMU specific settings (grouped by setting)
         # read via raw command
         response = self._b1500.query_learn(30)
-        if 'FL' in response.keys():
+        if "FL" in response.keys():
             # only present if filters of all channels are off
             return False
         else:
-            if str(self.channel) in response['FL0']:
+            if str(self.channel) in response["FL0"]:
                 return False
-            elif str(self.channel) in response['FL1']:
+            elif str(self.channel) in response["FL1"]:
                 return True
             else:
-                raise NotImplementedError('Filter Value cannot be read!')
+                raise NotImplementedError("Filter Value cannot be read!")
 
     @filter.setter
     def filter(self, setting):
@@ -1015,11 +1092,11 @@ class SMU():
 
     @property
     def series_resistor(self):
-        """ Enables/Disables 1MOhm series resistor. (``SSR``)
+        """Enables/Disables 1MOhm series resistor. (``SSR``)
 
         :type: bool
         """
-        response = self.query_learn(53, 'SSR')
+        response = self.query_learn(53, "SSR")
         response = bool(int(response))
         return response
 
@@ -1031,11 +1108,11 @@ class SMU():
 
     @property
     def meas_op_mode(self):
-        """ Set SMU measurement operation mode. (``CMM``)
+        """Set SMU measurement operation mode. (``CMM``)
 
         :type: :class:`.MeasOpMode`
         """
-        response = self.query_learn(46, 'CMM')
+        response = self.query_learn(46, "CMM")
         response = int(response)
         return MeasOpMode(response)
 
@@ -1051,7 +1128,7 @@ class SMU():
 
         :type: :class:`.ADCType`
         """
-        response = self.query_learn(55, 'AAD')
+        response = self.query_learn(55, "AAD")
         response = int(response)
         return ADCType(response)
 
@@ -1064,9 +1141,8 @@ class SMU():
     ######################################
     # Force Constant Output
     ######################################
-    def force(self, source_type, source_range, output, comp='',
-              comp_polarity='', comp_range=''):
-        """ Applies DC Current or Voltage from SMU immediately.
+    def force(self, source_type, source_range, output, comp="", comp_polarity="", comp_range=""):
+        """Applies DC Current or Voltage from SMU immediately.
         (``DI``, ``DV``)
 
         :param source_type: Source type (``'Voltage','Current'``)
@@ -1085,30 +1161,38 @@ class SMU():
         if source_type.upper() == "VOLTAGE":
             cmd = "DV"
             source_range = self.voltage_ranging.output(source_range).index
-            if not comp_range == '':
+            if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             cmd = "DI"
             source_range = self.current_ranging.output(source_range).index
-            if not comp_range == '':
+            if not comp_range == "":
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         cmd += " %d, %d, %g" % (self.channel, source_range, output)
-        if not comp == '':
+        if not comp == "":
             cmd += ", %g" % comp
-            if not comp_polarity == '':
+            if not comp_polarity == "":
                 comp_polarity = CompliancePolarity.get(comp_polarity).value
                 cmd += ", %d" % comp_polarity
-                if not comp_range == '':
+                if not comp_range == "":
                     cmd += ", %d" % comp_range
         self.write(cmd)
         self.check_errors()
 
-    def ramp_source(self, source_type, source_range, target_output, comp='',
-                    comp_polarity='', comp_range='',
-                    stepsize=0.001, pause=20e-3):
-        """ Ramps to a target output from the set value with a given
+    def ramp_source(
+        self,
+        source_type,
+        source_range,
+        target_output,
+        comp="",
+        comp_polarity="",
+        comp_range="",
+        stepsize=0.001,
+        pause=20e-3,
+    ):
+        """Ramps to a target output from the set value with a given
         step size, each separated by a pause.
 
         :param source_type: Source type (``'Voltage'`` or ``'Current'``)
@@ -1127,52 +1211,50 @@ class SMU():
         :param pause: Duration in seconds to wait between steps
         """
         if source_type.upper() == "VOLTAGE":
-            source_type = 'VOLTAGE'
-            cmd = 'DV%d' % self.channel
+            source_type = "VOLTAGE"
+            cmd = "DV%d" % self.channel
             source_range = self.voltage_ranging.output(source_range).index
-            unit = 'V'
-            if not comp_range == '':
+            unit = "V"
+            if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
-            source_type = 'CURRENT'
-            cmd = 'DI%d' % self.channel
+            source_type = "CURRENT"
+            cmd = "DI%d" % self.channel
             source_range = self.current_ranging.output(source_range).index
-            unit = 'A'
-            if not comp_range == '':
+            unit = "A"
+            if not comp_range == "":
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
 
         status = self._query_status_raw()
-        if 'CL' in status:  # SMU is OFF
+        if "CL" in status:  # SMU is OFF
             start = 0
         elif cmd in status:
             start = float(status[cmd][1])  # current output value
         else:
             log.info(
-                ("{} in different state. "
-                 "Changing to {} Source.").format(self.name, source_type))
+                ("{} in different state. Changing to {} Source.").format(self.name, source_type)
+            )
             start = 0
 
         # calculate number of points based on maximum stepsize
         nop = np.ceil(abs((target_output - start) / stepsize))
         nop = int(nop)
-        log.info("{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
-            self.name, start, unit, target_output, nop
-        ))
+        log.info(
+            "{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
+                self.name, start, unit, target_output, nop
+            )
+        )
         outputs = np.linspace(start, target_output, nop, endpoint=False)
 
         for output in outputs:
             # loop is only executed if target_output != start
-            self.force(
-                source_type, source_range, output,
-                comp, comp_polarity, comp_range)
+            self.force(source_type, source_range, output, comp, comp_polarity, comp_range)
             time.sleep(pause)
         # call force even if start==target_output
         # to set compliance
-        self.force(
-            source_type, source_range, target_output,
-            comp, comp_polarity, comp_range)
+        self.force(source_type, source_range, target_output, comp, comp_polarity, comp_range)
 
     ######################################
     # Measurement Range
@@ -1182,12 +1264,12 @@ class SMU():
 
     @property
     def meas_range_current(self):
-        """ Current measurement range index. (``RI``)
+        """Current measurement range index. (``RI``)
 
         Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
         :class:`.SMUCurrentRanging`
         """
-        response = self.query_learn(32, 'RI')
+        response = self.query_learn(32, "RI")
         response = self.current_ranging.meas(response)
         return response
 
@@ -1199,12 +1281,12 @@ class SMU():
 
     @property
     def meas_range_voltage(self):
-        """ Voltage measurement range index. (``RV``)
+        """Voltage measurement range index. (``RV``)
 
         Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
         :class:`.SMUVoltageRanging`
         """
-        response = self.query_learn(32, 'RV')
+        response = self.query_learn(32, "RV")
         response = self.voltage_ranging.meas(response)
         return response
 
@@ -1215,7 +1297,7 @@ class SMU():
         self.check_errors()
 
     def meas_range_current_auto(self, mode, rate=50):
-        """ Specifies the auto range operation. Check Documentation. (``RM``)
+        """Specifies the auto range operation. Check Documentation. (``RM``)
 
         :param mode: Range changing operation mode
         :type mode: int
@@ -1238,9 +1320,10 @@ class SMU():
     # not implemented: BSSI, BSSV, LSSI, LSSV
     ######################################
 
-    def staircase_sweep_source(self, source_type, mode, source_range,
-                               start, stop, steps, comp, Pcomp=''):
-        """ Specifies Staircase Sweep Source (Current or Voltage) and
+    def staircase_sweep_source(
+        self, source_type, mode, source_range, start, stop, steps, comp, Pcomp=""
+    ):
+        """Specifies Staircase Sweep Source (Current or Voltage) and
         its parameters. (``WV`` or ``WI``)
 
         :param source_type: Source type (``'Voltage','Current'``)
@@ -1275,24 +1358,27 @@ class SMU():
             elif start <= 0 and stop <= 0:
                 pass
             else:
-                raise ValueError(
-                    "For Log Sweep Start and Stop Values must "
-                    "have the same polarity."
-                )
+                raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %d, %g, %g, %g, %g" %
-                (self.channel, mode, source_range, start, stop, steps, comp))
-        if not Pcomp == '':
+        cmd += "%d, %d, %d, %g, %g, %g, %g" % (
+            self.channel,
+            mode,
+            source_range,
+            start,
+            stop,
+            steps,
+            comp,
+        )
+        if not Pcomp == "":
             cmd += ", %g" % Pcomp
         self.write(cmd)
         self.check_errors()
 
     # Synchronous Output: WSI, WSV, BSSI, BSSV, LSSI, LSSV
 
-    def synchronous_sweep_source(self, source_type, source_range,
-                                 start, stop, comp, Pcomp=''):
-        """ Specifies Synchronous Staircase Sweep Source (Current or Voltage)
+    def synchronous_sweep_source(self, source_type, source_range, start, stop, comp, Pcomp=""):
+        """Specifies Synchronous Staircase Sweep Source (Current or Voltage)
         and its parameters. (``WSV`` or ``WSI``)
 
         :param source_type: Source type (``'Voltage','Current'``)
@@ -1317,9 +1403,8 @@ class SMU():
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %g, %g, %g" %
-                (self.channel, source_range, start, stop, comp))
-        if not Pcomp == '':
+        cmd += "%d, %d, %g, %g, %g" % (self.channel, source_range, start, stop, comp)
+        if not Pcomp == "":
             cmd += ", %g" % Pcomp
         self.write(cmd)
         self.check_errors()
@@ -1331,7 +1416,7 @@ class SMU():
     ######################################
 
     def sampling_source(self, source_type, source_range, base, bias, comp):
-        """ Sets DC Source (Current or Voltage) for sampling measurement.
+        """Sets DC Source (Current or Voltage) for sampling measurement.
         DV/DI commands on the same channel overwrite this setting.
         (``MV`` or ``MI``)
 
@@ -1355,17 +1440,17 @@ class SMU():
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += ("%d, %d, %g, %g, %g" %
-                (self.channel, source_range, base, bias, comp))
+        cmd += "%d, %d, %g, %g, %g" % (self.channel, source_range, base, bias, comp)
         self.write(cmd)
         self.check_errors()
+
 
 ###############################################################################
 # Additional Classes / Constants
 ###############################################################################
 
 
-class Ranging():
+class Ranging:
     """Possible Settings for SMU Current/Voltage Output/Measurement ranges.
     Transformation of available Voltage/Current Range Names to Index and back.
 
@@ -1379,7 +1464,7 @@ class Ranging():
     .. automethod:: __call__
     """
 
-    _Range = namedtuple('Range', 'name index')
+    _Range = namedtuple("Range", "name index")
 
     def __init__(self, supported_ranges, ranges, fixed_ranges=False):
         if fixed_ranges:
@@ -1392,15 +1477,15 @@ class Ranging():
         # distinguish between limited and fixed ranging
         # omitting 'limited auto ranging'/'range fixed'
         # defaults to 'limited auto ranging'
-        inverse_ranges = {0: 'Auto Ranging'}
+        inverse_ranges = {0: "Auto Ranging"}
         for key, value in ranges.items():
             if isinstance(value, tuple):
                 for v in value:
-                    inverse_ranges[v] = (key + ' limited auto ranging', key)
-                    inverse_ranges[-v] = (key + ' range fixed')
+                    inverse_ranges[v] = (key + " limited auto ranging", key)
+                    inverse_ranges[-v] = key + " range fixed"
             else:
-                inverse_ranges[value] = (key + ' limited auto ranging', key)
-                inverse_ranges[-value] = (key + ' range fixed')
+                inverse_ranges[value] = (key + " limited auto ranging", key)
+                inverse_ranges[-value] = key + " range fixed"
 
         ranges = {}
         indizes = {}
@@ -1445,20 +1530,20 @@ class Ranging():
                 index = self.indizes[input_value.upper()]
             except Exception:
                 raise ValueError(
-                    ('Specified Range Name {} is not valid or '
-                     'not supported by this SMU').format(input_value.upper()))
+                    ("Specified Range Name {} is not valid or not supported by this SMU").format(
+                        input_value.upper()
+                    )
+                )
         # get name
         try:
             name = self.ranges[index]
         except Exception:
-            raise ValueError(
-                ('Specified Range {} is not supported '
-                 'by this SMU').format(index))
+            raise ValueError(("Specified Range {} is not supported by this SMU").format(index))
         return self._Range(name=name, index=index)
 
 
-class SMUVoltageRanging():
-    """ Provides Range Name/Index transformation for voltage
+class SMUVoltageRanging:
+    """Provides Range Name/Index transformation for voltage
     measurement/sourcing.
     Validity of ranges is checked against the type of the SMU.
 
@@ -1473,42 +1558,41 @@ class SMUVoltageRanging():
 
     def __init__(self, smu_type):
         supported_ranges = {
-            'HRSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
-            'MPSMU': [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
-            'HPSMU': [0, 11, 20, 12, 200, 13, 400, 14, 1000, 15, 2000],
-            'MCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-            'HCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-            'DHCSMU': [0, 2, 11, 20, 12, 200, 13, 400],
-            'HVSMU': [0, 15, 2000, 5000, 15000, 30000],
-            'UHCU': [0, 14, 1000],
-            'HVMCU': [0, 15000, 30000],
-            'UHVU': [0, 103]
+            "HRSMU": [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+            "MPSMU": [0, 5, 11, 20, 50, 12, 200, 13, 400, 14, 1000],
+            "HPSMU": [0, 11, 20, 12, 200, 13, 400, 14, 1000, 15, 2000],
+            "MCSMU": [0, 2, 11, 20, 12, 200, 13, 400],
+            "HCSMU": [0, 2, 11, 20, 12, 200, 13, 400],
+            "DHCSMU": [0, 2, 11, 20, 12, 200, 13, 400],
+            "HVSMU": [0, 15, 2000, 5000, 15000, 30000],
+            "UHCU": [0, 14, 1000],
+            "HVMCU": [0, 15000, 30000],
+            "UHVU": [0, 103],
         }
         supported_ranges = supported_ranges[smu_type]
 
         ranges = {
-            '0.2 V': 2,
-            '0.5 V': 5,
-            '2 V': (11, 20),
-            '5 V': 50,
-            '20 V': (12, 200),
-            '40 V': (13, 400),
-            '100 V': (14, 1000),
-            '200 V': (15, 2000),
-            '500 V': 5000,
-            '1500 V': 15000,
-            '3000 V': 30000,
-            '10 kV': 103
+            "0.2 V": 2,
+            "0.5 V": 5,
+            "2 V": (11, 20),
+            "5 V": 50,
+            "20 V": (12, 200),
+            "40 V": (13, 400),
+            "100 V": (14, 1000),
+            "200 V": (15, 2000),
+            "500 V": 5000,
+            "1500 V": 15000,
+            "3000 V": 30000,
+            "10 kV": 103,
         }
 
         # set range attributes
         self.output = Ranging(supported_ranges, ranges)
-        self.meas = Ranging(supported_ranges, ranges,
-                            fixed_ranges=True)
+        self.meas = Ranging(supported_ranges, ranges, fixed_ranges=True)
 
 
-class SMUCurrentRanging():
-    """ Provides Range Name/Index transformation for current
+class SMUCurrentRanging:
+    """Provides Range Name/Index transformation for current
     measurement/sourcing.
     Validity of ranges is checked against the type of the SMU.
 
@@ -1524,52 +1608,283 @@ class SMUCurrentRanging():
     def __init__(self, smu_type):
         supported_output_ranges = {
             # in combination with ASU also 8
-            'HRSMU': [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            "HRSMU": [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
             # in combination with ASU also 8,9,10
-            'MPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
-            'HPSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
-            'MCSMU': [0, 15, 16, 17, 18, 19, 20],
-            'HCSMU': [0, 15, 16, 17, 18, 19, 20, 22],
-            'DHCSMU': [0, 15, 16, 17, 18, 19, 20, 21, 23],
-            'HVSMU': [0, 11, 12, 13, 14, 15, 16, 17, 18],
-            'UHCU': [0, 26, 28],
-            'HVMCU': [],
-            'UHVU': []
+            "MPSMU": [0, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            "HPSMU": [0, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+            "MCSMU": [0, 15, 16, 17, 18, 19, 20],
+            "HCSMU": [0, 15, 16, 17, 18, 19, 20, 22],
+            "DHCSMU": [0, 15, 16, 17, 18, 19, 20, 21, 23],
+            "HVSMU": [0, 11, 12, 13, 14, 15, 16, 17, 18],
+            "UHCU": [0, 26, 28],
+            "HVMCU": [],
+            "UHVU": [],
         }
         supported_meas_ranges = {
             **supported_output_ranges,
             # overwrite output ranges:
-            'HVMCU': [0, 19, 21],
-            'UHVU': [0, 15, 16, 17, 18, 19]
+            "HVMCU": [0, 19, 21],
+            "UHVU": [0, 15, 16, 17, 18, 19],
         }
         supported_output_ranges = supported_output_ranges[smu_type]
         supported_meas_ranges = supported_meas_ranges[smu_type]
 
         ranges = {
-            '1 pA': 8,  # for ASU
-            '10 pA': 9,
-            '100 pA': 10,
-            '1 nA': 11,
-            '10 nA': 12,
-            '100 nA': 13,
-            '1 uA': 14,
-            '10 uA': 15,
-            '100 uA': 16,
-            '1 mA': 17,
-            '10 mA': 18,
-            '100 mA': 19,
-            '1 A': 20,
-            '2 A': 21,
-            '20 A': 22,
-            '40 A': 23,
-            '500 A': 26,
-            '2000 A': 28
+            "1 pA": 8,  # for ASU
+            "10 pA": 9,
+            "100 pA": 10,
+            "1 nA": 11,
+            "10 nA": 12,
+            "100 nA": 13,
+            "1 uA": 14,
+            "10 uA": 15,
+            "100 uA": 16,
+            "1 mA": 17,
+            "10 mA": 18,
+            "100 mA": 19,
+            "1 A": 20,
+            "2 A": 21,
+            "20 A": 22,
+            "40 A": 23,
+            "500 A": 26,
+            "2000 A": 28,
         }
 
         # set range attributes
         self.output = Ranging(supported_output_ranges, ranges)
-        self.meas = Ranging(supported_meas_ranges, ranges,
-                            fixed_ranges=True)
+        self.meas = Ranging(supported_meas_ranges, ranges, fixed_ranges=True)
+
+
+######################################
+# SPGU Setup
+######################################
+
+
+class SPGU:
+    """Provides specific methods for the SPGU module of the Agilent B1500 mainframe
+
+    :param parent: Instance of the B1500 mainframe class
+    :type parent: :class:`.AgilentB1500`
+    :param int channel: Channel number of the SPGU
+    """
+
+    def __init__(self, parent, channel, name, **kwargs):
+        # to allow garbage collection for cyclic references
+        self._b1500 = weakref.proxy(parent)
+        channel = strict_discrete_set(channel, range(1, 5))
+        self.channel = channel
+        self.name = name
+        self.ch1 = SPGUChannel(self, int(str(self.channel) + "01"))
+        self.ch2 = SPGUChannel(self, int(str(self.channel) + "02"))
+
+    def write(self, string):
+        """Wraps :meth:`.Instrument.write` method of B1500."""
+        self._b1500.write(string)
+
+    def ask(self, string):
+        """Wraps :meth:`~.Instrument.ask` method of B1500."""
+        return self._b1500.ask(string)
+
+    def start_output(self):
+        """Start SPGU output (``SRP``)"""
+        self.write("SRP")
+
+    def stop_output(self):
+        """Stop SPGU output (``SPP``). The channel outputs the base voltage."""
+        self.write("SPP")
+
+    operation_mode = Instrument.control(
+        "SIM?",
+        "SIM %d",
+        """Control mode for the Semiconductor Pulse Generator Unit (SPGU). (``SIM``)
+        The setting is effective for the all SPGU modules installed in the B1500. This
+        command also triggers 0 V output of the SPGU channels which output switch has been ON.""",
+        get_process=lambda v: SPGUOperationMode(v),
+        set_process=lambda v: SPGUOperationMode(v).value,
+    )
+
+    period = Instrument.control(
+        "SPPER?",
+        "SPPER %f",
+        """Control the pulse period for SPGU channels (``SPPER``) in seconds (float).
+        Applies to all installed SPGU modules""",
+        validator=strict_range,
+        values=[2e-8, 10],
+    )
+
+    def set_output_mode(self, mode, condition=None):
+        """Sets the operating mode for SPGU channel outputs. This setting applies to
+        all SPGU modules installed in the B1500. (``SPRM``)
+
+        :param mode: SPGU operation mode
+        :type mode: SPGUOperationMode
+        :param condition: Number of pulses for `SPGUOutputMode.COUNT` or output duration
+            for `SPGUOutputMode.DURATION`. Not used for SPGUOutputMode.FREE_RUN
+        :type condition: int or float or None
+        """
+        mode = SPGUOutputMode.get(mode)
+
+        if mode == SPGUOutputMode.FREE_RUN:
+            self.write(f"SPRM {mode.value}")
+            return
+
+        if condition is None:
+            raise ValueError(f"Condition must be specified when mode is {mode}")
+
+        if mode == SPGUOutputMode.COUNT:
+            if not (1 <= condition <= 1_000_000):
+                raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
+
+        elif mode == SPGUOutputMode.DURATION:
+            if not (1e-6 <= condition <= 31_556_926):
+                raise ValueError(
+                    "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
+                    "when mode is DURATION."
+                )
+
+        self.write(f"SPRM {mode.value}, {int(condition)}")
+
+    def get_output_mode(self):
+        """Gets the current operating mode and condition for SPGU channel outputs. (``SPRM?``)
+
+        :return: Tuple of (mode, condition)
+        :rtype: tuple
+        """
+        response = self.ask("SPRM?")
+        mode, condition = response.split(",")
+        return SPGUOutputMode(int(mode)), float(condition) if condition else None
+
+
+class SPGUChannel:
+    def __init__(self, parent, channel_number):
+        """Provides specific methods for the SPGU subchannels
+
+        :param parent: Instance of the SPGU class
+        :type parent: :class:`.SPGU`
+        :param int channel: Subchannel number of the SPGU channel
+        """
+        self._spgu = weakref.proxy(parent)
+        self.channel = channel_number
+
+    def write(self, string):
+        """Wraps :meth:`.Instrument.write` method of SPGU."""
+        self._spgu.write(string)
+
+    def ask(self, string):
+        """Wraps :meth:`~.Instrument.ask` method of SPGU."""
+        return self._spgu.ask(string)
+
+    def enable(self):
+        """Enable SPGU Channel (``CN``)"""
+        self._spgu.write("CN %d" % self.channel)
+
+    def disable(self):
+        """Disable SPGU Channel (``CL``)"""
+        self._spgu.write("CL %d" % self.channel)
+
+    @property
+    def load_impedance(self):
+        """Control the load impedance (``SER``) in Ohm (float)."""
+        return self._spgu.ask(f"SER? {self.channel}")
+
+    @load_impedance.setter
+    def load_impedance(self, value):
+        self._spgu.write(f"SER {self.channel}, {value}")
+
+    def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
+        """Sets the output voltage of the SPGU channel. (``SPV``)
+
+        :param source: Signal source for the output voltage,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: `SPGUSignalSource` or int
+        :param base_voltage: Pulse base voltage or DC output voltage in V, defaults to 0
+        :type base_voltage: float, optional
+        :param peak_voltage: Pulse peak voltage in V, defaults to 0
+        :type peak_voltage: float, optional
+        """
+        source = SPGUSignalSource.get(source).value
+        base_voltage = strict_range(base_voltage, (-40, 40))
+        peak_voltage = strict_range(peak_voltage, (-40, 40))
+        self._spgu.write(f"SPV {self.channel}, {source}, {base_voltage}, {peak_voltage}")
+
+    def get_output_voltage(self, source=1):
+        """Gets the output voltage of the specified signal source. (``SPV?``)"""
+        source = SPGUSignalSource.get(source).value
+        response = self._spgu.ask(f"SPV? {self.channel}, {source}")
+        base_voltage, peak_voltage = map(float, response.split(","))
+        return base_voltage, peak_voltage
+
+    @property
+    def output_mode(self):
+        """Control the output mode of the SPGU channel. (``SPM``)
+        The SPGU operating mode must be set to PG with the SIM 0 command before setting the
+        output mode.
+
+        :param mode: Output mode
+        :type mode: :class:`.SPGUChannelOutputMode` or int
+        """
+        return self._spgu.ask(f"SPM? {self.channel}")
+
+    @output_mode.setter
+    def output_mode(self, mode):
+        mode = SPGUChannelOutputMode.get(mode).value
+        self._spgu.write(f"SPM {self.channel}, {mode}")
+
+    def set_pulse_timings(
+        self,
+        source=1,
+        delay=0,
+        width=1e-7,
+        rise_time=2e-8,
+        fall_time=None,
+    ):
+        """Sets the timing parameters for the SPGU channel. (``SPT``)
+        The SPGU operating mode must be set to PG with the ``SIM 0`` command before setting
+        the pulse timings.
+
+        :param source: Signal source for the pulse timings,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: SPGUSignalSource or int
+        :param delay: Pulse delay in seconds, defaults to 0
+        :type delay: float, optional
+        :param width: Pulse width in seconds, defaults to 1e-7
+        :type width: float, optional
+        :param rise_time: Pulse rise time in seconds, defaults to 2e-8
+        :type rise_time: float, optional
+        :param fall_time: Pulse fall time in seconds, defaults to rise_time
+        :type fall_time: float, optional
+        """
+        source = SPGUSignalSource.get(source).value
+        if source == SPGUSignalSource.DC:
+            raise ValueError("Pulse timings can only be set for pulse sources.")
+        command = f"SPT {self.channel}, {source}, {delay}, {width}, {rise_time}"
+        if fall_time is not None:
+            command += f", {fall_time}"
+        self._spgu.write(command)
+
+    def get_pulse_timings(self, source=1):
+        """Gets the timing parameters for the SPGU channel. (``SPT?``)
+        The SPGU operating mode must be set to PG with the SIM 0 command before getting the pulse
+        timings.
+
+        :param source: Signal source for the pulse timings,
+            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :type source: SPGUSignalSource or int
+        :return: Tuple of (delay, width, rise_time, fall_time)
+        :rtype: tuple
+        """
+        source = SPGUSignalSource.get(source).value
+        response = self._spgu.ask(f"SPT? {self.channel}, {source}")
+        return tuple(map(float, response.split(",")))
+
+    def apply_setup(self):
+        """Applies the current setup to the SPGU channel.(``SPUPD``)
+
+        Depends on the b1500.spgu_mode (``SIM``)
+        PG mode: output base voltage set by ``SPV`` command
+        ALWG mode: output initial value of waveform
+        """
+        self._spgu.write(f"SPUPD {self.channel}")
 
 
 class CustomIntEnum(IntEnum):
@@ -1584,8 +1899,7 @@ class CustomIntEnum(IntEnum):
     """
 
     def __str__(self):
-        """Gives title case string of enum value
-        """
+        """Gives title case string of enum value"""
         return str(self.name).replace("_", " ").title()
         # str() conversion just because of pylint bug
 
@@ -1605,9 +1919,10 @@ class CustomIntEnum(IntEnum):
 
 class ADCType(CustomIntEnum):
     """ADC Type"""
-    HSADC = 0,  #: High-speed ADC
-    HRADC = 1,  #: High-resolution ADC
-    HSADC_PULSED = 2,  #: High-resolution ADC for pulsed measurements
+
+    HSADC = (0,)  #: High-speed ADC
+    HRADC = (1,)  #: High-resolution ADC
+    HSADC_PULSED = (2,)  #: High-speed ADC for pulsed measurements
 
     def __str__(self):
         return str(self.name).replace("_", " ")
@@ -1616,20 +1931,35 @@ class ADCType(CustomIntEnum):
 
 class ADCMode(CustomIntEnum):
     """ADC Mode"""
+
     AUTO = 0  #:
     MANUAL = 1  #:
-    PLC = 2  #:
-    TIME = 3  #:
+    PLC = 2  #: Power line cycle mode
+    TIME = 3  #: Measurement time mode
 
 
 class AutoManual(CustomIntEnum):
     """Auto/Manual selection"""
+
     AUTO = 0  #:
     MANUAL = 1  #:
 
 
+class ControlMode(CustomIntEnum):
+    """Control mode for the digital I/O ports"""
+
+    GENERAL = 0  #: General purpose control mode (default)
+    SMU_PGU_SELECTOR = 1  #: 16440A SMU/PGU selector (B1500A-A04) control mode
+    N1258A_N1259A = 2  #: N1258A/N1259A module selector control mode
+    N1265A = 4  #: N1265A Ultra High Current Expander/Fixture control mode
+    N1266A = 8  #: N1266A High Voltage Source Monitor Unit Current Expander control mode
+    N1268A = 16  #: N1268A Ultra High Voltage Expander control mode
+    N1272A = 32  #: N1272A Device Capacitance Selector control mode
+
+
 class MeasMode(CustomIntEnum):
     """Measurement Mode"""
+
     SPOT = 1  #:
     STAIRCASE_SWEEP = 2  #:
     SAMPLING = 10  #:
@@ -1637,23 +1967,54 @@ class MeasMode(CustomIntEnum):
 
 class MeasOpMode(CustomIntEnum):
     """Measurement Operation Mode"""
-    COMPLIANCE_SIDE = 0  #:
+
+    COMPLIANCE_SIDE = 0
+    """
+    Measures current in the voltage source operation or voltage in the current source operation.
+    """
     CURRENT = 1  #:
     VOLTAGE = 2  #:
     FORCE_SIDE = 3  #:
-    COMPLIANCE_AND_FORCE_SIDE = 4  #:
+    """
+    Measures current in the current sourceoperation or voltage in the voltage source operation.
+    """
+    COMPLIANCE_AND_FORCE_SIDE = 4
+    """
+    Current and voltage synchronous measurement. Measurement result contains the compliance side
+    data and the force side data in this order.
+    """
+
+
+class PgSelectorPort(CustomIntEnum):
+    """Output port of SMU/PG selector"""
+
+    OUTPUT_1_FIRST = 0  # Output 1 on the first selector
+    OUTPUT_2_FIRST = 1  # Output 2 on the first selector
+    OUTPUT_1_SECOND = 2  # Output 1 on the second selector
+    OUTPUT_2_SECOND = 3  # Output 2 on the second selector
+
+
+class PgSelectorConnectionStatus(CustomIntEnum):
+    """Connection status of I/O port"""
+
+    NO_CONNECTION = 0  # All open. Breaks connection. Initial setting
+    SMU_ON = 1  # SMU on. Makes connection to the SMU input.
+    PGU_ON = 2  # PGU on. Makes connection to the PGU input.
+    PGU_OPEN = 3  # PGU open. Made by opening the semiconductor relay installed on the PGU on port.
 
 
 class SweepMode(CustomIntEnum):
     """Sweep Mode"""
-    LINEAR_SINGLE = 1  #:
-    LOG_SINGLE = 2  #:
-    LINEAR_DOUBLE = 3  #:
-    LOG_DOUBLE = 4  #:
+
+    LINEAR_SINGLE = 1  #: Linear sweep (single stair, start to stop.)
+    LOG_SINGLE = 2  #: Log sweep (single stair, start to stop.)
+    LINEAR_DOUBLE = 3  #: Linear sweep (double stair, start to stop to start.)
+    LOG_DOUBLE = 4  #: Log sweep (double stair, start to stop to start.)
 
 
 class SamplingMode(CustomIntEnum):
     """Sampling Mode"""
+
     LINEAR = 1  #:
     LOG_10 = 2  #: Logarithmic 10 data points/decade
     LOG_25 = 3  #: Logarithmic 25 data points/decade
@@ -1665,47 +2026,100 @@ class SamplingMode(CustomIntEnum):
     def __str__(self):
         names = {
             1: "Linear",
-            2: "Log 10 data/decade", 3: "Log 25 data/decade",
-            4: "Log 50 data/decade", 5: "Log 100 data/decade",
-            6: "Log 250 data/decade", 7: "Log 5000 data/decade"}
+            2: "Log 10 data/decade",
+            3: "Log 25 data/decade",
+            4: "Log 50 data/decade",
+            5: "Log 100 data/decade",
+            6: "Log 250 data/decade",
+            7: "Log 5000 data/decade",
+        }
         return names[self.value]
 
 
 class SamplingPostOutput(CustomIntEnum):
     """Output after sampling"""
+
     BASE = 1  #:
     BIAS = 2  #:
 
 
+class SPGUChannelOutputMode(CustomIntEnum):
+    """Output mode of SPGU channel"""
+
+    DC = 0  #: DC output mode
+    SIGNAL_SOURCE_1 = 1  #: 2-level pulse output mode using pulse signal source 1
+    SIGNAL_SOURCE_2 = 2  #: 2-level pulse output mode using pulse signal source 2
+    SIGNAL_SOURCE_1_2 = 3  #: 3-level pulse output mode using pulse signal source 1 and 2
+
+
+class SPGUSignalSource(CustomIntEnum):
+    """Signal source for SPGU"""
+
+    DC = 0
+    PULSE_SIGNAL_1 = 1
+    PULSE_SIGNAL_2 = 2
+
+
+class SPGUOperationMode(CustomIntEnum):
+    """Operation mode of Semiconductor Pulse Generator Unit (SPGU)"""
+
+    PG = 0  #: PG (pulse output) mode
+    ALWG = 1  #: ALWG (arbitrary linear wave output) mode
+
+
+class SPGUOutputMode(CustomIntEnum):
+    """Operating mode for SPGU channel outputs"""
+
+    FREE_RUN = 0
+    """
+    Free Run mode. Continues outputting until the ``SPP`` command is executed. The condition
+    parameter is not required.
+    """
+    COUNT = 1
+    """
+    Count mode. Outputs the number of pulses (when set to PG mode with the ``SIM 0`` command), or
+    the number of sequences (when set to ALWG mode with the ``SIM 1`` command) specified by
+    the condition parameter.
+    """
+    DURATION = 2
+    """
+    Duration mode. Outputs for a duration specified by the condition parameter.
+    """
+
+
 class StaircaseSweepPostOutput(CustomIntEnum):
     """Output after staircase sweep"""
+
     START = 1  #:
     STOP = 2  #:
 
 
 class CompliancePolarity(CustomIntEnum):
     """Compliance polarity"""
+
     AUTO = 0  #:
     MANUAL = 1  #:
 
 
 class WaitTimeType(CustomIntEnum):
     """Wait time type"""
-    SMU_SOURCE = 1  #:
-    SMU_MEASUREMENT = 2  #:
-    CMU_MEASUREMENT = 3  #:
+
+    SMU_SOURCE = 1  #: wait before changing the output value
+    SMU_MEASUREMENT = 2  #: wait before starting the measurement
+    CMU_MEASUREMENT = 3  #: wait before starting the measurement
+
 
 ###############################################################################
 # Query Learn: Parse Instrument settings into human readable format
 ###############################################################################
 
 
-class QueryLearn():
+class QueryLearn:
     """Methods to issue and process ``*LRN?`` (learn) command and response."""
 
     @staticmethod
     def query_learn(ask, query_type):
-        """ Issues ``*LRN?`` (learn) command to the instrument to read
+        """Issues ``*LRN?`` (learn) command to the instrument to read
         configuration.
         Returns dictionary of commands and set values.
 
@@ -1716,24 +2130,34 @@ class QueryLearn():
         """
         response = ask("*LRN? " + str(query_type))
         # response.split(';')
-        response = re.findall(
-            r'(?P<command>[A-Z]+)(?P<parameter>[0-9,\+\-\.E]+)',
-            response)
+        response = re.findall(r"(?P<command>[A-Z]+)(?P<parameter>[0-9,\+\-\.E]+)", response)
         # check if commands are unique -> suitable as keys for dict
         counts = Counter([item[0] for item in response])
         # responses that start with a channel number
         # the channel number should always be included in the key
         include_chnum = [
-            'DI', 'DV',  # Sourcing
-            'RI', 'RV',  # Ranging
-            'WV', 'WI', 'WSV', 'WSI',  # Staircase Sweep
-            'PV', 'PI', 'PWV', 'PWI',  # Pulsed Source
-            'MV', 'MI', 'MSP',  # Sampling
-            'SSR', 'RM', 'AAD'  # Series Resistor, Auto Ranging, ADC
+            "DI",
+            "DV",  # Sourcing
+            "RI",
+            "RV",  # Ranging
+            "WV",
+            "WI",
+            "WSV",
+            "WSI",  # Staircase Sweep
+            "PV",
+            "PI",
+            "PWV",
+            "PWI",  # Pulsed Source
+            "MV",
+            "MI",
+            "MSP",  # Sampling
+            "SSR",
+            "RM",
+            "AAD",  # Series Resistor, Auto Ranging, ADC
         ]  # probably not complete yet...
         response_dict = {}
         for element in response:
-            parameters = element[1].split(',')
+            parameters = element[1].split(",")
             name = element[0]
             if (counts[name] > 1) or (name in include_chnum):
                 # append channel (first parameter) to command as dict key
@@ -1742,14 +2166,13 @@ class QueryLearn():
             if len(parameters) == 1:
                 parameters = parameters[0]
             # skip second AAD entry for each channel -> contains no information
-            if 'AAD' in name and name in response_dict.keys():
+            if "AAD" in name and name in response_dict.keys():
                 continue
             response_dict[name] = parameters
         return response_dict
 
     @classmethod
-    def query_learn_header(cls, ask, query_type, smu_references,
-                           single_command=False):
+    def query_learn_header(cls, ask, query_type, smu_references, single_command=False):
         """Issues ``*LRN?`` (learn) command to the instrument to
         read configuration.
         Processes information to human readable values for debugging
@@ -1773,15 +2196,14 @@ class QueryLearn():
         ret = {}
         for key, value in response.items():
             # command without channel
-            command = re.findall(r'(?P<command>[A-Z]+)', key)[0]
-            new_dict = getattr(cls, command)(
-                key, value, smu_references=smu_references)
+            command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
+            new_dict = getattr(cls, command)(key, value, smu_references=smu_references)
             ret = {**ret, **new_dict}
         return ret
 
     @staticmethod
     def to_dict(parameters, names, *args):
-        """ Takes parameters returned by :meth:`query_learn` and ordered list
+        """Takes parameters returned by :meth:`query_learn` and ordered list
         of corresponding parameter names (optional function) and returns
         dict of parameters including names.
 
@@ -1809,7 +2231,7 @@ class QueryLearn():
     @staticmethod
     def _get_smu(key, smu_references):
         # command without channel
-        command = re.findall(r'(?P<command>[A-Z]+)', key)[0]
+        command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
         channel = key[len(command) :]  # noqa: E203
         return smu_references[int(channel)]
 
@@ -1818,85 +2240,76 @@ class QueryLearn():
     def DI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ('Current Range',
-                lambda parameter:
-                smu.current_ranging.output(int(parameter)).name),
-            'Current Output (A)', 'Compliance Voltage (V)',
-            ('Compliance Polarity',
-                lambda parameter: str(CompliancePolarity.get(int(parameter)))),
-            ('Voltage Compliance Ranging Type',
-                lambda parameter:
-                smu.voltage_ranging.meas(int(parameter)).name)
+            ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
+            "Current Output (A)",
+            "Compliance Voltage (V)",
+            ("Compliance Polarity", lambda parameter: str(CompliancePolarity.get(int(parameter)))),
+            (
+                "Voltage Compliance Ranging Type",
+                lambda parameter: smu.voltage_ranging.meas(int(parameter)).name,
+            ),
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Constant Current'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Constant Current"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
     def DV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ('Voltage Range',
-                lambda parameter:
-                smu.voltage_ranging.output(int(parameter)).name),
-            'Voltage Output (V)', 'Compliance Current (A)',
-            ('Compliance Polarity',
-                lambda parameter: str(CompliancePolarity.get(int(parameter)))),
-            ('Current Compliance Ranging Type',
-                lambda parameter:
-                smu.current_ranging.meas(int(parameter)).name)
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
+            "Voltage Output (V)",
+            "Compliance Current (A)",
+            ("Compliance Polarity", lambda parameter: str(CompliancePolarity.get(int(parameter)))),
+            (
+                "Current Compliance Ranging Type",
+                lambda parameter: smu.current_ranging.meas(int(parameter)).name,
+            ),
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Constant Voltage'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Constant Voltage"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
     def CL(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key + parameters, smu_references)
-        return {smu.name: 'OFF'}
+        return {smu.name: "OFF"}
 
     # Instrument Settings: 31
     @classmethod
     def TM(cls, key, parameters, smu_references={}):
-        names = ['Trigger Mode']  # enum + setting not implemented yet
+        names = ["Trigger Mode"]  # enum + setting not implemented yet
         return cls.to_dict(parameters, names)
 
     @classmethod
     def AV(cls, key, parameters, smu_references={}):
         names = [
-            'ADC Averaging Number',
-            ('ADC Averaging Mode',
-                lambda parameter: str(AutoManual(int(parameter))))
+            "ADC Averaging Number",
+            ("ADC Averaging Mode", lambda parameter: str(AutoManual(int(parameter)))),
         ]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def CM(cls, key, parameters, smu_references={}):
-        names = [
-            ('Auto Calibration Mode',
-                lambda parameter: bool(int(parameter)))
-        ]
+        names = [("Auto Calibration Mode", lambda parameter: bool(int(parameter)))]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def FMT(cls, key, parameters, smu_references={}):
-        names = ['Output Data Format', 'Output Data Mode']
+        names = ["Output Data Format", "Output Data Mode"]
         # enum + setting not implemented yet
         return cls.to_dict(parameters, names)
 
     @classmethod
     def MM(cls, key, parameters, smu_references={}):
-        names = [
-            ('Measurement Mode',
-                lambda parameter: str(MeasMode(int(parameter))))
-        ]
+        names = [("Measurement Mode", lambda parameter: str(MeasMode(int(parameter))))]
         ret = cls.to_dict(parameters[0], names)
         smu_names = []
         for channel in parameters[1:]:
             smu_names.append(smu_references[int(channel)].name)
-        ret['Measurement Channels'] = ', '.join(smu_names)
+        ret["Measurement Channels"] = ", ".join(smu_names)
         return ret
 
     # Measurement Ranging: 32
@@ -1904,9 +2317,10 @@ class QueryLearn():
     def RI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            (smu.name + ' Current Measurement Range',
-                lambda parameter:
-                smu.current_ranging.meas(int(parameter)).name)
+            (
+                smu.name + " Current Measurement Range",
+                lambda parameter: smu.current_ranging.meas(int(parameter)).name,
+            )
         ]
         return cls.to_dict(parameters, names)
 
@@ -1914,9 +2328,10 @@ class QueryLearn():
     def RV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            (smu.name + ' Voltage Measurement Range',
-                lambda parameter:
-                smu.voltage_ranging.meas(int(parameter)).name)
+            (
+                smu.name + " Voltage Measurement Range",
+                lambda parameter: smu.voltage_ranging.meas(int(parameter)).name,
+            )
         ]
         return cls.to_dict(parameters, names)
 
@@ -1924,21 +2339,22 @@ class QueryLearn():
     @classmethod
     def WM(cls, key, parameters, smu_references={}):
         names = [
-            ('Auto Abort Status',
-                lambda parameter:
-                {2: True, 1: False}[int(parameter)]),
-            ('Output after Measurement',
-                lambda parameter:
-                str(StaircaseSweepPostOutput(int(parameter))))
+            ("Auto Abort Status", lambda parameter: {2: True, 1: False}[int(parameter)]),
+            (
+                "Output after Measurement",
+                lambda parameter: str(StaircaseSweepPostOutput(int(parameter))),
+            ),
         ]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def WT(cls, key, parameters, smu_references={}):
         names = [
-            'Hold Time (s)', 'Delay Time (s)', 'Step Delay Time (s)',
-            'Step Source Trigger Delay Time (s)',
-            'Step Measurement Trigger Delay Time (s)'
+            "Hold Time (s)",
+            "Delay Time (s)",
+            "Step Delay Time (s)",
+            "Step Source Trigger Delay Time (s)",
+            "Step Measurement Trigger Delay Time (s)",
         ]
         return cls.to_dict(parameters, names)
 
@@ -1946,17 +2362,17 @@ class QueryLearn():
     def WV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Sweep Mode",
-                lambda parameter: str(SweepMode(int(parameter)))),
-            ("Voltage Range",
-                lambda parameter:
-                smu.voltage_ranging.output(int(parameter)).name),
-            "Start Voltage (V)", "Stop Voltage (V)", "Number of Steps",
-            "Current Compliance (A)", "Power Compliance (W)"
+            ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
+            "Start Voltage (V)",
+            "Stop Voltage (V)",
+            "Number of Steps",
+            "Current Compliance (A)",
+            "Power Compliance (W)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Voltage Sweep Source'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Voltage Sweep Source"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
@@ -1964,45 +2380,46 @@ class QueryLearn():
         smu = cls._get_smu(key, smu_references)
         names = [
             ("Sweep Mode", lambda parameter: str(SweepMode(int(parameter)))),
-            ("Current Range",
-                lambda parameter:
-                smu.current_ranging.output(int(parameter)).name),
-            "Start Current (A)", "Stop Current (A)", "Number of Steps",
-            "Voltage Compliance (V)", "Power Compliance (W)"
+            ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
+            "Start Current (A)",
+            "Stop Current (A)",
+            "Number of Steps",
+            "Voltage Compliance (V)",
+            "Power Compliance (W)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Current Sweep Source'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Current Sweep Source"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
     def WSV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Voltage Range",
-                lambda parameter:
-                smu.voltage_ranging.output(int(parameter)).name),
-            "Start Voltage (V)", "Stop Voltage (V)",
-            "Current Compliance (A)", "Power Compliance (W)"
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
+            "Start Voltage (V)",
+            "Stop Voltage (V)",
+            "Current Compliance (A)",
+            "Power Compliance (W)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Synchronous Voltage Sweep Source'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Synchronous Voltage Sweep Source"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
     def WSI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Current Range",
-                lambda parameter:
-                smu.current_ranging.output(int(parameter)).name),
-            "Start Current (A)", "Stop Current (A)",
-            "Voltage Compliance (V)", "Power Compliance (W)"
+            ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
+            "Start Current (A)",
+            "Stop Current (A)",
+            "Voltage Compliance (V)",
+            "Power Compliance (W)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Synchronous Current Sweep Source'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Synchronous Current Sweep Source"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     # SMU Measurement Operation Mode: 46
@@ -2010,9 +2427,10 @@ class QueryLearn():
     def CMM(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            (smu.name + ' Measurement Operation Mode',
-                lambda parameter:
-                str(MeasOpMode(int(parameter))))
+            (
+                smu.name + " Measurement Operation Mode",
+                lambda parameter: str(MeasOpMode(int(parameter))),
+            )
         ]
         return cls.to_dict(parameters, names)
 
@@ -2020,90 +2438,73 @@ class QueryLearn():
     @classmethod
     def MSC(cls, key, parameters, smu_references={}):
         names = [
-            ('Auto Abort Status',
-                lambda parameter:
-                {2: True, 1: False}[int(parameter)]),
-            ('Output after Measurement',
-                lambda parameter:
-                str(SamplingPostOutput(int(parameter))))
+            ("Auto Abort Status", lambda parameter: {2: True, 1: False}[int(parameter)]),
+            ("Output after Measurement", lambda parameter: str(SamplingPostOutput(int(parameter)))),
         ]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def MT(cls, key, parameters, smu_references={}):
         names = [
-            'Hold Bias Time (s)', 'Sampling Interval (s)',
-            'Number of Samples', 'Hold Base Time (s)'
+            "Hold Bias Time (s)",
+            "Sampling Interval (s)",
+            "Number of Samples",
+            "Hold Base Time (s)",
         ]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def ML(cls, key, parameters, smu_references={}):
-        names = [
-            ('Sampling Mode',
-                lambda parameter: str(SamplingMode(int(parameter))))
-        ]
+        names = [("Sampling Mode", lambda parameter: str(SamplingMode(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def MV(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Voltage Range",
-                lambda parameter:
-                smu.voltage_ranging.output(int(parameter)).name),
-            "Base Voltage (V)", "Bias Voltage (V)",
-            "Current Compliance (A)"
+            ("Voltage Range", lambda parameter: smu.voltage_ranging.output(int(parameter)).name),
+            "Base Voltage (V)",
+            "Bias Voltage (V)",
+            "Current Compliance (A)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Voltage Source Sampling'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Voltage Source Sampling"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     @classmethod
     def MI(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
         names = [
-            ("Current Range",
-                lambda parameter:
-                smu.current_ranging.output(int(parameter)).name),
-            "Base Current (A)", "Bias Current (A)",
-            "Voltage Compliance (V)"
+            ("Current Range", lambda parameter: smu.current_ranging.output(int(parameter)).name),
+            "Base Current (A)",
+            "Bias Current (A)",
+            "Voltage Compliance (V)",
         ]
         ret = cls.to_dict(parameters, names)
-        ret['Source Type'] = 'Current Source Sampling'
-        ret.move_to_end('Source Type', last=False)  # make first entry
+        ret["Source Type"] = "Current Source Sampling"
+        ret.move_to_end("Source Type", last=False)  # make first entry
         return {smu.name: ret}
 
     # SMU Series Resistor: 53
     @classmethod
     def SSR(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [
-            (smu.name + ' Series Resistor',
-                lambda parameter: bool(int(parameter)))
-        ]
+        names = [(smu.name + " Series Resistor", lambda parameter: bool(int(parameter)))]
         return cls.to_dict(parameters, names)
 
     # Auto Ranging Mode: 54
     @classmethod
     def RM(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [
-            smu.name + ' Ranging Mode',
-            smu.name + ' Ranging Mode Parameter'
-        ]
+        names = [smu.name + " Ranging Mode", smu.name + " Ranging Mode Parameter"]
         return cls.to_dict(parameters, names)
 
     # ADC: 55, 56
     @classmethod
     def AAD(cls, key, parameters, smu_references={}):
         smu = cls._get_smu(key, smu_references)
-        names = [
-            (smu.name + ' ADC',
-                lambda parameter:
-                str(ADCType(int(parameter))))
-        ]
+        names = [(smu.name + " ADC", lambda parameter: str(ADCType(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     @classmethod
@@ -2111,26 +2512,18 @@ class QueryLearn():
         adc_type = key[3:]
         adc_name = str(ADCType(int(adc_type)))
         names = [
-            (adc_name + ' Mode',
-                lambda parameter:
-                str(ADCMode(int(parameter)))),
-            adc_name + ' Parameter'
+            (adc_name + " Mode", lambda parameter: str(ADCMode(int(parameter)))),
+            adc_name + " Parameter",
         ]
         return cls.to_dict(parameters, names)
 
     @classmethod
     def AZ(cls, key, parameters, smu_references={}):
-        names = [
-            ('ADC Auto Zero',
-                lambda parameter: str(bool(int(parameter))))
-        ]
+        names = [("ADC Auto Zero", lambda parameter: str(bool(int(parameter))))]
         return cls.to_dict(parameters, names)
 
     # Time Stamp: 60
     @classmethod
     def TSC(cls, key, parameters, smu_references={}):
-        names = [
-            ('Time Stamp',
-                lambda parameter: str(bool(int(parameter))))
-        ]
+        names = [("Time Stamp", lambda parameter: str(bool(int(parameter))))]
         return cls.to_dict(parameters, names)
