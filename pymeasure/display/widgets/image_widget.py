@@ -35,44 +35,67 @@ log.addHandler(logging.NullHandler())
 
 
 class ImageWidget(TabWidget, QtWidgets.QWidget):
-    """ Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
+    """Extends the :class:`ImageFrame<pymeasure.display.widgets.image_frame.ImageFrame>`
     to allow different columns of the data to be dynamically chosen
     """
 
-    def __init__(self, name, columns, x_axis, y_axis, z_axis=None, refresh_time=0.2,
-                 check_status=True, parent=None):
+    def __init__(
+        self,
+        name,
+        columns,
+        x_axis,
+        y_axis,
+        z_axis=None,
+        refresh_time=0.2,
+        check_status=True,
+        colormap="viridis",
+        force_reload=False,
+        parent=None,
+    ):
         super().__init__(name, parent)
         self.columns = columns
         self.refresh_time = refresh_time
         self.check_status = check_status
         self.x_axis = x_axis
         self.y_axis = y_axis
+        self.colormap = colormap
         self._setup_ui()
         self._layout()
         if z_axis is not None:
             self.columns_z.setCurrentIndex(self.columns_z.findText(z_axis))
             self.image_frame.change_z_axis(z_axis)
+        self.force_reload = force_reload
 
     def _setup_ui(self):
         self.columns_z_label = QtWidgets.QLabel(self)
-        self.columns_z_label.setMaximumSize(QtCore.QSize(45, 16777215))
-        self.columns_z_label.setText('Z Axis:')
+        self.columns_z_label.setText("Z Axis:")
 
         self.columns_z = QtWidgets.QComboBox(self)
         for column in self.columns:
             self.columns_z.addItem(column)
-        self.columns_z.activated.connect(self.update_z_column)
+        self.columns_z.currentIndexChanged.connect(self.update_z_column)
+
+        list_of_maps = pg.colormap.listMaps()
+        list_of_maps = sorted(list_of_maps, key=lambda x: x.swapcase())
+        self.colormaps_label = QtWidgets.QLabel(self)
+        self.colormaps_label.setText("Colormap:")
+
+        self.colormaps = QtWidgets.QComboBox(self)
+        self.colormaps.addItems(list_of_maps)
 
         self.image_frame = ImageFrame(
-            self.x_axis,
-            self.y_axis,
-            self.columns[0],
-            self.refresh_time,
-            self.check_status
+            self.x_axis, self.y_axis, self.columns[0], self.refresh_time, self.check_status
         )
-        self.updated = self.image_frame.updated
         self.plot = self.image_frame.plot
-        self.columns_z.setCurrentIndex(2)
+        self.colorbar = pg.ColorBarItem(
+            colorMap=self.colormap,
+            interactive=False,
+            colorMapMenu=False,
+        )
+        self.colorbar.setLabel("left", text=self.columns_z.currentText())
+        self.image_frame.updated.connect(self._update_colorbar)
+        self.colormaps.currentIndexChanged.connect(self.set_colormap)
+        self.colormaps.setCurrentIndex(self.colormaps.findText(self.colormap))
 
     def _layout(self):
         vbox = QtWidgets.QVBoxLayout(self)
@@ -83,6 +106,11 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         hbox.setContentsMargins(-1, 6, -1, 6)
         hbox.addWidget(self.columns_z_label)
         hbox.addWidget(self.columns_z)
+        hbox.addWidget(self.colormaps_label)
+        hbox.addWidget(self.colormaps)
+        spacer = QtWidgets.QWidget()
+        spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        hbox.addWidget(spacer)
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.image_frame)
@@ -92,19 +120,28 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
         return QtCore.QSize(300, 600)
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
-        """ Creates a new image """
-        image = ResultsImage(results,
-                             wdg=self,
-                             x=self.image_frame.x_axis,
-                             y=self.image_frame.y_axis,
-                             z=self.image_frame.z_axis,
-                             **kwargs
-                             )
+        """Creates a new image"""
+        image = ResultsImage(
+            results,
+            wdg=self,
+            x=self.image_frame.x_axis,
+            y=self.image_frame.y_axis,
+            z=self.image_frame.z_axis,
+            colormap=self.colormap,
+            force_reload=self.force_reload,
+            **kwargs,
+        )
         return image
 
     def update_z_column(self, index):
         axis = self.columns_z.itemText(index)
         self.image_frame.change_z_axis(axis)
+        self.colorbar.setLabel("left", text=axis)
+
+    def set_colormap(self, index):
+        self.colormap = self.colormaps.itemText(index)
+        self.colorbar.setColorMap(self.colormap)
+        self.image_frame.set_colormap(self.colormap)
 
     def load(self, curve):
         curve.z = self.columns_z.currentText()
@@ -113,3 +150,9 @@ class ImageWidget(TabWidget, QtWidgets.QWidget):
 
     def remove(self, curve):
         self.plot.removeItem(curve)
+
+    def _update_colorbar(self):
+        """Updates the colorbar to match the current image"""
+        for item in self.plot.items:
+            if isinstance(item, ResultsImage):
+                self.colorbar.setImageItem(item, insert_in=self.plot)
