@@ -113,8 +113,9 @@ class OscilloscopeChannel(Channel):
     protect_enabled = Instrument.control(
         get_command=":CHAN{ch}:PROT?",
         set_command=":CHAN{ch}:PROT %s",
-        docs="""Control whether the input protection is enabled in 50Ω mode (bool). If enabled,
-            the 50Ω load will disconnect if greater than 5 Vrms is detected.""",
+        docs="""Control whether the input protection is enabled in 50Ω mode (bool).
+
+        If enabled,the 50Ω load will disconnect if greater than 5 Vrms is detected.""",
         validator=strict_discrete_set,
         values={False: "OFF", True: "ON"},
         map_values=True
@@ -145,6 +146,7 @@ class OscilloscopeChannel(Channel):
     @property
     def current_configuration(self):
         """ Get channel configuration as a dict containing the following keys:
+
             - "CHAN": channel number (int)
             - "RANGE": vertical range (float)
             - "OFFSET": vertical offset (float)
@@ -267,10 +269,12 @@ class HP54616B(SCPIMixin, Instrument):
 
     def digitize(self, channel):
         """The DIGitize command is a macro that captures data satisfying the
-        specifications set up by the ACQuire subsystem. When the digitize process is
-        complete, the acquisition is stopped. The captured data can then be
-        measured by the instrument or transferred to the controller for further
-        analysis.
+        specifications set up by the ACQuire subsystem.
+
+        When the digitize process is complete, the acquisition is stopped.
+        The captured data can then be measured by the instrument or
+        transferred to the controller for further analysis.
+
         :param int channel: Number of bytes to read. A value of -1 indicates to
         read from the whole read buffer.
         """
@@ -295,6 +299,7 @@ class HP54616B(SCPIMixin, Instrument):
 
     def get_display_pixel(self, x, y, **kwargs):
         """Get pixel displayed at (x,y) coordinate location.
+
         :param int x: x-coordinate
         :param int y: y-coordinate
         """
@@ -305,6 +310,7 @@ class HP54616B(SCPIMixin, Instrument):
 
     def set_display_pixel(self, x, y, intensity, **kwargs):
         """Set pixel displayed at (x,y) coordinate location.
+
         :param int x: x-coordinate
         :param int y: y-coordinate
         :param int intensity: 0 to clear pixel, 1 for half-bright, 2 for full-bright,
@@ -360,8 +366,10 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_points = Instrument.control(
         get_command=":ACQ:POIN?",
         set_command=None,
-        docs="""Get number of time buckets. Time buckets groups a set of high-speed samples
-            into a bucket, which represents a fixed time window on the time axis.""",
+        docs="""Get number of time buckets.
+
+        Time buckets groups a set of high-speed samples into a bucket,
+        which represents a fixed time window on the time axis.""",
         validator=strict_range,
         values=[1, 4000],
         map_values=False,
@@ -376,7 +384,7 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_type = Instrument.control(
         get_command=":ACQ:TYPE?",
         set_command=":ACQ:TYPE %s",
-        docs="""Control acquire type which are NORMal, AVERage and PEAK.""",
+        docs="""Control acquire type which are "normal", "average" and "peak".""",
         validator=strict_discrete_set,
         values={"normal": "NORM", "average": "AVER", "peak": "PEAK"},
         map_values=True,
@@ -442,7 +450,7 @@ class HP54616B(SCPIMixin, Instrument):
     display_grid = Instrument.control(
         get_command=":DISP:GRID?",
         set_command=":DISP:GRID %s",
-        docs="""Control display grid.""",
+        docs="""Control display grid. Options are "on", "off", and "simple".""",
         validator=strict_discrete_set,
         values={"on": "ON", "off": "OFF", "simple": "SIMP", "tv": "TV"},
         map_values=True,
@@ -460,7 +468,7 @@ class HP54616B(SCPIMixin, Instrument):
     display_palette = Instrument.control(
         get_command=":DISP:PAL?",
         set_command=":DISP:PAL %u",
-        docs="""Control palette of display.""",
+        docs="""Control palette of display. Options integers in are in [0,6].""",
         validator=strict_range,
         values=[0, 6],
         map_values=False,
