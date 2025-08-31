@@ -144,7 +144,7 @@ class OscilloscopeChannel(Channel):
 
     @property
     def current_configuration(self):
-        """ Read channel configuration as a dict containing the following keys:
+        """ Get channel configuration as a dict containing the following keys:
             - "CHAN": channel number (int)
             - "RANGE": vertical range (float)
             - "OFFSET": vertical offset (float)
@@ -309,7 +309,7 @@ class HP54616B(SCPIMixin, Instrument):
         :param int x: x-coordinate
         :param int y: y-coordinate
         :param int intensity: 0 to clear pixel, 1 for half-bright, 2 for full-bright,
-            other value to clear pixel
+        other value to clear pixel
         """
         message = f":DISP:PIX {x},{y},{intensity}"
         if not (0 <= x <= 511):
