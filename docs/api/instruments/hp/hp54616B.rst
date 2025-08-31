@@ -1,0 +1,7 @@
+######################
+HP 54616B Oscilloscope
+######################
+
+.. autoclass:: pymeasure.instruments.hp.HP54616B
+    :members:
+    :show-inheritance:

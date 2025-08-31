@@ -55,7 +55,7 @@ def test_channel_setup():
                 (b":CHAN1:BW ON", None),
                 (b":CHAN1:COUP DC", None),
                 (b":CHAN1:INP FIFT", None),
-                (b":CHAN1:INV ON", None),
+                (b":CHAN1:INV OFF", None),
                 (b":CHAN1:OFFS 4.20000E+00", None),
                 (b":CHAN1:PMOD AUT", None),
                 (b":CHAN1:PROB X1", None),
@@ -64,22 +64,22 @@ def test_channel_setup():
              ],
     ) as instr:
         # Checking keys of channel config dict
-        channel_dict = instr.ch1.current_configuration
+        channel_dict = instr.channel_1.current_configuration
         expected_channel_dict_keys = ["CHAN", 'RANGE', 'OFFSET', 'COUP', 'BWLIMIT', 'INVERT',
                                       'VERNIER', 'PROBE', 'PMODE', 'INPUT', 'PROTECT']
         for key in channel_dict:
             assert key in expected_channel_dict_keys
 
-        instr.ch1.setup(
-            bwlimit="on",
+        instr.channel_1.setup(
+            bwlimit_enabled=True,
             coupling="dc",
             input_impedance="50",
-            invert="on",
+            invert_enabled=False,
             offset=4.2,
-            pmode="auto",
+            probe_auto_mode_enabled=True,
             probe_attenuation="x1",
             vertical_range=1.25,
-            vernier="off"
+            vernier_enabled=False
         )
 
 
@@ -88,7 +88,15 @@ def test_channel_voltage_offset():
             HP54616B,
             [(b":CHAN1:OFFS 5.00000E-01", None)],
     ) as instr:
-        instr.ch1.offset = 0.5
+        instr.channel_1.offset = 0.5
+
+
+def test_channel_bwlimit_enabled():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN1:BW ON", None)],
+    ) as instr:
+        instr.channel_1.bwlimit_enabled = True
 
 
 def test_display_pixel():
@@ -112,7 +120,7 @@ def test_channel1_coupling():
             HP54616B,
             [(b":CHAN1:COUP?", "AC")],
     ) as instr:
-        assert instr.ch1.coupling == "ac"
+        assert instr.channel_1.coupling == "ac"
 
 
 def test_channel2_coupling():
@@ -120,4 +128,4 @@ def test_channel2_coupling():
             HP54616B,
             [(b":CHAN2:COUP?", "DC")],
     ) as instr:
-        assert instr.ch2.coupling == "dc"
+        assert instr.channel_2.coupling == "dc"
