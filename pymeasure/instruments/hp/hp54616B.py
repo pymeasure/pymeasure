@@ -280,7 +280,7 @@ class HP54616B(SCPIMixin, Instrument):
         transferred to the controller for further analysis.
 
         :param int channel: Number of bytes to read. A value of -1 indicates to
-        read from the whole read buffer.
+            read from the whole read buffer.
         """
         self.write(":DIG CHAN%u" % channel)
 
@@ -318,7 +318,7 @@ class HP54616B(SCPIMixin, Instrument):
         :param int x: x-coordinate
         :param int y: y-coordinate
         :param int intensity: 0 to clear pixel, 1 for half-bright, 2 for full-bright,
-        other value to clear pixel
+            other value to clear pixel
         """
         message = f":DISP:PIX {x},{y},{intensity}"
         if not (0 <= x <= 511):
