@@ -67,12 +67,12 @@ class OscilloscopeChannel(Channel):
         map_values=True
     )
 
-    input_impedance = Instrument.control(
+    input_impedance_high = Instrument.control(
         get_command=":CHAN{ch}:INP?",
         set_command=":CHAN{ch}:INP %s",
-        docs="""Control input impedance to either "50" or "1M" Ohm""",
+        docs="""Control input impedance to either 50Ohm (false) or 1MOhm (True)""",
         validator=strict_discrete_set,
-        values={"50": "FIFT", "1M": "ONEM"},
+        values={False: "FIFT", True: "ONEM"},
         map_values=True
     )
 
@@ -195,28 +195,28 @@ class OscilloscopeChannel(Channel):
                 ch_setup_dict[key] = int(ch_setup_dict[key])
         return ch_setup_dict
 
-    def setup(self, bwlimit_enabled=None, coupling=None, input_impedance=None,
+    def setup(self, bwlimit_enabled=None, coupling=None, input_impedance_high=None,
               invert_enabled=None, offset=None, probe_auto_mode_enabled=None,
               probe_attenuation=None, vertical_range=None, vernier_enabled=None):
         """ Setup channel. Unspecified settings are not modified. Modifying values such as
         probe attenuation will modify offset, range, etc. Refer to oscilloscope documentation.
 
         :param bwlimit_enabled: A boolean, which enables 25 MHz internal low-pass filter.
-        :param coupling: "ac" or "dc".
-        :param input_impedance: A boolean, changes input impedance.
-        :param invert_enabled: A boolean, which enables input signal inversion.
-        :param offset: Numerical value represented at center of screen.
-        :param probe_auto_mode_enabled: Sets the probe mode to "auto" or "manual".
-        :param probe_attenuation: Sets the probe attenuation to "x1", "x10", "x100".
-        :param vertical_range: Full-scale vertical axis of the selected channel.
-        :param vernier_enabled: Control the enable vernier option. """
+        :param coupling: Set coupling mode to "ac" or "dc" (string).
+        :param input_impedance_high: Set input impedance to 1MOhm (true) or 50Ohm (false).
+        :param invert_enabled: Enable input signal inversion (bool).
+        :param offset: Value represented at center of screen (float).
+        :param probe_auto_mode_enabled: Set the probe mode to auto (true) or manual (false).
+        :param probe_attenuation: Set the probe attenuation to "x1", "x10", "x100" (string).
+        :param vertical_range: Set full-scale vertical axis of the selected channel (float).
+        :param vernier_enabled: Enable vernier option (bool)."""
 
         if bwlimit_enabled is not None:
             self.bwlimit_enabled = bwlimit_enabled
         if coupling is not None:
             self.coupling = coupling
-        if input_impedance is not None:
-            self.input_impedance = input_impedance
+        if input_impedance_high is not None:
+            self.input_impedance_high = input_impedance_high
         if invert_enabled is not None:
             self.invert_enabled = invert_enabled
         if offset is not None:
