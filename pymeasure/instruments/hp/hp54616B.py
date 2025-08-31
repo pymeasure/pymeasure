@@ -357,7 +357,7 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_count = Instrument.control(
         get_command=":ACQ:COUN?",
         set_command=":ACQ:COUN %d",
-        docs="""Control number of averaged values when acquire type is average.""",
+        docs="""Control number of averaged values when acquire type is average (int strictly from 1 to 256)""",
         validator=strict_range,
         values=[1, 256],
         map_values=False,
@@ -468,7 +468,7 @@ class HP54616B(SCPIMixin, Instrument):
     display_palette = Instrument.control(
         get_command=":DISP:PAL?",
         set_command=":DISP:PAL %u",
-        docs="""Control palette of display. Options integers in are in [0,6].""",
+        docs="""Control palette of display. (int strictly between 0 and 6).""",
         validator=strict_range,
         values=[0, 6],
         map_values=False,
@@ -479,7 +479,7 @@ class HP54616B(SCPIMixin, Instrument):
     display_pixel = Instrument.control(
         get_command=None,
         set_command=":DISP:PIX %s",
-        docs="""Control pixel on display.""",
+        docs="""Control pixel on display (string in format <x>, <y>, <intensity>).""",
     )
 
     display_setup = Instrument.control(
@@ -491,7 +491,7 @@ class HP54616B(SCPIMixin, Instrument):
     display_source = Instrument.control(
         get_command=":DISP:SOUR?",
         set_command=":DISP:SOUR %s",
-        docs="""Control display source.""",
+        docs="""Control display source. Options are "pmemory1" and "pmemory2".""",
         validator=strict_discrete_set,
         values={"pmemory1": "PMEM1", "pmemory2": "PMEM2"},
         map_values=True,
@@ -523,6 +523,7 @@ class HP54616B(SCPIMixin, Instrument):
         get_command=":WAV:POIN?",
         set_command=":WAV:POIN %s",
         docs="""Control number of waveform points.
+
             Options are 100, 200, 250, 400, 500, 800, 1000, 2000, 4000, 5000.""",
         validator=strict_discrete_set,
         values={
@@ -564,37 +565,37 @@ class HP54616B(SCPIMixin, Instrument):
     waveform_x_increment = Instrument.control(
         get_command=":WAV:XINC?",
         set_command=None,
-        docs="""Get waveform x increment.""",
+        docs="""Get waveform x increment (float).""",
     )
 
     waveform_x_origin = Instrument.control(
         get_command=":WAV:XOR?",
         set_command=None,
-        docs="""Get waveform x origin.""",
+        docs="""Get waveform x origin (float).""",
     )
 
     waveform_x_reference = Instrument.control(
         get_command=":WAV:XREF?",
         set_command=None,
-        docs="""Get waveform x reference.""",
+        docs="""Get waveform x reference (int).""",
     )
 
     waveform_y_increment = Instrument.control(
         get_command=":WAV:YINC?",
         set_command=None,
-        docs="""Get waveform y increment.""",
+        docs="""Get waveform y increment (float).""",
     )
 
     waveform_y_origin = Instrument.control(
         get_command=":WAV:YOR?",
         set_command=None,
-        docs="""Get waveform y origin.""",
+        docs="""Get waveform y origin (float).""",
     )
 
     waveform_y_reference = Instrument.control(
         get_command=":WAV:YREF?",
         set_command=None,
-        docs="""Get waveform y reference.""",
+        docs="""Get waveform y reference (int).""",
     )
 
     ###############
