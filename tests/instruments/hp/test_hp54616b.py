@@ -73,7 +73,7 @@ def test_channel_setup():
         instr.channel_1.setup(
             bwlimit_enabled=True,
             coupling="dc",
-            input_impedance="50",
+            input_impedance_high=False,
             invert_enabled=False,
             offset=4.2,
             probe_auto_mode_enabled=True,
@@ -129,3 +129,11 @@ def test_channel2_coupling():
             [(b":CHAN2:COUP?", "DC")],
     ) as instr:
         assert instr.channel_2.coupling == "dc"
+
+
+def test_input_impedance_high():
+    with expected_protocol(
+            HP54616B,
+            [(b":CHAN1:INP?", "ONEM")],
+    ) as instr:
+        assert instr.channel_1.input_impedance_high == True
