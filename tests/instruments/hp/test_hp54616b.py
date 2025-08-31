@@ -136,4 +136,4 @@ def test_input_impedance_high():
             HP54616B,
             [(b":CHAN1:INP?", "ONEM")],
     ) as instr:
-        assert instr.channel_1.input_impedance_high == True
+        assert instr.channel_1.input_impedance_high
