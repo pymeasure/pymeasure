@@ -268,10 +268,10 @@ class HP54616B(SCPIMixin, Instrument):
 
     def digitize(self, channel):
         """The DIGitize command is a macro that captures data satisfying the
-            specifications set up by the ACQuire subsystem. When the digitize process is
-            complete, the acquisition is stopped. The captured data can then be
-            measured by the instrument or transferred to the controller for further
-            analysis.
+        specifications set up by the ACQuire subsystem. When the digitize process is
+        complete, the acquisition is stopped. The captured data can then be
+        measured by the instrument or transferred to the controller for further
+        analysis.
         :param int channel: Number of bytes to read. A value of -1 indicates to
         read from the whole read buffer.
         """
