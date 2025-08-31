@@ -70,7 +70,7 @@ class OscilloscopeChannel(Channel):
     input_impedance_high = Instrument.control(
         get_command=":CHAN{ch}:INP?",
         set_command=":CHAN{ch}:INP %s",
-        docs="""Control input impedance to either 50Ohm (false) or 1MOhm (True)""",
+        docs="""Control input impedance to either 50Ohm (False) or 1MOhm (True)""",
         validator=strict_discrete_set,
         values={False: "FIFT", True: "ONEM"},
         map_values=True
@@ -157,8 +157,7 @@ class OscilloscopeChannel(Channel):
             - "INPUT": input impedance FIFT or ONEM (str)
             - "PROTECT": protect channel "on" or "off" (bool)
         """
-
-        ch_setup_raw = self.setup_summary
+        ch_setup_raw = str(self.setup_summary)
 
         # ch_setup_raw has the following format:
         # CHAN1:RANGE +1.60000000E-001;OFFSET -1.31250000E-002;COUP DC;BWLIMIT OFF;
@@ -168,7 +167,7 @@ class OscilloscopeChannel(Channel):
         ch_setup_splitted = ch_setup_raw[6:].split(";")
 
         # Create dict of setup parameters
-        ch_setup_dict = dict(map(lambda v: v.split(" "), ch_setup_splitted))
+        ch_setup_dict: dict[str, str | bool | float | int] = dict(map(lambda v: v.split(" "), ch_setup_splitted))
 
         # Add "CHAN" key
         ch_setup_dict["CHAN"] = ch_setup_raw[4]
@@ -407,6 +406,24 @@ class HP54616B(SCPIMixin, Instrument):
     # Display #
     ###############
 
+    display_connect_enable = Instrument.control(
+        get_command=":DISP:CONN?",
+        set_command=":DISP:CONN %s",
+        docs="""Control whether display is connected (bool).""",
+        validator=strict_range,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    display_row = Instrument.control(
+        get_command=":DISP:ROW?",
+        set_command=":DISP:ROW %u",
+        docs="""Control row of display.""",
+        validator=strict_range,
+        values=[1, 20],
+        map_values=False,
+    )
+
     display_column = Instrument.control(
         get_command=":DISP:COL?",
         set_command=":DISP:COL %u",
@@ -416,13 +433,10 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=False,
     )
 
-    display_connect = Instrument.control(
-        get_command=":DISP:CONN?",
-        set_command=":DISP:CONN %s",
-        docs="""Control display connect.""",
-        validator=strict_range,
-        values={"on": "ON", "off": "OFF"},
-        map_values=True,
+    display_line = Instrument.control(
+        get_command=None,
+        set_command=":DISP:LINE %s",
+        docs="""Set display line.""",
     )
 
     display_grid = Instrument.control(
@@ -443,12 +457,6 @@ class HP54616B(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    display_line = Instrument.control(
-        get_command=None,
-        set_command=":DISP:LINE %s",
-        docs="""Set display line.""",
-    )
-
     display_palette = Instrument.control(
         get_command=":DISP:PAL?",
         set_command=":DISP:PAL %u",
@@ -464,15 +472,6 @@ class HP54616B(SCPIMixin, Instrument):
         get_command=None,
         set_command=":DISP:PIX %s",
         docs="""Control pixel on display.""",
-    )
-
-    display_row = Instrument.control(
-        get_command=":DISP:ROW?",
-        set_command=":DISP:ROW %u",
-        docs="""Control row of display.""",
-        validator=strict_range,
-        values=[1, 20],
-        map_values=False,
     )
 
     display_setup = Instrument.control(
