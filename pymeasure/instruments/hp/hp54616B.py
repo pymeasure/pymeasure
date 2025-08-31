@@ -169,32 +169,36 @@ class OscilloscopeChannel(Channel):
         ch_setup_splitted = ch_setup_raw[6:].split(";")
 
         # Create dict of setup parameters
-        ch_setup_dict: dict[str, str | bool | float | int] = dict(map(lambda v: v.split(" "), ch_setup_splitted))
+        ch_setup_dict_preparse: dict[str, str] = dict(map(lambda v: v.split(" "),
+                                                          ch_setup_splitted))
+
+        # Parse values in setup dict and create a new dictionary
+        ch_setup_dict_postparse: dict[str, str | bool | float | int] = {}
 
         # Add "CHAN" key
-        ch_setup_dict["CHAN"] = ch_setup_raw[4]
+        ch_setup_dict_postparse["CHAN"] = ch_setup_raw[4]
 
         # Convert values to specific type
         to_str = ["COUP", "PROBE", "PMODE", "INPUT"]
         to_bool = ["BWLIMIT", "INVERT", "VERNIER", "PROTECT"]
         to_float = ["RANGE", "OFFSET"]
         to_int = ["CHAN"]
-        for key in ch_setup_dict:
+        for key in ch_setup_dict_preparse:
             if key in to_str:
-                ch_setup_dict[key] = str(ch_setup_dict[key])
+                ch_setup_dict_postparse[key] = str(ch_setup_dict_preparse[key])
             elif key in to_bool:
-                if (ch_setup_dict[key] == "ON"):
-                    ch_setup_dict[key] = True
-                elif (ch_setup_dict[key] == "OFF"):
-                    ch_setup_dict[key] = False
+                if (ch_setup_dict_preparse[key] == "ON"):
+                    ch_setup_dict_postparse[key] = True
+                elif (ch_setup_dict_preparse[key] == "OFF"):
+                    ch_setup_dict_postparse[key] = False
                 else:
                     raise Exception("Boolean should be either \"ON\" or \"OFF\". "
                                     "Setup value is neither.")
             elif key in to_float:
-                ch_setup_dict[key] = float(ch_setup_dict[key])
+                ch_setup_dict_postparse[key] = float(ch_setup_dict_preparse[key])
             elif key in to_int:
-                ch_setup_dict[key] = int(ch_setup_dict[key])
-        return ch_setup_dict
+                ch_setup_dict_postparse[key] = int(ch_setup_dict_preparse[key])
+        return ch_setup_dict_postparse
 
     def setup(self, bwlimit_enabled=None, coupling=None, input_impedance_high=None,
               invert_enabled=None, offset=None, probe_auto_mode_enabled=None,
@@ -348,7 +352,7 @@ class HP54616B(SCPIMixin, Instrument):
         get_command=":ACQ:COMP?",
         set_command=":ACQ:COMP %d",
         docs="""Control the percentage of time buckets to be full before acquisition
-            is considered complete. Set integer in range [1,100]. """,
+            is considered complete. Set integer in range [1,100].""",
         validator=strict_range,
         values=[0, 100],
         map_values=False,
@@ -357,7 +361,9 @@ class HP54616B(SCPIMixin, Instrument):
     acquire_count = Instrument.control(
         get_command=":ACQ:COUN?",
         set_command=":ACQ:COUN %d",
-        docs="""Control number of averaged values when acquire type is average (int strictly from 1 to 256)""",
+        docs="""Control number of averaged values is average (int strictly from 1 to 256).
+
+        Only applicate when acquire type is average.""",
         validator=strict_range,
         values=[1, 256],
         map_values=False,
