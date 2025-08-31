@@ -273,7 +273,7 @@ class HP54616B(SCPIMixin, Instrument):
             measured by the instrument or transferred to the controller for further
             analysis.
         :param int channel: Number of bytes to read. A value of -1 indicates to
-            read from the whole read buffer.
+        read from the whole read buffer.
         """
         self.write(":DIG CHAN%u" % channel)
 
