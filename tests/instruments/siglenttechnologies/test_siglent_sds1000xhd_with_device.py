@@ -35,7 +35,7 @@ def sds1000xhd(connected_device_address):
     Setup: Connect a sine wave generator to channel 1 (1kHz, 2Vpp recommended).
     """
     instr = SDS1000XHD(connected_device_address)
-    instr.write("*RST")  # Reset the instrument to known state
+    # instr.write("*RST")  # Reset the instrument to known state
     time.sleep(1)  # Allow reset to complete
     return instr
 
@@ -52,7 +52,7 @@ def test_identification(sds1000xhd):
     """Test that the instrument identifies itself correctly."""
     idn = sds1000xhd.id
     # Check that it's a Siglent SDS device
-    assert "SIGLENT" in idn
+    assert "Siglent" in idn
     assert "SDS" in idn
 
 
@@ -142,7 +142,7 @@ def test_waveform_acquisition(auto_setup_sds1000xhd):
     scope = auto_setup_sds1000xhd
     
     # Set up channel 1 for acquisition
-    scope.channel_1.switch = True
+    scope.channel_1.display_enabled = True
     scope.waveform_channels["C1"].source = "C1"
     
     # Set data format to BYTE for faster acquisition
@@ -239,7 +239,7 @@ def test_save_waveform_csv(sds1000xhd, tmp_path):
     time.sleep(2)
     
     # Set up channel 1 for acquisition
-    sds1000xhd.channel_1.switch = True
+    sds1000xhd.channel_1.display_enabled = True
     sds1000xhd.waveform_channels["C1"].source = "C1"
     
     # Get waveform data

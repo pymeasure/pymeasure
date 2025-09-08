@@ -110,3 +110,6 @@ settings.json
 
 # Vim
 *.swp
+
+# Claude Code
+CLAUDE.md

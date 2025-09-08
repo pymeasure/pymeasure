@@ -25,11 +25,10 @@
 
 import struct
 import math
-import gc
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_discrete_set, truncated_range, strict_discrete_set
+    truncated_discrete_set, strict_range, strict_discrete_set
 )
 
 
@@ -43,92 +42,87 @@ class AnalogChannel(Channel):
     scale = Channel.control(
         ":CHANnel{ch}:SCALe?",
         ":CHANnel{ch}:SCALe %.3e",
-        "Control the vertical scale of a channel in V/divisions.",
-        validator=truncated_range,
+        "Control the vertical scale of a channel in V/divisions (float).",
+        validator=strict_range,
         values=[1e-3, 10],
-        get_process=lambda v: float(v),
     )
 
     coupling = Channel.control(
         ":CHANnel{ch}:COUPling?",
         ":CHANnel{ch}:COUPling %s",
-        "Control the channel coupling mode (DC, AC, or GND).",
+        "Control the channel coupling mode (str): 'DC', 'AC', or 'GND'.",
         validator=strict_discrete_set,
         values=["DC", "AC", "GND"],
-        get_process=lambda v: v.strip(),
     )
 
     probe = Channel.control(
         ":CHANnel{ch}:PROBe?",
         ":CHANnel{ch}:PROBe %s",
-        "Control the probe attenuation factor.",
+        "Control the probe attenuation factor (float).",
         validator=truncated_discrete_set,
         values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200,
                 500, 1000],
-        get_process=lambda v: float(v),
     )
 
     offset = Channel.control(
         ":CHANnel{ch}:OFFSet?",
         ":CHANnel{ch}:OFFSet %.6f",
-        "Control the vertical offset of the channel in volts.",
-        get_process=lambda v: float(v),
+        "Control the vertical offset of the channel in volts (float).",
     )
 
-    visible = Channel.control(
+    visible_enabled = Channel.control(
         ":CHANnel{ch}:VISible?",
         ":CHANnel{ch}:VISible %s",
-        "Control whether the channel is visible (ON/OFF).",
+        """Control whether the channel waveform is displayed on screen (bool).
+        This sets the display state only, controlling waveform visibility.
+        Different from display_enabled which controls the physical channel switch.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
-    switch = Channel.control(
+    display_enabled = Channel.control(
         ":CHANnel{ch}:SWITch?",
         ":CHANnel{ch}:SWITch %s",
-        "Control the channel display switch (ON/OFF).",
+        """Control whether the channel display is turned on or off (bool).
+        This turns the display of the specified channel on or off.
+        Different from visible_enabled which sets the display state only.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
-    bandwidth_limit = Channel.control(
+    bandwidth_limit_enabled = Channel.control(
         ":CHANnel{ch}:BWLimit?",
         ":CHANnel{ch}:BWLimit %s",
-        "Control the bandwidth limit (ON/OFF).",
+        "Control the bandwidth limit enabled state (bool).",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
     invert = Channel.control(
         ":CHANnel{ch}:INVert?",
         ":CHANnel{ch}:INVert %s",
-        "Control signal inversion (ON/OFF).",
+        "Control signal inversion (bool).",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
     label = Channel.control(
         ":CHANnel{ch}:LABel:TEXT?",
         ":CHANnel{ch}:LABel:TEXT '%s'",
-        "Control the channel label text.",
-        get_process=lambda v: v.strip().strip('"\''),
+        "Control the channel label text (str).",
+        preprocess_reply=lambda v: v.strip().strip('"'),
     )
 
     unit = Channel.control(
         ":CHANnel{ch}:UNIT?",
         ":CHANnel{ch}:UNIT %s",
-        "Control the channel unit (V, A).",
+        "Control the channel unit (str): 'V' or 'A'.",
         validator=strict_discrete_set,
         values=["V", "A"],
-        get_process=lambda v: v.strip(),
     )
 
 
@@ -146,31 +140,30 @@ class WaveformChannel(Channel):
     source = Channel.control(
         ":WAVeform:SOURce?",
         ":WAVeform:SOURce %s",
-        "Control the waveform source to be transferred from the oscilloscope.",
+        "Control the waveform source to be transferred from the oscilloscope (str).",
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
-        get_process=lambda v: v.strip(),
     )
 
     start_point = Channel.control(
         ":WAVeform:STARt?",
         ":WAVeform:STARt %d",
-        """Control the starting data point for waveform transfer.
+        """Control the starting data point for waveform transfer (int).
+        
         This command specifies the starting data point for waveform transfer
         using the query :WAVeform:DATA?. The value range is related to the
         current waveform point and the value set by the command :WAVeform:POINt.
         Value in NR1 format (integer with no decimal point).""",
-        validator=truncated_range,
-        values=[0, 1000000000],  # Range depends on current waveform points and :WAVeform:POINt
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
     interval = Channel.control(
         ":WAVeform:INTerval?",
         ":WAVeform:INTerval %d",
-        """Control the interval between data points for waveform transfer.
+        """Control the interval between data points for waveform transfer (int).
+        
         This command sets the interval between data points for waveform transfer
         using the query :WAVeform:DATA?. The query returns the interval between
         data points for waveform transfer.
@@ -178,54 +171,57 @@ class WaveformChannel(Channel):
         Note: The value range is related to the values set by the commands
         :WAVeform:POINt and :WAVeform:STARt.
         """,
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
     point = Channel.control(
         ":WAVeform:POINt?",
         ":WAVeform:POINt %d",
-        """Control the number of waveform points to be transferred with :WAVeform:DATA?.
+        """Control the number of waveform points to be transferred with :WAVeform:DATA? (int).
+        
         This command sets the number of waveform points to be transferred with the
         query :WAVeform:DATA?. The query returns the number of waveform points to be
         transferred.
         Value in NR1 format (integer with no decimal point).
         Note: The value range is related to the current waveform point.
         """,
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
     max_point = Channel.measurement(
         ":WAVeform:MAXPoint?",
-        """Get the maximum points of one piece when reading waveform data in pieces.
+        """Get the maximum points of one piece when reading waveform data in pieces (float).
+        
         This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
         """,
-        get_process=lambda v: float(v)
+        cast=float
     )
 
     width = Channel.control(
         ":WAVeform:WIDTh?",
         ":WAVeform:WIDTh %s",
-        """Control the output format for the transfer of waveform data.
+        """Control the output format for the transfer of waveform data (str).
+        
         This command sets the current output format for the transfer of
         waveform data. The query returns the current output format.
+        Options: 'BYTE' or 'WORD'.
         """,
         validator=strict_discrete_set,
         values=["BYTE", "WORD"],
-        get_process=lambda v: v.strip(),
     )
 
     def _parse_preamble_descriptor(self, raw_data):
         """Parse the binary preamble descriptor data.
-        Args:
-            raw_data (bytes): Raw binary data from :WAVeform:PREamble? command
-        Returns:
-            dict: Parsed descriptor data with the same format as get_descriptor
+        
+        :param bytes raw_data: Raw binary data from :WAVeform:PREamble? command
+        :return: Parsed descriptor data with the same format as get_descriptor (dict)
         """
-        # Find the start of the binary data after the header
+        # Ensure we have bytes data for binary parsing
         if isinstance(raw_data, str):
-            raw_data = raw_data.encode('latin-1')
+            # This shouldn't normally happen with read_bytes(), but handle gracefully
+            raw_data = raw_data.encode("latin-1")  # latin-1 preserves byte values 0-255
 
         # Locate the binary data block
         recv = raw_data[raw_data.find(b'#') + 11:]
@@ -272,20 +268,23 @@ class WaveformChannel(Channel):
     @property
     def preamble(self):
         """Get the waveform preamble descriptor data.
+        
         The preamble contains binary descriptor information about the waveform data format,
         including voltage scale, offset, time interval, trigger delay, time division,
         voltage codes per division, ADC bit depth, and probe attenuation factor.
         This uses the same binary parsing approach as the get_descriptor method.
-        Returns:
-        dict: A dictionary with the following keys:
-        - vdiv: Voltage per division (float)
-        - voffset: Voltage offset (float)
-        - interval: Time interval between points (float)
-        - trdl: Trigger delay (float)
-        - tdiv: Time per division (float)
-        - vcode_per: Voltage codes per division (float)
-        - adc_bit: ADC bit depth (int)
-        - probe: Probe attenuation factor (float)
+
+        :return: A dictionary with the following keys:
+
+            - vdiv: Voltage per division (float)
+            - voffset: Voltage offset (float)  
+            - interval: Time interval between points (float)
+            - trdl: Trigger delay (float)
+            - tdiv: Time per division (float)
+            - vcode_per: Voltage codes per division (float)
+            - adc_bit: ADC bit depth (int)
+            - probe: Probe attenuation factor (float)
+        :rtype: dict
         """
         # Get raw binary data from the instrument using the same approach as get_descriptor
         self.write(":WAVeform:PREamble?")
@@ -312,7 +311,7 @@ class WaveformChannel(Channel):
         # Get waveform descriptor information using the preamble property
         preamble_data = self.preamble
         vdiv = preamble_data['vdiv']
-        ofst = preamble_data['voffset']
+        offset = preamble_data['voffset']
         interval = preamble_data['interval']
         trdl = preamble_data['trdl']
         tdiv = preamble_data['tdiv']
@@ -320,7 +319,7 @@ class WaveformChannel(Channel):
         adc_bit = preamble_data['adc_bit']
 
         # Get the waveform points and confirm the number of waveform slice reads
-        points = self.parent.acq_points
+        points = self.parent.acquisition_points
         one_piece_num = self.max_point
         read_times = math.ceil(points / one_piece_num)
 
@@ -353,11 +352,7 @@ class WaveformChannel(Channel):
         if adc_bit > 8:
             # Calculate actual length of data received and adjust points if needed
             actual_points = len(recv_byte) // 2  # 2 bytes per point for WORD format
-            # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
             if actual_points * 2 != len(recv_byte):
-                # warning_msg = (f"Warning: Buffer size {len(recv_byte)} is not exactly "
-                #                f"twice the number of points {actual_points}")
-                # print(warning_msg)
                 # Truncate buffer to ensure it's exactly divisible by 2
                 truncated_bytes = len(recv_byte) - (len(recv_byte) % 2)
                 recv_byte = recv_byte[:truncated_bytes]
@@ -367,16 +362,13 @@ class WaveformChannel(Channel):
         else:
             # Calculate actual length of data received and adjust points if needed
             actual_points = len(recv_byte)  # 1 byte per point for BYTE format
-            # print(f"Expected points: {int(points)}, Actual points from data: {actual_points}")
             convert_data = struct.unpack("%db" % actual_points, recv_byte)
-        del recv_byte
-        gc.collect()
 
         # Calculate the voltage value and time value
         time_value = []
         volt_value = []
         for idx in range(0, len(convert_data)):
-            volt_value.append(convert_data[idx] / vcode_per * float(vdiv) - float(ofst))
+            volt_value.append(convert_data[idx] / vcode_per * float(vdiv) - float(offset))
             time_data = -(float(tdiv) * HORI_NUM / 2) + idx * interval + float(trdl)
             time_value.append(time_data)
 
@@ -394,57 +386,46 @@ class AdvancedMeasurementItem(Channel):
     enabled = Channel.control(
         ":MEASure:ADVanced:P{ch}?",
         ":MEASure:ADVanced:P{ch} %s",
-        "Control whether the advanced measurement item is enabled (ON/OFF).",
+        "Control whether the advanced measurement item is enabled (bool).",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
     source1 = Channel.control(
         ":MEASure:ADVanced:P{ch}:SOURce1?",
         ":MEASure:ADVanced:P{ch}:SOURce1 %s",
-        "Control the first source for the advanced measurement item.",
+        "Control the first source for the advanced measurement item (str).",
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
-        get_process=lambda v: v.strip(),
     )
 
     source2 = Channel.control(
         ":MEASure:ADVanced:P{ch}:SOURce2?",
         ":MEASure:ADVanced:P{ch}:SOURce2 %s",
-        """Control the second source for the advanced measurement item.
+        """Control the second source for the advanced measurement item (str).
         This is used for measurements that require two sources.
         """,
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
-        get_process=lambda v: v.strip(),
     )
 
-    statistics_all = Channel.measurement(
-        ":MEASure:ADVanced:P{ch}:STATistics? ALL",
-        "Returns all the statistics",
-        get_process=lambda v: v.strip(),
-    )
-
-    # Individual statistics measurements
     statistics_all = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? ALL",
         """Get all statistics for the advanced measurement item.
-        Returns all statistical data when statistics are enabled, or 'OFF' when disabled.
+        Gets all statistical data when statistics are enabled, or 'OFF' when disabled.
         """,
-        get_process=lambda v: v.strip(),
+        preprocess_reply=lambda v: v.strip(),
+        separator=None,
     )
 
     statistics_current = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? CURRent",
-        """Get the current value of the statistics for the advanced measurement item.
-        Returns the current statistical value in NR3 format (e.g., 1.23E+2).
-        """,
+        """Get the current statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: (float(v.strip())
                                if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
@@ -452,9 +433,7 @@ class AdvancedMeasurementItem(Channel):
 
     statistics_mean = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MEAN",
-        """Get the mean value of the statistics for the advanced measurement item.
-        Returns the mean statistical value in NR3 format (e.g., 1.23E+2).
-        """,
+        """Get the mean statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: (float(v.strip())
                                if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
@@ -462,9 +441,7 @@ class AdvancedMeasurementItem(Channel):
 
     statistics_maximum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MAXimum",
-        """Get the maximum value of the statistics for the advanced measurement item.
-        Returns the maximum statistical value in NR3 format (e.g., 1.23E+2).
-        """,
+        """Get the maximum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: (float(v.strip())
                                if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
@@ -472,9 +449,7 @@ class AdvancedMeasurementItem(Channel):
 
     statistics_minimum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MINimum",
-        """Get the minimum value of the statistics for the advanced measurement item.
-        Returns the minimum statistical value in NR3 format (e.g., 1.23E+2).
-        """,
+        """Get the minimum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: (float(v.strip())
                                if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
@@ -492,34 +467,28 @@ class AdvancedMeasurementItem(Channel):
 
     statistics_count = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? COUNt",
-        """Get the count of measurements used for statistics calculation.
-        Returns the number of measurements used to calculate the statistical data.
-        """,
+        """Get the count of measurements used for statistics calculation.""",
         get_process=lambda v: (int(float(v.strip()))
                                if isinstance(v, str) and v.strip() != "OFF"
                                else (v.strip() if isinstance(v, str) else v)),
     )
 
-    # TODO : modify values to match the actual values used by the instrument
     type = Channel.control(
         ":MEASure:ADVanced:P{ch}:TYPE?",
         ":MEASure:ADVanced:P{ch}:TYPE %s",
-        """Control the type of advanced measurement.
+        """Control the type of advanced measurement (str).
         This command sets the type of advanced measurement to be performed.
         The query returns the current measurement type.
-        Values:
-        PKPK|MAX|MIN|AMPL|TOP|BASE|LEVELX|CMEAN|MEAN|
-        STDEV|VSTD|RMS|CRMS|MEDIAN|CMEDIAN|OVSN|FPRE|
-        OVSP|RPRE|PER|FREQ|TMAX|TMIN|PWID|NWID|DUTY|
-        NDUTY|WID|NBWID|DELAY|TIMEL|RISE|FALL|RISE10T90|
-        FALL90T10|CCJ|PAREA|NAREA|AREA|ABSAREA|CYCLES|
-        REDGES|FEDGES|EDGES|PPULSES|NPULSES|PHA|SKEW|
-        FRR|FRF|FFR|FFF|LRR|LRF|LFR|LFF|PACArea|NACArea|
-        ACArea|ABSACArea|PSLOPE|NSLOPE|TSR|TSF|THR|THF
         """,
         validator=strict_discrete_set,
-        values=[f"P{i}" for i in range(1, 13)],
-        get_process=lambda v: v.strip(),
+        values=["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "LEVELX", "CMEAN", "MEAN",
+                "STDEV", "VSTD", "RMS", "CRMS", "MEDIAN", "CMEDIAN", "OVSN", "FPRE",
+                "OVSP", "RPRE", "PER", "FREQ", "TMAX", "TMIN", "PWID", "NWID", "DUTY",
+                "NDUTY", "WID", "NBWID", "DELAY", "TIMEL", "RISE", "FALL", "RISE10T90",
+                "FALL90T10", "CCJ", "PAREA", "NAREA", "AREA", "ABSAREA", "CYCLES",
+                "REDGES", "FEDGES", "EDGES", "PPULSES", "NPULSES", "PHA", "SKEW",
+                "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "PACArea",
+                "NACArea", "ACArea", "ABSACArea", "PSLOPE", "NSLOPE", "TSR", "TSF", "THR", "THF"],
     )
 
     value = Channel.control(
@@ -541,48 +510,46 @@ class MeasureChannel(Channel):
     It provides a comprehensive interface for all measurement operations on the SDS1000xHD.
     """
 
-    enabled = Channel.control(
-        ":MEASure?",
-        ":MEASure %s",
-        "Control the state of the measurement function (ON/OFF).",
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-        get_process=lambda v: v.strip(),
-    )
-
-    mode = Channel.control(
-        ":MEASure:MODE?",
-        ":MEASure:MODE %s",
-        "Control the measurement mode (SIMPle or ADVanced).",
-        validator=strict_discrete_set,
-        values=["SIMPle", "ADVanced"],
-        get_process=lambda v: v.strip(),
-    )
-
-    advanced_line_number = Channel.control(
-        ":MEASure:ADVanced:LINenumber?",
-        ":MEASure:ADVanced:LINenumber %d",
-        "Control the total number of advanced measurement items displayed.",
-        validator=truncated_range,
-        values=[1, 12],
-        get_process=lambda v: int(v),
-    )
-
     advanced_measurements = Channel.MultiChannelCreator(
         AdvancedMeasurementItem,
         list(range(1, 13)),  # P1 through P12
         prefix="advanced_p"
     )
 
-    statistics_enabled = Channel.control(
-        ":MEASure:ADVanced:STATistics?",
-        ":MEASure:ADVanced:STATistics %s",
-        "Control whether statistics are enabled for measurements.",
+    enabled = Channel.control(
+        ":MEASure?",
+        ":MEASure %s",
+        "Control the state of the measurement function (bool).",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
+    )
+
+    advanced_mode_enabled = Channel.control(
+        ":MEASure:MODE?",
+        ":MEASure:MODE %s",
+        "Control whether advanced measurement mode is enabled (bool).",
+        validator=strict_discrete_set,
+        values={True: "ADVanced", False: "SIMPle"},
+        map_values=True,
+    )
+
+    advanced_line_number = Channel.control(
+        ":MEASure:ADVanced:LINenumber?",
+        ":MEASure:ADVanced:LINenumber %d",
+        "Control the total number of advanced measurement items displayed (int).",
+        validator=strict_range,
+        values=[1, 12],
+        cast=int,
+    )
+
+    statistics_enabled = Channel.control(
+        ":MEASure:ADVanced:STATistics?",
+        ":MEASure:ADVanced:STATistics %s",
+        "Control whether statistics are enabled for measurements (bool).",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
     )
 
     # Simple measurement properties
@@ -593,7 +560,6 @@ class MeasureChannel(Channel):
         validator=strict_discrete_set,
         values=["CHANnel1", "CHANnel2", "CHANnel3", "CHANnel4",
                 "FUNCtion1", "FUNCtion2", "FUNCtion3", "FUNCtion4"],
-        get_process=lambda v: v.strip(),
     )
 
     def get_simple_value(self, measurement_type):
@@ -628,7 +594,6 @@ class MeasureChannel(Channel):
         """Get all simple measurement values.
         This command retrieves all measurement values of all measurement types
         except for delay measurements.""",
-        get_process=lambda v: v.strip(),
     )
 
     simple_item = Channel.setting(
@@ -690,17 +655,26 @@ class TriggerChannel(Channel):
     mode = Channel.control(
         ":TRIGger:MODE?",
         ":TRIGger:MODE %s",
-        """Control the trigger mode.""",
+        """Control the trigger mode.
+        
+        Available options:
+        
+        - AUTO: Oscilloscope searches for trigger signal. If satisfied, shows 'Trig'd' 
+          and stable waveform. Otherwise shows 'Auto' with unstable waveform.
+        - NORMal: Oscilloscope waits for trigger signal. If satisfied, shows 'Trig'd' 
+          and stable waveform. Otherwise shows 'Ready' with last triggered waveform.
+        - SINGle: Single trigger mode. Oscilloscope waits for trigger, then stops 
+          scanning after trigger is satisfied.
+        - FTRIG: Force trigger to acquire a frame regardless of trigger conditions.
+        """,
         validator=strict_discrete_set,
         values=["AUTO", "NORMal", "SINGle", "FTRIG"],
-        get_process=lambda v: v.strip(),
     )
 
     status = Channel.measurement(
         ":TRIGger:STATus?",
         docs="""Get the current trigger status.
         Returns the current trigger state such as STOP, READY, ARM, TD, WAIT, etc.""",
-        get_process=lambda v: v.strip(),
     )
 
     type = Channel.measurement(
@@ -709,7 +683,6 @@ class TriggerChannel(Channel):
         - "type": trigger type (EDGE, SLOPe, PULSe, VIDeo, WINDow, INTerval, DROPout,
         RUNT, PATTern, QUALified, DELay, NEDGe, SHOLd, IIC, SPI, UART, CAN, LIN, etc.)
         """,
-        get_process=lambda v: v.strip(),
     )
 
     # EDGE trigger specific measurements
@@ -719,7 +692,6 @@ class TriggerChannel(Channel):
         """Control the coupling mode of the edge trigger.""",
         validator=strict_discrete_set,
         values=["DC", "AC", "LFREJect", "HFREJect"],
-        get_process=lambda v: v.strip(),
     )
 
     edge_hld_event = Channel.control(
@@ -730,9 +702,9 @@ class TriggerChannel(Channel):
         The holdoff event count determines how many trigger events to ignore
         before allowing the next trigger to occur.
         """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[1, 100000000],
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
     edge_hld_time = Channel.control(
@@ -743,9 +715,9 @@ class TriggerChannel(Channel):
         The holdoff time determines how long to wait after a trigger event before
         allowing the next trigger to occur.
         """,
-        validator=truncated_range,
+        validator=strict_range,
         values=[8e-9, 30],
-        get_process=lambda v: float(v),
+        cast=float,
     )
 
     edge_hld_off = Channel.control(
@@ -754,7 +726,6 @@ class TriggerChannel(Channel):
         """Control the holdoff type for edge trigger.""",
         validator=strict_discrete_set,
         values=["OFF", "EVENts", "TIME"],
-        get_process=lambda v: v.strip(),
     )
 
     edge_hld_start = Channel.control(
@@ -763,7 +734,6 @@ class TriggerChannel(Channel):
         """Control the initial position of the edge trigger holdoff.""",
         validator=strict_discrete_set,
         values=["LAST_TRIG", "ACQ_START"],
-        get_process=lambda v: v.strip(),
     )
 
     edge_impedance = Channel.control(
@@ -772,7 +742,6 @@ class TriggerChannel(Channel):
         """Control the impedance of the edge trigger source.""",
         validator=strict_discrete_set,
         values=["ONEMeg", "FIFTy"],
-        get_process=lambda v: v.strip(),
     )
 
     edge_level = Channel.control(
@@ -791,11 +760,10 @@ class TriggerChannel(Channel):
     edge_noise_reject = Channel.control(
         ":TRIGger:EDGE:NREJect?",
         ":TRIGger:EDGE:NREJect %s",
-        """Control the noise rejection for edge trigger.""",
+        """Control the noise rejection for edge trigger (bool).""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
     edge_slope = Channel.control(
@@ -804,7 +772,6 @@ class TriggerChannel(Channel):
         """Control the slope of the edge trigger.""",
         validator=strict_discrete_set,
         values=["RISing", "FALLing", "ALTernate"],
-        get_process=lambda v: v.strip(),
     )
 
     edge_source = Channel.control(
@@ -814,7 +781,6 @@ class TriggerChannel(Channel):
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "EX", "EX5", "LINE"],
-        get_process=lambda v: v.strip(),
     )
 
     def force_trigger(self):
@@ -847,10 +813,7 @@ class SDS1000XHD(SCPIMixin, Instrument):
     measurements, and trigger control.
     """
 
-    def __init__(self, adapter, name="Siglent SDS1000xHD Oscilloscope", timeout=2000,
-                 chunk_size=20*1024*1024, **kwargs):
-        super().__init__(adapter, name, timeout=timeout, chunk_size=chunk_size, **kwargs)
-
+    # Child definitions moved to top per maintainer feedback
     channel_1 = Instrument.ChannelCreator(AnalogChannel, "1")
     channel_2 = Instrument.ChannelCreator(AnalogChannel, "2")
     channel_3 = Instrument.ChannelCreator(AnalogChannel, "3")  # For 4-channel models
@@ -871,7 +834,11 @@ class SDS1000XHD(SCPIMixin, Instrument):
     # Trigger subsystem
     trigger = Instrument.ChannelCreator(TriggerChannel, "")
 
-    acq_acquisition_mode = Instrument.control(
+    def __init__(self, adapter, name="Siglent SDS1000xHD Oscilloscope", timeout=2000,
+                 chunk_size=20*1024*1024, **kwargs):
+        super().__init__(adapter, name, timeout=timeout, chunk_size=chunk_size, **kwargs)
+
+    acquisition_mode = Instrument.control(
         ":ACQuire:AMODe?",
         ":ACQuire:AMODe %s",
         """Control sets the rate of waveform capture.
@@ -879,37 +846,35 @@ class SDS1000XHD(SCPIMixin, Instrument):
         anomalies""",
         validator=strict_discrete_set,
         values=["FAST", "SLOW"],
-        get_process=lambda v: v.strip(),
     )
 
-    acq_interpolation = Instrument.control(
+    interpolation_enabled = Instrument.control(
         ":ACQuire:INTerpolation?",
         ":ACQuire:INTerpolation %s",
-        "Control acquisition interpolation method (ON selects sinx/x (sinc) "
-        "interpolation, OFF selects linear interpolation).",
+        "Control whether acquisition interpolation is enabled (bool). "
+        "When True, uses sinx/x (sinc) interpolation. When False, uses linear interpolation.",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
-    acq_memory_mgmt = Instrument.control(
+    memory_management = Instrument.control(
         ":ACQuire:MMANagement?",
         ":ACQuire:MMANagement %s",
-        """Control memory management mode.
+        """Control memory management mode (str).
 
-        AUTO: Maintain maximum sampling rate, automatically set memory depth and
-              sampling rate according to time base.
-        FSRate: Fixed Sampling Rate mode - maintain specified sampling rate and
-                automatically set memory depth according to time base.
-        FMDepth: Fixed Memory Depth mode - automatically set sampling rate
-                 according to storage depth and time base.""",
+        Options:
+        - 'AUTO': Maintain maximum sampling rate, automatically set memory depth and
+                  sampling rate according to time base.
+        - 'FSRate': Fixed Sampling Rate mode - maintain specified sampling rate and
+                    automatically set memory depth according to time base.
+        - 'FMDepth': Fixed Memory Depth mode - automatically set sampling rate
+                     according to storage depth and time base.""",
         validator=strict_discrete_set,
         values=["AUTO", "FSRate", "FMDepth"],
-        get_process=lambda v: v.strip(),
     )
 
-    acq_plot_mode = Instrument.control(
+    plot_mode = Instrument.control(
         ":ACQuire:MODE?",
         ":ACQuire:MODE %s",
         """Control the acquisition mode of the oscilloscope.
@@ -921,10 +886,9 @@ class SDS1000XHD(SCPIMixin, Instrument):
         "strip chart" recording and is ideal for low-frequency signals.""",
         validator=strict_discrete_set,
         values=["YT", "XY", "ROLL"],
-        get_process=lambda v: v.strip(),
     )
 
-    acq_memory_depth = Instrument.control(
+    memory_depth = Instrument.control(
         ":ACQuire:MDEPth?",
         ":ACQuire:MDEPth %s",
         """Control the memory depth.
@@ -938,47 +902,44 @@ class SDS1000XHD(SCPIMixin, Instrument):
         user manual for single and dual channel mode definitions.""",
         validator=strict_discrete_set,
         values=["AUTO", "10k", "100k", "1M", "10M", "25M", "50M", "100M"],
-        get_process=lambda v: v.strip(),
     )
 
-    acq_num_acquisitions = Instrument.control(
+    num_acquisitions = Instrument.control(
         ":ACQuire:NUMAcq?",
         ":ACQuire:NUMAcq %d",
         """Control the number of waveform acquisitions that
-        have occurred since starting acquisition. This value is reset to
+        have occurred since starting acquisition (int). This value is reset to
         zero when any acquisition,horizontal, or vertical arguments
         that affect the waveform are changed.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[1, 1000000],
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
-    acq_points = Instrument.measurement(
+    acquisition_points = Instrument.measurement(
         ":ACQuire:POINts?",
-        "Get the number of sampled points of the current waveform on the screen.",
-        get_process=lambda v: int(v),
+        "Get the number of sampled points of the current waveform on the screen (int).",
+        cast=int,
     )
 
-    acq_resolution = Instrument.control(
+    resolution = Instrument.control(
         ":ACQuire:RESolution?",
         ":ACQuire:RESolution %s",
         "Control the ADC resolution for SDS1000X HD oscilloscope (8Bits or 10Bits).",
         validator=strict_discrete_set,
         values=["8Bits", "10Bits"],
-        get_process=lambda v: v.strip(),
     )
 
-    acq_sequence_mode = Instrument.control(
+    sequence_mode = Instrument.control(
         ":ACQuire:SEQuence?",
         ":ACQuire:SEQuence %s",
-        "Control sequence acquisition mode (ON/OFF).",
+        "Control sequence acquisition mode (bool).",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
-    acq_sequence_count = Instrument.control(
+    sequence_count = Instrument.control(
         ":ACQuire:SEQuence:COUNt?",
         ":ACQuire:SEQuence:COUNt %d",
         """Control the number of memory segments to acquire.
@@ -987,22 +948,21 @@ class SDS1000XHD(SCPIMixin, Instrument):
         The query returns the current count setting.
         Value in NR1 format (integer, no decimal point). The range varies by model
         and current timebase - see user manual for details.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[1, 10000],
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
-    acq_sample_rate = Instrument.control(
+    sample_rate = Instrument.control(
         ":ACQuire:SRATe?",
         ":ACQuire:SRATe %.3e",
-        """Control the sampling rate in samples per second.
+        """Control the sampling rate in samples per second (float).
         This command sets the sampling rate when in the fixed sampling rate mode.
         If the set value is greater than the settable value, it will automatically
         match to the settable value. The query returns the current sampling rate.""",
-        get_process=lambda v: float(v),
     )
 
-    acq_type = Instrument.control(
+    acquisition_type = Instrument.control(
         ":ACQuire:TYPE?",
         ":ACQuire:TYPE %s",
         """Control the acquisition type.
@@ -1022,8 +982,7 @@ class SDS1000XHD(SCPIMixin, Instrument):
     timebase_delay = Instrument.control(
         ":TIMebase:DELay?",
         ":TIMebase:DELay %.6e",
-        "Control the horizontal trigger delay in seconds.",
-        get_process=lambda v: float(v),
+        "Control the horizontal trigger delay in seconds (float).",
     )
 
     timebase_reference = Instrument.control(
@@ -1038,68 +997,65 @@ class SDS1000XHD(SCPIMixin, Instrument):
                   around the position of the horizontal display.""",
         validator=strict_discrete_set,
         values=["DELay", "POSition"],
-        get_process=lambda v: v.strip(),
     )
 
     timebase_reference_position = Instrument.control(
         ":TIMebase:REFerence:POSition?",
         ":TIMebase:REFerence:POSition %d",
-        """Control the horizontal reference center when the reference strategy is DELay.
+        """Control the horizontal reference center when the reference strategy is DELay (int).
         This command sets the horizontal reference center as a percentage of the display width.
         The value represents the position from the left edge of the display (0-100%).""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[0, 100],
-        get_process=lambda v: int(v),
+        cast=int,
     )
 
     timebase_scale = Instrument.control(
         ":TIMebase:SCALe?",
         ":TIMebase:SCALe %.6e",
-        """Control the horizontal scale per division for the main window in seconds per division.
+        """Control the horizontal scale per division for the main window in seconds per division (float).
         Note: Due to the limitation of the expansion strategy, when the time base is set
         from large to small, it will automatically adjust to the minimum time base that
         can be set currently.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[200e-12, 1000],
-        get_process=lambda v: float(v),
+        cast=float,
     )
 
     timebase_window = Instrument.control(
         ":TIMebase:WINDow?",
         ":TIMebase:WINDow %s",
-        """Control the zoomed window state.
+        """Control the zoomed window state (bool).
         This command turns on or off the zoomed window.
         The query returns the state of the zoomed window.""",
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        get_process=lambda v: v.strip(),
     )
 
     timebase_window_delay = Instrument.control(
         ":TIMebase:WINDow:DELay?",
         ":TIMebase:WINDow:DELay %.6e",
-        """Control the horizontal position in the zoomed view of the main sweep.
+        """Control the horizontal position in the zoomed view of the main sweep (float).
         This command sets the horizontal delay of the zoomed window relative to the main sweep.
         The delay value must keep the zoomed view window within the main sweep range.
         If the delay is set outside the legal range, it will be automatically adjusted
         to the nearest legal value.
         The valid range is determined by the main sweep range and horizontal position.""",
-        get_process=lambda v: float(v),
     )
 
     timebase_window_scale = Instrument.control(
         ":TIMebase:WINDow:SCALe?",
         ":TIMebase:WINDow:SCALe %.6e",
-        """Control the horizontal scale per division for the zoomed window in seconds per division.
+        """Control the horizontal scale per division for the zoomed window in seconds per division (float).
         This command sets the zoomed window horizontal scale (seconds/division).
         The query returns the current zoomed window scale setting.
         Note: The scale of the zoomed window cannot be greater than that of the main window.
         If you set the value greater than the main window scale, it will automatically be
         set to the same value as the main window.""",
-        validator=truncated_range,
+        validator=strict_range,
         values=[200e-12, 1000],
-        get_process=lambda v: float(v),
+        cast=float,
     )
 
     def auto_setup(self):

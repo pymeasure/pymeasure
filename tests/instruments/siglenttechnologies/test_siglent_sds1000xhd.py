@@ -1,6 +1,32 @@
-import struct
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2025 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 import math
+import struct
+
 import pytest
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.siglenttechnologies import SDS1000XHD
 
@@ -97,7 +123,7 @@ def test_channel_visible_getter():
             SDS1000XHD,
             [(b':CHANnel1:VISible?', b'ON')],
     ) as inst:
-        assert inst.channel_1.visible is True
+        assert inst.channel_1.visible_enabled is True
 
 
 def test_channel_visible_setter():
@@ -106,7 +132,7 @@ def test_channel_visible_setter():
             SDS1000XHD,
             [(b':CHANnel1:VISible OFF', None)],
     ) as inst:
-        inst.channel_1.visible = False
+        inst.channel_1.visible_enabled = False
 
 
 def test_waveform_source_getter():
@@ -187,7 +213,7 @@ def test_acq_acquisition_mode_getter():
             SDS1000XHD,
             [(b':ACQuire:AMODe?', b'FAST')],
     ) as inst:
-        assert inst.acq_acquisition_mode == 'FAST'
+        assert inst.acquisition_mode == 'FAST'
 
 
 def test_acq_acquisition_mode_setter():
@@ -196,7 +222,7 @@ def test_acq_acquisition_mode_setter():
             SDS1000XHD,
             [(b':ACQuire:AMODe SLOW', None)],
     ) as inst:
-        inst.acq_acquisition_mode = 'SLOW'
+        inst.acquisition_mode = 'SLOW'
 
 
 def test_acq_interpolation_getter():
@@ -205,7 +231,7 @@ def test_acq_interpolation_getter():
             SDS1000XHD,
             [(b':ACQuire:INTerpolation?', b'ON')],
     ) as inst:
-        assert inst.acq_interpolation is True
+        assert inst.interpolation_enabled is True
 
 
 def test_acq_interpolation_setter():
@@ -214,7 +240,7 @@ def test_acq_interpolation_setter():
             SDS1000XHD,
             [(b':ACQuire:INTerpolation OFF', None)],
     ) as inst:
-        inst.acq_interpolation = False
+        inst.interpolation_enabled = False
 
 
 def test_acq_memory_mgmt_getter():
@@ -223,7 +249,7 @@ def test_acq_memory_mgmt_getter():
             SDS1000XHD,
             [(b':ACQuire:MMANagement?', b'AUTO')],
     ) as inst:
-        assert inst.acq_memory_mgmt == 'AUTO'
+        assert inst.memory_management == 'AUTO'
 
 
 def test_acq_memory_mgmt_setter():
@@ -232,7 +258,7 @@ def test_acq_memory_mgmt_setter():
             SDS1000XHD,
             [(b':ACQuire:MMANagement FSRate', None)],
     ) as inst:
-        inst.acq_memory_mgmt = 'FSRate'
+        inst.memory_management = 'FSRate'
 
 
 def test_acq_plot_mode_getter():
@@ -241,7 +267,7 @@ def test_acq_plot_mode_getter():
             SDS1000XHD,
             [(b':ACQuire:MODE?', b'YT')],
     ) as inst:
-        assert inst.acq_plot_mode == 'YT'
+        assert inst.plot_mode == 'YT'
 
 
 def test_acq_plot_mode_setter():
@@ -250,7 +276,7 @@ def test_acq_plot_mode_setter():
             SDS1000XHD,
             [(b':ACQuire:MODE XY', None)],
     ) as inst:
-        inst.acq_plot_mode = 'XY'
+        inst.plot_mode = 'XY'
 
 
 def test_timebase_scale_getter():
@@ -346,7 +372,7 @@ def test_channel_switch_getter():
             SDS1000XHD,
             [(b':CHANnel1:SWITch?', b'ON')],
     ) as inst:
-        assert inst.channel_1.switch is True
+        assert inst.channel_1.display_enabled is True
 
 
 def test_channel_switch_setter():
@@ -355,7 +381,7 @@ def test_channel_switch_setter():
             SDS1000XHD,
             [(b':CHANnel1:SWITch OFF', None)],
     ) as inst:
-        inst.channel_1.switch = False
+        inst.channel_1.display_enabled = False
 
 
 def test_channel_bandwidth_limit_getter():
@@ -364,7 +390,7 @@ def test_channel_bandwidth_limit_getter():
             SDS1000XHD,
             [(b':CHANnel1:BWLimit?', b'OFF')],
     ) as inst:
-        assert inst.channel_1.bandwidth_limit is False
+        assert inst.channel_1.bandwidth_limit_enabled is False
 
 
 def test_channel_bandwidth_limit_setter():
@@ -373,7 +399,7 @@ def test_channel_bandwidth_limit_setter():
             SDS1000XHD,
             [(b':CHANnel1:BWLimit ON', None)],
     ) as inst:
-        inst.channel_1.bandwidth_limit = True
+        inst.channel_1.bandwidth_limit_enabled = True
 
 
 def test_channel_invert_getter():
@@ -592,9 +618,9 @@ def test_channel_complete_configuration():
         inst.channel_1.coupling = 'DC'
         inst.channel_1.probe = 10
         inst.channel_1.offset = 0.0
-        inst.channel_1.visible = True
-        inst.channel_1.switch = True
-        inst.channel_1.bandwidth_limit = False
+        inst.channel_1.visible_enabled = True
+        inst.channel_1.display_enabled = True
+        inst.channel_1.bandwidth_limit_enabled = False
         inst.channel_1.invert = False
         inst.channel_1.label = 'CH1'
         inst.channel_1.unit = 'V'
@@ -613,14 +639,14 @@ def test_acquisition_complete_configuration():
              (b':ACQuire:SEQuence OFF', None),
              (b':ACQuire:TYPE NORMal', None)],
     ) as inst:
-        inst.acq_acquisition_mode = 'FAST'
-        inst.acq_interpolation = True
-        inst.acq_memory_mgmt = 'AUTO'
-        inst.acq_plot_mode = 'YT'
-        inst.acq_memory_depth = 'AUTO'
-        inst.acq_resolution = '8Bits'
-        inst.acq_sequence_mode = False
-        inst.acq_type = 'NORMal'
+        inst.acquisition_mode = 'FAST'
+        inst.interpolation_enabled = True
+        inst.memory_management = 'AUTO'
+        inst.plot_mode = 'YT'
+        inst.memory_depth = 'AUTO'
+        inst.resolution = '8Bits'
+        inst.sequence_mode = False
+        inst.acquisition_type = 'NORMal'
 
 
 def test_timebase_complete_configuration():
@@ -810,7 +836,7 @@ def test_measure_mode_getter():
             SDS1000XHD,
             [(b':MEASure:MODE?', b'SIMPle')],
     ) as inst:
-        assert inst.measure.mode == 'SIMPle'
+        assert inst.measure.advanced_mode_enabled is False
 
 
 def test_measure_mode_setter():
@@ -819,7 +845,7 @@ def test_measure_mode_setter():
             SDS1000XHD,
             [(b':MEASure:MODE ADVanced', None)],
     ) as inst:
-        inst.measure.mode = 'ADVanced'
+        inst.measure.advanced_mode_enabled = True
 
 
 def test_measure_advanced_line_number_getter():
@@ -1174,13 +1200,8 @@ def test_advanced_measurement_statistics_all():
             [(b':MEASure:ADVanced:P1:STATistics? ALL', b'CUR,1.234E+00,MEAN,1.500E+00')],
     ) as inst:
         result = inst.measure.advanced_p1.statistics_all
-        # The result may be parsed as a list or returned as a string
-        # depending on the framework's processing
-        if isinstance(result, list):
-            # Check that it contains the expected elements
-            assert 'CUR' in result and 1.234 in result and 'MEAN' in result and 1.5 in result
-        else:
-            assert result == 'CUR,1.234E+00,MEAN,1.500E+00'
+        # The result should consistently be a string
+        assert result == 'CUR,1.234E+00,MEAN,1.500E+00'
 
 
 def test_advanced_measurement_statistics_maximum():
@@ -1232,9 +1253,9 @@ def test_advanced_measurement_type_setter():
     """Test setting advanced measurement type."""
     with expected_protocol(
             SDS1000XHD,
-            [(b':MEASure:ADVanced:P1:TYPE P2', None)],
+            [(b':MEASure:ADVanced:P1:TYPE FREQ', None)],
     ) as inst:
-        inst.measure.advanced_p1.type = 'P2'
+        inst.measure.advanced_p1.type = 'FREQ'
 
 
 # Test multiple advanced measurement items
