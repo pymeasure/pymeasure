@@ -291,10 +291,10 @@ class WaveformChannel(Channel):
         This method retrieves waveform data from the oscilloscope using the preamble
         property to get descriptor information about the waveform format.
 
-        Returns:
-            tuple: A tuple containing (time_values, volt_values) where:
-                - time_values: List of time values in seconds
-                - volt_values: List of voltage values in volts
+        :return: A tuple containing (time_values, volt_values) where:
+            - time_values: List of time values in seconds
+            - volt_values: List of voltage values in volts
+        :rtype: tuple
         """
         # Constants - same as reference script
         HORI_NUM = 10
@@ -558,24 +558,24 @@ class MeasureChannel(Channel):
 
     def get_simple_value(self, measurement_type):
         """Get the value of a specific simple measurement type.
+
         This method retrieves the current value of the specified simple measurement type.
-        Args:
-        measurement_type (str): The measurement type to query. Valid values are:
-        PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
-        STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
-        OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
-        NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
-        FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
-        REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
-        NACArea, ACArea, ABSACArea, ALL
 
-        Note: ALL returns all measurement values of all measurement types
-        except for delay measurements.
+        :param str measurement_type: The measurement type to query. Valid values are:
+            PKPK, MAX, MIN, AMPL, TOP, BASE, LEVELX, CMEAN, MEAN,
+            STDEV, VSTD, RMS, CRMS, MEDIAN, CMEDIAN, OVSN, FPRE,
+            OVSP, RPRE, PER, FREQ, TMAX, TMIN, PWID, NWID, DUTY,
+            NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
+            FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
+            REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
+            NACArea, ACArea, ABSACArea, ALL
 
-        Returns:
-        float or str: The measurement value in NR3 format (e.g., 1.23E+2) for
-        individual measurements, or a string containing all values
-        when measurement_type is "ALL".
+            Note: ALL returns all measurement values of all measurement types
+            except for delay measurements.
+        :return: The measurement value in NR3 format (e.g., 1.23E+2) for
+            individual measurements, or a string containing all values
+            when measurement_type is "ALL"
+        :rtype: float or str
         """
         response = self.ask(f":MEASure:SIMPle:VALue? {measurement_type}")
         if measurement_type == "ALL":
