@@ -127,13 +127,13 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: bool(int(x) & 1),
     )
 
-    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=300):
+    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=3600):
         """Block the program, waiting for the sweep to complete.
 
         :param should_stop: Function that returns True to stop waiting.
         :param timeout: Maximum waiting time, in seconds.
         :return: True when sweep completed, False if stopped by should_stop.
-        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
+        :raises TimeoutError: If the sweep does not complete within the timeout period.
         """
 
         t0 = time()
