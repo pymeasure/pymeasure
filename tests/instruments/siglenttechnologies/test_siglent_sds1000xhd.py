@@ -1358,7 +1358,6 @@ def test_parse_preamble_descriptor_basic():
         assert result['probe'] == pytest.approx(10.0)
 
 
-
 def test_instrument_get_methods_exist():
     """Test that the instrument has the expected methods available."""
     with expected_protocol(
