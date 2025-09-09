@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-
 import struct
 import math
 from pymeasure.instruments import Channel, Instrument
@@ -60,8 +59,8 @@ class AnalogChannel(Channel):
         ":CHANnel{ch}:PROBe %s",
         "Control the probe attenuation factor (float).",
         validator=truncated_discrete_set,
-        values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200,
-                500, 1000],
+        values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50,
+                100, 200, 500, 1000],
     )
 
     offset = Channel.control(
@@ -114,7 +113,7 @@ class AnalogChannel(Channel):
         ":CHANnel{ch}:LABel:TEXT?",
         ":CHANnel{ch}:LABel:TEXT '%s'",
         "Control the channel label text (str).",
-        preprocess_reply=lambda v: v.strip().strip('"'),
+        preprocess_reply=lambda v: v.strip('\r\n\t \'"'),
     )
 
     unit = Channel.control(
@@ -151,7 +150,7 @@ class WaveformChannel(Channel):
         ":WAVeform:STARt?",
         ":WAVeform:STARt %d",
         """Control the starting data point for waveform transfer (int).
-        
+
         This command specifies the starting data point for waveform transfer
         using the query :WAVeform:DATA?. The value range is related to the
         current waveform point and the value set by the command :WAVeform:POINt.
@@ -163,7 +162,7 @@ class WaveformChannel(Channel):
         ":WAVeform:INTerval?",
         ":WAVeform:INTerval %d",
         """Control the interval between data points for waveform transfer (int).
-        
+
         This command sets the interval between data points for waveform transfer
         using the query :WAVeform:DATA?. The query returns the interval between
         data points for waveform transfer.
@@ -178,7 +177,7 @@ class WaveformChannel(Channel):
         ":WAVeform:POINt?",
         ":WAVeform:POINt %d",
         """Control the number of waveform points to be transferred with :WAVeform:DATA? (int).
-        
+
         This command sets the number of waveform points to be transferred with the
         query :WAVeform:DATA?. The query returns the number of waveform points to be
         transferred.
@@ -191,7 +190,7 @@ class WaveformChannel(Channel):
     max_point = Channel.measurement(
         ":WAVeform:MAXPoint?",
         """Get the maximum points of one piece when reading waveform data in pieces (float).
-        
+
         This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
@@ -203,7 +202,7 @@ class WaveformChannel(Channel):
         ":WAVeform:WIDTh?",
         ":WAVeform:WIDTh %s",
         """Control the output format for the transfer of waveform data (str).
-        
+
         This command sets the current output format for the transfer of
         waveform data. The query returns the current output format.
         Options: 'BYTE' or 'WORD'.
@@ -214,15 +213,10 @@ class WaveformChannel(Channel):
 
     def _parse_preamble_descriptor(self, raw_data):
         """Parse the binary preamble descriptor data.
-        
+
         :param bytes raw_data: Raw binary data from :WAVeform:PREamble? command
         :return: Parsed descriptor data with the same format as get_descriptor (dict)
         """
-        # Ensure we have bytes data for binary parsing
-        if isinstance(raw_data, str):
-            # This shouldn't normally happen with read_bytes(), but handle gracefully
-            raw_data = raw_data.encode("latin-1")  # latin-1 preserves byte values 0-255
-
         # Locate the binary data block
         recv = raw_data[raw_data.find(b'#') + 11:]
 
@@ -268,7 +262,7 @@ class WaveformChannel(Channel):
     @property
     def preamble(self):
         """Get the waveform preamble descriptor data.
-        
+
         The preamble contains binary descriptor information about the waveform data format,
         including voltage scale, offset, time interval, trigger delay, time division,
         voltage codes per division, ADC bit depth, and probe attenuation factor.
@@ -277,7 +271,7 @@ class WaveformChannel(Channel):
         :return: A dictionary with the following keys:
 
             - vdiv: Voltage per division (float)
-            - voffset: Voltage offset (float)  
+            - voffset: Voltage offset (float)
             - interval: Time interval between points (float)
             - trdl: Trigger delay (float)
             - tdiv: Time per division (float)
@@ -319,7 +313,7 @@ class WaveformChannel(Channel):
         adc_bit = preamble_data['adc_bit']
 
         # Get the waveform points and confirm the number of waveform slice reads
-        points = self.parent.acquisition_points
+        points = self.parent.acquisition.points
         one_piece_num = self.max_point
         read_times = math.ceil(points / one_piece_num)
 
@@ -629,6 +623,222 @@ class MeasureChannel(Channel):
         self.write(":MEASure:ADVanced:STATistics:RESet")
 
 
+class AcquisitionChannel(Channel):
+    """
+    Acquisition channel for SDS1000xHD oscilloscope.
+    This class provides comprehensive acquisition control for the SDS1000xHD oscilloscope
+    including acquisition modes, memory management, sampling, and data format settings.
+    """
+
+    mode = Channel.control(
+        ":ACQuire:AMODe?",
+        ":ACQuire:AMODe %s",
+        """Control sets the rate of waveform capture.
+        This command can provide a high-speed waveform capture rate to help capture signal
+        anomalies""",
+        validator=strict_discrete_set,
+        values=["FAST", "SLOW"],
+    )
+
+    interpolation_enabled = Channel.control(
+        ":ACQuire:INTerpolation?",
+        ":ACQuire:INTerpolation %s",
+        "Control whether acquisition interpolation is enabled (bool). "
+        "When True, uses sinx/x (sinc) interpolation. When False, uses linear interpolation.",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    memory_management = Channel.control(
+        ":ACQuire:MMANagement?",
+        ":ACQuire:MMANagement %s",
+        """Control memory management mode (str).
+
+        Options:
+        - 'AUTO': Maintain maximum sampling rate, automatically set memory depth and
+                  sampling rate according to time base.
+        - 'FSRate': Fixed Sampling Rate mode - maintain specified sampling rate and
+                    automatically set memory depth according to time base.
+        - 'FMDepth': Fixed Memory Depth mode - automatically set sampling rate
+                     according to storage depth and time base.""",
+        validator=strict_discrete_set,
+        values=["AUTO", "FSRate", "FMDepth"],
+    )
+
+    plot_mode = Channel.control(
+        ":ACQuire:MODE?",
+        ":ACQuire:MODE %s",
+        """Control the acquisition mode of the oscilloscope.
+
+        YT mode plots amplitude (Y) vs. time (T).
+        XY mode plots channel X vs. channel Y, commonly referred to as a Lissajous curve.
+        ROLL mode plots amplitude (Y) vs. time (T) as in YT mode, but begins to write
+        the waveforms from the right-hand side of the display. This is similar to a
+        "strip chart" recording and is ideal for low-frequency signals.""",
+        validator=strict_discrete_set,
+        values=["YT", "XY", "ROLL"],
+    )
+
+    memory_depth = Channel.control(
+        ":ACQuire:MDEPth?",
+        ":ACQuire:MDEPth %s",
+        """Control the memory depth for acquisition (str).
+        Sets the maximum number of sample points that can be stored.""",
+        validator=strict_discrete_set,
+        values=["AUTO", "14K", "140K", "1.4M", "14M", "AUTO"],
+    )
+
+    count = Channel.control(
+        ":ACQuire:NUMacq?",
+        ":ACQuire:NUMacq %d",
+        """Control the number of acquisitions for averaging mode (int).
+        Valid range: 1 to 1000000""",
+        validator=strict_range,
+        values=[1, 1000000],
+        cast=int,
+    )
+
+    points = Channel.measurement(
+        ":ACQuire:POINts?",
+        "Get the number of sampled points of the current waveform on the screen (int).",
+        cast=lambda x: int(float(x)),
+    )
+
+    resolution = Channel.control(
+        ":ACQuire:RESolution?",
+        ":ACQuire:RESolution %s",
+        "Control the vertical resolution for digitizing (str).",
+        validator=strict_discrete_set,
+        values=["8Bits", "10Bits"],
+    )
+
+    sequence_mode = Channel.control(
+        ":ACQuire:SEQuence?",
+        ":ACQuire:SEQuence %s",
+        "Control sequence acquisition mode (bool).",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    sequence_count = Channel.control(
+        ":ACQuire:SEQuence:COUNt?",
+        ":ACQuire:SEQuence:COUNt %d",
+        """Control the number of segments for sequence acquisition (int).
+        This command sets the number of acquisition segments when sequence mode is enabled.
+        Valid range: 1 to 1000.""",
+        validator=strict_range,
+        values=[1, 1000],
+        cast=int,
+    )
+
+    sample_rate = Channel.measurement(
+        ":ACQuire:SRATe?",
+        "Get the current sample rate in samples per second (float).",
+        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
+    )
+
+    type = Channel.control(
+        ":ACQuire:TYPE?",
+        ":ACQuire:TYPE %s",
+        """Control acquisition type and averaging settings (str).
+
+        Options:
+        - 'NORMal': Normal acquisition mode
+        - 'PEAK': Peak detect mode
+        - 'AVERage': Averaging mode
+        - 'ERES': Enhanced resolution mode""",
+        validator=strict_discrete_set,
+        values=["NORMal", "PEAK", "AVERage", "ERES"],
+        get_process=lambda v: v.strip().split(',')[0],  # Extract base type from response
+    )
+
+
+class TimebaseChannel(Channel):
+    """
+    Timebase channel for SDS1000xHD oscilloscope.
+    This class provides comprehensive timebase control for the SDS1000xHD oscilloscope.
+    """
+
+    delay = Channel.control(
+        ":TIMebase:DELay?",
+        ":TIMebase:DELay %.6e",
+        "Control the horizontal trigger delay in seconds (float).",
+    )
+
+    reference = Channel.control(
+        ":TIMebase:REFerence?",
+        ":TIMebase:REFerence %s",
+        """Control the horizontal reference strategy for delay value changes.
+
+        DELay: When the time base is changed, the horizontal delay value remains fixed.
+               The waveform expands/contracts around the center of the display.
+        POSition: When the time base is changed, the horizontal delay remains fixed
+                  to the grid position on the display. The waveform expands/contracts
+                  around the position of the horizontal display.""",
+        validator=strict_discrete_set,
+        values=["DELay", "POSition"],
+    )
+
+    reference_position = Channel.control(
+        ":TIMebase:REFerence:POSition?",
+        ":TIMebase:REFerence:POSition %d",
+        """Control the horizontal reference center when the reference strategy is DELay (int).
+        This command sets the horizontal reference center as a percentage of the display width.
+        The value represents the position from the left edge of the display (0-100%).""",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
+
+    scale = Channel.control(
+        ":TIMebase:SCALe?",
+        ":TIMebase:SCALe %.6e",
+        """Control the horizontal scale per division for the main window (float).
+        Note: Due to the limitation of the expansion strategy, when the time base is set
+        from large to small, it will automatically adjust to the minimum time base that
+        can be set currently.""",
+        validator=strict_range,
+        values=[200e-12, 1000],
+        cast=float,
+    )
+
+    window = Channel.control(
+        ":TIMebase:WINDow?",
+        ":TIMebase:WINDow %s",
+        """Control the zoomed window state (bool).
+        This command turns on or off the zoomed window.
+        The query returns the state of the zoomed window.""",
+        validator=strict_discrete_set,
+        values={True: "ON", False: "OFF"},
+        map_values=True,
+    )
+
+    window_delay = Channel.control(
+        ":TIMebase:WINDow:DELay?",
+        ":TIMebase:WINDow:DELay %.6e",
+        """Control the horizontal position in the zoomed view of the main sweep (float).
+        This command sets the horizontal delay of the zoomed window relative to the main sweep.
+        The delay value must keep the zoomed view window within the main sweep range.
+        When the zoomed window is off, this command is invalid.""",
+        validator=strict_range,
+        values=[-5.0e5, 5.0e5],
+        cast=float,
+    )
+
+    window_scale = Channel.control(
+        ":TIMebase:WINDow:SCALe?",
+        ":TIMebase:WINDow:SCALe %.6e",
+        """Control the horizontal scale per division for the zoomed window (float).
+        This command sets the zoomed window horizontal scale (seconds/division).
+        The query returns the current zoomed window scale setting.""",
+        validator=strict_range,
+        values=[200e-12, 1000],
+        cast=float,
+    )
+
+
 class TriggerChannel(Channel):
     """
     Trigger channel for SDS1000xHD oscilloscope.
@@ -656,14 +866,14 @@ class TriggerChannel(Channel):
         ":TRIGger:MODE?",
         ":TRIGger:MODE %s",
         """Control the trigger mode.
-        
+
         Available options:
-        
-        - AUTO: Oscilloscope searches for trigger signal. If satisfied, shows 'Trig'd' 
+
+        - AUTO: Oscilloscope searches for trigger signal. If satisfied, shows 'Trig'd'
           and stable waveform. Otherwise shows 'Auto' with unstable waveform.
-        - NORMal: Oscilloscope waits for trigger signal. If satisfied, shows 'Trig'd' 
+        - NORMal: Oscilloscope waits for trigger signal. If satisfied, shows 'Trig'd'
           and stable waveform. Otherwise shows 'Ready' with last triggered waveform.
-        - SINGle: Single trigger mode. Oscilloscope waits for trigger, then stops 
+        - SINGle: Single trigger mode. Oscilloscope waits for trigger, then stops
           scanning after trigger is satisfied.
         - FTRIG: Force trigger to acquire a frame regardless of trigger conditions.
         """,
@@ -829,234 +1039,21 @@ class SDS1000XHD(SCPIMixin, Instrument):
         prefix="wf_"
     )
 
+    # Acquisition subsystem
+    acquisition = Instrument.ChannelCreator(AcquisitionChannel, "")
+
     # Measurement subsystem
     measure = Instrument.ChannelCreator(MeasureChannel, "")
+
+    # Timebase subsystem
+    timebase = Instrument.ChannelCreator(TimebaseChannel, "")
+
     # Trigger subsystem
     trigger = Instrument.ChannelCreator(TriggerChannel, "")
 
     def __init__(self, adapter, name="Siglent SDS1000xHD Oscilloscope", timeout=2000,
                  chunk_size=20*1024*1024, **kwargs):
         super().__init__(adapter, name, timeout=timeout, chunk_size=chunk_size, **kwargs)
-
-    acquisition_mode = Instrument.control(
-        ":ACQuire:AMODe?",
-        ":ACQuire:AMODe %s",
-        """Control sets the rate of waveform capture.
-        This command can provide a high-speed waveform capture rate to help capture signal
-        anomalies""",
-        validator=strict_discrete_set,
-        values=["FAST", "SLOW"],
-    )
-
-    interpolation_enabled = Instrument.control(
-        ":ACQuire:INTerpolation?",
-        ":ACQuire:INTerpolation %s",
-        "Control whether acquisition interpolation is enabled (bool). "
-        "When True, uses sinx/x (sinc) interpolation. When False, uses linear interpolation.",
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-    )
-
-    memory_management = Instrument.control(
-        ":ACQuire:MMANagement?",
-        ":ACQuire:MMANagement %s",
-        """Control memory management mode (str).
-
-        Options:
-        - 'AUTO': Maintain maximum sampling rate, automatically set memory depth and
-                  sampling rate according to time base.
-        - 'FSRate': Fixed Sampling Rate mode - maintain specified sampling rate and
-                    automatically set memory depth according to time base.
-        - 'FMDepth': Fixed Memory Depth mode - automatically set sampling rate
-                     according to storage depth and time base.""",
-        validator=strict_discrete_set,
-        values=["AUTO", "FSRate", "FMDepth"],
-    )
-
-    plot_mode = Instrument.control(
-        ":ACQuire:MODE?",
-        ":ACQuire:MODE %s",
-        """Control the acquisition mode of the oscilloscope.
-
-        YT mode plots amplitude (Y) vs. time (T).
-        XY mode plots channel X vs. channel Y, commonly referred to as a Lissajous curve.
-        ROLL mode plots amplitude (Y) vs. time (T) as in YT mode, but begins to write
-        the waveforms from the right-hand side of the display. This is similar to a
-        "strip chart" recording and is ideal for low-frequency signals.""",
-        validator=strict_discrete_set,
-        values=["YT", "XY", "ROLL"],
-    )
-
-    memory_depth = Instrument.control(
-        ":ACQuire:MDEPth?",
-        ":ACQuire:MDEPth %s",
-        """Control the memory depth.
-        For SDS1000X HD:
-        - Single Channel: 10k, 100k, 1M, 10M, 100M
-        - Dual-Channel: 10k, 100k, 1M, 10M, 50M
-        - Four-Channel: 10k, 100k, 1M, 10M, 25M
-        AUTO mode automatically selects appropriate depth based on timebase and channels.
-        Note: Turning on digital channels or setting acquisition type to AVERage/ERES
-        or setting acquisition mode to roll will limit the memory depth. Refer to the
-        user manual for single and dual channel mode definitions.""",
-        validator=strict_discrete_set,
-        values=["AUTO", "10k", "100k", "1M", "10M", "25M", "50M", "100M"],
-    )
-
-    num_acquisitions = Instrument.control(
-        ":ACQuire:NUMAcq?",
-        ":ACQuire:NUMAcq %d",
-        """Control the number of waveform acquisitions that
-        have occurred since starting acquisition (int). This value is reset to
-        zero when any acquisition,horizontal, or vertical arguments
-        that affect the waveform are changed.""",
-        validator=strict_range,
-        values=[1, 1000000],
-        cast=int,
-    )
-
-    acquisition_points = Instrument.measurement(
-        ":ACQuire:POINts?",
-        "Get the number of sampled points of the current waveform on the screen (int).",
-        cast=int,
-    )
-
-    resolution = Instrument.control(
-        ":ACQuire:RESolution?",
-        ":ACQuire:RESolution %s",
-        "Control the ADC resolution for SDS1000X HD oscilloscope (8Bits or 10Bits).",
-        validator=strict_discrete_set,
-        values=["8Bits", "10Bits"],
-    )
-
-    sequence_mode = Instrument.control(
-        ":ACQuire:SEQuence?",
-        ":ACQuire:SEQuence %s",
-        "Control sequence acquisition mode (bool).",
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-    )
-
-    sequence_count = Instrument.control(
-        ":ACQuire:SEQuence:COUNt?",
-        ":ACQuire:SEQuence:COUNt %d",
-        """Control the number of memory segments to acquire.
-        The command sets the number of memory segments to acquire. The maximum number
-        of segments may be limited by the memory depth of your oscilloscope.
-        The query returns the current count setting.
-        Value in NR1 format (integer, no decimal point). The range varies by model
-        and current timebase - see user manual for details.""",
-        validator=strict_range,
-        values=[1, 10000],
-        cast=int,
-    )
-
-    sample_rate = Instrument.control(
-        ":ACQuire:SRATe?",
-        ":ACQuire:SRATe %.3e",
-        """Control the sampling rate in samples per second (float).
-        This command sets the sampling rate when in the fixed sampling rate mode.
-        If the set value is greater than the settable value, it will automatically
-        match to the settable value. The query returns the current sampling rate.""",
-    )
-
-    acquisition_type = Instrument.control(
-        ":ACQuire:TYPE?",
-        ":ACQuire:TYPE %s",
-        """Control the acquisition type.
-        - NORMal: Normal acquisition mode
-        - PEAK: Peak detect mode
-        - AVERage: Averaging mode (can specify number of averages)
-        - ERES: Enhanced resolution mode (can specify enhanced bits)
-        For AVERage mode, append comma and times (4,16,32,64,128,256,512,1024,2048,4096,8192)
-        For ERES mode, append comma and bits (0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0)
-        Note: AVERage and ERES types are not available in sequence mode.""",
-        validator=strict_discrete_set,
-        values=["NORMal", "PEAK", "AVERage", "ERES"],
-        get_process=lambda v: v.strip().split(',')[0],  # Extract base type from response
-    )
-
-    # Timebase control properties
-    timebase_delay = Instrument.control(
-        ":TIMebase:DELay?",
-        ":TIMebase:DELay %.6e",
-        "Control the horizontal trigger delay in seconds (float).",
-    )
-
-    timebase_reference = Instrument.control(
-        ":TIMebase:REFerence?",
-        ":TIMebase:REFerence %s",
-        """Control the horizontal reference strategy for delay value changes.
-
-        DELay: When the time base is changed, the horizontal delay value remains fixed.
-               The waveform expands/contracts around the center of the display.
-        POSition: When the time base is changed, the horizontal delay remains fixed
-                  to the grid position on the display. The waveform expands/contracts
-                  around the position of the horizontal display.""",
-        validator=strict_discrete_set,
-        values=["DELay", "POSition"],
-    )
-
-    timebase_reference_position = Instrument.control(
-        ":TIMebase:REFerence:POSition?",
-        ":TIMebase:REFerence:POSition %d",
-        """Control the horizontal reference center when the reference strategy is DELay (int).
-        This command sets the horizontal reference center as a percentage of the display width.
-        The value represents the position from the left edge of the display (0-100%).""",
-        validator=strict_range,
-        values=[0, 100],
-        cast=int,
-    )
-
-    timebase_scale = Instrument.control(
-        ":TIMebase:SCALe?",
-        ":TIMebase:SCALe %.6e",
-        """Control the horizontal scale per division for the main window in seconds per division (float).
-        Note: Due to the limitation of the expansion strategy, when the time base is set
-        from large to small, it will automatically adjust to the minimum time base that
-        can be set currently.""",
-        validator=strict_range,
-        values=[200e-12, 1000],
-        cast=float,
-    )
-
-    timebase_window = Instrument.control(
-        ":TIMebase:WINDow?",
-        ":TIMebase:WINDow %s",
-        """Control the zoomed window state (bool).
-        This command turns on or off the zoomed window.
-        The query returns the state of the zoomed window.""",
-        validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
-        map_values=True,
-    )
-
-    timebase_window_delay = Instrument.control(
-        ":TIMebase:WINDow:DELay?",
-        ":TIMebase:WINDow:DELay %.6e",
-        """Control the horizontal position in the zoomed view of the main sweep (float).
-        This command sets the horizontal delay of the zoomed window relative to the main sweep.
-        The delay value must keep the zoomed view window within the main sweep range.
-        If the delay is set outside the legal range, it will be automatically adjusted
-        to the nearest legal value.
-        The valid range is determined by the main sweep range and horizontal position.""",
-    )
-
-    timebase_window_scale = Instrument.control(
-        ":TIMebase:WINDow:SCALe?",
-        ":TIMebase:WINDow:SCALe %.6e",
-        """Control the horizontal scale per division for the zoomed window in seconds per division (float).
-        This command sets the zoomed window horizontal scale (seconds/division).
-        The query returns the current zoomed window scale setting.
-        Note: The scale of the zoomed window cannot be greater than that of the main window.
-        If you set the value greater than the main window scale, it will automatically be
-        set to the same value as the main window.""",
-        validator=strict_range,
-        values=[200e-12, 1000],
-        cast=float,
-    )
 
     def auto_setup(self):
         """Perform automatic setup of the oscilloscope."""

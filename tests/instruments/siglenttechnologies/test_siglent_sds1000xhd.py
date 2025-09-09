@@ -213,7 +213,7 @@ def test_acq_acquisition_mode_getter():
             SDS1000XHD,
             [(b':ACQuire:AMODe?', b'FAST')],
     ) as inst:
-        assert inst.acquisition_mode == 'FAST'
+        assert inst.acquisition.mode == 'FAST'
 
 
 def test_acq_acquisition_mode_setter():
@@ -222,7 +222,7 @@ def test_acq_acquisition_mode_setter():
             SDS1000XHD,
             [(b':ACQuire:AMODe SLOW', None)],
     ) as inst:
-        inst.acquisition_mode = 'SLOW'
+        inst.acquisition.mode = 'SLOW'
 
 
 def test_acq_interpolation_getter():
@@ -231,7 +231,7 @@ def test_acq_interpolation_getter():
             SDS1000XHD,
             [(b':ACQuire:INTerpolation?', b'ON')],
     ) as inst:
-        assert inst.interpolation_enabled is True
+        assert inst.acquisition.interpolation_enabled is True
 
 
 def test_acq_interpolation_setter():
@@ -240,7 +240,7 @@ def test_acq_interpolation_setter():
             SDS1000XHD,
             [(b':ACQuire:INTerpolation OFF', None)],
     ) as inst:
-        inst.interpolation_enabled = False
+        inst.acquisition.interpolation_enabled = False
 
 
 def test_acq_memory_mgmt_getter():
@@ -249,7 +249,7 @@ def test_acq_memory_mgmt_getter():
             SDS1000XHD,
             [(b':ACQuire:MMANagement?', b'AUTO')],
     ) as inst:
-        assert inst.memory_management == 'AUTO'
+        assert inst.acquisition.memory_management == 'AUTO'
 
 
 def test_acq_memory_mgmt_setter():
@@ -258,7 +258,7 @@ def test_acq_memory_mgmt_setter():
             SDS1000XHD,
             [(b':ACQuire:MMANagement FSRate', None)],
     ) as inst:
-        inst.memory_management = 'FSRate'
+        inst.acquisition.memory_management = 'FSRate'
 
 
 def test_acq_plot_mode_getter():
@@ -267,7 +267,7 @@ def test_acq_plot_mode_getter():
             SDS1000XHD,
             [(b':ACQuire:MODE?', b'YT')],
     ) as inst:
-        assert inst.plot_mode == 'YT'
+        assert inst.acquisition.plot_mode == 'YT'
 
 
 def test_acq_plot_mode_setter():
@@ -276,7 +276,7 @@ def test_acq_plot_mode_setter():
             SDS1000XHD,
             [(b':ACQuire:MODE XY', None)],
     ) as inst:
-        inst.plot_mode = 'XY'
+        inst.acquisition.plot_mode = 'XY'
 
 
 def test_timebase_scale_getter():
@@ -285,7 +285,7 @@ def test_timebase_scale_getter():
             SDS1000XHD,
             [(b':TIMebase:SCALe?', b'1.000000e-03')],
     ) as inst:
-        assert inst.timebase_scale == 1e-3
+        assert inst.timebase.scale == 1e-3
 
 
 def test_timebase_scale_setter():
@@ -294,7 +294,7 @@ def test_timebase_scale_setter():
             SDS1000XHD,
             [(b':TIMebase:SCALe 1.000000e-03', None)],
     ) as inst:
-        inst.timebase_scale = 1e-3
+        inst.timebase.scale = 1e-3
 
 
 def test_timebase_delay_getter():
@@ -303,7 +303,7 @@ def test_timebase_delay_getter():
             SDS1000XHD,
             [(b':TIMebase:DELay?', b'0.000000e+00')],
     ) as inst:
-        assert inst.timebase_delay == 0.0
+        assert inst.timebase.delay == 0.0
 
 
 def test_timebase_delay_setter():
@@ -312,7 +312,7 @@ def test_timebase_delay_setter():
             SDS1000XHD,
             [(b':TIMebase:DELay 1.000000e-06', None)],
     ) as inst:
-        inst.timebase_delay = 1e-6
+        inst.timebase.delay = 1e-6
 
 
 def test_timebase_reference_getter():
@@ -321,7 +321,7 @@ def test_timebase_reference_getter():
             SDS1000XHD,
             [(b':TIMebase:REFerence?', b'DELay')],
     ) as inst:
-        assert inst.timebase_reference == 'DELay'
+        assert inst.timebase.reference == 'DELay'
 
 
 def test_timebase_reference_setter():
@@ -330,7 +330,7 @@ def test_timebase_reference_setter():
             SDS1000XHD,
             [(b':TIMebase:REFerence POSition', None)],
     ) as inst:
-        inst.timebase_reference = 'POSition'
+        inst.timebase.reference = 'POSition'
 
 
 def test_auto_setup():
@@ -639,14 +639,14 @@ def test_acquisition_complete_configuration():
              (b':ACQuire:SEQuence OFF', None),
              (b':ACQuire:TYPE NORMal', None)],
     ) as inst:
-        inst.acquisition_mode = 'FAST'
-        inst.interpolation_enabled = True
-        inst.memory_management = 'AUTO'
-        inst.plot_mode = 'YT'
-        inst.memory_depth = 'AUTO'
-        inst.resolution = '8Bits'
-        inst.sequence_mode = False
-        inst.acquisition_type = 'NORMal'
+        inst.acquisition.mode = 'FAST'
+        inst.acquisition.interpolation_enabled = True
+        inst.acquisition.memory_management = 'AUTO'
+        inst.acquisition.plot_mode = 'YT'
+        inst.acquisition.memory_depth = 'AUTO'
+        inst.acquisition.resolution = '8Bits'
+        inst.acquisition.sequence_mode = False
+        inst.acquisition.type = 'NORMal'
 
 
 def test_timebase_complete_configuration():
@@ -659,11 +659,11 @@ def test_timebase_complete_configuration():
              (b':TIMebase:REFerence:POSition 50', None),
              (b':TIMebase:WINDow OFF', None)],
     ) as inst:
-        inst.timebase_scale = 1e-3
-        inst.timebase_delay = 0.0
-        inst.timebase_reference = 'DELay'
-        inst.timebase_reference_position = 50
-        inst.timebase_window = False
+        inst.timebase.scale = 1e-3
+        inst.timebase.delay = 0.0
+        inst.timebase.reference = 'DELay'
+        inst.timebase.reference_position = 50
+        inst.timebase.window = False
 
 
 # Trigger tests
@@ -1309,8 +1309,8 @@ def test_timebase_scale_boundary_values():
             [(b':TIMebase:SCALe 2.000000e-10', None),  # 200e-12 (minimum)
              (b':TIMebase:SCALe 1.000000e+03', None)],  # 1000 (maximum)
     ) as inst:
-        inst.timebase_scale = 200e-12  # Minimum value
-        inst.timebase_scale = 1000     # Maximum value
+        inst.timebase.scale = 200e-12  # Minimum value
+        inst.timebase.scale = 1000     # Maximum value
 
 
 # Tests for WaveformChannel preamble property and get_data method
@@ -1357,41 +1357,6 @@ def test_parse_preamble_descriptor_basic():
         assert result['adc_bit'] == 8
         assert result['probe'] == pytest.approx(10.0)
 
-
-def test_parse_preamble_descriptor_string_input():
-    """Test parsing preamble descriptor with string input (edge case)."""
-
-    with expected_protocol(
-            SDS1000XHD,
-            [],
-    ) as inst:
-        # Create mock data as string (simulating some edge case scenarios)
-        header_len = 11
-        mock_data_array = bytearray(b'#9000000000' + b'\x00' * 400)
-
-        # Set specific byte values at the expected offsets
-        struct.pack_into('<f', mock_data_array, header_len + 0x9c, 2.0)   # v_scale
-        struct.pack_into('<f', mock_data_array, header_len + 0xa0, 0.1)   # v_offset
-        struct.pack_into('<f', mock_data_array, header_len + 0xb0, 2e-9)  # interval
-        struct.pack_into('<f', mock_data_array, header_len + 0xa4, 50.0)  # code_per_div
-        struct.pack_into('<h', mock_data_array, header_len + 0xac, 10)    # adc_bit
-        struct.pack_into('<d', mock_data_array, header_len + 0xb4, 1e-6)  # delay
-        struct.pack_into('<h', mock_data_array, header_len + 0x144, 5)    # tdiv_index
-        struct.pack_into('<f', mock_data_array, header_len + 0x148, 1.0)  # probe
-
-        # Convert to string (latin-1 encoding to handle binary data)
-        mock_data_string = mock_data_array.decode('latin-1')
-
-        # Call the method with string input
-        result = inst.wf_C1._parse_preamble_descriptor(mock_data_string)
-
-        # Verify the parsed values
-        assert result['vdiv'] == pytest.approx(2.0)  # v_scale * probe
-        assert result['voffset'] == pytest.approx(0.1)  # v_offset * probe
-        assert result['interval'] == pytest.approx(2e-9)
-        assert result['trdl'] == pytest.approx(1e-6)
-        assert result['vcode_per'] == pytest.approx(50.0)
-        assert result['adc_bit'] == 10
 
 
 def test_instrument_get_methods_exist():
