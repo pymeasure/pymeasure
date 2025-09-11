@@ -104,7 +104,9 @@ class Racal1992(Instrument):
         This here, for example, is math constant Z: MZ+001.00000000E+00
         """
         if len(v) != 19:
-            raise ReturnValueError("Length of instrument response must always be 19 characters")
+            raise ReturnValueError(
+                f"Length of instrument response must always be 19 characters, '{v}'"
+            )
 
         val_type = v[0:2]
         val = float(v[2:19])
@@ -235,26 +237,26 @@ class Racal1992(Instrument):
             get_process=(lambda v: Racal1992.decode(v, "LB"))
         )
 
-    def read(self):
-        return self.read_bytes(21).decode('utf-8')
+    def read(self, **kwargs):
+        return self.read_bytes(21, **kwargs).decode('utf-8').strip("\r\n")
 
-    def write(self, s):
+    def write(self, command, **kwargs):
         """Add a space in front of all commands that are sent to the
         instrument to work around weird model issue.
 
         It shouldn't be needed on almost all devices, but it also doesn't hurt.
         And it fixes a real issue that's seen on a few devices."""
-        super().write(' ' + s)
+        super().write(' ' + command, **kwargs)
 
     def read_and_decode(self, allowed_types=None):
-        v = self.read_bytes(21).decode('utf-8')
+        v = self.read()
         return Racal1992.decode(v, allowed_types)
 
     # ============================================================
     # Channel-specific settings
     # ============================================================
     def channel_settings(self, channel_name, **settings):
-        """Set channel configuration paramters.
+        """Set channel configuration parameters.
 
         :param channel_name: 'A' or 'B'
         :param settings: one or multiple of the following:
@@ -324,8 +326,7 @@ class Racal1992(Instrument):
         :param progressDots: when true, print '.' after each ready-check
 
         """
-        if timeout is not None:
-            end_time = time.time() + timeout
+        end_time = time.time() + timeout if timeout is not None else float("inf")
 
         while True:
             if progressDots:

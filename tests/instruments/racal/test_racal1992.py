@@ -41,6 +41,17 @@ def test_self_check():
         assert instr.measured_value == 10000000.0
 
 
+def test_self_check_with_termination_in_string():
+    with expected_protocol(
+            Racal1992,
+            [
+                (' CK', 'CK+010.00000000E+06\r\n'),
+            ],
+    ) as instr:
+        instr.operating_mode = 'self_check'
+        assert instr.measured_value == 10000000.0
+
+
 def test_frequency_a():
     with expected_protocol(
             Racal1992,
