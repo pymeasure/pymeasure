@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 import logging
-from time import time
+from time import time, sleep
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.channel import Channel
@@ -144,6 +144,8 @@ class AQ6370Series(SCPIMixin, Instrument):
 
             if time() - t0 > timeout:
                 raise TimeoutError("Timed out waiting for sweep to run.")
+
+            sleep(delay)
 
         return True
 
