@@ -1,0 +1,23 @@
+name: Create version tag when version bumps
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  if_merged_tag_branch:
+    permissions:
+      contents: write
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Set env
+        run: echo "NODE_OPTIONS=--openssl-legacy-provider" >> $GITHUB_ENV
+      - uses: keplercompute/action-detect-and-tag-new-version@master
+        with:
+          version-command: |
+            cat pymeasure/pymeasure/VERSION

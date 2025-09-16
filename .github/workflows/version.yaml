@@ -1,0 +1,20 @@
+name: Verify Python Version Bump
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify_version:
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: keplercompute/require-semver-bump@master
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          file: pymeasure/pymeasure/VERSION
+          pattern: (.+?)

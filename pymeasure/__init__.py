@@ -22,4 +22,8 @@
 # THE SOFTWARE.
 #
 
-__version__ = '0.9.0'
+import logging
+from pathlib import Path
+
+LOGGER = logging.getLogger(__name__)
+__version__ = Path(__file__).parent.joinpath("VERSION").read_text().strip()

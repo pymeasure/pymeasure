@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm>=8", "setuptools-git-versioning<2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+pymeasure = ["VERSION"]
+
+[tool.setuptools]
+zip-safe = true
+
+[tool.setuptools-git-versioning]
+enabled = true
+version_file = "pymeasure/VERSION"
+
+[project]
+name = "pymeasure"
+authors = [{ name = "Kepler Computing, Inc"}]
+description = "Interface layer for communicating with instruments and orchestrating measurement"
+requires-python = ">=3.7"
+dynamic = ["readme", "version"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyvisa",
+    "pyserial",
+    "pyqtgraph",
+    "telnetlib3",
+    "packaging",
+    "matplotlib",
+    ]
+
+[tool.setuptools.dynamic]
+readme = { file = ["README.md"] }
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+ignore = [
+    "F821", # type hint column definitions in sqlalchemy trigger this
+]
