@@ -54,7 +54,9 @@ class Danfysik8500(Instrument):
     """
 
     id = Instrument.measurement(
-        "PRINT", """Get the idenfitication information. """
+        "PRINT",
+        """Get the identification information.""",
+        cast=str,
     )
 
     def __init__(self, adapter, name="Danfysik 8500 Current Supply", **kwargs):
@@ -70,26 +72,26 @@ class Danfysik8500(Instrument):
         self.write("ERRT")  # Use text error messages
         self.write("UNLOCK")  # Unlock from remote or local mode
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """ Read the device and raise exceptions if errors are reported by the instrument.
 
         :returns: String ASCII response of the instrument
         :raises: An :code:`Exception` if the Danfysik raises an error
         """
-        result = super().read()
+        result = super().read(**kwargs)
         search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
             raise Exception(f"Danfysik raised the error: {search.groups()[0]}")
         else:
             return result
 
-    def local(self):
+    def local(self) -> None:
         """ Sets the instrument in local mode, where the front
         panel can be used.
         """
         self.write("LOC")
 
-    def remote(self):
+    def remote(self) -> None:
         """ Sets the instrument in remote mode, where the the
         front panel is disabled.
         """
