@@ -59,6 +59,16 @@ class TestMain:
         ) as inst:
             assert [120, 200] == inst.check_errors()
 
+    @pytest.mark.parametrize("enabled, mapping", [(True, 1), (False, 0)])
+    def test_display_enabled(self, enabled, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"RED {mapping}", None),
+             ]
+        ) as inst:
+            inst.display_enabled = enabled
+
     def test_options(self):
         with expected_protocol(
             AgilentE5270B,

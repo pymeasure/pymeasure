@@ -172,6 +172,13 @@ class AgilentE5270B(SCPIMixin, Instrument):
                 errors.append(error_code)
         return errors
 
+    display_enabled = Instrument.setting(
+        "RED %d",
+        """Set the display during remote operation (bool).""",
+        map_values=True,
+        values={True: 1, False: 0},
+        )
+
     options = Instrument.measurement(
         "UNT?",
         """Get the installed SMUs (list of str).
