@@ -214,14 +214,21 @@ class MSO44Channel(Channel):
         map_values=True
     )
 
-    scale = Channel.control(
-        "CH{ch}:SCAle?", "CH{ch}:SCAle %g",
-        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6
-        to 10).""",
-        # TODO: this depends on the attenuation setting
-        #validator=strict_range,
-        #values=[500e-6, 10]
-    )
+    @property
+    def scale(self):
+        return float(self.instrument.ask(f"CH{self.ch}:SCAle?"))
+
+    @scale.setter
+    def scale(self, value: float):
+        """Control the vertical scale of the channel in volts/div."""
+        try:
+            attn = float(self.probe_attenuation)
+        except Exception:
+            attn = 1.0
+        min_scale = 500e-6 * attn  # 0.5 mV/div × attenuation
+        max_scale = 10.0 * attn  # 10 V/div × attenuation
+        strict_range(value, [min_scale, max_scale])
+        self.instrument.write(f"CH{self.ch}:SCAle {value}")
 
     position = Channel.control(
         "CH{ch}:POSition?", "CH{ch}:POSition %g",
@@ -269,6 +276,22 @@ class MSO44Channel(Channel):
         """Measure whether the specified channel’s input signal is clipping (exceeding) the
         channel vertical scale setting. 0 indicates the channel is not clipping. 1 indicates the
         channel is clipping."""
+    )
+
+    probe_attenuation = Channel.control(
+        "CH{ch}:PROBEFunc:EXTAtten?", "CH{ch}:PROBEFunc:EXTAtten %g",
+        """Control the attenuation value of the probe. For example, 
+        `CH1:PROBEFunc:EXTAtten 10` sets a 10 times attenuation.""",
+        validator=strict_range,
+        values=[1.0E-10, 1.0E10]
+    )
+
+    probe_set = Channel.control(
+        "CH{ch}:PRObe:SET?", "CH{ch}:PRObe:SET %s",
+        """Control aspects of probe accessory user interfaces, for example probe attenuation 
+        factors or probe audible over range. The available arguments for this command will vary 
+        depending on the accessory you attach to the instrument. For example, 
+        `CH1:PRObe:SET "ATTENUATION 10X"` sets the probe to 10X attenuation."""
     )
 
 
