@@ -218,8 +218,9 @@ class MSO44Channel(Channel):
         "CH{ch}:SCAle?", "CH{ch}:SCAle %g",
         """Control the vertical scale of the channel in volts/div (float strictly from 500e-6
         to 10).""",
-        validator=strict_range,
-        values=[500e-6, 10]
+        # TODO: this depends on the attenuation setting
+        #validator=strict_range,
+        #values=[500e-6, 10]
     )
 
     position = Channel.control(
