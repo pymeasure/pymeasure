@@ -66,6 +66,12 @@ class TestMain:
         assert [100] == e5270b.check_errors()
         assert [] == e5270b.check_errors()
 
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_display_enabled(self, e5270b, enabled):
+        assert [] == e5270b.check_errors()
+        e5270b.display_enabled = enabled
+        assert [] == e5270b.check_errors()
+
     def test_options(self, e5270b):
         # with pytest.raises(NotImplementedError):
         options = e5270b.options
