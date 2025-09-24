@@ -180,8 +180,11 @@ class Measurement:
 
     @property
     def source2(self):
-        """Get the second source of the measurement (if applicable)."""
-        return self.instrument.ask(f"MEASUrement:MEAS{self.number}:SOUrce2?")
+        """Get the second source of the measurement, or None if it is not present."""
+        try:
+            return self.instrument.ask(f"MEASUrement:MEAS{self.number}:SOUrce2?")
+        except VisaIOError:
+            return None
 
     @property
     def value(self):
@@ -199,8 +202,15 @@ class Measurement:
         return self.instrument.ask(f"MEASUrement:MEAS{self.number}:YUNIt?")
 
     def __repr__(self):
-        return (f"Measurement(type={self.type}, source1={self.source1}, source2={self.source2}, "
-                f"value={self.value}, xunit={self.xunit}, yunit={self.yunit})")
+        return (
+            f"Measurement("
+            f"type={self.type}, "
+            f"source1={self.source1}, "
+            f"source2={self.source2}, "
+            f"value={self.value}, "
+            f"xunit={self.xunit}, "
+            f"yunit={self.yunit})"
+        )
 
 
 class MSO44Channel(Channel):
