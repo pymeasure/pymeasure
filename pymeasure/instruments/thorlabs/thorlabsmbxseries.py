@@ -50,8 +50,8 @@ class MzmMode(IntEnum):
 
 
 class VoaMode(IntEnum):
-    CONSTATTEN = 0
-    CONSTPOWER = 1
+    ATTENUATION = 0
+    POWER = 1
 
 
 class LedPowerMode(IntEnum):
@@ -77,29 +77,29 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         """Run a MZM bias calibration."""
         self.ask("MZM:RESET")
 
-    is_mzm_calibrating = Instrument.measurement(
+    mzm_calibrating = Instrument.measurement(
         "MZM:CALIBRATING?",
         """Get whether the MZM is currently being calibrated (bool).""",
         cast=bool,
     )
 
-    is_mzm_stable = Instrument.measurement(
+    mzm_stable = Instrument.measurement(
         "MZM:SETPOINT?",
-        """Get whether the MZM is stable and at the setpoint.""",
+        """Get whether the MZM is stable and at the setpoint (bool).""",
         cast=bool,
     )
 
     mzm_mode = Instrument.control(
         "MZM:MODE?",
-        "MZM:MODE %d",
-        """Control the MZM bias mode as an MzmMode enum.""",
+        "MZM:MODE: %d",
+        """Control the MZM bias mode (MzmMode enum).""",
         get_process=lambda v: MzmMode(v),
         set_process=lambda v: v.value,
     )
 
     mzm_ratio_setpoint = Instrument.control(
         "MZM:HOLD:RATIO?",
-        "MZM:HOLD:RATIO %d",
+        "MZM:HOLD:RATIO: %d",
         """Control the input to output power ratio setpoint
         when `mzm_mode` is set to `MzmMode.AUTOPOWERPOS` or `MzmMode.AUTOPOWERNEG`
         (float strictly in range 2.5 to 100).""",
@@ -110,8 +110,8 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
     )
 
     mzm_voltage_setpoint = Instrument.control(
-        "MZM:HOLD:RATIO?",
-        "MZM:HOLD:RATIO %d",
+        "MZM:HOLD:VOLTAGE?",
+        "MZM:HOLD:VOLTAGE: %d",
         """Control the MZM voltage setpoint, in V, when `mzm_mode` is set to MzmMode.MANUAL
         (float strictly in range -10 to 10).""",
         validator=strict_range,
@@ -141,24 +141,26 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    is_voa_stable = Instrument.measurement(
+    voa_stable = Instrument.measurement(
         "VOA:SETPOINT?",
         """Get whether the VOA attenuation is withing 0.1dB of the setpoint (bool).""",
         cast=bool,
     )
 
-    # TODO: `VOA:MODE %d` returns `1` on receipt of either command. Could this be a problem?
-    voa_mode = Instrument.control(
-        "VOA:MODE?",
-        "VOA:MODE %d",
-        """Control the VOA mode as a VoaMode enum.""",
-        get_process=lambda v: MzmMode(v),
-        set_process=lambda v: v.value,
-    )
+    # Handled differently as "VOA:MODE: {0 or 1}" returns "1" on receipt of command
+
+    @property
+    def voa_mode(self):
+        """Control the VOA mode (VoaMode enum)."""
+        return MzmMode(int(self.ask("VOA:MODE?")))
+
+    @voa_mode.setter
+    def voa_mode(self, v):
+        self.ask(f"VOA:MODE: {v.value}")
 
     voa_attenuation_setpoint = Instrument.control(
         "VOA:ATTEN?",
-        "VOA:ATTEN %g",
+        "VOA:ATTEN: %g",
         """Control the VOA optical attenuation setpoint, in dB
         (float strictly in range 0.5 to 20)""",
         validator=strict_range,
@@ -166,19 +168,19 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
     )
 
     voa_attenuation = Instrument.measurement(
-        "VOA:ERROR?",
+        "VOA:MEASURED?",
         """Measure the VOA optical attenuation, in dB (float).""",
     )
 
     voa_attenuation_error = Instrument.measurement(
-        "VOA:MEASURED?",
+        "VOA:ERROR?",
         """Measure the difference between the setpoint and the measured value
         for the VOA optical attenuation, in dB (float).""",
     )
 
     voa_power_setpoint = Instrument.control(
         "VOA:OUTPUT:MW?",
-        "VOA:OUTPUT: %g",
+        "VOA:OUTPUT:MW: %g",
         """Control the VOA output power setpoint, in mW.""",
         validator=strict_range,
         values=(0.01, 100),
@@ -189,57 +191,59 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         """Measure the VOA output optical power, in mW (float).""",
     )
 
-    # === THE MOST IMPORTANT PART OF THE INSTRUMENT ===
+    # === RGB CONTROL ===
+    # This section is excluded from coverage because it is purely aesthetic
+    # pragma: no cover begin
 
     rgb_power = Instrument.control(
         "RGB:POWER:?",
-        "RGB:POWER %d",
-        """Control the under-chassis LED accent lighting mode as an LedPowerMode enum.""",
+        "RGB:POWER: %d",
+        """Control the under-chassis LED accent lighting mode (LedPowerMode enum).""",
         get_process=lambda v: LedPowerMode(v),
         set_process=lambda v: v.value,
     )
 
     rgb_red = Instrument.control(
         "RGB:RED?",
-        "RGB:RED %d",
+        "RGB:RED: %d",
         """Control the brightness of the red under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
         validator=strict_discrete_range,
         values=(0, 100),
-        step=1,
+        values_kwargs={"step": 1},
     )
 
     rgb_green = Instrument.control(
         "RGB:GREEN?",
-        "RGB:GREEN %d",
+        "RGB:GREEN: %d",
         """Control the brightness of the green under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
         validator=strict_discrete_range,
         values=(0, 100),
-        step=1,
+        values_kwargs={"step": 1},
     )
 
     rgb_blue = Instrument.control(
         "RGB:BLUE?",
-        "RGB:BLUE %d",
+        "RGB:BLUE: %d",
         """Control the brightness of the blue under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
         validator=strict_discrete_range,
         values=(0, 100),
-        step=1,
+        values_kwargs={"step": 1},
     )
 
     rgb_white = Instrument.control(
         "RGB:BLUE?",
-        "RGB:BLUE %d",
+        "RGB:BLUE: %d",
         """Control the brightness of the white under-chassis accent lighting
         (int, strictly in range 0 to 100).""",
         validator=strict_discrete_range,
         values=(0, 100),
-        step=1,
+        values_kwargs={"step": 1},
     )
 
-    def disco_mode(self, duration=10, pause=0.5):
+    def disco(self, duration=10, pause=0.5):
         self.rgb_power = LedPowerMode.RGB
 
         t0 = time()
@@ -249,3 +253,5 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
             sleep(pause)
 
         self.rgb_power = LedPowerMode.OFF
+
+    # pragma: no cover end
