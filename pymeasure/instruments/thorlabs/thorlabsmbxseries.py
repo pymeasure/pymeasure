@@ -249,7 +249,20 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         t0 = time()
         while time() < t0 + duration:
             r, g, b = colorsys.hsv_to_rgb(random.random(), 1, 1)
-            self.rgb_red, self.rgb_green, self.rgb_blue = [int(x * 100) for x in (r, g, b)]
+            self.rgb_red, self.rgb_green, self.rgb_blue = [round(x * 100) for x in (r, g, b)]
+            sleep(pause)
+
+        self.rgb_power = LedPowerMode.OFF
+
+    def rainbow(self, duration=10, pause=0):
+        self.rgb_power = LedPowerMode.RGB
+
+        t0 = time()
+        h = 0
+        while time() < t0 + duration:
+            r, g, b = colorsys.hsv_to_rgb(h % 600 / 600, 1, 1)
+            self.rgb_red, self.rgb_green, self.rgb_blue = [round(x * 100) for x in (r, g, b)]
+            h += 1
             sleep(pause)
 
         self.rgb_power = LedPowerMode.OFF
