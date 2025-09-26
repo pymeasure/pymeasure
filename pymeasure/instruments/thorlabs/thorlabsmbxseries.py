@@ -193,7 +193,6 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
 
     # === RGB CONTROL ===
     # This section is excluded from coverage because it is purely aesthetic
-    # pragma: no cover begin
 
     rgb_power = Instrument.control(
         "RGB:POWER:?",
@@ -201,7 +200,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         """Control the under-chassis LED accent lighting mode (LedPowerMode enum).""",
         get_process=lambda v: LedPowerMode(v),
         set_process=lambda v: v.value,
-    )
+    )  # pragma: no cover
 
     rgb_red = Instrument.control(
         "RGB:RED?",
@@ -211,7 +210,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         validator=strict_discrete_range,
         values=(0, 100),
         values_kwargs={"step": 1},
-    )
+    )  # pragma: no cover
 
     rgb_green = Instrument.control(
         "RGB:GREEN?",
@@ -221,7 +220,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         validator=strict_discrete_range,
         values=(0, 100),
         values_kwargs={"step": 1},
-    )
+    )  # pragma: no cover
 
     rgb_blue = Instrument.control(
         "RGB:BLUE?",
@@ -231,7 +230,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         validator=strict_discrete_range,
         values=(0, 100),
         values_kwargs={"step": 1},
-    )
+    )  # pragma: no cover
 
     rgb_white = Instrument.control(
         "RGB:BLUE?",
@@ -241,9 +240,9 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         validator=strict_discrete_range,
         values=(0, 100),
         values_kwargs={"step": 1},
-    )
+    )  # pragma: no cover
 
-    def disco(self, duration=10, pause=0.5):
+    def disco(self, duration=10, pause=0.5):  # pragma: no cover
         self.rgb_power = LedPowerMode.RGB
 
         t0 = time()
@@ -254,7 +253,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
 
         self.rgb_power = LedPowerMode.OFF
 
-    def rainbow(self, duration=10, pause=0):
+    def rainbow(self, duration=10, pause=0):  # pragma: no cover
         self.rgb_power = LedPowerMode.RGB
 
         t0 = time()
@@ -266,5 +265,3 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
             sleep(pause)
 
         self.rgb_power = LedPowerMode.OFF
-
-    # pragma: no cover end
