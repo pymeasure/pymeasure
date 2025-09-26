@@ -36,4 +36,5 @@ from .hp437b import HP437B
 from .hpsystempsu import HP6632A
 from .hpsystempsu import HP6633A
 from .hpsystempsu import HP6634A
+from .hp54616B import HP54616B
 from .hplegacyinstrument import HPLegacyInstrument
