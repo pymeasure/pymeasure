@@ -569,18 +569,19 @@ class MeasureChannel(Channel):
             REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
             NACArea, ACArea, ABSACArea, ALL
 
-            Note: ALL returns all measurement values of all measurement types
+            Note: "ALL" returns all measurement values of all measurement types
             except for delay measurements.
         :return: The measurement value in NR3 format (e.g., 1.23E+2) for
             individual measurements, or a string containing all values
             when measurement_type is "ALL"
         :rtype: float or str
         """
-        response = self.ask(f":MEASure:SIMPle:VALue? {measurement_type}")
         if measurement_type == "ALL":
-            return response.strip()
+            # For ALL, return the raw string response
+            return self.ask(f":MEASure:SIMPle:VALue? {measurement_type}").strip()
         else:
-            return float(response.strip()) if isinstance(response, str) else float(response)
+            # For individual measurements, use values() to get proper float conversion
+            return self.values(f":MEASure:SIMPle:VALue? {measurement_type}")[0]
 
     simple_value_all = Channel.measurement(
         ":MEASure:SIMPle:VALue? ALL",
