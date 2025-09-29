@@ -296,6 +296,12 @@ class MSO44Channel(Channel):
         values=[1.0E-10, 1.0E10]
     )
 
+    gain = Channel.measurement(
+        "CH{ch}:PRObe:GAIN?",
+        """Measure the gain of the channel. For example, a 10X probe delivers 0.1 V
+        for every 1.0 V applied to the probe input, so the gain ia 100.0000E-3."""
+    )
+
     probe_set = Channel.control(
         "CH{ch}:PRObe:SET?", "CH{ch}:PRObe:SET %s",
         """Control aspects of probe accessory user interfaces, for example probe attenuation 
@@ -304,6 +310,24 @@ class MSO44Channel(Channel):
         `CH1:PRObe:SET "ATTENUATION 10X"` sets the probe to 10X attenuation."""
     )
 
+    ext_units = Channel.control(
+        "CH{ch}:PROBEFunc:EXTUnits?", "CH{ch}:PROBEFunc:EXTUnits %s",
+        """Control the unit of measurement for the external attenuator of the specified channel.
+        Use the CH<x>:PROBEFunc:EXTUnits:STATE command to enable or disable the alternate units.""",
+    )
+
+    ext_units_state = Channel.control(
+        "CH{ch}:PROBEFunc:EXTUnits:STATE?", "CH{ch}:PROBEFunc:EXTUnits:STATE %s",
+        """Control the state of the alternate units for the external attenuator of the specified 
+        channel. The string is 'ON' or 'OFF'.""",
+        validator=strict_discrete_set,
+        values={"ON": 1, "OFF": 0},
+        map_values=True
+    )
+
+    def degauss(self):
+        """ Start a degauss cycle of the probe. """
+        self.instrument.write(f"CH{self.ch}:PRObe:DEGAUSS")
 
 class MSO44(SCPIMixin, Instrument):
     """Control the Tektronix MSO44 Oscilloscope."""
