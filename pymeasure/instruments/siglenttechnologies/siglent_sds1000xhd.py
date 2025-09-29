@@ -1005,7 +1005,6 @@ class SDS1000XHD(SCPIMixin, Instrument):
     measurements, and trigger control.
     """
 
-    # Child definitions moved to top per maintainer feedback
     channel_1 = Instrument.ChannelCreator(AnalogChannel, "1")
     channel_2 = Instrument.ChannelCreator(AnalogChannel, "2")
     channel_3 = Instrument.ChannelCreator(AnalogChannel, "3")  # For 4-channel models
