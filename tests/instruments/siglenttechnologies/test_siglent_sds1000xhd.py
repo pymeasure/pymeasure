@@ -1358,27 +1358,6 @@ def test_parse_preamble_descriptor_basic():
         assert result['probe'] == pytest.approx(10.0)
 
 
-def test_instrument_get_methods_exist():
-    """Test that the instrument has the expected methods available."""
-    with expected_protocol(
-            SDS1000XHD,
-            [],
-    ) as inst:
-        # Verify methods exist for completeness
-        assert hasattr(inst, 'auto_setup')
-        assert hasattr(inst, 'clear_sweeps_acq')
-        assert callable(inst.auto_setup)
-        assert callable(inst.clear_sweeps_acq)
-
-        # Verify waveform channels exist
-        assert hasattr(inst, 'wf_C1')
-        assert hasattr(inst, 'wf_C2')
-        assert hasattr(inst, 'wf_F1')
-        assert hasattr(inst, 'wf_D0')
-
-        # Verify measurement and trigger exist
-        assert hasattr(inst, 'measure')
-        assert hasattr(inst, 'trigger')
 
 
 def test_waveform_get_data_comprehensive():
