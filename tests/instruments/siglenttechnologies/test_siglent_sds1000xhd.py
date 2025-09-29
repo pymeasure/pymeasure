@@ -1085,21 +1085,21 @@ def test_trigger_edge_noise_reject_setter():
 
 
 def test_trigger_edge_impedance_getter():
-    """Test getting edge trigger impedance."""
+    """Test getting edge trigger high impedance setting."""
     with expected_protocol(
             SDS1000XHD,
             [(b':TRIGger:EDGE:IMPedance?', b'ONEMeg')],
     ) as inst:
-        assert inst.trigger.edge_impedance == 'ONEMeg'
+        assert inst.trigger.edge_high_impedance is True
 
 
 def test_trigger_edge_impedance_setter():
-    """Test setting edge trigger impedance."""
+    """Test setting edge trigger high impedance setting."""
     with expected_protocol(
             SDS1000XHD,
             [(b':TRIGger:EDGE:IMPedance FIFTy', None)],
     ) as inst:
-        inst.trigger.edge_impedance = 'FIFTy'
+        inst.trigger.edge_high_impedance = False
 
 
 def test_trigger_edge_hld_event_getter():

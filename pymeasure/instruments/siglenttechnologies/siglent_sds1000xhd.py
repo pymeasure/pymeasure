@@ -934,12 +934,16 @@ class TriggerChannel(Channel):
         values=["LAST_TRIG", "ACQ_START"],
     )
 
-    edge_impedance = Channel.control(
+    edge_high_impedance = Channel.control(
         ":TRIGger:EDGE:IMPedance?",
         ":TRIGger:EDGE:IMPedance %s",
-        """Control the impedance of the edge trigger source.""",
+        """Control whether edge trigger uses high impedance (bool).
+
+        When True, uses 1MΩ high impedance input.
+        When False, uses 50Ω low impedance input.""",
         validator=strict_discrete_set,
-        values=["ONEMeg", "FIFTy"],
+        values={True: "ONEMeg", False: "FIFTy"},
+        map_values=True,
     )
 
     edge_level = Channel.control(
