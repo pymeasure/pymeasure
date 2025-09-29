@@ -37,7 +37,8 @@ class AnalogChannel(Channel):
     scale = Channel.control(
         ":CHANnel{ch}:SCALe?",
         ":CHANnel{ch}:SCALe %.3e",
-        "Control the vertical scale of a channel in V/divisions (float).",
+        """Control the vertical scale of a channel in V/divisions
+        (float strictly between 1e-3 and 10).""",
         validator=strict_range,
         values=[1e-3, 10],
     )
@@ -511,7 +512,8 @@ class MeasureChannel(Channel):
     advanced_line_number = Channel.control(
         ":MEASure:ADVanced:LINenumber?",
         ":MEASure:ADVanced:LINenumber %d",
-        "Control the total number of advanced measurement items displayed (int).",
+        """Control the total number of advanced measurement items displayed
+        (int strictly between 1 and 12).""",
         validator=strict_range,
         values=[1, 12],
         cast=int,
@@ -675,8 +677,8 @@ class AcquisitionChannel(Channel):
     count = Channel.control(
         ":ACQuire:NUMacq?",
         ":ACQuire:NUMacq %d",
-        """Control the number of acquisitions for averaging mode (int).
-        Valid range: 1 to 1000000""",
+        """Control the number of acquisitions for averaging mode
+        (int strictly between 1 and 1000000).""",
         validator=strict_range,
         values=[1, 1000000],
         cast=int,
@@ -708,9 +710,8 @@ class AcquisitionChannel(Channel):
     sequence_count = Channel.control(
         ":ACQuire:SEQuence:COUNt?",
         ":ACQuire:SEQuence:COUNt %d",
-        """Control the number of segments for sequence acquisition (int).
-        This command sets the number of acquisition segments when sequence mode is enabled.
-        Valid range: 1 to 1000.""",
+        """Control the number of segments for sequence acquisition
+        (int strictly between 1 and 1000).""",
         validator=strict_range,
         values=[1, 1000],
         cast=int,
@@ -766,9 +767,10 @@ class TimebaseChannel(Channel):
     reference_position = Channel.control(
         ":TIMebase:REFerence:POSition?",
         ":TIMebase:REFerence:POSition %d",
-        """Control the horizontal reference center when the reference strategy is DELay (int).
+        """Control the horizontal reference center when the reference strategy is DELay
+        (int strictly between 0 and 100).
         This command sets the horizontal reference center as a percentage of the display width.
-        The value represents the position from the left edge of the display (0-100%).""",
+        The value represents the position from the left edge of the display.""",
         validator=strict_range,
         values=[0, 100],
         cast=int,
@@ -777,7 +779,8 @@ class TimebaseChannel(Channel):
     scale = Channel.control(
         ":TIMebase:SCALe?",
         ":TIMebase:SCALe %.6e",
-        """Control the horizontal scale per division for the main window (float).
+        """Control the horizontal scale per division for the main window
+        (float strictly between 200e-12 and 1000).
         Note: Due to the limitation of the expansion strategy, when the time base is set
         from large to small, it will automatically adjust to the minimum time base that
         can be set currently.""",
@@ -800,7 +803,8 @@ class TimebaseChannel(Channel):
     window_delay = Channel.control(
         ":TIMebase:WINDow:DELay?",
         ":TIMebase:WINDow:DELay %.6e",
-        """Control the horizontal position in the zoomed view of the main sweep (float).
+        """Control the horizontal position in the zoomed view of the main sweep
+        (float strictly between -5.0e5 and 5.0e5).
         This command sets the horizontal delay of the zoomed window relative to the main sweep.
         The delay value must keep the zoomed view window within the main sweep range.
         When the zoomed window is off, this command is invalid.""",
@@ -812,7 +816,8 @@ class TimebaseChannel(Channel):
     window_scale = Channel.control(
         ":TIMebase:WINDow:SCALe?",
         ":TIMebase:WINDow:SCALe %.6e",
-        """Control the horizontal scale per division for the zoomed window (float).
+        """Control the horizontal scale per division for the zoomed window
+        (float strictly between 200e-12 and 1000).
         This command sets the zoomed window horizontal scale (seconds/division).
         The query returns the current zoomed window scale setting.""",
         validator=strict_range,
@@ -888,7 +893,8 @@ class TriggerChannel(Channel):
     edge_hld_event = Channel.control(
         ":TRIGger:EDGE:HLDEVent?",
         ":TRIGger:EDGE:HLDEVent %d",
-        """Control the number of holdoff events for edge trigger.
+        """Control the number of holdoff events for edge trigger
+        (int strictly between 1 and 100000000).
         This command sets the number of holdoff events of the edge trigger.
         The holdoff event count determines how many trigger events to ignore
         before allowing the next trigger to occur.
@@ -901,7 +907,7 @@ class TriggerChannel(Channel):
     edge_hld_time = Channel.control(
         ":TRIGger:EDGE:HLDTime?",
         ":TRIGger:EDGE:HLDTime %.6e",
-        """Control the holdoff time for edge trigger.
+        """Control the holdoff time for edge trigger (float strictly between 8e-9 and 30).
         This command sets the holdoff time of the edge trigger in seconds.
         The holdoff time determines how long to wait after a trigger event before
         allowing the next trigger to occur.
