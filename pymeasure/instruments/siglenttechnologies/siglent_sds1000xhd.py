@@ -605,8 +605,8 @@ class MeasureChannel(Channel):
 
 
 class AcquisitionChannel(Channel):
-    """
-    Acquisition channel for SDS1000xHD oscilloscope.
+    """Acquisition channel for SDS1000xHD oscilloscope.
+
     This class provides comprehensive acquisition control for the SDS1000xHD oscilloscope
     including acquisition modes, memory management, sampling, and data format settings.
     """
@@ -738,8 +738,8 @@ class AcquisitionChannel(Channel):
 
 
 class TimebaseChannel(Channel):
-    """
-    Timebase channel for SDS1000xHD oscilloscope.
+    """Timebase channel for SDS1000xHD oscilloscope.
+
     This class provides comprehensive timebase control for the SDS1000xHD oscilloscope.
     """
 
@@ -822,8 +822,8 @@ class TimebaseChannel(Channel):
 
 
 class TriggerChannel(Channel):
-    """
-    Trigger channel for SDS1000xHD oscilloscope.
+    """Trigger channel for SDS1000xHD oscilloscope.
+
     This class provides comprehensive trigger control for the SDS1000xHD oscilloscope
     using SCPI commands. It handles type-specific trigger configuration where different
     trigger types (EDGE, SLOPe, etc.) have their own source, level, and coupling settings.
