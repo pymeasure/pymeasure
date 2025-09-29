@@ -190,8 +190,7 @@ class WaveformChannel(Channel):
         This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
-        """,
-        cast=float
+        """
     )
 
     width = Channel.control(
@@ -787,7 +786,6 @@ class TimebaseChannel(Channel):
         can be set currently.""",
         validator=strict_range,
         values=[200e-12, 1000],
-        cast=float,
     )
 
     window = Channel.control(
@@ -811,7 +809,6 @@ class TimebaseChannel(Channel):
         When the zoomed window is off, this command is invalid.""",
         validator=strict_range,
         values=[-5.0e5, 5.0e5],
-        cast=float,
     )
 
     window_scale = Channel.control(
@@ -823,7 +820,6 @@ class TimebaseChannel(Channel):
         The query returns the current zoomed window scale setting.""",
         validator=strict_range,
         values=[200e-12, 1000],
-        cast=float,
     )
 
 
@@ -915,7 +911,6 @@ class TriggerChannel(Channel):
         """,
         validator=strict_range,
         values=[8e-9, 30],
-        cast=float,
     )
 
     edge_hld_off = Channel.control(
