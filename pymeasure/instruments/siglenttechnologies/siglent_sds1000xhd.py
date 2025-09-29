@@ -676,7 +676,7 @@ class AcquisitionChannel(Channel):
         """Control the memory depth for acquisition (str).
         Sets the maximum number of sample points that can be stored.""",
         validator=strict_discrete_set,
-        values=["AUTO", "14K", "140K", "1.4M", "14M", "AUTO"],
+        values=["AUTO", "14K", "140K", "1.4M", "14M"],
     )
 
     count = Channel.control(
