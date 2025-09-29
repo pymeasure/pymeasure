@@ -32,11 +32,7 @@ from pymeasure.instruments.validators import (
 
 
 class AnalogChannel(Channel):
-    """
-    ===========================================================
-    Implementation of a SIGLENT SDS1000xHD Oscilloscope channel
-    ===========================================================
-    """
+    """Implementation of a SIGLENT SDS1000xHD Oscilloscope channel."""
 
     scale = Channel.control(
         ":CHANnel{ch}:SCALe?",
@@ -126,9 +122,8 @@ class AnalogChannel(Channel):
 
 
 class WaveformChannel(Channel):
-    """
-    Waveform channel for SDS1000XHD oscilloscope.
-    ===========================================================
+    """Waveform channel for SDS1000XHD oscilloscope.
+
     This class provides methods to retrieve waveform data from the oscilloscope.
     The waveform record contains two portions: the preamble and waveform data.
     The preamble contains information for interpreting the waveform data, while
@@ -370,9 +365,8 @@ class WaveformChannel(Channel):
 
 
 class AdvancedMeasurementItem(Channel):
-    """
-    Represents an advanced measurement item in the SDS1000xHD oscilloscope.
-    ========================================================================
+    """Represents an advanced measurement item in the SDS1000xHD oscilloscope.
+
     This class provides controls for enabling/disabling the measurement item,
     setting its source, and retrieving its value.
     """
@@ -484,9 +478,8 @@ class AdvancedMeasurementItem(Channel):
 
 
 class MeasureChannel(Channel):
-    """
-    Unified measurement class for SDS1000xHD oscilloscope.
-    ===========================================================
+    """Unified measurement class for SDS1000xHD oscilloscope.
+
     This class combines Simple, Advanced, Gate, and Threshold measurement functionality.
     It provides a comprehensive interface for all measurement operations on the SDS1000xHD.
     """
@@ -921,9 +914,15 @@ class TriggerChannel(Channel):
     edge_hld_off = Channel.control(
         ":TRIGger:EDGE:HOLDoff?",
         ":TRIGger:EDGE:HOLDoff %s",
-        """Control the holdoff type for edge trigger.""",
+        """Control the holdoff type for edge trigger (str).
+
+        Available options:
+        - 'OFF': Turn off holdoff
+        - 'EVENTS': Use event count-based holdoff
+        - 'TIME': Use time-based holdoff""",
         validator=strict_discrete_set,
-        values=["OFF", "EVENts", "TIME"],
+        values=["OFF", "EVENTS", "TIME"],
+        get_process=lambda v: v.upper(),
     )
 
     edge_hld_start = Channel.control(
@@ -1004,10 +1003,8 @@ class TriggerChannel(Channel):
 
 
 class SDS1000XHD(SCPIMixin, Instrument):
-    """
-    ==============================================
-    Represents the SIGLENT SDS1000xHD Oscilloscope
-    ==============================================
+    """Represents the SIGLENT SDS1000xHD Oscilloscope.
+
     The SDS1000X-HD series are high-definition oscilloscopes with enhanced
     measurement capabilities and improved user interface. This implementation
     supports common oscilloscope operations including waveform acquisition,
