@@ -6,6 +6,10 @@ Agilent E5270B SMU mainframe
     :members:
     :show-inheritance:
 
+.. autoclass:: pymeasure.instruments.agilent.agilentE5270B.Display
+    :members:
+    :show-inheritance:
+
 .. autoclass:: pymeasure.instruments.agilent.agilentE5270B.SMUChannel
     :members:
     :show-inheritance:
