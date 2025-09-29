@@ -1041,5 +1041,5 @@ class SDS1000XHD(SCPIMixin, Instrument):
         self.write(":AUToset")
 
     def clear_sweeps_acq(self):
-        """Clear accumulated sweeps using ACQuire command."""
+        """Clear accumulated sweeps and reset acquisition statistics."""
         self.write(":ACQuire:CSWeep")
