@@ -621,9 +621,11 @@ class AcquisitionChannel(Channel):
     mode = Channel.control(
         ":ACQuire:AMODe?",
         ":ACQuire:AMODe %s",
-        """Control sets the rate of waveform capture.
-        This command can provide a high-speed waveform capture rate to help capture signal
-        anomalies""",
+        """Control whether to use the fast or slow capture rate (str).
+
+        Available options:
+        - 'FAST': High-speed waveform capture rate to help capture signal anomalies
+        - 'SLOW': Standard capture rate""",
         validator=strict_discrete_set,
         values=["FAST", "SLOW"],
     )
