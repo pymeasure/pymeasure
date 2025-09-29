@@ -288,7 +288,7 @@ class MSO44Channel(Channel):
         channel is clipping."""
     )
 
-    probe_attenuation = Channel.control(
+    external_attenuation = Channel.control(
         "CH{ch}:PROBEFunc:EXTAtten?", "CH{ch}:PROBEFunc:EXTAtten %g",
         """Control the attenuation value of the probe. For example, 
         `CH1:PROBEFunc:EXTAtten 10` sets a 10 times attenuation.""",
