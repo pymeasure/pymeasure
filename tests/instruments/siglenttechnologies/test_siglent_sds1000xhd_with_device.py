@@ -76,27 +76,28 @@ def test_channel_settings(sds1000xhd):
 
     # Test scale (vertical sensitivity)
     sds1000xhd.channel_1.scale = 0.5  # 500mV/div
-    assert abs(sds1000xhd.channel_1.scale - 0.5) < 0.01
+    assert sds1000xhd.channel_1.scale == pytest.approx(0.5, abs=0.01)
 
     # Test offset
     sds1000xhd.channel_1.offset = 0.2
-    assert abs(sds1000xhd.channel_1.offset - 0.2) < 0.01
+    assert sds1000xhd.channel_1.offset == pytest.approx(0.2, abs=0.01)
 
     # Test probe attenuation
     sds1000xhd.channel_1.probe = 10
     # Allow some tolerance for probe setting (truncated to valid values)
-    assert abs(sds1000xhd.channel_1.probe - 10) < 0.1 or sds1000xhd.channel_1.probe in [1, 10]
+    assert (sds1000xhd.channel_1.probe == pytest.approx(10, abs=0.1) or
+            sds1000xhd.channel_1.probe in [1, 10])
 
 
 def test_timebase_settings(sds1000xhd):
     """Test that timebase settings can be configured."""
     # Set timebase scale to 1ms/div
     sds1000xhd.timebase.scale = 1e-3
-    assert abs(sds1000xhd.timebase.scale - 1e-3) < 1e-4
+    assert sds1000xhd.timebase.scale == pytest.approx(1e-3, abs=1e-4)
 
     # Set timebase delay to 0
     sds1000xhd.timebase.delay = 0
-    assert abs(sds1000xhd.timebase.delay) < 1e-6
+    assert sds1000xhd.timebase.delay == pytest.approx(0, abs=1e-6)
 
 
 def test_trigger_settings(sds1000xhd):
@@ -115,7 +116,7 @@ def test_trigger_settings(sds1000xhd):
 
     # Set edge trigger level
     sds1000xhd.trigger.edge_level = 0.5
-    assert abs(sds1000xhd.trigger.edge_level - 0.5) < 0.1
+    assert sds1000xhd.trigger.edge_level == pytest.approx(0.5, abs=0.1)
 
 
 def test_acquisition_settings(sds1000xhd):

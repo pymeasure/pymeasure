@@ -27,7 +27,7 @@ import math
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
-    truncated_discrete_set, strict_range, strict_discrete_set
+    strict_range, strict_discrete_set
 )
 
 
@@ -58,7 +58,7 @@ class AnalogChannel(Channel):
         ":CHANnel{ch}:PROBe?",
         ":CHANnel{ch}:PROBe %s",
         "Control the probe attenuation factor (float).",
-        validator=truncated_discrete_set,
+        validator=strict_discrete_set,
         values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50,
                 100, 200, 500, 1000],
     )
@@ -488,11 +488,10 @@ class AdvancedMeasurementItem(Channel):
     value = Channel.control(
         ":MEASure:ADVanced:P{ch}:VALue?",
         ":MEASure:ADVanced:P{ch}:VALue %.6e",
-        """Get the value of the advanced measurement item.
+        """Control the value of the advanced measurement item.
         This command retrieves the current value of the advanced measurement item.
         The value is returned in NR3 format (e.g., 1.23E+2).
         """,
-        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v)
     )
 
 
@@ -702,7 +701,7 @@ class AcquisitionChannel(Channel):
     points = Channel.measurement(
         ":ACQuire:POINts?",
         "Get the number of sampled points of the current waveform on the screen (int).",
-        cast=lambda x: int(float(x)),
+        get_process=lambda x: int(float(x)),
     )
 
     resolution = Channel.control(
@@ -736,7 +735,6 @@ class AcquisitionChannel(Channel):
     sample_rate = Channel.measurement(
         ":ACQuire:SRATe?",
         "Get the current sample rate in samples per second (float).",
-        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
     )
 
     type = Channel.control(
@@ -859,7 +857,6 @@ class TriggerChannel(Channel):
         The default precision is 3 digits, maximum valid precision is 7 digits.
         Use ":FORMat:DATA" command to set the data precision.
         """,
-        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
     )
 
     mode = Channel.control(
@@ -964,7 +961,6 @@ class TriggerChannel(Channel):
         [-4.1*vertical_scale-vertical_offset, 4.1*vertical_scale-vertical_offset]
         See programming manual for other models.
         """,
-        get_process=lambda v: float(v.strip()) if isinstance(v, str) else float(v),
     )
 
     edge_noise_reject = Channel.control(
