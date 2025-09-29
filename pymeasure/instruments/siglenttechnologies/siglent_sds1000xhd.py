@@ -420,33 +420,25 @@ class AdvancedMeasurementItem(Channel):
     statistics_current = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? CURRent",
         """Get the current statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
-        get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     statistics_mean = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MEAN",
         """Get the mean statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
-        get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     statistics_maximum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MAXimum",
         """Get the maximum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
-        get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     statistics_minimum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MINimum",
         """Get the minimum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
-        get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     statistics_stddev = Channel.measurement(
@@ -454,17 +446,13 @@ class AdvancedMeasurementItem(Channel):
         """Get the standard deviation of the statistics for the advanced measurement item.
         Returns the standard deviation in NR3 format (e.g., 1.23E+2).
         """,
-        get_process=lambda v: (float(v.strip())
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     statistics_count = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? COUNt",
         """Get the count of measurements used for statistics calculation.""",
-        get_process=lambda v: (int(float(v.strip()))
-                               if isinstance(v, str) and v.strip() != "OFF"
-                               else (v.strip() if isinstance(v, str) else v)),
+        get_process=lambda v: int(float(v)) if str(v).strip() != "OFF" else str(v).strip(),
     )
 
     type = Channel.control(
