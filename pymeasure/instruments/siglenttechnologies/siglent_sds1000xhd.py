@@ -687,7 +687,7 @@ class AcquisitionChannel(Channel):
     points = Channel.measurement(
         ":ACQuire:POINts?",
         "Get the number of sampled points of the current waveform on the screen (int).",
-        get_process=lambda x: int(float(x)),
+        cast=int,
     )
 
     resolution = Channel.control(
