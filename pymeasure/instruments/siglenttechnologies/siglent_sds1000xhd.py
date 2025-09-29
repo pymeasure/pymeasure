@@ -866,8 +866,7 @@ class TriggerChannel(Channel):
 
     status = Channel.measurement(
         ":TRIGger:STATus?",
-        docs="""Get the current trigger status.
-        Returns the current trigger state such as STOP, READY, ARM, TD, WAIT, etc.""",
+        docs="""Get the current trigger status, such as STOP, READY, ARM, TD, WAIT, etc.""",
     )
 
     type = Channel.measurement(
