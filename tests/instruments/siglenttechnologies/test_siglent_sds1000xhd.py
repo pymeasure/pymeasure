@@ -208,21 +208,21 @@ def test_waveform_max_point():
 
 
 def test_acq_acquisition_mode_getter():
-    """Test getting acquisition mode."""
+    """Test getting acquisition fast mode enabled."""
     with expected_protocol(
             SDS1000XHD,
             [(b':ACQuire:AMODe?', b'FAST')],
     ) as inst:
-        assert inst.acquisition.mode == 'FAST'
+        assert inst.acquisition.fast_mode_enabled is True
 
 
 def test_acq_acquisition_mode_setter():
-    """Test setting acquisition mode."""
+    """Test setting acquisition fast mode enabled."""
     with expected_protocol(
             SDS1000XHD,
             [(b':ACQuire:AMODe SLOW', None)],
     ) as inst:
-        inst.acquisition.mode = 'SLOW'
+        inst.acquisition.fast_mode_enabled = False
 
 
 def test_acq_interpolation_getter():
@@ -639,7 +639,7 @@ def test_acquisition_complete_configuration():
              (b':ACQuire:SEQuence OFF', None),
              (b':ACQuire:TYPE NORMal', None)],
     ) as inst:
-        inst.acquisition.mode = 'FAST'
+        inst.acquisition.fast_mode_enabled = True
         inst.acquisition.interpolation_enabled = True
         inst.acquisition.memory_management = 'AUTO'
         inst.acquisition.plot_mode = 'YT'

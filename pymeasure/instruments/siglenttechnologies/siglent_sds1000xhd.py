@@ -618,16 +618,16 @@ class AcquisitionChannel(Channel):
     including acquisition modes, memory management, sampling, and data format settings.
     """
 
-    mode = Channel.control(
+    fast_mode_enabled = Channel.control(
         ":ACQuire:AMODe?",
         ":ACQuire:AMODe %s",
-        """Control whether to use the fast or slow capture rate (str).
+        """Control whether fast capture mode is enabled (bool).
 
-        Available options:
-        - 'FAST': High-speed waveform capture rate to help capture signal anomalies
-        - 'SLOW': Standard capture rate""",
+        When True, uses high-speed waveform capture rate to help capture signal anomalies.
+        When False, uses standard capture rate.""",
         validator=strict_discrete_set,
-        values=["FAST", "SLOW"],
+        values={True: "FAST", False: "SLOW"},
+        map_values=True,
     )
 
     interpolation_enabled = Channel.control(
