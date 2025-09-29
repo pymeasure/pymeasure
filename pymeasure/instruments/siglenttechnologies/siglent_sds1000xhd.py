@@ -690,12 +690,14 @@ class AcquisitionChannel(Channel):
         cast=int,
     )
 
-    resolution = Channel.control(
+    resolution_high_enabled = Channel.control(
         ":ACQuire:RESolution?",
         ":ACQuire:RESolution %s",
-        "Control the vertical resolution for digitizing (str).",
+        """Control whether high resolution mode is enabled (bool).
+        When True, uses 10-bit resolution. When False, uses 8-bit resolution.""",
         validator=strict_discrete_set,
-        values=["8Bits", "10Bits"],
+        values={True: "10Bits", False: "8Bits"},
+        map_values=True,
     )
 
     sequence_mode = Channel.control(

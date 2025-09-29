@@ -279,6 +279,24 @@ def test_acq_plot_mode_setter():
         inst.acquisition.plot_mode = 'XY'
 
 
+def test_acq_resolution_high_enabled_getter():
+    """Test getting resolution high enabled state."""
+    with expected_protocol(
+            SDS1000XHD,
+            [(b':ACQuire:RESolution?', b'10Bits')],
+    ) as inst:
+        assert inst.acquisition.resolution_high_enabled is True
+
+
+def test_acq_resolution_high_enabled_setter():
+    """Test setting resolution high enabled state."""
+    with expected_protocol(
+            SDS1000XHD,
+            [(b':ACQuire:RESolution 8Bits', None)],
+    ) as inst:
+        inst.acquisition.resolution_high_enabled = False
+
+
 def test_timebase_scale_getter():
     """Test getting timebase scale."""
     with expected_protocol(
@@ -644,7 +662,7 @@ def test_acquisition_complete_configuration():
         inst.acquisition.memory_management = 'AUTO'
         inst.acquisition.plot_mode = 'YT'
         inst.acquisition.memory_depth = 'AUTO'
-        inst.acquisition.resolution = '8Bits'
+        inst.acquisition.resolution_high_enabled = False
         inst.acquisition.sequence_mode = False
         inst.acquisition.type = 'NORMal'
 
