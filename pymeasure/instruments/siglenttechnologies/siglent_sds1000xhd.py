@@ -159,9 +159,8 @@ class WaveformChannel(Channel):
         ":WAVeform:INTerval %d",
         """Control the interval between data points for waveform transfer (int).
 
-        This command sets the interval between data points for waveform transfer
-        using the query :WAVeform:DATA?. The query returns the interval between
-        data points for waveform transfer.
+        This controls the interval between data points for waveform transfer
+        using the query :WAVeform:DATA?.
         Value in NR1 format (integer with no decimal point).
         Note: The value range is related to the values set by the commands
         :WAVeform:POINt and :WAVeform:STARt.
@@ -174,9 +173,8 @@ class WaveformChannel(Channel):
         ":WAVeform:POINt %d",
         """Control the number of waveform points to be transferred with :WAVeform:DATA? (int).
 
-        This command sets the number of waveform points to be transferred with the
-        query :WAVeform:DATA?. The query returns the number of waveform points to be
-        transferred.
+        This controls the number of waveform points to be transferred with the
+        query :WAVeform:DATA?.
         Value in NR1 format (integer with no decimal point).
         Note: The value range is related to the current waveform point.
         """,
@@ -198,9 +196,8 @@ class WaveformChannel(Channel):
         ":WAVeform:WIDTh %s",
         """Control the output format for the transfer of waveform data (str).
 
-        This command sets the current output format for the transfer of
-        waveform data. The query returns the current output format.
-        Options: 'BYTE' or 'WORD'.
+        This controls the current output format for the transfer of
+        waveform data. Options: 'BYTE' or 'WORD'.
         """,
         validator=strict_discrete_set,
         values=["BYTE", "WORD"],
@@ -453,8 +450,7 @@ class AdvancedMeasurementItem(Channel):
         ":MEASure:ADVanced:P{ch}:TYPE?",
         ":MEASure:ADVanced:P{ch}:TYPE %s",
         """Control the type of advanced measurement (str).
-        This command sets the type of advanced measurement to be performed.
-        The query returns the current measurement type.
+        This controls the type of advanced measurement to be performed.
         """,
         validator=strict_discrete_set,
         values=["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "LEVELX", "CMEAN", "MEAN",
@@ -769,7 +765,7 @@ class TimebaseChannel(Channel):
         ":TIMebase:REFerence:POSition %d",
         """Control the horizontal reference center when the reference strategy is DELay
         (int strictly between 0 and 100).
-        This command sets the horizontal reference center as a percentage of the display width.
+        This controls the horizontal reference center as a percentage of the display width.
         The value represents the position from the left edge of the display.""",
         validator=strict_range,
         values=[0, 100],
@@ -804,7 +800,7 @@ class TimebaseChannel(Channel):
         ":TIMebase:WINDow:DELay %.6e",
         """Control the horizontal position in the zoomed view of the main sweep
         (float strictly between -5.0e5 and 5.0e5).
-        This command sets the horizontal delay of the zoomed window relative to the main sweep.
+        This controls the horizontal delay of the zoomed window relative to the main sweep.
         The delay value must keep the zoomed view window within the main sweep range.
         When the zoomed window is off, this command is invalid.""",
         validator=strict_range,
@@ -816,8 +812,7 @@ class TimebaseChannel(Channel):
         ":TIMebase:WINDow:SCALe %.6e",
         """Control the horizontal scale per division for the zoomed window
         (float strictly between 200e-12 and 1000).
-        This command sets the zoomed window horizontal scale (seconds/division).
-        The query returns the current zoomed window scale setting.""",
+        This controls the zoomed window horizontal scale (seconds/division).""",
         validator=strict_range,
         values=[200e-12, 1000],
     )
@@ -891,7 +886,6 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:HLDEVent %d",
         """Control the number of holdoff events for edge trigger
         (int strictly between 1 and 100000000).
-        This command sets the number of holdoff events of the edge trigger.
         The holdoff event count determines how many trigger events to ignore
         before allowing the next trigger to occur.
         """,
@@ -904,7 +898,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:HLDTime?",
         ":TRIGger:EDGE:HLDTime %.6e",
         """Control the holdoff time for edge trigger (float strictly between 8e-9 and 30).
-        This command sets the holdoff time of the edge trigger in seconds.
+        This controls the holdoff time of the edge trigger in seconds.
         The holdoff time determines how long to wait after a trigger event before
         allowing the next trigger to occur.
         """,
@@ -950,8 +944,7 @@ class TriggerChannel(Channel):
         ":TRIGger:EDGE:LEVel?",
         ":TRIGger:EDGE:LEVel %.6e",
         """Control the trigger level of the edge trigger.
-        This command sets the trigger level of the edge trigger in volts.
-        The query returns the current trigger level value of the edge trigger.
+        This controls the trigger level of the edge trigger in volts.
         For SDS1000X HD models, the range is:
         [-4.1*vertical_scale-vertical_offset, 4.1*vertical_scale-vertical_offset]
         See programming manual for other models.
