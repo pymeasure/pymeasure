@@ -125,9 +125,9 @@ def test_acquisition_settings(sds1000xhd):
     sds1000xhd.acquisition.type = "NORMal"
     assert sds1000xhd.acquisition.type == "NORMal"
 
-    # Set acquisition mode to FAST (high-speed capture)
-    sds1000xhd.acquisition.mode = "FAST"
-    assert sds1000xhd.acquisition.mode == "FAST"
+    # Set fast mode to enabled (high-speed capture)
+    sds1000xhd.acquisition.fast_mode_enabled = True
+    assert sds1000xhd.acquisition.fast_mode_enabled is True
 
 
 def test_auto_setup(sds1000xhd):

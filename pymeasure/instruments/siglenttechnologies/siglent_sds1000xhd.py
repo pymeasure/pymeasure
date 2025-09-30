@@ -188,7 +188,8 @@ class WaveformChannel(Channel):
         This query returns the maximum points of one piece, when it needs to read
         the waveform data in pieces. This is useful for determining how to segment
         large waveform transfers.
-        """
+        """,
+        cast=float
     )
 
     width = Channel.control(
@@ -682,7 +683,7 @@ class AcquisitionChannel(Channel):
     points = Channel.measurement(
         ":ACQuire:POINts?",
         "Get the number of sampled points of the current waveform on the screen (int).",
-        cast=int,
+        get_process=lambda v: int(float(v)),
     )
 
     resolution_high_enabled = Channel.control(
