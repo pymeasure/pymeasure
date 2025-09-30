@@ -702,7 +702,8 @@ class AcquisitionChannel(Channel):
     sequence_count = Channel.control(
         ":ACQuire:SEQuence:COUNt?",
         ":ACQuire:SEQuence:COUNt %d",
-        """Control the number of acquisition segments for sequence mode (int strictly between 1 and 1000).""",
+        """Control the number of acquisition segments for sequence mode
+        (int strictly between 1 and 1000).""",
         validator=strict_range,
         values=[1, 1000],
         cast=int,

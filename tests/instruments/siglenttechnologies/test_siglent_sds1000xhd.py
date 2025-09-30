@@ -1376,8 +1376,6 @@ def test_parse_preamble_descriptor_basic():
         assert result['probe'] == pytest.approx(10.0)
 
 
-
-
 def test_waveform_get_data_comprehensive():
     """Test comprehensive waveform data retrieval with mock binary data."""
 
