@@ -921,17 +921,17 @@ def test_measure_simple_source_setter():
 
 
 def test_measure_simple_value_all():
-    """Test getting all simple measurement values."""
+    """Test getting all simple measurement values using simple_value_all property."""
     all_values = ('FREQ:1.00kHz,PERIOD:1.00ms,PKPK:2.00V,MAX:1.00V,MIN:-1.00V,AMPL:2.00V,'
                   'TOP:1.00V,BASE:-1.00V,MEAN:0.00V')
     with expected_protocol(
             SDS1000XHD,
             [(b':MEASure:SIMPle:VALue? ALL', all_values)],
     ) as inst:
-        # Get all measurement values at once
-        result = inst.measure.get_simple_value("ALL")
+        # Get all measurement values at once using the property
+        result = inst.measure.simple_value_all
 
-        # Check that the method returns the string value
+        # Check that the property returns the string value
         assert result == all_values
 
 

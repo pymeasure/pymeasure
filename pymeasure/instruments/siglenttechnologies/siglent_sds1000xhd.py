@@ -546,27 +546,21 @@ class MeasureChannel(Channel):
             NDUTY, WID, NBWID, DELAY, TIMEL, RISE, FALL, RISE20T80,
             FALL80T20, CCJ, PAREA, NAREA, AREA, ABSAREA, CYCLES,
             REDGES, FEDGES, EDGES, PPULSES, NPULSES, PACArea,
-            NACArea, ACArea, ABSACArea, ALL
+            NACArea, ACArea, ABSACArea
 
-            Note: "ALL" returns all measurement values of all measurement types
-            except for delay measurements.
-        :return: The measurement value in NR3 format (e.g., 1.23E+2) for
-            individual measurements, or a string containing all values
-            when measurement_type is "ALL"
-        :rtype: float or str
+            Note: To get all measurement values at once, use the simple_value_all property.
+        :return: The measurement value in NR3 format (e.g., 1.23E+2)
+        :rtype: float
         """
-        if measurement_type == "ALL":
-            # For ALL, return the raw string response
-            return self.ask(f":MEASure:SIMPle:VALue? {measurement_type}").strip()
-        else:
-            # For individual measurements, use values() to get proper float conversion
-            return self.values(f":MEASure:SIMPle:VALue? {measurement_type}")[0]
+        return self.values(f":MEASure:SIMPle:VALue? {measurement_type}")[0]
 
     simple_value_all = Channel.measurement(
         ":MEASure:SIMPle:VALue? ALL",
         """Get all simple measurement values.
         This command retrieves all measurement values of all measurement types
         except for delay measurements.""",
+        preprocess_reply=lambda v: v.strip(),
+        separator=None,
     )
 
     simple_item = Channel.setting(
