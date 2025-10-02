@@ -54,7 +54,7 @@ class VoaMode(IntEnum):
     POWER = 1
 
 
-class LedPowerMode(IntEnum):
+class RgbPowerMode(IntEnum):
     OFF = 0
     RGB = 1
     WHITE = 2
@@ -197,8 +197,8 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
     rgb_power = Instrument.control(
         "RGB:POWER:?",
         "RGB:POWER: %d",
-        """Control the under-chassis LED accent lighting mode (LedPowerMode enum).""",
-        get_process=lambda v: LedPowerMode(v),
+        """Control the under-chassis LED accent lighting mode (RgbPowerMode enum).""",
+        get_process=lambda v: RgbPowerMode(v),
         set_process=lambda v: v.value,
     )  # pragma: no cover
 
@@ -207,9 +207,8 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         "RGB:RED: %d",
         """Control the brightness of the red under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
-        validator=strict_discrete_range,
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(0, 100),
-        values_kwargs={"step": 1},
     )  # pragma: no cover
 
     rgb_green = Instrument.control(
@@ -217,9 +216,8 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         "RGB:GREEN: %d",
         """Control the brightness of the green under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
-        validator=strict_discrete_range,
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(0, 100),
-        values_kwargs={"step": 1},
     )  # pragma: no cover
 
     rgb_blue = Instrument.control(
@@ -227,9 +225,8 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         "RGB:BLUE: %d",
         """Control the brightness of the blue under-chassis accent lighting LEDs
         (int, strictly in range 0 to 100).""",
-        validator=strict_discrete_range,
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(0, 100),
-        values_kwargs={"step": 1},
     )  # pragma: no cover
 
     rgb_white = Instrument.control(
@@ -237,13 +234,12 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
         "RGB:BLUE: %d",
         """Control the brightness of the white under-chassis accent lighting
         (int, strictly in range 0 to 100).""",
-        validator=strict_discrete_range,
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(0, 100),
-        values_kwargs={"step": 1},
     )  # pragma: no cover
 
     def disco(self, duration=10, pause=0.5):  # pragma: no cover
-        self.rgb_power = LedPowerMode.RGB
+        self.rgb_power = RgbPowerMode.RGB
 
         t0 = time()
         while time() < t0 + duration:
@@ -251,10 +247,10 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
             self.rgb_red, self.rgb_green, self.rgb_blue = [round(x * 100) for x in (r, g, b)]
             sleep(pause)
 
-        self.rgb_power = LedPowerMode.OFF
+        self.rgb_power = RgbPowerMode.OFF
 
     def rainbow(self, duration=10, pause=0):  # pragma: no cover
-        self.rgb_power = LedPowerMode.RGB
+        self.rgb_power = RgbPowerMode.RGB
 
         t0 = time()
         h = 0
@@ -264,4 +260,4 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
             h += 1
             sleep(pause)
 
-        self.rgb_power = LedPowerMode.OFF
+        self.rgb_power = RgbPowerMode.OFF
