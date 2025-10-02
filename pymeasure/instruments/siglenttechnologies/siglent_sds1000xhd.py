@@ -659,9 +659,11 @@ class AcquisitionChannel(Channel):
         ":ACQuire:MDEPth?",
         ":ACQuire:MDEPth %s",
         """Control the memory depth for acquisition (str).
-        Sets the maximum number of sample points that can be stored.""",
+        Sets the maximum number of sample points that can be stored.
+        Note: Available values may vary by oscilloscope model. Values shown are
+        common options but should be validated for your specific instrument.""",
         validator=strict_discrete_set,
-        values=["AUTO", "14K", "140K", "1.4M", "14M"],
+        values=["AUTO", "10K", "100K", "1M", "10M", "50M"],
     )
 
     count = Channel.control(
