@@ -75,7 +75,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
     def __init__(self, adapter, name="ThorlabsMBXSeries modulator bias controller", **kwargs):
 
         kwargs.setdefault("baud_rate", 115200)
-        kwargs.setdefault("timeout", 1)
+        kwargs.setdefault("timeout", 1000)
         kwargs.setdefault("write_termination", "\r")
         kwargs.setdefault("read_termination", "\r")
         super().__init__(adapter, name, **kwargs)
