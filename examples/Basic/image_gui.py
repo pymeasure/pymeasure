@@ -77,6 +77,11 @@ class TestImageProcedure(Procedure):
         xs = np.arange(self.X_start, self.X_end, self.X_step)
         ys = np.arange(self.Y_start, self.Y_end, self.Y_step)
 
+        # Optional: Shuffle the arrays to test unordered data
+        p = np.random.permutation(len(xs))
+        xs = xs[p]
+        ys = ys[p]
+
         nprog = xs.size * ys.size
         progit = 0
         for x in xs:
@@ -88,9 +93,7 @@ class TestImageProcedure(Procedure):
                     {
                         "X": x,
                         "Y": y,
-                        "pixel_data": np.random.normal(
-                            loc=self.Z_mean, scale=self.Z_stddev, size=1
-                        )[0],
+                        "pixel_data": x * y,
                     },
                 )
                 sleep(self.delay)
