@@ -28,7 +28,6 @@ import random
 import colorsys
 from time import time, sleep
 
-from pymeasure.adapters import Adapter, SerialAdapter
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import (
     strict_range,
@@ -64,11 +63,9 @@ class RgbPowerMode(IntEnum):
 class ThorlabsMBXSeries(SCPIMixin, Instrument):
     """Represents Thorlabs MBX Series Modulator Bias Controllers.
 
-    This instrument defaults to use of a SerialAdapter (unlike a VISAAdapter for most instruments).
-
     .. note::
-       This implementation requires the instrument to be connected via the RS-232 connector,
-       as serial communication via the USB port requires a Silicon Labs® USB to UART DLL
+       - Serial communication via the RS-232 port requires a null-modem connector.
+       - Serial communication via the USB port requires a Silicon Labs® USB to UART DLL.
 
     Abbreviations:
         MZM - Mach Zender Modulator
@@ -77,14 +74,11 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
 
     def __init__(self, adapter, name="ThorlabsMBXSeries modulator bias controller", **kwargs):
 
-        if isinstance(adapter, str):
-            kwargs.setdefault("baudrate", 115200)
-            kwargs.setdefault("timeout", 1)
-            kwargs.setdefault("write_termination", "\r")
-            kwargs.setdefault("read_termination", "\r")
-            adapter = SerialAdapter(adapter, **kwargs)
-
-        super().__init__(adapter, name)
+        kwargs.setdefault("baud_rate", 115200)
+        kwargs.setdefault("timeout", 1)
+        kwargs.setdefault("write_termination", "\r")
+        kwargs.setdefault("read_termination", "\r")
+        super().__init__(adapter, name, **kwargs)
 
     # === MACH-ZENDER INTERFEROMETER (MZM) ===
 
