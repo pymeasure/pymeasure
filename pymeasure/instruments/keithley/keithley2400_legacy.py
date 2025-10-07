@@ -20,7 +20,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
     high-level interface for interacting with the instrument.
 
     .. note::
-       This is a legacy version of Keithley2400 kept for backwards-compatibility.
+       This is a legacy version of Keithley2400 frozen at PyMeausure version 0.15
+       and kept for backwards compatibility.
 
     .. code-block:: python
 
@@ -44,8 +45,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
         warn(
-            "Keithley2400Legacy is a legacy version kept for backwards compatibility."
-            "It will not receive further maintenance or updates."
+            "Keithley2400Legacy is a legacy version of Keithley2400 frozen at PyMeausure version "
+            "0.15 and kept for backwards compatibility."
         )
 
     source_mode = Instrument.control(
