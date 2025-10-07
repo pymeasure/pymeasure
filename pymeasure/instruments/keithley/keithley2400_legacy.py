@@ -15,9 +15,12 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
+class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
     """Represent the Keithley 2400 SourceMeter and provide a
     high-level interface for interacting with the instrument.
+
+    .. note::
+       This is a legacy version of Keithley2400 kept for backwards-compatibility.
 
     .. code-block:: python
 
@@ -40,14 +43,17 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
-        warn("This is a deprecated version of Keithley2400.", FutureWarning)
+        warn(
+            "Keithley2400Legacy is a legacy version kept for backwards compatibility."
+            "It will not receive further maintenance or updates."
+        )
 
     source_mode = Instrument.control(
         ":SOUR:FUNC?",
         ":SOUR:FUNC %s",
         """ Control (string) the source mode, which can
         take the values 'current' or 'voltage'. The convenience methods
-        :meth:`~.Keithley2400.apply_current` and :meth:`~.Keithley2400.apply_voltage`
+        :meth:`~.Keithley2400Legacy.apply_current` and :meth:`~.Keithley2400Legacy.apply_voltage`
         can also be used. """,
         validator=strict_discrete_set,
         values={"current": "CURR", "voltage": "VOLT"},
@@ -58,8 +64,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         "OUTPut?",
         "OUTPut %d",
         """Control whether the source is enabled, takes
-        values True or False. The convenience methods :meth:`~.Keithley2400.enable_source` and
-        :meth:`~.Keithley2400.disable_source` can also be used.""",
+        values True or False. The convenience methods :meth:`~.Keithley2400Legacy.enable_source` and
+        :meth:`~.Keithley2400Legacy.disable_source` can also be used.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -447,8 +453,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The compliance voltage is also set.
 
         :param compliance_voltage: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_voltage`
-        :param current_range: A :attr:`~.Keithley2400.current_range` value or None
+                                   :attr:`~.Keithley2400Legacy.compliance_voltage`
+        :param current_range: A :attr:`~.Keithley2400Legacy.current_range` value or None
         """
         log.info("%s is sourcing current." % self.name)
         self.source_mode = "current"
@@ -465,8 +471,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The compliance current is also set.
 
         :param compliance_current: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_current`
-        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
+                                   :attr:`~.Keithley2400Legacy.compliance_current`
+        :param voltage_range: A :attr:`~.Keithley2400Legacy.voltage_range` value or None
         """
         log.info("%s is sourcing voltage." % self.name)
         self.source_mode = "voltage"
