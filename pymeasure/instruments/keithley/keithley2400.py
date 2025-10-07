@@ -39,6 +39,10 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def _deprecate_process(msg):
+    return lambda v: (warn(msg, FutureWarning), v)[1]
+
+
 class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     """Represent the Keithley 2400 SourceMeter and provide a
     high-level interface for interacting with the instrument.
@@ -223,7 +227,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             - 'time' (float): Measurement time in s.
             - 'status' (int): Instrument status flag.
         """
-        self.resistance_mode_auto = False
+        self.resistance_mode_auto_enabled = False
         self.write(":SENS:FUNC:ALL")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
@@ -762,13 +766,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "moving": "MOV",
         },
         map_values=True,
-        get_process=warn(
+        get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`, "
-            "use `Keithley2400.repeat_filter_enabled`."
+            "use `Keithley2400.repeat_filter_enabled`.",
         ),
-        set_process=warn(
+        set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`, "
-            "use `Keithley2400.repeat_filter_enabled`."
+            "use `Keithley2400.repeat_filter_enabled`.",
         ),
     )
 
@@ -783,10 +787,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={4: 1, 2: 0},
         map_values=True,
-        get_process=warn(
+        get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
         ),
-        set_process=warn(
+        set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
         ),
     )
