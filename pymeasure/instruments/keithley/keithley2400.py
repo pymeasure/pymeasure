@@ -57,17 +57,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         keithley.reset()                        # Resets the instrument
     """
 
-    SOURCE_MAP = {
-        "current": "CURR",
-        "voltage": "VOLT",
-    }
-
-    MEASURE_MAP = {
-        "current": "CURR",
-        "voltage": "VOLT",
-        "resistance": "RES",
-    }
-
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.reset_data_format()
@@ -104,7 +93,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:FUNC %s",
         """Control the source mode (str strictly 'current' or 'voltage').""",
         validator=strict_discrete_set,
-        values=SOURCE_MAP,
+        values={"current": "CURR", "voltage": "VOLT"},
         map_values=True,
     )
 
@@ -188,15 +177,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # Measurement properties #
 
-    filter_type = Instrument.control(
+    repeat_filter_enabled = Instrument.control(
         ":SENS:AVER:TCON?",
         ":SENS:AVER:TCON %s",
-        """Control the filter's type (str, strictly 'repeat' or 'moving'.""",
+        """Control whether repeat filter is enabled (bool). If False, moving filter is used.""",
         validator=strict_discrete_set,
-        values={
-            "repeat": "REP",
-            "moving": "MOV",
-        },
+        values={True: "REP", False: "MOV"},
         map_values=True,
     )
 
@@ -213,7 +199,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     filter_enabled = Instrument.control(
         ":SENS:AVER?",
         ":SENS:AVER %s",
-        """Control if the filter is active (bool).""",
+        """Control whether the filter is active (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -448,7 +434,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         get_process_list=lambda v: v[3],
     )
 
-    resistance_mode_auto = Instrument.control(
+    resistance_mode_auto_enabled = Instrument.control(
         ":SENS:RES:MODE?",
         ":SENS:RES:MODE %s",
         """Control the resistance mode auto status (bool).
@@ -684,7 +670,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # UI methods #
 
-    def beep(self, frequency, duration):
+    def sound_beep(self, frequency, duration):
         """Sound a system beep.
 
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
@@ -692,7 +678,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
-    def triad(self, base_frequency, duration):
+    def sound_triad(self, base_frequency, duration):
         """Sound a musical triad using the system beep.
 
         :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
@@ -710,13 +696,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # Misc properties #
 
-    wires = Instrument.control(
+    four_wire_enabled = Instrument.control(
         ":SYST:RSEN?",
         ":SYST:RSEN %d",
-        """Control the number of wires in use for sourcing voltage, measuring voltage,
-        or measuring resistance (int, strictly 2 or 4).""",
+        """Control whether four wire sensing is enabled (bool).""",
         validator=strict_discrete_set,
-        values={4: 1, 2: 0},
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -738,24 +723,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    terminals = Instrument.control(
+    front_terminals_enabled = Instrument.control(
         ":ROUT:TERM?",
         ":ROUT:TERM %s",
-        """Control whether to use the front or rear terminals (str, 'front' or 'rear').""",
+        """Control whether the to route to the front terminals (bool).
+        When True the front terminals are routed to and the rear disconnected,
+        and vice-versa when False.""",
         validator=strict_discrete_set,
-        values={"front": "FRON", "rear": "REAR"},
+        values={True: "FRON", False: "REAR"},
         map_values=True,
     )
-
-    # Misc methods #
-
-    def use_rear_terminals(self):
-        """Enable the rear terminals for measurement, and disable the front terminals."""
-        self.terminals = "rear"
-
-    def use_front_terminals(self):
-        """Enable the front terminals for measurement, and disable the rear terminals."""
-        self.terminals = "rear"
 
     def shutdown(self):
         """Ensure that the current or voltage is turned to zero and disable the output."""
@@ -772,12 +749,86 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Deprecated #
     ##############
 
-    def auto_range_source(self):
-        """Configure the source to use an automatic range."""
+    filter_type = Instrument.control(
+        ":SENS:AVER:TCON?",
+        ":SENS:AVER:TCON %s",
+        """Control the filter's type (str, strictly 'repeat' or 'moving'.
+
+        .. deprecated:: 0.16
+           Use :prop:`~.Keithley2400.repeat_filter_enabled`.""",
+        validator=strict_discrete_set,
+        values={
+            "repeat": "REP",
+            "moving": "MOV",
+        },
+        map_values=True,
+        get_process=warn(
+            "Deprecated to use `Keithley2400.filter_type`, "
+            "use `Keithley2400.repeat_filter_enabled`."
+        ),
+        set_process=warn(
+            "Deprecated to use `Keithley2400.filter_type`, "
+            "use `Keithley2400.repeat_filter_enabled`."
+        ),
+    )
+
+    wires = Instrument.control(
+        ":SYST:RSEN?",
+        ":SYST:RSEN %d",
+        """Control the number of wires in use for sourcing voltage, measuring voltage,
+        or measuring resistance (int, strictly 2 or 4).
+
+        .. deprecated:: 0.16
+           Use :prop:`~.Keithley2400.four_wire_enabled`.""",
+        validator=strict_discrete_set,
+        values={4: 1, 2: 0},
+        map_values=True,
+        get_process=warn(
+            "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
+        ),
+        set_process=warn(
+            "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
+        ),
+    )
+
+    def use_rear_terminals(self):
+        """Enable the rear terminals for measurement, and disable the front terminals.
+
+        .. deprecated:: 0.16
+           Use :prop:`~.Keithley2400.front_terminals_enabled`.
+        """
         warn(
-            "Deprecated, recommended to explicitly set the auto range for the desired source "
-            "using `Keithley2400.source_current_range_auto_enabled` "
-            "and/or `Keithley2400.source_voltage_range_auto_enabled`.",
+            "Deprecated to use `Keithley2400.use_rear_terminals`, "
+            "use `Keithley2400.front_terminals_enabled`.",
+            FutureWarning,
+        )
+        self.front_terminals_enabled = False
+
+    def use_front_terminals(self):
+        """Enable the front terminals for measurement, and disable the rear terminals.
+
+        .. deprecated:: 0.16
+           Use :prop:`~.Keithley2400.front_terminals_enabled`.
+        """
+        warn(
+            "Deprecated to use `Keithley2400.use_front_terminals`, "
+            "use `Keithley2400.front_terminals_enabled`.",
+            FutureWarning,
+        )
+        self.front_terminals_enabled = True
+
+    def auto_range_source(self):
+        """Configure the source to use an automatic range.
+
+        .. deprecated:: 0.16
+           Control auto ranging for the desired source using
+           :prop:`~.Keithley2400.source_current_range_auto_enabled` or
+           :prop:`~.Keithley2400.source_voltage_range_auto_enabled`.
+        """
+        warn(
+            """Deprecated to use `Keithley2400.auto_range_source`. Recommended to explicitly set the
+            auto range for the desired source using `Keithley2400.source_current_range_auto_enabled`
+            or `Keithley2400.source_voltage_range_auto_enabled`.""",
             FutureWarning,
         )
         if self.source_mode == "current":
@@ -791,9 +842,23 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
         :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
         :param auto_range: Enables auto_range if True, else uses the set current
+
+        .. deprecated:: 0.16
+           - Configuration to measure current is performed implicitly by
+             :prop:`~.Keithley2400.current`.
+           - Control current nplc via :prop:`~.Keithley2400.current_nplc`.
+           - Control current range via :prop:`~.Keithley2400.current_range`
+             or :prop:`~.Keithley2400.current_range_auto_enabled`.
         """
+        warn(
+            """Deprecated to use `Keithley2400.measure_current`, configuration to measure
+            current is now performed implicitly by `Keithley2400.current`. Recommended to
+            explicitly set the current nplc via `Keithley2400.current_nplc`, and the current
+            range via `Keithley2400.current_range` or `Keithley2400.current_range_auto_enabled`.""",
+            FutureWarning,
+        )
         log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
+        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;" % nplc)
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:
@@ -801,16 +866,28 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def measure_voltage(self, nplc=1, voltage=21.0, auto_range=True):
+        """Configure the measurement of voltage.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
+        :param auto_range: Enables auto_range if True, else uses the set voltage
+
+        .. deprecated:: 0.16
+           - Configuration to measure voltage is performed implicitly by
+             :prop:`~.Keithley2400.voltage`.
+           - Control voltage nplc via :prop:`~.Keithley2400.voltage_nplc`.
+           - Control voltage range via :prop:`~.Keithley2400.voltage_range`
+             or :prop:`~.Keithley2400.voltage_range_auto_enabled`.
+        """
         warn(
-            """Deprecated to use `measure_voltage`, configuration to measure voltage is now
-            performed implicitly by the `Keithley2400.voltage` property.
-            Recommended to explicitly set the voltage nplc via `Keithley2400.voltage_nplc`,
-            and the voltage range via `Keithley2400.voltage_range`
-            or `Keithley2400.voltage_range_auto_enabled.""",
+            """Deprecated to use `Keithley2400.measure_voltage`, configuration to measure
+            voltage is now performed implicitly by `Keithley2400.voltage`. Recommended to
+            explicitly set the voltage nplc via `Keithley2400.voltage_nplc`, and the voltage
+            range via `Keithley2400.voltage_range` or `Keithley2400.voltage_range_auto_enabled`.""",
             FutureWarning,
         )
         log.info("%s is measuring voltage." % self.name)
-        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;:FORM:ELEM VOLT;" % nplc)
+        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;" % nplc)
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -818,16 +895,29 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def measure_resistance(self, nplc=1, resistance=2.1e5, auto_range=True):
+        """Configure the measurement of resistance.
+
+        :param nplc: Number of power line cycles (NPLC) from 0.01 to 10
+        :param resistance: Upper limit of resistance in Ohms, from -210 MOhms to 210 MOhms
+        :param auto_range: Enables auto_range if True, else uses the set resistance
+
+        .. deprecated:: 0.16
+           - Configuration to measure resistance is performed implicitly by
+             :prop:`~.Keithley2400.resistance`.
+           - Control resistance nplc via :prop:`~.Keithley2400.resistance_nplc`.
+           - Control resistance range via :prop:`~.Keithley2400.resistance_range`
+             or :prop:`~.Keithley2400.resistance_range_auto_enabled`.
+        """
         warn(
-            """Deprecated to use `measure_resistance`, configuration to measure resistance is now
-            performed implicitly by the `Keithley2400.resistance` property.
-            Recommended to explicitly set the resistance nplc via `Keithley2400.resistance_nplc`,
-            and the voltage range via `Keithley2400.resistance_range`
-            or `Keithley2400.resistance_range_auto_enabled.""",
+            """Deprecated to use `Keithley2400.measure_resistance`, configuration to measure
+            voltage is now performed implicitly by `Keithley2400.resistance`. Recommended to
+            explicitly set the resistance nplc via `Keithley2400.resistance_nplc`, and the
+            resistance range via `Keithley2400.resistance_range` or
+            `Keithley2400.resistance_range_auto_enabled`.""",
             FutureWarning,
         )
         log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;:FORM:ELEM RES;" % nplc)
+        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;" % nplc)
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -835,11 +925,25 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def apply_current(self, current_range=None, compliance_voltage=0.1):
+        """Configure the instrument to apply a source current, and
+        uses an auto range unless a current range is specified.
+        The compliance voltage is also set.
+
+        :param compliance_voltage: A float in the correct range for a
+                                   :attr:`~.Keithley2400.compliance_voltage`
+        :param current_range: A :attr:`~.Keithley2400.current_range` value or None
+
+        .. deprecated:: 0.16
+           - Control source mode via :prop:`~.Keithley2400.source_mode`.
+           - Control source current range via :prop:`~.Keithley2400.source_current_range` or
+             :prop:`~.Keithley2400.source_current_range_auto_enabled`.
+           - Control compliance voltage via :prop:`~.Keithley2400.compliance_voltage`
+        """
         warn(
-            """Deprecated to use `apply_current`, recommended to explicitly control source mode,
-            current range, and compliance voltage via `Keithley2400.source_mode`,
-            `Keithley2400.source_current_range`, `Keithley2400.source_current_range_auto_enabled`,
-            and `Keithley2400.compliance_voltage`.""",
+            """Deprecated to use `Keithley2400.apply_current`. Recommended to explicitly control
+            source mode via `Keithley2400.source_mode`, current range via
+            `Keithley2400.source_current_range` or `Keithley2400.source_current_range_auto_enabled`,
+            and compliance voltage via `Keithley2400.compliance_voltage`.""",
             FutureWarning,
         )
         log.info("%s is sourcing current." % self.name)
@@ -852,11 +956,25 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.check_errors()
 
     def apply_voltage(self, voltage_range=None, compliance_current=0.1):
+        """Configure the instrument to apply a source voltage, and
+        uses an auto range unless a voltage range is specified.
+        The compliance current is also set.
+
+        :param compliance_current: A float in the correct range for a
+                                   :attr:`~.Keithley2400.compliance_current`
+        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
+
+        .. deprecated:: 0.16
+           - Control source mode via :prop:`~.Keithley2400.source_mode`.
+           - Control source voltage range via :prop:`~.Keithley2400.source_voltage_range` or
+             :prop:`~.Keithley2400.source_voltage_range_auto_enabled`.
+           - Control compliance current via :prop:`~.Keithley2400.compliance_current`
+        """
         warn(
-            """Deprecated to use `apply_voltage`, recommended to explicitly control source mode,
-            voltage range, and compliance current via `Keithley2400.source_mode`,
-            `Keithley2400.source_voltage_range`, `Keithley2400.source_voltage_range_auto_enabled`,
-            and `Keithley2400.compliance_current`.""",
+            """Deprecated to use `Keithley2400.apply_voltage`. Recommended to explicitly control
+            source mode via `Keithley2400.source_mode`, voltage range via
+            `Keithley2400.source_voltage_range` or `Keithley2400.source_voltage_range_auto_enabled`,
+            and compliance current via `Keithley2400.compliance_current`.""",
             FutureWarning,
         )
         log.info("%s is sourcing voltage." % self.name)
@@ -878,9 +996,35 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
 
-    def status(self):
+    def status(self):  # TODO: Check whether status property works
         warn("Deprecated to use `status` method, use `status` property instead.", FutureWarning)
         return self.ask("status:queue?;")
+
+    def beep(self, frequency, duration):
+        """Sound a system beep.
+
+        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+
+        .. deprecated:: 0.16
+           Use :meth:`~.Keithley2400.sound_beep`.
+        """
+        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
+
+    def triad(self, base_frequency, duration):
+        """Sound a musical triad using the system beep.
+
+        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
+        :param duration: A time in seconds between 0 and 7.9 seconds
+
+        .. deprecated:: 0.16
+           Use :meth:`~.Keithley2400.sound_beep`.
+        """
+        self.beep(base_frequency, duration)
+        time.sleep(duration)
+        self.beep(base_frequency * 5.0 / 4.0, duration)
+        time.sleep(duration)
+        self.beep(base_frequency * 6.0 / 4.0, duration)
 
     def RvsI(self, startI, stopI, stepI, compliance, delay=10.0e-3, backward=False):
         # Fred Gillard, fg-lumentum:
