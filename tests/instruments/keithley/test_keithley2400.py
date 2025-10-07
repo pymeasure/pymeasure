@@ -86,21 +86,19 @@ def test_disable_source():
 
 
 def test_source_mode_getter():
-    for k, v in Keithley2400.SOURCE_MAP.items():
-        with expected_protocol(
-            Keithley2400,
-            [INIT_COMMS, (":SOUR:FUNC?", v)],
-        ) as inst:
-            assert inst.source_mode == k
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SOUR:FUNC?", "CURR")],
+    ) as inst:
+        assert inst.source_mode == "current"
 
 
 def test_source_mode_setter():
-    for k, v in Keithley2400.SOURCE_MAP.items():
-        with expected_protocol(
-            Keithley2400,
-            [INIT_COMMS, (f":SOUR:FUNC {v}", None)],
-        ) as inst:
-            inst.source_mode = k
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SOUR:FUNC VOLT", None)],
+    ) as inst:
+        inst.source_mode = "voltage"
 
 
 def test_auto_output_off_getter():
@@ -235,20 +233,20 @@ def test_current_range_setter():
         inst.current_range = 0.5
 
 
-def test_current_range_auto_getter():
+def test_current_range_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:CURR:RANG:AUTO?", 1)],
     ) as inst:
-        assert inst.current_range_auto is True
+        assert inst.current_range_auto_enabled is True
 
 
-def test_current_range_auto_setter():
+def test_current_range_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:CURR:RANG:AUTO 0", None)],
     ) as inst:
-        inst.current_range_auto = False
+        inst.current_range_auto_enabled = False
 
 
 def test_current_nplc_getter():
@@ -315,20 +313,20 @@ def test_source_current_range_setter():
         inst.source_current_range = 0.5
 
 
-def test_source_current_range_auto_getter():
+def test_source_current_range_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:CURR:RANG:AUTO?", 1)],
     ) as inst:
-        assert inst.source_current_range_auto is True
+        assert inst.source_current_range_auto_enabled is True
 
 
-def test_source_current_range_auto_setter():
+def test_source_current_range_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:CURR:RANG:AUTO 0", None)],
     ) as inst:
-        inst.source_current_range_auto = False
+        inst.source_current_range_auto_enabled = False
 
 
 ###############
@@ -360,20 +358,20 @@ def test_voltage_range_setter():
         inst.voltage_range = 0.5
 
 
-def test_voltage_range_auto_getter():
+def test_voltage_range_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:VOLT:RANG:AUTO?", 1)],
     ) as inst:
-        assert inst.voltage_range_auto is True
+        assert inst.voltage_range_auto_enabled is True
 
 
-def test_voltage_range_auto_setter():
+def test_voltage_range_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:VOLT:RANG:AUTO 0", None)],
     ) as inst:
-        inst.voltage_range_auto = False
+        inst.voltage_range_auto_enabled = False
 
 
 def test_voltage_nplc_getter():
@@ -440,20 +438,20 @@ def test_source_voltage_range_setter():
         inst.source_voltage_range = 0.5
 
 
-def test_source_voltage_range_auto_getter():
+def test_source_voltage_range_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:VOLT:RANG:AUTO?", 1)],
     ) as inst:
-        assert inst.source_voltage_range_auto is True
+        assert inst.source_voltage_range_auto_enabled is True
 
 
-def test_source_voltage_range_auto_setter():
+def test_source_voltage_range_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:VOLT:RANG:AUTO 0", None)],
     ) as inst:
-        inst.source_voltage_range_auto = False
+        inst.source_voltage_range_auto_enabled = False
 
 
 ####################
@@ -485,20 +483,20 @@ def test_resistance_range_setter():
         inst.resistance_range = 0.5
 
 
-def test_resistance_range_auto_getter():
+def test_resistance_range_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:RES:RANG:AUTO?", 1)],
     ) as inst:
-        assert inst.resistance_range_auto is True
+        assert inst.resistance_range_auto_enabled is True
 
 
-def test_resistance_range_auto_setter():
+def test_resistance_range_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SENS:RES:RANG:AUTO 0", None)],
     ) as inst:
-        inst.resistance_range_auto = False
+        inst.resistance_range_auto_enabled = False
 
 
 def test_resistance_nplc_getter():
@@ -567,20 +565,20 @@ def test_display_enabled_setter():
 ########
 
 
-def test_wires_getter():
+def test_four_wire_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SYST:RSEN?", 0)],
     ) as inst:
-        assert inst.wires == 2
+        assert inst.four_wire_enabled is False
 
 
-def test_wires_setter():
+def test_four_wire_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SYST:RSEN 1", None)],
     ) as inst:
-        inst.wires = 4
+        inst.four_wire_enabled = True
 
 
 def test_line_frequency_getter():
@@ -615,17 +613,17 @@ def test_auto_line_frequency_setter():
         inst.line_frequency_auto = False
 
 
-def test_terminals_getter():
+def test_front_terminals_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":ROUT:TERM?", "FRON")],
     ) as inst:
-        assert inst.terminals == "front"
+        assert inst.front_terminals_enabled is True
 
 
-def test_terminals_setter():
+def test_front_terminals_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":ROUT:TERM REAR", None)],
     ) as inst:
-        inst.terminals = "rear"
+        inst.front_terminals_enabled = False
