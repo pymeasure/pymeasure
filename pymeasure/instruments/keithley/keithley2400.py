@@ -111,7 +111,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_delay = Instrument.control(
         ":SOUR:DEL?",
         ":SOUR:DEL %g",
-        """Control a manual delay for the source after the output is turned on
+        """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
         When this property is set, the auto delay is turned off.""",
         validator=strict_range,
@@ -131,7 +131,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SYST:AZER:STAT?",
         ":SYST:AZER:STAT %s",
         """Control whether the auto zero option is enabled
-        (bool or str, True (enabled), False (disabled), or 'ONCE' (force immediate)).""",
+        (bool or str, True (enabled), False (disabled), or 'once' (force immediate)).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0, "once": "ONCE"},
         map_values=True,
@@ -272,10 +272,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-1.05, 1.05],
     )
 
-    current_range_auto = Instrument.control(
+    current_range_auto_enabled = Instrument.control(
         ":SENS:CURR:RANG:AUTO?",
         ":SENS:CURR:RANG:AUTO %d",
-        """Control the measurement current auto-range (bool).""",
+        """Control whether current measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -284,7 +284,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?",
         ":SENS:CURR:NPLC %g",
-        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
         Note that this is a global command, implicitly setting
         :attr:`~.Keithley2400.voltage_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
         validator=strict_range,
@@ -319,10 +319,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-1.05, 1.05],
     )
 
-    source_current_range_auto = Instrument.control(
+    source_current_range_auto_enabled = Instrument.control(
         ":SOUR:CURR:RANG:AUTO?",
         ":SOUR:CURR:RANG:AUTO %d",
-        """Control the souce current auto-range (bool).""",
+        """Control whether souce current auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -365,10 +365,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-210, 210],
     )
 
-    voltage_range_auto = Instrument.control(
+    voltage_range_auto_enabled = Instrument.control(
         ":SENS:VOLT:RANG:AUTO?",
         ":SENS:VOLT:RANG:AUTO %d",
-        """Control the measurement voltage auto-range (bool).""",
+        """Control whether voltage measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -377,7 +377,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     voltage_nplc = Instrument.control(
         ":SENS:VOLT:NPLC?",
         ":SENS:VOLT:NPLC %g",
-        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
         Note that this is a global command, implicitly setting
         :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
         validator=strict_range,
@@ -412,10 +412,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[-210, 210],
     )
 
-    source_voltage_range_auto = Instrument.control(
+    source_voltage_range_auto_enabled = Instrument.control(
         ":SOUR:VOLT:RANG:AUTO?",
         ":SOUR:VOLT:RANG:AUTO %d",
-        """Control the souce voltage auto-range (bool).""",
+        """Control whether source voltage auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -468,10 +468,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[0, 210e6],
     )
 
-    resistance_range_auto = Instrument.control(
+    resistance_range_auto_enabled = Instrument.control(
         ":SENS:RES:RANG:AUTO?",
         ":SENS:RES:RANG:AUTO %d",
-        """Control the measurement resistance auto-range (bool).""",
+        """Control whether resistance measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -480,7 +480,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?",
         ":SENS:RES:NPLC %g",
-        """Control the number of power line cycles (NPLC) (float, from strictly from 0.01 to 10).
+        """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
         Note that this is a global command, implicitly setting
         :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.voltage_nplc`""",
         validator=strict_range,
@@ -776,8 +776,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Configure the source to use an automatic range."""
         warn(
             "Deprecated, recommended to explicitly set the auto range for the desired source "
-            "using `Keithley2400.source_current_range_auto` "
-            "and/or `Keithley2400.source_voltage_range_auto`.",
+            "using `Keithley2400.source_current_range_auto_enabled` "
+            "and/or `Keithley2400.source_voltage_range_auto_enabled`.",
             FutureWarning,
         )
         if self.source_mode == "current":
@@ -806,7 +806,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             performed implicitly by the `Keithley2400.voltage` property.
             Recommended to explicitly set the voltage nplc via `Keithley2400.voltage_nplc`,
             and the voltage range via `Keithley2400.voltage_range`
-            or `Keithley2400.voltage_range_auto.""",
+            or `Keithley2400.voltage_range_auto_enabled.""",
             FutureWarning,
         )
         log.info("%s is measuring voltage." % self.name)
@@ -823,7 +823,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             performed implicitly by the `Keithley2400.resistance` property.
             Recommended to explicitly set the resistance nplc via `Keithley2400.resistance_nplc`,
             and the voltage range via `Keithley2400.resistance_range`
-            or `Keithley2400.resistance_range_auto.""",
+            or `Keithley2400.resistance_range_auto_enabled.""",
             FutureWarning,
         )
         log.info("%s is measuring resistance." % self.name)
@@ -838,7 +838,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         warn(
             """Deprecated to use `apply_current`, recommended to explicitly control source mode,
             current range, and compliance voltage via `Keithley2400.source_mode`,
-            `Keithley2400.source_current_range`, `Keithley2400.source_current_range_auto`,
+            `Keithley2400.source_current_range`, `Keithley2400.source_current_range_auto_enabled`,
             and `Keithley2400.compliance_voltage`.""",
             FutureWarning,
         )
@@ -855,7 +855,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         warn(
             """Deprecated to use `apply_voltage`, recommended to explicitly control source mode,
             voltage range, and compliance current via `Keithley2400.source_mode`,
-            `Keithley2400.source_voltage_range`, `Keithley2400.source_voltage_range_auto`,
+            `Keithley2400.source_voltage_range`, `Keithley2400.source_voltage_range_auto_enabled`,
             and `Keithley2400.compliance_current`.""",
             FutureWarning,
         )
