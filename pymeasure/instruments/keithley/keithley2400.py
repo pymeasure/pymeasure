@@ -70,12 +70,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
+        self.reset_data_format()
 
-        # Ensures the data format is as expected. Setting `:FORM:ELEM` to anything else after
-        # initialization will break some part of the functionality.
-        # If comms in the init is undesirable, could put the formatter before any measurements
-        # e.g. for current, ":FORM:ELEM CURR;:MEAS:CURR?". I opted against this to reduce the
-        # number of commands sent to the instrument.
+    def reset_data_format(self):
+        """Resets the data format to the format expected by :class:`~.Keithley2400`.
+
+        The expected data format is [`current`, `voltage`, `resistance`, `time`, `status`].
+
+        .. caution::
+           Changing the data format after initialization may break parts of :class:`~.Keithley2400`.
+        """
         self.write(":FORM:ELEM VOLT, CURR, RES, TIME, STAT")
 
     ##########
