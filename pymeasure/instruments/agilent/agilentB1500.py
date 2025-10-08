@@ -169,8 +169,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         :return: SPGU instance
         :rtype: :class:`.SPGU`
         """
-        if channel in (list(range(101, 1101, 100)) + list(range(102, 1102, 100))):
-            channel = int(str(channel))
         self._spgu_names[channel] = name
         spgu_reference = SPGU(self, channel, name)
         self._spgu_references[channel] = spgu_reference
