@@ -35,7 +35,7 @@ class Display(Channel):
 
     enabled = Instrument.setting(
         "RED %d",
-        """Set the display during remote operation (bool).""",
+        """Set whether the display is enabled during remote operation (bool).""",
         map_values=True,
         values={True: 1, False: 0},
         )
