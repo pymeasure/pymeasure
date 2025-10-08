@@ -136,3 +136,15 @@ class TestSMU:
              ]
         ) as inst:
             assert -1.234e-6 == inst.smu1.voltage
+
+
+class TestDisplay:
+    @pytest.mark.parametrize("enabled, mapping", [(True, 1), (False, 0)])
+    def test_enabled(self, enabled, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"RED {mapping}", None),
+             ]
+        ) as inst:
+            inst.display.enabled = enabled
