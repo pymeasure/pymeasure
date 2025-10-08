@@ -185,7 +185,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param int pause_seconds: Seconds to pause
         """
-        self.write("PA %d" % pause_seconds)
+        self.write(f"PA {pause_seconds}")
 
     def abort(self):
         """Abort the present operation but channels may still output
@@ -262,7 +262,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @auto_calibration.setter
     def auto_calibration(self, setting):
         setting = int(setting)
-        self.write("CM %d" % setting)
+        self.write(f"CM {setting}")
         self.check_errors()
 
     ######################################
@@ -364,9 +364,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             try:
                 self.size = sizes[output_format_str]
             except Exception:
-                raise NotImplementedError(
-                    ("Data Format {} is not implemented so far.").format(output_format_str)
-                )
+                raise NotImplementedError(f"Data Format {output_format_str} is not implemented so far.")
             self.format = output_format_str
             data_names_C = {
                 "V": "Voltage (V)",
@@ -412,9 +410,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             """
 
             def log_failed():
-                log.info(
-                    ("Agilent B1500: check_status not possible for status {}").format(status_string)
-                )
+                log.info("Agilent B1500: check_status not possible for status %s", status_string)
 
             if name is None:
                 name = ""
@@ -435,14 +431,14 @@ class AgilentB1500(SCPIMixin, Instrument):
                 for index, digit in enumerate(bin(status)[2:]):
                     # [2:] to chop off 0b
                     if digit == "1":
-                        log.info("Agilent B1500{}: {}".format(name, status_dict[2**index]))
+                        log.info("Agilent B1500%s: %s", name, status_dict[2**index])
             elif len(status.group("letter")) > 0:
                 status = status.group("letter")
                 status = status.strip()  # remove whitespaces
                 if status not in ["N", "W", "E"]:
                     try:
                         status = self.status[status]
-                        log.info(f"Agilent B1500{name}: {status}")
+                        log.info("Agilent B1500%s: %s", name, status)
                     except KeyError:
                         log_failed()
             else:
@@ -547,9 +543,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             format_class = classes[output_format_str]
         except KeyError:
             log.error(
-                (
-                    "Data Format {} is not implemented so far. Please set appropriate Data Format."
-                ).format(output_format_str)
+                "Data Format %s is not implemented so far. Please set appropriate Data Format.", output_format_str
             )
             return
         else:
@@ -571,7 +565,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         output_format = strict_discrete_set(output_format, [1, 11, 21])
         # possible: [1, 2, 3, 4, 5, 11, 12, 13, 14, 15, 21, 22, 25]
         mode = strict_range(mode, range(0, 11))
-        self.write("FMT %d, %d" % (output_format, mode))
+        self.write(f"FMT {output_format}, {mode}")
         self.check_errors()
         if self._smu_names == {}:
             print(
@@ -584,7 +578,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                 "instead channel numbers will be used. "
                 "Call data_format after initializing all SMUs."
             )
-        self._data_format = self._data_formatting("FMT%d" % output_format, self._smu_names)
+        self._data_format = self._data_formatting(f"FMT{output_format}", self._smu_names)
 
     ######################################
     # Measurement Settings
@@ -605,7 +599,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @parallel_meas.setter
     def parallel_meas(self, setting):
         setting = int(setting)
-        self.write("PAD %d" % setting)
+        self.write(f"PAD {setting}")
         self.check_errors()
 
     def query_meas_settings(self):
@@ -631,10 +625,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param SMU args: SMU references
         """
         mode = MeasMode.get(mode)
-        cmd = "MM %d" % mode.value
+        cmd = f"MM {mode.value}"
         for smu in args:
             if isinstance(smu, SMU):
-                cmd += ", %d" % smu.channel
+                cmd += f", {smu.channel}"
         self.write(cmd)
         self.check_errors()
 
@@ -661,12 +655,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         mode = ADCMode.get(mode)
         if (adc_type == ADCType["HRADC"]) and (mode == ADCMode["TIME"]):
             raise ValueError("Time ADC mode is not available for HRADC")
-        command = "AIT %d, %d" % (adc_type.value, mode.value)
+        command = f"AIT {adc_type.value}, {mode.value}"
         if not N == "":
             if mode == ADCMode["TIME"]:
-                command += ", %g" % N
+                command += f", {N}"
             else:
-                command += ", %d" % N
+                command += f", {N}"
         self.write(command)
         self.check_errors()
 
@@ -681,10 +675,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         if number > 0:
             number = strict_range(number, range(1, 1024))
             mode = AutoManual.get(mode).value
-            self.write("AV %d, %d" % (number, mode))
+            self.write(f"AV {number}, {mode}")
         else:
             number = strict_range(number, range(-1, -101, -1))
-            self.write("AV %d" % number)
+            self.write(f"AV {number}")
         self.check_errors()
 
     @property
@@ -701,7 +695,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @adc_auto_zero.setter
     def adc_auto_zero(self, setting):
         setting = int(setting)
-        self.write("AZ %d" % setting)
+        self.write(f"AZ {setting}")
         self.check_errors()
 
     @property
@@ -717,7 +711,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @time_stamp.setter
     def time_stamp(self, setting):
         setting = int(setting)
-        self.write("TSC %d" % setting)
+        self.write(f"TSC {setting}")
         self.check_errors()
 
     def query_time_stamp_setting(self):
@@ -732,7 +726,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param int, optional offset: Offset for wait time, defaults to 0
         """
         wait_type = WaitTimeType.get(wait_type).value
-        self.write("WAT %d, %g, %d" % (wait_type, N, offset))
+        self.write(f"WAT {wait_type}, {N}, {offset}")
         self.check_errors()
 
     ######################################
@@ -783,7 +777,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         abort = strict_discrete_set(abort, abort_values)
         abort = abort_values[abort]
         post = StaircaseSweepPostOutput.get(post)
-        self.write("WM %d, %d" % (abort, post.value))
+        self.write(f"WM {abort}, {post.value}")
         self.check_errors()
 
     ######################################
@@ -807,7 +801,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @sampling_mode.setter
     def sampling_mode(self, mode):
         mode = SamplingMode.get(mode).value
-        self.write("ML %d" % mode)
+        self.write(f"ML {mode}")
         self.check_errors()
 
     def sampling_timing(self, hold_bias, interval, number, hold_base=0):
@@ -843,7 +837,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         # ToDo: different restrictions apply for logarithmic sampling!
         hold_base = strict_discrete_range(hold_base, (0, 655.35), 0.01)
 
-        self.write("MT %g, %g, %d, %g" % (hold_bias, interval, number, hold_base))
+        self.write(f"MT {hold_bias}, {interval}, {number}, {hold_base}")
         self.check_errors()
 
     def sampling_auto_abort(self, abort, post="Bias"):
@@ -857,7 +851,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         abort = strict_discrete_set(abort, abort_values)
         abort = abort_values[abort]
         post = SamplingPostOutput.get(post).value
-        self.write("MSC %d, %d" % (abort, post))
+        self.write(f"MSC {abort}, {post}")
         self.check_errors()
 
     ######################################
@@ -999,22 +993,22 @@ class SMU:
 
     def enable(self):
         """Enable Source/Measurement Channel (``CN``)"""
-        self.write("CN %d" % self.channel)
+        self.write(f"CN {self.channel}")
 
     def disable(self):
         """Disable Source/Measurement Channel (``CL``)"""
-        self.write("CL %d" % self.channel)
+        self.write(f"CL {self.channel}")
 
     def force_gnd(self):
         """Force 0V immediately. Current Settings can be restored with
         ``RZ``. (``DZ``)"""
-        self.write("DZ %d" % self.channel)
+        self.write(f"DZ {self.channel}")
 
     def restore_settings(self):
         """Restore the settings of the channel to the state before
         using `force_gnd`. (``RZ``)
         """
-        self.write("RZ %d" % self.channel)
+        self.write(f"RZ {self.channel}")
 
     @property
     def filter(self):
@@ -1039,7 +1033,7 @@ class SMU:
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write("FL %d, %d" % (setting, self.channel))
+        self.write(f"FL {setting}, {self.channel}")
         self.check_errors()
 
     @property
@@ -1055,7 +1049,7 @@ class SMU:
     @series_resistor.setter
     def series_resistor(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write("SSR %d, %d" % (self.channel, setting))
+        self.write(f"SSR {self.channel}, {setting}")
         self.check_errors()
 
     @property
@@ -1071,7 +1065,7 @@ class SMU:
     @meas_op_mode.setter
     def meas_op_mode(self, op_mode):
         op_mode = MeasOpMode.get(op_mode)
-        self.write("CMM %d, %d" % (self.channel, op_mode.value))
+        self.write(f"CMM {self.channel}, {op_mode.value}")
         self.check_errors()
 
     @property
@@ -1087,7 +1081,7 @@ class SMU:
     @adc_type.setter
     def adc_type(self, adc_type):
         adc_type = ADCType.get(adc_type)
-        self.write("AAD %d, %d" % (self.channel, adc_type.value))
+        self.write(f"AAD {self.channel}, {adc_type.value}")
         self.check_errors()
 
     ######################################
@@ -1116,14 +1110,14 @@ class SMU:
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        cmd += " %d, %d, %g" % (self.channel, source_range, output)
+        cmd += f" {self.channel}, {source_range}, {output}"
         if not comp == "":
-            cmd += ", %g" % comp
+            cmd += f", {comp}"
             if not comp_polarity == "":
                 comp_polarity = CompliancePolarity.get(comp_polarity).value
-                cmd += ", %d" % comp_polarity
+                cmd += f", {comp_polarity}"
                 if not comp_range == "":
-                    cmd += ", %d" % comp_range
+                    cmd += f", {comp_range}"
         self.write(cmd)
         self.check_errors()
 
@@ -1153,14 +1147,14 @@ class SMU:
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
-            cmd = "DV%d" % self.channel
+            cmd = f"DV{self.channel}"
             source_range = self.voltage_ranging.output(source_range).index
             unit = "V"
             if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = "CURRENT"
-            cmd = "DI%d" % self.channel
+            cmd = f"DI{self.channel}"
             source_range = self.current_ranging.output(source_range).index
             unit = "A"
             if not comp_range == "":
@@ -1174,19 +1168,13 @@ class SMU:
         elif cmd in status:
             start = float(status[cmd][1])  # current output value
         else:
-            log.info(
-                ("{} in different state. Changing to {} Source.").format(self.name, source_type)
-            )
+            log.info("%s in different state. Changing to %s Source.", self.name, source_type)
             start = 0
 
         # calculate number of points based on maximum stepsize
         nop = np.ceil(abs((target_output - start) / stepsize))
         nop = int(nop)
-        log.info(
-            "{0} ramping from {1}{2} to {3}{2} in {4} steps".format(
-                self.name, start, unit, target_output, nop
-            )
-        )
+        log.info("%s ramping from %g%s to %g%s in %d steps", self.name, start, unit, target_output, unit, nop)
         outputs = np.linspace(start, target_output, nop, endpoint=False)
 
         for output in outputs:
@@ -1217,7 +1205,7 @@ class SMU:
     @meas_range_current.setter
     def meas_range_current(self, meas_range):
         meas_range_index = self.current_ranging.meas(meas_range).index
-        self.write("RI %d, %d" % (self.channel, meas_range_index))
+        self.write(f"RI {self.channel}, {meas_range_index}")
         self.check_errors()
 
     @property
@@ -1234,7 +1222,7 @@ class SMU:
     @meas_range_voltage.setter
     def meas_range_voltage(self, meas_range):
         meas_range_index = self.voltage_ranging.meas(meas_range).index
-        self.write("RV %d, %d" % (self.channel, meas_range_index))
+        self.write(f"RV {self.channel}, {meas_range_index}")
         self.check_errors()
 
     def meas_range_current_auto(self, mode, rate=50):
@@ -1246,9 +1234,9 @@ class SMU:
         """
         mode = strict_range(mode, range(1, 4))
         if mode == 1:
-            self.write("RM %d, %d" % (self.channel, mode))
+            self.write(f"RM {self.channel}, {mode}")
         else:
-            self.write("RM %d, %d, %d" % (self.channel, mode, rate))
+            self.write(f"RM {self.channel}, {mode}, {rate}")
         self.write
 
     ######################################
@@ -1292,17 +1280,9 @@ class SMU:
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += "%d, %d, %d, %g, %g, %g, %g" % (
-            self.channel,
-            mode,
-            source_range,
-            start,
-            stop,
-            steps,
-            comp,
-        )
+        cmd += f"{self.channel}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
         if not Pcomp == "":
-            cmd += ", %g" % Pcomp
+            cmd += f", {Pcomp}"
         self.write(cmd)
         self.check_errors()
 
@@ -1328,9 +1308,9 @@ class SMU:
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += "%d, %d, %g, %g, %g" % (self.channel, source_range, start, stop, comp)
+        cmd += f"{self.channel}, {source_range}, {start}, {stop}, {comp}"
         if not Pcomp == "":
-            cmd += ", %g" % Pcomp
+            cmd += f", {Pcomp}"
         self.write(cmd)
         self.check_errors()
 
@@ -1360,7 +1340,7 @@ class SMU:
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += "%d, %d, %g, %g, %g" % (self.channel, source_range, base, bias, comp)
+        cmd += f"{self.channel}, {source_range}, {base}, {bias}, {comp}"
         self.write(cmd)
         self.check_errors()
 
@@ -1446,15 +1426,13 @@ class Ranging:
                 index = self.indizes[input_value.upper()]
             except Exception:
                 raise ValueError(
-                    ("Specified Range Name {} is not valid or not supported by this SMU").format(
-                        input_value.upper()
-                    )
+                    f"Specified Range Name {input_value.upper()} is not valid or not supported by this SMU"
                 )
         # get name
         try:
             name = self.ranges[index]
         except Exception:
-            raise ValueError(("Specified Range {} is not supported by this SMU").format(index))
+            raise ValueError(f"Specified Range {index} is not supported by this SMU")
         return self._Range(name=name, index=index)
 
 
@@ -1688,11 +1666,11 @@ class SPGUChannel:
 
     def enable(self):
         """Enable SPGU Channel (``CN``)"""
-        self._spgu.write("CN %d" % self.channel)
+        self._spgu.write(f"CN {self.channel}")
 
     def disable(self):
         """Disable SPGU Channel (``CL``)"""
-        self._spgu.write("CL %d" % self.channel)
+        self._spgu.write(f"CL {self.channel}")
 
     @property
     def load_impedance(self):
