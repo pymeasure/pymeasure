@@ -22,8 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .channel import Channel
-from .instrument import Instrument
-from .resources import find_serial_port, list_resources
-from .generic_types import SCPIMixin, SCPIUnknownMixin
-from . import exfo
+from .ctp10 import CTP10
+
+__all__ = ['CTP10']
