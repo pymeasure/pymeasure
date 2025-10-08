@@ -199,7 +199,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     def restore_settings(self):
         """Restores the settings of all channels to the state before
-        using `force_gnd`. (``RZ``)
+        using :meth:`force_gnd`. (``RZ``)
         """
         self.write("RZ")
 
@@ -1005,7 +1005,7 @@ class SMU:
 
     def force_gnd(self):
         """Force 0V immediately. Current Settings can be restored with
-        ``RZ`` (not implemented). (``DZ``)"""
+        ``RZ``. (``DZ``)"""
         self.write("DZ %d" % self.channel)
 
     def restore_settings(self):
@@ -1630,8 +1630,8 @@ class SPGU:
         all SPGU modules installed in the B1500. (``SPRM``)
 
         :param SPGUOperationMode mode: SPGU operation mode
-        :param int or float or None condition: Number of pulses for `SPGUOutputMode.COUNT` or output duration
-            for `SPGUOutputMode.DURATION`. Not used for SPGUOutputMode.FREE_RUN
+        :param int or float or None condition: Number of pulses for :attr:`SPGUOutputMode.COUNT` or output duration
+            for :attr:`SPGUOutputMode.DURATION`. Not used for :attr:`SPGUOutputMode.FREE_RUN`
         """
         mode = SPGUOutputMode.get(mode)
 
@@ -1704,8 +1704,8 @@ class SPGUChannel:
     def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
         """Sets the output voltage of the SPGU channel. (``SPV``)
 
-        :param `SPGUSignalSource` or int source: Signal source for the output voltage,
-            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+        :param SPGUSignalSource or int source: Signal source for the output voltage,
+            defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
         :param float, optional base_voltage: Pulse base voltage or DC output voltage in V, defaults to 0
         :param float, optional peak_voltage: Pulse peak voltage in V, defaults to 0
         """
@@ -1749,7 +1749,7 @@ class SPGUChannel:
         the pulse timings.
 
         :param SPGUSignalSource or int source: Signal source for the pulse timings,
-            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+            defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
         :param float, optional delay: Pulse delay in seconds, defaults to 0
         :param float, optional width: Pulse width in seconds, defaults to 1e-7
         :param float, optional rise_time: Pulse rise time in seconds, defaults to 2e-8
@@ -1769,7 +1769,7 @@ class SPGUChannel:
         timings.
 
         :param SPGUSignalSource or int source: Signal source for the pulse timings,
-            defaults to `SPGUSignalSource.PULSE_SIGNAL_1`
+            defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
         :return: Tuple of (delay, width, rise_time, fall_time)
         :rtype: tuple
         """
