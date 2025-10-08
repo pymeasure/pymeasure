@@ -121,7 +121,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         return out
 
     def initialize_smu(self, channel, smu_type, name):
-        """Initialize SMU instance by calling :class:`.SMU`.
+        """Initialize a :class:`.SMU` instance.
 
         :param int channel: SMU channel
         :param str smu_type: SMU type, e.g. ``'HRSMU'``
@@ -139,9 +139,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         return smu_reference
 
     def initialize_all_smus(self):
-        """Initialize all SMUs by querying available modules and creating
-        a SMU class instance for each.
-        SMUs are accessible via attributes ``.smu1`` etc.
+        """Initialize all SMUs.
+
+        Query available modules and create a :class:`.SMU` instance for each.
+        SMUs are accessible via attributes such as ``.smu1``, etc.
         """
         modules = self.query_modules()
         i = 1
@@ -153,7 +154,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                 i += 1
 
     def initialize_spgu(self, channel, name):
-        """Initialize SPGU instance by calling :class:`.SPGU`.
+        """Initialize a :class:`.SPGU` instance.
 
         :param int channel: SPGU channel
         :param str spgu_type: SPGU type, e.g. ``'HRSPGU'``
@@ -167,9 +168,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         return spgu_reference
 
     def initialize_all_spgus(self):
-        """Initialize all SPGUs by querying available modules and creating
-        a SPGU class instance for each.
-        SPGUs are accessible via attributes ``.spgu1`` etc.
+        """Initialize all SPGUs.
+
+        Query available modules and create a :class:`.SPGU` instance for each.
+        SPGUs are accessible via attributes such as ``.spgu1``, etc.
         """
         modules = self.query_modules()
         i = 1
