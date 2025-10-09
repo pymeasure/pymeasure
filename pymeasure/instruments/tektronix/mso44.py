@@ -224,7 +224,16 @@ class MSO44Channel(Channel):
         map_values=True
     )
 
-    @property
+    scale = Channel.control(
+        "CH{ch}:SCAle?", "CH{ch}:SCAle %g",
+        """Control the vertical scale of the channel in volts/div (float strictly from 500e-6
+        to 10).""",
+        # TODO: this depends on the attenuation setting
+        #validator=strict_range,
+        #values=[500e-6, 10]
+    )
+
+    '''@property
     def scale(self):
         return float(self.instrument.ask(f"CH{self.ch}:SCAle?"))
 
@@ -238,7 +247,7 @@ class MSO44Channel(Channel):
         min_scale = 500e-6 * attn  # 0.5 mV/div × attenuation
         max_scale = 10.0 * attn  # 10 V/div × attenuation
         strict_range(value, [min_scale, max_scale])
-        self.instrument.write(f"CH{self.ch}:SCAle {value}")
+        self.instrument.write(f"CH{self.ch}:SCAle {value}")'''
 
     position = Channel.control(
         "CH{ch}:POSition?", "CH{ch}:POSition %g",
