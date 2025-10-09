@@ -148,3 +148,105 @@ class TestDisplay:
              ]
         ) as inst:
             inst.display.enabled = enabled
+
+    @pytest.mark.parametrize("format, mapping", [("engineering", 0), ("scientific", 1)])
+    def test_format(self, format, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"DFM {mapping}", None),
+             ]
+        ) as inst:
+            inst.display.format = format
+
+    @pytest.mark.parametrize("measurement_smu", range(1, 9))
+    def test_measurement_channel(self, measurement_smu):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"MCH {measurement_smu}", None),
+             ]
+        ) as inst:
+            inst.display.measurement_smu = measurement_smu
+
+    @pytest.mark.parametrize("measurement_smu", [0, 9])
+    def test_measurement_smu_validator(self, measurement_smu):
+        with pytest.raises(ValueError):
+            with expected_protocol(
+                AgilentE5270B,
+                [INITIALIZATION,
+                 (f"MCH {measurement_smu}", None),
+                 ]
+            ) as inst:
+                inst.display.measurement_smu = measurement_smu
+
+    @pytest.mark.parametrize("measurement_parameter, mapping",
+                             [("result", 1),
+                              ("result_and_source", 2),
+                              ("resistance", 3),
+                              ("power", 4),
+                              ]
+                             )
+    def test_measurement_parameter(self, measurement_parameter, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"MPA {mapping}", None),
+             ]
+        ) as inst:
+            inst.display.measurement_parameter = measurement_parameter
+
+    @pytest.mark.parametrize("source_smu", range(1, 9))
+    def test_source_smu(self, source_smu):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"SCH {source_smu}", None),
+             ]
+        ) as inst:
+            inst.display.source_smu = source_smu
+
+    @pytest.mark.parametrize("source_smu", [0, 9])
+    def test_source_smu_validator(self, source_smu):
+        with pytest.raises(ValueError):
+            with expected_protocol(
+                AgilentE5270B,
+                [INITIALIZATION,
+                 (f"SCH {source_smu}", None),
+                 ]
+            ) as inst:
+                inst.display.source_smu = source_smu
+
+    @pytest.mark.parametrize("source_parameter, mapping",
+                             [("set_point", 1),
+                              ("compliance", 2),
+                              ("voltage_range", 3),
+                              ("current_range", 4),
+                              ("error", 5),
+                              ]
+                             )
+    def test_source_parameter1(self, source_parameter, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"SPA 1,{mapping}", None),
+             ]
+        ) as inst:
+            inst.display.source_parameter1 = source_parameter
+
+    @pytest.mark.parametrize("source_parameter, mapping",
+                             [("set_point", 1),
+                              ("compliance", 2),
+                              ("voltage_range", 3),
+                              ("current_range", 4),
+                              ("error", 5),
+                              ]
+                             )
+    def test_source_parameter2(self, source_parameter, mapping):
+        with expected_protocol(
+            AgilentE5270B,
+            [INITIALIZATION,
+             (f"SPA 2,{mapping}", None),
+             ]
+        ) as inst:
+            inst.display.source_parameter2 = source_parameter
