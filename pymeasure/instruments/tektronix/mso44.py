@@ -232,7 +232,7 @@ class MSO44Channel(Channel):
     def scale(self, value: float):
         """Control the vertical scale of the channel in volts/div."""
         try:
-            attn = float(self.probe_attenuation)
+            attn = float(self.external_attenuation)
         except Exception:
             attn = 1.0
         min_scale = 500e-6 * attn  # 0.5 mV/div × attenuation
