@@ -1,7 +1,11 @@
 import pytest
 
 from pymeasure.instruments.agilent import AgilentB1500
-from pymeasure.instruments.agilent.agilentB1500 import ControlMode, PgSelectorConnectionStatus, PgSelectorPort
+from pymeasure.instruments.agilent.agilentB1500 import (
+    ControlMode,
+    PgSelectorConnectionStatus,
+    PgSelectorPort,
+)
 from pymeasure.test import expected_protocol
 
 
@@ -16,18 +20,15 @@ class TestB1500:
         ) as inst:
             inst.restore_settings()
 
-
     @pytest.mark.parametrize("control_mode", list(ControlMode))
     def test_control_mode(self, control_mode):
         """Test control mode property."""
         with expected_protocol(
             AgilentB1500,
-            [(f"ERMOD {control_mode.value}", None),
-            ("ERMOD?", control_mode.value)],
+            [(f"ERMOD {control_mode.value}", None), ("ERMOD?", control_mode.value)],
         ) as inst:
             inst.control_mode = control_mode
             assert inst.control_mode == control_mode
-
 
     @pytest.mark.parametrize("port", list(PgSelectorPort))
     @pytest.mark.parametrize("status", list(PgSelectorConnectionStatus))

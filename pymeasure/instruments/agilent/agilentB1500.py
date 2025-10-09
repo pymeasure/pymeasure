@@ -208,7 +208,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     control_mode = Instrument.control(
         "ERMOD?",
         "ERMOD %s",
-        """Control the control mode for the digital I/O ports (:class:`ControlMode`). (``ERMOD``)""",
+        "Control the control mode for the digital I/O ports (:class:`ControlMode`). (``ERMOD``)",
         get_process=lambda v: ControlMode(v),
         set_process=lambda v: ControlMode(v).value,
     )
@@ -364,7 +364,9 @@ class AgilentB1500(SCPIMixin, Instrument):
             try:
                 self.size = sizes[output_format_str]
             except Exception:
-                raise NotImplementedError(f"Data Format {output_format_str} is not implemented so far.")
+                raise NotImplementedError(
+                    f"Data Format {output_format_str} is not implemented so far."
+                )
             self.format = output_format_str
             data_names_C = {
                 "V": "Voltage (V)",
@@ -543,7 +545,8 @@ class AgilentB1500(SCPIMixin, Instrument):
             format_class = classes[output_format_str]
         except KeyError:
             log.error(
-                "Data Format %s is not implemented so far. Please set appropriate Data Format.", output_format_str
+                "Data Format %s is not implemented so far. Please set appropriate Data Format.",
+                output_format_str,
             )
             return
         else:
@@ -771,7 +774,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         Also set the post measurement condition. (``WM``)
 
         :param bool abort: Enable/Disable automatic abort
-        :param StaircaseSweepPostOutput, optional post: Output after measurement, defaults to 'Start'
+        :param StaircaseSweepPostOutput, optional post:
+            Output after measurement, defaults to 'Start'
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
@@ -1174,7 +1178,15 @@ class SMU:
         # calculate number of points based on maximum stepsize
         nop = np.ceil(abs((target_output - start) / stepsize))
         nop = int(nop)
-        log.info("%s ramping from %g%s to %g%s in %d steps", self.name, start, unit, target_output, unit, nop)
+        log.info(
+            "%s ramping from %g%s to %g%s in %d steps",
+            self.name,
+            start,
+            unit,
+            target_output,
+            unit,
+            nop,
+        )
         outputs = np.linspace(start, target_output, nop, endpoint=False)
 
         for output in outputs:
@@ -1426,7 +1438,8 @@ class Ranging:
                 index = self.indizes[input_value.upper()]
             except Exception:
                 raise ValueError(
-                    f"Specified Range Name {input_value.upper()} is not valid or not supported by this SMU"
+                    f"Specified Range Name {input_value.upper()} is not valid or not supported by"
+                    f" this SMU"
                 )
         # get name
         try:
@@ -1610,8 +1623,9 @@ class SPGU:
         all SPGU modules installed in the B1500. (``SPRM``)
 
         :param SPGUOperationMode mode: SPGU operation mode
-        :param int or float or None condition: Number of pulses for :attr:`SPGUOutputMode.COUNT` or output duration
-            for :attr:`SPGUOutputMode.DURATION`. Not used for :attr:`SPGUOutputMode.FREE_RUN`
+        :param int or float or None condition: Number of pulses for :attr:`SPGUOutputMode.COUNT` or
+            output duration for :attr:`SPGUOutputMode.DURATION`.
+            Not used for :attr:`SPGUOutputMode.FREE_RUN`
         """
         mode = SPGUOutputMode.get(mode)
 
@@ -1686,7 +1700,8 @@ class SPGUChannel:
 
         :param SPGUSignalSource or int source: Signal source for the output voltage,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float, optional base_voltage: Pulse base voltage or DC output voltage in V, defaults to 0
+        :param float, optional base_voltage: Pulse base voltage or DC output voltage in V,
+            defaults to 0
         :param float, optional peak_voltage: Pulse peak voltage in V, defaults to 0
         """
         source = SPGUSignalSource.get(source).value
