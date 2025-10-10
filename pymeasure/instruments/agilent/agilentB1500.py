@@ -33,6 +33,7 @@ import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -153,20 +154,6 @@ class AgilentB1500(SCPIMixin, Instrument):
                 )
                 i += 1
 
-    def initialize_spgu(self, channel, name):
-        """Initialize a :class:`.SPGU` instance.
-
-        :param int channel: SPGU channel
-        :param str spgu_type: SPGU type, e.g. ``'HRSPGU'``
-        :param str name: SPGU name for pymeasure (data output etc.)
-        :return: SPGU instance
-        :rtype: :class:`.SPGU`
-        """
-        self._spgu_names[channel] = name
-        spgu_reference = SPGU(self, channel, name)
-        self._spgu_references[channel] = spgu_reference
-        return spgu_reference
-
     def initialize_all_spgus(self):
         """Initialize all SPGUs.
 
@@ -174,11 +161,9 @@ class AgilentB1500(SCPIMixin, Instrument):
         SPGUs are accessible via attributes such as ``.spgu1``, etc.
         """
         modules = self.query_modules()
-        i = 1
         for channel, module_type in modules.items():
             if module_type == "SPGU":
-                setattr(self, "spgu" + str(i), self.initialize_spgu(channel, "SPGU" + str(i)))
-                i += 1
+                self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
 
     def pause(self, pause_seconds):
         """Pause Command Execution for given time in seconds (``PA``)
@@ -1567,29 +1552,17 @@ class SMUCurrentRanging:
 ######################################
 
 
-class SPGU:
+class SPGU(Channel):
     """Provide specific methods for the SPGU module of the Agilent B1500 mainframe
 
     :param AgilentB1500 parent: Instance of the B1500 mainframe class
     :param int channel: Channel number of the SPGU
     """
 
-    def __init__(self, parent, channel, name, **kwargs):
-        # to allow garbage collection for cyclic references
-        self._b1500 = weakref.proxy(parent)
-        channel = strict_discrete_set(channel, range(1, 5))
-        self.channel = channel
-        self.name = name
-        self.ch1 = SPGUChannel(self, int(str(self.channel) + "01"))
-        self.ch2 = SPGUChannel(self, int(str(self.channel) + "02"))
-
-    def write(self, string):
-        """Wrap :meth:`.Instrument.write` method of B1500."""
-        self._b1500.write(string)
-
-    def ask(self, string):
-        """Wrap :meth:`~.Instrument.ask` method of B1500."""
-        return self._b1500.ask(string)
+    def __init__(self, parent, channel, **kwargs):
+        super().__init__(parent, channel, **kwargs)
+        self.ch1 = SPGUChannel(self, int(str(self.id) + "01"))
+        self.ch2 = SPGUChannel(self, int(str(self.id) + "02"))
 
     def start_output(self):
         """Start SPGU output (``SRP``)"""
