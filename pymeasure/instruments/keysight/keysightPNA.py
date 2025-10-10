@@ -347,7 +347,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     output_enabled = Instrument.control(
         "OUTP?",
         "OUTP %d",
-        """Control the RF power output status of the sources (bool).""",
+        """Control whether the RF power output of the sources is enabled (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
