@@ -110,8 +110,3 @@ settings.json
 
 # Vim
 *.swp
-
-# AI Assistant Files (symlinks to Agents.md)
-CLAUDE.md
-CURSOR.md
-COPILOT.md
