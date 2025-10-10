@@ -25,6 +25,8 @@
 # Call signature:
 # $ pytest test_keysightPNA_with_device.py --device-address "GPIB0::16::INSTR"
 # $ pytest test_keysightPNA_with_device.py --device-address "TCPIP0::192.168.50.2::INSTR"
+# The given device addresses are just examples. Please exchanged them to your own address.
+
 
 # Requirements for the PNA:
 # The following state state file exists: 'D:/States/PyMeasurePytest.csa'
