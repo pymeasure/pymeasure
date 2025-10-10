@@ -71,16 +71,8 @@ class Marker(Channel):
 class Trace(Channel):
     """A class representing a Keysight PNA measurement trace."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # add the 15 markers to traces
-        for marker in range(1, 16):
-            self.add_child(Marker,
-                           id=marker,
-                           collection="markers",
-                           prefix="mkr_",
-                           )
+    # add the 15 markers to traces
+    markers = Instrument.MultiChannelCreator(Marker, list(range(1,16)), prefix="mkr_")
 
     placeholder = "tr"
 
