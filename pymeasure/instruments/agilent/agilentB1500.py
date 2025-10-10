@@ -1561,8 +1561,8 @@ class SPGU(Channel):
 
     def __init__(self, parent, channel, **kwargs):
         super().__init__(parent, channel, **kwargs)
-        self.ch1 = SPGUChannel(self, int(str(self.id) + "01"))
-        self.ch2 = SPGUChannel(self, int(str(self.id) + "02"))
+        self.ch1 = self.add_child(SPGUChannel, int(str(self.id) + "01"), prefix="ch")
+        self.ch2 = self.add_child(SPGUChannel, int(str(self.id) + "02"), prefix="ch")
 
     def start_output(self):
         """Start SPGU output (``SRP``)"""
@@ -1633,40 +1633,23 @@ class SPGU(Channel):
         return SPGUOutputMode(int(mode)), float(condition) if condition else None
 
 
-class SPGUChannel:
-    def __init__(self, parent, channel_number):
-        """Provide specific methods for the SPGU subchannels
-
-        :param SPGU parent: Instance of the SPGU class
-        :param int channel: Subchannel number of the SPGU channel
-        """
-        self._spgu = weakref.proxy(parent)
-        self.channel = channel_number
-
-    def write(self, string):
-        """Wrap :meth:`.Instrument.write` method of SPGU."""
-        self._spgu.write(string)
-
-    def ask(self, string):
-        """Wrap :meth:`~.Instrument.ask` method of SPGU."""
-        return self._spgu.ask(string)
-
+class SPGUChannel(Channel):
     def enable(self):
         """Enable SPGU Channel (``CN``)"""
-        self._spgu.write(f"CN {self.channel}")
+        self.write(f"CN {self.id}")
 
     def disable(self):
         """Disable SPGU Channel (``CL``)"""
-        self._spgu.write(f"CL {self.channel}")
+        self.write(f"CL {self.id}")
 
     @property
     def load_impedance(self):
         """Control the load impedance (``SER``) in Ohm (float)."""
-        return self._spgu.ask(f"SER? {self.channel}")
+        return self.ask(f"SER? {self.id}")
 
     @load_impedance.setter
     def load_impedance(self, value):
-        self._spgu.write(f"SER {self.channel}, {value}")
+        self.write(f"SER {self.id}, {value}")
 
     def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
         """Set the output voltage of the SPGU channel. (``SPV``)
@@ -1680,12 +1663,12 @@ class SPGUChannel:
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
-        self._spgu.write(f"SPV {self.channel}, {source}, {base_voltage}, {peak_voltage}")
+        self.write(f"SPV {self.id}, {source}, {base_voltage}, {peak_voltage}")
 
     def get_output_voltage(self, source=1):
         """Get the output voltage of the specified signal source. (``SPV?``)"""
         source = SPGUSignalSource.get(source).value
-        response = self._spgu.ask(f"SPV? {self.channel}, {source}")
+        response = self.ask(f"SPV? {self.id}, {source}")
         base_voltage, peak_voltage = map(float, response.split(","))
         return base_voltage, peak_voltage
 
@@ -1697,12 +1680,12 @@ class SPGUChannel:
 
         :param SPGUChannelOutputMode or int mode: Output mode
         """
-        return self._spgu.ask(f"SPM? {self.channel}")
+        return self.ask(f"SPM? {self.id}")
 
     @output_mode.setter
     def output_mode(self, mode):
         mode = SPGUChannelOutputMode.get(mode).value
-        self._spgu.write(f"SPM {self.channel}, {mode}")
+        self.write(f"SPM {self.id}, {mode}")
 
     def set_pulse_timings(
         self,
@@ -1726,10 +1709,10 @@ class SPGUChannel:
         source = SPGUSignalSource.get(source).value
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
-        command = f"SPT {self.channel}, {source}, {delay}, {width}, {rise_time}"
+        command = f"SPT {self.id}, {source}, {delay}, {width}, {rise_time}"
         if fall_time is not None:
             command += f", {fall_time}"
-        self._spgu.write(command)
+        self.write(command)
 
     def get_pulse_timings(self, source=1):
         """Get the timing parameters for the SPGU channel. (``SPT?``)
@@ -1742,7 +1725,7 @@ class SPGUChannel:
         :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
-        response = self._spgu.ask(f"SPT? {self.channel}, {source}")
+        response = self.ask(f"SPT? {self.id}, {source}")
         return tuple(map(float, response.split(",")))
 
     def apply_setup(self):
@@ -1752,7 +1735,7 @@ class SPGUChannel:
         PG mode: output base voltage set by ``SPV`` command
         ALWG mode: output initial value of waveform
         """
-        self._spgu.write(f"SPUPD {self.channel}")
+        self.write(f"SPUPD {self.id}")
 
 
 class CustomIntEnum(IntEnum):
