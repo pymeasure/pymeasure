@@ -285,7 +285,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     def abort(self):
         """Stop all sweeps.
 
-        After the stop the sweep(s) resume per current trigger settings.
+        Note that the configured trigger will restart the sweeps.
         """
         self.write("ABOR")
 
