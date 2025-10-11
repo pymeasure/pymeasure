@@ -1564,15 +1564,17 @@ class SPGU(Channel):
         self.ch1 = self.add_child(SPGUChannel, int(str(self.id) + "01"), prefix="ch")
         self.ch2 = self.add_child(SPGUChannel, int(str(self.id) + "02"), prefix="ch")
 
-    def start_output(self):
-        """Start SPGU output (``SRP``)"""
-        self.write("SRP")
+    output = Channel.setting(
+        "%s",
+        """Set SPGU output state. (``SRP``, ``SPP``)
+        When enabled, starts SPGU output. When disabled, stops output and channels output
+        base voltage.""",
+        validator=strict_discrete_set,
+        values={False: "SPP", True: "SRP"},
+        map_values=True,
+    )
 
-    def stop_output(self):
-        """Stop SPGU output (``SPP``). The channel outputs the base voltage."""
-        self.write("SPP")
-
-    operation_mode = Instrument.control(
+    operation_mode = Channel.control(
         "SIM?",
         "SIM %d",
         """Control mode for the Semiconductor Pulse Generator Unit (SPGU). (``SIM``)
@@ -1582,7 +1584,7 @@ class SPGU(Channel):
         set_process=lambda v: SPGUOperationMode(v).value,
     )
 
-    period = Instrument.control(
+    period = Channel.control(
         "SPPER?",
         "SPPER %f",
         """Control the pulse period for SPGU channels (``SPPER``) in seconds (float).
@@ -1634,22 +1636,19 @@ class SPGU(Channel):
 
 
 class SPGUChannel(Channel):
-    def enable(self):
-        """Enable SPGU Channel (``CN``)"""
-        self.write(f"CN {self.id}")
+    enabled = Channel.setting(
+        "%s {ch}",
+        """Control SPGU channel enable/disable state. (``CN``, ``CL``)""",
+        validator=strict_discrete_set,
+        values={False: "CL", True: "CN"},
+        map_values=True,
+    )
 
-    def disable(self):
-        """Disable SPGU Channel (``CL``)"""
-        self.write(f"CL {self.id}")
-
-    @property
-    def load_impedance(self):
-        """Control the load impedance (``SER``) in Ohm (float)."""
-        return self.ask(f"SER? {self.id}")
-
-    @load_impedance.setter
-    def load_impedance(self, value):
-        self.write(f"SER {self.id}, {value}")
+    load_impedance = Channel.control(
+        "SER? {ch}",
+        "SER {ch}, %f",
+        """Control the load impedance (``SER``) in Ohm (float).""",
+    )
 
     def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
         """Set the output voltage of the SPGU channel. (``SPV``)
@@ -1672,20 +1671,15 @@ class SPGUChannel(Channel):
         base_voltage, peak_voltage = map(float, response.split(","))
         return base_voltage, peak_voltage
 
-    @property
-    def output_mode(self):
+    output_mode = Channel.control(
+        "SPM? {ch}",
+        "SPM {ch}, %d",
         """Control the output mode of the SPGU channel. (``SPM``)
         The SPGU operating mode must be set to PG with the SIM 0 command before setting the
-        output mode.
-
-        :param SPGUChannelOutputMode or int mode: Output mode
-        """
-        return self.ask(f"SPM? {self.id}")
-
-    @output_mode.setter
-    def output_mode(self, mode):
-        mode = SPGUChannelOutputMode.get(mode).value
-        self.write(f"SPM {self.id}, {mode}")
+        output mode.""",
+        get_process=lambda v: SPGUChannelOutputMode(int(v)),
+        set_process=lambda v: SPGUChannelOutputMode.get(v).value,
+    )
 
     def set_pulse_timings(
         self,
