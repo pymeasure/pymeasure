@@ -44,6 +44,7 @@ class TestB1500:
         ) as inst:
             inst.set_port_connection(port, status)
 
+
 class AgilentB1500Mock(AgilentB1500):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
