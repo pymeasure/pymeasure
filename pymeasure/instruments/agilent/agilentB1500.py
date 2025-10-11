@@ -190,7 +190,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         self.write("RZ")
 
-    control_mode = Instrument.control(
+    io_control_mode = Instrument.control(
         "ERMOD?",
         "ERMOD %s",
         "Control the control mode for the digital I/O ports (:class:`ControlMode`). (``ERMOD``)",

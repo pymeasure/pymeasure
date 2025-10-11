@@ -24,15 +24,15 @@ class TestB1500:
         ) as inst:
             inst.restore_settings()
 
-    @pytest.mark.parametrize("control_mode", list(ControlMode))
-    def test_control_mode(self, control_mode):
-        """Test control_mode property."""
+    @pytest.mark.parametrize("io_control_mode", list(ControlMode))
+    def test_io_control_mode(self, io_control_mode):
+        """Test io_control_mode property."""
         with expected_protocol(
             AgilentB1500,
-            [(f"ERMOD {control_mode.value}", None), ("ERMOD?", control_mode.value)],
+            [(f"ERMOD {io_control_mode.value}", None), ("ERMOD?", io_control_mode.value)],
         ) as inst:
-            inst.control_mode = control_mode
-            assert inst.control_mode == control_mode
+            inst.io_control_mode = io_control_mode
+            assert inst.io_control_mode == io_control_mode
 
     @pytest.mark.parametrize("port", list(PgSelectorPort))
     @pytest.mark.parametrize("status", list(PgSelectorConnectionStatus))
