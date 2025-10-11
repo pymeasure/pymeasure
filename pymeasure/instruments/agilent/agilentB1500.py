@@ -995,7 +995,7 @@ class SMU:
 
     def restore_settings(self):
         """Restore the settings of the channel to the state before
-        using `force_gnd`. (``RZ``)
+        using :meth:`force_gnd`. (``RZ``)
         """
         self.write(f"RZ {self.channel}")
 
