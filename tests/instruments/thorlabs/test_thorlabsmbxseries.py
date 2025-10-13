@@ -3,6 +3,7 @@ from pymeasure.instruments.thorlabs.thorlabsmbxseries import (
     ThorlabsMBXSeries,
     MzmMode,
     VoaMode,
+    RgbPowerMode,
 )
 
 
@@ -142,3 +143,39 @@ def test_voa_power():
     protocol = [("VOA:TAP:MW?", b"5")]
     with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
         assert inst.voa.power == 5
+
+
+def test_rgb_mode_setter():
+    protocol = [("RGB:POWER: 0", None)]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        inst.rgb.mode = RgbPowerMode.OFF
+
+
+def test_rgb_mode_getter():
+    protocol = [("RGB:POWER?", b"2")]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        assert inst.rgb.mode == RgbPowerMode.WHITE
+
+
+def test_rgb_rgb_setter():
+    protocol = [("RGB:RED: 55", None), ("RGB:GREEN: 65", None), ("RGB:BLUE: 75", None)]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        inst.rgb.rgb = (55, 65, 75)
+
+
+def test_rgb_rgb_getter():
+    protocol = [("RGB:RED?", b"25"), ("RGB:GREEN?", b"35"), ("RGB:BLUE?", b"45")]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        assert inst.rgb.rgb == (25, 35, 45)
+
+
+def test_rgb_white_setter():
+    protocol = [("RGB:WHITE: 50", None)]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        inst.rgb.white = 50
+
+
+def test_rgb_white_getter():
+    protocol = [("RGB:WHITE?", 40)]
+    with expected_protocol(ThorlabsMBXSeries, protocol) as inst:
+        assert inst.rgb.white == 40

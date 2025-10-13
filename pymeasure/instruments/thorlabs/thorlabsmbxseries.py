@@ -181,7 +181,7 @@ class ThorlabsMBXSeriesRGB(Channel):
     """ThorlabsMBXSeries channel for control of the asethetic RGB under-chassis lighting."""
 
     mode = Instrument.control(
-        "RGB:POWER:?",
+        "RGB:POWER?",
         "RGB:POWER: %d",
         """Control the under-chassis LED accent lighting mode (:class:`RgbPowerMode` enum).""",
     )
@@ -213,9 +213,19 @@ class ThorlabsMBXSeriesRGB(Channel):
         values=(0, 100),
     )
 
+    @property
+    def rgb(self):
+        """Control the brightness of the red, green, and blue under-chassis accent lighting LEDs
+        (tuple of ints, strictly in range 0 to 100)."""
+        return (self.red, self.green, self.blue)
+
+    @rgb.setter
+    def rgb(self, vals):
+        self.red, self.green, self.blue = vals
+
     white = Instrument.control(
-        "RGB:BLUE?",
-        "RGB:BLUE: %d",
+        "RGB:WHITE?",
+        "RGB:WHITE: %d",
         """Control the brightness of the white under-chassis accent lighting
         (int, strictly in range 0 to 100).""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
@@ -239,7 +249,7 @@ class ThorlabsMBXSeries(SCPIMixin, Instrument):
 
         kwargs.setdefault("timeout", 1000)
         super().__init__(
-            adapter, name, baud_rate=115200, write_termination="\r", read_termination="\r"
+            adapter, name, baud_rate=115200, write_termination="\r", read_termination="\r", **kwargs
         )
 
     mzm = Instrument.ChannelCreator(ThorlabsMBXSeriesMZM, "")
