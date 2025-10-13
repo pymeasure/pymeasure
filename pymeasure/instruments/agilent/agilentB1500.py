@@ -1632,6 +1632,12 @@ class SPGU(Channel):
         mode, condition = response.split(",")
         return SPGUOutputMode(int(mode)), float(condition) if condition else None
 
+    complete = Channel.measurement(
+        "SPST?",
+        """Check if the SPGU output has finished. (``SPST?``)""",
+        get_process=lambda v: not bool(v),
+    )
+
 
 class SPGUChannel(Channel):
     enabled = Channel.setting(

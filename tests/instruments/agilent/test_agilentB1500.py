@@ -99,6 +99,15 @@ class TestSPGU:
             inst.spgu1.set_output_mode(output_mode, condition)
             assert inst.spgu1.get_output_mode() == (output_mode, condition)
 
+    def test_complete(self):
+        """Test complete property."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [("SPST?", "0"), ("SPST?", "1")],
+        ) as inst:
+            assert inst.spgu1.complete
+            assert not inst.spgu1.complet
+
 
 class TestSPGUChannel:
     """Tests for SPGU channel functionality."""
