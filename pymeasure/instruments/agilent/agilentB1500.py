@@ -58,8 +58,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
         self._smu_names = {}
         self._smu_references = {}
-        self._spgu_names = {}
-        self._spgu_references = {}
 
     @property
     def smu_references(self):
