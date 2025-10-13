@@ -106,7 +106,7 @@ class TestSPGU:
             [("SPST?", "0"), ("SPST?", "1")],
         ) as inst:
             assert inst.spgu1.complete
-            assert not inst.spgu1.complet
+            assert not inst.spgu1.complete
 
 
 class TestSPGUChannel:
