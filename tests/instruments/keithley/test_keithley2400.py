@@ -305,7 +305,7 @@ def test_source_current_range_getter():
         assert inst.source_current_range == 0.5
 
 
-def test_source_current_range_setter():
+def test_source_current_range_setter():  # TODO: This gives more than one value
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:CURR:RANG 0.5", None)],

@@ -84,9 +84,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_enabled = Instrument.control(
         "OUTP?",
         "OUTP %d",
-        """Control whether the source is enabled (bool).
-        The convenience methods :meth:`~.Keithley2400.enable_source`
-        and :meth:`~.Keithley2400.disable_source` can also be used.""",
+        """Control whether the source is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -106,15 +104,17 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:DEL %g",
         """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
-        When this property is set, the auto delay is turned off.""",
+
+        When this property is set, :prop:`~.Keithley2400.source_delay_auto_enabled` is implicitly
+        set to False.""",
         validator=strict_range,
         values=[0, 999.9999],
     )
 
-    source_delay_auto = Instrument.control(
+    source_delay_auto_enabled = Instrument.control(
         ":SOUR:DEL:AUTO?",
         ":SOUR:DEL:AUTO %d",
-        """Control the auto delay (bool).""",
+        """Control whether the source auto delay is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -135,6 +135,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":OUTP:SMOD %s",
         """Control the output-off state of the SourceMeter
         (str, strictly 'disconnect', 'normal', 'zero', or 'guard').
+
         disconnect : output relay is open, disconnects external circuitry.
         normal : V-Source is selected and set to 0V, Compliance is set to 0.5%
         full scale of the present current range.
@@ -215,7 +216,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently.
 
         .. note::
-           Sets `resistance_mode_auto` to False
+           Sets :prop:`~.Keithley2400.resistance_mode_auto` to False
 
         Returns
         -------
@@ -256,8 +257,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:CURR:RANG?",
         ":SENS:CURR:RANG %g",
         """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
+
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and Auto-range is disabled.""",
+        set value, and :prop:`~.Keithley2400.current_range_auto_enabled` is implicitly set to False.
+        """,
         validator=strict_range,
         values=[-1.05, 1.05],
     )
@@ -275,8 +278,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:CURR:NPLC?",
         ":SENS:CURR:NPLC %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
-        Note that this is a global command, implicitly setting
-        :attr:`~.Keithley2400.voltage_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
+
+        .. note::
+           This is a global command, implicitly setting :attr:`~.Keithley2400.voltage_nplc`
+           and :attr:`~.Keithley2400.resistance_nplc`.
+        """,
         validator=strict_range,
         values=[0.01, 10],
     )
@@ -303,6 +309,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:CURR:RANG?",
         ":SOUR:CURR:RANG %g",
         """Control the source current range in Amps (float, strictly from -1.05 to 1.05).
+
         When set, the range selected will be the most sensitive range that will accommodate the
         set value, and Auto-range is disabled.""",
         validator=strict_range,
@@ -349,8 +356,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:VOLT:RANG?",
         ":SENS:VOLT:RANG %g",
         """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
+
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and Auto-range is disabled.""",
+        set value, and :prop:`~.Keithley2400.voltage_range_auto_enabled` is implicitly set to False.
+        """,
         validator=strict_range,
         values=[-210, 210],
     )
@@ -368,8 +377,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:VOLT:NPLC?",
         ":SENS:VOLT:NPLC %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
-        Note that this is a global command, implicitly setting
-        :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.resistance_nplc`""",
+
+        .. note::
+           This is a global command, implicitly setting :attr:`~.Keithley2400.current_nplc`
+           and :attr:`~.Keithley2400.resistance_nplc`.
+        """,
         validator=strict_range,
         values=[0.01, 10],
     )
@@ -396,6 +408,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:VOLT:RANG?",
         ":SOUR:VOLT:RANG %g",
         """Control the source voltage range in Volts (float, strictly from -210 to 210).
+
         When set, the range selected will be the most sensitive range that will accommodate the
         set value, and Auto-range is disabled.""",
         validator=strict_range,
@@ -435,13 +448,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     resistance = Instrument.measurement(
         ":MEAS:RES?",
         """Measure the resistance in Ohms (float).""",
-        get_process_list=lambda v: v[3],
+        get_process_list=lambda v: v[2],
     )
 
     resistance_mode_auto_enabled = Instrument.control(
         ":SENS:RES:MODE?",
         ":SENS:RES:MODE %s",
         """Control the resistance mode auto status (bool).
+
         When `True`, `source_current` and `voltage_range` depends on the `resistance_range`
         selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
         values={True: "AUTO", False: "MAN"},
@@ -452,8 +466,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:RES:RANG?",
         ":SENS:RES:RANG %g",
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
+
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and Auto-range is disabled.""",
+        set value, and :prop:`~.Keithley2400.resistance_range_auto_enabled` is implicitly set to
+        False.""",
         validator=strict_range,
         values=[0, 210e6],
     )
@@ -471,8 +487,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENS:RES:NPLC?",
         ":SENS:RES:NPLC %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
-        Note that this is a global command, implicitly setting
-        :attr:`~.Keithley2400.current_nplc` and :attr:`~.Keithley2400.voltage_nplc`""",
+
+        .. note::
+           This is a global command, implicitly setting :attr:`~.Keithley2400.current_nplc`
+           and :attr:`~.Keithley2400.voltage_nplc`.
+        """,
         validator=strict_range,
         values=[0.01, 10],
     )
@@ -667,7 +686,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     display_enabled = Instrument.control(
         ":DISP:ENAB?",
         ":DISP:ENAB %d",
-        """Control whether or not the display of the sourcemeter is enabled (bool).""",
+        """Control whether the display of the sourcemeter is enabled (bool).""",
         values={True: 1, False: 0},
         map_values=True,
     )
@@ -718,10 +737,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         cast=int,
     )
 
-    line_frequency_auto = Instrument.control(
+    line_frequency_auto_enabled = Instrument.control(
         ":SYST:LFR:AUTO?",
         ":SYST:LFR:AUTO %d",
-        """Control the auto line frequency (bool).""",
+        """Control whether the auto line frequency is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
