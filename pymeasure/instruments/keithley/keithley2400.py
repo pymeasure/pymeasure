@@ -642,6 +642,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[0, 999.9999],
     )
 
+    arm_time = Instrument.control(
+        ":ARM:TIM?",
+        "ARM:TIM %g",
+        """Control the arm layer timer in seconds (float, strictly in range 0.001 to 99999.99).""",
+        validator=strict_range,
+        values=[0.001, 99999.99],
+    )
+
     trigger_source = Instrument.control(
         ":TRIG:SOUR %s",
         ":TRIG:SOUR?",
@@ -686,8 +694,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     trigger_output_event = Instrument.control(
         ":ARM:OUTP %s",
         ":ARM:OUTP?",
-        """Control when the trigger pulse occurs on the trigger layer output trigger line
-        (str).
+        """Control when the trigger pulse occurs on the trigger layer output trigger line (str).
 
         - 'source': Trigger after source level is set.
         - 'delay': Trigger after delay period.
@@ -1124,7 +1131,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         points can not exceed 2500
 
         .. deprecated:: 0.16
-           Use :prop:`Keithley2400.trigger_count` and/or :prop:`Keithley2400.arm_count`
+           Use :prop:`~.trigger_count` and/or :prop:`~.arm_count`
         """
         warn(
             """Deprecated to use `Keithley2400.set_trigger_counts`.
@@ -1142,8 +1149,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Set up the measurement to be taken with the internal
         trigger at a variable sampling rate defined by the interval
         in seconds between sampling points
+
+        .. deprecated:: 0.16
+           Set :prop:`~.arm_source` to "time" and control interval using :prop:`~.arm_time`.
         """
-        # TODO: Add deprecation notice
+        warn(
+            """Deprecated to use `Keithley2400.set_timed_arm`.
+            Set `Keithley2400.arm_source` to "time" and control interval using
+            `Keithley2400.arm_time`.""",
+            FutureWarning,
+        )
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
@@ -1151,13 +1166,28 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     def trigger_immediately(self):
         """Configure measurements to be taken with the internal
         trigger at the maximum sampling rate.
+
+        .. deprecated:: 0.16
+           Set :prop:`~.arm_source` and :prop:`~.trigger_source` to "immediate".
         """
-        # TODO: Add deprecation notice
+        warn(
+            """Deprecated to use `Keithley2400.trigger_immediately`.
+            Set `Keithley2400.arm_source` and `Keithley2400.trigger_source` to "immediate".""",
+            FutureWarning,
+        )
         self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
 
     def disable_output_trigger(self):
-        """Disable the output trigger for the Trigger layer"""
-        # TODO: Add deprecation notice
+        """Disable the output trigger for the Trigger layer
+
+        .. deprecated:: 0.16
+           Set :prop:`~.trigger_output_event` to "off".
+        """
+        warn(
+            """Deprecated to use `Keithley2400.disable_output_trigger`.
+            Set `Keithley2400.trigger_output_event` to "off".""",
+            FutureWarning,
+        )
         self.write(":TRIG:OUTP NONE")
 
     def output_trigger_on_external(self, line=1, after="DEL"):
@@ -1168,8 +1198,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         :param line: A trigger line from 1 to 4
         :param after: An event string that determines when to trigger
+
+        .. deprecated:: 0.16
+           Use :prop:`~.trigger_output_event` and :prop:`~.trigger_output_line`.
         """
-        # TODO: Add deprecation notice
+        warn(
+            """Deprecated to use `Keithley2400.output_trigger_on_external`.
+            Use `Keithley2400.trigger_output_event` and `Keithley2400.trigger_output_line`.""",
+            FutureWarning,
+        )
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
 
     @property
@@ -1181,10 +1218,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """
         warn("Deprecated to use `error`, use `next_error` instead.", FutureWarning)
         return self.next_error
-
-    def status(self):  # TODO: Check whether status property works
-        warn("Deprecated to use `status` method, use `status` property instead.", FutureWarning)
-        return self.ask("status:queue?;")
 
     def beep(self, frequency, duration):
         """Sound a system beep.
