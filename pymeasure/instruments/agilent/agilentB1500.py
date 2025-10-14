@@ -1634,7 +1634,7 @@ class SPGU(Channel):
 
     complete = Channel.measurement(
         "SPST?",
-        """Check if the SPGU output has finished. (``SPST?``)""",
+        """Get whether the SPGU output has finished. (``SPST?``)""",
         get_process=lambda v: not bool(v),
     )
 
