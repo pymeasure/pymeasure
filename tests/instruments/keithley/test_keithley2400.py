@@ -133,20 +133,20 @@ def test_source_delay_setter():
         inst.source_delay = 0.1
 
 
-def test_source_delay_auto_getter():
+def test_source_delay_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:DEL:AUTO?", 1)],
     ) as inst:
-        assert inst.source_delay_auto is True
+        assert inst.source_delay_auto_enabled is True
 
 
-def test_source_delay_auto_setter():
+def test_source_delay_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOUR:DEL:AUTO 0", None)],
     ) as inst:
-        inst.source_delay_auto = False
+        inst.source_delay_auto_enabled = False
 
 
 def test_auto_zero_getter():
@@ -212,9 +212,9 @@ def test_measure_all():
 def test_current():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":MEAS:CURR?", 0.5)],
+        [INIT_COMMS, (":MEAS:CURR?", b"0.1,0.2,9.91e37,1234,5678\n")],
     ) as inst:
-        assert inst.current == 0.5
+        assert inst.current == 0.2
 
 
 def test_current_range_getter():
@@ -337,9 +337,9 @@ def test_source_current_range_auto_enabled_setter():
 def test_voltage():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":MEAS:VOLT?", 0.5)],
+        [INIT_COMMS, (":MEAS:VOLT?", b"0.1,0.2,9.91e37,1234,5678\n")],
     ) as inst:
-        assert inst.voltage == 0.5
+        assert inst.voltage == 0.1
 
 
 def test_voltage_range_getter():
@@ -462,7 +462,7 @@ def test_source_voltage_range_auto_enabled_setter():
 def test_resistance():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":MEAS:RES?", 0.5)],
+        [INIT_COMMS, (":MEAS:RES?", "0.1,0.2,0.5,1234,5678\n")],
     ) as inst:
         assert inst.resistance == 0.5
 
@@ -597,20 +597,20 @@ def test_line_frequency_setter():
         inst.line_frequency = 60
 
 
-def test_auto_line_frequency_getter():
+def test_line_frequency_auto_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SYST:LFR:AUTO?", 1)],
     ) as inst:
-        assert inst.line_frequency_auto is True
+        assert inst.line_frequency_auto_enabled is True
 
 
-def test_auto_line_frequency_setter():
+def test_line_frequency_auto_enabled_setter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SYST:LFR:AUTO 0", None)],
     ) as inst:
-        inst.line_frequency_auto = False
+        inst.line_frequency_auto_enabled = False
 
 
 def test_front_terminals_enabled_getter():

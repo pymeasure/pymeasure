@@ -30,7 +30,11 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
-from pymeasure.instruments.validators import strict_range, strict_discrete_set
+from pymeasure.instruments.validators import (
+    strict_range,
+    strict_discrete_range,
+    strict_discrete_set,
+)
 
 from .buffer import KeithleyBuffer
 
@@ -105,7 +109,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
 
-        When this property is set, :prop:`~.Keithley2400.source_delay_auto_enabled` is implicitly
+        When this property is set, :prop:`~.source_delay_auto_enabled` is implicitly
         set to False.""",
         validator=strict_range,
         values=[0, 999.9999],
@@ -216,7 +220,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently.
 
         .. note::
-           Sets :prop:`~.Keithley2400.resistance_mode_auto` to False
+           Sets :prop:`~.resistance_mode_auto` to False
 
         Returns
         -------
@@ -259,7 +263,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.Keithley2400.current_range_auto_enabled` is implicitly set to False.
+        set value, and :prop:`~.current_range_auto_enabled` is implicitly set to False.
         """,
         validator=strict_range,
         values=[-1.05, 1.05],
@@ -280,8 +284,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
-           This is a global command, implicitly setting :attr:`~.Keithley2400.voltage_nplc`
-           and :attr:`~.Keithley2400.resistance_nplc`.
+           This is a global command, implicitly setting :attr:`~.voltage_nplc`
+           and :attr:`~.resistance_nplc`.
         """,
         validator=strict_range,
         values=[0.01, 10],
@@ -358,7 +362,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.Keithley2400.voltage_range_auto_enabled` is implicitly set to False.
+        set value, and :prop:`~.voltage_range_auto_enabled` is implicitly set to False.
         """,
         validator=strict_range,
         values=[-210, 210],
@@ -379,8 +383,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
-           This is a global command, implicitly setting :attr:`~.Keithley2400.current_nplc`
-           and :attr:`~.Keithley2400.resistance_nplc`.
+           This is a global command, implicitly setting :attr:`~.current_nplc`
+           and :attr:`~.resistance_nplc`.
         """,
         validator=strict_range,
         values=[0.01, 10],
@@ -468,7 +472,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.Keithley2400.resistance_range_auto_enabled` is implicitly set to
+        set value, and :prop:`~.resistance_range_auto_enabled` is implicitly set to
         False.""",
         validator=strict_range,
         values=[0, 210e6],
@@ -489,8 +493,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
-           This is a global command, implicitly setting :attr:`~.Keithley2400.current_nplc`
-           and :attr:`~.Keithley2400.voltage_nplc`.
+           This is a global command, implicitly setting :attr:`~.current_nplc`
+           and :attr:`~.voltage_nplc`.
         """,
         validator=strict_range,
         values=[0.01, 10],
@@ -588,94 +592,199 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Trigger #
     ###########
 
+    def trigger(self):
+        """Execute a bus trigger, which can be used when :meth:`~.trigger_on_bus` is configured."""
+        self.write("*TRG")
+
+    def reset_trigger(self):
+        """Reset the trigger system and return to an idle state."""
+        self.write(":ABORt")
+
+    def clear_trigger(self):
+        """Clear any pending input triggers immediately."""
+        self.write(":TRIG:CLE")
+
+    def _set_trigger_count_process(self, value):
+        if value * self.arm_count > 2500:
+            raise ValueError("Product of arm_count and trigger_count cannot exceed 2500.")
+        return value
+
     trigger_count = Instrument.control(
         ":TRIG:COUN?",
         ":TRIG:COUN %d",
-        """Control the trigger count (int, strictly from 1 to 2500).""",
-        validator=strict_range,
-        values=[1, 2500],
-        cast=int,
+        """Control the trigger layer count (int strictly in range 1 to 2500).
+        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 2500),
+        set_process=_set_trigger_count_process,
+    )
+
+    def _set_arm_count_process(self, value):
+        if value * self.trigger_count > 2500:
+            raise ValueError("Product of arm_count and trigger_count cannot exceed 2500.")
+        return value
+
+    arm_count = Instrument.control(
+        ":TRIG:COUN?",
+        ":TRIG:COUN %d",
+        """Control the arm layer count (int strictly in range 1 to 2500).
+        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 2500),
+        set_process=_set_arm_count_process,
     )
 
     trigger_delay = Instrument.control(
         ":TRIG:SEQ:DEL?",
         ":TRIG:SEQ:DEL %g",
-        """Control the trigger delay in seconds (float, strictly from 0 to 999.9999).""",
+        """Control the trigger layer delay in seconds (float, strictly in range 0 to 999.9999).""",
         validator=strict_range,
         values=[0, 999.9999],
     )
 
-    def trigger(self):
-        """Execute a bus trigger, which can be used when
-        :meth:`~.trigger_on_bus` is configured.
-        """
-        return self.write("*TRG")
+    trigger_source = Instrument.control(
+        ":TRIG:SOUR %s",
+        ":TRIG:SOUR?",
+        """Control the trigger layer event control source (str).
 
-    def trigger_immediately(self):
-        """Configure measurements to be taken with the internal
-        trigger at the maximum sampling rate.
-        """
-        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
+        - 'immediate': Pass operation through immedately.
+        - 'tlink': Select trigger link as the event.
+        """,
+        validator=strict_discrete_set,
+        values={"immediate": "IMM", "tlink": "TLIN"},
+        map_values=True,
+    )
+
+    arm_source = Instrument.control(
+        ":ARM:SOUR %s",
+        ":ARM:SOUR?",
+        """Control the arm layer event control source (str).
+
+        - 'immediate': Pass operation through immedately.
+        - 'tlink': Select trigger link as the event.
+        - 'timer': Select timer as the event.
+        - 'manual': Select manual event.
+        - 'bus': Select bus trigger as the event.
+        - 'nstest': Select low SOT pulse as the event.
+        - 'pstest': Select high SOT pulse as the event.
+        - 'bstest': Select high or low SOT pluse as the event.
+        """,
+        validator=strict_discrete_set,
+        values={
+            "immediate": "IMM",
+            "tlink": "TLIN",
+            "timer": "TIM",
+            "manual": "MAN",
+            "bus": "BUS",
+            "nstest": "NST",
+            "pstest": "PST",
+            "bstest": "BST",
+        },
+        map_values=True,
+    )
+
+    trigger_output_event = Instrument.control(
+        ":ARM:OUTP %s",
+        ":ARM:OUTP?",
+        """Control when the trigger pulse occurs on the trigger layer output trigger line
+        (str).
+
+        - 'source': Trigger after source level is set.
+        - 'delay': Trigger after delay period.
+        - 'sense': Trigger after measurements.
+        - 'off': Disable trigger layer output triggers.""",
+        validator=strict_discrete_set,
+        values={"source": "SOUR", "delay": "DEL", "sense": "SENS", "off": "NONE"},
+        map_values=True,
+    )
+
+    arm_output_event = Instrument.control(
+        ":ARM:OUTP %s",
+        ":ARM:OUTP?",
+        """Control when the trigger pulse occurs on the arm layer output trigger line (str).
+
+        - 'enter': Trigger on entering trigger layer.
+        - 'exit': Trigger on exiting trigger layer.
+        - 'off': Disable arm layer output triggering""",
+        validator=strict_discrete_set,
+        values={"enter": "TENT", "exit": "TEX", "off": "NONE"},
+        map_values=True,
+    )
+
+    def disable_output_triggers(self):
+        """Disable the output trigger for the Trigger layer"""
+        self.output_arm_event = "off"
+        self.output_trigger_event = "off"
+
+    trigger_input_line = Instrument.control(
+        "TRIG:ILIN %d",
+        "TRIG:ILIN?",
+        """Control the trigger layer input line (int, strictly in range 1 to 4).
+
+        For normal operation, :prop:`~.trigger_input_line` should not share its value with
+        :prop:`~.trigger_output_line` or :prop:`~.arm_output_line`.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 4),
+    )
+
+    arm_input_line = Instrument.control(
+        "ARM:ILIN %d",
+        "ARM:ILIN?",
+        """Control the arm layer input line (int, strictly in range 1 to 4).
+
+        For normal operation, :prop:`~.arm_input_line` should not share its value with
+        :prop:`~.trigger_output_line` or :prop:`~.arm_output_line`.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 4),
+    )
+
+    trigger_output_line = Instrument.control(
+        "TRIG:OLIN %d",
+        "TRIG:OLIN?",
+        """Control the trigger layer output line (int, strictly in range 1 to 4).
+
+        For normal operation, :prop:`~.trigger_output_line` should not share its value with
+        :prop:`~.trigger_input_line` or :prop:`~.arm_input_line`.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 4),
+    )
+
+    arm_output_line = Instrument.control(
+        "ARM:OLIN %d",
+        "ARM:OLIN?",
+        """Control the arm layer output line (int, strictly in range 1 to 4).
+
+        For normal operation, :prop:`~.arm_output_line` should not share its value with
+        :prop:`~.trigger_input_line` or :prop:`~.arm_input_line`.""",
+        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
+        values=(1, 4),
+    )
 
     def trigger_on_bus(self):
-        """Configure the trigger to detect events based on the bus
-        trigger, which can be activated by :meth:`~.trigger`.
+        """Configure the trigger to detect events based on the bus trigger,
+        which can be activated by :meth:`~.trigger`.
         """
-        self.write(":ARM:COUN 1;:ARM:SOUR BUS;:TRIG:SOUR BUS;")
-
-    def set_trigger_counts(self, arm, trigger):
-        """Set the number of counts for both the sweeps (arm) and the
-        points in those sweeps (trigger), where the total number of
-        points can not exceed 2500
-        """
-        if arm * trigger > 2500 or arm * trigger < 0:
-            raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
-        if arm < trigger:
-            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
-        else:
-            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+        self.arm_count = 1
+        self.arm_source = "bus"
+        self.trigger_source = "bus"
 
     def sample_continuously(self):
         """Cause the instrument to continuously read samples
-        and turns off any buffer or output triggering
+        and turns off any buffer or output triggering.
         """
         self.disable_buffer()
         self.disable_output_trigger()
         self.trigger_immediately()
 
-    def set_timed_arm(self, interval):
-        """Set up the measurement to be taken with the internal
-        trigger at a variable sampling rate defined by the interval
-        in seconds between sampling points
-        """
-        if interval > 99999.99 or interval < 0.001:
-            raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
-
     def trigger_on_external(self, line=1):
-        """Configure the measurement trigger to be taken from a
-        specific line of an external trigger
+        """Configure the measurement trigger to be taken from a specific line of an external trigger
 
         :param line: A trigger line from 1 to 4
         """
-        cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
-        cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
-        self.write(cmd)
-
-    def output_trigger_on_external(self, line=1, after="DEL"):
-        """Configure the output trigger on the specified trigger link
-        line number, with the option of supplying the part of the
-        measurement after which the trigger should be generated
-        (default to delay, which is right before the measurement)
-
-        :param line: A trigger line from 1 to 4
-        :param after: An event string that determines when to trigger
-        """
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
-
-    def disable_output_trigger(self):
-        """Disable the output trigger for the Trigger layer"""
-        self.write(":TRIG:OUTP NONE")
+        self.arm_source = "tlink"
+        self.trigger_source = "tlink"
+        self.arm_input_line = line
+        self.trigger_input_line = line
 
     ######
     # UI #
@@ -778,7 +887,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the filter's type (str, strictly 'repeat' or 'moving'.
 
         .. deprecated:: 0.16
-           Use :prop:`~.Keithley2400.repeat_filter_enabled`.""",
+           Use :prop:`~.repeat_filter_enabled`.""",
         validator=strict_discrete_set,
         values={
             "repeat": "REP",
@@ -802,7 +911,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         or measuring resistance (int, strictly 2 or 4).
 
         .. deprecated:: 0.16
-           Use :prop:`~.Keithley2400.four_wire_enabled`.""",
+           Use :prop:`~.four_wire_enabled`.""",
         validator=strict_discrete_set,
         values={4: 1, 2: 0},
         map_values=True,
@@ -818,7 +927,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Enable the rear terminals for measurement, and disable the front terminals.
 
         .. deprecated:: 0.16
-           Use :prop:`~.Keithley2400.front_terminals_enabled`.
+           Use :prop:`~.front_terminals_enabled`.
         """
         warn(
             "Deprecated to use `Keithley2400.use_rear_terminals`, "
@@ -831,7 +940,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Enable the front terminals for measurement, and disable the rear terminals.
 
         .. deprecated:: 0.16
-           Use :prop:`~.Keithley2400.front_terminals_enabled`.
+           Use :prop:`~.front_terminals_enabled`.
         """
         warn(
             "Deprecated to use `Keithley2400.use_front_terminals`, "
@@ -845,8 +954,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            Control auto ranging for the desired source using
-           :prop:`~.Keithley2400.source_current_range_auto_enabled` or
-           :prop:`~.Keithley2400.source_voltage_range_auto_enabled`.
+           :prop:`~.source_current_range_auto_enabled` or
+           :prop:`~.source_voltage_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.auto_range_source`. Recommended to explicitly set the
@@ -868,10 +977,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure current is performed implicitly by
-             :prop:`~.Keithley2400.current`.
-           - Control current nplc via :prop:`~.Keithley2400.current_nplc`.
-           - Control current range via :prop:`~.Keithley2400.current_range`
-             or :prop:`~.Keithley2400.current_range_auto_enabled`.
+             :prop:`~.current`.
+           - Control current nplc via :prop:`~.current_nplc`.
+           - Control current range via :prop:`~.current_range`
+             or :prop:`~.current_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_current`, configuration to measure
@@ -897,10 +1006,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure voltage is performed implicitly by
-             :prop:`~.Keithley2400.voltage`.
-           - Control voltage nplc via :prop:`~.Keithley2400.voltage_nplc`.
-           - Control voltage range via :prop:`~.Keithley2400.voltage_range`
-             or :prop:`~.Keithley2400.voltage_range_auto_enabled`.
+             :prop:`~.voltage`.
+           - Control voltage nplc via :prop:`~.voltage_nplc`.
+           - Control voltage range via :prop:`~.voltage_range`
+             or :prop:`~.voltage_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_voltage`, configuration to measure
@@ -926,10 +1035,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure resistance is performed implicitly by
-             :prop:`~.Keithley2400.resistance`.
-           - Control resistance nplc via :prop:`~.Keithley2400.resistance_nplc`.
-           - Control resistance range via :prop:`~.Keithley2400.resistance_range`
-             or :prop:`~.Keithley2400.resistance_range_auto_enabled`.
+             :prop:`~.resistance`.
+           - Control resistance nplc via :prop:`~.resistance_nplc`.
+           - Control resistance range via :prop:`~.resistance_range`
+             or :prop:`~.resistance_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_resistance`, configuration to measure
@@ -953,14 +1062,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The compliance voltage is also set.
 
         :param compliance_voltage: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_voltage`
-        :param current_range: A :attr:`~.Keithley2400.current_range` value or None
+                                   :attr:`~.compliance_voltage`
+        :param current_range: A :attr:`~.current_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :prop:`~.Keithley2400.source_mode`.
-           - Control source current range via :prop:`~.Keithley2400.source_current_range` or
-             :prop:`~.Keithley2400.source_current_range_auto_enabled`.
-           - Control compliance voltage via :prop:`~.Keithley2400.compliance_voltage`
+           - Control source mode via :prop:`~.source_mode`.
+           - Control source current range via :prop:`~.source_current_range` or
+             :prop:`~.source_current_range_auto_enabled`.
+           - Control compliance voltage via :prop:`~.compliance_voltage`
         """
         warn(
             """Deprecated to use `Keithley2400.apply_current`. Recommended to explicitly control
@@ -984,14 +1093,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The compliance current is also set.
 
         :param compliance_current: A float in the correct range for a
-                                   :attr:`~.Keithley2400.compliance_current`
-        :param voltage_range: A :attr:`~.Keithley2400.voltage_range` value or None
+                                   :attr:`~.compliance_current`
+        :param voltage_range: A :attr:`~.voltage_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :prop:`~.Keithley2400.source_mode`.
-           - Control source voltage range via :prop:`~.Keithley2400.source_voltage_range` or
-             :prop:`~.Keithley2400.source_voltage_range_auto_enabled`.
-           - Control compliance current via :prop:`~.Keithley2400.compliance_current`
+           - Control source mode via :prop:`~.source_mode`.
+           - Control source voltage range via :prop:`~.source_voltage_range` or
+             :prop:`~.source_voltage_range_auto_enabled`.
+           - Control compliance current via :prop:`~.compliance_current`
         """
         warn(
             """Deprecated to use `Keithley2400.apply_voltage`. Recommended to explicitly control
@@ -1008,6 +1117,60 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             self.source_voltage_range = voltage_range
         self.compliance_current = compliance_current
         self.check_errors()
+
+    def set_trigger_counts(self, arm, trigger):
+        """Set the number of counts for both the sweeps (arm) and the
+        points in those sweeps (trigger), where the total number of
+        points can not exceed 2500
+
+        .. deprecated:: 0.16
+           Use :prop:`Keithley2400.trigger_count` and/or :prop:`Keithley2400.arm_count`
+        """
+        warn(
+            """Deprecated to use `Keithley2400.set_trigger_counts`.
+            Use `Keithley2400.trigger_count` and/or `Keithley2400.arm_count`.""",
+            FutureWarning,
+        )
+        if arm * trigger > 2500 or arm * trigger < 0:
+            raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
+        if arm < trigger:
+            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
+        else:
+            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+
+    def set_timed_arm(self, interval):
+        """Set up the measurement to be taken with the internal
+        trigger at a variable sampling rate defined by the interval
+        in seconds between sampling points
+        """
+        # TODO: Add deprecation notice
+        if interval > 99999.99 or interval < 0.001:
+            raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
+        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+
+    def trigger_immediately(self):
+        """Configure measurements to be taken with the internal
+        trigger at the maximum sampling rate.
+        """
+        # TODO: Add deprecation notice
+        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
+
+    def disable_output_trigger(self):
+        """Disable the output trigger for the Trigger layer"""
+        # TODO: Add deprecation notice
+        self.write(":TRIG:OUTP NONE")
+
+    def output_trigger_on_external(self, line=1, after="DEL"):
+        """Configure the output trigger on the specified trigger link
+        line number, with the option of supplying the part of the
+        measurement after which the trigger should be generated
+        (default to delay, which is right before the measurement)
+
+        :param line: A trigger line from 1 to 4
+        :param after: An event string that determines when to trigger
+        """
+        # TODO: Add deprecation notice
+        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
 
     @property
     def error(self):
@@ -1030,7 +1193,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param duration: A time in seconds between 0 and 7.9 seconds
 
         .. deprecated:: 0.16
-           Use :meth:`~.Keithley2400.sound_beep`.
+           Use :meth:`~.sound_beep`.
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
@@ -1041,7 +1204,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param duration: A time in seconds between 0 and 7.9 seconds
 
         .. deprecated:: 0.16
-           Use :meth:`~.Keithley2400.sound_beep`.
+           Use :meth:`~.sound_beep`.
         """
         self.beep(base_frequency, duration)
         time.sleep(duration)
