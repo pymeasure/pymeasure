@@ -180,7 +180,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         values=[-1010, 1010]
     )
     voltage_nplc = Instrument.control(
-        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
         """ Control (floating) the number of power line cycles
         (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are

@@ -111,6 +111,7 @@ need_init_communication = [
     "IBeamSmart",
     "ANC300Controller",
     "Keithley2281S",
+    "SpellmanXRV",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [

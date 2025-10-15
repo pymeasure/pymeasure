@@ -3,6 +3,7 @@ Upcoming Release
 
 Removed
 -------
+- Remove support for Python 3.8
 - Remove deprecated Adapter and Instrument parameters :code:`preprocess_reply`, :code:`query_delay`
 - Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
 - Remove deprecated Telnet and VXI adapters

@@ -61,7 +61,7 @@ class IVProcedure(Procedure):
     delay = FloatParameter('Delay Time', units='ms', default=20)
     voltage_range = FloatParameter('Voltage Range', units='V', default=10)
 
-    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (Ohm)']
+    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (ohm)']
 
     def startup(self):
         log.info("Setting up instruments")
@@ -100,7 +100,7 @@ class IVProcedure(Procedure):
             data = {
                 'Current (A)': current,
                 'Voltage (V)': voltage,
-                'Resistance (Ohm)': resistance
+                'Resistance (ohm)': resistance
             }
             self.emit('results', data)
             self.emit('progress', 100. * i / steps)

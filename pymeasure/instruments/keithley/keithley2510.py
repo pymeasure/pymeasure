@@ -36,9 +36,7 @@ class Keithley2510(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Keithley 2510 TEC SourceMeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    ###########
-    # Control #
-    ###########
+    # === Control ===
 
     source_enabled = Instrument.control(
         "OUTPut?",
@@ -60,9 +58,7 @@ class Keithley2510(SCPIMixin, Instrument):
         values=[-50, 225],
     )
 
-    ################
-    # Measurements #
-    ################
+    # === Measurements ===
 
     temperature = Instrument.measurement(
         ":MEASure:TEMPerature?",
@@ -79,9 +75,7 @@ class Keithley2510(SCPIMixin, Instrument):
         """Measure the DC voltage through the thermoelectric cooler, in Volts.""",
     )
 
-    ##########################
-    # Temperature Protection #
-    ##########################
+    # === Temperature protection ===
 
     temperature_protection_enabled = Instrument.control(
         ":SOURce:TEMPerature:PROTection:STATe?",
@@ -114,18 +108,51 @@ class Keithley2510(SCPIMixin, Instrument):
 
     @property
     def temperature_protection_range(self):
-        """Control the lower and upper temperature limits in degrees centigrade.
-        Two-tuple of floats (lower_limit, upper_limit) which can take values from -50 to 250."""
+        """Control the lower and upper temperature limits in degrees centigrade through the tuple
+        (lower_limit, upper_limit)."""
         return (self.temperature_protection_low, self.temperature_protection_high)
 
     @temperature_protection_range.setter
     def temperature_protection_range(self, temp_range):
-        self.temperature_protection_low = temp_range[0]
-        self.temperature_protection_high = temp_range[1]
+        self.temperature_protection_low, self.temperature_protection_high = temp_range
 
-    ###########
-    # Methods #
-    ###########
+    # === PID Control ===
+
+    temperature_pid_p = Instrument.control(
+        ":SOURce:TEMPerature:LCONstants:GAIN?",
+        ":SOURce:TEMPerature:LCONstants:GAIN %g",
+        """Control the proportional constant of the temperature PID loop.""",
+        validator=strict_range,
+        values=[0, 1e5],
+    )
+
+    temperature_pid_i = Instrument.control(
+        ":SOURce:TEMPerature:LCONstants:INTegral?",
+        ":SOURce:TEMPerature:LCONstants:INTegral %g",
+        """Control the integral constant of the temperature PID loop.""",
+        validator=strict_range,
+        values=[0, 1e5],
+    )
+
+    temperature_pid_d = Instrument.control(
+        ":SOURce:TEMPerature:LCONstants:DERivative?",
+        ":SOURce:TEMPerature:LCONstants:DERivative %g",
+        """Control the derivative constant of the temperature PID loop.""",
+        validator=strict_range,
+        values=[0, 1e5],
+    )
+
+    @property
+    def temperature_pid(self):
+        """Control the temperature PID loop constants through the tuple
+        (proportional_const, integral_const, derivative_const)."""
+        return (self.temperature_pid_p, self.temperature_pid_i, self.temperature_pid_d)
+
+    @temperature_pid.setter
+    def temperature_pid(self, pid_consts):
+        self.temperature_pid_p, self.temperature_pid_i, self.temperature_pid_d = pid_consts
+
+    # === Methods ===
 
     def enable_source(self):
         """Enables the source."""
