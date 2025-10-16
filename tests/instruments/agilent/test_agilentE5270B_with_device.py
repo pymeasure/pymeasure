@@ -91,3 +91,11 @@ class TestSMU:
         # expect 0.2V  (voltage compliance)
         assert e5270b.smu1.voltage == pytest.approx(0.2, rel=1e-3)
         e5270b.smu1.enabled = False
+
+
+class TestDisplay:
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_enabled(self, e5270b, enabled):
+        assert [] == e5270b.check_errors()
+        e5270b.display.enabled = enabled
+        assert [] == e5270b.check_errors()
