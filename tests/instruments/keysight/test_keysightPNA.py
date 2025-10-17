@@ -322,11 +322,11 @@ class TestKeysightPNA():
         ) as inst:
             inst.load_state("MyState.csa")
 
-    @pytest.mark.parametrize("byte_order, mapping", [
-                             ("normal", "NORM"),
-                             ("swapped", "SWAP"),
+    @pytest.mark.parametrize("byte_order_swapped, mapping", [
+                             (False, "NORM"),
+                             (True, "SWAP"),
                              ])
-    def test_byte_order(self, byte_order, mapping):
+    def test_byte_order(self, byte_order_swapped, mapping):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
@@ -334,8 +334,8 @@ class TestKeysightPNA():
              ("FORM:BORD?", mapping),
              ],
         ) as inst:
-            inst.byte_order = byte_order
-            assert byte_order == inst.byte_order
+            inst.byte_order_swapped = byte_order_swapped
+            assert byte_order_swapped == inst.byte_order_swapped
 
     @pytest.mark.parametrize("data_format, mapping",
                              [("ascii", "ASC,0"),

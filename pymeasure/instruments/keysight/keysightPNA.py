@@ -256,7 +256,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     def __init__(self, adapter,
                  name="Keysight PNA",
                  data_format="real64",
-                 byte_order="swapped",
+                 byte_order_swapped=True,
                  **kwargs):
         super().__init__(
             adapter,
@@ -266,7 +266,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         )
 
         self.data_format = data_format
-        self.byte_order = byte_order
+        self.byte_order_swapped = byte_order_swapped
 
         # add the active channels
         for channel in self.measurement_channels:
@@ -288,16 +288,16 @@ class KeysightPNA(SCPIMixin, Instrument):
         """
         self.write(f"MMEM:LOAD '{file_name}'")
 
-    byte_order = Instrument.control(
+    byte_order_swapped = Instrument.control(
         "FORM:BORD?",
         "FORM:BORD %s",
         """
-        Control the byte order used for data transfer (strictly ``normal`` or ``swapped``).
+        Control whether the byte order is swapped for data transfer (bool).
         """,
         map_values=True,
         validator=strict_discrete_set,
-        values={"normal": "NORM",
-                "swapped": "SWAP",
+        values={False: "NORM",
+                True: "SWAP",
                 },
         )
 

@@ -61,18 +61,18 @@ def keysightPNA(connected_device_address):
 class TestKeysightPNA:
     def test_defaults(self, keysightPNA_default):
         assert "real64" == keysightPNA_default.data_format
-        assert "swapped" == keysightPNA_default.byte_order
+        assert keysightPNA_default.byte_order_swapped is True
 
     def test_abort(self, keysightPNA):
         keysightPNA.abort()
         assert [] == keysightPNA.check_errors()
 
-    @pytest.mark.parametrize("byte_order", ["normal", "swapped"])
-    def test_byte_order(self, keysightPNA, byte_order):
-        initial_byte_order = keysightPNA.byte_order
-        keysightPNA.byte_order = byte_order
-        assert byte_order == keysightPNA.byte_order
-        keysightPNA.byte_order = initial_byte_order
+    @pytest.mark.parametrize("byte_order_swapped", [False, True])
+    def test_byte_order(self, keysightPNA, byte_order_swapped):
+        initial_byte_order_swapped = keysightPNA.byte_order_swapped
+        keysightPNA.byte_order_swapped = byte_order_swapped
+        assert byte_order_swapped == keysightPNA.byte_order_swapped
+        keysightPNA.byte_order_swapped = initial_byte_order_swapped
         assert [] == keysightPNA.check_errors()
 
     @pytest.mark.parametrize("data_format", ["ascii", "real32", "real64"])
