@@ -284,7 +284,7 @@ class KeysightPNA(SCPIMixin, Instrument):
     def load_state(self, file_name):
         """Load an instrument state from file.
 
-        :param file_name: str, e.g. ``D:/my_pna_state.csa``
+        :param str file_name: e.g. ``D:/my_pna_state.csa``
         """
         self.write(f"MMEM:LOAD '{file_name}'")
 
