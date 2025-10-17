@@ -259,6 +259,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     # Measurement properties #
 
+    filter_enabled = Instrument.control(
+        ":SENSE:AVERAGE?",
+        ":SENSE:AVERAGE %s",
+        """Control whether the filter is active (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
     repeat_filter_enabled = Instrument.control(
         ":SENSE:AVERAGE:TCONTROL?",
         ":SENSE:AVERAGE:TCONTROL %s",
@@ -276,15 +285,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_range,
         values=[1, 100],
         cast=int,
-    )
-
-    filter_enabled = Instrument.control(
-        ":SENSE:AVERAGE?",
-        ":SENSE:AVERAGE %s",
-        """Control whether the filter is active (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
     )
 
     # Measurement methods #
@@ -306,7 +306,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             - 'status' (int): Instrument status flag.
         """
         self.resistance_mode_auto_enabled = False
-        self.write(":SENSE:FUNC:ALL")
+        self.write(":SENSE:FUNCTION:ALL")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
 
@@ -677,35 +677,31 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Clear any pending input triggers immediately."""
         self.write(":TRIGGER:CLEAR")
 
-    def _set_trigger_count_process(self, value):
-        if value * self.arm_count > 2500:
-            raise ValueError("Product of arm_count and trigger_count cannot exceed 2500.")
-        return value
-
-    trigger_count = Instrument.control(
-        ":TRIGGER:COUNT?",
-        ":TRIGGER:COUNT %d",
+    @property
+    def trigger_count(self):
         """Control the trigger layer count (int strictly in range 1 to 2500).
-        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
-        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
-        values=(1, 2500),
-        set_process=_set_trigger_count_process,
-    )
+        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500."""
+        return self.values(":TRIGGER:COUNT?")[0]
 
-    def _set_arm_count_process(self, value):
-        if value * self.trigger_count > 2500:
+    @trigger_count.setter
+    def trigger_count(self, v):
+        v = strict_discrete_range(v, (1, 2500), 1)
+        if v * self.arm_count > 2500:
             raise ValueError("Product of arm_count and trigger_count cannot exceed 2500.")
-        return value
+        self.write(f":TRIGGER:COUNT {v}")
 
-    arm_count = Instrument.control(
-        ":TRIGGER:COUNT?",
-        ":TRIGGER:COUNT %d",
+    @property
+    def arm_count(self):
         """Control the arm layer count (int strictly in range 1 to 2500).
-        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
-        validator=lambda v, vs: strict_discrete_range(v, vs, 1),
-        values=(1, 2500),
-        set_process=_set_arm_count_process,
-    )
+        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500."""
+        return self.values(":ARM:COUNT?")[0]
+
+    @arm_count.setter
+    def arm_count(self, v):
+        v = strict_discrete_range(v, (1, 2500), 1)
+        if v * self.trigger_count > 2500:
+            raise ValueError("Product of arm_count and trigger_count cannot exceed 2500.")
+        self.write(f":ARM:COUNT {v}")
 
     trigger_delay = Instrument.control(
         ":TRIGGER:DELAY?",
@@ -715,42 +711,42 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=[0, 999.9999],
     )
 
-    arm_time = Instrument.control(
-        ":ARM:TIME?",
-        ":ARM:TIME %g",
+    arm_timer = Instrument.control(
+        ":ARM:TIMER?",
+        ":ARM:TIMER %g",
         """Control the arm layer timer in seconds (float, strictly in range 0.001 to 99999.99).""",
         validator=strict_range,
         values=[0.001, 99999.99],
     )
 
     trigger_source = Instrument.control(
-        ":TRIGGER:SOURCE %s",
         ":TRIGGER:SOURCE?",
+        ":TRIGGER:SOURCE %s",
         """Control the trigger layer event control source, as a :class:`TriggerSource` enum.""",
         validator=strict_discrete_set,
         values=TriggerSource,
     )
 
     arm_source = Instrument.control(
-        ":ARM:SOURCE %s",
         ":ARM:SOURCE?",
+        ":ARM:SOURCE %s",
         """Control the arm layer event control source as, an :class:`ArmSource` enum.""",
         validator=strict_discrete_set,
         values=ArmSource,
     )
 
     trigger_output_event = Instrument.control(
-        ":ARM:OUTPUT %s",
-        ":ARM:OUTPUT?",
+        ":TRIGGER:OUTPUT?",
+        ":TRIGGER:OUTPUT %s",
         """Control when the trigger pulse occurs on the trigger layer output trigger line,
-        as a :class:`trigger_output_event` enum.""",
+        as a :class:`TriggerOutputEvent` enum.""",
         validator=strict_discrete_set,
         values=TriggerOutputEvent,
     )
 
     arm_output_event = Instrument.control(
-        ":ARM:OUTPUT %s",
         ":ARM:OUTPUT?",
+        ":ARM:OUTPUT %s",
         """Control when the trigger pulse occurs on the arm layer output trigger line,
         as an :class:`ArmOutputEvent` enum.""",
         validator=strict_discrete_set,
@@ -759,12 +755,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def disable_output_triggers(self):
         """Disable the output trigger for the Trigger layer"""
-        self.output_arm_event = ArmOutputEvent.NONE
-        self.output_trigger_event = TriggerOutputEvent.NONE
+        self.arm_output_event = ArmOutputEvent.NONE
+        self.trigger_output_event = TriggerOutputEvent.NONE
 
     trigger_input_line = Instrument.control(
-        ":TRIGGER:ILINE %d",
         ":TRIGGER:ILINE?",
+        ":TRIGGER:ILINE %d",
         """Control the trigger layer input line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.trigger_input_line` should not share its value with
@@ -774,8 +770,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     arm_input_line = Instrument.control(
-        ":ARM:ILINE %d",
         ":ARM:ILINE?",
+        ":ARM:ILINE %d",
         """Control the arm layer input line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.arm_input_line` should not share its value with
@@ -785,8 +781,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     trigger_output_line = Instrument.control(
-        ":TRIGGER:OLINE %d",
         ":TRIGGER:OLINE?",
+        ":TRIGGER:OLINE %d",
         """Control the trigger layer output line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.trigger_output_line` should not share its value with
@@ -796,8 +792,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     arm_output_line = Instrument.control(
-        ":ARM:OLINE %d",
         ":ARM:OLINE?",
+        ":ARM:OLINE %d",
         """Control the arm layer output line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.arm_output_line` should not share its value with
@@ -812,15 +808,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """
         self.arm_count = 1
         self.arm_source = ArmSource.BUS
-        self.trigger_source = TriggerSource.BUS
-
-    def sample_continuously(self):
-        """Cause the instrument to continuously read samples
-        and turns off any buffer or output triggering.
-        """
-        self.disable_buffer()
-        self.disable_output_trigger()
-        self.trigger_immediately()
+        self.trigger_source = TriggerSource.IMMEDIATE
 
     def trigger_on_external(self, line=1):
         """Configure the measurement trigger to be taken from a specific line of an external trigger
@@ -1238,11 +1226,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Disable the output trigger for the Trigger layer
 
         .. deprecated:: 0.16
-           Set :prop:`~.trigger_output_event` to "off".
+           Set :prop:`~.trigger_output_event` to "off" to turn off just trigger layer output
+           triggering, or use `~.disable_output_triggers` to disable both trigger and
+           arm layer output triggering.
         """
         warn(
             """Deprecated to use `Keithley2400.disable_output_trigger`.
-            Set `Keithley2400.trigger_output_event` to "off".""",
+            Set `Keithley2400.trigger_output_event` to "off" to turn off just trigger layer output
+            triggering, or use `Keithley2400.disable_output_triggers` to disable both trigger and
+            arm layer output triggering.""",
             FutureWarning,
         )
         self.write(":TRIG:OUTP NONE")
@@ -1265,6 +1257,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             FutureWarning,
         )
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+
+    def sample_continuously(self):  # TODO: Deprecation notice
+        """Cause the instrument to continuously read samples
+        and turns off any buffer or output triggering.
+        """
+        self.disable_buffer()
+        self.disable_output_trigger()
+        self.trigger_immediately()
 
     @property
     def error(self):

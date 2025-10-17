@@ -24,7 +24,9 @@
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.keithley import Keithley2400
+from pymeasure.instruments.keithley import (
+    Keithley2400,
+)  # TODO: Create pytest fixture to manage instead
 
 
 INIT_COMMS = (":FORM:ELEM VOLT, CURR, RES, TIME, STAT", None)
