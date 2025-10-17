@@ -405,6 +405,7 @@ def test_wait_for_sweep_complete_should_stop():
         result = inst.wait_for_sweep_complete(should_stop=should_stop)
         assert result is False
 
+
 def test_check_errors():
     """Test check_errors method calls parent implementation."""
     with expected_protocol(
