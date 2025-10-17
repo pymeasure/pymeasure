@@ -435,7 +435,7 @@ class CTP10(SCPIMixin, Instrument):
         Possible values:
         - Standard sampling: integers in the range 1 to 250 pm
         - High resolution sampling: 0.5, 0.2, 0.1, 0.05, or 0.02 pm
-          (Note: High resolution sampling reduces possible sweep span and laser speed)
+        (Note: High resolution sampling reduces possible sweep span and laser speed)
         """,
         get_process=lambda v: float(v) * 1e12,
     )
