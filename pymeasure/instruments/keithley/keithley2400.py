@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from enum import StrEnum
 import logging
 import time
 from warnings import warn
@@ -47,22 +48,111 @@ def _deprecate_process(msg):
     return lambda v: (warn(msg, FutureWarning), v)[1]
 
 
+class SourceMode(StrEnum):
+    CURRENT = "current"
+    VOLTAGE = "voltage"
+
+
+class AutoZeroState(StrEnum):
+    ON = "ON"
+    OFF = "OFF"
+    ONCE = "ONCE"
+
+
+class OutputOffState(StrEnum):
+    """Avaliable output off states.
+
+    Args:
+        DISCONNECTED: output relay is open, disconnects external circuitry.
+        NORMAL: Voltage source is selected and set to 0V. Compliance is set to 0.5%
+            of the full scale of the present current range.
+        ZERO: Voltage source is selected and set to 0V, compliance is set to the greater of the
+            programmed source current value or 0.5% of the full scale of the present current range.
+        GUARD: Current source is selected and set to 0A
+    """
+
+    DISCONNECTED = "HIMP"
+    NORMAL = "NORM"
+    ZERO = "ZERO"
+    GUARD = "GUAR"
+
+
+class TriggerSource(StrEnum):
+    """Available trigger sources.
+
+    Attrs:
+        IMMEDIATE: Pass operation through immediately.
+        TRIGGER_LINK: Select trigger link as the event.
+    """
+
+    IMMEDIATE = "IMMEDIATE"
+    TRIGGER_LINK = "TLINK"
+
+
+class ArmSource(StrEnum):
+    """Available arm sources.
+
+    Attrs:
+        IMMEDIATE: Pass operation through immediately.
+        TRIGGER_LINK: Select trigger link as the event.
+        TIMER: Select timer as the event.
+        MANUAL: Select manual event.
+        BUS: Select bus trigger as the event.
+    """
+
+    IMMEDIATE = "IMMEDIATE"
+    TRIGGER_LINK = "TLINK"
+    TIMER = "TIMER"
+    MANUAL = "MANUAL"
+    BUS = "BUS"
+
+
+class TriggerOutputEvent(StrEnum):
+    """Avaliable trigger output events
+
+    Attrs:
+        SOURCE: Trigger after source level is set.
+        DELAY: Trigger after delay period.
+        SENSE: Trigger after measurements.
+        NONE: Disable trigger layer output triggers.
+    """
+
+    SOURCE = "SOURCE"
+    DELAY = "DELAY"
+    SENSE = "SENSE"
+    NONE = "NONE"
+
+
+class ArmOutputEvent(StrEnum):
+    """Avaliable arm output events
+
+    Attrs:
+        ENTER: Trigger on entering trigger layer
+        EXIT: Trigger on exiting trigger layer
+        NONE: Disable trigger layer output triggers.
+    """
+
+    ENTER = "TENTER"
+    EXIT = "TEXIT"
+    NONE = "NONE"
+
+
 class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     """Represent the Keithley 2400 SourceMeter and provide a
     high-level interface for interacting with the instrument.
 
     .. code-block:: python
 
-        keithley = Keithley2400("GPIB::1")
-        keithley.reset()                        # Resets the instrument
+        smu = Keithley2400("GPIB::1")
+        smu.reset()                        # Resets the instrument
 
-        keithley.source_mode = "current"        # Sets up to source current
-        keithley.source_enabled = True          # Enables the source output
+        smu.source_mode = "current"        # Sets up to source current
+        smu.source_enabled = True          # Enables the source output
 
-        keithley.ramp_to_current(5e-3)          # Ramps the current to 5 mA
-        print(keithley.voltage)                 # Prints the voltage in Volts
+        smu.ramp_to_current(5e-3)          # Ramps the current to 5 mA
+        print(smu.voltage)                 # Prints the voltage in Volts
 
-        keithley.reset()                        # Resets the instrument
+        smu.reset()                        # Resets the instrument
     """
 
     def __init__(self, adapter, name="Keithley 2400 SourceMeter", **kwargs):
@@ -70,12 +160,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.reset_data_format()
 
     def reset_data_format(self):
-        """Resets the data format to the format expected by :class:`~.Keithley2400`.
+        """Resets the data format to the format expected by :class:`Keithley2400`.
 
         The expected data format is [`current`, `voltage`, `resistance`, `time`, `status`].
 
         .. caution::
-           Changing the data format after initialization may break parts of :class:`~.Keithley2400`.
+           Changing the data format with the ":FORM:ELEM" command after initialization
+           may break parts of :class:`Keithley2400`.
         """
         self.write(":FORM:ELEM VOLT, CURR, RES, TIME, STAT")
 
@@ -97,10 +188,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     source_mode = Instrument.control(
         ":SOUR:FUNC?",
         ":SOUR:FUNC %s",
-        """Control the source mode (str strictly 'current' or 'voltage').""",
+        """Control the source mode as a :class:`SourceMode` enum.""",
         validator=strict_discrete_set,
-        values={"current": "CURR", "voltage": "VOLT"},
-        map_values=True,
+        values=SourceMode,  # ??? Do I need map_values=True here?
     )
 
     source_delay = Instrument.control(
@@ -109,8 +199,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
 
-        When this property is set, :prop:`~.source_delay_auto_enabled` is implicitly
-        set to False.""",
+        When this property is set, :prop:`~.source_delay_auto_enabled` is implicitly set to False.
+        """,
         validator=strict_range,
         values=[0, 999.9999],
     )
@@ -124,37 +214,20 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    auto_zero = Instrument.control(
+    auto_zero_state = Instrument.control(
         ":SYST:AZER:STAT?",
         ":SYST:AZER:STAT %s",
-        """Control whether the auto zero option is enabled
-        (bool or str, True (enabled), False (disabled), or 'once' (force immediate)).""",
+        """Control the state of auto zeroing, as an :class:`AutoZeroState` enum.""",
         validator=strict_discrete_set,
-        values={True: 1, False: 0, "once": "ONCE"},
-        map_values=True,
+        values=AutoZeroState,
     )
 
     output_off_state = Instrument.control(
         ":OUTP:SMOD?",
         ":OUTP:SMOD %s",
-        """Control the output-off state of the SourceMeter
-        (str, strictly 'disconnect', 'normal', 'zero', or 'guard').
-
-        disconnect : output relay is open, disconnects external circuitry.
-        normal : V-Source is selected and set to 0V, Compliance is set to 0.5%
-        full scale of the present current range.
-        zero : V-Source is selected and set to 0V, compliance is set to the
-        programmed Source I value or to 0.5% full scale of the present current
-        range, whichever is greater.
-        guard : I-Source is selected and set to 0A""",
+        """Control the output-off state, as an :class:`OutputOffState` enum.""",
         validator=strict_discrete_set,
-        values={
-            "disconnect": "HIMP",
-            "normal": "NORM",
-            "zero": "ZERO",
-            "guard": "GUAR",
-        },
-        map_values=True,
+        values=OutputOffState,
     )
 
     auto_output_off = Instrument.control(
@@ -653,75 +726,41 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     trigger_source = Instrument.control(
         ":TRIG:SOUR %s",
         ":TRIG:SOUR?",
-        """Control the trigger layer event control source (str).
-
-        - 'immediate': Pass operation through immedately.
-        - 'tlink': Select trigger link as the event.
-        """,
+        """Control the trigger layer event control source, as a :class:`TriggerSource` enum.""",
         validator=strict_discrete_set,
-        values={"immediate": "IMM", "tlink": "TLIN"},
-        map_values=True,
+        values=TriggerSource,
     )
 
     arm_source = Instrument.control(
         ":ARM:SOUR %s",
         ":ARM:SOUR?",
-        """Control the arm layer event control source (str).
-
-        - 'immediate': Pass operation through immedately.
-        - 'tlink': Select trigger link as the event.
-        - 'timer': Select timer as the event.
-        - 'manual': Select manual event.
-        - 'bus': Select bus trigger as the event.
-        - 'nstest': Select low SOT pulse as the event.
-        - 'pstest': Select high SOT pulse as the event.
-        - 'bstest': Select high or low SOT pluse as the event.
-        """,
+        """Control the arm layer event control source as, an :class:`ArmSource` enum.""",
         validator=strict_discrete_set,
-        values={
-            "immediate": "IMM",
-            "tlink": "TLIN",
-            "timer": "TIM",
-            "manual": "MAN",
-            "bus": "BUS",
-            "nstest": "NST",
-            "pstest": "PST",
-            "bstest": "BST",
-        },
-        map_values=True,
+        values=ArmSource,
     )
 
     trigger_output_event = Instrument.control(
         ":ARM:OUTP %s",
         ":ARM:OUTP?",
-        """Control when the trigger pulse occurs on the trigger layer output trigger line (str).
-
-        - 'source': Trigger after source level is set.
-        - 'delay': Trigger after delay period.
-        - 'sense': Trigger after measurements.
-        - 'off': Disable trigger layer output triggers.""",
+        """Control when the trigger pulse occurs on the trigger layer output trigger line,
+        as a :class:`trigger_output_event` enum.""",
         validator=strict_discrete_set,
-        values={"source": "SOUR", "delay": "DEL", "sense": "SENS", "off": "NONE"},
-        map_values=True,
+        values=TriggerOutputEvent,
     )
 
     arm_output_event = Instrument.control(
         ":ARM:OUTP %s",
         ":ARM:OUTP?",
-        """Control when the trigger pulse occurs on the arm layer output trigger line (str).
-
-        - 'enter': Trigger on entering trigger layer.
-        - 'exit': Trigger on exiting trigger layer.
-        - 'off': Disable arm layer output triggering""",
+        """Control when the trigger pulse occurs on the arm layer output trigger line,
+        as an :class:`ArmOutputEvent` enum.""",
         validator=strict_discrete_set,
-        values={"enter": "TENT", "exit": "TEX", "off": "NONE"},
-        map_values=True,
+        values=ArmOutputEvent,
     )
 
     def disable_output_triggers(self):
         """Disable the output trigger for the Trigger layer"""
-        self.output_arm_event = "off"
-        self.output_trigger_event = "off"
+        self.output_arm_event = ArmOutputEvent.NONE
+        self.output_trigger_event = TriggerOutputEvent.NONE
 
     trigger_input_line = Instrument.control(
         "TRIG:ILIN %d",
@@ -772,8 +811,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         which can be activated by :meth:`~.trigger`.
         """
         self.arm_count = 1
-        self.arm_source = "bus"
-        self.trigger_source = "bus"
+        self.arm_source = ArmSource.BUS
+        self.trigger_source = TriggerSource.BUS
 
     def sample_continuously(self):
         """Cause the instrument to continuously read samples
@@ -788,8 +827,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         :param line: A trigger line from 1 to 4
         """
-        self.arm_source = "tlink"
-        self.trigger_source = "tlink"
+        self.arm_source = ArmSource.TRIGGER_LINK
+        self.trigger_source = TriggerSource.TRIGGER_LINK
         self.arm_input_line = line
         self.trigger_input_line = line
 
@@ -887,6 +926,24 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ##############
     # Deprecated #
     ##############
+
+    auto_zero = Instrument.control(  # TODO: add deprecation notices
+        ":SYST:AZER:STAT?",
+        ":SYST:AZER:STAT %s",
+        """ Control whether the auto zero option is enabled. Valid values are
+        True (enabled) and False (disabled) and 'ONCE' (force immediate).
+
+        .. deprecated:: 0.16
+           Use :prop:`~.auto_zero_state`.""",
+        values={True: 1, False: 0, "ONCE": "ONCE"},
+        map_values=True,
+        get_process=_deprecate_process(
+            "Deprecated to use `Keithley2400.auto_zero`, " "use `Keithley2400.auto_zero_state`.",
+        ),
+        set_process=_deprecate_process(
+            "Deprecated to use `Keithley2400.auto_zero`, " "use `Keithley2400.auto_zero_state`.",
+        ),
+    )
 
     filter_type = Instrument.control(
         ":SENS:AVER:TCON?",
