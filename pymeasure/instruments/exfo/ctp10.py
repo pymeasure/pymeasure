@@ -23,7 +23,6 @@
 #
 
 import logging
-import time
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
@@ -512,25 +511,16 @@ class CTP10(SCPIMixin, Instrument):
         """
         self.write(':INITiate:IMMediate')
 
-    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=60.0, delay=0.02):
-        """Block the program, waiting for the sweep to complete.
+    def wait_for_sweep_complete(self, should_stop=lambda: False):
+        """Wait until the sweep completes or until ``should_stop`` returns True.
 
         :param callable should_stop: Optional function that returns True to stop waiting.
-        :param float timeout: Maximum waiting time in seconds (default 60.0).
-        :param float delay: Delay between checks for sweep completion in seconds (default 0.02).
         :return: True when sweep completed, False if stopped by should_stop (bool).
-        :raises TimeoutError: If the sweep does not complete within the timeout period.
         """
-        t0 = time.time()
-
+        # Poll the instrument until sweep_complete is True or should_stop()
         while not self.sweep_complete:
             if should_stop():
                 return False
-
-            if time.time() - t0 > timeout:
-                raise TimeoutError(f"Sweep did not complete within {timeout}s timeout")
-
-            time.sleep(delay)
 
         return True
 

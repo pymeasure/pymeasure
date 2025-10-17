@@ -383,7 +383,7 @@ def test_wait_for_sweep_complete_success():
             (b":STATus:OPERation:CONDition?", b"0\r\n"),  # Complete
         ],
     ) as inst:
-        result = inst.wait_for_sweep_complete(timeout=1.0, delay=0.01)
+        result = inst.wait_for_sweep_complete()
         assert result is True
 
 
@@ -402,27 +402,8 @@ def test_wait_for_sweep_complete_should_stop():
             (b":STATus:OPERation:CONDition?", b"4\r\n"),  # Still scanning
         ],
     ) as inst:
-        result = inst.wait_for_sweep_complete(
-            should_stop=should_stop, timeout=10.0, delay=0.01)
+        result = inst.wait_for_sweep_complete(should_stop=should_stop)
         assert result is False
-
-
-def test_wait_for_sweep_complete_timeout():
-    """Test wait_for_sweep_complete raises TimeoutError."""
-    # Use 4 checks to account for timing variations
-    with expected_protocol(
-        CTP10,
-        [
-            (b":STATus:OPERation:CONDition?", b"4\r\n"),  # Check 1
-            (b":STATus:OPERation:CONDition?", b"4\r\n"),  # Check 2
-            (b":STATus:OPERation:CONDition?", b"4\r\n"),  # Check 3
-            (b":STATus:OPERation:CONDition?", b"4\r\n"),  # Check 4
-        ],
-    ) as inst:
-        with pytest.raises(TimeoutError,
-                           match="Sweep did not complete within"):
-            inst.wait_for_sweep_complete(timeout=0.06, delay=0.02)
-
 
 def test_check_errors():
     """Test check_errors method calls parent implementation."""
