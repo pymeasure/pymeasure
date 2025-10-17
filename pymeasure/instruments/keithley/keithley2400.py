@@ -165,10 +165,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         The expected data format is [`current`, `voltage`, `resistance`, `time`, `status`].
 
         .. caution::
-           Changing the data format with the ":FORM:ELEM" command after initialization
+           Changing the data format with the ":FORMAT:ELEMENTS" command after initialization
            may break parts of :class:`Keithley2400`.
         """
-        self.write(":FORM:ELEM VOLT, CURR, RES, TIME, STAT")
+        self.write(":FORMAT:ELEMENTS VOLTAGE, CURRENT, RESISTANCE, TIME, STATUS")
 
     ##########
     # SOURCE #
@@ -177,8 +177,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Source properties #
 
     source_enabled = Instrument.control(
-        "OUTP?",
-        "OUTP %d",
+        "OUTPUT?",
+        "OUTPUT %d",
         """Control whether the source is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -186,16 +186,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     source_mode = Instrument.control(
-        ":SOUR:FUNC?",
-        ":SOUR:FUNC %s",
+        ":SOURCE:FUNCTION?",
+        ":SOURCE:FUNCTION %s",
         """Control the source mode as a :class:`SourceMode` enum.""",
         validator=strict_discrete_set,
         values=SourceMode,  # ??? Do I need map_values=True here?
     )
 
     source_delay = Instrument.control(
-        ":SOUR:DEL?",
-        ":SOUR:DEL %g",
+        ":SOURCE:DELAY?",
+        ":SOURCE:DELAY %g",
         """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
 
@@ -206,8 +206,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     source_delay_auto_enabled = Instrument.control(
-        ":SOUR:DEL:AUTO?",
-        ":SOUR:DEL:AUTO %d",
+        ":SOURCE:DELAY:AUTO?",
+        ":SOURCE:DELAY:AUTO %d",
         """Control whether the source auto delay is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -215,24 +215,24 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     auto_zero_state = Instrument.control(
-        ":SYST:AZER:STAT?",
-        ":SYST:AZER:STAT %s",
+        ":SYSTEM:AZERO:STATUS?",
+        ":SYSTEM:AZERO:STATUS %s",
         """Control the state of auto zeroing, as an :class:`AutoZeroState` enum.""",
         validator=strict_discrete_set,
         values=AutoZeroState,
     )
 
     output_off_state = Instrument.control(
-        ":OUTP:SMOD?",
-        ":OUTP:SMOD %s",
+        ":OUTPUT:SMODE?",
+        ":OUTPUT:SMODE %s",
         """Control the output-off state, as an :class:`OutputOffState` enum.""",
         validator=strict_discrete_set,
         values=OutputOffState,
     )
 
     auto_output_off = Instrument.control(
-        ":SOUR:CLE:AUTO?",
-        ":SOUR:CLE:AUTO %d",
+        ":SOURCE:CLEAR:AUTO?",
+        ":SOURCE:CLEAR:AUTO %d",
         """Control whether auto output-off is activated (bool).
 
         .. warning::
@@ -260,17 +260,17 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Measurement properties #
 
     repeat_filter_enabled = Instrument.control(
-        ":SENS:AVER:TCON?",
-        ":SENS:AVER:TCON %s",
+        ":SENSE:AVERAGE:TCONTROL?",
+        ":SENSE:AVERAGE:TCONTROL %s",
         """Control whether repeat filter is enabled (bool). If False, moving filter is used.""",
         validator=strict_discrete_set,
-        values={True: "REP", False: "MOV"},
+        values={True: "REPEAT", False: "MOVING"},
         map_values=True,
     )
 
     filter_count = Instrument.control(
-        ":SENS:AVER:COUNT?",
-        ":SENS:AVER:COUNT %d",
+        ":SENSE:AVERAGE:COUNT?",
+        ":SENSE:AVERAGE:COUNT %d",
         """Control the number of readings that are acquired and stored in the filter buffer
         (int, strictly from 1 to 100).""",
         validator=strict_range,
@@ -279,8 +279,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     filter_enabled = Instrument.control(
-        ":SENS:AVER?",
-        ":SENS:AVER %s",
+        ":SENSE:AVERAGE?",
+        ":SENSE:AVERAGE %s",
         """Control whether the filter is active (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -306,7 +306,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             - 'status' (int): Instrument status flag.
         """
         self.resistance_mode_auto_enabled = False
-        self.write(":SENS:FUNC:ALL")
+        self.write(":SENSE:FUNC:ALL")
         values = self.values(":READ?")
         values = [float("nan") if v == 9.91e37 else v for v in values]
 
@@ -325,14 +325,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Current measurement properties #
 
     current = Instrument.measurement(
-        ":MEAS:CURR?",
+        ":MEASURE:CURRENT?",
         """Measure the current in Amps (float).""",
         get_process_list=lambda v: v[1],
     )
 
     current_range = Instrument.control(
-        ":SENS:CURR:RANG?",
-        ":SENS:CURR:RANG %g",
+        ":SENSE:CURRENT:RANGE?",
+        ":SENSE:CURRENT:RANGE %g",
         """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
 
         When set, the range selected will be the most sensitive range that will accommodate the
@@ -343,8 +343,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     current_range_auto_enabled = Instrument.control(
-        ":SENS:CURR:RANG:AUTO?",
-        ":SENS:CURR:RANG:AUTO %d",
+        ":SENSE:CURRENT:RANGE:AUTO?",
+        ":SENSE:CURRENT:RANGE:AUTO %d",
         """Control whether current measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -352,8 +352,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     current_nplc = Instrument.control(
-        ":SENS:CURR:NPLC?",
-        ":SENS:CURR:NPLC %g",
+        ":SENSE:CURRENT:NPLCYCLES?",
+        ":SENSE:CURRENT:NPLCYCLES %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
@@ -365,8 +365,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     compliance_current = Instrument.control(
-        ":SENS:CURR:PROT?",
-        ":SENS:CURR:PROT %g",
+        ":SENSE:CURRENT:PROTECTION?",
+        ":SENSE:CURRENT:PROTECTION %g",
         """Control the compliance current in Amps (float, strictly from -1.05 to 1.05).""",
         validator=strict_range,
         values=[-1.05, 1.05],
@@ -375,16 +375,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Current source properties #
 
     source_current = Instrument.control(
-        ":SOUR:CURR?",
-        ":SOUR:CURR %g",
+        ":SOURCE:CURRENT?",
+        ":SOURCE:CURRENT %g",
         """Control the source current in Amps (float, strictly from -1.05 to 1.05).""",
         validator=strict_range,
         values=[-1.05, 1.05],
     )
 
     source_current_range = Instrument.control(
-        ":SOUR:CURR:RANG?",
-        ":SOUR:CURR:RANG %g",
+        ":SOURCE:CURRENT:RANGE?",
+        ":SOURCE:CURRENT:RANGE %g",
         """Control the source current range in Amps (float, strictly from -1.05 to 1.05).
 
         When set, the range selected will be the most sensitive range that will accommodate the
@@ -394,8 +394,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     source_current_range_auto_enabled = Instrument.control(
-        ":SOUR:CURR:RANG:AUTO?",
-        ":SOUR:CURR:RANG:AUTO %d",
+        ":SOURCE:CURRENT:RANGE:AUTO?",
+        ":SOURCE:CURRENT:RANGE:AUTO %d",
         """Control whether souce current auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -424,14 +424,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Voltage measurement properties #
 
     voltage = Instrument.measurement(
-        ":MEAS:VOLT?",
+        ":MEASURE:VOLTAGE?",
         """Measure the voltage in Volts (float).""",
         get_process_list=lambda v: v[0],
     )
 
     voltage_range = Instrument.control(
-        ":SENS:VOLT:RANG?",
-        ":SENS:VOLT:RANG %g",
+        ":SENSE:VOLTAGE:RANGE?",
+        ":SENSE:VOLTAGE:RANGE %g",
         """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
 
         When set, the range selected will be the most sensitive range that will accommodate the
@@ -442,8 +442,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     voltage_range_auto_enabled = Instrument.control(
-        ":SENS:VOLT:RANG:AUTO?",
-        ":SENS:VOLT:RANG:AUTO %d",
+        ":SENSE:VOLTAGE:RANGE:AUTO?",
+        ":SENSE:VOLTAGE:RANGE:AUTO %d",
         """Control whether voltage measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -451,8 +451,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     voltage_nplc = Instrument.control(
-        ":SENS:VOLT:NPLC?",
-        ":SENS:VOLT:NPLC %g",
+        ":SENSE:VOLTAGE:NPLCYCLES?",
+        ":SENSE:VOLTAGE:NPLCYCLES %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
@@ -464,8 +464,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     compliance_voltage = Instrument.control(
-        ":SENS:VOLT:PROT?",
-        ":SENS:VOLT:PROT %g",
+        ":SENSE:VOLTAGE:PROTECTION?",
+        ":SENSE:VOLTAGE:PROTECTION %g",
         """Control the compliance voltage in Volts (float, strictly from -210 to 210).""",
         validator=strict_range,
         values=[-210, 210],
@@ -474,16 +474,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Voltage source properties #
 
     source_voltage = Instrument.control(
-        ":SOUR:VOLT?",
-        ":SOUR:VOLT %g",
+        ":SOURCE:VOLTAGE?",
+        ":SOURCE:VOLTAGE %g",
         """Control the source voltage in Volts (float, strictly from -210 to 210).""",
         validator=strict_range,
         values=[-210, 210],
     )
 
     source_voltage_range = Instrument.control(
-        ":SOUR:VOLT:RANG?",
-        ":SOUR:VOLT:RANG %g",
+        ":SOURCE:VOLTAGE:RANGE?",
+        ":SOURCE:VOLTAGE:RANGE %g",
         """Control the source voltage range in Volts (float, strictly from -210 to 210).
 
         When set, the range selected will be the most sensitive range that will accommodate the
@@ -493,8 +493,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     source_voltage_range_auto_enabled = Instrument.control(
-        ":SOUR:VOLT:RANG:AUTO?",
-        ":SOUR:VOLT:RANG:AUTO %d",
+        ":SOURCE:VOLTAGE:RANGE:AUTO?",
+        ":SOURCE:VOLTAGE:RANGE:AUTO %d",
         """Control whether source voltage auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -523,25 +523,25 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Resistance measurement properties #
 
     resistance = Instrument.measurement(
-        ":MEAS:RES?",
+        ":MEASURE:RESISTANCE?",
         """Measure the resistance in Ohms (float).""",
         get_process_list=lambda v: v[2],
     )
 
     resistance_mode_auto_enabled = Instrument.control(
-        ":SENS:RES:MODE?",
-        ":SENS:RES:MODE %s",
+        ":SENSE:RESISTANCE:MODE?",
+        ":SENSE:RESISTANCE:MODE %s",
         """Control the resistance mode auto status (bool).
 
         When `True`, `source_current` and `voltage_range` depends on the `resistance_range`
         selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
-        values={True: "AUTO", False: "MAN"},
+        values={True: "AUTO", False: "MANUAL"},
         map_values=True,
     )
 
     resistance_range = Instrument.control(
-        ":SENS:RES:RANG?",
-        ":SENS:RES:RANG %g",
+        ":SENSE:RESISTANCE:RANGE?",
+        ":SENSE:RESISTANCE:RANGE %g",
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
 
         When set, the range selected will be the most sensitive range that will accommodate the
@@ -552,8 +552,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     resistance_range_auto_enabled = Instrument.control(
-        ":SENS:RES:RANG:AUTO?",
-        ":SENS:RES:RANG:AUTO %d",
+        ":SENSE:RESISTANCE:RANGE:AUTO?",
+        ":SENSE:RESISTANCE:RANGE:AUTO %d",
         """Control whether resistance measurement auto-range is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -561,8 +561,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     resistance_nplc = Instrument.control(
-        ":SENS:RES:NPLC?",
-        ":SENS:RES:NPLC %g",
+        ":SENSE:RESISTANCE:NPLCYCLES?",
+        ":SENSE:RESISTANCE:NPLCYCLES %g",
         """Control the number of power line cycles (NPLC) (float, strictly from 0.01 to 10).
 
         .. note::
@@ -578,25 +578,25 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     ##########
 
     means = Instrument.measurement(
-        ":CALC3:FORM MEAN;:CALC3:DATA?;",
+        ":CALCULATE3:FORMAT MEAN;:CALCULATE3:DATA?;",
         """Get the calculated means for voltage, current, and resistance from the buffer data
         (list of floats).""",
     )
 
     maximums = Instrument.measurement(
-        ":CALC3:FORM MAX;:CALC3:DATA?;",
+        ":CALCULATE3:FORMAT MAX;:CALCULATE3:DATA?;",
         """Get the calculated maximums for voltage, current, and resistance from the buffer data
         (list of floats).""",
     )
 
     minimums = Instrument.measurement(
-        ":CALC3:FORM MIN;:CALC3:DATA?;",
+        ":CALCULATE3:FORMAT MIN;:CALCULATE3:DATA?;",
         """Get the calculated minimums for voltage, current, and resistance from the buffer data
         (list of floats).""",
     )
 
     standard_devs = Instrument.measurement(
-        ":CALC3:FORM SDEV;:CALC3:DATA?;",
+        ":CALCULATE3:FORMAT SDEVIATION;:CALCULATE3:DATA?;",
         """Get the calculated standard deviations for voltage, current, and resistance from the
         buffer data (list of floats).""",
     )
@@ -671,11 +671,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def reset_trigger(self):
         """Reset the trigger system and return to an idle state."""
-        self.write(":ABORt")
+        self.write(":ABORT")
 
     def clear_trigger(self):
         """Clear any pending input triggers immediately."""
-        self.write(":TRIG:CLE")
+        self.write(":TRIGGER:CLEAR")
 
     def _set_trigger_count_process(self, value):
         if value * self.arm_count > 2500:
@@ -683,8 +683,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         return value
 
     trigger_count = Instrument.control(
-        ":TRIG:COUN?",
-        ":TRIG:COUN %d",
+        ":TRIGGER:COUNT?",
+        ":TRIGGER:COUNT %d",
         """Control the trigger layer count (int strictly in range 1 to 2500).
         The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
@@ -698,8 +698,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         return value
 
     arm_count = Instrument.control(
-        ":TRIG:COUN?",
-        ":TRIG:COUN %d",
+        ":TRIGGER:COUNT?",
+        ":TRIGGER:COUNT %d",
         """Control the arm layer count (int strictly in range 1 to 2500).
         The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
@@ -708,40 +708,40 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     trigger_delay = Instrument.control(
-        ":TRIG:SEQ:DEL?",
-        ":TRIG:SEQ:DEL %g",
+        ":TRIGGER:DELAY?",
+        ":TRIGGER:DELAY %g",
         """Control the trigger layer delay in seconds (float, strictly in range 0 to 999.9999).""",
         validator=strict_range,
         values=[0, 999.9999],
     )
 
     arm_time = Instrument.control(
-        ":ARM:TIM?",
-        "ARM:TIM %g",
+        ":ARM:TIME?",
+        ":ARM:TIME %g",
         """Control the arm layer timer in seconds (float, strictly in range 0.001 to 99999.99).""",
         validator=strict_range,
         values=[0.001, 99999.99],
     )
 
     trigger_source = Instrument.control(
-        ":TRIG:SOUR %s",
-        ":TRIG:SOUR?",
+        ":TRIGGER:SOURCE %s",
+        ":TRIGGER:SOURCE?",
         """Control the trigger layer event control source, as a :class:`TriggerSource` enum.""",
         validator=strict_discrete_set,
         values=TriggerSource,
     )
 
     arm_source = Instrument.control(
-        ":ARM:SOUR %s",
-        ":ARM:SOUR?",
+        ":ARM:SOURCE %s",
+        ":ARM:SOURCE?",
         """Control the arm layer event control source as, an :class:`ArmSource` enum.""",
         validator=strict_discrete_set,
         values=ArmSource,
     )
 
     trigger_output_event = Instrument.control(
-        ":ARM:OUTP %s",
-        ":ARM:OUTP?",
+        ":ARM:OUTPUT %s",
+        ":ARM:OUTPUT?",
         """Control when the trigger pulse occurs on the trigger layer output trigger line,
         as a :class:`trigger_output_event` enum.""",
         validator=strict_discrete_set,
@@ -749,8 +749,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     arm_output_event = Instrument.control(
-        ":ARM:OUTP %s",
-        ":ARM:OUTP?",
+        ":ARM:OUTPUT %s",
+        ":ARM:OUTPUT?",
         """Control when the trigger pulse occurs on the arm layer output trigger line,
         as an :class:`ArmOutputEvent` enum.""",
         validator=strict_discrete_set,
@@ -763,8 +763,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.output_trigger_event = TriggerOutputEvent.NONE
 
     trigger_input_line = Instrument.control(
-        "TRIG:ILIN %d",
-        "TRIG:ILIN?",
+        ":TRIGGER:ILINE %d",
+        ":TRIGGER:ILINE?",
         """Control the trigger layer input line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.trigger_input_line` should not share its value with
@@ -774,8 +774,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     arm_input_line = Instrument.control(
-        "ARM:ILIN %d",
-        "ARM:ILIN?",
+        ":ARM:ILINE %d",
+        ":ARM:ILINE?",
         """Control the arm layer input line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.arm_input_line` should not share its value with
@@ -785,8 +785,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     trigger_output_line = Instrument.control(
-        "TRIG:OLIN %d",
-        "TRIG:OLIN?",
+        ":TRIGGER:OLINE %d",
+        ":TRIGGER:OLINE?",
         """Control the trigger layer output line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.trigger_output_line` should not share its value with
@@ -796,8 +796,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     arm_output_line = Instrument.control(
-        "ARM:OLIN %d",
-        "ARM:OLIN?",
+        ":ARM:OLINE %d",
+        ":ARM:OLINE?",
         """Control the arm layer output line (int, strictly in range 1 to 4).
 
         For normal operation, :prop:`~.arm_output_line` should not share its value with
@@ -839,8 +839,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # UI properties #
 
     display_enabled = Instrument.control(
-        ":DISP:ENAB?",
-        ":DISP:ENAB %d",
+        ":DISPLAY:ENABLE?",
+        ":DISPLAY:ENABLE %d",
         """Control whether the display of the sourcemeter is enabled (bool).""",
         values={True: 1, False: 0},
         map_values=True,
@@ -854,7 +854,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
         """
-        self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
+        self.write(f":SYSTEM:BEEP {frequency:g}, {duration:g}")
 
     def sound_triad(self, base_frequency, duration):
         """Sound a musical triad using the system beep.
@@ -875,8 +875,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Misc properties #
 
     four_wire_enabled = Instrument.control(
-        ":SYST:RSEN?",
-        ":SYST:RSEN %d",
+        ":SYSTEM:RSENSE?",
+        ":SYSTEM:RSENSE %d",
         """Control whether four wire sensing is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -884,8 +884,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     line_frequency = Instrument.control(
-        ":SYST:LFR?",
-        ":SYST:LFR %d",
+        ":SYSTEM:LFREQUENCY?",
+        ":SYSTEM:LFREQUENCY %d",
         """Control the line frequency in Hertz (int, strictly 50 or 60).""",
         validator=strict_discrete_set,
         values=[50, 60],
@@ -893,8 +893,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     line_frequency_auto_enabled = Instrument.control(
-        ":SYST:LFR:AUTO?",
-        ":SYST:LFR:AUTO %d",
+        ":SYSTEM:LFREQUENCY:AUTO?",
+        ":SYSTEM:LFREQUENCY:AUTO %d",
         """Control whether the auto line frequency is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -902,13 +902,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     front_terminals_enabled = Instrument.control(
-        ":ROUT:TERM?",
-        ":ROUT:TERM %s",
+        ":ROUTE:TERMINALS?",
+        ":ROUTE:TERMINALS %s",
         """Control whether the to route to the front terminals (bool).
         When True the front terminals are routed to and the rear disconnected,
         and vice-versa when False.""",
         validator=strict_discrete_set,
-        values={True: "FRON", False: "REAR"},
+        values={True: "FRONT", False: "REAR"},
         map_values=True,
     )
 
@@ -927,7 +927,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # Deprecated #
     ##############
 
-    auto_zero = Instrument.control(  # TODO: add deprecation notices
+    auto_zero = Instrument.control(
         ":SYST:AZER:STAT?",
         ":SYST:AZER:STAT %s",
         """ Control whether the auto zero option is enabled. Valid values are
