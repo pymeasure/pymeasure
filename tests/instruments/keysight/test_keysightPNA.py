@@ -64,89 +64,78 @@ class TestAttributeError:
                 assert "FREQ" == inst.ch_1.tr_3.x_unit
 
 
-@pytest.mark.parametrize("channel, trace",
-                         [(1, 4),
-                          (2, 3),
-                          (5, 7),
-                          ])
-@pytest.mark.parametrize("marker", range(1, 16))
 class TestMarker:
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),
                              (False, 0),
                              ])
-    def test_enabled(self, channel, trace, marker, enabled, mapping):
+    def test_enabled(self, enabled, mapping):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:STATE {mapping}", None),
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:STATE?", mapping),
+             (f"CALC1:MEAS1:MARK1:STATE {mapping}", None),
+             ("CALC1:MEAS1:MARK1:STATE?", mapping),
              ],
         ) as inst:
-            inst.channels[channel].traces[trace].markers[marker].enabled = enabled
-            assert enabled == inst.channels[channel].traces[trace].markers[marker].enabled
+            inst.ch_1.tr_1.mkr_1.enabled = enabled
+            assert enabled == inst.ch_1.tr_1.mkr_1.enabled
 
     @pytest.mark.parametrize("is_discrete, mapping", [
                              (True, 1),
                              (False, 0),
                              ])
-    def test_is_discrete(self, channel, trace, marker, is_discrete, mapping):
+    def test_is_discrete(self, is_discrete, mapping):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:DISC {mapping}", None),
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:DISC?", mapping),
+             (f"CALC1:MEAS1:MARK1:DISC {mapping}", None),
+             ("CALC1:MEAS1:MARK1:DISC?", mapping),
              ],
         ) as inst:
-            inst.channels[channel].traces[trace].markers[marker].is_discrete = is_discrete
-            assert is_discrete == inst.channels[channel].traces[trace].markers[marker].is_discrete
+            inst.ch_1.tr_1.mkr_1.is_discrete = is_discrete
+            assert is_discrete == inst.ch_1.tr_1.mkr_1.is_discrete
 
     @pytest.mark.parametrize("x", [1, 1.4e7, -2.4])
-    def test_x(self, channel, trace, marker, x):
+    def test_x(self, x):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:X {x:f}", None),
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:X?", x),
+             (f"CALC1:MEAS1:MARK1:X {x:f}", None),
+             ("CALC1:MEAS1:MARK1:X?", x),
              ],
         ) as inst:
-            inst.channels[channel].traces[trace].markers[marker].x = x
-            assert x == inst.channels[channel].traces[trace].markers[marker].x
+            inst.ch_1.tr_1.mkr_1.x = x
+            assert x == inst.ch_1.tr_1.mkr_1.x
 
-    def test_y(self, channel, trace, marker):
+    def test_y(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:MARK{marker}:Y?", "2.3,-4.76E+2"),
+             ("CALC1:MEAS1:MARK1:Y?", "2.3,-4.76E+2"),
              ],
         ) as inst:
-            assert [2.3, -4.76E+2] == inst.channels[channel].traces[trace].markers[marker].y
+            assert [2.3, -4.76E+2] == inst.ch_1.tr_1.mkr_1.y
 
 
-@pytest.mark.parametrize("channel, trace",
-                         [(1, 4),
-                          (2, 3),
-                          (5, 7),
-                          ])
 class TestTrace:
-    def test_parameter(self, channel, trace):
+    def test_parameter(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:PAR?", '"S11"'),
+             ("CALC1:MEAS1:PAR?", '"S11"'),
              ],
         ) as inst:
-            assert "S11" == inst.channels[channel].traces[trace].parameter
+            assert "S11" == inst.ch_1.tr_1.parameter
 
-    def test_x_data_ascii(self, channel, trace):
+    def test_x_data_ascii(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", "ASC,0"),
-             (f"CALC{channel}:MEAS{trace}:X?", "1.2,3,5E+4"),
+             ("CALC1:MEAS1:X?", "1.2,3,5E+4"),
              ],
         ) as inst:
-            x_data = inst.channels[channel].traces[trace].x_data
+            x_data = inst.ch_1.tr_1.x_data
             assert type(x_data) is np.ndarray
             assert ["1.2", "3", "5E+4"] == list(x_data)
 
@@ -155,36 +144,36 @@ class TestTrace:
                              [("REAL,32", b"#14" + REAL32_DATA + b"\n"),
                               ("REAL,64", b"#18" + REAL64_DATA + b"\n"),
                               ])
-    def test_x_data_real(self, channel, trace, data_format, response):
+    def test_x_data_real(self, data_format, response):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", data_format),
-             (f"CALC{channel}:MEAS{trace}:X?", response),
+             ("CALC1:MEAS1:X?", response),
              ],
         ) as inst:
-            x_data = inst.channels[channel].traces[trace].x_data
+            x_data = inst.ch_1.tr_1.x_data
             assert type(x_data) is np.ndarray
             assert [1.e+07] == x_data
 
-    def test_x_unit(self, channel, trace):
+    def test_x_unit(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:X:AXIS:UNIT?", "FREQ"),
+             ("CALC1:MEAS1:X:AXIS:UNIT?", "FREQ"),
              ],
         ) as inst:
-            assert "FREQ" == inst.channels[channel].traces[trace].x_unit
+            assert "FREQ" == inst.ch_1.tr_1.x_unit
 
-    def test_y_data_ascii(self, channel, trace):
+    def test_y_data_ascii(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", "ASC,0"),
-             (f"CALC{channel}:MEAS{trace}:DATA:FDATA?", "1.2,3,5E+4"),
+             ("CALC1:MEAS1:DATA:FDATA?", "1.2,3,5E+4"),
              ],
         ) as inst:
-            y_data = inst.channels[channel].traces[trace].y_data
+            y_data = inst.ch_1.tr_1.y_data
             assert type(y_data) is np.ndarray
             assert ["1.2", "3", "5E+4"] == list(y_data)
 
@@ -193,27 +182,27 @@ class TestTrace:
                              [("REAL,32", b"#14" + REAL32_DATA + b"\n"),
                               ("REAL,64", b"#18" + REAL64_DATA + b"\n"),
                               ])
-    def test_y_data_real(self, channel, trace, data_format, response):
+    def test_y_data_real(self, data_format, response):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", data_format),
-             (f"CALC{channel}:MEAS{trace}:DATA:FDATA?", response),
+             ("CALC1:MEAS1:DATA:FDATA?", response),
              ],
         ) as inst:
-            y_data = inst.channels[channel].traces[trace].y_data
+            y_data = inst.ch_1.tr_1.y_data
             assert type(y_data) is np.ndarray
             assert [1.e+07] == y_data
 
-    def test_y_data_complex_ascii(self, channel, trace):
+    def test_y_data_complex_ascii(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", "ASC,0"),
-             (f"CALC{channel}:MEAS{trace}:DATA:SDATA?", "1.2,3"),
+             ("CALC1:MEAS1:DATA:SDATA?", "1.2,3"),
              ],
         ) as inst:
-            y_data = inst.channels[channel].traces[trace].y_data_complex
+            y_data = inst.ch_1.tr_1.y_data_complex
             assert type(y_data) is np.ndarray
             assert "1.2" == y_data[0][0]
             assert "3" == y_data[0][1]
@@ -223,84 +212,83 @@ class TestTrace:
                              [("REAL,32", b"#18" + 2*REAL32_DATA + b"\n"),
                               ("REAL,64", b"#216" + 2*REAL64_DATA + b"\n"),
                               ])
-    def test_y_data_complex_real(self, channel, trace, data_format, response):
+    def test_y_data_complex_real(self, data_format, response):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
              ("FORM?", data_format),
-             (f"CALC{channel}:MEAS{trace}:DATA:SDATA?", response),
+             ("CALC1:MEAS1:DATA:SDATA?", response),
              ],
         ) as inst:
-            y_data = inst.channels[channel].traces[trace].y_data_complex
+            y_data = inst.ch_1.tr_1.y_data_complex
             assert type(y_data) is np.ndarray
             assert 1.e7 == y_data[0][0]
             assert 1.e7 == y_data[0][1]
 
-    def test_y_unit(self, channel, trace):
+    def test_y_unit(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"CALC{channel}:MEAS{trace}:Y:AXIS:UNIT?", "DBM"),
+             ("CALC1:MEAS1:Y:AXIS:UNIT?", "DBM"),
              ],
         ) as inst:
-            assert "DBM" == inst.channels[channel].traces[trace].y_unit
+            assert "DBM" == inst.ch_1.tr_1.y_unit
 
 
-@pytest.mark.parametrize("channel", [1, 2, 5])
 class TestMeasurementChannel():
-    def test_initiate(self, channel):
+    def test_initiate(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"INIT{channel}:IMM", None),
+             ("INIT1:IMM", None),
              ],
         ) as inst:
-            inst.channels[channel].initiate()
+            inst.ch_1.initiate()
 
-    def test_single(self, channel):
+    def test_single(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"SENS{channel}:SWE:MODE SING", None),
+             ("SENS1:SWE:MODE SING", None),
              ],
         ) as inst:
-            inst.channels[channel].single()
+            inst.ch_1.single()
 
-    def test_continuous(self, channel):
+    def test_continuous(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"SENS{channel}:SWE:MODE CONT", None),
+             ("SENS1:SWE:MODE CONT", None),
              ],
         ) as inst:
-            inst.channels[channel].continuous()
+            inst.ch_1.continuous()
 
-    def test_hold(self, channel):
+    def test_hold(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"SENS{channel}:SWE:MODE HOLD", None),
+             ("SENS1:SWE:MODE HOLD", None),
              ],
         ) as inst:
-            inst.channels[channel].hold()
+            inst.ch_1.hold()
 
-    def test_number_of_points(self, channel):
+    def test_number_of_points(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"SENS{channel}:SWE:POIN?", "201"),
+             ("SENS1:SWE:POIN?", "201"),
              ],
         ) as inst:
-            assert 201 == inst.channels[channel].number_of_points
+            assert 201 == inst.ch_1.number_of_points
 
-    def test_measurements(self, channel):
+    def test_measurements(self):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
-             (f"SYST:MEAS:CAT? {channel}", "1,2,3,6,8"),
+             ("SYST:MEAS:CAT? 1", "1,2,3,6,8"),
              ],
         ) as inst:
-            assert [1, 2, 3, 6, 8] == inst.channels[channel].measurements
+            assert [1, 2, 3, 6, 8] == inst.ch_1.measurements
 
 
 class TestKeysightPNA():
@@ -326,7 +314,7 @@ class TestKeysightPNA():
                              (False, "NORM"),
                              (True, "SWAP"),
                              ])
-    def test_byte_order(self, byte_order_swapped, mapping):
+    def test_byte_order_swapped(self, byte_order_swapped, mapping):
         with expected_protocol(
             KeysightPNA,
             INITIALIZATION + [
