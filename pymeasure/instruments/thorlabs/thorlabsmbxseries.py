@@ -80,7 +80,7 @@ class ThorlabsMBXSeriesMZM(Channel):
         "MZM:MODE: %d",
         """Control the MZM bias mode (:class:`MzmMode` enum).""",
         validator=strict_discrete_set,
-        values=[mode.value for mode in MzmMode],
+        values=MzmMode,
     )
 
     ratio_setpoint = Instrument.control(
@@ -138,11 +138,11 @@ class ThorlabsMBXSeriesVOA(Channel):
     @property
     def mode(self):
         """Control the VOA mode (:class:`VoaMode` enum)."""
-        return MzmMode(int(self.ask("VOA:MODE?")))
+        return VoaMode(int(self.ask("VOA:MODE?")))
 
     @mode.setter
     def mode(self, v):
-        strict_discrete_set(v, [mode.value for mode in RgbPowerMode])
+        strict_discrete_set(v, VoaMode)
         # Ask as "VOA:MODE: {0 or 1}" returns "1" on receipt of command
         self.ask(f"VOA:MODE: {v.value}")
 
@@ -188,7 +188,7 @@ class ThorlabsMBXSeriesRGB(Channel):
         "RGB:POWER: %d",
         """Control the under-chassis LED accent lighting mode (:class:`RgbPowerMode` enum).""",
         validator=strict_discrete_set,
-        values=[mode.value for mode in RgbPowerMode],
+        values=RgbPowerMode,
     )
 
     red = Instrument.control(
