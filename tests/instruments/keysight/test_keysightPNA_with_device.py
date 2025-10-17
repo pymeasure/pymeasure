@@ -27,14 +27,9 @@
 # $ pytest test_keysightPNA_with_device.py --device-address "TCPIP0::192.168.50.2::INSTR"
 # The given device addresses are just examples. Please exchanged them to your own address.
 
-
 # Requirements for the PNA:
-# The following state state file exists: 'D:/States/PyMeasurePytest.csa'
-# This state meets the following conditions:
-#  - Active channels: 1, 2, 5
-#  - Trace numbers in channel 1: 1 (S11), 2 (S22), 4 (A,1)
-#  - Trace numbers in channel 2: 3 (R1,1), 5 (S21), 6 (b2,2)
-#  - Trace numbers in channel 5: 7 (S12)
+# Channel 1 and trace 1 exist after reset.
+# This is the default case if Preset is set to Factory Preset.
 
 
 import pytest
@@ -59,22 +54,8 @@ def keysightPNA(connected_device_address):
     instr.clear()
     instr.reset()  # also resets data_format to ascii
     instr.complete
-    instr.load_state("D:/States/PyMeasurePytest.csa")
-    instr.complete
     assert [] == instr.check_errors()
     return instr
-
-
-class TestAttributeError:
-    def test_undefined_channel(self, keysightPNA):
-        with pytest.raises(AttributeError):
-            measurements = keysightPNA.ch_3.measurements
-            assert [1, 2] == measurements
-
-    def test_undefined_trace(self, keysightPNA):
-        with pytest.raises(AttributeError):
-            unit = keysightPNA.ch_1.tr_3.x_unit
-            assert "FREQ" == unit
 
 
 class TestKeysightPNA:
@@ -101,7 +82,7 @@ class TestKeysightPNA:
         assert [] == keysightPNA.check_errors()
 
     def test_measurement_channels(self, keysightPNA):
-        assert [1, 2, 5] == keysightPNA.measurement_channels
+        assert 1 in keysightPNA.measurement_channels
         assert [] == keysightPNA.check_errors()
 
     @pytest.mark.parametrize("output_enabled", [True, False])
@@ -111,71 +92,61 @@ class TestKeysightPNA:
         assert [] == keysightPNA.check_errors()
 
 
-@pytest.mark.parametrize("channel", [1, 2, 5])
 class TestMeasurementChannel:
-    def test_hold(self, keysightPNA, channel):
-        keysightPNA.channels[channel].hold()
+    def test_hold(self, keysightPNA):
+        keysightPNA.ch_1.hold()
         assert [] == keysightPNA.check_errors()
 
-    def test_single(self, keysightPNA, channel):
-        keysightPNA.channels[channel].single()
+    def test_single(self, keysightPNA):
+        keysightPNA.ch_1.single()
         keysightPNA.complete
         assert [] == keysightPNA.check_errors()
 
-    def test_continuous(self, keysightPNA, channel):
-        keysightPNA.channels[channel].continuous()
+    def test_continuous(self, keysightPNA):
+        keysightPNA.ch_1.continuous()
         assert [] == keysightPNA.check_errors()
 
-    def test_number_of_points(self, keysightPNA, channel):
-        number_of_points = keysightPNA.channels[channel].number_of_points
+    def test_number_of_points(self, keysightPNA):
+        number_of_points = keysightPNA.ch_1.number_of_points
         assert type(number_of_points) is int
         assert number_of_points > 0
         assert [] == keysightPNA.check_errors()
 
-    def test_measurements(self, keysightPNA, channel):
-        measurements = keysightPNA.channels[channel].measurements
+    def test_measurements(self, keysightPNA):
+        measurements = keysightPNA.ch_1.measurements
         assert type(measurements) is list
         assert [] == keysightPNA.check_errors()
 
 
-@pytest.mark.parametrize("channel, trace, parameter",
-                         [(1, 1, "S11"),
-                          (1, 2, "S22"),
-                          (1, 4, "A,1"),
-                          (2, 3, "R1,1"),
-                          (2, 5, "S21"),
-                          (2, 6, "b2,2"),
-                          (5, 7, "S12"),
-                          ])
 class TestTrace:
-    def test_parameter(self, keysightPNA, channel, trace, parameter):
-        got = keysightPNA.channels[channel].traces[trace].parameter
-        assert parameter == got
+    def test_parameter(self, keysightPNA):
+        got = keysightPNA.ch_1.tr_1.parameter
+        assert type(got) is str
         assert [] == keysightPNA.check_errors()
 
-    def test_x_data(self, keysightPNA, channel, trace, parameter):
-        x_data = keysightPNA.channels[channel].traces[trace].x_data
+    def test_x_data(self, keysightPNA):
+        x_data = keysightPNA.ch_1.tr_1.x_data
         assert type(x_data) is np.ndarray
         assert [] == keysightPNA.check_errors()
 
-    def test_x_unit(self, keysightPNA, channel, trace, parameter):
-        x_unit = keysightPNA.channels[channel].traces[trace].x_unit
+    def test_x_unit(self, keysightPNA):
+        x_unit = keysightPNA.ch_1.tr_1.x_unit
         assert x_unit in ["FREQ", "POW", "PHAS", "DC", "POIN", "DEF"]
         assert [] == keysightPNA.check_errors()
 
-    def test_y_data(self, keysightPNA, channel, trace, parameter):
-        y_data = keysightPNA.channels[channel].traces[trace].y_data
+    def test_y_data(self, keysightPNA):
+        y_data = keysightPNA.ch_1.tr_1.y_data
         assert type(y_data) is np.ndarray
         assert [] == keysightPNA.check_errors()
 
-    def test_y_data_complex(self, keysightPNA, channel, trace, parameter):
-        y_data = keysightPNA.channels[channel].traces[trace].y_data_complex
+    def test_y_data_complex(self, keysightPNA):
+        y_data = keysightPNA.ch_1.tr_1.y_data_complex
         assert type(y_data) is np.ndarray
         assert y_data.ndim == 2
         assert [] == keysightPNA.check_errors()
 
-    def test_y_unit(self, keysightPNA, channel, trace, parameter):
-        y_unit = keysightPNA.channels[channel].traces[trace].y_unit
+    def test_y_unit(self, keysightPNA):
+        y_unit = keysightPNA.ch_1.tr_1.y_unit
         assert y_unit in [
             "HZ", "SEC", "MIN", "HOUR", "DAY", "DB", "DBM", "DBMV", "WATT", "FAR", "HENR",
             "OHM", "MHO", "SIEM", "VOLT", "DEGR", "RAD", "MET", "DPHZ", "UNIT", "NON",
@@ -187,40 +158,31 @@ class TestTrace:
         assert [] == keysightPNA.check_errors()
 
 
-@pytest.mark.parametrize("channel, trace",
-                         [(1, 1),
-                          (1, 2),
-                          (1, 4),
-                          (2, 3),
-                          (2, 5),
-                          (2, 6),
-                          (5, 7),
-                          ])
 @pytest.mark.parametrize("marker", range(1, 16))
 class TestMarker:
     # keep marker activated for the following tests
-    def test_enabled_true(self, keysightPNA, channel, trace, marker):
-        keysightPNA.channels[channel].traces[trace].markers[marker].enabled = True
-        assert keysightPNA.channels[channel].traces[trace].markers[marker].enabled
+    def test_enabled_true(self, keysightPNA, marker):
+        keysightPNA.ch_1.tr_1.markers[marker].enabled = True
+        assert keysightPNA.ch_1.tr_1.markers[marker].enabled
 
     @pytest.mark.parametrize("is_discrete", [True, False])
-    def test_is_discrete(self, keysightPNA, channel, trace, marker, is_discrete):
-        keysightPNA.channels[channel].traces[trace].markers[marker].is_discrete = is_discrete
-        assert is_discrete == keysightPNA.channels[channel].traces[trace].markers[
+    def test_is_discrete(self, keysightPNA, marker, is_discrete):
+        keysightPNA.ch_1.tr_1.markers[marker].is_discrete = is_discrete
+        assert is_discrete == keysightPNA.ch_1.tr_1.markers[
             marker].is_discrete
 
     @pytest.mark.parametrize("x", [100E6, 2.458E9])
-    def test_x(self, keysightPNA, channel, trace, marker, x):
-        keysightPNA.channels[channel].traces[trace].markers[marker].x = x
-        assert x == keysightPNA.channels[channel].traces[trace].markers[marker].x
+    def test_x(self, keysightPNA, marker, x):
+        keysightPNA.ch_1.tr_1.markers[marker].x = x
+        assert x == keysightPNA.ch_1.tr_1.markers[marker].x
 
-    def test_y(self, keysightPNA, channel, trace, marker):
-        y = keysightPNA.channels[channel].traces[trace].markers[marker].y
+    def test_y(self, keysightPNA, marker):
+        y = keysightPNA.ch_1.tr_1.markers[marker].y
         assert 2 == len(y)
         assert type(y[0]) is float
         assert type(y[1]) is float
 
     # finally disable the marker
-    def test_enabled_false(self, keysightPNA, channel, trace, marker):
-        keysightPNA.channels[channel].traces[trace].markers[marker].enabled = False
-        assert not keysightPNA.channels[channel].traces[trace].markers[marker].enabled
+    def test_enabled_false(self, keysightPNA, marker):
+        keysightPNA.ch_1.tr_1.markers[marker].enabled = False
+        assert not keysightPNA.ch_1.tr_1.markers[marker].enabled
