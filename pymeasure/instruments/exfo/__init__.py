@@ -23,5 +23,3 @@
 #
 
 from .ctp10 import CTP10
-
-__all__ = ['CTP10']

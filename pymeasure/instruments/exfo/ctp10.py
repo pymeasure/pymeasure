@@ -29,7 +29,6 @@ import numpy as np
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import strict_range
-from pyvisa.util import from_binary_block
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -39,15 +38,15 @@ class TLSChannel(Channel):
     """Represents a TLS (Tunable Laser Source) channel on the EXFO CTP10."""
 
     start_wavelength_nm = Channel.control(
-        ":INIT:TLS{ch}:WAV:STAR?",
-        ":INIT:TLS{ch}:WAV:STAR %gNM",
+        ":INIT:TLS{ch}:WAVelength:STARt?",
+        ":INIT:TLS{ch}:WAVelength:STARt %gNM",
         """Control the TLS sweep start wavelength (float in nm).""",
         get_process=lambda v: float(v) * 1e9,
     )
 
     stop_wavelength_nm = Channel.control(
-        ":INIT:TLS{ch}:WAV:STOP?",
-        ":INIT:TLS{ch}:WAV:STOP %gNM",
+        ":INIT:TLS{ch}:WAVelength:STOP?",
+        ":INIT:TLS{ch}:WAVelength:STOP %gNM",
         """Control the TLS sweep stop wavelength (float in nm).""",
         get_process=lambda v: float(v) * 1e9,
     )
@@ -58,7 +57,8 @@ class TLSChannel(Channel):
         """Control the TLS sweep speed (int in nm/s).
 
         Allowed values depend on the laser model:
-        - EXFO T100S-HP: 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20, 22, 25, 29, 33, 40, 50, 67, 100
+        - EXFO T100S-HP: 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 20,
+          22, 25, 29, 33, 40, 50, 67, 100
         - VIAVI mSWS-AISLS: 5 to 100
         - T200S: 10, 20, 50, 100, 200 (depends on laser model)
         - T500S: 10, 20, 50, 100, 200 (depends on laser model)
@@ -91,139 +91,152 @@ class TLSChannel(Channel):
 
 
 class TraceChannel(Channel):
-    """Represents a trace channel on the EXFO CTP10.
+    """Base class for trace channels on the EXFO CTP10.
 
     The channel is identified by:
     - SENSe[1...20]: Module identification number (position in mainframe, left to right)
         * In Daisy chaining mode: positions 1-10 are Primary mainframe, 11-20 are Secondary
     - CHANnel[1...6]: Detector identification number (detector position on module, top to bottom)
         * Note: This number is not used for BR (back reflection) traces
+    - TYPE[1...23]: Trace type number (depends on detector type)
 
-    Trace types are handled internally:
-        * Processed trace (TYPE=1)
-        * Raw Live trace (TYPE=11)
-        * Raw Reference trace (TYPE=12)
-        * Raw Quick Reference trace (TYPE=13)
+    Note: Different detector types support different trace types (1-23).
+    See instrument documentation for complete list.
 
-    Access trace channels via: ctp.trace[module, channel]
+    This base class provides common functionality for all trace types.
+    Use the specific trace type classes (TFLiveTrace, RawLiveTrace, etc.) to access data.
+
+    Access trace channels via specific trace type accessors:
+        - ctp.tf_live[module, channel] for TF live trace (TYPE1)
+        - ctp.raw_live[module, channel] for Raw Live trace (TYPE11)
+        - ctp.raw_reference[module, channel] for Raw Reference trace (TYPE12)
+        - ctp.raw_quick_reference[module, channel] for Raw Quick Reference trace (TYPE13)
 
     Example:
-        trace_ch = ctp.trace[4, 1]  # Module 4, detector 1
+        # Access TF live trace on module 4, channel 1
+        trace_ch = ctp.tf_live[4, 1]
 
-        # Read processed trace (default)
+        # Read trace data
         length = trace_ch.length
         wavelengths = trace_ch.get_wavelength_array()
         powers = trace_ch.get_data_y()
 
-        # Access different trace types
-        live_data = trace_ch.get_data_y(trace_type='live')
-        ref_data = trace_ch.get_data_y(trace_type='reference')
+        # Access different trace type
+        raw_live_trace = ctp.raw_live[4, 1]
+        raw_live_powers = raw_live_trace.get_data_y()
 
-        # Channel operations
+        # Channel operations (independent of trace type)
         trace_ch.create_reference()  # Create reference for this channel
-        power = trace_ch.get_power()  # Get optical power for this channel
-
-        # Save trace
-        trace_ch.save()
+        power_dbm = trace_ch.power  # Get optical power in dBm
     """
 
-    # Trace type definitions (internal)
-    _TRACE_TYPES = {
-        'processed': 1,
-        'live': 11,
-        'reference': 12,
-        'quick_reference': 13,
-    }
+    def __init__(self, parent, id=None, trace_type=1, **kwargs):
+        """Initialize trace channel with module, channel, and trace type.
 
-    def __init__(self, parent, id=None, **kwargs):
-        """Initialize trace channel with module and channel.
-
-        :param id: Tuple of (module, channel) or None for dynamic access
-            - module (int): SENSe number 1-20 (module position in mainframe)
-            - channel (int): CHANnel number 1-6 (detector position on module)
+        :param tuple id: Tuple of (module, channel) or None for dynamic access.
+            module (int): SENSe number 1-20 (module position in mainframe).
+            channel (int): CHANnel number 1-6 (detector position on module).
+        :param int trace_type: TYPE number 1-23 (depends on detector type).
         """
         # Accept tuple or None (for ChannelCreator pattern)
         if id is not None and not (isinstance(id, tuple) and len(id) == 2):
             raise ValueError("TraceChannel ID must be a tuple of (module, channel)")
 
-        # Store module and channel as separate attributes for easy access
+        # Store module, channel, and trace type as separate attributes
         if id is not None:
             self.module, self.channel = id
         else:
             self.module, self.channel = None, None
 
+        self.trace_type = trace_type
+
         # Pass the tuple as-is to parent
         super().__init__(parent, id, **kwargs)
 
     def insert_id(self, command):
-        """Insert the channel ID (module, channel) into the command.
+        """Insert the channel ID (module, channel, type) into the command.
 
-        Replaces {ch} placeholder. For commands with separate module/channel,
-        use string formatting with self.module and self.channel directly.
+        Replaces {ch} placeholder with module:CHANnel format.
+        Replaces {type} placeholder with trace type number.
         """
         if self.id is None:
             return command
+        # Replace placeholders that exist in the command
+        # Use format_map to avoid KeyError for missing placeholders
+        from string import Formatter
+        formatter = Formatter()
+        # Get field names from the command
+        field_names = {field_name for _, field_name, _, _ in formatter.parse(command)
+                       if field_name is not None}
 
-        # Standard Channel behavior - replace {ch} with the ID
-        # But our commands use self.module and self.channel directly in methods
-        return command.format(ch=self.id)
+        # Build format dict with only the fields that are in the command
+        format_dict = {}
+        if 'ch' in field_names:
+            format_dict['ch'] = f"{self.module}:CHANnel{self.channel}"
+        if 'type' in field_names:
+            format_dict['type'] = self.trace_type
 
-    @property
-    def length(self):
-        """Get the number of points in the processed trace (int)."""
-        # SCPI format: :TRACe:SENSe[module]:CHANnel[channel]:TYPE[type]:DATA:LENGth?
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE1:DATA:LENGth?"
-        return int(self.values(cmd)[0])
+        return command.format(**format_dict)
 
-    @property
-    def sampling_pm(self):
-        """Get the wavelength sampling resolution in pm (float) for the processed trace."""
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE1:DATA:SAMPling?"
-        return float(self.values(cmd)[0]) * 1e12
+    length = Channel.measurement(
+        ":TRACe:SENSe{ch}:TYPE{type}:DATA:LENGth?",
+        """Get the number of points in the trace (int).""",
+        cast=int,
+    )
 
-    @property
-    def start_wavelength_nm(self):
-        """Get the start wavelength in nm (float) for the processed trace."""
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE1:DATA:STARt?"
-        return float(self.values(cmd)[0]) * 1e9
+    sampling_pm = Channel.measurement(
+        ":TRACe:SENSe{ch}:TYPE{type}:DATA:SAMPling?",
+        """Get the wavelength sampling resolution in pm (float).""",
+        get_process=lambda v: float(v) * 1e12,
+    )
 
-    def get_data_x(self, trace_type='processed'):
+    start_wavelength_nm = Channel.measurement(
+        ":TRACe:SENSe{ch}:TYPE{type}:DATA:STARt?",
+        """Get the start wavelength in nm (float).""",
+        get_process=lambda v: float(v) * 1e9,
+    )
+
+    power = Channel.measurement(
+        ":CTP:SENSe{ch}:POWer?",
+        """Get the optical power measurement for this channel (float in dBm).
+
+        This operation is independent of the trace type.
+        The unit is always dBm according to the instrument manual.
+        """,
+    )
+
+    def get_data_x(self):
         """Get trace X-axis data (wavelength) in immediate ASCII format.
 
-        :param trace_type: Type of trace - 'processed' (default), 'live', 'reference', 'quick_reference'.
         :return: List of wavelength values.
         """
-        type_num = self._TRACE_TYPES[trace_type]
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{type_num}:DATA:X[:IMMediate]?"
+        cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
+               f"TYPE{self.trace_type}:DATA:X[:IMMediate]?")
         return self.values(cmd)
 
-    def get_data_y(self, unit='DB', format='BIN', trace_type='processed'):
+    def get_data_y(self, unit='DB', format='BIN'):
         """Get trace Y-axis data.
 
-        :param unit: Data unit - 'DB' for dB or 'Y' for linear (default 'DB').
-        :param format: Data format - 'BIN' for binary or 'ASCII' for ASCII (default 'BIN').
-        :param trace_type: Type of trace - 'processed' (default), 'live', 'reference', 'quick_reference'.
+        :param str unit: Data unit - 'DB' for dB or 'Y' for linear (default 'DB').
+        :param str format: Data format - 'BIN' for binary or 'ASCII' for ASCII
+            (default 'BIN').
         :return: Numpy array of trace data (binary) or list (ASCII).
         """
-        type_num = self._TRACE_TYPES[trace_type]
-
         if format.upper() == 'BIN':
             # Binary format - query with format and unit parameters after ?
-            cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{type_num}:DATA? BIN,{unit}"
+            cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
+                   f"TYPE{self.trace_type}:DATA? BIN,{unit}")
             self.write(cmd)
             return self._read_binary_trace()
         else:
             # ASCII format
-            cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{type_num}:DATA? ASCII,{unit}"
+            cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
+                   f"TYPE{self.trace_type}:DATA? ASCII,{unit}")
             return self.values(cmd)
 
-    def save(self, trace_type='processed'):
-        """Save trace data to internal memory (CSV format only).
-
-        :param trace_type: Type of trace - 'processed' (default), 'live', 'reference', 'quick_reference'.
-        """
-        type_num = self._TRACE_TYPES[trace_type]
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{type_num}:SAVE"
+    def save(self):
+        """Save trace data to internal memory (CSV format only)."""
+        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{self.trace_type}:SAVE"
         self.write(cmd)
 
     def get_wavelength_array(self):
@@ -267,18 +280,64 @@ class TraceChannel(Channel):
 
         This operation is independent of the trace type.
         """
-        cmd = f':REF:SENS{self.module}:CHAN{self.channel}:INIT'
+        cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INITiate'
         self.write(cmd)
 
-    def get_power(self):
-        """Get the optical power measurement for this channel.
 
-        This operation is independent of the trace type.
+class TFLiveTrace(TraceChannel):
+    """TF Live trace (TYPE1) - Transmission/Reflection live.
 
-        :return: Power value as string (with units).
-        """
-        cmd = f':CTP:SENS{self.module}:CHAN{self.channel}:POW?'
-        return self.ask(cmd)
+    Only available on OPM detector modules.
+
+    Example:
+        trace = ctp.tf_live[4, 1]  # Module 4, channel 1
+        powers = trace.get_data_y()
+    """
+
+    def __init__(self, parent, id=None, **kwargs):
+        """Initialize TF Live trace channel."""
+        super().__init__(parent, id, trace_type=1, **kwargs)
+
+
+class RawLiveTrace(TraceChannel):
+    """Raw Live trace (TYPE11) - Unreferenced TF/PDL live.
+
+    Example:
+        trace = ctp.raw_live[4, 1]  # Module 4, channel 1
+        powers = trace.get_data_y()
+    """
+
+    def __init__(self, parent, id=None, **kwargs):
+        """Initialize Raw Live trace channel."""
+        super().__init__(parent, id, trace_type=11, **kwargs)
+
+
+class RawReferenceTrace(TraceChannel):
+    """Raw Reference trace (TYPE12) - Reference of TF/PDL live.
+
+    Example:
+        trace = ctp.raw_reference[4, 1]  # Module 4, channel 1
+        powers = trace.get_data_y()
+    """
+
+    def __init__(self, parent, id=None, **kwargs):
+        """Initialize Raw Reference trace channel."""
+        super().__init__(parent, id, trace_type=12, **kwargs)
+
+
+class RawQuickReferenceTrace(TraceChannel):
+    """Raw Quick Reference trace (TYPE13) - Quick reference.
+
+    Only available on IL RL OPM2 modules.
+
+    Example:
+        trace = ctp.raw_quick_reference[4, 1]  # Module 4, channel 1
+        powers = trace.get_data_y()
+    """
+
+    def __init__(self, parent, id=None, **kwargs):
+        """Initialize Raw Quick Reference trace channel."""
+        super().__init__(parent, id, trace_type=13, **kwargs)
 
 
 class CTP10(SCPIMixin, Instrument):
@@ -305,18 +364,45 @@ class CTP10(SCPIMixin, Instrument):
         ctp.initiate_sweep()
         ctp.wait_for_sweep_complete()
 
-        # Access trace data using trace channel (module=4, channel=1)
-        trace_ch = ctp.trace[4, 1]
-        length = trace_ch.length
-        wavelengths = trace_ch.get_wavelength_array()
+        # Access TF live trace data (module=4, channel=1)
+        tf_trace = ctp.tf_live[4, 1]
+        length = tf_trace.length
+        wavelengths = tf_trace.get_wavelength_array()
+        powers = tf_trace.get_data_y(unit='DB')
 
-        # Get processed trace (default)
-        powers = trace_ch.get_data_y(unit='DB')
+        # Access different trace types
+        raw_live_trace = ctp.raw_live[4, 1]
+        raw_live_powers = raw_live_trace.get_data_y()
 
-        # Or get different trace types
-        live_powers = trace_ch.get_data_y(trace_type='live')
-        ref_powers = trace_ch.get_data_y(trace_type='reference')
+        raw_ref_trace = ctp.raw_reference[4, 1]
+        raw_ref_powers = raw_ref_trace.get_data_y()
     """
+
+    # TLS Channel creators (up to 4 channels)
+    tls1 = Instrument.ChannelCreator(TLSChannel, 1)
+    tls2 = Instrument.ChannelCreator(TLSChannel, 2)
+    tls3 = Instrument.ChannelCreator(TLSChannel, 3)
+    tls4 = Instrument.ChannelCreator(TLSChannel, 4)
+
+    # Trace Channel creators for all valid (module, channel) combinations
+    # Modules: 1-20, Channels: 1-6
+    # Each trace type has its own accessor
+    tf_live = Instrument.MultiChannelCreator(
+        TFLiveTrace,
+        [(m, c) for m in range(1, 21) for c in range(1, 7)]
+    )
+    raw_live = Instrument.MultiChannelCreator(
+        RawLiveTrace,
+        [(m, c) for m in range(1, 21) for c in range(1, 7)]
+    )
+    raw_reference = Instrument.MultiChannelCreator(
+        RawReferenceTrace,
+        [(m, c) for m in range(1, 21) for c in range(1, 7)]
+    )
+    raw_quick_reference = Instrument.MultiChannelCreator(
+        RawQuickReferenceTrace,
+        [(m, c) for m in range(1, 21) for c in range(1, 7)]
+    )
 
     def __init__(
         self,
@@ -337,19 +423,6 @@ class CTP10(SCPIMixin, Instrument):
             },
             **kwargs,
         )
-
-    # TLS Channel creators (up to 4 channels)
-    tls1 = Instrument.ChannelCreator(TLSChannel, 1)
-    tls2 = Instrument.ChannelCreator(TLSChannel, 2)
-    tls3 = Instrument.ChannelCreator(TLSChannel, 3)
-    tls4 = Instrument.ChannelCreator(TLSChannel, 4)
-
-    # Trace Channel creator for all valid (module, channel) combinations
-    # Modules: 1-20, Channels: 1-6
-    trace = Instrument.MultiChannelCreator(
-        TraceChannel,
-        [(m, c) for m in range(1, 21) for c in range(1, 7)]
-    )
 
     # Global sweep control properties -------------------------------------------------
 
@@ -375,15 +448,12 @@ class CTP10(SCPIMixin, Instrument):
 
         Format: stabilization = (output, duration)
 
-        Parameters:
-        - output (int): Activation state of the laser after scan stop
-            - 0 or OFF: disables the laser optical output when the scan stops
-            - 1 or ON (default): sets the laser optical output to stay enabled after scan stop
-        - duration (float): Stabilization time in seconds (range 0 to 60, default 0)
-            Period of time during which the laser stabilizes before starting acquisition
-
-        Returns:
-            Tuple of (output, duration) when queried
+        :param int output: Activation state of the laser after scan stop.
+            0 or OFF disables the laser optical output when the scan stops.
+            1 or ON (default) sets the laser optical output to stay enabled after scan stop.
+        :param float duration: Stabilization time in seconds (range 0 to 60, default 0).
+            Period of time during which the laser stabilizes before starting acquisition.
+        :return: Tuple of (output, duration) when queried.
 
         Example:
             ctp.stabilization = (1, 12.3)  # Set: Keep laser on, 12.3s stabilization
@@ -416,8 +486,7 @@ class CTP10(SCPIMixin, Instrument):
         - Bit 12 (weight 4096): Loading/Saving
         - Bits 13-15: Not used
 
-        Returns:
-            int: Condition register value (0-65535)
+        :return: Condition register value (0-65535, int)
         """,
         cast=int,
     )
@@ -446,10 +515,10 @@ class CTP10(SCPIMixin, Instrument):
     def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=60.0, delay=0.02):
         """Block the program, waiting for the sweep to complete.
 
-        :param should_stop: Optional function that returns True to stop waiting.
-        :param timeout: Maximum waiting time in seconds (default 60.0).
-        :param delay: Delay between checks for sweep completion in seconds (default 0.02).
-        :return: True when sweep completed, False if stopped by should_stop.
+        :param callable should_stop: Optional function that returns True to stop waiting.
+        :param float timeout: Maximum waiting time in seconds (default 60.0).
+        :param float delay: Delay between checks for sweep completion in seconds (default 0.02).
+        :return: True when sweep completed, False if stopped by should_stop (bool).
         :raises TimeoutError: If the sweep does not complete within the timeout period.
         """
         t0 = time.time()
