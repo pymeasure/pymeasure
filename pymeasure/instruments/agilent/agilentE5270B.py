@@ -30,6 +30,17 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class Display(Channel):
+    """A class representing the Agilent E5270B display."""
+
+    enabled = Instrument.setting(
+        "RED %d",
+        """Set whether the display is enabled during remote operation (bool).""",
+        map_values=True,
+        values={True: 1, False: 0},
+        )
+
+
 class SMUChannel(Channel):
     """A class representing the Agilent E5270B SMU channel."""
 
@@ -126,6 +137,8 @@ class AgilentE5270B(SCPIMixin, Instrument):
     +--------+-------+-------+-----------------+----------------+
 
     """
+
+    display = Instrument.ChannelCreator(Display)
 
     def __init__(self, adapter,
                  name="Agilent E5270B",
