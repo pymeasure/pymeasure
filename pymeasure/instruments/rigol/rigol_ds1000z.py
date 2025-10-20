@@ -760,7 +760,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         x_origin = preamble["x_origin"]
         x_reference = preamble["x_reference"]
         x_increment = preamble["x_increment"]
-        time = x_origin + (np.arange(start_index, start_index + sample_count) - x_reference) * x_increment
+        time = x_origin + (np.arange(start_index, start_index + sample_count) -
+                           x_reference) * x_increment
 
         return time, voltage
 
