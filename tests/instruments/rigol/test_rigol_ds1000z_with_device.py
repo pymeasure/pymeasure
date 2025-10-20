@@ -22,5 +22,35 @@
 # THE SOFTWARE.
 #
 
-from .rigol_dg800 import DG800
-from .rigol_ds1000z import RigolDS1000Z
+import pytest
+
+from pymeasure.instruments.rigol import RigolDS1000Z
+
+pytest.skip("Only work with connected hardware", allow_module_level=True)
+
+
+class TestRigolDS1000Z:
+    """Hardware-backed smoke tests for a Rigol DS/MSO1000Z oscilloscope."""
+
+    # Update to match the VISA resource string of the target instrument before running.
+    RESOURCE = "TCPIP0::10.33.179.98::INSTR"
+
+    SCOPE = RigolDS1000Z(RESOURCE)
+
+    @pytest.fixture
+    def scope(self):
+        yield self.SCOPE
+
+    def test_idn_responds(self, scope):
+        response = scope.id
+        assert isinstance(response, str)
+        assert response
+        print(f"Response: {response}")
+
+    def test_memory_depth_round_trip(self, scope):
+        scope.memory_depth = "AUTO"
+        scope.memory_depth = 12_000
+        assert scope.memory_depth in ("AUTO", 12_000)
+
+    def test_autoscale_executes(self, scope):
+        scope.autoscale()
