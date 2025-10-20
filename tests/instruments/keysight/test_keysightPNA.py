@@ -28,13 +28,14 @@ import numpy as np
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.keysight import KeysightPNA
 
-# communication during class initialization
+# communication during class initialization:
+# - set the data format to real64
+# - use swapped byte order for data transfer
+# - represent 1 channel with 1 trace
 INITIALIZATION = [("FORM REAL,64", None),
                   ("FORM:BORD SWAP", None),
-                  ("SYST:CHAN:CAT?", "1,2,5"),
-                  ("SYST:MEAS:CAT? 1", "1,2,4"),
-                  ("SYST:MEAS:CAT? 2", "3,5,6"),
-                  ("SYST:MEAS:CAT? 5", "7"),
+                  ("SYST:CHAN:CAT?", "1"),
+                  ("SYST:MEAS:CAT? 1", "1"),
                   ]
 
 # binary data representing '1.e+7'
