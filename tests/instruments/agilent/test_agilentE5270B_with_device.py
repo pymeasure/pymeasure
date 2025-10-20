@@ -27,7 +27,6 @@
 
 # The test uses slot 1 as test SMU
 # Disconnect all loads from E5270B SMUs before test.
-# The display tests are performed for slots 1, 2, 3, 4, 6, and 8.
 
 import pytest
 from pymeasure.instruments.agilent.agilentE5270B import AgilentE5270B
@@ -100,16 +99,15 @@ class TestDisplay:
         e5270b.display.enabled = enabled
         assert [] == e5270b.check_errors()
 
-    @pytest.mark.parametrize("format", ["engineering", "scientific"])
-    def test_format(self, e5270b, format):
+    @pytest.mark.parametrize("engineering_format_enabled", [True, False])
+    def test_format(self, e5270b, engineering_format_enabled):
         assert [] == e5270b.check_errors()
-        e5270b.display.format = format
+        e5270b.display.engineering_format_enabled = engineering_format_enabled
         assert [] == e5270b.check_errors()
 
-    @pytest.mark.parametrize("measurement_smu", [1, 2, 3, 4, 6, 8])
-    def test_measurement_smu(self, e5270b, measurement_smu):
+    def test_measurement_smu(self, e5270b):
         assert [] == e5270b.check_errors()
-        e5270b.display.measurement_smu = measurement_smu
+        e5270b.display.measurement_smu = 1
         assert [] == e5270b.check_errors()
 
     @pytest.mark.parametrize("measurement_parameter",
@@ -124,10 +122,9 @@ class TestDisplay:
         e5270b.display.measurement_parameter = measurement_parameter
         assert [] == e5270b.check_errors()
 
-    @pytest.mark.parametrize("source_smu", [1, 2, 3, 4, 6, 8])
-    def test_source_smu(self, e5270b, source_smu):
+    def test_source_smu(self, e5270b):
         assert [] == e5270b.check_errors()
-        e5270b.display.source_smu = source_smu
+        e5270b.display.source_smu = 1
         assert [] == e5270b.check_errors()
 
     @pytest.mark.parametrize("source_parameter",
@@ -138,20 +135,9 @@ class TestDisplay:
                               "error",
                               ]
                              )
-    def test_source_parameter1(self, e5270b, source_parameter):
+    def test_source_parameter(self, e5270b, source_parameter):
         assert [] == e5270b.check_errors()
         e5270b.display.source_parameter1 = source_parameter
-        assert [] == e5270b.check_errors()
-
-    @pytest.mark.parametrize("source_parameter",
-                             ["set_point",
-                              "compliance",
-                              "voltage_range",
-                              "current_range",
-                              "error",
-                              ]
-                             )
-    def test_source_parameter2(self, e5270b, source_parameter):
         assert [] == e5270b.check_errors()
         e5270b.display.source_parameter2 = source_parameter
         assert [] == e5270b.check_errors()

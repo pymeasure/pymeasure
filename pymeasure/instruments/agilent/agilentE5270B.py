@@ -41,16 +41,18 @@ class Display(Channel):
         values={True: 1, False: 0},
         )
 
-    format = Channel.setting(
+    engineering_format_enabled  = Channel.setting(
         "DFM %d",
-        """Set the data display format (str, strictly ``engineering`` or ``scientific``).
+        """Set whether the engineering data format or the scientific data format is used (bool).
+
+        :meth:`reset()` sets the data format to scientific.
 
         Example:
-            - ``engineering``:  +123.456mA
-            - ``scientific``: +1.234E-1A
+            - ``True`` (engineering):  +123.456mA
+            - ``False`` (scientific): +1.234E-1A
         """,
         map_values=True,
-        values={"engineering": 0, "scientific": 1},
+        values={True: 0, False: 1},
         )
 
     measurement_smu = Channel.setting(
