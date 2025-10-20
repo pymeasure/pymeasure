@@ -41,7 +41,7 @@ class Display(Channel):
         values={True: 1, False: 0},
         )
 
-    engineering_format_enabled  = Channel.setting(
+    engineering_format_enabled = Channel.setting(
         "DFM %d",
         """Set whether the engineering data format or the scientific data format is used (bool).
 
