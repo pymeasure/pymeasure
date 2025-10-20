@@ -103,6 +103,13 @@ class WaveformFormat(str, Enum):
     ASCII = "ASC"
 
 
+_WAVEFORM_CHUNK_LIMITS: Dict[WaveformFormat, int] = {
+    WaveformFormat.BYTE: 250_000,
+    WaveformFormat.WORD: 125_000,
+    WaveformFormat.ASCII: 15_625,
+}
+
+
 # Display enums
 
 class DisplayType(str, Enum):
@@ -663,58 +670,85 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Read a waveform and return time and voltage arrays."""
 
-        if isinstance(source, int):
-            if not 1 <= source <= self._channel_count:
-                raise ValueError("Invalid channel index for waveform read.")
-            source_value = f"CHAN{source}"
-        else:
-            source_value = str(source).upper()
-
-        if isinstance(mode, WaveformMode):
-            mode_value = mode.value
-        else:
-            mode_value = str(mode).upper()
-        try:
-            mode_enum = WaveformMode(mode_value)
-        except ValueError as exc:
-            raise ValueError(f"Unsupported waveform mode: {mode}") from exc
-
-        if isinstance(data_format, WaveformFormat):
-            format_value = data_format.value
-        else:
-            format_value = str(data_format).upper()
-        try:
-            format_enum = WaveformFormat(format_value)
-        except ValueError as exc:
-            raise ValueError(f"Unsupported waveform format: {data_format}") from exc
+        source_value = self._resolve_waveform_source(source)
+        mode_enum = self._resolve_waveform_mode(mode)
+        format_enum = self._resolve_waveform_format(data_format)
 
         if force_stop_for_raw and mode_enum == WaveformMode.RAW:
             self.stop()
 
+        self._configure_waveform_transfer(source_value, mode_enum, format_enum)
+
+        preamble = self.get_waveform_preamble()
+        total_points = preamble["points"]
+        if total_points <= 0:
+            empty = np.array([], dtype=float)
+            return empty, empty
+
+        start, stop = self._derive_waveform_window(total_points, start, stop)
+
+        raw_data = self._collect_waveform_data(format_enum, start, stop)
+        voltage = self._scale_waveform_data(format_enum, raw_data, preamble)
+        time = self._generate_time_axis(preamble, start, voltage.size)
+
+        return time, voltage
+
+    def _resolve_waveform_source(self, source: Union[str, int]) -> str:
+        if isinstance(source, int):
+            if not 1 <= source <= self._channel_count:
+                raise ValueError("Invalid channel index for waveform read.")
+            return f"CHAN{source}"
+        return str(source).upper()
+
+    @staticmethod
+    def _resolve_waveform_mode(mode: Union[WaveformMode, str]) -> WaveformMode:
+        if isinstance(mode, WaveformMode):
+            return mode
+        mode_value = str(mode).upper()
+        try:
+            return WaveformMode(mode_value)
+        except ValueError as exc:
+            raise ValueError(f"Unsupported waveform mode: {mode}") from exc
+
+    @staticmethod
+    def _resolve_waveform_format(data_format: Union[WaveformFormat, str]) -> WaveformFormat:
+        if isinstance(data_format, WaveformFormat):
+            return data_format
+        format_value = str(data_format).upper()
+        try:
+            return WaveformFormat(format_value)
+        except ValueError as exc:
+            raise ValueError(f"Unsupported waveform format: {data_format}") from exc
+
+    def _configure_waveform_transfer(
+        self,
+        source_value: str,
+        mode_enum: WaveformMode,
+        format_enum: WaveformFormat,
+    ) -> None:
         self.waveform_source = source_value
         self.waveform_mode = mode_enum.value
         self.waveform_format = format_enum.value
 
-        preamble = self.get_waveform_preamble()
-        total_points = preamble["points"]
-        if start is None:
-            start = 1
-        if stop is None:
-            stop = total_points
-        if total_points <= 0:
-            return np.array([], dtype=float), np.array([], dtype=float)
-        if stop < start:
+    @staticmethod
+    def _derive_waveform_window(
+        total_points: int,
+        start: Optional[int],
+        stop: Optional[int],
+    ) -> Tuple[int, int]:
+        start_idx = 1 if start is None else start
+        stop_idx = total_points if stop is None else stop
+        if stop_idx < start_idx or start_idx < 1:
             raise ValueError("Invalid start/stop points for waveform acquisition.")
-        if start < 1:
-            raise ValueError("Invalid start/stop points for waveform acquisition.")
+        return start_idx, stop_idx
 
-        chunk_limits = {
-            WaveformFormat.BYTE: 250_000,
-            WaveformFormat.WORD: 125_000,
-            WaveformFormat.ASCII: 15_625,
-        }
-        chunk_size = chunk_limits[format_enum]
-
+    def _collect_waveform_data(
+        self,
+        format_enum: WaveformFormat,
+        start: int,
+        stop: int,
+    ) -> np.ndarray:
+        chunk_size = _WAVEFORM_CHUNK_LIMITS[format_enum]
         raw_chunks: List[np.ndarray] = []
         index = start
         while index <= stop:
@@ -725,45 +759,54 @@ class RigolDS1000Z(SCPIMixin, Instrument):
                 text = self.ask(":WAV:DATA?")
                 raw = np.fromstring(text, sep=",", dtype=float)
             else:
-                self.write(":WAV:DATA?")
-                header = self.read_bytes(2)
-                if len(header) != 2 or not header.startswith(b"#"):
-                    raise RuntimeError("Invalid binary block header.")
-                length_digits = int(header[1:2].decode("ascii"))
-                length = int(self.read_bytes(length_digits).decode("ascii"))
-                payload = self.read_bytes(length)
-                # consume trailing terminator if present
-                try:
-                    self.read_bytes(1, break_on_termchar=True)
-                except Exception:
-                    pass
-                dtype = np.uint8 if format_enum == WaveformFormat.BYTE else np.uint16
-                raw = np.frombuffer(payload, dtype=dtype).astype(np.float64)
+                raw = self._read_binary_waveform_chunk(format_enum)
             raw_chunks.append(raw)
             index = chunk_stop + 1
 
         if raw_chunks:
-            raw_data = np.concatenate(raw_chunks)
-        else:
-            raw_data = np.array([], dtype=float)
+            return np.concatenate(raw_chunks)
+        return np.array([], dtype=float)
 
+    def _read_binary_waveform_chunk(self, format_enum: WaveformFormat) -> np.ndarray:
+        self.write(":WAV:DATA?")
+        header = self.read_bytes(2)
+        if len(header) != 2 or not header.startswith(b"#"):
+            raise RuntimeError("Invalid binary block header.")
+        length_digits = int(header[1:2].decode("ascii"))
+        length = int(self.read_bytes(length_digits).decode("ascii"))
+        payload = self.read_bytes(length)
+        try:
+            self.read_bytes(1, break_on_termchar=True)
+        except Exception:
+            pass
+        dtype = np.uint8 if format_enum == WaveformFormat.BYTE else np.uint16
+        return np.frombuffer(payload, dtype=dtype).astype(np.float64)
+
+    @staticmethod
+    def _scale_waveform_data(
+        format_enum: WaveformFormat,
+        raw_data: np.ndarray,
+        preamble: Dict[str, Union[int, float]],
+    ) -> np.ndarray:
         if format_enum == WaveformFormat.ASCII:
-            voltage = raw_data
-        else:
-            y_origin = preamble["y_origin"]
-            y_reference = preamble["y_reference"]
-            y_increment = preamble["y_increment"]
-            voltage = (raw_data - y_origin - y_reference) * y_increment
+            return raw_data
+        y_origin = preamble["y_origin"]
+        y_reference = preamble["y_reference"]
+        y_increment = preamble["y_increment"]
+        return (raw_data - y_origin - y_reference) * y_increment
 
+    @staticmethod
+    def _generate_time_axis(
+        preamble: Dict[str, Union[int, float]],
+        start: int,
+        sample_count: int,
+    ) -> np.ndarray:
         start_index = start - 1
-        sample_count = voltage.size
         x_origin = preamble["x_origin"]
         x_reference = preamble["x_reference"]
         x_increment = preamble["x_increment"]
-        time = x_origin + (np.arange(start_index, start_index + sample_count) -
+        return x_origin + (np.arange(start_index, start_index + sample_count) -
                            x_reference) * x_increment
-
-        return time, voltage
 
     def save_screen_to_usb(self, filename: str = "rigol.png"):
         """Save a PNG screenshot to the USB storage device."""
