@@ -45,11 +45,14 @@ class Display(Channel):
         "DFM %d",
         """Set whether the engineering data format or the scientific data format is used (bool).
 
-        :meth:`reset()` sets the data format to scientific.
-
         Example:
             - ``True`` (engineering):  +123.456mA
             - ``False`` (scientific): +1.234E-1A
+
+        .. note::
+            Executing :meth:`~pymeasure.instruments.Instrument.reset` sets the data format to
+            scientific.
+
         """,
         map_values=True,
         values={True: 0, False: 1},
