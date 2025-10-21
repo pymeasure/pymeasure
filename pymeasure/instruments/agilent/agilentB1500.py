@@ -1836,19 +1836,19 @@ class MeasOpMode(CustomIntEnum):
 class PgSelectorPort(CustomIntEnum):
     """Output port of SMU/PG selector"""
 
-    OUTPUT_1_FIRST = 0  # Output 1 on the first selector
-    OUTPUT_2_FIRST = 1  # Output 2 on the first selector
-    OUTPUT_1_SECOND = 2  # Output 1 on the second selector
-    OUTPUT_2_SECOND = 3  # Output 2 on the second selector
+    OUTPUT_1_FIRST = 0  #: Output 1 on the first selector
+    OUTPUT_2_FIRST = 1  #: Output 2 on the first selector
+    OUTPUT_1_SECOND = 2  #: Output 1 on the second selector
+    OUTPUT_2_SECOND = 3  #: Output 2 on the second selector
 
 
 class PgSelectorConnectionStatus(CustomIntEnum):
     """Connection status of I/O port"""
 
-    NO_CONNECTION = 0  # All open. Breaks connection. Initial setting
-    SMU_ON = 1  # SMU on. Makes connection to the SMU input.
-    PGU_ON = 2  # PGU on. Makes connection to the PGU input.
-    PGU_OPEN = 3  # PGU open. Made by opening the semiconductor relay installed on the PGU on port.
+    NO_CONNECTION = 0  #: All open. Breaks connection. Initial setting
+    SMU_ON = 1  #: SMU on. Makes connection to the SMU input.
+    PGU_ON = 2  #: PGU on. Makes connection to the PGU input.
+    PGU_OPEN = 3  #: PGU open. Made by opening the semiconductor relay installed on the PGU on port.
 
 
 class SweepMode(CustomIntEnum):
@@ -1903,9 +1903,9 @@ class SPGUChannelOutputMode(CustomIntEnum):
 class SPGUSignalSource(CustomIntEnum):
     """Signal source for SPGU"""
 
-    DC = 0
-    PULSE_SIGNAL_1 = 1
-    PULSE_SIGNAL_2 = 2
+    DC = 0  #:
+    PULSE_SIGNAL_1 = 1  #:
+    PULSE_SIGNAL_2 = 2  #:
 
 
 class SPGUOperationMode(CustomIntEnum):
