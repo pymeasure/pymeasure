@@ -49,8 +49,8 @@ def _deprecate_process(msg):
 
 
 class SourceMode(StrEnum):
-    CURRENT = "current"
-    VOLTAGE = "voltage"
+    CURRENT = "CURR"
+    VOLTAGE = "VOLT"
 
 
 class AutoZeroState(StrEnum):
@@ -85,8 +85,8 @@ class TriggerSource(StrEnum):
         TRIGGER_LINK: Select trigger link as the event.
     """
 
-    IMMEDIATE = "IMMEDIATE"
-    TRIGGER_LINK = "TLINK"
+    IMMEDIATE = "IMM"
+    TRIGGER_LINK = "TLIN"
 
 
 class ArmSource(StrEnum):
@@ -100,10 +100,10 @@ class ArmSource(StrEnum):
         BUS: Select bus trigger as the event.
     """
 
-    IMMEDIATE = "IMMEDIATE"
-    TRIGGER_LINK = "TLINK"
-    TIMER = "TIMER"
-    MANUAL = "MANUAL"
+    IMMEDIATE = "IMM"
+    TRIGGER_LINK = "TLIN"
+    TIMER = "TIME"
+    MANUAL = "MAN"
     BUS = "BUS"
 
 
@@ -117,9 +117,9 @@ class TriggerOutputEvent(StrEnum):
         NONE: Disable trigger layer output triggers.
     """
 
-    SOURCE = "SOURCE"
-    DELAY = "DELAY"
-    SENSE = "SENSE"
+    SOURCE = "SOUR"
+    DELAY = "DEL"
+    SENSE = "SENS"
     NONE = "NONE"
 
 
@@ -132,8 +132,8 @@ class ArmOutputEvent(StrEnum):
         NONE: Disable trigger layer output triggers.
     """
 
-    ENTER = "TENTER"
-    EXIT = "TEXIT"
+    ENTER = "TENT"
+    EXIT = "TEX"
     NONE = "NONE"
 
 
@@ -214,12 +214,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
+    # TODO: Make this a boolean of on and off, and make once a method
     auto_zero_state = Instrument.control(
-        ":SYSTEM:AZERO:STATUS?",
-        ":SYSTEM:AZERO:STATUS %s",
+        ":SYSTEM:AZERO?",
+        ":SYSTEM:AZERO %s",
         """Control the state of auto zeroing, as an :class:`AutoZeroState` enum.""",
         validator=strict_discrete_set,
         values=AutoZeroState,
+        get_process=lambda v: "ON" if v == 1 else ("OFF" if v == 0 else v),
     )
 
     output_off_state = Instrument.control(
@@ -230,7 +232,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=OutputOffState,
     )
 
-    auto_output_off = Instrument.control(
+    auto_output_off_enabled = Instrument.control(
         ":SOURCE:CLEAR:AUTO?",
         ":SOURCE:CLEAR:AUTO %d",
         """Control whether auto output-off is activated (bool).
@@ -273,7 +275,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SENSE:AVERAGE:TCONTROL %s",
         """Control whether repeat filter is enabled (bool). If False, moving filter is used.""",
         validator=strict_discrete_set,
-        values={True: "REPEAT", False: "MOVING"},
+        values={True: "REP", False: "MOV"},
         map_values=True,
     )
 
@@ -535,7 +537,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         When `True`, `source_current` and `voltage_range` depends on the `resistance_range`
         selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
-        values={True: "AUTO", False: "MANUAL"},
+        values={True: "AUTO", False: "MAN"},
         map_values=True,
     )
 
@@ -896,7 +898,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         When True the front terminals are routed to and the rear disconnected,
         and vice-versa when False.""",
         validator=strict_discrete_set,
-        values={True: "FRONT", False: "REAR"},
+        values={True: "FRON", False: "REAR"},
         map_values=True,
     )
 
