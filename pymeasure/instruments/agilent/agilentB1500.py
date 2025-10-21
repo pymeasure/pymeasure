@@ -1559,8 +1559,8 @@ class SPGU(Channel):
 
     def __init__(self, parent, channel, **kwargs):
         super().__init__(parent, channel, **kwargs)
-        self.ch1 = self.add_child(SPGUChannel, int(str(self.id) + "01"), prefix="ch")
-        self.ch2 = self.add_child(SPGUChannel, int(str(self.id) + "02"), prefix="ch")
+        self.ch1 = self.add_child(SPGUChannel, int(f"{self.id}01"), prefix="ch")
+        self.ch2 = self.add_child(SPGUChannel, int(f"{self.id}02"), prefix="ch")
 
     output = Channel.setting(
         "%s",
