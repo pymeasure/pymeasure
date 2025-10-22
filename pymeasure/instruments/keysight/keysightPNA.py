@@ -191,7 +191,7 @@ class MeasurementChannel(Channel):
         """Initiate an immidiate trigger.
 
         .. note::
-            The trigger source to be set to `MANUAL` for this command.
+            The trigger source has to be set to `MANUAL` for this command.
             One trigger signal is sent each time :meth:`initiate()` is executed.
 
         """
@@ -226,6 +226,11 @@ class MeasurementChannel(Channel):
 
 class KeysightPNA(SCPIMixin, Instrument):
     """A class representing a Keysight PNA vector network analyzer.
+
+    :param str data_format: strictly ``ascii``, ``real32`` or ``real64``
+    :param bool byte_order_swapped:
+
+    See :attr:`.data_format` and :attr:`.byte_order_swapped` for more information.
 
     .. code-block:: python
 
@@ -293,6 +298,15 @@ class KeysightPNA(SCPIMixin, Instrument):
         "FORM:BORD %s",
         """
         Control whether the byte order is swapped for data transfer (bool).
+
+        Some computers read data from the analyzer in the reverse order. This property is only
+        effective if :attr:`.data_format` set to ``real32`` or ``real64``. If :attr:`.data_format`
+        is set to ``ascii``, :attr:`.byte_order_swapped` is ignored.
+
+        - ``True``: Use for IBM compatible computers.
+        - ``False``: The controller is anything other than an IBM compatible computers
+            or when using VEE, LabView, or T&M Tool kit.
+
         """,
         map_values=True,
         validator=strict_discrete_set,
@@ -306,6 +320,17 @@ class KeysightPNA(SCPIMixin, Instrument):
         "FORM %s",
         """
         Control the data format (strictly ``ascii``, ``real32`` or ``real64``).
+
+        - ``ascii`` is but slow. Use it when you have to transfer
+          small amounts data.
+        - ``real32`` is  best for transferring large amounts of measurement data.
+          It can cause rounding errors in frequency data.
+        - ``real64`` is slower than ``real32`` but has more significant digits.
+          It is required to accurately represent frequency data.
+
+        In the PNA, measurement data is stored as 32 bit and frequencies stored as 64 bit.
+        Therefore, use ``real32`` when getting data and ``real64`` when getting frequencies.
+        It avoids losing any precision as well as getting the maximum speed on the data transfer.
 
         .. note::
             Executing :meth:`~pymeasure.instruments.Instrument.reset`
