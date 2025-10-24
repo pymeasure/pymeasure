@@ -103,10 +103,10 @@ class SCPIKeywordEnum(SCPIKeyword, Enum):
         ...     PYMEASURE = "PYMeasure"
 
         >>> PyMeasureEnum("PYM")
-        <TestEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
-        >>> CommandMode("PyMeasure")
-        <TestEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
-        >>> CommandMode("foo")
+        <PyMeasureEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
+        >>> PyMeasureEnum("PyMeasure")
+        <PyMeasureEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
+        >>> PyMeasureEnum("foo")
         Traceback (most recent call last):
             ...
         ValueError: 'foo' is not a valid PyMeasureEnum
