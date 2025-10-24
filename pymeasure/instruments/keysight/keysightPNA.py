@@ -71,7 +71,7 @@ class Marker(Channel):
 class Trace(Channel):
     """A class representing a Keysight PNA measurement trace."""
 
-    # add the 15 markers to traces
+    # add the 15 markers to the trace
     markers = Instrument.MultiChannelCreator(Marker, list(range(1, 16)), prefix="mkr_")
 
     placeholder = "tr"
@@ -179,13 +179,7 @@ class MeasurementChannel(Channel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # add the measurement traces
-        for trace in self.measurements:
-            self.add_child(Trace,
-                           id=trace,
-                           collection="traces",
-                           prefix="tr_",
-                           )
+        self.update_traces()
 
     def initiate(self):
         """Initiate an immidiate trigger.
@@ -208,6 +202,24 @@ class MeasurementChannel(Channel):
     def hold(self):
         """Set the channel on `HOLD` mode."""
         self.write("SENS{ch}:SWE:MODE HOLD")
+
+    def update_traces(self):
+        """Update the traces of the measurement channel."""
+
+        if not hasattr(self, "traces"):
+            self.traces = {}
+
+        # remove all traces
+        for trace in list(self.traces.keys()):
+            self.remove_child(self.traces[trace])
+
+        # add the new traces
+        for trace in self.measurements:
+            self.add_child(Trace,
+                           id=trace,
+                           collection="traces",
+                           prefix="tr_",
+                           )
 
     number_of_points = Channel.measurement(
         "SENS{ch}:SWE:POIN?",
@@ -272,12 +284,7 @@ class KeysightPNA(SCPIMixin, Instrument):
 
         self.data_format = data_format
         self.byte_order_swapped = byte_order_swapped
-
-        # add the active channels
-        for channel in self.measurement_channels:
-            self.add_child(MeasurementChannel,
-                           id=channel,
-                           )
+        self.update_channels()
 
     def abort(self):
         """Stop all sweeps.
@@ -292,6 +299,23 @@ class KeysightPNA(SCPIMixin, Instrument):
         :param str file_name: e.g. ``D:/my_pna_state.csa``
         """
         self.write(f"MMEM:LOAD '{file_name}'")
+        self.update_channels()
+
+    def update_channels(self):
+        """Update the measurement channels of the PNA."""
+
+        if not hasattr(self, "channels"):
+            self.channels = {}
+
+        # remove all channels
+        for channel in list(self.channels.keys()):
+            self.remove_child(self.channels[channel])
+
+        # add the new channels
+        for channel in self.measurement_channels:
+            self.add_child(MeasurementChannel,
+                           id=channel,
+                           )
 
     byte_order_swapped = Instrument.control(
         "FORM:BORD?",

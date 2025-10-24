@@ -38,6 +38,10 @@ INITIALIZATION = [("FORM REAL,64", None),
                   ("SYST:MEAS:CAT? 1", "1"),
                   ]
 
+UPDATE = [("SYST:CHAN:CAT?", "2"),
+          ("SYST:MEAS:CAT? 2", "3"),
+          ]
+
 # binary data representing '1.e+7'
 REAL32_DATA = b"\x80\x96\x18\x4b"
 REAL64_DATA = b"\x00\x00\x00\x00\xd0\x12\x63\x41"
@@ -307,7 +311,7 @@ class TestKeysightPNA():
             KeysightPNA,
             INITIALIZATION + [
              ("MMEM:LOAD 'MyState.csa'", None),
-             ],
+             ] + UPDATE,
         ) as inst:
             inst.load_state("MyState.csa")
 
