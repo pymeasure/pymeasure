@@ -25,44 +25,83 @@
 from contextlib import nullcontext
 import pytest
 
-from pymeasure.instruments import SCPIKeyword
+from pymeasure.instruments import SCPIKeyword, SCPIKeywordEnum
+
+
+# === SCPIKeyword ===
 
 
 @pytest.mark.parametrize(
-    "input_value, shortform, exception",
+    "input_value, shortform, expected_exception",
     (
-        ("PYMeasure", "PYM", None),
-        ("PYM", "PYM", None),
-        ("PYMeasure1", "PYM1", None),
-        (SCPIKeyword("PYMeasure"), "PYM", None),
+        ("ALPHa", "ALPH", None),
+        ("ALPH", "ALPH", None),
+        ("ALPHa1", "ALPH1", None),
+        (SCPIKeyword("ALPHa"), "ALPH", None),
         (1234, None, TypeError),
-        ("PYMeasure-1", None, ValueError),
-        ("pymeasure", None, ValueError),
-        ("pymEASure", None, ValueError),
-        ("PYM1easure", None, ValueError),
+        ("ALPHa-1", None, ValueError),
+        ("alpha", None, ValueError),
+        ("alPHa", None, ValueError),
+        ("A1PHa", None, ValueError),
     ),
 )
-def test_scpi_keyword_init(input_value, shortform, exception):
-    ctx = pytest.raises(exception) if exception else nullcontext()
+def test_scpi_keyword_init(input_value, shortform, expected_exception):
+    ctx = pytest.raises(expected_exception) if expected_exception else nullcontext()
     with ctx:
         keyword = SCPIKeyword(input_value)
         assert keyword.shortform == shortform
 
 
-PYMEASURE_KEYWORD = SCPIKeyword("PYMeasure")
+ALPHA_KEYWORD = SCPIKeyword("ALPHa")
 
 
 def test_scpi_keyword_repr():
-    assert repr(PYMEASURE_KEYWORD) == "SCPIKeyword('PYMeasure')"
+    assert repr(ALPHA_KEYWORD) == "SCPIKeyword('ALPHa')"
 
 
 @pytest.mark.parametrize(
     "input_value, valid",
     (
-        ("Pym", True),
-        ("Pymeasure", True),
-        ("Pymeas", False),
+        ("Alph", True),
+        ("Alpha", True),
+        ("ALP", False),
     ),
 )
 def test_scpi_keyword_eq(input_value, valid):
-    assert (PYMEASURE_KEYWORD == input_value) is valid
+    assert (ALPHA_KEYWORD == input_value) is valid
+
+
+# === SCPIKeywordEnum ===
+
+
+class AlphaKeywordEnum(SCPIKeywordEnum):
+    ALPHA = "ALPHa"
+
+
+@pytest.mark.parametrize(
+    "input_value, valid",
+    (
+        ("Alph", True),
+        ("Alpha", True),
+        ("ALP", False),
+    ),
+)
+def test_scpi_keyword_enum_eq(input_value, valid):
+    assert (AlphaKeywordEnum.ALPHA == input_value) is valid
+
+
+@pytest.mark.parametrize(
+    "input_value, expected_member, expected_exception",
+    [
+        ("ALPHa", AlphaKeywordEnum.ALPHA, None),
+        ("alph", AlphaKeywordEnum.ALPHA, None),
+        ("Alpha", AlphaKeywordEnum.ALPHA, None),
+        ("Bravo", None, ValueError),
+        ("", None, ValueError),
+        (None, None, ValueError),
+    ],
+)
+def test_scpi_keyword_enum_lookup(input_value, expected_member, expected_exception):
+    ctx = pytest.raises(expected_exception) if expected_exception else nullcontext()
+    with ctx:
+        assert AlphaKeywordEnum(input_value) is expected_member

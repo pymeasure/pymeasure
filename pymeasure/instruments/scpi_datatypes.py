@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from enum import Enum
+
 
 class SCPIKeyword(str):
     """Represents a SCPI keyword with shortform handling.
@@ -31,14 +33,14 @@ class SCPIKeyword(str):
     case-insensitively against either its longform or shortform.
 
     Example:
-        >>> k = SCPIKeyword("MEASure")
+        >>> k = SCPIKeyword("PYMeasure")
         >>> k.shortform
-        'SOUR'
-        >>> k == "meas"
+        'PYM'
+        >>> k == "PYM"
         True
-        >>> k == "measure"
+        >>> k == "PyMeasure"
         True
-        >>> k == "measu"
+        >>> k == "PyMeas"
         False
 
     Rules:
@@ -86,3 +88,35 @@ class SCPIKeyword(str):
 
     def __repr__(self):
         return f"SCPIKeyword('{str(self)}')"
+
+
+class SCPIKeywordEnum(SCPIKeyword, Enum):
+    """Enum subclass for SCPI keywords with shortform and case-insensitive lookup.
+
+    This class extends :class:`Enum` and :class:`SCPIKeyword` to allow lookup of
+    enum members using either the longform keyword, shortform keyword or any
+    case-insensitive variant. This makes it easy to resolve user input or parsed
+    SCPI commands to the correct enumeration member.
+
+    Example:
+        >>> class PyMeasureEnum(SCPIKeywordEnum):
+        ...     PYMEASURE = "PYMeasure"
+
+        >>> PyMeasureEnum("PYM")
+        <TestEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
+        >>> CommandMode("PyMeasure")
+        <TestEnum.PYMEASURE: SCPIKeyword('PYMeasure')>
+        >>> CommandMode("foo")
+        Traceback (most recent call last):
+            ...
+        ValueError: 'foo' is not a valid PyMeasureEnum
+    """
+
+    @classmethod
+    def _missing_(cls, value):
+        """Allow lookup by short or case-insensitive SCPI keyword string."""
+        if isinstance(value, str):
+            for member in cls:
+                if member == value:  # Uses SCPIKeyword.__eq__
+                    return member
+        return None
