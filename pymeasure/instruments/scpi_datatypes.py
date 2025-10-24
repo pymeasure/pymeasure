@@ -54,7 +54,7 @@ class SCPIKeyword(str):
             value = str(value)
 
         if not isinstance(value, str):
-            raise TypeError(f"Inappropriate argument type for SCPIKeyword: {type(value)}")
+            raise TypeError(f"Expected a string or SCPIKeyword, got {type(value).__name__}")
 
         if not value.isalnum():
             raise ValueError(f"Invalid SCPIKeyword '{value}': must be alphanumeric")
@@ -71,7 +71,7 @@ class SCPIKeyword(str):
         if value != upper + lower + decimal:
             raise ValueError(
                 f"Invalid SCPIKeyword '{value}': "
-                "Must be of the form '<uppercase><lowercase><decimal>'."
+                "must be of the form '<uppercase><lowercase><decimal>'."
             )
 
         self = str.__new__(cls, value)
@@ -82,9 +82,7 @@ class SCPIKeyword(str):
         """Compare against a string or SCPIKeyword, matching longform or shortform."""
         if isinstance(other, str):
             return other.upper() in [self.upper(), self.shortform]
-        return NotImplemented(
-            f"Cannot evaluate equivalence between types 'SCPIKeyword' and '{type(other)}'."
-        )
+        return NotImplemented
 
     def __repr__(self):
         return f"SCPIKeyword('{str(self)}')"
