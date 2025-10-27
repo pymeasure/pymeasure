@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from enum import StrEnum
+from enum import Enum
 import logging
 
 from pymeasure.instruments import Instrument
@@ -33,11 +33,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LDP3811Mode(StrEnum):
+class LDP3811Mode(str, Enum):
     CONT_WAVE = "CW"
     CONST_DUTY_CYCLE = "CDC"
     CONST_PULSE_REP = "PRI"
     EXTERNAL = "EXT"
+
+    def __str__(self):
+        return str(self.value)
 
 
 class LDP3811(Instrument):
@@ -66,6 +69,7 @@ class LDP3811(Instrument):
         """Control the mode as an :class:`LDP3811Mode` enum.""",
         validator=strict_discrete_set,
         values=LDP3811Mode,
+        get_process=lambda v: LDP3811Mode(v),
     )
 
     # --- Current Control ---
