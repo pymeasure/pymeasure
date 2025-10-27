@@ -34,6 +34,16 @@ log.addHandler(logging.NullHandler())
 
 
 class LDP3811Mode(str, Enum):
+    """Enumerator of LDP3811 modes.
+
+    Members:
+        CONT_WAVE: Continuous wave current source (command 'CW').
+        CONST_DUTY_CYCLE: Keep duty cycle (pulse width / pulse repetition interval) constant
+            (command 'CDC').
+        CONST_PULSE_REP: Keep the pulse repetition interval constant (command 'PRI').
+        EXTERNAL: Trigger on the external trigger line (command 'EXT').
+    """
+
     CONT_WAVE = "CW"
     CONST_DUTY_CYCLE = "CDC"
     CONST_PULSE_REP = "PRI"
@@ -82,8 +92,8 @@ class LDP3811(Instrument):
     @property
     def current_setpoint(self):
         """Control the current setpoint, in mA (float, strictly in range 0 to
-        (:prop:`current_limit_500` if :prop:`current_range_500_enabled`
-         else :prop:`current_limit_200`))."""
+        (:attr:`~.current_limit_500` if :attr:`~.current_range_500_enabled`
+        else :attr:`~.current_limit_200`))."""
         return self.values("SET:LDI?")[0]
 
     @current_setpoint.setter
@@ -126,13 +136,14 @@ class LDP3811(Instrument):
 
     duty_cycle = Instrument.measurement(
         "CDC?",
-        """Measure the duty cycle, as a percentage (float).""",
+        """Measure the duty cycle (pulse width / pulse repetition interval),
+        as a percentage (float).""",
     )
 
     @property
     def duty_cycle_setpoint(self):
         """Control the duty cycle (pulse width / pulse repetition interval) as a percentage
-        (float, strictly in range (100 * :prop:`pulse_width` / 6500) to 100)."""
+        (float, strictly in range (100 * :attr:`~.pulse_width` / 6500) to 100)."""
         return self.values("SET:CDC?")[0]
 
     @duty_cycle_setpoint.setter
@@ -148,7 +159,7 @@ class LDP3811(Instrument):
     @property
     def pulse_repetition_interval_setpoint(self):
         """Control the pulse repetition interval, in us
-        (float, strictly in range max(1, :prop:`pulse_width`) to 6500)."""
+        (float, strictly in range max(1, :attr:`~.pulse_width`) to 6500)."""
         return self.values("SET:PRI?")[0]
 
     @pulse_repetition_interval_setpoint.setter
@@ -164,7 +175,7 @@ class LDP3811(Instrument):
     @property
     def pulse_width_setpoint(self):
         """Control the pulse width, in us (float strictly in range 0.1 to
-        :prop:`~.pulse_repetition_interval`."""
+        :attr:`~.pulse_repetition_interval`."""
         return self.values("SET:PW?")[0]
 
     @pulse_width_setpoint.setter
