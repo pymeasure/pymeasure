@@ -120,3 +120,6 @@ class SCPIKeywordEnum(SCPIKeyword, Enum):
                 if member == value:  # Uses SCPIKeyword.__eq__
                     return member
         return None
+
+    def __str__(self):
+        return str(self.value)

@@ -105,3 +105,7 @@ def test_scpi_keyword_enum_lookup(input_value, expected_member, expected_excepti
     ctx = pytest.raises(expected_exception) if expected_exception else nullcontext()
     with ctx:
         assert AlphaKeywordEnum(input_value) is expected_member
+
+
+def test_scpi_keyword_str():
+    assert str(AlphaKeywordEnum.ALPHA) == str(AlphaKeywordEnum.ALPHA.value)
