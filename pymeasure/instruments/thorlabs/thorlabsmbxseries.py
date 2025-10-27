@@ -81,6 +81,7 @@ class ThorlabsMBXSeriesMZM(Channel):
         """Control the MZM bias mode (:class:`MzmMode` enum).""",
         validator=strict_discrete_set,
         values=MzmMode,
+        get_process=lambda v: MzmMode(v),
     )
 
     ratio_setpoint = Instrument.control(
@@ -189,6 +190,7 @@ class ThorlabsMBXSeriesRGB(Channel):
         """Control the under-chassis LED accent lighting mode (:class:`RgbPowerMode` enum).""",
         validator=strict_discrete_set,
         values=RgbPowerMode,
+        get_process=lambda v: RgbPowerMode(v),
     )
 
     red = Instrument.control(
