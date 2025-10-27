@@ -33,6 +33,179 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class RLASerChannel(Channel):
+    """Represents a RLASer (Reference Laser) channel on the EXFO CTP10.
+    
+    Valid channel numbers: 1-10.
+    
+    In laser sharing mode, this query is not available on Distributed CTP10s.
+    """
+
+    idn = Channel.measurement(
+        ":CTP:RLASer{ch}:IDN?",
+        """Get the identification of the laser (str).
+        
+        Returns a comma-separated string with format: manufacturer,model,serial,firmware
+        
+        Example response: "EXFO,T100S-HP,0,6.06"
+        
+        Response components:
+        - manufacturer: Manufacturer of the laser
+        - model: Instrument model
+        - serial: Instrument serial number
+        - firmware: Instrument firmware version
+        """,
+    )
+
+    power_dbm = Channel.control(
+        ":CTP:RLASer{ch}:POWer?",
+        ":CTP:RLASer{ch}:POWer %gDBM",
+        """Control the laser output power in dBm (float).
+        
+        Sets the laser output power value in static control, or returns the power value
+        set for the given laser in static control, or the actual laser power after an
+        acquisition.
+        
+        Possible values depend on the laser specifications.
+        
+        On T500S, the maximum power is limited to 13 dBm. To avoid permanent damage
+        to the CTP10 module detectors, do not apply a higher output power value than
+        the maximum safe power specified for the detector to which the laser is connected
+        (refer to Optical Measurement Specifications).
+        
+        The default unit is dBm.
+        """,
+    )
+
+    power_mw = Channel.control(
+        ":CTP:RLASer{ch}:POWer?",
+        ":CTP:RLASer{ch}:POWer %gMW",
+        """Control the laser output power in mW (float).
+        
+        Sets the laser output power value in static control, or returns the power value
+        set for the given laser in static control, or the actual laser power after an
+        acquisition.
+        
+        Possible values depend on the laser specifications.
+        
+        On T500S, the maximum power is limited to 13 dBm. To avoid permanent damage
+        to the CTP10 module detectors, do not apply a higher output power value than
+        the maximum safe power specified for the detector to which the laser is connected
+        (refer to Optical Measurement Specifications).
+        """,
+    )
+
+    power_state = Channel.control(
+        ":CTP:RLASer{ch}:POWer:STATe?",
+        ":CTP:RLASer{ch}:POWer:STATe %s",
+        """Control the laser output state (bool or str).
+        
+        Enables or disables the laser output. This operation can take time,
+        depending on the laser model.
+        
+        Set values:
+        - False, 0, or 'OFF': disables the laser output
+        - True, 1, or 'ON': enables the laser output
+        
+        Query returns:
+        - 0 if laser output is disabled
+        - 1 if laser output is enabled
+        """,
+        validator=lambda v, values: v,
+        map_values=True,
+        values={False: 'OFF', True: 'ON', 0: 'OFF', 1: 'ON', 'OFF': 'OFF', 'ON': 'ON'},
+        get_process=lambda v: bool(int(v)),
+    )
+
+    wavelength_pm = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gPM",
+        """Control the laser emission wavelength in picometers (float).
+        
+        Sets the laser emission wavelength (static control), or returns the wavelength
+        set for the given laser in static control, or the actual laser wavelength after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+        get_process=lambda v: float(v) * 1e12,
+    )
+
+    wavelength_nm = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gNM",
+        """Control the laser emission wavelength in nanometers (float).
+        
+        Sets the laser emission wavelength (static control), or returns the wavelength
+        set for the given laser in static control, or the actual laser wavelength after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+        get_process=lambda v: float(v) * 1e9,
+    )
+
+    wavelength_m = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gM",
+        """Control the laser emission wavelength in meters (float).
+        
+        Sets the laser emission wavelength (static control), or returns the wavelength
+        set for the given laser in static control, or the actual laser wavelength after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+    )
+
+    frequency_hz = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gHZ",
+        """Control the laser emission frequency in Hz (float).
+        
+        Sets the laser emission frequency (static control), or returns the frequency
+        set for the given laser in static control, or the actual laser frequency after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+    )
+
+    frequency_ghz = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gGHZ",
+        """Control the laser emission frequency in GHz (float).
+        
+        Sets the laser emission frequency (static control), or returns the frequency
+        set for the given laser in static control, or the actual laser frequency after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+        get_process=lambda v: float(v) * 1e-9,
+    )
+
+    frequency_thz = Channel.control(
+        ":CTP:RLASer{ch}:WAVelength?",
+        ":CTP:RLASer{ch}:WAVelength %gTHZ",
+        """Control the laser emission frequency in THz (float).
+        
+        Sets the laser emission frequency (static control), or returns the frequency
+        set for the given laser in static control, or the actual laser frequency after
+        an acquisition.
+        
+        The allowed units are: PM, NM, M, HZ, GHZ, THZ.
+        The default unit is meter (M).
+        """,
+        get_process=lambda v: float(v) * 1e-12,
+    )
+
+
 class TLSChannel(Channel):
     """Represents a TLS (Tunable Laser Source) channel on the EXFO CTP10."""
 
@@ -359,6 +532,23 @@ class CTP10(SCPIMixin, Instrument):
         ctp.tls1.sweep_speed_nmps = 50
         ctp.tls1.laser_power_dbm = 5.0
 
+        # Get reference laser identification (up to 10 lasers)
+        laser_id = ctp.rlaser[2].idn  # Returns "EXFO,T100S-HP,0,6.06"
+        
+        # Set reference laser power
+        ctp.rlaser[2].power_dbm = 1.5  # Set power to 1.5 dBm
+        current_power = ctp.rlaser[2].power_dbm  # Read current power setting
+        
+        # Enable/disable laser output
+        ctp.rlaser[2].power_state = True  # Enable laser output
+        ctp.rlaser[2].power_state = 'ON'  # Alternative: use 'ON'/'OFF'
+        is_enabled = ctp.rlaser[2].power_state  # Returns True/False
+        
+        # Set laser wavelength (multiple units available)
+        ctp.rlaser[2].wavelength_nm = 1550.0  # Set to 1550 nm
+        current_wavelength = ctp.rlaser[2].wavelength_nm  # Read wavelength in nm
+        # Alternative units: wavelength_pm, wavelength_m, frequency_hz, frequency_ghz, frequency_thz
+
         # Start measurement
         ctp.initiate_sweep()
         ctp.wait_for_sweep_complete()
@@ -382,6 +572,9 @@ class CTP10(SCPIMixin, Instrument):
     tls2 = Instrument.ChannelCreator(TLSChannel, 2)
     tls3 = Instrument.ChannelCreator(TLSChannel, 3)
     tls4 = Instrument.ChannelCreator(TLSChannel, 4)
+
+    # RLASer Channel creator (up to 10 channels)
+    rlaser = Instrument.MultiChannelCreator(RLASerChannel, list(range(1, 11)))
 
     # Trace Channel creators for all valid (module, channel) combinations
     # Modules: 1-20, Channels: 1-6
