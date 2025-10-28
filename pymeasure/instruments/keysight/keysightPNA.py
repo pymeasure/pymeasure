@@ -204,7 +204,7 @@ class MeasurementChannel(Channel):
         self.write("SENS{ch}:SWE:MODE HOLD")
 
     def update_traces(self):
-        """Update the trace instances of the channel to reflect the current 
+        """Update the trace instances of the channel to reflect the current
         trace configuration."""
 
         if not hasattr(self, "traces"):
@@ -303,7 +303,7 @@ class KeysightPNA(SCPIMixin, Instrument):
         self.update_channels()
 
     def update_channels(self):
-        """Update the channel instances of the PNA driver to reflect the current 
+        """Update the channel instances of the PNA driver to reflect the current
         channel configuration."""
 
         if not hasattr(self, "channels"):
