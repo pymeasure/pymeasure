@@ -31,16 +31,24 @@ from pymeasure.instruments.keysight import KeysightPNA
 # communication during class initialization:
 # - set the data format to real64
 # - use swapped byte order for data transfer
-# - represent 1 channel with 1 trace
+# - represent channel 1 with trace 1
 INITIALIZATION = [("FORM REAL,64", None),
                   ("FORM:BORD SWAP", None),
                   ("SYST:CHAN:CAT?", "1"),
                   ("SYST:MEAS:CAT? 1", "1"),
                   ]
 
-UPDATE = [("SYST:CHAN:CAT?", "2"),
-          ("SYST:MEAS:CAT? 2", "3"),
-          ]
+# communication after reset():
+# - represent channel 1 with trace 1
+AFTER_RESET = [("SYST:CHAN:CAT?", "1"),
+               ("SYST:MEAS:CAT? 1", "1"),
+               ]
+
+# communication after load_state():
+# - represent channel 2 with trace 3
+NEW_STATE = [("SYST:CHAN:CAT?", "2"),
+             ("SYST:MEAS:CAT? 2", "3"),
+             ]
 
 # binary data representing '1.e+7'
 REAL32_DATA = b"\x80\x96\x18\x4b"
@@ -311,7 +319,7 @@ class TestKeysightPNA():
             KeysightPNA,
             INITIALIZATION + [
              ("MMEM:LOAD 'MyState.csa'", None),
-             ] + UPDATE,
+             ] + NEW_STATE,
         ) as inst:
             inst.load_state("MyState.csa")
 
@@ -375,3 +383,12 @@ class TestKeysightPNA():
         ) as inst:
             inst.output_enabled = output_enabled
             assert output_enabled == inst.output_enabled
+
+    def test_reset(self):
+        with expected_protocol(
+            KeysightPNA,
+            INITIALIZATION + [
+             ("*RST", None),
+             ] + AFTER_RESET,
+        ) as inst:
+            inst.reset()

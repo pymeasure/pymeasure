@@ -204,7 +204,8 @@ class MeasurementChannel(Channel):
         self.write("SENS{ch}:SWE:MODE HOLD")
 
     def update_traces(self):
-        """Update the traces of the measurement channel."""
+        """Update the trace instances of the channel to reflect the current 
+        trace configuration."""
 
         if not hasattr(self, "traces"):
             self.traces = {}
@@ -302,7 +303,8 @@ class KeysightPNA(SCPIMixin, Instrument):
         self.update_channels()
 
     def update_channels(self):
-        """Update the measurement channels of the PNA."""
+        """Update the channel instances of the PNA driver to reflect the current 
+        channel configuration."""
 
         if not hasattr(self, "channels"):
             self.channels = {}
@@ -316,6 +318,10 @@ class KeysightPNA(SCPIMixin, Instrument):
             self.add_child(MeasurementChannel,
                            id=channel,
                            )
+
+    def reset(self):
+        super().reset()
+        self.update_channels()
 
     byte_order_swapped = Instrument.control(
         "FORM:BORD?",
