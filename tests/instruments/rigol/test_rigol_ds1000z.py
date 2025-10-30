@@ -26,39 +26,15 @@ import io
 
 import pytest
 
-from pymeasure.instruments.rigol import RigolDS1000Z
 from pymeasure.instruments.rigol.rigol_ds1000z import (
+    RigolDS1000Z,
     DisplayImageFormat,
-    RigolDS1000ZDisplay,
     _normalize_memory_depth_value,
     _parse_memory_depth,
     _parse_tmc_block,
     _parse_waveform_preamble,
 )
 from pymeasure.test import expected_protocol
-
-
-class DummyParent:
-    """Lightweight stand-in for RigolDS1000Z used by display unit tests."""
-
-    def __init__(self, *, ask_map=None, byte_stream=b""):
-        self.writes = []
-        self.asks = []
-        self._ask_map = ask_map or {}
-        self._stream = io.BytesIO(byte_stream)
-
-    def write(self, command):
-        self.writes.append(command)
-
-    def ask(self, command):
-        self.asks.append(command)
-        try:
-            return self._ask_map[command]
-        except KeyError as exc:
-            raise AssertionError(f"Unexpected ask command: {command}") from exc
-
-    def read_bytes(self, count, break_on_termchar=False):
-        return self._stream.read(count)
 
 
 def _stream_reader(payload):
@@ -132,50 +108,62 @@ def test_parse_memory_depth_invalid_reply():
         _parse_memory_depth("banana")
 
 
+
 def test_display_grab_image_includes_optional_arguments():
-    parent = DummyParent(byte_stream=b"#40004data\n")
-    display = RigolDS1000ZDisplay(parent)
-    result = display.grab_image(color=True, invert=False, image_format=DisplayImageFormat.PNG)
-    assert result == b"data"
-    assert parent.writes == [":DISP:DATA? [ON,OFF,PNG]"]
+    with expected_protocol(
+        RigolDS1000Z,
+        [(b":DISP:DATA? [ON,OFF,PNG]", b"#40004data")]
+    ) as inst:
+        result = inst.display.grab_image(color=True, invert=False, image_format=DisplayImageFormat.PNG)
+        assert result == b"data"
+
 
 
 def test_display_grab_image_rejects_unsupported_format():
-    display = RigolDS1000ZDisplay(DummyParent())
-    with pytest.raises(ValueError):
-        display.grab_image(image_format="svg")
+    with expected_protocol(RigolDS1000Z, []) as inst:
+        with pytest.raises(ValueError):
+            inst.display.grab_image(image_format="svg")
 
 
-def test_display_type_getter_and_alias_setter():
-    parent = DummyParent(ask_map={":DISP:TYPE?": "VECT\n"})
-    display = RigolDS1000ZDisplay(parent)
-    assert display.type.value == "VECT"
-    display.type = "vectors"
-    assert parent.writes == [":DISP:TYPE VECT"]
+
+def test_display_type_set_and_get():
+    with expected_protocol(
+        RigolDS1000Z,
+        [(b":DISP:TYPE VECT", None), (b":DISP:TYPE?", b"VECT")]
+    ) as inst:
+        inst.display.type = "VECT"
+        assert inst.display.type == "VECT"
+
 
 
 def test_display_type_setter_rejects_invalid_mode():
-    display = RigolDS1000ZDisplay(DummyParent())
-    with pytest.raises(ValueError):
-        display.type = "lines"
+    with expected_protocol(RigolDS1000Z, []) as inst:
+        with pytest.raises(ValueError):
+            inst.display.type = "lines"
 
 
-def test_display_persistence_accepts_infinite_alias():
-    display = RigolDS1000ZDisplay(DummyParent())
-    display.persistence = "infinite"
-    assert display._parent.writes == [":DISP:GRAD:TIME INF"]
+
+def test_display_persistence_set_and_get_inf():
+    with expected_protocol(
+        RigolDS1000Z,
+        [(b":DISP:GRAD:TIME INF", None), (b":DISP:GRAD:TIME?", b"inf")]
+    ) as inst:
+        inst.display.persistence = "INF"
+        assert inst.display.persistence == float('inf')
+
 
 
 def test_display_persistence_rejects_invalid_value():
-    display = RigolDS1000ZDisplay(DummyParent())
-    with pytest.raises(ValueError):
-        display.persistence = "fast"
+    with expected_protocol(RigolDS1000Z, []) as inst:
+        with pytest.raises(ValueError):
+            inst.display.persistence = "fast"
+
 
 
 def test_waveform_brightness_setter_rejects_out_of_range():
-    display = RigolDS1000ZDisplay(DummyParent())
-    with pytest.raises(ValueError):
-        display.waveform_brightness = 200
+    with expected_protocol(RigolDS1000Z, []) as inst:
+        with pytest.raises(ValueError):
+            inst.display.waveform_brightness = 200
 
 
 def test_memory_depth_single_channel_allows_maximum_depth():

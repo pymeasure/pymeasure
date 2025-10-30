@@ -21,23 +21,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import logging
-from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple, Union
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Until StrEnum is broadly available from the standard library"""
+        # Python>3.10 remove it.
+
+from typing import Union, Optional
 
 import numpy as np
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
-
-_ANALOG_SOURCES: Tuple[str, ...] = ("CHAN1", "CHAN2", "CHAN3", "CHAN4", "MATH")
-_DIGITAL_SOURCES: Tuple[str, ...] = tuple(f"D{idx}" for idx in range(16))
-_WAVEFORM_SOURCES: Tuple[str, ...] = _ANALOG_SOURCES + _DIGITAL_SOURCES
-_MEMORY_DEPTH_VALUES: Tuple[int, ...] = (
+_ANALOG_SOURCES: tuple[str, ...] = ("CHAN1", "CHAN2", "CHAN3", "CHAN4", "MATH")
+_DIGITAL_SOURCES: tuple[str, ...] = tuple(f"D{idx}" for idx in range(16))
+_WAVEFORM_SOURCES: tuple[str, ...] = _ANALOG_SOURCES + _DIGITAL_SOURCES
+_MEMORY_DEPTH_VALUES: tuple[int, ...] = (
     3000,
     6000,
     12000,
@@ -52,21 +56,21 @@ _MEMORY_DEPTH_VALUES: Tuple[int, ...] = (
     12000000,
     24000000,
 )
-_ANALOG_MEMORY_DEPTH_OPTIONS: Dict[int, Set[int]] = {
+_ANALOG_MEMORY_DEPTH_OPTIONS: dict[int, set[int]] = {
     0: set(_MEMORY_DEPTH_VALUES),
     1: {12000, 120000, 1200000, 12000000, 24000000},
     2: {6000, 60000, 600000, 6000000, 12000000},
     3: {3000, 30000, 300000, 3000000, 6000000},
     4: {3000, 30000, 300000, 3000000, 6000000},
 }
-_DIGITAL_MEMORY_DEPTH_OPTIONS: Dict[int, Set[int]] = {
+_DIGITAL_MEMORY_DEPTH_OPTIONS: dict[int, set[int]] = {
     0: set(_MEMORY_DEPTH_VALUES),
     8: {12000, 120000, 1200000, 12000000, 24000000},
     16: {6000, 60000, 600000, 6000000, 12000000},
 }
 
 
-class AcquireType(str, Enum):
+class AcquireType(StrEnum):
     """Supported acquisition types for the scope."""
     # In this mode, the oscilloscope samples the signal at equal time interval to rebuild the
     # waveform. For most of the waveforms, the best display effect can be obtained using this mode.
@@ -89,21 +93,21 @@ class AcquireType(str, Enum):
     HIGH_RESOLUTION = "HRES"
 
 
-class WaveformMode(str, Enum):
+class WaveformMode(StrEnum):
     """Waveform acquisition modes supported by the scope."""
     NORMAL = "NORM"
     MAXIMUM = "MAX"
     RAW = "RAW"
 
 
-class WaveformFormat(str, Enum):
+class WaveformFormat(StrEnum):
     """Waveform data formats supported by the scope."""
     BYTE = "BYTE"
     WORD = "WORD"
     ASCII = "ASC"
 
 
-_WAVEFORM_CHUNK_LIMITS: Dict[WaveformFormat, int] = {
+_WAVEFORM_CHUNK_LIMITS: dict[WaveformFormat, int] = {
     WaveformFormat.BYTE: 250_000,
     WaveformFormat.WORD: 125_000,
     WaveformFormat.ASCII: 15_625,
@@ -112,18 +116,18 @@ _WAVEFORM_CHUNK_LIMITS: Dict[WaveformFormat, int] = {
 
 # Display enums
 
-class DisplayType(str, Enum):
+class DisplayType(StrEnum):
     VECTORS = "VECT"
     DOTS = "DOTS"
 
 
-class DisplayGrid(str, Enum):
+class DisplayGrid(StrEnum):
     FULL = "FULL"
     HALF = "HALF"
     NONE = "NONE"
 
 
-class DisplayImageFormat(str, Enum):
+class DisplayImageFormat(StrEnum):
     BMP24 = "BMP24"
     BMP8 = "BMP8"
     PNG = "PNG"
@@ -131,10 +135,10 @@ class DisplayImageFormat(str, Enum):
     TIFF = "TIFF"
 
 
-def _parse_waveform_preamble(reply: str) -> Dict[str, Union[int, float]]:
+def _parse_waveform_preamble(reply: str) -> dict[str, Union[int, float]]:
     """Parse the `:WAV:PRE?` reply into a structured dictionary."""
 
-    fields = reply.strip().split(",")
+    fields = reply.split(",")
     if len(fields) != 10:
         raise RuntimeError(f"Unexpected waveform preamble: {reply!r}")
 
@@ -172,7 +176,7 @@ def _parse_tmc_block(read_bytes_func) -> bytes:
     return payload
 
 
-def _normalize_memory_depth_value(value: Union[str, int]) -> Tuple[str, Optional[int]]:
+def _normalize_memory_depth_value(value: Union[str, int]) -> tuple[str, Optional[int]]:
     """Normalise memory depth input, returning the SCPI text and numeric form.
 
     Returns
@@ -222,7 +226,6 @@ class RigolDS1000ZChannel(Channel):
         "Control the channel coupling mode (str): 'DC', 'AC', or 'GND'.",
         validator=strict_discrete_set,
         values=["DC", "AC", "GND"],
-        preprocess_reply=lambda v: v.strip(),
     )
 
     bandwidth_limit_enabled = Channel.control(
@@ -232,7 +235,6 @@ class RigolDS1000ZChannel(Channel):
         validator=strict_discrete_set,
         values={True: "20M", False: "OFF"},
         map_values=True,
-        preprocess_reply=lambda v: v.strip(),
     )
 
     display_enabled = Channel.control(
@@ -252,7 +254,6 @@ class RigolDS1000ZChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
-        preprocess_reply=lambda v: v.strip(),
     )
 
     scale = Channel.control(
@@ -284,22 +285,27 @@ class RigolDS1000ZChannel(Channel):
         "Control the channel unit (str).",
         validator=strict_discrete_set,
         values=["VOLT", "WATT", "AMP", "UNKN"],
-        preprocess_reply=lambda v: v.strip(),
     )
 
 
 # TODO: add Cursor object
 
 
-class RigolDS1000ZDisplay:
+class RigolDS1000ZDisplay(Channel):
     """Display subsystem for Rigol DS/MSO 1000Z (:DISPlay.*)."""
 
-    def __init__(self, parent: "RigolDS1000Z"):
-        self._parent = parent
+    def __init__(self, parent):
+        super().__init__(parent, "")
+
+    def insert_id(self, command):
+        """We treat the Display as a channel so we can use channel control, but we don't
+        need to insert an ID.
+        """
+        return command
 
     def clear(self) -> None:
         """Clear all waveforms on the screen (equiv. front-panel CLEAR)."""
-        self._parent.write(":DISP:CLE")
+        self.write(":DISP:CLE")
 
     def grab_image(
         self,
@@ -343,79 +349,82 @@ class RigolDS1000ZDisplay:
             args = ""
 
         cmd = f":DISP:DATA? {args}".rstrip()
-        self._parent.write(cmd)
-        return _parse_tmc_block(self._parent.read_bytes)
+        self.write(cmd)
+        return _parse_tmc_block(self.read_bytes)
 
-    @property
-    def type(self) -> DisplayType:
-        reply = self._parent.ask(":DISP:TYPE?")
-        val = reply.strip().upper()
-        # Instrument replies "VECT" or "DOTS"
-        return DisplayType(val)
+    type = Channel.control(
+        ":DISP:TYPE?",
+        ":DISP:TYPE %s",
+        "Control the display type (str): 'VECT' (vectors) or 'DOTS'.",
+        validator=strict_discrete_set,
+        values=[DisplayType.VECTORS.value, DisplayType.DOTS.value],
+    )
 
-    @type.setter
-    def type(self, mode: Union[DisplayType, str]) -> None:
-        if isinstance(mode, DisplayType):
-            val = mode.value
-        else:
-            val = str(mode).upper()
-            if val == "VECTORS":  # accept friendly alias
-                val = "VECT"
-            if val not in (DisplayType.VECTORS.value, DisplayType.DOTS.value):
-                raise ValueError("Display type must be 'VECTors' or 'DOTS'.")
-        self._parent.write(f":DISP:TYPE {val}")
+    persistence = Channel.control(
+        ":DISP:GRAD:TIME?",
+        ":DISP:GRAD:TIME %s",
+        "Control persistence time (str): one of 'MIN','0.1','0.2','0.5','1','5','10','INF'.",
+        validator=strict_discrete_set,
+        values=["MIN", "0.1", "0.2", "0.5", "1", "5", "10", "INF"],
+    )
 
-    @property
-    def persistence(self) -> str:
-        """Return persistence time: MIN, 0.1, 0.2, 0.5, 1, 5, 10, or INF."""
-        return self._parent.ask(":DISP:GRAD:TIME?").strip().upper()
+    waveform_brightness = Channel.control(
+        ":DISP:WBR?",
+        ":DISP:WBR %d",
+        "Control the waveform brightness (int 0..100).",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
 
-    @persistence.setter
-    def persistence(self, value: Union[str, float]) -> None:
-        allowed = {"MIN", "0.1", "0.2", "0.5", "1", "5", "10", "INF", "INFINITE"}
-        if isinstance(value, (int, float)):
-            value = str(value)
-        val = str(value).strip().upper()
-        if val == "INFINITE":
-            val = "INF"
-        if val not in allowed:
-            raise ValueError(f"Invalid persistence '{value}'. Allowed: {sorted(allowed)}")
-        self._parent.write(f":DISP:GRAD:TIME {val}")
+    grid = Channel.control(
+        ":DISP:GRID?",
+        ":DISP:GRID %s",
+        "Control the display grid (str): 'FULL','HALF','NONE'.",
+        validator=strict_discrete_set,
+        values=[g.value for g in DisplayGrid],
+    )
 
-    @property
-    def waveform_brightness(self) -> int:
-        return int(float(self._parent.ask(":DISP:WBR?")))
-
-    @waveform_brightness.setter
-    def waveform_brightness(self, pct: int) -> None:
-        if not (0 <= int(pct) <= 100):
-            raise ValueError("Waveform brightness must be 0..100")
-        self._parent.write(f":DISP:WBR {int(pct)}")
-
-    @property
-    def grid(self) -> DisplayGrid:
-        return DisplayGrid(self._parent.ask(":DISP:GRID?").strip().upper())
-
-    @grid.setter
-    def grid(self, mode: Union[DisplayGrid, str]) -> None:
-        val = mode.value if isinstance(mode, DisplayGrid) else str(mode).upper()
-        if val not in {g.value for g in DisplayGrid}:
-            raise ValueError("Grid must be FULL, HALF, or NONE.")
-        self._parent.write(f":DISP:GRID {val}")
-
-    @property
-    def grid_brightness(self) -> int:
-        return int(float(self._parent.ask(":DISP:GBR?")))
-
-    @grid_brightness.setter
-    def grid_brightness(self, pct: int) -> None:
-        if not (0 <= int(pct) <= 100):
-            raise ValueError("Grid brightness must be 0..100")
-        self._parent.write(f":DISP:GBR {int(pct)}")
-
+    grid_brightness = Channel.control(
+        ":DISP:GBR?",
+        ":DISP:GBR %d",
+        "Control the grid brightness (int 0..100).",
+        validator=strict_range,
+        values=[0, 100],
+        cast=int,
+    )
 
 class RigolDS1000Z(SCPIMixin, Instrument):
-    """Driver for the Rigol DS/MSO 1000Z series oscilloscopes."""
+    """Driver for the Rigol DS/MSO 1000Z series oscilloscopes.
+
+    Parameters
+        ----------
+        adapter : Adapter or str
+            PyMeasure adapter or VISA resource name.
+        name : str, optional
+            Readable instrument name reported to PyMeasure.
+        channel_count : int, optional
+            Number of *physical* analogue channels fitted to the scope (typically 2 or 4).
+            Must be between 1 and 4; only determines how many channel interfaces
+            are exposed via :pyattr:`channels`. The SCPI properties still allow
+            enabling or disabling any individual channel regardless of that entry
+            count.
+        **kwargs :
+            Forwarded to :class:`~pymeasure.instruments.Instrument`.
+    """
+
+    def __init__(self, adapter, name="Rigol DS1000Z/MSO1000Z Oscilloscope",
+                 channel_count=4, **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        if not 1 <= channel_count <= 4:
+            raise ValueError("channel_count must be between 1 and 4")
+        self._channel_count = channel_count
+        self._channel_map = {
+            index: getattr(self, f"channel_{index}")
+            for index in range(1, channel_count + 1)
+        }
+        self._digital_channel_hint: Optional[int] = None
+        self.display = RigolDS1000ZDisplay(self)
 
     channel_1 = Instrument.ChannelCreator(RigolDS1000ZChannel, "1")
     channel_2 = Instrument.ChannelCreator(RigolDS1000ZChannel, "2")
@@ -547,36 +556,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         cast=int,
     )
 
-    def __init__(self, adapter, name="Rigol DS1000Z/MSO1000Z Oscilloscope",
-                 channel_count=4, **kwargs):
-        """Initialise the driver.
-
-        Parameters
-        ----------
-        adapter : Adapter or str
-            PyMeasure adapter or VISA resource name.
-        name : str, optional
-            Readable instrument name reported to PyMeasure.
-        channel_count : int, optional
-            Number of *physical* analogue channels fitted to the scope (typically 2 or 4).
-            Must be between 1 and 4; only determines how many channel interfaces
-            are exposed via :pyattr:`channels`. The SCPI properties still allow
-            enabling or disabling any individual channel regardless of that entry
-            count.
-        **kwargs :
-            Forwarded to :class:`~pymeasure.instruments.Instrument`.
-        """
-        super().__init__(adapter, name, **kwargs)
-        if not 1 <= channel_count <= 4:
-            raise ValueError("channel_count must be between 1 and 4")
-        self._channel_count = channel_count
-        self._channel_map = {
-            index: getattr(self, f"channel_{index}")
-            for index in range(1, channel_count + 1)
-        }
-        self._digital_channel_hint: Optional[int] = None
-        self.display = RigolDS1000ZDisplay(self)
-
     def run(self):
         """Start waveform acquisition."""
         self.write(":RUN")
@@ -654,7 +633,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         and single trigger modes."""
         self.write(":TFOR")
 
-    def get_waveform_preamble(self) -> Dict[str, Union[int, float]]:
+    def get_waveform_preamble(self) -> dict[str, Union[int, float]]:
         """Return the parsed contents of `:WAVeform:PREamble?`."""
         reply = self.ask(":WAV:PRE?")
         return _parse_waveform_preamble(reply)
@@ -667,7 +646,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         start: Optional[int] = None,
         stop: Optional[int] = None,
         force_stop_for_raw: bool = True,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Read a waveform and return time and voltage arrays."""
 
         source_value = self._resolve_waveform_source(source)
@@ -735,7 +714,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         total_points: int,
         start: Optional[int],
         stop: Optional[int],
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         start_idx = 1 if start is None else start
         stop_idx = total_points if stop is None else stop
         if stop_idx < start_idx or start_idx < 1:
@@ -749,7 +728,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         stop: int,
     ) -> np.ndarray:
         chunk_size = _WAVEFORM_CHUNK_LIMITS[format_enum]
-        raw_chunks: List[np.ndarray] = []
+        raw_chunks: list[np.ndarray] = []
         index = start
         while index <= stop:
             chunk_stop = min(index + chunk_size - 1, stop)
@@ -786,7 +765,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def _scale_waveform_data(
         format_enum: WaveformFormat,
         raw_data: np.ndarray,
-        preamble: Dict[str, Union[int, float]],
+        preamble: dict[str, Union[int, float]],
     ) -> np.ndarray:
         if format_enum == WaveformFormat.ASCII:
             return raw_data
@@ -797,7 +776,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     @staticmethod
     def _generate_time_axis(
-        preamble: Dict[str, Union[int, float]],
+        preamble: dict[str, Union[int, float]],
         start: int,
         sample_count: int,
     ) -> np.ndarray:
@@ -834,7 +813,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             raise ValueError("active_lines must be one of 0, 8, 16, or None")
         self._digital_channel_hint = active_lines
 
-    def _allowed_memory_depth_values(self) -> Set[int]:
+    def _allowed_memory_depth_values(self) -> set[int]:
         analog_active = self._active_analog_channel_count()
         analog_key = min(max(analog_active, 0), 4)
         analog_options = _ANALOG_MEMORY_DEPTH_OPTIONS.get(
