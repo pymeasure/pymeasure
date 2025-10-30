@@ -4,11 +4,6 @@ Rigol DS1000Z oscilloscope
 
 .. currentmodule:: pymeasure.instruments.rigol.rigol_ds1000z
 
-The :class:`RigolDS1000Z` driver targets the Rigol DS1000Z and MSO1000Z series
-oscilloscopes. It exposes strongly typed helpers for common acquisition,
-trigger, and waveform-transfer tasks while building on :class:`~pymeasure.instruments.Channel`
-descriptors for per-channel configuration.
-
 Quick start
 ===========
 

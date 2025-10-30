@@ -26,31 +26,25 @@ import pytest
 
 from pymeasure.instruments.rigol import RigolDS1000Z
 
-pytest.skip("Only work with connected hardware", allow_module_level=True)
+
+@pytest.fixture(scope="module")
+def rigolDS1000Z(connected_device_address):
+    instr = RigolDS1000Z(connected_device_address)
+    return instr
 
 
-class TestRigolDS1000Z:
-    """Hardware-backed smoke tests for a Rigol DS/MSO1000Z oscilloscope."""
+def test_idn_responds(rigolDS1000Z: RigolDS1000Z):
+    response = rigolDS1000Z.id
+    assert isinstance(response, str)
+    assert response
+    print(f"Response: {response}")
 
-    # Update to match the VISA resource string of the target instrument before running.
-    RESOURCE = "TCPIP0::10.33.179.98::INSTR"
 
-    SCOPE = RigolDS1000Z(RESOURCE)
+def test_memory_depth_round_trip(rigolDS1000Z: RigolDS1000Z):
+    rigolDS1000Z.memory_depth = "AUTO"
+    rigolDS1000Z.memory_depth = 12_000
+    assert rigolDS1000Z.memory_depth in ("AUTO", 12_000)
 
-    @pytest.fixture
-    def scope(self):
-        yield self.SCOPE
 
-    def test_idn_responds(self, scope):
-        response = scope.id
-        assert isinstance(response, str)
-        assert response
-        print(f"Response: {response}")
-
-    def test_memory_depth_round_trip(self, scope):
-        scope.memory_depth = "AUTO"
-        scope.memory_depth = 12_000
-        assert scope.memory_depth in ("AUTO", 12_000)
-
-    def test_autoscale_executes(self, scope):
-        scope.autoscale()
+def test_autoscale_executes(rigolDS1000Z: RigolDS1000Z):
+    rigolDS1000Z.autoscale()
