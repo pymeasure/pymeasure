@@ -399,7 +399,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     """Driver for the Rigol DS/MSO 1000Z series oscilloscopes.
 
     Parameters
-        ----------
         adapter : Adapter or str
             PyMeasure adapter or VISA resource name.
         name : str, optional
