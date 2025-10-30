@@ -394,6 +394,7 @@ class RigolDS1000ZDisplay(Channel):
         cast=int,
     )
 
+
 class RigolDS1000Z(SCPIMixin, Instrument):
     """Driver for the Rigol DS/MSO 1000Z series oscilloscopes.
 
@@ -406,10 +407,10 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         channel_count : int, optional
             Number of *physical* analogue channels fitted to the scope (typically 2 or 4).
             Must be between 1 and 4; only determines how many channel interfaces
-            are exposed via :pyattr:`channels`. The SCPI properties still allow
+            are exposed via channels. The SCPI properties still allow
             enabling or disabling any individual channel regardless of that entry
             count.
-        **kwargs :
+        `**kwargs` :
             Forwarded to :class:`~pymeasure.instruments.Instrument`.
     """
 
