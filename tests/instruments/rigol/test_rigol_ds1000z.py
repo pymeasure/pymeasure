@@ -108,22 +108,20 @@ def test_parse_memory_depth_invalid_reply():
         _parse_memory_depth("banana")
 
 
-
 def test_display_grab_image_includes_optional_arguments():
     with expected_protocol(
         RigolDS1000Z,
         [(b":DISP:DATA? [ON,OFF,PNG]", b"#40004data")]
     ) as inst:
-        result = inst.display.grab_image(color=True, invert=False, image_format=DisplayImageFormat.PNG)
+        result = inst.display.grab_image(color=True, invert=False,
+                                         image_format=DisplayImageFormat.PNG)
         assert result == b"data"
-
 
 
 def test_display_grab_image_rejects_unsupported_format():
     with expected_protocol(RigolDS1000Z, []) as inst:
         with pytest.raises(ValueError):
             inst.display.grab_image(image_format="svg")
-
 
 
 def test_display_type_set_and_get():
@@ -135,12 +133,10 @@ def test_display_type_set_and_get():
         assert inst.display.type == "VECT"
 
 
-
 def test_display_type_setter_rejects_invalid_mode():
     with expected_protocol(RigolDS1000Z, []) as inst:
         with pytest.raises(ValueError):
             inst.display.type = "lines"
-
 
 
 def test_display_persistence_set_and_get_inf():
@@ -152,12 +148,10 @@ def test_display_persistence_set_and_get_inf():
         assert inst.display.persistence == float('inf')
 
 
-
 def test_display_persistence_rejects_invalid_value():
     with expected_protocol(RigolDS1000Z, []) as inst:
         with pytest.raises(ValueError):
             inst.display.persistence = "fast"
-
 
 
 def test_waveform_brightness_setter_rejects_out_of_range():
