@@ -38,12 +38,12 @@ def test_output_enabled_setter():
 
 def test_mode_getter():
     with expected_protocol(LDP3811, [(b"MODE?", "CW")]) as inst:
-        assert inst.mode == LDP3811Mode.CONT_WAVE
+        assert inst.mode == LDP3811Mode.CONTINUOUS_WAVE
 
 
 def test_mode_setter():
     with expected_protocol(LDP3811, [(b"MODE PRI", None)]) as inst:
-        inst.mode = LDP3811Mode.CONST_PULSE_REP
+        inst.mode = LDP3811Mode.CONST_REPETITION_INTERVAL
 
 
 def test_current():
