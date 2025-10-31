@@ -572,7 +572,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def parallel_meas(self):
-        """Enable/Disable parallel measurements.
+        """Control whether parallel measurements are enabled (bool).
             Effective for SMUs using HSADC and measurement modes 1,2,10,18.
             (``PAD``)
 
