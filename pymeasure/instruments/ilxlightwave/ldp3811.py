@@ -154,6 +154,20 @@ class LDP3811(Instrument):
         value = strict_range(value, (100 * self.pulse_width / 6500, 100))
         self.write(f"CDC {value}")
 
+    def set_to_min_duty_cycle(self):
+        """Set the duty cycle to the minimum valid value given the present mode, pulse width,
+        and pulse repetition interval, and return the duty cycle."""
+        self.write("CDC 0.01")  # The instrument implicitly truncates to the closest valid value
+        self.check_errors()
+        return self.duty_cycle_setpoint
+
+    def set_to_max_duty_cycle(self):
+        """Set the duty cycle to the maximum valid value given the present mode, pulse width,
+        and pulse repetition interval, and return the duty cycle."""
+        self.write("CDC 100")  # The instrument implicitly truncates to the closest valid value
+        self.check_errors()
+        return self.duty_cycle_setpoint
+
     pulse_repetition_interval = Instrument.measurement(
         "PRI?",
         """Measure the pulse repetition interval, in us (float).""",
