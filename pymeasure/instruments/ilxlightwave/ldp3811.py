@@ -22,38 +22,41 @@
 # THE SOFTWARE.
 #
 
-from enum import Enum
 import logging
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
+
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Until StrEnum is broadly available from the standard library"""
+
+        # Python>3.10 remove it.
+
+        def __str__(self):
+            return str(self.value)
 
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class LDP3811Mode(str, Enum):
-    """Enumerator of LDP3811 modes.
+class LDP3811Mode(StrEnum):
+    """Enumerator of LDP3811 modes."""
 
-    Members:
-        CONT_WAVE: Continuous wave current source (command 'CW').
-        CONST_DUTY_CYCLE: Keep duty cycle (pulse width / pulse repetition interval) constant
-            (command 'CDC').
-        CONST_PULSE_REP: Keep the pulse repetition interval constant (command 'PRI').
-        EXTERNAL: Trigger on the external trigger line (command 'EXT').
-    """
-
-    CONT_WAVE = "CW"
+    CONTINUOUS_WAVE = "CW"
     CONST_DUTY_CYCLE = "CDC"
-    CONST_PULSE_REP = "PRI"
-    EXTERNAL = "EXT"
-
-    def __str__(self):
-        return str(self.value)
+    CONST_REPETITION_INTERVAL = "PRI"
+    EXTERNAL_TRIGGER = "EXT"
 
 
 class LDP3811(Instrument):
+    """Represents the ILX Lightwave LDP3811 Pulsed Laser Diode Driver
+    and provides a high-level interface for interacting with the instrument."""
 
     def __init__(self, adapter, name="ILX Lightwave LDP 3811", includeSCPI=False, **kwargs):
         super().__init__(adapter, name, includeSCPI, **kwargs)
