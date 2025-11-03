@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
+
 
 class Parameter:
     """ Encapsulates the information for an experiment parameter
@@ -228,6 +230,8 @@ class BooleanParameter(Parameter):
         elif isinstance(value, (int, float)) and value in [0, 1]:
             value = bool(value)
         elif isinstance(value, bool):
+            value = value
+        elif isinstance(value, np.bool):
             value = value
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
