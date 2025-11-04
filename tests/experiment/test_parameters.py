@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
 import pytest
 
 from pymeasure.experiment.parameters import Parameter
@@ -100,6 +101,10 @@ def test_boolean_value():
     assert p.value is False
     p.value = True
     assert p.value is True
+    p.value = np.bool(True)  # True as numpy boolean
+    assert bool(p.value) is True
+    p.value = np.bool(False)  # False as numpy boolean
+    assert bool(p.value) is False
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
 
