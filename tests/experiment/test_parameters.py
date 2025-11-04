@@ -79,7 +79,7 @@ def test_integer_bounds():
         p.value = -100  # below minimum
 
 
-def test_boolean_value():
+def test_boolean_value_error():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         _ = p.value  # not set
@@ -87,26 +87,24 @@ def test_boolean_value():
         p.value = 'a'  # a string
     with pytest.raises(ValueError):
         p.value = 10  # a number other than 0 or 1
-    p.value = "True"
-    assert p.value is True
-    p.value = "False"
-    assert p.value is False
-    p.value = "true"
-    assert p.value is True
-    p.value = "false"
-    assert p.value is False
-    p.value = 1  # a number
-    assert p.value is True
-    p.value = 0  # zero
-    assert p.value is False
-    p.value = True
-    assert p.value is True
-    p.value = np.bool(True)  # True as numpy boolean
-    assert bool(p.value) is True
-    p.value = np.bool(False)  # False as numpy boolean
-    assert bool(p.value) is False
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         ["True", True],
+                         ["true", True],
+                         [1, True],
+                         [np.bool(True), True],
+                         ["False", False],
+                         ["false", False],
+                         [0, False],
+                         [np.bool(False), False],
+                         ))
+def test_boolean_value(value, mapping):
+    p = BooleanParameter('Test')
+    p.value = value
+    assert p.value == mapping
 
 
 def test_float_value():
