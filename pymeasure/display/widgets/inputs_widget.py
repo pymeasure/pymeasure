@@ -142,7 +142,7 @@ class InputsWidget(QtWidgets.QWidget):
             if isinstance(group_el, BooleanInput):
                 group_el.toggled.connect(toggle)
                 toggle(group_el.isChecked())
-            elif isinstance(group_el, StringInput, VectorInput):
+            elif isinstance(group_el, (StringInput, VectorInput)):
                 group_el.textChanged.connect(toggle)
                 toggle(group_el.text())
             elif isinstance(group_el, (IntegerInput, ScientificInput)):
