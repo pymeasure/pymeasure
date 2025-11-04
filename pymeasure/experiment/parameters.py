@@ -328,7 +328,7 @@ class VectorParameter(Parameter):
                                  " denoted by square brackets if initializing"
                                  " by string.")
             raw_list = value[1:-1].split(",")
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
             raise ValueError("VectorParameter given undesired value of "
