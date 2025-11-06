@@ -51,19 +51,35 @@ so daq.measure.voltage
 # :ABORt
 # :INITiate[:IMMediate]
 
-class ChannelState(Enum):
-    """
-    Enum for channel state to make it clearer in code if opening or closing channels.
-    """
-    OPEN = False
-    CLOSED = True
+# class ChannelState(Enum):
+#     """
+#     Enum for channel state to make it clearer in code if opening or closing channels.
+#     """
+#     OPEN = False
+#     CLOSED = True
 
+
+def text_length_validator(value, values):
+    """ Provides a validator function that a valid string for the display
+    commands of the Keithley. Raises a TypeError if value is not a string.
+    If the string is too long, it is truncated to the correct length.
+
+    :param value: A value to test
+    :param values: The allowed length of the text
+    """
+
+    if not isinstance(value, str):
+        raise TypeError("Value is not a string.")
+
+    return value[:values]
 
 class MuxChannel(Channel):
     """mux relay channels"""
 
-    def __init__(self, chan_number):
-        self.chan_num = chan_number
+    def __init__(self, instrument, id):
+        #todo, validate channel number. have a list of valid channels for each mux card type?
+        # int(id) in mux_card_channel_lists[mux_card_name]
+        super().__init__(instrument, id)
 
 
     def channel_name(self):
@@ -116,10 +132,41 @@ class MuxChannel(Channel):
         return self.status()
 
 
-class ModuleCard():
-    # should this inherit from channel or something?
-    def __init__(self, slot):
-        pass
+class ExpansionCard(Channel):
+
+    # make these into their own classes?
+    card_types = {
+        "7700": {"description": "20 Channel, Differential Multiplexer Module",
+                 "mux_channels": 20},
+        "7701": {"description": "32 Channel, Differential Multiplexer Module",
+                 "mux_channels": 32},
+        "7702": {"description": "40 Channel, Differential Multiplexer Module",
+                 "mux_channels": 40},
+        "7703": {"description": "32 Ch. High Speed Differential Multiplexer Module",
+                 "mux_channels": 32},
+        "7705": {"description": "40 Ch. Single-pole Control Module",
+                 "mux_channels": 40},
+        "7706": {"description": "All-in-One I/O Module.",
+                 "mux_channels": 20},
+        "7707": {"description": "32 Ch. Digital I/O Module",
+                 "mux_channels": 10},
+        "7708": {"description": "40 Ch. Differential Multiplexer Module",
+                 "mux_channels": 40},
+        "7709": {"description": "6×8 Matrix Module.",
+                 "mux_channels": 48},
+        "7710": {"description": "20 Ch. Solid-state Differential Multiplexer Module",
+                 "mux_channels": 20},
+        "7711": {"description": "2 GHz 50Ω RF Module",
+                 "mux_channels": 8},
+        "7712": {"description": "3.5 GHz 50Ω RF Module",
+                 "mux_channels": 8},
+    }
+
+
+    def __init__(self, instrument, slot):
+        #todo, validate channel number. have a list of valid channels for each mux card type?
+        # int(id) in mux_card_channel_lists[mux_card_name]
+        super().__init__(instrument, slot)
 
     @property
     def module_id(self):
@@ -129,6 +176,8 @@ class ModuleCard():
 class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     """Represents the Keithley DAQ6510 Data Acquisition Logging Multimeter System
     and provides a high-level interface for interacting with the instrument.
+
+    The DAQ6510 inherits significant functionality from the Keithley2700 DAQ system
 
     Tested with instrument firmware version `1.7.16A`
 
@@ -162,13 +211,26 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         )
 
         self.mux_channels = None
-        self.cards = ["slot1":None, "slot2":None]
+        self.cards = {1:None, 2:None} 
 
         self.cards = self._detect_cards
 
         for card in self.cards
             self.mux_channels.append(card.mux_channels)
 
+    display_text = Instrument.control(
+        "DISP:USER1:TEXT:DATA?", "DISP:USER1:TEXT:DATA '%s'",
+        """ Control (string) the text shown on the display of
+        the Keithley 2700. Text can be up to 12 ASCII characters and must be
+        enabled to show.
+        """,
+        validator=text_length_validator,
+        values=12,
+        cast=str,
+        separator="NO_SEPARATOR",
+        get_process=lambda v: v.strip("'\""),
+    )
+    
     sense_mode = Instrument.control(
         ":SENS:FUNC?",
         ':SENS:FUNC "%s"',
@@ -371,7 +433,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
 
     def _channels_id(self, input_channel_list):
         """
-        generates scpi chennel id string for single or multiple channels.
+        generates scpi channel id string for single or multiple channels.
         """
 
         # convert single elements to list.
@@ -396,7 +458,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         
             returns dictonary of channel states.
         """
-        states = self.ask(":ROUT:STAT? (@101:120)")
+        states = self.ask(":ROUT:STAT?")
         # is "all" a valid channel range? or do i have to construct a list of all channels?
 
         # todo, convert/map output list to channel objects? or use channel numbers?. state is enum.
@@ -455,6 +517,7 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         """
 
         self.route_channels(channel_list, True)
+
 
 
     def beep(self, frequency, duration):
