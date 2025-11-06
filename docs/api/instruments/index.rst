@@ -43,6 +43,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   ilxlightwave/index
    inficon/index
    ipgphotonics/index
    keithley/index
