@@ -24,7 +24,9 @@ from pymeasure.instruments import Instrument, Channel
 
 class GP_PressureChannel(Channel):
     """Channel of the GP350UHV vacuum sensor for pressure measurement.
-    Each channel corresponds to a filament or display output of the sensor."""
+    
+    Each channel corresponds to a filament or display output of the sensor.
+    """
     pressure = Instrument.measurement(
         "#RD{ch}",
         "Measure the current pressure in mbar (float).",
@@ -35,8 +37,10 @@ class GP_PressureChannel(Channel):
 
 class GP350(Instrument):
     """Representation of the GP350UHV Vacuum Sensor.
+    
     Provides access to multiple pressure channels corresponding to filaments
     and display outputs. Each channel can be queried for its current pressure in mbar.
+    
     Parameters
     ----------
     adapter : Adapter
@@ -44,10 +48,13 @@ class GP350(Instrument):
     name : str, optional
         Name of the instrument, default is "GP350UHV Vacuum Sensor".
     **kwargs
-        Additional keyword arguments passed to the Instrument base class."""
-    def __init__(self, adapter, name="GP350UHV Vacuum Sensor", **kwargs):
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        Additional keyword arguments passed to the Instrument base class.
+    """
+    
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
     display_B = Instrument.ChannelCreator(GP_PressureChannel, "B")
+    
+    def __init__(self, adapter, name="GP350UHV Vacuum Sensor", **kwargs):
+        super().__init__(adapter, name, includeSCPI=False, **kwargs)
