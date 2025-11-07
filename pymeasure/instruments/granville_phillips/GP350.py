@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from pymeasure.instruments import Instrument, Channel
+
+
 class GP_PressureChannel(Channel):
     """Channel of the GP350UHV vacuum sensor for pressure measurement.
     Each channel corresponds to a filament or display output of the sensor."""
@@ -29,6 +31,8 @@ class GP_PressureChannel(Channel):
         preprocess_reply=lambda reply: reply.lstrip("* ").strip(),
         get_process=lambda r: float("nan") if float(r) >= 9.90e9 else float(r),
     )
+
+
 class GP350(Instrument):
     """Representation of the GP350UHV Vacuum Sensor.
     Provides access to multiple pressure channels corresponding to filaments
