@@ -1,5 +1,5 @@
 import pytest
-from pymeasure.instruments.granville_phillips import GP350UHV
+from pymeasure.instruments.granville_phillips.GP350 import GP350UHV
 
 class DummyAdapter:
     def write(self, cmd): pass
