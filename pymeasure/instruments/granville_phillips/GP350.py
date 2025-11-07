@@ -19,33 +19,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from pymeasure.instruments import Instrument, Channel
-
-
 class GP_PressureChannel(Channel):
-    """
-    Channel of the GP350UHV vacuum sensor for pressure measurement.
-
-    Each channel corresponds to a filament or display output of the sensor.
-    """
-
+    """Channel of the GP350UHV vacuum sensor for pressure measurement.
+    Each channel corresponds to a filament or display output of the sensor."""
     pressure = Instrument.measurement(
         "#RD{ch}",
-        """Measure the current pressure in mbar (float).""",
+        "Measure the current pressure in mbar (float).",
         preprocess_reply=lambda reply: reply.lstrip("* ").strip(),
         get_process=lambda r: float("nan") if float(r) >= 9.90e9 else float(r),
     )
-
-
 class GP350(Instrument):
-    """
-    Representation of the GP350UHV Vacuum Sensor.
-
+    """Representation of the GP350UHV Vacuum Sensor.
     Provides access to multiple pressure channels corresponding to filaments
-    and display outputs. Each channel can be queried for its current pressure
-    in mbar.
-
+    and display outputs. Each channel can be queried for its current pressure in mbar.
     Parameters
     ----------
     adapter : Adapter
@@ -53,14 +40,9 @@ class GP350(Instrument):
     name : str, optional
         Name of the instrument, default is "GP350UHV Vacuum Sensor".
     **kwargs
-        Additional keyword arguments passed to the Instrument base class.
-    """
-
+        Additional keyword arguments passed to the Instrument base class."""
     def __init__(self, adapter, name="GP350UHV Vacuum Sensor", **kwargs):
         super().__init__(adapter, name, includeSCPI=False, **kwargs)
-
-    # Channels 1 and 2 correspond to the ionization filaments,
-    # while A and B represent the display lines on the GP350 gauge.
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
