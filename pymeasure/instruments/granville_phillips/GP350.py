@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
- 
+
 from pymeasure.instruments import Instrument, Channel
 
 
@@ -45,16 +45,15 @@ class GP350UHV(Instrument):
     Provides access to multiple pressure channels corresponding to filaments
     and display outputs. Each channel can be queried for its current pressure
     in mbar.
-    
+
     Parameters
-        ----------
-        adapter : Adapter
-            Communication adapter (e.g., SerialAdapter, VISAAdapter).
-        name : str, optional
-            Name of the instrument, default is "GP350UHV Vacuum Sensor".
-        **kwargs
-            Additional keyword arguments passed to the Instrument base class.
-    
+    ----------
+    adapter : Adapter
+        Communication adapter (e.g., SerialAdapter, VISAAdapter).
+    name : str, optional
+        Name of the instrument, default is "GP350UHV Vacuum Sensor".
+    **kwargs
+        Additional keyword arguments passed to the Instrument base class.
     """
 
     def __init__(self, adapter, name="GP350UHV Vacuum Sensor", **kwargs):
@@ -62,12 +61,7 @@ class GP350UHV(Instrument):
 
     # Channels 1 and 2 correspond to the ionization filaments,
     # while A and B represent the display lines on the GP350 gauge.
-    
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
-    
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
-    
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
-    
     display_B = Instrument.ChannelCreator(GP_PressureChannel, "B")
-
