@@ -53,7 +53,9 @@ class SCPIKeyword(str):
     def __new__(cls, value):
         """Validate and construct a new SCPIKeyword instance."""
         if isinstance(value, SCPIKeyword):
-            value = str(value)
+            instance = super().__new__(cls, value)
+            instance.shortform = value.shortform
+            return instance
 
         if not isinstance(value, str):
             raise TypeError(f"Expected a string or SCPIKeyword, got {type(value).__name__}")
@@ -67,7 +69,8 @@ class SCPIKeyword(str):
 
         if len(upper) == 0:
             raise ValueError(
-                f"Invalid SCPIKeyword '{value}': Must start with at least one uppercase character."
+                f"Invalid SCPIKeyword '{value}': "
+                "Must start with at least one uppercase character."
             )
 
         if value != upper + lower + decimal:
@@ -76,9 +79,9 @@ class SCPIKeyword(str):
                 "must be of the form '<uppercase><lowercase><decimal>'."
             )
 
-        self = str.__new__(cls, value)
-        self.shortform = upper + decimal
-        return self
+        instance = super().__new__(cls, value)
+        instance.shortform = upper + decimal
+        return instance
 
     def __eq__(self, other):
         """Compare against a string or SCPIKeyword, matching longform or shortform."""
@@ -87,7 +90,7 @@ class SCPIKeyword(str):
         return NotImplemented
 
     def __repr__(self):
-        return f"SCPIKeyword('{str(self)}')"
+        return f"SCPIKeyword('{self!s}')"
 
 
 class SCPIKeywordEnum(SCPIKeyword, Enum):
