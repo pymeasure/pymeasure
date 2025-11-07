@@ -38,7 +38,7 @@ class GP_PressureChannel(Channel):
     )
 
 
-class GP350UHV(Instrument):
+class GP350(Instrument):
     """
     Representation of the GP350UHV Vacuum Sensor.
 
