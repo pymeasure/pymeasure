@@ -4,6 +4,7 @@
 
 from pymeasure.instruments.granville_phillips.GP350 import GP350
 
+
 class DummyAdapter:
     """Simulates the GP350 communication for testing."""
     def write(self, command):
