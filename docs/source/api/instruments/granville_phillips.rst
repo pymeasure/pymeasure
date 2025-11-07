@@ -9,10 +9,10 @@ GP350 Instrument
 Measurement Channels
 --------------------
 
-.. autoclass:: pymeasure.instruments.granville_phillips.GP350.GP350UHV.channel_A
-    :members:
-    :undoc-members:
+.. note::
+    Channels are available as attributes of the GP350 instrument:
 
-.. autoclass:: pymeasure.instruments.granville_phillips.GP350.GP350UHV.channel_B
-    :members:
-    :undoc-members:
+    - filament_1
+    - filament_2
+    - display_A
+    - display_B
