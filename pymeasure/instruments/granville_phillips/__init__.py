@@ -1,1 +1,1 @@
-import .GP350
+from .GP350 import GP350UHV
