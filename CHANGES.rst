@@ -1,6 +1,10 @@
 Upcoming Release
 ================
 
+Instruments
+-----------
+- Add SCPIKeyword and SCPIKeywordEnum for unified handling of longform and shortform SCPI keywords.
+
 Removed
 -------
 - Remove support for Python 3.8
