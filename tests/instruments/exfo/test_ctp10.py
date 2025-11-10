@@ -386,7 +386,7 @@ def test_trace_length():
         CTP10,
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA:LENGth?", b"6001\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].length == 6001
+        assert inst.trace(4, 1, type=1).length == 6001
 
 
 def test_trace_sampling_pm():
@@ -395,7 +395,7 @@ def test_trace_sampling_pm():
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA:SAMPling?",
           b"1.00000000E-011\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].sampling_pm == pytest.approx(10.0)
+        assert inst.trace(4, 1, type=1).sampling_pm == pytest.approx(10.0)
 
 
 def test_trace_start_wavelength_nm():
@@ -404,7 +404,7 @@ def test_trace_start_wavelength_nm():
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA:STARt?",
           b"1.55000000E-006\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].start_wavelength_nm == pytest.approx(1550.0)
+        assert inst.trace(4, 1, type=1).start_wavelength_nm == pytest.approx(1550.0)
 
 
 def test_trace_get_data_x():
@@ -413,7 +413,7 @@ def test_trace_get_data_x():
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA:X? BIN,M",
           b"#216" + struct.pack('>2d', 1.55e-6, 1.56e-6))],  # 'd' for float64
     ) as inst:
-        data = inst.tf_live[4, 1].get_data_x()
+        data = inst.trace(4, 1, type=1).get_data_x()
         expected = np.array([1.55e-6, 1.56e-6], dtype=np.float64)
         np.testing.assert_array_almost_equal(data, expected, decimal=15)
 
@@ -424,7 +424,7 @@ def test_trace_get_data_y_ascii():
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA? ASCII,DB",
           b"-5.25,-6.32\r\n")],
     ) as inst:
-        data = inst.tf_live[4, 1].get_data_y(unit='DB', format='ASCII')
+        data = inst.trace(4, 1, type=1).get_data_y(unit='DB', format='ASCII')
         assert data == [pytest.approx(-5.25), pytest.approx(-6.32)]
 
 
@@ -434,7 +434,7 @@ def test_trace_get_data_y_raw_live():
         [(b":TRACe:SENSe4:CHANnel1:TYPE11:DATA? ASCII,DB",
           b"-5.25,-6.32\r\n")],
     ) as inst:
-        data = inst.raw_live[4, 1].get_data_y(unit='DB', format='ASCII')
+        data = inst.trace(4, 1, type=11).get_data_y(unit='DB', format='ASCII')
         assert data == [pytest.approx(-5.25), pytest.approx(-6.32)]
 
 
@@ -444,7 +444,7 @@ def test_trace_get_data_y_raw_reference():
         [(b":TRACe:SENSe4:CHANnel1:TYPE12:DATA? ASCII,DB",
           b"-5.25,-6.32\r\n")],
     ) as inst:
-        data = inst.raw_reference[4, 1].get_data_y(unit='DB', format='ASCII')
+        data = inst.trace(4, 1, type=12).get_data_y(unit='DB', format='ASCII')
         assert data == [pytest.approx(-5.25), pytest.approx(-6.32)]
 
 
@@ -453,7 +453,7 @@ def test_trace_save():
         CTP10,
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:SAVE", None)],
     ) as inst:
-        inst.tf_live[4, 1].save()
+        inst.trace(4, 1, type=1).save()
 
 
 def test_trace_create_reference():
@@ -461,7 +461,7 @@ def test_trace_create_reference():
         CTP10,
         [(b":REFerence:SENSe4:CHANnel1:INITiate", None)],
     ) as inst:
-        inst.tf_live[4, 1].create_reference()
+        inst.trace(4, 1, type=1).create_reference()
 
 
 def test_trace_get_power():
@@ -470,7 +470,7 @@ def test_trace_get_power():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:POWer?", b"-5.25\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].power == pytest.approx(-5.25)
+        assert inst.trace(4, 1, type=1).power == pytest.approx(-5.25)
 
 
 def test_trace_power_simple():
@@ -479,7 +479,7 @@ def test_trace_power_simple():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:POWer?", b"-3.14\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].power == pytest.approx(-3.14)
+        assert inst.trace(4, 1, type=1).power == pytest.approx(-3.14)
 
 
 def test_trace_spectral_unit_setter_wav():
@@ -487,7 +487,7 @@ def test_trace_spectral_unit_setter_wav():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X WAV", None)],
     ) as inst:
-        inst.tf_live[4, 1].spectral_unit = 'WAV'
+        inst.trace(4, 1, type=1).spectral_unit = 'WAV'
 
 
 def test_trace_spectral_unit_setter_freq():
@@ -495,7 +495,7 @@ def test_trace_spectral_unit_setter_freq():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X FREQ", None)],
     ) as inst:
-        inst.tf_live[4, 1].spectral_unit = 'FREQ'
+        inst.trace(4, 1, type=1).spectral_unit = 'FREQ'
 
 
 def test_trace_spectral_unit_setter_int_0():
@@ -503,7 +503,7 @@ def test_trace_spectral_unit_setter_int_0():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X WAV", None)],
     ) as inst:
-        inst.tf_live[4, 1].spectral_unit = 0
+        inst.trace(4, 1, type=1).spectral_unit = 0
 
 
 def test_trace_spectral_unit_setter_int_1():
@@ -511,7 +511,7 @@ def test_trace_spectral_unit_setter_int_1():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X FREQ", None)],
     ) as inst:
-        inst.tf_live[4, 1].spectral_unit = 1
+        inst.trace(4, 1, type=1).spectral_unit = 1
 
 
 def test_trace_spectral_unit_getter_wav():
@@ -519,7 +519,7 @@ def test_trace_spectral_unit_getter_wav():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X?", b"0\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].spectral_unit == 0
+        assert inst.trace(4, 1, type=1).spectral_unit == 0
 
 
 def test_trace_spectral_unit_getter_freq():
@@ -527,7 +527,7 @@ def test_trace_spectral_unit_getter_freq():
         CTP10,
         [(b":CTP:SENSe4:CHANnel1:UNIT:X?", b"1\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 1].spectral_unit == 1
+        assert inst.trace(4, 1, type=1).spectral_unit == 1
 
 
 def test_trace_power_unit_setter_dbm():
@@ -535,7 +535,7 @@ def test_trace_power_unit_setter_dbm():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y DBM", None)],
     ) as inst:
-        inst.tf_live[4, 2].power_unit = 'DBM'
+        inst.trace(4, 2, type=1).power_unit = 'DBM'
 
 
 def test_trace_power_unit_setter_mw():
@@ -543,7 +543,7 @@ def test_trace_power_unit_setter_mw():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y MW", None)],
     ) as inst:
-        inst.tf_live[4, 2].power_unit = 'MW'
+        inst.trace(4, 2, type=1).power_unit = 'MW'
 
 
 def test_trace_power_unit_setter_int_0():
@@ -551,7 +551,7 @@ def test_trace_power_unit_setter_int_0():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y DBM", None)],
     ) as inst:
-        inst.tf_live[4, 2].power_unit = 0
+        inst.trace(4, 2, type=1).power_unit = 0
 
 
 def test_trace_power_unit_setter_int_1():
@@ -559,7 +559,7 @@ def test_trace_power_unit_setter_int_1():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y MW", None)],
     ) as inst:
-        inst.tf_live[4, 2].power_unit = 1
+        inst.trace(4, 2, type=1).power_unit = 1
 
 
 def test_trace_power_unit_getter_dbm():
@@ -567,7 +567,7 @@ def test_trace_power_unit_getter_dbm():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y?", b"0\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 2].power_unit == 0
+        assert inst.trace(4, 2, type=1).power_unit == 0
 
 
 def test_trace_power_unit_getter_mw():
@@ -575,7 +575,7 @@ def test_trace_power_unit_getter_mw():
         CTP10,
         [(b":CTP:SENSe4:CHANnel2:UNIT:Y?", b"1\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 2].power_unit == 1
+        assert inst.trace(4, 2, type=1).power_unit == 1
 
 
 def test_trace_trigger_setter_software():
@@ -583,7 +583,7 @@ def test_trace_trigger_setter_software():
         CTP10,
         [(b":CTP:SENSe4:CHANnel3:FUNCtion:TRIGGer 0", None)],
     ) as inst:
-        inst.tf_live[4, 3].trigger = 0
+        inst.trace(4, 3, type=1).trigger = 0
 
 
 def test_trace_trigger_setter_port_4():
@@ -591,7 +591,7 @@ def test_trace_trigger_setter_port_4():
         CTP10,
         [(b":CTP:SENSe6:CHANnel1:FUNCtion:TRIGGer 4", None)],
     ) as inst:
-        inst.tf_live[6, 1].trigger = 4
+        inst.trace(6, 1, type=1).trigger = 4
 
 
 def test_trace_trigger_getter():
@@ -599,7 +599,7 @@ def test_trace_trigger_getter():
         CTP10,
         [(b":CTP:SENSe4:CHANnel3:FUNCtion:TRIGGer?", b"5\r\n")],
     ) as inst:
-        assert inst.tf_live[4, 3].trigger == 5
+        assert inst.trace(4, 3, type=1).trigger == 5
 
 
 def test_trace_wavelength_array():
@@ -610,7 +610,7 @@ def test_trace_wavelength_array():
              b"#216" + struct.pack('>2d', 1.55e-6, 1.55001e-6)),  # 'd' for float64
         ],
     ) as inst:
-        wavelengths = inst.tf_live[4, 1].get_data_x(unit='M', format='BIN')
+        wavelengths = inst.trace(4, 1, type=1).get_data_x(unit='M', format='BIN')
         expected = np.array([1.55e-6, 1.55001e-6], dtype=np.float64)
         np.testing.assert_array_almost_equal(wavelengths, expected, decimal=15)
 
@@ -623,7 +623,7 @@ def test_trace_data_x_ascii():
              b"1.55000000E-006,1.55001000E-006,1.55002000E-006\r\n"),
         ],
     ) as inst:
-        wavelengths = inst.tf_live[4, 1].get_data_x(unit='M', format='ASCII')
+        wavelengths = inst.trace(4, 1, type=1).get_data_x(unit='M', format='ASCII')
         expected = [1.55e-6, 1.55001e-6, 1.55002e-6]
         assert wavelengths == expected
 
@@ -640,9 +640,9 @@ def test_trace_multiple_channels():
             (b":TRACe:SENSe5:CHANnel1:TYPE1:DATA:LENGth?", b"6003\r\n"),
         ],
     ) as inst:
-        assert inst.tf_live[4, 1].length == 6001
-        assert inst.tf_live[4, 2].length == 6002
-        assert inst.tf_live[5, 1].length == 6003
+        assert inst.trace(4, 1, type=1).length == 6001
+        assert inst.trace(4, 2, type=1).length == 6002
+        assert inst.trace(5, 1, type=1).length == 6003
 
 
 # SCPI Tests ---------------------------------------------------------------
@@ -670,14 +670,6 @@ def test_reset():
 
 
 # Error Handling and Edge Cases ----------------------------------------
-
-
-def test_trace_accessor_invalid_key():
-    """Test TraceAccessor raises ValueError for invalid key format."""
-    with expected_protocol(CTP10, []) as inst:
-        with pytest.raises(ValueError, match="TraceAccessor requires"):
-            # Try to access with single int instead of tuple
-            _ = inst.tf_live[4]
 
 
 def test_trace_method_invalid_module():
@@ -746,7 +738,7 @@ def test_trace_get_data_y_binary():
         CTP10,
         [(b":TRACe:SENSe4:CHANnel1:TYPE1:DATA? BIN,DB", response)],
     ) as inst:
-        data = inst.tf_live[4, 1].get_data_y(unit='DB', format='BIN')
+        data = inst.trace(4, 1, type=1).get_data_y(unit='DB', format='BIN')
         assert isinstance(data, np.ndarray)
         assert len(data) == 1
         assert data[0] == pytest.approx(float_value)

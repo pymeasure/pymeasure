@@ -637,34 +637,6 @@ class CTP10(SCPIMixin, Instrument):
     # RLASer Channel creator (up to 10 channels)
     rlaser = Instrument.MultiChannelCreator(RLASerChannel, list(range(1, 11)))
 
-    # Trace channel convenience accessors for common trace types
-    class TraceAccessor:
-        """Helper class to provide dict-like access to trace channels."""
-        def __init__(self, parent, trace_type):
-            self.parent = parent
-            self.trace_type = trace_type
-
-        def __getitem__(self, key):
-            if isinstance(key, tuple) and len(key) == 2:
-                module, channel = key
-                return self.parent.trace(module, channel, self.trace_type)
-            raise ValueError("TraceAccessor requires (module, channel) tuple")
-
-    @property
-    def tf_live(self):
-        """Convenience accessor for TF live traces (TYPE 1)."""
-        return self.TraceAccessor(self, 1)
-
-    @property
-    def raw_live(self):
-        """Convenience accessor for Raw live traces (TYPE 11)."""
-        return self.TraceAccessor(self, 11)
-
-    @property
-    def raw_reference(self):
-        """Convenience accessor for Raw reference traces (TYPE 12)."""
-        return self.TraceAccessor(self, 12)
-
     # Generic trace accessor ---------------------------------------------------------
     def trace(self, module: int, channel: int, type: int = 1) -> TraceChannel:
         """Return a TraceChannel for given module, channel and TYPE.
