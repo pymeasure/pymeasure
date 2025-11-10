@@ -290,101 +290,83 @@ class TLSChannel(Channel):
     )
 
 
-class TraceChannel(Channel):
-    """Base class for trace channels on the EXFO CTP10.
+class DetectorChannel(Channel):
+    """Represents a detector channel on the EXFO CTP10.
+
+    A detector channel corresponds to a physical detector on a module and provides
+    access to both detector-level operations (power, trigger, units, references) and
+    trace data retrieval for specific trace types.
 
     The channel is identified by:
     - SENSe[1...20]: Module identification number (position in mainframe, left to right)
         * In Daisy chaining mode: positions 1-10 are Primary mainframe, 11-20 are Secondary
     - CHANnel[1...6]: Detector identification number (detector position on module, top to bottom)
-        * Note: This number is not used for BR (back reflection) traces
-    - TYPE[1...23]: Trace type number (depends on detector type)
 
-    Note: Different detector types support different trace types (1-23).
-    See instrument documentation for complete list.
-
-    This base class provides common functionality for all trace types.
-    Use the generic accessor on the instrument to obtain a trace channel:
-
-        - ctp.trace(module, channel, type=1) for TF live trace (TYPE1)
-        - ctp.trace(module, channel, type=11) for Raw Live trace (TYPE11)
-        - ctp.trace(module, channel, type=12) for Raw Reference trace (TYPE12)
-        - ctp.trace(module, channel, type=13) for Raw Quick Reference trace (TYPE13)
+    Trace types (TYPE parameter):
+    - TYPE1: TF live trace (Transmission Function)
+    - TYPE11: Raw Live trace
+    - TYPE12: Raw Reference trace
+    - TYPE13: Raw Quick Reference trace
+    - See instrument documentation for complete list (1-23)
 
     Example:
-        # Access TF live trace on module 4, channel 1
-        trace_ch = ctp.trace(module=4, channel=1, type=1)
+        # Access detector on module 4, channel 1
+        detector = ctp.detector(module=4, channel=1)
 
-        # Read trace data (binary format recommended for speed)
-        length = trace_ch.length
-        wavelengths = trace_ch.get_data_x(unit='M', format='BIN')  # Returns wavelengths in meters
-        powers = trace_ch.get_data_y(unit='DB', format='BIN')  # Returns power in dB
+        # Detector-level operations
+        detector.power_unit = 'DBM'  # Set unit to dBm
+        power_dbm = detector.power  # Get optical power
+        detector.trigger = 0  # Set software trigger
+        detector.create_reference()  # Create reference
 
-        # Access different trace type
-        raw_live_trace = ctp.trace(module=4, channel=1, type=11)
-        raw_live_powers = raw_live_trace.get_data_y(unit='DB', format='BIN')
+        # Read trace data for TF live trace (TYPE1)
+        length = detector.length(trace_type=1)
+        wavelengths = detector.get_data_x(trace_type=1, unit='M', format='BIN')
+        powers = detector.get_data_y(trace_type=1, unit='DB', format='BIN')
 
-        # Channel operations (independent of trace type)
-        trace_ch.create_reference()  # Create reference for this channel
-        power_dbm = trace_ch.power  # Get optical power in dBm (or mW per unit)
+        # Read Raw Live trace (TYPE11)
+        raw_powers = detector.get_data_y(trace_type=11, unit='DB', format='BIN')
+
+        # Save trace data
+        detector.save(trace_type=1)
     """
 
-    def __init__(self, parent, id=None, trace_type=1, **kwargs):
-        """Initialize trace channel with module, channel, and trace type.
+    def __init__(self, parent, id=None, **kwargs):
+        """Initialize detector channel with module and channel.
 
         :param tuple id: Tuple of (module, channel) or None for dynamic access.
             module (int): SENSe number 1-20 (module position in mainframe).
             channel (int): CHANnel number 1-6 (detector position on module).
-        :param int trace_type: TYPE number 1-23 (depends on detector type).
         """
         # Accept tuple or None (for ChannelCreator pattern)
         if id is not None and not (isinstance(id, tuple) and len(id) == 2):
-            raise ValueError("TraceChannel ID must be a tuple of (module, channel)")
+            raise ValueError("DetectorChannel ID must be a tuple of (module, channel)")
 
-        # Store module, channel, and trace type as separate attributes
+        # Store module and channel as separate attributes
         if id is not None:
             self.module, self.channel = id
         else:
             self.module, self.channel = None, None
 
-        self.trace_type = trace_type
-
         # Pass the tuple as-is to parent
         super().__init__(parent, id, **kwargs)
 
     def insert_id(self, command):
-        """Insert the channel ID (module, channel, type) into the command.
+        """Insert the channel ID (module, channel) into the command.
 
-        Replaces {module}, {channel}, and {type} placeholders.
+        Replaces {module} and {channel} placeholders.
         """
         if self.id is None:
             return command
-        return command.format(module=self.module, channel=self.channel, type=self.trace_type)
+        return command.format(module=self.module, channel=self.channel)
 
-    length = Channel.measurement(
-        ":TRACe:SENSe{module}:CHANnel{channel}:TYPE{type}:DATA:LENGth?",
-        """Get the number of points in the trace (int).""",
-        cast=int,
-    )
-
-    sampling_pm = Channel.measurement(
-        ":TRACe:SENSe{module}:CHANnel{channel}:TYPE{type}:DATA:SAMPling?",
-        """Get the wavelength sampling resolution in pm (float).""",
-        get_process=lambda v: float(v) * 1e12,
-    )
-
-    start_wavelength_nm = Channel.measurement(
-        ":TRACe:SENSe{module}:CHANnel{channel}:TYPE{type}:DATA:STARt?",
-        """Get the start wavelength in nm (float).""",
-        get_process=lambda v: float(v) * 1e9,
-    )
+    # Detector-level properties -------------------------------------------------------
 
     power = Channel.measurement(
         ":CTP:SENSe{module}:CHANnel{channel}:POWer?",
         """Get the optical power measurement for this detector channel (float).
 
-        The unit (dBm or mW) depends on the unit setting configured with
-        CTP:SENSe[1...10]:CHANnel[1...6]:UNIT:Y.
+        The unit (dBm or mW) depends on the unit setting configured with power_unit.
 
         Note: This query is not available on a PCM detector.
 
@@ -398,8 +380,8 @@ class TraceChannel(Channel):
         :return: Instant power measured on the detector (float in dBm or mW).
 
         Example:
-            # Get power for module 2, channel 2
-            power = ctp.trace(module=2, channel=2, type=1).power  # e.g. -3.1
+            detector = ctp.detector(module=2, channel=2)
+            power = detector.power  # e.g. -3.1
         """,
     )
 
@@ -412,17 +394,22 @@ class TraceChannel(Channel):
             'WAV' or 0 or '0' : wavelength in nm
             'FREQ' or 1 or '1' : frequency in THz
 
-        :return: Current spectral unit (int): 0 for wavelength (nm), 1 for frequency (THz).
+        :return: Current spectral unit (str): 'NM' for wavelength (nm), 'THz' for frequency.
 
         Example:
-            # Set to wavelength (nm)
-            ctp.trace(4, 1).spectral_unit = 'WAV'
-            # Query current spectral unit
-            u = ctp.trace(4, 1).spectral_unit  # returns 0 or 1
+            detector.spectral_unit = 'WAV'      # instrument command uses WAV
+            u = detector.spectral_unit          # returns 'NM'
+            detector.spectral_unit = 'FREQ'
+            u2 = detector.spectral_unit         # returns 'THz'
         """,
         validator=lambda v, values: v,
         map_values=False,
-        get_process=lambda v: int(v),
+        cast=str,
+        # Map instrument query response (0/1 or WAV/FREQ) to human readable 'NM'/'THz'
+        get_process=lambda v: (
+            'NM' if str(v).strip().upper() in {'0', 'WAV'} else
+            'THz' if str(v).strip().upper() in {'1', 'FREQ'} else str(v)
+        ),
         set_process=lambda v: (
             'WAV' if str(v).strip().upper() in {'0', 'WAV', 'WAVELENGTH', 'NM'}
             else 'FREQ' if str(v).strip().upper() in {'1', 'FREQ', 'FREQUENCY', 'THZ'}
@@ -439,17 +426,22 @@ class TraceChannel(Channel):
             'DBM' or 0 or '0' : power in dBm (default)
             'MW'  or 1 or '1' : power in mW
 
-        :return: Current power unit (int): 0 for dBm, 1 for mW.
+        :return: Current power unit (str): 'dBm' or 'mW'.
 
         Example:
-            # Set power unit to mW
-            ctp.trace(4, 2).power_unit = 'MW'
-            # Query current power unit
-            pu = ctp.trace(4, 2).power_unit  # returns 0 or 1
+            detector.power_unit = 'DBM'   # instrument command uses DBM
+            pu = detector.power_unit      # returns 'dBm'
+            detector.power_unit = 'MW'
+            pu2 = detector.power_unit     # returns 'mW'
         """,
         validator=lambda v, values: v,
         map_values=False,
-        get_process=lambda v: int(v),
+        cast=str,
+        # Map instrument query response (0/1 or DBM/MW) to 'dBm'/'mW'
+        get_process=lambda v: (
+            'dBm' if str(v).strip().upper() in {'0', 'DBM', 'DBMA'} else
+            'mW' if str(v).strip().upper() in {'1', 'MW', 'MA'} else str(v)
+        ),
         set_process=lambda v: (
             'DBM' if str(v).strip().upper() in {'0', 'DBM', 'DBMA'}
             else 'MW' if str(v).strip().upper() in {'1', 'MW', 'MA'}
@@ -475,66 +467,112 @@ class TraceChannel(Channel):
         :return: Current trigger setting (int, 0-8).
 
         Example:
-            # Set to software trigger
-            ctp.trace(module=4, channel=3).trigger = 0
-
-            # Set to use TRIG IN port 4
-            ctp.trace(module=6, channel=1).trigger = 4
-
-            # Query current trigger setting
-            trig = ctp.trace(module=4, channel=3).trigger  # returns 0-8
+            detector.trigger = 0  # software trigger
+            detector.trigger = 4  # use TRIG IN port 4
+            trig = detector.trigger  # returns 0-8
         """,
         validator=strict_range,
         values=[0, 8],
         cast=int,
     )
 
-    def get_data_x(self, unit='M', format='BIN'):
+    def create_reference(self):
+        """Create a reference trace for this detector channel."""
+        cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INITiate'
+        self.write(cmd)
+
+    # Trace data methods --------------------------------------------------------------
+
+    def length(self, trace_type: int = 1):
+        """Get the number of points in the trace (int).
+
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
+        :return: Number of data points in the trace (int).
+        """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{trace_type}:DATA:LENGth?"
+        return int(self.ask(cmd))
+
+    def sampling_pm(self, trace_type: int = 1):
+        """Get the wavelength sampling resolution in pm (float).
+
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
+        :return: Sampling resolution in picometers (float).
+        """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{trace_type}:DATA:SAMPling?"
+        return float(self.ask(cmd)) * 1e12
+
+    def start_wavelength_nm(self, trace_type: int = 1):
+        """Get the start wavelength in nm (float).
+
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
+        :return: Start wavelength in nanometers (float).
+        """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{trace_type}:DATA:STARt?"
+        return float(self.ask(cmd)) * 1e9
+
+    def get_data_x(self, trace_type: int = 1, unit='M', format='BIN'):
         """Get trace X-axis data (wavelength or frequency).
 
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
         :param str unit: Data unit - 'M' for meters (wavelength), 'HZ' for Hertz (frequency).
             Default 'M'.
         :param str format: Data format - 'BIN' for binary or 'ASCII' for ASCII.
             Default 'BIN' for faster transfer of large datasets.
         :return: Numpy array of trace data (binary) or list (ASCII).
         """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+
         if format.upper() == 'BIN':
-            # Binary format - query with format and unit parameters after ?
-            # X-axis data (wavelength/frequency) uses float64 (8 bytes per value)
+            # Binary format - X-axis data uses float64 (8 bytes per value)
             cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
-                   f"TYPE{self.trace_type}:DATA:X? BIN,{unit}")
+                   f"TYPE{trace_type}:DATA:X? BIN,{unit}")
             self.write(cmd)
             return self._read_binary_trace(dtype='>f8')  # 64-bit float, big-endian
         else:
             # ASCII format
             cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
-                   f"TYPE{self.trace_type}:DATA:X? ASCII,{unit}")
+                   f"TYPE{trace_type}:DATA:X? ASCII,{unit}")
             return self.values(cmd)
 
-    def get_data_y(self, unit='DB', format='BIN'):
-        """Get trace Y-axis data.
+    def get_data_y(self, trace_type: int = 1, unit='DB', format='BIN'):
+        """Get trace Y-axis data (power).
 
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
         :param str unit: Data unit - 'DB' for dB or 'Y' for linear (default 'DB').
         :param str format: Data format - 'BIN' for binary or 'ASCII' for ASCII
             (default 'BIN').
         :return: Numpy array of trace data (binary) or list (ASCII).
         """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+
         if format.upper() == 'BIN':
-            # Binary format - query with format and unit parameters after ?
-            # Y-axis data (power) uses float32 (4 bytes per value)
+            # Binary format - Y-axis data uses float32 (4 bytes per value)
             cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
-                   f"TYPE{self.trace_type}:DATA? BIN,{unit}")
+                   f"TYPE{trace_type}:DATA? BIN,{unit}")
             self.write(cmd)
             return self._read_binary_trace(dtype='>f4')  # 32-bit float, big-endian
         else:
             # ASCII format
             cmd = (f":TRACe:SENSe{self.module}:CHANnel{self.channel}:"
-                   f"TYPE{self.trace_type}:DATA? ASCII,{unit}")
+                   f"TYPE{trace_type}:DATA? ASCII,{unit}")
             return self.values(cmd)
 
-    def save(self):
-        """Save trace data to internal memory (CSV format only)."""
-        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{self.trace_type}:SAVE"
+    def save(self, trace_type: int = 1):
+        """Save trace data to internal memory (CSV format only).
+
+        :param int trace_type: TYPE number 1-23 (depends on detector type). Default 1.
+        """
+        if not (1 <= int(trace_type) <= 23):
+            raise ValueError("trace_type must be in 1..23")
+        cmd = f":TRACe:SENSe{self.module}:CHANnel{self.channel}:TYPE{trace_type}:SAVE"
         self.write(cmd)
 
     def _read_binary_trace(self, dtype='>f4'):
@@ -550,27 +588,18 @@ class TraceChannel(Channel):
         import numpy as np
 
         # Read the '#' character and length digit (e.g., '#7')
-        header = self.read_bytes(2)
+        header = self.parent.read_bytes(2)
         length_of_length = int(chr(header[1]))
 
         # Read the length value (e.g., '3760004' for 940001 floats)
-        length_bytes = self.read_bytes(length_of_length)
+        length_bytes = self.parent.read_bytes(length_of_length)
         data_length = int(length_bytes)
 
         # Read the actual binary data
-        # This is the large data transfer that needs adequate timeout
-        data_bytes = self.read_bytes(data_length)
+        data_bytes = self.parent.read_bytes(data_length)
 
         # Convert to numpy array with specified dtype
         return np.frombuffer(data_bytes, dtype=np.dtype(dtype))
-
-    def create_reference(self):
-        """Create a reference trace for this channel.
-
-        This operation is independent of the trace type.
-        """
-        cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INITiate'
-        self.write(cmd)
 
 
 class CTP10(SCPIMixin, Instrument):
@@ -578,7 +607,7 @@ class CTP10(SCPIMixin, Instrument):
 
     The CTP10 is a tunable laser source and optical component test platform
     that can measure transmission and reflection characteristics. It supports
-    up to 4 TLS (Tunable Laser Source) channels.
+    up to 4 TLS (Tunable Laser Source) channels and up to 10 RLASer channels.
 
     .. code-block:: python
 
@@ -587,45 +616,53 @@ class CTP10(SCPIMixin, Instrument):
         # Configure global resolution
         ctp.resolution_pm = 10.0
 
-        # Configure TLS channel 1 wavelengths and power
+        # Configure TLS channel 1
         ctp.tls1.start_wavelength_nm = 1520.0
         ctp.tls1.stop_wavelength_nm = 1580.0
         ctp.tls1.sweep_speed_nmps = 50
         ctp.tls1.laser_power_dbm = 5.0
 
-        # Get reference laser identification (up to 10 lasers)
-        laser_id = ctp.rlaser[2].idn  # Returns "EXFO,T100S-HP,0,6.06"
-
-        # Set reference laser power
-        ctp.rlaser[2].power_dbm = 1.5  # Set power to 1.5 dBm
-        current_power = ctp.rlaser[2].power_dbm  # Read current power setting
-
-        # Enable/disable laser output
-        ctp.rlaser[2].power_state = True  # Enable laser output
-        ctp.rlaser[2].power_state = 'ON'  # Alternative: use 'ON'/'OFF'
-        is_enabled = ctp.rlaser[2].power_state  # Returns True/False
-
-        # Set laser wavelength (multiple units available)
-        ctp.rlaser[2].wavelength_nm = 1550.0  # Set to 1550 nm
-        current_wavelength = ctp.rlaser[2].wavelength_nm  # Read wavelength in nm
-        # Alternative units: wavelength_pm, wavelength_m, frequency_hz, frequency_ghz, frequency_thz
+        # Configure reference laser
+        ctp.rlaser[2].power_dbm = 1.5
+        ctp.rlaser[2].wavelength_nm = 1550.0
+        ctp.rlaser[2].power_state = True  # Enable laser
 
         # Start measurement
         ctp.initiate_sweep()
         ctp.wait_for_sweep_complete()
 
-        # Access TF live trace data (module=4, channel=1)
-        tf_trace = ctp.trace(module=4, channel=1, type=1)
-        length = tf_trace.length
-        wavelengths = tf_trace.get_data_x(unit='M', format='BIN')  # Returns wavelengths in meters
-        powers = tf_trace.get_data_y(unit='DB', format='BIN')  # Returns power in dB
+        # Access detector on module 4, channel 1
+        detector = ctp.detector(module=4, channel=1)
 
-        # Access different trace types
-        raw_live_trace = ctp.trace(module=4, channel=1, type=11)
-        raw_live_powers = raw_live_trace.get_data_y()
+        # Configure detector-level settings
+        detector.power_unit = 'DBM'
+        detector.spectral_unit = 'WAV'
+        detector.trigger = 0  # Software trigger
+        detector.create_reference()
 
-        raw_ref_trace = ctp.trace(module=4, channel=1, type=12)
-        raw_ref_powers = raw_ref_trace.get_data_y()
+        # Measure optical power
+        power = detector.power  # Returns power in configured unit
+
+        # Read TF live trace data (TYPE1)
+        length = detector.length(trace_type=1)
+        wavelengths = detector.get_data_x(trace_type=1, unit='M', format='BIN')
+        powers = detector.get_data_y(trace_type=1, unit='DB', format='BIN')
+
+        # Read Raw Live trace (TYPE11)
+        raw_powers = detector.get_data_y(trace_type=11, unit='DB', format='BIN')
+
+        # Read Raw Reference trace (TYPE12)
+        ref_powers = detector.get_data_y(trace_type=12, unit='DB', format='BIN')
+
+        # Save trace data
+        detector.save(trace_type=1)
+
+    Trace types (TYPE parameter):
+        - TYPE1: TF live trace (Transmission Function)
+        - TYPE11: Raw Live trace
+        - TYPE12: Raw Reference trace
+        - TYPE13: Raw Quick Reference trace
+        - See instrument documentation for complete list (1-23)
     """
 
     # TLS Channel creators (up to 4 channels)
@@ -637,22 +674,31 @@ class CTP10(SCPIMixin, Instrument):
     # RLASer Channel creator (up to 10 channels)
     rlaser = Instrument.MultiChannelCreator(RLASerChannel, list(range(1, 11)))
 
-    # Generic trace accessor ---------------------------------------------------------
-    def trace(self, module: int, channel: int, type: int = 1) -> TraceChannel:
-        """Return a TraceChannel for given module, channel and TYPE.
+    # Detector accessor ---------------------------------------------------------------
+    def detector(self, module: int, channel: int) -> DetectorChannel:
+        """Return a DetectorChannel for given module and channel.
 
         :param int module: SENSe number 1-20 (module position in mainframe).
         :param int channel: CHANnel number 1-6 (detector position on module).
-        :param int type: Trace TYPE number 1-23 (depends on detector type).
-        :return: TraceChannel instance bound to the given identifiers.
+        :return: DetectorChannel instance bound to the given identifiers.
+
+        Example:
+            # Access detector on module 4, channel 1
+            detector = ctp.detector(module=4, channel=1)
+
+            # Detector-level operations
+            detector.power_unit = 'DBM'
+            power = detector.power
+
+            # Access trace data
+            tf_trace = detector.tf_live_trace()
+            wavelengths = tf_trace.get_data_x()
         """
         if not (1 <= int(module) <= 20):
             raise ValueError("module must be in 1..20")
         if not (1 <= int(channel) <= 6):
             raise ValueError("channel must be in 1..6")
-        if not (1 <= int(type) <= 23):
-            raise ValueError("type must be in 1..23")
-        return TraceChannel(self, (int(module), int(channel)), trace_type=int(type))
+        return DetectorChannel(self, (int(module), int(channel)))
 
     def __init__(
         self,
