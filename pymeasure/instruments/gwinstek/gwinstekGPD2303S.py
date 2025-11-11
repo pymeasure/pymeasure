@@ -24,11 +24,10 @@
 import enum
 
 from pymeasure.instruments import Instrument, SCPIMixin, Channel
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
 import logging
-from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
