@@ -22,11 +22,29 @@
 # THE SOFTWARE.
 #
 
-from .keysight81160A import Keysight81160A
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightE3631A import KeysightE3631A
-from .keysightE36312A import KeysightE36312A
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightN7744C import KeysightN7744C
-from .keysightN7745C import KeysightN7745C
+import logging
+from pymeasure.instruments import Instrument
+from .keysightN7744C import KeysightN7744C, MPPMChannel
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class KeysightN7745C(KeysightN7744C):
+    """
+    This represents the Keysight N7745C Optical Multiport Power Meter interface.
+
+    .. code-block:: python
+
+        mppm = KeysightN7745C(address)
+
+    """
+
+    def __init__(self, adapter, name="N7745C Optical Multiport Power Meter", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs)
+
+    channel_5 = Instrument.ChannelCreator(MPPMChannel, 5)
+    channel_6 = Instrument.ChannelCreator(MPPMChannel, 6)
+    channel_7 = Instrument.ChannelCreator(MPPMChannel, 7)
+    channel_8 = Instrument.ChannelCreator(MPPMChannel, 8)
