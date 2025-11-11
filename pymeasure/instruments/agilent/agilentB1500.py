@@ -128,7 +128,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         return out
 
     def initialize_smu(self, channel, smu_type, name):
-        """Initialize a :class:`.SMU` instance.
+        """Initialize a :class:`SMU` instance.
 
         :param int channel: SMU channel
         :param str smu_type: SMU type, e.g. ``'HRSMU'``
@@ -185,8 +185,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write("AB")
 
     def force_gnd(self):
-        """Force 0V on all channels immediately. Current Settings can
-        be restored with RZ. (``DZ``)
+        """Force 0V on all channels immediately. Current settings can
+        be restored with :meth:`restore_settings`. (``DZ``)
         """
         self.write("DZ")
 
@@ -995,8 +995,9 @@ class SMU:
         self.write(f"CL {self.channel}")
 
     def force_gnd(self):
-        """Force 0V immediately. Current Settings can be restored with
-        ``RZ``. (``DZ``)"""
+        """Force 0V immediately. Current settings can be restored with
+        :meth:`restore_settings`. (``DZ``)
+        """
         self.write(f"DZ {self.channel}")
 
     def restore_settings(self):
@@ -1449,9 +1450,9 @@ class SMUVoltageRanging:
     the range string for voltage measurement defaults to
     'limited auto ranging'.
 
-    Full specification: '2 V range fixed' or '2 V limited auto ranging'
+    Full specification: ``'2 V range fixed'`` or ``'2 V limited auto ranging'``
 
-    '2 V' defaults to '2 V limited auto ranging'
+    ``'2 V'`` defaults to ``'2 V limited auto ranging'``
     """
 
     def __init__(self, smu_type):
@@ -1498,9 +1499,9 @@ class SMUCurrentRanging:
     the range string for current measurement defaults to
     'limited auto ranging'.
 
-    Full specification: '1 nA range fixed' or '1 nA limited auto ranging'
+    Full specification: ``'1 nA range fixed'`` or ``'1 nA limited auto ranging'``
 
-    '1 nA' defaults to '1 nA limited auto ranging'
+    ``'1 nA'`` defaults to ``'1 nA limited auto ranging'``
     """
 
     def __init__(self, smu_type):
@@ -1722,8 +1723,8 @@ class SPGUChannel(Channel):
 
     def get_pulse_timings(self, source=1):
         """Get the timing parameters for the SPGU channel. (``SPT?``)
-        The SPGU operating mode must be set to PG with the SIM 0 command before getting the pulse
-        timings.
+        The SPGU operating mode must be set to PG with the ``SIM 0`` command before getting the
+        pulse timings.
 
         :param SPGUSignalSource or int source: Signal source for the pulse timings,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
@@ -1735,11 +1736,12 @@ class SPGUChannel(Channel):
         return tuple(map(float, response.split(",")))
 
     def apply_setup(self):
-        """Apply the current setup to the SPGU channel.(``SPUPD``)
+        """Apply the current setup to the SPGU channel (``SPUPD``).
 
-        Depends on the b1500.spgu_mode (``SIM``)
-        PG mode: output base voltage set by ``SPV`` command
-        ALWG mode: output initial value of waveform
+        Depends on the :attr:`SPGU.operation_mode` (``SIM``):
+
+        * PG mode: output base voltage set by ``SPV`` command
+        * ALWG mode: output initial value of waveform
         """
         self.write(f"SPUPD {self.id}")
 
