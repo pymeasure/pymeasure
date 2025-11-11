@@ -1658,7 +1658,6 @@ class SPGUChannel(Channel):
             defaults to 0
         :param float, optional peak_voltage: Pulse peak voltage in V, defaults to 0
         """
-
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
@@ -1671,7 +1670,6 @@ class SPGUChannel(Channel):
         :return: Tuple of (base_voltage, peak_voltage)
         :rtype: tuple
         """
-
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPV? {self.id}, {source}")
         base_voltage, peak_voltage = map(float, response.split(","))
@@ -1706,7 +1704,6 @@ class SPGUChannel(Channel):
         :param float, optional rise_time: Pulse rise time in seconds, defaults to 2e-8
         :param float, optional fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
-
         source = SPGUSignalSource.get(source).value
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
@@ -1725,7 +1722,6 @@ class SPGUChannel(Channel):
         :return: Tuple of (delay, width, rise_time, fall_time)
         :rtype: tuple
         """
-
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPT? {self.id}, {source}")
         return tuple(map(float, response.split(",")))
@@ -1764,7 +1760,6 @@ class CustomIntEnum(IntEnum):
         :param str or int input_value: Enum name or value
         :return: Enum member
         """
-
         if isinstance(input_value, int):
             return cls(input_value)
         else:
