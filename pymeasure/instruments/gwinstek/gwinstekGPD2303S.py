@@ -83,12 +83,12 @@ class GWInstekGPD230SChannel(Channel):
         values=_VOLTAGE_RANGE,
     )
     current = Channel.measurement("IOUT{ch}?",
-     """Returns the actual output current.""",
+     """Get the actual output current.""",
      get_process=lambda v: float(v.replace('A', ''))
      )
 
     voltage = Channel.measurement("VOUT{ch}?",
-     """Returns the actual output voltage.""",
+     """Get the actual output voltage.""",
      get_process=lambda v: float(v.replace('V', ''))
      )
 
@@ -186,7 +186,7 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
 
     tracking_mode = Instrument.setting(
         "TRACK%d",
-        """Selects the operation mode: independent, tracking series, or tracking parallel.
+        """Set the operation mode: independent, tracking series, or tracking parallel.
         NR1 0: Independent, 1: Series, 2: Parallel""",
         validator=strict_discrete_set,
         values=_TRACK_MODES,
@@ -194,7 +194,7 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
 
     beep_enabled = Instrument.setting(
         "BEEP%d",
-        """Trono on or off the beep.""",
+        """Set beep on or off.""",
         validator=strict_discrete_set,
         values=_TRACK_MODES,
     )
@@ -208,23 +208,23 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
     )
 
     recall = Instrument.setting(
-        "RCL%d", """Recalls a panel setting""", validator=strict_discrete_set, values=[1, 2, 3, 4]
+        "RCL%d", """Set to recall a panel setting""", validator=strict_discrete_set, values=[1, 2, 3, 4]
     )
 
     baude_rate = Instrument.setting(
         "BAUD%d",
-        """Sets the baud rate to 2:9600, 1:57600, 0:115200""",
+        """Set the baud rate to 2:9600, 1:57600, 0:115200""",
         validator=strict_discrete_set,
         values=[0, 1, 2],
     )
 
     local = Instrument.setting(
-        "LOCAL", """Exits remote mode and sets the instrument ot local mode.
+        "LOCAL", """Set to exit remote mode and sets the instrument ot local mode.
         Beware, remote operation is not possible afterwards."""
     )
 
     error = Instrument.measurement(
-        "ERR?", """Checks the error status of the instrument and returns the last error message."""
+        "ERR?", """Get the error status of the instrument and returns the last error message."""
     )
 
-    help = Instrument.measurement("HELP?", """Shows the command list.""")
+    help = Instrument.measurement("HELP?", """Get the command list.""")
