@@ -94,24 +94,25 @@ class RLASerChannel(Channel):
         """,
     )
 
-    power_state = Channel.control(
+    power_state_enabled = Channel.control(
         ":CTP:RLASer{ch}:POWer:STATe?",
         ":CTP:RLASer{ch}:POWer:STATe %s",
-        """Control the laser output state (bool or int).
+        """Control the laser output state (bool).
 
         Enables or disables the laser output. This operation can take time,
         depending on the laser model.
 
         Set values:
-        - False, 0, or 'OFF': disables the laser output
-        - True, 1, or 'ON': enables the laser output
+        - False or 'disabled': disables the laser output
+        - True or 'enabled': enables the laser output
 
-        :return: Laser output state (int): 0 if disabled, 1 if enabled.
+        :return: Laser output state (bool): False if disabled, True if enabled.
         """,
         validator=lambda v, values: v,
         map_values=False,
+        cast=int,
+        get_process=lambda v: bool(v),
         set_process=lambda v: 'ON' if v in (True, 1, '1', 'ON') else 'OFF',
-        get_process=int,
     )
 
     wavelength_pm = Channel.control(
@@ -205,6 +206,42 @@ class RLASerChannel(Channel):
 
 class TLSChannel(Channel):
     """Represents a TLS (Tunable Laser Source) channel on the EXFO CTP10."""
+
+    identifier = Channel.control(
+        ":INIT:TLS{ch}:IDentifier?",
+        ":INIT:TLS{ch}:IDentifier %d",
+        """Control the identifier of the laser to use as a TLS in the subsystem.
+
+        This command defines the identifier of the laser to use as a TLS in
+        the subsystem. The corresponding GUI setting is the selection of a TLS
+        in the Subsystem setup menu.
+
+        Allowed values (int): 0 to 10
+            0: No laser is selected for use in the subsystem
+            1-10: Identifier of the laser to use as a TLS
+
+        The laser identification number is defined with the command
+        CTP:RLASer[1...10]:TYPE on page 428 (in the GUI, it corresponds
+        to the position of the laser in the Modules & Lasers window from
+        left to right).
+
+        :return: Identifier of the selected laser (int, 0-10).
+            0 means that the laser is not selected for use in the subsystem.
+
+        Example:
+            # Set laser with identifier 4 as TLS
+            ctp.tls1.identifier = 4
+
+            # Deselect laser (no laser used)
+            ctp.tls1.identifier = 0
+
+            # Query current identifier
+            laser_id = ctp.tls1.identifier  # returns 0-10
+        """,
+        validator=strict_range,
+        values=[0, 10],
+        cast=int,
+    )
 
     start_wavelength_nm = Channel.control(
         ":INIT:TLS{ch}:WAVelength:STARt?",

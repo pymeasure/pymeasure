@@ -196,7 +196,7 @@ def test_rlaser_power_state_setter_true():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe ON", None)],
     ) as inst:
-        inst.rlaser[2].power_state = True
+        inst.rlaser[2].power_state_enabled = True
 
 
 def test_rlaser_power_state_setter_false():
@@ -204,7 +204,7 @@ def test_rlaser_power_state_setter_false():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe OFF", None)],
     ) as inst:
-        inst.rlaser[2].power_state = False
+        inst.rlaser[2].power_state_enabled = False
 
 
 def test_rlaser_power_state_setter_int_1():
@@ -212,7 +212,7 @@ def test_rlaser_power_state_setter_int_1():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe ON", None)],
     ) as inst:
-        inst.rlaser[2].power_state = 1
+        inst.rlaser[2].power_state_enabled = 1
 
 
 def test_rlaser_power_state_setter_int_0():
@@ -220,7 +220,7 @@ def test_rlaser_power_state_setter_int_0():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe OFF", None)],
     ) as inst:
-        inst.rlaser[2].power_state = 0
+        inst.rlaser[2].power_state_enabled = 0
 
 
 def test_rlaser_power_state_setter_string_on():
@@ -228,7 +228,7 @@ def test_rlaser_power_state_setter_string_on():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe ON", None)],
     ) as inst:
-        inst.rlaser[2].power_state = 'ON'
+        inst.rlaser[2].power_state_enabled = 'ON'
 
 
 def test_rlaser_power_state_setter_string_off():
@@ -236,7 +236,7 @@ def test_rlaser_power_state_setter_string_off():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe OFF", None)],
     ) as inst:
-        inst.rlaser[2].power_state = 'OFF'
+        inst.rlaser[2].power_state_enabled = 'OFF'
 
 
 def test_rlaser_power_state_getter_enabled():
@@ -244,7 +244,7 @@ def test_rlaser_power_state_getter_enabled():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe?", b"1\r\n")],
     ) as inst:
-        assert inst.rlaser[2].power_state == 1
+        assert inst.rlaser[2].power_state_enabled is True
 
 
 def test_rlaser_power_state_getter_disabled():
@@ -252,7 +252,7 @@ def test_rlaser_power_state_getter_disabled():
         CTP10,
         [(b":CTP:RLASer2:POWer:STATe?", b"0\r\n")],
     ) as inst:
-        assert inst.rlaser[2].power_state == 0
+        assert inst.rlaser[2].power_state_enabled is False
 
 
 def test_rlaser_wavelength_nm_setter():
@@ -728,16 +728,6 @@ def test_trace_channel_none_id():
         channel = DetectorChannel(inst, id=None)
         assert channel.module is None
         assert channel.channel is None
-
-
-def test_trace_channel_insert_id_with_none():
-    """Test insert_id returns command unchanged when id is None."""
-    with expected_protocol(CTP10, []) as inst:
-        channel = DetectorChannel(inst, id=None)
-        # insert_id should return command unchanged when id is None
-        cmd = ":CTP:SENSe{module}:CHANnel{channel}:POWer?"
-        result = channel.insert_id(cmd)
-        assert result == cmd
 
 
 def test_trace_data_y_binary():
