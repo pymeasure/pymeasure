@@ -39,20 +39,15 @@ _TRACK_MODES = [0, 1, 2]
 
 
 class GWInstekGPD2303SStatusRegister(enum.Enum):
-    CH1 = {"flag": 0b10000000,
-            "states": {0b0: "CC", 0b1: "CV"}}
-    CH2 = {"flag": 0b01000000,
-            "states": {0b0: "CC", 0b1: "CV"}}
+    CH1 = {"flag": 0b10000000, "states": {0b0: "CC", 0b1: "CV"}}
+    CH2 = {"flag": 0b01000000, "states": {0b0: "CC", 0b1: "CV"}}
     TRACKING = {
         "flag": 0b00110000,
-            "states": {0b01: "Independent", 0b11: "Series", 0b10: "Parallel"},
+        "states": {0b01: "Independent", 0b11: "Series", 0b10: "Parallel"},
     }
-    BEEP = {"flag": 0b00001000,
-            "states": {0b0: "Off", 0b1: "On"}}
-    OUTPUT = {"flag": 0b00000100,
-            "states": {0b0: "Off", 0b1: "On"}}
-    BAUD = {"flag": 0b00000011,
-            "states": {0b00: 115200, 0b01: 57600, 0b10: 9600}}
+    BEEP = {"flag": 0b00001000, "states": {0b0: "Off", 0b1: "On"}}
+    OUTPUT = {"flag": 0b00000100, "states": {0b0: "Off", 0b1: "On"}}
+    BAUD = {"flag": 0b00000011, "states": {0b00: 115200, 0b01: 57600, 0b10: 9600}}
 
 
 class GWInstekGPD230SChannel(Channel):
