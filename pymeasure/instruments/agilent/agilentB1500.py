@@ -86,7 +86,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     def query_learn_header(self, query_type, **kwargs):
         """Query settings from the instrument (``*LRN?``).
-        Return dict of settings in human readable format for debugging
+        Return dict of settings in human-readable format for debugging
         or file headers.
         For optional arguments check the underlying definition of
         :meth:`QueryLearn.query_learn_header`.
@@ -1132,14 +1132,13 @@ class SMU:
         step size, each separated by a pause.
 
         :param str source_type: Source type (``'Voltage'`` or ``'Current'``)
-        :param target_output: Target output voltage or current
-        :type: target_output: float
+        :param float target_output: Target output voltage or current
         :param int irange: Output range index
         :param float, optional comp: Compliance, defaults to previous setting
-        :param CompliancePolarity comp_polarity: Compliance polairty, defaults to auto
+        :param CompliancePolarity, optional comp_polarity: Compliance polairty, defaults to auto
         :param int or str, optional comp_range: Compliance ranging type, defaults to auto
-        :param stepsize: Maximum size of steps
-        :param pause: Duration in seconds to wait between steps
+        :param float, optional stepsize: Maximum size of steps
+        :param float, optional pause: Duration in seconds to wait between steps
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
@@ -1358,9 +1357,9 @@ class Ranging:
     """Possible Settings for SMU Current/Voltage Output/Measurement ranges.
     Transformation of available Voltage/Current Range Names to Index and back.
 
-    :param list supported_ranges: Ranges which are supported (list of range indizes)
-    :param dict ranges: All range names ``{Name: Indizes}``
-    :param bool, optional fixed_ranges: add fixed ranges (negative indizes); defaults to False
+    :param list supported_ranges: Ranges which are supported (list of range indices)
+    :param dict ranges: All range names ``{Name: Indices}``
+    :param bool, optional fixed_ranges: Add fixed ranges (negative indices), defaults to False
 
     .. automethod:: __call__
     """
@@ -1418,8 +1417,8 @@ class Ranging:
         """Give named tuple (name/index) of given Range.
         Throws error if range is not supported by this SMU.
 
-        :param str or int input: Range name or index
-        :return: named tuple (name/index) of range
+        :param str or int input_value: Range name or index
+        :return: Named tuple (name/index) of range
         :rtype: namedtuple
         """
         # set index
@@ -1649,6 +1648,8 @@ class SPGU(Channel):
 
 
 class SPGUChannel(Channel):
+    """SPGU Channel of the Agilent B1500 mainframe."""
+
     enabled = Channel.setting(
         "%s {ch}",
         """Control SPGU channel enable/disable state. (``CN``, ``CL``)""",
@@ -1672,13 +1673,20 @@ class SPGUChannel(Channel):
             defaults to 0
         :param float, optional peak_voltage: Pulse peak voltage in V, defaults to 0
         """
+
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
         self.write(f"SPV {self.id}, {source}, {base_voltage}, {peak_voltage}")
 
     def get_output_voltage(self, source=1):
-        """Get the output voltage of the specified signal source. (``SPV?``)"""
+        """Get the output voltage of the specified signal source. (``SPV?``)
+
+        :param SPGUSignalSource or int source: Signal source
+        :return: Tuple of (base_voltage, peak_voltage)
+        :rtype: tuple
+        """
+
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPV? {self.id}, {source}")
         base_voltage, peak_voltage = map(float, response.split(","))
@@ -1711,8 +1719,9 @@ class SPGUChannel(Channel):
         :param float, optional delay: Pulse delay in seconds, defaults to 0
         :param float, optional width: Pulse width in seconds, defaults to 1e-7
         :param float, optional rise_time: Pulse rise time in seconds, defaults to 2e-8
-        :param float, optional fall_time: Pulse fall time in seconds, defaults to rise_time
+        :param float, optional fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
+
         source = SPGUSignalSource.get(source).value
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
@@ -1731,6 +1740,7 @@ class SPGUChannel(Channel):
         :return: Tuple of (delay, width, rise_time, fall_time)
         :rtype: tuple
         """
+
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPT? {self.id}, {source}")
         return tuple(map(float, response.split(",")))
@@ -1769,6 +1779,7 @@ class CustomIntEnum(IntEnum):
         :param str or int input_value: Enum name or value
         :return: Enum member
         """
+
         if isinstance(input_value, int):
             return cls(input_value)
         else:
