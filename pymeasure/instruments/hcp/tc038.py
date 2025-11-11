@@ -23,8 +23,10 @@
 #
 
 import logging
+from typing import Union
 
 from pymeasure.instruments import Instrument
+from pymeasure.adapters import Adapter
 from pyvisa.constants import Parity
 
 
@@ -32,28 +34,30 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _data_to_temp(data):
+def _data_to_temp(data: str) -> float:
     """Convert the returned hex value "data" to a temperature in °C."""
-    return int(data[7:11], 16) / 10.
+    return int(data[7:11], 16) / 10.0
     # get the hex number, convert to int and shift the decimal sign
 
 
-registers = {'temperature': "D0002",
-             'setpoint': "D0120",
-             }
+registers = {
+    "temperature": "D0002",
+    "setpoint": "D0120",
+}
 
 
-def _check_errors(response):
-    errors = {"02": "Command does not exist or is not executable.",
-              "03": "Register number does not exist.",
-              "04": "Out of setpoint range.",
-              "05": "Out of data number range.",
-              "06": "Executed monitor without specifying what to monitor.",
-              "08": "Illegal parameter is set.",
-              "42": "Sum does not match the expected value.",
-              "43": "Data value greater than specified received.",
-              "44": "End of data or end of text character is not received.",
-              }
+def _check_errors(response: str) -> list[str]:
+    errors = {
+        "02": "Command does not exist or is not executable.",
+        "03": "Register number does not exist.",
+        "04": "Out of setpoint range.",
+        "05": "Out of data number range.",
+        "06": "Executed monitor without specifying what to monitor.",
+        "08": "Illegal parameter is set.",
+        "42": "Sum does not match the expected value.",
+        "43": "Data value greater than specified received.",
+        "44": "End of data or end of text character is not received.",
+    }
     if response[5:7] == "OK":
         return []
     else:  # got[5:7] == "ER"
@@ -77,13 +81,21 @@ class TC038(Instrument):
 
     The oven always responds with an "OK" to all valid requests or commands.
 
-    :param str adapter: Name of the COM-Port.
-    :param int address: Address of the device. Should be between 1 and 99.
-    :param int timeout: Timeout in ms.
+    :param adapter: Name of the COM-Port.
+    :param name: Name of the instrument.
+    :param address: Address of the device. Should be between 1 and 99.
+    :param timeout: Timeout in ms.
+    :param kwargs: Additional arguments for the Instrument base class.
     """
 
-    def __init__(self, adapter, name="TC038", address=1, timeout=1000,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: Union[Adapter, int, str],
+        name: str = "TC038",
+        address: int = 1,
+        timeout: int = 1000,
+        **kwargs,
+    ) -> None:
         super().__init__(
             adapter,
             name,
@@ -94,25 +106,25 @@ class TC038(Instrument):
             includeSCPI=False,
             **kwargs,
         )
-        self.address = address
+        self.address: int = address
 
         self.set_monitored_quantity()  # start to monitor the temperature
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Send a `command` in its own protocol."""
         # 010 is CPU (01) and time to wait (0), which are fix
-        super().write(chr(2) + f"{self.address:02}" + "010" + command + chr(3))
+        super().write(chr(2) + f"{self.address:02}" + "010" + command + chr(3), **kwargs)
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Do error checking on reading."""
         # Response is chr(2) + address:02 + "01" + response + chr(3)
-        got = super().read()
+        got = super().read(**kwargs)
         errors = _check_errors(got)
         if errors:
             raise ConnectionError(errors[0])
         return got
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after having set a property.
 
         Called if :code:`check_set_errors=True` is set for that property.
@@ -125,7 +137,7 @@ class TC038(Instrument):
         else:
             return []
 
-    def set_monitored_quantity(self, quantity='temperature'):
+    def set_monitored_quantity(self, quantity: str = "temperature") -> None:
         """
         Configure the oven to monitor a certain `quantity`.
 
@@ -138,8 +150,8 @@ class TC038(Instrument):
         self.ask(command="WRS" + "01" + registers[quantity])
 
     setpoint = Instrument.control(
-        "WRD" + registers['setpoint'] + ",01",
-        "WWR" + registers['setpoint'] + ",01,%s",
+        "WRD" + registers["setpoint"] + ",01",
+        "WWR" + registers["setpoint"] + ",01,%s",
         """Control the setpoint of the temperature controller in °C.""",
         get_process=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
@@ -147,16 +159,16 @@ class TC038(Instrument):
     )
 
     temperature = Instrument.measurement(
-        "WRD" + registers['temperature'] + ",01",
+        "WRD" + registers["temperature"] + ",01",
         """Measure the current temperature in °C.""",
-        get_process=_data_to_temp
+        get_process=_data_to_temp,
     )
 
     monitored_value = Instrument.measurement(
         "WRM",
         """Measure the currently monitored value. For default it is the current
         temperature in °C.""",
-        get_process=_data_to_temp
+        get_process=_data_to_temp,
     )
 
     information = Instrument.measurement(
