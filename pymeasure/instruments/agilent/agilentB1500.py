@@ -76,7 +76,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         return self._smu_names
 
     def query_learn(self, query_type):
-        """Query settings from the instrument (``*LRN?``).
+        """Query settings from the instrument. (``*LRN?``)
         Return dict of settings.
 
         :param int or str query_type: Query type (number according to manual)
@@ -85,7 +85,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         return QueryLearn.query_learn(self.ask, query_type)
 
     def query_learn_header(self, query_type, **kwargs):
-        """Query settings from the instrument (``*LRN?``).
+        """Query settings from the instrument. (``*LRN?``)
         Return dict of settings in human-readable format for debugging
         or file headers.
         For optional arguments check the underlying definition of
@@ -172,7 +172,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
 
     def pause(self, pause_seconds):
-        """Pause Command Execution for given time in seconds (``PA``)
+        """Pause Command Execution for given time in seconds. (``PA``)
 
         :param int pause_seconds: Seconds to pause
         """
@@ -180,7 +180,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     def abort(self):
         """Abort the present operation but channels may still output
-        current/voltage (``AB``)
+        current/voltage. (``AB``)
         """
         self.write("AB")
 
@@ -213,7 +213,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(f"ERSSP {port.value}, {status.value}")
 
     def check_errors(self):
-        """Check for errors (``ERRX?``)"""
+        """Check for errors. (``ERRX?``)"""
         error = self.ask("ERRX?")
         error = re.match(
             r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error
@@ -224,20 +224,19 @@ class AgilentB1500(SCPIMixin, Instrument):
             raise OSError(f"Agilent B1500 Error {error[0]}: {error[1]}")
 
     def check_idle(self):
-        """Check if instrument is idle (``*OPC?``). Alias for :meth:`~.SCPIMixin.complete`."""
+        """Check if instrument is idle. (``*OPC?``) Alias for :meth:`~.SCPIMixin.complete`."""
         return self.complete
 
     def clear_buffer(self):
-        """Clear output data buffer (``BC``)"""
+        """Clear output data buffer. (``BC``)"""
         self.write("BC")
 
     def clear_timer(self):
-        """Clear timer count (``TSR``)"""
+        """Clear timer count. (``TSR``)"""
         self.write("TSR")
 
     def send_trigger(self):
-        """Send trigger to start measurement (except High Speed Spot)
-        (``XE``)"""
+        """Send trigger to start measurement (except High Speed Spot). (``XE``)"""
         self.write("XE")
 
     @property
@@ -921,7 +920,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
 
 class SMU:
-    """Provide specific methods for the SMUs of the Agilent B1500 mainframe
+    """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
     :param AgilentB1500 parent: Instance of the B1500 mainframe class
     :param int channel: Channel number of the SMU
@@ -987,11 +986,11 @@ class SMU:
         return self._b1500.query_learn_header(str(self.channel))
 
     def enable(self):
-        """Enable Source/Measurement Channel (``CN``)"""
+        """Enable Source/Measurement Channel. (``CN``)"""
         self.write(f"CN {self.channel}")
 
     def disable(self):
-        """Disable Source/Measurement Channel (``CL``)"""
+        """Disable Source/Measurement Channel. (``CL``)"""
         self.write(f"CL {self.channel}")
 
     def force_gnd(self):
@@ -1559,7 +1558,7 @@ class SMUCurrentRanging:
 
 
 class SPGU(Channel):
-    """Provide specific methods for the SPGU module of the Agilent B1500 mainframe
+    """Provide specific methods for the SPGU module of the Agilent B1500 mainframe.
 
     :param AgilentB1500 parent: Instance of the B1500 mainframe class
     :param int channel: Channel number of the SPGU
@@ -1746,7 +1745,7 @@ class SPGUChannel(Channel):
         return tuple(map(float, response.split(",")))
 
     def apply_setup(self):
-        """Apply the current setup to the SPGU channel (``SPUPD``).
+        """Apply the current setup to the SPGU channel. (``SPUPD``)
 
         Depends on the :attr:`SPGU.operation_mode` (``SIM``):
 
