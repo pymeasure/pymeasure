@@ -61,7 +61,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def smu_references(self):
-        """Return all SMU instances.
+        """Get all SMU instances.
 
         :rtype: dict_values
         """
@@ -69,7 +69,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def smu_names(self):
-        """Return all SMU names.
+        """Get all SMU names.
 
         :rtype: dict
         """
@@ -241,10 +241,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def auto_calibration(self):
-        """Enable/Disable SMU auto-calibration every 30 minutes. (``CM``)
-
-        :type: bool
-        """
+        """Control SMU auto-calibration every 30 minutes (bool). (``CM``)"""
         response = self.query_learn(31)["CM"]
         response = bool(int(response))
         return response
@@ -676,10 +673,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def adc_auto_zero(self):
-        """Enable/Disable ADC zero function. Halves the
-        integration time, if off. (``AZ``)
-
-        :type: bool
+        """Control ADC zero function (bool). (``AZ``)
+        Halves the integration time when disabled.
         """
         response = self.query_learn(56)["AZ"]
         response = bool(int(response))
@@ -693,10 +688,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def time_stamp(self):
-        """Enable/Disable Time Stamp function. (``TSC``)
-
-        :type: bool
-        """
+        """Control Time Stamp function (bool). (``TSC``)"""
         response = self.query_learn(60)["TSC"]
         response = bool(int(response))
         return response
@@ -784,7 +776,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def sampling_mode(self):
-        """Set linear or logarithmic sampling mode. (``ML``)
+        """Control sampling mode, linear or logarithmic. (``ML``)
 
         :type: :class:`.SamplingMode`
         """
@@ -982,7 +974,7 @@ class SMU:
 
     @property
     def status(self):
-        """Query status of the SMU."""
+        """Control status of the SMU."""
         return self._b1500.query_learn_header(str(self.channel))
 
     def enable(self):
@@ -1007,10 +999,7 @@ class SMU:
 
     @property
     def filter(self):
-        """Enable/Disable SMU Filter. (``FL``)
-
-        :type: bool
-        """
+        """Control SMU Filter enable/disable state (bool). (``FL``)"""
         # different than other SMU specific settings (grouped by setting)
         # read via raw command
         response = self._b1500.query_learn(30)
@@ -1033,10 +1022,7 @@ class SMU:
 
     @property
     def series_resistor(self):
-        """Enable/Disable 1MOhm series resistor. (``SSR``)
-
-        :type: bool
-        """
+        """Control 1MOhm series resistor enable/disable state (bool). (``SSR``)"""
         response = self.query_learn(53, "SSR")
         response = bool(int(response))
         return response
@@ -1049,7 +1035,7 @@ class SMU:
 
     @property
     def meas_op_mode(self):
-        """Set SMU measurement operation mode. (``CMM``)
+        """Control SMU measurement operation mode. (``CMM``)
 
         :type: :class:`.MeasOpMode`
         """
@@ -1065,7 +1051,7 @@ class SMU:
 
     @property
     def adc_type(self):
-        """ADC type of individual measurement channel. (``AAD``)
+        """Control ADC type of individual measurement channel. (``AAD``)
 
         :type: :class:`.ADCType`
         """
@@ -1195,7 +1181,7 @@ class SMU:
 
     @property
     def meas_range_current(self):
-        """Current measurement range index. (``RI``)
+        """Control current measurement range index. (``RI``)
 
         Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
         :class:`.SMUCurrentRanging`
@@ -1212,7 +1198,7 @@ class SMU:
 
     @property
     def meas_range_voltage(self):
-        """Voltage measurement range index. (``RV``)
+        """Control voltage measurement range index. (``RV``)
 
         Possible settings depend on SMU type, e.g. ``0`` for Auto Ranging:
         :class:`.SMUVoltageRanging`
