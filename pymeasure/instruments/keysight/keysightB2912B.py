@@ -22,10 +22,23 @@
 # THE SOFTWARE.
 #
 
-from .keysight81160A import Keysight81160A
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightE3631A import KeysightE3631A
-from .keysightE36312A import KeysightE36312A
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightB2901B import KeysightB2901B
+import logging
+from .keysightB2902B import KeysightB2902B
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class KeysightB2911B(KeysightB2902B):
+    """
+    This represents the Keysight B2912B Source-Measure Unit interface.
+
+    .. code-block:: python
+
+        smu = KeysightB2912B(address)
+
+    """
+
+    def __init__(self, adapter, name="Keysight B2912B Source-Measure Unit", **kwargs):
+        super().__init__(
+            adapter, name, **kwargs)
