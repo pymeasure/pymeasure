@@ -61,12 +61,18 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @property
     def smu_references(self):
-        """Return all SMU instances."""
+        """Return all SMU instances.
+
+        :rtype: dict_values
+        """
         return self._smu_references.values()
 
     @property
     def smu_names(self):
-        """Return all SMU names."""
+        """Return all SMU names.
+
+        :rtype: dict
+        """
         return self._smu_names
 
     def query_learn(self, query_type):
@@ -74,6 +80,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         Return dict of settings.
 
         :param int or str query_type: Query type (number according to manual)
+        :rtype: dict
         """
         return QueryLearn.query_learn(self.ask, query_type)
 
@@ -85,6 +92,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         :meth:`QueryLearn.query_learn_header`.
 
         :param int or str query_type: Query type (number according to manual)
+        :rtype: dict
         """
         return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
 
