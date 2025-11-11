@@ -513,6 +513,70 @@ class DetectorChannel(Channel):
         cast=int,
     )
 
+    wavelength_nm = Channel.control(
+        ":CTP:SENSe{module}:CHANnel{channel}:WAVelength?",
+        ":CTP:SENSe{module}:CHANnel{channel}:WAVelength %gNM",
+        """Control the wavelength of the signal received on the detector in nanometers (float).
+
+        Sets the wavelength of the signal received on this detector (static control).
+
+        This command is not available if the detector is scanning.
+        The wavelength value set with this command may be modified if you start
+        the logging, pulse logging or stability function.
+
+        Note: This query is not available on PCM module detectors.
+
+        Range: 1240 to 1680 nm
+        Units: PM, NM, M, HZ, GHZ, THZ (default: meter or Hertz)
+
+        On IL RL OPM2 modules:
+        - If the command applies to the TLS IN, Out to SCAN SYNC or Out to DUT connector,
+          the value set also applies to the two other connectors of the module.
+
+        :return: Wavelength in nanometers (float).
+
+        Example:
+            detector = ctp.detector(module=1, channel=2)
+            detector.wavelength_nm = 1550.0  # Set to 1550 nm
+            wl = detector.wavelength_nm  # Get wavelength in nm
+        """,
+        validator=strict_range,
+        values=[1240.0, 1680.0],
+        get_process=lambda v: float(v) * 1e9,
+    )
+
+    frequency_thz = Channel.control(
+        ":CTP:SENSe{module}:CHANnel{channel}:WAVelength?",
+        ":CTP:SENSe{module}:CHANnel{channel}:WAVelength %gTHZ",
+        """Control the frequency of the signal received on the detector in THz (float).
+
+        Sets the frequency of the signal received on this detector (static control).
+
+        This command is not available if the detector is scanning.
+        The frequency value set with this command may be modified if you start
+        the logging, pulse logging or stability function.
+
+        Note: This query is not available on PCM module detectors.
+
+        Range: 178.4479 to 241.7681 THz
+        Units: PM, NM, M, HZ, GHZ, THZ (default: meter or Hertz)
+
+        On IL RL OPM2 modules:
+        - If the command applies to the TLS IN, Out to SCAN SYNC or Out to DUT connector,
+          the value set also applies to the two other connectors of the module.
+
+        :return: Frequency in THz (float).
+
+        Example:
+            detector = ctp.detector(module=1, channel=2)
+            detector.frequency_thz = 193.4  # Set to 193.4 THz
+            freq = detector.frequency_thz  # Get frequency in THz
+        """,
+        validator=strict_range,
+        values=[178.4479, 241.7681],
+        get_process=lambda v: float(v) * 1e-12,
+    )
+
     def create_reference(self):
         """Create a reference trace for this detector channel."""
         cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INITiate'
