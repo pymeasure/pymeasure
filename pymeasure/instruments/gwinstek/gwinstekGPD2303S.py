@@ -37,40 +37,30 @@ _VOLTAGE_RANGE = [0.0, 30]
 _CURRENT_RANGE = [0.0, 3]
 _TRACK_MODES = [0, 1, 2]
 
+
 class GWInstekGPD2303SStatusRegister(enum.Enum):
-    CH1     = {"flag": 0b10000000,
-                "states":{
-                    0b0: "CC",
-                    0b1: "CV"}}
-    CH2     = {"flag": 0b01000000,
-                "states":{
-                    0b0: "CC",
-                    0b1: "CV"}}
-    TRACKING = {"flag": 0b00110000,
-                "states":{
-                    0b01: "Independent",
-                    0b11: "Series",
-                    0b10: "Parallel"}}
-    BEEP    = {"flag": 0b00001000,
-                "states":{
-                    0b0: "Off",
-                    0b1: "On"}}
-    OUTPUT  = {"flag": 0b00000100,
-                "states":{
-                    0b0: "Off",
-                    0b1: "On"}}
-    BAUD    = {"flag": 0b00000011,
-                "states":{
-                    0b00: 115200,
-                    0b01: 57600,
-                    0b10: 9600}}
+    CH1 = {"flag": 0b10000000,
+            "states": {0b0: "CC", 0b1: "CV"}}
+    CH2 = {"flag": 0b01000000,
+            "states": {0b0: "CC", 0b1: "CV"}}
+    TRACKING = {
+        "flag": 0b00110000,
+            "states": {0b01: "Independent", 0b11: "Series", 0b10: "Parallel"},
+    }
+    BEEP = {"flag": 0b00001000,
+            "states": {0b0: "Off", 0b1: "On"}}
+    OUTPUT = {"flag": 0b00000100,
+            "states": {0b0: "Off", 0b1: "On"}}
+    BAUD = {"flag": 0b00000011,
+            "states": {0b00: 115200, 0b01: 57600, 0b10: 9600}}
+
 
 class GWInstekGPD230SChannel(Channel):
     current_limit = Channel.control(
         "ISET{ch}?",
         "ISET{ch}:%g",
         """Control maximum current of the power supply.""",
-        get_process=lambda v: float(v.replace('A', '')),
+        get_process=lambda v: float(v.replace("A", "")),
         validator=truncated_range,
         values=_CURRENT_RANGE,
     )
@@ -78,19 +68,21 @@ class GWInstekGPD230SChannel(Channel):
         "VSET{ch}?",
         "VSET{ch}:%g",
         """Control maximum voltage of the power supply.""",
-        get_process=lambda v: float(v.replace('V', '')),
+        get_process=lambda v: float(v.replace("V", "")),
         validator=truncated_range,
         values=_VOLTAGE_RANGE,
     )
-    current = Channel.measurement("IOUT{ch}?",
-     """Get the actual output current.""",
-     get_process=lambda v: float(v.replace('A', ''))
-     )
+    current = Channel.measurement(
+        "IOUT{ch}?",
+        """Get the actual output current.""",
+        get_process=lambda v: float(v.replace("A", "")),
+    )
 
-    voltage = Channel.measurement("VOUT{ch}?",
-     """Get the actual output voltage.""",
-     get_process=lambda v: float(v.replace('V', ''))
-     )
+    voltage = Channel.measurement(
+        "VOUT{ch}?",
+        """Get the actual output voltage.""",
+        get_process=lambda v: float(v.replace("V", "")),
+    )
 
 
 class GWInstekGPD230S(SCPIMixin, Instrument):
@@ -140,10 +132,12 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
     channel_2 = Instrument.ChannelCreator(GWInstekGPD230SChannel, 2)
 
     def __init__(
-        self, adapter, name="GW Instek GPD-2303S DC Power Supply",
+        self,
+        adapter,
+        name="GW Instek GPD-2303S DC Power Supply",
         read_termination="\n",
         baud_rate=9600,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             adapter,
@@ -155,10 +149,11 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
 
     @staticmethod
     def decode_status_byte(status_byte: int) -> dict:
-        """Decode the status byte according to manual.
-        """
+        """Decode the status byte according to manual."""
         if type(status_byte) is not int:
-            raise(ValueError((f"status_byte {status_byte} is not type int but {type(status_byte)}")))
+            raise (
+                ValueError((f"status_byte {status_byte} is not type int but {type(status_byte)}"))
+            )
         return_dict = {}
         return_dict["raw"] = bin(status_byte)
         for register in GWInstekGPD2303SStatusRegister:
@@ -169,14 +164,14 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
             trailing_zeors = (flag & -flag).bit_length() - 1
             state = (flag & status_byte) >> trailing_zeors
 
-            return_dict[name] = states.get(state, 'Error')
+            return_dict[name] = states.get(state, "Error")
 
         return return_dict
 
     @property
     def status(self) -> dict:
-        """ Get the status byte and and decode it. """
-        status_byte = int(self.ask("STATUS?").strip(),2)
+        """Get the status byte and and decode it."""
+        status_byte = int(self.ask("STATUS?").strip(), 2)
         return self.decode_status_byte(status_byte)
 
     # remote = Instrument.setting(
@@ -208,7 +203,10 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
     )
 
     recall = Instrument.setting(
-        "RCL%d", """Set to recall a panel setting""", validator=strict_discrete_set, values=[1, 2, 3, 4]
+        "RCL%d",
+        """Set to recall a panel setting""",
+        validator=strict_discrete_set,
+        values=[1, 2, 3, 4],
     )
 
     baude_rate = Instrument.setting(
@@ -219,8 +217,9 @@ class GWInstekGPD230S(SCPIMixin, Instrument):
     )
 
     local = Instrument.setting(
-        "LOCAL", """Set to exit remote mode and sets the instrument ot local mode.
-        Beware, remote operation is not possible afterwards."""
+        "LOCAL",
+        """Set to exit remote mode and sets the instrument ot local mode.
+        Beware, remote operation is not possible afterwards.""",
     )
 
     error = Instrument.measurement(
