@@ -940,7 +940,7 @@ class SMU(Channel):
 
     def query_learn(self, query_type, command):
         """Wrap :meth:`~.AgilentB1500.query_learn` method of B1500."""
-        response = self._b1500.query_learn(query_type)
+        response = self.parent.query_learn(query_type)
         # query_learn returns settings of all smus
         # pick setting for this smu only
         response = response[command + str(self.channel)]
@@ -948,17 +948,17 @@ class SMU(Channel):
 
     def check_errors(self):
         """Wrap :meth:`~.AgilentB1500.check_errors` method of B1500."""
-        return self._b1500.check_errors()
+        return self.parent.check_errors()
 
     ##########################################
 
     def _query_status_raw(self):
-        return self._b1500.query_learn(str(self.channel))
+        return self.parent.query_learn(str(self.channel))
 
     @property
     def status(self):
         """Query status of the SMU."""
-        return self._b1500.query_learn_header(str(self.channel))
+        return self.parent.query_learn_header(str(self.channel))
 
     def enable(self):
         """Enable Source/Measurement Channel (``CN``)"""
@@ -987,7 +987,7 @@ class SMU(Channel):
         """
         # different than other SMU specific settings (grouped by setting)
         # read via raw command
-        response = self._b1500.query_learn(30)
+        response = self.parent.query_learn(30)
         if "FL" in response.keys():
             # only present if filters of all channels are off
             return False
