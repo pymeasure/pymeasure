@@ -62,7 +62,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @property
     def smu_references(self):
         """Return all SMU instances."""
-        return self._smu_references.values()
+        return self.smus.values()
 
     @property
     def smu_names(self):
@@ -138,6 +138,8 @@ class AgilentB1500(SCPIMixin, Instrument):
                     name=f"SMU{i}",
                     channel=channel,
                 )
+                self._smu_references[channel] = self.smus[i]
+                self._smu_names[channel] = self.smus[i].name
                 i += 1
 
     def initialize_all_spgus(self):
