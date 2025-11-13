@@ -204,7 +204,7 @@ def test_vector_error():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
 
 
 @pytest.mark.parametrize("value, mapping", (
