@@ -50,4 +50,4 @@ class GP350(Instrument):
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
-    display_B = Instrument.ChannelCreator(GP_PressureChannel, "B") can you format it so that it gets to the docstring test in pymeasure
+    display_B = Instrument.ChannelCreator(GP_PressureChannel, "B")

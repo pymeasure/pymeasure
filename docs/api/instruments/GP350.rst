@@ -1,0 +1,7 @@
+#####################################
+Granville-Phillips Vacuum Gauge 
+#####################################
+
+.. autoclass:: pymeasure.instruments.granville-phillips.GP350
+    :members:
+    :show-inheritance:
