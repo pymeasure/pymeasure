@@ -37,6 +37,7 @@ class GP350(Instrument):
     """Representation of the GP350 Vacuum Sensor.
     Provides access to multiple pressure channels corresponding to filaments
     and display outputs. Each channel can be queried for its current pressure in mbar.
+    
     Parameters
     ----------
     adapter : Adapter
