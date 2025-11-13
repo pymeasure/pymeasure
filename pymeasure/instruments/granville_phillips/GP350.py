@@ -37,7 +37,6 @@ class GP350(Instrument):
     """Representation of the GP350 Vacuum Sensor.
     Provides access to multiple pressure channels corresponding to filaments
     and display outputs. Each channel can be queried for its current pressure in mbar.
-    
     Parameters
     ----------
     adapter : Adapter
@@ -49,6 +48,10 @@ class GP350(Instrument):
     def __init__(self, adapter, name="GP350 Vacuum Sensor", **kwargs):
         super().__init__(adapter, name, includeSCPI=False, **kwargs)
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
+    """Channel 1 (filament 1). :no-index:"""
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
+    """Channel 2 (filament 2). :no-index:"""
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
+    """Display channel A. :no-index:"""
     display_B = Instrument.ChannelCreator(GP_PressureChannel, "B")
+    """Display channel B. :no-index:"""
