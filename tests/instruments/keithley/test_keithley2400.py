@@ -26,16 +26,7 @@ import math
 
 from pymeasure.test import expected_protocol
 
-from pymeasure.instruments.keithley.keithley2400 import (
-    Keithley2400,
-    SourceMode,
-    AutoZeroState,
-    OutputOffState,
-    TriggerSource,
-    ArmSource,
-    TriggerOutputEvent,
-    ArmOutputEvent,
-)
+from pymeasure.instruments.keithley.keithley2400 import Keithley2400
 
 
 INIT_COMMS = (":FORMAT:ELEMENTS VOLTAGE, CURRENT, RESISTANCE, TIME, STATUS", None)
@@ -97,25 +88,25 @@ def test_disable_source():
 def test_source_mode_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SOURCE:FUNCTION?", "current")],
+        [INIT_COMMS, (":SOURCE:FUNCTION?", "CURR")],
     ) as inst:
-        assert inst.source_mode == SourceMode.CURRENT
+        assert inst.source_mode == "current"
 
 
 def test_source_mode_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SOURCE:FUNCTION voltage", None)],
+        [INIT_COMMS, (":SOURCE:FUNCTION VOLT", None)],
     ) as inst:
-        inst.source_mode = SourceMode.VOLTAGE
+        inst.source_mode = "voltage"
 
 
-def test_auto_output_off_getter():
+def test_auto_output_off_enabled_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SOURCE:CLEAR:AUTO?", 0)],
     ) as inst:
-        assert inst.auto_output_off is False
+        assert inst.auto_output_off_enabled is False
 
 
 def test_auto_output_off_setter():
@@ -123,7 +114,7 @@ def test_auto_output_off_setter():
         Keithley2400,
         [INIT_COMMS, (":SOURCE:CLEAR:AUTO 1", None)],
     ) as inst:
-        inst.auto_output_off = True
+        inst.auto_output_off_enabled = True
 
 
 def test_source_delay_getter():
@@ -158,20 +149,28 @@ def test_source_delay_auto_enabled_setter():
         inst.source_delay_auto_enabled = False
 
 
-def test_auto_zero_state_getter():
+def test_auto_zero_enabled_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SYSTEM:AZERO:STATUS?", "ONCE")],
+        [INIT_COMMS, (":SYSTEM:AZERO:STATE?", "ON")],
     ) as inst:
-        assert inst.auto_zero_state == AutoZeroState.ONCE
+        assert inst.auto_zero_enabled is True
 
 
-def test_auto_zero_setter():
+def test_auto_zero_enabled_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SYSTEM:AZERO:STATUS OFF", None)],
+        [INIT_COMMS, (":SYSTEM:AZERO:STATE OFF", None)],
     ) as inst:
-        inst.auto_zero_state = AutoZeroState.OFF
+        inst.auto_zero_enabled = False
+
+
+def test_auto_zero_once():
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SYSTEM:AZERO:STATE ONCE", None)],
+    ) as inst:
+        inst.auto_zero_once()
 
 
 def test_output_off_state_getter():
@@ -179,7 +178,7 @@ def test_output_off_state_getter():
         Keithley2400,
         [INIT_COMMS, (":OUTPUT:SMODE?", "HIMP")],
     ) as inst:
-        assert inst.output_off_state == OutputOffState.DISCONNECTED
+        assert inst.output_off_state == "disconnected"
 
 
 def test_output_off_state_setter():
@@ -187,7 +186,7 @@ def test_output_off_state_setter():
         Keithley2400,
         [INIT_COMMS, (":OUTPUT:SMODE ZERO", None)],
     ) as inst:
-        inst.output_off_state = OutputOffState.ZERO
+        inst.output_off_state = "zero"
 
 
 ###########
@@ -214,7 +213,7 @@ def test_filter_enabled_setter():
 def test_repeat_filter_enabled_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SENSE:AVERAGE:TCONTROL?", "MOVING")],
+        [INIT_COMMS, (":SENSE:AVERAGE:TCONTROL?", "MOV")],
     ) as inst:
         assert inst.repeat_filter_enabled is False
 
@@ -222,7 +221,7 @@ def test_repeat_filter_enabled_getter():
 def test_repeat_filter_enabled_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SENSE:AVERAGE:TCONTROL REPEAT", None)],
+        [INIT_COMMS, (":SENSE:AVERAGE:TCONTROL REP", None)],
     ) as inst:
         inst.repeat_filter_enabled = True
 
@@ -248,7 +247,7 @@ def test_measure_all():
         Keithley2400,
         [
             INIT_COMMS,
-            (":SENSE:RESISTANCE:MODE MANUAL", None),
+            (":SENSE:RESISTANCE:MODE MAN", None),
             (":SENSE:FUNCTION:ALL", None),
             (":READ?", "0.1,0.2,9.91e37,1234,5678\n"),
         ],
@@ -668,41 +667,41 @@ def test_arm_timer_setter():
 def test_trigger_source_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":TRIGGER:SOURCE?", "IMMEDIATE")],
+        [INIT_COMMS, (":TRIGGER:SOURCE?", "IMM")],
     ) as inst:
-        assert inst.trigger_source == TriggerSource.IMMEDIATE
+        assert inst.trigger_source == "immediate"
 
 
 def test_trigger_source_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":TRIGGER:SOURCE TLINK", None)],
+        [INIT_COMMS, (":TRIGGER:SOURCE TLIN", None)],
     ) as inst:
-        inst.trigger_source = TriggerSource.TRIGGER_LINK
+        inst.trigger_source = "trigger_link"
 
 
 def test_arm_source_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":ARM:SOURCE?", "IMMEDIATE")],
+        [INIT_COMMS, (":ARM:SOURCE?", "IMM")],
     ) as inst:
-        assert inst.arm_source == ArmSource.IMMEDIATE
+        assert inst.arm_source == "immediate"
 
 
 def test_arm_source_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":ARM:SOURCE TLINK", None)],
+        [INIT_COMMS, (":ARM:SOURCE TLIN", None)],
     ) as inst:
-        inst.arm_source = ArmSource.TRIGGER_LINK
+        inst.arm_source = "trigger_link"
 
 
 def test_trigger_output_event_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":TRIGGER:OUTPUT?", "SENSE")],
+        [INIT_COMMS, (":TRIGGER:OUTPUT?", "SENS")],
     ) as inst:
-        assert inst.trigger_output_event == TriggerOutputEvent.SENSE
+        assert inst.trigger_output_event == "sense"
 
 
 def test_trigger_output_event_setter():
@@ -710,15 +709,15 @@ def test_trigger_output_event_setter():
         Keithley2400,
         [INIT_COMMS, (":TRIGGER:OUTPUT NONE", None)],
     ) as inst:
-        inst.trigger_output_event = TriggerOutputEvent.NONE
+        inst.trigger_output_event = "none"
 
 
 def test_arm_output_event_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":ARM:OUTPUT?", "TENTER")],
+        [INIT_COMMS, (":ARM:OUTPUT?", "TENT")],
     ) as inst:
-        assert inst.arm_output_event == ArmOutputEvent.ENTER
+        assert inst.arm_output_event == "trigger_enter"
 
 
 def test_arm_output_event_setter():
@@ -726,7 +725,7 @@ def test_arm_output_event_setter():
         Keithley2400,
         [INIT_COMMS, (":ARM:OUTPUT NONE", None)],
     ) as inst:
-        inst.arm_output_event = ArmOutputEvent.NONE
+        inst.arm_output_event = "none"
 
 
 def test_disable_output_triggers():
@@ -809,7 +808,7 @@ def test_trigger_on_bus():
             (":TRIGGER:COUNT?", 1),
             (":ARM:COUNT 1", None),
             (":ARM:SOURCE BUS", None),
-            (":TRIGGER:SOURCE IMMEDIATE", None),
+            (":TRIGGER:SOURCE IMM", None),
         ],
     ) as inst:
         inst.trigger_on_bus()
@@ -820,8 +819,8 @@ def test_trigger_on_external():
         Keithley2400,
         [
             INIT_COMMS,
-            (":ARM:SOURCE TLINK", None),
-            (":TRIGGER:SOURCE TLINK", None),
+            (":ARM:SOURCE TLIN", None),
+            (":TRIGGER:SOURCE TLIN", None),
             (":ARM:ILINE 1", None),
             (":TRIGGER:ILINE 1", None),
         ],
@@ -906,7 +905,7 @@ def test_line_frequency_auto_enabled_setter():
 def test_front_terminals_enabled_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":ROUTE:TERMINALS?", "FRONT")],
+        [INIT_COMMS, (":ROUTE:TERMINALS?", "FRON")],
     ) as inst:
         assert inst.front_terminals_enabled is True
 
