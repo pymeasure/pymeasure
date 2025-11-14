@@ -55,6 +55,7 @@ class GWInstekGPD230SChannel(Channel):
         "ISET{ch}:%g",
         """Control maximum current of the power supply.""",
         get_process=lambda v: float(v.replace("A", "")),
+        set_process=lambda v: round(v, 3),
         validator=truncated_range,
         values=_CURRENT_RANGE,
     )
@@ -63,6 +64,7 @@ class GWInstekGPD230SChannel(Channel):
         "VSET{ch}:%g",
         """Control maximum voltage of the power supply.""",
         get_process=lambda v: float(v.replace("V", "")),
+        set_process=lambda v: round(v, 3),
         validator=truncated_range,
         values=_VOLTAGE_RANGE,
     )
