@@ -135,6 +135,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SOUR:DEL:AUTO?",
         ":SOUR:DEL:AUTO %d",
         """ Control the auto delay (boolean).
+
         .. deprecated:: 0.16
            Use :attr:`~.source_delay_auto_enabled`.""",
         values={True: 1, False: 0},
