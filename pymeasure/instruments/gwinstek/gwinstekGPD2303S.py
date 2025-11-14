@@ -23,7 +23,7 @@
 #
 import enum
 
-from pymeasure.instruments import Instrument, SCPIMixin, Channel
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
@@ -34,7 +34,7 @@ log.addHandler(logging.NullHandler())
 
 _VOLTAGE_RANGE = [0.0, 30]
 _CURRENT_RANGE = [0.0, 3]
-_TRACK_MODES = [0, 1, 2]
+_TRACK_MODES = [0, 1, 2]  # 0=Independent, 1=Series, 2=Parallel
 
 
 class GWInstekGPD2303SStatusRegister(enum.Enum):
@@ -79,7 +79,7 @@ class GWInstekGPD230SChannel(Channel):
     )
 
 
-class GWInstekGPD230S(SCPIMixin, Instrument):
+class GWInstekGPD230S(Instrument):
     """
     Represents the GW Instek two channel Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
