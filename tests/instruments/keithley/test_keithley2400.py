@@ -854,12 +854,12 @@ def test_display_enabled_setter():
 ########
 
 
-def test_four_wire_enabled_getter():
+def test_four_wires_getter():
     with expected_protocol(
         Keithley2400,
         [INIT_COMMS, (":SYSTEM:RSENSE?", 0)],
     ) as inst:
-        assert inst.four_wire_enabled is False
+        assert inst.wires == 2
 
 
 def test_four_wire_enabled_setter():
@@ -867,7 +867,7 @@ def test_four_wire_enabled_setter():
         Keithley2400,
         [INIT_COMMS, (":SYSTEM:RSENSE 1", None)],
     ) as inst:
-        inst.four_wire_enabled = True
+        inst.wires = 4
 
 
 def test_line_frequency_getter():

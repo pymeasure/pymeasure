@@ -116,7 +116,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the manual delay in seconds for the source after the output is turned on
         before a measurement is taken (float strictly from 0 to 999.9999).
 
-        When this property is set, :prop:`~.source_delay_auto_enabled` is implicitly set to False.
+        When this property is set, :attr:`~.source_delay_auto_enabled` is implicitly set to False.
         """,
         validator=strict_range,
         values=[0, 999.9999],
@@ -184,7 +184,18 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     output_off_state = Instrument.control(
         ":OUTPUT:SMODE?",
         ":OUTPUT:SMODE %s",
-        """Control the output-off state""",  # TODO: detailed docstring needed
+        """Control the output-off state.
+
+        str:
+        - 'disconnected': Output relay opens (do not use this state if output is turned on and off
+                                              frequently to prevent excess wear on the relay)
+        - 'normal': V-source is selected and set to 0V.
+        - 'zero': Allows the sourcemeter to be used to measure current while off.
+        - 'guard': I-source is selected and set to 0A.
+
+        .. deprecated:: 0.16
+           deprecated to use 'HIMP', 'NORM', 'ZERO', or 'GUAR' with :attr:`~.output_off_state`.
+        """,
         validator=strict_discrete_set,
         values={
             "disconnected": "HIMP",
@@ -220,7 +231,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         stays on after measurement).
 
         .. deprecated:: 0.16
-           Use :prop:`~.auto_output_off_enabled`.""",
+           Use :attr:`~.auto_output_off_enabled`.""",
         values={True: 1, False: 0},
         map_values=True,
         get_process=_deprecate_process(
@@ -238,8 +249,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            Control auto ranging for the desired source using
-           :prop:`~.source_current_range_auto_enabled` or
-           :prop:`~.source_voltage_range_auto_enabled`.
+           :attr:`~.source_current_range_auto_enabled` or
+           :attr:`~.source_voltage_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.auto_range_source`. Recommended to explicitly set the
@@ -271,7 +282,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """ Control if the filter is active (string, strictly 'ON' or 'OFF').
 
         .. deprecated:: 0.16
-           Use :prop:`~.filter_enabled`.""",
+           Use :attr:`~.filter_enabled`.""",
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         map_values=False,
@@ -300,7 +311,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         MOV : Moving filter
 
         .. deprecated:: 0.16
-           Use :prop:`~.repeat_filter_enabled`.
+           Use :attr:`~.repeat_filter_enabled`.
         """,
         validator=strict_discrete_set,
         values=["REP", "MOV"],
@@ -329,7 +340,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Measure current (A), voltage (V), resistance (Ohm), time (s), and status concurrently.
 
         .. note::
-           Sets :prop:`~.resistance_mode_auto` to False
+           Sets :attr:`~.resistance_mode_auto` to False
 
         Returns
         -------
@@ -372,7 +383,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the measurement current range in Amps (float, strictly from -1.05 to 1.05).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.current_range_auto_enabled` is implicitly set to False.
+        set value, and :attr:`~.current_range_auto_enabled` is implicitly set to False.
         """,
         validator=strict_range,
         values=[-1.05, 1.05],
@@ -417,10 +428,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure current is performed implicitly by
-             :prop:`~.current`.
-           - Control current nplc via :prop:`~.current_nplc`.
-           - Control current range via :prop:`~.current_range`
-             or :prop:`~.current_range_auto_enabled`.
+             :attr:`~.current`.
+           - Control current nplc via :attr:`~.current_nplc`.
+           - Control current range via :attr:`~.current_range`
+             or :attr:`~.current_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_current`, configuration to measure
@@ -490,10 +501,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param current_range: A :attr:`~.current_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :prop:`~.source_mode`.
-           - Control source current range via :prop:`~.source_current_range` or
-             :prop:`~.source_current_range_auto_enabled`.
-           - Control compliance voltage via :prop:`~.compliance_voltage`
+           - Control source mode via :attr:`~.source_mode`.
+           - Control source current range via :attr:`~.source_current_range` or
+             :attr:`~.source_current_range_auto_enabled`.
+           - Control compliance voltage via :attr:`~.compliance_voltage`
         """
         warn(
             """Deprecated to use `Keithley2400.apply_current`. Recommended to explicitly control
@@ -529,7 +540,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the measurement voltage range in Volts (float, strictly from -210 to 210).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.voltage_range_auto_enabled` is implicitly set to False.
+        set value, and :attr:`~.voltage_range_auto_enabled` is implicitly set to False.
         """,
         validator=strict_range,
         values=[-210, 210],
@@ -574,10 +585,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure voltage is performed implicitly by
-             :prop:`~.voltage`.
-           - Control voltage nplc via :prop:`~.voltage_nplc`.
-           - Control voltage range via :prop:`~.voltage_range`
-             or :prop:`~.voltage_range_auto_enabled`.
+             :attr:`~.voltage`.
+           - Control voltage nplc via :attr:`~.voltage_nplc`.
+           - Control voltage range via :attr:`~.voltage_range`
+             or :attr:`~.voltage_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_voltage`, configuration to measure
@@ -647,10 +658,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param voltage_range: A :attr:`~.voltage_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :prop:`~.source_mode`.
-           - Control source voltage range via :prop:`~.source_voltage_range` or
-             :prop:`~.source_voltage_range_auto_enabled`.
-           - Control compliance current via :prop:`~.compliance_current`
+           - Control source mode via :attr:`~.source_mode`.
+           - Control source voltage range via :attr:`~.source_voltage_range` or
+             :attr:`~.source_voltage_range_auto_enabled`.
+           - Control compliance current via :attr:`~.compliance_current`
         """
         warn(
             """Deprecated to use `Keithley2400.apply_voltage`. Recommended to explicitly control
@@ -695,7 +706,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :prop:`~.resistance_range_auto_enabled` is implicitly set to
+        set value, and :attr:`~.resistance_range_auto_enabled` is implicitly set to
         False.""",
         validator=strict_range,
         values=[0, 210e6],
@@ -732,10 +743,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         .. deprecated:: 0.16
            - Configuration to measure resistance is performed implicitly by
-             :prop:`~.resistance`.
-           - Control resistance nplc via :prop:`~.resistance_nplc`.
-           - Control resistance range via :prop:`~.resistance_range`
-             or :prop:`~.resistance_range_auto_enabled`.
+             :attr:`~.resistance`.
+           - Control resistance nplc via :attr:`~.resistance_nplc`.
+           - Control resistance range via :attr:`~.resistance_range`
+             or :attr:`~.resistance_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_resistance`, configuration to measure
@@ -860,7 +871,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     @property
     def trigger_count(self):
         """Control the trigger layer count (int strictly in range 1 to 2500).
-        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500."""
+        The product of :attr:`trigger_count` and :attr:`arm_count` cannot exceed 2500."""
         return self.values(":TRIGGER:COUNT?")[0]
 
     @trigger_count.setter
@@ -873,7 +884,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     @property
     def arm_count(self):
         """Control the arm layer count (int strictly in range 1 to 2500).
-        The product of :prop:`trigger_count` and :prop:`arm_count` cannot exceed 2500."""
+        The product of :attr:`trigger_count` and :attr:`arm_count` cannot exceed 2500."""
         return self.values(":ARM:COUNT?")[0]
 
     @arm_count.setter
@@ -964,8 +975,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":TRIGGER:ILINE %d",
         """Control the trigger layer input line (int, strictly in range 1 to 4).
 
-        For normal operation, :prop:`~.trigger_input_line` should not share its value with
-        :prop:`~.trigger_output_line` or :prop:`~.arm_output_line`.""",
+        For normal operation, :attr:`~.trigger_input_line` should not share its value with
+        :attr:`~.trigger_output_line` or :attr:`~.arm_output_line`.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(1, 4),
     )
@@ -975,8 +986,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":ARM:ILINE %d",
         """Control the arm layer input line (int, strictly in range 1 to 4).
 
-        For normal operation, :prop:`~.arm_input_line` should not share its value with
-        :prop:`~.trigger_output_line` or :prop:`~.arm_output_line`.""",
+        For normal operation, :attr:`~.arm_input_line` should not share its value with
+        :attr:`~.trigger_output_line` or :attr:`~.arm_output_line`.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(1, 4),
     )
@@ -986,8 +997,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":TRIGGER:OLINE %d",
         """Control the trigger layer output line (int, strictly in range 1 to 4).
 
-        For normal operation, :prop:`~.trigger_output_line` should not share its value with
-        :prop:`~.trigger_input_line` or :prop:`~.arm_input_line`.""",
+        For normal operation, :attr:`~.trigger_output_line` should not share its value with
+        :attr:`~.trigger_input_line` or :attr:`~.arm_input_line`.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(1, 4),
     )
@@ -997,8 +1008,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":ARM:OLINE %d",
         """Control the arm layer output line (int, strictly in range 1 to 4).
 
-        For normal operation, :prop:`~.arm_output_line` should not share its value with
-        :prop:`~.trigger_input_line` or :prop:`~.arm_input_line`.""",
+        For normal operation, :attr:`~.arm_output_line` should not share its value with
+        :attr:`~.trigger_input_line` or :attr:`~.arm_input_line`.""",
         validator=lambda v, vs: strict_discrete_range(v, vs, 1),
         values=(1, 4),
     )
@@ -1021,13 +1032,27 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.arm_input_line = line
         self.trigger_input_line = line
 
+    def trigger_immediately(self):
+        """Configure measurements to be taken with the internal trigger
+        at the maximum sampling rate."""
+        self.arm_source = "immediate"
+        self.trigger_source = "immediate"
+
+    def sample_continuously(self):
+        """Cause the instrument to continuously read samples
+        and turns off any buffer or output triggering.
+        """
+        self.disable_buffer()
+        self.disable_output_triggers()
+        self.trigger_immediately()
+
     def set_trigger_counts(self, arm, trigger):
         """Set the number of counts for both the sweeps (arm) and the
         points in those sweeps (trigger), where the total number of
         points can not exceed 2500
 
         .. deprecated:: 0.16
-           Use :prop:`~.trigger_count` and/or :prop:`~.arm_count`
+           Use :attr:`~.trigger_count` and/or :attr:`~.arm_count`
         """
         warn(
             """Deprecated to use `Keithley2400.set_trigger_counts`.
@@ -1047,43 +1072,29 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         in seconds between sampling points
 
         .. deprecated:: 0.16
-           Set :prop:`~.arm_source` to "time" and control interval using :prop:`~.arm_time`.
+           Set :attr:`~.arm_source` to "time" and control interval using :attr:`~.arm_timer`.
         """
         warn(
             """Deprecated to use `Keithley2400.set_timed_arm`.
-            Set `Keithley2400.arm_source` to "time" and control interval using
-            `Keithley2400.arm_time`.""",
+            Set `Keithley2400.arm_source` to "timer" and control interval using
+            `Keithley2400.arm_timer`.""",
             FutureWarning,
         )
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
         self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
 
-    def trigger_immediately(self):
-        """Configure measurements to be taken with the internal
-        trigger at the maximum sampling rate.
-
-        .. deprecated:: 0.16
-           Set :prop:`~.arm_source` and :prop:`~.trigger_source` to "immediate".
-        """
-        warn(
-            """Deprecated to use `Keithley2400.trigger_immediately`.
-            Set `Keithley2400.arm_source` and `Keithley2400.trigger_source` to "immediate".""",
-            FutureWarning,
-        )
-        self.write(":ARM:SOUR IMM;:TRIG:SOUR IMM;")
-
     def disable_output_trigger(self):
         """Disable the output trigger for the Trigger layer
 
         .. deprecated:: 0.16
-           Set :prop:`~.trigger_output_event` to "off" to turn off just trigger layer output
+           Set :attr:`~.trigger_output_event` to "none" to turn off just trigger layer output
            triggering, or use `~.disable_output_triggers` to disable both trigger and
            arm layer output triggering.
         """
         warn(
             """Deprecated to use `Keithley2400.disable_output_trigger`.
-            Set `Keithley2400.trigger_output_event` to "off" to turn off just trigger layer output
+            Set `Keithley2400.trigger_output_event` to "none" to turn off just trigger layer output
             triggering, or use `Keithley2400.disable_output_triggers` to disable both trigger and
             arm layer output triggering.""",
             FutureWarning,
@@ -1100,7 +1111,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param after: An event string that determines when to trigger
 
         .. deprecated:: 0.16
-           Use :prop:`~.trigger_output_event` and :prop:`~.trigger_output_line`.
+           Use :attr:`~.trigger_output_event` and :attr:`~.trigger_output_line`.
         """
         warn(
             """Deprecated to use `Keithley2400.output_trigger_on_external`.
@@ -1108,14 +1119,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             FutureWarning,
         )
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
-
-    def sample_continuously(self):  # TODO: Deprecation notice
-        """Cause the instrument to continuously read samples
-        and turns off any buffer or output triggering.
-        """
-        self.disable_buffer()
-        self.disable_output_trigger()
-        self.trigger_immediately()
 
     ######
     # UI #
@@ -1129,34 +1132,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    def sound_beep(self, frequency, duration):
-        """Sound a system beep.
-
-        :param frequency: A frequency in Hz between 65 Hz and 2 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.write(f":SYSTEM:BEEP {frequency:g}, {duration:g}")
-
-    def sound_triad(self, base_frequency, duration):
-        """Sound a musical triad using the system beep.
-
-        :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
-        :param duration: A time in seconds between 0 and 7.9 seconds
-        """
-        self.beep(base_frequency, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 5.0 / 4.0, duration)
-        time.sleep(duration)
-        self.beep(base_frequency * 6.0 / 4.0, duration)
-
     def beep(self, frequency, duration):
         """Sound a system beep.
 
         :param frequency: A frequency in Hz between 65 Hz and 2 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
-
-        .. deprecated:: 0.16
-           Use :meth:`~.sound_beep`.
         """
         self.write(f":SYST:BEEP {frequency:g}, {duration:g}")
 
@@ -1165,9 +1145,6 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         :param base_frequency: A frequency in Hz between 65 Hz and 1.3 MHz
         :param duration: A time in seconds between 0 and 7.9 seconds
-
-        .. deprecated:: 0.16
-           Use :meth:`~.sound_beep`.
         """
         self.beep(base_frequency, duration)
         time.sleep(duration)
@@ -1179,32 +1156,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     # MISC #
     ########
 
-    four_wire_enabled = Instrument.control(
+    wires = Instrument.control(
         ":SYSTEM:RSENSE?",
         ":SYSTEM:RSENSE %d",
-        """Control whether four wire sensing is enabled (bool).""",
-        validator=strict_discrete_set,
-        values={True: 1, False: 0},
-        map_values=True,
-    )
-
-    wires = Instrument.control(
-        ":SYST:RSEN?",
-        ":SYST:RSEN %d",
         """Control the number of wires in use for sourcing voltage, measuring voltage,
-        or measuring resistance (int, strictly 2 or 4).
-
-        .. deprecated:: 0.16
-           Use :prop:`~.four_wire_enabled`.""",
+        or measuring resistance (int, strictly 2 or 4).""",
         validator=strict_discrete_set,
         values={4: 1, 2: 0},
         map_values=True,
-        get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
-        ),
-        set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.wires`, use `Keithley2400.four_wire_enabled`."
-        ),
     )
 
     line_frequency = Instrument.control(
@@ -1255,30 +1214,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    def use_rear_terminals(self):
-        """Enable the rear terminals for measurement, and disable the front terminals.
-
-        .. deprecated:: 0.16
-           Use :prop:`~.front_terminals_enabled`.
-        """
-        warn(
-            "Deprecated to use `Keithley2400.use_rear_terminals`, "
-            "use `Keithley2400.front_terminals_enabled = False`.",
-            FutureWarning,
-        )
+    def use_rear_terminals(self):  # Included for backwards compatibility
+        """Enable the rear terminals for measurement, and disable the front terminals."""
         self.front_terminals_enabled = False
 
-    def use_front_terminals(self):
-        """Enable the front terminals for measurement, and disable the rear terminals.
-
-        .. deprecated:: 0.16
-           Use :prop:`~.front_terminals_enabled`.
-        """
-        warn(
-            "Deprecated to use `Keithley2400.use_front_terminals`, "
-            "use `Keithley2400.front_terminals_enabled = True`.",
-            FutureWarning,
-        )
+    def use_front_terminals(self):  # Included for backwards compatibility
+        """Enable the front terminals for measurement, and disable the rear terminals."""
         self.front_terminals_enabled = True
 
     def shutdown(self):

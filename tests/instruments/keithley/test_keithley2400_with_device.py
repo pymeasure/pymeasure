@@ -25,16 +25,7 @@
 import pytest
 
 from pymeasure.errors import Error
-from pymeasure.instruments.keithley.keithley2400 import (
-    Keithley2400,
-    SourceMode,
-    AutoZeroState,
-    OutputOffState,
-    TriggerSource,
-    ArmSource,
-    TriggerOutputEvent,
-    ArmOutputEvent,
-)
+from pymeasure.instruments.keithley.keithley2400 import Keithley2400
 
 
 @pytest.fixture(scope="module")
@@ -54,7 +45,7 @@ def test_reset(keithley2400):
 
     # 18-4
     assert keithley2400.source_enabled is False
-    assert keithley2400.output_off_state == OutputOffState.NORMAL
+    assert keithley2400.output_off_state == "normal"
 
     # 18-5
     assert keithley2400.front_terminals_enabled is True
@@ -81,7 +72,7 @@ def test_reset(keithley2400):
 
     # 18-7
     assert keithley2400.auto_output_off_enabled is False
-    assert keithley2400.source_mode == SourceMode.VOLTAGE
+    assert keithley2400.source_mode == "voltage"
     assert keithley2400.source_delay == 0.001  # Different to manual
     assert keithley2400.source_delay_auto_enabled is True
 
@@ -94,13 +85,13 @@ def test_reset(keithley2400):
     assert keithley2400.source_voltage == 0
 
     # 18-9
-    assert keithley2400.auto_zero_state == AutoZeroState.ON
+    assert keithley2400.auto_zero_enabled is True
 
 
 def test_current_source(keithley2400):
     source_current = 10e-3
 
-    keithley2400.source_mode = SourceMode.CURRENT
+    keithley2400.source_mode = "current"
     keithley2400.source_current = source_current
     keithley2400.source_enabled = True
 
@@ -109,7 +100,7 @@ def test_current_source(keithley2400):
     voltage = measurements["voltage"]
     resistance = measurements["resistance"]
 
-    assert keithley2400.source_mode == SourceMode.CURRENT
+    assert keithley2400.source_mode == "current"
     assert keithley2400.source_current == source_current
     assert keithley2400.source_enabled is True
 
@@ -119,7 +110,7 @@ def test_current_source(keithley2400):
 def test_voltage_source(keithley2400):
     source_voltage = 1
 
-    keithley2400.source_mode = SourceMode.VOLTAGE
+    keithley2400.source_mode = "voltage"
     keithley2400.source_voltage = source_voltage
     keithley2400.source_enabled = True
 
@@ -128,7 +119,7 @@ def test_voltage_source(keithley2400):
     voltage = measurements["voltage"]
     resistance = measurements["resistance"]
 
-    assert keithley2400.source_mode == SourceMode.VOLTAGE
+    assert keithley2400.source_mode == "voltage"
     assert keithley2400.source_voltage == source_voltage
     assert keithley2400.source_enabled is True
 
@@ -140,17 +131,17 @@ def test_voltage_source(keithley2400):
     [
         ("source_enabled", True),
         ("source_enabled", False),
-        ("source_mode", SourceMode.VOLTAGE),
-        ("source_mode", SourceMode.CURRENT),
+        ("source_mode", "voltage"),
+        ("source_mode", "current"),
         ("source_delay", 0.1),
         ("source_delay_auto_enabled", True),
         ("source_delay_auto_enabled", False),
-        ("auto_zero_state", AutoZeroState.ON),
-        ("auto_zero_state", AutoZeroState.OFF),
-        ("output_off_state", OutputOffState.DISCONNECTED),
-        ("output_off_state", OutputOffState.NORMAL),
-        ("output_off_state", OutputOffState.ZERO),
-        ("output_off_state", OutputOffState.GUARD),
+        ("auto_zero_enabled", True),
+        ("auto_zero_enabled", True),
+        ("output_off_state", "disconnected"),
+        ("output_off_state", "normal"),
+        ("output_off_state", "zero"),
+        ("output_off_state", "guard"),
         ("auto_output_off_enabled", True),
         ("auto_output_off_enabled", False),
         ("filter_enabled", True),
@@ -184,20 +175,20 @@ def test_voltage_source(keithley2400):
         ("resistance_nplc", 1.0),
         ("trigger_delay", 0.5),
         ("arm_timer", 1.0),
-        ("trigger_source", TriggerSource.IMMEDIATE),
-        ("trigger_source", TriggerSource.TRIGGER_LINK),
-        ("arm_source", ArmSource.IMMEDIATE),
-        ("arm_source", ArmSource.TRIGGER_LINK),
-        ("arm_source", ArmSource.TIMER),
-        ("arm_source", ArmSource.MANUAL),
-        ("arm_source", ArmSource.BUS),
-        ("trigger_output_event", TriggerOutputEvent.SOURCE),
-        ("trigger_output_event", TriggerOutputEvent.DELAY),
-        ("trigger_output_event", TriggerOutputEvent.SENSE),
-        ("trigger_output_event", TriggerOutputEvent.NONE),
-        ("arm_output_event", ArmOutputEvent.ENTER),
-        ("arm_output_event", ArmOutputEvent.EXIT),
-        ("arm_output_event", ArmOutputEvent.NONE),
+        ("trigger_source", "immediate"),
+        ("trigger_source", "trigger_link"),
+        ("arm_source", "immediate"),
+        ("arm_source", "trigger_link"),
+        ("arm_source", "timer"),
+        ("arm_source", "manual"),
+        ("arm_source", "bus"),
+        ("trigger_output_event", "source"),
+        ("trigger_output_event", "delay"),
+        ("trigger_output_event", "sense"),
+        ("trigger_output_event", "none"),
+        ("arm_output_event", "trigger_enter"),
+        ("arm_output_event", "trigger_exit"),
+        ("arm_output_event", "none"),
         ("trigger_input_line", 2),
         ("arm_input_line", 3),
         ("trigger_output_line", 4),
