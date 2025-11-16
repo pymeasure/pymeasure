@@ -85,6 +85,8 @@ class ResultsImage(pg.ImageItem):
         self.yend = getattr(self.results.procedure, self.y + "_end")
         self.ystep = getattr(self.results.procedure, self.y + "_step")
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep))
+        self.xbins = np.linspace(self.xstart, self.xend, self.xsize + 1)
+        self.ybins = np.linspace(self.ystart, self.yend, self.ysize + 1)
         self.img_data = np.full((self.ysize, self.xsize), np.nan, dtype=float)
         self.force_reload = force_reload
         self.colormap = colormap
@@ -103,10 +105,8 @@ class ResultsImage(pg.ImageItem):
 
         # set image data
         if len(z_data) != 0:
-            x_unique = np.unique(x_data)
-            y_unique = np.unique(y_data)
-            x_ids = np.searchsorted(x_unique, x_data)
-            y_ids = np.searchsorted(y_unique, y_data)
+            x_ids = np.digitize(x_data, self.xbins, right=True)
+            y_ids = np.digitize(y_data, self.ybins, right=True)
 
             self.img_data[y_ids, x_ids] = z_data
             self.setImage(
