@@ -25,9 +25,99 @@
 import logging
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.validators import strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class Display(Channel):
+    """A class representing the Agilent E5270B display."""
+
+    enabled = Channel.setting(
+        "RED %d",
+        """Set whether the display is enabled during remote operation (bool).""",
+        map_values=True,
+        values={True: 1, False: 0},
+        )
+
+    engineering_format_enabled = Channel.setting(
+        "DFM %d",
+        """Set whether the engineering data format or the scientific data format is used (bool).
+
+        Example:
+            - ``True`` (engineering):  +123.456mA
+            - ``False`` (scientific): +1.234E-1A
+
+        .. note::
+            Executing :meth:`~pymeasure.instruments.Instrument.reset` sets the data format to
+            scientific.
+
+        """,
+        map_values=True,
+        values={True: 0, False: 1},
+        )
+
+    measurement_smu = Channel.setting(
+        "MCH %d",
+        """Set the measurement SMU for the data displayed on the LCD
+        (int, strictly from ``1`` to ``8``).
+        """,
+        validator=strict_range,
+        values=[1, 8],
+        )
+
+    measurement_parameter = Channel.setting(
+        "MPA %d",
+        """Set the parameter displayed in the Measurement Data display area
+        (str, strictly ``result``, ``result_and_source``, ``resistance`` or ``power``).
+        """,
+        map_values=True,
+        values={"result": 1,
+                "result_and_source": 2,
+                "resistance": 3,
+                "power": 4,
+                },
+        )
+
+    source_smu = Channel.setting(
+        "SCH %d",
+        """Set the source SMU for the data displayed on the LCD.
+        (int, strictly from ``1`` to ``8``).
+        """,
+        validator=strict_range,
+        values=[1, 8],
+        )
+
+    source_parameter1 = Channel.setting(
+        "SPA 1,%d",
+        """Set the parameter displayed in line 1 of the Source Data display area
+        (str, strictly in ``set_point``, ``compliance``, ``voltage_range``, ``current_range`` or
+        ``error``).
+        """,
+        map_values=True,
+        values={"set_point": 1,
+                "compliance": 2,
+                "voltage_range": 3,
+                "current_range": 4,
+                "error": 5,
+                },
+        )
+
+    source_parameter2 = Channel.setting(
+        "SPA 2,%d",
+        """Set the parameter displayed in line 2 of the Source Data display area
+        (str, strictly in ``set_point``, ``compliance``, ``voltage_range``, ``current_range`` or
+        ``error``).
+        """,
+        map_values=True,
+        values={"set_point": 1,
+                "compliance": 2,
+                "voltage_range": 3,
+                "current_range": 4,
+                "error": 5,
+                },
+        )
 
 
 class SMUChannel(Channel):
@@ -126,6 +216,8 @@ class AgilentE5270B(SCPIMixin, Instrument):
     +--------+-------+-------+-----------------+----------------+
 
     """
+
+    display = Instrument.ChannelCreator(Display)
 
     def __init__(self, adapter,
                  name="Agilent E5270B",

@@ -67,7 +67,6 @@ class TestMain:
         assert [] == e5270b.check_errors()
 
     def test_options(self, e5270b):
-        # with pytest.raises(NotImplementedError):
         options = e5270b.options
         assert type(options) is list
         assert 8 == len(options)
@@ -91,3 +90,54 @@ class TestSMU:
         # expect 0.2V  (voltage compliance)
         assert e5270b.smu1.voltage == pytest.approx(0.2, rel=1e-3)
         e5270b.smu1.enabled = False
+
+
+class TestDisplay:
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_enabled(self, e5270b, enabled):
+        assert [] == e5270b.check_errors()
+        e5270b.display.enabled = enabled
+        assert [] == e5270b.check_errors()
+
+    @pytest.mark.parametrize("engineering_format_enabled", [True, False])
+    def test_format(self, e5270b, engineering_format_enabled):
+        assert [] == e5270b.check_errors()
+        e5270b.display.engineering_format_enabled = engineering_format_enabled
+        assert [] == e5270b.check_errors()
+
+    def test_measurement_smu(self, e5270b):
+        assert [] == e5270b.check_errors()
+        e5270b.display.measurement_smu = 1
+        assert [] == e5270b.check_errors()
+
+    @pytest.mark.parametrize("measurement_parameter",
+                             ["result",
+                              "result_and_source",
+                              "resistance",
+                              "power",
+                              ]
+                             )
+    def test_measurement_parameter(self, e5270b, measurement_parameter):
+        assert [] == e5270b.check_errors()
+        e5270b.display.measurement_parameter = measurement_parameter
+        assert [] == e5270b.check_errors()
+
+    def test_source_smu(self, e5270b):
+        assert [] == e5270b.check_errors()
+        e5270b.display.source_smu = 1
+        assert [] == e5270b.check_errors()
+
+    @pytest.mark.parametrize("source_parameter",
+                             ["set_point",
+                              "compliance",
+                              "voltage_range",
+                              "current_range",
+                              "error",
+                              ]
+                             )
+    def test_source_parameter(self, e5270b, source_parameter):
+        assert [] == e5270b.check_errors()
+        e5270b.display.source_parameter1 = source_parameter
+        assert [] == e5270b.check_errors()
+        e5270b.display.source_parameter2 = source_parameter
+        assert [] == e5270b.check_errors()

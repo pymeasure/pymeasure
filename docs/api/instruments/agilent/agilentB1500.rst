@@ -209,6 +209,8 @@ Classes to communicate with the instrument:
 
 * :class:`AgilentB1500`: Main instrument class
 * :class:`SMU`: Instantiated by main instrument class for every SMU
+* :class:`SPGU`: Instantiated by main instrument class for every SPGU
+* :class:`SPGUChannel`: Instantiated by SPGU for each channel
 
 All `query` commands return a human readable dict of settings. These are intended for debugging/logging/file headers, not for passing to the accompanying setting commands.
 
@@ -220,10 +222,15 @@ All `query` commands return a human readable dict of settings. These are intende
     :members:
     :show-inheritance:
     :member-order: bysource
+.. autoclass:: SPGU
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+.. autoclass:: SPGUChannel
+    :members:
+    :show-inheritance:
+    :member-order: bysource
 
-.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
-..     :members: AgilentB1500, SMU
-..     :show-inheritance:
 
 **********************************************
 Supporting Classes
@@ -250,9 +257,6 @@ Classes that provide additional functionalities:
     :members:
     :show-inheritance:
 
-.. .. automodule:: pymeasure.instruments.agilent.agilentB1500
-..     :members: QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
-..     :show-inheritance:
 
 Enumerations
 =========================
@@ -271,6 +275,6 @@ It's purpose is only logging or documentation.
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: 
-    :exclude-members: AgilentB1500, SMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+    :exclude-members: AgilentB1500, SMU, SPGU, SPGUChannel, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
     :show-inheritance:
     :member-order: bysource

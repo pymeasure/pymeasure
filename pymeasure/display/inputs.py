@@ -273,3 +273,15 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
                 QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepDownEnabled
         else:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
+
+
+class VectorInput(StringInput):
+    """
+    String input box connected to a :class:`VectorParameter`. This box will
+    display and accept lists.
+    """
+
+    def setValue(self, value):  # override the method from StringInput
+        value = "[" + ", ".join(map(str, value)) + "]"
+        # QtWidgets.QLineEdit has a setText() method instead of setValue()
+        return super().setText(value)
