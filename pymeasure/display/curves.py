@@ -26,7 +26,7 @@ import logging
 
 import numpy as np
 import pyqtgraph as pg
-from .Qt import QtCore, QtGui
+from .Qt import QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

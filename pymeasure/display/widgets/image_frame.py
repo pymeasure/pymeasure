@@ -27,8 +27,6 @@ import logging
 from ..curves import ResultsImage
 from ..Qt import QtCore
 from .plot_frame import PlotFrame
-import pyqtgraph as pg
-from ...experiment import Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
