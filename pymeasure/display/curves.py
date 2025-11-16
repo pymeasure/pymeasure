@@ -91,7 +91,7 @@ class ResultsImage(pg.ImageItem):
         self.force_reload = force_reload
         self.colormap = colormap
 
-        super().__init__(image=self.img_data)
+        super().__init__()
 
     def update_data(self):
         if self.force_reload:
