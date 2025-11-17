@@ -152,7 +152,7 @@ def test_source_delay_auto_enabled_setter():
 def test_auto_zero_enabled_getter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SYSTEM:AZERO:STATE?", "ON")],
+        [INIT_COMMS, (":SYSTEM:AZERO:STATE?", 1)],
     ) as inst:
         assert inst.auto_zero_enabled is True
 
@@ -160,7 +160,7 @@ def test_auto_zero_enabled_getter():
 def test_auto_zero_enabled_setter():
     with expected_protocol(
         Keithley2400,
-        [INIT_COMMS, (":SYSTEM:AZERO:STATE OFF", None)],
+        [INIT_COMMS, (":SYSTEM:AZERO:STATE 0", None)],
     ) as inst:
         inst.auto_zero_enabled = False
 

@@ -46,7 +46,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         super().__init__(adapter, name, **kwargs)
         warn(
             "Keithley2400Legacy is a legacy version of Keithley2400 frozen at PyMeausure version "
-            "0.15 and kept for backwards compatibility."
+            "0.15 and kept for backwards compatibility.",
+            FutureWarning,
         )
 
     source_mode = Instrument.control(

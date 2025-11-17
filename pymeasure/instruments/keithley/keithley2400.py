@@ -155,7 +155,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":SYSTEM:AZERO:STATE %s",
         """Control whether auto zeroing is enabled (bool)""",
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"},
+        values={True: 1, False: 0},
         map_values=True,
     )
 
@@ -930,7 +930,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values={
             "immediate": "IMM",
             "trigger_link": "TLIN",
-            "timer": "TIME",
+            "timer": "TIM",
             "manual": "MAN",
             "bus": "BUS",
         },

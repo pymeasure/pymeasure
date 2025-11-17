@@ -158,7 +158,7 @@ def test_voltage_source(keithley2400):
         ("source_current_range", 0.0105),
         ("source_current_range_auto_enabled", True),
         ("source_current_range_auto_enabled", False),
-        # ("voltage_range", 21),  # TODO: Check why this fails
+        # ("voltage_range", 21),  # Invalid with source readback on, needs configuration after reset
         ("voltage_range_auto_enabled", True),
         ("voltage_range_auto_enabled", False),
         ("voltage_nplc", 1.0),
@@ -205,8 +205,8 @@ def test_voltage_source(keithley2400):
     ],
 )
 def test_setters_and_getters(keithley2400, attr, value):
+    keithley2400.reset()
     setattr(keithley2400, attr, value)
     assert getattr(keithley2400, attr) == value
     if e := keithley2400.check_errors():
         raise Error(e)
-    keithley2400.reset()
