@@ -189,13 +189,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
         str:
         - 'disconnected': Output relay opens (do not use this state if output is turned on and off
-                                              frequently to prevent excess wear on the relay)
+          frequently to prevent excess wear on the relay)
         - 'normal': V-source is selected and set to 0V.
         - 'zero': Allows the sourcemeter to be used to measure current while off.
         - 'guard': I-source is selected and set to 0A.
 
         .. deprecated:: 0.16
-           deprecated to use 'HIMP', 'NORM', 'ZERO', or 'GUAR' with :attr:`~.output_off_state`.
+           Deprecated to use 'HIMP', 'NORM', 'ZERO', or 'GUAR' with :attr:`~.output_off_state`.
         """,
         validator=strict_discrete_set,
         values={
