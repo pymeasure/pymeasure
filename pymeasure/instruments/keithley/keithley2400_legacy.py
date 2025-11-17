@@ -19,7 +19,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
     """Represent the Keithley 2400 SourceMeter and provide a
     high-level interface for interacting with the instrument.
 
-    .. note::
+    .. deprecated:: 0.16
        This is a legacy version of Keithley2400 frozen at PyMeausure version 0.15
        and kept for backwards compatibility.
 
