@@ -39,6 +39,7 @@ Instruments by manufacturer:
    edwards/index
    eurotest/index
    fluke/index
+   formfactor/index
    fwbell/index
    heidenhain/index
    hcp/index
