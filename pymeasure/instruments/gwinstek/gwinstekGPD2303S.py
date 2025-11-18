@@ -121,7 +121,11 @@ class GWInstekGPD230S(Instrument):
     print(ps.error)
     print(ps.status)
     print(ps.channel_1.voltage)
-    print(ps.channel_1.current)
+    print(ps.channel_1.current)\n
+
+    Known issue:
+    - When the instrument throws an error, it is best to flush the read buffer
+    `ps.adapter.flush_read_buffer()`
     """
 
     channel_1 = Instrument.ChannelCreator(GWInstekGPD230SChannel, 1)
@@ -140,6 +144,7 @@ class GWInstekGPD230S(Instrument):
             name,
             read_termination=read_termination,
             baud_rate=baud_rate,
+            includeSCPI=False,
             **kwargs,
         )
 
