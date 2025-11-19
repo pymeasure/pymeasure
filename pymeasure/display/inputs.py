@@ -26,13 +26,15 @@ import logging
 
 import re
 
-from .Qt import QtGui, QtWidgets
+from PySide6.QtWidgets import QSizePolicy
+
+from .Qt import QtGui, QtWidgets, QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Input:
+class Input(QtWidgets.QWidget):
     """
     Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
     input box.
@@ -40,12 +42,32 @@ class Input:
     :param parameter: The parameter to connect to this input box.
     :attr parameter: Read-only property to access the associated parameter.
     """
+    _widget_type = None
+    def __init__(self, parameter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMouseTracking(True)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
-    def __init__(self, parameter, **kwargs):
-        super().__init__(**kwargs)
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setAlignment(QtCore.Qt.Alignment.AlignLeft)
+        self.layout.setSpacing(0)
+        if self._widget_type is None:
+            raise TypeError("Input must be instantiated as Tool[WidgetType]()")
+        self.widget = self._widget_type()
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.layout.addWidget(self.widget)
+        
         self._parameter = None
         self.set_parameter(parameter)
+        self.set_reset_button()
 
+    def __class_getitem__(cls, widget_type):
+        class InputWithButtons(cls):
+            _widget_type = widget_type
+        InputWithButtons.__name__ = f"Input[{widget_type.__name__}]"
+        return InputWithButtons
+    
     def set_parameter(self, parameter):
         """
         Connects a new parameter to the input box, and initializes the box
@@ -56,19 +78,57 @@ class Input:
         self._parameter = parameter
 
         if parameter.is_set():
-            self.setValue(parameter.value)
+            self.set_value(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
-            self.setSuffix(" %s" % parameter.units)
+            self.set_suffix(" %s" % parameter.units)
 
         self.setToolTip(parameter._cli_help_fields())
 
+    def set_value(self, value):
+        pass
+
+    def set_suffix(self, suffix):
+        pass
     def update_parameter(self):
         """
         Update the parameter value with the Input GUI element's current value.
         """
         self._parameter.value = self.value()
 
+    def reset(self):
+        if self._parameter.default:
+            self.set_value(self._parameter.default)
+        
+    def set_reset_button(self):
+        self.btn = QtWidgets.QPushButton("⟲")
+        self.btn.setStyleSheet(
+            """
+            QPushButton {
+            background: transparent;
+            border: none;
+            color: lightgray;
+            }
+            
+            QPushButton:hover {
+            color: black;
+            }
+            """
+        )
+        self.btn.setFixedWidth(20)
+        self.btn.setToolTip("Reset to default")
+        self.btn.clicked.connect(self.reset)
+        self.btn.hide()
+
+        self.layout.addWidget(self.btn)
+
+    def event(self, e):
+        if e.type() == QtCore.QEvent.Type.HoverEnter:
+            self.btn.setVisible(True)
+        elif e.type() == QtCore.QEvent.Type.HoverLeave:
+            self.btn.hide()
+        return super().event(e)
+        
     @property
     def parameter(self):
         """
@@ -81,8 +141,7 @@ class Input:
         self.update_parameter()
         return self._parameter
 
-
-class StringInput(Input, QtWidgets.QLineEdit):
+class StringInput(Input[QtWidgets.QLineEdit]):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
     that are string-based may also use this input, but non-string parameters
@@ -92,19 +151,19 @@ class StringInput(Input, QtWidgets.QLineEdit):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
-    def setValue(self, value):
+    def set_value(self, value):
         # QtWidgets.QLineEdit has a setText() method instead of setValue()
-        return super().setText(value)
+        return self.widget.setText(value)
 
-    def setSuffix(self, value):
+    def set_suffix(self, value):
         pass
 
     def value(self):
         # QtWidgets.QLineEdit has a text() method instead of value()
-        return super().text()
+        return self.widget.text()
 
 
-class IntegerInput(Input, QtWidgets.QSpinBox):
+class IntegerInput(Input[QtWidgets.QSpinBox]):
     """
     Spin input box for integer values, connected to a :class:`IntegerParameter`.
     """
@@ -112,16 +171,16 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         if parameter.step:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
-            self.setSingleStep(parameter.step)
-            self.setEnabled(True)
+            self.widget.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.widget.setSingleStep(parameter.step)
+            self.widget.setEnabled(True)
         else:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+            self.widget.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
+        self.widget.setMinimum(parameter.minimum)
+        self.widget.setMaximum(parameter.maximum)
         super().set_parameter(parameter)  # default gets set here, after min/max
 
     def stepEnabled(self):
@@ -131,8 +190,13 @@ class IntegerInput(Input, QtWidgets.QSpinBox):
         else:
             return QtWidgets.QAbstractSpinBox.StepEnabledFlag.StepNone
 
+    def set_value(self, value):
+        self.widget.setValue(value)
 
-class BooleanInput(Input, QtWidgets.QCheckBox):
+    def set_suffix(self, suffix):
+        self.widget.setSuffix(suffix)
+
+class BooleanInput(Input[QtWidgets.QCheckBox]):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
     """
@@ -142,20 +206,20 @@ class BooleanInput(Input, QtWidgets.QCheckBox):
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
-        self.setText(parameter.name)
+        self.widget.setText(parameter.name)
         super().set_parameter(parameter)
 
-    def setValue(self, value):
-        return super().setChecked(value)
+    def set_value(self, value):
+        return self.widget.setChecked(value)
 
-    def setSuffix(self, value):
+    def set_suffix(self, suffix):
         pass
 
     def value(self):
-        return super().isChecked()
+        return self.widget.isChecked()
 
 
-class ListInput(Input, QtWidgets.QComboBox):
+class ListInput(Input[QtWidgets.QComboBox]):
     """
     Dropdown for list values, connected to a :class:`ListParameter`.
     """
@@ -163,7 +227,7 @@ class ListInput(Input, QtWidgets.QComboBox):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         self._stringChoices = None
-        self.setEditable(False)
+        self.widget.setEditable(False)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -176,27 +240,25 @@ class ListInput(Input, QtWidgets.QComboBox):
             self._stringChoices = tuple((str(choice) + suffix) for choice in parameter.choices)
         except TypeError:  # choices is None
             self._stringChoices = tuple()
-        self.clear()
-        self.addItems(self._stringChoices)
-
+        self.widget.clear()
+        self.widget.addItems(self._stringChoices)
         super().set_parameter(parameter)
 
-    def setValue(self, value):
+    def set_value(self, value):
         try:
             index = self._parameter.choices.index(value)
-            self.setCurrentIndex(index)
+            self.widget.setCurrentIndex(index)
         except (TypeError, ValueError) as e:  # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._parameter.choices)) from e
 
-    def setSuffix(self, value):
+    def set_suffix(self, suffix):
         pass
 
     def value(self):
-        return self._parameter.choices[self.currentIndex()]
-
-
-class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
+        return self._parameter.choices[self.widget.currentIndex()]
+    
+class ScientificInput(Input[QtWidgets.QDoubleSpinBox]):
     """
     Spinner input box for floating-point values, connected to a
     :class:`FloatParameter`. This box will display and accept values in
@@ -210,11 +272,11 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
         if parameter.step:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
-            self.setSingleStep(parameter.step)
-            self.setEnabled(True)
+            self.widget.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.UpDownArrows)
+            self.widget.setSingleStep(parameter.step)
+            self.widget.setEnabled(True)
         else:
-            self.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+            self.widget.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
 
     def set_parameter(self, parameter):
         # Override from :class:`Input`
@@ -225,12 +287,18 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
             parameter.maximum,
             parameter.decimals,
             self)
-        self.setDecimals(parameter.decimals)
-        self.setMinimum(parameter.minimum)
-        self.setMaximum(parameter.maximum)
+        self.widget.setDecimals(parameter.decimals)
+        self.widget.setMinimum(parameter.minimum)
+        self.widget.setMaximum(parameter.maximum)
         self.validator.setNotation(QtGui.QDoubleValidator.Notation.ScientificNotation)
         super().set_parameter(parameter)  # default gets set here, after min/max
 
+    def set_value(self, value):
+        self.widget.setValue(value)
+
+    def set_suffix(self, suffix):
+        self.widget.setSuffix(suffix)
+        
     def validate(self, text, pos):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
@@ -240,7 +308,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
             return self.validator.validate(text, pos)
 
     def fixCase(self, text):
-        self.lineEdit().setText(text.toLower())
+        self.widget.lineEdit().setText(text.toLower())
 
     def toDouble(self, string):
         value, success = self.validator.locale().toDouble(string)
@@ -281,7 +349,7 @@ class VectorInput(StringInput):
     display and accept lists.
     """
 
-    def setValue(self, value):  # override the method from StringInput
+    def set_value(self, value):  # override the method from StringInput
         value = "[" + ", ".join(map(str, value)) + "]"
         # QtWidgets.QLineEdit has a setText() method instead of setValue()
-        return super().setText(value)
+        self.widget.setText(value)

@@ -28,7 +28,7 @@ import numpy as np
 class Parameter:
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
-
+1
     :var value: The value of the parameter
 
     :param name: The parameter name
@@ -143,7 +143,7 @@ class Parameter:
                 message += f"\n{prefix} {value}."
 
         return message
-
+    
     def __str__(self):
         return str(self._value) if self.is_set() else ''
 

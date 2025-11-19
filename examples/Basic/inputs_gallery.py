@@ -23,21 +23,24 @@
 #
 
 """
-This example demonstrates how to make a graphical interface, and uses
-a random number generator to simulate data so that it does not require
-an instrument to use. It also demonstrates the use of the sequencer module.
+This is a gallery of all the available inputs in the package.
 
 Run the program by changing to the directory containing this file and calling:
 
-python gui_sequencer.py
+python gui.py
 
 """
-
 import sys
-import random
-from time import sleep
 
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import (
+    Procedure,
+    IntegerParameter,
+    Parameter,
+    FloatParameter,
+    BooleanParameter,
+    ListParameter,
+    VectorParameter,
+)
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
@@ -48,44 +51,33 @@ log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
-    iterations = IntegerParameter("Loop Iterations", default=100)
-    delay = FloatParameter("Delay Time", units="s", default=0.2)
-    seed = Parameter("Random Seed", default="12345")
+    float_param = FloatParameter("Float Parameter", units="s", default=0.2, step=0.01)
+    int_param = IntegerParameter("Integer Parametr", units="A", default = 1, step=1)
+    param = Parameter("Parameter", default = "text")
+    bool_param = BooleanParameter("Boolean Parameter", default=True)
+    list_param = ListParameter("List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'])
+    vector_param = VectorParameter("Vector Parameter", default = [1,2,3], units = "m")
 
     DATA_COLUMNS = ["Iteration", "Random Number"]
 
     def startup(self):
-        log.info("Setting up random number generator")
-        random.seed(int(self.seed))
-
+        pass
+    
     def execute(self):
-        log.info("Starting to generate numbers")
-        for i in range(self.iterations):
-            data = {"Iteration": i, "Random Number": random.random()}
-            log.debug("Produced numbers: %s" % data)
-            self.emit("results", data)
-            self.emit("progress", 100 * i / self.iterations)
-            sleep(self.delay)
-            if self.should_stop():
-                log.warning("Catch stop command in procedure")
-                break
-
+        pass
+    
     def shutdown(self):
-        log.info("Finished")
+        pass
 
 
 class MainWindow(ManagedWindow):
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["iterations", "delay", "seed"],
-            displays=["iterations", "delay", "seed"],
+            inputs=["float_param", "int_param", "param", "bool_param", "list_param", "vector_param"],
+            displays=["float_param"],
             x_axis="Iteration",
             y_axis="Random Number",
-            sequencer=True,
-            sequencer_inputs=["iterations", "delay", "seed"],
-            sequence_file="gui_sequencer_example_sequence.txt",
-            inputs_in_scrollarea=True,
         )
         self.setWindowTitle("GUI Example")
 
