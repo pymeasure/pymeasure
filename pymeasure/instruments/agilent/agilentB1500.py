@@ -25,7 +25,6 @@
 import logging
 import re
 import time
-import weakref
 from collections import Counter, OrderedDict, namedtuple
 from enum import IntEnum
 
