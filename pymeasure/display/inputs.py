@@ -25,84 +25,19 @@
 import logging
 
 import re
+from typing import Any, Callable, Type
 
-from PySide6.QtWidgets import QSizePolicy
+from pymeasure.experiment.parameters import Parameter
 
 from .Qt import QtGui, QtWidgets, QtCore
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
-class Input(QtWidgets.QWidget):
-    """
-    Mix-in class that connects a :mod:`Parameter <.parameters>` object to a GUI
-    input box.
-
-    :param parameter: The parameter to connect to this input box.
-    :attr parameter: Read-only property to access the associated parameter.
-    """
-    _widget_type = None
-    def __init__(self, parameter, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setMouseTracking(True)
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
-
-        self.layout = QtWidgets.QHBoxLayout(self)
-        self.layout.setContentsMargins(0,0,0,0)
-        self.layout.setAlignment(QtCore.Qt.Alignment.AlignLeft)
-        self.layout.setSpacing(0)
-        if self._widget_type is None:
-            raise TypeError("Input must be instantiated as Tool[WidgetType]()")
-        self.widget = self._widget_type()
-        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
-        self.layout.addWidget(self.widget)
-        
-        self._parameter = None
-        self.set_parameter(parameter)
-        self.set_reset_button()
-
-    def __class_getitem__(cls, widget_type):
-        class InputWithButtons(cls):
-            _widget_type = widget_type
-        InputWithButtons.__name__ = f"Input[{widget_type.__name__}]"
-        return InputWithButtons
-    
-    def set_parameter(self, parameter):
-        """
-        Connects a new parameter to the input box, and initializes the box
-        value.
-
-        :param parameter: parameter to connect.
-        """
-        self._parameter = parameter
-
-        if parameter.is_set():
-            self.set_value(parameter.value)
-
-        if hasattr(parameter, 'units') and parameter.units:
-            self.set_suffix(" %s" % parameter.units)
-
-        self.setToolTip(parameter._cli_help_fields())
-
-    def set_value(self, value):
-        pass
-
-    def set_suffix(self, suffix):
-        pass
-    def update_parameter(self):
-        """
-        Update the parameter value with the Input GUI element's current value.
-        """
-        self._parameter.value = self.value()
-
-    def reset(self):
-        if self._parameter.default:
-            self.set_value(self._parameter.default)
-        
-    def set_reset_button(self):
-        self.btn = QtWidgets.QPushButton("⟲")
-        self.btn.setStyleSheet(
+class TrailingButton(QtWidgets.QPushButton):
+    def __init__(self, glyph: str, slot: Callable, tooltip: str, *args, **kwargs) -> None:
+        super().__init__(glyph, *args, **kwargs)
+        self.setStyleSheet(
             """
             QPushButton {
             background: transparent;
@@ -115,22 +50,103 @@ class Input(QtWidgets.QWidget):
             }
             """
         )
-        self.btn.setFixedWidth(20)
-        self.btn.setToolTip("Reset to default")
-        self.btn.clicked.connect(self.reset)
-        self.btn.hide()
+        self.setFixedWidth(20)
+        self.setToolTip(tooltip)
+        self.clicked.connect(slot)
 
-        self.layout.addWidget(self.btn)
+        
+class Input(QtWidgets.QWidget):
+    """
+    Generic class that defines and input QWidget and connects a :mod:`Parameter <.parameters>`
+    object to a GUI input box.
 
-    def event(self, e):
+    :param parameter: The parameter to connect to this input box.
+    :attr parameter: Read-only property to access the associated parameter.
+    """
+    _widget_type = None
+    def __init__(self, parameter: Parameter, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMouseTracking(True)
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
+
+        self.layout = QtWidgets.QHBoxLayout(self)
+        self.layout.setContentsMargins(0,0,0,0)
+        self.layout.setAlignment(QtCore.Qt.Alignment.AlignLeft)
+        self.layout.setSpacing(0)
+        
+        if self._widget_type is None:
+            raise TypeError("Input must be instantiated as Tool[WidgetType]()")
+        self.widget = self._widget_type()
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.layout.addWidget(self.widget)
+
+        self._trailing_layout = QtWidgets.QHBoxLayout()
+        self._trailing_layout.setContentsMargins(0,0,0,0)
+        self._trailing_layout.setAlignment(QtCore.Qt.Alignment.AlignLeft)
+        self._trailing_widget = QtWidgets.QWidget()
+        self._trailing_widget.setLayout(self._trailing_layout)
+        self._trailing_layout.setSpacing(0)
+        self._trailing_widget.setVisible(False)
+        self.layout.addWidget(self._trailing_widget)
+        
+        self._parameter = None
+        self.set_parameter(parameter)
+
+        self.reset_button = TrailingButton("⟳", self.reset, "Reset to default")
+        self.add_trailing_button(self.reset_button)
+
+    def __class_getitem__(cls, widget_type: Type[QtWidgets.QWidget]):
+        class InputWithButtons(cls):
+            _widget_type = widget_type
+        InputWithButtons.__name__ = f"Input[{widget_type.__name__}]"
+        return InputWithButtons
+    
+    def set_parameter(self, parameter: Parameter) -> None:
+        """
+        Connects a new parameter to the input box, and initializes the box
+        value.
+
+        :param parameter: parameter to connect.
+        """
+        self._parameter = parameter
+
+        if parameter.is_set():
+            self.set_value(parameter.value)
+            
+        if hasattr(parameter, 'units') and parameter.units:
+            self.set_suffix(" %s" % parameter.units)
+
+        self.setToolTip(parameter._cli_help_fields())
+
+    def set_value(self, value: Any) -> None:
+        return None
+
+    def set_suffix(self, suffix: Any) -> None:
+        return None
+
+    #TODO: add a function value to be implemented in subclasses
+    def update_parameter(self) -> None:
+        """
+        Update the parameter value with the Input GUI element's current value.
+        """
+        self._parameter.value = self.value()
+
+    def reset(self) -> None:
+        if self._parameter.default:
+            self.set_value(self._parameter.default)
+
+    def add_trailing_button(self, button: TrailingButton) -> None:
+        self._trailing_layout.addWidget(button)
+    
+    def event(self, e: QtCore.QEvent):
         if e.type() == QtCore.QEvent.Type.HoverEnter:
-            self.btn.setVisible(True)
+            self._trailing_widget.setVisible(True)
         elif e.type() == QtCore.QEvent.Type.HoverLeave:
-            self.btn.hide()
+            self._trailing_widget.setVisible(False)
         return super().event(e)
         
     @property
-    def parameter(self):
+    def parameter(self) -> Parameter|None:
         """
         The connected parameter object. Read-only property; see
         :meth:`set_parameter`.
@@ -151,12 +167,12 @@ class StringInput(Input[QtWidgets.QLineEdit]):
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(parameter=parameter, parent=parent, **kwargs)
 
-    def set_value(self, value):
+    def set_value(self, value: Any):
         # QtWidgets.QLineEdit has a setText() method instead of setValue()
         return self.widget.setText(value)
 
-    def set_suffix(self, value):
-        pass
+    def set_suffix(self, value: Any) -> None:
+        return None
 
     def value(self):
         # QtWidgets.QLineEdit has a text() method instead of value()

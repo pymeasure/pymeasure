@@ -22,7 +22,9 @@
 # THE SOFTWARE.
 #
 
+from typing import Any, Callable
 import numpy as np
+from qtpy import QtWidgets
 
 
 class Parameter:
@@ -48,8 +50,14 @@ class Parameter:
         parameter.
     """
 
-    def __init__(self, name, default=None, ui_class=None, group_by=None, group_condition=True,
-                 description=None):
+    def __init__(self,
+                 name: str,
+                 default: Any | None=None,
+                 units: str | None=None,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_by: str|list[str]|tuple[str]|dict[str,bool|Callable[[Any],bool]]|None = None,
+                 group_condition: bool|Callable[[Any],bool] = True,
+                 description: str|None=None):
         self.name = name
         separator = ": "
         if separator in name:
@@ -60,6 +68,7 @@ class Parameter:
         if default is not None:
             self.value = default
         self.default = default
+        self.units = units
         self.ui_class = ui_class
         self._help_fields = [('units are', 'units'), 'default']
 
