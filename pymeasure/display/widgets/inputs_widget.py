@@ -25,16 +25,120 @@
 import logging
 
 from functools import partial
+from typing import Any, Type
 
-from ..inputs import (BooleanInput, IntegerInput, ListInput, ScientificInput,
+from ..inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
                       StringInput, VectorInput)
-from ..Qt import QtWidgets, QtCore
-from ...experiment import parameters
+from ..Qt import QtWidgets, QtCore, QtGui
+from ...experiment import parameters, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+class ArrowButton(QtWidgets.QToolButton):
+    def __init__(self, parent=None):
+        super().__init__(parent)
 
+        self._angle = 0
+        self.anim = QtCore.QPropertyAnimation(self, b"angle")
+        self.setFixedSize(20, 20)
+        self.setStyleSheet("QToolButton { border: none; }")
+        self.setCheckable(True)
+        self.setChecked(True)
+        self.toggled.connect(self.animate)
+
+        
+    def paintEvent(self, e):
+        p = QtGui.QPainter(self)
+        p.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        p.setPen(QtGui.QPen(QtGui.QColor(0,0,0), 2))
+        p.setBrush(QtGui.QBrush(QtGui.QColor(0,0,0)))
+
+        w, h = self.width(), self.height()
+
+        # arrow pointing down in checked state
+        arrow = QtGui.QPolygonF([
+            QtCore.QPointF(w*0.5, h*0.8),
+            QtCore.QPointF(w*0.2, h*0.2),
+            QtCore.QPointF(w*0.8, h*0.2),
+            QtCore.QPointF(w*0.5, h*0.8),
+        ])
+
+        # rotate around center
+        p.translate(w/2, h/2)
+        p.rotate(self._angle)
+        p.translate(-w/2, -h/2)
+
+        p.drawPolygon(arrow)
+
+    def getAngle(self) -> float:
+        return self._angle
+
+    def setAngle(self, v: float):
+        self._angle = v
+        self.update()
+
+    angle = QtCore.Property(float, getAngle, setAngle)
+
+    def animate(self, checked: bool):
+        self.anim.stop()
+        self.anim.setDuration(500)
+        self.anim.setStartValue(self._angle)
+        self.anim.setEndValue(self._angle + (1 if checked else -1)*90)
+        self.anim.start()
+
+class InputGroup(QtWidgets.QWidget):
+    def __init__(self, name: str, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        self.layout.setContentsMargins(0,0,0,0)
+
+        self.header_layout = QtWidgets.QHBoxLayout()
+        self.layout.addLayout(self.header_layout)
+
+        self.collapse_button = ArrowButton()
+        self.collapse_button.setFixedSize(15,15)
+        self.toggled = self.collapse_button.toggled
+        self.header_layout.addWidget(self.collapse_button)
+        
+        self.header_label = QtWidgets.QLabel(name)
+        self.header_layout.addWidget(self.header_label)
+        
+        self.contents = QtWidgets.QWidget()
+        self.contents.setObjectName("inputGroupContents")
+        self.contents.setStyleSheet("""
+            #inputGroupContents {
+                border: 1px solid #999;
+                border-radius: 5px
+            }
+        """)
+        self.layout.addWidget(self.contents)
+        self.contents_layout = QtWidgets.QVBoxLayout(self.contents)
+
+        self.anim_contents = QtCore.QPropertyAnimation(self.contents, b"maximumHeight")
+        self.anim_contents.setDuration(500)
+        self.anim_contents.setEasingCurve(QtCore.QEasingCurve.Type.InOutCubic)
+        
+        self._height = None
+        self.toggled.connect(self.animate)
+        
+    def add_input(self, input_widget: Input, label: str | None = None):
+        if label:
+            label_widget = QtWidgets.QLabel()
+            label_widget.setText(f"{label}:")
+            self.contents_layout.addWidget(label_widget)
+        self.contents_layout.addWidget(input_widget)
+
+    def animate(self, checked: bool):
+        if self._height is None:
+            self._height = self.contents.sizeHint().height()
+        self.anim_contents.stop()
+        self.anim_contents.setStartValue(self.contents.height())
+        self.anim_contents.setEndValue(self._height if checked else 1)
+        self.anim_contents.start()
+        
 class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
@@ -43,18 +147,22 @@ class InputsWidget(QtWidgets.QWidget):
     # tuple of Input classes that do not need an external label
     NO_LABEL_INPUTS = (BooleanInput,)
 
-    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True,
-                 inputs_in_scrollarea=False):
-        super().__init__(parent)
+    def __init__(self,
+                 procedure_class: Type[Procedure],
+                 inputs: tuple[str] | None = None,
+                 hide_groups: bool=True,
+                 inputs_in_scrollarea: bool=False,
+                 **kwargs):
+        super().__init__(**kwargs)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
-        self._inputs = inputs
+        self._inputs = inputs if inputs else ()
         self._setup_ui()
         self._layout(inputs_in_scrollarea)
         self._hide_groups = hide_groups
         self._setup_visibility_groups()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
@@ -88,14 +196,28 @@ class InputsWidget(QtWidgets.QWidget):
 
         self.labels = {}
         parameters = self._procedure.parameter_objects()
+        groups = {
+            parameters[name].group_name: InputGroup(parameters[name].group_name)
+            for name in self._inputs
+            if parameters[name].group_name
+        }
         for name in self._inputs:
-            if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
+            input_inst: Input = getattr(self, name)
+            if (group := groups.get(parameters[name].group_name, None)):
+                group.add_input(input_inst,
+                                parameters[name].name
+                                if not isinstance(input_inst, self.NO_LABEL_INPUTS)
+                                else None)
+            elif not isinstance(input_inst, self.NO_LABEL_INPUTS):
                 label = QtWidgets.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
+                vbox.addWidget(input_inst)
                 self.labels[name] = label
-
-            vbox.addWidget(getattr(self, name))
+            else:
+                vbox.addWidget(input_inst)
+        for _, group in groups.items():
+            vbox.addWidget(group)
 
         if inputs_in_scrollarea:
             scroll_area = QtWidgets.QScrollArea()

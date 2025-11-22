@@ -55,6 +55,7 @@ class Parameter:
                  default: Any | None=None,
                  units: str | None=None,
                  ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
                  group_by: str|list[str]|tuple[str]|dict[str,bool|Callable[[Any],bool]]|None = None,
                  group_condition: bool|Callable[[Any],bool] = True,
                  description: str|None=None):
@@ -70,6 +71,7 @@ class Parameter:
         self.default = default
         self.units = units
         self.ui_class = ui_class
+        self.group_name = group_name
         self._help_fields = [('units are', 'units'), 'default']
 
         self.group_by = {}
@@ -506,7 +508,6 @@ class PhysicalParameter(VectorParameter):
     def __repr__(self):
         return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
-
 
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter

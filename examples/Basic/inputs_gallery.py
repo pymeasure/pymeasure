@@ -55,8 +55,8 @@ class TestProcedure(Procedure):
     int_param = IntegerParameter("Integer Parametr", units="A", default = 1, step=1)
     param = Parameter("Parameter", default = "text")
     bool_param = BooleanParameter("Boolean Parameter", default=True)
-    list_param = ListParameter("List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'])
-    vector_param = VectorParameter("Vector Parameter", default = [1,2,3], units = "m")
+    list_param = ListParameter("List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'], group_name="Test")
+    vector_param = VectorParameter("Vector Parameter", default = [1,2,3], units = "m", group_name="Test")
 
     DATA_COLUMNS = ["Iteration", "Random Number"]
 
