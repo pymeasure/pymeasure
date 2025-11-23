@@ -46,6 +46,8 @@ from pymeasure.display.windows import ManagedWindow
 
 import logging
 
+from pymeasure.experiment.parameters import PhysicalParameter
+
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
@@ -57,7 +59,8 @@ class TestProcedure(Procedure):
     bool_param = BooleanParameter("Boolean Parameter", default=True)
     list_param = ListParameter("List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'], group_name="Test")
     vector_param = VectorParameter("Vector Parameter", default = [1,2,3], units = "m", group_name="Test")
-
+    phys_param = PhysicalParameter("Physical Parameter", default = [1,4])
+    
     DATA_COLUMNS = ["Iteration", "Random Number"]
 
     def startup(self):

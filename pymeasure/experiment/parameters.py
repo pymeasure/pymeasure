@@ -22,12 +22,15 @@
 # THE SOFTWARE.
 #
 
-from typing import Any, Callable
+from typing import Any, Callable, Generic, Literal, Type, TypeVar
 import numpy as np
 from qtpy import QtWidgets
 
+from pymeasure.typing import GroupByType, GroupConditionType, SupportsStr
 
-class Parameter:
+T = TypeVar("T")
+
+class Parameter(Generic[T]):
     """ Encapsulates the information for an experiment parameter
     with information about the name, and units if supplied.
 1
@@ -49,15 +52,15 @@ class Parameter:
     :description: A string providing a human-friendly description for the
         parameter.
     """
-
+    _value: T | None
     def __init__(self,
                  name: str,
-                 default: Any | None=None,
+                 default: T | None=None,
                  units: str | None=None,
                  ui_class: QtWidgets.QWidget | None = None,
                  group_name: str | None = None,
-                 group_by: str|list[str]|tuple[str]|dict[str,bool|Callable[[Any],bool]]|None = None,
-                 group_condition: bool|Callable[[Any],bool] = True,
+                 group_by: GroupByType|None = None,
+                 group_condition: GroupConditionType = bool(True),
                  description: str|None=None):
         self.name = name
         separator = ": "
@@ -91,20 +94,20 @@ class Parameter:
         if description is not None and not isinstance(description, str):
             raise TypeError("The provided description argument is not a string.")
         self.description = description
-
+    
     @property
-    def value(self):
+    def value(self) -> T | None:
         if self.is_set():
             return self._value
         else:
             raise ValueError("Parameter value is not set")
 
     @value.setter
-    def value(self, value):
+    def value(self, value: T | None) -> None:
         self._value = self.convert(value)
 
     @property
-    def cli_args(self):
+    def cli_args(self) -> tuple[str,str,str]:
         """ helper for command line interface parsing of parameters
 
         This property returns a list of data to help formatting a command line
@@ -117,12 +120,12 @@ class Parameter:
         """
         return (self.default, self._help_fields, self.convert)
 
-    def is_set(self):
+    def is_set(self) -> bool:
         """ Returns True if the Parameter value is set
         """
         return self._value is not None
 
-    def convert(self, value):
+    def convert(self, value: Any) -> T | None:
         """ Convert user input to python data format
 
         Subclasses are expected to customize this method.
@@ -155,15 +158,15 @@ class Parameter:
 
         return message
     
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self._value) if self.is_set() else ''
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<{}(name={},value={},default={})>".format(
             self.__class__.__name__, self.name, self._value, self.default)
 
 
-class IntegerParameter(Parameter):
+class IntegerParameter(Parameter[int]):
     """ :class:`.Parameter` sub-class that uses the integer type to
     store the value.
 
@@ -177,13 +180,23 @@ class IntegerParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     :param step: int step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
-
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9, step=None, **kwargs):
+    def __init__(self,
+                 name: str,
+                 default: int | None = None,
+                 units: str | None = None,
+                 minimum: int = int(-1e9),
+                 maximum: int = int(1e9),
+                 step: int | None = None,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
-        super().__init__(name, **kwargs)
         self.step = int(step) if step else None
+        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
         self._help_fields.append('minimum')
         self._help_fields.append('maximum')
 
@@ -219,7 +232,7 @@ class IntegerParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
-class BooleanParameter(Parameter):
+class BooleanParameter(Parameter[bool|np.bool]):
     """ :class:`.Parameter` sub-class that uses the boolean type to
     store the value.
 
@@ -250,7 +263,7 @@ class BooleanParameter(Parameter):
         return value
 
 
-class FloatParameter(Parameter):
+class FloatParameter(Parameter[float]):
     """ :class:`.Parameter` sub-class that uses the floating point
     type to store the value.
 
@@ -265,17 +278,26 @@ class FloatParameter(Parameter):
     :param ui_class: A Qt class to use for the UI of this parameter
     :param step: step size for parameter's UI spinbox. If None, spinbox will have step disabled
     """
-
-    def __init__(self, name, units=None, minimum=-1e9, maximum=1e9,
-                 decimals=15, step=None, **kwargs):
-        self.units = units
+    def __init__(self,
+                 name: str,
+                 default: float | None = None,
+                 units: str | None = None,
+                 minimum: float = -1e9,
+                 maximum: float = 1e9,
+                 decimals: int = 15,
+                 step: int | None = None,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
         self.minimum = minimum
         self.maximum = maximum
-        super().__init__(name, **kwargs)
         self.decimals = decimals
         self.step = step
+        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
         self._help_fields.append(('decimals are', 'decimals'))
-
+        
     def convert(self, value):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
@@ -308,7 +330,7 @@ class FloatParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
-class VectorParameter(Parameter):
+class VectorParameter(Parameter[list[float]]):
     """ :class:`.Parameter` sub-class that stores the value in a
     vector format.
 
@@ -320,13 +342,21 @@ class VectorParameter(Parameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-
-    def __init__(self, name, length=3, units=None, **kwargs):
+    def __init__(self,
+                 name: str,
+                 default: list[float] | None = None,
+                 units: str | None = None,
+                 length: int = 3,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
         self._length = length
         self.units = units
-        super().__init__(name, **kwargs)
+        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
         self._help_fields.append('_length')
-
+        
     def convert(self, value):
         if isinstance(value, str):
             # strip units if included
@@ -371,7 +401,7 @@ class VectorParameter(Parameter):
             self.__class__.__name__, self.name, self._value, self.units, self._length)
 
 
-class ListParameter(Parameter):
+class ListParameter(Parameter[SupportsStr]):
     """ :class:`.Parameter` sub-class that stores the value as a list.
     String representation of choices must be unique.
 
@@ -381,9 +411,16 @@ class ListParameter(Parameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-
-    def __init__(self, name, choices=None, units=None, **kwargs):
-        self.units = units
+    def __init__(self,
+                 name: str,
+                 choices: list[SupportsStr] | None = None,
+                 default: SupportsStr | None = None,
+                 units: str | None = None,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
         if choices is not None:
             keys = [str(c) for c in choices]
             # check that string representation is unique
@@ -393,10 +430,10 @@ class ListParameter(Parameter):
             self._choices = {k: c for k, c in zip(keys, choices)}
         else:
             self._choices = None
-        super().__init__(name, **kwargs)
+        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
         self._help_fields.append(('choices are', 'choices'))
 
-    def convert(self, value):
+    def convert(self, value: str) -> SupportsStr:
         if self._choices is None:
             raise ValueError("ListParameter cannot be set since "
                              "allowed choices are set to None.")
@@ -407,18 +444,17 @@ class ListParameter(Parameter):
                 value = value[:-len(self.units)].strip()
 
         if str(value) in self._choices.keys():
-            value = self._choices[str(value)]
+            return self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._choices))
 
-        return value
-
     @property
-    def choices(self):
+    def choices(self) -> tuple[SupportsStr,...] | None:
         """ Returns an immutable iterable of choices, or None if not set. """
-        return tuple(self._choices.values())
-
+        if self._choices:
+            return tuple(self._choices.values())
+        return None
 
 class PhysicalParameter(VectorParameter):
     """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
@@ -432,13 +468,22 @@ class PhysicalParameter(VectorParameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-
-    def __init__(self, name, uncertaintyType='absolute', **kwargs):
-        super().__init__(name, length=2, **kwargs)
+    #TODO: Rework this class and add an Input that overrides value.
+    def __init__(self,
+                 name: str,
+                 default: list[float] | None = None,
+                 units: str | None = None,
+                 uncertainty_type: Literal["absolute", "relative", "percentage"] = "absolute",
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
         self._utype = ListParameter("uncertainty type",
                                     choices=['absolute', 'relative', 'percentage'],
                                     default=None)
-        self._utype.value = uncertaintyType
+        self._utype.value = uncertainty_type
+        super().__init__(name, default, units, 2, ui_class, group_name, group_by, group_condition, description)
 
     def convert(self, value):
         if isinstance(value, str):
@@ -471,11 +516,13 @@ class PhysicalParameter(VectorParameter):
         return value
 
     @property
-    def uncertainty_type(self):
+    def uncertainty_type(self)->Literal["absolute", "relative", "percentage"]:
         return self._utype.value
 
     @uncertainty_type.setter
-    def uncertainty_type(self, uncertaintyType):
+    def uncertainty_type(
+            self, uncertaintyType: Literal["absolute", "relative", "percentage"]
+    ) -> None:
         oldType = self._utype.value
         self._utype.value = uncertaintyType
         newType = self._utype.value
@@ -483,22 +530,22 @@ class PhysicalParameter(VectorParameter):
         if self.is_set():
             # Convert uncertainty value to the new type
             if (oldType, newType) == ('absolute', 'relative'):
-                self._value[1] = abs(self._value[1] / self._value[0])
+                self.value[1] = abs(self.value[1] / self.value[0])
             if (oldType, newType) == ('relative', 'absolute'):
-                self._value[1] = abs(self._value[1] * self._value[0])
+                self.value[1] = abs(self.value[1] * self.value[0])
             if (oldType, newType) == ('relative', 'percentage'):
-                self._value[1] = abs(self._value[1] * 100.0)
+                self.value[1] = abs(self.value[1] * 100.0)
             if (oldType, newType) == ('percentage', 'relative'):
-                self._value[1] = abs(self._value[1] * 0.01)
+                self.value[1] = abs(self.value[1] * 0.01)
             if (oldType, newType) == ('percentage', 'absolute'):
-                self._value[1] = abs(self._value[1] * self._value[0] * 0.01)
+                self.value[1] = abs(self.value[1] * self.value[0] * 0.01)
             if (oldType, newType) == ('absolute', 'percentage'):
-                self._value[1] = abs(self._value[1] * 100.0 / self._value[0])
+                self.value[1] = abs(self.value[1] * 100.0 / self.value[0])
 
     def __str__(self):
         if not self.is_set():
             return ''
-        result = f"{self._value[0]:g} +/- {self._value[1]:g}"
+        result = f"{self.value[0]:g} +/- {self.value[1]:g}"
         if self.units:
             result += " %s" % self.units
         if self._utype.value is not None:

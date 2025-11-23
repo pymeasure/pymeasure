@@ -75,7 +75,7 @@ class Input(QtWidgets.QWidget):
         self.layout.setSpacing(0)
         
         if self._widget_type is None:
-            raise TypeError("Input must be instantiated as Tool[WidgetType]()")
+            raise TypeError("Input must be used as Input[WidgetType]()")
         self.widget = self._widget_type()
         self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
         self.layout.addWidget(self.widget)
