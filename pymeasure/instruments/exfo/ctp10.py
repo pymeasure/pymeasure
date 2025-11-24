@@ -838,6 +838,52 @@ class CTP10(SCPIMixin, Instrument):
         get_process=lambda v: float(v) * 1e12,
     )
 
+    start_wavelength_nm = Instrument.control(
+        ":INIT:WAVelength:STARt?",
+        ":INIT:WAVelength:STARt %gNM",
+        """Control the scan start wavelength in nanometers (float).
+
+        This command sets the scan start wavelength or frequency.
+        The corresponding GUI setting is Start (see Start/Stop on page 115).
+
+        As the scan start and stop values are interdependent, this command may modify
+        the already set stop value to ensure consistency and comply with the minimum
+        and maximum limits of each command.
+
+        Units: PM, NM, M, HZ, GHZ, THZ (default: meter or hertz)
+
+        :return: Scan start wavelength in nanometers (float).
+
+        Example:
+            ctp.start_wavelength_nm = 1500.0  # Set to 1500 nm
+            start_wl = ctp.start_wavelength_nm  # Get start wavelength in nm
+        """,
+        get_process=lambda v: float(v) * 1e9,
+    )
+
+    stop_wavelength_nm = Instrument.control(
+        ":INIT:WAVelength:STOP?",
+        ":INIT:WAVelength:STOP %gNM",
+        """Control the scan stop wavelength in nanometers (float).
+
+        This command sets the scan stop wavelength or frequency.
+        The corresponding GUI setting is Stop (see Start/Stop on page 115).
+
+        As the scan start and stop values are interdependent, this command may modify
+        the already set start value to ensure consistency and comply with the minimum
+        and maximum limits of each command.
+
+        Units: PM, NM, M, HZ, GHZ, THZ (default: meter or hertz)
+
+        :return: Scan stop wavelength in nanometers (float).
+
+        Example:
+            ctp.stop_wavelength_nm = 1650.0  # Set to 1650 nm
+            stop_wl = ctp.stop_wavelength_nm  # Get stop wavelength in nm
+        """,
+        get_process=lambda v: float(v) * 1e9,
+    )
+
     stabilization = Instrument.control(
         ":INIT:STABilization?",
         ":INIT:STABilization %d,%g",
