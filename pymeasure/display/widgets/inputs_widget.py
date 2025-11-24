@@ -28,7 +28,7 @@ from functools import partial
 from typing import Any, Type
 
 from ..inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
-                      StringInput, VectorInput)
+                      StringInput, UncertQuantInput, VectorInput)
 from ..Qt import QtWidgets, QtCore, QtGui
 from ...experiment import parameters, Procedure
 
@@ -170,7 +170,12 @@ class InputsWidget(QtWidgets.QWidget):
                 element = parameter.ui_class(parameter)
 
             elif isinstance(parameter, parameters.FloatParameter):
+                print("yay")
                 element = ScientificInput(parameter)
+
+            elif isinstance(parameter, parameters.PhysicalParameter):
+                print("yay")
+                element = UncertQuantInput(parameter)
 
             elif isinstance(parameter, parameters.IntegerParameter):
                 element = IntegerInput(parameter)

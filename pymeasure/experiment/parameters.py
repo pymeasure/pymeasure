@@ -103,7 +103,7 @@ class Parameter(Generic[T]):
             raise ValueError("Parameter value is not set")
 
     @value.setter
-    def value(self, value: T | None) -> None:
+    def value(self, value: Any) -> None:
         self._value = self.convert(value)
 
     @property
@@ -556,6 +556,25 @@ class PhysicalParameter(VectorParameter):
         return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
+class RangeParameter(Parameter[np.ndarray]):
+    def __init__(self,
+                 name: str,
+                 minimum: float = -1e9,
+                 maximum: float = 1e9,
+                 default: np.ndarray | None = None,
+                 units: str | None = None,
+                 ui_class: QtWidgets.QWidget | None = None,
+                 group_name: str | None = None,
+                 group_by: GroupByType | None = None,
+                 group_condition: GroupConditionType = bool(True),
+                 description: str | None = None):
+        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
+        self.minimum = minimum
+        self.maximum = maximum
+
+    def convert(self, value: tuple[float, float, float|None, int|None]) -> np.ndarray | None:
+        start, stop,
+    
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.

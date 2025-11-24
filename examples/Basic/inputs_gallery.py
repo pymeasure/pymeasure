@@ -57,9 +57,13 @@ class TestProcedure(Procedure):
     int_param = IntegerParameter("Integer Parametr", units="A", default = 1, step=1)
     param = Parameter("Parameter", default = "text")
     bool_param = BooleanParameter("Boolean Parameter", default=True)
-    list_param = ListParameter("List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'], group_name="Test")
-    vector_param = VectorParameter("Vector Parameter", default = [1,2,3], units = "m", group_name="Test")
-    phys_param = PhysicalParameter("Physical Parameter", default = [1,4])
+    list_param = ListParameter(
+        "List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'], group_name="Test"
+    )
+    vector_param = VectorParameter(
+        "Vector Parameter", default = [1,2,3], units = "m", group_name="Test"
+    )
+    phys_param = PhysicalParameter("Physical Parameter", default = [20,3])
     
     DATA_COLUMNS = ["Iteration", "Random Number"]
 
@@ -77,7 +81,7 @@ class MainWindow(ManagedWindow):
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["float_param", "int_param", "param", "bool_param", "list_param", "vector_param"],
+            inputs=["phys_param", "float_param", "int_param", "param", "bool_param", "list_param", "vector_param"],
             displays=["float_param"],
             x_axis="Iteration",
             y_axis="Random Number",
