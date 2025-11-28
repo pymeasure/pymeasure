@@ -460,7 +460,7 @@ def test_trace_create_reference():
     """Test create_reference via detector() API."""
     with expected_protocol(
         CTP10,
-        [(b":REFerence:SENSe4:CHANnel1:INITiate", None)],
+        [(b":REFerence:SENSe4:CHANnel1:INIT", None)],
     ) as inst:
         inst.detector(4, 1).create_reference()
 
@@ -841,3 +841,109 @@ def test_check_errors():
         [(b"SYST:ERR?", b"0,No error\r\n")],
     ) as inst:
         inst.check_errors()  # Should not raise
+
+
+# Reference Tests ---------------------------------------------------------
+
+
+def test_detector_create_reference():
+    """Test creating a reference trace on a detector."""
+    with expected_protocol(
+        CTP10,
+        [(b":REFerence:SENSe4:CHANnel1:INIT", None)],
+    ) as inst:
+        detector = inst.detector(module=4, channel=1)
+        detector.create_reference()
+
+
+def test_detector_reference_result_valid():
+    """Test getting reference result when reference is valid."""
+    with expected_protocol(
+        CTP10,
+        [(b":REFerence:SENSe4:CHANnel1:RESult?", b"1,0,20251128,092631\r\n")],
+    ) as inst:
+        detector = inst.detector(module=4, channel=1)
+        result = detector.reference_result
+        
+        assert isinstance(result, dict)
+        assert result['state'] == 1
+        assert result['type'] == 0
+        assert result['date'] == '20251128'
+        assert result['time'] == '092631'
+
+
+def test_detector_reference_result_no_reference():
+    """Test getting reference result when no reference exists."""
+    with expected_protocol(
+        CTP10,
+        [(b":REFerence:SENSe4:CHANnel1:RESult?", b"0\r\n")],
+    ) as inst:
+        detector = inst.detector(module=4, channel=1)
+        result = detector.reference_result
+        
+        assert isinstance(result, dict)
+        assert result['state'] == 0
+        assert result['type'] is None
+        assert result['date'] is None
+        assert result['time'] is None
+
+
+def test_detector_reference_result_pdl_reference():
+    """Test getting reference result for TF/PDL reference (4 sweeps)."""
+    with expected_protocol(
+        CTP10,
+        [(b":REFerence:SENSe5:CHANnel2:RESult?", b"1,1,20251128,104558\r\n")],
+    ) as inst:
+        detector = inst.detector(module=5, channel=2)
+        result = detector.reference_result
+        
+        assert isinstance(result, dict)
+        assert result['state'] == 1
+        assert result['type'] == 1  # TF/PDL reference (4 sweeps)
+        assert result['date'] == '20251128'
+        assert result['time'] == '104558'
+
+
+def test_referencing_property_true():
+    """Test referencing property when system is referencing."""
+    with expected_protocol(
+        CTP10,
+        [(b":STATus:OPERation:CONDition?", b"64\r\n")],  # Bit 6 set
+    ) as inst:
+        assert inst.referencing is True
+
+
+def test_referencing_property_false():
+    """Test referencing property when system is not referencing."""
+    with expected_protocol(
+        CTP10,
+        [(b":STATus:OPERation:CONDition?", b"0\r\n")],  # Idle
+    ) as inst:
+        assert inst.referencing is False
+
+
+def test_referencing_property_with_other_bits():
+    """Test referencing property with multiple bits set."""
+    with expected_protocol(
+        CTP10,
+        [(b":STATus:OPERation:CONDition?", b"68\r\n")],  # Bit 6 (64) + Bit 2 (4)
+    ) as inst:
+        assert inst.referencing is True  # Bit 6 is set
+
+
+def test_condition_register_referencing():
+    """Test condition register returns correct value during referencing."""
+    with expected_protocol(
+        CTP10,
+        [(b":STATus:OPERation:CONDition?", b"64\r\n")],
+    ) as inst:
+        assert inst.condition_register == 64
+
+
+def test_condition_register_idle():
+    """Test condition register returns 0 when idle."""
+    with expected_protocol(
+        CTP10,
+        [(b":STATus:OPERation:CONDition?", b"0\r\n")],
+    ) as inst:
+        assert inst.condition_register == 0

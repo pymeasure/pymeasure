@@ -578,9 +578,53 @@ class DetectorChannel(Channel):
     )
 
     def create_reference(self):
-        """Create a reference trace for this detector channel."""
-        cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INITiate'
+        """Create a reference trace for this detector channel.
+
+        This command performs a reference of the given detector.
+        Before sending this command, make sure that the patch cord is
+        properly connected to the given detector.
+
+        When the system executes this command, bit 6 "Referencing"
+        is set in the Operational Status Condition Register.
+        """
+        cmd = f':REFerence:SENSe{self.module}:CHANnel{self.channel}:INIT'
         self.write(cmd)
+
+    reference_result = Channel.measurement(
+        ":REFerence:SENSe{module}:CHANnel{channel}:RESult?",
+        """Get the result of the referencing operation on this detector (dict).
+
+        Returns information about the reference trace status including:
+        - state: Reference validity (0 = no valid reference, 1 = reference is valid)
+        - type: Reference operation type
+          (0 = TF reference (1 sweep), 1 = TF/PDL reference (4 sweeps))
+        - date: Date of the referencing operation in YYYYMMDD format (None if no reference)
+        - time: Time of the referencing operation in HHMMSS format (None if no reference)
+
+        :return: Dictionary with keys 'state', 'type', 'date', 'time'.
+            Example: {'state': 1, 'type': 0, 'date': '20251128', 'time': '092631'}
+            If no reference: {'state': 0, 'type': None, 'date': None, 'time': None}
+
+        Example:
+            detector = ctp.detector(module=4, channel=1)
+            result = detector.reference_result
+            if result['state'] == 1:
+                print(f"Valid reference from {result['date']} at {result['time']}")
+            else:
+                print("No valid reference")
+        """,
+        separator=None,
+        get_process=lambda v: (
+            {'state': 0, 'type': None, 'date': None, 'time': None}
+            if ',' not in str(v) else
+            {
+                'state': int(v.split(',')[0]),
+                'type': int(v.split(',')[1]) if int(v.split(',')[0]) == 1 else None,
+                'date': v.split(',')[2] if int(v.split(',')[0]) == 1 else None,
+                'time': v.split(',')[3] if int(v.split(',')[0]) == 1 else None,
+            }
+        ),
+    )
 
     # Trace data methods --------------------------------------------------------------
 
@@ -941,6 +985,17 @@ class CTP10(SCPIMixin, Instrument):
         :return: Sweep status (bool): True if complete, False if scanning in progress.
         """,
         get_process=lambda x: not bool(int(x) & 4),  # Check if bit 2 (weight 4) is NOT set
+    )
+
+    referencing = Instrument.measurement(
+        ":STATus:OPERation:CONDition?",
+        """Get whether the system is currently performing a reference operation (bool).
+
+        Checks bit 6 (weight 64) of the Operational Status Condition Register.
+
+        :return: Referencing status (bool): True if referencing in progress, False otherwise.
+        """,
+        get_process=lambda x: bool(int(x) & 64),  # Check if bit 6 (weight 64) is set
     )
 
     # Sweep methods -------------------------------------------------------------------
