@@ -1,10 +1,8 @@
-import numpy as ny
 
-#import serial reste a installer
-#import serial.tools.list_ports
-import time
+from pint import Quantity as Q_
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.smaract.utils import check_type
 
 class SmarActSCU_USB(Instrument):
 
@@ -14,11 +12,23 @@ class SmarActSCU_USB(Instrument):
                          write_termination='\n',
                          **kwargs)
 
+    frequency_max = Instrument.control(
+        ":GCLF0",
+        ":SCLF0F%d",
+        """ Control the maximum frequency in an absolute move """,
+        set_process = lambda v: check_type(v, 'Hz'),
+        get_process = lambda s: Q_(s[6:], 'Hz'),
+    )
+
+    def move_abs(self, position: Q_):
+        ...
+        self.write()
+
 
 if __name__ == "__main__":
     inst = SmarActSCU_USB('ASRL3::INSTR')
     pass
-    inst.close()
+
     # import pyvisa
     # rm = pyvisa.ResourceManager()
     # ressources = rm.list_resources()
