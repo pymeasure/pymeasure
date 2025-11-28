@@ -109,14 +109,14 @@ class TSL570(SCPIMixin, Instrument):
 
     power_setpoint = Instrument.control(
         ":POWer?",
-        ":Power %e",
-        """Control the output optical power, units defined by power_unit.""",
+        ":POWer %g",
+        """Control the output optical power, units determined by :attr:`~.power_unit`.""",
         check_set_errors=True,
     )
 
     power = Instrument.measurement(
         ":POWer:ACTual?",
-        """Measure the monitored optical power, units defined by power_unit.""",
+        """Measure the monitored optical power, units determined by :attr:`~.power_unit`.""",
     )
 
     # --- Wavelength control ---
@@ -135,29 +135,30 @@ class TSL570(SCPIMixin, Instrument):
 
     wavelength_setpoint = Instrument.control(
         ":WAVelength?",
-        ":WAVelength %e",
-        """Control the output wavelength, in m.""",
+        ":WAVelength %g",
+        """Control the output wavelength, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     wavelength_start = Instrument.control(
         ":WAVelength:SWEep:STARt?",
-        ":WAVelength:SWEep:STARt %e",
-        """Control the sweep start wavelength, in m.""",
+        ":WAVelength:SWEep:STARt %g",
+        """Control the sweep start wavelength, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     wavelength_stop = Instrument.control(
         ":WAVelength:SWEep:STOP?",
-        ":WAVelength:SWEep:STOP %e",
-        """Control the sweep stop wavelength, in m.""",
+        ":WAVelength:SWEep:STOP %g",
+        """Control the sweep stop wavelength, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     wavelength_step = Instrument.control(
         ":WAVelength:SWEep:STEP?",
-        ":WAVelength:SWEep:STEP %e",
-        """Control the sweep step wavelength when in step sweep mode, in m.""",
+        ":WAVelength:SWEep:STEP %g",
+        """Control the sweep step wavelength when in step sweep mode,
+        units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
@@ -177,29 +178,30 @@ class TSL570(SCPIMixin, Instrument):
 
     frequency_setpoint = Instrument.control(
         ":FREQuency?",
-        ":FREQuency %e",
-        """Control the output frequency, in m.""",
+        ":FREQuency %g",
+        """Control the output frequency, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     frequency_start = Instrument.control(
         ":FREQuency:SWEep:STARt?",
-        ":FREQuency:SWEep:STARt %e",
-        """Control the sweep start frequency, in m.""",
+        ":FREQuency:SWEep:STARt %g",
+        """Control the sweep start frequency, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     frequency_stop = Instrument.control(
         ":FREQuency:SWEep:STOP?",
-        ":FREQuency:SWEep:STOP %e",
-        """Control the sweep stop frequency, in m.""",
+        ":FREQuency:SWEep:STOP %g",
+        """Control the sweep stop frequency, units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
     frequency_step = Instrument.control(
         ":FREQuency:SWEep:STEP?",
-        ":FREQuency:SWEep:STEP %e",
-        """Control the sweep step frequency when in step sweep mode, in m.""",
+        ":FREQuency:SWEep:STEP %g",
+        """Control the sweep step frequency when in step sweep mode,
+        units determined by :attr:`~.command_set`.""",
         check_set_errors=True,
     )
 
@@ -291,3 +293,13 @@ class TSL570(SCPIMixin, Instrument):
     sweep_count = Instrument.measurement(
         ":WAVelength:SWEep:COUNt?", """Get the current number of completed sweeps."""
     )
+
+
+class TSL550(TSL570):
+    """Represents the Santec TSL-550 Tunable Laser and provides a high-level interface for
+    interacting with the instrument."""
+
+    def __init__(self, adapter, name="Santec TSL-550", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+    wavelength_setpoint_docs = """Control the output wavelength, in nm."""  # !!! I doubt this works
