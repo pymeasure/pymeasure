@@ -864,7 +864,7 @@ def test_detector_reference_result_valid():
     ) as inst:
         detector = inst.detector(module=4, channel=1)
         result = detector.reference_result
-        
+
         assert isinstance(result, dict)
         assert result['state'] == 1
         assert result['type'] == 0
@@ -880,7 +880,7 @@ def test_detector_reference_result_no_reference():
     ) as inst:
         detector = inst.detector(module=4, channel=1)
         result = detector.reference_result
-        
+
         assert isinstance(result, dict)
         assert result['state'] == 0
         assert result['type'] is None
@@ -896,7 +896,7 @@ def test_detector_reference_result_pdl_reference():
     ) as inst:
         detector = inst.detector(module=5, channel=2)
         result = detector.reference_result
-        
+
         assert isinstance(result, dict)
         assert result['state'] == 1
         assert result['type'] == 1  # TF/PDL reference (4 sweeps)
