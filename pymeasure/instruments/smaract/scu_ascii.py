@@ -1,4 +1,4 @@
-
+from typing import Union
 from pint import Quantity as Q_
 
 from pymeasure.instruments import Instrument
@@ -20,9 +20,11 @@ class SmarActSCU_USB(Instrument):
         get_process = lambda s: Q_(s[6:], 'Hz'),
     )
 
-    def move_abs(self, position: Q_):
-        ...
-        self.write()
+
+
+    def move_abs(self, position: Union[Q_, int]):
+
+        self.write(f":MPA0P{check_type(position, 'um')}")
 
 
 if __name__ == "__main__":
