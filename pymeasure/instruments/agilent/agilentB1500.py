@@ -394,8 +394,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
             :param str status_string: Status string returned by the instrument
                                       when reading data.
-            :param str, optional name: Name of the SMU channel, defaults to None
-            :param bool, optional cmu: Whether or not channel is CMU, defaults to False (SMU)
+            :param str name: Name of the SMU channel, defaults to None
+            :param bool cmu: Whether or not channel is CMU, defaults to False (SMU)
             """
 
             def log_failed():
@@ -519,7 +519,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Return data formatting class for given data format string
 
         :param str output_format_str: Data output format, e.g. ``FMT21``
-        :param dict, optional smu_names: Dictionary of channels and SMU names, defaults to {}
+        :param dict smu_names: Dictionary of channels and SMU names, defaults to {}
         :return: Corresponding formatting class
         :rtype: class
         """
@@ -548,7 +548,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         Currently implemented are format 1, 11, and 21.
 
         :param str output_format: Output format string, e.g. ``FMT21``
-        :param int, optional mode: Data output mode, defaults to 0 (only measurement
+        :param int mode: Data output mode, defaults to 0 (only measurement
                                    data is returned)
         """
         # restrict to implemented formats
@@ -638,7 +638,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param ADCType adc_type: ADC type
         :param ADCMode mode: ADC mode
-        :param str, optional N: additional parameter, check documentation, defaults to ``''``
+        :param str N: additional parameter, check documentation, defaults to ``''``
         """
 
         adc_type = ADCType.get(adc_type)
@@ -660,7 +660,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         Defaults: N=1, Auto
 
         :param int number: Number of averages
-        :param AutoManual, optional mode: Mode (``'Auto','Manual'``), defaults to 'Auto'
+        :param AutoManual mode: Mode (``'Auto','Manual'``), defaults to 'Auto'
         """
         if number > 0:
             number = strict_range(number, range(1, 1024))
@@ -708,7 +708,7 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param WaitTimeType wait_type: Wait time type
         :param float N: Coefficient for initial wait time, default: 1
-        :param int, optional offset: Offset for wait time, defaults to 0
+        :param int offset: Offset for wait time, defaults to 0
         """
         wait_type = WaitTimeType.get(wait_type).value
         self.write(f"WAT {wait_type}, {N}, {offset}")
@@ -733,9 +733,9 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         :param float hold: Hold time
         :param float delay: Delay time
-        :param float, optional step_delay: Step delay time, defaults to 0
-        :param float, optional step_trigger_delay: Trigger delay time, defaults to 0
-        :param float, optional measurement_trigger_delay: Measurement trigger delay time,
+        :param float step_delay: Step delay time, defaults to 0
+        :param float step_trigger_delay: Trigger delay time, defaults to 0
+        :param float measurement_trigger_delay: Measurement trigger delay time,
                                                           defaults to 0
         """
         hold = strict_discrete_range(hold, (0, 655.35), 0.01)
@@ -756,7 +756,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         Also set the post measurement condition. (``WM``)
 
         :param bool abort: Enable/Disable automatic abort
-        :param StaircaseSweepPostOutput, optional post:
+        :param StaircaseSweepPostOutput post:
             Output after measurement, defaults to 'Start'
         """
         abort_values = {True: 2, False: 1}
@@ -796,7 +796,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param float hold_bias: Bias hold time
         :param float interval: Sampling interval
         :param int number: Number of Samples
-        :param float, optional hold_base: Base hold time, defaults to 0
+        :param float hold_base: Base hold time, defaults to 0
         """
         n_channels = self.query_meas_settings()["Measurement Channels"]
         n_channels = len(n_channels.split(", "))
@@ -831,7 +831,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         Also set the post measurement condition. (``MSC``)
 
         :param bool abort: Enable/Disable automatic abort
-        :param SamplingPostOutput, optional post: Output after measurement, defaults to 'Bias'
+        :param SamplingPostOutput post: Output after measurement, defaults to 'Bias'
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
@@ -1075,9 +1075,9 @@ class SMU:
         :param str source_type: Source type (``'Voltage','Current'``)
         :param int or str source_range: Output range index or name
         :param float output: Source output value in A or V
-        :param float, optional comp: Compliance value, defaults to previous setting
+        :param float comp: Compliance value, defaults to previous setting
         :param CompliancePolarity comp_polarity: Compliance polairty, defaults to auto
-        :param int or str, optional comp_range: Compliance ranging type, defaults to auto
+        :param int or str comp_range: Compliance ranging type, defaults to auto
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "DV"
@@ -1119,11 +1119,11 @@ class SMU:
         :param str source_type: Source type (``'Voltage'`` or ``'Current'``)
         :param float target_output: Target output voltage or current
         :param int irange: Output range index
-        :param float, optional comp: Compliance, defaults to previous setting
-        :param CompliancePolarity, optional comp_polarity: Compliance polairty, defaults to auto
-        :param int or str, optional comp_range: Compliance ranging type, defaults to auto
-        :param float, optional stepsize: Maximum size of steps
-        :param float, optional pause: Duration in seconds to wait between steps
+        :param float comp: Compliance, defaults to previous setting
+        :param CompliancePolarity comp_polarity: Compliance polairty, defaults to auto
+        :param int or str comp_range: Compliance ranging type, defaults to auto
+        :param float stepsize: Maximum size of steps
+        :param float pause: Duration in seconds to wait between steps
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
@@ -1217,7 +1217,7 @@ class SMU:
         """Specify the auto range operation. Check Documentation. (``RM``)
 
         :param int mode: Range changing operation mode
-        :param int, optional rate: Parameter used to calculate the *current* value,
+        :param int rate: Parameter used to calculate the *current* value,
                                    defaults to 50
         """
         mode = strict_range(mode, range(1, 4))
@@ -1248,7 +1248,7 @@ class SMU:
         :param float stop: Sweep stop value
         :param int steps: Number of sweep steps
         :param float comp: Compliance value
-        :param float, optional Pcomp: Power compliance, defaults to not set
+        :param float Pcomp: Power compliance, defaults to not set
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WV"
@@ -1285,7 +1285,7 @@ class SMU:
         :param float start: Sweep start value
         :param float stop: Sweep stop value
         :param float comp: Compliance value
-        :param float, optional Pcomp: Power compliance, defaults to not set
+        :param float Pcomp: Power compliance, defaults to not set
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WSV"
@@ -1344,7 +1344,7 @@ class Ranging:
 
     :param list supported_ranges: Ranges which are supported (list of range indices)
     :param dict ranges: All range names ``{Name: Indices}``
-    :param bool, optional fixed_ranges: Add fixed ranges (negative indices), defaults to False
+    :param bool fixed_ranges: Add fixed ranges (negative indices), defaults to False
 
     .. automethod:: __call__
     """
@@ -1654,9 +1654,9 @@ class SPGUChannel(Channel):
 
         :param SPGUSignalSource or int source: Signal source for the output voltage,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float, optional base_voltage: Pulse base voltage or DC output voltage in V,
+        :param float base_voltage: Pulse base voltage or DC output voltage in V,
             defaults to 0
-        :param float, optional peak_voltage: Pulse peak voltage in V, defaults to 0
+        :param float peak_voltage: Pulse peak voltage in V, defaults to 0
         """
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
@@ -1699,10 +1699,10 @@ class SPGUChannel(Channel):
 
         :param SPGUSignalSource or int source: Signal source for the pulse timings,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float, optional delay: Pulse delay in seconds, defaults to 0
-        :param float, optional width: Pulse width in seconds, defaults to 1e-7
-        :param float, optional rise_time: Pulse rise time in seconds, defaults to 2e-8
-        :param float, optional fall_time: Pulse fall time in seconds, defaults to rise_time if None
+        :param float delay: Pulse delay in seconds, defaults to 0
+        :param float width: Pulse width in seconds, defaults to 1e-7
+        :param float rise_time: Pulse rise time in seconds, defaults to 2e-8
+        :param float fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
         source = SPGUSignalSource.get(source).value
         if source == SPGUSignalSource.DC:
