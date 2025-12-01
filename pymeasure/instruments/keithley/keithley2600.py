@@ -41,7 +41,7 @@ log.addHandler(logging.NullHandler())
 #    LV   HV  HV+fine current
 # 1 2601 2611 2635
 # 2 2602 2612 2636
-# 2 2604 2614 2634 - No Ethernet
+# 2 2604 2614 2634 - No Ethernet for lower cost
 
 class Keithley260X(SCPIMixin, Instrument):
     """Represents the Keithley 2600* series SourceMeter with at least one channel"""
@@ -87,7 +87,7 @@ class Keithley2600(Keithley260X):
     """Backward compatible 2600 model - Not a real product"""
     def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
         warn("This is a generic 2 channel model. Using the actual model may " \
-                " match limits better.", FutureWarning)
+                " match limits and channels better.", FutureWarning)
         super().__init__(
             adapter,
             name,
@@ -136,7 +136,7 @@ class Keithley2602(Keithley260X):
         self.ChB = ChannelLV(self, 'b')
 
 class Keithley2602A(Keithley2602):
-    '''Represents the 2602A Single Channel SMU'''
+    '''Represents the 2602A Dual Channel SMU'''
     def __init__(self, adapter, name="Keithley 2602A SourceMeter", **kwargs):
         super().__init__(
             adapter,
@@ -145,7 +145,7 @@ class Keithley2602A(Keithley2602):
         )
 
 class Keithley2602B(Keithley2602):
-    '''Represents the 2602B Single Channel SMU'''
+    '''Represents the 2602B Dual Channel SMU'''
     def __init__(self, adapter, name="Keithley 2602B SourceMeter", **kwargs):
         super().__init__(
             adapter,
@@ -154,7 +154,7 @@ class Keithley2602B(Keithley2602):
         )
 
 class Keithley2604B(Keithley2602):
-    '''Represents the 2604B Single Channel SMU'''
+    '''Represents the 2604B Dual Channel SMU'''
     # It doesn't look like 2604 non-Bs were made.
     def __init__(self, adapter, name="Keithley 2604B SourceMeter", **kwargs):
         super().__init__(
@@ -165,17 +165,17 @@ class Keithley2604B(Keithley2602):
 
 class Keithley2611(Keithley260X):
     '''Represents the 2611 Single Channel SMU'''
-    def __init__(self, adapter, name="Keithley 2601 SourceMeter", **kwargs):
+    def __init__(self, adapter, name="Keithley 2611 SourceMeter", **kwargs):
         super().__init__(
             adapter,
             name,
             **kwargs
         )
-        self.ChA = ChannelLV(self, 'a')
+        self.ChA = ChannelHV(self, 'a')
 
 class Keithley2611A(Keithley2601):
     '''Represents the 2611A Single Channel SMU'''
-    def __init__(self, adapter, name="Keithley 2601A SourceMeter", **kwargs):
+    def __init__(self, adapter, name="Keithley 2611A SourceMeter", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -184,7 +184,7 @@ class Keithley2611A(Keithley2601):
 
 class Keithley2611B(Keithley2601):
     '''Represents the 2611B Single Channel SMU'''
-    def __init__(self, adapter, name="Keithley 2601B SourceMeter", **kwargs):
+    def __init__(self, adapter, name="Keithley 2611B SourceMeter", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -199,11 +199,11 @@ class Keithley2612(Keithley260X):
             name,
             **kwargs
         )
-        self.ChA = ChannelLV(self, 'a')
-        self.ChB = ChannelLV(self, 'b')
+        self.ChA = ChannelHV(self, 'a')
+        self.ChB = ChannelHV(self, 'b')
 
-class Keithley2612A(Keithley2602):
-    '''Represents the 2612A Single Channel SMU'''
+class Keithley2612A(Keithley2612):
+    '''Represents the 2612A Dual Channel SMU'''
     def __init__(self, adapter, name="Keithley 2612A SourceMeter", **kwargs):
         super().__init__(
             adapter,
@@ -211,8 +211,8 @@ class Keithley2612A(Keithley2602):
             **kwargs
         )
 
-class Keithley2612B(Keithley2602):
-    '''Represents the 2612B Single Channel SMU'''
+class Keithley2612B(Keithley2612):
+    '''Represents the 2612B Dual Channel SMU'''
     def __init__(self, adapter, name="Keithley 2612B SourceMeter", **kwargs):
         super().__init__(
             adapter,
@@ -220,8 +220,8 @@ class Keithley2612B(Keithley2602):
             **kwargs
         )
 
-class Keithley2634B(Keithley2602):
-    '''Represents the 2634B Single Channel SMU'''
+class Keithley2634B(Keithley2612):
+    '''Represents the 2634B Dual Channel SMU'''
     # It doesn't look like 2634 non-Bs were made.
     def __init__(self, adapter, name="Keithley 2634B SourceMeter", **kwargs):
         super().__init__(
@@ -230,7 +230,7 @@ class Keithley2634B(Keithley2602):
             **kwargs
         )
 
-class Keithley2635A(Keithley2601):
+class Keithley2635A(Keithley2611):
     '''Represents the 2635A Single Channel SMU'''
     def __init__(self, adapter, name="Keithley 2635A SourceMeter", **kwargs):
         super().__init__(
@@ -239,7 +239,7 @@ class Keithley2635A(Keithley2601):
             **kwargs
         )
 
-class Keithley2635B(Keithley2601):
+class Keithley2635B(Keithley2611):
     '''Represents the 2635B Single Channel SMU'''
     def __init__(self, adapter, name="Keithley 2635B SourceMeter", **kwargs):
         super().__init__(
@@ -248,9 +248,9 @@ class Keithley2635B(Keithley2601):
             **kwargs
         )
 
-class Keithley2636A(Keithley2602):
-    '''Represents the 2636A Single Channel SMU'''
-    # It doesn't look like 2604 non-letters were made.
+class Keithley2636A(Keithley2612):
+    '''Represents the 2636A Dual Channel SMU'''
+    # It doesn't look like 2634 non-letters were made.
     def __init__(self, adapter, name="Keithley 2636A SourceMeter", **kwargs):
         super().__init__(
             adapter,
@@ -258,9 +258,9 @@ class Keithley2636A(Keithley2602):
             **kwargs
         )
 
-class Keithley2636B(Keithley2602):
-    '''Represents the 2636B Single Channel SMU'''
-    # It doesn't look like 2604 non-letters were made.
+class Keithley2636B(Keithley2612):
+    '''Represents the 2636B Dual Channel SMU'''
+    # It doesn't look like 2634 non-letters were made.
     def __init__(self, adapter, name="Keithley 2636B SourceMeter", **kwargs):
         super().__init__(
             adapter,
