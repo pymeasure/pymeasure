@@ -132,7 +132,6 @@ grandfathered_docstring_instruments = [
     "KeysightDSOX1102G",
     "IPS120_10",
     "ITC503",
-    "TSL550",
     "PS120_10",
     "SFM",
     "SG380",
