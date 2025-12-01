@@ -18,6 +18,22 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley2450
    keithley2510
    keithley2600
+   keithley2601
+   keithley2602
+   keithley2611
+   keithley2612
+   keithley2600A
+   keithley2601A
+   keithley2602A
+   keithley2611A
+   keithley2612A
+   keithley2600B
+   keithley2601B
+   keithley2602B
+   keithley2604B
+   keithley2611B
+   keithley2612B
+   keithley2634B
    keithley2700
    keithley2750
    keithley6221
