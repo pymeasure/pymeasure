@@ -35,7 +35,6 @@ from .keithley2600 import Keithley2601, Keithley2602, Keithley2611, Keithley2612
 from .keithley2600 import Keithley2601A, Keithley2602A, Keithley2611A, Keithley2612A
 from .keithley2600 import Keithley2601B, Keithley2602B, Keithley2604B, Keithley2611B, Keithley2612B
 from .keithley2600 import Keithley2634B, Keithley2635B, Keithley2636B
-from .keithley2600 import Keithley2602B
 from .keithley2700 import Keithley2700
 from .keithley2750 import Keithley2750
 from .keithley6221 import Keithley6221
