@@ -87,6 +87,7 @@ class TSL570(SCPIMixin, Instrument):
         values={"Legacy": 0, "SCPI": 1},
         map_values=True,
     )
+
     # --- Optical power control ---
 
     output_enabled = Instrument.control(
@@ -291,7 +292,8 @@ class TSL570(SCPIMixin, Instrument):
     )
 
     sweep_count = Instrument.measurement(
-        ":WAVelength:SWEep:COUNt?", """Get the current number of completed sweeps."""
+        ":WAVelength:SWEep:COUNt?",
+        """Get the current number of completed sweeps.""",
     )
 
 
@@ -302,4 +304,35 @@ class TSL550(TSL570):
     def __init__(self, adapter, name="Santec TSL-550", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    wavelength_setpoint_docs = """Control the output wavelength, in nm."""  # !!! I doubt this works
+    @property
+    def command_set(self):
+        """The command set. The TSL-550 only accepts legacy commands.
+        Legacy commands use units of nm and THz for wavelength and optical frequency
+        respectively."""
+        return "Legacy"
+
+    @property
+    def wavelength_min(self):
+        raise AttributeError("TSL550.wavelength_min is not available.")
+
+    @property
+    def wavelength_max(self):
+        raise AttributeError("TSL550.wavelength_max is not available.")
+
+    @property
+    def frequency_min(self):
+        raise AttributeError("TSL550.frequency_min is not available.")
+
+    @property
+    def frequency_max(self):
+        raise AttributeError("TSL550.frequency_max is not available.")
+
+    sweep_speed = Instrument.control(
+        ":WAVelength:SWEep:SPEed?",
+        ":WAVelength:SWEep:SPEed %d",
+        """Control the sweep speed, in nm/s
+        (float strictly in range 0.5 to 100; rounds to 1 decimal place).""",
+        validator=strict_range,
+        values=[0.5, 100],
+        set_process=lambda v: round(v, 1),
+    )
