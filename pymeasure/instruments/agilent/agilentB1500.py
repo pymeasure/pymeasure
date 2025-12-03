@@ -71,7 +71,6 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     def query_learn(self, query_type):
         """Query settings from the instrument. (``*LRN?``)
-        Return dict of settings.
 
         :param int or str query_type: Query type (number according to manual)
         :rtype: dict
