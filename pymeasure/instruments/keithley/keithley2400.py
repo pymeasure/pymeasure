@@ -1035,7 +1035,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def trigger_immediately(self):
         """Configure measurements to be taken with the internal trigger
-        at the maximum sampling rate."""
+        at the maximum sampling rate.
+        """
         self.arm_source = "immediate"
         self.trigger_source = "immediate"
 
