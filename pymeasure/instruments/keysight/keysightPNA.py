@@ -239,8 +239,10 @@ class MeasurementChannel(Channel):
 class KeysightPNA(SCPIMixin, Instrument):
     """A class representing a Keysight PNA vector network analyzer.
 
-    :param str data_format: set the :attr:`.data_format` attribute to strictly ``ascii``, ``real32`` or ``real64``.
-    :param bool byte_order_swapped: Set the :attr:`.byte_order_swapped` attribute.
+    :param str data_format: set the :attr:`.data_format` attribute to strictly ``ascii``,
+    ``real32`` or ``real64``.
+    :param bool byte_order_swapped: Set the :attr:`.byte_order_swapped` attribute for 
+    the ``real32`` and ``real64`` data formats.
 
     .. code-block:: python
 
