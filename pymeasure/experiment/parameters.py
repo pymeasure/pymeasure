@@ -578,35 +578,44 @@ class RangeParameter(Parameter[np.ndarray]):
 
 class ParameterGroup:
     
-    def __set_name__(self, owner, name):
+    """def __set_name__(self, owner, name):
         for var_name, parameter in self.parameters.items():
             setattr(owner, var_name, parameter)
-        setattr(owner, name, self.value)
+        setattr(owner, name, self.value)"""
 
     def __init__(self, name: str, **parameters: Parameter) -> None:
         self.name = name
+        self.group_by = {}
         self.parameters = parameters
         self.param_names = list(self.parameters.keys())
         for _, parameter in self.parameters.items():
             assert issubclass(parameter.__class__, Parameter)
             parameter.group_name = name
-            
+
+    def is_set(self):
+        params_set = [param.is_set() for _, param in self.parameters.items()]
+        return all(params_set)
+        
     @property
     def value(self) -> list:
-        return self.convert()
+        return self.serialize()
 
     @value.setter
     def value(self, value_list: list):
-        for value, (_, parameter) in zip(value_list, self.parameters.items()):
-            parameter.value = value
+        self.deserialize(value_list)
 
-    def convert(self):
+    def serialize(self):
         """Act on the parameter values and specify what the group should return.
            By default it returns a list of the parameter values.
            Modify in subclasses.
         """
         return [parameter.value for (_, parameter) in self.parameters.items()]
 
+    def deserialize(self, value_list: list):
+        for value, (_, parameter) in zip(value_list, self.parameters.items()):
+            parameter.value = value
+
+        
 class RangeParameterGroup(ParameterGroup):
 
     def __init__(self, name: str, start_kwargs = {}, stop_kwargs = {}, no_step_kwargs = {}) -> None:
@@ -618,9 +627,14 @@ class RangeParameterGroup(ParameterGroup):
         }
         super().__init__(name, **parameters)
 
-    def convert(self):
-        start, stop, no_steps = super().convert()
+    def serialize(self):
+        start, stop, no_steps = super().serialize()
         return np.linspace(start, stop, no_steps)
+
+    def deserialize(self, value_list: list):
+        self.parameters[f"{self.var_name}_start"].value = value_list[0]
+        self.parameters[f"{self.var_name}_stop"].value = value_list[-1]
+        self.parameters[f"{self.var_name}_no_steps"].value = len(value_list)
         
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter

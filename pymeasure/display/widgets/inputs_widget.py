@@ -35,6 +35,8 @@ from ...experiment import parameters, Procedure
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+NO_LABEL_INPUTS = (BooleanInput, )
+
 class ArrowButton(QtWidgets.QToolButton):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -88,8 +90,10 @@ class ArrowButton(QtWidgets.QToolButton):
         self.anim.start()
 
 class InputGroup(QtWidgets.QWidget):
-    def __init__(self, name: str, *args, **kwargs) -> None:
+    def __init__(self, group: parameters.ParameterGroup, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        self.parameter = group
         
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
@@ -103,7 +107,7 @@ class InputGroup(QtWidgets.QWidget):
         self.toggled = self.collapse_button.toggled
         self.header_layout.addWidget(self.collapse_button)
         
-        self.header_label = QtWidgets.QLabel(name)
+        self.header_label = QtWidgets.QLabel(self.parameter.name)
         self.header_layout.addWidget(self.header_label)
         
         self.contents = QtWidgets.QWidget()
@@ -123,9 +127,42 @@ class InputGroup(QtWidgets.QWidget):
         
         self._height = None
         self.toggled.connect(self.animate)
+        self.setup_ui()
+        
+    def setup_ui(self):
+        for _,parameter in self.parameter.parameters.items():
+            if parameter.ui_class is not None:
+                element = parameter.ui_class(parameter)
+                
+            elif isinstance(parameter,parameters.ParameterGroup):
+                element = InputGroup(parameter)
+                
+            elif isinstance(parameter, parameters.FloatParameter):
+                element = ScientificInput(parameter)
+
+            elif isinstance(parameter, parameters.PhysicalParameter):
+                element = UncertQuantInput(parameter)
+
+            elif isinstance(parameter, parameters.IntegerParameter):
+                element = IntegerInput(parameter)
+
+            elif isinstance(parameter, parameters.BooleanParameter):
+                element = BooleanInput(parameter)
+
+            elif isinstance(parameter, parameters.ListParameter):
+                element = ListInput(parameter)
+
+            elif isinstance(parameter, parameters.VectorParameter):
+                element = VectorInput(parameter)
+
+            elif isinstance(parameter, parameters.Parameter):
+                element = StringInput(parameter)
+
+            self.add_input(element, parameter.name)
+
         
     def add_input(self, input_widget: Input, label: str | None = None):
-        if label:
+        if label and not isinstance(input_widget, NO_LABEL_INPUTS):
             label_widget = QtWidgets.QLabel()
             label_widget.setText(f"{label}:")
             self.contents_layout.addWidget(label_widget)
@@ -145,7 +182,6 @@ class InputsWidget(QtWidgets.QWidget):
     """
 
     # tuple of Input classes that do not need an external label
-    NO_LABEL_INPUTS = (BooleanInput,)
 
     def __init__(self,
                  procedure_class: Type[Procedure],
@@ -166,7 +202,10 @@ class InputsWidget(QtWidgets.QWidget):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if parameter.ui_class is not None:
+            if isinstance(parameter,parameters.ParameterGroup):
+                element = InputGroup(parameter)
+                
+            elif parameter.ui_class is not None:
                 element = parameter.ui_class(parameter)
                 
             elif isinstance(parameter, parameters.FloatParameter):
@@ -199,19 +238,19 @@ class InputsWidget(QtWidgets.QWidget):
 
         self.labels = {}
         parameters = self._procedure.parameter_objects()
-        groups = {
+        """groups = {
             parameters[name].group_name: InputGroup(parameters[name].group_name)
             for name in self._inputs
             if parameters[name].group_name
-        }
+        }"""
         for name in self._inputs:
             input_inst: Input = getattr(self, name)
-            if (group := groups.get(parameters[name].group_name, None)):
+            """if (group := groups.get(parameters[name].group_name, None)):
                 group.add_input(input_inst,
                                 parameters[name].name
                                 if not isinstance(input_inst, self.NO_LABEL_INPUTS)
-                                else None)
-            elif not isinstance(input_inst, self.NO_LABEL_INPUTS):
+                                else None)"""
+            if not isinstance(input_inst, NO_LABEL_INPUTS) and not isinstance(input_inst, InputGroup):
                 label = QtWidgets.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
@@ -219,8 +258,8 @@ class InputsWidget(QtWidgets.QWidget):
                 self.labels[name] = label
             else:
                 vbox.addWidget(input_inst)
-        for _, group in groups.items():
-            vbox.addWidget(group)
+        """for _, group in groups.items():
+            vbox.addWidget(group)"""
 
         if inputs_in_scrollarea:
             scroll_area = QtWidgets.QScrollArea()

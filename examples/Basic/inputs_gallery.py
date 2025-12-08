@@ -91,11 +91,9 @@ class MainWindow(ManagedWindow):
                   "bool_param",
                   "list_param",
                   "vector_param",
-                  "test1",
-                  "test2",
-                  "wavelength_range_start",
-                  "wavelength_range_stop",
-                  "wavelength_range_no_steps"]
+                  "param_group",
+                  "wl_range",
+                  ]
         super().__init__(
             procedure_class=TestProcedure,
             inputs= inputs,
