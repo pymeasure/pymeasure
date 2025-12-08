@@ -71,7 +71,6 @@ class Marker(Channel):
 class Trace(Channel):
     """A class representing a Keysight PNA measurement trace."""
 
-    # add the 15 markers to the trace
     markers = Instrument.MultiChannelCreator(Marker, list(range(1, 16)), prefix="mkr_")
 
     placeholder = "tr"
