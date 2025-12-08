@@ -46,15 +46,14 @@ from pymeasure.display.windows import ManagedWindow
 
 import logging
 
-from pymeasure.experiment.parameters import PhysicalParameter
+from pymeasure.experiment.parameters import PhysicalParameter, ParameterGroup, RangeParameterGroup
 
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
-
 class TestProcedure(Procedure):
     float_param = FloatParameter("Float Parameter", units="s", default=0.2, step=0.01)
-    int_param = IntegerParameter("Integer Parametr", units="A", default = 1, step=1)
+    int_param = IntegerParameter("Integer Parameter", units="A", default = 1, step=1)
     param = Parameter("Parameter", default = "text")
     bool_param = BooleanParameter("Boolean Parameter", default=True)
     list_param = ListParameter(
@@ -64,11 +63,17 @@ class TestProcedure(Procedure):
         "Vector Parameter", default = [1,2,3], units = "m", group_name="Test"
     )
     phys_param = PhysicalParameter("Physical Parameter", default = [20,3])
+    param_group = ParameterGroup("Test group",
+                                 test1 = FloatParameter("test1", default=0),
+                                 test2 = FloatParameter("test2", default=0)
+                                 )
+    wl_range = RangeParameterGroup("Wavelength Range")
+    
     
     DATA_COLUMNS = ["Iteration", "Random Number"]
 
     def startup(self):
-        pass
+        print(self.wl_range)
     
     def execute(self):
         pass
@@ -79,9 +84,21 @@ class TestProcedure(Procedure):
 
 class MainWindow(ManagedWindow):
     def __init__(self):
+        inputs = ["phys_param",
+                  "float_param",
+                  "int_param",
+                  "param",
+                  "bool_param",
+                  "list_param",
+                  "vector_param",
+                  "test1",
+                  "test2",
+                  "wavelength_range_start",
+                  "wavelength_range_stop",
+                  "wavelength_range_no_steps"]
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["phys_param", "float_param", "int_param", "param", "bool_param", "list_param", "vector_param"],
+            inputs= inputs,
             displays=["float_param"],
             x_axis="Iteration",
             y_axis="Random Number",

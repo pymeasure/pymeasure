@@ -168,13 +168,11 @@ class InputsWidget(QtWidgets.QWidget):
             parameter = parameter_objects[name]
             if parameter.ui_class is not None:
                 element = parameter.ui_class(parameter)
-
+                
             elif isinstance(parameter, parameters.FloatParameter):
-                print("yay")
                 element = ScientificInput(parameter)
 
             elif isinstance(parameter, parameters.PhysicalParameter):
-                print("yay")
                 element = UncertQuantInput(parameter)
 
             elif isinstance(parameter, parameters.IntegerParameter):
@@ -193,7 +191,7 @@ class InputsWidget(QtWidgets.QWidget):
                 element = StringInput(parameter)
 
             setattr(self, name, element)
-
+        
     def _layout(self, inputs_in_scrollarea):
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
