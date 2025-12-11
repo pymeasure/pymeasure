@@ -129,7 +129,7 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
         self._parameter.value = self.get_value()
 
     def reset(self) -> None:
-        if self._parameter.default:
+        if self._parameter.default is not None:
             self.set_value(self._parameter.default)
 
     def add_trailing_button(self, button: TrailingButton) -> None:

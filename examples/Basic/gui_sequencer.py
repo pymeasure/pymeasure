@@ -37,22 +37,23 @@ import sys
 import random
 from time import sleep
 
-from pymeasure.experiment import Procedure, IntegerParameter, Parameter, FloatParameter
+from pymeasure.experiment import Procedure, IntegerParameter, Parameter, \
+    FloatParameter
 from pymeasure.display.Qt import QtWidgets
 from pymeasure.display.windows import ManagedWindow
 
 import logging
-
-log = logging.getLogger("")
+log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
-    iterations = IntegerParameter("Loop Iterations", default=100)
-    delay = FloatParameter("Delay Time", units="s", default=0.2)
-    seed = Parameter("Random Seed", default="12345")
 
-    DATA_COLUMNS = ["Iteration", "Random Number"]
+    iterations = IntegerParameter('Loop Iterations', default=100)
+    delay = FloatParameter('Delay Time', units='s', default=0.2)
+    seed = Parameter('Random Seed', default='12345')
+
+    DATA_COLUMNS = ['Iteration', 'Random Number']
 
     def startup(self):
         log.info("Setting up random number generator")
@@ -61,10 +62,13 @@ class TestProcedure(Procedure):
     def execute(self):
         log.info("Starting to generate numbers")
         for i in range(self.iterations):
-            data = {"Iteration": i, "Random Number": random.random()}
+            data = {
+                'Iteration': i,
+                'Random Number': random.random()
+            }
             log.debug("Produced numbers: %s" % data)
-            self.emit("results", data)
-            self.emit("progress", 100 * i / self.iterations)
+            self.emit('results', data)
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -75,19 +79,20 @@ class TestProcedure(Procedure):
 
 
 class MainWindow(ManagedWindow):
+
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["iterations", "delay", "seed"],
-            displays=["iterations", "delay", "seed"],
-            x_axis="Iteration",
-            y_axis="Random Number",
+            inputs=['iterations', 'delay', 'seed'],
+            displays=['iterations', 'delay', 'seed'],
+            x_axis='Iteration',
+            y_axis='Random Number',
             sequencer=True,
-            sequencer_inputs=["iterations", "delay", "seed"],
+            sequencer_inputs=['iterations', 'delay', 'seed'],
             sequence_file="gui_sequencer_example_sequence.txt",
-            inputs_in_scrollarea=True,
+            inputs_in_scrollarea=True
         )
-        self.setWindowTitle("GUI Example")
+        self.setWindowTitle('GUI Example')
 
 
 if __name__ == "__main__":

@@ -50,16 +50,16 @@ import instruments.units as u
 from io import BytesIO
 
 import logging
-
-log = logging.getLogger("")
+log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
-    iterations = IntegerParameter("Loop Iterations", default=10, maximum=100)
-    delay = FloatParameter("Delay Time", units="s", default=0.2)
 
-    DATA_COLUMNS = ["Iteration", "Power (W)"]
+    iterations = IntegerParameter('Loop Iterations', default=10, maximum=100)
+    delay = FloatParameter('Delay Time', units='s', default=0.2)
+
+    DATA_COLUMNS = ['Iteration', 'Power (W)']
 
     def startup(self):
         log.info("Setting up the power meter")
@@ -76,13 +76,13 @@ class TestProcedure(Procedure):
         log.info("Starting to measure the laser power")
         for i in range(self.iterations):
             data = {
-                "Iteration": i,
+                'Iteration': i,
                 # Read the powermeter and store the sensor reading in Watts.
-                "Power (W)": self.powermeter.read().m_as(u.W),
+                'Power (W)': self.powermeter.read().m_as(u.W),
             }
             log.debug("Produced numbers: %s" % data)
-            self.emit("results", data)
-            self.emit("progress", 100 * i / self.iterations)
+            self.emit('results', data)
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -93,15 +93,16 @@ class TestProcedure(Procedure):
 
 
 class MainWindow(ManagedWindow):
+
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["iterations", "delay"],
-            displays=["iterations", "delay"],
-            x_axis="Iteration",
-            y_axis="Power (W)",
+            inputs=['iterations', 'delay'],
+            displays=['iterations', 'delay'],
+            x_axis='Iteration',
+            y_axis='Power (W)',
         )
-        self.setWindowTitle("GUI Example for Foreign Instrument")
+        self.setWindowTitle('GUI Example for Foreign Instrument')
 
 
 if __name__ == "__main__":

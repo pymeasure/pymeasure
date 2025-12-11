@@ -28,13 +28,14 @@ from functools import partial
 from typing import Any, Type
 
 from ..inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
-                      StringInput, UncertQuantInput, VectorInput)
+                      StringInput, UncertQuantInput, VectorInput, TrailingButton)
 from ..Qt import QtWidgets, QtCore, QtGui
 from ...experiment import parameters, Procedure
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+# tuple of Input classes that do not need an external label
 NO_LABEL_INPUTS = (BooleanInput, )
 
 class ArrowButton(QtWidgets.QToolButton):
@@ -130,6 +131,7 @@ class InputGroup(QtWidgets.QWidget):
         self.setup_ui()
         
     def setup_ui(self):
+        self.elements = {}
         for _,parameter in self.parameter.parameters.items():
             if parameter.ui_class is not None:
                 element = parameter.ui_class(parameter)
@@ -159,8 +161,8 @@ class InputGroup(QtWidgets.QWidget):
                 element = StringInput(parameter)
 
             self.add_input(element, parameter.name)
-
-        
+            self.elements[parameter.name] = element
+            
     def add_input(self, input_widget: Input, label: str | None = None):
         if label and not isinstance(input_widget, NO_LABEL_INPUTS):
             label_widget = QtWidgets.QLabel()
@@ -175,14 +177,24 @@ class InputGroup(QtWidgets.QWidget):
         self.anim_contents.setStartValue(self.contents.height())
         self.anim_contents.setEndValue(self._height if checked else 1)
         self.anim_contents.start()
+
+class RangeInputGroup(InputGroup):
+    selection_triggered = QtCore.Signal()
+    def __init__(self, group: parameters.ParameterGroup, *args, **kwargs) -> None:
+        super().__init__(group, *args, **kwargs)
+        self.select_trailing_button = TrailingButton("◱", lambda: self.selection_triggered.emit(), "Select range")
+        self.header_layout.addWidget(self.select_trailing_button)
+        self.select_trailing_button.setVisible(True)
+
+    def set_range(self, r: tuple):
+        self.elements["Start"].set_value(r[0])
+        self.elements["Stop"].set_value(r[1])
         
 class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
-
-    # tuple of Input classes that do not need an external label
-
+    selection_triggered = QtCore.Signal()
     def __init__(self,
                  procedure_class: Type[Procedure],
                  inputs: tuple[str] | None = None,
@@ -202,7 +214,11 @@ class InputsWidget(QtWidgets.QWidget):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if isinstance(parameter,parameters.ParameterGroup):
+            if isinstance(parameter, parameters.RangeParameterGroup):
+                element = RangeInputGroup(parameter)
+                element.selection_triggered.connect(self.selection_triggered.emit)
+                setattr(self, "set_range", element.set_range)
+            elif isinstance(parameter,parameters.ParameterGroup):
                 element = InputGroup(parameter)
                 
             elif parameter.ui_class is not None:

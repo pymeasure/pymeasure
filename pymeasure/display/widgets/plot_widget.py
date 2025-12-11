@@ -27,7 +27,7 @@ import logging
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
-from ..Qt import QtCore, QtWidgets
+from ..Qt import QtCore, QtWidgets, QtGui
 from .tab_widget import TabWidget
 from .plot_frame import PlotFrame
 
@@ -39,7 +39,7 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to allow different columns of the data to be dynamically chosen
     """
-
+    
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
                  check_status=True, linewidth=1, parent=None):
         super().__init__(name, parent)
@@ -79,6 +79,11 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
             self.check_status,
             parent=self,
         )
+
+        self.roi = None
+        self.selection_active = False
+        self.start_pos = None
+       
         self.updated = self.plot_frame.updated
         self.plot = self.plot_frame.plot
         self.columns_x.setCurrentIndex(0)
@@ -150,3 +155,13 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
 
     def clear_widget(self):
         self.plot.clear()
+
+    def enter_selection_mode(self):
+        super().enter_selection_mode()
+        self.linear_reg = pg.LinearRegionItem()
+        self.plot_frame.plot_widget.addItem(self.linear_reg)
+
+    def exit_selection_mode(self):
+        x1, x2 = self.linear_reg.getRegion()
+        self.plot_frame.plot_widget.removeItem(self.linear_reg)
+        return (x1, x2, 0, 0)

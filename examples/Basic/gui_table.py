@@ -44,17 +44,17 @@ from pymeasure.display.windows import ManagedWindowBase
 from pymeasure.display.widgets import TableWidget, LogWidget
 
 import logging
-
-log = logging.getLogger("")
+log = logging.getLogger('')
 log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
-    iterations = IntegerParameter("Loop Iterations", default=10)
-    delay = FloatParameter("Delay Time", units="s", default=0.2)
-    seed = Parameter("Random Seed", default="12345")
 
-    DATA_COLUMNS = ["Iteration", "Random Number"]
+    iterations = IntegerParameter('Loop Iterations', default=10)
+    delay = FloatParameter('Delay Time', units='s', default=0.2)
+    seed = Parameter('Random Seed', default='12345')
+
+    DATA_COLUMNS = ['Iteration', 'Random Number']
 
     def startup(self):
         log.info("Setting up random number generator")
@@ -63,10 +63,13 @@ class TestProcedure(Procedure):
     def execute(self):
         log.info("Starting to generate numbers")
         for i in range(self.iterations):
-            data = {"Iteration": i, "Random Number": random.random()}
+            data = {
+                'Iteration': i,
+                'Random Number': random.random()
+            }
             log.debug("Produced numbers: %s" % data)
-            self.emit("results", data)
-            self.emit("progress", 100 * i / self.iterations)
+            self.emit('results', data)
+            self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -77,31 +80,30 @@ class TestProcedure(Procedure):
 
 
 class MainWindow(ManagedWindowBase):
+
     def __init__(self):
-        widget_list = (
-            TableWidget(
-                "Experiment Table",
-                TestProcedure.DATA_COLUMNS,
-                by_column=True,
-            ),
-            LogWidget("Experiment Log"),
-        )
+        widget_list = (TableWidget("Experiment Table",
+                                   TestProcedure.DATA_COLUMNS,
+                                   by_column=True,
+                                   ),
+                       LogWidget("Experiment Log"),
+                       )
 
         super().__init__(
             procedure_class=TestProcedure,
-            inputs=["iterations", "delay", "seed"],
-            displays=["iterations", "delay", "seed"],
+            inputs=['iterations', 'delay', 'seed'],
+            displays=['iterations', 'delay', 'seed'],
             widget_list=widget_list,
             enable_file_input=False,
         )
         logging.getLogger().addHandler(widget_list[1].handler)
         log.setLevel(self.log_level)
         log.info("ManagedWindow connected to logging")
-        self.setWindowTitle("GUI Example")
+        self.setWindowTitle('GUI Example')
 
     def queue(self):
-        direc = "."
-        filename = unique_filename(direc, "gui_table")
+        direc = '.'
+        filename = unique_filename(direc, 'gui_table')
 
         procedure = self.make_procedure()
         results = Results(procedure, filename)
