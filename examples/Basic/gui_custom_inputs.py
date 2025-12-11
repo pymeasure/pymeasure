@@ -43,17 +43,17 @@ from pymeasure.display.Qt import QtWidgets, fromUi
 from pymeasure.display.windows import ManagedWindow
 
 import logging
-log = logging.getLogger('')
+
+log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
 
 
 class TestProcedure(Procedure):
+    iterations = IntegerParameter("Loop Iterations", default=100)
+    delay = FloatParameter("Delay Time", units="s", default=0.2)
+    seed = Parameter("Random Seed", default="12345")
 
-    iterations = IntegerParameter('Loop Iterations', default=100)
-    delay = FloatParameter('Delay Time', units='s', default=0.2)
-    seed = Parameter('Random Seed', default='12345')
-
-    DATA_COLUMNS = ['Iteration', 'Random Number']
+    DATA_COLUMNS = ["Iteration", "Random Number"]
 
     def startup(self):
         log.info("Setting up random number generator")
@@ -62,13 +62,10 @@ class TestProcedure(Procedure):
     def execute(self):
         log.info("Starting to generate numbers")
         for i in range(self.iterations):
-            data = {
-                'Iteration': i,
-                'Random Number': random.random()
-            }
+            data = {"Iteration": i, "Random Number": random.random()}
             log.debug("Produced numbers: %s" % data)
-            self.emit('results', data)
-            self.emit('progress', 100 * i / self.iterations)
+            self.emit("results", data)
+            self.emit("progress", 100 * i / self.iterations)
             sleep(self.delay)
             if self.should_stop():
                 log.warning("Catch stop command in procedure")
@@ -79,23 +76,22 @@ class TestProcedure(Procedure):
 
 
 class MainWindow(ManagedWindow):
-
     def __init__(self):
         super().__init__(
             procedure_class=TestProcedure,
-            displays=['iterations', 'delay', 'seed'],
-            x_axis='Iteration',
-            y_axis='Random Number',
+            displays=["iterations", "delay", "seed"],
+            x_axis="Iteration",
+            y_axis="Random Number",
             sequencer=True,
         )
-        self.setWindowTitle('GUI Example')
+        self.setWindowTitle("GUI Example")
 
     def _setup_ui(self):
         # After the default setup_ui method, replace the inputs widget with
         # the custom widget
         super()._setup_ui()
         self.inputs.hide()
-        self.inputs = fromUi('gui_custom_inputs.ui')
+        self.inputs = fromUi("gui_custom_inputs.ui")
 
     def make_procedure(self):
         # Overwrite the make_procedure method that creates the procedure and
