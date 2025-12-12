@@ -1,0 +1,14 @@
+#################################################################
+GW Instek GPD-2303S 2-Channel Programmable Linear DC Power Supply, 30V/3A, 180W
+#################################################################
+
+.. autoclass:: pymeasure.instruments.gwinstek.gwinstekGPD2303S
+    :members:
+    :show-inheritance:
+    :inherited-members: CommonBase
+
+.. autoclass:: pymeasure.instruments.gwinstek.gwinstekGPD2303S.GWInstekGPD2303SStatusRegister
+    :members:
+
+.. autoclass:: pymeasure.instruments.gwinstek.gwinstekGPD2303S.GWInstekGPD230SChannel
+    :members:
