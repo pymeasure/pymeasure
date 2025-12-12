@@ -27,14 +27,18 @@ from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
-import logging
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
 _VOLTAGE_RANGE = [0.0, 30]
 _CURRENT_RANGE = [0.0, 3]
-_TRACK_MODES = [0, 1, 2]  # 0=Independent, 1=Series, 2=Parallel
+
+class TRACK_MODE(enum.Enum):
+    INDEPENDENT = 0
+    SERIES = 1
+    PARALLEL = 2
+
+class BAUD_RATE(enum.Enum):
+    BAUD_115200 = 0
+    BAUD_57600 = 1
+    BAUD_9600 = 2
 
 
 class GWInstekGPD2303SStatusRegister(enum.Enum):
@@ -53,30 +57,32 @@ class GWInstekGPD230SChannel(Channel):
     current_limit = Channel.control(
         "ISET{ch}?",
         "ISET{ch}:%g",
-        """Control maximum current of the power supply.""",
+        """Control maximum current [A] of the power supply.""",
         get_process=lambda v: float(v.replace("A", "")),
         set_process=lambda v: round(v, 3),
         validator=truncated_range,
         values=_CURRENT_RANGE,
     )
+
     voltage_limit = Channel.control(
         "VSET{ch}?",
         "VSET{ch}:%g",
-        """Control maximum voltage of the power supply.""",
+        """Control maximum voltage [V] of the power supply.""",
         get_process=lambda v: float(v.replace("V", "")),
         set_process=lambda v: round(v, 3),
         validator=truncated_range,
         values=_VOLTAGE_RANGE,
     )
+
     current = Channel.measurement(
         "IOUT{ch}?",
-        """Get the actual output current.""",
+        """Get the actual output current [A].""",
         get_process=lambda v: float(v.replace("A", "")),
     )
 
     voltage = Channel.measurement(
         "VOUT{ch}?",
-        """Get the actual output voltage.""",
+        """Get the actual output voltage [V].""",
         get_process=lambda v: float(v.replace("V", "")),
     )
 
@@ -85,47 +91,14 @@ class GWInstekGPD230S(Instrument):
     """
     Represents the GW Instek two channel Power Supply (minimal implementation)
     and provides a high-level interface for interacting with the instrument.
-
-    The device only has a serial USB interface that is ususally set at
-    a baud rate of 9600. \n
-
-    the GPD-230s series only has two channels.
-
-    Supported commands (as per the manual):
-
-      - VSET<CH>:<volts>
-      - VSET<CH>?
-      - ISET<CH>:<amps>
-      - ISET<CH>?
-
-      - VOUT<CH>?
-      - IOUT<CH>?
-      - TRACK<NR1> (0=Independent, 1=Series, 2=Parallel)
-
-      - OUT<BOOLEAN> (0=Off, 1=On)
-      - LOCAL / REMOTE
-
-      - BEEP<BOOLEAN>
-      - SAV<NR1> / RCL<NR1> (memory save/recall)
-
-      - BAUD<NR1> (0:115200, 1:57600, 2:9600)
-      - *IDN? / STATUS? / ERR? / HELP?
-
-      - SAV/RCL do not affect output state; OUT may be turned off on save/recall as safety
-
-    .. code-block:: python
-
-    ps.output_enabled = 1
-    ps.channel_1.voltage_limit=5
-    ps.channel_1.current_limit=1
-    print(ps.error)
-    print(ps.status)
-    print(ps.channel_1.voltage)
-    print(ps.channel_1.current)\n
+    The device only has a serial USB interface that is usually set at
+    a baud rate of 9600. The GPD-230s series only has two channels.
 
     Known issue:
-    - When the instrument throws an error, it is best to flush the read buffer
-    `ps.adapter.flush_read_buffer()`
+    - When the instrument throws an error, it is best to flush the read buffer with
+    `ps.adapter.flush_read_buffer()`.
+    -  The`REMOTE` command is not implemented, as it does not have any effect. It
+    does not work, when the instrument is already in local mode.
     """
 
     channel_1 = Instrument.ChannelCreator(GWInstekGPD230SChannel, 1)
@@ -135,14 +108,13 @@ class GWInstekGPD230S(Instrument):
         self,
         adapter,
         name="GW Instek GPD-2303S DC Power Supply",
-        read_termination="\n",
         baud_rate=9600,
         **kwargs,
     ):
         super().__init__(
             adapter,
             name,
-            read_termination=read_termination,
+            read_termination="\n",
             baud_rate=baud_rate,
             includeSCPI=False,
             **kwargs,
@@ -162,8 +134,8 @@ class GWInstekGPD230S(Instrument):
             flag = register.value["flag"]
             states = register.value["states"]
 
-            trailing_zeors = (flag & -flag).bit_length() - 1
-            state = (flag & status_byte) >> trailing_zeors
+            trailing_zeros = (flag & -flag).bit_length() - 1
+            state = (flag & status_byte) >> trailing_zeros
 
             return_dict[name] = states.get(state, "Error")
 
@@ -175,29 +147,26 @@ class GWInstekGPD230S(Instrument):
         status_byte = int(self.ask("STATUS?").strip(), 2)
         return self.decode_status_byte(status_byte)
 
-    # remote = Instrument.setting(
-    #     "REMOTE",
-    #     """ Exits local mode and sets the instrument to remote mode""",
-    # )
-
     tracking_mode = Instrument.setting(
         "TRACK%d",
         """Set the operation mode: independent, tracking series, or tracking parallel.
         NR1 0: Independent, 1: Series, 2: Parallel""",
         validator=strict_discrete_set,
-        values=_TRACK_MODES,
+        values=TRACK_MODE,
+        map_values=True,
     )
 
     beep_enabled = Instrument.setting(
         "BEEP%d",
         """Set beep on or off.""",
         validator=strict_discrete_set,
-        values=_TRACK_MODES,
+        values={True: 1, False: 0},
+        map_values=True,
     )
 
     output_enabled = Instrument.setting(
         "OUT%d",
-        """Control whether the source is enabled, takes values True or False. (bool)""",
+        """Control whether the source is enabled. (bool)""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -214,13 +183,8 @@ class GWInstekGPD230S(Instrument):
         "BAUD%d",
         """Set the baud rate to 2:9600, 1:57600, 0:115200""",
         validator=strict_discrete_set,
-        values=[0, 1, 2],
-    )
-
-    local = Instrument.setting(
-        "LOCAL",
-        """Set to exit remote mode and sets the instrument ot local mode.
-        Beware, remote operation is not possible afterwards.""",
+        values=BAUD_RATE,
+        map_values=True,
     )
 
     error = Instrument.measurement(
@@ -228,3 +192,8 @@ class GWInstekGPD230S(Instrument):
     )
 
     help = Instrument.measurement("HELP?", """Get the command list.""")
+
+    def disable_remote(self):
+        """Set to exit remote mode and sets the instrument ot local mode.
+        Beware, remote operation is not possible afterwards."""
+        self.write("LOCAL")
