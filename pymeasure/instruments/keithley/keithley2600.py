@@ -27,16 +27,24 @@ import time
 from warnings import warn
 
 import numpy as np
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 # Setup logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+# The Keithley 2600* SMUs come in a few flavors with even last digits being 2 channels,
+# and the next to last digit indicating the max voltage and resolution.
+# We care about the limits not resolution.
+# For a given number, the limits are the same, but enumerating each may save user time.
+#    LV   HV  HV+fine current
+# 1 2601 2611 2635
+# 2 2602 2612 2636
+# 2 2604 2614 2634 - No Ethernet for lower cost
 
-class Keithley2600(SCPIUnknownMixin, Instrument):
-    """Represents the Keithley 2600 series (channel A and B) SourceMeter"""
+class Keithley260X(SCPIMixin, Instrument):
+    """Represents the Keithley 2600* series SourceMeter with at least one channel"""
 
     def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
         super().__init__(
@@ -44,8 +52,7 @@ class Keithley2600(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        self.ChA = Channel(self, 'a')
-        self.ChB = Channel(self, 'b')
+        # Channels are configured/initialized in the specific model.
 
     @property
     def next_error(self):
@@ -76,8 +83,194 @@ class Keithley2600(SCPIUnknownMixin, Instrument):
         return self.next_error
 
 
-class Channel:
+class Keithley2600(Keithley260X):
+    """Backward compatible 2600 model - Not a real product"""
+    def __init__(self, adapter, name="Keithley 2600 SourceMeter", **kwargs):
+        warn("This is a generic 2 channel model. Using the actual model may " \
+                " match limits and channels better.", FutureWarning)
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+        self.ChA = ChannelHV(self, 'a')
+        self.ChB = ChannelHV(self, 'b')
 
+class Keithley2601(Keithley260X):
+    '''Represents the 2601 Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2601 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+        self.ChA = ChannelLV(self, 'a')
+
+class Keithley2601A(Keithley2601):
+    '''Represents the 2601A Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2601A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2601B(Keithley2601):
+    '''Represents the 2601B Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2601B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2602(Keithley260X):
+    '''Represents the 2602 Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2602 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+        self.ChA = ChannelLV(self, 'a')
+        self.ChB = ChannelLV(self, 'b')
+
+class Keithley2602A(Keithley2602):
+    '''Represents the 2602A Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2602A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2602B(Keithley2602):
+    '''Represents the 2602B Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2602B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2604B(Keithley2602):
+    '''Represents the 2604B Dual Channel SMU'''
+    # It doesn't look like 2604 non-Bs were made.
+    def __init__(self, adapter, name="Keithley 2604B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2611(Keithley260X):
+    '''Represents the 2611 Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2611 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+        self.ChA = ChannelHV(self, 'a')
+
+class Keithley2611A(Keithley2601):
+    '''Represents the 2611A Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2611A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2611B(Keithley2601):
+    '''Represents the 2611B Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2611B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2612(Keithley260X):
+    '''Represents the 2612 Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2612 SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+        self.ChA = ChannelHV(self, 'a')
+        self.ChB = ChannelHV(self, 'b')
+
+class Keithley2612A(Keithley2612):
+    '''Represents the 2612A Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2612A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2612B(Keithley2612):
+    '''Represents the 2612B Dual Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2612B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2634B(Keithley2612):
+    '''Represents the 2634B Dual Channel SMU'''
+    # It doesn't look like 2634 non-Bs were made.
+    def __init__(self, adapter, name="Keithley 2634B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2635A(Keithley2611):
+    '''Represents the 2635A Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2635A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2635B(Keithley2611):
+    '''Represents the 2635B Single Channel SMU'''
+    def __init__(self, adapter, name="Keithley 2635B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2636A(Keithley2612):
+    '''Represents the 2636A Dual Channel SMU'''
+    # It doesn't look like 2634 non-letters were made.
+    def __init__(self, adapter, name="Keithley 2636A SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+class Keithley2636B(Keithley2612):
+    '''Represents the 2636B Dual Channel SMU'''
+    # It doesn't look like 2634 non-letters were made.
+    def __init__(self, adapter, name="Keithley 2636B SourceMeter", **kwargs):
+        super().__init__(
+            adapter,
+            name,
+            **kwargs
+        )
+
+
+class CommonChannel:
+    '''An SMU Channel. The Keithley SMUs here have either 1 or 2 channels.'''
     def __init__(self, instrument, channel):
         self.instrument = instrument
         self.channel = channel
@@ -127,78 +320,6 @@ class Channel:
         map_values=True
     )
 
-    ###############
-    # Current (A) #
-    ###############
-    current = Instrument.measurement(
-        'measure.i()',
-        """ Get the current in Amps """
-    )
-
-    source_current = Instrument.control(
-        'source.leveli', 'source.leveli=%f',
-        """ Control the applied source current """,
-        validator=truncated_range,
-        values=[-1.5, 1.5]
-    )
-
-    compliance_current = Instrument.control(
-        'source.limiti', 'source.limiti=%f',
-        """ Control the source compliance current """,
-        validator=truncated_range,
-        values=[-1.5, 1.5]
-    )
-
-    source_current_range = Instrument.control(
-        'source.rangei', 'source.rangei=%f',
-        """Control the source current range """,
-        validator=truncated_range,
-        values=[-1.5, 1.5]
-    )
-
-    current_range = Instrument.control(
-        'measure.rangei', 'measure.rangei=%f',
-        """Control the measurement current range """,
-        validator=truncated_range,
-        values=[-1.5, 1.5]
-    )
-
-    ###############
-    # Voltage (V) #
-    ###############
-    voltage = Instrument.measurement(
-        'measure.v()',
-        """ Get the voltage in Volts """
-    )
-
-    source_voltage = Instrument.control(
-        'source.levelv', 'source.levelv=%f',
-        """ Control the applied source voltage """,
-        validator=truncated_range,
-        values=[-200, 200]
-    )
-
-    compliance_voltage = Instrument.control(
-        'source.limitv', 'source.limitv=%f',
-        """ Control the source compliance voltage """,
-        validator=truncated_range,
-        values=[-200, 200]
-    )
-
-    source_voltage_range = Instrument.control(
-        'source.rangev', 'source.rangev=%f',
-        """Control the source current range """,
-        validator=truncated_range,
-        values=[-200, 200]
-    )
-
-    voltage_range = Instrument.control(
-        'measure.rangev', 'measure.rangev=%f',
-        """Control the measurement voltage range """,
-        validator=truncated_range,
-        values=[-200, 200]
-    )
-
     ####################
     # Resistance (Ohm) #
     ####################
@@ -226,7 +347,6 @@ class Channel:
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
         log.info("%s is measuring voltage." % self.channel)
-        self.write('measure.v()')
         self.write('measure.nplc=%f' % nplc)
         if auto_range:
             self.write('measure.autorangev=1')
@@ -323,3 +443,155 @@ class Channel:
         else:
             self.ramp_to_voltage(0.0)
         self.source_output = 'OFF'
+
+class ChannelHV(CommonChannel):
+    '''Channel with limits for the 200V 261x or 263x models.'''
+        ###############
+    # Current (A) #
+    ###############
+    current = Instrument.measurement(
+        'measure.i()',
+        """ Get the current in Amps """
+    )
+
+    source_current = Instrument.control(
+        'source.leveli', 'source.leveli=%f',
+        """ Control the applied source current """,
+        validator=truncated_range,
+        values=[-1.5, 1.5]
+    )
+
+    compliance_current = Instrument.control(
+        'source.limiti', 'source.limiti=%f',
+        """ Control the source compliance current """,
+        validator=truncated_range,
+        values=[-1.5, 1.5]
+    )
+
+    source_current_range = Instrument.control(
+        'source.rangei', 'source.rangei=%f',
+        """Control the source current range """,
+        validator=truncated_range,
+        values=[-1.5, 1.5]
+    )
+
+    current_range = Instrument.control(
+        'measure.rangei', 'measure.rangei=%f',
+        """Control the measurement current range """,
+        validator=truncated_range,
+        values=[-1.5, 1.5]
+    )
+
+    ###############
+    # Voltage (V) #
+    ###############
+    voltage = Instrument.measurement(
+        'measure.v()',
+        """ Get the voltage in Volts """
+    )
+
+    source_voltage = Instrument.control(
+        'source.levelv', 'source.levelv=%f',
+        """ Control the applied source voltage """,
+        validator=truncated_range,
+        values=[-200, 200]
+    )
+
+    compliance_voltage = Instrument.control(
+        'source.limitv', 'source.limitv=%f',
+        """ Control the source compliance voltage """,
+        validator=truncated_range,
+        values=[-200, 200]
+    )
+
+    source_voltage_range = Instrument.control(
+        'source.rangev', 'source.rangev=%f',
+        """Control the source current range """,
+        validator=truncated_range,
+        values=[-200, 200]
+    )
+
+    voltage_range = Instrument.control(
+        'measure.rangev', 'measure.rangev=%f',
+        """Control the measurement voltage range """,
+        validator=truncated_range,
+        values=[-200, 200]
+    )
+
+class Channel(ChannelHV):
+    '''This is for backwards compatibility with the previous 2600 Channel definition.'''
+
+
+class ChannelLV(CommonChannel):
+    '''Channel with limits for the 40V 261x or 263x models.'''
+    ###############
+    # Current (A) #
+    ###############
+    current = Instrument.measurement(
+        'measure.i()',
+        """ Get the current in Amps """
+    )
+
+    source_current = Instrument.control(
+        'source.leveli', 'source.leveli=%f',
+        """ Control the applied source current """,
+        validator=truncated_range,
+        values=[-3, 3]
+    )
+
+    compliance_current = Instrument.control(
+        'source.limiti', 'source.limiti=%f',
+        """ Control the source compliance current """,
+        validator=truncated_range,
+        values=[-3, 3]
+    )
+
+    source_current_range = Instrument.control(
+        'source.rangei', 'source.rangei=%f',
+        """Control the source current range """,
+        validator=truncated_range,
+        values=[-3, 3]
+    )
+
+    current_range = Instrument.control(
+        'measure.rangei', 'measure.rangei=%f',
+        """Control the measurement current range """,
+        validator=truncated_range,
+        values=[-3, 3]
+    )
+
+    ###############
+    # Voltage (V) #
+    ###############
+    voltage = Instrument.measurement(
+        'measure.v()',
+        """ Get the voltage in Volts """
+    )
+
+    source_voltage = Instrument.control(
+        'source.levelv', 'source.levelv=%f',
+        """ Control the applied source voltage """,
+        validator=truncated_range,
+        values=[-40, 40]
+    )
+
+    compliance_voltage = Instrument.control(
+        'source.limitv', 'source.limitv=%f',
+        """ Control the source compliance voltage """,
+        validator=truncated_range,
+        values=[-40, 40]
+    )
+
+    source_voltage_range = Instrument.control(
+        'source.rangev', 'source.rangev=%f',
+        """Control the source current range """,
+        validator=truncated_range,
+        values=[-40, 40]
+    )
+
+    voltage_range = Instrument.control(
+        'measure.rangev', 'measure.rangev=%f',
+        """Control the measurement voltage range """,
+        validator=truncated_range,
+        values=[-40, 40]
+    )
