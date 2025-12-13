@@ -57,12 +57,13 @@ class TabArea(QtWidgets.QTabWidget):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def start_selection(self):
+    def start_selection(self, selector, initial_range):
         self.selection_started.emit()
         wdg = self.currentWidget()
         if isinstance(wdg, PlotWidget):
-            wdg.selection_finished.connect(self.selection_completed)
-            wdg.enter_selection_mode()
+            if selector in wdg.selectors:
+                wdg.selection_finished.connect(self.selection_completed)
+                wdg.enter_selection_mode(initial_range)
 
 class ManagedWindowBase(QtWidgets.QMainWindow):
     """

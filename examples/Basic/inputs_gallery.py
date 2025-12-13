@@ -31,6 +31,7 @@ python gui.py
 
 """
 import sys
+import numpy as np
 
 from pymeasure.experiment import (
     Procedure,
@@ -46,7 +47,7 @@ from pymeasure.display.windows import ManagedWindow
 
 import logging
 
-from pymeasure.experiment.parameters import PhysicalParameter, ParameterGroup, RangeParameterGroup
+from pymeasure.experiment.parameters import PhysicalParameter, ParameterGroup, Range1DParameterGroup
 
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
@@ -57,26 +58,30 @@ class TestProcedure(Procedure):
     param = Parameter("Parameter", default = "text")
     bool_param = BooleanParameter("Boolean Parameter", default=True)
     list_param = ListParameter(
-        "List Parameter", choices = ['Choice1', 'Choice 2', 'Choice 3'], group_name="Test"
+        "List Parameter", choices = ['Choice 1', 'Choice 2', 'Choice 3'], group_name="Test", default="Choice 1",
     )
     vector_param = VectorParameter(
         "Vector Parameter", default = [1,2,3], units = "m", group_name="Test"
     )
-    phys_param = PhysicalParameter("Physical Parameter", default = [20,3])
+    #phys_param = PhysicalParameter("Physical Parameter",group_by="bool_param", default = [20,3])
     param_group = ParameterGroup("Test group",
+                                 group_by={"bool_param": True},
                                  test1 = FloatParameter("test1", default=0),
                                  test2 = FloatParameter("test2", default=0)
                                  )
-    wl_range = RangeParameterGroup("Wavelength Range")
+    wl_range = Range1DParameterGroup("Wavelength Range")
     
     
-    DATA_COLUMNS = ["Iteration", "Random Number"]
+    DATA_COLUMNS = ["wavelength (nm)", "intensity (a.u.)"]
 
     def startup(self):
-        print(self.wl_range)
+        pass
     
     def execute(self):
-        pass
+        for wl in self.wl_range:
+            result = {"wavelength (nm)": wl,
+                      "intensity (a.u)": np.random.rand()}
+            self.emit("results", result)
     
     def shutdown(self):
         pass
@@ -84,8 +89,7 @@ class TestProcedure(Procedure):
 
 class MainWindow(ManagedWindow):
     def __init__(self):
-        inputs = ["phys_param",
-                  "float_param",
+        inputs = ["float_param",
                   "int_param",
                   "param",
                   "bool_param",
@@ -98,11 +102,11 @@ class MainWindow(ManagedWindow):
             procedure_class=TestProcedure,
             inputs= inputs,
             displays=["float_param"],
-            x_axis="Iteration",
-            y_axis="Random Number",
+            x_axis="wavelength (nm)",
+            y_axis="intensity (a.u.)",
         )
         self.setWindowTitle("GUI Example")
-
+        self.plot_widget.selectors = ["wl_range"]
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

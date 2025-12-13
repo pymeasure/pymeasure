@@ -217,7 +217,7 @@ class BooleanInput(Input[BooleanParameter, QtWidgets.QCheckBox]):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(widget=QtWidgets.QCheckBox(), parameter=parameter, parent=parent, **kwargs)
-
+    
     def set_parameter(self, parameter):
         # Override from :class:`Input`
         self.widget.setText(parameter.name)

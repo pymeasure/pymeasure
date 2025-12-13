@@ -22,10 +22,10 @@
 # THE SOFTWARE.
 #
 
-from typing import Any, Callable, Generic, Literal, Type, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 import numpy as np
-from numpy._core.fromnumeric import var
 from qtpy import QtWidgets
+import json
 
 from pymeasure.typing import GroupByType, GroupConditionType, SupportsStr
 
@@ -431,6 +431,7 @@ class ListParameter(Parameter[SupportsStr]):
             self._choices = {k: c for k, c in zip(keys, choices)}
         else:
             self._choices = None
+        self.units = units
         super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
         self._help_fields.append(('choices are', 'choices'))
 
@@ -557,35 +558,11 @@ class PhysicalParameter(VectorParameter):
         return "<{}(name={},value={},units={},uncertaintyType={})>".format(
             self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
 
-class RangeParameter(Parameter[np.ndarray]):
-    def __init__(self,
-                 name: str,
-                 minimum: float = -1e9,
-                 maximum: float = 1e9,
-                 default: np.ndarray | None = None,
-                 units: str | None = None,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
-                 group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
-        super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
-        self.minimum = minimum
-        self.maximum = maximum
-
-    def convert(self, value: tuple[float, float, float|None, int|None]) -> np.ndarray | None:
-        pass
-
 class ParameterGroup:
-    
-    """def __set_name__(self, owner, name):
-        for var_name, parameter in self.parameters.items():
-            setattr(owner, var_name, parameter)
-        setattr(owner, name, self.value)"""
 
-    def __init__(self, name: str, **parameters: Parameter) -> None:
+    def __init__(self, name: str, group_by: GroupByType | None = {}, **parameters: Parameter) -> None:
         self.name = name
-        self.group_by = {}
+        self.group_by = group_by
         self.parameters = parameters
         self.param_names = list(self.parameters.keys())
         for _, parameter in self.parameters.items():
@@ -611,21 +588,35 @@ class ParameterGroup:
         """
         return [parameter.value for (_, parameter) in self.parameters.items()]
 
-    def deserialize(self, value_list: list):
-        for value, (_, parameter) in zip(value_list, self.parameters.items()):
+    def deserialize(self, value: list | str):
+        if isinstance(value, str):
+            value = json.loads(value)
+            value = [item for _,item in value.items()]
+        for value, (_, parameter) in zip(value, self.parameters.items()):
             parameter.value = value
 
+    def __str__(self):
+        if not self.is_set():
+            return " "
+        result = {parameter.name: str(parameter) for (_,parameter) in self.parameters.items()}
+        result = json.dumps(result)
+        return result
         
-class RangeParameterGroup(ParameterGroup):
+class Range1DParameterGroup(ParameterGroup):
 
-    def __init__(self, name: str, start_kwargs = {}, stop_kwargs = {}, no_step_kwargs = {}) -> None:
+    def __init__(self,
+                 name: str,
+                 group_by: GroupByType| None = {},
+                 start_kwargs = {},
+                 stop_kwargs = {},
+                 no_step_kwargs = {}) -> None:
         self.var_name = name.lower().replace(" ", "_")
         parameters = {
             f"{self.var_name}_start": FloatParameter("Start",default=0, **start_kwargs),
             f"{self.var_name}_stop": FloatParameter("Stop",default=1, **stop_kwargs),
             f"{self.var_name}_no_steps": IntegerParameter("Number of steps",default=50, **no_step_kwargs)
         }
-        super().__init__(name, **parameters)
+        super().__init__(name, group_by, **parameters)
 
     def serialize(self):
         start, stop, no_steps = super().serialize()
@@ -635,6 +626,38 @@ class RangeParameterGroup(ParameterGroup):
         self.parameters[f"{self.var_name}_start"].value = value_list[0]
         self.parameters[f"{self.var_name}_stop"].value = value_list[-1]
         self.parameters[f"{self.var_name}_no_steps"].value = len(value_list)
+
+class Range2DParameterGroup(ParameterGroup):
+
+    def __init__(self,
+                 name: str,
+                 group_by: GroupByType| None = {},
+                 start_kwargs_x = {},
+                 start_kwargs_y = {},
+                 stop_kwargs_x = {},
+                 stop_kwargs_y = {},
+                 no_step_kwargs_x = {},
+                 no_step_kwargs_y = {},
+                 ) -> None:
+        self.var_name = name.lower().replace(" ", "_")
+        parameters = {
+            f"{self.var_name}_start_x": FloatParameter("Start",default=0, **start_kwargs_x),
+            f"{self.var_name}_stop_x": FloatParameter("Stop",default=1, **stop_kwargs_x),
+            f"{self.var_name}_no_steps_x": IntegerParameter("Number of steps",default=50, **no_step_kwargs_x),
+            f"{self.var_name}_start_y": FloatParameter("Start",default=0, **start_kwargs_y),
+            f"{self.var_name}_stop_y": FloatParameter("Stop",default=1, **stop_kwargs_y),
+            f"{self.var_name}_no_steps_y": IntegerParameter("Number of steps",default=50, **no_step_kwargs_y)
+        }
+        super().__init__(name, group_by, **parameters)
+
+    def serialize(self):
+        start_x, stop_x, no_steps_x, start_y, stop_y, no_steps_y = super().serialize()
+        return np.linspace(start_x, stop_x, no_steps_x)
+
+    def deserialize(self, value_list: list):
+        self.parameters[f"{self.var_name}_start_x"].value = value_list[0]
+        self.parameters[f"{self.var_name}_stop_x"].value = value_list[-1]
+        self.parameters[f"{self.var_name}_no_steps_x"].value = len(value_list)
         
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter

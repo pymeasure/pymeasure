@@ -41,9 +41,10 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     """
     
     def __init__(self, name, columns, x_axis=None, y_axis=None, refresh_time=0.2,
-                 check_status=True, linewidth=1, parent=None):
+                 check_status=True, linewidth=1, selectors = [], parent=None):
         super().__init__(name, parent)
         self.columns = columns
+        self.selectors = selectors
         self.refresh_time = refresh_time
         self.check_status = check_status
         self.linewidth = linewidth
@@ -156,9 +157,10 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     def clear_widget(self):
         self.plot.clear()
 
-    def enter_selection_mode(self):
+    def enter_selection_mode(self, initial_range):
         super().enter_selection_mode()
         self.linear_reg = pg.LinearRegionItem()
+        self.linear_reg.setRegion(initial_range)
         self.plot_frame.plot_widget.addItem(self.linear_reg)
 
     def exit_selection_mode(self):

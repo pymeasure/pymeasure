@@ -179,22 +179,27 @@ class InputGroup(QtWidgets.QWidget):
         self.anim_contents.start()
 
 class RangeInputGroup(InputGroup):
-    selection_triggered = QtCore.Signal()
+    selection_triggered = QtCore.Signal(object)
     def __init__(self, group: parameters.ParameterGroup, *args, **kwargs) -> None:
         super().__init__(group, *args, **kwargs)
-        self.select_trailing_button = TrailingButton("◱", lambda: self.selection_triggered.emit(), "Select range")
+        self.select_trailing_button = TrailingButton(
+            "◱", lambda: self.selection_triggered.emit(self.get_range()), "Select range"
+        )
         self.header_layout.addWidget(self.select_trailing_button)
         self.select_trailing_button.setVisible(True)
 
     def set_range(self, r: tuple):
         self.elements["Start"].set_value(r[0])
         self.elements["Stop"].set_value(r[1])
+
+    def get_range(self):
+        return self.elements["Start"].get_value(), self.elements["Stop"].get_value()
         
 class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
-    selection_triggered = QtCore.Signal()
+    selection_triggered = QtCore.Signal(str, object)
     def __init__(self,
                  procedure_class: Type[Procedure],
                  inputs: tuple[str] | None = None,
@@ -214,10 +219,12 @@ class InputsWidget(QtWidgets.QWidget):
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if isinstance(parameter, parameters.RangeParameterGroup):
+            
+            if isinstance(parameter, parameters.Range1DParameterGroup):
                 element = RangeInputGroup(parameter)
-                element.selection_triggered.connect(self.selection_triggered.emit)
+                element.selection_triggered.connect(lambda x: self.selection_triggered.emit(name, x))
                 setattr(self, "set_range", element.set_range)
+            
             elif isinstance(parameter,parameters.ParameterGroup):
                 element = InputGroup(parameter)
                 
@@ -300,7 +307,7 @@ class InputsWidget(QtWidgets.QWidget):
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameters[name]
-
+            
             group_state = {g: True for g in parameter.group_by}
 
             for group_name, condition in parameter.group_by.items():
@@ -316,21 +323,22 @@ class InputsWidget(QtWidgets.QWidget):
 
                 groups[group_name].append((name, condition, group_state))
 
+        #TODO: Functions for grouping should not depend on Qt.
         for group_name, group in groups.items():
             toggle = partial(self.toggle_group, group_name=group_name, group=group)
             group_el = getattr(self, group_name)
             if isinstance(group_el, BooleanInput):
-                group_el.toggled.connect(toggle)
-                toggle(group_el.isChecked())
+                group_el.widget.toggled.connect(toggle)
+                toggle(group_el.widget.isChecked())
             elif isinstance(group_el, (StringInput, VectorInput)):
-                group_el.textChanged.connect(toggle)
-                toggle(group_el.text())
+                group_el.widget.textChanged.connect(toggle)
+                toggle(group_el.widget.text())
             elif isinstance(group_el, (IntegerInput, ScientificInput)):
-                group_el.valueChanged.connect(toggle)
-                toggle(group_el.value())
+                group_el.widget.valueChanged.connect(toggle)
+                toggle(group_el.widget.value())
             elif isinstance(group_el, ListInput):
-                group_el.currentTextChanged.connect(toggle)
-                toggle(group_el.currentText())
+                group_el.widget.currentTextChanged.connect(toggle)
+                toggle(group_el.widget.currentText())
             else:
                 raise NotImplementedError(
                     f"Grouping based on {group_name} ({group_el}) is not implemented.")
