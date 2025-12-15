@@ -140,6 +140,7 @@ grandfathered_docstring_instruments = [
     "SR830",
     "SR860",
     "SR510",
+    "TSL550",
 ]
 
 
