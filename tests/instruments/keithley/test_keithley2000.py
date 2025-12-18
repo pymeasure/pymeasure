@@ -78,6 +78,7 @@ def test_measure_voltage():
     ) as inst:
         inst.measure_voltage(max_voltage=300, ac=True)
 
+
 def test_enable_filter():
     with expected_protocol(
         Keithley2000,
