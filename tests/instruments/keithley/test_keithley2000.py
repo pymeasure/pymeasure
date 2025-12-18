@@ -77,3 +77,13 @@ def test_measure_voltage():
          ],
     ) as inst:
         inst.measure_voltage(max_voltage=300, ac=True)
+
+def test_enable_filter():
+    with expected_protocol(
+        Keithley2000,
+        [(":SENS:VOLT:AC:AVER:STAT 1", None),
+         (":SENS:VOLT:AC:AVER:TCON repeat", None),
+         (":SENS:VOLT:AC:AVER:COUN 10", None),
+         ],
+    ) as inst:
+        inst.enable_filter(mode='voltage ac', type='repeat', count=10)
