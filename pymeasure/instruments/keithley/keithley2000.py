@@ -554,9 +554,9 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         :param type: The type of averaging filter, either 'repeat' or 'moving'.
         :param count: A number of averages, which can take take values from 1 to 100
         """
-        self.write(":SENS:%s:AVER:STAT 1")
-        self.write(":SENS:%s:AVER:TCON %s")
-        self.write(":SENS:%s:AVER:COUN %d")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:STAT 1")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:TCON {type}")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:COUN {count}")
 
     def disable_filter(self, mode=None):
         """ Disables the averaging filter for the active mode,
