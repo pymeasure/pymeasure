@@ -28,6 +28,7 @@ from .keithley2260B import Keithley2260B
 from .keithley2281S import Keithley2281S
 from .keithley2306 import Keithley2306
 from .keithley2400 import Keithley2400
+from .keithley2400_legacy import Keithley2400Legacy
 from .keithley2450 import Keithley2450
 from .keithley2510 import Keithley2510
 from .keithley2600 import Keithley2600
