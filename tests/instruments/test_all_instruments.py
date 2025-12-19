@@ -40,8 +40,8 @@ def find_devices_in_module(module):
     base_import = module.__package__ + "."
     for inst_file in Path(base_dir).rglob("*.py"):
         relative_path = inst_file.relative_to(base_dir)
-        if inst_file == "__init__.py":
-            # import parent module when filename __init__.py
+        if inst_file == "test_smaract_protocol.py":
+            # import parent module when filename test_smaract_protocol.py
             relative_import = ".".join(relative_path.parts[:-1])[:-3]
         else:
             relative_import = ".".join(relative_path.parts)[:-3]

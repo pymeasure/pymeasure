@@ -8,7 +8,9 @@ from pymeasure.instruments.validators import truncated_range
 
 
 class SmarActSCU_USB(Instrument):
+    """ Blblabla documentation
 
+    """
     def __init__(self, adapter, name='SCUController', **kwargs):
         super().__init__(adapter, name,
                          read_termination='\n',
@@ -20,55 +22,61 @@ class SmarActSCU_USB(Instrument):
         ":SCLF0F%d",
         """ Control the maximum frequency in an absolute move """,
         set_process = lambda v: check_type(v, 'Hz'),
-        get_process = lambda s: Q_(s[6:], 'Hz'),
+        get_process = lambda s: Q_(s.split('CLF0F')[1], 'Hz'),
     )
-
-
 
     def move_abs(self, position: Union[Q_, int]):
 
         self.write(f":MPA0P{check_type(position, 'um')}")
 
-    def move_rel(self, position: Q_):
+    def move_pos_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f"MPR{check_type(position, 'um')}")
+        self.write(f":MPR0P{check_type(position, 'um')}")
 
-    def move_to_ref(self, position: Q_):
-        """Moves up/down to reference"""
-        self.write(f"MTR0")
+    def move_to_ref(self):
+        """Moves to reference"""
+        self.write(f":MTR0H0Z1")
 
     def move_to_end_up(self):
         """Moves up until end of line"""
-        self.write(f"M0DU")
+        self.write(f":MES0DU")
 
     def move_to_end_down(self):
         """Moves down until end of line"""
-        self.write(f"M0DD")
+        self.write(f":MES0DD")
 
     def stop(self):
         """Stops any process."""
-        self.write(f"S")
+        self.write(f":S0")
 
-    def get_position(self, channel_index):
+    def get_position(self):
         """
         Retourne la position actuelle en micromètres.
         Commande: GP<channel>[cite: 971].
         """
-        self.write(f"GP{channel_index}")
-        response = self.read
+        self.write(f":GP0")
+        response = self.read()
         # Réponse format: :P<channel>P<position>
-        return  float(response[3:])
-        return None
-
-
-
-
-
-
+        response = response.split(":P0P")[1]
+        return  float(response)
+    def get_angle(self):
+        """
+        Retourne la position actuelle en micromètres.
+        Commande: GP<channel>[cite: 971].
+        """
+        self.write(f":GA0")
+        response = self.read()
+        # Réponse format: :A<channel>A<position>R0
+        response = response.split(":A0A")[1][:-2]
+        return  float(response)
+    def move_rel(self, angle: Q_):
+        """Moves up a angle + current angle"""
+        self.write(f":MAA0A{check_type(angle, ' m°')}")
 
 
 if __name__ == "__main__":
     inst = SmarActSCU_USB('ASRL3::INSTR')
+    inst.get_position()
     pass
 
     # import pyvisa
