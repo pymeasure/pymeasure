@@ -25,7 +25,6 @@
 import logging
 import re
 import time
-import weakref
 from collections import Counter, OrderedDict, namedtuple
 from enum import IntEnum
 
@@ -62,7 +61,7 @@ class AgilentB1500(SCPIMixin, Instrument):
     @property
     def smu_references(self):
         """Return all SMU instances."""
-        return self._smu_references.values()
+        return self.smus.values()
 
     @property
     def smu_names(self):
@@ -119,24 +118,6 @@ class AgilentB1500(SCPIMixin, Instrument):
                     raise NotImplementedError(f"Module {module[0]} is not implemented yet!")
         return out
 
-    def initialize_smu(self, channel, smu_type, name):
-        """Initialize a :class:`.SMU` instance.
-
-        :param int channel: SMU channel
-        :param str smu_type: SMU type, e.g. ``'HRSMU'``
-        :param str name: SMU name for pymeasure (data output etc.)
-        :return: SMU instance
-        :rtype: :class:`.SMU`
-        """
-        if channel in (list(range(101, 1101, 100)) + list(range(102, 1102, 100))):
-            channel = int(str(channel)[0:-2])
-            # subchannels not relevant for SMU/CMU
-        channel = strict_discrete_set(channel, range(1, 11))
-        self._smu_names[channel] = name
-        smu_reference = SMU(self, channel, smu_type, name)
-        self._smu_references[channel] = smu_reference
-        return smu_reference
-
     def initialize_all_smus(self):
         """Initialize all SMUs.
 
@@ -145,11 +126,19 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         modules = self.query_modules()
         i = 1
-        for channel, smu_type in modules.items():
-            if "SMU" in smu_type:
-                setattr(
-                    self, "smu" + str(i), self.initialize_smu(channel, smu_type, "SMU" + str(i))
+        for channel, module_type in modules.items():
+            if "SMU" in module_type:
+                self.add_child(
+                    SMU,
+                    i,
+                    collection="smus",
+                    prefix="smu",
+                    type=module_type,
+                    name=f"SMU{i}",
+                    channel=channel,
                 )
+                self._smu_references[channel] = self.smus[i]
+                self._smu_names[channel] = self.smus[i].name
                 i += 1
 
     def initialize_all_spgus(self):
@@ -912,22 +901,20 @@ class AgilentB1500(SCPIMixin, Instrument):
 ######################################
 
 
-class SMU:
+class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe
 
-    :param AgilentB1500 parent: Instance of the B1500 mainframe class
     :param int channel: Channel number of the SMU
     :param str smu_type: Type of the SMU
     :param str name: Name of the SMU
     """
 
-    def __init__(self, parent, channel, smu_type, name, **kwargs):
-        # to allow garbage collection for cyclic references
-        self._b1500 = weakref.proxy(parent)
+    def __init__(self, parent, number, type, name, channel, **kwargs):
+        super().__init__(parent, channel, **kwargs)
         channel = strict_discrete_set(channel, range(1, 11))
         self.channel = channel
-        smu_type = strict_discrete_set(
-            smu_type,
+        type = strict_discrete_set(
+            type,
             [
                 "HRSMU",
                 "MPSMU",
@@ -941,24 +928,18 @@ class SMU:
                 "UHVU",
             ],
         )
-        self.voltage_ranging = SMUVoltageRanging(smu_type)
-        self.current_ranging = SMUCurrentRanging(smu_type)
+        self.voltage_ranging = SMUVoltageRanging(type)
+        self.current_ranging = SMUCurrentRanging(type)
         self.name = name
+        self.type = type
 
     ##########################################
     # Wrappers of B1500 communication methods
     ##########################################
-    def write(self, string):
-        """Wrap :meth:`.Instrument.write` method of B1500."""
-        self._b1500.write(string)
-
-    def ask(self, string):
-        """Wrap :meth:`~.Instrument.ask` method of B1500."""
-        return self._b1500.ask(string)
 
     def query_learn(self, query_type, command):
         """Wrap :meth:`~.AgilentB1500.query_learn` method of B1500."""
-        response = self._b1500.query_learn(query_type)
+        response = self.parent.query_learn(query_type)
         # query_learn returns settings of all smus
         # pick setting for this smu only
         response = response[command + str(self.channel)]
@@ -966,17 +947,17 @@ class SMU:
 
     def check_errors(self):
         """Wrap :meth:`~.AgilentB1500.check_errors` method of B1500."""
-        return self._b1500.check_errors()
+        return self.parent.check_errors()
 
     ##########################################
 
     def _query_status_raw(self):
-        return self._b1500.query_learn(str(self.channel))
+        return self.parent.query_learn(str(self.channel))
 
     @property
     def status(self):
         """Query status of the SMU."""
-        return self._b1500.query_learn_header(str(self.channel))
+        return self.parent.query_learn_header(str(self.channel))
 
     def enable(self):
         """Enable Source/Measurement Channel (``CN``)"""
@@ -1005,7 +986,7 @@ class SMU:
         """
         # different than other SMU specific settings (grouped by setting)
         # read via raw command
-        response = self._b1500.query_learn(30)
+        response = self.parent.query_learn(30)
         if "FL" in response.keys():
             # only present if filters of all channels are off
             return False
