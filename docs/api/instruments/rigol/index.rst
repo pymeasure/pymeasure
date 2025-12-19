@@ -11,3 +11,4 @@ in an instrument not included, please consider :doc:`adding the instrument </dev
    :maxdepth: 2
 
    rigol_dg800
+   rigol_ds1000z
