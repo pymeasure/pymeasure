@@ -182,9 +182,11 @@ def test_memory_depth_two_channels_accepts_mid_range_depth():
 
 
 def test_memory_depth_respects_digital_channel_hint():
-    commands = _display_queries({1}) + _display_queries({1})
-    commands.append((b":ACQ:MDEP 24000000", None))
-    with expected_protocol(RigolDS1000Z, commands) as inst:
+    display_commands = _display_queries({1}) + _display_queries({1})
+    with expected_protocol(
+        RigolDS1000Z,
+        display_commands + [(b":ACQ:MDEP 24000000", None)],
+    ) as inst:
         inst.set_digital_channel_hint(16)
         with pytest.raises(ValueError):
             inst.memory_depth = 24_000_000

@@ -71,25 +71,18 @@ _DIGITAL_MEMORY_DEPTH_OPTIONS: dict[int, set[int]] = {
 
 
 class AcquireType(StrEnum):
-    """Supported acquisition types for the scope."""
-    # In this mode, the oscilloscope samples the signal at equal time interval to rebuild the
-    # waveform. For most of the waveforms, the best display effect can be obtained using this mode.
+    """Supported acquisition types for the scope.
+
+    - ``NORMAL`` (``NORM``): Samples at equal time intervals to rebuild the waveform.
+    - ``AVERAGE`` (``AVER``): Averages multiple acquisitions to reduce noise (see
+      :attr:`~RigolDS1000Z.average_count`).
+    - ``PEAK`` (``PEAK``): Captures min/max values per interval to preserve narrow pulses.
+    - ``HIGH_RESOLUTION`` (``HRES``): Ultra-sample technique that smooths waveforms by averaging
+      neighboring points.
+    """
     NORMAL = "NORM"
-    # In this mode, the oscilloscope averages the waveforms from multiple samples to reduce the
-    # random noise of the input signal and improve the vertical resolution. The number of averages
-    # can be set by the `average_count` property. Greater number of averages can lower the noise
-    # and increase the vertical resolution, but will also slow the response of the displayed
-    # waveform to the waveform changes.
     AVERAGE = "AVER"
-    # In this mode, the oscilloscope acquires the maximum and minimum values of the signal within
-    # the sample interval to get the envelope of the signal or the narrow pulse of the signal
-    # that might be lost. In this mode, signal confusion can be prevented but the noise displayed
-    # would be larger.
     PEAK = "PEAK"
-    # This mode uses a kind of ultra-sample technique to average the neighboring points of the
-    # sample waveform to reduce the random noise on the input signal and generate much smoother
-    # waveforms on the screen. This is generally used when the sample rate of the digital
-    # converter is higher than the storage rate of the acquisition memory.
     HIGH_RESOLUTION = "HRES"
 
 
@@ -176,33 +169,47 @@ def _parse_tmc_block(read_bytes_func) -> bytes:
     return payload
 
 
-def _normalize_memory_depth_value(value: Union[str, int]) -> tuple[str, Optional[int]]:
+def _normalize_memory_depth_value(
+    value: Union[str, int],
+    *,
+    allowed_values: Optional[set[int]] = None,
+    allowed_values_factory=None,
+) -> tuple[str, Optional[int]]:
     """Normalise memory depth input, returning the SCPI text and numeric form.
 
-    Returns
-    -------
-    tuple
-        (value_as_string, numeric_points or None if AUTO)
+    :param value: Either ``"AUTO"`` (case-insensitive) or an integer number of points.
+    :param allowed_values: Optional set of allowed numeric values for the current scope
+        configuration.
+    :param allowed_values_factory: Optional callable returning the allowed numeric values. This is
+        only called when a numeric depth is requested (not for ``"AUTO"``).
+    :return: ``(value_as_string, numeric_points_or_None_if_AUTO)``
     """
 
     if isinstance(value, str):
-        candidate = value.strip().upper()
-        if candidate == "AUTO":
+        cleaned = value.strip().upper()
+        if cleaned == "AUTO":
             return "AUTO", None
         try:
-            numeric = int(candidate)
+            numeric = int(cleaned)
         except ValueError as exc:
             raise ValueError(f"Unsupported memory depth: {value!r}") from exc
     else:
         numeric = int(value)
-        candidate = str(numeric)
 
     if numeric not in _MEMORY_DEPTH_VALUES:
         raise ValueError(
             f"Unsupported memory depth: {numeric}. "
             f"Valid values are {_MEMORY_DEPTH_VALUES} or 'AUTO'."
         )
-    return candidate, numeric
+
+    if allowed_values is None and callable(allowed_values_factory):
+        allowed_values = allowed_values_factory()
+    if allowed_values is not None and numeric not in allowed_values:
+        raise ValueError(
+            f"Memory depth {numeric} pts is not permitted for the current "
+            f"channel configuration. Allowed values: {sorted(allowed_values)} or 'AUTO'."
+        )
+    return str(numeric), numeric
 
 
 def _parse_memory_depth(reply: str) -> Union[int, str]:
@@ -215,6 +222,16 @@ def _parse_memory_depth(reply: str) -> Union[int, str]:
         return int(cleaned)
     except ValueError as exc:
         raise RuntimeError(f"Unexpected memory depth reply: {reply!r}") from exc
+
+
+def _validate_enum_member(value, values):
+    """Accept either an enum member or its SCPI value (case-insensitive)."""
+    if isinstance(value, values):
+        return value
+    try:
+        return values(str(value).upper())
+    except ValueError as exc:
+        raise ValueError(f"Unsupported value: {value!r}") from exc
 
 
 class RigolDS1000ZChannel(Channel):
@@ -260,14 +277,12 @@ class RigolDS1000ZChannel(Channel):
         ":CHAN{ch}:SCAL?",
         ":CHAN{ch}:SCAL %.6f",
         "Control the vertical scale in volts per division (float).",
-        cast=float,
     )
 
     offset = Channel.control(
         ":CHAN{ch}:OFFS?",
         ":CHAN{ch}:OFFS %.6f",
         "Control the vertical offset in volts (float).",
-        cast=float,
     )
 
     probe_ratio = Channel.control(
@@ -276,26 +291,19 @@ class RigolDS1000ZChannel(Channel):
         "Control the probe attenuation ratio (float).",
         validator=strict_range,
         values=[0.0001, 1000],
-        cast=float,
     )
 
     unit = Channel.control(
         ":CHAN{ch}:UNIT?",
         ":CHAN{ch}:UNIT %s",
-        "Control the channel unit (str).",
+        "Control the channel unit (str): 'VOLT', 'WATT', 'AMP', or 'UNKN'.",
         validator=strict_discrete_set,
         values=["VOLT", "WATT", "AMP", "UNKN"],
     )
 
 
-# TODO: add Cursor object
-
-
 class RigolDS1000ZDisplay(Channel):
     """Display subsystem for Rigol DS/MSO 1000Z (:DISPlay.*)."""
-
-    def __init__(self, parent):
-        super().__init__(parent, "")
 
     def insert_id(self, command):
         """We treat the Display as a channel so we can use channel control, but we don't
@@ -398,19 +406,70 @@ class RigolDS1000ZDisplay(Channel):
 class RigolDS1000Z(SCPIMixin, Instrument):
     """Driver for the Rigol DS/MSO 1000Z series oscilloscopes.
 
-    Parameters
-        adapter : Adapter or str
-            PyMeasure adapter or VISA resource name.
-        name : str, optional
-            Readable instrument name reported to PyMeasure.
-        channel_count : int, optional
-            Number of *physical* analogue channels fitted to the scope (typically 2 or 4).
-            Must be between 1 and 4; only determines how many channel interfaces
-            are exposed via channels. The SCPI properties still allow
-            enabling or disabling any individual channel regardless of that entry
-            count.
-        `**kwargs` :
-            Forwarded to :class:`~pymeasure.instruments.Instrument`.
+    Quick start
+    ----------
+
+    .. code-block:: python
+
+        from pymeasure.instruments.rigol import RigolDS1000Z
+
+        with RigolDS1000Z("TCPIP0::10.0.0.5::INSTR") as scope:
+            scope.reset()
+            scope.clear_status()
+
+            # Configure analogue channel 1
+            scope.channel_1.display_enabled = True
+            scope.channel_1.coupling = "DC"
+            scope.channel_1.scale = 0.5  # volts/div
+
+            # Pull the waveform
+            time_axis, voltage = scope.read_waveform(source=1)
+
+    Memory depth handling
+    ---------------------
+
+    Rigol scopes restrict memory depth to discrete values that depend on the number of enabled
+    analogue inputs and, on MSO models, digital pod lines. The driver automatically queries the
+    display state of each analogue channel before accepting a depth change and raises
+    :class:`ValueError` if the requested value does not fit the current configuration.
+
+    Digital pod usage varies between models, so the driver exposes
+    :meth:`set_digital_channel_hint` for callers to provide the number of active digital lines
+    (0, 8, or 16). This hint is optional—if omitted, the logic assumes the pod is disabled—but it
+    enables strict validation when logic channels are in use.
+
+    Waveform acquisition
+    --------------------
+
+    :meth:`read_waveform` wraps the SCPI ``:WAV`` commands, handling chunked reads, binary block
+    parsing, and scaling the returned data to physical units. The method accepts either integer
+    channel indices or the standard Rigol source names (for example ``"CHAN1"``, ``"MATH"``, or
+    ``"D0"``), and it supports all Rigol formats via :class:`WaveformFormat`.
+
+    Display capture
+    ---------------
+
+    The :class:`RigolDS1000ZDisplay` helper contains front-panel display controls, including
+    :meth:`RigolDS1000ZDisplay.grab_image`. Calling ``grab_image`` issues ``:DISP:DATA?`` and
+    returns the raw image bytes (PNG, BMP, JPEG, or TIFF) so you can save them directly to disk:
+
+    .. code-block:: python
+
+        from pathlib import Path
+
+        image = scope.display.grab_image(color=True, image_format="PNG")
+        Path("screenshot.png").write_bytes(image)
+
+    Optional ``color`` and ``invert`` parameters map to the oscilloscope arguments, allowing
+    monochrome or inverted captures without halting acquisition.
+
+    :param adapter: PyMeasure adapter or VISA resource name.
+    :param name: Readable instrument name reported to PyMeasure.
+    :param channel_count: Number of *physical* analogue channels fitted to the scope (typically 2
+        or 4). Must be between 1 and 4; only determines how many channel interfaces are exposed via
+        channels. The SCPI properties still allow enabling or disabling any individual channel
+        regardless of that entry count.
+    :param kwargs: Forwarded to :class:`~pymeasure.instruments.Instrument`.
     """
 
     def __init__(self, adapter, name="Rigol DS1000Z/MSO1000Z Oscilloscope",
@@ -424,12 +483,12 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             for index in range(1, channel_count + 1)
         }
         self._digital_channel_hint: Optional[int] = None
-        self.display = RigolDS1000ZDisplay(self)
 
     channel_1 = Instrument.ChannelCreator(RigolDS1000ZChannel, "1")
     channel_2 = Instrument.ChannelCreator(RigolDS1000ZChannel, "2")
     channel_3 = Instrument.ChannelCreator(RigolDS1000ZChannel, "3")
     channel_4 = Instrument.ChannelCreator(RigolDS1000ZChannel, "4")
+    display: RigolDS1000ZDisplay = Instrument.ChannelCreator(RigolDS1000ZDisplay, "")
 
     acquisition_type = Instrument.control(
         ":ACQ:TYPE?",
@@ -462,6 +521,9 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         channels are currently enabled. The driver counts the active analogue
         inputs and uses :meth:`set_digital_channel_hint` as an optional cue for
         the digital pod state before applying validation.
+
+        Digital pod activity cannot be queried reliably across all models, so you must set the
+        hint manually when using logic channels.
         """
 
         reply = self.ask(":ACQ:MDEP?")
@@ -469,20 +531,16 @@ class RigolDS1000Z(SCPIMixin, Instrument):
 
     @memory_depth.setter
     def memory_depth(self, value: Union[str, int]) -> None:
-        target, numeric = _normalize_memory_depth_value(value)
-        if numeric is not None:
-            allowed = self._allowed_memory_depth_values()
-            if numeric not in allowed:
-                raise ValueError(
-                    f"Memory depth {numeric} pts is not permitted for the current "
-                    f"channel configuration. Allowed values: {sorted(allowed)} or 'AUTO'."
-                )
+        target, numeric = _normalize_memory_depth_value(
+            value,
+            allowed_values_factory=self._allowed_memory_depth_values,
+        )
         self.write(f":ACQ:MDEP {target}")
 
     trigger_source = Instrument.control(
         ":TRIG:EDGE:SOUR?",
         ":TRIG:EDGE:SOUR %s",
-        "Control the trigger source selection (str).",
+        "Control the trigger source selection (str): e.g. 'CHAN1'..'CHAN4', 'MATH', or 'D0'..'D15'.",
         validator=strict_discrete_set,
         values=_WAVEFORM_SOURCES,
     )
@@ -494,6 +552,15 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["POS", "NEG"],
     )
+
+    @property
+    def trigger_slope_positive(self) -> bool:
+        """Control whether the edge trigger slope is positive (bool)."""
+        return self.trigger_slope == "POS"
+
+    @trigger_slope_positive.setter
+    def trigger_slope_positive(self, value: bool) -> None:
+        self.trigger_slope = "POS" if bool(value) else "NEG"
 
     trigger_coupling = Instrument.control(
         ":TRIG:COUP?",
@@ -515,7 +582,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         ":TRIG:LEV?",
         ":TRIG:LEV %f",
         "Control the trigger level in volts (float).",
-        cast=float,
     )
 
     waveform_source = Instrument.control(
@@ -529,17 +595,21 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     waveform_mode = Instrument.control(
         ":WAV:MODE?",
         ":WAV:MODE %s",
-        "Control the waveform acquisition mode for transfer (str).",
-        validator=strict_discrete_set,
-        values=[mode.value for mode in WaveformMode],
+        "Control the waveform acquisition mode for transfer (:class:`WaveformMode`).",
+        validator=_validate_enum_member,
+        values=WaveformMode,
+        get_process=WaveformMode,
+        set_process=lambda mode: mode.value,
     )
 
     waveform_format = Instrument.control(
         ":WAV:FORM?",
         ":WAV:FORM %s",
-        "Control the waveform data format for transfer (str).",
-        validator=strict_discrete_set,
-        values=[fmt.value for fmt in WaveformFormat],
+        "Control the waveform data format for transfer (:class:`WaveformFormat`).",
+        validator=_validate_enum_member,
+        values=WaveformFormat,
+        get_process=WaveformFormat,
+        set_process=lambda fmt: fmt.value,
     )
 
     waveform_start = Instrument.control(
@@ -577,6 +647,10 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self.write("*CLS")
 
     def clear(self):
+        """Alias for :meth:`clear_waveforms`."""
+        self.clear_waveforms()
+
+    def clear_waveforms(self):
         """Clear all the waveforms on the screen."""
         self.write(":CLE")
 
@@ -589,7 +663,11 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self.write("*RST")
 
     def calibrate_start(self):
-        """Calibrate the start of the instrument.
+        """Alias for :meth:`start_calibration`."""
+        self.start_calibration()
+
+    def start_calibration(self):
+        """Run the self-calibration procedure.
 
         The self-calibration operation can make the oscilloscope quickly reach its optimum working
         state to obtain the most accurate measurement values.
@@ -598,11 +676,15 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         from the inputs.
 
         The functions of most of the keys are disabled during the self-calibration. You can call
-        the calibrate_quit method to quit the self-calibration.
+        the :meth:`abort_calibration` method to quit the self-calibration.
         """
         self.write(":CAL:STAR")
 
     def calibrate_quit(self):
+        """Alias for :meth:`abort_calibration`."""
+        self.abort_calibration()
+
+    def abort_calibration(self):
         """Exit the self-calibration at any time."""
         self.write(":CAL:QUIT")
 
@@ -629,8 +711,14 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self.trigger_sweep = sweep
 
     def tforce(self):
-        """Generate a trigger signal forcefully. This command is only applicable to the normal
-        and single trigger modes."""
+        """Alias for :meth:`force_trigger`."""
+        self.force_trigger()
+
+    def force_trigger(self):
+        """Generate a trigger signal forcefully.
+
+        This command is only applicable to the normal and single trigger modes.
+        """
         self.write(":TFOR")
 
     def get_waveform_preamble(self) -> dict[str, Union[int, float]]:
@@ -706,8 +794,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         format_enum: WaveformFormat,
     ) -> None:
         self.waveform_source = source_value
-        self.waveform_mode = mode_enum.value
-        self.waveform_format = format_enum.value
+        self.waveform_mode = mode_enum
+        self.waveform_format = format_enum
 
     @staticmethod
     def _derive_waveform_window(
@@ -804,6 +892,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             Use 0 when the MSO pod is disabled, 8 or 16 when the corresponding
             digital groups are enabled. ``None`` clears the hint and reverts to
             the default assumption (no digital channels enabled).
+
+            See :attr:`memory_depth` for details on memory depth validation.
         """
 
         if active_lines is None:
