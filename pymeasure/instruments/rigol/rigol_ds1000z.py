@@ -407,7 +407,7 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     """Driver for the Rigol DS/MSO 1000Z series oscilloscopes.
 
     Quick start
-    ----------
+    -----------
 
     .. code-block:: python
 
@@ -540,7 +540,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     trigger_source = Instrument.control(
         ":TRIG:EDGE:SOUR?",
         ":TRIG:EDGE:SOUR %s",
-        "Control the trigger source selection (str): e.g. 'CHAN1'..'CHAN4', 'MATH', or 'D0'..'D15'.",
+        "Control the trigger source selection (str): e.g. 'CHAN1'..'CHAN4', 'MATH', or "
+        "'D0'..'D15'.",
         validator=strict_discrete_set,
         values=_WAVEFORM_SOURCES,
     )
