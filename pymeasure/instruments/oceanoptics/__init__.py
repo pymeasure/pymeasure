@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .flame import Flame
+from .flame import FlameS, FlameT
