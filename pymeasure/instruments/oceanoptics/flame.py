@@ -22,11 +22,81 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from enum import IntEnum
+from pymeasure.instruments import Instrument, validators
 
 
-class Flame(Instrument):
-    """Control the Ocean Optics Flame instrument."""
+class CommandFlameS(IntEnum):
+    INITIALIZE = 0x01
+    SET_INTEGRATION_TIME = 0x02
+    SET_STROBE_STATUS = 0x03
+    SET_SHUTDOWN_MODE = 0x04
+    QUERY = 0x05
+    WRITE = 0x06
+    REQUEST_SPECTRA = 0x09
+    SET_TRIGGER_MODE = 0x0A
+    QUERY_NUM_OF_PLUGIN_ACCESSORIES = 0x0B
+    QUERY_PLUGIN_IDS = 0x0C
+    DETECT_PLUGINS = 0x0D
+    LED_STATUS = 0x12
+    I2C_READ = 0x60
+    I2C_WRITE = 0x61
+    SPI_IO = 0x6A
+    WRITE_REGISTER_INFO = 0x6A
+    READ_REGISTER_INFO = 0x6B
+    READ_PCB_TEMPERATURE = 0x6C
+    READ_IRRADIANCE_CALIBRATION_FACTORS = 0x6D
+    WRITE_IRRADIANCE_CALIBRATION_FACTORS = 0x6E
+    QUERY_INFO = 0xFE
 
-    def __init__(self, adapter, name="Ocean Optics Flame", **kwargs):
+
+class FlameS(Instrument):
+    """Control the Ocean Optics Flame S instrument."""
+
+    def __init__(self, adapter, name="Ocean Optics Flame S", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+    def init(self):
+        self.write_bytes(CommandFlameS.INITIALIZE)
+
+    def set_integration_time(self, integration_time: int):
+        """Set the integration time.
+        :integration_time (int): Integration time in microseconds.
+        """
+        validators.strict_range(integration_time, [1_000, 65_535_000])
+        payload = integration_time.to_bytes(length=4, byteorder='little')
+        cmd = bytearray(CommandFlameS.SET_INTEGRATION_TIME.to_bytes())
+        cmd.extend(payload)
+        self.write_bytes(cmd)
+
+
+class CommandFlameT(IntEnum):
+    INITIALIZE = 0x01
+    SET_INTEGRATION_TIME = 0x02
+    SET_STROBE_STATUS = 0x03
+    QUERY = 0x05
+    WRITE = 0x06
+    REQUEST_SPECTRA = 0x09
+    SET_TRIGGER_MODE = 0x0A
+    QUERY_NUM_OF_PLUGIN_ACCESSORIES = 0x0B
+    QUERY_PLUGIN_IDS = 0x0C
+    DETECT_PLUGINS = 0x0D
+    LED_STATUS = 0x12
+    I2C_READ = 0x60
+    I2C_WRITE = 0x61
+    SPI_IO = 0x62
+    PSOC_READ = 0x68
+    PSOC_WRITE = 0x69
+    WRITE_REGISTER_INFO = 0x6A
+    READ_REGISTER_INFO = 0x6B
+    READ_PCB_TEMPERATURE = 0x6C
+    READ_IRRADIANCE_CALIBRATION_FACTORS = 0x6D
+    WRITE_IRRADIANCE_CALIBRATION_FACTORS = 0x6E
+    QUERY_INFO = 0xFE
+
+
+class FlameT(Instrument):
+    """Control the Ocean Optics Flame T instrument."""
+
+    def __init__(self, adapter, name="Ocean Optics Flame T", **kwargs):
         super().__init__(adapter, name, **kwargs)
