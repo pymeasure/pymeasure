@@ -52,7 +52,9 @@ class CommandFlameS(IntEnum):
 
 class FlameS(Instrument):
     """Control the Ocean Optics Flame S instrument."""
+    BYTE_ORDER = "little"
     NUM_PIXELS = 2048
+
 
     def __init__(self, adapter, name="Ocean Optics Flame S", **kwargs):
         super().__init__(adapter, name, **kwargs)
@@ -65,15 +67,10 @@ class FlameS(Instrument):
         :integration_time (int): Integration time in microseconds.
         """
         validators.strict_range(integration_time, [1_000, 65_535_000])
-        payload = integration_time.to_bytes(length=4, byteorder='little')
+        payload = integration_time.to_bytes(length=4, byteorder=self.BYTE_ORDER)
         cmd = bytearray(CommandFlameS.SET_INTEGRATION_TIME.to_bytes())
         cmd.extend(payload)
         self.write_bytes(cmd)
-
-    def request_spectra(self):
-        PIXELS_PER_PACKET = 256
-        self.write_bytes(CommandFlameS.REQUEST_SPECTRA.to_bytes())
-        raw = self.read_bytes()
 
 class CommandFlameT(IntEnum):
     INITIALIZE = 0x01
@@ -102,7 +99,38 @@ class CommandFlameT(IntEnum):
 
 class FlameT(Instrument):
     """Control the Ocean Optics Flame T instrument."""
+    BYTE_ORDER = "little"
     NUM_PIXELS = 3648
 
     def __init__(self, adapter, name="Ocean Optics Flame T", **kwargs):
         super().__init__(adapter, name, **kwargs)
+
+    def init(self):
+        self.write_bytes(CommandFlameT.INITIALIZE.to_bytes())
+
+    def set_integration_time(self, integration_time: int):
+        """Set the integration time.
+        :integration_time (int): Integration time in microseconds.
+        """
+        validators.strict_range(integration_time, [1_000, 65_535_000])
+        payload = integration_time.to_bytes(length=4, byteorder=self.BYTE_ORDER)
+        cmd = bytearray(CommandFlameT.SET_INTEGRATION_TIME.to_bytes())
+        cmd.extend(payload)
+        self.write_bytes(cmd)
+
+    def request_spectra(self):
+        BYTES_PER_PIXEL_PACKET = 512
+        PIXELS_PER_PACKET = 256
+        BYTES_PER_PIXEL = 2
+        NUM_PIXEL_PACKETS = 15
+        SYNC_PACKET_BYTES = 1
+        SYNC_INDICATOR = 0x69
+        
+        self.write_bytes(CommandFlameT.REQUEST_SPECTRA.to_bytes())
+        
+        pixel_packets = []
+        for i in range(NUM_PIXEL_PACKETS):
+            raw = self.read_bytes(BYTES_PER_PIXEL_PACKET)
+            print(raw)
+            pixel_packets[i] = raw
+        print(pixel_packets)
