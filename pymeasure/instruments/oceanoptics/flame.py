@@ -52,12 +52,13 @@ class CommandFlameS(IntEnum):
 
 class FlameS(Instrument):
     """Control the Ocean Optics Flame S instrument."""
+    NUM_PIXELS = 2048
 
     def __init__(self, adapter, name="Ocean Optics Flame S", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     def init(self):
-        self.write_bytes(CommandFlameS.INITIALIZE)
+        self.write_bytes(CommandFlameS.INITIALIZE.to_bytes())
 
     def set_integration_time(self, integration_time: int):
         """Set the integration time.
@@ -69,6 +70,10 @@ class FlameS(Instrument):
         cmd.extend(payload)
         self.write_bytes(cmd)
 
+    def request_spectra(self):
+        PIXELS_PER_PACKET = 256
+        self.write_bytes(CommandFlameS.REQUEST_SPECTRA.to_bytes())
+        raw = self.read_bytes()
 
 class CommandFlameT(IntEnum):
     INITIALIZE = 0x01
@@ -97,6 +102,7 @@ class CommandFlameT(IntEnum):
 
 class FlameT(Instrument):
     """Control the Ocean Optics Flame T instrument."""
+    NUM_PIXELS = 3648
 
     def __init__(self, adapter, name="Ocean Optics Flame T", **kwargs):
         super().__init__(adapter, name, **kwargs)
