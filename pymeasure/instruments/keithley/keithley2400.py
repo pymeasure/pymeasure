@@ -70,7 +70,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         self.reset_data_format()
 
     def reset_data_format(self):
-        """Resets the data format to the format expected by :class:`Keithley2400`.
+        """Reset the data format to the format expected by :class:`Keithley2400`.
 
         The expected data format is [<current>, <voltage>, <resistance>, <time>, <status>].
 
@@ -137,16 +137,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """ Control the auto delay (boolean).
 
         .. deprecated:: 0.16
-           Use :attr:`~.source_delay_auto_enabled`.""",
+           Instead use :attr:`~.source_delay_auto_enabled`.""",
         values={True: 1, False: 0},
         map_values=True,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.source_delay_auto`, "
-            "use `Keithley2400.source_delay_auto_enabled`.",
+            "Deprecated to use `Keithley2400.source_delay_auto`. "
+            "Instead use `Keithley2400.source_delay_auto_enabled`.",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.source_delay_auto`, "
-            "use `Keithley2400.source_delay_auto_enabled`.",
+            "Deprecated to use `Keithley2400.source_delay_auto`. "
+            "Instead use `Keithley2400.source_delay_auto_enabled`.",
         ),
     )
 
@@ -169,16 +169,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         True (enabled) and False (disabled) and 'ONCE' (force immediate).
 
         .. deprecated:: 0.16
-           Use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
+           Instead use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.auto_zero`, "
-            "use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
+            "Deprecated to use `Keithley2400.auto_zero`. "
+            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.auto_zero`, "
-            "use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
+            "Deprecated to use `Keithley2400.auto_zero`. "
+            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
         ),
     )
 
@@ -232,16 +232,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         stays on after measurement).
 
         .. deprecated:: 0.16
-           Use :attr:`~.auto_output_off_enabled`.""",
+           Instead use :attr:`~.auto_output_off_enabled`.""",
         values={True: 1, False: 0},
         map_values=True,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.auto_output_off`, "
-            "use `Keithley2400.auto_output_off_enabled`.",
+            "Deprecated to use `Keithley2400.auto_output_off`. "
+            "Instead use `Keithley2400.auto_output_off_enabled`.",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.auto_output_off_enabled`, "
-            "use `Keithley2400.auto_output_off_enabled`.",
+            "Deprecated to use `Keithley2400.auto_output_off_enabled`. "
+            "Instead use `Keithley2400.auto_output_off_enabled`.",
         ),
     )
 
@@ -249,7 +249,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Configure the source to use an automatic range.
 
         .. deprecated:: 0.16
-           Control auto ranging for the desired source using
+           Instead control auto ranging for the desired source using
            :attr:`~.source_current_range_auto_enabled` or
            :attr:`~.source_voltage_range_auto_enabled`.
         """
@@ -283,15 +283,17 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """ Control if the filter is active (string, strictly 'ON' or 'OFF').
 
         .. deprecated:: 0.16
-           Use :attr:`~.filter_enabled`.""",
+           Instead use :attr:`~.filter_enabled`.""",
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         map_values=False,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_state`, use `Keithley2400.filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_state`. ",
+            "Instead use `Keithley2400.filter_enabled`.",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_state`, use `Keithley2400.filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_state`. ",
+            "Instead use `Keithley2400.filter_enabled`.",
         ),
     )
 
@@ -312,18 +314,18 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         MOV : Moving filter
 
         .. deprecated:: 0.16
-           Use :attr:`~.repeat_filter_enabled`.
+           Instead use :attr:`~.repeat_filter_enabled`.
         """,
         validator=strict_discrete_set,
         values=["REP", "MOV"],
         map_values=False,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_type`, "
-            "use `Keithley2400.repeat_filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_type`. "
+            "Instead use `Keithley2400.repeat_filter_enabled`.",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_type`, "
-            "use `Keithley2400.repeat_filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_type`. "
+            "Instead use `Keithley2400.repeat_filter_enabled`.",
         ),
     )
 
@@ -428,11 +430,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param auto_range: Enables auto_range if True, else uses the set current
 
         .. deprecated:: 0.16
-           - Configuration to measure current is performed implicitly by
-             :attr:`~.current`.
-           - Control current nplc via :attr:`~.current_nplc`.
-           - Control current range via :attr:`~.current_range`
-             or :attr:`~.current_range_auto_enabled`.
+           Configuration to measure current is performed implicitly by :attr:`~.current`.
+           Recommended to control
+           - current nplc via :attr:`~.current_nplc`.
+           - current range via :attr:`~.current_range` or :attr:`~.current_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_current`, configuration to measure
@@ -502,10 +503,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param current_range: A :attr:`~.current_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :attr:`~.source_mode`.
-           - Control source current range via :attr:`~.source_current_range` or
+           Instead control
+           - source mode via :attr:`~.source_mode`.
+           - source current range via :attr:`~.source_current_range` or
              :attr:`~.source_current_range_auto_enabled`.
-           - Control compliance voltage via :attr:`~.compliance_voltage`
+           - compliance voltage via :attr:`~.compliance_voltage`
         """
         warn(
             """Deprecated to use `Keithley2400.apply_current`. Recommended to explicitly control
@@ -585,11 +587,10 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param auto_range: Enables auto_range if True, else uses the set voltage
 
         .. deprecated:: 0.16
-           - Configuration to measure voltage is performed implicitly by
-             :attr:`~.voltage`.
-           - Control voltage nplc via :attr:`~.voltage_nplc`.
-           - Control voltage range via :attr:`~.voltage_range`
-             or :attr:`~.voltage_range_auto_enabled`.
+           Configuration to measure voltage is performed implicitly by :attr:`~.voltage`.
+           Recommended to control
+           - voltage nplc via :attr:`~.voltage_nplc`.
+           - voltage range via :attr:`~.voltage_range` or :attr:`~.voltage_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_voltage`, configuration to measure
@@ -659,13 +660,14 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param voltage_range: A :attr:`~.voltage_range` value or None
 
         .. deprecated:: 0.16
-           - Control source mode via :attr:`~.source_mode`.
-           - Control source voltage range via :attr:`~.source_voltage_range` or
+           Recommended to control
+           - source mode via :attr:`~.source_mode`.
+           - source voltage range via :attr:`~.source_voltage_range` or
              :attr:`~.source_voltage_range_auto_enabled`.
-           - Control compliance current via :attr:`~.compliance_current`
+           - compliance current via :attr:`~.compliance_current`
         """
         warn(
-            """Deprecated to use `Keithley2400.apply_voltage`. Recommended to explicitly control
+            """Deprecated to use `Keithley2400.apply_voltage`. Instead explicitly control
             source mode via `Keithley2400.source_mode`, voltage range via
             `Keithley2400.source_voltage_range` or `Keithley2400.source_voltage_range_auto_enabled`,
             and compliance current via `Keithley2400.compliance_current`.""",
@@ -707,8 +709,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Control the resistance range in Ohms (float, strictly from 0 to 210e6).
 
         When set, the range selected will be the most sensitive range that will accommodate the
-        set value, and :attr:`~.resistance_range_auto_enabled` is implicitly set to
-        False.""",
+        set value, and :attr:`~.resistance_range_auto_enabled` is implicitly set to False.""",
         validator=strict_range,
         values=[0, 210e6],
     )
@@ -743,15 +744,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param auto_range: Enables auto_range if True, else uses the set resistance
 
         .. deprecated:: 0.16
-           - Configuration to measure resistance is performed implicitly by
-             :attr:`~.resistance`.
-           - Control resistance nplc via :attr:`~.resistance_nplc`.
-           - Control resistance range via :attr:`~.resistance_range`
+           Configuration to measure resistance is performed implicitly by :attr:`~.resistance`.
+           Instead:
+           - control resistance nplc via :attr:`~.resistance_nplc`.
+           - control resistance range via :attr:`~.resistance_range`
              or :attr:`~.resistance_range_auto_enabled`.
         """
         warn(
             """Deprecated to use `Keithley2400.measure_resistance`, configuration to measure
-            voltage is now performed implicitly by `Keithley2400.resistance`. Recommended to
+            voltage is now performed implicitly by `Keithley2400.resistance`. Instead
             explicitly set the resistance nplc via `Keithley2400.resistance_nplc`, and the
             resistance range via `Keithley2400.resistance_range` or
             `Keithley2400.resistance_range_auto_enabled`.""",
@@ -915,7 +916,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":TRIGGER:SOURCE?",
         ":TRIGGER:SOURCE %s",
         """Control the trigger layer event control source
-        (str, strictly 'immediate' or 'trigger_link'.""",
+        (str, strictly 'immediate' or 'trigger_link').""",
         validator=strict_discrete_set,
         values={"immediate": "IMM", "trigger_link": "TLIN"},
         map_values=True,
@@ -925,7 +926,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":ARM:SOURCE?",
         ":ARM:SOURCE %s",
         """Control the arm layer event control source
-        (str, strictly 'immediate', 'trigger_link', 'timer', 'manual', or 'bus'.""",
+        (str, strictly 'immediate', 'trigger_link', 'timer', 'manual', or 'bus').""",
         validator=strict_discrete_set,
         values={
             "immediate": "IMM",
@@ -941,7 +942,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":TRIGGER:OUTPUT?",
         ":TRIGGER:OUTPUT %s",
         """Control when the trigger pulse occurs on the trigger layer output trigger line
-        (str, strictly 'source', 'delay', 'sense', or 'none')""",
+        (str, strictly 'source', 'delay', 'sense', or 'none').""",
         validator=strict_discrete_set,
         values={
             "source": "SOUR",
@@ -956,7 +957,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         ":ARM:OUTPUT?",
         ":ARM:OUTPUT %s",
         """Control when the trigger pulse occurs on the arm layer output trigger line
-        (str, strictly 'trigger_enter', 'trigger_exit', or 'none'.""",
+        (str, strictly 'trigger_enter', 'trigger_exit', or 'none').""",
         validator=strict_discrete_set,
         values={
             "trigger_enter": "TENT",
@@ -1054,11 +1055,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         points can not exceed 2500
 
         .. deprecated:: 0.16
-           Use :attr:`~.trigger_count` and/or :attr:`~.arm_count`
+           Instead use :attr:`~.trigger_count` and/or :attr:`~.arm_count`
         """
         warn(
             """Deprecated to use `Keithley2400.set_trigger_counts`.
-            Use `Keithley2400.trigger_count` and/or `Keithley2400.arm_count`.""",
+            Instead use `Keithley2400.trigger_count` and/or `Keithley2400.arm_count`.""",
             FutureWarning,
         )
         if arm * trigger > 2500 or arm * trigger < 0:
@@ -1074,12 +1075,13 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         in seconds between sampling points
 
         .. deprecated:: 0.16
-           Set :attr:`~.arm_source` to "time" and control interval using :attr:`~.arm_timer`.
+           Instead set :attr:`~.arm_source` to "time"
+           and control the interval using :attr:`~.arm_timer`.
         """
         warn(
             """Deprecated to use `Keithley2400.set_timed_arm`.
-            Set `Keithley2400.arm_source` to "timer" and control interval using
-            `Keithley2400.arm_timer`.""",
+            Instead set `Keithley2400.arm_source` to "timer"
+            and control the interval using `Keithley2400.arm_timer`.""",
             FutureWarning,
         )
         if interval > 99999.99 or interval < 0.001:
@@ -1090,15 +1092,15 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """Disable the output trigger for the Trigger layer
 
         .. deprecated:: 0.16
-           Set :attr:`~.trigger_output_event` to "none" to turn off just trigger layer output
-           triggering, or use `~.disable_output_triggers` to disable both trigger and
+           Instead set :attr:`~.trigger_output_event` to "none" to turn off just trigger layer
+           output triggering, or use `~.disable_output_triggers` to disable both trigger and
            arm layer output triggering.
         """
         warn(
             """Deprecated to use `Keithley2400.disable_output_trigger`.
-            Set `Keithley2400.trigger_output_event` to "none" to turn off just trigger layer output
-            triggering, or use `Keithley2400.disable_output_triggers` to disable both trigger and
-            arm layer output triggering.""",
+            Instead set `Keithley2400.trigger_output_event` to "none" to turn off just trigger
+            layer output triggering, or use `Keithley2400.disable_output_triggers` to disable both
+            trigger and arm layer output triggering.""",
             FutureWarning,
         )
         self.write(":TRIG:OUTP NONE")
@@ -1113,11 +1115,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         :param after: An event string that determines when to trigger
 
         .. deprecated:: 0.16
-           Use :attr:`~.trigger_output_event` and :attr:`~.trigger_output_line`.
+           Instead use :attr:`~.trigger_output_event` and :attr:`~.trigger_output_line`.
         """
         warn(
             """Deprecated to use `Keithley2400.output_trigger_on_external`.
-            Use `Keithley2400.trigger_output_event` and `Keithley2400.trigger_output_line`.""",
+            Instead use `Keithley2400.trigger_output_event`
+            and `Keithley2400.trigger_output_line`.""",
             FutureWarning,
         )
         self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
@@ -1192,16 +1195,16 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         """ Control the auto line frequency (boolean).
 
         .. deprecated:: 0.16
-           Use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
+           Instead use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
         values={True: 1, False: 0},
         map_values=True,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.line_frequency_auto`, "
-            "use `Keithley2400.line_frequency_auto_enabled`",
+            "Deprecated to use `Keithley2400.line_frequency_auto`. "
+            "Instead use `Keithley2400.line_frequency_auto_enabled`.",
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.line_frequency_auto`, "
-            "use `Keithley2400.line_frequency_auto_enabled`",
+            "Deprecated to use `Keithley2400.line_frequency_auto`. "
+            "Instead use `Keithley2400.line_frequency_auto_enabled`.",
         ),
     )
 
@@ -1216,12 +1219,28 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
     )
 
-    def use_rear_terminals(self):  # Included for backwards compatibility
-        """Enable the rear terminals for measurement, and disable the front terminals."""
+    def use_rear_terminals(self):
+        """Enable the rear terminals for measurement, and disable the front terminals.
+
+        .. deprecated:: 0.16
+           Instead set :attr:`~.front_terminals_enabled` to False."""
+        warn(
+            """Deprecated to use `Keithley2400.use_rear_terminals`.
+            Instead set :attr:`~.front_terminals_enabled` to False.""",
+            FutureWarning,
+        )
         self.front_terminals_enabled = False
 
-    def use_front_terminals(self):  # Included for backwards compatibility
-        """Enable the front terminals for measurement, and disable the rear terminals."""
+    def use_front_terminals(self):
+        """Enable the front terminals for measurement, and disable the rear terminals.
+
+        .. deprecated:: 0.16
+           Instead set :attr:`~.front_terminals_enabled` to True."""
+        warn(
+            """Deprecated to use `Keithley2400.use_front_terminals`.
+            Instead set :attr:`~.front_terminals_enabled` to True.""",
+            FutureWarning,
+        )
         self.front_terminals_enabled = True
 
     def shutdown(self):
