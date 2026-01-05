@@ -1,5 +1,5 @@
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.santec.tsl500series import (
+from pymeasure.instruments.santec.tsl570 import (
     TSL570,
     SweepStatus,
     SweepMode,

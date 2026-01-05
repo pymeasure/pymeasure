@@ -22,4 +22,5 @@
 # THE SOFTWARE.
 #
 
-from .tsl500series import TSL570, TSL550
+from .tsl570 import TSL570
+from .tsl550 import TSL550
