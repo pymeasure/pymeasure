@@ -9,4 +9,5 @@ This section contains specific documentation on the Santec instruments that are 
 .. toctree::
    :maxdepth: 2
 
-   tsl500series
+   tsl570
+   tsl550
