@@ -93,20 +93,20 @@ class TestChuck:
 
 
 class TestWaferMap:
-    def test_step_firstdie(self):
+    def test_step_first_die(self):
         with expected_protocol(
             Velox,
             [("StepFirstDie", "0: 4 6 1")]
         ) as inst:
-            assert [4, 6, 1] == inst.wafermap.step_firstdie()
+            assert [4, 6, 1] == inst.wafermap.step_first_die()
 
-    def test_step_nextdie_no_args(self):
+    def test_step_next_die_no_args(self):
         with expected_protocol(
             Velox,
             [("StepNextDie", "0: 1 2 3"),
              ]
         ) as inst:
-            assert [1, 2, 3] == inst.wafermap.step_nextdie()
+            assert [1, 2, 3] == inst.wafermap.step_next_die()
 
     @pytest.mark.parametrize("coordinates", [
         "5 6 1",
@@ -115,15 +115,15 @@ class TestWaferMap:
         (5, "6", 1),  # tuple
         [5, 6, 1],  # list
         ])
-    def test_step_nextdie_single_arg(self, coordinates):
+    def test_step_next_die_single_arg(self, coordinates):
         with expected_protocol(
             Velox,
             [("StepNextDie 5 6 1", "0: 5 6 1"),
              ]
         ) as inst:
-            assert [5, 6, 1] == inst.wafermap.step_nextdie(coordinates)
+            assert [5, 6, 1] == inst.wafermap.step_next_die(coordinates)
 
-    def test_step_nextdie_multi_args(self):
+    def test_step_next_die_multi_args(self):
         with expected_protocol(
             Velox,
             [("StepNextDie 1", "0: 1 6 0 0"),
@@ -131,9 +131,9 @@ class TestWaferMap:
              ("StepNextDie 1 2 3", "0: 1 2 3 9"),
              ]
         ) as inst:
-            assert [1, 6, 0, 0] == inst.wafermap.step_nextdie(1)
-            assert [1, 2, 0, 1] == inst.wafermap.step_nextdie(1, 2)
-            assert [1, 2, 3, 9] == inst.wafermap.step_nextdie(1, "2", [3])  # mixed types
+            assert [1, 6, 0, 0] == inst.wafermap.step_next_die(1)
+            assert [1, 2, 0, 1] == inst.wafermap.step_next_die(1, 2)
+            assert [1, 2, 3, 9] == inst.wafermap.step_next_die(1, "2", [3])  # mixed types
 
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),
@@ -162,7 +162,7 @@ class TestVelox:
                 Velox,
                 [("StepNextDie", "703: End of wafer.")]
             ) as inst:
-                inst.wafermap.step_nextdie()
+                inst.wafermap.step_next_die()
 
     def test_options(self):
         with pytest.raises(NotImplementedError):

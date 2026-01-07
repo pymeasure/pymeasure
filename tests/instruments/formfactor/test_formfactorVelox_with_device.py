@@ -78,18 +78,18 @@ class TestChuck:
 
 
 class TestWafermap:
-    def test_step_firstdie(self, prober):
+    def test_step_first_die(self, prober):
         if not prober.wafermap.enabled:
             pytest.skip("WaferMap module not loaded.")
-        got = prober.wafermap.step_firstdie()
+        got = prober.wafermap.step_first_die()
         assert list is type(got)
         assert 4 == len(got)
         sleep(0.5)
 
-    def test_step_nextdie(self, prober):
+    def test_step_next_die(self, prober):
         if not prober.wafermap.enabled:
             pytest.skip("WaferMap module not loaded.")
-        got = prober.wafermap.step_nextdie()
+        got = prober.wafermap.step_next_die()
         assert list is type(got)
         assert 4 == len(got)
 

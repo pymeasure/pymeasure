@@ -128,7 +128,7 @@ class Chuck(Channel):
 class WaferMap(Channel):
     """A class representing the functions of the Wafermap module."""
 
-    def step_firstdie(self):
+    def step_first_die(self):
         """Move the chuck to the first die and clear the the binning results.
 
         :return: List of the int containing the coordinates of the first die.
@@ -144,7 +144,7 @@ class WaferMap(Channel):
                            cast=int,
                            )
 
-    def step_nextdie(self, *args):
+    def step_next_die(self, *args):
         """Move the chuck to the specified die coordinates. If no argument is passed,
         the prober moves to the next logical die.
 
@@ -197,14 +197,14 @@ class Velox(SCPIMixin, Instrument):
         from pymeasure.instruments.formfactor.velox import Velox
 
         prober = Velox("GPIB0::28::INSTR")  # replace the resource to your needs
-        coordinates = prober.wafermap.step_firstdie()  # move to the first die in the wafermap
+        coordinates = prober.wafermap.step_first_die()  # move to the first die in the wafermap
         while not prober.error_code:
             prober.chuck.move_contact()  # move to contact height
             # ...
             # code for measurement, processing and storing data
             # ...
             prober.chuck.move_separation()  # move to separation height
-            coordinates = prober.wafermap.step_nextdie()  # move to the next die in the wafermap
+            coordinates = prober.wafermap.step_next_die()  # move to the next die in the wafermap
 
     """
 
@@ -225,7 +225,8 @@ class Velox(SCPIMixin, Instrument):
 
     @property
     def options(self):
-        """Raises *NotImplementedError* since command ``*OPT?`` is not implemented in Velox."""
+        """Get the installed options.
+        Raises *NotImplementedError* since command ``*OPT?`` is not implemented in Velox."""
         raise NotImplementedError("*OPT? is not implemented in Velox.")
 
     version = Instrument.measurement(
