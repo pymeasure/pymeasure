@@ -90,7 +90,7 @@ class Chuck(Channel):
         pos_ref = pos_ref.lower()
         strict_discrete_set(pos_ref, PROBER_REFERENCES.keys())
         strict_range(velocity, VELOCITY_RANGE)
-        _ref = pos_ref[0].upper()
+        _ref = PROBER_REFERENCES[pos_ref]
         return self.ask(f"MoveChuckIndex {x_steps} {y_steps} {_ref} {velocity}")
 
     def move(self, x, y, pos_ref="home", unit="microns", velocity=100):
