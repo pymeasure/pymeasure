@@ -50,15 +50,15 @@ def prober(connected_device_address,
 
 class TestChuck:
     def test_move_contact(self, prober):
-        assert "OK" == prober.chuck.move_contact()
+        assert "" == prober.chuck.move_contact()
         sleep(0.5)
 
     def test_move_align(self, prober):
-        assert "OK" == prober.chuck.move_align(10)
+        assert "" == prober.chuck.move_align(10)
         sleep(0.5)
 
     def test_move_separation(self, prober):
-        assert "OK" == prober.chuck.move_separation()
+        assert "" == prober.chuck.move_separation()
         sleep(0.5)
 
     def test_index(self, prober):
@@ -69,11 +69,11 @@ class TestChuck:
         prober.chuck.index = initial_index
 
     def test_move_index(self, prober):
-        assert "OK" == prober.chuck.move_index(0, 0, "center")
+        assert "" == prober.chuck.move_index(0, 0, "center")
         sleep(0.5)
 
     def test_move(self, prober):
-        assert "OK" == prober.chuck.move(100, 500, "relative")
+        assert "" == prober.chuck.move(100, 500, "relative")
         sleep(0.5)
 
 

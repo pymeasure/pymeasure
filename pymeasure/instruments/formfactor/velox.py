@@ -261,9 +261,6 @@ class Velox(SCPIMixin, Instrument):
             if self.error_code not in EXPECTED_ERRORS:
                 raise ConnectionError(f"{self.error_code}: {self.error_message}")
 
-        if response == "":
-            response = "OK"  # for commands that only return error code 0
-
         return response
 
     def check_errors(self):

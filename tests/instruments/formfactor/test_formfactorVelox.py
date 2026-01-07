@@ -35,21 +35,21 @@ class TestChuck:
             Velox,
             [("MoveChuckContact 100", "0:")]
         ) as inst:
-            assert "OK" == inst.chuck.move_contact()
+            assert "" == inst.chuck.move_contact()
 
     def test_move_align(self):
         with expected_protocol(
             Velox,
             [("MoveChuckAlign 1", "0:")]
         ) as inst:
-            assert "OK" == inst.chuck.move_align(1)
+            assert "" == inst.chuck.move_align(1)
 
     def test_move_separation(self):
         with expected_protocol(
             Velox,
             [("MoveChuckSeparation 100", "0:")]
         ) as inst:
-            assert "OK" == inst.chuck.move_separation()
+            assert "" == inst.chuck.move_separation()
 
     @pytest.mark.parametrize("pos_ref, mapping", [
                              ("home", "H"),
@@ -64,7 +64,7 @@ class TestChuck:
             [(f"MoveChuckIndex 1 2 {mapping} 100", "0:"),
              ]
         ) as inst:
-            assert "OK" == inst.chuck.move_index(1, 2, pos_ref)
+            assert "" == inst.chuck.move_index(1, 2, pos_ref)
 
     @pytest.mark.parametrize("unit, mapping", [
                              ("microns", "Y"),
@@ -79,7 +79,7 @@ class TestChuck:
             [(f"MoveChuck 199 -23.6 C {mapping} 100", "0:"),
              ]
         ) as inst:
-            assert "OK" == inst.chuck.move(199, -23.6, "center", unit)
+            assert "" == inst.chuck.move(199, -23.6, "center", unit)
 
     def test_index(self):
         with expected_protocol(
