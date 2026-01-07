@@ -44,12 +44,7 @@ PROBER_REFERENCES = {"home": "H",
                      "center": "C",
                      "diehome": "D",
                      }
-EXPECTED_ERRORS = [703]  # list of errors that do not raise VeloxError
-
-
-class VeloxError(BaseException):
-    """A class representing Velox errors."""
-    pass
+EXPECTED_ERRORS = [703]  # list of errors that do not raise a ConnectionError
 
 
 class Chuck(Channel):
@@ -228,6 +223,11 @@ class Velox(SCPIMixin, Instrument):
             **kwargs
         )
 
+    @property
+    def options(self):
+        """Raises *NotImplementedError* since command ``*OPT?`` is not implemented in Velox."""
+        raise NotImplementedError("*OPT? is not implemented in Velox.")
+
     version = Instrument.measurement(
         "ReportSoftwareVersion",
         """Get the main software version of Velox (str).""",
@@ -237,7 +237,7 @@ class Velox(SCPIMixin, Instrument):
         """
         Read the response and check for errors.
 
-        :raise: *VeloxError* if an error is detected.
+        :raise: *ConnectionError* if an error is detected.
 
         """
 
@@ -258,7 +258,7 @@ class Velox(SCPIMixin, Instrument):
         if self.error_code:
             self.error_message = response
             if self.error_code not in EXPECTED_ERRORS:
-                raise VeloxError(f"{self.error_code}: {self.error_message}")
+                raise ConnectionError(f"{self.error_code}: {self.error_message}")
 
         if response == "":
             response = "OK"  # for commands that only return error code 0

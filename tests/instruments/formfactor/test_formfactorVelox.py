@@ -26,7 +26,7 @@ import pytest
 from contextlib import nullcontext as does_not_raise
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.formfactor.velox import Velox, VeloxError
+from pymeasure.instruments.formfactor.velox import Velox
 
 
 class TestChuck:
@@ -148,21 +148,29 @@ class TestWaferMap:
 
 
 class TestVelox:
-    def test_veloxerror(self):
-        with pytest.raises(VeloxError):
+    def test_error(self):
+        with pytest.raises(ConnectionError):
             with expected_protocol(
                 Velox,
                 [("*IDN?", "7: Error Message")]
             ) as inst:
                 inst.id
 
-    def test_expected_veloxerror(self):
-        with does_not_raise(VeloxError):
+    def test_expected_error(self):
+        with does_not_raise(ConnectionError):
             with expected_protocol(
                 Velox,
                 [("StepNextDie", "703: End of wafer.")]
             ) as inst:
                 inst.wafermap.step_nextdie()
+
+    def test_options(self):
+        with pytest.raises(NotImplementedError):
+            with expected_protocol(
+                Velox,
+                [("*OPT?", "Fake options")]
+            ) as inst:
+                inst.options
 
     def test_version(self):
         with expected_protocol(

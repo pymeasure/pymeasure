@@ -35,7 +35,7 @@
 import pytest
 from time import sleep
 
-from pymeasure.instruments.formfactor.velox import Velox, VeloxError
+from pymeasure.instruments.formfactor.velox import Velox
 
 
 @pytest.fixture(scope="module")
@@ -100,7 +100,7 @@ class TestVelox:
     def test_check_errors(self, prober):
         try:
             prober.ask("unknown_command")
-        except VeloxError:
+        except ConnectionError:
             assert 509 == prober.error_code
 
     def test_id(self, prober):
