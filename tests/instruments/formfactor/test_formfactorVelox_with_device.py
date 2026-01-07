@@ -24,6 +24,7 @@
 
 # Call signature:
 # $ pytest test_formfactorVelox_with_device.py --device-address "GPIB0::28::INSTR"
+# Replace "GPIB0::28::INSTR" with your own device address.
 
 #############################################
 #          !!! ATTENTION !!!
@@ -35,10 +36,6 @@ import pytest
 from time import sleep
 
 from pymeasure.instruments.formfactor.velox import Velox, VeloxError
-
-############
-# FIXTURES #
-############
 
 
 @pytest.fixture(scope="module")
