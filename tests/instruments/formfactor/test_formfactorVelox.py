@@ -96,44 +96,27 @@ class TestWaferMap:
     def test_step_first_die(self):
         with expected_protocol(
             Velox,
-            [("StepFirstDie", "0: 4 6 1")]
+            [("StepFirstDie", "0: 4 6 1 2")]
         ) as inst:
-            assert [4, 6, 1] == inst.wafermap.step_first_die()
+            assert [4, 6, 1, 2] == inst.wafermap.step_first_die()
 
-    def test_step_next_die_no_args(self):
+    def test_step_next_die(self):
         with expected_protocol(
             Velox,
-            [("StepNextDie", "0: 1 2 3"),
+            [("StepNextDie", "0: 1 2 3 4"),
              ]
         ) as inst:
-            assert [1, 2, 3] == inst.wafermap.step_next_die()
+            assert [1, 2, 3, 4] == inst.wafermap.step_next_die()
 
-    @pytest.mark.parametrize("coordinates", [
-        "5 6 1",
-        "5,6 1",
-        "5,6;1",
-        (5, "6", 1),  # tuple
-        [5, 6, 1],  # list
-        ])
-    def test_step_next_die_single_arg(self, coordinates):
+    def test_step_to_die(self):
         with expected_protocol(
             Velox,
-            [("StepNextDie 5 6 1", "0: 5 6 1"),
+            [("StepNextDie 5 6", "0: 5 6 1 2"),
+             ("StepNextDie 5 6 1", "0: 5 6 1 2"),
              ]
         ) as inst:
-            assert [5, 6, 1] == inst.wafermap.step_next_die(coordinates)
-
-    def test_step_next_die_multi_args(self):
-        with expected_protocol(
-            Velox,
-            [("StepNextDie 1", "0: 1 6 0 0"),
-             ("StepNextDie 1 2", "0: 1 2 0 1"),
-             ("StepNextDie 1 2 3", "0: 1 2 3 9"),
-             ]
-        ) as inst:
-            assert [1, 6, 0, 0] == inst.wafermap.step_next_die(1)
-            assert [1, 2, 0, 1] == inst.wafermap.step_next_die(1, 2)
-            assert [1, 2, 3, 9] == inst.wafermap.step_next_die(1, "2", [3])  # mixed types
+            inst.wafermap.step_to_die(5, 6)
+            inst.wafermap.step_to_die(5, 6, 1)
 
     @pytest.mark.parametrize("enabled, mapping", [
                              (True, 1),

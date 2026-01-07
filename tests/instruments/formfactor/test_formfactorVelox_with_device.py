@@ -92,7 +92,14 @@ class TestWafermap:
         got = prober.wafermap.step_next_die()
         assert list is type(got)
         assert 4 == len(got)
+        sleep(0.5)
 
+    def test_step_to_die(self, prober):
+        if not prober.wafermap.enabled:
+            pytest.skip("WaferMap module not loaded.")
+        prober.wafermap.step_to_die(5, 5)
+        sleep(0.1)
+        prober.wafermap.step_to_die(5, 5, 0)  # include a subsite in the coordinates
         sleep(0.5)
 
 

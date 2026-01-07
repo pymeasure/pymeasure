@@ -136,7 +136,7 @@ class WaferMap(Channel):
                     - item[0]: X coordinate
                     - item[1]: Y coordinate
                     - item[2]: Current subdie index
-                    - item[3]: Total number of subdies
+                    - item[3]: Total number of subdies in the die
 
         """
         return self.values("StepFirstDie",
@@ -144,40 +144,37 @@ class WaferMap(Channel):
                            cast=int,
                            )
 
-    def step_next_die(self, *args):
-        """Move the chuck to the specified die coordinates. If no argument is passed,
-        the prober moves to the next logical die.
+    def step_next_die(self):
+        """Move the chuck to the next logical die.
 
-        :param \\*args: Die coordinates. The coordinates can be passed as individual arguments or
-            as a single argument.
-            Examples of valid arguments to move to x=5, y=6:
-            ``5, 6``, ``"5 6"``, ``"5, 6"``, ``"5; 6"``, ``[5, 6]``, ``(5, 6)``
-
-        :return: List of int containing the new die coordinates.
+        :return: List of the int containing the coordinates of the new die.
 
             - item[0]: X coordinate
             - item[1]: Y coordinate
             - item[2]: Current subdie index
-            - item[3]: Total number of subdies
+            - item[3]: Total number of subdies in the die
 
         """
-
-        coordinates = ""
-        for arg in args:
-            if type(arg) in [list, tuple]:
-                coordinates += " ".join(map(str, arg))
-            else:
-                coordinates += str(arg).replace(",", " ").replace(";", " ")
-            coordinates += " "
-
-        if len(coordinates):
-            coordinates = " ".join(coordinates.split())  # ensure single space between elements
-
-        command = f"StepNextDie {coordinates}".strip()
-        return self.values(command,
+        return self.values("StepNextDie",
                            separator=" ",
                            cast=int,
                            )
+
+    def step_to_die(self, x_pos, y_pos, s_pos=None):
+        """Move the chuck to the specified die coordinates.
+
+        :param int x_pos: X coordinate.
+        :param int y_pos: Y coordinate.
+        :param int s_pos: subdie index.
+
+        """
+
+        coordinates = [x_pos, y_pos]
+        if s_pos:
+            coordinates.append(s_pos)
+
+        _coord = " ".join(map(str, coordinates))
+        self.ask(f"StepNextDie {_coord}")
 
     enabled = Channel.measurement(
         "IsAppRegistered WaferMap",
