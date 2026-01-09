@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,16 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.santec.tsl570 import TSL570
+from pymeasure.instruments.santec.tsl500series import (
+    TSL500Series,
+    SweepStatus,
+    SweepMode,
+    SweepRouting,
+    SweepPattern,
+)
 
 
-class TSL550(TSL570):
+class TSL550(TSL500Series):
     """Represents the Santec TSL-550 Tunable Laser and provides a high-level interface for
     interacting with the instrument."""
 
