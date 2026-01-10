@@ -50,23 +50,23 @@ def test_input_toggling(qtbot, hide_groups, exp_visible, exp_enabled):
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'), hide_groups=hide_groups)
     qtbot.addWidget(wdg)
 
-    assert wdg.toggle_par.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is True
-    assert wdg.x.isEnabled() is True
+    assert wdg.toggle_par.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is True
+    assert wdg.x.widget.isEnabled() is True
 
-    qtbot.mouseClick(wdg.toggle_par, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par.widget.height()/2)))
 
-    assert wdg.toggle_par.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is exp_visible
-    assert wdg.x.isEnabled() is exp_enabled
+    assert wdg.toggle_par.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is exp_visible
+    assert wdg.x.widget.isEnabled() is exp_enabled
 
-    qtbot.mouseClick(wdg.toggle_par, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par.widget.height()/2)))
 
-    assert wdg.toggle_par.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is True
-    assert wdg.x.isEnabled() is True
+    assert wdg.toggle_par.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is True
+    assert wdg.x.widget.isEnabled() is True
 
 
 def test_input_toggling_start_hidden(qtbot):
@@ -83,14 +83,14 @@ def test_input_toggling_start_hidden(qtbot):
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
     qtbot.addWidget(wdg)
 
-    assert wdg.toggle_par.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.toggle_par.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    qtbot.mouseClick(wdg.toggle_par, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par.widget.height()/2)))
 
-    assert wdg.toggle_par.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is True
+    assert wdg.toggle_par.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is True
 
 
 def test_input_toggling_multiple_conditions(qtbot):
@@ -105,37 +105,37 @@ def test_input_toggling_multiple_conditions(qtbot):
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par1', 'toggle_par2', 'x'))
     qtbot.addWidget(wdg)
 
-    assert wdg.toggle_par1.isChecked() is True
-    assert wdg.toggle_par2.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is True
+    assert wdg.toggle_par1.widget.isChecked() is True
+    assert wdg.toggle_par2.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is True
 
-    qtbot.mouseClick(wdg.toggle_par1, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par1.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par1.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par1.widget.height()/2)))
 
-    assert wdg.toggle_par1.isChecked() is False
-    assert wdg.toggle_par2.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.toggle_par1.widget.isChecked() is False
+    assert wdg.toggle_par2.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    qtbot.mouseClick(wdg.toggle_par2, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par2.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par2.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par2.widget.height()/2)))
 
-    assert wdg.toggle_par1.isChecked() is False
-    assert wdg.toggle_par2.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.toggle_par1.widget.isChecked() is False
+    assert wdg.toggle_par2.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    qtbot.mouseClick(wdg.toggle_par1, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par1.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par1.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par1.widget.height()/2)))
 
-    assert wdg.toggle_par1.isChecked() is True
-    assert wdg.toggle_par2.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.toggle_par1.widget.isChecked() is True
+    assert wdg.toggle_par2.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    qtbot.mouseClick(wdg.toggle_par2, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par2.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par2.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par2.widget.height()/2)))
 
-    assert wdg.toggle_par1.isChecked() is True
-    assert wdg.toggle_par2.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is True
+    assert wdg.toggle_par1.widget.isChecked() is True
+    assert wdg.toggle_par2.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is True
 
 
 @pytest.mark.parametrize(
@@ -154,20 +154,20 @@ def test_input_toggling_boolean(qtbot, condition):
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
     qtbot.addWidget(wdg)
 
-    assert wdg.toggle_par.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is condition
+    assert wdg.toggle_par.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is condition
 
-    qtbot.mouseClick(wdg.toggle_par, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par.widget.height()/2)))
 
-    assert wdg.toggle_par.isChecked() is False
-    assert wdg.x.isVisibleTo(wdg) is not condition
+    assert wdg.toggle_par.widget.isChecked() is False
+    assert wdg.x.widget.isVisibleTo(wdg) is not condition
 
-    qtbot.mouseClick(wdg.toggle_par, QtCore.Qt.LeftButton,
-                     pos=QtCore.QPoint(2, int(wdg.toggle_par.height()/2)))
+    qtbot.mouseClick(wdg.toggle_par.widget, QtCore.Qt.LeftButton,
+                     pos=QtCore.QPoint(2, int(wdg.toggle_par.widget.height()/2)))
 
-    assert wdg.toggle_par.isChecked() is True
-    assert wdg.x.isVisibleTo(wdg) is condition
+    assert wdg.toggle_par.widget.isChecked() is True
+    assert wdg.x.widget.isVisibleTo(wdg) is condition
 
 
 @pytest.mark.parametrize(
@@ -189,15 +189,15 @@ def test_input_toggling_various_inputs(qtbot, partype, default, condition, kwarg
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
     qtbot.addWidget(wdg)
 
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    wdg.toggle_par.setValue(condition)
+    wdg.toggle_par.set_value(condition)
 
-    assert wdg.x.isVisibleTo(wdg) is True
+    assert wdg.x.widget.isVisibleTo(wdg) is True
 
-    wdg.toggle_par.setValue(default)
+    wdg.toggle_par.set_value(default)
 
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
 
 def test_input_toggling_lambda_condition(qtbot):
@@ -211,12 +211,12 @@ def test_input_toggling_lambda_condition(qtbot):
     wdg = InputsWidget(TestProcedure, inputs=('toggle_par', 'x'))
     qtbot.addWidget(wdg)
 
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
 
-    wdg.toggle_par.setValue(80)
+    wdg.toggle_par.set_value(80)
 
-    assert wdg.x.isVisibleTo(wdg) is True
+    assert wdg.x.widget.isVisibleTo(wdg) is True
 
-    wdg.toggle_par.setValue(40)
+    wdg.toggle_par.set_value(40)
 
-    assert wdg.x.isVisibleTo(wdg) is False
+    assert wdg.x.widget.isVisibleTo(wdg) is False
