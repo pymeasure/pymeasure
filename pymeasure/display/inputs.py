@@ -25,7 +25,6 @@
 import logging
 
 import re
-from types import NoneType
 from typing import Any, Callable, Generic, Literal, TypeVar
 
 from pymeasure.experiment.parameters import BooleanParameter, FloatParameter, IntegerParameter, ListParameter, Parameter, PhysicalParameter

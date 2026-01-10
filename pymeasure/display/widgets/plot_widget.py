@@ -24,6 +24,7 @@
 
 import logging
 
+from numpy.random import default_rng
 import pyqtgraph as pg
 
 from ..curves import ResultsCurve
@@ -157,6 +158,9 @@ class PlotWidget(TabWidget, QtWidgets.QWidget):
     def clear_widget(self):
         self.plot.clear()
 
+    def selection_tags(self) -> list[str]:
+        return ["1D"]
+    
     def enter_selection_mode(self, initial_range):
         super().enter_selection_mode()
         self.linear_reg = pg.LinearRegionItem()

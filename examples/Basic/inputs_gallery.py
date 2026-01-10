@@ -33,6 +33,8 @@ python gui.py
 import sys
 import numpy as np
 
+from pymeasure.display.widgets import LogWidget, PlotWidget, ImageWidget
+from pymeasure.display.windows.managed_window import ManagedWindowBase
 from pymeasure.experiment import (
     Procedure,
     IntegerParameter,
@@ -47,7 +49,7 @@ from pymeasure.display.windows import ManagedWindow
 
 import logging
 
-from pymeasure.experiment.parameters import PhysicalParameter, ParameterGroup, Range1DParameterGroup
+from pymeasure.experiment.parameters import PhysicalParameter, ParameterGroup, Range1DParameterGroup, Range2DParameterGroup
 
 log = logging.getLogger("")
 log.addHandler(logging.NullHandler())
@@ -70,24 +72,28 @@ class TestProcedure(Procedure):
                                  test2 = FloatParameter("test2", default=0)
                                  )
     wl_range = Range1DParameterGroup("Wavelength Range")
+    voltages = Range2DParameterGroup("Voltages Range")
     
-    
-    DATA_COLUMNS = ["wavelength (nm)", "intensity (a.u.)"]
-
+    DATA_COLUMNS = ["wavelength (nm)", "intensity (a.u.)", "voltage1 (V)", "voltage2 (V)", "current (A)"]
+        
     def startup(self):
         pass
     
     def execute(self):
-        for wl in self.wl_range:
+        for wl, (voltage1, voltage2) in zip(self.wl_range, self.voltages):
             result = {"wavelength (nm)": wl,
-                      "intensity (a.u)": np.random.rand()}
+                      "intensity (a.u)": np.random.rand(),
+                      "voltage1 (V)": voltage1,
+                      "voltage2 (V)": voltage2,
+                      "current (A)": np.random.rand()}
             self.emit("results", result)
+            
     
     def shutdown(self):
         pass
 
 
-class MainWindow(ManagedWindow):
+class MainWindow(ManagedWindowBase):
     def __init__(self):
         inputs = ["float_param",
                   "int_param",
@@ -97,16 +103,23 @@ class MainWindow(ManagedWindow):
                   "vector_param",
                   "param_group",
                   "wl_range",
+                  "voltages",
                   ]
+        widgets = [LogWidget("Log"),
+                   PlotWidget("Plot", ["wavelength (nm)", "intensity (a.u.)"], selectors=["wl_range"]),
+                   ImageWidget("Image", ["voltage1 (V)",
+                                         "voltage2 (V)",
+                                         "current (A)"],
+                               "voltage1 (V)",
+                               "voltage2 (V)",
+                               selectors=["voltages"]),]
         super().__init__(
-            procedure_class=TestProcedure,
-            inputs= inputs,
-            displays=["float_param"],
-            x_axis="wavelength (nm)",
-            y_axis="intensity (a.u.)",
+            procedure_class = TestProcedure,
+            inputs = inputs,
+            displays = ["float_param"],
+            widget_list = widgets
         )
         self.setWindowTitle("GUI Example")
-        self.plot_widget.selectors = ["wl_range"]
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

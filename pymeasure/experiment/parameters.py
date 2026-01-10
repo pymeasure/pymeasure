@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
+from inspect import TPFLAGS_IS_ABSTRACT
 from typing import Any, Generic, Literal, TypeVar
 import numpy as np
+from pyqtgraph.debug import traceback
 from qtpy import QtWidgets
 import json
 
@@ -622,10 +624,13 @@ class Range1DParameterGroup(ParameterGroup):
         start, stop, no_steps = super().serialize()
         return np.linspace(start, stop, no_steps)
 
-    def deserialize(self, value_list: list):
-        self.parameters[f"{self.var_name}_start"].value = value_list[0]
-        self.parameters[f"{self.var_name}_stop"].value = value_list[-1]
-        self.parameters[f"{self.var_name}_no_steps"].value = len(value_list)
+    def deserialize(self, value: list|str):
+        if isinstance(value, str):
+            super().deserialize(value)
+        else:
+            self.parameters[f"{self.var_name}_start"].value = value[0]
+            self.parameters[f"{self.var_name}_stop"].value = value[-1]
+            self.parameters[f"{self.var_name}_no_steps"].value = len(value)
 
 class Range2DParameterGroup(ParameterGroup):
 
@@ -641,24 +646,36 @@ class Range2DParameterGroup(ParameterGroup):
                  ) -> None:
         self.var_name = name.lower().replace(" ", "_")
         parameters = {
-            f"{self.var_name}_start_x": FloatParameter("Start",default=0, **start_kwargs_x),
-            f"{self.var_name}_stop_x": FloatParameter("Stop",default=1, **stop_kwargs_x),
-            f"{self.var_name}_no_steps_x": IntegerParameter("Number of steps",default=50, **no_step_kwargs_x),
-            f"{self.var_name}_start_y": FloatParameter("Start",default=0, **start_kwargs_y),
-            f"{self.var_name}_stop_y": FloatParameter("Stop",default=1, **stop_kwargs_y),
-            f"{self.var_name}_no_steps_y": IntegerParameter("Number of steps",default=50, **no_step_kwargs_y)
+            f"{self.var_name}_start_x": FloatParameter("Start x",default=0., **start_kwargs_x),
+            f"{self.var_name}_stop_x": FloatParameter("Stop x",default=1., **stop_kwargs_x),
+            f"{self.var_name}_no_steps_x": IntegerParameter("Number of steps x",default=50, **no_step_kwargs_x),
+            f"{self.var_name}_start_y": FloatParameter("Start y",default=0., **start_kwargs_y),
+            f"{self.var_name}_stop_y": FloatParameter("Stop y",default=1., **stop_kwargs_y),
+            f"{self.var_name}_no_steps_y": IntegerParameter("Number of steps y",default=50, **no_step_kwargs_y)
         }
         super().__init__(name, group_by, **parameters)
 
     def serialize(self):
         start_x, stop_x, no_steps_x, start_y, stop_y, no_steps_y = super().serialize()
-        return np.linspace(start_x, stop_x, no_steps_x)
+        x_range = np.linspace(start_x, stop_x, no_steps_x)
+        y_range = np.linspace(start_y, stop_y, no_steps_y)
+        x_range, y_range = np.meshgrid(x_range, y_range)
+        return np.dstack((x_range.flatten(), y_range.flatten()))[0]
 
-    def deserialize(self, value_list: list):
-        self.parameters[f"{self.var_name}_start_x"].value = value_list[0]
-        self.parameters[f"{self.var_name}_stop_x"].value = value_list[-1]
-        self.parameters[f"{self.var_name}_no_steps_x"].value = len(value_list)
-        
+    def deserialize(self, value: np.ndarray | str):
+        if isinstance(value, str):
+            super().deserialize(value)
+        else:
+            x_values = np.unique(value[:,0])
+            y_values = np.unique(value[:,1])
+            self.parameters[f"{self.var_name}_start_x"].value = x_values[0]
+            self.parameters[f"{self.var_name}_stop_x"].value = x_values[-1]
+            self.parameters[f"{self.var_name}_no_steps_x"].value = x_values.shape[0]
+
+            self.parameters[f"{self.var_name}_start_y"].value = y_values[0]
+            self.parameters[f"{self.var_name}_stop_y"].value = y_values[-1]
+            self.parameters[f"{self.var_name}_no_steps_y"].value = y_values.shape[0]
+            
 class Measurable:
     """ Encapsulates the information for a measurable experiment parameter
     with information about the name, fget function and units if supplied.

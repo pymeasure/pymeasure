@@ -30,7 +30,10 @@ import subprocess
 import tempfile
 import shutil
 
+from numpy._core.numeric import False_
 import pyqtgraph as pg
+
+from pymeasure.display.widgets.image_widget import ImageWidget
 
 from ..browser import BrowserItem
 from ..manager import Manager, Experiment
@@ -57,12 +60,12 @@ class TabArea(QtWidgets.QTabWidget):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def start_selection(self, selector, initial_range):
+    def start_selection(self, selector, tag, initial_range):
         self.selection_started.emit()
         wdg = self.currentWidget()
-        if isinstance(wdg, PlotWidget):
+        if tag in wdg.selection_tags():
             if selector in wdg.selectors:
-                wdg.selection_finished.connect(self.selection_completed)
+                wdg.selection_finished.connect(lambda result: self.selection_completed.emit([selector, result]))
                 wdg.enter_selection_mode(initial_range)
 
 class ManagedWindowBase(QtWidgets.QMainWindow):
@@ -278,7 +281,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
 
         self.tabs = TabArea(self.main)
         self.inputs.selection_triggered.connect(self.tabs.start_selection)
-        self.tabs.selection_completed.connect(getattr(self.inputs, "set_range"))
+        self.tabs.selection_completed.connect(self.inputs.set_selector)
         for wdg in self.widget_list:
             self.tabs.addTab(wdg, wdg.name)
 

@@ -80,6 +80,8 @@ class TabWidget:
 
         return None
 
+    def selection_tags(self) -> list[str]:
+        return []
     
     def enter_selection_mode(self):
         self.selection_active = True
