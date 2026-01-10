@@ -25,7 +25,7 @@
 import logging
 
 from functools import partial
-from typing import Any, Type
+from typing import Union, Type
 
 from ..inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
                       StringInput, UncertQuantInput, VectorInput)
@@ -43,7 +43,7 @@ class InputsWidget(QtWidgets.QWidget):
     selection_triggered = QtCore.Signal(str, str, object)
     def __init__(self,
                  procedure_class: Type[Procedure],
-                 inputs: tuple[str] | None = None,
+                 inputs: Union[tuple[str], None] = None,
                  hide_groups: bool=True,
                  inputs_in_scrollarea: bool=False,
                  **kwargs):

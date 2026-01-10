@@ -25,7 +25,7 @@
 import logging
 
 import re
-from typing import Any, Callable, Generic, Literal, TypeVar
+from typing import Any, Callable, Generic, Literal, TypeVar, Union
 
 from pymeasure.experiment.parameters import BooleanParameter, FloatParameter, IntegerParameter, ListParameter, Parameter, PhysicalParameter
 from pyqtgraph import SpinBox
@@ -142,7 +142,7 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
         return super().event(e)
         
     @property
-    def parameter(self) -> Parameter|None:
+    def parameter(self) -> Union[Parameter, None]:
         """
         The connected parameter object. Read-only property; see
         :meth:`set_parameter`.

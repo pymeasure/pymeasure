@@ -2,7 +2,7 @@ import pymeasure.experiment.parameters as parameters
 from .Qt import QtCore, QtGui, QtWidgets
 from .inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
                       StringInput, UncertQuantInput, VectorInput, TrailingButton)
-
+from typing import Union
 # tuple of Input classes that do not need an external label
 NO_LABEL_INPUTS = (BooleanInput, )
 
@@ -130,7 +130,7 @@ class InputGroup(QtWidgets.QWidget):
             self.add_input(element, parameter.name)
             self.elements[parameter.name] = element
             
-    def add_input(self, input_widget: Input, label: str | None = None):
+    def add_input(self, input_widget: Input, label: Union[str, None] = None):
         if label and not isinstance(input_widget, NO_LABEL_INPUTS):
             label_widget = QtWidgets.QLabel()
             label_widget.setText(f"{label}:")

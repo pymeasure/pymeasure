@@ -22,10 +22,8 @@
 # THE SOFTWARE.
 #
 
-from inspect import TPFLAGS_IS_ABSTRACT
-from typing import Any, Generic, Literal, TypeVar
+from typing import Any, Generic, Literal, TypeVar, Union
 import numpy as np
-from pyqtgraph.debug import traceback
 from qtpy import QtWidgets
 import json
 
@@ -55,16 +53,16 @@ class Parameter(Generic[T]):
     :description: A string providing a human-friendly description for the
         parameter.
     """
-    _value: T | None
+    _value: Union[T, None]
     def __init__(self,
                  name: str,
-                 default: T | None=None,
-                 units: str | None=None,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType|None = None,
+                 default: Union[T, None]=None,
+                 units: Union[str, None]=None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str|None=None):
+                 description: Union[str, None]=None):
         self.name = name
         separator = ": "
         if separator in name:
@@ -99,7 +97,7 @@ class Parameter(Generic[T]):
         self.description = description
     
     @property
-    def value(self) -> T | None:
+    def value(self) -> Union[T, None]:
         if self.is_set():
             return self._value
         else:
@@ -128,7 +126,7 @@ class Parameter(Generic[T]):
         """
         return self._value is not None
 
-    def convert(self, value: Any) -> T | None:
+    def convert(self, value: Any) -> Union[T, None]:
         """ Convert user input to python data format
 
         Subclasses are expected to customize this method.
@@ -185,16 +183,16 @@ class IntegerParameter(Parameter[int]):
     """
     def __init__(self,
                  name: str,
-                 default: int | None = None,
-                 units: str | None = None,
+                 default: Union[int, None] = None,
+                 units: Union[str, None] = None,
                  minimum: int = int(-1e9),
                  maximum: int = int(1e9),
-                 step: int | None = None,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
+                 step: Union[int, None] = None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
+                 description: Union[str, None] = None):
         self.units = units
         self.minimum = int(minimum)
         self.maximum = int(maximum)
@@ -235,7 +233,7 @@ class IntegerParameter(Parameter[int]):
             self.__class__.__name__, self.name, self._value, self.units, self.default)
 
 
-class BooleanParameter(Parameter[bool|np.bool]):
+class BooleanParameter(Parameter[Union[bool,np.bool]]):
     """ :class:`.Parameter` sub-class that uses the boolean type to
     store the value.
 
@@ -283,17 +281,17 @@ class FloatParameter(Parameter[float]):
     """
     def __init__(self,
                  name: str,
-                 default: float | None = None,
-                 units: str | None = None,
+                 default: Union[float, None] = None,
+                 units: Union[str, None] = None,
                  minimum: float = -1e9,
                  maximum: float = 1e9,
                  decimals: int = 15,
-                 step: int | None = None,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
+                 step: Union[int, None] = None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
+                 description: Union[str, None] = None):
         self.minimum = minimum
         self.maximum = maximum
         self.decimals = decimals
@@ -347,14 +345,14 @@ class VectorParameter(Parameter[list[float]]):
     """
     def __init__(self,
                  name: str,
-                 default: list[float] | None = None,
-                 units: str | None = None,
+                 default: Union[list[float], None] = None,
+                 units: Union[str, None] = None,
                  length: int = 3,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
+                 description: Union[str, None] = None):
         self._length = length
         self.units = units
         super().__init__(name, default, units, ui_class, group_name, group_by, group_condition, description)
@@ -416,14 +414,14 @@ class ListParameter(Parameter[SupportsStr]):
     """
     def __init__(self,
                  name: str,
-                 choices: list[SupportsStr] | None = None,
-                 default: SupportsStr | None = None,
-                 units: str | None = None,
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
+                 choices: Union[list[SupportsStr], None] = None,
+                 default: Union[SupportsStr, None] = None,
+                 units: Union[str, None] = None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
+                 description: Union[str, None] = None):
         if choices is not None:
             keys = [str(c) for c in choices]
             # check that string representation is unique
@@ -454,7 +452,7 @@ class ListParameter(Parameter[SupportsStr]):
                              "Must be one of %s" % str(self._choices))
 
     @property
-    def choices(self) -> tuple[SupportsStr,...] | None:
+    def choices(self) -> Union[tuple[SupportsStr,...], None]:
         """ Returns an immutable iterable of choices, or None if not set. """
         if self._choices:
             return tuple(self._choices.values())
@@ -475,14 +473,14 @@ class PhysicalParameter(VectorParameter):
     #TODO: Rework this class and add an Input that overrides value.
     def __init__(self,
                  name: str,
-                 default: list[float] | None = None,
-                 units: str | None = None,
+                 default: Union[list[float], None] = None,
+                 units: Union[str, None] = None,
                  uncertainty_type: Literal["absolute", "relative", "percentage"] = "absolute",
-                 ui_class: QtWidgets.QWidget | None = None,
-                 group_name: str | None = None,
-                 group_by: GroupByType | None = None,
+                 ui_class: Union[QtWidgets.QWidget, None] = None,
+                 group_name: Union[str, None] = None,
+                 group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: str | None = None):
+                 description: Union[str, None] = None):
         self._utype = ListParameter("uncertainty type",
                                     choices=['absolute', 'relative', 'percentage'],
                                     default=None)
@@ -562,7 +560,10 @@ class PhysicalParameter(VectorParameter):
 
 class ParameterGroup:
 
-    def __init__(self, name: str, group_by: GroupByType | None = {}, **parameters: Parameter) -> None:
+    def __init__(self,
+                 name: str,
+                 group_by: Union[GroupByType, None] = {},
+                 **parameters: Parameter) -> None:
         self.name = name
         self.group_by = group_by
         self.parameters = parameters
@@ -590,7 +591,7 @@ class ParameterGroup:
         """
         return [parameter.value for (_, parameter) in self.parameters.items()]
 
-    def deserialize(self, value: list | str):
+    def deserialize(self, value: Union[list, str]):
         if isinstance(value, str):
             value = json.loads(value)
             value = [item for _,item in value.items()]
@@ -608,7 +609,7 @@ class Range1DParameterGroup(ParameterGroup):
 
     def __init__(self,
                  name: str,
-                 group_by: GroupByType| None = {},
+                 group_by: Union[GroupByType, None] = {},
                  start_kwargs = {},
                  stop_kwargs = {},
                  no_step_kwargs = {}) -> None:
@@ -624,7 +625,7 @@ class Range1DParameterGroup(ParameterGroup):
         start, stop, no_steps = super().serialize()
         return np.linspace(start, stop, no_steps)
 
-    def deserialize(self, value: list|str):
+    def deserialize(self, value: Union[list, str]):
         if isinstance(value, str):
             super().deserialize(value)
         else:
@@ -636,7 +637,7 @@ class Range2DParameterGroup(ParameterGroup):
 
     def __init__(self,
                  name: str,
-                 group_by: GroupByType| None = {},
+                 group_by: Union[GroupByType, None] = {},
                  start_kwargs_x = {},
                  start_kwargs_y = {},
                  stop_kwargs_x = {},
@@ -662,7 +663,7 @@ class Range2DParameterGroup(ParameterGroup):
         x_range, y_range = np.meshgrid(x_range, y_range)
         return np.dstack((x_range.flatten(), y_range.flatten()))[0]
 
-    def deserialize(self, value: np.ndarray | str):
+    def deserialize(self, value: Union[np.ndarray, str]):
         if isinstance(value, str):
             super().deserialize(value)
         else:
