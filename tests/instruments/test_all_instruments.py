@@ -118,7 +118,6 @@ grandfathered_docstring_instruments = [
     "Agilent33521A",
     "Agilent8257D",
     "Agilent8722ES",
-    "AgilentB1500",
     "AgilentE4408B",
     "AgilentE4980",
     "AnritsuMS2090A",
