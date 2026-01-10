@@ -24,8 +24,8 @@
 
 from typing import Protocol, Union, Callable, Any
 
-GroupConditionType = bool|Callable[[Any],bool]
-GroupByType = Union[str|list[str]|tuple[str]|dict[str,GroupConditionType]]
+GroupConditionType = Union[bool,Callable[[Any],bool]]
+GroupByType = Union[str,list[str],tuple[str],dict[str,GroupConditionType]]
 
 class SupportsStr(Protocol):
     def __str__(self) -> str: ...
