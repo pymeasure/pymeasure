@@ -34,43 +34,31 @@ class GP_PressureChannel(Channel):
 
 
 class GP350(Instrument):
-    """Representation of the GP350 Vacuum Sensor.
-    
+    """
+    Granville-Phillips GP350 Vacuum Sensor.
+
     Provides access to multiple pressure channels corresponding to filaments
-    and display outputs. Each channel can be queried for its current pressure in mbar.
+    and display outputs. Each channel can be queried for its current pressure
+    in mbar.
 
     Measurement Channels
     --------------------
-    The GP350 exposes the following measurement channels as attributes:
+    The following channels are available as attributes:
 
-    .. attribute:: filament_1
-       :type: GP_PressureChannel
+    - ``filament_1``: Filament 1 pressure
+    - ``filament_2``: Filament 2 pressure
+    - ``display_A``: Display A pressure
+    - ``display_B``: Display B pressure
 
-       Pressure measured at filament 1.
-
-    .. attribute:: filament_2
-       :type: GP_PressureChannel
-
-       Pressure measured at filament 2.
-
-    .. attribute:: display_A
-       :type: GP_PressureChannel
-
-       Pressure shown on display A.
-
-    .. attribute:: display_B
-       :type: GP_PressureChannel
-
-       Pressure shown on display B.
+    See :class:`GP_PressureChannel` for channel behavior and units.
 
     :param Adapter adapter: Communication adapter (e.g., SerialAdapter, VISAAdapter).
     :param str name: Name of the instrument, default is "GP350 Vacuum Sensor".
     :param kwargs: Additional keyword arguments passed to the Instrument base class.
     """
-    
     def __init__(self, adapter, name="GP350 Vacuum Sensor", **kwargs):
         super().__init__(adapter, name, includeSCPI=False, **kwargs)
-        
+
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
 
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
