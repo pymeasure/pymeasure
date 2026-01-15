@@ -35,23 +35,46 @@ class GP_PressureChannel(Channel):
 
 class GP350(Instrument):
     """Representation of the GP350 Vacuum Sensor.
+    
     Provides access to multiple pressure channels corresponding to filaments
     and display outputs. Each channel can be queried for its current pressure in mbar.
-    Parameters
-    ----------
-    adapter : Adapter
-        Communication adapter (e.g., SerialAdapter, VISAAdapter).
-    name : str, optional
-        Name of the instrument, default is "GP350 Vacuum Sensor".
-    kwargs
-        Additional keyword arguments passed to the Instrument base class."""
+
+    Measurement Channels
+    --------------------
+    The GP350 exposes the following measurement channels as attributes:
+
+    .. attribute:: filament_1
+       :type: GP_PressureChannel
+
+       Pressure measured at filament 1.
+
+    .. attribute:: filament_2
+       :type: GP_PressureChannel
+
+       Pressure measured at filament 2.
+
+    .. attribute:: display_A
+       :type: GP_PressureChannel
+
+       Pressure shown on display A.
+
+    .. attribute:: display_B
+       :type: GP_PressureChannel
+
+       Pressure shown on display B.
+
+    :param Adapter adapter: Communication adapter (e.g., SerialAdapter, VISAAdapter).
+    :param str name: Name of the instrument, default is "GP350 Vacuum Sensor".
+    :param kwargs: Additional keyword arguments passed to the Instrument base class.
+    """
+    
     def __init__(self, adapter, name="GP350 Vacuum Sensor", **kwargs):
         super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        
     filament_1 = Instrument.ChannelCreator(GP_PressureChannel, "1")
-    """Channel 1 (filament 1). :no-index:"""
+
     filament_2 = Instrument.ChannelCreator(GP_PressureChannel, "2")
-    """Channel 2 (filament 2). :no-index:"""
+
     display_A = Instrument.ChannelCreator(GP_PressureChannel, "A")
-    """Display channel A. :no-index:"""
+
     display_B = Instrument.ChannelCreator(GP_PressureChannel, "B")
-    """Display channel B. :no-index:"""
