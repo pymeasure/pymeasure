@@ -192,14 +192,8 @@ def test_list_order():
                              ('choices are', 'choices')]
 
 
-def test_vector():
+def test_vector_error():
     p = VectorParameter('test', length=3, units='tests')
-    p.value = [1, 2, 3]
-    assert p.value == [1, 2, 3]
-    p.value = '[4, 5, 6]'
-    assert p.value == [4, 5, 6]
-    p.value = '[7, 8, 9] tests'
-    assert p.value == [7, 8, 9]
     with pytest.raises(ValueError):
         p.value = '[0, 1, 2] wrong unit'
     with pytest.raises(ValueError):
@@ -210,6 +204,18 @@ def test_vector():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         [[1, 2, 3], [1, 2, 3]],
+                         ['[4, 5, 6]', [4, 5, 6]],
+                         ['[7, 8, 9] tests', [7, 8, 9]],
+                         [np.array([10, 11, 12]), [10, 11, 12]],
+                         ))
+def test_vector(value, mapping):
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = value
+    assert p.value == mapping
 
 # TODO: Add tests for Measurable
