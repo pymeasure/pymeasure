@@ -26,6 +26,12 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, truncated_range
 
 
+PERSISTENT_SWITCH_HEATER_STATES = {
+    0: 'OFF',
+    1: 'ON'
+}
+
+
 class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
     """
     Represents the Cryomagnetics 4G Magnet Power Supply family and provides a
@@ -181,6 +187,29 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
 
         Must be between 0 and 16 characters in length.
         """
+    )
+
+    persistent_switch_heater = Instrument.control(
+        "PSHTR?",
+        "PSHTR %s",
+        """
+        Control the status of the persistent switch heater, either ``'ON'`` or ``'OFF'``.
+        """,
+        validator=strict_discrete_set,
+        values=PERSISTENT_SWITCH_HEATER_STATES,
+        get_process=lambda x: PERSISTENT_SWITCH_HEATER_STATES[int(x)]
+    )
+
+    def quench_reset(self):
+        """Resets the power supply quench doncition and returns it to STANDBY."""
+        self.write("QRESET")
+
+    def get_range_limit(self, range):
+        """Get ..."""
+
+    range_limit = Instrument.setting(
+        "RANGE %g %g",
+        """Set range x to limit y... Set with a tuple ``(x, y)``.""",
     )
 
 
