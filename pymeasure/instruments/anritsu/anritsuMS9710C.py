@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -275,7 +275,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     trace_marker = Instrument.control(
         "TMK?", "TMK %f",
         "Control the trace marker with a wavelength.  Returns the trace wavelength and power.",
-        get_process=_parse_trace_peak
+        get_process_list=_parse_trace_peak
     )
 
     @property

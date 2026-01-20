@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,8 @@ import logging
 
 from functools import partial
 
-from ..inputs import BooleanInput, IntegerInput, ListInput, ScientificInput, StringInput
+from ..inputs import (BooleanInput, IntegerInput, ListInput, ScientificInput,
+                      StringInput, VectorInput)
 from ..Qt import QtWidgets, QtCore
 from ...experiment import parameters
 
@@ -71,6 +72,9 @@ class InputsWidget(QtWidgets.QWidget):
 
             elif isinstance(parameter, parameters.ListParameter):
                 element = ListInput(parameter)
+
+            elif isinstance(parameter, parameters.VectorParameter):
+                element = VectorInput(parameter)
 
             elif isinstance(parameter, parameters.Parameter):
                 element = StringInput(parameter)
@@ -138,7 +142,7 @@ class InputsWidget(QtWidgets.QWidget):
             if isinstance(group_el, BooleanInput):
                 group_el.toggled.connect(toggle)
                 toggle(group_el.isChecked())
-            elif isinstance(group_el, StringInput):
+            elif isinstance(group_el, (StringInput, VectorInput)):
                 group_el.textChanged.connect(toggle)
                 toggle(group_el.text())
             elif isinstance(group_el, (IntegerInput, ScientificInput)):

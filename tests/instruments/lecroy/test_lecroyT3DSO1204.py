@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -377,6 +377,15 @@ def test_math_define():
     ) as instr:
         instr.math_define = ("channel2", "*", "channel4")
         assert instr.math_define == ["EQN", "'C2*C4'"]
+
+
+def test_acquisition_type_average():
+    with expected_protocol(
+        LeCroyT3DSO1204,
+        [("CHDR OFF", None),
+         ("ACQW?", "AVERAGE, 5")]
+    ) as instr:
+        assert instr.acquisition_type == ["average", 5]
 
 
 def test_math_vdiv():

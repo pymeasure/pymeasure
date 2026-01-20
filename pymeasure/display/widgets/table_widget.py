@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -183,7 +183,7 @@ class PandasModelBase(QtCore.QAbstractTableModel):
                 value_render = ""
             if isinstance(value_render, np.float64):
                 # limit maximum number of decimal digits displayed
-                value_render = f"{value_render:.{self.float_digits:d}g}"
+                value_render = f"{value_render:.{self.float_digits:d}g}"  # noqa: E231
 
             if role == QtCore.Qt.ItemDataRole.DisplayRole:
                 return str(value_render)

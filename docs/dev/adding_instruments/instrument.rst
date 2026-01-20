@@ -50,7 +50,7 @@ The most basic instrument, for our "Extreme 5000" example starts like this:
     #
     # This file is part of the PyMeasure package.
     #
-    # Copyright (c) 2013-2024 PyMeasure Developers
+    # Copyright (c) 2013-2025 PyMeasure Developers
     #
     # Permission is hereby granted, free of charge, to any person obtaining a copy
     # of this software and associated documentation files (the "Software"), to deal
@@ -139,6 +139,7 @@ For example, if an instrument complies to SCPI standards, you can add :class:`~p
 
 This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.generic_types.SCPIMixin.id`, :attr:`~pymeasure.instruments.generic_types.SCPIMixin.status` and default methods like :meth:`~pymeasure.instruments.generic_types.SCPIMixin.clear` and :meth:`~pymeasure.instruments.generic_types.SCPIMixin.reset` to :code:`SomeSCPIInstrument`.
 
+You can check whether your instrument can safely inherit from :class:`~pymeasure.instruments.generic_types.SCPIMixin` by running :code:`pytest -k scpi_mixin --device-address "<instrument-address>"`.
 
 Frequent properties
 -------------------

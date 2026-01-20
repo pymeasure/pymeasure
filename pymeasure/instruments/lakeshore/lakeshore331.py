@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,20 +22,17 @@
 # THE SOFTWARE.
 #
 
-import logging
+import warnings
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.lakeshore.lakeshore_base import LakeShoreTemperatureChannel, \
     LakeShoreHeaterChannel
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
-
-class LakeShore331(SCPIUnknownMixin, Instrument):
-    """ Represents the Lake Shore 331 Temperature Controller and provides
-    a high-level interface for interacting with the instrument. Note that the
-    331 provides two input channels (A and B) and two output channels (1 and 2).
+class LakeShore331(SCPIMixin, Instrument):
+    """Represents the Lake Shore 331 Temperature Controller and provides
+    a high-level interface for interacting with the instrument.
+    Note that the 331 provides two input channels (A and B) and two output channels (1 and 2).
     This driver makes use of the :ref:`LakeShoreChannels`.
 
     .. code-block:: python
@@ -46,7 +43,10 @@ class LakeShore331(SCPIUnknownMixin, Instrument):
         controller.output_1.setpoint = 50           # Change the loop 1 setpoint to 50 K
         controller.output_1.heater_range = 'low'    # Change the heater range to low.
         controller.input_A.wait_for_temperature()   # Wait for the temperature to stabilize.
-        print(controller.input_A.temperature)       # Print the temperature at sensor A.
+        print(controller.input_A.kelvin             # Print the temperature at sensor A.
+
+    .. deprecated:: 0.16.0
+        Use LakeShore3xx instead.
     """
     input_A = Instrument.ChannelCreator(LakeShoreTemperatureChannel, 'A')
 
@@ -56,10 +56,15 @@ class LakeShore331(SCPIUnknownMixin, Instrument):
 
     output_2 = Instrument.ChannelCreator(LakeShoreHeaterChannel, 2)
 
-    def __init__(self, adapter, name="Lakeshore Model 336 Temperature Controller", **kwargs):
-        kwargs.setdefault('read_termination', "\r\n")
+    def __init__(self,
+                 adapter,
+                 name="Lakeshore Model 331 Temperature Controller",
+                 read_termination="\r\n",
+                 **kwargs):
+        warnings.warn("LakeShore331 is deprecated. Use LakeShore3xx instead.", DeprecationWarning)
         super().__init__(
             adapter,
             name,
+            read_termination=read_termination,
             **kwargs
         )

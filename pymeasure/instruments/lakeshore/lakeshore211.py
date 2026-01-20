@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2022 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -116,7 +116,7 @@ class LakeShore211(SCPIUnknownMixin, Instrument):
             strict_discrete_set(v[0], vs[0]), strict_discrete_set(v[1], vs[1])),
         values=[list(AnalogMode), list(AnalogRange)],
         # These are the vs values in the validator lambda
-        get_process=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
+        get_process_list=lambda x: (LakeShore211.AnalogMode(x[0]), LakeShore211.AnalogRange(x[1])),
         cast=int
     )
 

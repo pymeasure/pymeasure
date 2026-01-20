@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,3 +24,4 @@
 
 from .thorlabspm100usb import ThorlabsPM100USB
 from .thorlabspro8000 import ThorlabsPro8000
+from .thorlabsmbxseries import ThorlabsMBXSeries

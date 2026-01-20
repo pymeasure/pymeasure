@@ -21,6 +21,7 @@ Instruments by manufacturer:
    :maxdepth: 2
 
    activetechnologies/index
+   aculight/index
    advantest/index
    agilent/index
    aimtti/index
@@ -42,6 +43,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   ilxlightwave/index
    inficon/index
    ipgphotonics/index
    keithley/index
@@ -56,14 +58,19 @@ Instruments by manufacturer:
    novanta/index
    oxfordinstruments/index
    parker/index
+   philips/index
    pendulum/index
    proterial/index
+   ptw/index
    racal/index
    razorbill/index
    redpitaya/index
+   rigol/index
    rohdeschwarz/index
+   santec/index
    siglenttechnologies/index
    signalrecovery/index
+   spellmanhv/index
    srs/index
    tcpowerconversion/index
    tdk/index

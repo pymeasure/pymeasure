@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
 import pytest
 
 from pymeasure.experiment.parameters import Parameter
@@ -37,6 +38,7 @@ def test_parameter_default():
     assert p.value == 5
     assert p.cli_args[0] == 5
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+    assert p._cli_help_fields() == 'Test:\n\nDefault is 5.'
 
 
 def test_integer_units():
@@ -77,7 +79,7 @@ def test_integer_bounds():
         p.value = -100  # below minimum
 
 
-def test_boolean_value():
+def test_boolean_value_error():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         _ = p.value  # not set
@@ -85,22 +87,24 @@ def test_boolean_value():
         p.value = 'a'  # a string
     with pytest.raises(ValueError):
         p.value = 10  # a number other than 0 or 1
-    p.value = "True"
-    assert p.value is True
-    p.value = "False"
-    assert p.value is False
-    p.value = "true"
-    assert p.value is True
-    p.value = "false"
-    assert p.value is False
-    p.value = 1  # a number
-    assert p.value is True
-    p.value = 0  # zero
-    assert p.value is False
-    p.value = True
-    assert p.value is True
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         ["True", True],
+                         ["true", True],
+                         [1, True],
+                         [np.bool(True), True],
+                         ["False", False],
+                         ["false", False],
+                         [0, False],
+                         [np.bool(False), False],
+                         ))
+def test_boolean_value(value, mapping):
+    p = BooleanParameter('Test')
+    p.value = value
+    assert p.value == mapping
 
 
 def test_float_value():
@@ -121,7 +125,8 @@ def test_float_value():
     with pytest.raises(ValueError):
         p.value = '31.3 incorrect units'  # not the correct units
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', 'decimals']
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('decimals are', 'decimals')]
 
 
 def test_float_bounds():
@@ -157,7 +162,8 @@ def test_list_value():
     with pytest.raises(ValueError):
         p.value = 5
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_value_with_units():
@@ -173,7 +179,8 @@ def test_list_value_with_units():
     p.value = 'and four tests'
     assert p.value == 'and four'
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
 def test_list_order():
@@ -181,17 +188,12 @@ def test_list_order():
     # check if order is preserved, choices are internally stored as dict
     assert p.choices == (1, 2.2, 'three', 'and four')
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', ('choices are', 'choices')]
+    assert p.cli_args[1] == [('units are', 'units'), 'default',
+                             ('choices are', 'choices')]
 
 
-def test_vector():
+def test_vector_error():
     p = VectorParameter('test', length=3, units='tests')
-    p.value = [1, 2, 3]
-    assert p.value == [1, 2, 3]
-    p.value = '[4, 5, 6]'
-    assert p.value == [4, 5, 6]
-    p.value = '[7, 8, 9] tests'
-    assert p.value == [7, 8, 9]
     with pytest.raises(ValueError):
         p.value = '[0, 1, 2] wrong unit'
     with pytest.raises(ValueError):
@@ -202,6 +204,18 @@ def test_vector():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         [[1, 2, 3], [1, 2, 3]],
+                         ['[4, 5, 6]', [4, 5, 6]],
+                         ['[7, 8, 9] tests', [7, 8, 9]],
+                         [np.array([10, 11, 12]), [10, 11, 12]],
+                         ))
+def test_vector(value, mapping):
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = value
+    assert p.value == mapping
 
 # TODO: Add tests for Measurable

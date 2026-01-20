@@ -129,6 +129,25 @@ We define the data columns that will be recorded in a list stored in :python:`DA
 
 The :python:`execute` methods defines the main body of the procedure. Our example method consists of a loop over the number of iterations, in which we emit the data to be recorded (the Iteration number). The data is broadcast to any number of listeners by using the :code:`emit` method, which takes a topic as the first argument. Data with the :python:`'results'` topic and the proper data columns will be recorded to a file. The sleep function in our example provides two very useful features. The first is to delay the execution of the next lines of code by the time argument in units of seconds. The seconds is that during this delay time, the CPU is free to perform other code. Successful measurements often require the intelligent use of sleep to deal with instrument delays and ensure that the CPU is not hogged by a single script. After our delay, we check to see if the Procedure should stop by calling :python:`self.should_stop()`. By checking this flag, the Procedure will react to a user canceling the procedure execution.
 
+.. note::
+   Instead of emitting results one by one, it is also possible to emit results in batch. As an example consider a device that returns multiple points for each measurement (such as an oscilloscope or a CCD): ::
+
+    intensities = self.ccd.capture()  # Assume this function returns a list of intensities for each pixel
+    pixels = np.arange(len(intensities))
+
+    for pixel, intensity in zip(pixels, intensities):
+        self.emit('results', {'Pixel': pixel, 'Intensity': intensity})
+
+   The downside to this method is that it is cumbersome to write and can be slow when the array of data is large. Instead it is possible to emit the data as as a whole: ::
+
+    intensities = self.ccd.capture()  # Assume this function returns a list of intensities for each pixel
+    pixels = np.arange(len(intensities))
+
+    self.emit('batch results', {'Pixel': pixels, 'Intensity': intensities})
+
+   Please note that you have to use :python:`'batch results'` as the topic when emitting results this way.
+
+
 This covers the basic requirements of a Procedure object. Now let's construct our SimpleProcedure object with 100 iterations. ::
 
     procedure = SimpleProcedure()

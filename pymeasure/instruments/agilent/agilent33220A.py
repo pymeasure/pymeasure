@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import strict_discrete_set,\
+from pymeasure.instruments.validators import strict_discrete_set, \
     strict_range, joined_validators
 from time import time
 from pyvisa.errors import VisaIOError
@@ -78,8 +78,8 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     shape = Instrument.control(
         "FUNC?", "FUNC %s",
-        """ A string property that controls the output waveform. Can be set to:
-        SIN<USOID>, SQU<ARE>, RAMP, PULS<E>, NOIS<E>, DC, USER. """,
+        """Control the output waveform (string, strict from SINUSOID, SIN, SQUARE, SQU, RAMP, PULSE,
+        PULS, NOISE, NOIS, DC, USER).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -88,26 +88,23 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
     )
 
     frequency = Instrument.control(
-        "FREQ?", "FREQ %s",
-        """ A floating point property that controls the frequency of the output
-        waveform in Hz, from 1e-6 (1 uHz) to 20e+6 (20 MHz), depending on the
-        specified function. Can be set. """,
-        validator=strict_range,
-        values=[1e-6, 5e+6],
+        "FREQ?", "FREQ %f",
+        """Control the frequency of the output waveform. Depending on the output shape, the
+        supported frequency range changes. Supplying out-of-bound values may silently be clipped
+        by the device (float, in Hz)"""
     )
 
     amplitude = Instrument.control(
         "VOLT?", "VOLT %f",
-        """ A floating point property that controls the voltage amplitude of the
-        output waveform in V, from 10e-3 V to 10 V. Can be set. """,
-        validator=strict_range,
-        values=[10e-3, 10],
+        """Control the amplitude of the output waveform. Depending on amplitude unit, the unit
+        is Volt (peak-to-peak), Volt (RMS) or dBm. The limits depend on the configured output
+        termination (50 Ohm to High Impedance changes by a factor of 2) and the offset.
+        Supplying out-of-bound values may silently be clipped by the device (float, in V or dBm)"""
     )
 
     amplitude_unit = Instrument.control(
         "VOLT:UNIT?", "VOLT:UNIT %s",
-        """ A string property that controls the units of the amplitude. Valid
-        values are Vpp (default), Vrms, and dBm. Can be set. """,
+        """Control the units of the amplitude (string, strict from VPP, VRMS, DBM).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -116,64 +113,53 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     offset = Instrument.control(
         "VOLT:OFFS?", "VOLT:OFFS %f",
-        """ A floating point property that controls the voltage offset of the
-        output waveform in V, from 0 V to 4.995 V, depending on the set
-        voltage amplitude (maximum offset = (10 - voltage) / 2). Can be set.
-        """,
-        validator=strict_range,
-        values=[-4.995, +4.995],
+        """Control the voltage offset of the output waveform. This is limited by the amplitude
+        and output termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_high = Instrument.control(
         "VOLT:HIGH?", "VOLT:HIGH %f",
-        """ A floating point property that controls the upper voltage of the
-        output waveform in V, from -4.990 V to 5 V (must be higher than low
-        voltage). Can be set. """,
-        validator=strict_range,
-        values=[-4.99, 5],
+        """Control the upper voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     voltage_low = Instrument.control(
         "VOLT:LOW?", "VOLT:LOW %f",
-        """ A floating point property that controls the lower voltage of the
-        output waveform in V, from -5 V to 4.990 V (must be lower than high
-        voltage). Can be set. """,
-        validator=strict_range,
-        values=[-5, 4.99],
+        """Control the lower voltage of the output waveform. The limits depend on the output
+        termination. Supplying out-of-bound values may silently be clipped by the
+        device. (float, in V)"""
     )
 
     square_dutycycle = Instrument.control(
         "FUNC:SQU:DCYC?", "FUNC:SQU:DCYC %f",
-        """ A floating point property that controls the duty cycle of a square
-        waveform function in percent. Can be set. """,
+        """Control the duty cycle of a square waveform function (float, strict from 20 to 80).""",
         validator=strict_range,
         values=[20, 80],
     )
 
     ramp_symmetry = Instrument.control(
         "FUNC:RAMP:SYMM?", "FUNC:RAMP:SYMM %f",
-        """ A floating point property that controls the symmetry percentage
-        for the ramp waveform. Can be set. """,
+        """Control the symmetry percentage for the ramp waveform (float, strict from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
     )
 
     pulse_period = Instrument.control(
         "PULS:PER?", "PULS:PER %f",
-        """ A floating point property that controls the period of a pulse
-        waveform function in seconds, ranging from 200 ns to 2000 s. Can be set
-        and overwrites the frequency for *all* waveforms. If the period is
-        shorter than the pulse width + the edge time, the edge time and pulse
-        width will be adjusted accordingly. """,
+        """Control the period of a pulse waveform function in seconds
+        (float, strict from 200e-9 to 2e3). The period overwrites the frequency for all waveforms.
+        If the period is shorter than the pulse width + the edge time, the edge time and pulse
+        width will be adjusted accordingly.""",
         validator=strict_range,
         values=[200e-9, 2e3],
     )
 
     pulse_hold = Instrument.control(
         "FUNC:PULS:HOLD?", "FUNC:PULS:HOLD %s",
-        """ A string property that controls if either the pulse width or the
-        duty cycle is retained when changing the period or frequency of the
-        waveform. Can be set to: WIDT<H> or DCYC<LE>. """,
+        """Control if either the pulse width or the duty cycle is retained when changing the period
+        or frequency of the waveform (string, strict from WIDT, WIDTH, DCYC, DCYCLE).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -182,36 +168,34 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     pulse_width = Instrument.control(
         "FUNC:PULS:WIDT?", "FUNC:PULS:WIDT %f",
-        """ A floating point property that controls the width of a pulse
-        waveform function in seconds, ranging from 20 ns to 2000 s, within a
-        set of restrictions depending on the period. Can be set. """,
+        """Control the width of a pulse waveform function in seconds
+        (float, strict from 20e-9 to 2e3).""",
         validator=strict_range,
         values=[20e-9, 2e3],
     )
 
     pulse_dutycycle = Instrument.control(
         "FUNC:PULS:DCYC?", "FUNC:PULS:DCYC %f",
-        """ A floating point property that controls the duty cycle of a pulse
-        waveform function in percent. Can be set. """,
+        """Control the duty cycle of a pulse waveform function in percent
+        (float, strict from 0 to 100).""",
         validator=strict_range,
         values=[0, 100],
     )
 
     pulse_transition = Instrument.control(
         "FUNC:PULS:TRAN?", "FUNC:PULS:TRAN %g",
-        """ A floating point property that controls the edge time in
+        """Control the edge time in
         seconds for both the rising and falling edges. It is defined as the
         time between 0.1 and 0.9 of the threshold. Valid values are between
         5 ns to 100 ns. The transition time has to be smaller than
-        0.625 * the pulse width. Can be set. """,
+        0.625 * the pulse width.""",
         validator=strict_range,
         values=[5e-9, 100e-9],
     )
 
     output = Instrument.control(
         "OUTP?", "OUTP %d",
-        """ A boolean property that turns on (True) or off (False) the output
-        of the function generator. Can be set. """,
+        """Control the output of the function generator (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -219,8 +203,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     burst_state = Instrument.control(
         "BURS:STAT?", "BURS:STAT %d",
-        """ A boolean property that controls whether the burst mode is on
-        (True) or off (False). Can be set. """,
+        """Control whether the burst mode is on (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -228,8 +211,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     burst_mode = Instrument.control(
         "BURS:MODE?", "BURS:MODE %s",
-        """ A string property that controls the burst mode. Valid values
-        are: TRIG<GERED>, GAT<ED>. This setting can be set. """,
+        """Control the burst mode (string, strict from TRIG, TRIGGERED, GAT, GATED).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -238,9 +220,8 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     burst_ncycles = Instrument.control(
         "BURS:NCYC?", "BURS:NCYC %d",
-        """ An integer property that sets the number of cycles to be output
-        when a burst is triggered. Valid values are 1 to 50000. This can be
-        set. """,
+        """Control the number of cycles to be output when a burst is triggered
+        (int, strict from 1 to 50000).""",
         validator=strict_discrete_set,
         values=range(1, 50001),
         cast=lambda v: int(float(v))
@@ -274,8 +255,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
             if timeout != 0 and time() - t0 > timeout:
                 raise TimeoutError(
-                    "Timeout expired while waiting for the Agilent 33220A" +
-                    " to finish the triggering."
+                    "Timeout expired while waiting for the Agilent 33220A to finish the triggering."
                 )
 
             if should_stop():
@@ -283,9 +263,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     trigger_source = Instrument.control(
         "TRIG:SOUR?", "TRIG:SOUR %s",
-        """ A string property that controls the trigger source. Valid values
-        are: IMM<EDIATE> (internal), EXT<ERNAL> (rear input), BUS (via trigger
-        command). This setting can be set. """,
+        """Control the trigger source (string, strict from IMM, IMMEDIATE, EXT, EXTERNAL, BUS).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -294,8 +272,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     trigger_state = Instrument.control(
         "OUTP:TRIG?", "OUTP:TRIG %d",
-        """ A boolean property that controls whether the output is triggered
-        (True) or not (False). Can be set. """,
+        """Control whether the output is triggered (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
@@ -303,9 +280,8 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     remote_local_state = Instrument.setting(
         "SYST:COMM:RLST %s",
-        """ A string property that controls the remote/local state of the
-        function generator. Valid values are: LOC<AL>, REM<OTE>, RWL<OCK>.
-        This setting can only be set. """,
+        """Set the remote/local state of the function generator
+        (string, strict from LOC, LOCAL, REM, REMOTE, RWL, RWLOCK).""",
         validator=joined_validators(
             strict_discrete_set, string_validator
         ),
@@ -314,8 +290,7 @@ class Agilent33220A(SCPIUnknownMixin, Instrument):
 
     beeper_state = Instrument.control(
         "SYST:BEEP:STAT?", "SYST:BEEP:STAT %d",
-        """ A boolean property that controls the state of the beeper. Can
-        be set. """,
+        """Control the state of the beeper (bool).""",
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -308,6 +308,12 @@ class TestTeledyneMAUI:
         expected = resetted_instrument.trigger
         resetted_instrument.trigger_setup(**expected)
         assert resetted_instrument.trigger == expected
+
+    def test_vbs(self, resetted_instrument):
+        """Test reading and writing values through the VBS interface."""
+        resetted_instrument.vbs_write("app.Acquisition.C1.VerScale=0.01")
+        val = resetted_instrument.vbs_ask("app.Acquisition.C1.VerScale")
+        assert val == "0.01\n"
 
 
 if __name__ == "__main__":

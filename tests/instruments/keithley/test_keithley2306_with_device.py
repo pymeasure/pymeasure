@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -530,16 +530,16 @@ class TestKeithley2306:
         instr.ch(channel).average_count = average_count
         time.sleep(0.2)
         readings = instr.ch(channel).readings
-        assert type(readings) == list
+        assert type(readings) is list
         assert len(readings) == average_count
-        assert type(readings[0]) == float
+        assert type(readings[0]) is float
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_measured_voltage(self, instr, average_count, channel):
         instr.ch(channel).average_count = average_count
         time.sleep(0.1)
-        assert type(instr.ch(channel).measured_voltage) == float
+        assert type(instr.ch(channel).measured_voltage) is float
         assert instr.ch(channel).sense_mode == 'voltage'
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
@@ -548,9 +548,9 @@ class TestKeithley2306:
         instr.ch(channel).average_count = average_count
         time.sleep(0.2)
         measured_voltages = instr.ch(channel).measured_voltages
-        assert type(measured_voltages) == list
+        assert type(measured_voltages) is list
         assert len(measured_voltages) == average_count
-        assert type(measured_voltages[0]) == float
+        assert type(measured_voltages[0]) is float
         assert instr.ch(channel).sense_mode == 'voltage'
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
@@ -558,7 +558,7 @@ class TestKeithley2306:
     def test_measured_current(self, instr, average_count, channel):
         instr.ch(channel).average_count = average_count
         time.sleep(0.1)
-        assert type(instr.ch(channel).measured_current) == float
+        assert type(instr.ch(channel).measured_current) is float
         assert instr.ch(channel).sense_mode == 'current'
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
@@ -567,9 +567,9 @@ class TestKeithley2306:
         instr.ch(channel).average_count = average_count
         time.sleep(0.2)
         measured_currents = instr.ch(channel).measured_currents
-        assert type(measured_currents) == list
+        assert type(measured_currents) is list
         assert len(measured_currents) == average_count
-        assert type(measured_currents[0]) == float
+        assert type(measured_currents[0]) is float
         assert instr.ch(channel).sense_mode == 'current'
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
@@ -577,7 +577,7 @@ class TestKeithley2306:
     def test_dvm_voltage(self, instr, average_count, channel):
         instr.ch(channel).average_count = average_count
         time.sleep(0.1)
-        assert type(instr.ch(channel).dvm_voltage) == float
+        assert type(instr.ch(channel).dvm_voltage) is float
         assert instr.ch(channel).sense_mode == 'dvm'
 
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)
@@ -586,7 +586,7 @@ class TestKeithley2306:
         instr.ch(channel).average_count = average_count
         time.sleep(0.2)
         dvm_voltages = instr.ch(channel).dvm_voltages
-        assert type(dvm_voltages) == list
+        assert type(dvm_voltages) is list
         assert len(dvm_voltages) == average_count
-        assert type(dvm_voltages[0]) == float
+        assert type(dvm_voltages[0]) is float
         assert instr.ch(channel).sense_mode == 'dvm'

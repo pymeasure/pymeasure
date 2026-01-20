@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2023 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +60,7 @@ class IVProcedure(Procedure):
     delay = FloatParameter('Delay Time', units='ms', default=20)
     voltage_range = FloatParameter('Voltage Range', units='V', default=10)
 
-    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (Ohm)']
+    DATA_COLUMNS = ['Current (A)', 'Voltage (V)', 'Resistance (ohm)']
 
     def startup(self):
         log.info("Setting up instruments")
@@ -100,7 +100,7 @@ class IVProcedure(Procedure):
             data = {
                 'Current (A)': current,
                 'Voltage (V)': voltage,
-                'Resistance (Ohm)': resistance
+                'Resistance (ohm)': resistance
             }
             self.emit('results', data)
             self.emit('progress', 100. * i / steps)

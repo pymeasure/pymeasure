@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -109,7 +109,7 @@ def test_non_empty_write_buffer():
             [('VOLT?', 3.14)]
         ) as instr:
             instr.adapter.write_bytes(b"VOLT")
-            instr.adapter._index = 1
+            instr.adapter._index = 1  # type: ignore
 
 
 def test_non_empty_read_buffer():
@@ -144,7 +144,7 @@ class TestConnectionCalls:
                 [],
                 connection_methods={'stb': 17}
         ) as inst:
-            assert inst.adapter.connection.stb() == 17
+            assert inst.adapter.connection.stb() == 17  # type: ignore
 
     def test_connection_attribute(self):
         with expected_protocol(
@@ -152,7 +152,7 @@ class TestConnectionCalls:
                 [],
                 connection_attributes={'timeout': 100}
         ) as inst:
-            assert inst.adapter.connection.timeout == 100
+            assert inst.adapter.connection.timeout == 100  # type: ignore
 
 
 def test_limited_control_raises_validator_exception():

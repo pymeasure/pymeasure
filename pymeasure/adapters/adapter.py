@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 #
 
 import logging
-from warnings import warn
 
 import numpy as np
 from copy import copy
@@ -37,30 +36,18 @@ class Adapter:
 
     This class should only be inherited from.
 
-    :param preprocess_reply: An optional callable used to preprocess
-        strings received from the instrument. The callable returns the
-        processed string.
-
-        .. deprecated:: 0.11
-            Implement it in the instrument's `read` method instead.
-
     :param log: Parent logger of the 'Adapter' logger.
     :param \\**kwargs: Keyword arguments just to be cooperative.
     """
 
-    def __init__(self, preprocess_reply=None, log=None, **kwargs):
+    def __init__(self, log=None, **kwargs):
         super().__init__(**kwargs)
-        self.preprocess_reply = preprocess_reply
         self.connection = None
         if log is None:
             self.log = logging.getLogger("Adapter")
         else:
             self.log = log.getChild("Adapter")
         self.log.addHandler(logging.NullHandler())
-        if preprocess_reply is not None:
-            warn(("Parameter `preprocess_reply` is deprecated in Adapter. "
-                 "Implement it in the instrument instead."),
-                 FutureWarning)
 
     def __del__(self):
         """Close connection upon garbage collection of the device."""
@@ -145,98 +132,33 @@ class Adapter:
         """Flush and discard the input buffer. Implement in subclass."""
         raise NotImplementedError("Adapter class has not implemented input flush.")
 
-    # Deprecated methods.
-    def ask(self, command):
-        """ Write the command to the instrument and returns the resulting
-        ASCII response.
-
-        .. deprecated:: 0.11
-           Call `Instrument.ask` instead.
-
-        :param command: SCPI command string to be sent to the instrument
-        :returns: String ASCII response of the instrument
-        """
-        warn("`Adapter.ask` is deprecated, call `Instrument.ask` instead.", FutureWarning)
-        self.write(command)
-        return self.read()
-
-    def values(self, command, separator=',', cast=float, preprocess_reply=None):
-        """ Write a command to the instrument and returns a list of formatted
-        values from the result.
-
-        .. deprecated:: 0.11
-            Call `Instrument.values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param separator: A separator character to split the string into a list
-        :param cast: A type to cast the result
-        :param preprocess_reply: optional callable used to preprocess values
-            received from the instrument. The callable returns the processed string.
-            If not specified, the Adapter default is used if available, otherwise no
-            preprocessing is done.
-        :returns: A list of the desired type, or strings where the casting fails
-        """
-        warn("`Adapter.values` is deprecated, call `Instrument.values` instead.",
-             FutureWarning)
-        results = str(self.ask(command)).strip()
-        if callable(preprocess_reply):
-            results = preprocess_reply(results)
-        elif callable(self.preprocess_reply):
-            results = self.preprocess_reply(results)
-        results = results.split(separator)
-        for i, result in enumerate(results):
-            try:
-                if cast == bool:
-                    # Need to cast to float first since results are usually
-                    # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
-                else:
-                    results[i] = cast(result)
-            except Exception:
-                pass  # Keep as string
-        return results
-
-    def binary_values(self, command, header_bytes=0, dtype=np.float32):
-        """ Returns a numpy array from a query for binary data
-
-        .. deprecated:: 0.11
-            Call `Instrument.binary_values` instead.
-
-        :param command: SCPI command to be sent to the instrument
-        :param header_bytes: Integer number of bytes to ignore in header
-        :param dtype: The NumPy data type to format the values with
-        :returns: NumPy array of values
-        """
-        warn("`Adapter.binary_values` is deprecated, call `Instrument.binary_values` instead.",
-             FutureWarning)
-        self.write(command)
-        binary = self.read()
-        # header = binary[:header_bytes]
-        data = binary[header_bytes:]
-        return np.fromstring(data, dtype=dtype)
-
     # Binary format methods
     def read_binary_values(self, header_bytes=0, termination_bytes=None,
-                           dtype=np.float32, **kwargs):
+                           dtype=np.float32, sep="", **kwargs):
         """ Returns a numpy array from a query for binary data
 
         :param int header_bytes: Number of bytes to ignore in header.
         :param int termination_bytes: Number of bytes to strip at end of message or None.
         :param dtype: The NumPy data type to format the values with.
-        :param \\**kwargs: Further arguments for the NumPy fromstring method.
+        :param string sep: Separator between chars. If given, use fromstring, otherwise frombytes.
+        :param \\**kwargs: Further arguments for the NumPy fromstring / frombytes method.
         :returns: NumPy array of values
+        :raises ValueError: if the data buffer is empty or malformed
         """
         binary = self.read_bytes(-1)
         # header = binary[:header_bytes]
         data = binary[header_bytes:termination_bytes]
-        return np.fromstring(data, dtype=dtype, **kwargs)
+        if sep == "":
+            return np.frombuffer(data, dtype=dtype, **kwargs)
+        else:
+            return np.fromstring(data, dtype=dtype, sep=sep, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
         """Format values in binary format, used internally in :meth:`Adapter.write_binary_values`.
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
+        :param is_big_endian: boolean indicating endianness.
         :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
         :return: binary string.
         :rtype: bytes

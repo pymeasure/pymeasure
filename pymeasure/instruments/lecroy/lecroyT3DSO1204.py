@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2024 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import logging
 import re
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope,\
+from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
     TeledyneOscilloscopeChannel, sanitize_source
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
@@ -242,16 +242,23 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     ###############
 
     acquisition_type = Instrument.control(
-        "ACQW?", "ACQW %s",
+        "ACQW?",
+        "ACQW %s",
         """Control the type of data acquisition.
 
         Can be 'normal', 'peak', 'average', 'highres'.
         """,
         validator=strict_discrete_set,
-        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
-                "highres": "HIGH_RES"},
+        values={
+            "normal": "SAMPLING",
+            "peak": "PEAK_DETECT",
+            "average": "AVERAGE",
+            "highres": "HIGH_RES",
+        },
         map_values=True,
-        get_process=lambda v: [v[0].lower(), int(v[1])] if len(v) == 2 and v[0] == "AVERAGE" else v
+        get_process_list=lambda v: [v[0].lower(), int(v[1])]
+        if len(v) == 2 and v[0] == "AVERAGE"
+        else v,
     )
 
     acquisition_average = Instrument.control(
