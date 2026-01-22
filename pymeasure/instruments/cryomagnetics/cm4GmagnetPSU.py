@@ -84,14 +84,24 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
     ``sweep_lower_limit``.
 
     Additionally, the sweep function of the power supply is segmented into five
-    **Ranges**, 1 to 4, as viewable on the magnet power supply. I.e., **Range 1** starts
-    at ``range_boundary 0`` and extends to ``range_boundary 1``, **Range 2** starts at
-    ``range_boundary 1`` and extends to ``range_boundary 2``, and so on. The boundary limits
-    can be configured using ``get_range_limit`` and ``set_range_limit``. The sweep rate
-    for each **Range** can be individually configured using ``get_range_rate`` and
-    ``set_range_rate``. Typically you might sweep faster at lower fields, e.g. 0 to
-    +/- 5 T, and then slow down at higher fields (both in a positive and negative
-    sense) where the risk of magnet quench is higher, e.g. 5 to 7 T.
+    **Ranges**, 1 to 5 as viewable on the magnet power supply:
+
+    * **Range 1** starts at ``range_boundary_0`` and extends to ``range_boundary_1``
+    * **Range 2** starts at ``range_boundary_1`` and extends to ``range_boundary_2`` etc...
+
+
+    The exception is **Range 5** which begins at ``range_boundary_4`` and extends to the
+    maximum supply current.
+
+    The sweep rate for each **Range** can be individually configured with e.g. ``range_1_rate``
+    for **Range 1**. The sweep rates can take values from 0 to max supply current,
+    e.g. 100 Amps/second for the 4G-100. However, this is likely not a realistic sweep rate.
+    It is strongly advised not to attempt to sweep faster than your magnet can handle. This
+    should be specified by the manufacturer. Typically you might sweep faster at lower fields,
+    e.g. 0 to +/- 5 T, and then slow down at higher fields (both in a positive and negative
+    sense) where the risk of magnet quench is higher, e.g. 5 to 7 T. Generally, once these
+    have been initially configured then there shouldn't be a need to adjust them any further
+    during your measurements
 
     The magnet power supply can be instructed to do the following:
 
@@ -103,24 +113,54 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
     The magnet will attempt to respond at whatever sweep rate has been defined according
     to whichever **Range** it is currently in.
 
-    Additionally, there is a *fast* rate that can be configured with ``get_fast_rate``
-    and ``set_fast_rate``. The fast rate is invoked by appending ``'FAST'`` to any of
-    the four instructions above, e.g. ``'UP FAST'``. The sweep rate of the current
-    **Range** will be overridden by the fast rate. However, future instructions will
-    also be executed with the fast rate unless ``'SLOW'`` is added, at which point
-    the rate will once more be determined according to the present **Range**.
+    Additionally, there is a *fast* rate (``fast_rate``). The fast rate is invoked by
+    appending ``'FAST'`` to any of the four instructions above, e.g. ``'UP FAST'``.
+    The sweep rate of the current **Range** will be overridden by the fast rate. However,
+    future instructions will also be executed with the fast rate unless ``'SLOW'`` is added,
+    at which point the rate will once more be determined according to the present **Range**.
+
+    As an example:
 
     .. code-block:: python
 
+        # Instantiate the power supply
+        magnet = Cryomagnetics4G100("GPIB::1")
+
+        # Give it a name
+        magnet.name = "my magnet"
+
+        # Set up a sweep between 0 and 10 Amps, or 0 and 2 Tesla
+        # The magnet has a calibration 0.2 Tesla per Amp
+        # or 5 Amps per Tesla
+        magnet.sweep_lower_limit = 0
+        magnet.sweep_upper_limit = 10
+
+        # Set up two sweep ranges:
+        # 0 to 5 Amps (boundaries 0 and 1)
+        # 5 to 10 Amps (boundaries 1 and 2)
+        magnet.range_boundary_0 = 0
+        magnet.range_boundary_1 = 5
+        magnet.range_boundary_2 = 10
+
+        # Set the sweep rate for range 1 to be 1 Amps/second
+        # and for range 2 to be 0.5 Amps/second
+        magnet.range_1_rate = 1
+        magnet.range_2_rate = 0.5
+
+        # Additionally, configure the fast rate
+        magnet.fast_rate = 2
+
+        # Assume magnet is already at zero field
         # start sweeping to upper limit
         magnet.sweep_mode = 'UP'
+        # ...
         # some time later, pause the sweep
         magnet.sweep_mode = 'PAUSE'
         # continue sweeping up, but now at fast rate
         magnet.sweep_mode = 'UP FAST'
         # pause the sweep
         magnet.sweep_mode = 'PAUSE'
-        # sweep down reverting to slow rate
+        # sweep down reverting to rate determined by current range
         magnet.sweep_mode = 'DOWN SLOW'
         # sweep back to zero
         magnet.sweep_mode = 'ZERO'
@@ -313,120 +353,119 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         preprocess_reply=lambda response: response.strip("SWEEP ")
     )
 
+    range_1_rate = Instrument.control(
+        "RATE? 0",
+        "RATE 0 %g",
+        """
+        Control the rate, in Amps/second, of Range 1.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_2_rate = Instrument.control(
+        "RATE? 1",
+        "RATE 1 %g",
+        """
+        Control the rate, in Amps/second, of Range 2.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_3_rate = Instrument.control(
+        "RATE? 2",
+        "RATE 2 %g",
+        """
+        Control the rate, in Amps/second, of Range 3.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_4_rate = Instrument.control(
+        "RATE? 3",
+        "RATE 3 %g",
+        """
+        Control the rate, in Amps/second, of Range 4.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_5_rate = Instrument.control(
+        "RATE? 4",
+        "RATE 4 %g",
+        """
+        Control the rate, in Amps/second, of Range 5.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    fast_rate = Instrument.control(
+        "RATE? 5",
+        "RATE 5 %g",
+        """
+        Control the fast sweep rate, in Amps/second.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_boundary_0 = Instrument.control(
+        "RANGE? 0",
+        "RANGE 0 %g",
+        """
+        Control the value, in Amps, of range boundary 0.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_boundary_1 = Instrument.control(
+        "RANGE? 1",
+        "RANGE 1 %g",
+        """
+        Control the value, in Amps, of range boundary 1.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_boundary_2 = Instrument.control(
+        "RANGE? 2",
+        "RANGE 2 %g",
+        """
+        Control the value, in Amps, of range boundary 2.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_boundary_3 = Instrument.control(
+        "RANGE? 3",
+        "RANGE 3 %g",
+        """
+        Control the value, in Amps, of range boundary 3.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
+    range_boundary_4 = Instrument.control(
+        "RANGE? 4",
+        "RANGE 4 %g",
+        """
+        Control the value, in Amps, of range boundary 4.
+        """,
+        validator=truncated_range,
+        values=[0, _MAXIMUM_CURRENT]
+    )
+
     def quench_reset(self):
         """Resets the power supply quench doncition and returns it to **STANDBY**."""
         self.write("QRESET")
-
-    def get_range_limit(self, range_boundary: int):
-        """
-        Get the boundary limit, in Amps, of the specified ``range_boundary``.
-
-        :param range_boundary: The desired sweep range boundary to query, from 0 to 4.
-
-        :return: The value of the boundary, in Amps.
-        """
-
-        if not isinstance(range_boundary, int) or \
-                range_boundary not in (0, 1, 2, 3, 4):
-            return -1
-        else:
-            self.write(
-                f"RANGE? {range_boundary}"
-            )
-            response = self.read()
-            return response
-
-    def set_range_limit(self, range_boundary: int, limit: float):
-        """
-         Set the value of the boundary, in Amps, of the specified ``range_boundary``
-         to be ``limit``.
-
-        :param range_boundary: The desired boundary to set, from 0 to 4.
-        :type range_boundary: int
-        :param limit: The value of the boundary, in Amps, from 0 to maximum supply current.
-        :type limit: float
-        """
-        if not isinstance(range_boundary, int) or \
-                range_boundary not in (0, 1, 2, 3, 4) or \
-                not isinstance(limit, float):
-            return
-        else:
-            if limit < 0:
-                limit = 0
-            elif limit > self.__class__._MAXIMUM_CURRENT:
-                limit = self.__class__._MAXIMUM_CURRENT
-
-            self.write(
-                f"RANGE {range_boundary} {limit:.f}"
-            )
-
-    def get_range_rate(self, sweep_range: int):
-        """
-        Get the sweep rate, in Amps/second, for the specified ``sweep_range``
-        (i.e. **Range**), in the range 1 to 4.
-
-        :param sweep_range: The **Range** to query.
-        :type sweep_range: int
-        """
-        if not isinstance(sweep_range, int) or \
-                sweep_range not in (1, 2, 3, 4):
-            return -1
-        else:
-            self.write(
-                f"RATE? {sweep_range-1}"
-            )
-            response = self.read()
-            return response
-
-    def set_range_rate(self, sweep_range: int, rate: float):
-        """
-        Set the sweep rate, in Amps/second, for the specified ``sweep_range``
-        (i.e. **Range**), in the range 1 to 4.
-
-        :param sweep_range: The **Range** to configure.
-        :type sweep_range: int
-        :param rate: The rate, in Amps/second, to set.
-        :type rate: float
-        """
-        if not isinstance(sweep_range, int) or \
-                sweep_range not in (1, 2, 3, 4) or \
-                not isinstance(rate, float):
-            return
-        else:
-            if rate < 0:
-                rate = 0
-            elif rate > self.__class__._MAXIMUM_CURRENT:
-                rate = self.__class__._MAXIMUM_CURRENT
-
-            self.write(
-                f"RANGE {sweep_range-1} {rate:f}"
-            )
-
-    def get_fast_rate(self):
-        """
-        Get the fast sweep rate in Amps/second.
-        """
-        self.write(
-            "RATE? 5"
-        )
-        response = self.read()
-        return response
-
-    def set_fast_rate(self, rate: float):
-        """
-        Set the fast sweep rate in Amps/second.
-
-        :param rate: The fast sweep rate, in Amps/second.
-        :type rate: float
-        """
-        if rate < 0:
-            rate = 0
-        elif rate > self.__class__._MAXIMUM_CURRENT:
-            rate = self.__class__._MAXIMUM_CURRENT
-
-        self.write(
-            f"RANGE 5 {rate:f}"
-        )
 
     def reset(self):
         """
