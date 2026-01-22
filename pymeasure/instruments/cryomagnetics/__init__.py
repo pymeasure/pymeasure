@@ -23,7 +23,6 @@
 #
 
 from .cm4GmagnetPSU import (
-    Cryomagnetics4GMagnetPowerSupplyBase,
     Cryomagnetics4G100,
     Cryomagnetics4G150s,
     Cryomagnetics4G200s,

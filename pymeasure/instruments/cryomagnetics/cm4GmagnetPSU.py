@@ -47,10 +47,11 @@ SWEEP_MODES = [
 ]
 
 
-class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
+class Cryomagnetics4G100(Instrument):
     """
-    Represents the Cryomagnetics 4G Magnet Power Supply family and provides a
-    high-level interface for interacting with the instrument via GPIB.
+    Represents the Cryomagnetics 4G-100 Magnet Power Supply and family,
+    and provides a high-level interface for interacting with the instrument
+    via GPIB.
 
     The below implementation is based on revision 9.3 of the Operating
     Instruction Manual (issued 02/20/2020). While the instrument is purported
@@ -72,8 +73,8 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
     +-------------------+-----------------+-------------------------+
 
     The 4G-100, 4G-150s and 4G-200s have one bipolar output channel, while
-    the 4G-Dual has two bipolar output channels. The four models inherit from
-    the common base unit.
+    the 4G-Dual has two bipolar output channels. The 4G-100 model acts as a
+    base for the three other models.
 
     The implementation does not at this time include methods for adjusting any
     of the shim magnets, only the main superconducting magnet.
@@ -217,10 +218,10 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         values=['A', 'G']
     )
 
-    magnet_current = Instrument.control(
+    magnet_current = Instrument.measurement(
         "UNITS A;IMAG?",
-        "UNITS A;IMAG %g",
-        """Control the magnet current in Amps up to +/- the maximum supply current of the model.
+        """
+        Get the magnet current in Amps up to +/- the maximum supply current of the model.
 
         If the persistent switch heater is **ON**, the magnet current returned will be the same as
         the power supply output current. If the persistent switch heater is **OFF**, the magnet
@@ -232,9 +233,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
 
         N.B. The ``units`` will always be switched to Amps when using this command.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0],
-        validator=truncated_range,
-        values=[-_MAXIMUM_CURRENT, _MAXIMUM_CURRENT],
+        preprocess_reply=lambda response: response.replace("A", ""),
     )
 
     output_current = Instrument.measurement(
@@ -247,7 +246,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
 
         N.B. The ``units`` will always be switched to Amps when using this command.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0],
+        preprocess_reply=lambda response: response.replace("A", ""),
     )
 
     sweep_lower_limit = Instrument.control(
@@ -262,7 +261,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
 
         N.B. The ``units`` will always be switched to Amps when using this command.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0],
+        preprocess_reply=lambda response: response.replace("A", ""),
         validator=truncated_range,
         values=[-_MAXIMUM_CURRENT, _MAXIMUM_CURRENT],
     )
@@ -279,7 +278,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
 
         N.B. The ``units`` will always be switched to Amps when using this command.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0],
+        preprocess_reply=lambda response: response.replace("A", ""),
         validator=truncated_range,
         values=[-_MAXIMUM_CURRENT, _MAXIMUM_CURRENT],
     )
@@ -317,7 +316,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         """,
         validator=truncated_range,
         values=[0, _MAXIMUM_VOLTAGE],
-        preprocess_reply=lambda response: response.split(" ")[0]
+        preprocess_reply=lambda response: response.replace("V", "")
     )
 
     magnet_voltage = Instrument.measurement(
@@ -325,7 +324,8 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         """
         Get the present magnet voltage in Volts.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0]
+        preprocess_reply=lambda response: response.replace("V", ""),
+        cast=float
     )
 
     output_voltage = Instrument.measurement(
@@ -333,7 +333,8 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         """
         Get the present power supply output voltage in Volts.
         """,
-        preprocess_reply=lambda response: response.split(" ")[0]
+        preprocess_reply=lambda response: response.replace("V", ""),
+        cast=float
     )
 
     sweep_mode = Instrument.control(
@@ -347,10 +348,13 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         Additionally, each may be modified by either ``'SLOW'`` or ``'FAST'``.
 
         For example ``sweep_mode = 'UP FAST'``.
+
+        Return values are ``'STANDBY'``, ``'SWEEPING UP'``, ``'SWEEPING DOWN'``,
+        ``'SWEEPING PAUSED'`` or ``'SWEEPING TO ZERO'``.
         """,
         validator=strict_discrete_set,
         values=SWEEP_MODES,
-        preprocess_reply=lambda response: response.strip("SWEEP ")
+        preprocess_reply=lambda response: response.upper()
     )
 
     range_1_rate = Instrument.control(
@@ -474,15 +478,7 @@ class Cryomagnetics4GMagnetPowerSupplyBase(Instrument):
         self.write("*RST")
 
 
-class Cryomagnetics4G100(Cryomagnetics4GMagnetPowerSupplyBase):
-    """
-    Represents the Cryomagnetics model 4G-100 magnet power supply.
-    """
-    _MAXIMUM_CURRENT = 100
-    _MAXIMUM_VOLTAGE = 10
-
-
-class Cryomagnetics4G150s(Cryomagnetics4GMagnetPowerSupplyBase):
+class Cryomagnetics4G150s(Cryomagnetics4G100):
     """
     Represents the Cryomagnetics model 4G-150s magnet power supply.
     """
@@ -490,7 +486,7 @@ class Cryomagnetics4G150s(Cryomagnetics4GMagnetPowerSupplyBase):
     _MAXIMUM_VOLTAGE = 10
 
 
-class Cryomagnetics4G200s(Cryomagnetics4GMagnetPowerSupplyBase):
+class Cryomagnetics4G200s(Cryomagnetics4G100):
     """
     Represents the Cryomagnetics model 4G-200s magnet power supply.
     """
@@ -498,7 +494,7 @@ class Cryomagnetics4G200s(Cryomagnetics4GMagnetPowerSupplyBase):
     _MAXIMUM_VOLTAGE = 8
 
 
-class Cryomagnetics4GDual(Cryomagnetics4GMagnetPowerSupplyBase):
+class Cryomagnetics4GDual(Cryomagnetics4G100):
     """
     Represents the Cryomagnetics model 4G-Dual magnet power supply.
     """

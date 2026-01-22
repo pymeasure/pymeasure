@@ -2,10 +2,6 @@
 4G Magnet Power Supply
 ######################
 
-.. autoclass:: pymeasure.instruments.cryomagnetics.Cryomagnetics4GMagnetPowerSupplyBase
-    :members:
-    :show-inheritance:
-
 .. autoclass:: pymeasure.instruments.cryomagnetics.Cryomagnetics4G100
     :members:
     :show-inheritance:
