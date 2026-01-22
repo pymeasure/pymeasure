@@ -281,10 +281,11 @@ class Cryomagnetics4G100(Instrument):
         values=[-_MAXIMUM_CURRENT, _MAXIMUM_CURRENT],
     )
 
-    name = Instrument.control(
+    magnet_name = Instrument.control(
         "NAME?",
         "NAME %s",
-        """Control the name of the currently selected module on the display.
+        """
+        Control the name of the currently selected module on the display.
         Upper and lower case area accepted; however the string is converted to upper case.
 
         Must be between 0 and 16 characters in length.
@@ -483,6 +484,16 @@ class Cryomagnetics4G150s(Cryomagnetics4G100):
     _MAXIMUM_CURRENT = 150
     _MAXIMUM_VOLTAGE = 10
 
+    def __init__(self,
+                 adapter,
+                 name="Cryomagnetics 4G Magnet Power Supply",
+                 **kwargs):
+        super().__init__(
+            adapter=adapter,
+            name=name,
+            **kwargs
+        )
+
 
 class Cryomagnetics4G200s(Cryomagnetics4G100):
     """
@@ -491,6 +502,16 @@ class Cryomagnetics4G200s(Cryomagnetics4G100):
     _MAXIMUM_CURRENT = 200
     _MAXIMUM_VOLTAGE = 8
 
+    def __init__(self,
+                 adapter,
+                 name="Cryomagnetics 4G Magnet Power Supply",
+                 **kwargs):
+        super().__init__(
+            adapter=adapter,
+            name=name,
+            **kwargs
+        )
+
 
 class Cryomagnetics4GDual(Cryomagnetics4G100):
     """
@@ -498,6 +519,16 @@ class Cryomagnetics4GDual(Cryomagnetics4G100):
     """
     _MAXIMUM_CURRENT = 100
     _MAXIMUM_VOLTAGE = 8
+
+    def __init__(self,
+                 adapter,
+                 name="Cryomagnetics 4G Magnet Power Supply",
+                 **kwargs):
+        super().__init__(
+            adapter=adapter,
+            name=name,
+            **kwargs
+        )
 
     channel = Instrument.control(
         "CHAN?",
