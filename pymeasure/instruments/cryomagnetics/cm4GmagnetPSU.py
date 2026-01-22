@@ -221,15 +221,13 @@ class Cryomagnetics4G100(Instrument):
     magnet_current = Instrument.measurement(
         "UNITS A;IMAG?",
         """
-        Get the magnet current in Amps up to +/- the maximum supply current of the model.
+        Get the magnet current in Amps.
 
         If the persistent switch heater is **ON**, the magnet current returned will be the same as
         the power supply output current. If the persistent switch heater is **OFF**, the magnet
         current will be the value of the power supply output current when the persistent switch
         heater was last turned off. The magnet current will be set to zero if the power supply
         detects a quench.
-
-        **How does this actually work??**
 
         N.B. The ``units`` will always be switched to Amps when using this command.
         """,
