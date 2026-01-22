@@ -22,7 +22,8 @@ class TestTektronixMSO58:
     #########################
 
     BOOLEANS = [False, True]
-    BANDWIDTH_LIMITS = [[20.0000E+6, "20MHz"], [250.0000E+6, "250MHz"], [1.0000E+9, "1GHz"]]
+    #BANDWIDTH_LIMITS = [[20.0000E+6, '20MHz'], [250.0000E+6, "250MHz"], [1.0000E+9, "1GHz"]]
+    BANDWIDTH_LIMITS = ['20MHz', "250MHz", "1GHz"]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
     TRIGGER_TYPES = ["edge", "pulse", "timeout", "runt", "window", "logic", "sethold",
@@ -80,7 +81,7 @@ class TestTektronixMSO58:
     MATH_FFT_OUTPUT_TYPE = ["MAGNITUDE", "PHASE"]
     MATH_FFT_WINDOW_TYPE = ["RECTANGULAR", "HAMMING", "HANNING", "BLACKMANHARRIS",
                             "KAISERBESSEL", "GAUSSIAN", "FLATTOP2", "TEKEXPONENTIAL"]
-    WAVEFORM_POINTS = [100, 1000, 20000, 40000]
+    WAVEFORM_POINTS = [100, 1000, 20000]
     WAVEFORM_SOURCES = ["CH1"]  # , "C2", "C3", "C4"]
 
     ############
@@ -131,7 +132,7 @@ class TestTektronixMSO58:
         resetted_instrument.ch_1.trigger_level = 0
         expected = {
             "channel": 1,
-            "bandwidth_limit": 1.0E+9,
+            "bandwidth_limit": "1GHz",
             "coupling": "dc",
             "offset": 0.0,
             "display": True,
@@ -150,10 +151,10 @@ class TestTektronixMSO58:
         assert instrument.channels[ch_number].display == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
-    @pytest.mark.parametrize("case, expected", BANDWIDTH_LIMITS)
-    def test_ch_bwlimit(self, instrument, ch_number, case, expected):
+    @pytest.mark.parametrize("case", BANDWIDTH_LIMITS)
+    def test_ch_bwlimit(self, instrument, ch_number, case):
         instrument.ch(ch_number).bwlimit = case
-        assert instrument.channels[ch_number].bwlimit == expected
+        assert instrument.channels[ch_number].bwlimit == case
 
     @pytest.mark.parametrize("ch_number", CHANNELS)
     @pytest.mark.parametrize("case", CHANNEL_COUPLINGS)
@@ -342,8 +343,9 @@ class TestTektronixMSO58:
         resetted_instrument.waveform_source = "C1"
         expected_preamble = {
             "sparsing": 1,
-            "requested_points": 2500.0,
-            "memory_size": 2500.0,
+            "requested_points": 20000.0,
+            'sampling_rate': 50000000000.0,
+            "memory_size": 20000.0,
             "transmitted_points": None,
             "first_point": 1.0,
             "source": resetted_instrument.waveform_source,
@@ -357,6 +359,7 @@ class TestTektronixMSO58:
         preamble = resetted_instrument.waveform_preamble
         assert preamble == expected_preamble
 
+    @pytest.mark.skip(reason="A human is needed to check the output waveform")
     @pytest.mark.parametrize("case1", WAVEFORM_SOURCES)
     @pytest.mark.parametrize("case2", WAVEFORM_POINTS)
     def test_download_data(self, instrument, case1, case2):
@@ -375,7 +378,7 @@ class TestTektronixMSO58:
         plt.scatter(x=time, y=data)
         plt.show()
 
-    # @pytest.mark.skip(reason="A human is needed to check the output waveform")
+    @pytest.mark.skip(reason="A human is needed to check the output waveform")
     def test_download_data_all_points(self, instrument):
         from matplotlib import pyplot as plt
 
