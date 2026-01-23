@@ -344,7 +344,7 @@ class Cryomagnetics4G100(Instrument):
 
         Possible values are ``'UP'``, ``'DOWN'``, ``'PAUSE'`` and ``'ZERO'``.
 
-        Additionally, each may be modified by either ``'SLOW'`` or ``'FAST'`` 
+        Additionally, each may be modified by either ``'SLOW'`` or ``'FAST'``
         (see main class description for full explanation.)
 
         For example ``sweep_mode = 'UP FAST'``.
