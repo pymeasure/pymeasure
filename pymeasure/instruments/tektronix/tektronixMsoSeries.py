@@ -1224,8 +1224,14 @@ class TektronixMsoScope(SCPIMixin, Instrument):
         """Get a PNG image of oscilloscope screen in bytearray.
         """
         self.write('SAVE:IMAGe \"C:/Temp.png\"')
-        # 2) Wait for operation complete so the file is fully written
-        self.query("*OPC?")  # returns "1" when done
+        # If you have query() available, prefer: self.query('*OPC?')
+        # Otherwise a small wait or WAI can help:
+        try:
+            self.write('*OPC?')
+            _ = self.read()  # read '1'
+        except Exception:
+            # Fallback if *OPC? is not supported by your abstraction
+            self.write('*WAI')
         self.write('FILESystem:READFile \"C:/Temp.png\"')
         img = self.read_bytes(count=-1, break_on_termchar=True)
         self.write('FILESystem:DELEte \"C:/Temp.png\"')
