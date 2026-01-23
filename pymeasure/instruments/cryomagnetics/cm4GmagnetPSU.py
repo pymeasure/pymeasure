@@ -172,7 +172,7 @@ class Cryomagnetics4G100(Instrument):
 
     def __init__(self,
                  adapter,
-                 name="Cryomagnetics 4G Magnet Power Supply",
+                 name="Cryomagnetics 4G-100 Magnet Power Supply",
                  **kwargs):
         super().__init__(
             adapter=adapter,
@@ -288,7 +288,7 @@ class Cryomagnetics4G100(Instrument):
         Control the name of the currently selected module on the display.
         Upper and lower case area accepted; however the string is converted to upper case.
 
-        Must be between 0 and 16 characters in length.
+        Must be between 0 and 16 characters in length. Longer names will be truncated.
         """
     )
 
@@ -344,7 +344,8 @@ class Cryomagnetics4G100(Instrument):
 
         Possible values are ``'UP'``, ``'DOWN'``, ``'PAUSE'`` and ``'ZERO'``.
 
-        Additionally, each may be modified by either ``'SLOW'`` or ``'FAST'``.
+        Additionally, each may be modified by either ``'SLOW'`` or ``'FAST'`` 
+        (see main class description for full explanation.)
 
         For example ``sweep_mode = 'UP FAST'``.
 
@@ -486,7 +487,7 @@ class Cryomagnetics4G150s(Cryomagnetics4G100):
 
     def __init__(self,
                  adapter,
-                 name="Cryomagnetics 4G Magnet Power Supply",
+                 name="Cryomagnetics 4G-150s Magnet Power Supply",
                  **kwargs):
         super().__init__(
             adapter=adapter,
@@ -504,7 +505,7 @@ class Cryomagnetics4G200s(Cryomagnetics4G100):
 
     def __init__(self,
                  adapter,
-                 name="Cryomagnetics 4G Magnet Power Supply",
+                 name="Cryomagnetics 4G-200s Magnet Power Supply",
                  **kwargs):
         super().__init__(
             adapter=adapter,
@@ -522,7 +523,7 @@ class Cryomagnetics4GDual(Cryomagnetics4G100):
 
     def __init__(self,
                  adapter,
-                 name="Cryomagnetics 4G Magnet Power Supply",
+                 name="Cryomagnetics 4G-Dual Magnet Power Supply",
                  **kwargs):
         super().__init__(
             adapter=adapter,
@@ -536,8 +537,6 @@ class Cryomagnetics4GDual(Cryomagnetics4G100):
         """
         Control the power module channel selected for remote commands,
         takes values 1 or 2.
-
-        This is only applicable to the 4G-Dual model.
         """,
         validator=strict_discrete_set,
         values=[1, 2]
