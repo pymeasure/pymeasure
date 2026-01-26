@@ -135,6 +135,15 @@ class TektronixMsoScopeChannel(Channel):
         map_values=True,
     )
 
+    deskew = Instrument.control(
+        "CH{ch}:DESKew?",
+        "CH{ch}:DESKew %G",
+        """Control the horizontal deskew time for the specified channel.
+        """,
+        validator=strict_range,
+        values=[-125.0E-9, 125.0E-9],
+    )
+
     coupling = Instrument.control(
         "CH{ch}:COUPling?",
         "CH{ch}:COUPling %s",
@@ -208,6 +217,7 @@ class TektronixMsoScopeChannel(Channel):
 
         - "channel": channel number (int)
         - "bandwidth_limit": bandwidth limiting enabled (bool)
+        - "deskew":  horizontal deskew time
         - "coupling": "ac 1M", "dc 1M", "ground" coupling (str)
         - "offset": vertical offset (float)
         - "display": currently displayed (bool)
@@ -220,6 +230,7 @@ class TektronixMsoScopeChannel(Channel):
         ch_setup = {
             "channel": self.id,
             "bandwidth_limit": self.bwlimit,
+            "deskew": self.deskew,
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
