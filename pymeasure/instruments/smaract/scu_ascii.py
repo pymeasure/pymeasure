@@ -24,32 +24,32 @@ class SmarActSCU_USB(Instrument):
     frequency_max = Instrument.control(
         ":GCLF0",
         ":SCLF0F%d",
-        """ Control the maximum frequency in an absolute move """,
+        """Control the maximum frequency in an absolute move""",
         set_process = lambda v: check_type(v, 'Hz'),
         get_process = lambda s: Q_(s[6:], 'Hz'),
     )
-
+    #WORKING
     def check_sensor_present(self):
-        """Check if sensor is present."""
-
+        """Check if the sensor is present."""
         self.write(f':GSP0')
         response = self.read()
-        return response[3] == 'P'
+        return response == ':SP0P'
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
-        if self.check_sensor_present is True:
-            self.write(f"SZ0")
+        if self.check_sensor_present:
+            self.write(f":SZ0")
         else:
             raise NotImplementedError
 
     def check_amplitude(self, amplitude: Q_):
+        """Check if amplitude is present and if it is inside the given boundary."""
         if amplitude is None:
             amplitude = self._amplitude
         else:
             self._amplitude = amplitude
-        # truncated amplitude zrt
-        #Amplitude[150;1000]
+        if amplitude > 1000 or amplitude > 150:
+            raise ValueError
         return amplitude
 
     def move_steps_up(self, steps: int, frequency=Q_(1000, 'Hz'), amplitude: Q_ = None):
@@ -57,11 +57,11 @@ class SmarActSCU_USB(Instrument):
 
         amplitude = self.check_amplitude(amplitude)
 
-        self.write(f"U0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
+        self.write(f":U0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
 
     def move_steps_down(self, steps: int, frequency: Q_, amplitude: Q_):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-        self.write(f"D0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
+        self.write(f":D0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
 
     def move_abs(self, position: Union[Q_, int]):
         raise NotImplementedError
@@ -77,19 +77,15 @@ class SmarActSCU_USB(Instrument):
         if self.unit == '':
             raise NotImplementedError
         else:
-            self.write(f"MTR0")
-    def move_to_ref(self):
-        """Moves to reference"""
-        self.write(f":MTR0H0Z1")
+            self.write(f"MTR0H0Z1")
 
     def move_to_end_up(self):
         """Moves up until end of line"""
-        self.write(f"MES0DU")
         self.write(f":MES0DU")
+
 
     def move_to_end_down(self):
         """Moves down until end of line"""
-        self.write(f"MES0DD")
         self.write(f":MES0DD")
 
     def stop(self):
@@ -101,21 +97,16 @@ class SmarActSCU_USB(Instrument):
         if self.unit == '':
             raise NotImplementedError
 
-
-
-
 class SmarActSCULinear(SmarActSCU_USB):
     unit = 'um'
 
     def move_abs(self, position: Q_):
         self.write(f":MPA0P{check_type(position, self.unit)}")
 
-    def get_position(self, channel_index) -> Q_:
-        """Retourne la position actuelle en micromètres.
-        Commande: GP<channel>[cite: 971]."""
-        self.write(f"GP{channel_index}")
+    def get_position(self) -> Q_:
+        """Returns the current position in micrometres."""
+        self.write(f":GP")
         response = self.read
-        # Réponse format: :P<channel>P<position>
         return Q_(float(response[3:]), self.unit)
 
     def move_rel(self, position: Q_):
