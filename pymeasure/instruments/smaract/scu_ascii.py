@@ -1,4 +1,4 @@
-from telnetlib import theNULL
+
 from typing import Union
 from pint import Quantity as Q_
 
@@ -20,6 +20,9 @@ class SmarActSCU_USB(Instrument):
                          **kwargs)
 
         self._amplitude: Q_ = Q_(1000, 'dV')
+        self._freq: Q_ = Q_(260, 'Hz')
+        self.steps =250
+
 
     frequency_max = Instrument.control(
         ":GCLF0",
@@ -48,20 +51,50 @@ class SmarActSCU_USB(Instrument):
             amplitude = self._amplitude
         else:
             self._amplitude = amplitude
-        if amplitude > 1000 or amplitude > 150:
+        if amplitude > 1000 or amplitude < 150:
             raise ValueError
         return amplitude
 
-    def move_steps_up(self, steps: int, frequency=Q_(1000, 'Hz'), amplitude: Q_ = None):
+    def check_freq(self, freq: Q_):
+        """Check if frequency is present and if it is inside the given boundary."""
+        if freq is None:
+            freq = self._freq
+        else:
+            self._freq = freq
+        if freq > 18500 or freq < 1:
+            raise ValueError
+        return freq
+
+    def check_steps(self, steps):
+        """Check if steps are parametrized and if it is inside the given boundary."""
+        if steps is None:
+            steps = self._steps
+        else:
+            self._steps = steps
+        if steps > 30000 or steps < 1:
+            raise ValueError
+        return steps
+
+    def set_steps_parameters(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+        """Set steps parameters.Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
+        amplitude = self.check_amplitude(amplitude)
+        freq = self.check_freq(freq)
+        steps = self.check_steps(steps)
+
+    def move_steps_up(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
         amplitude = self.check_amplitude(amplitude)
+        freq=self.check_freq(freq)
 
-        self.write(f":U0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
+        self.write(f":U0F{check_type(freq,'Hz')}A{check_type(amplitude,'dV')}S{steps}")
 
-    def move_steps_down(self, steps: int, frequency: Q_, amplitude: Q_):
+    def move_steps_down(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-        self.write(f":D0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
+        amplitude = self.check_amplitude(amplitude)
+        freq = self.check_freq(freq)
+
+        self.write(f":D0F{check_type(freq, 'Hz')}A{check_type(amplitude, 'dV')}S{steps}")
 
     def move_abs(self, position: Union[Q_, int]):
         raise NotImplementedError
@@ -92,7 +125,7 @@ class SmarActSCU_USB(Instrument):
         """Stops any process."""
         self.write(f":S0")
 
-    def get_position(self, channel_index) -> Q_:
+    def get_position(self, channel_index) :
         """Retourne la position actuelle en micromètres."""
         if self.unit == '':
             raise NotImplementedError
