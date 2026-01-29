@@ -12,8 +12,8 @@ from pymeasure.instruments.validators import truncated_range
 
 class SmarActSCU_USB(Instrument):
     unit: str = ''
-
     def __init__(self, adapter, name='SCUController', **kwargs):
+        #
         super().__init__(adapter, name,
                          read_termination='\n',
                          write_termination='\n',
@@ -54,13 +54,13 @@ class SmarActSCU_USB(Instrument):
 
     def move_steps_up(self, steps: int, frequency=Q_(1000, 'Hz'), amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-
         amplitude = self.check_amplitude(amplitude)
 
         self.write(f":U0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
 
     def move_steps_down(self, steps: int, frequency: Q_, amplitude: Q_):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
+        amplitude = self.check_amplitude(amplitude)
         self.write(f":D0F{check_type(frequency,'Hz')}A{check_type(amplitude,'dV')} S{steps}")
 
     def move_abs(self, position: Union[Q_, int]):
