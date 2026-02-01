@@ -31,12 +31,18 @@ class SmarActSCU_USB(Instrument):
         set_process = lambda v: check_type(v, 'Hz'),
         get_process = lambda s: Q_(s[6:], 'Hz'),
     )
+
     #WORKING
     def check_sensor_present(self):
         """Check if the sensor is present."""
         self.write(f':GSP0')
         response = self.read()
         return response == ':SP0P'
+
+    def calibrate_sensor(self):
+        """Calibrate the sensor. Has to done before the use of move to reference. Make sure not close to mechanical limit"""
+        self.write(f':CS0')
+        #M.WEBER : possible de regarder les 'status code' pour verifier si la caliberation s'est bien effectué
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -75,13 +81,13 @@ class SmarActSCU_USB(Instrument):
             raise ValueError
         return steps
 
-    def set_steps_parameters(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+    def set_steps_parameters(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
         """Set steps parameters.Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
         amplitude = self.check_amplitude(amplitude)
         freq = self.check_freq(freq)
         steps = self.check_steps(steps)
 
-    def move_steps_up(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+    def move_steps_up(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
         amplitude = self.check_amplitude(amplitude)
@@ -89,7 +95,7 @@ class SmarActSCU_USB(Instrument):
 
         self.write(f":U0F{check_type(freq,'Hz')}A{check_type(amplitude,'dV')}S{steps}")
 
-    def move_steps_down(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+    def move_steps_down(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
         amplitude = self.check_amplitude(amplitude)
         freq = self.check_freq(freq)
@@ -110,7 +116,7 @@ class SmarActSCU_USB(Instrument):
         if self.unit == '':
             raise NotImplementedError
         else:
-            self.write(f"MTR0H0Z1")
+            self.write(f"MTR0H1000Z1")
 
     def move_to_end_up(self):
         """Moves up until end of line"""
@@ -125,8 +131,9 @@ class SmarActSCU_USB(Instrument):
         """Stops any process."""
         self.write(f":S0")
 
-    def get_position(self, channel_index) :
-        """Retourne la position actuelle en micromètres."""
+    def get_position(self) :
+        """Returns the current position in micrometres."""
+        if check_sensor_present():
         if self.unit == '':
             raise NotImplementedError
 
@@ -136,11 +143,12 @@ class SmarActSCULinear(SmarActSCU_USB):
     def move_abs(self, position: Q_):
         self.write(f":MPA0P{check_type(position, self.unit)}")
 
-    def get_position(self) -> Q_:
+    def get_position(self):
         """Returns the current position in micrometres."""
-        self.write(f":GP")
-        response = self.read
-        return Q_(float(response[3:]), self.unit)
+        self.write(f":GP0")
+        pos = self.read()
+        self.position = (Q_(float(pos[4:]), self.unit))
+        return self.position
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
@@ -153,15 +161,12 @@ class SmarActSCUAngular(SmarActSCU_USB):
     def move_abs(self, position: Q_):
         self.write(f":MAA0P{check_type(position, self.unit)}")
 
-    def get_angle(self, channel_index) -> Q_:
-        """
-        Retourne la position actuelle en millidegree.
-        Commande: GP<channel>[cite: 971].
-        """
-        self.write(f"GA{channel_index}")
-        response = self.read
-        # Réponse format: :A<channel>A<angel>
-        return Q_(float(response[3:]), self.unit)
+    def get_angle(self):
+        """ Returns the current angle in degrees"""
+        self.write(f":GA0")
+        ang = self.read()
+        self.angle = (Q_(float(ang[4:]), self.unit))
+        return self.angle
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
@@ -169,7 +174,7 @@ class SmarActSCUAngular(SmarActSCU_USB):
 
 
 if __name__ == "__main__":
-    inst = SmarActSCULinear('ASRL3::INSTR')
+    inst = SmarActSCU_USB('ASRL3::INSTR')
     pass
 
     # import pyvisa
