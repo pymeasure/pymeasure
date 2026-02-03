@@ -42,6 +42,8 @@ class SmarActSCU_USB(Instrument):
     def calibrate_sensor(self):
         """Calibrate the sensor. Has to done before the use of move to reference. Make sure not close to mechanical limit"""
         self.write(f':CS0')
+        status = self.ask(f":M0")
+        print(status)
         #M.WEBER : possible de regarder les 'status code' pour verifier si la caliberation s'est bien effectué
 
     def set_zero_pos(self):
@@ -50,6 +52,18 @@ class SmarActSCU_USB(Instrument):
             self.write(f":SZ0")
         else:
             raise NotImplementedError
+
+    def set_pos_type(self, type : Q_):
+        """Set the positioner/sensor type, could be linear or angular"""
+        if self.check_sensor_present:
+            self.write(f":SST0T{type})")
+        else:
+            raise NotImplementedError
+
+    def get_pos_type(self):
+        """Get the positioner/sensor type, could be linear or angular"""
+        self.write(f":GST0")
+        return self.read()
 
     def check_amplitude(self, amplitude: Q_):
         """Check if amplitude is present and if it is inside the given boundary."""
@@ -116,7 +130,9 @@ class SmarActSCU_USB(Instrument):
         if self.unit == '':
             raise NotImplementedError
         else:
-            self.write(f"MTR0H1000Z1")
+            self.write(f"MTR0H5000Z0")
+            status = self.ask(f":M0")
+            print(status)
 
     def move_to_end_up(self):
         """Moves up until end of line"""
@@ -130,12 +146,28 @@ class SmarActSCU_USB(Instrument):
     def stop(self):
         """Stops any process."""
         self.write(f":S0")
+        status = self.ask(f":M0")
+        print(status)
 
     def get_position(self) :
         """Returns the current position in micrometres."""
-        if check_sensor_present():
+        #if check_sensor_present():
         if self.unit == '':
             raise NotImplementedError
+    def get_safe_dir(self):
+        """Get the safe direction for a certain channel, if defined"""
+        self.write(f":GSD0")
+        return self.read()
+
+    def set_safe_dir(self, dir: Q_):
+        """Set the safe direction for a certain channel"""
+        self.write(f"SSD0D{check_type(dir, self.unit)}")
+
+    def set_baudrate(self, baudrate: Q_):
+        """Set the baudrate after the next reset done
+        Currently supported baud rates are: 9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000"""
+        self.write(f':CB{check_type(baudrate, self.unit)})')
+
 
 class SmarActSCULinear(SmarActSCU_USB):
     unit = 'um'
@@ -174,7 +206,7 @@ class SmarActSCUAngular(SmarActSCU_USB):
 
 
 if __name__ == "__main__":
-    inst = SmarActSCU_USB('ASRL3::INSTR')
+    inst = SmarActSCULinear('ASRL3::INSTR')
     pass
 
     # import pyvisa

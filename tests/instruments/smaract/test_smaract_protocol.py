@@ -3,18 +3,18 @@ from pymeasure.test import expected_protocol
 from pymeasure.units import ureg
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCU_USB
 def test_init():
-    """Vérifie que l'initialisation ne plante pas."""
+    # Verify the expected communication.
     with expected_protocol(
         SmarActSCU_USB,
-        [] # Aucune commande n'est envoyée au __init__ dans notre driver
-    ) as inst:
+        [] # No command being sent at __init__ in the code
+    ):
         pass
 
 def test_id():
-    """Vérifie la commande GID."""
+    """Verification of the cmd for ID of instrument."""
     with expected_protocol(
         SmarActSCU_USB,
-        [(":GID", ":ID123456")] # Commande envoyée, Réponse simulée
+        [(":GID", ":ID123456")] # Sent command, simulated response
     ) as inst:
         assert inst.id == "123456"
 
