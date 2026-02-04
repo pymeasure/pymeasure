@@ -25,6 +25,7 @@
 from enum import Enum
 from pymeasure.instruments import Instrument
 
+
 class VGCDef(Enum):
     """
     Represents VGC Definitions used in data transmission.
@@ -32,6 +33,7 @@ class VGCDef(Enum):
     ENQ = b'\x05'
     ACK = b'\x06\r\n'
     NAK = b'\x15\r\n'
+
 
 class VGC501(Instrument):
     """
@@ -41,7 +43,7 @@ class VGC501(Instrument):
     def __init__(self,
                  adapter,
                  name="VGC501",
-                 baud_rate = 9600,
+                 baud_rate=9600,
                  **kwargs
                  ):
         super().__init__(
@@ -49,7 +51,7 @@ class VGC501(Instrument):
             name,
             baud_rate=baud_rate,
             includeSCPI=False,
-            timeout = 100,
+            timeout=100,
             write_termination="\r\n\x05",
             read_termination="\r\n",
             **kwargs
