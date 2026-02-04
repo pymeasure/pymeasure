@@ -31,7 +31,7 @@ class VGCDef(Enum):
     """
     ENQ = b'\x05'
     ACK = b'\x06\r\n'
-    NAK = b'\x15\r\n'     
+    NAK = b'\x15\r\n'
 
 class VGC501(Instrument):
     """
@@ -56,24 +56,24 @@ class VGC501(Instrument):
         )
 
     def read(self, **kwargs):
-            """
-            Read from the device and check the response.
+        """
+        Read from the device and check the response.
 
-            The first read line contains an acknowledgement of the read command.
-            The second line contains the value to be parsed to the measurement.
-            """
-            response = super().read_bytes(3)
-            if response == VGCDef.ACK.value:
-                val = super().read()
-                return val
-            elif response == VGCDef.NAK.value:
-                 raise ValueError(
-                      f"Received negative acknowledgement {response}."
-                      )
-            else:
-                 raise ValueError(
-                      f"Expected positive acknowledgement {VGCDef.ACK.value}, received {response}."
-                      )
+        The first read line contains an acknowledgement of the read command.
+        The second line contains the value to be parsed to the measurement.
+        """
+        response = super().read_bytes(3)
+        if response == VGCDef.ACK.value:
+            val = super().read()
+            return val
+        elif response == VGCDef.NAK.value:
+            raise ValueError(
+                f"Received negative acknowledgement {response}."
+                )
+        else:
+            raise ValueError(
+                f"Expected positive acknowledgement {VGCDef.ACK.value}, received {response}."
+                )
 
     pressure_1 = Instrument.measurement(
         "PR1",
