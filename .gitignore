@@ -110,3 +110,6 @@ settings.json
 
 # Vim
 *.swp
+
+#Generatore
+test_vgc501_generator.py
