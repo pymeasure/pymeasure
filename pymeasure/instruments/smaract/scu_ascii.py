@@ -5,12 +5,32 @@ from pint import Quantity as Q_
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.smaract.utils import check_type
 
-from pymeasure.instruments.validators import truncated_range
 
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
 # <angel> : the current angle of the position in millidegree
 
-class SmarActSCU_USB(Instrument):
+class SmarActSCU_ASCII(Instrument):
+    """
+    Communication with a SmarAct SCU (Simple Control Unit) motion controller.
+
+    The SmarAct SCU product line includes one- and three-channel control systems
+    for driving stick-slip piezo stages, with optional support for closed-loop
+    positioning using position or angle sensors.
+
+    SCU controllers communicate via USB or RS232. Program uses a simple ASCII command
+    protocol, which is implemented by this driver.
+
+    The control system is available as an integrated handheld controller or as
+    an OEM single-board controller. This base class provides the common
+    communication layer and shared functionality, while axis-specific behavior
+    (e.g. linear or angular motion) is implemented in subclasses.
+
+    :param str adapter: Name of the COM-port.
+    :param str address: ---.
+    :param int timeout: Timeout in ms.
+    """
+    #ici je me suis basé sur le tc038, qui est souvent utilisé dans le manuel de PyMeasure
+
     unit: str = ''
 
     def __init__(self, adapter, name='SCUController', **kwargs):
@@ -19,10 +39,14 @@ class SmarActSCU_USB(Instrument):
                          write_termination='\n',
                          **kwargs)
 
-        self._amplitude: Q_ = Q_(1000, 'dV')
+        self._amplitude: Q_ = Q_(300, 'dV')
         self._freq: Q_ = Q_(260, 'Hz')
-        self.steps =250
+        self._steps: int = 250
 
+    id = Instrument.measurement(
+        ":GID", """Get the identification number. """
+        ":I", """Get the device identification information. """
+    )
 
     frequency_max = Instrument.control(
         ":GCLF0",
@@ -32,19 +56,22 @@ class SmarActSCU_USB(Instrument):
         get_process = lambda s: Q_(s[6:], 'Hz'),
     )
 
-    #WORKING
-    def check_sensor_present(self):
-        """Check if the sensor is present."""
+    def check_sensor_present(self) -> bool:
+        """Check if the sensor is present
+
+        :returns: True/False
+
+        """
         self.write(f':GSP0')
         response = self.read()
         return response == ':SP0P'
 
     def calibrate_sensor(self):
-        """Calibrate the sensor. Has to done before the use of move to reference. Make sure not close to mechanical limit"""
+        """Calibrate the sensor. Has to done before the use of move to reference.
+           The user must ensure himself that the positioner is not close to a mechanical limit"""
         self.write(f':CS0')
         status = self.ask(f":M0")
         print(status)
-        #M.WEBER : possible de regarder les 'status code' pour verifier si la caliberation s'est bien effectué
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -53,14 +80,65 @@ class SmarActSCU_USB(Instrument):
         else:
             raise NotImplementedError
 
-    def set_pos_type(self, type : Q_):
-        """Set the positioner/sensor type, could be linear or angular"""
-        if self.check_sensor_present:
-            self.write(f":SST0T{type})")
-        else:
-            raise NotImplementedError
+    def set_positioner_type(self, t: int):
+        """Set the positioner/sensor type.
 
-    def get_pos_type(self):
+           CAUTION! The user has to use the 'SmarAct ASCII Programming Interface' for thorough
+           It will ensure the user, that the desired type exists, and has the possibility to be implemented
+           to the program.
+
+           The list ''positioner_types' contains the available t values and corresponding properties
+
+        """
+        positioner_types = {
+            1: "Linear – M",
+            4: "Rotary – GC",
+            5: "Goniometer – GD",
+            6: "Goniometer – GE",
+            7: "Rotary – RA",
+            8: "Rotary – GF",
+            9: "Rotary – RB",
+            10: "Rotary – SR36M",
+            11: "Rotary – SR36ME",
+            12: "Rotary – SR50M",
+            13: "Rotary – SR50ME",
+            14: "Linear – MM50",
+            15: "Goniometer – G935M",
+            16: "Linear – MD",
+            17: "Tip-Tilt – TT254",
+            18: "Linear – LC",
+            19: "Rotary – LR",
+            20: "Linear – LCD",
+            21: "Linear – L",
+            22: "Linear – LD",
+            23: "Linear – LE",
+            24: "Linear – LED",
+            25: "Linear – SL…S1I1E1",
+            26: "Linear – SL…D1I1E1",
+            27: "Linear – SL…S1I2E2",
+            28: "Linear – SL…D1I2E2",
+            29: "Tip-Tilt – ST…S1I1E2",
+            30: "Goniometer – SG…D1L1S",
+            31: "Goniometer – SG…D1L1E",
+            32: "Goniometer – SG…D1L2S",
+            33: "Goniometer – SG…D1L2E",
+            34: "Goniometer – SG…D1M1E",
+            35: "Goniometer – SG…D1M2E",
+            36: "Iris – SI…S1L1S",
+            37: "Tip-Tilt – ST…S1I2E2",
+            38: "Rotary – SR…T5L3S",
+            39: "Iris – SI…S1L4E",
+            40: "Iris – SI…S1L1E",
+        }
+        #if self.check_sensor_present:
+        if t in positioner_types:
+            self.write(f":SST0T{t})")
+        else:
+            raise ValueError
+        #else:
+        #    raise NotImplementedError
+
+    def get_positioner_type(self):
         """Get the positioner/sensor type, could be linear or angular"""
         self.write(f":GST0")
         return self.read()
@@ -71,37 +149,38 @@ class SmarActSCU_USB(Instrument):
             amplitude = self._amplitude
         else:
             self._amplitude = amplitude
-        if amplitude > 1000 or amplitude < 150:
+        if 150 > amplitude > 1000:
             raise ValueError
         return amplitude
 
-    def check_freq(self, freq: Q_):
+    def check_freq(self, freq: Q_) -> Q_:
         """Check if frequency is present and if it is inside the given boundary."""
         if freq is None:
             freq = self._freq
         else:
             self._freq = freq
-        if freq > 18500 or freq < 1:
+        if Q_(1, 'Hz') > freq > self.frequency_max:
             raise ValueError
         return freq
 
-    def check_steps(self, steps):
+    def check_steps(self, steps: int):
         """Check if steps are parametrized and if it is inside the given boundary."""
         if steps is None:
             steps = self._steps
         else:
             self._steps = steps
-        if steps > 30000 or steps < 1:
+        if 1 > steps > 30000:
             raise ValueError
         return steps
 
-    def set_steps_parameters(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
+    def set_steps_parameters(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Set steps parameters.Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-        amplitude = self.check_amplitude(amplitude)
-        freq = self.check_freq(freq)
-        steps = self.check_steps(steps)
+        self.check_amplitude(amplitude)
+        self.check_freq(freq)
+        self.check_steps(steps)
+        #M.Weber : n'est pas sûr si besoin
 
-    def move_steps_up(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
+    def move_steps_up(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
         amplitude = self.check_amplitude(amplitude)
@@ -109,17 +188,23 @@ class SmarActSCU_USB(Instrument):
 
         self.write(f":U0F{check_type(freq,'Hz')}A{check_type(amplitude,'dV')}S{steps}")
 
-    def move_steps_down(self, steps: int, freq: Q_ = int, amplitude: Q_ = int):
+    def move_steps_down(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
+
         amplitude = self.check_amplitude(amplitude)
         freq = self.check_freq(freq)
 
         self.write(f":D0F{check_type(freq, 'Hz')}A{check_type(amplitude, 'dV')}S{steps}")
 
     def move_abs(self, position: Union[Q_, int]):
+        """Moves up/down to absolute position
+
+        :param position : A distance in um
+        """
         raise NotImplementedError
 
     def move_rel(self, position: Q_):
+        #legge til param her!
         if position.magnitude >= 0:
             self.move_steps_up(position.magnitude)
         else:
@@ -130,14 +215,13 @@ class SmarActSCU_USB(Instrument):
         if self.unit == '':
             raise NotImplementedError
         else:
-            self.write(f"MTR0H5000Z0")
+            self.write(f":MTR0H0Z1")
             status = self.ask(f":M0")
             print(status)
 
     def move_to_end_up(self):
         """Moves up until end of line"""
         self.write(f":MES0DU")
-
 
     def move_to_end_down(self):
         """Moves down until end of line"""
@@ -154,22 +238,21 @@ class SmarActSCU_USB(Instrument):
         #if check_sensor_present():
         if self.unit == '':
             raise NotImplementedError
-    def get_safe_dir(self):
+    def get_safe_direction(self):
         """Get the safe direction for a certain channel, if defined"""
         self.write(f":GSD0")
         return self.read()
 
-    def set_safe_dir(self, dir: Q_):
+    def set_safe_direction(self,direction : Q_):
         """Set the safe direction for a certain channel"""
-        self.write(f"SSD0D{check_type(dir, self.unit)}")
+        self.write(f":SSD0D{check_type(direction, self.unit)}")
 
     def set_baudrate(self, baudrate: Q_):
-        """Set the baudrate after the next reset done
-        Currently supported baud rates are: 9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000"""
+        """Set the baudrate after the next reset done"""
         self.write(f':CB{check_type(baudrate, self.unit)})')
 
 
-class SmarActSCULinear(SmarActSCU_USB):
+class SmarActSCULinear(SmarActSCU_ASCII):
     unit = 'um'
 
     def move_abs(self, position: Q_):
@@ -184,10 +267,10 @@ class SmarActSCULinear(SmarActSCU_USB):
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f"MPR{check_type(position, self.unit)}")
+        self.write(f":MPR{check_type(position, self.unit)}")
 
 
-class SmarActSCUAngular(SmarActSCU_USB):
+class SmarActSCUAngular(SmarActSCU_ASCII):
     unit = 'm°'
 
     def move_abs(self, position: Q_):
@@ -202,7 +285,7 @@ class SmarActSCUAngular(SmarActSCU_USB):
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f"MAR{check_type(position, self.unit)}")
+        self.write(f":MAR{check_type(position, self.unit)}")
 
 
 if __name__ == "__main__":
@@ -219,4 +302,4 @@ if __name__ == "__main__":
     # inst.read_termination = '\n'
     # pass
     #
-    # inst.close()
+    inst.close()
