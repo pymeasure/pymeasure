@@ -23,5 +23,4 @@
 #
 
 from .sqm160 import SQM160
-
 from .vgc501 import VGC501

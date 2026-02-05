@@ -77,19 +77,19 @@ class VGC501(Instrument):
                 f"Expected positive acknowledgement {VGCDef.ACK.value}, received {response}."
                 )
 
-    pressure_1 = Instrument.measurement(
+    pressure = Instrument.measurement(
         "PR1",
-        """Measure the pressure of gauge 1 in mbar.""",
+        """Measure the pressure of the gauge in mbar.""",
     )
 
     information = Instrument.measurement(
         "AYT",
-        """Measure information about the connected instrument.""",
+        """Get information about the connected instrument.""",
     )
 
     error_status = Instrument.measurement(
         "ERR",
         """
-        Measure the error status of the gauge
+        Get the error status of the gauge
         """,
     )
