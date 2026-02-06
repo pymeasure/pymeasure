@@ -104,3 +104,7 @@ Falk Korndörfer
 Henk Vergone
 Sergey Ilyev
 Cedric Kessler
+Alfons Schuck
+Lucas Braud
+Patrick Mischke
+Sung-Chieh Chiu

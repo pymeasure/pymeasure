@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
 import pytest
 
 from pymeasure.experiment.parameters import Parameter
@@ -78,7 +79,7 @@ def test_integer_bounds():
         p.value = -100  # below minimum
 
 
-def test_boolean_value():
+def test_boolean_value_error():
     p = BooleanParameter('Test')
     with pytest.raises(ValueError):
         _ = p.value  # not set
@@ -86,22 +87,24 @@ def test_boolean_value():
         p.value = 'a'  # a string
     with pytest.raises(ValueError):
         p.value = 10  # a number other than 0 or 1
-    p.value = "True"
-    assert p.value is True
-    p.value = "False"
-    assert p.value is False
-    p.value = "true"
-    assert p.value is True
-    p.value = "false"
-    assert p.value is False
-    p.value = 1  # a number
-    assert p.value is True
-    p.value = 0  # zero
-    assert p.value is False
-    p.value = True
-    assert p.value is True
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         ["True", True],
+                         ["true", True],
+                         [1, True],
+                         [np.bool(True), True],
+                         ["False", False],
+                         ["false", False],
+                         [0, False],
+                         [np.bool(False), False],
+                         ))
+def test_boolean_value(value, mapping):
+    p = BooleanParameter('Test')
+    p.value = value
+    assert p.value == mapping
 
 
 def test_float_value():
@@ -189,14 +192,8 @@ def test_list_order():
                              ('choices are', 'choices')]
 
 
-def test_vector():
+def test_vector_error():
     p = VectorParameter('test', length=3, units='tests')
-    p.value = [1, 2, 3]
-    assert p.value == [1, 2, 3]
-    p.value = '[4, 5, 6]'
-    assert p.value == [4, 5, 6]
-    p.value = '[7, 8, 9] tests'
-    assert p.value == [7, 8, 9]
     with pytest.raises(ValueError):
         p.value = '[0, 1, 2] wrong unit'
     with pytest.raises(ValueError):
@@ -207,6 +204,18 @@ def test_vector():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
+
+
+@pytest.mark.parametrize("value, mapping", (
+                         [[1, 2, 3], [1, 2, 3]],
+                         ['[4, 5, 6]', [4, 5, 6]],
+                         ['[7, 8, 9] tests', [7, 8, 9]],
+                         [np.array([10, 11, 12]), [10, 11, 12]],
+                         ))
+def test_vector(value, mapping):
+    p = VectorParameter('test', length=3, units='tests')
+    p.value = value
+    assert p.value == mapping
 
 # TODO: Add tests for Measurable

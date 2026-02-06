@@ -43,6 +43,7 @@ Instruments by manufacturer:
    heidenhain/index
    hcp/index
    hp/index
+   ilxlightwave/index
    inficon/index
    ipgphotonics/index
    keithley/index
@@ -69,6 +70,7 @@ Instruments by manufacturer:
    santec/index
    siglenttechnologies/index
    signalrecovery/index
+   spellmanhv/index
    srs/index
    tcpowerconversion/index
    tdk/index

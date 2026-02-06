@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
+
 
 class Parameter:
     """ Encapsulates the information for an experiment parameter
@@ -229,6 +231,8 @@ class BooleanParameter(Parameter):
             value = bool(value)
         elif isinstance(value, bool):
             value = value
+        elif isinstance(value, np.bool):
+            value = value
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))
@@ -310,7 +314,7 @@ class VectorParameter(Parameter):
         self._length = length
         self.units = units
         super().__init__(name, **kwargs)
-        self._help_fields.append('_length')
+        self._help_fields.append(('length is', '_length'))
 
     def convert(self, value):
         if isinstance(value, str):
@@ -324,7 +328,7 @@ class VectorParameter(Parameter):
                                  " denoted by square brackets if initializing"
                                  " by string.")
             raw_list = value[1:-1].split(",")
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
             raise ValueError("VectorParameter given undesired value of "
