@@ -108,7 +108,7 @@ def test_fetch(lcr500):
     assert all(isinstance(v, float) for v in value)
 
 
-def test_write_protocol_tests(generator):
+def test_write_protocol_tests(lcr500, generator):
     """Write the generated protocol-based unit tests to file."""
     output_path = os.path.join(os.path.dirname(__file__), "test_voltcraft_lcr500.py")
     generator.write_file(output_path)
