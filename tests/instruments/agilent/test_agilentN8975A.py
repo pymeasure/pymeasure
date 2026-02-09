@@ -89,7 +89,7 @@ class TestAgilentN8975A:
             assert average_enabled == inst.average_enabled
 
     @pytest.mark.parametrize("bandwidth", [100e3, 200e3, 400e3, 1e6, 2e6, 4e6])
-    def test_start(self, bandwidth):
+    def test_bandwidth(self, bandwidth):
         with expected_protocol(
             AgilentN8975A,
             [(f"BAND {bandwidth:f}", None),
