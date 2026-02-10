@@ -89,8 +89,6 @@ class LCR500(SCPIMixin, Instrument):
 
     def __init__(self, adapter, name="Voltcraft LCR-500", **kwargs):
         super().__init__(adapter, name, write_termination="\n", read_termination="\n", **kwargs)
-        self.adapter.connection.write_termination = "\n"
-        self.adapter.connection.read_termination = "\n"
 
     go_to_local = Instrument.setting(
         "*GTL", """Set the device to local mode and disable key lock."""
