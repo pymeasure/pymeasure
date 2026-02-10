@@ -20,81 +20,20 @@ class SCUChannel(Channel):
         """Control the maximum frequency in an absolute move""",
         set_process = lambda v: check_quantity_unit(v, 'Hz'),
         get_process = lambda s: Q_(s[6:], 'Hz'),
-
     )
-
-    def check_sensor_present(self) -> bool:
-        """Check if the sensor is present
-
-        :returns: True/False
-
-        """
-        self.write(f':GSP{self.id}')
-        response = self.read()
-        return response == ':SP{self.id}P'
-    def move_abs(self, position: Q_):
-        self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
-
-
-
-class SmarActSCU_ASCII(Instrument):
-    """
-    Communication with a SmarAct SCU (Simple Control Unit) motion controller.
-
-    The SmarAct SCU product line includes one- and three-channel control systems
-    for driving stick-slip piezo stages, with optional support for closed-loop
-    positioning using position or angle sensors.
-
-    SCU controllers communicate via USB or RS232. Program uses a simple ASCII command
-    protocol, which is implemented by this driver.
-
-    The control system is available as an integrated handheld controller or as
-    an OEM single-board controller. This base class provides the common
-    communication layer and shared functionality, while axis-specific behavior
-    (e.g. linear or angular motion) is implemented in subclasses.
-
-    :param str adapter: Name of the COM-port.
-    :param str address: ---.
-    :param int timeout: Timeout in ms.
-    """
-    #ici je me suis basé sur le tc038, qui est souvent utilisé dans le manuel de PyMeasure
-
-
-
-    channel0 = Instrument.ChannelCreator(SCUChannel, "0")
-    channel1 = Instrument.ChannelCreator(SCUChannel, "1")
-    channel2 = Instrument.ChannelCreator(SCUChannel, "2")
-
-
-    def __init__(self, adapter, name='SCUController', **kwargs):
-        super().__init__(adapter, name,
-                         read_termination='\n',
-                         write_termination='\n',
-                         **kwargs)
-
-        self._amplitude: Q_ = Q_(300, 'dV')
-        self._freq: Q_ = Q_(260, 'Hz')
-        self._steps: int = 250
-
-    id = Instrument.measurement(
-        ":GID", """Get the identification number. """
-        ":I", """Get the device identification information. """
-    )
-
-
 
 
     def calibrate_sensor(self):
         """Calibrate the sensor. Has to done before the use of move to reference.
            The user must ensure himself that the positioner is not close to a mechanical limit"""
-        self.write(f':CS0')
-        status = self.ask(f":M0")
+        self.write(f':CS{self.id}')
+        status = self.ask(f":M{self.id}")
         print(status)
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
         if self.check_sensor_present:
-            self.write(f":SZ0")
+            self.write(f":SZ{self.id}")
         else:
             raise NotImplementedError
 
@@ -150,7 +89,7 @@ class SmarActSCU_ASCII(Instrument):
         }
         #if self.check_sensor_present:
         if t in positioner_types:
-            self.write(f":SST0T{t})")
+            self.write(f":SST{self.id}T{t})")
         else:
             raise ValueError
         #else:
@@ -158,8 +97,172 @@ class SmarActSCU_ASCII(Instrument):
 
     def get_positioner_type(self):
         """Get the positioner/sensor type, could be linear or angular"""
-        self.write(f":GST0")
+        self.write(f":GST{self.id}")
         return self.read()
+
+    def move_steps_up(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
+
+        if freq is None:
+            freq = self.frequency
+        if ampl is None:
+            ampl = self.amplitude
+        self.write(f":U{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
+
+    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit
+
+
+        """
+        if freq is None:
+            freq = self._freq
+        if ampl is None:
+            ampl = self._amplitude
+
+        self.write(f":D{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
+
+    def check_sensor_present(self) -> bool:
+        """Check if the sensor is present
+
+        :returns: True/False
+
+        """
+        self.write(f':GSP{self.id}')
+        response = self.read()
+        return response == f':SP{self.id}P'
+
+    def move_to_ref(self):
+        """Moves up/down to reference"""
+        if self.unit == '':
+            raise NotImplementedError
+        else:
+            self.write(f":MTR{self.id}H0Z1")
+            status = self.ask(f":M{self.id}")
+            print(status)
+
+    def move_to_end_up(self):
+        """Moves up until end of line"""
+        self.write(f":MES{self.id}DU")
+
+    def move_to_end_down(self):
+        """Moves down until end of line"""
+        self.write(f":MES{self.id}DD")
+
+    def stop(self):
+        """Stops any process."""
+        self.write(f":S{self.id}")
+        status = self.ask(f":M{self.id}")
+        print(status)
+
+    def get_position(self) :
+        """Returns the current position in micrometres."""
+        #if check_sensor_present():
+        if self.unit == '':
+            raise NotImplementedError
+
+        
+
+    def get_safe_direction(self):
+        """Get the safe direction for a certain channel, if defined"""
+        self.write(f":GSD{self.id}")
+        return self.read()
+
+    def set_safe_direction(self,direction : int):
+        """Set the safe direction for a certain channel
+           This feature is not available with all sensors.
+        """
+        self.write(f":SSD{self.id}D{check_quantity_unit(direction, self.unit)}")
+
+class SCUChannelLinear(SCUChannel):
+    unit = 'µm'
+
+    def move_abs(self, position: Q_):
+        self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
+
+    def get_position(self):
+        """Returns the current position in micrometres."""
+        self.write(f":GP{self.id}")
+        pos = self.read()
+        self.position = (Q_(float(pos[4:]), self.unit))
+        return self.position
+
+    def move_rel(self, position: Q_):
+        """Moves up a distance + current position"""
+        self.write(f":MPR{self.id}P{check_quantity_unit(position, self.unit)}")
+
+class SCUChannelAngular(SCUChannel):
+    unit = 'm°'
+
+    def move_abs(self, position: Q_):
+        self.write(f":MAA{self.id}P{check_quantity_unit(position, self.unit)}")
+
+    def get_angle(self):
+        """ Returns the current angle in degrees"""
+        self.write(f":GA{self.id}")
+        ang = self.read()
+        self.angle = (Q_(float(ang[4:]), self.unit))
+        return self.angle
+
+    def move_rel(self, position: Q_):
+        """Moves up a distance + current position"""
+        self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
+
+
+class SmarActSCU_ASCII(Instrument):
+    """
+    Communication with a SmarAct SCU (Simple Control Unit) motion controller.
+
+    The SmarAct SCU product line includes one- and three-channel control systems
+    for driving stick-slip piezo stages, with optional support for closed-loop
+    positioning using position or angle sensors.
+
+    SCU controllers communicate via USB or RS232. Program uses a simple ASCII command
+    protocol, which is implemented by this driver.
+
+    The control system is available as an integrated handheld controller or as
+    an OEM single-board controller. This base class provides the common
+    communication layer and shared functionality, while axis-specific behavior
+    (e.g. linear or angular motion) is implemented in subclasses.
+
+    :param str adapter: Name of the COM-port.
+    :param str address: ---.
+    :param int timeout: Timeout in ms.
+    """
+    #ici je me suis basé sur le tc038, qui est souvent utilisé dans le manuel de PyMeasure
+
+    channel0 = Instrument.ChannelCreator(SCUChannel, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannel, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannel, "2")
+
+
+    def __init__(self, adapter, name='SCUController', **kwargs):
+        super().__init__(adapter, name,
+                         read_termination='\n',
+                         write_termination='\n',
+                         **kwargs)
+
+        self._amplitude: Q_ = Q_(300, 'dV')
+        self._freq: Q_ = Q_(260, 'Hz')
+        self._steps: int = 250
+        self._safe_direction: str = safe_direction
+
+    id = Instrument.measurement(
+        ":GID", """Get the identification number. """
+        ":I", """Get the device identification information. """
+    )
+
+    @property
+    def safe_direction(self):
+        return self._safe_direction
+
+    @safe_direction.setter
+    def safe_direction(self, value):
+        """Sets the safe_direction property. It must either be up, also
+           known as forward, and down, also known as backward
+        """
+        if value not in ("up", "down"):
+            raise ValueError("safed must be 'up' or 'down'")
+        self._safe_direction = value
 
     ###CHECK AMPLITUDE###
 
@@ -213,38 +316,10 @@ class SmarActSCU_ASCII(Instrument):
             raise ValueError
         return steps
 
-    def set_steps_parameters(self, steps: int, freq: Q_ = None, ampl : Q_ = None):
-        """Set steps parameters.Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-        self.check_amplitude(ampl)
-        self.check_freq(freq)
-        self.check_steps(steps)
-        #M.Weber : n'est pas sûr si besoin
-
-    def move_steps_up(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
-        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-
-        if freq is None:
-            freq = self.frequency
-        if ampl is None:
-            ampl = self.amplitude
-        self.write(f":U0F{freq.to('Hz').magnitude}A{ampl.to('dV')}S{steps}")
-
-    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
-        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit
-
-
-        """
-        if freq is None:
-            freq = self._freq
-        if ampl is None:
-            ampl = self._amplitude
-
-        self.write(f":D0F{freq.to('Hz').magnitude}A{ampl.to('dV')}S{steps}")
-
     def move_abs(self, position: Union[Q_, int]):
         """Moves up/down to absolute position
 
-        :param position : A quantity with length units (µm), if int then given in µm
+        :param position : A quantity with length units (µm), if integer, then given in µm
         """
         raise NotImplementedError
 
@@ -255,43 +330,6 @@ class SmarActSCU_ASCII(Instrument):
         else:
             self.move_steps_down(position.magnitude)
 
-    def move_to_ref(self):
-        """Moves up/down to reference"""
-        if self.unit == '':
-            raise NotImplementedError
-        else:
-            self.write(f":MTR0H0Z1")
-            status = self.ask(f":M0")
-            print(status)
-
-    def move_to_end_up(self):
-        """Moves up until end of line"""
-        self.write(f":MES0DU")
-
-    def move_to_end_down(self):
-        """Moves down until end of line"""
-        self.write(f":MES0DD")
-
-    def stop(self):
-        """Stops any process."""
-        self.write(f":S0")
-        status = self.ask(f":M0")
-        print(status)
-
-    def get_position(self) :
-        """Returns the current position in micrometres."""
-        #if check_sensor_present():
-        if self.unit == '':
-            raise NotImplementedError
-    def get_safe_direction(self):
-        """Get the safe direction for a certain channel, if defined"""
-        self.write(f":GSD0")
-        return self.read()
-
-    def set_safe_direction(self,direction : Q_):
-        """Set the safe direction for a certain channel"""
-        self.write(f":SSD0D{check_quantity_unit(direction, self.unit)}")
-
     def set_baudrate(self, baudrate :int):
         """Set the baudrate after the next reset done"""
         self.write(f':CB(baudrate)')
@@ -301,38 +339,15 @@ class SmarActSCU_ASCII(Instrument):
 class SmarActSCULinear(SmarActSCU_ASCII):
     unit = 'um'
 
-    def move_abs(self, position: Q_):
-        self.write(f":MPA0P{check_quantity_unit(position, self.unit)}")
-
-    def get_position(self):
-        """Returns the current position in micrometres."""
-        self.write(f":GP0")
-        pos = self.read()
-        self.position = (Q_(float(pos[4:]), self.unit))
-        return self.position
-
-    def move_rel(self, position: Q_):
-        """Moves up a distance + current position"""
-        self.write(f":MPR{check_quantity_unit(position, self.unit)}")
-
+    channel0 = Instrument.ChannelCreator(SCUChannelLinear, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannelLinear, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannelLinear, "2")
 
 class SmarActSCUAngular(SmarActSCU_ASCII):
-    unit = 'm°'
 
-    def move_abs(self, position: Q_):
-        self.write(f":MAA0P{check_quantity_unit(position, self.unit)}")
-
-    def get_angle(self):
-        """ Returns the current angle in degrees"""
-        self.write(f":GA0")
-        ang = self.read()
-        self.angle = (Q_(float(ang[4:]), self.unit))
-        return self.angle
-
-    def move_rel(self, position: Q_):
-        """Moves up a distance + current position"""
-        self.write(f":MAR{check_quantity_unit(position, self.unit)}")
-
+    channel0 = Instrument.ChannelCreator(SCUChannelLinear, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannelLinear, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannelLinear, "2")
 
 if __name__ == "__main__":
     inst = SmarActSCULinear('ASRL3::INSTR')
