@@ -149,8 +149,8 @@ class SmarActSCU_ASCII(Instrument):
             amplitude = self._amplitude
         else:
             self._amplitude = amplitude
-        if 150 > amplitude > 1000:
-            raise ValueError
+        if not (150 <= amplitude.magnitude <= 1000):
+            raise ValueError("Amplitude out of range")
         return amplitude
 
     def check_freq(self, freq: Q_) -> Q_:
@@ -183,8 +183,8 @@ class SmarActSCU_ASCII(Instrument):
     def move_steps_up(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
-        amplitude = self.check_amplitude(amplitude)
-        freq=self.check_freq(freq)
+        self.check_freq(freq)
+        self.check_amplitude(amplitude)
 
         self.write(f":U0F{check_type(freq,'Hz')}A{check_type(amplitude,'dV')}S{steps}")
 
@@ -292,10 +292,10 @@ if __name__ == "__main__":
     inst = SmarActSCULinear('ASRL3::INSTR')
     pass
 
-    # import pyvisa
+    #import pyvisa
     # rm = pyvisa.ResourceManager()
-    # ressources = rm.list_resources()
-    # print(ressources)
+    #ressources = rm.list_resources()
+    #print(ressources)
     #
     # inst = rm.open_resource(ressources[0])
     # inst.write_termination = '\n'
