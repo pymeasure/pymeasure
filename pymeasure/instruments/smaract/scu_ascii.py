@@ -2,12 +2,40 @@
 from typing import Union
 from pint import Quantity as Q_
 
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.smaract.utils import check_type
+from pymeasure.instruments import Instrument, Channel
+
+from pymeasure.instruments.smaract.utils import check_quantity_unit
 
 
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
 # <angel> : the current angle of the position in millidegree
+
+class SCUChannel(Channel):
+
+    unit: str = ''
+
+    frequency_max = Instrument.control(
+        ":GCLF{ch}",
+        ":SCLF{ch}F%d",
+        """Control the maximum frequency in an absolute move""",
+        set_process = lambda v: check_quantity_unit(v, 'Hz'),
+        get_process = lambda s: Q_(s[6:], 'Hz'),
+
+    )
+
+    def check_sensor_present(self) -> bool:
+        """Check if the sensor is present
+
+        :returns: True/False
+
+        """
+        self.write(f':GSP{self.id}')
+        response = self.read()
+        return response == ':SP{self.id}P'
+    def move_abs(self, position: Q_):
+        self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
+
+
 
 class SmarActSCU_ASCII(Instrument):
     """
@@ -31,7 +59,12 @@ class SmarActSCU_ASCII(Instrument):
     """
     #ici je me suis basé sur le tc038, qui est souvent utilisé dans le manuel de PyMeasure
 
-    unit: str = ''
+
+
+    channel0 = Instrument.ChannelCreator(SCUChannel, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannel, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannel, "2")
+
 
     def __init__(self, adapter, name='SCUController', **kwargs):
         super().__init__(adapter, name,
@@ -48,23 +81,8 @@ class SmarActSCU_ASCII(Instrument):
         ":I", """Get the device identification information. """
     )
 
-    frequency_max = Instrument.control(
-        ":GCLF0",
-        ":SCLF0F%d",
-        """Control the maximum frequency in an absolute move""",
-        set_process = lambda v: check_type(v, 'Hz'),
-        get_process = lambda s: Q_(s[6:], 'Hz'),
-    )
 
-    def check_sensor_present(self) -> bool:
-        """Check if the sensor is present
 
-        :returns: True/False
-
-        """
-        self.write(f':GSP0')
-        response = self.read()
-        return response == ':SP0P'
 
     def calibrate_sensor(self):
         """Calibrate the sensor. Has to done before the use of move to reference.
@@ -143,25 +161,47 @@ class SmarActSCU_ASCII(Instrument):
         self.write(f":GST0")
         return self.read()
 
-    def check_amplitude(self, amplitude: Q_):
-        """Check if amplitude is present and if it is inside the given boundary."""
-        if amplitude is None:
-            amplitude = self._amplitude
-        else:
-            self._amplitude = amplitude
-        if not (150 <= amplitude.magnitude <= 1000):
-            raise ValueError("Amplitude out of range")
-        return amplitude
+    ###CHECK AMPLITUDE###
 
-    def check_freq(self, freq: Q_) -> Q_:
+    def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
+        """Check if amplitude is present and if it is inside the given boundary."""
+        if ampl is None:
+            ampl = self.amplitude
+        else:
+            ampl = check_quantity_unit(ampl, 'dV')
+        if not (150 <= ampl.magnitude <= 1000):
+            raise ValueError("Amplitude out of range")
+        return ampl
+
+    @property
+    def amplitude(self):
+        """ Get/set default frequency """
+        return self._amplitude
+
+    @amplitude.setter
+    def amplitude(self, value: Union[int, Q_]):
+        self._amplitude = self.check_amplitude(value)
+
+    ###CHECK FREQUENCY###
+
+    def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
         """Check if frequency is present and if it is inside the given boundary."""
         if freq is None:
-            freq = self._freq
+            freq = self.frequency
         else:
-            self._freq = freq
-        if Q_(1, 'Hz') > freq > self.frequency_max:
-            raise ValueError
+            freq = check_quantity_unit(freq, 'Hz')
+        if not (Q_(1, 'Hz') < freq < self.frequency_max):
+            raise ValueError('blablabla')
         return freq
+
+    @property
+    def frequency(self):
+        """ Get/set default frequency """
+        return self._freq
+
+    @frequency.setter
+    def frequency(self, value: Union[int, Q_]):
+        self._freq = self.check_freq(value)
 
     def check_steps(self, steps: int):
         """Check if steps are parametrized and if it is inside the given boundary."""
@@ -169,37 +209,42 @@ class SmarActSCU_ASCII(Instrument):
             steps = self._steps
         else:
             self._steps = steps
-        if 1 > steps > 30000:
+        if not (1 <= steps <= 30000):
             raise ValueError
         return steps
 
-    def set_steps_parameters(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+    def set_steps_parameters(self, steps: int, freq: Q_ = None, ampl : Q_ = None):
         """Set steps parameters.Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
-        self.check_amplitude(amplitude)
+        self.check_amplitude(ampl)
         self.check_freq(freq)
         self.check_steps(steps)
         #M.Weber : n'est pas sûr si besoin
 
-    def move_steps_up(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
+    def move_steps_up(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
         """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
-        self.check_freq(freq)
-        self.check_amplitude(amplitude)
+        if freq is None:
+            freq = self.frequency
+        if ampl is None:
+            ampl = self.amplitude
+        self.write(f":U0F{freq.to('Hz').magnitude}A{ampl.to('dV')}S{steps}")
 
-        self.write(f":U0F{check_type(freq,'Hz')}A{check_type(amplitude,'dV')}S{steps}")
+    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit
 
-    def move_steps_down(self, steps: int, freq: Q_ = None, amplitude: Q_ = None):
-        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
 
-        amplitude = self.check_amplitude(amplitude)
-        freq = self.check_freq(freq)
+        """
+        if freq is None:
+            freq = self._freq
+        if ampl is None:
+            ampl = self._amplitude
 
-        self.write(f":D0F{check_type(freq, 'Hz')}A{check_type(amplitude, 'dV')}S{steps}")
+        self.write(f":D0F{freq.to('Hz').magnitude}A{ampl.to('dV')}S{steps}")
 
     def move_abs(self, position: Union[Q_, int]):
         """Moves up/down to absolute position
 
-        :param position : A distance in um
+        :param position : A quantity with length units (µm), if int then given in µm
         """
         raise NotImplementedError
 
@@ -245,18 +290,19 @@ class SmarActSCU_ASCII(Instrument):
 
     def set_safe_direction(self,direction : Q_):
         """Set the safe direction for a certain channel"""
-        self.write(f":SSD0D{check_type(direction, self.unit)}")
+        self.write(f":SSD0D{check_quantity_unit(direction, self.unit)}")
 
-    def set_baudrate(self, baudrate: Q_):
+    def set_baudrate(self, baudrate :int):
         """Set the baudrate after the next reset done"""
-        self.write(f':CB{check_type(baudrate, self.unit)})')
+        self.write(f':CB(baudrate)')
+        #propietes
 
 
 class SmarActSCULinear(SmarActSCU_ASCII):
     unit = 'um'
 
     def move_abs(self, position: Q_):
-        self.write(f":MPA0P{check_type(position, self.unit)}")
+        self.write(f":MPA0P{check_quantity_unit(position, self.unit)}")
 
     def get_position(self):
         """Returns the current position in micrometres."""
@@ -267,14 +313,14 @@ class SmarActSCULinear(SmarActSCU_ASCII):
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f":MPR{check_type(position, self.unit)}")
+        self.write(f":MPR{check_quantity_unit(position, self.unit)}")
 
 
 class SmarActSCUAngular(SmarActSCU_ASCII):
     unit = 'm°'
 
     def move_abs(self, position: Q_):
-        self.write(f":MAA0P{check_type(position, self.unit)}")
+        self.write(f":MAA0P{check_quantity_unit(position, self.unit)}")
 
     def get_angle(self):
         """ Returns the current angle in degrees"""
@@ -285,7 +331,7 @@ class SmarActSCUAngular(SmarActSCU_ASCII):
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f":MAR{check_type(position, self.unit)}")
+        self.write(f":MAR{check_quantity_unit(position, self.unit)}")
 
 
 if __name__ == "__main__":

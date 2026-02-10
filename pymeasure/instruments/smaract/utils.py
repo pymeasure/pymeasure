@@ -7,14 +7,11 @@ def set_type(response_raw : str, index : int, unit: str = 'Hz' ):
     return Q_(response_raw[index:], unit)
 
 """il va falloir le genraliser avec tous les types de donnés"""
-def check_type(input: Union[str, int, Q_], unit='Hz'):
+def check_quantity_unit(input: Union[str, int, Q_], unit: str):
     if isinstance(input, str):
         input = Q_(input)
     if isinstance(input, Q_):
-        try:
-            return input.to(unit).magnitude
-        except DimensionalityError:
-            raise TypeError('Invalid input for the instrument')
+        return input.to(unit).magnitude
     elif isinstance(input, int):
         return input
     else:
