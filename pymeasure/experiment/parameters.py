@@ -314,7 +314,7 @@ class VectorParameter(Parameter):
         self._length = length
         self.units = units
         super().__init__(name, **kwargs)
-        self._help_fields.append('_length')
+        self._help_fields.append(('length is', '_length'))
 
     def convert(self, value):
         if isinstance(value, str):

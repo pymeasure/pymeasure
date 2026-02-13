@@ -139,6 +139,7 @@ For example, if an instrument complies to SCPI standards, you can add :class:`~p
 
 This mixin adds default SCPI properties like :attr:`~pymeasure.instruments.generic_types.SCPIMixin.id`, :attr:`~pymeasure.instruments.generic_types.SCPIMixin.status` and default methods like :meth:`~pymeasure.instruments.generic_types.SCPIMixin.clear` and :meth:`~pymeasure.instruments.generic_types.SCPIMixin.reset` to :code:`SomeSCPIInstrument`.
 
+You can check whether your instrument can safely inherit from :class:`~pymeasure.instruments.generic_types.SCPIMixin` by running :code:`pytest -k scpi_mixin --device-address "<instrument-address>"`.
 
 Frequent properties
 -------------------
