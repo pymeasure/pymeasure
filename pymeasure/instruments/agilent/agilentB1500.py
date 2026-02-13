@@ -896,15 +896,15 @@ class AgilentB1500(SCPIMixin, Instrument):
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
-    :param int channel: Channel number of the SMU
+    :param int slot: Slot number of the SMU
     :param str smu_type: Type of the SMU
     :param str name: Name of the SMU
     """
 
-    def __init__(self, parent, number, type, name, channel, **kwargs):
-        super().__init__(parent, channel, **kwargs)
-        channel = strict_discrete_set(channel, range(1, 11))
-        self.channel = channel
+    def __init__(self, parent, index, type, name, slot, **kwargs):
+        super().__init__(parent, slot, **kwargs)
+        slot = strict_discrete_set(slot, range(1, 11))
+        self.channel = slot
         type = strict_discrete_set(
             type,
             [

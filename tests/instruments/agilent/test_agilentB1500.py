@@ -74,7 +74,7 @@ class AgilentB1500Mock(AgilentB1500):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.spgu1 = SPGU(self, 1)
-        self.smu1 = SMU(self, number=1, type="HRSMU", name="test", channel=1)
+        self.smu1 = SMU(self, index=1, type="HRSMU", name="test", slot=1)
 
 
 class TestSMU:
