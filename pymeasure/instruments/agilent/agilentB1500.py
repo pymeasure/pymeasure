@@ -443,7 +443,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                 return channel
 
     class _data_formatting_FMT1(_data_formatting_generic):
-        """Data formatting for FMT1 format"""
+        """Data formatting for FMT1 format."""
 
         def __init__(self, smu_names={}, output_format_string="FMT1"):
             super().__init__(smu_names, output_format_string)
@@ -468,13 +468,13 @@ class AgilentB1500(SCPIMixin, Instrument):
             return (status, channel, data_name, value)
 
     class _data_formatting_FMT11(_data_formatting_FMT1):
-        """Data formatting for FMT11 format (based on FMT1)"""
+        """Data formatting for FMT11 format (based on FMT1)."""
 
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT11")
 
     class _data_formatting_FMT21(_data_formatting_generic):
-        """Data formatting for FMT21 format"""
+        """Data formatting for FMT21 format."""
 
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT21")
@@ -884,7 +884,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         return self.query_learn_header(46)
 
     def query_meas_ranges(self):
-        """Read measruement ranging status (32) for all SMUs."""
+        """Read measurement ranging status (32) for all SMUs."""
         return self.query_learn_header(32)
 
 
@@ -896,9 +896,11 @@ class AgilentB1500(SCPIMixin, Instrument):
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
-    :param int slot: Slot number of the SMU
-    :param str smu_type: Type of the SMU
+    :param AgilentB1500 parent: Instance of the B1500 mainframe class
+    :param int index: Index of the SMU
+    :param str type: Type of the SMU
     :param str name: Name of the SMU
+    :param int slot: Slot number of the SMU
     """
 
     def __init__(self, parent, index, type, name, slot, **kwargs):
@@ -1050,7 +1052,7 @@ class SMU(Channel):
         :param int or str source_range: Output range index or name
         :param float output: Source output value in A or V
         :param float comp: Compliance value, defaults to previous setting
-        :param CompliancePolarity comp_polarity: Compliance polairty, defaults to auto
+        :param CompliancePolarity comp_polarity: Compliance polarity, defaults to auto
         :param int or str comp_range: Compliance ranging type, defaults to auto
         """
         if source_type.upper() == "VOLTAGE":
@@ -1092,10 +1094,10 @@ class SMU(Channel):
         Each step is separated by a pause duration.
 
         :param str source_type: Source type (``'Voltage'`` or ``'Current'``)
+        :param int or str source_range: Output range index or name
         :param float target_output: Target output voltage or current
-        :param int irange: Output range index
         :param float comp: Compliance, defaults to previous setting
-        :param CompliancePolarity comp_polarity: Compliance polairty, defaults to auto
+        :param CompliancePolarity comp_polarity: Compliance polarity, defaults to auto
         :param int or str comp_range: Compliance ranging type, defaults to auto
         :param float stepsize: Maximum size of steps
         :param float pause: Duration in seconds to wait between steps
@@ -1554,7 +1556,7 @@ class SPGU(Channel):
         "SPPER?",
         "SPPER %f",
         """Control the pulse period for SPGU channels (``SPPER``) in seconds (float).
-        Applies to all installed SPGU modules""",
+        Applies to all installed SPGU modules.""",
         validator=strict_range,
         values=[2e-8, 10],
     )
@@ -1691,6 +1693,7 @@ class SPGUChannel(Channel):
 
     def get_pulse_timings(self, source=1):
         """Get the timing parameters for the SPGU channel. (``SPT?``)
+
         The SPGU operating mode must be set to PG with the ``SIM 0`` command before getting the
         pulse timings.
 
@@ -1726,7 +1729,7 @@ class CustomIntEnum(IntEnum):
     """
 
     def __str__(self):
-        """Give title case string of enum value"""
+        """Give title case string of enum value."""
         return str(self.name).replace("_", " ").title()
         # str() conversion just because of pylint bug
 
@@ -1744,7 +1747,7 @@ class CustomIntEnum(IntEnum):
 
 
 class ADCType(CustomIntEnum):
-    """ADC Type"""
+    """ADC Type."""
 
     HSADC = (0,)  #: High-speed ADC
     HRADC = (1,)  #: High-resolution ADC
@@ -1756,7 +1759,7 @@ class ADCType(CustomIntEnum):
 
 
 class ADCMode(CustomIntEnum):
-    """ADC Mode"""
+    """ADC Mode."""
 
     AUTO = 0  #:
     MANUAL = 1  #:
@@ -1765,14 +1768,14 @@ class ADCMode(CustomIntEnum):
 
 
 class AutoManual(CustomIntEnum):
-    """Auto/Manual selection"""
+    """Auto/Manual selection."""
 
     AUTO = 0  #:
     MANUAL = 1  #:
 
 
 class ControlMode(CustomIntEnum):
-    """Control mode for the digital I/O ports"""
+    """Control mode for the digital I/O ports."""
 
     GENERAL = 0  #: General purpose control mode (default)
     SMU_PGU_SELECTOR = 1  #: 16440A SMU/PGU selector (B1500A-A04) control mode
@@ -1784,7 +1787,7 @@ class ControlMode(CustomIntEnum):
 
 
 class MeasMode(CustomIntEnum):
-    """Measurement Mode"""
+    """Measurement Mode."""
 
     SPOT = 1  #:
     STAIRCASE_SWEEP = 2  #:
@@ -1792,7 +1795,7 @@ class MeasMode(CustomIntEnum):
 
 
 class MeasOpMode(CustomIntEnum):
-    """Measurement Operation Mode"""
+    """Measurement Operation Mode."""
 
     COMPLIANCE_SIDE = 0
     """
@@ -1802,7 +1805,7 @@ class MeasOpMode(CustomIntEnum):
     VOLTAGE = 2  #:
     FORCE_SIDE = 3  #:
     """
-    Measure current in the current sourceoperation or voltage in the voltage source operation.
+    Measure current in the current source operation or voltage in the voltage source operation.
     """
     COMPLIANCE_AND_FORCE_SIDE = 4
     """
@@ -1812,7 +1815,7 @@ class MeasOpMode(CustomIntEnum):
 
 
 class PgSelectorPort(CustomIntEnum):
-    """Output port of SMU/PG selector"""
+    """Output port of SMU/PG selector."""
 
     OUTPUT_1_FIRST = 0  #: Output 1 on the first selector
     OUTPUT_2_FIRST = 1  #: Output 2 on the first selector
@@ -1821,7 +1824,7 @@ class PgSelectorPort(CustomIntEnum):
 
 
 class PgSelectorConnectionStatus(CustomIntEnum):
-    """Connection status of I/O port"""
+    """Connection status of I/O port."""
 
     NO_CONNECTION = 0  #: All open. Breaks connection. Initial setting
     SMU_ON = 1  #: SMU on. Makes connection to the SMU input.
@@ -1830,7 +1833,7 @@ class PgSelectorConnectionStatus(CustomIntEnum):
 
 
 class SweepMode(CustomIntEnum):
-    """Sweep Mode"""
+    """Sweep Mode."""
 
     LINEAR_SINGLE = 1  #: Linear sweep (single stair, start to stop.)
     LOG_SINGLE = 2  #: Log sweep (single stair, start to stop.)
@@ -1839,7 +1842,7 @@ class SweepMode(CustomIntEnum):
 
 
 class SamplingMode(CustomIntEnum):
-    """Sampling Mode"""
+    """Sampling Mode."""
 
     LINEAR = 1  #:
     LOG_10 = 2  #: Logarithmic 10 data points/decade
@@ -1863,14 +1866,14 @@ class SamplingMode(CustomIntEnum):
 
 
 class SamplingPostOutput(CustomIntEnum):
-    """Output after sampling"""
+    """Output after sampling."""
 
     BASE = 1  #:
     BIAS = 2  #:
 
 
 class SPGUChannelOutputMode(CustomIntEnum):
-    """Output mode of SPGU channel"""
+    """Output mode of SPGU channel."""
 
     DC = 0  #: DC output mode
     SIGNAL_SOURCE_1 = 1  #: 2-level pulse output mode using pulse signal source 1
@@ -1879,7 +1882,7 @@ class SPGUChannelOutputMode(CustomIntEnum):
 
 
 class SPGUSignalSource(CustomIntEnum):
-    """Signal source for SPGU"""
+    """Signal source for SPGU."""
 
     DC = 0  #:
     PULSE_SIGNAL_1 = 1  #:
@@ -1914,21 +1917,21 @@ class SPGUOutputMode(CustomIntEnum):
 
 
 class StaircaseSweepPostOutput(CustomIntEnum):
-    """Output after staircase sweep"""
+    """Output after staircase sweep."""
 
     START = 1  #:
     STOP = 2  #:
 
 
 class CompliancePolarity(CustomIntEnum):
-    """Compliance polarity"""
+    """Compliance polarity."""
 
     AUTO = 0  #:
     MANUAL = 1  #:
 
 
 class WaitTimeType(CustomIntEnum):
-    """Wait time type"""
+    """Wait time type."""
 
     SMU_SOURCE = 1  #: wait before changing the output value
     SMU_MEASUREMENT = 2  #: wait before starting the measurement
