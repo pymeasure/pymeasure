@@ -155,27 +155,27 @@ class TestAgilentN8975A:
 
 
 class TestAgilentN8975AFrequency:
-    @pytest.mark.parametrize("start", [10e6, 26.4999e9])
-    def test_start(self, start):
+    @pytest.mark.parametrize("start_frequency", [10e6, 26.4999e9])
+    def test_start_frequency(self, start_frequency):
         with expected_protocol(
             AgilentN8975A,
-            [(f"FREQ:STAR {start:f}", None),
-             ("FREQ:STAR?", f"{start}"),
+            [(f"FREQ:STAR {start_frequency:f}", None),
+             ("FREQ:STAR?", f"{start_frequency}"),
              ]
         ) as inst:
-            inst.frequency.start = start
-            assert start == inst.frequency.start
+            inst.frequency.start_frequency = start_frequency
+            assert start_frequency == inst.frequency.start_frequency
 
-    @pytest.mark.parametrize("stop", [10.1e6, 26.5e9])
-    def test_stop(self, stop):
+    @pytest.mark.parametrize("stop_frequency", [10.1e6, 26.5e9])
+    def test_stop_frequency(self, stop_frequency):
         with expected_protocol(
             AgilentN8975A,
-            [(f"FREQ:STOP {stop:f}", None),
-             ("FREQ:STOP?", f"{stop}"),
+            [(f"FREQ:STOP {stop_frequency:f}", None),
+             ("FREQ:STOP?", f"{stop_frequency}"),
              ]
         ) as inst:
-            inst.frequency.stop = stop
-            assert stop == inst.frequency.stop
+            inst.frequency.stop_frequency = stop_frequency
+            assert stop_frequency == inst.frequency.stop_frequency
 
     @pytest.mark.parametrize("mode, mapping", [
                              ("sweep", "SWE"),

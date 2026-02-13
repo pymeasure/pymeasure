@@ -29,7 +29,7 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 class AgilentN8975AFrequency(Channel):
     """A class representing the frequency subsystem of the Noise Figure Analyzer."""
 
-    start = Channel.control(
+    start_frequency = Channel.control(
         "FREQ:STAR?",
         "FREQ:STAR %f",
         """Control the start frequency in Hz for the sweep frequency :attr:`mode`
@@ -38,7 +38,7 @@ class AgilentN8975AFrequency(Channel):
         values=[10e6, 26.4999e9],
         )
 
-    stop = Channel.control(
+    stop_frequency = Channel.control(
         "FREQ:STOP?",
         "FREQ:STOP %f",
         """Control the stop frequency in Hz for the sweep frequency :attr:`mode`

@@ -174,14 +174,14 @@ class TestSweepMode:
         assert "sweep" == n8975a_sweep.frequency.mode
         assert [] == n8975a_sweep.check_errors()
 
-    def test_start(self, n8975a_sweep):
-        n8975a_sweep.frequency.start = 3e9
-        assert 3e9 == n8975a_sweep.frequency.start
+    def test_start_frequency(self, n8975a_sweep):
+        n8975a_sweep.frequency.start_frequency = 3e9
+        assert 3e9 == n8975a_sweep.frequency.start_frequency
         assert [] == n8975a_sweep.check_errors()
 
-    def test_stop(self, n8975a_sweep):
-        n8975a_sweep.frequency.stop = 5.5e9
-        assert 5.5e9 == n8975a_sweep.frequency.stop
+    def test_stop_frequency(self, n8975a_sweep):
+        n8975a_sweep.frequency.stop_frequency = 5.5e9
+        assert 5.5e9 == n8975a_sweep.frequency.stop_frequency
         assert [] == n8975a_sweep.check_errors()
 
     def test_number_of_points(self, n8975a_sweep):
