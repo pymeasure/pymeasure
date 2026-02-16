@@ -955,24 +955,24 @@ class SMU(Channel):
 
     def enable(self):
         """Enable source/measurement channel. (``CN``)"""
-        self.write(f"CN {self.channel}")
+        self.write(f"CN {self.id}")
 
     def disable(self):
         """Disable source/measurement channel. (``CL``)"""
-        self.write(f"CL {self.channel}")
+        self.write(f"CL {self.id}")
 
     def force_gnd(self):
         """Force output to 0 V immediately. (``DZ``)
 
         Current settings can be restored with :meth:`restore_settings`.
         """
-        self.write(f"DZ {self.channel}")
+        self.write(f"DZ {self.id}")
 
     def restore_settings(self):
         """Restore the settings of the channel to the state before
         using :meth:`force_gnd`. (``RZ``)
         """
-        self.write(f"RZ {self.channel}")
+        self.write(f"RZ {self.id}")
 
     @property
     def filter(self):
@@ -994,7 +994,7 @@ class SMU(Channel):
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"FL {setting}, {self.channel}")
+        self.write(f"FL {setting}, {self.id}")
         self.check_errors()
 
     @property
@@ -1007,7 +1007,7 @@ class SMU(Channel):
     @series_resistor.setter
     def series_resistor(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"SSR {self.channel}, {setting}")
+        self.write(f"SSR {self.id}, {setting}")
         self.check_errors()
 
     @property
@@ -1023,7 +1023,7 @@ class SMU(Channel):
     @meas_op_mode.setter
     def meas_op_mode(self, op_mode):
         op_mode = MeasOpMode.get(op_mode)
-        self.write(f"CMM {self.channel}, {op_mode.value}")
+        self.write(f"CMM {self.id}, {op_mode.value}")
         self.check_errors()
 
     @property
@@ -1039,7 +1039,7 @@ class SMU(Channel):
     @adc_type.setter
     def adc_type(self, adc_type):
         adc_type = ADCType.get(adc_type)
-        self.write(f"AAD {self.channel}, {adc_type.value}")
+        self.write(f"AAD {self.id}, {adc_type.value}")
         self.check_errors()
 
     ######################################
@@ -1067,7 +1067,7 @@ class SMU(Channel):
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        cmd += f" {self.channel}, {source_range}, {output}"
+        cmd += f" {self.id}, {source_range}, {output}"
         if not comp == "":
             cmd += f", {comp}"
             if not comp_polarity == "":
@@ -1104,14 +1104,14 @@ class SMU(Channel):
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
-            cmd = f"DV{self.channel}"
+            cmd = f"DV{self.id}"
             source_range = self.voltage_ranging.output(source_range).index
             unit = "V"
             if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = "CURRENT"
-            cmd = f"DI{self.channel}"
+            cmd = f"DI{self.id}"
             source_range = self.current_ranging.output(source_range).index
             unit = "A"
             if not comp_range == "":
@@ -1170,7 +1170,7 @@ class SMU(Channel):
     @meas_range_current.setter
     def meas_range_current(self, meas_range):
         meas_range_index = self.current_ranging.meas(meas_range).index
-        self.write(f"RI {self.channel}, {meas_range_index}")
+        self.write(f"RI {self.id}, {meas_range_index}")
         self.check_errors()
 
     @property
@@ -1187,7 +1187,7 @@ class SMU(Channel):
     @meas_range_voltage.setter
     def meas_range_voltage(self, meas_range):
         meas_range_index = self.voltage_ranging.meas(meas_range).index
-        self.write(f"RV {self.channel}, {meas_range_index}")
+        self.write(f"RV {self.id}, {meas_range_index}")
         self.check_errors()
 
     def meas_range_current_auto(self, mode, rate=50):
@@ -1198,9 +1198,9 @@ class SMU(Channel):
         """
         mode = strict_range(mode, range(1, 4))
         if mode == 1:
-            self.write(f"RM {self.channel}, {mode}")
+            self.write(f"RM {self.id}, {mode}")
         else:
-            self.write(f"RM {self.channel}, {mode}, {rate}")
+            self.write(f"RM {self.id}, {mode}, {rate}")
         self.write
 
     ######################################
@@ -1243,7 +1243,7 @@ class SMU(Channel):
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += f"{self.channel}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
+        cmd += f"{self.id}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
         if not Pcomp == "":
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1271,7 +1271,7 @@ class SMU(Channel):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += f"{self.channel}, {source_range}, {start}, {stop}, {comp}"
+        cmd += f"{self.id}, {source_range}, {start}, {stop}, {comp}"
         if not Pcomp == "":
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1303,7 +1303,7 @@ class SMU(Channel):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += f"{self.channel}, {source_range}, {base}, {bias}, {comp}"
+        cmd += f"{self.id}, {source_range}, {base}, {bias}, {comp}"
         self.write(cmd)
         self.check_errors()
 
