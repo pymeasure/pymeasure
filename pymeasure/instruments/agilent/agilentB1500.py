@@ -138,7 +138,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     prefix="smu",
                     type=module_type,
                     name=f"SMU{i}",
-                    channel=channel,
+                    slot=channel,
                 )
                 self._smu_references[channel] = self.smus[i]
                 self._smu_names[channel] = self.smus[i].name
