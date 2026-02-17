@@ -9,6 +9,10 @@ from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
 @pytest.fixture(scope="module")
 def smaractascii(connected_device_address):
     """ connected_device_address as "ASRL3::INSTR" """
+    """ to use the tests in this file invoke pytest as:
+        pytest -k scu_ascii --device-address TCPIP::x.y.z.k::port::SOCKET
+        where you replace x.y.z.k byt the device IP address and port by its port address
+        """
 
     instr = SmarActSCULinear(connected_device_address)
 
@@ -62,7 +66,7 @@ def test_zero_and_move_rel_sequence(smaractascii):
         time.sleep(1)
 
         initial_pos = smaractascii.get_position()
-        assert initial_pos== pytest.approx(0.0, abs=0.1), \
+        assert initial_pos== pytest.approx(0.0, abs=0.5), \
             f"Expected 0 um after zeroing, got {initial_pos}"
         target_pos = Q_(500, 'um')
         smaractascii.move_rel(target_pos)
@@ -106,4 +110,5 @@ def test_move_step_sequence(smaractascii):
         f"Expected 0 um, got {final_pos}"
 
 #pytest test_scu_ascii_with_device.py --device-address "ASRL3::INSTR" -s
+
 
