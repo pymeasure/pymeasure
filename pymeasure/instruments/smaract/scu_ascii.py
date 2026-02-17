@@ -5,6 +5,7 @@ from pint import Quantity as Q_
 from pymeasure.instruments import Instrument, Channel
 
 from pymeasure.instruments.smaract.utils import check_quantity_unit
+from pymeasure.instruments.validators import truncated_discrete_set
 
 
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
@@ -20,6 +21,16 @@ class SCUChannel(Channel):
         """Control the maximum frequency in an absolute move""",
         set_process = lambda v: check_quantity_unit(v, 'Hz'),
         get_process = lambda s: Q_(s[6:], 'Hz'),
+    )
+    safe_direction = Instrument.control(
+        ":SSD{ch}D%d",
+        ":GSD{ch}",
+        """Control the safe direction for a given channel for move_to_ref
+           :param  must be either 0 (down) or 1 (up).""",
+        validator=truncated_discrete_set,
+        values = {1:'up',0:'down'},
+        map_values= True
+
     )
 
 
@@ -160,18 +171,6 @@ class SCUChannel(Channel):
         if self.unit == '':
             raise NotImplementedError
 
-        
-
-    def get_safe_direction(self):
-        """Get the safe direction for a certain channel, if defined"""
-        self.write(f":GSD{self.id}")
-        return self.read()
-
-    def set_safe_direction(self,direction : int):
-        """Set the safe direction for a certain channel
-           This feature is not available with all sensors.
-        """
-        self.write(f":SSD{self.id}D{check_quantity_unit(direction, self.unit)}")
 
 class SCUChannelLinear(SCUChannel):
     unit = 'µm'
@@ -180,7 +179,7 @@ class SCUChannelLinear(SCUChannel):
         self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
 
     def get_position(self):
-        """Returns the current position in micrometres."""
+        """Returns the current position in micrometers."""
         self.write(f":GP{self.id}")
         pos = self.read()
         self.position = (Q_(float(pos[4:]), self.unit))
@@ -194,6 +193,10 @@ class SCUChannelAngular(SCUChannel):
     unit = 'm°'
 
     def move_abs(self, position: Q_):
+        """Moves to the absolute angle given in m° from the reference position via closed-loop control.
+
+           :param angle: A quantity with angular units (m°)
+        """
         self.write(f":MAA{self.id}P{check_quantity_unit(position, self.unit)}")
 
     def get_angle(self):
@@ -204,16 +207,19 @@ class SCUChannelAngular(SCUChannel):
         return self.angle
 
     def move_rel(self, position: Q_):
-        """Moves up a distance + current position"""
+        """Moves the relative angle given in m° from the current position closed-loop control.
+
+           :param angle: A quantity with angular units (m°)
+        """
         self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
 
 
 class SmarActSCU_ASCII(Instrument):
     """
-    Communication with a SmarAct SCU (Simple Control Unit) motion controller.
+    Communication with a SmarAct SCU (Simple Control Unit) motion controller via ASCII.
 
     The SmarAct SCU product line includes one- and three-channel control systems
-    for driving stick-slip piezo stages, with optional support for closed-loop
+    for driving piezo stages, with optional support for closed-loop
     positioning using position or angle sensors.
 
     SCU controllers communicate via USB or RS232. Program uses a simple ASCII command
@@ -234,7 +240,6 @@ class SmarActSCU_ASCII(Instrument):
     channel1 = Instrument.ChannelCreator(SCUChannel, "1")
     channel2 = Instrument.ChannelCreator(SCUChannel, "2")
 
-
     def __init__(self, adapter, name='SCUController', **kwargs):
         super().__init__(adapter, name,
                          read_termination='\n',
@@ -244,25 +249,12 @@ class SmarActSCU_ASCII(Instrument):
         self._amplitude: Q_ = Q_(300, 'dV')
         self._freq: Q_ = Q_(260, 'Hz')
         self._steps: int = 250
-        self._safe_direction: str = safe_direction
+        #self._safe_direction: str = safe_direction
 
     id = Instrument.measurement(
         ":GID", """Get the identification number. """
         ":I", """Get the device identification information. """
     )
-
-    @property
-    def safe_direction(self):
-        return self._safe_direction
-
-    @safe_direction.setter
-    def safe_direction(self, value):
-        """Sets the safe_direction property. It must either be up, also
-           known as forward, and down, also known as backward
-        """
-        if value not in ("up", "down"):
-            raise ValueError("safed must be 'up' or 'down'")
-        self._safe_direction = value
 
     ###CHECK AMPLITUDE###
 
@@ -288,7 +280,10 @@ class SmarActSCU_ASCII(Instrument):
     ###CHECK FREQUENCY###
 
     def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
-        """Check if frequency is present and if it is inside the given boundary."""
+        """Check if frequency is present and if it is inside the given boundary.
+
+        :param freq: a qunatity with Frequency units in Hz, if int, then given in Hz
+        """
         if freq is None:
             freq = self.frequency
         else:
@@ -307,7 +302,7 @@ class SmarActSCU_ASCII(Instrument):
         self._freq = self.check_freq(value)
 
     def check_steps(self, steps: int):
-        """Check if steps are parametrized and if it is inside the given boundary."""
+        """Check if steps are present and if it is inside the given boundary."""
         if steps is None:
             steps = self._steps
         else:
@@ -317,14 +312,17 @@ class SmarActSCU_ASCII(Instrument):
         return steps
 
     def move_abs(self, position: Union[Q_, int]):
-        """Moves up/down to absolute position
+        """Moves to the absolute position given in µm from the reference possition
 
         :param position : A quantity with length units (µm), if integer, then given in µm
         """
         raise NotImplementedError
 
     def move_rel(self, position: Q_):
-        #legge til param her!
+        """Moves the relative distance given in µm from current position
+
+        :param position : A quantity with length units (µm)
+        """
         if position.magnitude >= 0:
             self.move_steps_up(position.magnitude)
         else:
