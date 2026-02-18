@@ -270,6 +270,12 @@ texinfo_documents = [
 autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 
 
+# -- Options for sphinx_autodoc_typehints ---------------------------------
+
+typehints_use_rtype = False
+typehints_defaults = "comma"
+
+
 def setup(app):
     app.connect('autodoc-process-docstring', gen_channel_docs)
 
