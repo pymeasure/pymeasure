@@ -99,21 +99,25 @@ class VoltageRange(IntEnum):
 
 
 class CurrentRange(IntEnum):
-    # When the integration time is sample hold mode (SH) and between 100 μs to 500 μs, the
-    # resolution is as follows.
-    #
-    # Integration time Decomposition energy (digit)
-    # SH, 100μs        10 digits
-    # 200μs            5 digits
-    # 500μs            2 digits
+    """Current measurement/source range selection.
 
-    # The range that maximizes the number of digits in the measurement data is automatically
-    # selected.
-    # It cannot be specified for pulse measurement and pulse sweep.
+    .. warning::
+
+        ``AUTO`` and ``AUTO_*`` (limited auto) ranges cannot be used for pulse
+        measurement or pulse sweep. Using them in pulsed modes causes error 00211
+        ("command cannot be executed in current settings"). Use a fixed range such
+        as ``FIXED_BEST`` instead.
+
+    When the integration time is sample hold mode (SH) and between 100 μs to 500 μs,
+    the resolution is reduced (10 digits at 100 μs, 5 at 200 μs, 2 at 500 μs).
+    """
+
+    #: Auto range — automatically selects the range that maximizes digits.
+    #: **Cannot be used for pulse measurement or pulse sweep.**
     AUTO = 0  # ±10fA resolution
 
-    # It operates in the same way as the auto range, except that the specified range is the minimum
-    # range. It cannot be specified for pulse measurement and pulse sweep.
+    #: Limited auto range (minimum = 6nA). Same as auto but with a floor.
+    #: **Cannot be used for pulse measurement or pulse sweep.**
     AUTO_6nA = 23  # ±10fA resolution
     AUTO_60nA = 24  # ±100fA resolution
     AUTO_600nA = 25  # ±1pA resolution
@@ -831,7 +835,10 @@ def seq_sample_mode(mode, auto_sampling=True, channel=1):
 
     :param mode: Sample mode.
     :type mode: int or :class:`.SampleMode`
-    :param bool auto_sampling: Enable auto sampling.
+    :param bool auto_sampling: Enable auto sampling. When True, measurement data is
+        automatically output after each trigger. When False, data is output only on
+        explicit request (e.g. ``FCH?``). Use False for dual-channel synchronous modes
+        (``PULSED_SYNC``, ``SWEEP_SYNC``, etc.) to get actual measurement results.
     :param int channel: Channel number (1=A, 2=B).
     :rtype: str
     """
@@ -1294,8 +1301,14 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
     sequence_program_number = Instrument.measurement(
         "lnub?",
-        """Measure the number of program sequences stored in sequence memory (``LNUB?``).""",
+        """Measure the number of program sequences stored in sequence memory (``LNUB?``).
+
+        The response has the format ``#3XXX,line1,line2,...`` where ``XXX`` is a
+        3-digit count of stored programs and the remaining values are line numbers.
+        This property returns only the count as an integer.
+        """,
         cast=int,
+        preprocess_reply=lambda v: v[2:5] if v.startswith('#') else v,
     )
 
     def query_sequence_program(self, line):
@@ -1611,13 +1624,26 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
     error_register = Instrument.measurement(
         "err?",
-        """Measure the error register contents (``ERR?``).""",
+        """Measure the error register contents as a 5-digit integer (``ERR?``).
+
+        The response format is ``UUEEN`` where ``UU`` is the unit number
+        (00=system, 01=ch A, 02=ch B) and ``EEN`` is the error code.
+        Use :meth:`check_errors` for structured error checking with messages.
+        """,
         cast=int,
     )
 
     self_test = Instrument.measurement(
         "*tst?",
-        """Measure the result of the self-test (``*TST?``).""",
+        """Measure the result of the self-test (``*TST?``).
+
+        .. warning::
+
+            This command may take a long time to complete or may not
+            be supported on all models. A VISA timeout error is possible.
+            Consider wrapping in a try/except block or increasing
+            the adapter timeout before calling.
+        """,
         cast=int,
     )
 
@@ -1900,8 +1926,17 @@ class SMUChannel(Channel):
 
         :param mode: Sample Mode
         :type mode: :class:`.SampleMode`
-        :param auto_sampling: Whether or not auto sampling is enabled, defaults to True
+        :param auto_sampling: Whether or not auto sampling is enabled, defaults to True.
+            When True, measurement data is automatically output after each trigger.
+            When False, data is output only on explicit request (e.g. ``FCH?``).
         :type auto_sampling: bool, optional
+
+        .. warning::
+
+            For dual-channel synchronous modes (``PULSED_SYNC``, ``SWEEP_SYNC``, etc.),
+            use ``auto_sampling=False``. With ``auto_sampling=True`` (the default), the
+            auto-output data contains the generated/source value rather than the actual
+            measurement result when reading via ``select_for_output()`` / ``FCH?``.
 
         """
         mode = SampleMode(mode)
@@ -1931,11 +1966,22 @@ class SMUChannel(Channel):
                    f"{pulsed_period:.4e}")
 
     def select_for_output(self):
-        """Select this channel for output and read its measurement data (``FCH?``).
+        """Select this channel for measurement data output (``FCH?``).
 
-        When the output channel is selected by the FCH command, the measured
-        data of the same channel is returned until the output channel is
-        changed by the next FCH command.
+        Sends the FCH? query to select which channel's measurement data
+        will be output. Call :meth:`~.AdvantestR624X.read_measurement`
+        afterward to read the data.
+
+        The recommended usage pattern (per the instrument manual) is::
+
+            smu.ch_A.select_for_output()   # Select channel A
+            smu.trigger()                   # Trigger measurement
+            value = smu.read_measurement()  # Read channel A data
+
+        Or, when data already exists from a previous trigger::
+
+            smu.ch_B.select_for_output()   # Switch to channel B
+            value = smu.read_measurement()  # Read channel B data
 
         .. note::
 
@@ -1944,7 +1990,7 @@ class SMUChannel(Channel):
             the measurement data of channel A is output.
 
         """
-        return self.parent.parse_measurement(self.ask("fch_0{ch}?"))[0]
+        self.write("fch_0{ch}?")
 
     def trigger(self):
         """Send a measurement trigger for sweep, search measurement, or sweep step (``XE``)."""
@@ -2009,6 +2055,12 @@ class SMUChannel(Channel):
             The current compliance range is automatically set to the minimum range that includes the
             set value.
 
+        .. warning::
+
+            When using pulsed sources, ``measure_current()`` must be called with a fixed
+            range (e.g. ``CurrentRange.FIXED_BEST``). ``CurrentRange.AUTO`` and ``AUTO_*``
+            ranges are not supported in pulsed modes (error 00211).
+
         """
         source_range = VoltageRange(source_range)
         pulse_value = truncated_range(pulse_value, self.voltage_range)
@@ -2069,6 +2121,11 @@ class SMUChannel(Channel):
             set.
             The current compliance range is automatically set to the minimum range that includes the
             set value.
+
+        .. warning::
+
+            When using pulsed sweeps, ``measure_current()`` must use a fixed range
+            (e.g. ``CurrentRange.FIXED_BEST``). Auto ranges are not supported (error 00211).
 
         """
         voltage_range = VoltageRange(voltage_range)
@@ -2133,6 +2190,11 @@ class SMUChannel(Channel):
               polarity, the compliance of both polarities (+ and -) is set.
             - The current compliance range is automatically set to the minimum range that includes
               the set value.
+
+        .. warning::
+
+            When using pulsed sweeps, ``measure_current()`` must use a fixed range
+            (e.g. ``CurrentRange.FIXED_BEST``). Auto ranges are not supported (error 00211).
 
         """
         sweep_mode = SweepMode(sweep_mode)
@@ -2259,6 +2321,12 @@ class SMUChannel(Channel):
             The voltage compliance range is automatically set to the minimum range that includes the
             set value.
 
+        .. warning::
+
+            The ``source_range`` must be a fixed range (e.g. ``CurrentRange.FIXED_BEST``).
+            ``CurrentRange.AUTO`` and ``AUTO_*`` ranges are not supported in pulsed
+            modes (error 00211).
+
         """
         source_range = CurrentRange(source_range)
         pulse_value = truncated_range(pulse_value, self.current_range)
@@ -2318,6 +2386,12 @@ class SMUChannel(Channel):
             set.
             The voltage compliance range is automatically set to the minimum range that includes the
             set value.
+
+        .. warning::
+
+            The ``current_range`` must be a fixed range (e.g. ``CurrentRange.FIXED_BEST``).
+            ``CurrentRange.AUTO`` and ``AUTO_*`` ranges are not supported for pulse sweep
+            (error 00211).
 
         """
         current_range = CurrentRange(current_range)
@@ -2381,6 +2455,12 @@ class SMUChannel(Channel):
             - The voltage compliance range is automatically set to the minimum range that includes
               the set value.
 
+        .. warning::
+
+            The ``current_range`` must be a fixed range (e.g. ``CurrentRange.FIXED_BEST``).
+            ``CurrentRange.AUTO`` and ``AUTO_*`` ranges are not supported for pulse sweep
+            (error 00211).
+
         """
         sweep_mode = SweepMode(sweep_mode)
         repeat = truncated_range(repeat, [0, 1024])
@@ -2403,8 +2483,14 @@ class SMUChannel(Channel):
         :param internal_measurement: A boolean property that enables or disables the internal
             measurement.
         :type internal_measurement: bool, optional
-        :param current_range: Specifying voltage range
+        :param current_range: Specifying current range.
         :type current_range: :class:`.CurrentRange`, optional
+
+        .. warning::
+
+            ``CurrentRange.AUTO`` and ``AUTO_*`` ranges cannot be used when the channel
+            is configured for pulse measurement or pulse sweep (error 00211). Use a
+            fixed range such as ``CurrentRange.FIXED_BEST`` for pulsed modes.
 
         """
         current_range = CurrentRange(current_range)
@@ -2506,7 +2592,7 @@ class SMUChannel(Channel):
 
         """
         address = truncated_range(address, [1, 2048])
-        return self.ask(f'rms_1{{ch}}? {address}')
+        return self.ask(f'rms_1{{ch}}? {address}').strip()
 
     def enable_source(self):
         """Put this channel into the operating state (``CN``)."""

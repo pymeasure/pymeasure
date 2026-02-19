@@ -766,9 +766,17 @@ def test_digital_output_enable():
 def test_sequence_program_number():
     with expected_protocol(
         AdvantestR6246,
-        [("lnub?", "5")]
+        [("lnub?", "#3003,1, 2,19")]
     ) as inst:
-        assert inst.sequence_program_number == 5
+        assert inst.sequence_program_number == 3
+
+
+def test_sequence_program_number_single():
+    with expected_protocol(
+        AdvantestR6246,
+        [("lnub?", "#3001,1")]
+    ) as inst:
+        assert inst.sequence_program_number == 1
 
 
 def test_status_byte_register():
@@ -1309,10 +1317,17 @@ def test_ch_comparison_limits_off():
 def test_ch_select_for_output():
     with expected_protocol(
         AdvantestR6246,
-        [("fch_01?", "ABCD 1.234e-3")]
+        [("fch_01?", None)]
     ) as inst:
-        result = inst.ch_A.select_for_output()
-        assert result == 1.234e-3
+        inst.ch_A.select_for_output()
+
+
+def test_ch_select_for_output_ch_b():
+    with expected_protocol(
+        AdvantestR6246,
+        [("fch_02?", None)]
+    ) as inst:
+        inst.ch_B.select_for_output()
 
 
 def test_ch_read_measurement_from_addr():
