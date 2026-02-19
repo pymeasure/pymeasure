@@ -24,7 +24,7 @@
 
 import logging
 from enum import IntEnum, IntFlag
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
     strict_range
 
@@ -940,7 +940,7 @@ def seq_join(*commands):
     return ';'.join(commands)
 
 
-class AdvantestR624X(SCPIUnknownMixin, Instrument):
+class AdvantestR624X(Instrument):
     """ Represents the Advantest R624X series (channel A and B) SourceMeter and provides a
     high-level interface for interacting with the instrument.
 
@@ -964,7 +964,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
     """
 
     def __init__(self, adapter, name="R624X Source meter Base Class", **kwargs):
-        super().__init__(adapter, name, **kwargs)
+        super().__init__(adapter, name, includeSCPI=False, **kwargs)
         self.sequence = []
         self.store_to_sequence = False
         self.sequence_line_count = 0
@@ -1025,6 +1025,10 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
     def standby(self):
         """Put channel A and B in standby mode (``CL``)."""
         self.write('cl 0')
+
+    def reset(self):
+        """Reset the instrument to default settings (``*RST``)."""
+        self.write('*rst')
 
     def clear_status_register(self):
         """Clear the Standard Event Status Register (SESR) and
