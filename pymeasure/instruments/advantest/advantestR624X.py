@@ -736,14 +736,14 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         :rtype: str
         """
         line = truncated_range(line, [1, 100])
-        return self.ask('lst? {line}')
+        return self.ask(f'lst? {line}')
 
     def trigger_output_signal(self, trigger_output, alarm_output, scanner_output):
         """ Directly output the trigger output signal, alarm output signal,
         scanner (start/stop) output signal from GPIB (``OSIG``).
 
         :param int trigger_output: Number specifying type of trigger output
-        :param int alarm_output: Number specifying type of alaram output
+        :param int alarm_output: Number specifying type of alarm output
         :param int scanner_output: Number specifying the type of scanner output
 
         Trigger output:
@@ -939,7 +939,6 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
             SESR is cleared after being read.
 
         """,
-        values=[0, 255],
         get_process=lambda v: SESR(int(v)),
     )
 
@@ -949,7 +948,6 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         in the form of a :class:`DOR` ``IntFlag`` (``DOC?``).
 
         """,
-        values=range(0, 65535),
         get_process=lambda v: DOR(int(v)),
     )
 
@@ -1012,7 +1010,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         :type: int
         """,
         validator=strict_range,
-        values=range(0, 4),
+        values=range(0, 5),
     )
 
     load_config = Instrument.setting(
@@ -1023,7 +1021,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         :type: int
         """,
         validator=strict_range,
-        values=range(0, 4),
+        values=range(0, 5),
     )
 
     def set_lo_common_connection_relay(self, enable, lo_relay=None):
@@ -1094,8 +1092,8 @@ class SMUChannel(Channel):
         self.write(f'ofm {{ch}},{output_type.value},{measurement_type.value}')
 
     analog_input = Channel.setting(
-        "fl {ch},%d",
-        """ Set the analog input terminal (ANALOG INPUT) on the rear panel ON or OFF (``FL``).
+        "ian {ch},%d",
+        """ Set the analog input terminal (ANALOG INPUT) on the rear panel ON or OFF (``IAN``).
 
         :type: int
 
@@ -1105,7 +1103,7 @@ class SMUChannel(Channel):
 
         """,
         validator=strict_range,
-        values=range(1, 3),
+        values=range(1, 4),
     )
 
     trigger_output_timing = Channel.setting(
@@ -1177,7 +1175,7 @@ class SMUChannel(Channel):
 
         """,
         validator=strict_range,
-        values=range(1, 3),
+        values=range(1, 4),
         # get_process=lambda v: TriggerInputType(int(v)),
     )
 
@@ -1258,13 +1256,13 @@ class SMUChannel(Channel):
 
         """
         self.write(f"wt {{ch}},{hold_time:.4e},{measurement_delay:.4e},{pulsed_width:.4e},"
-                   "{pulsed_period:.4e}")
+                   f"{pulsed_period:.4e}")
 
     def select_for_output(self):
-        """ This is a query command to select a channel and to
-        output the measurement data (``FCH?``). When the output channel is selected
-        by the FCH command, the measured data of the same channel is
-        returned until the output channel is changed by the next FCH command.
+        """ Read the measurement data of this channel (``FCH?``).
+        When the output channel is selected by the FCH command, the measured
+        data of the same channel is returned until the output channel is
+        changed by the next FCH command.
 
         .. note::
 
@@ -1273,7 +1271,7 @@ class SMUChannel(Channel):
             the measurement data of channel A is output.
 
         """
-        self.write("fch_0{ch}?")
+        return self.parent.parse_measurement(self.ask("fch_0{ch}?"))[0]
 
     def trigger(self):
         """ Measurement trigger command for sweep, start search measurement or sweep step action
@@ -1346,7 +1344,7 @@ class SMUChannel(Channel):
         base_value = truncated_range(base_value, self.voltage_range)
 
         self.write(f'pv {{ch}},{source_range.value},{pulse_value:.4e},{base_value:.4e},'
-                   '{current_compliance:.4e}')
+                   f'{current_compliance:.4e}')
 
     change_source_voltage = Channel.setting(
         "spot {ch},%.4e",
@@ -1386,7 +1384,7 @@ class SMUChannel(Channel):
         voltage_level = truncated_range(voltage_level, self.voltage_range)
 
         self.write(f'fxv {{ch}},{voltage_range.value},{voltage_level:.4e},'
-                   '{measurement_count},{current_compliance:.4e},{bias:.4e}')
+                   f'{measurement_count},{current_compliance:.4e},{bias:.4e}')
 
     def voltage_fixed_pulsed_sweep(
             self, voltage_range, pulse, base, measurement_count, current_compliance, bias=0):
@@ -1407,7 +1405,7 @@ class SMUChannel(Channel):
         base = truncated_range(base, self.voltage_range)
 
         self.write(f'pxv {{ch}},{voltage_range.value},{pulse:.4e},{base:.4e},'
-                   '{measurement_count},{current_compliance:.4e},{bias:.4e}')
+                   f'{measurement_count},{current_compliance:.4e},{bias:.4e}')
 
     def voltage_sweep(
             self, sweep_mode, repeat, voltage_range, start_value, stop_value, steps,
@@ -1439,8 +1437,8 @@ class SMUChannel(Channel):
         voltage_range = VoltageRange(voltage_range)
 
         self.write(f'wv {{ch}},{sweep_mode.value},{repeat},{voltage_range.value},'
-                   '{start_value:.4e},{stop_value:.4e},{steps}, '
-                   '{current_compliance:.4e},{bias:.4e}')
+                   f'{start_value:.4e},{stop_value:.4e},{steps},'
+                   f'{current_compliance:.4e},{bias:.4e}')
 
     def voltage_pulsed_sweep(
             self, sweep_mode, repeat, voltage_range, base, start_value, stop_value, steps,
@@ -1472,8 +1470,8 @@ class SMUChannel(Channel):
         voltage_range = VoltageRange(voltage_range)
 
         self.write(f'pwv {{ch}},{sweep_mode.value},{repeat},{voltage_range.value},{base:.4e},'
-                   '{start_value:.4e},{stop_value:.4e},{steps},{current_compliance:.4e},'
-                   '{bias:.4e}')
+                   f'{start_value:.4e},{stop_value:.4e},{steps},{current_compliance:.4e},'
+                   f'{bias:.4e}')
 
     def voltage_random_sweep(
             self, sweep_mode, repeat, start_address, stop_address, current_compliance, bias=0):
@@ -1504,7 +1502,7 @@ class SMUChannel(Channel):
         stop_address = truncated_range(stop_address, [1, 2048])
 
         self.write(f'mdwv {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
-                   '{current_compliance:.4e},{bias:.4e}')
+                   f'{current_compliance:.4e},{bias:.4e}')
 
     def voltage_random_pulsed_sweep(
             self, sweep_mode, repeat, start_address, stop_address, current_compliance, bias=0):
@@ -1536,7 +1534,7 @@ class SMUChannel(Channel):
         stop_address = truncated_range(stop_address, [1, 2048])
 
         self.write(f'mpwv {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
-                   '{current_compliance:.4e},{bias:.4e}')
+                   f'{current_compliance:.4e},{bias:.4e}')
 
     def voltage_set_random_memory(self, address, voltage_range, output, current_compliance):
         """ The command stores the specified value to the randomly generated data memory (``RMS``).
@@ -1550,7 +1548,7 @@ class SMUChannel(Channel):
         address = truncated_range(address, [1, 2048])
 
         self.write(f'rms {address};dv{{ch}},{voltage_range.value},{output:.4e},'
-                   '{current_compliance:.4e};rend')
+                   f'{current_compliance:.4e};rend')
 
     ###############
     # Current (A) #
@@ -1595,7 +1593,7 @@ class SMUChannel(Channel):
         base_value = truncated_range(base_value, self.current_range)
 
         self.write(f'pi {{ch}},{source_range.value},{pulse_value:.4e},{base_value:.4e},'
-                   '{voltage_compliance:.4e}')
+                   f'{voltage_compliance:.4e}')
 
     change_source_current = Channel.setting(
         "spot {ch},%.4e",
@@ -1634,7 +1632,7 @@ class SMUChannel(Channel):
         current_range = CurrentRange(current_range)
 
         self.write(f'fxi {{ch}},{current_range.value},{current_level:.4e},{measurement_count},'
-                   '{voltage_compliance:.4e},{bias:.4e}')
+                   f'{voltage_compliance:.4e},{bias:.4e}')
 
     def current_fixed_pulsed_sweep(
             self, current_range, pulse, base, measurement_count, voltage_compliance, bias=0):
@@ -1653,7 +1651,7 @@ class SMUChannel(Channel):
         current_range = CurrentRange(current_range)
 
         self.write(f'pxi {{ch}},{current_range.value},{pulse:.4e},{base:.4e},{measurement_count},'
-                   '{voltage_compliance:.4e},{bias:.4e}')
+                   f'{voltage_compliance:.4e},{bias:.4e}')
 
     def current_sweep(
             self, sweep_mode, repeat, current_range, start_value, stop_value, steps,
@@ -1685,8 +1683,8 @@ class SMUChannel(Channel):
         current_range = CurrentRange(current_range)
 
         self.write(f'wi {{ch}},{sweep_mode.value},{repeat},{current_range.value},'
-                   '{start_value:.4e},{stop_value:.4e},{steps},{voltage_compliance:.4e},'
-                   '{bias:.4e}')
+                   f'{start_value:.4e},{stop_value:.4e},{steps},{voltage_compliance:.4e},'
+                   f'{bias:.4e}')
 
     def current_pulsed_sweep(
             self, sweep_mode, repeat, current_range, base, start_value, stop_value, steps,
@@ -1719,7 +1717,7 @@ class SMUChannel(Channel):
 
         self.write(
             f'pwi {{ch}},{sweep_mode.value},{repeat},{current_range.value},{base:.4e},'
-            '{start_value:.4e},{stop_value:.4e},{steps},{voltage_compliance:.4e},{bias:.4e}')
+            f'{start_value:.4e},{stop_value:.4e},{steps},{voltage_compliance:.4e},{bias:.4e}')
 
     def measure_current(self, enable=True, internal_measurement=True,
                         current_range=CurrentRange.AUTO):
@@ -1776,7 +1774,7 @@ class SMUChannel(Channel):
 
         self.write(
             f'mdwi {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
-            '{current_compliance:.4e},{bias:.4e}')
+            f'{current_compliance:.4e},{bias:.4e}')
 
     def current_random_pulsed_sweep(
             self, sweep_mode, repeat, start_address, stop_address, current_compliance, bias=0):
@@ -1810,7 +1808,7 @@ class SMUChannel(Channel):
 
         self.write(
             f'mpwi {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
-            '{current_compliance:.4e},{bias:.4e}')
+            f'{current_compliance:.4e},{bias:.4e}')
 
     def current_set_random_memory(self, address, current_range, output, voltage_compliance):
         """ Store the current parameters to randomly generated data memory (``RMS``).
@@ -1824,12 +1822,12 @@ class SMUChannel(Channel):
 
         self.write(
             f'rms {address};di{{ch}},{current_range.value},{output:.4e},'
-            '{voltage_compliance:.4e};rend')
+            f'{voltage_compliance:.4e};rend')
 
     def read_random_memory(self, address):
         """ Return memory specified by address location (``RMS?``).
 
-        :param int address: Adress to specify memory location.
+        :param int address: Address to specify memory location.
         :returns: Set values returned by the device from the specified address location.
         :rtype: str
 
@@ -2001,7 +1999,7 @@ class SMUChannel(Channel):
 
         """,
         validator=strict_range,
-        values=range(1, 4),
+        values=range(1, 5),
     )
 
     operation_register = Channel.measurement(
@@ -2081,7 +2079,6 @@ class AdvantestR6245(AdvantestR624X):
                                      current_range=current_range)
 
     def __init__(self, adapter, name="Advantest R6245 SourceMeter", **kwargs):
-        kwargs
         super().__init__(
             adapter,
             name,
