@@ -360,70 +360,42 @@ class TriggerOutputSignalTiming(IntFlag):
     START_OF_OCCURRENCE = 1 << 0
 
 
-"""
-TODO, implement the following commands:
+class SearchMode(IntEnum):
+    BINARY_SENSE = 1
+    BINARY_SEARCH_NEGATIVE = 2
+    BINARY_SEARCH_POSITIVE = 3
+    LINEAR_SENSE = 4
+    LINEAR_SEARCH = 5
 
-(54) LDS? This is a query command for reading the currently set parameters via GPIB.
 
-(93) MAR ~; NENT The MAR ~; NENT command sets the search measurement sense channel source, target
-measurement,
-and compliance values, and the search channel start/stop and compliance values.
-It also sets the output state after stopping for both the sense channel and search channel.
-(94) MAR~；CMD~；NEN During search measurement, you can set ON/OFF of the measurement data comparison
-calculation and the upper and lower limit data to be compared.
+class OccurrenceAfterStop(IntEnum):
+    GENERATE_BIAS = 1
+    LEAVE_AS_IS = 2
+    GENERATE_STOP = 3
 
-Syntax:
-MAR 0, search mode, generated value after stop; command; NEN
 
-1 Binary search measurement: sense channel
-2 Binary search measurement: search channel (negative feedback search)
-3 Binary search measurement: search channel (positive feedback search)
-4 Linear search measurement: sense channel
-5 Linear search measurement: search channel
+class HighSpeedTriggerMode(IntEnum):
+    CONTINUOUS = 1
+    STEP = 2
+    EXECUTION_TRIGGER = 3
 
-Occurrence value after stopping
-1 Generates a bias value.
-2 Leave the finished generation value as is.
-3 Generate stop values.
 
-- The commands that can be used for search measurement are shown below.
+class JumpCondition(IntEnum):
+    HI_PROCEED = 1
+    GO_PROCEED = 2
+    LO_PROCEED = 3
+    FAIL_PROCEED = 4
+    CANCEL = 5
+    UNCONDITIONAL = 6
+    HI_STAY = 7
+    GO_STAY = 8
+    LO_STAY = 9
+    FAIL_STAY = 10
 
-                Binary search                 Linear search
-sense channel:  FXI, FXV, PXI, PXV, CMD       FXI, FXV, PXI, PXV, CMD
-search channel: WI, WV                        WI, WV, PWI, PWV, CMD
 
-- If you set a command other than the above with the MAR ~; NENT command, an error will occur.
-- The linear search CMD (comparison operation) command is set to either the sense channel or the
-search channel.
-  Therefore, if the CMD command is set for both channels, the comparison operation is performed with
-the one that was set later.
-
-Number of steps: 2. When the source range is 600mV, search is performed in steps of 20µV.
-MAR 0, 1, 2;FXV 1, 20, 6, 17, 2, 0;NENT
-MAR 0, 2, 2;WV 2, 1, 1, 20, -3, 0, 17, 6.2E-2, -3; NENT
-
-(95) PGST~;END # Program number that specifies the command to be executed by the high-speed sequence
-program. This command stores in memory.
-
-Commands that can be used unconditionally
-DV, DI, PV, PI
-WT, MST, RV, RI
-CMD, CN, CL, OPM, FL
-LTL, DIOS, DIOE, EXT
-PCEL, MAR ~ NENT
-
-Commands that can be used with MAR ~ ; NEN commands
-FXV, FXI. PXV, PXI, WV, WI, PWV, PWI
-
-(96) EXT # This command is used to set a conditional jump in the program of a high-speed sequence
-program.
-(97) PGON To execute a high-speed sequence program, store the program in program numbers 1 to 20
-with the PGST ; END command in advance.
-Note that program numbers that do not store programs are skipped without being executed.
-(98) PGOF This command cancels the start/enable state of the high-speed sequence program set by the
-PGON command.
-(99) PCEL This command clears the program stored in memory by the PGST command.
-"""
+class ProgramClearMode(IntEnum):
+    SPECIFIED_ONLY = 1
+    SPECIFIED_AND_SUBSEQUENT = 2
 
 
 def map_values(value, values):
@@ -606,13 +578,99 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         """,
     )
 
+    def query_operation_mode(self):
+        """Get the operation mode and sweep delay time (``LDS?``).
+
+        :return: Raw response string containing JM and GDLY parameters.
+        :rtype: str
+        """
+        return self.ask('lds?')
+
+    def query_system_settings(self):
+        """Get the output data format, common short, power frequency,
+        and SRQ gate settings (``LDS_50?``).
+
+        :return: Raw response string containing FMT, LTL, LF, and S0/S1 parameters.
+        :rtype: str
+        """
+        return self.ask('lds_50?')
+
+    def search_measurement_setup(self, search_mode, occurrence_after_stop, command):
+        """Set up search measurement sense/search channel parameters (``MAR~;NENT``).
+
+        :param search_mode: Search mode specifying binary/linear and sense/search channel.
+        :type search_mode: int or :class:`.SearchMode`
+        :param occurrence_after_stop: Output behavior after stopping.
+        :type occurrence_after_stop: int or :class:`.OccurrenceAfterStop`
+        :param str command: Inner command string (e.g. ``'FXV 1,20,6,17,2,0'``).
+            Valid prefixes: FXV, FXI, PXV, PXI, WV, WI, PWV, PWI, CMD.
+
+        .. note::
+
+            Parameter meanings of the inner command change in search context.
+            See the instrument manual for details on how FXV/FXI/PXV/PXI and
+            WV/WI/PWV/PWI parameters are reinterpreted.
+
+        """
+        search_mode = strict_discrete_set(search_mode, [1, 2, 3, 4, 5])
+        occurrence_after_stop = strict_discrete_set(occurrence_after_stop, [1, 2, 3])
+
+        valid_prefixes = ['fxv', 'fxi', 'pxv', 'pxi', 'wv', 'wi', 'pwv', 'pwi', 'cmd']
+        cmd_lower = command.strip().lower()
+        if not any(cmd_lower.startswith(p) for p in valid_prefixes):
+            raise ValueError(
+                f"Invalid command '{command}' for search measurement. "
+                f"Valid prefixes: {valid_prefixes}")
+
+        self.write(
+            f'mar 0,{search_mode},{occurrence_after_stop};{command};nent')
+
+    def search_comparison_setup(self, search_mode, occurrence_after_stop,
+                                channel, comparison, comparison_function,
+                                upper_limit, lower_limit):
+        """Set up search measurement comparison calculation (``MAR~;CMD~;NENT``).
+
+        :param search_mode: Search mode specifying binary/linear and sense/search channel.
+        :type search_mode: int or :class:`.SearchMode`
+        :param occurrence_after_stop: Output behavior after stopping.
+        :type occurrence_after_stop: int or :class:`.OccurrenceAfterStop`
+        :param int channel: Channel number (1 or 2, ignored by instrument).
+        :param int comparison: Comparison ON/OFF (1=OFF, 2=ON with polarity,
+            3=ON with polarity).
+        :param int comparison_function: Comparison value type
+            (1=voltage, 2=current).
+        :param float upper_limit: Upper comparison limit.
+        :param float lower_limit: Lower comparison limit.
+
+        .. note::
+
+            If the lower value is greater than the upper value, the instrument
+            will return an error.
+
+        """
+        search_mode = strict_discrete_set(search_mode, [1, 2, 3, 4, 5])
+        occurrence_after_stop = strict_discrete_set(occurrence_after_stop, [1, 2, 3])
+        channel = strict_discrete_set(channel, [1, 2])
+        comparison = strict_discrete_set(comparison, [1, 2, 3])
+        comparison_function = strict_discrete_set(comparison_function, [1, 2])
+
+        if lower_limit > upper_limit:
+            raise ValueError(
+                f"Lower limit ({lower_limit}) must not exceed "
+                f"upper limit ({upper_limit}).")
+
+        self.write(
+            f'mar 0,{search_mode},{occurrence_after_stop};'
+            f'cmd {channel},{comparison},{comparison_function},'
+            f'{upper_limit:.4e},{lower_limit:.4e};nent')
+
     def append_sequence_command(self, command):
         valid_commands = [
             'jm', 'gdly', 'fl', 'dv', 'di', 'fxv', 'fxi', 'wv', 'wi', 'mdwv', 'mdwi', 'pv', 'pi',
             'pxv', 'pxi', 'pwv', 'pwi', 'mpwv', 'mpwi', 'rv', 'ri', 'mst', 'wt', 'cm', 'cmd', 'nug',
             'ofm', 'fmt', 'mbc', 'fmt', 'wm', 'cn', 'cl', 'opm', 'osl', 'ltl', 'tjm', 'xe', '*trg',
             'tot', 'sct', 'osig', 'dios', 'dioe', 'ian', 'tlnk', 'wait', 'sav', 'rcl', '*sre',
-            '*ese', '*cls', 'coe', 'doe']
+            '*ese', '*cls', 'coe', 'doe', 'ext', 'pcel', 'pgst', 'mar', 'nent']
 
         if not self.store_to_sequence:
             raise ValueError("init_sequence() should be called first")
@@ -737,6 +795,94 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         """
         line = truncated_range(line, [1, 100])
         return self.ask(f'lst? {line}')
+
+    def store_highspeed_sequence(self, program_number, command):
+        """Store commands to a high-speed sequence program number (``PGST~;END``).
+
+        :param int program_number: Program number from 1 to 20.
+        :param str command: Semicolon-delimited command string to store.
+
+        .. note::
+
+            This method should not be called while a standard sequence is
+            being built (between :meth:`~.init_sequence` and
+            :meth:`~.end_sequence`), as the write will be intercepted
+            by the standard sequence system.
+
+        """
+        program_number = truncated_range(program_number, [1, 20])
+        if command.endswith(';'):
+            command = command[:-1]
+        self.write(f'pgst {program_number};{command};end')
+
+    def conditional_jump(self, channel, condition, destination):
+        """Set a conditional jump in a high-speed sequence program (``EXT``).
+
+        :param int channel: Channel selection (1=A, 2=B, 3=A|B OR condition).
+        :param condition: Jump condition.
+        :type condition: int or :class:`.JumpCondition`
+        :param int destination: Jump destination program number (1 to 20).
+
+        .. note::
+
+            - Conditions 1-4: proceed to the next program if condition is not met.
+            - Conditions 7-10: stay at the current program if condition is not met.
+            - Condition 5: cancel conditional jump.
+            - Condition 6: jump unconditionally (channel data is ignored).
+            - Destination must be >= current program number to be executed.
+
+        """
+        channel = strict_discrete_set(channel, [1, 2, 3])
+        condition = strict_discrete_set(
+            condition, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        destination = truncated_range(destination, [1, 20])
+        self.write(f'ext {channel},{condition},{destination}')
+
+    def enable_highspeed_sequence(self, trigger_mode):
+        """Enable the start of a high-speed sequence program (``PGON``).
+
+        :param trigger_mode: Trigger mode for program execution.
+        :type trigger_mode: int or :class:`.HighSpeedTriggerMode`
+
+        Trigger modes:
+
+        1. Continuous: executes all programs sequentially on one trigger.
+        2. Step: executes one program per trigger.
+        3. Execution trigger measurement: applies settings, then waits for
+           a trigger before each measurement.
+
+        .. note::
+
+            Store programs in program numbers 1-20 using
+            :meth:`~.store_highspeed_sequence` before calling this method.
+            Program numbers without stored programs are skipped.
+
+        """
+        trigger_mode = strict_discrete_set(trigger_mode, [1, 2, 3])
+        self.write(f'pgon 0,{trigger_mode}')
+
+    def disable_highspeed_sequence(self):
+        """Cancel the start/enable state of the high-speed sequence
+        program set by :meth:`~.enable_highspeed_sequence` (``PGOF``).
+        """
+        self.write('pgof')
+
+    def clear_highspeed_sequence(self, program_number, clear_mode):
+        """Clear program(s) stored in high-speed sequence memory (``PCEL``).
+
+        :param int program_number: Program number from 1 to 20.
+        :param clear_mode: Clear mode.
+        :type clear_mode: int or :class:`.ProgramClearMode`
+
+        Clear modes:
+
+        1. Clear only the specified program number.
+        2. Clear the specified program number and all subsequent programs.
+
+        """
+        program_number = truncated_range(program_number, [1, 20])
+        clear_mode = strict_discrete_set(clear_mode, [1, 2])
+        self.write(f'pcel {program_number},{clear_mode}')
 
     def trigger_output_signal(self, trigger_output, alarm_output, scanner_output):
         """ Directly output the trigger output signal, alarm output signal,
@@ -1070,6 +1216,51 @@ class SMUChannel(Channel):
     def clear_measurement_buffer(self):
         """ Clears the measurement data buffer (``MBC``). """
         self.write('mbc {ch}')
+
+    def query_output_waveform(self):
+        """Get the output waveform settings for this channel (``LDS_0x?``).
+
+        :return: Raw response string containing DI/DV/PI/PV/FXI/FXV/PXI/PXV/
+            WI/WV/PWI/PWV/MDWI/MDWV/MPWI/MPWV parameters.
+        :rtype: str
+        """
+        return self.ask('lds_0{ch}?')
+
+    def query_measurement_settings(self):
+        """Get the measurement range, integration time, hold time, delay time,
+        pulse width, and pulse period for this channel (``LDS_1x?``).
+
+        :return: Raw response string containing RI/RV, MST, and WT parameters.
+        :rtype: str
+        """
+        return self.ask('lds_1{ch}?')
+
+    def query_response_settings(self):
+        """Get the response mode, operate mode, and remote sense settings
+        for this channel (``LDS_2x?``).
+
+        :return: Raw response string containing FL, OPM, and OSL parameters.
+        :rtype: str
+        """
+        return self.ask('lds_2{ch}?')
+
+    def query_data_output_settings(self):
+        """Get the null operation, comparison operation, output data type,
+        and sweep stop condition for this channel (``LDS_3x?``).
+
+        :return: Raw response string containing NUG, CMD, OFM, and WM parameters.
+        :rtype: str
+        """
+        return self.ask('lds_3{ch}?')
+
+    def query_io_settings(self):
+        """Get the analog input, trigger output timing, trigger input type,
+        scanner control, and interlock control for this channel (``LDS_4x?``).
+
+        :return: Raw response string containing IAN, TOT, TJM, and SCT parameters.
+        :rtype: str
+        """
+        return self.ask('lds_4{ch}?')
 
     def set_output_type(self, output_type, measurement_type):
         """ Sets the output method and type of the GPIB output (``OFM``).
