@@ -29,7 +29,8 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.advantest import AdvantestR6246
 from pymeasure.instruments.advantest.advantestR624X import (
     SearchMode, OccurrenceAfterStop, HighSpeedTriggerMode,
-    JumpCondition, ProgramClearMode,
+    JumpCondition, ProgramClearMode, ComparisonMode,
+    ComparisonValueType, SequenceInterruptionType,
 )
 
 
@@ -241,3 +242,35 @@ def test_clear_highspeed_sequence_and_subsequent():
         [("pcel 6,2", None)]
     ) as inst:
         inst.clear_highspeed_sequence(6, ProgramClearMode.SPECIFIED_AND_SUBSEQUENT)
+
+
+def test_store_highspeed_sequence_invalid_command():
+    with expected_protocol(
+        AdvantestR6246,
+        []
+    ) as inst:
+        with pytest.raises(ValueError):
+            inst.store_highspeed_sequence(1, 'RU 1')
+
+
+def test_interrupt_sequence_command():
+    with expected_protocol(
+        AdvantestR6246,
+        [("sqsp 2", None)]
+    ) as inst:
+        inst.interrupt_sequence_command(SequenceInterruptionType.PAUSE)
+
+
+def test_search_comparison_setup_enums():
+    with expected_protocol(
+        AdvantestR6246,
+        [("mar 0,1,2;cmd 1,2,1,3.0000e+00,-1.0000e+00;nent", None)]
+    ) as inst:
+        inst.search_comparison_setup(
+            SearchMode.BINARY_SENSE,
+            OccurrenceAfterStop.LEAVE_AS_IS,
+            1,
+            ComparisonMode.ON_WITH_POLARITY,
+            ComparisonValueType.VOLTAGE,
+            3.0, -1.0
+        )

@@ -398,6 +398,31 @@ class ProgramClearMode(IntEnum):
     SPECIFIED_AND_SUBSEQUENT = 2
 
 
+class ComparisonMode(IntEnum):
+    """Comparison mode for search comparison setup."""
+    OFF = 1
+    ON_WITH_POLARITY = 2
+    ON_WITH_ABS_VALUE = 3
+
+
+class ComparisonValueType(IntEnum):
+    """Value type for search comparison setup."""
+    VOLTAGE = 1
+    CURRENT = 2
+
+
+HIGHSPEED_SEQUENCE_COMMANDS = [
+    # Unconditional commands
+    'dv', 'di', 'pv', 'pi', 'wt', 'mst', 'rv', 'ri',
+    'cmd', 'cn', 'cl', 'opm', 'fl', 'ltl', 'dios', 'dioe',
+    'ext', 'pcel', 'mar', 'nent',
+    # MAR-context commands (used within MAR~;NENT blocks)
+    'fxv', 'fxi', 'pxv', 'pxi', 'wv', 'wi', 'pwv', 'pwi',
+    # JM command
+    'jm',
+]
+
+
 def map_values(value, values):
     return values[strict_discrete_set(value, values)]
 
@@ -612,8 +637,8 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
             WV/WI/PWV/PWI parameters are reinterpreted.
 
         """
-        search_mode = strict_discrete_set(search_mode, [1, 2, 3, 4, 5])
-        occurrence_after_stop = strict_discrete_set(occurrence_after_stop, [1, 2, 3])
+        search_mode = SearchMode(search_mode)
+        occurrence_after_stop = OccurrenceAfterStop(occurrence_after_stop)
 
         valid_prefixes = ['fxv', 'fxi', 'pxv', 'pxi', 'wv', 'wi', 'pwv', 'pwi', 'cmd']
         cmd_lower = command.strip().lower()
@@ -635,10 +660,10 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         :param occurrence_after_stop: Output behavior after stopping.
         :type occurrence_after_stop: int or :class:`.OccurrenceAfterStop`
         :param int channel: Channel number (1 or 2, ignored by instrument).
-        :param int comparison: Comparison ON/OFF (1=OFF, 2=ON with polarity,
-            3=ON with polarity).
-        :param int comparison_function: Comparison value type
-            (1=voltage, 2=current).
+        :param comparison: Comparison mode.
+        :type comparison: int or :class:`.ComparisonMode`
+        :param comparison_function: Comparison value type.
+        :type comparison_function: int or :class:`.ComparisonValueType`
         :param float upper_limit: Upper comparison limit.
         :param float lower_limit: Lower comparison limit.
 
@@ -648,11 +673,11 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
             will return an error.
 
         """
-        search_mode = strict_discrete_set(search_mode, [1, 2, 3, 4, 5])
-        occurrence_after_stop = strict_discrete_set(occurrence_after_stop, [1, 2, 3])
+        search_mode = SearchMode(search_mode)
+        occurrence_after_stop = OccurrenceAfterStop(occurrence_after_stop)
         channel = strict_discrete_set(channel, [1, 2])
-        comparison = strict_discrete_set(comparison, [1, 2, 3])
-        comparison_function = strict_discrete_set(comparison_function, [1, 2])
+        comparison = ComparisonMode(comparison)
+        comparison_function = ComparisonValueType(comparison_function)
 
         if lower_limit > upper_limit:
             raise ValueError(
@@ -666,11 +691,11 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
     def append_sequence_command(self, command):
         valid_commands = [
-            'jm', 'gdly', 'fl', 'dv', 'di', 'fxv', 'fxi', 'wv', 'wi', 'mdwv', 'mdwi', 'pv', 'pi',
-            'pxv', 'pxi', 'pwv', 'pwi', 'mpwv', 'mpwi', 'rv', 'ri', 'mst', 'wt', 'cm', 'cmd', 'nug',
-            'ofm', 'fmt', 'mbc', 'fmt', 'wm', 'cn', 'cl', 'opm', 'osl', 'ltl', 'tjm', 'xe', '*trg',
-            'tot', 'sct', 'osig', 'dios', 'dioe', 'ian', 'tlnk', 'wait', 'sav', 'rcl', '*sre',
-            '*ese', '*cls', 'coe', 'doe', 'ext', 'pcel', 'pgst', 'mar', 'nent']
+            'jm', 'gdly', 'fl', 'dv', 'di', 'fxv', 'fxi', 'wv', 'wi', 'mdwv', 'mdwi',
+            'pv', 'pi', 'pxv', 'pxi', 'pwv', 'pwi', 'mpwv', 'mpwi', 'rv', 'ri', 'mst',
+            'wt', 'cm', 'cmd', 'nug', 'ofm', 'fmt', 'mbc', 'wm', 'cn', 'cl', 'opm',
+            'osl', 'ltl', 'tjm', 'xe', '*trg', 'tot', 'sct', 'osig', 'dios', 'dioe',
+            'ian', 'tlnk', 'wait', 'sav', 'rcl', '*sre', '*ese', '*cls', 'coe', 'doe']
 
         if not self.store_to_sequence:
             raise ValueError("init_sequence() should be called first")
@@ -775,7 +800,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         :param action: Specifies sequence interruption setup
         :type action: :class:`SequenceInterruptionType`
         """
-        action = strict_discrete_set(action, [1, 2, 3])
+        action = SequenceInterruptionType(action)
         self.write(f'sqsp {action}')
 
     sequence_program_number = Instrument.measurement(
@@ -813,6 +838,12 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
         program_number = truncated_range(program_number, [1, 20])
         if command.endswith(';'):
             command = command[:-1]
+        for subcmd in command.split(';'):
+            prefix = subcmd.strip().split()[0].lower() if subcmd.strip() else ''
+            if prefix and prefix not in HIGHSPEED_SEQUENCE_COMMANDS:
+                raise ValueError(
+                    f"Command '{subcmd.strip()}' is not allowed in "
+                    f"high-speed sequence programs.")
         self.write(f'pgst {program_number};{command};end')
 
     def conditional_jump(self, channel, condition, destination):
@@ -833,8 +864,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
         """
         channel = strict_discrete_set(channel, [1, 2, 3])
-        condition = strict_discrete_set(
-            condition, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        condition = JumpCondition(condition)
         destination = truncated_range(destination, [1, 20])
         self.write(f'ext {channel},{condition},{destination}')
 
@@ -858,7 +888,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
             Program numbers without stored programs are skipped.
 
         """
-        trigger_mode = strict_discrete_set(trigger_mode, [1, 2, 3])
+        trigger_mode = HighSpeedTriggerMode(trigger_mode)
         self.write(f'pgon 0,{trigger_mode}')
 
     def disable_highspeed_sequence(self):
@@ -881,7 +911,7 @@ class AdvantestR624X(SCPIUnknownMixin, Instrument):
 
         """
         program_number = truncated_range(program_number, [1, 20])
-        clear_mode = strict_discrete_set(clear_mode, [1, 2])
+        clear_mode = ProgramClearMode(clear_mode)
         self.write(f'pcel {program_number},{clear_mode}')
 
     def trigger_output_signal(self, trigger_output, alarm_output, scanner_output):
