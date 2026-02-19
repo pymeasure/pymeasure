@@ -1,11 +1,10 @@
-
 from typing import Union
 from pint import Quantity as Q_
 
 from pymeasure.instruments import Instrument, Channel
 
 from pymeasure.instruments.smaract.utils import check_quantity_unit
-from pymeasure.instruments.validators import truncated_discrete_set
+from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
 
 
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
@@ -23,27 +22,25 @@ class SCUChannel(Channel):
         get_process = lambda s: Q_(s[6:], 'Hz'),
     )
     safe_direction = Instrument.control(
-        ":SSD{ch}D%d",
         ":GSD{ch}",
+        ":SSD{ch}D%d",
         """Control the safe direction for a given channel for move_to_ref
-           :param  must be either 0 (down) or 1 (up).""",
-        validator=truncated_discrete_set,
-        values = {1:'up',0:'down'},
-        map_values= True
-
+           :param  must be either 0 (down) or 1 (up). In minor letters""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values = {'up':1,'down':0},
+        get_process=lambda x: int(x[-1]),
     )
-
 
     def calibrate_sensor(self):
         """Calibrate the sensor. Has to done before the use of move to reference.
            The user must ensure himself that the positioner is not close to a mechanical limit"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
-        print(status)
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
-        if self.check_sensor_present:
+        if self.check_sensor_present():
             self.write(f":SZ{self.id}")
         else:
             raise NotImplementedError
@@ -51,7 +48,7 @@ class SCUChannel(Channel):
     def set_positioner_type(self, t: int):
         """Set the positioner/sensor type.
 
-           CAUTION! The user has to use the 'SmarAct ASCII Programming Interface' for thorough
+           CAUTION! The user has to use the 'SmarAct ASCII Programming Interface' for a thorough knowledge of the differnet modes
            It will ensure the user, that the desired type exists, and has the possibility to be implemented
            to the program.
 
@@ -98,9 +95,8 @@ class SCUChannel(Channel):
             39: "Iris – SI…S1L4E",
             40: "Iris – SI…S1L1E",
         }
-        #if self.check_sensor_present:
         if t in positioner_types:
-            self.write(f":SST{self.id}T{t})")
+            self.write(f":SST{self.id}T{t}")
         else:
             raise ValueError
         #else:
@@ -112,24 +108,31 @@ class SCUChannel(Channel):
         return self.read()
 
     def move_steps_up(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
-        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit"""
+        """Moves up
 
-        if freq is None:
-            freq = self.frequency
-        if ampl is None:
-            ampl = self.amplitude
-        self.write(f":U{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
-
-    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
-        """Moves up, Freq[1;18500] in Hz and Amplitude[150;1000] in dV and Steps[1;30000] no unit
-
+        :param steps: Number of steps, an int in range [1;30000]
+        :param freq: Frequency, a quantity given in Hz in range [1;18500]
+        :param ampl: Amplitude, a quantity given in dV in range [150;1000]
 
         """
         if freq is None:
             freq = self._freq
         if ampl is None:
             ampl = self._amplitude
+        self.write(f":U{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
 
+    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+        """Moves down
+
+        :param steps: Number of steps, an int in range [1;30000]
+        :param freq: Frequency, a quantity given in Hz in range [1;18500]
+        :param ampl: Amplitude, a quantity given in dV in range [150;1000]
+
+        """
+        if freq is None:
+            freq = self._freq
+        if ampl is None:
+            ampl = self._amplitude
         self.write(f":D{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
 
     def check_sensor_present(self) -> bool:
@@ -225,10 +228,9 @@ class SmarActSCU_ASCII(Instrument):
     SCU controllers communicate via USB or RS232. Program uses a simple ASCII command
     protocol, which is implemented by this driver.
 
-    The control system is available as an integrated handheld controller or as
-    an OEM single-board controller. This base class provides the common
-    communication layer and shared functionality, while axis-specific behavior
-    (e.g. linear or angular motion) is implemented in subclasses.
+    This base class provides the common communication layer and shared
+    functionality, while axis-specific behavior (e.g. linear or angular motion)
+    is implemented in subclasses.
 
     :param str adapter: Name of the COM-port.
     :param str address: ---.
@@ -251,21 +253,28 @@ class SmarActSCU_ASCII(Instrument):
         self._steps: int = 250
         #self._safe_direction: str = safe_direction
 
-    id = Instrument.measurement(
+    identif = Instrument.measurement(
         ":GID", """Get the identification number. """
+
+    )
+
+    model = Instrument.measurement(
         ":I", """Get the device identification information. """
     )
 
     ###CHECK AMPLITUDE###
 
     def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
-        """Check if amplitude is present and if it is inside the given boundary."""
+        """Check if amplitude is present and if it is inside the given boundary.
+
+        :param ampl : a quantity with amplitude units dV, if int then given in dV
+        """
         if ampl is None:
             ampl = self.amplitude
         else:
             ampl = check_quantity_unit(ampl, 'dV')
         if not (150 <= ampl.magnitude <= 1000):
-            raise ValueError("Amplitude out of range")
+            raise ValueError("Amplitude out of range [150;1000] dV'")
         return ampl
 
     @property
@@ -282,14 +291,14 @@ class SmarActSCU_ASCII(Instrument):
     def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
         """Check if frequency is present and if it is inside the given boundary.
 
-        :param freq: a qunatity with Frequency units in Hz, if int, then given in Hz
+        :param freq: a qunatity with frequency units in Hz, if int, then given in Hz
         """
         if freq is None:
             freq = self.frequency
         else:
             freq = check_quantity_unit(freq, 'Hz')
         if not (Q_(1, 'Hz') < freq < self.frequency_max):
-            raise ValueError('blablabla')
+            raise ValueError('Frequency ut of the range [1;18500] Herz')
         return freq
 
     @property
@@ -308,7 +317,7 @@ class SmarActSCU_ASCII(Instrument):
         else:
             self._steps = steps
         if not (1 <= steps <= 30000):
-            raise ValueError
+            raise ValueError('Steps out of the range [1;30000] steps (int) ')
         return steps
 
     def move_abs(self, position: Union[Q_, int]):
@@ -343,9 +352,9 @@ class SmarActSCULinear(SmarActSCU_ASCII):
 
 class SmarActSCUAngular(SmarActSCU_ASCII):
 
-    channel0 = Instrument.ChannelCreator(SCUChannelLinear, "0")
-    channel1 = Instrument.ChannelCreator(SCUChannelLinear, "1")
-    channel2 = Instrument.ChannelCreator(SCUChannelLinear, "2")
+    channel0 = Instrument.ChannelCreator(SCUChannelAngular, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannelAngular, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannelAngular, "2")
 
 if __name__ == "__main__":
     inst = SmarActSCULinear('ASRL3::INSTR')
