@@ -148,7 +148,7 @@ class KoradKABase(Instrument):
     write_delay: float  # minimum time between writes
     cached_idn: str
 
-    def __init__(self, adapter: Adapter, name: str, **kwargs):
+    def __init__(self, adapter: Adapter, name: str = "Korad KA base", **kwargs):
         super().__init__(
             adapter,
             name,
