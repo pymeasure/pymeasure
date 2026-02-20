@@ -69,7 +69,7 @@ class KoradKAChannel(Channel):
     
     voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
-        """Control the programmed (set) output voltage.""",
+        """Control the output voltage setpoint.""",
         validator=lambda v, vs: strict_range(v, vs),
         values=(0, 61.0),
         dynamic=True
@@ -82,7 +82,9 @@ class KoradKAChannel(Channel):
 
     over_voltage_protection: property = Instrument.control(
         "OVP{ch}?", "OVP{ch}:%g",
-        """Control the over-voltage protection.""",
+        """Control the over-voltage protection.
+        
+        Valid values are ``True`` to turn OVP on and ``False`` to turn OVP off. When OVP is on, the PSU will shut down the output if the output voltage exceeds the OVP setpoint.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -91,7 +93,7 @@ class KoradKAChannel(Channel):
     # KA3005P V2.0 adds "K" suffix
     current_setpoint: property = Instrument.control(
         "ISET{ch}?", "ISET{ch}:%g",
-        """Control the programmed (set) output current.""",
+        """Control the output current setpoint.""",
         validator=lambda v, vs: strict_range(v, vs),
         values=(0, 5.1),
         dynamic=True,
@@ -100,13 +102,17 @@ class KoradKAChannel(Channel):
 
     current: property = Instrument.measurement(
         "IOUT{ch}?",
-        """Measure the actual output current.
-        """
+        """Measure the actual output current."""
     )
 
     over_current_protection: property = Instrument.control(
         "OCP{ch}?", "OCP{ch}:%g",
-        """Control the over-current protection.""",
+        """Control the over-current protection.
+        
+        Valid values are ``True`` to turn OCP on and ``False`` to turn OCP off. When OCP is on, the PSU will shut down the output if the output current exceeds the OCP setpoint.
+        
+        Be aware: OCP may trigger when enabling the output due to (internal) output capacity inrush current.
+        """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -123,7 +129,7 @@ class KoradKAChannel(Channel):
             return state.ch2
 
 class KoradKABase(Instrument):
-    """Represents a generic Kora KAxxxxP power supply
+    """Represents a generic Korad KAxxxxP power supply
     and provides a high-level for interacting with the instrument
     """
 
@@ -153,8 +159,7 @@ class KoradKABase(Instrument):
 
     @property
     def id(self) -> str:
-        """Get the identity of the instrument
-        """
+        """Get the identity of the instrument"""
         if self.cached_idn:
             return self.cached_idn
         self.cached_idn = self.ask("*IDN?")
@@ -162,14 +167,12 @@ class KoradKABase(Instrument):
     
     @property
     def model(self) -> str:
-        """Get the model of the instrument
-        """
+        """Get the model of the instrument"""
         return self.id.split("V")[0].removeprefix("KORAD")
     
     @property
     def version(self) -> list[int]:
-        """Get the firmware version of the instrument
-        """
+        """Get the firmware version of the instrument"""
         version_str = self.id.split("V")[1]
         version = version_str.split(".")
         assert len(version) == 2
@@ -204,9 +207,7 @@ class KoradKABase(Instrument):
     # - saves values as preset
     store_preset: property = Instrument.setting(
         "SAV%d",
-        """
-        Set the current settings into preset slot.
-        """,
+        """Set the current settings into preset slot.""",
         validator=strict_discrete_set,
         values=(1,2,3,4,5)
     )
@@ -216,9 +217,7 @@ class KoradKABase(Instrument):
     # - reloads values from the slot and overwrites anything unsaved
     recall_preset: property = Instrument.setting(
         "RCL%d",
-        """
-        Set the current settings from preset slot.
-        """,
+        """Set the current settings from preset slot.""",
         validator=strict_discrete_set,
         values=(1,2,3,4,5)
     )
