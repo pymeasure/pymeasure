@@ -25,24 +25,31 @@
 from pymeasure.adapters.adapter import Adapter
 from pymeasure.instruments.korad.ka_base import KoradKABase, KoradKAChannel
 
+
 class KoradKA3005Channel(KoradKAChannel):
     def __init__(self, parent: "KoradKA3005P", channel: int):
         super().__init__(parent, channel)
         assert channel in [1, 2], "Channel must be either 1 or 2."
-    
+
     voltage_setpoint_values = (0, 31.0)
     current_setpoint_values = (0, 5.1)
 
+
 class KoradKA3005P(KoradKABase):
-    """Represents a Korad KA3005P power supply
-    and provides a high-level for interacting with the instrument
+    """Represents a Korad KA3005P power supply.
+
+    Voltage range: 0-31V
+    Current range: 0-5.1A
+
+    This model has various FW versions and some features may not work properly on all versions.
+    (e.g.: preset store/recall on V2.0)
     """
 
     last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
     write_delay: float  # minimum time between writes
     ch_1: KoradKA3005Channel
 
-    def __init__(self, adapter: Adapter, name: str ="KA3005P", **kwargs):
+    def __init__(self, adapter: Adapter, name: str = "KA3005P", **kwargs):
         super().__init__(
             adapter,
             name,

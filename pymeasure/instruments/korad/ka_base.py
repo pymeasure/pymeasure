@@ -23,24 +23,26 @@
 #
 
 import numpy as np
+import time
 from enum import IntEnum
+from dataclasses import dataclass
 from pymeasure.adapters.adapter import Adapter
 from pymeasure.adapters.serial import SerialAdapter
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-import time
 
-from dataclasses import dataclass
 
 class Mode(IntEnum):
     CC = 0
     CV = 1
+
 
 class Combination(IntEnum):
     INDEPENDENT = 0
     TRACKING_SERIES = 1
     # ?
     TRACKING_PARALLEL = 3
+
 
 @dataclass
 class State:
@@ -62,11 +64,12 @@ class State:
         return cls(ch_1, ch_2, combination, beep, lock, output)
         # 7 N/A
 
+
 class KoradKAChannel(Channel):
     def __init__(self, parent: "KoradKABase", id: int):
         super().__init__(parent, id)
         assert id in [1, 2], "Channel must be either 1 or 2."
-    
+
     voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
         """Control the output voltage setpoint.""",
@@ -82,9 +85,12 @@ class KoradKAChannel(Channel):
 
     over_voltage_protection: property = Instrument.control(
         "OVP{ch}?", "OVP{ch}:%g",
-        """Control the over-voltage protection.
-        
-        Valid values are ``True`` to turn OVP on and ``False`` to turn OVP off. When OVP is on, the PSU will shut down the output if the output voltage exceeds the OVP setpoint.""",
+        """
+        Control the over-voltage protection.
+
+        Valid values are ``True`` to turn OVP on and ``False`` to turn OVP off.
+        When OVP is on, the PSU will shut down the output
+        if the output voltage exceeds the OVP setpoint.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True
@@ -107,11 +113,15 @@ class KoradKAChannel(Channel):
 
     over_current_protection: property = Instrument.control(
         "OCP{ch}?", "OCP{ch}:%g",
-        """Control the over-current protection.
-        
-        Valid values are ``True`` to turn OCP on and ``False`` to turn OCP off. When OCP is on, the PSU will shut down the output if the output current exceeds the OCP setpoint.
-        
-        Be aware: OCP may trigger when enabling the output due to (internal) output capacity inrush current.
+        """
+        Control the over-current protection.
+
+        Valid values are ``True`` to turn OCP on and ``False`` to turn OCP off.
+        When OCP is on, the PSU will shut down the output
+        if the output current exceeds the OCP setpoint.
+
+        Be aware: OCP may trigger when enabling the output
+        due to (internal) output capacity inrush current.
         """,
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -128,6 +138,7 @@ class KoradKAChannel(Channel):
         else:
             return state.ch_2
 
+
 class KoradKABase(Instrument):
     """Represents a generic Korad KAxxxxP power supply
     and provides a high-level for interacting with the instrument
@@ -137,7 +148,7 @@ class KoradKABase(Instrument):
     write_delay: float  # minimum time between writes
     cached_idn: str
 
-    def __init__(self, adapter: Adapter, name: str ="KA3000P", **kwargs):
+    def __init__(self, adapter: Adapter, name: str, **kwargs):
         super().__init__(
             adapter,
             name,
@@ -145,14 +156,16 @@ class KoradKABase(Instrument):
             **kwargs
         )
         if not isinstance(self.adapter, SerialAdapter):
-            self.adapter.log.warning("adapter should be instance of SerialAdapter, assuming test environment")
+            self.adapter.log.warning(
+                "adapter should be instance of SerialAdapter,assuming test environment"
+            )
         else:
             self.adapter.connection.timeout = 0.1
             self.adapter.connection.baudrate = 115200
         self.last_write_timestamp = 0.0
         self.write_delay = 0.05
         self.cached_idn = ""
-    
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Properties
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,12 +177,12 @@ class KoradKABase(Instrument):
             return self.cached_idn
         self.cached_idn = self.ask("*IDN?")
         return self.cached_idn
-    
+
     @property
     def model(self) -> str:
         """Get the model of the instrument"""
         return self.id.split("V")[0].removeprefix("KORAD")
-    
+
     @property
     def version(self) -> list[int]:
         """Get the firmware version of the instrument"""
@@ -209,7 +222,7 @@ class KoradKABase(Instrument):
         "SAV%d",
         """Set the current settings into preset slot.""",
         validator=strict_discrete_set,
-        values=(1,2,3,4,5)
+        values=(1, 2, 3, 4, 5)
     )
 
     # on KA3005P V2.0
@@ -219,19 +232,8 @@ class KoradKABase(Instrument):
         "RCL%d",
         """Set the current settings from preset slot.""",
         validator=strict_discrete_set,
-        values=(1,2,3,4,5)
+        values=(1, 2, 3, 4, 5)
     )
-
-    # select_preset: property = Instrument.setting(
-    #     "RCL%d",
-    #     """
-    #     Select the setpoint preset to use and alter. Valid values are integers from 1 to 5, corresponding to the preset number to recall from.
-
-    #     PSU auto disables output on each preset select request.
-    #     """,
-    #     validator=strict_discrete_set,
-    #     values=(1,2,3,4,5)
-    # )
 
     @property
     def state(self) -> State:
@@ -243,14 +245,11 @@ class KoradKABase(Instrument):
         assert len(got) == 1, f"Expected a single byte response for state query, got {got}"
         return State.from_byte(got[0])
 
-
-
-    # at least KA3005P V2.0 does nto use tranditional delimited responses,
-    # but relies on timeouts. It was observed tahat PSU starts sending reply
-    # ~18 ms after the end of the command (it the command is query).
+    # at least KA3005P V2.0 does not use traditionally delimiters for requests/responses,
+    # but relies on timeouts. It was observed that PSU starts sending reply
+    # ~18 ms after the end of the command (if the command is query).
     # To make sure all commands are registered by the PSU,
-    # 50 ms pause between wries proved to be sufficient.
-
+    # 50 ms pause between writes proved to be sufficient.
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Methods
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,11 +259,7 @@ class KoradKABase(Instrument):
         to_sleep = self.write_delay - actual_write_delay
         if to_sleep > 0:
             time.sleep(to_sleep)
-        #     self.adapter.log.debug(f"Adding write delay of {to_sleep:.3f} s")
-        # else:
-            # self.adapter.log.debug(f"No write delay needed, only {actual_write_delay:.3f} s since last write")
 
-        # Wrapper functions for the Adapter object
     def write(self, command, **kwargs):
         """Overrides Instrument write method for including write_delay time after the parent call.
 
@@ -273,7 +268,7 @@ class KoradKABase(Instrument):
         self._wait_before_writing()
         super().write(command, **kwargs)
         self.last_write_timestamp = time.time()
-    
+
     def ask(self, command, query_delay=None):
         """Overrides Instrument ask method for including write_delay time after the parent call.
 
@@ -281,16 +276,20 @@ class KoradKABase(Instrument):
     :returns: response from the instrument
         """
         if not isinstance(self.adapter, SerialAdapter):
-            self.adapter.log.warning("ask method may not work correctly if adapter is not instance of SerialAdapter, assuming test environment")
+            self.adapter.log.warning(
+                "ask method may not work correctly if adapter"
+                " is not instance of SerialAdapter, assuming test environment"
+            )
             return super().ask(command, query_delay=query_delay)
-        
+
         self.write(command)
         if query_delay is not None:
             time.sleep(query_delay)
         # override timeout until first character arrives
         # after that, restore the timeout and read until that
         timeout_backup = self.adapter.connection.timeout
-        assert timeout_backup is not None, "Adapter connection timeout must be set to a non-None value."
+        assert timeout_backup is not None, \
+            "Adapter connection timeout must be set to a non-None value."
         self.adapter.connection.timeout = 0.1
         first = self.read_bytes(1, break_on_termchar=False)
         self.adapter.connection.timeout = timeout_backup
@@ -298,4 +297,3 @@ class KoradKABase(Instrument):
         return (first + self.read_bytes(-1, break_on_termchar=False)).decode(errors="ignore")
         # if inter_byte_timeout woudl work, it would be easy
         return self.read_bytes(-1, break_on_termchar=False).decode(errors="ignore")
-

@@ -26,6 +26,7 @@ from pymeasure.instruments.korad.ka_base import Mode
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.korad.ka30xxp import KoradKA3005P
 
+
 def test_voltage_setpoint():
     """Verify the voltage setpoint setter and getter."""
     with expected_protocol(
@@ -36,6 +37,7 @@ def test_voltage_setpoint():
         inst.ch_1.voltage_setpoint = 2.2
         assert inst.ch_1.voltage_setpoint == 2.2
 
+
 def test_voltage_measurement():
     """Verify the voltage measurement getter."""
     with expected_protocol(
@@ -43,6 +45,7 @@ def test_voltage_measurement():
         [("VOUT1?", "2.2")],
     ) as inst:
         assert inst.ch_1.voltage == 2.2
+
 
 def test_overvoltage_protection():
     """Verify the overvoltage protection setter and getter"""
@@ -56,6 +59,7 @@ def test_overvoltage_protection():
         assert inst.ch_1.over_voltage_protection is True
         assert inst.ch_1.over_voltage_protection is False
 
+
 def test_current_setpoint():
     """Verify the current setpoint setter and getter."""
     with expected_protocol(
@@ -66,6 +70,7 @@ def test_current_setpoint():
         inst.ch_1.current_setpoint = 1.5
         assert inst.ch_1.current_setpoint == 1.5
 
+
 def test_current_measurement():
     """Verify the current measurement getter."""
     with expected_protocol(
@@ -73,6 +78,7 @@ def test_current_measurement():
         [("IOUT1?", "1.5")],
     ) as inst:
         assert inst.ch_1.current == 1.5
+
 
 def test_overcurrent_protection():
     """Verify the overcurrent protection setter and getter."""
@@ -86,6 +92,7 @@ def test_overcurrent_protection():
         assert inst.ch_1.over_current_protection is True
         assert inst.ch_1.over_current_protection is False
 
+
 def test_version():
     """Verify the version getter."""
     with expected_protocol(
@@ -93,6 +100,7 @@ def test_version():
         [("*IDN?", "KORADKA3005PV2.0")],
     ) as inst:
         assert inst.version == [2, 0]
+
 
 def test_model():
     """Verify the model getter."""
@@ -102,6 +110,7 @@ def test_model():
     ) as inst:
         assert inst.model == "KA3005P"
 
+
 def test_id():
     """Verify the ID getter."""
     with expected_protocol(
@@ -110,6 +119,7 @@ def test_id():
     ) as inst:
         assert inst.id == "KORADKA3005PV2.0"
 
+
 def test_channel_mode():
     """Verify the channel mode getter."""
     with expected_protocol(
@@ -117,6 +127,7 @@ def test_channel_mode():
         [("STATUS?", 0x01)],
     ) as inst:
         assert inst.ch_1.mode == Mode.CV
+
 
 def test_output_control():
     """Verify the output control getter and setter."""
@@ -131,4 +142,4 @@ def test_output_control():
         assert inst.output_enabled is True
         assert inst.output_enabled is False
 
-#TODO: it would be nice to also validate write timing
+# TODO: it would be nice to also validate write timing
