@@ -205,7 +205,7 @@ class KoradKABase(Instrument):
     store_preset: property = Instrument.setting(
         "SAV%d",
         """
-        Save the current settings to a preset. Valid values are integers from 1 to 5, corresponding to the preset number to save to.
+        Set the current settings into preset slot.
         """,
         validator=strict_discrete_set,
         values=(1,2,3,4,5)
@@ -217,7 +217,7 @@ class KoradKABase(Instrument):
     recall_preset: property = Instrument.setting(
         "RCL%d",
         """
-        Recall the current settings from a preset. Valid values are integers from 1 to 5, corresponding to the preset number to recall from.
+        Set the current settings from preset slot.
         """,
         validator=strict_discrete_set,
         values=(1,2,3,4,5)
