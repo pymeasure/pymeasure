@@ -27,7 +27,7 @@ from enum import IntEnum
 from pymeasure.adapters.adapter import Adapter
 from pymeasure.adapters.serial import SerialAdapter
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 import time
 
 from dataclasses import dataclass
@@ -70,7 +70,7 @@ class KoradKAChannel(Channel):
     voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
         """Control the programmed (set) output voltage.""",
-        validator=lambda v, vs: truncated_range(v, vs),
+        validator=lambda v, vs: strict_range(v, vs),
         values=(0, 61.0),
         dynamic=True
     )
@@ -92,7 +92,7 @@ class KoradKAChannel(Channel):
     current_setpoint: property = Instrument.control(
         "ISET{ch}?", "ISET{ch}:%g",
         """Control the programmed (set) output current.""",
-        validator=lambda v, vs: truncated_range(v, vs),
+        validator=lambda v, vs: strict_range(v, vs),
         values=(0, 5.1),
         dynamic=True,
         preprocess_reply=lambda s: s.replace("K", "")
