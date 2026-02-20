@@ -22,17 +22,11 @@
 # THE SOFTWARE.
 #
 
-from enum import IntEnum
 from pymeasure.adapters.adapter import Adapter
-from pymeasure.adapters.serial import SerialAdapter
-from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.korad.ka_base import KoradKABase, KoradKAChannel
-from pymeasure.instruments.validators import strict_range, truncated_range, truncated_discrete_set, strict_discrete_range, strict_discrete_set
-import time
-
 
 class KoradKA3005Channel(KoradKAChannel):
-    def __init__(self, parent : "KoradKA3005P", channel : int):
+    def __init__(self, parent: "KoradKA3005P", channel: int):
         super().__init__(parent, channel)
         assert channel in [1, 2], "Channel must be either 1 or 2."
     
@@ -44,11 +38,11 @@ class KoradKA3005P(KoradKABase):
     and provides a high-level for interacting with the instrument
     """
 
-    last_write_timestamp : float # hold timestamp fo the last write for enforcing write_delay
-    write_delay : float # minimum time between writes
-    ch1 : KoradKA3005Channel
+    last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
+    write_delay: float  # minimum time between writes
+    ch1: KoradKA3005Channel
 
-    def __init__(self, adapter : Adapter, name : str ="KA3005P", **kwargs):
+    def __init__(self, adapter: Adapter, name: str ="KA3005P", **kwargs):
         super().__init__(
             adapter,
             name,

@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-import pytest
 from pymeasure.instruments.korad.ka_base import Mode
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.korad.ka30xxp import KoradKA3005P

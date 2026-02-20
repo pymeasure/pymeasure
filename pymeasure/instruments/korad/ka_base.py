@@ -27,10 +27,10 @@ from enum import IntEnum
 from pymeasure.adapters.adapter import Adapter
 from pymeasure.adapters.serial import SerialAdapter
 from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.validators import strict_range, truncated_range, truncated_discrete_set, strict_discrete_range, strict_discrete_set
+from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 import time
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 class Mode(IntEnum):
     CC = 0
@@ -44,15 +44,15 @@ class Combination(IntEnum):
 
 @dataclass
 class State:
-    ch1 : Mode
-    ch2 : Mode
-    combination : Combination
-    beep : bool
-    lock : bool
-    output : bool
+    ch1: Mode
+    ch2: Mode
+    combination: Combination
+    beep: bool
+    lock: bool
+    output: bool
 
     @classmethod
-    def from_byte(cls, byte : int):
+    def from_byte(cls, byte: int):
         ch1 = Mode((byte >> 0) & 1)
         ch2 = Mode((byte >> 1) & 1)
         combination = Combination((byte >> 2) & 3)
@@ -63,11 +63,11 @@ class State:
         # 7 N/A
 
 class KoradKAChannel(Channel):
-    def __init__(self, parent : "KoradKABase", id : int):
+    def __init__(self, parent: "KoradKABase", id: int):
         super().__init__(parent, id)
         assert id in [1, 2], "Channel must be either 1 or 2."
     
-    voltage_setpoint : property = Instrument.control(
+    voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
         """Control the programmed (set) output voltage.""",
         validator=lambda v, vs: truncated_range(v, vs),
@@ -75,12 +75,12 @@ class KoradKAChannel(Channel):
         dynamic=True
     )
 
-    voltage : property = Instrument.measurement(
+    voltage: property = Instrument.measurement(
         "VOUT{ch}?",
         """Measure the actual output voltage."""
     )
 
-    over_voltage_protection : property = Instrument.control(
+    over_voltage_protection: property = Instrument.control(
         "OVP{ch}?", "OVP{ch}:%g",
         """Control the over-voltage protection.""",
         validator=strict_discrete_set,
@@ -89,7 +89,7 @@ class KoradKAChannel(Channel):
     )
 
     # KA3005P V2.0 adds "K" suffix
-    current_setpoint : property = Instrument.control(
+    current_setpoint: property = Instrument.control(
         "ISET{ch}?", "ISET{ch}:%g",
         """Control the programmed (set) output current.""",
         validator=lambda v, vs: truncated_range(v, vs),
@@ -98,13 +98,13 @@ class KoradKAChannel(Channel):
         preprocess_reply=lambda s: s.replace("K", "")
     )
 
-    current : property = Instrument.measurement(
+    current: property = Instrument.measurement(
         "IOUT{ch}?",
         """Measure the actual output current.
         """
     )
 
-    over_current_protection : property = Instrument.control(
+    over_current_protection: property = Instrument.control(
         "OCP{ch}?", "OCP{ch}:%g",
         """Control the over-current protection.""",
         validator=strict_discrete_set,
@@ -127,11 +127,11 @@ class KoradKABase(Instrument):
     and provides a high-level for interacting with the instrument
     """
 
-    last_write_timestamp : float # hold timestamp fo the last write for enforcing write_delay
-    write_delay : float # minimum time between writes
-    cached_idn : str
+    last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
+    write_delay: float  # minimum time between writes
+    cached_idn: str
 
-    def __init__(self, adapter : Adapter, name : str ="KA3000P", **kwargs):
+    def __init__(self, adapter: Adapter, name: str ="KA3000P", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -175,7 +175,7 @@ class KoradKABase(Instrument):
         assert len(version) == 2
         return [int(v) for v in version]
 
-    output_enabled : property = Instrument.control(
+    output_enabled: property = Instrument.control(
         "OUT?", "OUT%d",
         """Control the output of the power supply.
 
@@ -188,7 +188,7 @@ class KoradKABase(Instrument):
     )
 
     # does nothing on KA3005P V2.0
-    beep : property = Instrument.control(
+    beep: property = Instrument.control(
         "BEEP?", "BEEP%d",
         """Control the beep of the power supply.
 
@@ -202,7 +202,7 @@ class KoradKABase(Instrument):
     # on KA3005P V2.0
     # - works only when the preset is currently selected (caused by recall_preset)
     # - saves values as preset
-    store_preset : property = Instrument.setting(
+    store_preset: property = Instrument.setting(
         "SAV%d",
         """
         Save the current settings to a preset. Valid values are integers from 1 to 5, corresponding to the preset number to save to.
@@ -214,7 +214,7 @@ class KoradKABase(Instrument):
     # on KA3005P V2.0
     # - selects the preset slot
     # - reloads values from the slot and overwrites anything unsaved
-    recall_preset : property = Instrument.setting(
+    recall_preset: property = Instrument.setting(
         "RCL%d",
         """
         Recall the current settings from a preset. Valid values are integers from 1 to 5, corresponding to the preset number to recall from.
@@ -223,7 +223,7 @@ class KoradKABase(Instrument):
         values=(1,2,3,4,5)
     )
 
-    # select_preset : property = Instrument.setting(
+    # select_preset: property = Instrument.setting(
     #     "RCL%d",
     #     """
     #     Select the setpoint preset to use and alter. Valid values are integers from 1 to 5, corresponding to the preset number to recall from.
@@ -238,7 +238,7 @@ class KoradKABase(Instrument):
     def state(self) -> State:
         """Get the current state of the system
 
-        :return State.
+    :return State.
         """
         got = self.binary_values("STATUS?", dtype=np.uint8)
         assert len(got) == 1, f"Expected a single byte response for state query, got {got}"
@@ -269,7 +269,7 @@ class KoradKABase(Instrument):
     def write(self, command, **kwargs):
         """Overrides Instrument write method for including write_delay time after the parent call.
 
-        :param command: command string to be sent to the instrument
+    :param command: command string to be sent to the instrument
         """
         self._wait_before_writing()
         super().write(command, **kwargs)
@@ -278,8 +278,8 @@ class KoradKABase(Instrument):
     def ask(self, command, query_delay=None):
         """Overrides Instrument ask method for including write_delay time after the parent call.
 
-        :param command: command string to be sent to the instrument
-        :returns: response from the instrument
+    :param command: command string to be sent to the instrument
+    :returns: response from the instrument
         """
         if not isinstance(self.adapter, SerialAdapter):
             self.adapter.log.warning("ask method may not work correctly if adapter is not instance of SerialAdapter, assuming test environment")
