@@ -44,8 +44,8 @@ class Combination(IntEnum):
 
 @dataclass
 class State:
-    ch1: Mode
-    ch2: Mode
+    ch_1: Mode
+    ch_2: Mode
     combination: Combination
     beep: bool
     lock: bool
@@ -53,13 +53,13 @@ class State:
 
     @classmethod
     def from_byte(cls, byte: int):
-        ch1 = Mode((byte >> 0) & 1)
-        ch2 = Mode((byte >> 1) & 1)
+        ch_1 = Mode((byte >> 0) & 1)
+        ch_2 = Mode((byte >> 1) & 1)
         combination = Combination((byte >> 2) & 3)
         beep = bool((byte >> 4) & 1)
         lock = bool((byte >> 5) & 1)
         output = bool((byte >> 6) & 1)
-        return cls(ch1, ch2, combination, beep, lock, output)
+        return cls(ch_1, ch_2, combination, beep, lock, output)
         # 7 N/A
 
 class KoradKAChannel(Channel):
@@ -124,9 +124,9 @@ class KoradKAChannel(Channel):
         """
         state = self.parent.state
         if self.id == 1:
-            return state.ch1
+            return state.ch_1
         else:
-            return state.ch2
+            return state.ch_2
 
 class KoradKABase(Instrument):
     """Represents a generic Korad KAxxxxP power supply

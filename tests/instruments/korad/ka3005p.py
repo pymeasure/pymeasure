@@ -33,8 +33,8 @@ def test_voltage_setpoint():
         [("VSET1:2.2", None),
          ("VSET1?", "2.2")],
     ) as inst:
-        inst.ch1.voltage_setpoint = 2.2
-        assert inst.ch1.voltage_setpoint == 2.2
+        inst.ch_1.voltage_setpoint = 2.2
+        assert inst.ch_1.voltage_setpoint == 2.2
 
 def test_voltage_measurement():
     """Verify the voltage measurement getter."""
@@ -42,7 +42,7 @@ def test_voltage_measurement():
         KoradKA3005P,
         [("VOUT1?", "2.2")],
     ) as inst:
-        assert inst.ch1.voltage == 2.2
+        assert inst.ch_1.voltage == 2.2
 
 def test_overvoltage_protection():
     """Verify the overvoltage protection setter and getter"""
@@ -52,9 +52,9 @@ def test_overvoltage_protection():
          ("OVP1?", "1"),
          ("OVP1?", "0")]
     ) as inst:
-        inst.ch1.over_voltage_protection = True
-        assert inst.ch1.over_voltage_protection is True
-        assert inst.ch1.over_voltage_protection is False
+        inst.ch_1.over_voltage_protection = True
+        assert inst.ch_1.over_voltage_protection is True
+        assert inst.ch_1.over_voltage_protection is False
 
 def test_current_setpoint():
     """Verify the current setpoint setter and getter."""
@@ -63,8 +63,8 @@ def test_current_setpoint():
         [("ISET1:1.5", None),
          ("ISET1?", "1.5")],
     ) as inst:
-        inst.ch1.current_setpoint = 1.5
-        assert inst.ch1.current_setpoint == 1.5
+        inst.ch_1.current_setpoint = 1.5
+        assert inst.ch_1.current_setpoint == 1.5
 
 def test_current_measurement():
     """Verify the current measurement getter."""
@@ -72,7 +72,7 @@ def test_current_measurement():
         KoradKA3005P,
         [("IOUT1?", "1.5")],
     ) as inst:
-        assert inst.ch1.current == 1.5
+        assert inst.ch_1.current == 1.5
 
 def test_overcurrent_protection():
     """Verify the overcurrent protection setter and getter."""
@@ -82,9 +82,9 @@ def test_overcurrent_protection():
          ("OCP1?", "1"),
          ("OCP1?", "0")]
     ) as inst:
-        inst.ch1.over_current_protection = True
-        assert inst.ch1.over_current_protection is True
-        assert inst.ch1.over_current_protection is False
+        inst.ch_1.over_current_protection = True
+        assert inst.ch_1.over_current_protection is True
+        assert inst.ch_1.over_current_protection is False
 
 def test_version():
     """Verify the version getter."""
@@ -116,7 +116,7 @@ def test_channel_mode():
         KoradKA3005P,
         [("STATUS?", 0x01)],
     ) as inst:
-        assert inst.ch1.mode == Mode.CV
+        assert inst.ch_1.mode == Mode.CV
 
 def test_output_control():
     """Verify the output control getter and setter."""

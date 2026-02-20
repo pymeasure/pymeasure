@@ -40,7 +40,7 @@ class KoradKA3005P(KoradKABase):
 
     last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
     write_delay: float  # minimum time between writes
-    ch1: KoradKA3005Channel
+    ch_1: KoradKA3005Channel
 
     def __init__(self, adapter: Adapter, name: str ="KA3005P", **kwargs):
         super().__init__(
@@ -48,5 +48,5 @@ class KoradKA3005P(KoradKABase):
             name,
             **kwargs
         )
-        self.ch1 = KoradKA3005Channel(self, 1)
+        self.ch_1 = KoradKA3005Channel(self, 1)
         # assert "KORADKA3005P" in self.id
