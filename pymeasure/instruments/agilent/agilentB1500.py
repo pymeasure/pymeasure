@@ -1332,6 +1332,18 @@ class SMU:
         self.write(cmd)
         self.check_errors()
 
+    def set_cv_parameters(self, mode, start, stop, steps, comp=None):
+        """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
+
+        :param SweepMode mode: Sweep mode
+        :param float start: Sweep start voltage in V
+        :param float stop: Sweep stop voltage in V
+        :param int steps: Number of steps for staircase sweep
+        :param float comp: Compliance current in A. The previous value is used if not set.
+        """
+        cmd = _set_cv_parameters_base(self.channel, mode, start, stop, steps, comp)
+        self.write(cmd)
+
 
 ###############################################################################
 # Additional Classes / Constants
@@ -1827,34 +1839,15 @@ class CMU(Channel):
             f"{step_source_trigger_delay_time}"
         )
 
-    def set_cv_parameters(self, mode, start, stop, steps, comp=None):
+    def set_cv_parameters(self, mode, start, stop, steps):
         """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
 
         :param SweepMode mode: Sweep mode
         :param float start: Sweep start voltage in V
         :param float stop: Sweep stop voltage in V
         :param int steps: Number of steps for staircase sweep
-        :param float comp: Compliance current in A. The previous value is used if not set.
-            Available only for SMU.
         """
-        mode = SweepMode.get(mode)
-        if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
-            if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
-                raise ValueError(f"For {mode=} start and stop values must have the same sign.")
-
-        start = strict_range(start, [-100, 100])
-        stop = strict_range(stop, [-100, 100])
-        steps = strict_range(steps, range(1, 1001))
-
-        cmd = f"WDCV {self.id}, {mode.value}, {start}, {stop}, {steps}"
-        if comp is not None:
-            if isinstance(self, CMU):  # TODO: extract into common base
-                raise ValueError(
-                    "Current compliance cannot be set for CMU. Available only for SMU."
-                )
-            else:
-                cmd += f", {comp}"
-
+        cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps)
         self.write(cmd)
 
     def force_dc_bias(self, voltage):
@@ -1890,6 +1883,23 @@ class CMU(Channel):
                 0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
             )
         self.write(f"SSP {self.id}, {path.value}")
+
+def _set_cv_parameters_base(id, mode, start, stop, steps, comp=None):
+    mode = SweepMode.get(mode)
+    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
+        if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
+            raise ValueError(f"For {mode=} start and stop values must have the same sign.")
+
+    start = strict_range(start, [-100, 100])
+    stop = strict_range(stop, [-100, 100])
+    steps = strict_range(steps, range(1, 1001))
+
+    cmd = f"WDCV {id}, {mode.value}, {start}, {stop}, {steps}"
+
+    if comp is not None:
+        cmd += f", {comp}"
+
+    return cmd
 
 
 class CustomIntEnum(IntEnum):
