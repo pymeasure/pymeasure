@@ -24,8 +24,13 @@
 
 from .hp33120A import HP33120A
 from .hp34401A import HP34401A
+<<<<<<< HEAD
 from .hp663X2A import HP66312A
 from .hp663X2A import HP66332A
+||||||| c68c7468
+=======
+from .hp66312A import HP66312A
+>>>>>>> origin/master
 from .hp3478A import HP3478A
 from .hp3437A import HP3437A
 from .hp8116a import HP8116A
