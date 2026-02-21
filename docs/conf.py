@@ -273,7 +273,7 @@ autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 # -- Options for sphinx_autodoc_typehints ---------------------------------
 
 typehints_use_rtype = False
-typehints_defaults = "comma"
+typehints_defaults = "braces-after"
 
 
 def setup(app):
