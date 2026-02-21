@@ -1708,10 +1708,10 @@ class SPGUChannel(Channel):
         :param float rise_time: Pulse rise time in seconds, defaults to 2e-8
         :param float fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
-        source = SPGUSignalSource.get(source).value
+        source = SPGUSignalSource.get(source)
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
-        command = f"SPT {self.id}, {source}, {delay}, {width}, {rise_time}"
+        command = f"SPT {self.id}, {source.value}, {delay}, {width}, {rise_time}"
         if fall_time is not None:
             command += f", {fall_time}"
         self.write(command)
@@ -1742,11 +1742,9 @@ class SPGUChannel(Channel):
 
 
 class CMU(Channel):
-    """Provide specific methods for the CMUs of the Agilent B1500 mainframe.
+    """Provide specific methods for the CMU of the Agilent B1500 mainframe.
 
     :param AgilentB1500 parent: Instance of the B1500 mainframe class
-    :param str type: Type of the CMU
-    :param int index: Index of the CMU
     :param int slot: Slot number of the CMU
     """
 
@@ -1835,10 +1833,11 @@ class CMU(Channel):
         :param SweepMode mode: Sweep mode
         :param float start: Sweep start voltage in V
         :param float stop: Sweep stop voltage in V
-        :param int steps: Number of sweep steps
-        :param float comp: Compliance current in A, defaults to not set
+        :param int steps: Number of steps for staircase sweep
+        :param float comp: Compliance current in A. The previous value is used if not set.
+            Available only for SMU.
         """
-        mode = SweepMode.get(mode).value
+        mode = SweepMode.get(mode)
         if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
             if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
                 raise ValueError(f"For {mode=} start and stop values must have the same sign.")
@@ -1847,7 +1846,7 @@ class CMU(Channel):
         stop = strict_range(stop, [-100, 100])
         steps = strict_range(steps, range(1, 1001))
 
-        cmd = f"WDCV {self.id}, {mode}, {start}, {stop}, {steps}"
+        cmd = f"WDCV {self.id}, {mode.value}, {start}, {stop}, {steps}"
         if comp is not None:
             if isinstance(self, CMU):  # TODO: extract into common base
                 raise ValueError(
@@ -1859,7 +1858,7 @@ class CMU(Channel):
         self.write(cmd)
 
     def force_dc_bias(self, voltage):
-        """Apply DC voltage from CMU immediately.
+        """Apply DC voltage from CMU immediately. (``DCV``)
 
         :param float voltage: DC bias voltage in V
         """
@@ -1873,24 +1872,24 @@ class CMU(Channel):
 
         :param SCUUPath path: Path for the SCUU measurement
         """
-        path = SCUUPath.get(path).value
+
+        def log_settings_change(voltage, range, compliance, series_resistance):
+            log.info(
+                "SMU output settings changed:\n\t"
+                f"output voltage = {voltage} V\n\t"
+                f"output range = {range} V\n\t"
+                f"compliance = {compliance}\n\t"
+                f"series resistance = {series_resistance}"
+            )
+
+        path = SCUUPath.get(path)
         if path == SCUUPath.CMU:
-            log.info(
-                "SMU output settings changed:\n\t"
-                "output voltage = 0 V\n\t"
-                "output range = 100 V\n\t"
-                "compliance = 20 mA\n\t"
-                "series_resistance = OFF"
-            )
+            log_settings_change(0, 100, "20 mA", "OFF")
         else:
-            log.info(
-                "SMU output settings changed:\n\t"
-                "output voltage = 0 V\n\t"
-                "output range = 20 V\n\t"
-                "compliance = 100 uA\n\t"
-                "series_resistance = Condition before the connection is changed from SMU to MFCMU"
+            log_settings_change(
+                0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
             )
-        self.write(f"SSP {self.id}, {path}")
+        self.write(f"SSP {self.id}, {path.value}")
 
 
 class CustomIntEnum(IntEnum):
