@@ -609,21 +609,18 @@ class AgilentB1500(SCPIMixin, Instrument):
     def meas_mode(self, mode, *args):
         """Set measurement mode of channels. (``MM``)
 
-        Measurements will be taken in the same order as the SMU references are passed.
+        Measurements will be taken in the same order as the SMU or CMU references are passed.
 
         :param MeasMode mode: Measurement mode
-
-            * Spot
-            * Staircase Sweep
-            * Sampling
-
-        :param SMU args: SMU references
+        :param SMU args: SMU or CMU references
         """
         mode = MeasMode.get(mode)
         cmd = f"MM {mode.value}"
         for smu in args:
             if isinstance(smu, SMU):
                 cmd += f", {smu.channel}"
+            elif isinstance(smu, CMU):
+                cmd += f", {smu.id}"
         self.write(cmd)
         self.check_errors()
 
@@ -1971,6 +1968,13 @@ class MeasMode(CustomIntEnum):
     SPOT = 1  #:
     STAIRCASE_SWEEP = 2  #:
     SAMPLING = 10  #:
+    SPOT_C = 17  #: Spot capacitance measurement (MFCMU)
+    CV_SWEEP = 18  #: CV (DC bias) sweep measurement (SMU/MFCMU)
+    PULSED_SPOT_C = 19  #: Pulsed spot capacitance measurement (MFCMU)
+    PULSED_CV_SWEEP = 20  #: Pulsed CV sweep measurement (MFCMU)
+    C_F_SWEEP = 22  #: Capacitance frequency sweep (MFCMU)
+    CV_AC_SWEEP = 23  #: CV (AC bias) sweep measurement (MFCMU)
+    C_T_SAMPLING = 26  #: Capacitance sampling measurement (MFCMU)
 
 
 class MeasOpMode(CustomIntEnum):
