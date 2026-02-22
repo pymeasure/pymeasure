@@ -2,6 +2,7 @@ import pytest
 from pint import Quantity as Q_
 import time
 import pyvisa
+from six import integer_types
 
 # Importing driver classes
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
@@ -28,24 +29,86 @@ def smaractascii(serial_port="ASRL3::INSTR"):
 
 def test_connection_and_id(smaractascii):
     """Verify we can talk to the controller."""
-    idn = smaractascii.id
+    idn = smaractascii.idnumber
     print(f"\nConnected to: {idn}")
-    assert idn is not None
+    assert idn is integer_types
 
 @pytest.mark.parametrize("channel,issensor", zip(CHANNELS, SENSOR))
 def test_sensor(smaractascii, channel, issensor):
     """Simple test to verify if it has a sensor."""
     assert smaractascii.channels[channel].check_sensor_present() is issensor
 
+@pytest.mark.parametrize(" test_value, expected_outcome,channel",[
+    (9600,9600,CHANNELS),
+    ( 1500,pyvisa.VisaIOError,CHANNELS),
+] )
+def test_baudrate(smaractascii, test_value, expected_outcome, channel):
+    if expected_outcome == pyvisa.VisaIOError:
+        with pytest.raises(pyvisa.VisaIOError):
+            smaractascii.channels[channel].baudrate(test_value)
+    else smaractascii.channels[channel].test_value
+            assert smaractascii.channels[channel].frequency == expected_outcome
 
-def test_frequency_control(smaractascii):
-    """Test setting and reading back a property."""
-    target_freq = Q_(500, 'Hz')
-    smaractascii.channels.frequency_max = target_freq
-    assert smaractascii.channel0.frequency_max == target_freq
 
 
-def test_zero_and_move_absolute_sequence(smaractascii):
+
+@pytest.mark.parametrize("property_name, test_value, expected_outcome,channel", [
+    # --- FREQUENCY TESTS (Limits: > 1 Hz and < frequency_max)
+    ("frequency", Q_(500, 'Hz'), Q_(500, 'Hz'),CHANNELS),  # Valid
+    ("frequency", Q_(0.5, 'Hz'), ValueError,CHANNELS),  # Invalid: Too low
+    ("frequency", Q_(20000, 'Hz'), ValueError,CHANNELS),  # Invalid: Too high
+
+    # --- AMPLITUDE TESTS (Limits: 150 to 1000 dV)
+    ("amplitude", Q_(500, 'dV'), Q_(500, 'dV'),CHANNELS),  # Valid
+    ("amplitude", Q_(100, 'dV'), ValueError,CHANNELS),  # Invalid: Too low
+    ("amplitude", Q_(1500, 'dV'), ValueError,CHANNELS),  # Invalid: Too high
+])
+def test_instrument_properties(smaractascii, property_name, test_value, expected_outcome,channel):
+    """
+    Parametrized test for the Instrument properties.
+
+    """
+    # We expect a ValueError (Negative Testing)
+    if expected_outcome == ValueError:
+        with pytest.raises(ValueError):
+            if property_name == "frequency":
+                smaractascii.channels[channel].frequency = test_value
+            elif property_name == "amplitude":
+                smaractascii.channels[channel].amplitude = test_value
+
+    # We expect it to succeed (values in boundries)
+    else:
+        if property_name == "frequency":
+            smaractascii.channels[channel].frequency = test_value
+            assert smaractascii.channels[channel].frequency == expected_outcome
+
+        elif property_name == "amplitude":
+            smaractascii.channels[channel].amplitude = test_value
+            assert smaractascii.channels[channel].amplitude == expected_outcome
+
+
+@pytest.mark.parametrize("test_steps, expected_outcome", [
+    (1000, 1000),  # Valid: Normal steps
+    (0, ValueError),  # Invalid: Too low
+    (40000, ValueError),  # Invalid: Too high
+])
+def test_check_steps_method(smaract, test_steps, expected_outcome):
+    """
+    Parametrized test specifically for the check_steps method.
+    """
+
+    #  We expect an error
+    if expected_outcome == ValueError:
+        with pytest.raises(ValueError):
+            smaract.check_steps(test_steps)
+
+    #  We expect a valid return value
+    else:
+        result = smaract.check_steps(test_steps)
+        assert result == expected_outcome
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_ref_and_move_absolute_sequence(smaractascii,channel):
     """
     Integration test validating the absolute movement sequence:
     1. Go to ref.
@@ -54,9 +117,7 @@ def test_zero_and_move_absolute_sequence(smaractascii):
     4. Verify the final position is 500 um.
     """
     smaractascii.channel0.move_to_ref()
-
     time.sleep(0.2)
-
     initial_pos = smaractascii.channel0.get_position()
     assert initial_pos == pytest.approx(0.0, abs=0.1), \
         f"Expected 0 um after zeroing, got {initial_pos}"
@@ -67,8 +128,8 @@ def test_zero_and_move_absolute_sequence(smaractascii):
     final_pos = smaractascii.channel0.get_position()
     assert final_pos== pytest.approx(500.0, abs=1.0), \
         f"Expected 500 um, got {final_pos}"
-
-def test_zero_and_move_rel_sequence(smaractascii):
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_zero_and_move_rel_sequence(smaractascii,channel):
         """
         Integration test validating the movement sequence:
         0. Get to ref.
@@ -76,23 +137,24 @@ def test_zero_and_move_rel_sequence(smaractascii):
         2. Move rel to 500 .
         3. Verify the final position is 500 um.
         """
-        smaractascii.channel0.move_to_ref()
+        smaractascii.channels[channel].move_to_ref()
 
         time.sleep(1)
 
-        initial_pos = smaractascii.channel0.get_position()
+        initial_pos = smaractascii.channels[channel].get_position()
         assert initial_pos== pytest.approx(0.0, abs=0.5), \
             f"Expected 0 um after zeroing, got {initial_pos}"
         target_pos = Q_(500, 'um')
-        smaractascii.move_rel(target_pos)
+        smaractascii.channels[channel].move_rel(target_pos)
 
         time.sleep(2.0)
 
-        final_pos = smaractascii.get_position()
+        final_pos = smaractascii.channels[channel].get_position()
         assert final_pos== pytest.approx(500.0, abs=1.0), \
             f"Expected 500 um, got {final_pos}"
 
-def test_move_step_sequence(smaractascii):
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_step_sequence(smaractascii,channel):
     """
     Integration test validating the movement sequence:
     0.Reset to Reference to ensure safe range of motion
@@ -112,10 +174,9 @@ def test_move_step_sequence(smaractascii):
     steps_to_move = 1000
     freq = Q_(1000, 'Hz')
     amp = Q_(1000, 'dV')  # Max amplitude
-    smaractascii.set_steps_parameters(steps=steps_to_move, frequency=freq, amplitude=amp)
-    smaractascii.move_steps_up(steps_to_move)
+    smaractascii.channels[channel].move_steps_up(steps_to_move,steps=steps_to_move, frequency=freq, amplitude=amp)
     time.sleep(2.0)
-    smaractascii.move_steps_down(steps_to_move)
+    smaractascii.channels[channel].move_steps_down(steps_to_move)
 
 
     time.sleep(2.0)
@@ -124,7 +185,7 @@ def test_move_step_sequence(smaractascii):
     assert final_pos == pytest.approx(0.0, abs=1.0), \
         f"Expected 0 um, got {final_pos}"
 
-def test_stop_function(self, smaractascii):
+def test_stop_function(smaractascii):
     """Test the Emergency Stop functionality."""
     ch = smaractascii.channel0
 
@@ -151,6 +212,19 @@ def test_stop_function(self, smaractascii):
 
     # Cleanup: Restore speed
     ch.frequency_max = Q_(1000, 'Hz')
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_to_end(smaractascii,channel):
+    smaractascii.channels[channel].move_to_end_up()
+    smaractascii.channels[channel].move_to_end_down()
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_to_end(smaractascii,channel):
+    smaractascii.channels[channel].move_to_end_up()
+    smaractascii.channels[channel].move_to_end_down()
+
+
+
 
 #pytest test_scu_ascii_with_device.py --device-address "ASRL3::INSTR" -s
 

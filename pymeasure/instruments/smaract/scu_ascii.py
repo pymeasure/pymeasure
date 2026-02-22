@@ -32,10 +32,16 @@ class SCUChannel(Channel):
         map_values= True
 
     )
-
+    baudrate = Instrument.setting(
+        ":CBF%d" ,
+        """Set the baudrate after the next reset done""",
+        validator=truncated_discrete_set,
+        values={9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000},
+        map_values=True
+    )
 
     def calibrate_sensor(self):
-        """Calibrate the sensor. Has to done before the use of move to reference.
+        """Calibrate the sensor. Has to be done before the use of move to reference.
            The user must ensure himself that the positioner is not close to a mechanical limit"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
@@ -192,12 +198,12 @@ class SCUChannelLinear(SCUChannel):
 class SCUChannelAngular(SCUChannel):
     unit = 'm°'
 
-    def move_abs(self, position: Q_):
+    def move_abs(self, angle: Q_):
         """Moves to the absolute angle given in m° from the reference position via closed-loop control.
 
            :param angle: A quantity with angular units (m°)
         """
-        self.write(f":MAA{self.id}P{check_quantity_unit(position, self.unit)}")
+        self.write(f":MAA{self.id}P{check_quantity_unit(angle, self.unit)}")
 
     def get_angle(self):
         """ Returns the current angle in degrees"""
@@ -206,12 +212,12 @@ class SCUChannelAngular(SCUChannel):
         self.angle = (Q_(float(ang[4:]), self.unit))
         return self.angle
 
-    def move_rel(self, position: Q_):
+    def move_rel(self, angle: Q_):
         """Moves the relative angle given in m° from the current position closed-loop control.
 
            :param angle: A quantity with angular units (m°)
         """
-        self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
+        self.write(f":MAR{self.id}A{check_quantity_unit(angle, self.unit)}")
 
 
 class SmarActSCU_ASCII(Instrument):
@@ -251,10 +257,16 @@ class SmarActSCU_ASCII(Instrument):
         self._steps: int = 250
         #self._safe_direction: str = safe_direction
 
-    id = Instrument.measurement(
-        ":GID", """Get the identification number. """
-        ":I", """Get the device identification information. """
-    )
+    idnumber= Instrument.measurement(
+        ":GID",
+        """Get the identification number. """,
+    get_process = lambda s:s[3:])
+    idmodel = Instrument.measurement(
+        ":I",
+        """Get the device identification information. """)
+
+
+
 
     ###CHECK AMPLITUDE###
 
@@ -289,7 +301,7 @@ class SmarActSCU_ASCII(Instrument):
         else:
             freq = check_quantity_unit(freq, 'Hz')
         if not (Q_(1, 'Hz') < freq < self.frequency_max):
-            raise ValueError('blablabla')
+            raise ValueError(f"Frequency {freq} is out of bounds. Must be between 1 Hz and {self.frequency_max}.")
         return freq
 
     @property
@@ -328,9 +340,7 @@ class SmarActSCU_ASCII(Instrument):
         else:
             self.move_steps_down(position.magnitude)
 
-    def set_baudrate(self, baudrate :int):
-        """Set the baudrate after the next reset done"""
-        self.write(f':CB(baudrate)')
+
         #propietes
 
 

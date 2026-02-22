@@ -1,51 +1,89 @@
-import pytest
-from pymeasure.test import expected_protocol
-from pymeasure.units import ureg
-from pymeasure.instruments.smaract.scu_ascii import SmarActSCU_USB
-def test_init():
-    # Verify the expected communication.
-    with expected_protocol(
-        SmarActSCU_USB,
-        [] # No command being sent at __init__ in the code
-    ):
-        pass
+from pymeasure.generator import Generator
+from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
+from pint import Quantity as Q_
+import time
 
-def test_id():
-    """Verification of the cmd for ID of instrument."""
-    with expected_protocol(
-        SmarActSCU_USB,
-        [(":GID", ":ID123456")] # Sent command, simulated response
-    ) as inst:
-        assert inst.id == "123456"
+generator = Generator()
+adapter_string = 'ASRL3::INSTR'
+inst = generator.instantiate(
+    SmarActSCULinear,
+    adapter_string,
+    'SCUController',
+    adapter_kwargs={'read_termination': '\n', 'write_termination': '\n'}
+)
 
-def test_position_getter():
-    """Vérifie la lecture de la position (Parsing)."""
-    with expected_protocol(
-        SmarActSCU_USB,
-        [(":GP0", ":P0P-500.5")] # On simule une réponse négative
-    ) as inst:
-        assert inst.position == -500.5
+""" Test properties (Setter then Getter)"""
+inst.amplitude = Q_(500, 'dV')
+assert inst.amplitude == 500
 
-def test_position_setter():
-    """Vérifie l'écriture de la position (Commande MPA)."""
-    with expected_protocol(
-        SmarActSCU_USB,
-        [(":MPA0P1000H0", None)] # None car pas de réponse attendue pour un Setter
-    ) as inst:
-        inst.position = 1000
 
-def test_move_relative_with_units():
-    """Vérifie que les unités (mm) sont bien converties en microns."""
-    with expected_protocol(
-        SmarActSCU_USB,
-        [(":MPR0P2000.0H0", None)] # 2 mm = 2000 microns
-    ) as inst:
-        inst.move_relative(2 * ureg.mm)
+inst = Q_(800, 'Hz')
+assert inst.frequency == Q_(800, 'Hz')
 
-def test_frequency_max():
-    """Vérifie la propriété frequency_max."""
-    with expected_protocol(
-        SmarActSCU_USB,
-        [(":GCLF0", ":CLF0F5000")] # Réponse typique du manuel
-    ) as inst:
-        assert inst.frequency_max == 5000
+inst.baudrate = 9600
+assert inst.baudrate == 9600
+# Identification
+idn = inst.id
+assert idn is not None
+
+ch0 = inst.channel0
+pos_type = inst.get_positioner_type()
+
+ch0.move_steps_up(steps=100, freq=Q_(1000, 'Hz'), ampl=Q_(500, 'dV'))
+time.sleep(0.5)
+
+ch0.move_steps_down(steps=100, freq=Q_(1000, 'Hz'), ampl=Q_(500, 'dV'))
+time.sleep(0.5)
+
+
+
+is_present = inst.check_sensor_present()
+assert is_present is True
+
+# Calibrage et zérotage
+inst.calibrate_sensor()
+time.sleep(3.0)
+
+inst.move_to_ref()
+time.sleep(2.0)
+
+inst.set_zero_pos()
+time.sleep(0.5)
+
+# Limites mécaniques et arrêt brutal
+inst.move_to_end_up()
+time.sleep(1.0)
+inst.stop()
+time.sleep(0.5)
+
+inst.move_to_end_down()
+time.sleep(1.0)
+inst.stop()
+time.sleep(0.5)
+
+# ==========================================
+# TESTS DES CANAUX (CLOSED LOOP)
+# ==========================================
+ch = inst.channel0
+
+ch.move_abs(Q_(100, 'um'))
+time.sleep(1.0)
+pos_abs = ch.get_position()
+# Le générateur enregistrera la valeur lue et la mettra dans le test
+
+ch.move_rel(Q_(50, 'um'))
+time.sleep(1.0)
+pos_rel = ch.get_position()
+
+
+"""Testing Channel commands"""
+ch0 = inst.channel0
+ch0.move_abs(Q_(100, 'um'))
+assert ch0.get_position()==Q_(100, 'um')
+
+
+
+# 4. Save the recording!
+# This creates the file with all the expected_protocol tests.
+generator.write_file("generated_test_smaract.py")
+print("Done! Open 'generated_test_smaract.py' to see the magic.")
