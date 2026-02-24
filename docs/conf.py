@@ -272,6 +272,7 @@ autodoc_mock_imports = ['zmq', 'cloudpickle', 'pyvirtualbench']
 
 # -- Options for sphinx_autodoc_typehints ---------------------------------
 
+always_document_param_types = True
 typehints_use_rtype = False
 typehints_defaults = "braces-after"
 
