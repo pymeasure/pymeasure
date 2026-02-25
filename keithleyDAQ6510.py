@@ -46,127 +46,41 @@ so daq.measure.voltage
 
 
 
-# to implement:
-# :DISPlay:USER<n>:TEXT[:DATA] # displays user text on display.
-# :ABORt
-# :INITiate[:IMMediate]
-
-# class ChannelState(Enum):
-#     """
-#     Enum for channel state to make it clearer in code if opening or closing channels.
-#     """
-#     OPEN = False
-#     CLOSED = True
-
-
-def text_length_validator(value, values):
-    """ Provides a validator function that a valid string for the display
-    commands of the Keithley. Raises a TypeError if value is not a string.
-    If the string is too long, it is truncated to the correct length.
-
-    :param value: A value to test
-    :param values: The allowed length of the text
-    """
-
-    if not isinstance(value, str):
-        raise TypeError("Value is not a string.")
-
-    return value[:values]
 
 class MuxChannel(Channel):
     """mux relay channels"""
 
-    def __init__(self, instrument, id):
-        #todo, validate channel number. have a list of valid channels for each mux card type?
-        # int(id) in mux_card_channel_lists[mux_card_name]
-        super().__init__(instrument, id)
+    def __init__(self, chan_number):
+        self._chan_num = chan_number
 
-
-    def channel_name(self):
-        # see channel naming section in manual
-        daq._channels_id(_chan_number)
+    def get_closed_channels(self):
+        # returns list of closed channel numbers like [101, 102]
+        # daq returns string like "(@101,102)"
+        closed_list_raw = self.query("ROUT:CLOS?").strip()
+        closed_list = closed_list_raw.removeprefix('(@').removesuffix(')').split(",")
+        return [int(s) for s in closed_list]
 
     @property
     def closed(self):
-        """
-        gets if channel is closed.
-        """
+        raise NotImplementedError
         
         # pymeasure driver does not have a way to read this. but implementation may be possible
-        closed = self.daq_driver.ask(f":ROUT:STAT? {self._channels_id(self.chan_num)}")
-        closed = bool(closed) #make sure this works and does not always return comma with single channel.
-
-        #todo, return bool or enum? enum probably?
-        return closed
+        self.daq_driver.close_channel(self.channel_number)
 
 
     def closed(self, chanstate):
-        self.route_channels(channel_list, chanstate)
+        chanstate=bool(chanstate)
 
-    def measure(self,):
-        #measurement chennels must check if front panel is selected
+        if chanstate is True:
+            self.daq_driver.close_channel(self.channel_number)
+        else:
+            self.daq_driver.open_channel(self.channel_number)
+
+
+class ModuleCard():
+    # should this inherit from channel or something?
+    def __init__(self, slot):
         pass
-
-    def status(self):
-        """
-        human readable summary 
-        >>> chan.str()
-        ''
-        'AIN3->4()'
-        'AIN0( voltage: 0.0000v, raw_value: 0/4095,)'
-        """
-
-        mode = {Mode.CONTINUOUS: "CONTINUOUS", Mode.SINGLE: "SINGLE"}[self.mode]
-        summary = (
-            f"{type(self).__name__}( "
-            + f"chan_num: {self.chan_num}, "
-            + f"closed: {self.closed.name}, "
-        )
-
-        return summary
-
-    def __repr__(self):
-        return self.status()
-
-    def __str__(self):
-        return self.status()
-
-
-class ExpansionCard(Channel):
-
-    # make these into their own classes?
-    card_types = {
-        "7700": {"description": "20 Channel, Differential Multiplexer Module",
-                 "mux_channels": 20},
-        "7701": {"description": "32 Channel, Differential Multiplexer Module",
-                 "mux_channels": 32},
-        "7702": {"description": "40 Channel, Differential Multiplexer Module",
-                 "mux_channels": 40},
-        "7703": {"description": "32 Ch. High Speed Differential Multiplexer Module",
-                 "mux_channels": 32},
-        "7705": {"description": "40 Ch. Single-pole Control Module",
-                 "mux_channels": 40},
-        "7706": {"description": "All-in-One I/O Module.",
-                 "mux_channels": 20},
-        "7707": {"description": "32 Ch. Digital I/O Module",
-                 "mux_channels": 10},
-        "7708": {"description": "40 Ch. Differential Multiplexer Module",
-                 "mux_channels": 40},
-        "7709": {"description": "6×8 Matrix Module.",
-                 "mux_channels": 48},
-        "7710": {"description": "20 Ch. Solid-state Differential Multiplexer Module",
-                 "mux_channels": 20},
-        "7711": {"description": "2 GHz 50Ω RF Module",
-                 "mux_channels": 8},
-        "7712": {"description": "3.5 GHz 50Ω RF Module",
-                 "mux_channels": 8},
-    }
-
-
-    def __init__(self, instrument, slot):
-        #todo, validate channel number. have a list of valid channels for each mux card type?
-        # int(id) in mux_card_channel_lists[mux_card_name]
-        super().__init__(instrument, slot)
 
     @property
     def module_id(self):
@@ -177,17 +91,10 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
     """Represents the Keithley DAQ6510 Data Acquisition Logging Multimeter System
     and provides a high-level interface for interacting with the instrument.
 
-    The DAQ6510 inherits significant functionality from the Keithley2700 DAQ system
-
-    Tested with instrument firmware version `1.7.16A`
-
     .. code-block:: python
 
         keithley = KeithleyDAQ6510("GPIB::1")
-        # or
         keithley = KeithleyDAQ6510("TCPIP::192.168.1.1::INSTR")
-
-        # todo, fix this. it does not actually work.
 
         print(keithley.current)                 # Prints the current in Amps
         keithley.current_range = 10E-6          # Select the 10 uA range
@@ -211,26 +118,10 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         )
 
         self.mux_channels = None
-        self.cards = {1:None, 2:None} 
+        self.cards = ["slot1":None, "slot2":None]
 
         self.cards = self._detect_cards
 
-        for card in self.cards
-            self.mux_channels.append(card.mux_channels)
-
-    display_text = Instrument.control(
-        "DISP:USER1:TEXT:DATA?", "DISP:USER1:TEXT:DATA '%s'",
-        """ Control (string) the text shown on the display of
-        the Keithley 2700. Text can be up to 12 ASCII characters and must be
-        enabled to show.
-        """,
-        validator=text_length_validator,
-        values=12,
-        cast=str,
-        separator="NO_SEPARATOR",
-        get_process=lambda v: v.strip("'\""),
-    )
-    
     sense_mode = Instrument.control(
         ":SENS:FUNC?",
         ':SENS:FUNC "%s"',
@@ -246,14 +137,6 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         ":READ?",
         """ Take the currently configured measurement, if configured for this reading.
         """,
-    )
-
-    #finish this
-    front_panel_connection_state = Instrument.control(
-        "?", "",
-        """ gets front panel vs rear panel mode selection for measurement switch.""",
-        validator=truncated_range,
-        values=[100e-3, 1000],
     )
 
     ###############
@@ -431,94 +314,42 @@ class KeithleyDAQ6510(KeithleyBuffer, SCPIMixin, Instrument):
         self.diode_bias = bias
         self.check_errors()
 
-    def _channels_id(self, input_channel_list):
+    def open_channel(self, channel):
         """
-        generates scpi channel id string for single or multiple channels.
+        Set a single channel to open.
+
+        :param channel: Channel to be set to open.
         """
-
-        # convert single elements to list.
-        if not isinstance(input_channel_list, list):
-            input_channel_list = [input_channel_list]
-
-        channel_list = []
-        for chan in input_channel_list:
-            # convert channel objects to strings.
-            if isinstance(chan, MuxChannel):
-                chan = chan._chhan_number
-
-            # clean and make sure channels are integers.
-            chan = int(chan)
-
-        channel_string = ", ".join([str(ele) for ele in channel_list])
-        return f"(@{channel_string})"
-    
-
-    def get_channel_status(self):
-        """ gets list of closed channels.
-        
-            returns dictonary of channel states.
-        """
-        states = self.ask(":ROUT:STAT?")
-        # is "all" a valid channel range? or do i have to construct a list of all channels?
-
-        # todo, convert/map output list to channel objects? or use channel numbers?. state is enum.
-
-        return states
-
-    def open_all_channels(self)
-        """
-        Opens all channels
-        """
-        self.write("")
-
-    def route_channels(self, channel_list, closed):
-        """
-        Configure single or multiple channels be open/closed.
-
-        Example output to instrument:
-        daq.route_channels([101, 102], False)
-        ":ROUT:OPEN (@101, 102)"
-
-        :param channel_list: List of channels to be set to open.
-        :param closed: if channels are open/closed. can be bool, or enum
-        """
-
-        # todo, implement open/closed enum, or remove enum completely.
-
-        if isinstance(closed, string):
-            closed = {True:"CLOSED", False :"OPEN"}[closed.upper()]
-
-        # convert enum to bool
-        if isinstance(state, Enum):
-            pass
-
-        command = {True:":ROUT:CLOS", False:":ROUT:OPEN"}[bool(state)]          
-
-        self.write(f"{command} {self._channels_id(channel_list)}")
+        self.write(f":ROUT:OPEN (@{channel})")
         self.check_errors()
 
-
-    def open_channels(self, channel_list):
+    def close_channel(self, channel):
         """
-        Configure single or multiple channels to be open.
+        Set a single channel to closed.
 
-        :param channel_list: List of channels to be set to open.
+        :param channel: Channel to be set to closed.
         """
+        self.write(f":ROUT:CLOS (@{channel})")
+        self.check_errors()
 
-        # self.route_channels(channel_list, channel_state.open) #enum based
-        self.route_channels(channel_list, False)
+    # todo: implement these with a native list
+    # def open_channels(self, channel_list):
+    #     """
+    #     Configure multiple channels to be open.
 
+    #     :param channel_list: List of channels to be set to open.
+    #     """
+    #     for channel in channel_list:
+    #         self.open_channel(channel)
 
-    def close_channels(self, channel_list):
-        """
-        Configure single or multiple channels to be closed.
+    # def close_channels(self, channel_list):
+    #     """
+    #     Configure multiple channels to be closed.
 
-        :param channel_list: List of channels to be set to closed.
-        """
-
-        self.route_channels(channel_list, True)
-
-
+    #     :param channel_list: List of channels to be set to closed.
+    #     """
+    #     for channel in channel_list:
+    #         self.close_channel(channel)
 
     def beep(self, frequency, duration):
         """
