@@ -213,6 +213,7 @@ class TestSPGUChannel:
         ) as inst:
             inst.spgu1.ch1.apply_setup()
 
+
 class TestCMU:
     """Tests for CMU module functionality."""
 
