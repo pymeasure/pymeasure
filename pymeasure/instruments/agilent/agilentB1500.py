@@ -1801,11 +1801,16 @@ class CMU(Channel):
 
         :param measurement_mode: Measurement mode.
         """
-        # if self.parent.formatting in ["FMT3", "FMT4", "FMT13", "FMT14"]:
-        #     log.warning(
-        #         "The IMP command is not effective for binary data output format "
-        #         f"{self.parent.formatting}."
-        #     )
+        if hasattr(self.parent, "_data_format") and self.parent._data_format.format in [
+            "FMT3",
+            "FMT4",
+            "FMT13",
+            "FMT14",
+        ]:
+            log.warning(
+                "The IMP command is not effective for binary data output format "
+                f"{self.parent._data_format.format}."
+            )
         self.write(f"IMP {measurement_mode.value}")
 
     def set_cv_timings(
