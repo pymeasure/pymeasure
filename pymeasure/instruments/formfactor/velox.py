@@ -44,7 +44,6 @@ PROBER_REFERENCES = {"home": "H",
                      "center": "C",
                      "diehome": "D",
                      }
-EXPECTED_ERRORS = [703]  # list of errors that do not raise a ConnectionError
 
 
 class Chuck(Channel):
@@ -128,6 +127,9 @@ class Chuck(Channel):
 class WaferMap(Channel):
     """A class representing the functions of the Wafermap module."""
 
+    end_reached = False
+    """Get whether the end of the wafermap is reached or not (bool)."""
+
     def step_first_die(self):
         """Move the chuck to the first die and clear the the binning results.
 
@@ -178,7 +180,7 @@ class WaferMap(Channel):
 
     enabled = Channel.measurement(
         "IsAppRegistered WaferMap",
-        """Get whether the WaferMap module is loaded or not.""",
+        """Get whether the WaferMap module is loaded or not (bool).""",
         map_values=True,
         values={True: 1, False: 0}
         )
@@ -195,7 +197,7 @@ class Velox(SCPIMixin, Instrument):
 
         prober = Velox("GPIB0::28::INSTR")  # replace the resource to your needs
         coordinates = prober.wafermap.step_first_die()  # move to the first die in the wafermap
-        while not prober.error_code:
+        while not self.wafermap.end_reached:
             prober.chuck.move_contact()  # move to contact height
             # ...
             # code for measurement, processing and storing data
@@ -241,6 +243,7 @@ class Velox(SCPIMixin, Instrument):
 
         self.error_code = 0
         self.error_message = ""
+        self.wafermap.end_reached = False
 
         got = super().read()
 
@@ -255,10 +258,13 @@ class Velox(SCPIMixin, Instrument):
 
         if self.error_code:
             self.error_message = response
-            if self.error_code not in EXPECTED_ERRORS:
-                raise ConnectionError(f"{self.error_code}: {self.error_message}")
-            else:
+            if self.error_code == 703:
+                # 703 means end of wafermap reached, it's not a hard error
+                # more a status indicator, so it doesn't throw an exception
+                self.wafermap.end_reached = True
                 log.info(f"{self.error_code}: {self.error_message}")
+            else:
+                raise ConnectionError(f"{self.error_code}: {self.error_message}")
 
         return response
 
