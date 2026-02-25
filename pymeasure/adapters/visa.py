@@ -23,6 +23,7 @@
 #
 
 import logging
+from typing import Optional, Union
 
 import pyvisa
 
@@ -70,7 +71,13 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    def __init__(self, resource_name, visa_library="", log=None, **kwargs):
+    def __init__(
+        self,
+        resource_name: Union[ProtocolAdapter, "VISAAdapter", int, str],
+        visa_library: str = "",
+        log: Optional[logging.Logger] = None,
+        **kwargs,
+    ):
         super().__init__(log=log)
         if isinstance(resource_name, ProtocolAdapter):
             self.connection = resource_name
@@ -107,7 +114,7 @@ class VISAAdapter(Adapter):
             **kwargs
         )
 
-    def close(self):
+    def close(self) -> None:
         """Close the connection.
 
         .. note::
@@ -125,7 +132,7 @@ class VISAAdapter(Adapter):
             # AttributeError can occur during __del__ calling close
             pass
 
-    def _write(self, command, **kwargs):
+    def _write(self, command: str, **kwargs) -> None:
         """Write a string command to the instrument appending `write_termination`.
 
         :param str command: Command string to be sent to the instrument
@@ -134,7 +141,7 @@ class VISAAdapter(Adapter):
         """
         self.connection.write(command, **kwargs)
 
-    def _write_bytes(self, content, **kwargs):
+    def _write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument.
 
         :param bytes content: The bytes to write to the instrument.
@@ -142,7 +149,7 @@ class VISAAdapter(Adapter):
         """
         self.connection.write_raw(content, **kwargs)
 
-    def _read(self, **kwargs):
+    def _read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer.
 
         :param \\**kwargs: Keyword arguments for the connection itself.
@@ -150,7 +157,7 @@ class VISAAdapter(Adapter):
         """
         return self.connection.read(**kwargs)
 
-    def _read_bytes(self, count, break_on_termchar=False, **kwargs):
+    def _read_bytes(self, count: int, break_on_termchar: bool = False, **kwargs) -> bytes:
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
@@ -176,15 +183,15 @@ class VISAAdapter(Adapter):
                         return bytes(result)
                     raise
 
-    def wait_for_srq(self, timeout=25, delay=0.1):
+    def wait_for_srq(self, timeout: int = 25, delay: float = 0.1) -> None:
         """ Block until a SRQ, and leave the bit high
 
-        :param timeout: Timeout duration in seconds
+        :param timeout: Timeout duration in milliseconds
         :param delay: Time delay between checking SRQ in seconds
         """
         self.connection.wait_for_srq(timeout * 1000)
 
-    def flush_read_buffer(self):
+    def flush_read_buffer(self) -> None:
         """ Flush and discard the input buffer
 
         As detailed by pyvisa, discard the read and receivee buffer contents
@@ -208,5 +215,5 @@ class VISAAdapter(Adapter):
             finally:
                 self.connection.timeout = timeout
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
