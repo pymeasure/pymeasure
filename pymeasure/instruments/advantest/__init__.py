@@ -25,3 +25,4 @@
 from .advantestR3767CG import AdvantestR3767CG
 from .advantestR624X import AdvantestR6245
 from .advantestR624X import AdvantestR6246
+from .advantestQ8381 import AdvantestQ8381
