@@ -38,20 +38,20 @@ def test_power_unit_getter():
 
 
 def test_power_setpoint_setter():
-    protocol = [(b":Power 5.000000e+00", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":POWer 5", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        inst.power_setpoint = 5.0
+        inst.power_setpoint = 5
 
 
 def test_power_setpoint_getter():
-    protocol = [(b":POWer?", b"5.000000e+00\n")]
+    protocol = [(b":POWer?", b"5\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.power_setpoint
         assert abs(value - 5.0) < 1e-12
 
 
 def test_power():
-    protocol = [(b":POWer:ACTual?", b"3.500000e+00\n")]
+    protocol = [(b":POWer:ACTual?", b"3.5\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.power
         assert abs(value - 3.5) < 1e-12
@@ -61,135 +61,135 @@ def test_power():
 
 
 def test_wavelength_min():
-    protocol = [(b":WAVelength:SWEep:RANGe:MINimum?", b"1.000000e-06\n")]
+    protocol = [(b":WAVelength:SWEep:RANGe:MINimum?", b"1e-06\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_min
-        assert abs(value - 1e-06) < 1e-12
+        assert abs(value - 1e-6) < 1e-12
 
 
 def test_wavelength_max():
-    protocol = [(b":WAVelength:SWEep:RANGe:MAXimum?", b"2.000000e-06\n")]
+    protocol = [(b":WAVelength:SWEep:RANGe:MAXimum?", b"2e-06\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_max
-        assert abs(value - 2e-06) < 1e-12
+        assert abs(value - 2e-6) < 1e-12
 
 
 def test_wavelength_setpoint_setter():
-    protocol = [(b":WAVelength 1.550000e-06", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":WAVelength 1.55e-06", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        inst.wavelength_setpoint = 1.55e-06
+        inst.wavelength_setpoint = 1.55e-6
 
 
 def test_wavelength_setpoint_getter():
-    protocol = [(b":WAVelength?", b"1.550000e-06\n")]
+    protocol = [(b":WAVelength?", b"1.55e-06\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_setpoint
-        assert abs(value - 1.55e-06) < 1e-12
+        assert abs(value - 1.55e-6) < 1e-12
 
 
 def test_wavelength_start_setter():
-    protocol = [(b":WAVelength:SWEep:STARt 1.500000e-06", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":WAVelength:SWEep:STARt 1.5e-06", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        inst.wavelength_start = 1.5e-06
+        inst.wavelength_start = 1.5e-6
 
 
 def test_wavelength_start_getter():
-    protocol = [(b":WAVelength:SWEep:STARt?", b"1.500000e-06\n")]
+    protocol = [(b":WAVelength:SWEep:STARt?", b"1.5e-06\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_start
-        assert abs(value - 1.5e-06) < 1e-12
+        assert abs(value - 1.5e-6) < 1e-12
 
 
 def test_wavelength_stop_setter():
-    protocol = [(b":WAVelength:SWEep:STOP 1.600000e-06", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":WAVelength:SWEep:STOP 1.6e-06", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        inst.wavelength_stop = 1.6e-06
+        inst.wavelength_stop = 1.6e-6
 
 
 def test_wavelength_stop_getter():
-    protocol = [(b":WAVelength:SWEep:STOP?", b"1.600000e-06\n")]
+    protocol = [(b":WAVelength:SWEep:STOP?", b"1.6e-06\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_stop
-        assert abs(value - 1.6e-06) < 1e-12
+        assert abs(value - 1.6e-6) < 1e-12
 
 
 def test_wavelength_step_setter():
-    protocol = [(b":WAVelength:SWEep:STEP 1.000000e-09", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":WAVelength:SWEep:STEP 1e-09", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        inst.wavelength_step = 1e-09
+        inst.wavelength_step = 1e-9
 
 
 def test_wavelength_step_getter():
-    protocol = [(b":WAVelength:SWEep:STEP?", b"1.000000e-09\n")]
+    protocol = [(b":WAVelength:SWEep:STEP?", b"1e-09\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.wavelength_step
-        assert abs(value - 1e-09) < 1e-12
+        assert abs(value - 1e-9) < 1e-12
 
 
 # ========================= Frequency Control Tests =========================
 
 
 def test_frequency_min():
-    protocol = [(b":FREQuency:SWEep:RANGe:MINimum?", b"1.000000e+14\n")]
+    protocol = [(b":FREQuency:SWEep:RANGe:MINimum?", b"1e+14\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_min
         assert abs(value - 1e14) < 1e-6
 
 
 def test_frequency_max():
-    protocol = [(b":FREQuency:SWEep:RANGe:MAXimum?", b"2.000000e+14\n")]
+    protocol = [(b":FREQuency:SWEep:RANGe:MAXimum?", b"2e+14\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_max
         assert abs(value - 2e14) < 1e-6
 
 
 def test_frequency_setpoint_setter():
-    protocol = [(b":FREQuency 2.000000e+14", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":FREQuency 2e+14", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
         inst.frequency_setpoint = 2e14
 
 
 def test_frequency_setpoint_getter():
-    protocol = [(b":FREQuency?", b"2.000000e+14\n")]
+    protocol = [(b":FREQuency?", b"2e+14\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_setpoint
         assert abs(value - 2e14) < 1e-6
 
 
 def test_frequency_start_setter():
-    protocol = [(b":FREQuency:SWEep:STARt 1.900000e+14", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":FREQuency:SWEep:STARt 1.9e+14", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
         inst.frequency_start = 1.9e14
 
 
 def test_frequency_start_getter():
-    protocol = [(b":FREQuency:SWEep:STARt?", b"1.900000e+14\n")]
+    protocol = [(b":FREQuency:SWEep:STARt?", b"1.9e+14\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_start
         assert abs(value - 1.9e14) < 1e-6
 
 
 def test_frequency_stop_setter():
-    protocol = [(b":FREQuency:SWEep:STOP 2.100000e+14", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":FREQuency:SWEep:STOP 2.1e+14", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
         inst.frequency_stop = 2.1e14
 
 
 def test_frequency_stop_getter():
-    protocol = [(b":FREQuency:SWEep:STOP?", b"2.100000e+14\n")]
+    protocol = [(b":FREQuency:SWEep:STOP?", b"2.1e+14\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_stop
         assert abs(value - 2.1e14) < 1e-6
 
 
 def test_frequency_step_setter():
-    protocol = [(b":FREQuency:SWEep:STEP 1.000000e+12", None), (b"SYST:ERR?", "0,No error\n")]
+    protocol = [(b":FREQuency:SWEep:STEP 1e+12", None), (b"SYST:ERR?", "0,No error\n")]
     with expected_protocol(TSL570, protocol) as inst:
         inst.frequency_step = 1e12
 
 
 def test_frequency_step_getter():
-    protocol = [(b":FREQuency:SWEep:STEP?", b"1.000000e+12\n")]
+    protocol = [(b":FREQuency:SWEep:STEP?", b"1e+12\n")]
     with expected_protocol(TSL570, protocol) as inst:
         value = inst.frequency_step
         assert abs(value - 1e12) < 1e-6
