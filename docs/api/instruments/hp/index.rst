@@ -21,5 +21,6 @@ If the instrument you are looking for is not here, also check :doc:`Agilent<../a
    hp8753E
    hp11713A
    hp437B
+   hp4145x
    hplegacyinstrument
    hpsystempsu
