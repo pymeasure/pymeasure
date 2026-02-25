@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 import re
 import time
@@ -1756,11 +1758,11 @@ class SPGUChannel(Channel):
 class CMU(Channel):
     """Provide specific methods for the CMU of the Agilent B1500 mainframe.
 
-    :param AgilentB1500 parent: Instance of the B1500 mainframe class
-    :param int slot: Slot number of the CMU
+    :param parent: Instance of the B1500 mainframe class
+    :param slot: Slot number of the CMU
     """
 
-    def __init__(self, parent, slot, **kwargs):
+    def __init__(self, parent: AgilentB1500, slot: int, **kwargs):
         super().__init__(parent, slot, **kwargs)
         slot = strict_discrete_set(slot, range(1, 11))
         self.id = slot
@@ -1787,7 +1789,7 @@ class CMU(Channel):
         values=[1e3, 5e6],
     )
 
-    def set_measurement_mode(self, measurement_mode):
+    def set_measurement_mode(self, measurement_mode: MFCMUMeasurementMode) -> None:
         """Set the impedance measurement mode for the MFCMU. (``IMP``)
 
         The MFCMU measures two parameters per mode.
@@ -1797,7 +1799,7 @@ class CMU(Channel):
             This command is not effective for binary data output formats
             (FMT3, FMT4, FMT13, FMT14).
 
-        :param MFCMUMeasurementMode measurement_mode: Measurement mode.
+        :param measurement_mode: Measurement mode.
         """
         # if self.parent.formatting in ["FMT3", "FMT4", "FMT13", "FMT14"]:
         #     log.warning(
@@ -1808,24 +1810,24 @@ class CMU(Channel):
 
     def set_cv_timings(
         self,
-        hold_time,
-        delay_time,
-        step_delay_time=0.0,
-        step_source_trigger_delay_time=0.0,
-    ):
+        hold_time: float,
+        delay_time: float,
+        step_delay_time: float = 0.0,
+        step_source_trigger_delay_time: float = 0.0,
+    ) -> None:
         """Set the timing parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WTDCV``)
 
-        :param float hold_time: Wait time (in seconds) after starting measurement and
+        :param hold_time: Wait time (in seconds) after starting measurement and
             before starting delay time for the first step.
-        :param float delay_time: Wait time (in seconds) after starting to force a step output and
+        :param delay_time: Wait time (in seconds) after starting to force a step output and
             before starting a step measurement.
-        :param float step_delay_time: Wait time (in seconds) after starting a step measurement and
+        :param step_delay_time: Wait time (in seconds) after starting a step measurement and
             before starting to force the next step output.
 
             If step_delay_time is shorter than the measurement time, the B1500 waits until
             the measurement completes, then forces the next step output.
 
-        :param float step_source_trigger_delay_time: Wait time (in seconds) after completing
+        :param step_source_trigger_delay_time: Wait time (in seconds) after completing
             a step output setup and before sending a step output setup completion trigger.
         """
         hold_time = strict_range(hold_time, [0.0, 655.35])
@@ -1839,31 +1841,31 @@ class CMU(Channel):
             f"{step_source_trigger_delay_time}"
         )
 
-    def set_cv_parameters(self, mode, start, stop, steps):
+    def set_cv_parameters(self, mode: SweepMode, start: float, stop: float, steps: int) -> None:
         """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
 
-        :param SweepMode mode: Sweep mode
-        :param float start: Sweep start voltage in V
-        :param float stop: Sweep stop voltage in V
-        :param int steps: Number of steps for staircase sweep
+        :param mode: Sweep mode
+        :param start: Sweep start voltage in V
+        :param stop: Sweep stop voltage in V
+        :param steps: Number of steps for staircase sweep
         """
         cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps)
         self.write(cmd)
 
-    def force_dc_bias(self, voltage):
+    def force_dc_bias(self, voltage: float) -> None:
         """Apply DC voltage from CMU immediately. (``DCV``)
 
-        :param float voltage: DC bias voltage in V
+        :param voltage: DC bias voltage in V
         """
         voltage = strict_range(voltage, [-100, 100])
         self.write(f"DCV {self.id}, {voltage}")
 
-    def set_scuu_path(self, path):
+    def set_scuu_path(self, path: SCUUPath) -> None:
         """Set the connection path of the SMU CMU unify unit (SCUU). (``SSP``)
 
         This function is available when CMU and SMU CMU unify unit (SCUU) are installed.
 
-        :param SCUUPath path: Path for the SCUU measurement
+        :param path: Path for the SCUU measurement
         """
 
         def log_settings_change(voltage, range, compliance, series_resistance):
@@ -1884,7 +1886,15 @@ class CMU(Channel):
             )
         self.write(f"SSP {self.id}, {path.value}")
 
-def _set_cv_parameters_base(id, mode, start, stop, steps, comp=None):
+
+def _set_cv_parameters_base(
+    id: int,
+    mode: SweepMode | int | str,
+    start: float,
+    stop: float,
+    steps: int,
+    comp: float | None = None,
+) -> str:
     mode = SweepMode.get(mode)
     if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
         if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
@@ -2023,6 +2033,7 @@ class PgSelectorConnectionStatus(CustomIntEnum):
     PGU_ON = 2  #: PGU on. Makes connection to the PGU input.
     PGU_OPEN = 3  #: PGU open. Made by opening the semiconductor relay installed on the PGU on port.
 
+
 class SCUUPath(CustomIntEnum):
     """Connection path of the SMU CMU unify unit (SCUU)"""
 
@@ -2114,6 +2125,7 @@ class SPGUOutputMode(CustomIntEnum):
     """
     Duration mode. Outputs for a duration specified by the condition parameter.
     """
+
 
 class MFCMUMeasurementMode(CustomIntEnum):
     """Measurement mode for the Multi Frequency Capacitance Measurement Unit (MFCMU)."""
