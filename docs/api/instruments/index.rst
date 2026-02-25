@@ -40,6 +40,7 @@ Instruments by manufacturer:
    eurotest/index
    fluke/index
    fwbell/index
+   granville-phillips/index
    heidenhain/index
    hcp/index
    hp/index
