@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 import re
 import time
@@ -68,15 +70,14 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Get all SMU names as dict."""
         return self._smu_names
 
-    def query_learn(self, query_type):
+    def query_learn(self, query_type: int | str) -> dict:
         """Query settings from the instrument. (``*LRN?``)
 
-        :param int or str query_type: Query type (number according to manual)
-        :rtype: dict
+        :param query_type: Query type (number according to manual)
         """
         return QueryLearn.query_learn(self.ask, query_type)
 
-    def query_learn_header(self, query_type, **kwargs):
+    def query_learn_header(self, query_type: int | str, **kwargs) -> dict:
         """Query settings from the instrument. (``*LRN?``)
 
         Return dict of settings in human-readable format for debugging
@@ -84,18 +85,16 @@ class AgilentB1500(SCPIMixin, Instrument):
         For optional arguments check the underlying definition of
         :meth:`QueryLearn.query_learn_header`.
 
-        :param int or str query_type: Query type (number according to manual)
-        :rtype: dict
+        :param query_type: Query type (number according to manual)
         """
         return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
 
-    def query_modules(self):
+    def query_modules(self) -> dict:
         """Query module models from the instrument.
 
         Return dictionary of channel and module type.
 
         :return: Channel:Module Type
-        :rtype: dict
         """
         modules = self.ask("UNT?")
         modules = modules.split(";")
@@ -155,10 +154,10 @@ class AgilentB1500(SCPIMixin, Instrument):
             if module_type == "SPGU":
                 self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
 
-    def pause(self, pause_seconds):
+    def pause(self, pause_seconds: int):
         """Pause command execution for given time in seconds. (``PA``)
 
-        :param int pause_seconds: Seconds to pause
+        :param pause_seconds: Seconds to pause
         """
         self.write(f"PA {pause_seconds}")
 
@@ -186,11 +185,11 @@ class AgilentB1500(SCPIMixin, Instrument):
         set_process=lambda v: ControlMode(v).value,
     )
 
-    def set_port_connection(self, port, status):
+    def set_port_connection(self, port: PgSelectorPort, status: PgSelectorConnectionStatus):
         """Set the connection status for a specific port. (``ERSSP``)
 
-        :param PgSelectorPort port: Port number
-        :param PgSelectorConnectionStatus status: Connection status
+        :param port: Port number
+        :param status: Connection status
         """
         self.write(f"ERSSP {port.value}, {status.value}")
 
@@ -244,8 +243,8 @@ class AgilentB1500(SCPIMixin, Instrument):
     class _data_formatting_generic:
         """Format data output head of measurement value into user-readable values.
 
-        :param str output_format_str: Format string of measurement value
-        :param dict smu_names: Dictionary of channel and SMU name
+        :param output_format_str: Format string of measurement value
+        :param smu_names: Dictionary of channel and SMU name
         """
 
         channels = {
@@ -325,7 +324,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, smu_names, output_format_str):
+        def __init__(self, smu_names: dict, output_format_str: str):
             """Store parameters of the chosen output format for later usage in data processing.
 
             Data Names: e.g. "Voltage (V)" or "Current Measurement (A)"
@@ -371,14 +370,14 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.data_names = {}  # no header
             self.smu_names = smu_names
 
-        def check_status(self, status_string, name=None, cmu=False):
+        def check_status(self, status_string: str, name: str | None = None, cmu: bool = False):
             """Check returned status of instrument.
 
             If not null or end of data, message is written to log.info.
 
-            :param str status_string: Status string returned by the instrument when reading data.
-            :param str name: Name of the SMU channel, defaults to None
-            :param bool cmu: Whether or not channel is CMU, defaults to False (SMU)
+            :param status_string: Status string returned by the instrument when reading data.
+            :param name: Name of the SMU channel, defaults to None
+            :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             """
 
             def log_failed():
@@ -416,16 +415,15 @@ class AgilentB1500(SCPIMixin, Instrument):
             else:
                 log_failed()
 
-        def format_channel_check_status(self, status_string, channel_string):
+        def format_channel_check_status(self, status_string: str, channel_string: str) -> str:
             """Return channel number for given channel letter.
 
             Check for not null status of the channel and write according
             message to log.info.
 
-            :param str status_string: Status string returned by the instrument when reading data.
-            :param str channel_string: Channel string returned by the instrument
+            :param status_string: Status string returned by the instrument when reading data.
+            :param channel_string: Channel string returned by the instrument
             :return: Channel name
-            :rtype: str
             """
             channel = self.channels[channel_string]
             if isinstance(channel, int):
@@ -448,12 +446,11 @@ class AgilentB1500(SCPIMixin, Instrument):
         def __init__(self, smu_names={}, output_format_string="FMT1"):
             super().__init__(smu_names, output_format_string)
 
-        def format_single(self, element):
+        def format_single(self, element: str) -> tuple[str, str, str, float]:
             """Format single measurement value.
 
-            :param str element: Single measurement value read from the instrument
+            :param element: Single measurement value read from the instrument
             :return: Status, channel, data name, value
-            :rtype: (str, str, str, float)
             """
             status = element[0]  # one character
             channel = element[1]
@@ -479,12 +476,11 @@ class AgilentB1500(SCPIMixin, Instrument):
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT21")
 
-        def format_single(self, element):
+        def format_single(self, element: str) -> tuple[str, str, str, float]:
             """Format single measurement value.
 
-            :param str element: Single measurement value read from the instrument
+            :param element: Single measurement value read from the instrument
             :return: Status (three digits), channel, data name, value
-            :rtype: (str, str, str, float)
             """
             status = element[0:3]  # three digits
             channel = element[3]
@@ -498,13 +494,14 @@ class AgilentB1500(SCPIMixin, Instrument):
 
             return (status, channel, data_name, value)
 
-    def _data_formatting(self, output_format_str, smu_names={}):
+    def _data_formatting(
+        self, output_format_str: str, smu_names: dict = {}
+    ) -> _data_formatting_generic | None:
         """Return data formatting class for given data format string.
 
-        :param str output_format_str: Data output format, e.g. ``FMT21``
-        :param dict smu_names: Dictionary of channels and SMU names, defaults to {}
+        :param output_format_str: Data output format, e.g. ``FMT21``
+        :param smu_names: Dictionary of channels and SMU names, defaults to {}
         :return: Corresponding formatting class
-        :rtype: class
         """
         classes = {
             "FMT1": self._data_formatting_FMT1,
@@ -522,7 +519,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         else:
             return format_class(smu_names=smu_names)
 
-    def data_format(self, output_format, mode=0):
+    def data_format(self, output_format: int, mode: int = 0):
         """Specify data output format. Check documentation for parameters. (``FMT``)
 
         Should be called once per session to set the data format for
@@ -530,8 +527,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Currently implemented are format 1, 11, and 21.
 
-        :param str output_format: Output format string, e.g. ``FMT21``
-        :param int mode: Data output mode, defaults to 0 (only measurement data is returned)
+        :param output_format: Data output format
+        :param mode: Data output mode, defaults to 0 (only measurement data is returned)
         """
         # restrict to implemented formats
         output_format = strict_discrete_set(output_format, [1, 11, 21])
@@ -584,18 +581,18 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Read settings for ``MM`` command (part of 31) from the instrument."""
         return self.query_learn_header(31, single_command="MM")
 
-    def meas_mode(self, mode, *args):
+    def meas_mode(self, mode: MeasMode, *args: SMU):
         """Set measurement mode of channels. (``MM``)
 
         Measurements will be taken in the same order as the SMU references are passed.
 
-        :param MeasMode mode: Measurement mode
+        :param mode: Measurement mode
 
             * Spot
             * Staircase Sweep
             * Sampling
 
-        :param SMU args: SMU references
+        :param args: SMU references
         """
         mode = MeasMode.get(mode)
         cmd = f"MM {mode.value}"
@@ -611,7 +608,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Read ADC settings (55, 56) from the instrument."""
         return {**self.query_learn_header(55), **self.query_learn_header(56)}
 
-    def adc_setup(self, adc_type, mode, N=""):
+    def adc_setup(self, adc_type: ADCType, mode: ADCMode, N: str = ""):
         """Set up operation mode and parameters of ADC for each ADC type.
         (``AIT``)
 
@@ -620,9 +617,9 @@ class AgilentB1500(SCPIMixin, Instrument):
             - HSADC: Auto N=1, Manual N=1, PLC N=1, Time N=0.000002(s)
             - HRADC: Auto N=6, Manual N=3, PLC N=1
 
-        :param ADCType adc_type: ADC type
-        :param ADCMode mode: ADC mode
-        :param str N: additional parameter, check documentation, defaults to ``''``
+        :param adc_type: ADC type
+        :param mode: ADC mode
+        :param N: additional parameter, check documentation, defaults to ``''``
         """
 
         adc_type = ADCType.get(adc_type)
@@ -638,13 +635,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(command)
         self.check_errors()
 
-    def adc_averaging(self, number, mode="Auto"):
+    def adc_averaging(self, number: int, mode: AutoManual | str = "Auto"):
         """Set number of averaging samples of the HSADC. (``AV``)
 
         Defaults: N=1, Auto
 
-        :param int number: Number of averages
-        :param AutoManual mode: Mode (``'Auto','Manual'``), defaults to 'Auto'
+        :param number: Number of averages
+        :param mode: Mode (``'Auto','Manual'``), defaults to 'Auto'
         """
         if number > 0:
             number = strict_range(number, range(1, 1024))
@@ -688,12 +685,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Read time stamp settings (60) from the instrument."""
         return self.query_learn_header(60)
 
-    def wait_time(self, wait_type, N, offset=0):
+    def wait_time(self, wait_type: WaitTimeType, N: float, offset: int = 0):
         """Configure wait time. (``WAT``)
 
-        :param WaitTimeType wait_type: Wait time type
-        :param float N: Coefficient for initial wait time, default: 1
-        :param int offset: Offset for wait time, defaults to 0
+        :param wait_type: Wait time type
+        :param N: Coefficient for initial wait time, default: 1
+        :param offset: Offset for wait time, defaults to 0
         """
         wait_type = WaitTimeType.get(wait_type).value
         self.write(f"WAT {wait_type}, {N}, {offset}")
@@ -708,15 +705,20 @@ class AgilentB1500(SCPIMixin, Instrument):
         return self.query_learn_header(33)
 
     def sweep_timing(
-        self, hold, delay, step_delay=0, step_trigger_delay=0, measurement_trigger_delay=0
+        self,
+        hold: float,
+        delay: float,
+        step_delay: float = 0,
+        step_trigger_delay: float = 0,
+        measurement_trigger_delay: float = 0,
     ):
         """Set timing parameters for staircase or multi channel sweep. (``WT``)
 
-        :param float hold: Hold time
-        :param float delay: Delay time
-        :param float step_delay: Step delay time, defaults to 0
-        :param float step_trigger_delay: Trigger delay time, defaults to 0
-        :param float measurement_trigger_delay: Measurement trigger delay time,
+        :param hold: Hold time
+        :param delay: Delay time
+        :param step_delay: Step delay time, defaults to 0
+        :param step_trigger_delay: Trigger delay time, defaults to 0
+        :param measurement_trigger_delay: Measurement trigger delay time,
                                                           defaults to 0
         """
         hold = strict_discrete_range(hold, (0, 655.35), 0.01)
@@ -732,14 +734,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         )
         self.check_errors()
 
-    def sweep_auto_abort(self, abort, post="START"):
+    def sweep_auto_abort(self, abort: bool, post: StaircaseSweepPostOutput | str = "START"):
         """Enable/Disable the automatic abort function. (``WM``)
 
         Also set the post measurement condition.
 
-        :param bool abort: Enable/Disable automatic abort
-        :param StaircaseSweepPostOutput post:
-            Output after measurement, defaults to 'Start'
+        :param abort: Enable/Disable automatic abort
+        :param post: Output after measurement, defaults to 'Start'
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
@@ -772,13 +773,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(f"ML {mode}")
         self.check_errors()
 
-    def sampling_timing(self, hold_bias, interval, number, hold_base=0):
+    def sampling_timing(self, hold_bias: float, interval: float, number: int, hold_base: float = 0):
         """Set timing parameters for the sampling measurement. (``MT``)
 
-        :param float hold_bias: Bias hold time
-        :param float interval: Sampling interval
-        :param int number: Number of Samples
-        :param float hold_base: Base hold time, defaults to 0
+        :param hold_bias: Bias hold time
+        :param interval: Sampling interval
+        :param number: Number of Samples
+        :param hold_base: Base hold time, defaults to 0
         """
         n_channels = self.query_meas_settings()["Measurement Channels"]
         n_channels = len(n_channels.split(", "))
@@ -808,13 +809,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         self.write(f"MT {hold_bias}, {interval}, {number}, {hold_base}")
         self.check_errors()
 
-    def sampling_auto_abort(self, abort, post="Bias"):
+    def sampling_auto_abort(self, abort: bool, post: SamplingPostOutput | str = "Bias"):
         """Enable/Disable the automatic abort function. (``MSC``)
 
         Also set the post measurement condition.
 
-        :param bool abort: Enable/Disable automatic abort
-        :param SamplingPostOutput post: Output after measurement, defaults to 'Bias'
+        :param abort: Enable/Disable automatic abort
+        :param post: Output after measurement, defaults to 'Bias'
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
@@ -827,14 +828,13 @@ class AgilentB1500(SCPIMixin, Instrument):
     # Read out of data
     ######################################
 
-    def read_data(self, number_of_points):
+    def read_data(self, number_of_points: int) -> pd.DataFrame:
         """Read all data from buffer and return Pandas DataFrame.
 
         Specify number of measurement points for correct splitting of the data list.
 
-        :param int number_of_points: Number of measurement points
+        :param number_of_points: Number of measurement points
         :return: Measurement Data
-        :rtype: pd.DataFrame
         """
         data = self.read()
         data = data.split(",")
@@ -850,13 +850,12 @@ class AgilentB1500(SCPIMixin, Instrument):
         data.columns = heads
         return data
 
-    def read_channels(self, nchannels):
+    def read_channels(self, nchannels: int) -> tuple:
         """Read data for 1 measurement point from the buffer for the specified number of channels.
 
-        :param int nchannels: Number of channels which return data (includes measurement
+        :param nchannels: Number of channels which return data (includes measurement
             channels and sweep sources, depending on data output settings)
         :return: Measurement data
-        :rtype: tuple
         """
         data = self.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
@@ -896,14 +895,14 @@ class AgilentB1500(SCPIMixin, Instrument):
 class SMU(Channel):
     """Provide specific methods for the SMUs of the Agilent B1500 mainframe.
 
-    :param AgilentB1500 parent: Instance of the B1500 mainframe class
-    :param int index: Index of the SMU
-    :param str type: Type of the SMU
-    :param str name: Name of the SMU
-    :param int slot: Slot number of the SMU
+    :param parent: Instance of the B1500 mainframe class
+    :param index: Index of the SMU
+    :param type: Type of the SMU
+    :param name: Name of the SMU
+    :param slot: Slot number of the SMU
     """
 
-    def __init__(self, parent, index, type, name, slot, **kwargs):
+    def __init__(self, parent: AgilentB1500, index: int, type: str, name: str, slot: int, **kwargs):
         super().__init__(parent, slot, **kwargs)
         slot = strict_discrete_set(slot, range(1, 11))
         self.channel = slot
@@ -1045,15 +1044,23 @@ class SMU(Channel):
     ######################################
     # Force Constant Output
     ######################################
-    def force(self, source_type, source_range, output, comp="", comp_polarity="", comp_range=""):
+    def force(
+        self,
+        source_type: str,
+        source_range: int | str,
+        output: float,
+        comp: float | str = "",
+        comp_polarity: CompliancePolarity | str = "",
+        comp_range: int | str = "",
+    ):
         """Apply DC current or voltage from SMU immediately. (``DI``, ``DV``)
 
-        :param str source_type: Source type (``'Voltage','Current'``)
-        :param int or str source_range: Output range index or name
-        :param float output: Source output value in A or V
-        :param float comp: Compliance value, defaults to previous setting
-        :param CompliancePolarity comp_polarity: Compliance polarity, defaults to auto
-        :param int or str comp_range: Compliance ranging type, defaults to auto
+        :param source_type: Source type (``'Voltage','Current'``)
+        :param source_range: Output range index or name
+        :param output: Source output value in A or V
+        :param comp: Compliance value, defaults to previous setting
+        :param comp_polarity: Compliance polarity, defaults to auto
+        :param comp_range: Compliance ranging type, defaults to auto
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "DV"
@@ -1080,27 +1087,27 @@ class SMU(Channel):
 
     def ramp_source(
         self,
-        source_type,
-        source_range,
-        target_output,
-        comp="",
-        comp_polarity="",
-        comp_range="",
-        stepsize=0.001,
-        pause=20e-3,
+        source_type: str,
+        source_range: int | str,
+        target_output: float,
+        comp: float | str = "",
+        comp_polarity: CompliancePolarity | str = "",
+        comp_range: int | str = "",
+        stepsize: float = 0.001,
+        pause: float = 20e-3,
     ):
         """Ramp to a target output from the set value with a given step size.
 
         Each step is separated by a pause duration.
 
-        :param str source_type: Source type (``'Voltage'`` or ``'Current'``)
-        :param int or str source_range: Output range index or name
-        :param float target_output: Target output voltage or current
-        :param float comp: Compliance, defaults to previous setting
-        :param CompliancePolarity comp_polarity: Compliance polarity, defaults to auto
-        :param int or str comp_range: Compliance ranging type, defaults to auto
-        :param float stepsize: Maximum size of steps
-        :param float pause: Duration in seconds to wait between steps
+        :param source_type: Source type (``'Voltage'`` or ``'Current'``)
+        :param source_range: Output range index or name
+        :param target_output: Target output voltage or current
+        :param comp: Compliance, defaults to previous setting
+        :param comp_polarity: Compliance polarity, defaults to auto
+        :param comp_range: Compliance ranging type, defaults to auto
+        :param stepsize: Maximum size of steps
+        :param pause: Duration in seconds to wait between steps
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
@@ -1190,11 +1197,11 @@ class SMU(Channel):
         self.write(f"RV {self.id}, {meas_range_index}")
         self.check_errors()
 
-    def meas_range_current_auto(self, mode, rate=50):
+    def meas_range_current_auto(self, mode: int, rate: int = 50):
         """Specify the auto range operation. Check Documentation. (``RM``)
 
-        :param int mode: Range changing operation mode
-        :param int rate: Parameter used to calculate the *current* value, defaults to 50
+        :param mode: Range changing operation mode
+        :param rate: Parameter used to calculate the *current* value, defaults to 50
         """
         mode = strict_range(mode, range(1, 4))
         if mode == 1:
@@ -1212,18 +1219,26 @@ class SMU(Channel):
     ######################################
 
     def staircase_sweep_source(
-        self, source_type, mode, source_range, start, stop, steps, comp, Pcomp=""
+        self,
+        source_type: str,
+        mode: SweepMode,
+        source_range: int,
+        start: float,
+        stop: float,
+        steps: int,
+        comp: float,
+        Pcomp: float | str = "",
     ):
         """Specify staircase sweep source parameters. (``WV`` or ``WI``)
 
-        :param str source_type: Source type (``'Voltage', 'Current'``)
-        :param SweepMode mode: Sweep mode
-        :param int source_range: Source range index
-        :param float start: Sweep start value
-        :param float stop: Sweep stop value
-        :param int steps: Number of sweep steps
-        :param float comp: Compliance value
-        :param float Pcomp: Power compliance, defaults to not set
+        :param source_type: Source type (``'Voltage', 'Current'``)
+        :param mode: Sweep mode
+        :param source_range: Source range index
+        :param start: Sweep start value
+        :param stop: Sweep stop value
+        :param steps: Number of sweep steps
+        :param comp: Compliance value
+        :param Pcomp: Power compliance, defaults to not set
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WV"
@@ -1251,16 +1266,24 @@ class SMU(Channel):
 
     # Synchronous Output: WSI, WSV, BSSI, BSSV, LSSI, LSSV
 
-    def synchronous_sweep_source(self, source_type, source_range, start, stop, comp, Pcomp=""):
+    def synchronous_sweep_source(
+        self,
+        source_type: str,
+        source_range: int,
+        start: float,
+        stop: float,
+        comp: float,
+        Pcomp: float | str = "",
+    ):
         """Specify synchronous staircase sweep source (current or voltage)
         and its parameters. (``WSV`` or ``WSI``)
 
-        :param str source_type: Source type (``'Voltage','Current'``)
-        :param int source_range: Source range index
-        :param float start: Sweep start value
-        :param float stop: Sweep stop value
-        :param float comp: Compliance value
-        :param float Pcomp: Power compliance, defaults to not set
+        :param source_type: Source type (``'Voltage','Current'``)
+        :param source_range: Source range index
+        :param start: Sweep start value
+        :param stop: Sweep stop value
+        :param comp: Compliance value
+        :param Pcomp: Power compliance, defaults to not set
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "WSV"
@@ -1283,16 +1306,18 @@ class SMU(Channel):
     # not implemented: MSP, MCC, MSC
     ######################################
 
-    def sampling_source(self, source_type, source_range, base, bias, comp):
+    def sampling_source(
+        self, source_type: str, source_range: int, base: float, bias: float, comp: float
+    ):
         """Set DC source (current or voltage) for sampling measurement. (``MV`` or ``MI``)
 
         :meth:`force` commands on the same channel overwrite this setting.
 
-        :param str source_type: Source type (``'Voltage','Current'``)
-        :param int source_range: Source range index
-        :param float base: Base voltage/current
-        :param float bias: Bias voltage/current
-        :param float comp: Compliance value
+        :param source_type: Source type (``'Voltage','Current'``)
+        :param source_range: Source range index
+        :param base: Base voltage/current
+        :param bias: Bias voltage/current
+        :param comp: Compliance value
         """
         if source_type.upper() == "VOLTAGE":
             cmd = "MV"
@@ -1318,16 +1343,16 @@ class Ranging:
 
     Transformation of available voltage/current range names to index and back.
 
-    :param list supported_ranges: Ranges which are supported (list of range indices)
-    :param dict ranges: All range names ``{Name: Indices}``
-    :param bool fixed_ranges: Add fixed ranges (negative indices), defaults to False
+    :param supported_ranges: Ranges which are supported (list of range indices)
+    :param ranges: All range names ``{Name: Indices}``
+    :param fixed_ranges: Add fixed ranges (negative indices), defaults to False
 
     .. automethod:: __call__
     """
 
     _Range = namedtuple("Range", "name index")
 
-    def __init__(self, supported_ranges, ranges, fixed_ranges=False):
+    def __init__(self, supported_ranges: list, ranges: dict, fixed_ranges: bool = False):
         if fixed_ranges:
             # add negative indizes for measurement ranges (fixed ranging)
             supported_ranges += [-i for i in supported_ranges]
@@ -1374,14 +1399,13 @@ class Ranging:
         self.indizes = indizes  # Name -> Index
         self.ranges = ranges  # Index -> Name
 
-    def __call__(self, input_value):
+    def __call__(self, input_value: str | int) -> _Range:
         """Give named tuple (name/index) of given Range.
 
         Throws error if range is not supported by this SMU.
 
-        :param str or int input_value: Range name or index
+        :param input_value: Range name or index
         :return: Named tuple (name/index) of range
-        :rtype: namedtuple
         """
         # set index
         if isinstance(input_value, int):
@@ -1523,11 +1547,11 @@ class SMUCurrentRanging:
 class SPGU(Channel):
     """Provide specific methods for the SPGU module of the Agilent B1500 mainframe.
 
-    :param AgilentB1500 parent: Instance of the B1500 mainframe class
-    :param int channel: Channel number of the SPGU
+    :param parent: Instance of the B1500 mainframe class
+    :param channel: Channel number of the SPGU
     """
 
-    def __init__(self, parent, channel, **kwargs):
+    def __init__(self, parent: AgilentB1500, channel: int, **kwargs):
         super().__init__(parent, channel, **kwargs)
         self.ch1 = self.add_child(SPGUChannel, int(f"{self.id}01"), prefix="ch")
         self.ch2 = self.add_child(SPGUChannel, int(f"{self.id}02"), prefix="ch")
@@ -1561,13 +1585,13 @@ class SPGU(Channel):
         values=[2e-8, 10],
     )
 
-    def set_output_mode(self, mode, condition=None):
+    def set_output_mode(self, mode: SPGUOutputMode, condition: int | float | None = None):
         """Set the operating mode for SPGU channel outputs. (``SPRM``)
 
         This setting applies to all SPGU modules installed in the B1500.
 
-        :param SPGUOperationMode mode: SPGU operation mode
-        :param int or float or None condition: Number of pulses for :attr:`SPGUOutputMode.COUNT` or
+        :param mode: SPGU operation mode
+        :param condition: Number of pulses for :attr:`SPGUOutputMode.COUNT` or
             output duration for :attr:`SPGUOutputMode.DURATION`.
             Not used for :attr:`SPGUOutputMode.FREE_RUN`
         """
@@ -1593,11 +1617,10 @@ class SPGU(Channel):
 
         self.write(f"SPRM {mode.value}, {int(condition)}")
 
-    def get_output_mode(self):
+    def get_output_mode(self) -> tuple[SPGUOutputMode, float | None]:
         """Get the current operating mode and condition for SPGU channel outputs. (``SPRM?``)
 
         :return: Tuple of (mode, condition)
-        :rtype: tuple
         """
         response = self.ask("SPRM?")
         mode, condition = response.split(",")
@@ -1627,26 +1650,30 @@ class SPGUChannel(Channel):
         """Control the load impedance (``SER``) in Ohm (float).""",
     )
 
-    def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
+    def set_output_voltage(
+        self,
+        source: SPGUSignalSource | int = 1,
+        base_voltage: float = 0,
+        peak_voltage: float = 0,
+    ):
         """Set the output voltage of the SPGU channel. (``SPV``)
 
-        :param SPGUSignalSource or int source: Signal source for the output voltage,
+        :param source: Signal source for the output voltage,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float base_voltage: Pulse base voltage or DC output voltage in V,
+        :param base_voltage: Pulse base voltage or DC output voltage in V,
             defaults to 0
-        :param float peak_voltage: Pulse peak voltage in V, defaults to 0
+        :param peak_voltage: Pulse peak voltage in V, defaults to 0
         """
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
         self.write(f"SPV {self.id}, {source}, {base_voltage}, {peak_voltage}")
 
-    def get_output_voltage(self, source=1):
+    def get_output_voltage(self, source: SPGUSignalSource | int = 1) -> tuple[float, float]:
         """Get the output voltage of the specified signal source. (``SPV?``)
 
-        :param SPGUSignalSource or int source: Signal source
+        :param source: Signal source
         :return: Tuple of (base_voltage, peak_voltage)
-        :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPV? {self.id}, {source}")
@@ -1665,23 +1692,23 @@ class SPGUChannel(Channel):
 
     def set_pulse_timings(
         self,
-        source=1,
-        delay=0,
-        width=1e-7,
-        rise_time=2e-8,
-        fall_time=None,
+        source: SPGUSignalSource | int = 1,
+        delay: float = 0,
+        width: float = 1e-7,
+        rise_time: float = 2e-8,
+        fall_time: float | None = None,
     ):
         """Set the timing parameters for the SPGU channel. (``SPT``)
 
         The SPGU operating mode must be set to PG with the ``SIM 0`` command before setting
         the pulse timings.
 
-        :param SPGUSignalSource or int source: Signal source for the pulse timings,
+        :param source: Signal source for the pulse timings,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float delay: Pulse delay in seconds, defaults to 0
-        :param float width: Pulse width in seconds, defaults to 1e-7
-        :param float rise_time: Pulse rise time in seconds, defaults to 2e-8
-        :param float fall_time: Pulse fall time in seconds, defaults to rise_time if None
+        :param delay: Pulse delay in seconds, defaults to 0
+        :param width: Pulse width in seconds, defaults to 1e-7
+        :param rise_time: Pulse rise time in seconds, defaults to 2e-8
+        :param fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
         source = SPGUSignalSource.get(source).value
         if source == SPGUSignalSource.DC:
@@ -1691,16 +1718,15 @@ class SPGUChannel(Channel):
             command += f", {fall_time}"
         self.write(command)
 
-    def get_pulse_timings(self, source=1):
+    def get_pulse_timings(self, source: SPGUSignalSource | int = 1) -> tuple:
         """Get the timing parameters for the SPGU channel. (``SPT?``)
 
         The SPGU operating mode must be set to PG with the ``SIM 0`` command before getting the
         pulse timings.
 
-        :param SPGUSignalSource or int source: Signal source for the pulse timings,
+        :param source: Signal source for the pulse timings,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
         :return: Tuple of (delay, width, rise_time, fall_time)
-        :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
         response = self.ask(f"SPT? {self.id}, {source}")
@@ -1734,10 +1760,10 @@ class CustomIntEnum(IntEnum):
         # str() conversion just because of pylint bug
 
     @classmethod
-    def get(cls, input_value):
+    def get(cls, input_value: str | int):
         """Give Enum member by specifying name or value.
 
-        :param str or int input_value: Enum name or value
+        :param input_value: Enum name or value
         :return: Enum member
         """
         if isinstance(input_value, int):
@@ -1947,14 +1973,13 @@ class QueryLearn:
     """Methods to issue and process ``*LRN?`` (learn) command and response."""
 
     @staticmethod
-    def query_learn(ask, query_type):
+    def query_learn(ask, query_type: int | str) -> dict:
         """Issue ``*LRN?`` (learn) command to the instrument to read
         configuration.
         Return dictionary of commands and set values.
 
-        :param int query_type: Query type according to the programming guide
+        :param query_type: Query type according to the programming guide
         :return: Dictionary of command and set values
-        :rtype: dict
         """
         response = ask("*LRN? " + str(query_type))
         # response.split(';')
@@ -2000,19 +2025,20 @@ class QueryLearn:
         return response_dict
 
     @classmethod
-    def query_learn_header(cls, ask, query_type, smu_references, single_command=False):
+    def query_learn_header(
+        cls, ask, query_type: int | str, smu_references: dict, single_command: str | bool = False
+    ) -> dict:
         """Issue ``*LRN?`` (learn) command to the instrument to
         read configuration.
         Processes information to human readable values for debugging
         purposes or file headers.
 
         :param Instrument.ask ask: ask method of the instrument
-        :param int or str query_type: Number according to Programming Guide
-        :param dict smu_references: SMU references by channel
-        :param str single_command: if only a single command should be returned,
+        :param query_type: Number according to Programming Guide
+        :param smu_references: SMU references by channel
+        :param single_command: if only a single command should be returned,
                                    defaults to False
         :return: Read configuration
-        :rtype: dict
         """
         response = cls.query_learn(ask, query_type)
         if single_command is not False:
@@ -2026,16 +2052,15 @@ class QueryLearn:
         return ret
 
     @staticmethod
-    def to_dict(parameters, names, *args):
+    def to_dict(parameters: dict, names: list, *args) -> dict:
         """Take parameters returned by :meth:`query_learn` and ordered list
         of corresponding parameter names (optional function) and return
         dict of parameters including names.
 
-        :param dict parameters: Parameters for one command returned
+        :param parameters: Parameters for one command returned
                                 by :meth:`query_learn`
-        :param list names: list of names or (name, function) tuples, ordered
+        :param names: list of names or (name, function) tuples, ordered
         :return: Parameter name and (processed) parameter
-        :rtype: dict
         """
         ret = OrderedDict()
         if isinstance(parameters, str):
