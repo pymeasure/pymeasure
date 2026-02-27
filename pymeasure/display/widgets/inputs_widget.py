@@ -25,11 +25,13 @@
 import logging
 
 from functools import partial
+from typing import Union, Type
 
-from ..inputs import (BooleanInput, IntegerInput, ListInput, ScientificInput,
-                      StringInput, VectorInput)
+from ..inputs import (BooleanInput, Input, IntegerInput, ListInput, ScientificInput,
+                      StringInput, UncertQuantInput, VectorInput)
 from ..Qt import QtWidgets, QtCore
-from ...experiment import parameters
+from ...experiment import parameters, Procedure
+from ..input_groups import Range1DInputGroup, Range2DInputGroup, InputGroup, NO_LABEL_INPUTS
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -39,30 +41,53 @@ class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
+    selection_triggered = QtCore.Signal(str, str, object)
 
-    # tuple of Input classes that do not need an external label
-    NO_LABEL_INPUTS = (BooleanInput,)
-
-    def __init__(self, procedure_class, inputs=(), parent=None, hide_groups=True,
-                 inputs_in_scrollarea=False):
-        super().__init__(parent)
+    def __init__(self,
+                 procedure_class: Type[Procedure],
+                 inputs: Union[tuple[str], None] = None,
+                 hide_groups: bool = True,
+                 inputs_in_scrollarea: bool = False,
+                 **kwargs):
+        super().__init__(**kwargs)
         self._procedure_class = procedure_class
         self._procedure = procedure_class()
-        self._inputs = inputs
+        self._inputs = inputs if inputs else ()
         self._setup_ui()
         self._layout(inputs_in_scrollarea)
         self._hide_groups = hide_groups
         self._setup_visibility_groups()
 
-    def _setup_ui(self):
+    def set_selector(self, data):
+        selector = data[0]
+        result = data[1]
+        selector_widget = getattr(self, selector)
+        selector_widget.set_range(result)
+
+    def _setup_ui(self) -> None:
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            if parameter.ui_class is not None:
-                element = parameter.ui_class(parameter)
 
+            if isinstance(parameter,parameters.ParameterGroup):
+                element = InputGroup(parameter)
+
+            elif isinstance(parameter, parameters.Range1DParameterGroup):
+                element = Range1DInputGroup(parameter)
+                element.selection_triggered.connect(partial(self.selection_triggered.emit, name, "1D"))
+
+            elif isinstance(parameter, parameters.Range2DParameterGroup):
+                element = Range2DInputGroup(parameter)
+                element.selection_triggered.connect(partial(self.selection_triggered.emit, name, "2D"))
+                
+            elif parameter.ui_class is not None:
+                element = parameter.ui_class(parameter)
+                
             elif isinstance(parameter, parameters.FloatParameter):
                 element = ScientificInput(parameter)
+
+            elif isinstance(parameter, parameters.PhysicalParameter):
+                element = UncertQuantInput(parameter)
 
             elif isinstance(parameter, parameters.IntegerParameter):
                 element = IntegerInput(parameter)
@@ -80,7 +105,7 @@ class InputsWidget(QtWidgets.QWidget):
                 element = StringInput(parameter)
 
             setattr(self, name, element)
-
+        
     def _layout(self, inputs_in_scrollarea):
         vbox = QtWidgets.QVBoxLayout(self)
         vbox.setSpacing(6)
@@ -89,13 +114,15 @@ class InputsWidget(QtWidgets.QWidget):
         self.labels = {}
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
-            if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
+            input_inst: Input = getattr(self, name)
+            if not isinstance(input_inst, NO_LABEL_INPUTS) and not isinstance(input_inst, InputGroup):
                 label = QtWidgets.QLabel(self)
                 label.setText("%s:" % parameters[name].name)
                 vbox.addWidget(label)
+                vbox.addWidget(input_inst)
                 self.labels[name] = label
-
-            vbox.addWidget(getattr(self, name))
+            else:
+                vbox.addWidget(input_inst)
 
         if inputs_in_scrollarea:
             scroll_area = QtWidgets.QScrollArea()
@@ -120,7 +147,7 @@ class InputsWidget(QtWidgets.QWidget):
         parameters = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameters[name]
-
+            
             group_state = {g: True for g in parameter.group_by}
 
             for group_name, condition in parameter.group_by.items():
@@ -136,21 +163,22 @@ class InputsWidget(QtWidgets.QWidget):
 
                 groups[group_name].append((name, condition, group_state))
 
+        #TODO: Functions for grouping should not depend on Qt.
         for group_name, group in groups.items():
             toggle = partial(self.toggle_group, group_name=group_name, group=group)
             group_el = getattr(self, group_name)
             if isinstance(group_el, BooleanInput):
-                group_el.toggled.connect(toggle)
-                toggle(group_el.isChecked())
+                group_el.widget.toggled.connect(toggle)
+                toggle(group_el.widget.isChecked())
             elif isinstance(group_el, (StringInput, VectorInput)):
-                group_el.textChanged.connect(toggle)
-                toggle(group_el.text())
+                group_el.widget.textChanged.connect(toggle)
+                toggle(group_el.widget.text())
             elif isinstance(group_el, (IntegerInput, ScientificInput)):
-                group_el.valueChanged.connect(toggle)
-                toggle(group_el.value())
+                group_el.widget.valueChanged.connect(toggle)
+                toggle(group_el.widget.value())
             elif isinstance(group_el, ListInput):
-                group_el.currentTextChanged.connect(toggle)
-                toggle(group_el.currentText())
+                group_el.widget.currentTextChanged.connect(toggle)
+                toggle(group_el.widget.currentText())
             else:
                 raise NotImplementedError(
                     f"Grouping based on {group_name} ({group_el}) is not implemented.")

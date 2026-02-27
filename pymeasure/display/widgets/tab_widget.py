@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from ..Qt import QtCore, QtGui
 
 import logging
 
@@ -36,10 +37,12 @@ class TabWidget:
         users should inherit from this class and provide an
         implementation of these methods
     """
+    selection_finished = QtCore.Signal(object)
 
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
+        self.selection_active = False
 
     def new_curve(self, *args, **kwargs):
         """ Create a new curve """
@@ -55,6 +58,9 @@ class TabWidget:
 
     def set_color(self, curve, color):
         """ Set color for widget """
+        pass
+
+    def start_selection(self):
         pass
 
     def preview_widget(self, parent=None):
@@ -74,3 +80,20 @@ class TabWidget:
         """
 
         return None
+
+    def selection_tags(self) -> list[str]:
+        return []
+
+    def enter_selection_mode(self):
+        if not self.selection_active:
+            self.selection_active = True
+
+    def exit_selection_mode(self):
+        return None
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        if event.key() == QtCore.Qt.Key.Key_A:
+            if self.selection_active:
+                self.selection_finished.emit(self.exit_selection_mode())
+                self.selection_active = False
+        super().keyPressEvent(event)

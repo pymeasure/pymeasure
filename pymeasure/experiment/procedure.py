@@ -30,7 +30,7 @@ from importlib.machinery import SourceFileLoader
 import re
 from pint import UndefinedUnitError
 
-from .parameters import Parameter, Measurable, Metadata
+from .parameters import Parameter, Measurable, Metadata, ParameterGroup
 from pymeasure.units import ureg
 
 log = logging.getLogger(__name__)
@@ -137,13 +137,13 @@ class Procedure:
         """
         if not self._parameters:
             self._parameters = {}
-        for item, parameter in inspect.getmembers(self.__class__):
-            if isinstance(parameter, Parameter):
-                self._parameters[item] = deepcopy(parameter)
-                if parameter.is_set():
-                    setattr(self, item, parameter.value)
+        for key, instance in inspect.getmembers(self.__class__):
+            if isinstance(instance, Parameter) or isinstance(instance, ParameterGroup):
+                self._parameters[key] = deepcopy(instance)
+                if instance.is_set():
+                    setattr(self, key, instance.value)
                 else:
-                    setattr(self, item, None)
+                    setattr(self, key, None)
 
     def parameters_are_set(self):
         """ Returns True if all parameters are set """
