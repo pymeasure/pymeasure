@@ -166,6 +166,7 @@ def test_channel_setup():
             [(b"HEADer OFF", None),
              (b"VERBose ON", None),
              (b"CH1:BANdwidth?", b"1.0E+9"),
+             (b"CH1:DESKew?", b"0.0E+0"),
              (b"CH1:COUPling?", b"DC"),
              (b"CH1:OFFSet?", b"0.0"),
              (b"DISplay:GLObal:CH1:STATE?", b"1"),
@@ -176,7 +177,8 @@ def test_channel_setup():
              ]
     ) as instr:
         assert instr.ch_1.current_configuration == {"channel": 1,
-                                                    "bandwidth_limit": 1.0E+9,
+                                                    "bandwidth_limit": '1GHz',
+                                                    "deskew": 0.0E+0,
                                                     "coupling": "dc",
                                                     "offset": 0.0,
                                                     "display": True,

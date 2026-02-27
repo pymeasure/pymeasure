@@ -3,8 +3,7 @@ import pytest
 from datetime import datetime
 import numpy as np
 from pyvisa.errors import VisaIOError
-from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58,\
-    TektronixMsoScopeMathChannel
+from pymeasure.instruments.tektronix.tektronixMsoSeries import TektronixMSO58, TektronixMsoScopeMathChannel
 
 
 class TestTektronixMSO58:
@@ -22,7 +21,7 @@ class TestTektronixMSO58:
     #########################
 
     BOOLEANS = [False, True]
-    #BANDWIDTH_LIMITS = [[20.0000E+6, '20MHz'], [250.0000E+6, "250MHz"], [1.0000E+9, "1GHz"]]
+    # BANDWIDTH_LIMITS = [[20.0000E+6, '20MHz'], [250.0000E+6, "250MHz"], [1.0000E+9, "1GHz"]]
     BANDWIDTH_LIMITS = ['20MHz', "250MHz", "1GHz"]
     CHANNEL_COUPLINGS = ["ac", "dc"]
     ACQUISITION_MODES = ["SAMPLE", "AVERAGE", "PEAKDETECT", "ENVELOPE"]
