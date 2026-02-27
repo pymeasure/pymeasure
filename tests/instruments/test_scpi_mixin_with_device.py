@@ -22,10 +22,44 @@
 # THE SOFTWARE.
 #
 
-from .keysight81160A import Keysight81160A
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightE3631A import KeysightE3631A
-from .keysightE36312A import KeysightE36312A
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightPNA import KeysightPNA
+
+import pytest
+
+from pymeasure.instruments import Instrument, SCPIMixin
+
+
+class SCPIDevice(SCPIMixin, Instrument):
+    def __init__(self, adapter, name="SCPI Compatible Device", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+
+
+@pytest.fixture(scope="module")
+def scpi_device(connected_device_address):
+    scpi_device = SCPIDevice(connected_device_address)
+    scpi_device.clear()
+    return scpi_device
+
+
+def test_complete(scpi_device):
+    assert scpi_device.complete == "1"
+
+
+def test_status(scpi_device):
+    assert scpi_device.status
+
+
+def test_options(scpi_device):
+    assert scpi_device.options
+
+
+def test_id(scpi_device):
+    assert scpi_device.id
+
+
+def test_next_error(scpi_device):
+    err = scpi_device.next_error
+    assert int(err[0]) == 0
+
+
+def test_reset(scpi_device):
+    scpi_device.reset()

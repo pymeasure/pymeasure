@@ -22,6 +22,7 @@ dependencies:
   - setuptools_scm # don't pin, to get newest features
   - sphinx=7.4.7
   - sphinx_rtd_theme=3.0.0
+  - sphinx-autodoc-typehints=2.3.0
 #  pip is currently not needed, but the recommended tool when packages that are unavailable on conda are required
   # - pip  # don't pin, to gain newest conda compatibility fixes
   # - pip:
