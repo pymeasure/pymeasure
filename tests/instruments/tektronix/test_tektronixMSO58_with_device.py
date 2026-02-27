@@ -134,6 +134,7 @@ class TestTektronixMSO58:
             "channel": 1,
             "bandwidth_limit": "1GHz",
             "coupling": "dc",
+            'deskew': 0.0,
             "offset": 0.0,
             "display": True,
             "unit": "V",
@@ -250,10 +251,10 @@ class TestTektronixMSO58:
         with pytest.raises(ValueError):
             instrument.acquisition_state = 1
 
-    def test_acquisition_single(self, resetted_instrument):
-        resetted_instrument.single()
+    def test_acquisition_single(self, autoscaled_instrument):
+        autoscaled_instrument.single()
         sleep(1)
-        assert resetted_instrument.acquisition_state == 'STOP'
+        assert autoscaled_instrument.acquisition_state == 'STOP'
 
     # Data
     def test_download_image(self, instrument):
