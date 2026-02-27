@@ -110,3 +110,6 @@ settings.json
 
 # Vim
 *.swp
+
+# Pyright
+pyrightconfig.json

@@ -28,6 +28,7 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class TabWidget:
     """ Utility class to define default implementation for some basic methods.
 
@@ -37,7 +38,7 @@ class TabWidget:
         implementation of these methods
     """
     selection_finished = QtCore.Signal(object)
-    
+
     def __init__(self, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
@@ -61,7 +62,7 @@ class TabWidget:
 
     def start_selection(self):
         pass
-    
+
     def preview_widget(self, parent=None):
         """ Return a Qt widget suitable for preview during loading
 
@@ -82,9 +83,10 @@ class TabWidget:
 
     def selection_tags(self) -> list[str]:
         return []
-    
+
     def enter_selection_mode(self):
-        self.selection_active = True
+        if not self.selection_active:
+            self.selection_active = True
 
     def exit_selection_mode(self):
         return None

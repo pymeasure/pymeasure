@@ -30,10 +30,7 @@ import subprocess
 import tempfile
 import shutil
 
-from numpy._core.numeric import False_
 import pyqtgraph as pg
-
-from pymeasure.display.widgets.image_widget import ImageWidget
 
 from ..browser import BrowserItem
 from ..manager import Manager, Experiment
@@ -57,8 +54,6 @@ log.addHandler(logging.NullHandler())
 class TabArea(QtWidgets.QTabWidget):
     selection_started = QtCore.Signal()
     selection_completed = QtCore.Signal(object)
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
 
     def start_selection(self, selector, tag, initial_range):
         self.selection_started.emit()

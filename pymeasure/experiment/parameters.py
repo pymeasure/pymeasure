@@ -54,15 +54,16 @@ class Parameter(Generic[T]):
         parameter.
     """
     _value: Union[T, None]
+
     def __init__(self,
                  name: str,
-                 default: Union[T, None]=None,
-                 units: Union[str, None]=None,
+                 default: Union[T, None] = None,
+                 units: Union[str, None] = None,
                  ui_class: Union[QtWidgets.QWidget, None] = None,
                  group_name: Union[str, None] = None,
                  group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
-                 description: Union[str, None]=None):
+                 description: Union[str, None] = None):
         self.name = name
         separator = ": "
         if separator in name:
@@ -458,6 +459,7 @@ class ListParameter(Parameter[SupportsStr]):
             return tuple(self._choices.values())
         return None
 
+
 class PhysicalParameter(VectorParameter):
     """ :class:`.VectorParameter` sub-class of 2 dimensions to store a value
     and its uncertainty.
@@ -470,7 +472,7 @@ class PhysicalParameter(VectorParameter):
     :param default: The default value
     :param ui_class: A Qt class to use for the UI of this parameter
     """
-    #TODO: Rework this class and add an Input that overrides value.
+    # TODO: Rework this class and add an Input that overrides value.
     def __init__(self,
                  name: str,
                  default: Union[list[float], None] = None,
@@ -481,11 +483,13 @@ class PhysicalParameter(VectorParameter):
                  group_by: Union[GroupByType, None] = None,
                  group_condition: GroupConditionType = bool(True),
                  description: Union[str, None] = None):
+
         self._utype = ListParameter("uncertainty type",
                                     choices=['absolute', 'relative', 'percentage'],
                                     default=None)
         self._utype.value = uncertainty_type
-        super().__init__(name, default, units, 2, ui_class, group_name, group_by, group_condition, description)
+        super().__init__(name, default, units, 2, ui_class, group_name,
+                         group_by, group_condition, description)
 
     def convert(self, value):
         if isinstance(value, str):
@@ -518,7 +522,7 @@ class PhysicalParameter(VectorParameter):
         return value
 
     @property
-    def uncertainty_type(self)->Literal["absolute", "relative", "percentage"]:
+    def uncertainty_type(self) -> Literal["absolute", "relative", "percentage"]:
         return self._utype.value
 
     @uncertainty_type.setter
@@ -612,12 +616,17 @@ class Range1DParameterGroup(ParameterGroup):
                  group_by: Union[GroupByType, None] = {},
                  start_kwargs = {},
                  stop_kwargs = {},
-                 no_step_kwargs = {}) -> None:
+                 no_step_kwargs = {},
+                 **kwargs) -> None:
         self.var_name = name.lower().replace(" ", "_")
+        start_kwargs = {**kwargs, **start_kwargs}
+        stop_kwargs = {**kwargs, **stop_kwargs}
+        no_step_kwargs = {**kwargs, **no_step_kwargs}
         parameters = {
-            f"{self.var_name}_start": FloatParameter("Start",default=0, **start_kwargs),
-            f"{self.var_name}_stop": FloatParameter("Stop",default=1, **stop_kwargs),
-            f"{self.var_name}_no_steps": IntegerParameter("Number of steps",default=50, **no_step_kwargs)
+            f"{self.var_name}_start": FloatParameter("Start", default=0, **start_kwargs),
+            f"{self.var_name}_stop": FloatParameter("Stop", default=1, **stop_kwargs),
+            f"{self.var_name}_no_steps": IntegerParameter(
+                "Number of steps", default=50, **no_step_kwargs)
         }
         super().__init__(name, group_by, **parameters)
 
@@ -644,8 +653,15 @@ class Range2DParameterGroup(ParameterGroup):
                  stop_kwargs_y = {},
                  no_step_kwargs_x = {},
                  no_step_kwargs_y = {},
+                 **kwargs
                  ) -> None:
         self.var_name = name.lower().replace(" ", "_")
+        start_kwargs_x = {**kwargs, **start_kwargs_x}
+        stop_kwargs_x = {**kwargs, **stop_kwargs_x}
+        no_step_kwargs_x = {**kwargs, **no_step_kwargs_x}
+        start_kwargs_y = {**kwargs, **start_kwargs_y}
+        stop_kwargs_y = {**kwargs, **stop_kwargs_y}
+        no_step_kwargs_y = {**kwargs, **no_step_kwargs_y}
         parameters = {
             f"{self.var_name}_start_x": FloatParameter("Start x",default=0., **start_kwargs_x),
             f"{self.var_name}_stop_x": FloatParameter("Stop x",default=1., **stop_kwargs_x),

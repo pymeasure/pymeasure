@@ -42,7 +42,6 @@ dependencies = [
     "pyserial>=2.7",
     "pyqtgraph>=0.12",
     "qtpy>=2.4",
-    "pyside6>=6.10.1",
 ]
 
 [project.optional-dependencies]

@@ -35,7 +35,10 @@ from .Qt import QtGui, QtWidgets, QtCore
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+
 class TrailingButton(QtWidgets.QPushButton):
+    WIDTH: int = 20
+
     def __init__(self, glyph: str, slot: Callable, tooltip: str, *args, **kwargs) -> None:
         super().__init__(glyph, *args, **kwargs)
         self.setStyleSheet(
@@ -51,12 +54,14 @@ class TrailingButton(QtWidgets.QPushButton):
             }
             """
         )
-        self.setFixedWidth(20)
+        self.setFixedWidth(self.WIDTH)
         self.setToolTip(tooltip)
         self.clicked.connect(slot)
-        
+
+
 P = TypeVar("P", bound=Parameter)
 Q = TypeVar("Q", bound=QtWidgets.QWidget)
+
 
 class Input(QtWidgets.QWidget, Generic[P, Q]):
     """
@@ -72,29 +77,32 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
         self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
         self._layout = QtWidgets.QHBoxLayout(self)
-        self._layout.setContentsMargins(0,0,0,0)
+        self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self._layout.setSpacing(0)
 
         self.widget = widget
-        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding,
+                                  QtWidgets.QSizePolicy.Policy.Preferred)
         self._layout.addWidget(self.widget)
 
         self._trailing_layout = QtWidgets.QHBoxLayout()
-        self._trailing_layout.setContentsMargins(0,0,0,0)
+        self._trailing_layout.setContentsMargins(0, 0, 0, 0)
         self._trailing_layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter)
         self._trailing_widget = QtWidgets.QWidget()
         self._trailing_widget.setLayout(self._trailing_layout)
+        self.current_width = 0
         self._trailing_layout.setSpacing(0)
-        self._trailing_widget.setVisible(False)
         self._layout.addWidget(self._trailing_widget)
-        
+
         self._parameter = None
         self.set_parameter(parameter)
 
         self.reset_button = TrailingButton("⟳", self.reset, "Reset to default")
         self.add_trailing_button(self.reset_button)
-    
+
+        self.set_trailing_buttons_visibility(False)
+
     def set_parameter(self, parameter: P) -> None:
         """
         Connects a new parameter to the input, and initializes the input
@@ -106,12 +114,12 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
 
         if parameter.is_set():
             self.set_value(parameter.value)
-            
+
         if hasattr(parameter, 'units') and parameter.units:
             self.set_units(" %s" % parameter.units)
 
         self.setToolTip(parameter._cli_help_fields())
-        
+
     def set_value(self, value) -> None:
         return None
 
@@ -133,14 +141,21 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
 
     def add_trailing_button(self, button: TrailingButton) -> None:
         self._trailing_layout.addWidget(button)
-    
+        self.current_width += TrailingButton.WIDTH
+        self._trailing_widget.setFixedWidth(self.current_width)
+
+    def set_trailing_buttons_visibility(self, value: bool) -> None:
+        for i in range(self._trailing_layout.count()):
+            if (item := self._trailing_layout.itemAt(i).widget()):
+                item.setVisible(value)
+
     def event(self, e: QtCore.QEvent):
         if e.type() == QtCore.QEvent.Type.HoverEnter:
-            self._trailing_widget.setVisible(True)
+            self.set_trailing_buttons_visibility(True)
         elif e.type() == QtCore.QEvent.Type.HoverLeave:
-            self._trailing_widget.setVisible(False)
+            self.set_trailing_buttons_visibility(False)
         return super().event(e)
-        
+
     @property
     def parameter(self) -> Union[Parameter, None]:
         """
@@ -153,6 +168,7 @@ class Input(QtWidgets.QWidget, Generic[P, Q]):
         self.update_parameter()
         return self._parameter
 
+
 class StringInput(Input[Parameter, QtWidgets.QLineEdit]):
     """
     String input box connected to a :class:`Parameter`. Parameter subclasses
@@ -162,12 +178,9 @@ class StringInput(Input[Parameter, QtWidgets.QLineEdit]):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(widget=QtWidgets.QLineEdit(), parameter=parameter, parent=parent, **kwargs)
-        
+
     def set_value(self, value: str) -> None:
         return self.widget.setText(value)
-
-    def set_units(self, units: str) -> None:
-        return None
 
     def get_value(self) -> Any:
         return self.widget.text()
@@ -209,6 +222,7 @@ class IntegerInput(Input[IntegerParameter, QtWidgets.QSpinBox]):
     def get_value(self) -> int:
         return self.widget.value()
 
+
 class BooleanInput(Input[BooleanParameter, QtWidgets.QCheckBox]):
     """
     Checkbox for boolean values, connected to a :class:`BooleanParameter`.
@@ -216,7 +230,7 @@ class BooleanInput(Input[BooleanParameter, QtWidgets.QCheckBox]):
 
     def __init__(self, parameter, parent=None, **kwargs):
         super().__init__(widget=QtWidgets.QCheckBox(), parameter=parameter, parent=parent, **kwargs)
-    
+
     def set_parameter(self, parameter):
         # Override from :class:`Input`
         self.widget.setText(parameter.name)
@@ -224,9 +238,6 @@ class BooleanInput(Input[BooleanParameter, QtWidgets.QCheckBox]):
 
     def set_value(self, value) -> None:
         self.widget.setChecked(value)
-
-    def set_units(self, units: str) -> None:
-        pass
 
     def get_value(self) -> Any:
         return self.widget.isChecked()
@@ -265,12 +276,16 @@ class ListInput(Input[ListParameter, QtWidgets.QComboBox]):
             raise ValueError("Invalid choice for parameter. "
                              "Must be one of %s" % str(self._parameter.choices)) from e
 
+    # TODO: This class does not cleanly separate
+    # between value and units, setting units in set_parameter
+
     def set_units(self, units: str) -> None:
         pass
 
     def get_value(self):
         return self._parameter.choices[self.widget.currentIndex()]
-    
+
+
 class ScientificInput(Input[FloatParameter, QtWidgets.QDoubleSpinBox]):
     """
     Spinner input box for floating-point values, connected to a
@@ -314,7 +329,7 @@ class ScientificInput(Input[FloatParameter, QtWidgets.QDoubleSpinBox]):
 
     def get_value(self) -> Any:
         return self.widget.value()
-    
+
     def validate(self, text, pos):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
@@ -429,7 +444,7 @@ class UncertQuantInput(Input[PhysicalParameter, UncertaintyWidget]):
         self.pm_button = TrailingButton("±", self._change_uncert_type, "Change uncertainty type")
         self.add_trailing_button(self.pm_button)
         self.widget.setMinimumHeight(22)
-        
+
     def set_value(self, value: list):
         self.widget.set_value(value)
 

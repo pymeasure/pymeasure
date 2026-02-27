@@ -35,17 +35,19 @@ from ..input_groups import Range1DInputGroup, Range2DInputGroup, InputGroup, NO_
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-        
+
+
 class InputsWidget(QtWidgets.QWidget):
     """
     Widget wrapper for various :doc:`inputs`
     """
     selection_triggered = QtCore.Signal(str, str, object)
+
     def __init__(self,
                  procedure_class: Type[Procedure],
                  inputs: Union[tuple[str], None] = None,
-                 hide_groups: bool=True,
-                 inputs_in_scrollarea: bool=False,
+                 hide_groups: bool = True,
+                 inputs_in_scrollarea: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
         self._procedure_class = procedure_class
@@ -61,22 +63,22 @@ class InputsWidget(QtWidgets.QWidget):
         result = data[1]
         selector_widget = getattr(self, selector)
         selector_widget.set_range(result)
-        
+
     def _setup_ui(self) -> None:
         parameter_objects = self._procedure.parameter_objects()
         for name in self._inputs:
             parameter = parameter_objects[name]
-            
-            if isinstance(parameter, parameters.Range1DParameterGroup):
+
+            if isinstance(parameter,parameters.ParameterGroup):
+                element = InputGroup(parameter)
+
+            elif isinstance(parameter, parameters.Range1DParameterGroup):
                 element = Range1DInputGroup(parameter)
                 element.selection_triggered.connect(partial(self.selection_triggered.emit, name, "1D"))
 
             elif isinstance(parameter, parameters.Range2DParameterGroup):
                 element = Range2DInputGroup(parameter)
                 element.selection_triggered.connect(partial(self.selection_triggered.emit, name, "2D"))
-
-            elif isinstance(parameter,parameters.ParameterGroup):
-                element = InputGroup(parameter)
                 
             elif parameter.ui_class is not None:
                 element = parameter.ui_class(parameter)

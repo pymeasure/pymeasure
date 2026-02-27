@@ -68,17 +68,22 @@ class TestProcedure(Procedure):
     #phys_param = PhysicalParameter("Physical Parameter",group_by="bool_param", default = [20,3])
     param_group = ParameterGroup("Test group",
                                  group_by={"bool_param": True},
-                                 test1 = FloatParameter("test1", default=0),
-                                 test2 = FloatParameter("test2", default=0)
+                                 test1=FloatParameter("test1", default=0),
+                                 test2=FloatParameter("test2", default=0)
                                  )
-    wl_range = Range1DParameterGroup("Wavelength Range")
-    voltages = Range2DParameterGroup("Voltages Range")
-    
+    wl_range = Range1DParameterGroup("Wavelength Range",
+                                     units="nm",
+                                     step=0.01,
+                                     no_step_kwargs={"units": None})
+    voltages = Range2DParameterGroup("Voltages Range", units="V", step=0.01,
+                                     no_step_kwargs_x={"units": None},
+                                     no_step_kwargs_y={"units": None})
+
     DATA_COLUMNS = ["wavelength (nm)", "intensity (a.u.)", "voltage1 (V)", "voltage2 (V)", "current (A)"]
-        
+
     def startup(self):
         pass
-    
+
     def execute(self):
         for wl, (voltage1, voltage2) in zip(self.wl_range, self.voltages):
             result = {"wavelength (nm)": wl,
