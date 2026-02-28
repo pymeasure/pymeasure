@@ -59,10 +59,3 @@ class ImageFrame(PlotFrame):
             self.plot.setTitle(label)
         self.z_axis = axis
         self.z_axis_changed.emit(axis)
-
-    def set_colormap(self, colormap):
-        """Sets the colormap for the image plot"""
-        for item in self.plot.items:
-            if isinstance(item, self.ResultsClass):
-                item.set_colormap(colormap)
-        self.update_curves()

@@ -76,29 +76,26 @@ class TestImageProcedure(Procedure):
     def execute(self):
         xs = np.arange(self.X_start, self.X_end, self.X_step)
         ys = np.arange(self.Y_start, self.Y_end, self.Y_step)
+        xs, ys = np.meshgrid(xs, ys, indexing='xy')
+        coords = np.column_stack([xs.ravel(), ys.ravel()])
 
         # Optional: Shuffle the arrays to test unordered data
-        p = np.random.permutation(len(xs))
-        xs = xs[p]
-        ys = ys[p]
+        np.random.shuffle(coords)
 
         nprog = xs.size * ys.size
         progit = 0
-        for x in xs:
-            for y in ys:
-                self.emit("progress", int(100 * progit / nprog))
-                progit += 1
-                self.emit(
-                    "results",
-                    {
-                        "X": x,
-                        "Y": y,
-                        "pixel_data": x * y,
-                    },
-                )
-                sleep(self.delay)
-                if self.should_stop():
-                    break
+        for x,y in coords:
+            self.emit("progress", int(100 * progit / nprog))
+            progit += 1
+            self.emit(
+                "results",
+                {
+                    "X": x,
+                    "Y": y,
+                    "pixel_data": x * y,
+                },
+            )
+            sleep(self.delay)
             if self.should_stop():
                 break
 
@@ -128,17 +125,8 @@ class TestImageGUI(ManagedImageWindow):
                 "delay",
             ],
             displays=["X_start", "X_end", "Y_start", "Y_end", "delay"],
-            enable_file_input=False,
         )
         self.setWindowTitle("PyMeasure Image Test")
-
-    def queue(self):
-        filename = unique_filename(tempfile.gettempdir(), "test")
-        procedure = self.make_procedure()
-        results = Results(procedure, filename)
-        experiment = self.new_experiment(results)
-        self.manager.queue(experiment)
-
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

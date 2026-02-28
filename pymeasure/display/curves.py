@@ -70,7 +70,8 @@ class ResultsImage(pg.ImageItem):
     object."""
 
     def __init__(
-        self, results, x, y, z, force_reload=False, wdg=None, colormap="viridis", **kwargs
+            self, results, x, y, z, auto_level, lower_cmap_bound,
+            upper_cmap_bound, force_reload=False, wdg=None, **kwargs
     ):
         self.results = results
         self.wdg = wdg
@@ -85,11 +86,13 @@ class ResultsImage(pg.ImageItem):
         self.yend = getattr(self.results.procedure, self.y + "_end")
         self.ystep = getattr(self.results.procedure, self.y + "_step")
         self.ysize = int(np.ceil((self.yend - self.ystart) / self.ystep))
-        self.xbins = np.linspace(self.xstart, self.xend, self.xsize + 1)
-        self.ybins = np.linspace(self.ystart, self.yend, self.ysize + 1)
+        self.xbins = np.linspace(self.xstart, self.xend, self.xsize)
+        self.ybins = np.linspace(self.ystart, self.yend, self.ysize)
         self.img_data = np.full((self.ysize, self.xsize), np.nan, dtype=float)
+        self.auto_level = auto_level,
+        self.lower_cmap_bound = lower_cmap_bound
+        self.upper_cmap_bound = upper_cmap_bound
         self.force_reload = force_reload
-        self.colormap = colormap
 
         super().__init__()
 
@@ -117,14 +120,13 @@ class ResultsImage(pg.ImageItem):
                     self.xend - self.xstart,
                     self.yend - self.ystart,
                 ],
-                autoLevels=True,
-                colorMap=self.colormap,
+                autoLevels=self.auto_level,
             )
-
-    def set_colormap(self, colormap):
-        """Sets the colormap for the image."""
-        self.colormap = colormap
-
+            print(self.auto_level)
+            if not self.auto_level:
+                print(self.lower_cmap_bound)
+                self.setLevels([self.lower_cmap_bound, self.upper_cmap_bound], update=True)
+                print(self.levels)
 
 class BufferCurve(pg.PlotDataItem):
     """Creates a curve based on a predefined buffer size and allows data to be added dynamically."""
