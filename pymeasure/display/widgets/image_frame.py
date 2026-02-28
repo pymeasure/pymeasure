@@ -33,14 +33,17 @@ log.addHandler(logging.NullHandler())
 
 
 class ImageFrame(PlotFrame):
-    """ Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
+    """Extends :class:`PlotFrame<pymeasure.display.widgets.plot_frame.PlotFrame>`
     to plot also axis Z using colors
     """
+
     ResultsClass = ResultsImage
     z_axis_changed = QtCore.Signal(str)
+    item_updated = QtCore.Signal()
 
-    def __init__(self, x_axis, y_axis, z_axis=None,
-                 refresh_time=0.2, check_status=True, parent=None):
+    def __init__(
+        self, x_axis, y_axis, z_axis=None, refresh_time=0.2, check_status=True, parent=None
+    ):
         super().__init__(x_axis, y_axis, refresh_time, check_status, parent)
         self.change_z_axis(z_axis)
 
@@ -51,7 +54,7 @@ class ImageFrame(PlotFrame):
                 item.update_data()
         label, units = self.parse_axis(axis)
         if units is not None:
-            self.plot.setTitle(label + ' (%s)' % units)
+            self.plot.setTitle(label + " (%s)" % units)
         else:
             self.plot.setTitle(label)
         self.z_axis = axis
