@@ -256,9 +256,6 @@ class KoradKABase(Instrument):
     # ~18 ms after the end of the command (if the command is query).
     # To make sure all commands are registered by the PSU,
     # 50 ms pause between writes proved to be sufficient.
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Methods
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def _wait_before_writing(self):
         actual_write_delay = time.time() - self.last_write_timestamp
@@ -302,4 +299,4 @@ class KoradKABase(Instrument):
         assert len(first) > 0, "No response received from instrument."
         return (first + self.read_bytes(-1, break_on_termchar=False)).decode(errors="ignore")
         # if inter_byte_timeout woudl work, it would be easy
-        return self.read_bytes(-1, break_on_termchar=False).decode(errors="ignore")
+        # return self.read_bytes(-1, break_on_termchar=False).decode(errors="ignore")
