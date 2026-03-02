@@ -72,15 +72,15 @@ class KoradKAChannel(Channel):
 
     voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
-        """Control the output voltage setpoint.""",
-        validator=lambda v, vs: strict_range(v, vs),
+        """Control the output voltage setpoint in Volts (float).""",
+        validator=strict_range,
         values=(0, 61.0),
         dynamic=True
     )
 
     voltage: property = Instrument.measurement(
         "VOUT{ch}?",
-        """Measure the actual output voltage."""
+        """Measure the actual output voltage iv Volts (float)."""
     )
 
     over_voltage_protection: property = Instrument.control(
@@ -141,10 +141,10 @@ class KoradKAChannel(Channel):
 
 class KoradKABase(Instrument):
     """Represents a generic Korad KAxxxxP power supply
-    and provides a high-level for interacting with the instrument
+    and provides a high-level interface for interacting with the instrument
     """
 
-    last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
+    last_write_timestamp: float  # hold timestamp of the last write for enforcing write_delay
     write_delay: float  # minimum time between writes
     cached_idn: str
 
@@ -204,7 +204,7 @@ class KoradKABase(Instrument):
     )
 
     # does nothing on KA3005P V2.0
-    beep: property = Instrument.control(
+    beep_enabled: property = Instrument.control(
         "BEEP?", "BEEP%d",
         """Control the beep of the power supply.
 
@@ -263,7 +263,7 @@ class KoradKABase(Instrument):
     def write(self, command, **kwargs):
         """Overrides Instrument write method for including write_delay time after the parent call.
 
-    :param command: command string to be sent to the instrument
+        :param command: command string to be sent to the instrument
         """
         self._wait_before_writing()
         super().write(command, **kwargs)
