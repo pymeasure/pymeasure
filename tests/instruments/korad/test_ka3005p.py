@@ -142,6 +142,7 @@ def test_output_control():
         assert inst.output_enabled is True
         assert inst.output_enabled is False
 
+
 def test_save_preset():
     """Verify the save preset functionality."""
     with expected_protocol(
@@ -150,6 +151,7 @@ def test_save_preset():
          ],
     ) as inst:
         inst.store_preset(4)
+
 
 def test_recall_preset():
     """Verify the recall preset functionality."""

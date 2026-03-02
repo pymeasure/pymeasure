@@ -56,7 +56,7 @@ class KoradKA3005P(KoradKABase):
         psu.output_enabled = True  # enable output
 
         psu.ch_1.over_current = True # enable output auto-disable on overcurrent
-    
+
         print(psu.ch_1.voltage)  # measure output voltage
         print(psu.ch_1.current)  # measure output current
         print(psu.ch_1.mode)  # get current mode of the channel
