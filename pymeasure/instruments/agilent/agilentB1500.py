@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+from __future__ import annotations
+
 import logging
 import re
 import time
@@ -165,6 +167,17 @@ class AgilentB1500(SCPIMixin, Instrument):
         for channel, module_type in modules.items():
             if module_type == "SPGU":
                 self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
+
+    def initialize_cmu(self):
+        """Initialize CMU.
+
+        Query available modules and create a :class:`.CMU` instance for the CMU.
+        CMU is accessible via attribute ``.cmu``.
+        """
+        modules = self.query_modules()
+        for channel, module_type in modules.items():
+            if "CMU" in module_type:
+                self.cmu = CMU(parent=self, slot=channel)
 
     def pause(self, pause_seconds):
         """Pause command execution for given time in seconds. (``PA``)
@@ -598,21 +611,18 @@ class AgilentB1500(SCPIMixin, Instrument):
     def meas_mode(self, mode, *args):
         """Set measurement mode of channels. (``MM``)
 
-        Measurements will be taken in the same order as the SMU references are passed.
+        Measurements will be taken in the same order as the SMU or CMU references are passed.
 
         :param MeasMode mode: Measurement mode
-
-            * Spot
-            * Staircase Sweep
-            * Sampling
-
-        :param SMU args: SMU references
+        :param SMU args: SMU or CMU references
         """
         mode = MeasMode.get(mode)
         cmd = f"MM {mode.value}"
         for smu in args:
             if isinstance(smu, SMU):
                 cmd += f", {smu.channel}"
+            elif isinstance(smu, CMU):
+                cmd += f", {smu.id}"
         self.write(cmd)
         self.check_errors()
 
@@ -1324,6 +1334,18 @@ class SMU:
         self.write(cmd)
         self.check_errors()
 
+    def set_cv_parameters(self, mode, start, stop, steps, comp=None):
+        """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
+
+        :param SweepMode mode: Sweep mode
+        :param float start: Sweep start voltage in V
+        :param float stop: Sweep stop voltage in V
+        :param int steps: Number of steps for staircase sweep
+        :param float comp: Compliance current in A. The previous value is used if not set.
+        """
+        cmd = _set_cv_parameters_base(self.channel, mode, start, stop, steps, comp)
+        self.write(cmd)
+
 
 ###############################################################################
 # Additional Classes / Constants
@@ -1700,10 +1722,10 @@ class SPGUChannel(Channel):
         :param float rise_time: Pulse rise time in seconds, defaults to 2e-8
         :param float fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
-        source = SPGUSignalSource.get(source).value
+        source = SPGUSignalSource.get(source)
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
-        command = f"SPT {self.id}, {source}, {delay}, {width}, {rise_time}"
+        command = f"SPT {self.id}, {source.value}, {delay}, {width}, {rise_time}"
         if fall_time is not None:
             command += f", {fall_time}"
         self.write(command)
@@ -1731,6 +1753,168 @@ class SPGUChannel(Channel):
         * ALWG mode: output initial value of waveform
         """
         self.write(f"SPUPD {self.id}")
+
+
+class CMU(Channel):
+    """Provide specific methods for the CMU of the Agilent B1500 mainframe.
+
+    :param parent: Instance of the B1500 mainframe class
+    :param slot: Slot number of the CMU
+    """
+
+    def __init__(self, parent: AgilentB1500, slot: int, **kwargs):
+        super().__init__(parent, slot, **kwargs)
+        slot = strict_discrete_set(slot, range(1, 11))
+        self.id = slot
+
+    enabled = Channel.setting(
+        "%s {ch}",
+        """Control CMU enable/disable state. (``CN``, ``CL``)""",
+        validator=strict_discrete_set,
+        values={False: "CL", True: "CN"},
+        map_values=True,
+    )
+
+    voltage_ac = Channel.setting(
+        "ACV {ch}, %f",
+        """Set AC voltage amplitude in V. (``ACV``)""",
+        validator=strict_range,
+        values=[0.0, 0.25],
+    )
+
+    frequency_ac = Channel.setting(
+        "FC {ch}, %f",
+        """Set AC voltage frequency in Hz. (``FC``)""",
+        validator=strict_range,
+        values=[1e3, 5e6],
+    )
+
+    def set_measurement_mode(self, measurement_mode: MFCMUMeasurementMode) -> None:
+        """Set the impedance measurement mode for the MFCMU. (``IMP``)
+
+        The MFCMU measures two parameters per mode.
+        Defaults to :attr:`MFCMUMeasurementMode.CP_G`.
+
+        .. note::
+            This command is not effective for binary data output formats
+            (FMT3, FMT4, FMT13, FMT14).
+
+        :param measurement_mode: Measurement mode.
+        """
+        if hasattr(self.parent, "_data_format") and self.parent._data_format.format in [
+            "FMT3",
+            "FMT4",
+            "FMT13",
+            "FMT14",
+        ]:
+            log.warning(
+                "The IMP command is not effective for binary data output format "
+                f"{self.parent._data_format.format}."
+            )
+        self.write(f"IMP {measurement_mode.value}")
+
+    def set_cv_timings(
+        self,
+        hold_time: float,
+        delay_time: float,
+        step_delay_time: float = 0.0,
+        step_source_trigger_delay_time: float = 0.0,
+    ) -> None:
+        """Set the timing parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WTDCV``)
+
+        :param hold_time: Wait time (in seconds) after starting measurement and
+            before starting delay time for the first step.
+        :param delay_time: Wait time (in seconds) after starting to force a step output and
+            before starting a step measurement.
+        :param step_delay_time: Wait time (in seconds) after starting a step measurement and
+            before starting to force the next step output.
+
+            If step_delay_time is shorter than the measurement time, the B1500 waits until
+            the measurement completes, then forces the next step output.
+
+        :param step_source_trigger_delay_time: Wait time (in seconds) after completing
+            a step output setup and before sending a step output setup completion trigger.
+        """
+        hold_time = strict_range(hold_time, [0.0, 655.35])
+        delay_time = strict_range(delay_time, [0.0, 65.535])
+        step_delay_time = strict_range(step_delay_time, [0.0, 1.0])
+        step_source_trigger_delay_time = strict_range(
+            step_source_trigger_delay_time, [0.0, delay_time]
+        )
+        self.write(
+            f"WTDCV {self.id}, {hold_time}, {delay_time}, {step_delay_time}, "
+            f"{step_source_trigger_delay_time}"
+        )
+
+    def set_cv_parameters(self, mode: SweepMode, start: float, stop: float, steps: int) -> None:
+        """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
+
+        :param mode: Sweep mode
+        :param start: Sweep start voltage in V
+        :param stop: Sweep stop voltage in V
+        :param steps: Number of steps for staircase sweep
+        """
+        cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps)
+        self.write(cmd)
+
+    def force_dc_bias(self, voltage: float) -> None:
+        """Apply DC voltage from CMU immediately. (``DCV``)
+
+        :param voltage: DC bias voltage in V
+        """
+        voltage = strict_range(voltage, [-100, 100])
+        self.write(f"DCV {self.id}, {voltage}")
+
+    def set_scuu_path(self, path: SCUUPath) -> None:
+        """Set the connection path of the SMU CMU unify unit (SCUU). (``SSP``)
+
+        This function is available when CMU and SMU CMU unify unit (SCUU) are installed.
+
+        :param path: Path for the SCUU measurement
+        """
+
+        def log_settings_change(voltage, range, compliance, series_resistance):
+            log.info(
+                "SMU output settings changed:\n\t"
+                f"output voltage = {voltage} V\n\t"
+                f"output range = {range} V\n\t"
+                f"compliance = {compliance}\n\t"
+                f"series resistance = {series_resistance}"
+            )
+
+        path = SCUUPath.get(path)
+        if path == SCUUPath.CMU:
+            log_settings_change(0, 100, "20 mA", "OFF")
+        else:
+            log_settings_change(
+                0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
+            )
+        self.write(f"SSP {self.id}, {path.value}")
+
+
+def _set_cv_parameters_base(
+    id: int,
+    mode: SweepMode | int | str,
+    start: float,
+    stop: float,
+    steps: int,
+    comp: float | None = None,
+) -> str:
+    mode = SweepMode.get(mode)
+    if mode in [SweepMode.LOG_SINGLE, SweepMode.LOG_DOUBLE]:
+        if not ((start >= 0 and stop >= 0) or (start <= 0 and stop <= 0)):
+            raise ValueError(f"For {mode=} start and stop values must have the same sign.")
+
+    start = strict_range(start, [-100, 100])
+    stop = strict_range(stop, [-100, 100])
+    steps = strict_range(steps, range(1, 1001))
+
+    cmd = f"WDCV {id}, {mode.value}, {start}, {stop}, {steps}"
+
+    if comp is not None:
+        cmd += f", {comp}"
+
+    return cmd
 
 
 class CustomIntEnum(IntEnum):
@@ -1808,6 +1992,13 @@ class MeasMode(CustomIntEnum):
     SPOT = 1  #:
     STAIRCASE_SWEEP = 2  #:
     SAMPLING = 10  #:
+    SPOT_C = 17  #: Spot capacitance measurement (MFCMU)
+    CV_SWEEP = 18  #: CV (DC bias) sweep measurement (SMU/MFCMU)
+    PULSED_SPOT_C = 19  #: Pulsed spot capacitance measurement (MFCMU)
+    PULSED_CV_SWEEP = 20  #: Pulsed CV sweep measurement (MFCMU)
+    C_F_SWEEP = 22  #: Capacitance frequency sweep (MFCMU)
+    CV_AC_SWEEP = 23  #: CV (AC bias) sweep measurement (MFCMU)
+    C_T_SAMPLING = 26  #: Capacitance sampling measurement (MFCMU)
 
 
 class MeasOpMode(CustomIntEnum):
@@ -1846,6 +2037,15 @@ class PgSelectorConnectionStatus(CustomIntEnum):
     SMU_ON = 1  #: SMU on. Makes connection to the SMU input.
     PGU_ON = 2  #: PGU on. Makes connection to the PGU input.
     PGU_OPEN = 3  #: PGU open. Made by opening the semiconductor relay installed on the PGU on port.
+
+
+class SCUUPath(CustomIntEnum):
+    """Connection path of the SMU CMU unify unit (SCUU)"""
+
+    SMU1 = 1  #: Output SMU in slot cmu.id - 1
+    SMU2 = 2  #: Output SMU in slot cmu.id - 2
+    SMU_BOTH = 3  #: Output SMU in slot cmu.id - 1 and cmu.id - 2
+    CMU = 4  #: Output CMU
 
 
 class SweepMode(CustomIntEnum):
@@ -1930,6 +2130,31 @@ class SPGUOutputMode(CustomIntEnum):
     """
     Duration mode. Outputs for a duration specified by the condition parameter.
     """
+
+
+class MFCMUMeasurementMode(CustomIntEnum):
+    """Measurement mode for the Multi Frequency Capacitance Measurement Unit (MFCMU)."""
+
+    R_X = 1  #: R (resistance, Ohm) and X (reactance, Ohm)
+    G_B = 2  #: G (conductance, S) and B (susceptance, S)
+    Z_PHASE_RAD = 10  #: Z (impedance, Ohm) and phase (radian)
+    Z_PHASE_DEG = 11  #: Z (impedance, Ohm) and phase (degree)
+    Y_PHASE_RAD = 20  #: Y (admittance, S) and phase (radian)
+    Y_PHASE_DEG = 21  #: Y (admittance, S) and phase (degree)
+    CP_G = 100  #: Cp (parallel capacitance, F) and G (conductance, S)
+    CP_D = 101  #: Cp (parallel capacitance, F) and D (dissipation factor)
+    CP_Q = 102  #: Cp (parallel capacitance, F) and Q (quality factor)
+    CP_RP = 103  #: Cp (parallel capacitance, F) and Rp (parallel resistance, Ohm)
+    CS_RS = 200  #: Cs (series capacitance, F) and Rs (series resistance, Ohm)
+    CS_D = 201  #: Cs (series capacitance, F) and D (dissipation factor)
+    CS_Q = 202  #: Cs (series capacitance, F) and Q (quality factor)
+    LP_G = 300  #: Lp (parallel inductance, H) and G (conductance, S)
+    LP_D = 301  #: Lp (parallel inductance, H) and D (dissipation factor)
+    LP_Q = 302  #: Lp (parallel inductance, H) and Q (quality factor)
+    LP_RP = 303  #: Lp (parallel inductance, H) and Rp (parallel resistance, Ohm)
+    LS_RS = 400  #: Ls (series inductance, H) and Rs (series resistance, Ohm)
+    LS_D = 401  #: Ls (series inductance, H) and D (dissipation factor)
+    LS_Q = 402  #: Ls (series inductance, H) and Q (quality factor)
 
 
 class StaircaseSweepPostOutput(CustomIntEnum):
