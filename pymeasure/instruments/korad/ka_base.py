@@ -80,7 +80,7 @@ class KoradKAChannel(Channel):
 
     voltage: property = Instrument.measurement(
         "VOUT{ch}?",
-        """Measure the actual output voltage iv Volts (float)."""
+        """Measure the actual output voltage in Volts (float)."""
     )
 
     over_voltage_protection: property = Instrument.control(
@@ -99,7 +99,7 @@ class KoradKAChannel(Channel):
     # KA3005P V2.0 adds "K" suffix
     current_setpoint: property = Instrument.control(
         "ISET{ch}?", "ISET{ch}:%g",
-        """Control the output current setpoint.""",
+        """Control the output current setpoint in Amperes (float).""",
         validator=lambda v, vs: strict_range(v, vs),
         values=(0, 5.1),
         dynamic=True,
@@ -108,7 +108,7 @@ class KoradKAChannel(Channel):
 
     current: property = Instrument.measurement(
         "IOUT{ch}?",
-        """Measure the actual output current."""
+        """Measure the actual output current in Amperes (float)."""
     )
 
     over_current_protection: property = Instrument.control(
@@ -245,7 +245,7 @@ class KoradKABase(Instrument):
     def state(self) -> State:
         """Get the current state of the system
 
-    :return State.
+        :return State.
         """
         got = self.binary_values("STATUS?", dtype=np.uint8)
         assert len(got) == 1, f"Expected a single byte response for state query, got {got}"
@@ -278,8 +278,8 @@ class KoradKABase(Instrument):
     def ask(self, command, query_delay=None):
         """Overrides Instrument ask method for including write_delay time after the parent call.
 
-    :param command: command string to be sent to the instrument
-    :returns: response from the instrument
+        :param command: command string to be sent to the instrument
+        :returns: response from the instrument
         """
         if not isinstance(self.adapter, SerialAdapter):
             self.adapter.log.warning(
