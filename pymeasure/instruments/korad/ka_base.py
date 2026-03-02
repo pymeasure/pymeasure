@@ -68,7 +68,6 @@ class State:
 class KoradKAChannel(Channel):
     def __init__(self, parent: "KoradKABase", id: int):
         super().__init__(parent, id)
-        assert id in [1, 2], "Channel must be either 1 or 2."
 
     voltage_setpoint: property = Instrument.control(
         "VSET{ch}?", "VSET{ch}:%g",
@@ -190,7 +189,8 @@ class KoradKABase(Instrument):
         """Get the firmware version of the instrument"""
         version_str = self.id.split("V")[1]
         version = version_str.split(".")
-        assert len(version) == 2
+        if len(version) != 2:
+            raise ValueError(f"Expected version string in format 'x.y', got '{version_str}'.")
         return [int(v) for v in version]
 
     output_enabled: property = Instrument.control(
@@ -248,7 +248,8 @@ class KoradKABase(Instrument):
         :return State.
         """
         got = self.binary_values("STATUS?", dtype=np.uint8)
-        assert len(got) == 1, f"Expected a single byte response for state query, got {got}"
+        if len(got) != 1:
+            raise ValueError(f"Expected 1 byte from STATUS? query, got {len(got)} bytes.")
         return State.from_byte(got[0])
 
     # at least KA3005P V2.0 does not use traditionally delimiters for requests/responses,
@@ -290,13 +291,14 @@ class KoradKABase(Instrument):
             time.sleep(query_delay)
         # override timeout until first character arrives
         # after that, restore the timeout and read until that
+        if self.adapter.connection.timeout is None:
+            raise ValueError("Adapter connection timeout must be set to non zero value (~100 ms).")
         timeout_backup = self.adapter.connection.timeout
-        assert timeout_backup is not None, \
-            "Adapter connection timeout must be set to a non-None value."
         self.adapter.connection.timeout = 0.1
         first = self.read_bytes(1, break_on_termchar=False)
         self.adapter.connection.timeout = timeout_backup
-        assert len(first) > 0, "No response received from instrument."
+        if len(first) == 0:
+            raise TimeoutError("No response received from instrument.")
         return (first + self.read_bytes(-1, break_on_termchar=False)).decode(errors="ignore")
         # if inter_byte_timeout woudl work, it would be easy
         # return self.read_bytes(-1, break_on_termchar=False).decode(errors="ignore")

@@ -29,8 +29,8 @@ from pymeasure.instruments.korad.ka_base import KoradKABase, KoradKAChannel
 class KoradKA3005Channel(KoradKAChannel):
     def __init__(self, parent: "KoradKA3005P", channel: int):
         super().__init__(parent, channel)
-        if channel not in [1, 2]:
-            raise ValueError("Channel must be either 1 or 2.")
+        if channel != 1:
+            raise ValueError("KoradKA3005P only supports channel 1.")
 
     voltage_setpoint_values = (0, 31.0)
     current_setpoint_values = (0, 5.1)
