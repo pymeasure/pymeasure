@@ -215,25 +215,29 @@ class KoradKABase(Instrument):
         map_values=True
     )
 
-    # on KA3005P V2.0
-    # - works only when the preset is currently selected (caused by recall_preset)
-    # - saves values as preset
-    store_preset: property = Instrument.setting(
-        "SAV%d",
-        """Set the current settings into preset slot.""",
-        validator=strict_discrete_set,
-        values=(1, 2, 3, 4, 5)
-    )
+    def store_preset(self, slot: int):
+        """Store the current settings into preset slot.
 
-    # on KA3005P V2.0
-    # - selects the preset slot
-    # - reloads values from the slot and overwrites anything unsaved
-    recall_preset: property = Instrument.setting(
-        "RCL%d",
-        """Set the current settings from preset slot.""",
-        validator=strict_discrete_set,
-        values=(1, 2, 3, 4, 5)
-    )
+        on KA3005P V2.0
+          - works only when the preset is currently selected (caused by recall_preset)
+          - saves values as preset
+        
+        :param slot: preset slot number (1-5)
+        """
+        _ = strict_discrete_set(slot, (1, 2, 3, 4, 5))
+        _ = self.write(f"SAV{slot}")
+
+    def recall_preset(self, slot: int):
+        """Recall the settings from a preset slot.
+
+        on KA3005P V2.0
+          - selects the preset slot
+          - reloads values from the slot and overwrites anything unsaved
+
+        :param slot: preset slot number (1-5)
+        """
+        _ = strict_discrete_set(slot, (1, 2, 3, 4, 5))
+        _ = self.write(f"RCL{slot}")
 
     @property
     def state(self) -> State:

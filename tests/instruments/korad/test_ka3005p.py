@@ -142,4 +142,22 @@ def test_output_control():
         assert inst.output_enabled is True
         assert inst.output_enabled is False
 
+def test_save_preset():
+    """Verify the save preset functionality."""
+    with expected_protocol(
+        KoradKA3005P,
+        [("SAV4", None),
+         ],
+    ) as inst:
+        inst.store_preset(4)
+
+def test_recall_preset():
+    """Verify the recall preset functionality."""
+    with expected_protocol(
+        KoradKA3005P,
+        [("RCL4", None),
+         ],
+    ) as inst:
+        inst.recall_preset(4)
+
 # TODO: it would be nice to also validate write timing
