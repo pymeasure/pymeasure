@@ -254,7 +254,7 @@ class KoradKABase(Instrument):
     # 50 ms pause between writes proved to be sufficient.
 
     def _wait_before_writing(self):
-        actual_write_delay = time.time() - self.last_write_timestamp
+        actual_write_delay = time.monotonic() - self.last_write_timestamp
         to_sleep = self.write_delay - actual_write_delay
         if to_sleep > 0:
             time.sleep(to_sleep)
@@ -266,7 +266,7 @@ class KoradKABase(Instrument):
         """
         self._wait_before_writing()
         super().write(command, **kwargs)
-        self.last_write_timestamp = time.time()
+        self.last_write_timestamp = time.monotonic()
 
     def ask(self, command, query_delay=None):
         """Overrides Instrument ask method for including write_delay time after the parent call.
