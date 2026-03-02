@@ -290,8 +290,10 @@ class KoradKABase(Instrument):
             raise ValueError("Adapter connection timeout must be set to non zero value (~100 ms).")
         timeout_backup = self.adapter.connection.timeout
         self.adapter.connection.timeout = 0.1
-        first = self.read_bytes(1, break_on_termchar=False)
-        self.adapter.connection.timeout = timeout_backup
+        try:
+            first = self.read_bytes(1, break_on_termchar=False)
+        finally:
+            self.adapter.connection.timeout = timeout_backup
         if len(first) == 0:
             raise TimeoutError("No response received from instrument.")
         return (first + self.read_bytes(-1, break_on_termchar=False)).decode(errors="ignore")
