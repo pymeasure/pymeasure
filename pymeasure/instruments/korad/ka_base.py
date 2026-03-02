@@ -162,7 +162,7 @@ class KoradKABase(Instrument):
             self.adapter.read_termination = ""
             self.adapter.write_termination = ""
             self.adapter.connection.timeout = 0.1
-            self.adapter.connection.baudrate = 115200
+            self.adapter.connection.baudrate = 9600
         self.last_write_timestamp = 0.0
         self.write_delay = 0.05
         self.cached_idn = ""
