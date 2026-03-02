@@ -44,6 +44,22 @@ class KoradKA3005P(KoradKABase):
 
     This model has various FW versions and some features may not work properly on all versions.
     (e.g.: preset store/recall on V2.0)
+
+    .. code-block:: python
+
+        adapter = SerialAdapter("/dev/ttyACM0")
+        psu = KoradKA3005P(adapter)
+        print(psu.id)  # -> device ID string
+
+        psu.ch_1.current_setpoint  = 0.5  # set current setpoint to 0.5 A
+        psu.ch_1.voltage_setpoint  = 5.0  # set voltage setpoint to 5 V
+        psu.output_enabled = True  # enable output
+
+        psu.ch_1.over_current = True # enable output auto-disable on overcurrent
+    
+        print(psu.ch_1.voltage)  # measure output voltage
+        print(psu.ch_1.current)  # measure output current
+        print(psu.ch_1.mode)  # get current mode of the channel
     """
 
     last_write_timestamp: float  # hold timestamp fo the last write for enforcing write_delay
