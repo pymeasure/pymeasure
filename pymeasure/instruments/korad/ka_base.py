@@ -218,7 +218,7 @@ class KoradKABase(Instrument):
         on KA3005P V2.0
           - works only when the preset is currently selected (caused by recall_preset)
           - saves values as preset
-        
+
         :param slot: preset slot number (1-5)
         """
         _ = strict_discrete_set(slot, (1, 2, 3, 4, 5))
