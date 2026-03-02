@@ -145,7 +145,6 @@ class KoradKABase(Instrument):
 
     last_write_timestamp: float  # hold timestamp of the last write for enforcing write_delay
     write_delay: float  # minimum time between writes
-    cached_idn: str
 
     def __init__(self, adapter: Adapter, name: str = "Korad KA base", **kwargs):
         super().__init__(
@@ -165,7 +164,6 @@ class KoradKABase(Instrument):
             self.adapter.connection.baudrate = 9600
         self.last_write_timestamp = 0.0
         self.write_delay = 0.05
-        self.cached_idn = ""
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Properties
@@ -174,10 +172,7 @@ class KoradKABase(Instrument):
     @property
     def id(self) -> str:
         """Get the identity of the instrument"""
-        if self.cached_idn:
-            return self.cached_idn
-        self.cached_idn = self.ask("*IDN?")
-        return self.cached_idn
+        return self.ask("*IDN?")
 
     @property
     def model(self) -> str:
