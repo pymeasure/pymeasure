@@ -10,20 +10,20 @@ from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
 
 CHANNELS = ['0']
 SENSOR = [True]
-TYPE = ['Linear']
+#TYPE = ['Linear'] hesitating on adding this function, since it may not be as simple as imagined, and can be easily done by SENSOR
+
 
 "You can paremetrize the following test with @pytest.mark.parametrize and for your number of channels:"
 
-
-
 @pytest.fixture(scope="module")
-def smaractascii(serial_port="ASRL3::INSTR"):
+def smaractascii(connected_device_address: str):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address TCPIP::x.y.z.k::port::SOCKET
         where you replace x.y.z.k byt the device IP address and port by its port address
         """
-    instr = SmarActSCULinear(serial_port)
+    instr = SmarActSCULinear(adapter=connected_device_address)
+    # ensure the device is in a defined state, e.g. by resetting it.
     return instr
 
 
@@ -46,8 +46,9 @@ def test_baudrate(smaractascii, test_value, expected_outcome, channel):
     if expected_outcome == pyvisa.VisaIOError:
         with pytest.raises(pyvisa.VisaIOError):
             smaractascii.channels[channel].baudrate(test_value)
-    else smaractascii.channels[channel].test_value
-            assert smaractascii.channels[channel].frequency == expected_outcome
+    else:
+        smaractascii.channels[channel].test_value
+        assert smaractascii.channels[channel].frequency == expected_outcome
 
 
 
