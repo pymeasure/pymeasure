@@ -338,10 +338,16 @@ class SmarActSCU_ASCII(Instrument):
             self.move_steps_down(position.magnitude)
 
     def set_baudrate(self, baudrate :int):
-        """Set the baudrate after the next reset done"""
-        self.write(f':CB(baudrate)')
-        #propietes
+        """Set the baudrate after the next reset done
 
+        param baudrate : Currently supported baud rates are: 9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000.
+        """
+        self.write(f':CB(baudrate)')
+        #return self.read()
+        #propietes
+    def reset(self):
+        """Reset will be performed on the device. Has the same effect as a power-down/power-up cycle"""
+        self.write(f':R(reset)')
 
 class SmarActSCULinear(SmarActSCU_ASCII):
     unit = 'um'

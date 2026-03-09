@@ -27,31 +27,25 @@ def smaractascii(connected_device_address: str):
     return instr
 
 
-def test_connection_and_id(smaractascii):
-    """Verify we can talk to the controller."""
-    idn = smaractascii.idnumber
-    print(f"\nConnected to: {idn}")
-    assert idn is integer_types
 
 @pytest.mark.parametrize("channel,issensor", zip(CHANNELS, SENSOR))
 def test_sensor(smaractascii, channel, issensor):
     """Simple test to verify if it has a sensor."""
     assert smaractascii.channels[channel].check_sensor_present() is issensor
 
-@pytest.mark.parametrize(" test_value, expected_outcome,channel",[
-    (9600,9600,CHANNELS),
-    ( 1500,pyvisa.VisaIOError,CHANNELS),
-] )
+@pytest.mark.parametrize("channel", CHANNELS)
+@pytest.mark.parametrize("test_value, expected_outcome", [
+    (9600, 9600),
+    (1500, pyvisa.VisaIOError),
+])
 def test_baudrate(smaractascii, test_value, expected_outcome, channel):
+    ch = smaractascii.channels[channel]
     if expected_outcome == pyvisa.VisaIOError:
         with pytest.raises(pyvisa.VisaIOError):
-            smaractascii.channels[channel].baudrate(test_value)
+            ch.baudrate = test_value
     else:
-        smaractascii.channels[channel].test_value
-        assert smaractascii.channels[channel].frequency == expected_outcome
-
-
-
+        ch.baudrate = test_value
+        assert ch.baudrate == expected_outcome
 
 @pytest.mark.parametrize("property_name, test_value, expected_outcome,channel", [
     # --- FREQUENCY TESTS (Limits: > 1 Hz and < frequency_max)
@@ -218,14 +212,6 @@ def test_stop_function(smaractascii):
 def test_move_to_end(smaractascii,channel):
     smaractascii.channels[channel].move_to_end_up()
     smaractascii.channels[channel].move_to_end_down()
-
-@pytest.mark.parametrize("channel", CHANNELS)
-def test_move_to_end(smaractascii,channel):
-    smaractascii.channels[channel].move_to_end_up()
-    smaractascii.channels[channel].move_to_end_down()
-
-
-
 
 #pytest test_scu_ascii_with_device.py --device-address "ASRL3::INSTR" -s
 
