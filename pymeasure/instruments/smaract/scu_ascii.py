@@ -1,6 +1,8 @@
 from typing import Union
 from pint import Quantity as Q_
 
+import pyvisa
+
 from pymeasure.instruments import Instrument, Channel
 
 from pymeasure.instruments.smaract.utils import check_quantity_unit
@@ -34,7 +36,7 @@ class SCUChannel(Channel):
 
     def calibrate_sensor(self):
         """Calibrate the sensor. Has to done before the use of move to reference.
-           The user must ensure himself that the positioner is not close to a mechanical limit"""
+           The user must ensure himself that the positioner is not close to a mechanical limit before using this method"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
 
@@ -251,7 +253,6 @@ class SmarActSCU_ASCII(Instrument):
         self._amplitude: Q_ = Q_(300, 'dV')
         self._freq: Q_ = Q_(260, 'Hz')
         self._steps: int = 250
-        #self._safe_direction: str = safe_direction
 
     identif = Instrument.measurement(
         ":GID", """Get the identification number. """
@@ -270,9 +271,8 @@ class SmarActSCU_ASCII(Instrument):
         :param ampl : a quantity with amplitude units dV, if int then given in dV
         """
         if ampl is None:
-            ampl = self.amplitude
-        else:
-            ampl = check_quantity_unit(ampl, 'dV')
+            ampl = self._amplitude
+        ampl = Q_(ampl, 'dV')
         if not (150 <= ampl.magnitude <= 1000):
             raise ValueError("Amplitude out of range [150;1000] dV'")
         return ampl
@@ -289,16 +289,15 @@ class SmarActSCU_ASCII(Instrument):
     ###CHECK FREQUENCY###
 
     def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
-        """Check if frequency is present and if it is inside the given boundary.
+        """Check if closed-loop frequency is present and if it is inside the given boundary.
 
         :param freq: a qunatity with frequency units in Hz, if int, then given in Hz
         """
         if freq is None:
-            freq = self.frequency
-        else:
-            freq = check_quantity_unit(freq, 'Hz')
-        if not (Q_(1, 'Hz') < freq < self.frequency_max):
-            raise ValueError('Frequency ut of the range [1;18500] Herz')
+            freq = self._freq
+        freq = Q_(freq, 'Hz')  # force Quantity'sation
+        if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
+            raise ValueError("Frequency out of range [1;18500] Herz")
         return freq
 
     @property
@@ -310,6 +309,8 @@ class SmarActSCU_ASCII(Instrument):
     def frequency(self, value: Union[int, Q_]):
         self._freq = self.check_freq(value)
 
+    ###CHECK STEPS###
+
     def check_steps(self, steps: int):
         """Check if steps are present and if it is inside the given boundary."""
         if steps is None:
@@ -319,6 +320,8 @@ class SmarActSCU_ASCII(Instrument):
         if not (1 <= steps <= 30000):
             raise ValueError('Steps out of the range [1;30000] steps (int) ')
         return steps
+
+    ###MOVEMENT###
 
     def move_abs(self, position: Union[Q_, int]):
         """Moves to the absolute position given in µm from the reference possition
@@ -337,17 +340,22 @@ class SmarActSCU_ASCII(Instrument):
         else:
             self.move_steps_down(position.magnitude)
 
-    def set_baudrate(self, baudrate :int):
-        """Set the baudrate after the next reset done
+    BAUDRATE = (9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000)
 
-        param baudrate : Currently supported baud rates are: 9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000.
+    def set_baudrate(self, baudrate :int):
+        """Set the baudrate AND reset the instrument. The reset is necessary to update the baudrate.
+
+        param baudrate : Currently supported baudrates are: 9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000.
         """
-        self.write(f':CB(baudrate)')
-        #return self.read()
+        if baudrate in self.BAUDRATE:
+            self.write(f':CB{baudrate}')
+            self.write(':R')
+        else:
+            raise pyvisa.VisaIOError(-1)
         #propietes
     def reset(self):
         """Reset will be performed on the device. Has the same effect as a power-down/power-up cycle"""
-        self.write(f':R(reset)')
+        self.write(f':R')
 
 class SmarActSCULinear(SmarActSCU_ASCII):
     unit = 'um'
@@ -364,6 +372,7 @@ class SmarActSCUAngular(SmarActSCU_ASCII):
 
 if __name__ == "__main__":
     inst = SmarActSCULinear('ASRL3::INSTR')
+    #inst.baudrate = 9600
     pass
 
     #import pyvisa
