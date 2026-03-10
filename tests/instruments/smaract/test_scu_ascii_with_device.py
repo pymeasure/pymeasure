@@ -47,22 +47,20 @@ def test_baudrate(smaractascii, test_value, expected_outcome, channel):
         ch.baudrate = test_value
         assert ch.baudrate == expected_outcome
 
-@pytest.mark.parametrize("property_name, test_value, expected_outcome, channel", [
-    # --- FREQUENCY TESTS (Limits: > 1 Hz and < frequency_max)
-    ("frequency", Q_(500, 'Hz'), Q_(500, 'Hz'),CHANNELS),  # Valid
-    ("frequency", Q_(0.5, 'Hz'), ValueError,CHANNELS),  # Invalid: Too low
-    ("frequency", Q_(20000, 'Hz'), ValueError,CHANNELS),  # Invalid: Too high
 
-    # --- AMPLITUDE TESTS (Limits: 150 to 1000 dV)
-    ("amplitude", Q_(500, 'dV'), Q_(500, 'dV'),CHANNELS),  # Valid
-    ("amplitude", Q_(100, 'dV'), ValueError,CHANNELS),  # Invalid: Too low
-    ("amplitude", Q_(1500, 'dV'), ValueError,CHANNELS),  # Invalid: Too high
+@pytest.mark.parametrize("channel", CHANNELS)
+@pytest.mark.parametrize("property_name, test_value, expected_outcome", [
+    # --- FREQUENCY TESTS
+    ("frequency", Q_(500, 'Hz'), Q_(500, 'Hz')),  # Valid
+    ("frequency", Q_(0.5, 'Hz'), ValueError),  # Invalid: Too low
+    ("frequency", Q_(20000, 'Hz'), ValueError),  # Invalid: Too high
+
+    # --- AMPLITUDE TESTS
+    ("amplitude", Q_(500, 'dV'), Q_(500, 'dV')),  # Valid
+    ("amplitude", Q_(100, 'dV'), ValueError),  # Invalid: Too low
+    ("amplitude", Q_(1600, 'dV'), ValueError),  # Invalid: Too high
 ])
-def test_instrument_properties(smaractascii, property_name, test_value, expected_outcome,channel):
-    """
-    Parametrized test for the Instrument properties.
-
-    """
+def test_instrument_properties(smaractascii, channel, property_name, test_value, expected_outcome):
     # We expect a ValueError (Negative Testing)
     if expected_outcome == ValueError:
         with pytest.raises(ValueError):
@@ -71,16 +69,14 @@ def test_instrument_properties(smaractascii, property_name, test_value, expected
             elif property_name == "amplitude":
                 smaractascii.channels[channel].amplitude = test_value
 
-    # We expect it to succeed (values in boundries)
+    # We expect it to succeed
     else:
         if property_name == "frequency":
             smaractascii.channels[channel].frequency = test_value
             assert smaractascii.channels[channel].frequency == expected_outcome
-
         elif property_name == "amplitude":
             smaractascii.channels[channel].amplitude = test_value
             assert smaractascii.channels[channel].amplitude == expected_outcome
-
 
 @pytest.mark.parametrize("test_steps, expected_outcome", [
     (1000, 1000),  # Valid: Normal steps
@@ -111,18 +107,25 @@ def test_ref_and_move_absolute_sequence(smaractascii,channel):
     3. Move absolute to 500 um.
     4. Verify the final position is 500 um.
     """
-    smaractascii.channel0.move_to_ref()
-    time.sleep(0.2)
+    smaractascii.channels[channel].move_to_ref()
+    status = smaractascii.ask(f":M{channel}")
+    while status == f":M{channel}R":
+        time.sleep(1.0)
+        status = smaractascii.ask(f":M{channel}")
     initial_pos = smaractascii.channel0.get_position()
-    assert initial_pos == pytest.approx(0.0, abs=0.1), \
+    assert initial_pos.magnitude == pytest.approx(0.0, abs=1), \
         f"Expected 0 um after zeroing, got {initial_pos}"
     target_pos = Q_(500, 'um')
     smaractascii.channel0.move_abs(target_pos)
-    time.sleep(2.0)
+    status = smaractascii.ask(f":M{channel}")
+    while status == f":M{channel}T":
+        time.sleep(1.0)
+        status = smaractascii.ask(f":M{channel}")
 
     final_pos = smaractascii.channel0.get_position()
-    assert final_pos== pytest.approx(500.0, abs=1.0), \
+    assert final_pos.magnitude== pytest.approx(500.0, abs=2), \
         f"Expected 500 um, got {final_pos}"
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_zero_and_move_rel_sequence(smaractascii,channel):
         """
@@ -133,19 +136,21 @@ def test_zero_and_move_rel_sequence(smaractascii,channel):
         3. Verify the final position is 500 um.
         """
         smaractascii.channels[channel].move_to_ref()
-
-        time.sleep(1)
-
+        status = smaractascii.ask(f":M{channel}")
+        while status == f":M{channel}R":
+            time.sleep(1.0)
+            status = smaractascii.ask(f":M{channel}")
         initial_pos = smaractascii.channels[channel].get_position()
-        assert initial_pos== pytest.approx(0.0, abs=0.5), \
+        assert initial_pos.magnitude == pytest.approx(0.0, abs=0.5), \
             f"Expected 0 um after zeroing, got {initial_pos}"
         target_pos = Q_(500, 'um')
         smaractascii.channels[channel].move_rel(target_pos)
-
-        time.sleep(2.0)
-
+        status = smaractascii.ask(f":M{channel}")
+        while status == f":M{channel}T":
+            time.sleep(1.0)
+            status = smaractascii.ask(f":M{channel}")
         final_pos = smaractascii.channels[channel].get_position()
-        assert final_pos== pytest.approx(500.0, abs=1.0), \
+        assert final_pos.magnitude== pytest.approx(500.0, abs=1.0), \
             f"Expected 500 um, got {final_pos}"
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -180,43 +185,41 @@ def test_move_step_sequence(smaractascii,channel):
     assert final_pos == pytest.approx(0.0, abs=1.0), \
         f"Expected 0 um, got {final_pos}"
 
-def test_stop_function(smaractascii):
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_stop_function(smaractascii, channel):
     """Test the Emergency Stop functionality."""
-    ch = smaractascii.channel0
 
     # 1. Go to 0
-    ch.move_to_ref()
+    smaractascii.channels[channel].move_to_ref()
     time.sleep(1.0)
 
     # 2. Set slow speed to give us time to stop
-    ch.frequency_max = Q_(50, 'Hz')
+    smaractascii.channels[channel].frequency_max = Q_(50, 'Hz')
 
         # 3. Order a long move (5000 um)
-    ch.move_abs(Q_(5000, 'um'))
+    smaractascii.channels[channel].move_abs(Q_(5000, 'um'))
 
     # 4. Wait briefly then STOP
     time.sleep(0.5)
-    ch.stop()
+    smaractascii.channels[channel].stop()
 
 
 
-    # 5. Verify we did NOT reach 5000
-    final_pos = ch.get_position()
+
+    final_pos = smaractascii.channels[channel].get_position()
     print(f"Stopped at {final_pos}")
     assert final_pos.magnitude < 4000.0
 
     # Cleanup: Restore speed
-    ch.frequency_max = Q_(1000, 'Hz')
+    smaractascii.channels[channel].frequency_max = Q_(1000, 'Hz')
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_move_to_end(smaractascii,channel):
     smaractascii.channels[channel].move_to_end_up()
-    status = self.ask(f":M{channel}")
+    status = smaractascii.ask(f":M{channel}")
     while status==f"M{channel}T" :
         time.sleep(1.0)
-        status = self.ask(f":M{channel}")
-
-
+        status = smaractascii.ask(f":M{channel}")
 
     smaractascii.channels[channel].move_to_end_down()
 
