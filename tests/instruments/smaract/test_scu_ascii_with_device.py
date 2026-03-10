@@ -16,10 +16,10 @@ SENSOR = [True]
 "You can paremetrize the following test with @pytest.mark.parametrize and for your number of channels:"
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str):
+def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
-        pytest -k scu_ascii --device-address TCPIP::x.y.z.k::port::SOCKET
+        pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
         where you replace x.y.z.k byt the device IP address and port by its port address
         """
     instr = SmarActSCULinear(adapter=connected_device_address)
@@ -47,7 +47,7 @@ def test_baudrate(smaractascii, test_value, expected_outcome, channel):
         ch.baudrate = test_value
         assert ch.baudrate == expected_outcome
 
-@pytest.mark.parametrize("property_name, test_value, expected_outcome,channel", [
+@pytest.mark.parametrize("property_name, test_value, expected_outcome, channel", [
     # --- FREQUENCY TESTS (Limits: > 1 Hz and < frequency_max)
     ("frequency", Q_(500, 'Hz'), Q_(500, 'Hz'),CHANNELS),  # Valid
     ("frequency", Q_(0.5, 'Hz'), ValueError,CHANNELS),  # Invalid: Too low
@@ -198,7 +198,7 @@ def test_stop_function(smaractascii):
     time.sleep(0.5)
     ch.stop()
 
-    time.sleep(1.0)
+
 
     # 5. Verify we did NOT reach 5000
     final_pos = ch.get_position()
@@ -211,6 +211,13 @@ def test_stop_function(smaractascii):
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_move_to_end(smaractascii,channel):
     smaractascii.channels[channel].move_to_end_up()
+    status = self.ask(f":M{channel}")
+    while status==f"M{channel}T" :
+        time.sleep(1.0)
+        status = self.ask(f":M{channel}")
+
+
+
     smaractascii.channels[channel].move_to_end_down()
 
 #pytest test_scu_ascii_with_device.py --device-address "ASRL3::INSTR" -s
