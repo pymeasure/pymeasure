@@ -1,12 +1,11 @@
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.santec.tsl570 import (
-    TSL570,
+from pymeasure.instruments.santec.tsl570 import TSL570
+from pymeasure.instruments.santec.tsl500series import (
     SweepStatus,
     SweepMode,
     SweepPattern,
     SweepRouting,
 )
-
 
 # ========================= Optical Power Control Tests =========================
 
