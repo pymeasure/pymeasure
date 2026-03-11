@@ -637,7 +637,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
     )
 
     def ramp_to_voltage(self, target_voltage, steps=30, pause=20e-3):
-        """Ramp to a target voltage from the set voltage value over
+        """Ramp to a target voltage from the present voltage value over
         a certain number of linear steps, each separated by a pause duration.
 
         :param target_voltage: A voltage in Amps
