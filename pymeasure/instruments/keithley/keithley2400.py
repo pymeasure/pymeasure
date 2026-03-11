@@ -38,7 +38,6 @@ from pymeasure.instruments.validators import (
 
 from .buffer import KeithleyBuffer
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -142,11 +141,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.source_delay_auto`. "
-            "Instead use `Keithley2400.source_delay_auto_enabled`.",
+            "Instead use `Keithley2400.source_delay_auto_enabled`."
         ),
         set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.source_delay_auto`. "
-            "Instead use `Keithley2400.source_delay_auto_enabled`.",
+            "Instead use `Keithley2400.source_delay_auto_enabled`."
         ),
     )
 
@@ -174,11 +173,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_zero`. "
-            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
+            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`"
         ),
         set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_zero`. "
-            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`",
+            "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`"
         ),
     )
 
@@ -237,11 +236,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_output_off`. "
-            "Instead use `Keithley2400.auto_output_off_enabled`.",
+            "Instead use `Keithley2400.auto_output_off_enabled`."
         ),
         set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_output_off_enabled`. "
-            "Instead use `Keithley2400.auto_output_off_enabled`.",
+            "Instead use `Keithley2400.auto_output_off_enabled`."
         ),
     )
 
@@ -288,12 +287,12 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         values=["ON", "OFF"],
         map_values=False,
         get_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_state`. ",
-            "Instead use `Keithley2400.filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_state`. "
+            "Instead use `Keithley2400.filter_enabled`."
         ),
         set_process=_deprecate_process(
-            "Deprecated to use `Keithley2400.filter_state`. ",
-            "Instead use `Keithley2400.filter_enabled`.",
+            "Deprecated to use `Keithley2400.filter_state`. "
+            "Instead use `Keithley2400.filter_enabled`."
         ),
     )
 
@@ -321,11 +320,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=False,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`. "
-            "Instead use `Keithley2400.repeat_filter_enabled`.",
+            "Instead use `Keithley2400.repeat_filter_enabled`."
         ),
         set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`. "
-            "Instead use `Keithley2400.repeat_filter_enabled`.",
+            "Instead use `Keithley2400.repeat_filter_enabled`."
         ),
     )
 
@@ -1200,11 +1199,11 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         map_values=True,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.line_frequency_auto`. "
-            "Instead use `Keithley2400.line_frequency_auto_enabled`.",
+            "Instead use `Keithley2400.line_frequency_auto_enabled`."
         ),
         set_process=_deprecate_process(
             "Deprecated to use `Keithley2400.line_frequency_auto`. "
-            "Instead use `Keithley2400.line_frequency_auto_enabled`.",
+            "Instead use `Keithley2400.line_frequency_auto_enabled`."
         ),
     )
 
