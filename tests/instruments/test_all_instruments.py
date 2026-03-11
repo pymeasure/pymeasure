@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -118,7 +118,6 @@ grandfathered_docstring_instruments = [
     "Agilent33521A",
     "Agilent8257D",
     "Agilent8722ES",
-    "AgilentB1500",
     "AgilentE4408B",
     "AgilentE4980",
     "AnritsuMS2090A",

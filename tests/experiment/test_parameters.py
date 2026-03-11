@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -204,7 +204,7 @@ def test_vector_error():
         p.value = '0, 1, 2'
 
     assert p.cli_args[0] is None
-    assert p.cli_args[1] == [('units are', 'units'), 'default', '_length']
+    assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
 
 
 @pytest.mark.parametrize("value, mapping", (
