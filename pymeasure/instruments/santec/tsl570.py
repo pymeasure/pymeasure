@@ -22,13 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments.santec.tsl500series import (
-    TSL500Series,
-    SweepStatus,
-    SweepMode,
-    SweepRouting,
-    SweepPattern,
-)
+from pymeasure.instruments.santec.tsl500series import TSL500Series
 
 
 class TSL570(TSL500Series):
