@@ -81,9 +81,6 @@ ch0 = inst.channel0
 ch0.move_abs(Q_(100, 'um'))
 assert ch0.get_position()==Q_(100, 'um')
 
-
-
-# 4. Save the recording!
 # This creates the file with all the expected_protocol tests.
 generator.write_file("generated_test_smaract.py")
 print("Done! Open 'generated_test_smaract.py' to see the magic.")

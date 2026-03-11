@@ -153,8 +153,8 @@ class SCUChannel(Channel):
             raise NotImplementedError
         else:
             self.write(f":MTR{self.id}H0Z1")
-            status = self.ask(f":M{self.id}")
-            print(status)
+            #status = self.ask(f":M{self.id}")
+            #print(status)
 
     def move_to_end_up(self):
         """Moves up until end of line"""
@@ -167,8 +167,8 @@ class SCUChannel(Channel):
     def stop(self):
         """Stops any process."""
         self.write(f":S{self.id}")
-        status = self.ask(f":M{self.id}")
-        print(status)
+        #status = self.ask(f":M{self.id}")
+        #print(status)
 
     def get_position(self) :
         """Returns the current position in micrometres."""

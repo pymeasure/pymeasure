@@ -83,7 +83,7 @@ def test_instrument_properties(smaractascii, property_name, test_value, expected
     (0, ValueError),  # Invalid: Too low
     (40000, ValueError),  # Invalid: Too high
 ])
-def test_check_steps_method(smaract, test_steps, expected_outcome):
+def test_check_steps_method(smaractascii, test_steps, expected_outcome):
     """
     Parametrized test specifically for the check_steps method.
     """
@@ -91,11 +91,11 @@ def test_check_steps_method(smaract, test_steps, expected_outcome):
     #  We expect an error
     if expected_outcome == ValueError:
         with pytest.raises(ValueError):
-            smaract.check_steps(test_steps)
+            smaractascii.check_steps(test_steps)
 
     #  We expect a valid return value
     else:
-        result = smaract.check_steps(test_steps)
+        result = smaractascii.check_steps(test_steps)
         assert result == expected_outcome
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -162,54 +162,58 @@ def test_move_step_sequence(smaractascii,channel):
     2. Verify the position is read as 0 um.
     3. Move absolute to 500 um.
     4. Verify the final position is 500 um.
+
+    IMPORTANT : The hardware of the SmarAct SCU will be limiting the
+                precision of the movement sequence with steps. The main
+                factor that will play a role is the amplitude (dV), which
+                above ~200dV will not be as precise (above 2µm of imprecision)
+
     """
-    smaractascii.move_to_ref()
+    smaractascii.channels[channel].move_to_ref()
     time.sleep(2.0)
 
-    initial_pos=smaractascii.get_position()
+    initial_pos=smaractascii.channels[channel].get_position()
     assert initial_pos.magnitude == pytest.approx(0.0, abs=1.0), \
         f"Expected 0 um after zeroing, got {initial_pos}"
 
     # 2. Define Step Parameters locally
-    steps_to_move = 1000
+    steps_to_move = 100
     freq = Q_(1000, 'Hz')
-    amp = Q_(1000, 'dV')  # Max amplitude
-    smaractascii.channels[channel].move_steps_up(steps_to_move,steps=steps_to_move, frequency=freq, amplitude=amp)
+    amp = Q_(200, 'dV')  # Max amplitude
+    smaractascii.channels[channel].move_steps_up(steps_to_move, freq, amp)
     time.sleep(2.0)
-    smaractascii.channels[channel].move_steps_down(steps_to_move)
-
+    smaractascii.channels[channel].move_steps_down(steps_to_move,freq, amp)
 
     time.sleep(2.0)
 
-    final_pos = smaractascii.get_position()
-    assert final_pos == pytest.approx(0.0, abs=1.0), \
+    final_pos = smaractascii.channels[channel].get_position()
+    assert final_pos.magnitude == pytest.approx(0.0, abs=2.0), \
         f"Expected 0 um, got {final_pos}"
 
 """DANGEROUS ELEMENT WHICH IS UNSTABLE AND MAY CAUSE HARM TO THE INSTRUMENT"""
-# @pytest.mark.parametrize("channel", CHANNELS)
-# def test_stop_function(smaractascii, channel):
-#     """Test the Emergency Stop functionality."""
-#
-#     # 1. Go to 0
-#     smaractascii.channels[channel].move_to_ref()
-#     time.sleep(1.0)
-#
-#     # 2. Set slow speed to give us time to stop
-#     smaractascii.channels[channel].frequency_max = Q_(50, 'Hz')
-#
-#         # 3. Order a long move (5000 um)
-#     smaractascii.channels[channel].move_abs(Q_(5000, 'um'))
-#
-#     # 4. Wait briefly then STOP
-#     time.sleep(0.5)
-#     smaractascii.channels[channel].stop()
-#
-#     final_pos = smaractascii.channels[channel].get_position()
-#     print(f"Stopped at {final_pos}")
-#     assert final_pos.magnitude < 4000.0
-#
-#     # Cleanup: Restore speed
-#     smaractascii.channels[channel].frequency_max = Q_(1000, 'Hz')
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_stop_function(smaractascii, channel):
+    """Test the Emergency Stop functionality."""
+     # 1. Go to 0
+    smaractascii.channels[channel].move_to_ref()
+    time.sleep(1.0)
+
+     # 2. Set slow speed to give us time to stop
+    smaractascii.channels[channel].frequency_max = Q_(500, 'Hz')
+
+         # 3. Order a long move (5000 um)
+    smaractascii.channels[channel].move_abs(Q_(5000, 'um'))
+
+     # 4. Wait briefly then STOP
+    time.sleep(1)
+    smaractascii.channels[channel].stop()
+
+    final_pos = smaractascii.channels[channel].get_position()
+    print(f"Stopped at {final_pos}")
+    assert final_pos.magnitude < 4000.0
+
+     # Cleanup: Restore speed
+    smaractascii.channels[channel].frequency_max = Q_(1000, 'Hz')
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_move_to_end(smaractascii,channel):
