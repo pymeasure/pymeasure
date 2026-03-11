@@ -24,13 +24,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
-from pymeasure.instruments.santec.tsl500series import (
-    TSL500Series,
-    SweepStatus,
-    SweepMode,
-    SweepRouting,
-    SweepPattern,
-)
+from pymeasure.instruments.santec.tsl500series import TSL500Series
 
 
 class TSL550(TSL500Series):
