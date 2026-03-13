@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.validators import strict_range
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 from pymeasure.instruments.santec.tsl500series import TSL500Series
 
 
@@ -60,6 +60,24 @@ class TSL550(TSL500Series):
     def frequency_max(self):
         """Control the maximum frequency (not avaliable)."""
         raise AttributeError("TSL550.frequency_max is not available.")
+
+    laser_enabled = Instrument.control(
+        ":POWer:STATe?",
+        ":POWer:STATe %d",
+        """Control whether laser diode is enabled (bool).""",
+        validator=strict_discrete_set,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    output_enabled = Instrument.control(
+        ":POWer:SHUTter?",
+        ":POWer:SHUTter %d",
+        """Control whether output is enabled through the internal shutter (bool).""",
+        validator=strict_discrete_set,
+        values={True: 0, False: 1},
+        map_values=True,
+    )
 
     sweep_speed = Instrument.control(
         ":WAVelength:SWEep:SPEed?",
