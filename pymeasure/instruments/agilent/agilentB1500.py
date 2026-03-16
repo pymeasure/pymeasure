@@ -1334,14 +1334,16 @@ class SMU:
         self.write(cmd)
         self.check_errors()
 
-    def set_cv_parameters(self, mode, start, stop, steps, comp=None):
+    def set_cv_parameters(
+        self, mode: SweepMode, start: float, stop: float, steps: int, comp: float | None = None
+    ) -> None:
         """Set the mode and sweep parameters for :attr:`MeasMode.CV_SWEEP` measurement. (``WDCV``)
 
-        :param SweepMode mode: Sweep mode
-        :param float start: Sweep start voltage in V
-        :param float stop: Sweep stop voltage in V
-        :param int steps: Number of steps for staircase sweep
-        :param float comp: Compliance current in A. The previous value is used if not set.
+        :param mode: Sweep mode
+        :param start: Sweep start voltage in V
+        :param stop: Sweep stop voltage in V
+        :param steps: Number of steps for staircase sweep
+        :param comp: Compliance current in A. The previous value is used if not set.
         """
         cmd = _set_cv_parameters_base(self.channel, mode, start, stop, steps, comp)
         self.write(cmd)
