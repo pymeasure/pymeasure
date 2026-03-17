@@ -177,7 +177,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         modules = self.query_modules()
         for channel, module_type in modules.items():
             if "CMU" in module_type:
-                self.cmu = CMU(parent=self, slot=channel)
+                self.add_child(CMU, id=channel, collection="cmu", prefix=None)
 
     def pause(self, pause_seconds):
         """Pause command execution for given time in seconds. (``PA``)
