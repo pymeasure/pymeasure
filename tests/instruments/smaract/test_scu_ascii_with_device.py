@@ -49,34 +49,37 @@ def test_baudrate(smaractascii, test_value, expected_outcome, channel):
 """ This tests the frequency and amplitude values for a given instrument, assuming that the frequency 
     and amplitude will be similar on multiple channels if there exist more than one channel"""
 
-@pytest.mark.parametrize("property_name, test_value, expected_outcome", [
+@pytest.mark.parametrize(" test_value, expected_outcome", [
     # --- FREQUENCY TESTS
-    ("frequency", Q_(500, 'Hz'), Q_(500, 'Hz')),  # Valid
-    ("frequency", Q_(0.5, 'Hz'), ValueError),  # Invalid: Too low
-    ("frequency", Q_(20000, 'Hz'), ValueError),  # Invalid: Too high
+    (Q_(500, 'Hz'), Q_(500, 'Hz')),  # Valid
+    ( Q_(0.5, 'Hz'), ValueError),  # Invalid: Too low
+    ( Q_(20000, 'Hz'), ValueError)]) # Invalid: Too high
 
-    # --- AMPLITUDE TESTS
-    ("amplitude", Q_(500, 'dV'), Q_(500, 'dV')),  # Valid
-    ("amplitude", Q_(100, 'dV'), ValueError),  # Invalid: Too low
-    ("amplitude", Q_(1300, 'dV'), ValueError),  # Invalid: Too high
-])
-def test_instrument_properties(smaractascii, property_name, test_value, expected_outcome):
+def test_freq(smaractascii, test_value, expected_outcome):
     # We expect a ValueError (Negative Testing)
     if expected_outcome == ValueError:
         with pytest.raises(ValueError):
-            if property_name == "frequency":
-                smaractascii.frequency = test_value
-            elif property_name == "amplitude":
+            smaractascii.frequency = test_value
+    else:
+        smaractascii.frequency = test_value
+        assert smaractascii.frequency == expected_outcome
+
+@pytest.mark.parametrize(" test_value, expected_outcome", [
+    # --- AMPLITUDE TESTS
+    ( Q_(500, 'dV'), Q_(500, 'dV')),  # Valid
+    ( Q_(100, 'dV'), ValueError),  # Invalid: Too low
+    (Q_(1300, 'dV'), ValueError),  # Invalid: Too high
+])
+def test_ampli(smaractascii, test_value, expected_outcome):
+    # We expect a ValueError (Negative Testing)
+    if expected_outcome == ValueError:
+        with pytest.raises(ValueError):
                 smaractascii.amplitude = test_value
 
     # We expect it to succeed
     else:
-        if property_name == "frequency":
-            smaractascii.frequency = test_value
-            assert smaractascii.frequency == expected_outcome
-        elif property_name == "amplitude":
-            smaractascii.amplitude = test_value
-            assert smaractascii.amplitude == expected_outcome
+        smaractascii.amplitude = test_value
+        assert smaractascii.amplitude == expected_outcome
 
 @pytest.mark.parametrize("test_steps, expected_outcome", [
     (1000, 1000),  # Valid: Normal steps
@@ -87,7 +90,6 @@ def test_check_steps_method(smaractascii, test_steps, expected_outcome):
     """
     Parametrized test specifically for the check_steps method.
     """
-
     #  We expect an error
     if expected_outcome == ValueError:
         with pytest.raises(ValueError):
@@ -99,6 +101,55 @@ def test_check_steps_method(smaractascii, test_steps, expected_outcome):
         assert result == expected_outcome
 
 @pytest.mark.parametrize("channel", CHANNELS)
+def test_get_position(smaractascii, channel):
+    pos = smaractascii.channels[channel].get_position()
+
+    # we verify we do recive a(Quantity)
+    assert isinstance(pos, Q_)
+    # we verify its unity is um
+    assert str(pos.units) == 'micrometer'
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_to_ref(smaractascii, channel):
+    smaractascii.channels[channel].move_to_ref()
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_abs(smaractascii,channel):
+    target_pos = Q_(500, 'um')
+    smaractascii.channels[channel].move_abs(target_pos)
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_rel(smaractascii, channel):
+    target_pos = Q_(500, 'um')
+    smaractascii.channels[channel].move_rel(target_pos)
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_read_status(smaractascii, channel):
+    status=smaractascii.channels[channel].ask(f":M{channel}")
+    assert status.startswith(f":M{channel}")
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_steps_down(smaractascii,channel):
+    smaractascii.channels[channel].move_steps_down(1000, 500, 500)
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_steps_up(smaractascii,channel):
+    smaractascii.channels[channel].move_steps_up(1000,500,500)
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_to_end_up(smaractascii,channel):
+    smaractascii.channels[channel].move_to_end_up()
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_move_to_end_down(smaractascii,channel):
+    smaractascii.channels[channel].move_to_end_down()
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_stop(smaractascii, channel):
+    smaractascii.channels[channel].stop()
+
+
 def test_ref_and_move_absolute_sequence(smaractascii,channel):
     """
     Integration test validating the absolute movement sequence:

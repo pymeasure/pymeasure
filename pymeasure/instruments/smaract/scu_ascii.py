@@ -38,7 +38,6 @@ class SCUChannel(Channel):
         """Calibrate the sensor. Has to done before the use of move to reference.
            The user must ensure himself that the positioner is not close to a mechanical limit before using this method"""
         self.write(f':CS{self.id}')
-        status = self.ask(f":M{self.id}")
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -109,33 +108,36 @@ class SCUChannel(Channel):
         self.write(f":GST{self.id}")
         return self.read()
 
-    def move_steps_up(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+    def move_steps_up(self, steps: int, freq: Union[int, float, Q_] = None, ampl: Union[int, float, Q_] = None):
         """Moves up
-
         :param steps: Number of steps, an int in range [1;30000]
-        :param freq: Frequency, a quantity given in Hz in range [1;18500]
-        :param ampl: Amplitude, a quantity given in dV in range [150;1000]
-
+        :param freq: Frequency, a quantity given in Hz in range [1;18500] (or int)
+        :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
-        if freq is None:
-            freq = self._freq
-        if ampl is None:
-            ampl = self._amplitude
-        self.write(f":U{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
 
-    def move_steps_down(self, steps: int, freq: Q_ = None, ampl: Q_ = None):
+        valid_freq = self.parent.check_freq(freq)
+        valid_ampl = self.parent.check_amplitude(ampl)
+
+        f_val = int(valid_freq.to('Hz').magnitude)
+        a_val = int(valid_ampl.to('dV').magnitude)
+
+        self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
+
+
+    def move_steps_down(self, steps: int, freq: Union[int, float, Q_] = None, ampl: Union[int, float, Q_] = None):
         """Moves down
-
         :param steps: Number of steps, an int in range [1;30000]
-        :param freq: Frequency, a quantity given in Hz in range [1;18500]
-        :param ampl: Amplitude, a quantity given in dV in range [150;1000]
-
+        :param freq: Frequency, a quantity given in Hz in range [1;18500] (or int)
+        :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
-        if freq is None:
-            freq = self._freq
-        if ampl is None:
-            ampl = self._amplitude
-        self.write(f":D{self.id}F{freq.to('Hz').magnitude}A{ampl.to('dV').magnitude}S{steps}")
+        #
+        valid_freq = self.parent.check_freq(freq)
+        valid_ampl = self.parent.check_amplitude(ampl)
+
+        f_val = int(valid_freq.to('Hz').magnitude)
+        a_val = int(valid_ampl.to('dV').magnitude)
+
+        self.write(f":D{self.id}F{f_val}A{a_val}S{steps}")
 
     def check_sensor_present(self) -> bool:
         """Check if the sensor is present
@@ -254,27 +256,31 @@ class SmarActSCU_ASCII(Instrument):
         self._freq: Q_ = Q_(260, 'Hz')
         self._steps: int = 250
 
-    identif = Instrument.measurement(
-        ":GID", """Get the identification number. """
-
+    serial_nb = Instrument.measurement(
+        ":GID", """Get the serial number. """,
+    get_process = lambda s: s[3:]
     )
 
     model = Instrument.measurement(
-        ":I", """Get the device identification information. """
+        ":I", """Get the device identification information. """,
+    get_process = lambda s: s[2:]
     )
 
     ###CHECK AMPLITUDE###
-
     def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
         """Check if amplitude is present and if it is inside the given boundary.
 
-        :param ampl : a quantity with amplitude units dV, if int then given in dV
-        """
+               :param ampl : a quantity with amplitude units dV, if int then given in dV
+               """
         if ampl is None:
-            ampl = self._amplitude
-        ampl = Q_(ampl, 'dV')
-        if not (150 <= ampl.magnitude <= 1000):
-            raise ValueError("Amplitude out of range [150;1000] dV'")
+            return self._amplitude
+
+        if isinstance(ampl, (int)):
+            ampl = Q_(ampl, 'dV')
+
+        if not (Q_(150, 'dV') <= ampl <= Q_(1000, 'dV')):
+            raise ValueError(f"Amplitude {ampl} out of range [150; 1000] dV")
+
         return ampl
 
     @property
@@ -288,17 +294,24 @@ class SmarActSCU_ASCII(Instrument):
 
     ###CHECK FREQUENCY###
 
+
+
     def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
-        """Check if closed-loop frequency is present and if it is inside the given boundary.
+            """Check if closed-loop frequency is present and if it is inside the given boundary.
 
         :param freq: a qunatity with frequency units in Hz, if int, then given in Hz
         """
-        if freq is None:
-            freq = self._freq
-        freq = Q_(freq, 'Hz')  # force Quantity'sation
-        if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
-            raise ValueError("Frequency out of range [1;18500] Herz")
-        return freq
+            if freq is None:
+                return self._freq
+
+            if isinstance(freq, (int)):
+                freq = Q_(freq, 'Hz')
+
+            # Vérification of limits
+            if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
+                raise ValueError(f"Frequency {freq} out of range [1; 18500] Hz")
+
+            return freq
 
     @property
     def frequency(self):
