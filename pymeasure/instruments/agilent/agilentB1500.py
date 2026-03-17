@@ -1765,9 +1765,8 @@ class CMU(Channel):
     """
 
     def __init__(self, parent: AgilentB1500, slot: int, **kwargs):
-        super().__init__(parent, slot, **kwargs)
         slot = strict_discrete_set(slot, range(1, 11))
-        self.id = slot
+        super().__init__(parent, slot, **kwargs)
 
     enabled = Channel.setting(
         "%s {ch}",
