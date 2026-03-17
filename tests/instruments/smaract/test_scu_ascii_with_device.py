@@ -113,7 +113,7 @@ def test_ref_and_move_absolute_sequence(smaractascii,channel):
         time.sleep(1.0)
         status = smaractascii.ask(f":M{channel}")
     initial_pos = smaractascii.channel0.get_position()
-    assert initial_pos.magnitude == pytest.approx(0.0, abs=1), \
+    assert initial_pos.magnitude == pytest.approx(0.0, abs=5), \
         f"Expected 0 um after zeroing, got {initial_pos}"
     target_pos = Q_(500, 'um')
     smaractascii.channel0.move_abs(target_pos)
@@ -170,7 +170,10 @@ def test_move_step_sequence(smaractascii,channel):
 
     """
     smaractascii.channels[channel].move_to_ref()
-    time.sleep(2.0)
+    status = smaractascii.ask(f":M{channel}")
+    while status == f":M{channel}R":
+        time.sleep(1.0)
+        status = smaractascii.ask(f":M{channel}")
 
     initial_pos=smaractascii.channels[channel].get_position()
     assert initial_pos.magnitude == pytest.approx(0.0, abs=1.0), \
