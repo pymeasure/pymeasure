@@ -38,6 +38,8 @@ class SCUChannel(Channel):
         """Calibrate the sensor. Has to done before the use of move to reference.
            The user must ensure himself that the positioner is not close to a mechanical limit before using this method"""
         self.write(f':CS{self.id}')
+        status = self.ask(f":M{self.id}")
+        return status
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -258,12 +260,12 @@ class SmarActSCU_ASCII(Instrument):
 
     serial_nb = Instrument.measurement(
         ":GID", """Get the serial number. """,
-    get_process = lambda s: s[3:]
+    get_process = lambda s : s[3:]
     )
 
     model = Instrument.measurement(
-        ":I", """Get the device identification information. """,
-    get_process = lambda s: s[2:]
+        ":I", """Get the device model information. """,
+    get_process = lambda s : s[2:]
     )
 
     ###CHECK AMPLITUDE###
@@ -293,8 +295,6 @@ class SmarActSCU_ASCII(Instrument):
         self._amplitude = self.check_amplitude(value)
 
     ###CHECK FREQUENCY###
-
-
 
     def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
             """Check if closed-loop frequency is present and if it is inside the given boundary.
