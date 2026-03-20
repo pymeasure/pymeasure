@@ -90,13 +90,20 @@ class PlotFrame(QtWidgets.QFrame):
     def update_coordinates(self, x, y):
         self.coordinates.setText(f"({x:g}, {y:g})")
 
-    def update_curves(self):
+    def update_curves(self, dynamic = True, **kwargs):
         for item in self.plot.items:
             if isinstance(item, self.ResultsClass):
-                if self.check_status:
+                if self.check_status and dynamic:
                     if item.results.procedure.status == Procedure.RUNNING:
+                        for key, value in kwargs.items():
+                            if hasattr(item, key):
+                                print(key)
+                                setattr(item, key, value)
                         item.update_data()
                 else:
+                    for key, value in kwargs.items():
+                        if hasattr(item, key):
+                            setattr(item, key, value)
                     item.update_data()
 
     def parse_axis(self, axis):
