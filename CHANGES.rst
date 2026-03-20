@@ -11,6 +11,7 @@ Removed
 Changed features
 ----------------
 - :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore, only to a single value. Use :code:`get_process_list` parameter instead for processing a list of values.
+- Improved implementation of Keithley 2400, with some changes in functionality. Legacy implementation has been kept as `Keithley2400Legacy`.
 
 Deprecated
 ----------
