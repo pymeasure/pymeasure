@@ -24,6 +24,7 @@
 
 import logging
 from enum import IntEnum, IntFlag
+from warnings import warn
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set, \
     strict_range
@@ -1081,7 +1082,7 @@ class AdvantestR624X(Instrument):
         """Stop the sweep started by the XE command or the trigger input signal (``SP``)."""
         self.write('sp 0')
 
-    def digital_output(self, values):
+    def set_digital_output(self, values):
         """Output a 16-bit signal from the DIGITAL OUT output terminal
         on the rear panel (``DIOS``).
         If there are multiple values specified, the data is output at
@@ -1118,14 +1119,37 @@ class AdvantestR624X(Instrument):
         """,
     )
 
+    @property
     def operation_mode(self):
         """Get the operation mode and sweep delay time (``LDS?``)."""
         return self.ask('lds?')
 
+    def query_operation_mode(self):
+        """Get the operation mode and sweep delay time.
+
+        .. deprecated:: 0.15
+            Use :attr:`operation_mode` instead.
+        """
+        warn("`query_operation_mode` is deprecated, use `operation_mode` property instead.",
+             FutureWarning)
+        return self.operation_mode
+
+    @property
     def system_settings(self):
         """Get the output data format, common short, power frequency,
         and SRQ gate settings (``LDS_50?``)."""
         return self.ask('lds_50?')
+
+    def query_system_settings(self):
+        """Get the output data format, common short, power frequency,
+        and SRQ gate settings.
+
+        .. deprecated:: 0.15
+            Use :attr:`system_settings` instead.
+        """
+        warn("`query_system_settings` is deprecated, use `system_settings` property instead.",
+             FutureWarning)
+        return self.system_settings
 
     def search_measurement_setup(self, search_mode, occurrence_after_stop, command):
         """Configure search measurement sense/search channel parameters (``MAR~;NENT``).
@@ -1303,9 +1327,19 @@ class AdvantestR624X(Instrument):
         action = SequenceInterruptionType(action)
         self.write(f'sqsp {action}')
 
+    def interrupt_sequence_command(self, action):
+        """Interrupt the sequence program.
+
+        .. deprecated:: 0.15
+            Use :meth:`interrupt_sequence` instead.
+        """
+        warn("`interrupt_sequence_command` is deprecated, use "
+             "`interrupt_sequence` instead.", FutureWarning)
+        return self.interrupt_sequence(action)
+
     sequence_program_number = Instrument.measurement(
         "lnub?",
-        """Measure the number of program sequences stored in sequence memory (``LNUB?``).
+        """Get the number of program sequences stored in sequence memory (``LNUB?``).
 
         The response has the format ``#3XXX,line1,line2,...`` where ``XXX`` is a
         3-digit count of stored programs and the remaining values are line numbers.
@@ -1324,6 +1358,16 @@ class AdvantestR624X(Instrument):
         """
         line = truncated_range(line, [1, 100])
         return self.ask(f'lst? {line}')
+
+    def sequence_program_listing(self, line):
+        """Query the commands stored at a sequence program line.
+
+        .. deprecated:: 0.15
+            Use :meth:`query_sequence_program` instead.
+        """
+        warn("`sequence_program_listing` is deprecated, use "
+             "`query_sequence_program` instead.", FutureWarning)
+        return self.query_sequence_program(line)
 
     def store_highspeed_sequence(self, program_number, command):
         """Store commands in a high-speed sequence program number (``PGST~;END``).
@@ -1451,7 +1495,7 @@ class AdvantestR624X(Instrument):
 
         self.write(f'osig 0,{trigger_output},{alarm_output},{scanner_output}')
 
-    def output_format(self, delimiter_format, block_delimiter, terminator):
+    def set_output_format(self, delimiter_format, block_delimiter, terminator):
         """Set the format and terminator of the GPIB output data (``FMT``).
 
         :param int delimiter_format: Type of delimiter format
@@ -1588,6 +1632,23 @@ class AdvantestR624X(Instrument):
         values=[0, 65535],
     )
 
+    @property
+    def digital_out_enable_data(self):
+        """Control the digital output enable data register.
+
+        .. deprecated:: 0.15
+            Use :attr:`digital_output_enable` instead.
+        """
+        warn("`digital_out_enable_data` is deprecated, use "
+             "`digital_output_enable` instead.", FutureWarning)
+        return self.digital_output_enable
+
+    @digital_out_enable_data.setter
+    def digital_out_enable_data(self, value):
+        warn("`digital_out_enable_data` is deprecated, use "
+             "`digital_output_enable` instead.", FutureWarning)
+        self.digital_output_enable = value
+
     status_byte_register = Instrument.measurement(
         "*stb?",
         """Measure the status byte register and MSS bits without
@@ -1639,7 +1700,7 @@ class AdvantestR624X(Instrument):
 
     self_test = Instrument.measurement(
         "*tst?",
-        """Measure the result of the self-test (``*TST?``).
+        """Get the result of the self-test (``*TST?``).
 
         .. warning::
 
@@ -1707,7 +1768,7 @@ class AdvantestR624X(Instrument):
         values=range(0, 5),
     )
 
-    def lo_common_relay(self, enable, lo_relay=None):
+    def set_lo_common_connection_relay(self, enable, lo_relay=None):
         """Configure the LO common connection relay between channels A and B (``LTL``).
 
         :param bool enable: A boolean property that controls whether or not the
@@ -1751,31 +1812,86 @@ class SMUChannel(Channel):
         """Clear the measurement data buffer (``MBC``)."""
         self.write('mbc {ch}')
 
+    @property
     def output_waveform_settings(self):
         """Get the output waveform settings for this channel (``LDS_0x?``)."""
         return self.ask('lds_0{ch}?')
 
+    def query_output_waveform(self):
+        """Get the output waveform settings for this channel.
+
+        .. deprecated:: 0.15
+            Use :attr:`output_waveform_settings` instead.
+        """
+        warn("`query_output_waveform` is deprecated, use "
+             "`output_waveform_settings` property instead.", FutureWarning)
+        return self.output_waveform_settings
+
+    @property
     def measurement_range_settings(self):
         """Get the measurement range, integration time, hold time, delay time,
         pulse width, and pulse period for this channel (``LDS_1x?``)."""
         return self.ask('lds_1{ch}?')
 
+    def query_measurement_settings(self):
+        """Get the measurement range settings for this channel.
+
+        .. deprecated:: 0.15
+            Use :attr:`measurement_range_settings` instead.
+        """
+        warn("`query_measurement_settings` is deprecated, use "
+             "`measurement_range_settings` property instead.", FutureWarning)
+        return self.measurement_range_settings
+
+    @property
     def response_settings(self):
         """Get the response mode, operate mode, and remote sense settings
         for this channel (``LDS_2x?``)."""
         return self.ask('lds_2{ch}?')
 
+    def query_response_settings(self):
+        """Get the response mode settings for this channel.
+
+        .. deprecated:: 0.15
+            Use :attr:`response_settings` instead.
+        """
+        warn("`query_response_settings` is deprecated, use "
+             "`response_settings` property instead.", FutureWarning)
+        return self.response_settings
+
+    @property
     def data_output_settings(self):
         """Get the null operation, comparison operation, output data type,
         and sweep stop condition for this channel (``LDS_3x?``)."""
         return self.ask('lds_3{ch}?')
 
+    def query_data_output_settings(self):
+        """Get the data output settings for this channel.
+
+        .. deprecated:: 0.15
+            Use :attr:`data_output_settings` instead.
+        """
+        warn("`query_data_output_settings` is deprecated, use "
+             "`data_output_settings` property instead.", FutureWarning)
+        return self.data_output_settings
+
+    @property
     def io_settings(self):
         """Get the analog input, trigger output timing, trigger input type,
         scanner control, and interlock control for this channel (``LDS_4x?``)."""
         return self.ask('lds_4{ch}?')
 
-    def output_type(self, output_type, measurement_type):
+    def query_io_settings(self):
+        """Get the I/O settings for this channel.
+
+        .. deprecated:: 0.15
+            Use :attr:`io_settings` instead.
+        """
+        warn("`query_io_settings` is deprecated, use "
+             "`io_settings` property instead.", FutureWarning)
+        return self.io_settings
+
+    def set_output_type(self, output_type, measurement_type):
         """Set the output method and type of the GPIB output (``OFM``).
 
         :param output_type: A property that controls the type of output
@@ -1785,7 +1901,7 @@ class SMUChannel(Channel):
 
         .. note::
 
-            For the format of the output data, refer to :meth:`AdvantestR624X.output_format`.
+            For the format of the output data, refer to :meth:`AdvantestR624X.set_output_format`.
             For DC and pulse measurements, the output method is fixed to '1' (real-time output).
             When the output method '3' (buffering output) is specified, the measured data is not
             stored in memory.
@@ -1823,7 +1939,7 @@ class SMUChannel(Channel):
         # get_process=lambda v: TriggerOutputSignalTiming(int(v)),
     )
 
-    def scanner_control(self, output, interlock):
+    def set_scanner_control(self, output, interlock):
         """Set the SCANNER CONTROL (START, STOP)
         output signal and INTERLOCK input signal on the rear panel (``SCT``).
 
@@ -1924,7 +2040,7 @@ class SMUChannel(Channel):
         # get_process=lambda v: SampleHold(int(v)),
     )
 
-    def sample_mode(self, mode, auto_sampling=True):
+    def set_sample_mode(self, mode, auto_sampling=True):
         """Set the synchronous, asynchronous, or tracking operation
         and search measurement mode between channels (``JM``).
 
@@ -1948,7 +2064,7 @@ class SMUChannel(Channel):
 
         self.write(f'jm {mode.value},{auto_sampling},{{ch}}')
 
-    def timing_parameters(self, hold_time, measurement_delay, pulsed_width, pulsed_period):
+    def set_timing_parameters(self, hold_time, measurement_delay, pulsed_width, pulsed_period):
         """Set the hold time, measurement delay, pulse width, and pulse period (``WT``).
 
         :param float hold_time: total amount of time for the complete pulse, until next pulse comes
@@ -2273,7 +2389,7 @@ class SMUChannel(Channel):
         self.write(f'mpwv {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
                    f'{current_compliance:.4e},{bias:.4e}')
 
-    def voltage_random_memory(self, address, voltage_range, output,
+    def set_voltage_random_memory(self, address, voltage_range, output,
                               current_compliance):
         """Store voltage parameters to the random sweep data memory (``RMS``).
 
@@ -2572,7 +2688,7 @@ class SMUChannel(Channel):
             f'mpwi {{ch}},{sweep_mode.value},{repeat},{start_address},{stop_address},'
             f'{current_compliance:.4e},{bias:.4e}')
 
-    def current_random_memory(self, address, current_range, output,
+    def set_current_random_memory(self, address, current_range, output,
                               voltage_compliance):
         """Store current parameters to the random sweep data memory (``RMS``).
 
@@ -2672,7 +2788,7 @@ class SMUChannel(Channel):
         map_values=True
     )
 
-    def wire_mode(self, four_wire, lo_guard=True):
+    def set_wire_mode(self, four_wire, lo_guard=True):
         """Switch remote sense and set the LO-GUARD relay ON/OFF (``OSL``).
 
         :param bool four_wire: A boolean property that enables or disables four wire measurements.
@@ -2718,7 +2834,7 @@ class SMUChannel(Channel):
         map_values=True
     )
 
-    def comparison_limits(self, comparison, voltage_value, upper_limit, lower_limit):
+    def set_comparison_limits(self, comparison, voltage_value, upper_limit, lower_limit):
         """Set the measurement comparison ON/OFF and the upper/lower limit values (``CMD``).
 
         :param bool comparison: A boolean property that controls whether or not
@@ -2779,6 +2895,26 @@ class SMUChannel(Channel):
     def store_calibration_factor(self):
         """Store the calibration factor in non-volatile memory (EEPROM) (``CSRT``)."""
         self.write('csrt {ch}')
+
+    def calibration_init(self):
+        """Initialize the calibration data.
+
+        .. deprecated:: 0.15
+            Use :meth:`init_calibration` instead.
+        """
+        warn("`calibration_init` is deprecated, use "
+             "`init_calibration` instead.", FutureWarning)
+        return self.init_calibration()
+
+    def calibration_store_factor(self):
+        """Store the calibration factor.
+
+        .. deprecated:: 0.15
+            Use :meth:`store_calibration_factor` instead.
+        """
+        warn("`calibration_store_factor` is deprecated, use "
+             "`store_calibration_factor` instead.", FutureWarning)
+        return self.store_calibration_factor()
 
     calibration_measured_value = Channel.setting(
         "std {ch},%.4e",

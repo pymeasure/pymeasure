@@ -103,11 +103,11 @@ Measurement characteristics:
                                    pulse_value=6, base_value=0,
                                    current_compliance=2)
     smu.ch_B.measure_current(current_range=CurrentRange.FIXED_BEST)
-    smu.ch_B.timing_parameters(hold_time=0, measurement_delay=1e-4,
+    smu.ch_B.set_timing_parameters(hold_time=0, measurement_delay=1e-4,
                                pulsed_width=1e-2, pulsed_period=2e-2)
 
     # PULSED_SYNC with auto_sampling=False (critical for correct readout)
-    smu.ch_A.sample_mode(SampleMode.PULSED_SYNC, auto_sampling=False)
+    smu.ch_A.set_sample_mode(SampleMode.PULSED_SYNC, auto_sampling=False)
 
     smu.ch_A.enable_source()
     smu.ch_B.enable_source()
@@ -140,12 +140,12 @@ After operating, the measurement is repeated 10 times with a trigger command and
 
     smu = AdvantestR6246("GPIB::1")
     smu.reset()                                                      # Set default parameters
-    smu.ch_A.sample_mode(SampleMode.ASYNC, False)                     # Asynchronous operation and single shot sampling by trigger and command
+    smu.ch_A.set_sample_mode(SampleMode.ASYNC, False)                     # Asynchronous operation and single shot sampling by trigger and command
     smu.ch_A.voltage_source(source_range = VoltageRange.FIXED_BEST,
                             source_value = 10,
                             current_compliance = 0.5)                # compliance of 0.5A
     smu.ch_A.measure_current()                                       # Measure current
-    smu.ch_A.timing_parameters(hold_time = 0,                    # 0 sec hold time
+    smu.ch_A.set_timing_parameters(hold_time = 0,                    # 0 sec hold time
                                    measurement_delay = 1E-3,         # 1ms delay between measurements
                                    pulsed_width = 5E-3,              # 5ms pulse width
                                    pulsed_period = 10E-3)            # 10ms pulse period
@@ -184,7 +184,7 @@ Reads the fixed end bit, captures the measurement data, and prints out the measu
     smu.reset()                                                      # Set default parameters
 
     smu.ch_A.auto_zero_enabled = False
-    smu.ch_A.sample_mode(SampleMode.ASYNC, False)                     # Asynchronous operation and single shot sampling by trigger and command
+    smu.ch_A.set_sample_mode(SampleMode.ASYNC, False)                     # Asynchronous operation and single shot sampling by trigger and command
     smu.ch_A.voltage_pulsed_source(
           source_range = VoltageRange.FIXED_BEST,
           pulse_value = 10,
@@ -193,7 +193,7 @@ Reads the fixed end bit, captures the measurement data, and prints out the measu
     smu.ch_A.measure_current(current_range=CurrentRange.FIXED_BEST)  # Fixed range required for pulsed
     smu.ch_A.fast_mode_enabled = True                                # Set channel response to fast
     smu.ch_A.sample_hold_mode = SampleHold.MODE_1mS                  # Sample at 1mS
-    smu.ch_A.timing_parameters(hold_time = 0,                    # 0 sec hold time
+    smu.ch_A.set_timing_parameters(hold_time = 0,                    # 0 sec hold time
                                    measurement_delay = 1E-3,         # 1ms delay between measurements
                                    pulsed_width = 5E-3,              # 5ms pulse width
                                    pulsed_period = 10E-3)            # 10ms pulse period
@@ -235,7 +235,7 @@ After the operation, repeat the measurement 10 times with the trigger command an
 
     smu = AdvantestR6246("GPIB::1")
     smu.reset()                                                         # Set default parameters
-    smu.ch_A.sample_mode(SampleMode.ASYNC, auto_sampling = False)
+    smu.ch_A.set_sample_mode(SampleMode.ASYNC, auto_sampling = False)
     smu.ch_A.current_pulsed_source(
           source_range = CurrentRange.FIXED_600mA,
           pulse_value = 0.1,                                            # 100mA
@@ -244,7 +244,7 @@ After the operation, repeat the measurement 10 times with the trigger command an
     smu.ch_A.measure_voltage(voltage_range = VoltageRange.FIXED_BEST)
     smu.ch_A.fast_mode_enabled = True                                   # Set channel response to fast
     smu.ch_A.sample_hold_mode = SampleHold.MODE_1mS                     # Sample at 1mS
-    smu.ch_A.timing_parameters(hold_time = 0,                       # 0 sec hold time
+    smu.ch_A.set_timing_parameters(hold_time = 0,                       # 0 sec hold time
                                    measurement_delay = 0,               # 0 sec delay between measurements
                                    pulsed_width = 0,                    # 0 sec pulse width
                                    pulsed_period = 0)                   # 0 sec pulse period
@@ -289,18 +289,18 @@ read the measured data from 1 to 2 using the RMM command.
     # First we setup our main parameters
     smu.reset()                                                      # Set default parameters
 
-    smu.ch_A.output_type(output_type = OutputType.BUFFERING_OUTPUT_SPECIFIED,
+    smu.ch_A.set_output_type(output_type = OutputType.BUFFERING_OUTPUT_SPECIFIED,
                          measurement_type = MeasurementType.MEASURE_DATA)
 
-    smu.output_format(delimiter_format = 2,                           # No header, ASCII format
+    smu.set_output_format(delimiter_format = 2,                           # No header, ASCII format
                       block_delimiter = 1,                           # Make it the same as the terminator
                       terminator = 1)                                # CR, LF<EOI>
 
     smu.ch_A.analog_input = 1                                        # Turn off the analog input.
 
-    smu.lo_common_relay(enable = True)                               # Turns the connection relay on
+    smu.set_lo_common_connection_relay(enable = True)                               # Turns the connection relay on
 
-    smu.ch_A.wire_mode(four_wire = False,                             # disable four wire measurements
+    smu.ch_A.set_wire_mode(four_wire = False,                             # disable four wire measurements
                        lo_guard = True)                              # enable the LO-GUARD relay.
 
     smu.ch_A.auto_zero_enabled = False
@@ -308,7 +308,7 @@ read the measured data from 1 to 2 using the RMM command.
 
     # Now we set measurement specific variables
     smu.ch_A.clear_measurement_buffer()
-    smu.ch_A.sample_mode(SampleMode.ASYNC, auto_sampling = True)
+    smu.ch_A.set_sample_mode(SampleMode.ASYNC, auto_sampling = True)
     smu.ch_A.voltage_fixed_level_sweep(voltage_range = VoltageRange.FIXED_60V,
                                        voltage_level = 15,
                                        measurement_count = 20,       # 20 measurements
@@ -316,7 +316,7 @@ read the measured data from 1 to 2 using the RMM command.
                                        bias = 0)
     smu.ch_A.measure_voltage(voltage_range = VoltageRange.FIXED_BEST)
     smu.ch_A.sample_hold_mode = SampleHold.MODE_100uS
-    smu.ch_A.timing_parameters(hold_time = 1E-3,                 # 1ms sec hold time
+    smu.ch_A.set_timing_parameters(hold_time = 1E-3,                 # 1ms sec hold time
                                    measurement_delay = 0,            # 0 sec delay between measurements
                                    pulsed_width = 0,                 # 0 sec pulse width
                                    pulsed_period = 0)                # 0 sec pulse period

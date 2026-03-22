@@ -86,7 +86,7 @@ def test_operation_mode():
         AdvantestR6246,
         [("lds?", "JM 1,1,1;GDLY 0,1.0000e-03")]
     ) as inst:
-        result = inst.operation_mode()
+        result = inst.operation_mode
         assert result == "JM 1,1,1;GDLY 0,1.0000e-03"
 
 
@@ -95,7 +95,7 @@ def test_system_settings():
         AdvantestR6246,
         [("lds_50?", "FMT 0,1,1,2;LTL 0,1,3;LF 0,2;S0")]
     ) as inst:
-        result = inst.system_settings()
+        result = inst.system_settings
         assert result == "FMT 0,1,1,2;LTL 0,1,3;LF 0,2;S0"
 
 
@@ -104,7 +104,7 @@ def test_output_waveform_settings_ch_a():
         AdvantestR6246,
         [("lds_01?", "DV 1,20,5.0000e+00,1.0000e-01")]
     ) as inst:
-        result = inst.ch_A.output_waveform_settings()
+        result = inst.ch_A.output_waveform_settings
         assert result == "DV 1,20,5.0000e+00,1.0000e-01"
 
 
@@ -113,7 +113,7 @@ def test_output_waveform_settings_ch_b():
         AdvantestR6246,
         [("lds_02?", "DI 2,3,1.0000e-03,1.0000e+01")]
     ) as inst:
-        result = inst.ch_B.output_waveform_settings()
+        result = inst.ch_B.output_waveform_settings
         assert result == "DI 2,3,1.0000e-03,1.0000e+01"
 
 
@@ -122,7 +122,7 @@ def test_measurement_range_settings():
         AdvantestR6246,
         [("lds_11?", "RV 1,1,1,0;MST 1,13;WT 1,0,0,0,0")]
     ) as inst:
-        result = inst.ch_A.measurement_range_settings()
+        result = inst.ch_A.measurement_range_settings
         assert result == "RV 1,1,1,0;MST 1,13;WT 1,0,0,0,0"
 
 
@@ -131,7 +131,7 @@ def test_response_settings():
         AdvantestR6246,
         [("lds_21?", "FL 1,2;OPM 1,3;OSL 1,1,1")]
     ) as inst:
-        result = inst.ch_A.response_settings()
+        result = inst.ch_A.response_settings
         assert result == "FL 1,2;OPM 1,3;OSL 1,1,1"
 
 
@@ -140,7 +140,7 @@ def test_data_output_settings():
         AdvantestR6246,
         [("lds_31?", "NUG 1,1;CMD 1,1,1,0,0;OFM 1,1,1;WM 1,1")]
     ) as inst:
-        result = inst.ch_A.data_output_settings()
+        result = inst.ch_A.data_output_settings
         assert result == "NUG 1,1;CMD 1,1,1,0,0;OFM 1,1,1;WM 1,1"
 
 
@@ -149,7 +149,7 @@ def test_io_settings():
         AdvantestR6246,
         [("lds_41?", "IAN 1,1;TOT 1,0;TJM 1,1;SCT 1,1,1")]
     ) as inst:
-        result = inst.ch_A.io_settings()
+        result = inst.ch_A.io_settings
         assert result == "IAN 1,1;TOT 1,0;TJM 1,1;SCT 1,1,1"
 
 
@@ -521,20 +521,20 @@ def test_stop():
         inst.stop()
 
 
-def test_digital_output_int():
+def test_set_digital_output_int():
     with expected_protocol(
         AdvantestR6246,
         [("dios 0,255", None)]
     ) as inst:
-        inst.digital_output(255)
+        inst.set_digital_output(255)
 
 
-def test_digital_output_list():
+def test_set_digital_output_list():
     with expected_protocol(
         AdvantestR6246,
         [("dios 0,100,200", None)]
     ) as inst:
-        inst.digital_output([100, 200])
+        inst.set_digital_output([100, 200])
 
 
 def test_trigger_output_signal():
@@ -545,28 +545,28 @@ def test_trigger_output_signal():
         inst.trigger_output_signal(2, 3, 1)
 
 
-def test_output_format():
+def test_set_output_format():
     with expected_protocol(
         AdvantestR6246,
         [("fmt 0,1,2,3", None)]
     ) as inst:
-        inst.output_format(1, 2, 3)
+        inst.set_output_format(1, 2, 3)
 
 
-def test_lo_common_relay():
+def test_set_lo_common_connection_relay():
     with expected_protocol(
         AdvantestR6246,
         [("ltl 0,2,3", None)]
     ) as inst:
-        inst.lo_common_relay(True)
+        inst.set_lo_common_connection_relay(True)
 
 
-def test_lo_common_relay_with_lo():
+def test_set_lo_common_connection_relay_with_lo():
     with expected_protocol(
         AdvantestR6246,
         [("ltl 0,1,2", None)]
     ) as inst:
-        inst.lo_common_relay(False, lo_relay=True)
+        inst.set_lo_common_connection_relay(False, lo_relay=True)
 
 
 def test_start_sequence_program():
@@ -1013,12 +1013,12 @@ def test_ch_voltage_random_pulsed_sweep():
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1, 1, 100, 0.1)
 
 
-def test_ch_voltage_random_memory():
+def test_ch_set_voltage_random_memory():
     with expected_protocol(
         AdvantestR6246,
         [("rms 1;dv1,20,5.0000e+00,1.0000e-01;rend", None)]
     ) as inst:
-        inst.ch_A.voltage_random_memory(
+        inst.ch_A.set_voltage_random_memory(
             1, VoltageRange.FIXED_BEST, 5.0, 0.1)
 
 
@@ -1081,12 +1081,12 @@ def test_ch_current_random_pulsed_sweep():
             SweepMode.LINEAR_ONE_WAY_SWEEP, 1, 1, 100, 0.1)
 
 
-def test_ch_current_random_memory():
+def test_ch_set_current_random_memory():
     with expected_protocol(
         AdvantestR6246,
         [("rms 5;di1,20,1.0000e-03,1.0000e+01;rend", None)]
     ) as inst:
-        inst.ch_A.current_random_memory(
+        inst.ch_A.set_current_random_memory(
             5, CurrentRange.FIXED_BEST, 1e-3, 10.0)
 
 
@@ -1229,89 +1229,89 @@ def test_ch_output_enable_register():
 # SMUChannel misc method tests (timing, modes, wire, calibration)
 
 
-def test_ch_sample_mode():
+def test_ch_set_sample_mode():
     with expected_protocol(
         AdvantestR6246,
         [("jm 1,1,1", None)]
     ) as inst:
-        inst.ch_A.sample_mode(SampleMode.ASYNC)
+        inst.ch_A.set_sample_mode(SampleMode.ASYNC)
 
 
-def test_ch_sample_mode_no_auto():
+def test_ch_set_sample_mode_no_auto():
     with expected_protocol(
         AdvantestR6246,
         [("jm 5,2,2", None)]
     ) as inst:
-        inst.ch_B.sample_mode(
+        inst.ch_B.set_sample_mode(
             SampleMode.SWEEP_SYNC, auto_sampling=False)
 
 
-def test_ch_timing_parameters():
+def test_ch_set_timing_parameters():
     with expected_protocol(
         AdvantestR6246,
         [("wt 1,0.0000e+00,1.0000e-03,5.0000e-03,1.0000e-02", None)]
     ) as inst:
-        inst.ch_A.timing_parameters(0, 1e-3, 5e-3, 10e-3)
+        inst.ch_A.set_timing_parameters(0, 1e-3, 5e-3, 10e-3)
 
 
-def test_ch_output_type():
+def test_ch_set_output_type():
     with expected_protocol(
         AdvantestR6246,
         [("ofm 1,1,1", None)]
     ) as inst:
-        inst.ch_A.output_type(
+        inst.ch_A.set_output_type(
             OutputType.REAL_TIME_OUTPUT,
             MeasurementType.MEASURE_DATA)
 
 
-def test_ch_output_type_buffering():
+def test_ch_set_output_type_buffering():
     with expected_protocol(
         AdvantestR6246,
         [("ofm 2,2,2", None)]
     ) as inst:
-        inst.ch_B.output_type(
+        inst.ch_B.set_output_type(
             OutputType.BUFFERING_OUTPUT_ALL,
             MeasurementType.MEASURE_DATA_AND_OCCURENCE)
 
 
-def test_ch_scanner_control():
+def test_ch_set_scanner_control():
     with expected_protocol(
         AdvantestR6246,
         [("sct 1,2,1", None)]
     ) as inst:
-        inst.ch_A.scanner_control(2, 1)
+        inst.ch_A.set_scanner_control(2, 1)
 
 
-def test_ch_wire_mode_four_wire():
+def test_ch_set_wire_mode_four_wire():
     with expected_protocol(
         AdvantestR6246,
         [("osl 1,1,1", None)]
     ) as inst:
-        inst.ch_A.wire_mode(True, lo_guard=True)
+        inst.ch_A.set_wire_mode(True, lo_guard=True)
 
 
-def test_ch_wire_mode_two_wire():
+def test_ch_set_wire_mode_two_wire():
     with expected_protocol(
         AdvantestR6246,
         [("osl 2,2,2", None)]
     ) as inst:
-        inst.ch_B.wire_mode(False, lo_guard=False)
+        inst.ch_B.set_wire_mode(False, lo_guard=False)
 
 
-def test_ch_comparison_limits():
+def test_ch_set_comparison_limits():
     with expected_protocol(
         AdvantestR6246,
         [("cmd 1,2,1,5.0000e+00,-1.0000e+00", None)]
     ) as inst:
-        inst.ch_A.comparison_limits(True, True, 5.0, -1.0)
+        inst.ch_A.set_comparison_limits(True, True, 5.0, -1.0)
 
 
-def test_ch_comparison_limits_off():
+def test_ch_set_comparison_limits_off():
     with expected_protocol(
         AdvantestR6246,
         [("cmd 2,1,2,1.0000e+01,-1.0000e+01", None)]
     ) as inst:
-        inst.ch_B.comparison_limits(False, False, 10.0, -10.0)
+        inst.ch_B.set_comparison_limits(False, False, 10.0, -10.0)
 
 
 def test_ch_select_for_output():
