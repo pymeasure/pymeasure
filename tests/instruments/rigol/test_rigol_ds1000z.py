@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -142,16 +142,25 @@ def test_display_type_setter_rejects_invalid_mode():
 def test_display_persistence_set_and_get_inf():
     with expected_protocol(
         RigolDS1000Z,
-        [(b":DISP:GRAD:TIME INF", None), (b":DISP:GRAD:TIME?", b"inf")]
+        [(b":DISP:GRAD:TIME INF", None), (b":DISP:GRAD:TIME?", b"INF")]
     ) as inst:
-        inst.display.persistence = "INF"
+        inst.display.persistence = float('inf')
         assert inst.display.persistence == float('inf')
+
+
+def test_display_persistence_set_numeric():
+    with expected_protocol(
+        RigolDS1000Z,
+        [(b":DISP:GRAD:TIME MIN", None), (b":DISP:GRAD:TIME?", b"MIN")]
+    ) as inst:
+        inst.display.persistence = 0
+        assert inst.display.persistence == 0
 
 
 def test_display_persistence_rejects_invalid_value():
     with expected_protocol(RigolDS1000Z, []) as inst:
         with pytest.raises(ValueError):
-            inst.display.persistence = "fast"
+            inst.display.persistence = 99
 
 
 def test_waveform_brightness_setter_rejects_out_of_range():
@@ -164,12 +173,14 @@ def test_memory_depth_single_channel_allows_maximum_depth():
     commands = _display_queries({1})
     commands.append((b":ACQ:MDEP 24000000", None))
     with expected_protocol(RigolDS1000Z, commands) as inst:
+        inst.set_digital_channel_hint(0)
         inst.memory_depth = 24_000_000
 
 
 def test_memory_depth_rejects_value_not_allowed_for_active_channels():
     commands = _display_queries({1})
     with expected_protocol(RigolDS1000Z, commands) as inst:
+        inst.set_digital_channel_hint(0)
         with pytest.raises(ValueError):
             inst.memory_depth = 6000
 
@@ -178,7 +189,15 @@ def test_memory_depth_two_channels_accepts_mid_range_depth():
     commands = _display_queries({1, 2})
     commands.append((b":ACQ:MDEP 6000000", None))
     with expected_protocol(RigolDS1000Z, commands) as inst:
+        inst.set_digital_channel_hint(0)
         inst.memory_depth = 6_000_000
+
+
+def test_memory_depth_requires_digital_channel_hint():
+    commands = _display_queries({1})
+    with expected_protocol(RigolDS1000Z, commands) as inst:
+        with pytest.raises(ValueError, match="set_digital_channel_hint"):
+            inst.memory_depth = 12000
 
 
 def test_memory_depth_respects_digital_channel_hint():

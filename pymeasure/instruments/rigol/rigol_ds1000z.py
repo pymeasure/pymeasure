@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -288,7 +288,7 @@ class RigolDS1000ZChannel(Channel):
     probe_ratio = Channel.control(
         ":CHAN{ch}:PROB?",
         ":CHAN{ch}:PROB %f",
-        "Control the probe attenuation ratio (float).",
+        "Control the probe attenuation ratio (float strictly between 0.0001 and 1000).",
         validator=strict_range,
         values=[0.0001, 1000],
     )
@@ -306,9 +306,7 @@ class RigolDS1000ZDisplay(Channel):
     """Display subsystem for Rigol DS/MSO 1000Z (:DISPlay.*)."""
 
     def insert_id(self, command):
-        """We treat the Display as a channel so we can use channel control, but we don't
-        need to insert an ID.
-        """
+        """Hand on the command without inserting an id."""
         return command
 
     def clear(self) -> None:
@@ -321,22 +319,13 @@ class RigolDS1000ZDisplay(Channel):
         invert: Optional[bool] = None,
         image_format: Union[DisplayImageFormat, str] = DisplayImageFormat.BMP24,
     ) -> bytes:
-        """
-        Return the current screen image bytes (payload only, TMC header removed).
+        """Return the current screen image bytes (payload only, TMC header removed).
 
-        Parameters
-        ----------
-        color : bool | None
-            True=color, False=intensity graded color, None=use current setting.
-        invert : bool | None
-            True to invert, False normal, None=use current setting.
-        image_format : DisplayImageFormat | str
-            One of BMP24, BMP8, PNG, JPEG, TIFF. Defaults to BMP24.
-
-        Returns
-        -------
-        bytes
-            Image file bytes (e.g. PNG, BMP, …), without the TMC header.
+        :param bool color: True=color, False=intensity graded color, None=use current setting.
+        :param bool invert: True to invert, False normal, None=use current setting.
+        :param DisplayImageFormat | str image_format: One of BMP24, BMP8, PNG, JPEG, TIFF.
+            Defaults to BMP24.
+        :return bytes: Image file bytes (e.g. PNG, BMP, …), without the TMC header.
         """
         if isinstance(image_format, DisplayImageFormat):
             fmt = image_format.value
@@ -371,9 +360,15 @@ class RigolDS1000ZDisplay(Channel):
     persistence = Channel.control(
         ":DISP:GRAD:TIME?",
         ":DISP:GRAD:TIME %s",
-        "Control persistence time (str): one of 'MIN','0.1','0.2','0.5','1','5','10','INF'.",
+        "Control persistence time (float): 0 for minimum, 0.1, 0.2, 0.5, 1, 5, 10, "
+        "or inf.",
         validator=strict_discrete_set,
-        values=["MIN", "0.1", "0.2", "0.5", "1", "5", "10", "INF"],
+        values={
+            0: "MIN", 0.1: "0.1", 0.2: "0.2", 0.5: "0.5",
+            1: "1", 5: "5", 10: "10", float("inf"): "INF",
+        },
+        map_values=True,
+        get_process=lambda v: str(v).upper(),
     )
 
     waveform_brightness = Channel.control(
@@ -501,7 +496,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     average_count = Instrument.control(
         ":ACQ:AVE?",
         ":ACQ:AVE %d",
-        "Control the number of waveforms averaged when the acquisition type is 'AVER'.",
+        "Control the number of waveforms averaged when the acquisition type is 'AVER' "
+        "(int strictly between 2 and 1024).",
         validator=strict_range,
         values=[2, 1024],
         cast=int,
@@ -546,22 +542,14 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         values=_WAVEFORM_SOURCES,
     )
 
-    trigger_slope = Instrument.control(
+    trigger_slope_positive = Instrument.control(
         ":TRIG:EDGE:SLOP?",
         ":TRIG:EDGE:SLOP %s",
-        "Control the trigger slope (str): 'POS' or 'NEG'.",
+        "Control whether the trigger slope is positive (bool).",
         validator=strict_discrete_set,
-        values=["POS", "NEG"],
+        map_values=True,
+        values={True: "POS", False: "NEG"},
     )
-
-    @property
-    def trigger_slope_positive(self) -> bool:
-        """Control whether the edge trigger slope is positive (bool)."""
-        return self.trigger_slope == "POS"
-
-    @trigger_slope_positive.setter
-    def trigger_slope_positive(self, value: bool) -> None:
-        self.trigger_slope = "POS" if bool(value) else "NEG"
 
     trigger_coupling = Instrument.control(
         ":TRIG:COUP?",
@@ -647,10 +635,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         """Clear the instrument status register."""
         self.write("*CLS")
 
-    def clear(self):
-        """Alias for :meth:`clear_waveforms`."""
-        self.clear_waveforms()
-
     def clear_waveforms(self):
         """Clear all the waveforms on the screen."""
         self.write(":CLE")
@@ -662,10 +646,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def reset(self):
         """Reset the instrument to factory defaults."""
         self.write("*RST")
-
-    def calibrate_start(self):
-        """Alias for :meth:`start_calibration`."""
-        self.start_calibration()
 
     def start_calibration(self):
         """Run the self-calibration procedure.
@@ -681,10 +661,6 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         """
         self.write(":CAL:STAR")
 
-    def calibrate_quit(self):
-        """Alias for :meth:`abort_calibration`."""
-        self.abort_calibration()
-
     def abort_calibration(self):
         """Exit the self-calibration at any time."""
         self.write(":CAL:QUIT")
@@ -693,11 +669,18 @@ class RigolDS1000Z(SCPIMixin, Instrument):
         self,
         source: Union[str, int],
         level: float = 0.0,
-        slope: str = "POS",
+        slope_positive: bool = True,
         coupling: str = "DC",
         sweep: str = "AUTO",
     ):
-        """Configure the edge trigger settings in a single call."""
+        """Configure the edge trigger settings in a single call.
+
+        :param source: Channel index (1-based int) or SCPI source name (e.g. ``"CHAN1"``).
+        :param float level: Trigger level in volts.
+        :param bool slope_positive: True for rising edge, False for falling edge.
+        :param str coupling: Trigger coupling mode (e.g. ``"DC"``, ``"AC"``).
+        :param str sweep: Trigger sweep mode (``"AUTO"``, ``"NORM"``, or ``"SING"``).
+        """
 
         if isinstance(source, int):
             if not 1 <= source <= self._channel_count:
@@ -707,16 +690,12 @@ class RigolDS1000Z(SCPIMixin, Instrument):
             source_value = str(source).upper()
         self.trigger_source = source_value
         self.trigger_level = level
-        self.trigger_slope = slope
+        self.trigger_slope_positive = slope_positive
         self.trigger_coupling = coupling
         self.trigger_sweep = sweep
 
-    def tforce(self):
-        """Alias for :meth:`force_trigger`."""
-        self.force_trigger()
-
     def force_trigger(self):
-        """Generate a trigger signal forcefully.
+        """Generate a trigger signal regardless of the current trigger conditions.
 
         This command is only applicable to the normal and single trigger modes.
         """
@@ -887,13 +866,9 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def set_digital_channel_hint(self, active_lines: Optional[int]) -> None:
         """Hint the number of enabled digital lines for memory-depth validation.
 
-        Parameters
-        ----------
-        active_lines : int or None
-            Use 0 when the MSO pod is disabled, 8 or 16 when the corresponding
-            digital groups are enabled. ``None`` clears the hint and reverts to
-            the default assumption (no digital channels enabled).
-
+        :param int active_lines: Use 0 when the MSO pod is disabled, 8 or 16 when the
+            corresponding digital groups are enabled. ``None`` clears the hint and reverts
+            to the default assumption (no digital channels enabled).
             See :attr:`memory_depth` for details on memory depth validation.
         """
 
@@ -935,6 +910,8 @@ class RigolDS1000Z(SCPIMixin, Instrument):
     def _active_digital_channel_count(self) -> int:
         if self._digital_channel_hint is not None:
             return self._digital_channel_hint
-        # Without a reliable SCPI query across all models, default to assuming
-        # the digital pod is currently disabled.
-        return 0
+        raise ValueError(
+            "Digital channel state is unknown. Call set_digital_channel_hint() "
+            "to specify the number of active digital lines (0, 8, or 16) "
+            "before setting a numeric memory depth."
+        )
