@@ -26,13 +26,17 @@ import pytest
 
 from pymeasure.instruments.agilent import AgilentB1500
 from pymeasure.instruments.agilent.agilentB1500 import (
+    CMU,
     SPGU,
     ControlMode,
+    MFCMUMeasurementMode,
     PgSelectorConnectionStatus,
     PgSelectorPort,
+    SCUUPath,
     SPGUChannelOutputMode,
     SPGUOperationMode,
     SPGUOutputMode,
+    SweepMode,
 )
 from pymeasure.test import expected_protocol
 
@@ -73,6 +77,7 @@ class AgilentB1500Mock(AgilentB1500):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.spgu1 = SPGU(self, 1)
+        self.cmu = CMU(self, 2)
 
 
 class TestSPGU:
@@ -207,3 +212,91 @@ class TestSPGUChannel:
             [(f"SPUPD {self.channel}", None)],
         ) as inst:
             inst.spgu1.ch1.apply_setup()
+
+
+class TestCMU:
+    """Tests for CMU module functionality."""
+
+    @pytest.mark.parametrize("enabled", [True, False])
+    def test_enabled(self, enabled):
+        """Test enabled property."""
+        expected_command = "CN" if enabled else "CL"
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"{expected_command} 2", None)],
+        ) as inst:
+            inst.cmu.enabled = enabled
+
+    @pytest.mark.parametrize("voltage", [0.0, 0.25])
+    def test_voltage_ac(self, voltage):
+        """Test voltage_ac setting with boundary values."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"ACV 2, {voltage:f}", None)],
+        ) as inst:
+            inst.cmu.voltage_ac = voltage
+
+    @pytest.mark.parametrize("frequency", [1e3, 5e6])
+    def test_frequency_ac(self, frequency):
+        """Test frequency_ac setting with boundary values."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"FC 2, {frequency:f}", None)],
+        ) as inst:
+            inst.cmu.frequency_ac = frequency
+
+    @pytest.mark.parametrize("measurement_mode", list(MFCMUMeasurementMode))
+    def test_set_measurement_mode(self, measurement_mode):
+        """Test set_measurement_mode method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"IMP {measurement_mode.value}", None)],
+        ) as inst:
+            inst.cmu.set_measurement_mode(measurement_mode)
+
+    def test_set_cv_timings(self):
+        """Test set_cv_timings method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [("WTDCV 2, 0.5, 0.1, 0.0, 0.0", None)],
+        ) as inst:
+            inst.cmu.set_cv_timings(hold_time=0.5, delay_time=0.1)
+
+    def test_set_cv_timings_all_params(self):
+        """Test set_cv_timings with all parameters."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [("WTDCV 2, 1.0, 0.5, 0.2, 0.1", None)],
+        ) as inst:
+            inst.cmu.set_cv_timings(
+                hold_time=1.0,
+                delay_time=0.5,
+                step_delay_time=0.2,
+                step_source_trigger_delay_time=0.1,
+            )
+
+    @pytest.mark.parametrize("mode", [SweepMode.LINEAR_SINGLE, SweepMode.LINEAR_DOUBLE])
+    def test_set_cv_parameters(self, mode):
+        """Test set_cv_parameters method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"WDCV 2, {mode.value}, -5, 5, 100", None)],
+        ) as inst:
+            inst.cmu.set_cv_parameters(mode=mode, start=-5, stop=5, steps=100)
+
+    def test_force_dc_bias(self):
+        """Test force_dc_bias method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [("DCV 2, 1.5", None)],
+        ) as inst:
+            inst.cmu.force_dc_bias(1.5)
+
+    @pytest.mark.parametrize("path", list(SCUUPath))
+    def test_set_scuu_path(self, path):
+        """Test set_scuu_path method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"SSP 2, {path.value}", None)],
+        ) as inst:
+            inst.cmu.set_scuu_path(path)
