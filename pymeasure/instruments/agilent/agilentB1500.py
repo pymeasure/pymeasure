@@ -946,7 +946,7 @@ class SMU(Channel):
         response = self.parent.query_learn(query_type)
         # query_learn returns settings of all smus
         # pick setting for this smu only
-        response = response[command + str(self.channel)]
+        response = response[command + str(self.id)]
         return response
 
     def check_errors(self):
@@ -956,12 +956,12 @@ class SMU(Channel):
     ##########################################
 
     def _query_status_raw(self):
-        return self.parent.query_learn(str(self.channel))
+        return self.parent.query_learn(str(self.id))
 
     @property
     def status(self):
         """Get status of the SMU."""
-        return self.parent.query_learn_header(str(self.channel))
+        return self.parent.query_learn_header(str(self.id))
 
     def enable(self):
         """Enable source/measurement channel. (``CN``)"""
@@ -994,9 +994,9 @@ class SMU(Channel):
             # only present if filters of all channels are off
             return False
         else:
-            if str(self.channel) in response["FL0"]:
+            if str(self.id) in response["FL0"]:
                 return False
-            elif str(self.channel) in response["FL1"]:
+            elif str(self.id) in response["FL1"]:
                 return True
             else:
                 raise NotImplementedError("Filter Value cannot be read!")
@@ -1328,7 +1328,7 @@ class SMU(Channel):
         :param steps: Number of steps for staircase sweep
         :param comp: Compliance current in A. The previous value is used if not set.
         """
-        cmd = _set_cv_parameters_base(self.channel, mode, start, stop, steps, comp)
+        cmd = _set_cv_parameters_base(self.id, mode, start, stop, steps, comp)
         self.write(cmd)
 
 
