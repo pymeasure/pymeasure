@@ -138,7 +138,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     i,
                     collection="smus",
                     prefix="smu",
-                    type=module_type,
+                    smu_type=module_type,
                     name=f"SMU{i}",
                     slot=channel,
                 )
@@ -908,17 +908,15 @@ class SMU(Channel):
 
     :param AgilentB1500 parent: Instance of the B1500 mainframe class
     :param int index: Index of the SMU
-    :param str type: Type of the SMU
+    :param str smu_type: Type of the SMU
     :param str name: Name of the SMU
     :param int slot: Slot number of the SMU
     """
 
-    def __init__(self, parent, index, type, name, slot, **kwargs):
-        super().__init__(parent, slot, **kwargs)
+    def __init__(self, parent, index, smu_type, name, slot, **kwargs):
         slot = strict_discrete_set(slot, range(1, 11))
-        self.channel = slot
-        type = strict_discrete_set(
-            type,
+        smu_type = strict_discrete_set(
+            smu_type,
             [
                 "HRSMU",
                 "MPSMU",
@@ -932,10 +930,12 @@ class SMU(Channel):
                 "UHVU",
             ],
         )
-        self.voltage_ranging = SMUVoltageRanging(type)
-        self.current_ranging = SMUCurrentRanging(type)
+        super().__init__(parent, slot, **kwargs)
+        self.channel = slot
+        self.voltage_ranging = SMUVoltageRanging(smu_type)
+        self.current_ranging = SMUCurrentRanging(smu_type)
         self.name = name
-        self.type = type
+        self.type = smu_type
 
     ##########################################
     # Wrappers of B1500 communication methods
