@@ -21,7 +21,7 @@ class SCUChannel(Channel):
         ":SCLF{ch}F%d",
         """Control the maximum frequency in an absolute move""",
         set_process = lambda v: check_quantity_unit(v, 'Hz'),
-        get_process = lambda s: Q_(s[6:], 'Hz'),
+        get_process = lambda s: Q_(int(s[6:]), 'Hz'),
     )
     safe_direction = Instrument.control(
         ":GSD{ch}",

@@ -26,7 +26,7 @@ def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
     # ensure the device is in a defined state, e.g. by resetting it.
     return instr
 
-class TestSCUIdentifCalibrate:
+class TestSCUIdentificate:
 
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_model(self, smaractascii, channel):
@@ -72,7 +72,6 @@ class TestSCUConfiguration:
     def test_invalid_amplitude(self, smaractascii):
         with pytest.raises(ValueError):
             smaractascii.amplitude = Q_(50, "dV")
-
 
 class TestSCUChannel:
 
