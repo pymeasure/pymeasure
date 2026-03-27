@@ -383,19 +383,4 @@ class SmarActSCUAngular(SmarActSCU_ASCII):
     channel1 = Instrument.ChannelCreator(SCUChannelAngular, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelAngular, "2")
 
-if __name__ == "__main__":
-    inst = SmarActSCULinear('ASRL3::INSTR')
-    #inst.baudrate = 9600
-    pass
 
-    #import pyvisa
-    # rm = pyvisa.ResourceManager()
-    #ressources = rm.list_resources()
-    #print(ressources)
-    #
-    # inst = rm.open_resource(ressources[0])
-    # inst.write_termination = '\n'
-    # inst.read_termination = '\n'
-    # pass
-    #
-    inst.close()

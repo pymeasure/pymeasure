@@ -16,7 +16,7 @@ SENSOR = [True]
 "You can paremetrize the following test with @pytest.mark.parametrize and for your number of channels:"
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
+def smaractascii(connected_device_address: str):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
