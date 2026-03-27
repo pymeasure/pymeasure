@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,7 @@ from .keithley2260B import Keithley2260B
 from .keithley2281S import Keithley2281S
 from .keithley2306 import Keithley2306
 from .keithley2400 import Keithley2400
+from .keithley2400_legacy import Keithley2400Legacy
 from .keithley2450 import Keithley2450
 from .keithley2510 import Keithley2510
 from .keithley2600 import Keithley2600
