@@ -371,7 +371,6 @@ class SmarActSCU_ASCII(Instrument):
         self.write(f':R')
 
 class SmarActSCULinear(SmarActSCU_ASCII):
-    unit = 'um'
 
     channel0 = Instrument.ChannelCreator(SCUChannelLinear, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelLinear, "1")
