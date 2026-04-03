@@ -243,3 +243,87 @@ def test_measure_current(keithley2450):
 def test_measure_resistance(keithley2450):
     keithley2450.measure_resistance(nplc=1, auto_range=True)
     assert True
+
+
+@pytest.mark.parametrize("state", ["ON", "OFF"])
+def test_current_autozero(keithley2450, state):
+    responses = {"ON": 1.0, "OFF": 0.0}
+    keithley2450.current_autozero = state
+    assert keithley2450.current_autozero == responses[state]
+
+
+@pytest.mark.parametrize("autorange", BOOLEANS)
+def test_current_autorange(keithley2450, autorange):
+    keithley2450.current_autorange = autorange
+    assert keithley2450.current_autorange == autorange
+
+
+@pytest.mark.parametrize("count", [1, 300000])
+def test_sense_count(keithley2450, count):
+    keithley2450.sense_count = count
+    assert keithley2450.sense_count == count
+
+
+@pytest.mark.parametrize("state", ["ON", "OFF"])
+def test_source_voltage_readback(keithley2450, state):
+    responses = {"ON": 1.0, "OFF": 0.0}
+    keithley2450.source_voltage_readback = state
+    assert keithley2450.source_voltage_readback == responses[state]
+
+
+@pytest.mark.parametrize("state", ["BLAC", "ON25", "ON75", "ON100", "ON50"])
+def test_display_light_state(keithley2450, state):
+    keithley2450.display_light_state = state
+    assert keithley2450.display_light_state == state
+
+
+def test_error_count(keithley2450):
+    assert keithley2450.error_count == 0
+
+
+def test_next_error(keithley2450):
+    assert isinstance(keithley2450.next_error, list)
+
+
+def test_trace_actual_end(keithley2450):
+    assert isinstance(keithley2450.trace_actual_end, int)
+
+
+def test_auto_range_source_current(keithley2450):
+    keithley2450.source_mode = "current"
+    keithley2450.auto_range_source()
+
+
+def test_auto_range_source_voltage(keithley2450):
+    keithley2450.source_mode = "voltage"
+    keithley2450.auto_range_source()
+
+
+def test_use_rear_terminals(keithley2450):
+    keithley2450.use_rear_terminals()
+
+
+def test_use_front_terminals(keithley2450):
+    keithley2450.use_front_terminals()
+
+
+def test_clear_status(keithley2450):
+    keithley2450.clear_status()
+
+
+def test_autozero_once(keithley2450):
+    keithley2450.autozero_once()
+
+
+def test_ramp_to_current(keithley2450):
+    keithley2450.apply_current(current_range=0.01, compliance_voltage=5)
+    keithley2450.enable_source()
+    keithley2450.ramp_to_current(1e-3, steps=5)
+    assert abs(keithley2450.source_current - 1e-3) < 1e-9
+
+
+def test_ramp_to_voltage(keithley2450):
+    keithley2450.apply_voltage(voltage_range=5, compliance_current=0.01)
+    keithley2450.enable_source()
+    keithley2450.ramp_to_voltage(1.0, steps=5)
+    assert abs(keithley2450.source_voltage - 1.0) < 1e-6
