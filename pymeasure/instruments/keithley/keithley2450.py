@@ -730,18 +730,20 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         :param n_times: Number of times to repeat the sweep
         :param delay: Delay in seconds between each voltage step and measurement
         """
+
+        def fmt(values):
+            return ", ".join(f"{v:.3g}" for v in values)
+
         self.write(":SOUR:FUNC VOLT")
         n_points = len(waveform)
         if n_points > 100:
             chunks = np.array_split(np.array(waveform), int(np.ceil(n_points / 100)))
-            self.write(f":SOUR:LIST:VOLT {', '.join(map(str, chunks[0]))}")
+            self.write(f":SOUR:LIST:VOLT {fmt(chunks[0])}")
             for chunk in chunks[1:]:
-                self.write(f":SOUR:LIST:VOLT:APP {', '.join(map(str, chunk))}")
+                self.write(f":SOUR:LIST:VOLT:APP {fmt(chunk)}")
         else:
-            self.write(f":SOUR:LIST:VOLT {', '.join(map(str, waveform))}")
-        self.write(
-            f':SOUR:SWE:VOLT:LIST 1, {delay}, {n_times}'
-        )
+            self.write(f":SOUR:LIST:VOLT {fmt(waveform)}")
+        self.write(f":SOUR:SWE:VOLT:LIST 1, {delay}, {n_times}")
 
     def get_trace_data(self, ending_index, buffer_name="defbuffer1"):
         """Retrieves relative time, source, and reading columns from a trace buffer.
