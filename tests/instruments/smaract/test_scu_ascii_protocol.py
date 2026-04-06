@@ -15,6 +15,7 @@ def test_init():
     ):
         pass  # Verify the expected communication.
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_frequency_max_setter(channel):
     with expected_protocol(
@@ -22,6 +23,7 @@ def test_channel_frequency_max_setter(channel):
             [(f':SCLF{channel}F500'.encode(), None)],
     ) as inst:
         inst.channels[channel].frequency_max = Q_(500, 'Hz')
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel0_frequency_max_getter(channel):
@@ -45,8 +47,8 @@ def test_channel0_safe_direction_setter(channel):
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_safe_direction_getter(channel):
-    for comm_pairs, value in ((((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),),'up'),
-                             (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),),'down')):
+    for comm_pairs, value in ((((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), 'up'),
+                             (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),), 'down')):
         with expected_protocol(
                 SmarActSCULinear,
                 comm_pairs,
@@ -69,6 +71,7 @@ def test_serial_nb_getter():
     ) as inst:
         assert inst.serial_nb == '722998302'
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_ask(channel):
     with expected_protocol(
@@ -76,6 +79,7 @@ def test_ask(channel):
             [(f':M{channel}'.encode(), f':M{channel}S'.encode())],
     ) as inst:
         assert inst.ask(*(f':M{channel}',), ) == f':M{channel}S'
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_calibrate_sensor(channel):
@@ -86,6 +90,7 @@ def test_channel_calibrate_sensor(channel):
     ) as inst:
         assert inst.channels[channel].calibrate_sensor() == ':M0C'
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_check_sensor_present(channel):
     with expected_protocol(
@@ -93,6 +98,7 @@ def test_channel_check_sensor_present(channel):
             [(f':GSP{channel}'.encode(), f':SP{channel}P'.encode())],
     ) as inst:
         assert inst.channels[channel].check_sensor_present() is True
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_get_position(channel):
@@ -102,6 +108,7 @@ def test_channel_get_position(channel):
     ) as inst:
         assert inst.channels[channel].get_position() == Q_(-0.5, 'um')
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_get_positioner_type(channel):
     with expected_protocol(
@@ -109,6 +116,7 @@ def test_channel_get_positioner_type(channel):
             [(f':GST{channel}'.encode(), f':ST{channel}T21'.encode())],
     ) as inst:
         assert inst.channels[channel].get_positioner_type() == f':ST{channel}T21'
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_abs(channel):
@@ -118,6 +126,7 @@ def test_channel_move_abs(channel):
     ) as inst:
         inst.channels[channel].move_abs((Q_(100, 'um')))
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_rel(channel):
     with expected_protocol(
@@ -125,6 +134,7 @@ def test_channel_move_rel(channel):
             [(f':MPR{channel}P50'.encode(), None)],
     ) as inst:
         inst.channels[channel].move_rel((Q_(50, 'um')))
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_steps_down(channel):
@@ -134,6 +144,7 @@ def test_channel_move_steps_down(channel):
     ) as inst:
         assert inst.channels[channel].move_steps_down(*(100,), ) is None
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_steps_up(channel):
     with expected_protocol(
@@ -141,6 +152,7 @@ def test_channel_move_steps_up(channel):
             [(f':U{channel}F260A300S100'.encode(), None)],
     ) as inst:
         assert inst.channels[channel].move_steps_up(*(100,), ) is None
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_to_end_down(channel):
@@ -150,6 +162,7 @@ def test_channel_move_to_end_down(channel):
     ) as inst:
         assert inst.channels[channel].move_to_end_down() is None
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_to_end_up(channel):
     with expected_protocol(
@@ -157,6 +170,7 @@ def test_channel_move_to_end_up(channel):
             [(f':MES{channel}DU'.encode(), None)],
     ) as inst:
         assert inst.channels[channel].move_to_end_up() is None
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_to_ref(channel):
@@ -166,6 +180,7 @@ def test_channel_move_to_ref(channel):
     ) as inst:
         assert inst.channels[channel].move_to_ref() is None
 
+
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_stop(channel):
     with expected_protocol(
@@ -174,9 +189,10 @@ def test_channel_stop(channel):
     ) as inst:
         assert inst.channels[channel].stop() is None
 
+
 def test_reset():
     with expected_protocol(
             SmarActSCULinear,
-        [(b':R', None)],
+            [(b':R', None)],
     ) as inst:
         assert inst.reset() is None

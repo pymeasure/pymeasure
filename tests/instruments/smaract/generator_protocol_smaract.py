@@ -17,7 +17,7 @@ inst = gen.instantiate(
         "timeout": 3000,
     }
 )
-#used for simplicity reasons
+# Used for simplicity reasons
 ch = inst.channel0
 
 # Instrument-level tests
