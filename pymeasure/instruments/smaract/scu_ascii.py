@@ -39,6 +39,8 @@ class SCUChannel(Channel):
            The user must ensure himself that the positioner is not close to a mechanical
            limit before using this method"""
         self.write(f':CS{self.id}')
+        status = self.ask(f":M{self.id}")
+        return status
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -327,7 +329,7 @@ class SmarActSCU_ASCII(Instrument):
         if steps is None:
             steps = self._steps
         else:
-            self._steps=steps
+            self._steps = steps
         if not (1 <= steps <= 30000):
             raise ValueError('Steps out of the range [1;30000] steps (int) ')
         return steps
