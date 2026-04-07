@@ -14,7 +14,7 @@ from pymeasure.instruments.validators import truncated_discrete_set, strict_disc
 
 
 class SCUChannel(Channel):
-    unit: str=''
+    unit: str = ''
 
     frequency_max = Instrument.control(
         ":GCLF{ch}",
@@ -39,8 +39,6 @@ class SCUChannel(Channel):
            The user must ensure himself that the positioner is not close to a mechanical
            limit before using this method"""
         self.write(f':CS{self.id}')
-        status=self.ask(f":M{self.id}")
-        return status
 
     def set_zero_pos(self):
         """Set the current position as position zero."""
@@ -118,14 +116,13 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
 
-        valid_freq=self.parent.check_freq(freq)
-        valid_ampl=self.parent.check_amplitude(ampl)
+        valid_freq = self.parent.check_freq(freq)
+        valid_ampl = self.parent.check_amplitude(ampl)
 
-        f_val=int(valid_freq.to('Hz').magnitude)
-        a_val=int(valid_ampl.to('dV').magnitude)
+        f_val = int(valid_freq.to('Hz').magnitude)
+        a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
-
 
     def move_steps_down(self, steps: int,
                         freq: Union[int, float, Q_] = None,
@@ -136,11 +133,11 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
         #
-        valid_freq=self.parent.check_freq(freq)
-        valid_ampl=self.parent.check_amplitude(ampl)
+        valid_freq = self.parent.check_freq(freq)
+        valid_ampl = self.parent.check_amplitude(ampl)
 
-        f_val=int(valid_freq.to('Hz').magnitude)
-        a_val=int(valid_ampl.to('dV').magnitude)
+        f_val = int(valid_freq.to('Hz').magnitude)
+        a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":D{self.id}F{f_val}A{a_val}S{steps}")
 
@@ -151,7 +148,7 @@ class SCUChannel(Channel):
 
         """
         self.write(f':GSP{self.id}')
-        response=self.read()
+        response = self.read()
         return response == f':SP{self.id}P'
 
     def move_to_ref(self):
@@ -180,7 +177,7 @@ class SCUChannel(Channel):
 
 
 class SCUChannelLinear(SCUChannel):
-    unit='µm'
+    unit = 'µm'
 
     def move_abs(self, position: Q_):
         self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
@@ -198,7 +195,7 @@ class SCUChannelLinear(SCUChannel):
 
 
 class SCUChannelAngular(SCUChannel):
-    unit='m°'
+    unit = 'm°'
 
     def move_abs(self, position: Q_):
         """Moves to the absolute angle given in m° from the reference position via
@@ -211,8 +208,8 @@ class SCUChannelAngular(SCUChannel):
     def get_angle(self):
         """ Returns the current angle in degrees"""
         self.write(f":GA{self.id}")
-        ang=self.read()
-        self.angle=(Q_(float(ang[4:]), self.unit))
+        ang = self.read()
+        self.angle = (Q_(float(ang[4:]), self.unit))
         return self.angle
 
     def move_rel(self, position: Q_):
@@ -242,19 +239,19 @@ class SmarActSCU_ASCII(Instrument):
     :param int timeout: Timeout in ms.
     """
 
-    channel0=Instrument.ChannelCreator(SCUChannel, "0")
-    channel1=Instrument.ChannelCreator(SCUChannel, "1")
-    channel2=Instrument.ChannelCreator(SCUChannel, "2")
+    channel0 = Instrument.ChannelCreator(SCUChannel, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannel, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannel, "2")
 
     def __init__(self, adapter, name='SCUController',
                  includeSCPI=False, **kwargs):
-        super().__init__(adapter, name,
+        super().__init__(adapter, name, includeSCPI=False,
                          read_termination='\n',
                          write_termination='\n',
                          **kwargs)
 
-        self._amplitude: Q_=Q_(300, 'dV')
-        self._freq: Q_=Q_(260, 'Hz')
+        self._amplitude: Q_ = Q_(300, 'dV')
+        self._freq: Q_ = Q_(260, 'Hz')
         self._steps: int = 250
 
     def close(self):
@@ -280,20 +277,20 @@ class SmarActSCU_ASCII(Instrument):
             return self._amplitude
 
         if isinstance(ampl, (int)):
-            ampl=Q_(ampl, 'dV')
+            ampl = Q_(ampl, 'dV')
 
-        if not (Q_(150, 'dV')<=ampl<= Q_(1000, 'dV')):
+        if not (Q_(150, 'dV') <= ampl <= Q_(1000, 'dV')):
             raise ValueError(f"Amplitude {ampl} out of range [150; 1000] dV")
         return ampl
 
     @property
     def amplitude(self):
-        """ Get/set default frequency """
+        """ Control default frequency """
         return self._amplitude
 
     @amplitude.setter
     def amplitude(self, value: Union[int, Q_]):
-        self._amplitude=self.check_amplitude(value)
+        self._amplitude = self.check_amplitude(value)
 
     # CHECK FREQUENCY
 
@@ -306,32 +303,32 @@ class SmarActSCU_ASCII(Instrument):
             return self._freq
 
         if isinstance(freq, (int)):
-            freq=Q_(freq, 'Hz')
+            freq = Q_(freq, 'Hz')
 
         # Vérification of limits
-        if not (Q_(1, 'Hz')<=freq<= Q_(18500, 'Hz')):
+        if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
             raise ValueError(f"Frequency {freq} out of range [1; 18500] Hz")
 
         return freq
 
     @property
     def frequency(self):
-        """ Get/set default frequency """
+        """ Control default frequency """
         return self._freq
 
     @frequency.setter
     def frequency(self, value: Union[int, Q_]):
-        self._freq=self.check_freq(value)
+        self._freq = self.check_freq(value)
 
     # CHECK STEPS
 
     def check_steps(self, steps: int):
         """Check if steps are present and if it is inside the given boundary."""
         if steps is None:
-            steps=self._steps
+            steps = self._steps
         else:
             self._steps=steps
-        if not (1<=steps<= 30000):
+        if not (1 <= steps <= 30000):
             raise ValueError('Steps out of the range [1;30000] steps (int) ')
         return steps
 
@@ -354,7 +351,8 @@ class SmarActSCU_ASCII(Instrument):
         else:
             self.move_steps_down(position.magnitude)
 
-    BAUDRATE=(9600, 38400, 57600, 100000, 115200, 128000, 256000, 500000)
+    BAUDRATE = (9600, 38400, 57600, 100000, 115200,
+                128000, 256000, 500000)
 
     def set_baudrate(self, baudrate: int):
         """Set the baudrate AND reset the instrument. Reseting is necessary to update the baudrate.

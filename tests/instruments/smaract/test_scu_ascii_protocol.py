@@ -47,8 +47,10 @@ def test_channel0_safe_direction_setter(channel):
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_safe_direction_getter(channel):
-    for comm_pairs, value in ((((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), 'up'),
-                             (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),), 'down')):
+    for comm_pairs, value in (
+            (((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), 'up'),
+            (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),), 'down'),
+    ):
         with expected_protocol(
                 SmarActSCULinear,
                 comm_pairs,
