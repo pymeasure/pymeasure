@@ -6,7 +6,7 @@ import pyvisa
 from pymeasure.instruments import Instrument, Channel
 
 from pymeasure.instruments.smaract.utils import check_quantity_unit
-from pymeasure.instruments.validators import truncated_discrete_set, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set
 
 
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
