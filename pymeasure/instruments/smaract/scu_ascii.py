@@ -174,8 +174,7 @@ class SCUChannel(Channel):
         self.write(f":S{self.id}")
 
     def get_position(self):
-        """Returns the current position in micrometres."""
-        #if check_sensor_present():
+        """Returns the current position in micrometers."""
         if self.unit == '':
             raise NotImplementedError
 
@@ -189,8 +188,8 @@ class SCUChannelLinear(SCUChannel):
     def get_position(self):
         """Returns the current position in micrometers."""
         self.write(f":GP{self.id}")
-        pos=self.read()
-        self.position=(Q_(float(pos[4:]), self.unit))
+        pos = self.read()
+        self.position = Q_(float(pos[4:]), self.unit)
         return self.position
 
     def move_rel(self, position: Q_):
@@ -247,7 +246,8 @@ class SmarActSCU_ASCII(Instrument):
     channel1=Instrument.ChannelCreator(SCUChannel, "1")
     channel2=Instrument.ChannelCreator(SCUChannel, "2")
 
-    def __init__(self, adapter, name='SCUController', **kwargs):
+    def __init__(self, adapter, name='SCUController',
+                 includeSCPI=False, **kwargs):
         super().__init__(adapter, name,
                          read_termination='\n',
                          write_termination='\n',
@@ -256,6 +256,9 @@ class SmarActSCU_ASCII(Instrument):
         self._amplitude: Q_=Q_(300, 'dV')
         self._freq: Q_=Q_(260, 'Hz')
         self._steps: int = 250
+
+    def close(self):
+        self.adapter.close()
 
     serial_nb = Instrument.measurement(
         ":GID", """Get the serial number. """,

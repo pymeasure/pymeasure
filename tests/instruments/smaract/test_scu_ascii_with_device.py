@@ -24,7 +24,8 @@ def smaractascii(connected_device_address: str):
         """
     instr = SmarActSCULinear(adapter=connected_device_address)
     # ensure the device is in a defined state, e.g. by resetting it.
-    return instr
+    yield instr
+    instr.close()
 
 
 class TestSCUIdentificate:
