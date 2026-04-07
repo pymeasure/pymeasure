@@ -16,7 +16,7 @@ SENSOR = [True]
 
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str):
+def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
@@ -60,13 +60,33 @@ class TestSCUIdentificate:
 
 class TestSCUConfiguration:
 
+    @pytest.mark.parametrize("value", [1, 3000, 18500])
+    def test_check_freq_int_range(self, smaractascii, value):
+        result = smaractascii.check_freq(value)
+
+        assert isinstance(result, Q_)
+        assert result.magnitude == value
+        assert str(result.units) == 'hertz'
+
+    def test_check_freq_with_str(self, smaractascii):
+        result = smaractascii.check_freq('5000 Hz')
+        assert result == Q_(5000, 'Hz')
+
     def test_frequency(self, smaractascii):
         smaractascii.frequency = Q_(500, "Hz")
         assert smaractascii.frequency == Q_(500, "Hz")
 
-    def test_amplitude(self, smaractascii):
-        smaractascii.amplitude = Q_(300, "dV")
-        assert smaractascii.amplitude == Q_(300, "dV")
+    @pytest.mark.parametrize("value", [150, 300, 1000])
+    def test_check_amplitude_int_range(self, smaractascii, value):
+        result = smaractascii.check_amplitude(value)
+
+        assert isinstance(result, Q_)
+        assert result.magnitude == value
+        assert str(result.units) == 'decivolt'
+
+    def test_check_amplitude_with_str(self, smaractascii):
+        result = smaractascii.check_amplitude('300 dV')
+        assert result == Q_(300, 'dV')
 
     def test_invalid_frequency(self, smaractascii):
         with pytest.raises(ValueError):
@@ -76,6 +96,10 @@ class TestSCUConfiguration:
         with pytest.raises(ValueError):
             smaractascii.amplitude = Q_(50, "dV")
 
+    def test_close(connected_device_address):
+        inst = SmarActSCULinear(adapter=connected_device_address)
+        inst.close()
+        assert inst.adapter.connection is None or not inst.adapter.connection
 
 class TestSCUChannel:
 
@@ -109,7 +133,7 @@ class TestSCUMotion:
     def test_get_position(self, smaractascii, channel):
         pos = smaractascii.channels[channel].get_position()
 
-        # we verify we do recive a(Quantity)
+        # we verify we do receive a(Quantity)
         assert isinstance(pos, Q_)
         # we verify its unity is um
         assert str(pos.units) == 'micrometer'
@@ -124,7 +148,7 @@ class TestSCUMotion:
         smaractascii.channels[channel].move_abs(target_pos)
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_rel(slef, smaractascii, channel):
+    def test_move_rel(self, smaractascii, channel):
         target_pos = Q_(500, 'um')
         smaractascii.channels[channel].move_rel(target_pos)
 

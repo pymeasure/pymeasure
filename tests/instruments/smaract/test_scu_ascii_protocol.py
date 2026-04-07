@@ -13,7 +13,14 @@ def test_init():
             SmarActSCULinear,
             [],
     ):
-        pass  # Verify the expected communication.
+        pass  # verify the expected communication.
+
+def test_close():
+    with expected_protocol(
+            SmarActSCULinear,
+            [],  # no communication expected
+    ) as inst:
+        inst.close()
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -26,7 +33,7 @@ def test_channel_frequency_max_setter(channel):
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_channel0_frequency_max_getter(channel):
+def test_frequency_max_getter(channel):
     with expected_protocol(
             SmarActSCULinear,
             [(f':GCLF{channel}'.encode(), b':CLF0F500')],
@@ -35,7 +42,7 @@ def test_channel0_frequency_max_getter(channel):
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_channel0_safe_direction_setter(channel):
+def test_safe_direction_setter(channel):
     for comm_pairs, value in ((((f':SSD{channel}D1'.encode(), None),), 'up'),
                               (((f':SSD{channel}D0'.encode(), None),), 'down')):
         with expected_protocol(

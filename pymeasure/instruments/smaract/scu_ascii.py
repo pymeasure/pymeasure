@@ -173,9 +173,8 @@ class SCUChannel(Channel):
         self.write(f":S{self.id}")
 
     def get_position(self):
-        """Returns the current position in micrometers."""
-        if self.unit == '':
-            raise NotImplementedError
+        """Returns the current position in pint qunatity measured in micrometers."""
+        raise NotImplementedError
 
 
 class SCUChannelLinear(SCUChannel):
@@ -278,8 +277,11 @@ class SmarActSCU_ASCII(Instrument):
         if ampl is None:
             return self._amplitude
 
-        if isinstance(ampl, (int)):
+        if isinstance(ampl, int):
             ampl = Q_(ampl, 'dV')
+
+        if isinstance(ampl, str):
+            ampl = Q_(ampl)
 
         if not (Q_(150, 'dV') <= ampl <= Q_(1000, 'dV')):
             raise ValueError(f"Amplitude {ampl} out of range [150; 1000] dV")
@@ -304,8 +306,11 @@ class SmarActSCU_ASCII(Instrument):
         if freq is None:
             return self._freq
 
-        if isinstance(freq, (int)):
+        if isinstance(freq, int):
             freq = Q_(freq, 'Hz')
+
+        if isinstance(freq, str):
+            freq = Q_(freq)
 
         # Vérification of limits
         if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
@@ -387,3 +392,21 @@ class SmarActSCUAngular(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelAngular, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelAngular, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelAngular, "2")
+
+
+# if __name__ == "__main__":
+#     inst = SmarActSCULinear('ASRL3::INSTR')
+#     #inst.baudrate = 9600
+#     pass
+#
+#     #import pyvisa
+#     # rm = pyvisa.ResourceManager()
+#     #ressources = rm.list_resources()
+#     #print(ressources)
+#     #
+#     # inst = rm.open_resource(ressources[0])
+#     # inst.write_termination = '\n'
+#     # inst.read_termination = '\n'
+#     # pass
+#     #
+#     inst.close()
