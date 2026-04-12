@@ -157,9 +157,12 @@ class SCUChannel(Channel):
 
     def move_to_ref(self):
         """Moves up/down to reference"""
-        self.write(f":MTR{self.id}H0Z1")
-        self._current_steps =0
-        raise NotImplementedError
+        if  not self.check_sensor_present():
+            self.move_to_end_up()
+        else :
+            self.write(f":MTR{self.id}H0Z1")
+
+
 
     def move_to_end_up(self):
         """Moves up until end of line"""
