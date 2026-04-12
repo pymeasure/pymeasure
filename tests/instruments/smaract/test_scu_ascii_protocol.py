@@ -150,7 +150,7 @@ def test_channel_move_rel(channel):
 def test_channel_move_steps_down(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':D{channel}F260A300S100'.encode(), None)],
+            [(f':D{channel}F3000A400S100'.encode(), None)],
     ) as inst:
         assert inst.channels[channel].move_steps_down(*(100,), ) is None
 
@@ -159,7 +159,7 @@ def test_channel_move_steps_down(channel):
 def test_channel_move_steps_up(channel):
     with expected_protocol(
             SmarActSCULinear,
-            [(f':U{channel}F260A300S100'.encode(), None)],
+            [(f':U{channel}F3000A400S100'.encode(), None)],
     ) as inst:
         assert inst.channels[channel].move_steps_up(*(100,), ) is None
 
