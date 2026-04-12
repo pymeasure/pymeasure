@@ -125,6 +125,7 @@ class SCUChannel(Channel):
         a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
+        self._current_steps += steps
 
     def move_steps_down(self, steps: int,
                         freq: Union[int, float, Q_] = None,
@@ -142,6 +143,7 @@ class SCUChannel(Channel):
         a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":D{self.id}F{f_val}A{a_val}S{steps}")
+        self._current_steps -= steps
 
     def check_sensor_present(self) -> bool:
         """Check if the sensor is present
@@ -155,18 +157,20 @@ class SCUChannel(Channel):
 
     def move_to_ref(self):
         """Moves up/down to reference"""
-        if self.unit == '':
-            raise NotImplementedError
-        else:
-            self.write(f":MTR{self.id}H0Z1")
+        self.write(f":MTR{self.id}H0Z1")
+        self._current_steps =0
+        raise NotImplementedError
 
     def move_to_end_up(self):
         """Moves up until end of line"""
         self.write(f":MES{self.id}DU")
+        self._current_steps = 20000
 
     def move_to_end_down(self):
         """Moves down until end of line"""
         self.write(f":MES{self.id}DD")
+        self._current_steps = -20000
+
 
     def stop(self):
         """Stops any process."""
@@ -221,6 +225,51 @@ class SCUChannelAngular(SCUChannel):
         self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
 
 
+class SCUChannelStepper(SCUChannel):
+    """
+    Channel for an open-loop positioner without a sensor.
+    All positions are estimated by counting steps.
+    """
+    unit = 'step'
+
+    def get_position(self) -> int:
+        """ Returns the current estimated position in steps. """
+        # We simply read our internal counter variable
+        return self._current_steps
+
+    def move_rel(self, steps: Union[int, Q_]):
+        """
+        Moves relative to the current position by a given number of steps.
+        Positive = Up, Negative = Down.
+        """
+        # 1. Extract the integer value (whether it is passed as a Quantity or a raw int)
+        if isinstance(steps, Q_):
+            steps_val = int(steps.magnitude)
+        else:
+            steps_val = int(steps)
+
+        # 2. Choose the direction based on the sign
+        if steps_val > 0:
+            self.move_steps_up(steps_val)
+        elif steps_val < 0:
+            self.move_steps_down(abs(steps_val))
+
+
+    def move_abs(self, position: Union[int, Q_]):
+        """
+        Moves to an absolute step position (calculated internally).
+        """
+        if isinstance(position, Q_):
+            target_steps = int(position.magnitude)
+        else:
+            target_steps = int(position)
+
+        diff = target_steps - self._current_steps
+
+        # We use our own move_rel function to do the actual work
+        self.move_rel(diff)
+
+
 class SmarActSCU_ASCII(Instrument):
     """
     Communication with a SmarAct SCU (Simple Control Unit) motion controller via ASCII.
@@ -251,9 +300,10 @@ class SmarActSCU_ASCII(Instrument):
                          write_termination='\n',
                          **kwargs)
 
-        self._amplitude: Q_ = Q_(300, 'dV')
-        self._freq: Q_ = Q_(260, 'Hz')
-        self._steps: int = 250
+        self._amplitude: Q_ = Q_(400, 'dV')
+        self._freq: Q_ = Q_(3000, 'Hz')
+        self._steps: int = 2000
+        self._current_steps: int = 0
 
     def close(self):
         self.adapter.close()
@@ -392,6 +442,29 @@ class SmarActSCUAngular(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelAngular, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelAngular, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelAngular, "2")
+
+class SmarActSCUStepper(SmarActSCU_ASCII):
+    channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
+    channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
+    channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
+
+
+if __name__ == "__main__":
+    inst = SmarActSCULinear('ASRL3::INSTR')
+    #inst.baudrate = 9600
+    pass
+
+    #import pyvisa
+    # rm = pyvisa.ResourceManager()
+    #ressources = rm.list_resources()
+    #print(ressources)
+    #
+    # inst = rm.open_resource(ressources[0])
+    # inst.write_termination = '\n'
+    # inst.read_termination = '\n'
+    # pass
+    #
+    inst.close()
 
 
 # if __name__ == "__main__":
