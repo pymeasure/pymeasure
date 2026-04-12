@@ -98,6 +98,7 @@ class TestSCUConfiguration:
 
 class TestSCUChannel:
 
+
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_safe_direction(self, smaractascii, channel):
         smaractascii.channels[channel].safe_direction = 'up'

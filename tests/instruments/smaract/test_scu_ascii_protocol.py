@@ -16,6 +16,7 @@ def test_init():
     ):
         pass  # verify the expected communication.
 
+
 def test_close():
     with expected_protocol(
             SmarActSCULinear,
