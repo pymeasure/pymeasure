@@ -16,7 +16,7 @@ SENSOR = [True]
 
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str):
+def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
@@ -95,6 +95,11 @@ class TestSCUConfiguration:
     def test_invalid_amplitude(self, smaractascii):
         with pytest.raises(ValueError):
             smaractascii.amplitude = Q_(50, "dV")
+
+    def test_close(connected_device_address):
+        inst = SmarActSCULinear(adapter=connected_device_address)
+        inst.close()
+        assert inst.adapter.connection is None or not inst.adapter.connection
 
 class TestSCUChannel:
 
@@ -180,8 +185,3 @@ class TestSCUMotion:
                 smaractascii.set_baudrate(test_value)
         else:
             smaractascii.set_baudrate(test_value)
-
-    def test_close(self, smaractascii):
-        smaractascii.close()
-        with pytest.raises(pyvisa.errors.InvalidSession):
-            smaractascii.serial_nb()

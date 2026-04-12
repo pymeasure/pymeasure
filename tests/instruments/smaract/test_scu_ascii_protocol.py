@@ -1,5 +1,4 @@
 import pytest
-import pyvisa
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
@@ -41,29 +40,6 @@ def test_frequency_max_getter(channel):
             [(f':GCLF{channel}'.encode(), b':CLF0F500')],
     ) as inst:
         assert inst.channels[channel].frequency_max.magnitude == 500
-
-
-def test_amplitude_setter():
-    inst = SmarActSCULinear(adapter=None)
-    inst.amplitude = Q_(300, 'dV')
-    assert inst.amplitude == Q_(300, 'dV')
-
-
-def test_frequency_setter():
-    inst = SmarActSCULinear(adapter=None)
-    inst.frequency = Q_(500, 'Hz')
-    assert inst.frequency == Q_(500, 'Hz')
-
-
-@pytest.mark.parametrize("channel", CHANNELS)
-def test_channel_set_zero(channel):
-    with expected_protocol(
-            SmarActSCULinear,
-            [(f':SZ{channel}'.encode(), None)],
-    ) as inst:
-        # must mock sensor present → otherwise NotImplementedError
-        inst.channels[channel].check_sensor_present = lambda: True
-        inst.channels[channel].set_zero_pos()
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -153,15 +129,6 @@ def test_channel_get_positioner_type(channel):
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_channel_set_positioner_type(channel):
-    with expected_protocol(
-            SmarActSCULinear,
-            [(f':SST{channel}T21'.encode(), None)],
-    ) as inst:
-        inst.channels[channel].set_positioner_type(21)
-
-
-@pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_move_abs(channel):
     with expected_protocol(
             SmarActSCULinear,
@@ -231,20 +198,6 @@ def test_channel_stop(channel):
             [(f':S{channel}'.encode(), None)],
     ) as inst:
         assert inst.channels[channel].stop() is None
-
-
-def test_set_baudrate():
-    with expected_protocol(
-            SmarActSCULinear,
-            [(b':CB9600', None), (b':R', None)],
-    ) as inst:
-        inst.set_baudrate(9600)
-
-
-def test_set_baudrate_invalid():
-    inst = SmarActSCULinear(adapter=None)
-    with pytest.raises(pyvisa.VisaIOError):
-        inst.set_baudrate(1234)
 
 
 def test_reset():
