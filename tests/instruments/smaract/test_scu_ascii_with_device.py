@@ -6,7 +6,8 @@ import pyvisa
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, SmarActSCUStepper
 
 
-CHANNELS = ['0'] # Here you may add multiple channels ['0', '1', '2', ...]
+CHANNELS = ['0']
+# Here you may add multiple channels ['0', '1', '2', ...]
 SENSOR = [True]
 # TYPE = ['Linear'] hesitating on adding this function, since it may
 # not be as simple as imagined, and can be easily checked by SENSOR
