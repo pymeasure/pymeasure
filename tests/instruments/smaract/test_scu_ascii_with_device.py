@@ -1,5 +1,4 @@
 import pytest
-from debugpy.launcher import channel
 from pint import Quantity as Q_
 import pyvisa
 
@@ -7,10 +6,10 @@ import pyvisa
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, SmarActSCUStepper
 
 
-CHANNELS = ['0']
+CHANNELS = ['0'] # Here you may add multiple channels ['0', '1', '2', ...]
 SENSOR = [True]
 # TYPE = ['Linear'] hesitating on adding this function, since it may
-# not be as simple as imagined, and can be easily done by SENSOR
+# not be as simple as imagined, and can be easily checked by SENSOR
 
 # You can parameterize the following test"
 # with @pytest.mark.parametrize for your number of channels:")
