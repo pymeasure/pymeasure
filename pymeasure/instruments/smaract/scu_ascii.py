@@ -258,8 +258,6 @@ class SCUChannelStepper(SCUChannel):
             self.move_steps_down(abs(steps_val))
             self._current_steps = steps_val + old_steps
 
-
-
     def move_abs(self, position: Union[int, Q_]):
         """Moves to the absolute position given in steps from the reference possition
 
@@ -454,21 +452,3 @@ class SmarActSCUStepper(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
-
-
-if __name__ == "__main__":
-    inst = SmarActSCUStepper('ASRL3::INSTR')
-    #inst.baudrate = 9600
-    pass
-
-    # import pyvisa
-    # rm = pyvisa.ResourceManager()
-    # ressources = rm.list_resources()
-    # print(ressources)
-    #
-    # inst = rm.open_resource(ressources[0])
-    # inst.write_termination = '\n'
-    # inst.read_termination = '\n'
-    # pass
-    #
-    inst.close()

@@ -4,7 +4,7 @@ from pint import Quantity as Q_
 import pyvisa
 
 # Importing driver classes
-from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear,SmarActSCUStepper
+from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, SmarActSCUStepper
 
 
 CHANNELS = ['0']
@@ -17,7 +17,7 @@ SENSOR = [True]
 
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
+def smaractascii(connected_device_address: str):
     """ connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
@@ -28,8 +28,9 @@ def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
     yield instr
     instr.close()
 
+
 @pytest.fixture(scope="module")
-def smaractasciiSTEPPER(connected_device_address: str = "ASRL3::INSTR"):
+def smaractasciiSTEPPER(connected_device_address: str):
 
     instz = SmarActSCUStepper(adapter=connected_device_address)
     yield instz
@@ -198,24 +199,24 @@ class TestSCUMotion:
 class TestSCUStepperUnit:
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_initial_position(self, smaractasciiSTEPPER,channel):
+    def test_initial_position(self, smaractasciiSTEPPER, channel):
         """Stepper position starts at instrument internal counter."""
         assert isinstance(smaractasciiSTEPPER.channels[channel].get_position_step(), int)
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_rel_positive(self, smaractasciiSTEPPER,channel):
+    def test_move_rel_positive(self, smaractasciiSTEPPER, channel):
         start = smaractasciiSTEPPER.channels[channel].get_position_step()
         smaractasciiSTEPPER.channels[channel].move_rel(100)
         assert smaractasciiSTEPPER.channels[channel].get_position_step() == start + 100
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_rel_negative(self, smaractasciiSTEPPER,channel):
+    def test_move_rel_negative(self, smaractasciiSTEPPER, channel):
         start = smaractasciiSTEPPER.channels[channel].get_position_step()
         smaractasciiSTEPPER.channels[channel].move_rel(-100)
         assert smaractasciiSTEPPER.channels[channel].get_position_step() == start - 100
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_abs(self, smaractasciiSTEPPER,channel):
+    def test_move_abs(self, smaractasciiSTEPPER, channel):
         ch = smaractasciiSTEPPER.channels[channel]
         ch.move_rel(20)
         ch.move_abs(5)
