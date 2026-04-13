@@ -22,17 +22,31 @@
 # THE SOFTWARE.
 #
 
-from .browser_widget import BrowserWidget
-from .fileinput_widget import FileInputWidget
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
+import logging
+
+from pyqtgraph.console import ConsoleWidget as PGConsoleWidget
+
 from .tab_widget import TabWidget
-from .table_widget import TableWidget
-from .console_widget import ConsoleWidget
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
+
+
+class ConsoleWidget(TabWidget, PGConsoleWidget):
+    """ Widget to display an interactive Python console in GUI.
+    
+    It allows executing arbitrary Python commands at runtime and debugging the 
+    application.
+
+    It can be included in subclasses of
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`
+    by adding it to the widget_list.
+    """
+
+    def __init__(self, name, parent=None, namespace=None, text="Interactive Python Console\n"):
+        super().__init__(
+            name=name,
+            parent=parent,
+            namespace=namespace,
+            text=text
+        )
