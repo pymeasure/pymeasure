@@ -98,7 +98,7 @@ def test_channel_calibrate_sensor(channel):
             [(f':CS{channel}'.encode(), None),
              (f':M{channel}'.encode(), f':M{channel}C'.encode())],
     ) as inst:
-        assert inst.channels[channel].calibrate_sensor() == ':M0C'
+        assert inst.channels[channel].calibrate_sensor() == f':M{channel}C'
 
 
 @pytest.mark.parametrize("channel", CHANNELS)

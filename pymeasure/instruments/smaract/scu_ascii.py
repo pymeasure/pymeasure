@@ -16,21 +16,24 @@ from pymeasure.instruments.validators import strict_discrete_set
 class SCUChannel(Channel):
     unit: str = ''
 
-    frequency_max = Instrument.control(
+    frequency_max = Channel.control(
         ":GCLF{ch}",
         ":SCLF{ch}F%d",
-        """Control the maximum frequency in an absolute move""",
+        """Control the maximum frequency in an absolute move
+        :param frequency, an int given in Hz in range [1;18500]
+        """,
         set_process=lambda v: check_quantity_unit(v, 'Hz'),
         get_process=lambda s: Q_(int(s[6:]), 'Hz'),
     )
-    safe_direction = Instrument.control(
+
+    safe_direction_up_enabled = Channel.control(
         ":GSD{ch}",
         ":SSD{ch}D%d",
-        """Control the safe direction for a given channel for move_to_ref
+        """Control the safe direction of the :meth: 'move_to_ref'
            :param  must be either 0 (down) or 1 (up). In minor letters""",
         validator=strict_discrete_set,
         map_values=True,
-        values={'up': 1, 'down': 0},
+        values={True: 1, False: 0},
         get_process=lambda x: int(x[-1]),
     )
 
@@ -110,8 +113,8 @@ class SCUChannel(Channel):
         return self.read()
 
     def move_steps_up(self, steps: int,
-                      freq: Union[int, float, Q_] = None,
-                      ampl: Union[int, float, Q_] = None):
+                      freq: Union[int, Q_] = None,
+                      ampl: Union[int, Q_] = None):
         """Moves up
         :param steps: Number of steps, an int in range [1;30000]
         :param freq: Frequency, a quantity given in Hz in range [1;18500] (or int)
@@ -204,12 +207,12 @@ class SCUChannelAngular(SCUChannel):
         """Moves to the absolute angle given in m° from the reference position via
            closed-loop control.
 
-           :param angle: A quantity with angular units (m°)
+           :param position: A quantity with angular units (m°)
         """
         self.write(f":MAA{self.id}P{check_quantity_unit(position, self.unit)}")
 
     def get_angle(self):
-        """ Returns the current angle in degrees"""
+        """ Returns the current angle in m°"""
         self.write(f":GA{self.id}")
         ang = self.read()
         self.angle = (Q_(float(ang[4:]), self.unit))
@@ -218,7 +221,7 @@ class SCUChannelAngular(SCUChannel):
     def move_rel(self, position: Q_):
         """Moves the relative angle given in m° from the current position closed-loop control.
 
-           :param angle: A quantity with angular units (m°)
+           :param position: A quantity with angular units (m°)
         """
         self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
 
@@ -234,16 +237,16 @@ class SCUChannelStepper(SCUChannel):
         super().__init__(*args, **kwargs)
         self._current_steps = 0
 
-    def get_position_step(self):
+    def get_position(self):
         """ Returns the current estimated position in steps. """
         # We simply read our internal counter variable
         return self._current_steps
 
     def move_rel(self, steps: Union[int, Q_]):
-        """Moves to the relative position given in steps from the current possition
+        """Moves to the relative position given in steps from the current position
 
         :param steps : A quantity with the step as unit, given as integer,
-                       with positive int = down, negative int = up.
+                       with positive int = up, negative int = down.
         """
         old_steps = self._current_steps
         if isinstance(steps, Q_):
@@ -286,7 +289,7 @@ class SmarActSCU_ASCII(Instrument):
     protocol, which is implemented by this driver.
 
     This base class provides the common communication layer and shared
-    functionality, while axis-specific behavior (e.g. linear or angular motion)
+    functionality, while axis-specific behavior (e.g. linear, angular or stepper motion)
     is implemented in subclasses.
 
     :param str adapter: Name of the COM-port.
@@ -343,7 +346,7 @@ class SmarActSCU_ASCII(Instrument):
 
     @property
     def amplitude(self):
-        """ Control default frequency """
+        """ Control default amplitude. """
         return self._amplitude
 
     @amplitude.setter
@@ -402,15 +405,19 @@ class SmarActSCU_ASCII(Instrument):
         """
         raise NotImplementedError
 
-    def move_rel(self, position: Q_):
+    def move_rel(self, position: Q_, channel: int = 0):
         """Moves the relative distance given in µm from current position
 
-        :param position : A quantity with length units (µm)
+        :param position: A quantity with length units (µm).
+        :param channel: Channel index (0, 1, or 2).
         """
-        if position.magnitude >= 0:
-            self.move_steps_up(position.magnitude)
-        else:
-            self.move_steps_down(position.magnitude)
+
+        ch = getattr(self, f"channel{channel}")
+
+    if position.magnitude >= 0:
+        ch.move_steps_up(position.magnitude)
+    else:
+        ch.move_steps_down(position.magnitude)
 
     BAUDRATE = (9600, 38400, 57600, 100000, 115200,
                 128000, 256000, 500000)
@@ -425,7 +432,7 @@ class SmarActSCU_ASCII(Instrument):
             self.write(f':CB{baudrate}')
             self.write(':R')
         else:
-            raise pyvisa.VisaIOError(-1)
+            raise ValueError(f"Invalid baudrate {baudrate}. Supported: {self.BAUDRATE}")
 
     def reset(self):
         """Reset will be performed on the device. Has the same effect
@@ -452,3 +459,20 @@ class SmarActSCUStepper(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
+
+if __name__ == "__main__":
+    inst = SmarActSCUStepper('ASRL3::INSTR')
+    #inst.baudrate = 9600
+    pass
+
+    # import pyvisa
+    # rm = pyvisa.ResourceManager()
+    # ressources = rm.list_resources()
+    # print(ressources)
+    #
+    # inst = rm.open_resource(ressources[0])
+    # inst.write_termination = '\n'
+    # inst.read_termination = '\n'
+    # pass
+    #
+    inst.close()
