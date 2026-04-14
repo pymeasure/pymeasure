@@ -1,3 +1,27 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2026 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
 from typing import Union
 from pint import Quantity as Q_
 
@@ -38,21 +62,70 @@ class SCUChannel(Channel):
     )
 
     def calibrate_sensor(self):
-        """Calibrate the sensor. Has to be done before the use of move to reference.
+        """Calibrate the sensor. Has to be done before the use of :meth: 'move_to_ref'
            The user must ensure himself that the positioner is not close to a mechanical
            limit before using this method"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
         return status
 
-    def set_zero_pos(self):
+    def set_zero_position(self):
         """Set the current position as position zero."""
         if self.check_sensor_present():
             self.write(f":SZ{self.id}")
         else:
-            raise NotImplementedError
+            raise ValueError("No sensor implemented on the instrument. Cannot set zero position")
 
-    def set_positioner_type(self, t: int):
+    POSITIONER_TYPES = {
+        1: "Linear – M",
+        4: "Rotary – GC",
+        5: "Goniometer – GD",
+        6: "Goniometer – GE",
+        7: "Rotary – RA",
+        8: "Rotary – GF",
+        9: "Rotary – RB",
+        10: "Rotary – SR36M",
+        11: "Rotary – SR36ME",
+        12: "Rotary – SR50M",
+        13: "Rotary – SR50ME",
+        14: "Linear – MM50",
+        15: "Goniometer – G935M",
+        16: "Linear – MD",
+        17: "Tip-Tilt – TT254",
+        18: "Linear – LC",
+        19: "Rotary – LR",
+        20: "Linear – LCD",
+        21: "Linear – L",
+        22: "Linear – LD",
+        23: "Linear – LE",
+        24: "Linear – LED",
+        25: "Linear – SL…S1I1E1",
+        26: "Linear – SL…D1I1E1",
+        27: "Linear – SL…S1I2E2",
+        28: "Linear – SL…D1I2E2",
+        29: "Tip-Tilt – ST…S1I1E2",
+        30: "Goniometer – SG…D1L1S",
+        31: "Goniometer – SG…D1L1E",
+        32: "Goniometer – SG…D1L2S",
+        33: "Goniometer – SG…D1L2E",
+        34: "Goniometer – SG…D1M1E",
+        35: "Goniometer – SG…D1M2E",
+        36: "Iris – SI…S1L1S",
+        37: "Tip-Tilt – ST…S1I2E2",
+        38: "Rotary – SR…T5L3S",
+        39: "Iris – SI…S1L4E",
+        40: "Iris – SI…S1L1E",
+    }
+
+    @property
+    def positioner_type(self):
+        """Get the positioner/sensor type, could be linear or angular,
+        see :property: 'positioner_type' for corresponding value"""
+        self.write(f":GST{self.id}")
+        return self.read()
+
+    @positioner_type.setter
+    def positioner_type(self, t: int):
         """Set the positioner/sensor type.
 
            CAUTION! The user has to use the 'SmarAct ASCII Programming Interface' for a
@@ -62,60 +135,16 @@ class SCUChannel(Channel):
            The list 'positioner_types' contains the available t values and corresponding properties
 
         """
-        positioner_types = {
-            1: "Linear – M",
-            4: "Rotary – GC",
-            5: "Goniometer – GD",
-            6: "Goniometer – GE",
-            7: "Rotary – RA",
-            8: "Rotary – GF",
-            9: "Rotary – RB",
-            10: "Rotary – SR36M",
-            11: "Rotary – SR36ME",
-            12: "Rotary – SR50M",
-            13: "Rotary – SR50ME",
-            14: "Linear – MM50",
-            15: "Goniometer – G935M",
-            16: "Linear – MD",
-            17: "Tip-Tilt – TT254",
-            18: "Linear – LC",
-            19: "Rotary – LR",
-            20: "Linear – LCD",
-            21: "Linear – L",
-            22: "Linear – LD",
-            23: "Linear – LE",
-            24: "Linear – LED",
-            25: "Linear – SL…S1I1E1",
-            26: "Linear – SL…D1I1E1",
-            27: "Linear – SL…S1I2E2",
-            28: "Linear – SL…D1I2E2",
-            29: "Tip-Tilt – ST…S1I1E2",
-            30: "Goniometer – SG…D1L1S",
-            31: "Goniometer – SG…D1L1E",
-            32: "Goniometer – SG…D1L2S",
-            33: "Goniometer – SG…D1L2E",
-            34: "Goniometer – SG…D1M1E",
-            35: "Goniometer – SG…D1M2E",
-            36: "Iris – SI…S1L1S",
-            37: "Tip-Tilt – ST…S1I2E2",
-            38: "Rotary – SR…T5L3S",
-            39: "Iris – SI…S1L4E",
-            40: "Iris – SI…S1L1E",
-        }
-        if t in positioner_types:
+        if t in POSITIONER_TYPES:
             self.write(f":SST{self.id}T{t}")
         else:
-            raise ValueError
-
-    def get_positioner_type(self):
-        """Get the positioner/sensor type, could be linear or angular"""
-        self.write(f":GST{self.id}")
-        return self.read()
+            raise ValueError(f"{t} is not a valid value, please choose from the list POSITIONER_TYPES")
 
     def move_steps_up(self, steps: int,
                       freq: Union[int, Q_] = None,
                       ampl: Union[int, Q_] = None):
-        """Moves up
+        """Move up.
+
         :param steps: Number of steps, an int in range [1;30000]
         :param freq: Frequency, a quantity given in Hz in range [1;18500] (or int)
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
@@ -128,17 +157,17 @@ class SCUChannel(Channel):
         a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
-        # self._current_steps += steps
 
     def move_steps_down(self, steps: int,
-                        freq: Union[int, float, Q_] = None,
-                        ampl: Union[int, float, Q_] = None):
-        """Moves down
+                        freq: Union[int, Q_] = None,
+                        ampl: Union[int, Q_] = None):
+        """Move down.
+
         :param steps: Number of steps, an int in range [1;30000]
         :param freq: Frequency, a quantity given in Hz in range [1;18500] (or int)
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
-        #
+
         valid_freq = self.parent.check_freq(freq)
         valid_ampl = self.parent.check_amplitude(ampl)
 
@@ -146,14 +175,9 @@ class SCUChannel(Channel):
         a_val = int(valid_ampl.to('dV').magnitude)
 
         self.write(f":D{self.id}F{f_val}A{a_val}S{steps}")
-        # self._current_steps -= steps
 
     def check_sensor_present(self) -> bool:
-        """Check if the sensor is present
-
-        :returns: True/False
-
-        """
+        """Check whether the sensor is present."""
         self.write(f':GSP{self.id}')
         response = self.read()
         return response == f':SP{self.id}P'
@@ -163,12 +187,12 @@ class SCUChannel(Channel):
         self.write(f":MTR{self.id}H0Z1")
         self._current_steps = 0
 
-    def move_to_end_up(self):
+    def move_up_to_end(self):
         """Moves up until end of line"""
         self.write(f":MES{self.id}DU")
         self._current_steps = -20000
 
-    def move_to_end_down(self):
+    def move_down_to_end(self):
         """Moves down until end of line"""
         self.write(f":MES{self.id}DD")
         self._current_steps = 20000
@@ -459,20 +483,3 @@ class SmarActSCUStepper(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
-
-if __name__ == "__main__":
-    inst = SmarActSCUStepper('ASRL3::INSTR')
-    #inst.baudrate = 9600
-    pass
-
-    # import pyvisa
-    # rm = pyvisa.ResourceManager()
-    # ressources = rm.list_resources()
-    # print(ressources)
-    #
-    # inst = rm.open_resource(ressources[0])
-    # inst.write_termination = '\n'
-    # inst.read_termination = '\n'
-    # pass
-    #
-    inst.close()

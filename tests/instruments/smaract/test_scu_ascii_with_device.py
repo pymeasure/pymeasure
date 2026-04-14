@@ -63,8 +63,8 @@ class TestSCUIdentificate:
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_set_zero(self, smaractascii, channel):
         pos = smaractascii.channels[channel].get_position()
-        smaractascii.channels[channel].set_zero_pos()
-        assert smaractascii.channels[channel].set_zero_pos() != pos
+        smaractascii.channels[channel].set_zero_position()
+        assert smaractascii.channels[channel].set_zero_position() != pos
 
 
 class TestSCUConfiguration:
@@ -166,12 +166,12 @@ class TestSCUMotion:
         smaractascii.channels[channel].move_steps_up(1000, 500, 500)
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_to_end_up(self, smaractascii, channel):
-        smaractascii.channels[channel].move_to_end_up()
+    def test_move_up_to_end(self, smaractascii, channel):
+        smaractascii.channels[channel].move_up_to_end()
 
     @pytest.mark.parametrize("channel", CHANNELS)
-    def test_move_to_end_down(self, smaractascii, channel):
-        smaractascii.channels[channel].move_to_end_down()
+    def test_move_down_to_end(self, smaractascii, channel):
+        smaractascii.channels[channel].move_down_to_end()
 
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_stop(self, smaractascii, channel):

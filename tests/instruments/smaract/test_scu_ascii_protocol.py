@@ -165,21 +165,21 @@ def test_channel_move_steps_up(channel):
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_channel_move_to_end_down(channel):
+def test_channel_move_down_to_end(channel):
     with expected_protocol(
             SmarActSCULinear,
             [(f':MES{channel}DD'.encode(), None)],
     ) as inst:
-        assert inst.channels[channel].move_to_end_down() is None
+        assert inst.channels[channel].move_down_to_end() is None
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
-def test_channel_move_to_end_up(channel):
+def test_channel_move_up_to_end(channel):
     with expected_protocol(
             SmarActSCULinear,
             [(f':MES{channel}DU'.encode(), None)],
     ) as inst:
-        assert inst.channels[channel].move_to_end_up() is None
+        assert inst.channels[channel].move_up_to_end() is None
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
