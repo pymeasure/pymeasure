@@ -135,7 +135,7 @@ class SCUChannel(Channel):
            The list 'positioner_types' contains the available t values and corresponding properties
 
         """
-        if t in POSITIONER_TYPES:
+        if t in self.POSITIONER_TYPES:
             self.write(f":SST{self.id}T{t}")
         else:
             raise ValueError(f"{t} is not a valid value, please choose from the list POSITIONER_TYPES")
@@ -201,7 +201,8 @@ class SCUChannel(Channel):
         """Stops any process."""
         self.write(f":S{self.id}")
 
-    def get_position(self):
+    @property
+    def position(self):
         """Returns the current position in pint qunatity measured in micrometers."""
         raise NotImplementedError
 
@@ -212,12 +213,13 @@ class SCUChannelLinear(SCUChannel):
     def move_abs(self, position: Q_):
         self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
 
-    def get_position(self):
+    @property
+    def position(self):
         """Returns the current position in micrometers."""
         self.write(f":GP{self.id}")
         pos = self.read()
-        self.position = Q_(float(pos[4:]), self.unit)
-        return self.position
+        return Q_(float(pos[4:]), self.unit)
+
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
@@ -226,6 +228,13 @@ class SCUChannelLinear(SCUChannel):
 
 class SCUChannelAngular(SCUChannel):
     unit = 'm°'
+
+    @property
+    def angle(self):
+        """Returns the current angle in m°"""
+        self.write(f":GA{self.id}")
+        ang = self.read()
+        return Q_(float(ang[4:]), self.unit)
 
     def move_abs(self, position: Q_):
         """Moves to the absolute angle given in m° from the reference position via
@@ -261,7 +270,8 @@ class SCUChannelStepper(SCUChannel):
         super().__init__(*args, **kwargs)
         self._current_steps = 0
 
-    def get_position(self):
+    @property
+    def position(self):
         """ Returns the current estimated position in steps. """
         # We simply read our internal counter variable
         return self._current_steps
@@ -287,8 +297,6 @@ class SCUChannelStepper(SCUChannel):
 
     def move_abs(self, position: Union[int, Q_]):
         """Moves to the absolute position given in steps from the reference possition
-
-        :param steps : A quantity with the step as unit, given as integer
         """
         if isinstance(position, Q_):
             target_steps = int(position.magnitude)
@@ -438,10 +446,10 @@ class SmarActSCU_ASCII(Instrument):
 
         ch = getattr(self, f"channel{channel}")
 
-    if position.magnitude >= 0:
-        ch.move_steps_up(position.magnitude)
-    else:
-        ch.move_steps_down(position.magnitude)
+        if position.magnitude >= 0:
+            ch.move_steps_up(position.magnitude)
+        else:
+            ch.move_steps_down(position.magnitude)
 
     BAUDRATE = (9600, 38400, 57600, 100000, 115200,
                 128000, 256000, 500000)
@@ -483,3 +491,20 @@ class SmarActSCUStepper(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
+
+if __name__ == "__main__":
+    inst = SmarActSCULinear('ASRL3::INSTR')
+    #inst.baudrate = 9600
+    pass
+
+    #import pyvisa
+    # rm = pyvisa.ResourceManager()
+    #ressources = rm.list_resources()
+    #print(ressources)
+    #
+    # inst = rm.open_resource(ressources[0])
+    # inst.write_termination = '\n'
+    # inst.read_termination = '\n'
+    # pass
+    #
+    inst.close()

@@ -44,26 +44,26 @@ def test_frequency_max_getter(channel):
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_safe_direction_setter(channel):
-    for comm_pairs, value in ((((f':SSD{channel}D1'.encode(), None),), 'up'),
-                              (((f':SSD{channel}D0'.encode(), None),), 'down')):
+    for comm_pairs, value in ((((f':SSD{channel}D1'.encode(), None),), True),
+                              (((f':SSD{channel}D0'.encode(), None),), False)):
         with expected_protocol(
                 SmarActSCULinear,
                 comm_pairs,
         ) as inst:
-            inst.channels[channel].safe_direction = value
+            inst.channels[channel].safe_direction_up_enabled = value
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_safe_direction_getter(channel):
     for comm_pairs, value in (
-            (((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), 'up'),
-            (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),), 'down'),
+            (((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), True),
+            (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),),  False),
     ):
         with expected_protocol(
                 SmarActSCULinear,
                 comm_pairs,
         ) as inst:
-            assert inst.channels[channel].safe_direction == value
+            assert inst.channels[channel].safe_direction_up_enabled == value
 
 
 def test_model_getter():
@@ -116,7 +116,7 @@ def test_channel_get_position(channel):
             SmarActSCULinear,
             [(f':GP{channel}'.encode(), f':P{channel}P-0.5'.encode())],
     ) as inst:
-        assert inst.channels[channel].get_position() == Q_(-0.5, 'um')
+        assert inst.channels[channel].position == Q_(-0.5, 'um')
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -125,7 +125,7 @@ def test_channel_get_positioner_type(channel):
             SmarActSCULinear,
             [(f':GST{channel}'.encode(), f':ST{channel}T21'.encode())],
     ) as inst:
-        assert inst.channels[channel].get_positioner_type() == f':ST{channel}T21'
+        assert inst.channels[channel].positioner_type == f':ST{channel}T21'
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
