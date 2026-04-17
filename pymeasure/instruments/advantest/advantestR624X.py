@@ -1127,7 +1127,7 @@ class AdvantestR624X(Instrument):
     def query_operation_mode(self):
         """Get the operation mode and sweep delay time.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`operation_mode` instead.
         """
         warn("`query_operation_mode` is deprecated, use `operation_mode` property instead.",
@@ -1144,7 +1144,7 @@ class AdvantestR624X(Instrument):
         """Get the output data format, common short, power frequency,
         and SRQ gate settings.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`system_settings` instead.
         """
         warn("`query_system_settings` is deprecated, use `system_settings` property instead.",
@@ -1330,7 +1330,7 @@ class AdvantestR624X(Instrument):
     def interrupt_sequence_command(self, action):
         """Interrupt the sequence program.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :meth:`interrupt_sequence` instead.
         """
         warn("`interrupt_sequence_command` is deprecated, use "
@@ -1362,7 +1362,7 @@ class AdvantestR624X(Instrument):
     def sequence_program_listing(self, line):
         """Query the commands stored at a sequence program line.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :meth:`query_sequence_program` instead.
         """
         warn("`sequence_program_listing` is deprecated, use "
@@ -1636,7 +1636,7 @@ class AdvantestR624X(Instrument):
     def digital_out_enable_data(self):
         """Control the digital output enable data register.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`digital_output_enable` instead.
         """
         warn("`digital_out_enable_data` is deprecated, use "
@@ -1820,7 +1820,7 @@ class SMUChannel(Channel):
     def query_output_waveform(self):
         """Get the output waveform settings for this channel.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`output_waveform_settings` instead.
         """
         warn("`query_output_waveform` is deprecated, use "
@@ -1836,7 +1836,7 @@ class SMUChannel(Channel):
     def query_measurement_settings(self):
         """Get the measurement range settings for this channel.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`measurement_range_settings` instead.
         """
         warn("`query_measurement_settings` is deprecated, use "
@@ -1852,7 +1852,7 @@ class SMUChannel(Channel):
     def query_response_settings(self):
         """Get the response mode settings for this channel.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`response_settings` instead.
         """
         warn("`query_response_settings` is deprecated, use "
@@ -1868,7 +1868,7 @@ class SMUChannel(Channel):
     def query_data_output_settings(self):
         """Get the data output settings for this channel.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`data_output_settings` instead.
         """
         warn("`query_data_output_settings` is deprecated, use "
@@ -1884,7 +1884,7 @@ class SMUChannel(Channel):
     def query_io_settings(self):
         """Get the I/O settings for this channel.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :attr:`io_settings` instead.
         """
         warn("`query_io_settings` is deprecated, use "
@@ -2899,7 +2899,7 @@ class SMUChannel(Channel):
     def calibration_init(self):
         """Initialize the calibration data.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :meth:`init_calibration` instead.
         """
         warn("`calibration_init` is deprecated, use "
@@ -2909,7 +2909,7 @@ class SMUChannel(Channel):
     def calibration_store_factor(self):
         """Store the calibration factor.
 
-        .. deprecated:: 0.15
+        .. deprecated:: 0.16
             Use :meth:`store_calibration_factor` instead.
         """
         warn("`calibration_store_factor` is deprecated, use "
