@@ -23,6 +23,7 @@
 #
 
 from .keysight81160A import Keysight81160A
+from .keysightB2900A import KeysightB2900A
 from .keysightDSOX1102G import KeysightDSOX1102G
 from .keysightE3631A import KeysightE3631A
 from .keysightE36312A import KeysightE36312A
