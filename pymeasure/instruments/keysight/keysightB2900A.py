@@ -169,7 +169,8 @@ class KeysightB2900AChannel(Channel):
         ":sens{ch}:curr:aper?",
         ":sens{ch}:curr:aper %g",
         """Control the measurement speed for a current measurement in seconds.
-        This the integration time of a single measurement. Consider also the alternative `current_measurement_speed_nplc`
+        This the integration time of a single measurement.
+        Consider also the alternative `current_measurement_speed_nplc`
         """,
     )
 
@@ -177,7 +178,8 @@ class KeysightB2900AChannel(Channel):
         ":sens{ch}:curr:nplc?",
         ":sens{ch}:curr:nplc %g",
         """Control the measurement speed for a current measurement in #powerline cycles.
-        This the integration time of a single measurement. Consider also the alternative `current_measurement_speed`.
+        This the integration time of a single measurement.
+        Consider also the alternative `current_measurement_speed`.
         """,
         validator=strict_range,
         values=[4.8e-4, 120],  # 60-Hz system
@@ -185,12 +187,12 @@ class KeysightB2900AChannel(Channel):
 
     measured_current = Channel.measurement(
         ":meas:curr? (@{ch})",
-        """Perform a current spot measurement""",
+        """Measure current (perform a spot measurement)""",
     )
 
     @property
     def measured_current_array(self):
-        """Fetch the measured current array (as float64)"""
+        """Get the measured current array (as float64)"""
         return self._get_measured_array("curr")
 
     voltage_measurement_range_auto = Channel.control(
@@ -213,7 +215,8 @@ class KeysightB2900AChannel(Channel):
         ":sens{ch}:volt:aper?",
         ":sens{ch}:volt:aper %g",
         """Set the measurement speed for a voltage measurement in seconds.
-        This the integration time of a single measurement. Consider also the alternative `voltage_measurement_speed_nplc`.
+        This the integration time of a single measurement.
+        Consider also the alternative `voltage_measurement_speed_nplc`.
         """,
     )
 
@@ -221,7 +224,8 @@ class KeysightB2900AChannel(Channel):
         ":sens{ch}:volt:nplc?",
         ":sens{ch}:volt:nplc %g",
         """Control the measurement speed for a current measurement in #powerline cycles.
-        This the integration time of a single measurement. Consider also the alternative `voltage_measurement_speed`.
+        This the integration time of a single measurement.
+        Consider also the alternative `voltage_measurement_speed`.
         """,
         validator=strict_range,
         values=[4.8e-4, 120],  # 60-Hz system
@@ -229,12 +233,12 @@ class KeysightB2900AChannel(Channel):
 
     measured_voltage = Channel.measurement(
         ":meas:volt? (@{ch})",
-        """Perform a voltage spot measurement""",
+        """Measure voltage (perform spot measurement)""",
     )
 
     @property
     def measured_voltage_array(self):
-        """Fetch the measured voltage array (as float64)"""
+        """Get the measured voltage array (as float64)"""
         return self._get_measured_array("volt")
 
     def _get_measured_array(self, v_or_c):
@@ -247,10 +251,10 @@ class KeysightB2900AChannel(Channel):
         raw_bytes = self.read_bytes(-1, break_on_termchar=True)
         assert chr(raw_bytes[0]) == "#"
         size_nbytes = int(chr(raw_bytes[1]))  # size of the size integer
-        nbytes = int(raw_bytes[2 : 2 + size_nbytes].decode())
+        nbytes = int(raw_bytes[2:2 + size_nbytes].decode())
         self.write(f":form {old_format}")
         # breakpoint()
-        raw_bytes = raw_bytes[2 + size_nbytes : -1]  # remove headers + newline byte
+        raw_bytes = raw_bytes[2 + size_nbytes:-1]  # remove headers + newline byte
         values = np.frombuffer(
             raw_bytes,
             dtype=np.dtype(">d"),
@@ -260,10 +264,11 @@ class KeysightB2900AChannel(Channel):
 
     trigger_source = Channel.setting(
         ":trig{ch}:sour %s",
-        """Set the trigger source. Currently supported options are "TIM" (internal timer) and "AINT" (auto). Note that this is not readable.
+        """Set the trigger source. Currently supported options are "TIM" (internal timer) and "AINT"
+        (auto). Note that this is not readable.
 
-        If switching from an active triggering sequence (i.e. auto (AINT) & trigger count set to infinite), you'll need to call the abort() method first to avoid an error.
-        """,
+        If switching from an active triggering sequence (i.e. auto (AINT) & trigger count set to
+        infinite), you'll need to call the abort() method first to avoid an error.  """,
         validator=strict_discrete_set,
         values=["TIM", "AINT"],  # "AUTO", "BUS", "INT1" "INT2", "LAN"
     )
@@ -271,20 +276,20 @@ class KeysightB2900AChannel(Channel):
     source_trigger_delay = Channel.control(
         ":trig{ch}:tran:del?",
         ":trig{ch}:tran:del %g",
-        """Sets the source delay time.
+        """Control the source delay time.
         """,
     )
 
     measurement_trigger_delay = Channel.control(
         ":trig{ch}:acq:del?",
         ":trig{ch}:acq:del %g",
-        """Sets the measurement delay time.
+        """Control the measurement delay time.
         """,
     )
 
     source_trigger_timer_period = Channel.setting(
         ":trig{ch}:tran:tim %s",
-        """Set the trigger period. `trigger_source` needs to be set to "TIM".
+        """Control the trigger period. `trigger_source` needs to be set to "TIM".
         Note that this is not readable.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
@@ -303,7 +308,8 @@ class KeysightB2900AChannel(Channel):
 
     source_trigger_count = Channel.setting(
         ":trig{ch}:tran:coun %g",
-        """Set the trigger count of the source trigger (from 1 to 100000 or 2147483647). Note that this is not readable. Set to 2147483647 for infinite. 
+        """Set the trigger count of the source trigger (from 1 to 100000 or 2147483647).
+        Note that this is not readable. Set to 2147483647 for infinite.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[1, 100000], 2147483647],
@@ -323,7 +329,8 @@ class KeysightB2900AChannel(Channel):
 
     idle = Channel.measurement(
         ":idle{ch}:all?",
-        """Check whether the triggering system is idle (i.e. all source & measurements are complete)""",
+        """Get whether the triggering system is idle
+        (i.e. all source & measurements are complete)""",
         cast=bool,
     )
 
@@ -400,7 +407,6 @@ class KeysightB2900A(SCPIMixin, Instrument):
                 need_to_clear = True
                 err = e
                 if datetime.now() >= end:
-                    print(f"DEBUG: VisaIOError timeout, {poll_count=}, {retval=}")
                     raise err
 
     def pop_err(self):

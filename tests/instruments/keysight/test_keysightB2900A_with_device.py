@@ -25,7 +25,6 @@
 # Tested using ethernet. call signature:
 #    pytest test_keysightB2900A_with_device.py --device-address 'TCPIP::192.168.2.232::INSTR'
 
-from numpy import polysub
 import pytest
 from pymeasure.instruments.keysight.keysightB2900A import KeysightB2900A
 # from pyvisa.errors import VisaIOError
@@ -45,9 +44,9 @@ def keysightB2900A(connected_device_address):
 
 def test_source_output_enabled(keysightB2900A):
     keysightB2900A.ch1.source_output_enabled = True
-    assert keysightB2900A.ch1.source_output_enabled == True
+    assert keysightB2900A.ch1.source_output_enabled
     keysightB2900A.ch2.source_output_enabled = True
-    assert keysightB2900A.ch2.source_output_enabled == True
+    assert keysightB2900A.ch2.source_output_enabled
 
 
 def test_source_output_mode(keysightB2900A):
@@ -115,9 +114,9 @@ def test_pulse_width(keysightB2900A):
 
 def test_current_measurement_range_auto(keysightB2900A):
     keysightB2900A.ch1.current_measurement_range_auto = False
-    assert keysightB2900A.ch1.current_measurement_range_auto == False
+    assert not keysightB2900A.ch1.current_measurement_range_auto
     keysightB2900A.ch2.current_measurement_range_auto = False
-    assert keysightB2900A.ch2.current_measurement_range_auto == False
+    assert not keysightB2900A.ch2.current_measurement_range_auto
 
 
 def test_current_measurement_range(keysightB2900A):
@@ -143,16 +142,16 @@ def test_measured_current(keysightB2900A):
 
 
 def test_measured_current_array(keysightB2900A):
-    c = keysightB2900A.ch1.measured_current_array
-    c = keysightB2900A.ch2.measured_current_array
+    keysightB2900A.ch1.measured_current_array
+    keysightB2900A.ch2.measured_current_array
     assert keysightB2900A.ask(":form?").strip() == "ASC"
 
 
 def test_voltage_measurement_range_auto(keysightB2900A):
     keysightB2900A.ch1.voltage_measurement_range_auto = False
-    assert keysightB2900A.ch1.voltage_measurement_range_auto == False
+    assert not keysightB2900A.ch1.voltage_measurement_range_auto
     keysightB2900A.ch2.voltage_measurement_range_auto = False
-    assert keysightB2900A.ch2.voltage_measurement_range_auto == False
+    assert not keysightB2900A.ch2.voltage_measurement_range_auto
 
 
 def test_voltage_measurement_range(keysightB2900A):
@@ -186,13 +185,13 @@ def test_measured_voltage_array(keysightB2900A):
 
 def test_output_protection_enabled(keysightB2900A):
     keysightB2900A.ch1.output_protection_enabled = True
-    assert keysightB2900A.ch1.output_protection_enabled == True
+    assert keysightB2900A.ch1.output_protection_enabled
     keysightB2900A.ch2.output_protection_enabled = True
-    assert keysightB2900A.ch2.output_protection_enabled == True
+    assert keysightB2900A.ch2.output_protection_enabled
     keysightB2900A.ch1.output_protection_enabled = False
-    assert keysightB2900A.ch1.output_protection_enabled == False
+    assert not keysightB2900A.ch1.output_protection_enabled
     keysightB2900A.ch2.output_protection_enabled = False
-    assert keysightB2900A.ch2.output_protection_enabled == False
+    assert not keysightB2900A.ch2.output_protection_enabled
 
 
 def test_compliance(keysightB2900A):
