@@ -30,7 +30,7 @@ from pymeasure.instruments import Channel, Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, joined_validators
 
 
-class KeysightB2900AChannel(Channel):
+class KeysightB2912AChannel(Channel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -324,7 +324,7 @@ class KeysightB2900AChannel(Channel):
     )
 
     def initiate(self):
-        """This is the B2900A manual's terminology for triggering."""
+        """This is the B2912A manual's terminology for triggering."""
         self.write(":INIT (@{ch})")
 
     idle = Channel.measurement(
@@ -365,18 +365,18 @@ class KeysightB2900AChannel(Channel):
         self.write(":ABOR:ALL (@{ch})")
 
 
-class KeysightB2900A(SCPIMixin, Instrument):
-    """Represents the Keysight B2900A Precision Source/Measure Unit.
+class KeysightB2912A(SCPIMixin, Instrument):
+    """Represents the Keysight B2912A Precision Source/Measure Unit.
 
     .. code-block:: python
 
-        psmu = KeysightB2900A(resource)
+        psmu = KeysightB2912A(resource)
     """
 
-    ch1 = Instrument.ChannelCreator(KeysightB2900AChannel, 1)
-    ch2 = Instrument.ChannelCreator(KeysightB2900AChannel, 2)
+    ch1 = Instrument.ChannelCreator(KeysightB2912AChannel, 1)
+    ch2 = Instrument.ChannelCreator(KeysightB2912AChannel, 2)
 
-    def __init__(self, adapter, name="Keysight B2900A PSMU", **kwargs):
+    def __init__(self, adapter, name="Keysight B2912A PSMU", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
     def wait_for_complete(self, timeout=1):
@@ -415,7 +415,7 @@ class KeysightB2900A(SCPIMixin, Instrument):
         indicates success.
 
         The Error queue can be cleared using the standard SCPI
-        ``KeysightB2900A.clear()`` method.
+        ``KeysightB2912A.clear()`` method.
 
         """
         error_str = self.ask("SYST:ERR?").strip()
