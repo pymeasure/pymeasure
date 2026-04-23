@@ -26,7 +26,7 @@ import logging
 import sys
 import inspect
 from copy import deepcopy
-from importlib.machinery import SourceFileLoader
+import importlib.util
 import re
 from pint import UndefinedUnitError
 
@@ -352,7 +352,10 @@ class ProcedureWrapper:
         self.__dict__.update(state)
 
         # Restore the procedure
-        module = SourceFileLoader(self._module, self._file).load_module()
+        spec = importlib.util.spec_from_file_location(self._module, self._file)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[self._module] = module
+        spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
         self.procedure = cls()
