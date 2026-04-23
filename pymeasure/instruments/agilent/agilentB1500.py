@@ -965,24 +965,24 @@ class SMU(Channel):
 
     def enable(self):
         """Enable source/measurement channel. (``CN``)"""
-        self.write(f"CN {self.id}")
+        self.write("CN {ch}")
 
     def disable(self):
         """Disable source/measurement channel. (``CL``)"""
-        self.write(f"CL {self.id}")
+        self.write("CL {ch}")
 
     def force_gnd(self):
         """Force output to 0 V immediately. (``DZ``)
 
         Current settings can be restored with :meth:`restore_settings`.
         """
-        self.write(f"DZ {self.id}")
+        self.write("DZ {ch}")
 
     def restore_settings(self):
         """Restore the settings of the channel to the state before
         using :meth:`force_gnd`. (``RZ``)
         """
-        self.write(f"RZ {self.id}")
+        self.write("RZ {ch}")
 
     @property
     def filter(self):
@@ -1004,7 +1004,7 @@ class SMU(Channel):
     @filter.setter
     def filter(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"FL {setting}, {self.id}")
+        self.write(f"FL {setting}, {{ch}}")
         self.check_errors()
 
     @property
@@ -1017,7 +1017,7 @@ class SMU(Channel):
     @series_resistor.setter
     def series_resistor(self, setting):
         setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"SSR {self.id}, {setting}")
+        self.write(f"SSR {{ch}}, {setting}")
         self.check_errors()
 
     @property
@@ -1033,7 +1033,7 @@ class SMU(Channel):
     @meas_op_mode.setter
     def meas_op_mode(self, op_mode):
         op_mode = MeasOpMode.get(op_mode)
-        self.write(f"CMM {self.id}, {op_mode.value}")
+        self.write(f"CMM {{ch}}, {op_mode.value}")
         self.check_errors()
 
     @property
@@ -1049,7 +1049,7 @@ class SMU(Channel):
     @adc_type.setter
     def adc_type(self, adc_type):
         adc_type = ADCType.get(adc_type)
-        self.write(f"AAD {self.id}, {adc_type.value}")
+        self.write(f"AAD {{ch}}, {adc_type.value}")
         self.check_errors()
 
     ######################################
@@ -1077,7 +1077,7 @@ class SMU(Channel):
                 comp_range = self.voltage_ranging.meas(comp_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        cmd += f" {self.id}, {source_range}, {output}"
+        cmd += f" {{ch}}, {source_range}, {output}"
         if not comp == "":
             cmd += f", {comp}"
             if not comp_polarity == "":
@@ -1114,14 +1114,14 @@ class SMU(Channel):
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
-            cmd = f"DV{self.id}"
+            cmd = "DV{ch}"
             source_range = self.voltage_ranging.output(source_range).index
             unit = "V"
             if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = "CURRENT"
-            cmd = f"DI{self.id}"
+            cmd = "DI{ch}"
             source_range = self.current_ranging.output(source_range).index
             unit = "A"
             if not comp_range == "":
@@ -1180,7 +1180,7 @@ class SMU(Channel):
     @meas_range_current.setter
     def meas_range_current(self, meas_range):
         meas_range_index = self.current_ranging.meas(meas_range).index
-        self.write(f"RI {self.id}, {meas_range_index}")
+        self.write(f"RI {{ch}}, {meas_range_index}")
         self.check_errors()
 
     @property
@@ -1197,7 +1197,7 @@ class SMU(Channel):
     @meas_range_voltage.setter
     def meas_range_voltage(self, meas_range):
         meas_range_index = self.voltage_ranging.meas(meas_range).index
-        self.write(f"RV {self.id}, {meas_range_index}")
+        self.write(f"RV {{ch}}, {meas_range_index}")
         self.check_errors()
 
     def meas_range_current_auto(self, mode, rate=50):
@@ -1208,9 +1208,9 @@ class SMU(Channel):
         """
         mode = strict_range(mode, range(1, 4))
         if mode == 1:
-            self.write(f"RM {self.id}, {mode}")
+            self.write(f"RM {{ch}}, {mode}")
         else:
-            self.write(f"RM {self.id}, {mode}, {rate}")
+            self.write(f"RM {{ch}}, {mode}, {rate}")
         self.write
 
     ######################################
@@ -1253,7 +1253,7 @@ class SMU(Channel):
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += f"{self.id}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
+        cmd += f"{{ch}}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
         if not Pcomp == "":
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1281,7 +1281,7 @@ class SMU(Channel):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += f"{self.id}, {source_range}, {start}, {stop}, {comp}"
+        cmd += f"{{ch}}, {source_range}, {start}, {stop}, {comp}"
         if not Pcomp == "":
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1313,7 +1313,7 @@ class SMU(Channel):
         else:
             raise ValueError("Source Type must be Current or Voltage.")
         # check on comp value not yet implemented
-        cmd += f"{self.id}, {source_range}, {base}, {bias}, {comp}"
+        cmd += f"{{ch}}, {source_range}, {base}, {bias}, {comp}"
         self.write(cmd)
         self.check_errors()
 
@@ -1663,7 +1663,7 @@ class SPGUChannel(Channel):
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
-        self.write(f"SPV {self.id}, {source}, {base_voltage}, {peak_voltage}")
+        self.write(f"SPV {{ch}}, {source}, {base_voltage}, {peak_voltage}")
 
     def get_output_voltage(self, source=1):
         """Get the output voltage of the specified signal source. (``SPV?``)
@@ -1673,7 +1673,7 @@ class SPGUChannel(Channel):
         :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
-        response = self.ask(f"SPV? {self.id}, {source}")
+        response = self.ask(f"SPV? {{ch}}, {source}")
         base_voltage, peak_voltage = map(float, response.split(","))
         return base_voltage, peak_voltage
 
@@ -1710,7 +1710,7 @@ class SPGUChannel(Channel):
         source = SPGUSignalSource.get(source)
         if source == SPGUSignalSource.DC:
             raise ValueError("Pulse timings can only be set for pulse sources.")
-        command = f"SPT {self.id}, {source.value}, {delay}, {width}, {rise_time}"
+        command = f"SPT {{ch}}, {source.value}, {delay}, {width}, {rise_time}"
         if fall_time is not None:
             command += f", {fall_time}"
         self.write(command)
@@ -1727,7 +1727,7 @@ class SPGUChannel(Channel):
         :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
-        response = self.ask(f"SPT? {self.id}, {source}")
+        response = self.ask(f"SPT? {{ch}}, {source}")
         return tuple(map(float, response.split(",")))
 
     def apply_setup(self):
@@ -1738,7 +1738,7 @@ class SPGUChannel(Channel):
         * PG mode: output base voltage set by ``SPV`` command
         * ALWG mode: output initial value of waveform
         """
-        self.write(f"SPUPD {self.id}")
+        self.write("SPUPD {ch}")
 
 
 class CMU(Channel):
@@ -1827,7 +1827,7 @@ class CMU(Channel):
             step_source_trigger_delay_time, [0.0, delay_time]
         )
         self.write(
-            f"WTDCV {self.id}, {hold_time}, {delay_time}, {step_delay_time}, "
+            f"WTDCV {{ch}}, {hold_time}, {delay_time}, {step_delay_time}, "
             f"{step_source_trigger_delay_time}"
         )
 
@@ -1848,7 +1848,7 @@ class CMU(Channel):
         :param voltage: DC bias voltage in V
         """
         voltage = strict_range(voltage, [-100, 100])
-        self.write(f"DCV {self.id}, {voltage}")
+        self.write(f"DCV {{ch}}, {voltage}")
 
     def set_scuu_path(self, path: SCUUPath) -> None:
         """Set the connection path of the SMU CMU unify unit (SCUU). (``SSP``)
@@ -1874,7 +1874,7 @@ class CMU(Channel):
             log_settings_change(
                 0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
             )
-        self.write(f"SSP {self.id}, {path.value}")
+        self.write(f"SSP {{ch}}, {path.value}")
 
 
 def _set_cv_parameters_base(
