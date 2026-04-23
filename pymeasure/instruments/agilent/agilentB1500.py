@@ -608,9 +608,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         mode = MeasMode.get(mode)
         cmd = f"MM {mode.value}"
         for smu in args:
-            if isinstance(smu, SMU):
-                cmd += f", {smu.channel}"
-            elif isinstance(smu, CMU):
+            if isinstance(smu, (SMU, CMU)):
                 cmd += f", {smu.id}"
         self.write(cmd)
         self.check_errors()
@@ -1114,14 +1112,14 @@ class SMU(Channel):
         """
         if source_type.upper() == "VOLTAGE":
             source_type = "VOLTAGE"
-            cmd = "DV{ch}"
+            cmd = f"DI{self.id}"
             source_range = self.voltage_ranging.output(source_range).index
             unit = "V"
             if not comp_range == "":
                 comp_range = self.current_ranging.meas(comp_range).index
         elif source_type.upper() == "CURRENT":
             source_type = "CURRENT"
-            cmd = "DI{ch}"
+            cmd = f"DI{self.id}"
             source_range = self.current_ranging.output(source_range).index
             unit = "A"
             if not comp_range == "":
@@ -1211,7 +1209,6 @@ class SMU(Channel):
             self.write(f"RM {{ch}}, {mode}")
         else:
             self.write(f"RM {{ch}}, {mode}, {rate}")
-        self.write
 
     ######################################
     # Staircase Sweep Measurement: (WT, WM -> Instrument)
