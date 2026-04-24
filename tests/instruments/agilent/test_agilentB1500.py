@@ -27,6 +27,7 @@ import pytest
 from pymeasure.instruments.agilent import AgilentB1500
 from pymeasure.instruments.agilent.agilentB1500 import (
     CMU,
+    SMU,
     SPGU,
     ControlMode,
     MFCMUMeasurementMode,
@@ -78,6 +79,29 @@ class AgilentB1500Mock(AgilentB1500):
         super().__init__(*args, **kwargs)
         self.spgu1 = SPGU(self, 1)
         self.cmu = CMU(self, 2)
+        self.smu1 = SMU(self, index=1, smu_type="HRSMU", name="test", slot=1)
+
+
+class TestSMU:
+    """Tests for SMU module functionality."""
+
+    channel = 1
+
+    def test_enable(self):
+        """Test enable method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"CN {self.channel}", None)],
+        ) as inst:
+            inst.smu1.enable()
+
+    def test_disable(self):
+        """Test disable method."""
+        with expected_protocol(
+            AgilentB1500Mock,
+            [(f"CL {self.channel}", None)],
+        ) as inst:
+            inst.smu1.disable()
 
 
 class TestSPGU:
