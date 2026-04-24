@@ -51,6 +51,18 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class TabArea(QtWidgets.QTabWidget):
+    selection_started = QtCore.Signal()
+    selection_completed = QtCore.Signal(object)
+
+    def start_selection(self, selector, tag, initial_range):
+        self.selection_started.emit()
+        wdg = self.currentWidget()
+        if tag in wdg.selection_tags():
+            if selector in wdg.selectors:
+                wdg.selection_finished.connect(lambda result: self.selection_completed.emit([selector, result]))
+                wdg.enter_selection_mode(initial_range)
+
 class ManagedWindowBase(QtWidgets.QMainWindow):
     """
     Base class for GUI experiment management .
@@ -262,7 +274,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             estimator_dock.setFeatures(QtWidgets.QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
             self.addDockWidget(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea, estimator_dock)
 
-        self.tabs = QtWidgets.QTabWidget(self.main)
+        self.tabs = TabArea(self.main)
+        self.inputs.selection_triggered.connect(self.tabs.start_selection)
+        self.tabs.selection_completed.connect(self.inputs.set_selector)
         for wdg in self.widget_list:
             self.tabs.addTab(wdg, wdg.name)
 
