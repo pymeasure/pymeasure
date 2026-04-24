@@ -53,10 +53,16 @@ class ManagedImageWindow(ManagedWindow):
 
     """
 
-    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, **kwargs):
+    def __init__(self, procedure_class, x_axis, y_axis, z_axis=None, colormap="viridis", **kwargs):
         self.z_axis = z_axis
         self.image_widget = ImageWidget(
-            "Image", procedure_class.DATA_COLUMNS, x_axis, y_axis, z_axis)
+            "Image",
+            procedure_class.DATA_COLUMNS,
+            x_axis,
+            y_axis,
+            z_axis,
+            colormap=colormap,
+        )
 
         if "widget_list" not in kwargs:
             kwargs["widget_list"] = ()
