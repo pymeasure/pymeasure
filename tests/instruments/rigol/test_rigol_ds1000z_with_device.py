@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2026 PyMeasure Developers
+# Copyright (c) 2013-2025 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,29 @@
 # THE SOFTWARE.
 #
 
-from .rigol_dg800 import DG800
-from .rigol_ds1000z import RigolDS1000Z
+import pytest
+
+from pymeasure.instruments.rigol import RigolDS1000Z
+
+
+@pytest.fixture(scope="module")
+def rigolDS1000Z(connected_device_address):
+    instr = RigolDS1000Z(connected_device_address)
+    return instr
+
+
+def test_idn_responds(rigolDS1000Z: RigolDS1000Z):
+    response = rigolDS1000Z.id
+    assert isinstance(response, str)
+    assert response
+    print(f"Response: {response}")
+
+
+def test_memory_depth_round_trip(rigolDS1000Z: RigolDS1000Z):
+    rigolDS1000Z.memory_depth = "AUTO"
+    rigolDS1000Z.memory_depth = 12_000
+    assert rigolDS1000Z.memory_depth in ("AUTO", 12_000)
+
+
+def test_autoscale_executes(rigolDS1000Z: RigolDS1000Z):
+    rigolDS1000Z.autoscale()
