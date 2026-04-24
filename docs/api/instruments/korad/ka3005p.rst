@@ -1,0 +1,7 @@
+##########################
+Korad KA3005P Power Supply
+##########################
+
+.. autoclass:: pymeasure.instruments.korad.KoradKA3005P
+    :members:
+    :show-inheritance:
