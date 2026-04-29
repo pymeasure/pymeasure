@@ -88,12 +88,12 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         response = self.values("SYST:SENSOR:IDN?")
         if response[0] == "no sensor":
             raise OSError("No sensor connected.")
-        self.sensor_name = response[0]
-        self.sensor_sn = response[1]
-        self.sensor_cal_msg = response[2]
-        self.sensor_type = response[3]
-        self.sensor_subtype = response[4]
-        self.flags = response[5]
+        self.sensor_name = response[0].replace('"', "")
+        self.sensor_sn = str(int(float(str(response[1]).strip('"'))))
+        self.sensor_cal_msg = response[2].replace('"', "")
+        self.sensor_type = int(response[3])
+        self.sensor_subtype = int(response[4])
+        self.flags = bin(int(response[5]))
 
         self.is_power_sensor = self.sensor_type in {1}
         self.is_energy_sensor = self.sensor_type in {2, 3}
