@@ -151,6 +151,91 @@ class TestResults:
         assert (result.parameters['par'].value == np.linspace(1, 100, 17)).all()
 
 
+class TestPandas3Numpy2Compat:
+    """Tests verifying compatibility with pandas 3.0 and numpy 2.0."""
+
+    @staticmethod
+    def _write_rows(result, rows):
+        """Append data rows directly to the results file."""
+        with open(result.data_filename, 'a', encoding=Results.ENCODING) as f:
+            for row in rows:
+                f.write(result.format(row) + Results.LINE_BREAK)
+
+    def test_results_numeric_dtype_preserved_after_reload(self, tmpdir):
+        """Numeric dtypes must be preserved after writing and reloading a Results file."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ['x', 'y']
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'dtype_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 2.5} for i in range(5)])
+        result.reload()
+
+        assert result.data['x'].dtype == np.float64
+        assert result.data['y'].dtype == np.float64
+
+    def test_results_numeric_dtype_preserved_after_incremental_read(self, tmpdir):
+        """Numeric dtypes must not become object/str when reading new rows incrementally."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ['x', 'y']
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'incremental_dtype_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 1.5} for i in range(5)])
+        first_data = result.data
+        first_dtype = first_data['x'].dtype
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 1.5} for i in range(5, 10)])
+        second_data = result.data
+
+        assert second_data['x'].dtype == first_dtype
+        assert second_data['y'].dtype == first_dtype
+        assert len(second_data) == 10
+
+    def test_results_concat_sort_false_preserves_column_order(self, tmpdir):
+        """pd.concat with sort=False must preserve column order from DATA_COLUMNS."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ['z', 'a', 'b']
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'column_order_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [
+            {'z': float(i), 'a': float(i + 1), 'b': float(i + 2)} for i in range(3)
+        ])
+        result.reload()
+
+        assert list(result.data.columns) == ['z', 'a', 'b']
+
+    def test_boolean_parameter_numpy_bool_(self):
+        """BooleanParameter must accept np.bool_ values (numpy 2.0 replacement for np.bool)."""
+        from pymeasure.experiment import BooleanParameter
+        p = BooleanParameter('Test')
+        p.value = np.bool_(True)
+        assert p.value is True
+        p.value = np.bool_(False)
+        assert p.value is False
+
+    def test_results_empty_file_returns_empty_dataframe(self, tmpdir):
+        """An empty Results file must return an empty DataFrame without dtype errors."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ['x', 'y']
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'empty_test.csv')
+        result = Results(procedure, filename)
+
+        data = result.data
+        assert isinstance(data, pd.DataFrame)
+        assert list(data.columns) == ['x', 'y']
+        assert len(data) == 0
+
+
 def test_parameter_reading():
     data_path = os.path.join(os.path.dirname(__file__), "data/results_for_testing_parameters.csv")
     test_string = "/test directory with space/test_filename.csv"
