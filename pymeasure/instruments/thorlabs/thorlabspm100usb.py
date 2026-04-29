@@ -35,9 +35,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
     """Represents Thorlabs PM100USB powermeter."""
 
     def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
+        super().__init__(adapter, name, **kwargs)
         self._set_flags()
 
     wavelength_min = Instrument.measurement(
@@ -64,14 +62,10 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
             if not hasattr(self, "_wavelength_max"):
                 self._wavelength_max = self.wavelength_max
 
-            value = truncated_range(
-                value, [self._wavelength_min, self._wavelength_max]
-            )
+            value = truncated_range(value, [self._wavelength_min, self._wavelength_max])
             self.write(f"SENSE:CORR:WAV {value}")
         else:
-            raise AttributeError(
-                f"{self.sensor_name} does not allow setting the wavelength."
-            )
+            raise AttributeError(f"{self.sensor_name} does not allow setting the wavelength.")
 
     @property
     def power(self):
@@ -87,9 +81,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         if self.is_energy_sensor:
             return self.values("MEAS:ENER?")[0]
         else:
-            raise AttributeError(
-                f"{self.sensor_name} is not an energy sensor."
-            )
+            raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
 
     def _set_flags(self):
         """Get sensor info and write flags."""
@@ -101,30 +93,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         self.sensor_cal_msg = response[2]
         self.sensor_type = response[3]
         self.sensor_subtype = response[4]
-        _flags_str = response[5]
+        self.flags = response[5]
 
-        # interpretation of the flags, see p. 49 of the manual:
-        # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
-
-        # Convert to binary representation and pad zeros to 9 bit for sensors
-        # where not all flags are present.
-        _flags_str = format(int(_flags_str), "09b")
-        # Reverse the order so it matches the flag order from the manual, i.e.
-        # from decimal values from 1 to 256.
-        _flags_str = _flags_str[::-1]
-
-        # Convert to boolean.
-        self.flags = [x == "1" for x in _flags_str]
-
-        # setting the flags; _dn are unused; decimal values as comments
-        (
-            self.is_power_sensor,  # 1
-            self.is_energy_sensor,  # 2
-            _d4,  # 4
-            _d8,  # 8
-            self.response_settable,  # 16
-            self.wavelength_settable,  # 32
-            self.tau_settable,  # 64
-            _d128,  # 128
-            self.has_temperature_sensor,  # 256
-        ) = self.flags
+        self.is_power_sensor = self.sensor_type in {1}
+        self.is_energy_sensor = self.sensor_type in {2, 3}
