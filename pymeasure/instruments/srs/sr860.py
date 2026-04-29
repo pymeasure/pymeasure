@@ -118,7 +118,7 @@ class SR860(Instrument):
         """A floating point property that represents the reference sine-wave
         voltage in Volts. This property can be set.""",
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
 
     timebase = Instrument.control(
