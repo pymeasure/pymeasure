@@ -140,15 +140,17 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Install pymeasure requirements (pandas3 + numpy2)
+      - name: Install base pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
-          environment-file: '.github/pymeasure_pandas3_numpy2.yml'
+          environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
-          cache-environment-key: pandas3-numpy2-py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/pymeasure_pandas3_numpy2.yml') }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
+      - name: Upgrade pandas and numpy to latest via pip
+        run: pip install "pandas>=3.0" "numpy>=2.0"
       - name: Install Pymeasure
         run: pip install .[tests]
       - name: Pymeasure version
