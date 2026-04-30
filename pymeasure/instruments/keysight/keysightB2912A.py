@@ -31,9 +31,6 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 
 
 class KeysightB2912AChannel(Channel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     #######################################################################
     #                           source functions                          #
     #######################################################################
@@ -60,7 +57,7 @@ class KeysightB2912AChannel(Channel):
     source_output_shape = Channel.control(
         ":sour{ch}:func:shap?",
         ":sour{ch}:func:shap %s",
-        """Control the source output mode (str). Options are "DC" or "PULS".
+        """Control the source output shape (str). Options are "DC" or "PULS".
         """,
         validator=strict_discrete_set,
         values=["DC", "PULS"],
@@ -161,7 +158,7 @@ class KeysightB2912AChannel(Channel):
     current_measurement_range = Channel.control(
         ":sens{ch}:curr:rang?",
         ":sens{ch}:curr:range %g",
-        """Control the the range of a current measurement. Ensure that
+        """Control the range of a current measurement. Ensure that
         `current_measurement_range_auto` is set to false before use.""",
     )
 
@@ -207,14 +204,14 @@ class KeysightB2912AChannel(Channel):
     voltage_measurement_range = Channel.control(
         ":sens{ch}:volt:rang?",
         ":sens{ch}:volt:range %g",
-        """Control the the range of a voltage measurement. Ensure that
+        """Control the range of a voltage measurement. Ensure that
         `voltage_measurement_range_auto` is set to false before use.""",
     )
 
     voltage_measurement_speed = Channel.control(
         ":sens{ch}:volt:aper?",
         ":sens{ch}:volt:aper %g",
-        """Set the measurement speed for a voltage measurement in seconds.
+        """Control the measurement speed for a voltage measurement in seconds.
         This the integration time of a single measurement.
         Consider also the alternative `voltage_measurement_speed_nplc`.
         """,
@@ -293,7 +290,7 @@ class KeysightB2912AChannel(Channel):
 
     source_trigger_timer_period = Channel.setting(
         ":trig{ch}:tran:tim %s",
-        """Control the trigger period. `trigger_source` needs to be set to "TIM".
+        """Set the trigger period. `trigger_source` needs to be set to "TIM".
         Note that this is not readable.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
@@ -362,10 +359,10 @@ class KeysightB2912AChannel(Channel):
             except VisaIOError as e:
                 err = e
                 if datetime.now() >= end:
-                    raise err
+                    raise e from None
 
     def abort(self):
-        """Abort any acquisition our source output device actions."""
+        """Abort any acquisition or source output device actions."""
         self.write(":ABOR:ALL (@{ch})")
 
 
@@ -411,7 +408,7 @@ class KeysightB2912A(SCPIMixin, Instrument):
                 need_to_clear = True
                 err = e
                 if datetime.now() >= end:
-                    raise err
+                    raise e from None
 
     def pop_err(self):
         """Pop an error off the device's error queue. Returns a tuple
