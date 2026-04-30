@@ -84,4 +84,5 @@ Instruments by manufacturer:
    thyracont/index
    toptica/index
    velleman/index
+   voltcraft/index
    yokogawa/index
