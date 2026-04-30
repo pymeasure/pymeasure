@@ -245,21 +245,25 @@ class KeysightB2912AChannel(Channel):
         """Fetch the a measurement array as float64"""
         old_format = self.ask(":form?").strip()
         self.write(":form REAL,64")
-        self.write(f":fetc:arr:{v_or_c}? (@{self.id})")
-        # We can't use instrument `binary_values` since we need to set
-        # break_on_termchar=True.
-        raw_bytes = self.read_bytes(-1, break_on_termchar=True)
-        assert chr(raw_bytes[0]) == "#"
+        try:
+            self.write(f":fetc:arr:{v_or_c}? (@{self.id})")
+            # We can't use instrument `binary_values` since we need to set
+            # break_on_termchar=True.
+            raw_bytes = self.read_bytes(-1, break_on_termchar=True)
+        finally:
+            self.write(f":form {old_format}")
+
+        if not raw_bytes.startswith(b"#"):
+            raise ValueError("Invalid IEEE-488.2 block header")
         size_nbytes = int(chr(raw_bytes[1]))  # size of the size integer
         nbytes = int(raw_bytes[2:2 + size_nbytes].decode())
-        self.write(f":form {old_format}")
-        # breakpoint()
         raw_bytes = raw_bytes[2 + size_nbytes:-1]  # remove headers + newline byte
         values = np.frombuffer(
             raw_bytes,
             dtype=np.dtype(">d"),
         ).astype(np.float64)
-        assert values.size == nbytes // 8
+        if values.size != nbytes // 8:
+            raise ValueError("Binary block length does not match float64 payload size")
         return values
 
     trigger_source = Channel.setting(
@@ -307,20 +311,20 @@ class KeysightB2912AChannel(Channel):
     )
 
     source_trigger_count = Channel.setting(
-        ":trig{ch}:tran:coun %g",
+        ":trig{ch}:tran:coun %d",
         """Set the trigger count of the source trigger (from 1 to 100000 or 2147483647).
         Note that this is not readable. Set to 2147483647 for infinite.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[1, 100000], 2147483647],
+        values=[[1, 100000], [2147483647]],
     )
 
     measurement_trigger_count = Channel.setting(
-        ":trig{ch}:acq:coun %g",
+        ":trig{ch}:acq:coun %d",
         """Set the trigger count of the measurement trigger. Note that this is not readable.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
-        values=[[1, 100000], 2147483647],
+        values=[[1, 100000], [2147483647]],
     )
 
     def initiate(self):
@@ -331,7 +335,7 @@ class KeysightB2912AChannel(Channel):
         ":idle{ch}:all?",
         """Get whether the triggering system is idle
         (i.e. all source & measurements are complete)""",
-        cast=bool,
+        cast=lambda value: bool(int(value)),
     )
 
     def wait_idle(self, timeout=1):

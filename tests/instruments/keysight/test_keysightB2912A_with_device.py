@@ -36,17 +36,21 @@ from pymeasure.instruments.keysight.keysightB2912A import KeysightB2912A
 def keysightB2912A(connected_device_address):
     instr = KeysightB2912A(connected_device_address)
     instr.clear()
-    # ensure the device is in a defined state, e.g. by resetting it.
+    instr.reset()
     yield instr
     instr.ch1.source_output_enabled = False  # pyright:ignore
     instr.ch2.source_output_enabled = False  # pyright:ignore
 
 
 def test_source_output_enabled(keysightB2912A):
-    keysightB2912A.ch1.source_output_enabled = True
-    assert keysightB2912A.ch1.source_output_enabled
-    keysightB2912A.ch2.source_output_enabled = True
-    assert keysightB2912A.ch2.source_output_enabled
+    try:
+        keysightB2912A.ch1.source_output_enabled = True
+        assert keysightB2912A.ch1.source_output_enabled
+        keysightB2912A.ch2.source_output_enabled = True
+        assert keysightB2912A.ch2.source_output_enabled
+    finally:
+        keysightB2912A.ch1.source_output_enabled = False
+        keysightB2912A.ch2.source_output_enabled = False
 
 
 def test_source_output_mode(keysightB2912A):
@@ -71,10 +75,10 @@ def test_source_current(keysightB2912A):
 
 
 def test_triggered_source_current(keysightB2912A):
-    keysightB2912A.ch1.triggered_source_current = 2e-3
-    assert keysightB2912A.ch1.triggered_source_current == 2e-3
-    keysightB2912A.ch2.triggered_source_current = 3e-3
-    assert keysightB2912A.ch2.triggered_source_current == 3e-3
+    keysightB2912A.ch1.source_current_triggered = 2e-3
+    assert keysightB2912A.ch1.source_current_triggered == 2e-3
+    keysightB2912A.ch2.source_current_triggered = 3e-3
+    assert keysightB2912A.ch2.source_current_triggered == 3e-3
 
 
 def test_source_voltage(keysightB2912A):
@@ -85,10 +89,10 @@ def test_source_voltage(keysightB2912A):
 
 
 def test_triggered_source_voltage(keysightB2912A):
-    keysightB2912A.ch1.triggered_source_voltage = 1.11
-    assert keysightB2912A.ch1.triggered_source_voltage == 1.11
-    keysightB2912A.ch2.triggered_source_voltage = 2.34
-    assert keysightB2912A.ch2.triggered_source_voltage == 2.34
+    keysightB2912A.ch1.source_voltage_triggered = 1.11
+    assert keysightB2912A.ch1.source_voltage_triggered == 1.11
+    keysightB2912A.ch2.source_voltage_triggered = 2.34
+    assert keysightB2912A.ch2.source_voltage_triggered == 2.34
 
 
 def test_pulse_delay(keysightB2912A):
@@ -120,9 +124,10 @@ def test_current_measurement_range_auto(keysightB2912A):
 
 
 def test_current_measurement_range(keysightB2912A):
-    keysightB2912A.current_measurement_range_auto = False
+    keysightB2912A.ch1.current_measurement_range_auto = False
     keysightB2912A.ch1.current_measurement_range = 0.1
     assert keysightB2912A.ch1.current_measurement_range == 0.1
+    keysightB2912A.ch2.current_measurement_range_auto = False
     keysightB2912A.ch2.current_measurement_range = 0.1
     assert keysightB2912A.ch2.current_measurement_range == 0.1
 
@@ -142,8 +147,10 @@ def test_measured_current(keysightB2912A):
 
 
 def test_measured_current_array(keysightB2912A):
-    keysightB2912A.ch1.measured_current_array
-    keysightB2912A.ch2.measured_current_array
+    ch1_values = keysightB2912A.ch1.measured_current_array
+    ch2_values = keysightB2912A.ch2.measured_current_array
+    assert ch1_values.dtype.kind == "f"
+    assert ch2_values.dtype.kind == "f"
     assert keysightB2912A.ask(":form?").strip() == "ASC"
 
 
@@ -178,8 +185,10 @@ def test_measured_voltage(keysightB2912A):
 
 
 def test_measured_voltage_array(keysightB2912A):
-    keysightB2912A.ch1.measured_voltage_array
-    keysightB2912A.ch2.measured_voltage_array
+    ch1_values = keysightB2912A.ch1.measured_voltage_array
+    ch2_values = keysightB2912A.ch2.measured_voltage_array
+    assert ch1_values.dtype.kind == "f"
+    assert ch2_values.dtype.kind == "f"
     assert keysightB2912A.ask(":form?").strip() == "ASC"
 
 
@@ -225,13 +234,15 @@ def test_trig_del(keysightB2912A):
 
 def test_trig_count(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
-        ch.trigger_timer_count = 1
+        ch.source_trigger_count = 1
+        ch.measurement_trigger_count = 1
         assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
 
 
 def test_trig_period(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
-        ch.trigger_timer_period = 1
+        ch.source_trigger_timer_period = 1
+        ch.measurement_trigger_timer_period = 1
         assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
 
 
@@ -240,8 +251,10 @@ def test_wait_for_complete(keysightB2912A):
         ch.trigger_source = "TIM"
         ch.source_trigger_delay = 0
         ch.measurement_trigger_delay = 0
-        ch.trigger_timer_period = 1
-        ch.trigger_timer_count = 10
+        ch.source_trigger_timer_period = 1
+        ch.measurement_trigger_timer_period = 1
+        ch.source_trigger_count = 10
+        ch.measurement_trigger_count = 10
         keysightB2912A.wait_for_complete(10)
         ch.initiate()
         keysightB2912A.wait_for_complete(11)
