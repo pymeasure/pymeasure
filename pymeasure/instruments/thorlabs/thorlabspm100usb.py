@@ -93,7 +93,25 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         self.sensor_cal_msg = response[2].replace('"', "")
         self.sensor_type = int(response[3])
         self.sensor_subtype = int(response[4])
-        self.flags = bin(int(response[5]))
+        self.sensor_flags = int(response[5])
 
         self.is_power_sensor = self.sensor_type in {1}
         self.is_energy_sensor = self.sensor_type in {2, 3}
+
+        self.is_flags_new_format = bool(self.sensor_flags & 1 << 31)
+
+        # TODO: Add reference to documentation
+        if self.is_flags_new_format:
+            self.is_wavelength_settable = bool(self.sensor_flags & 1 << 2)
+        else:
+            self.is_wavelength_settable = bool(self.sensor_flags & 1 << 5)
+
+    @property
+    def flags(self):
+        # TODO: Deprecate
+        return self.sensor_flags
+
+    @property
+    def wavelength_settable(self):
+        # TODO: Deprecate
+        return self.is_wavelength_settable
