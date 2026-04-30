@@ -523,7 +523,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         self.write(":SYST:BEEP")
 
     def local(self):
-        """ Sets the instrument to local mode and returns control to its front panel.
+        """ Set the instrument to local mode and return control to its front panel.
         """
         self.write(":SYST:LOC")
 
