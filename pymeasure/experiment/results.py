@@ -450,7 +450,6 @@ class Results:
             current_size = os.path.getsize(self.data_filename)
             if current_size == self._last_file_size:
                 return self._data
-            
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
@@ -473,7 +472,6 @@ class Results:
                                            ignore_index=True)
             except Exception:
                 pass  # All data is up to date
-            
             # Update _last_file_size
             self._last_file_size = current_size
         return self._data
