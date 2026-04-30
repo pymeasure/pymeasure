@@ -23,8 +23,9 @@
 #
 
 import logging
+from typing import Optional, Sequence, Union
 
-from .common_base import CommonBase
+from .common_base import CommonBase, IdType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -47,12 +48,12 @@ class Channel(CommonBase):
 
     placeholder = "ch"
 
-    def __init__(self, parent, id):
+    def __init__(self, parent: CommonBase, id: IdType, **kwargs):
         self.parent = parent
         self.id = id
-        super().__init__()
+        super().__init__(**kwargs)
 
-    def insert_id(self, command):
+    def insert_id(self, command: str) -> str:
         """Insert the channel id in a command replacing `placeholder`.
 
         Subclass this method if you want to do something else,
@@ -61,7 +62,7 @@ class Channel(CommonBase):
         return command.format_map({self.placeholder: self.id})
 
     # Calls to the instrument
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Write a string command to the instrument appending `write_termination`.
 
         :param command: command string to be sent to the instrument.
@@ -70,15 +71,15 @@ class Channel(CommonBase):
         """
         self.parent.write(self.insert_id(command), **kwargs)
 
-    def write_bytes(self, content, **kwargs):
+    def write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument."""
         self.parent.write_bytes(content, **kwargs)
 
-    def read(self, **kwargs):
+    def read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer."""
         return self.parent.read(**kwargs)
 
-    def read_bytes(self, count, **kwargs):
+    def read_bytes(self, count: int, **kwargs) -> bytes:
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
@@ -88,7 +89,9 @@ class Channel(CommonBase):
         """
         return self.parent.read_bytes(count, **kwargs)
 
-    def write_binary_values(self, command, values, *args, **kwargs):
+    def write_binary_values(
+        self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
+    ):
         """Write binary values to the instrument.
 
         :param command: Command to send.
@@ -102,14 +105,14 @@ class Channel(CommonBase):
         """Read binary values from the instrument."""
         return self.parent.read_binary_values(**kwargs)
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """Read all errors from the instrument and log them.
 
         :return: List of error entries.
         """
         return self.parent.check_errors()
 
-    def check_get_errors(self):
+    def check_get_errors(self) -> list:
         """Check for errors after having gotten a property and log them.
 
         Called if :code:`check_get_errors=True` is set for that property.
@@ -120,7 +123,7 @@ class Channel(CommonBase):
         """
         return self.parent.check_get_errors()
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.
@@ -132,7 +135,7 @@ class Channel(CommonBase):
         return self.parent.check_set_errors()
 
     # Communication functions
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: Optional[float] = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.
