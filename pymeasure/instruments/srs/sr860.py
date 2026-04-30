@@ -118,7 +118,7 @@ class SR860(Instrument):
         """A floating point property that represents the reference sine-wave
         voltage in Volts. This property can be set.""",
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
 
     timebase = Instrument.control(
@@ -317,28 +317,28 @@ class SR860(Instrument):
         """Floating point property representing the preset sine out amplitude, for the A1 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A2 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
-        """Floating point property representing the preset sine out amplitude, for the A3 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A4 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_dclevelpreset1 = Instrument.control(
         "PSTL? 0", "PSTL 0, %0.3e",
