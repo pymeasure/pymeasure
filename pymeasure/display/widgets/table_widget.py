@@ -298,7 +298,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
             df = None
         else:
             # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=self.concat_axis).replace(to_replace=np.nan, value="")
+            df = pd.concat(df_list, axis=self.concat_axis, sort=False)
+            df = df.replace(to_replace=np.nan, value="")
         return df
 
     def set_index(self, index):
