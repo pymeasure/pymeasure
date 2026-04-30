@@ -123,16 +123,16 @@ class TestResults:
         procedure_mock = mock.MagicMock(spec=Procedure)
         result = Results(procedure_mock, 'test.csv')
 
-        read_csv_mock.return_value = [pd.DataFrame(data={
+        read_csv_mock.return_value = pd.DataFrame(data={
             'A': [1, 2, 3, 4, 5, 6, 7],
             'B': [2, 3, 4, 5, 6, 7, 8]
-        })]
+        })
         first_data = result.data
 
         # if no updates, read_csv returns a zero-row dataframe
-        read_csv_mock.return_value = [pd.DataFrame(data={
+        read_csv_mock.return_value = pd.DataFrame(data={
             'A': [], 'B': []
-        }, dtype=object)]
+        }, dtype=object)
         second_data = result.data
 
         assert second_data.iloc[:, 0].dtype is not object
