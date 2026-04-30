@@ -29,6 +29,8 @@ from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 def test_local():
     with expected_protocol(
         Agilent34450A,
-        [(":SYST:LOC", None)],
+        [("SYST:ERR?", "+0, No Error"),
+         (":SYST:LOC", None),
+         ],
     ) as inst:
         inst.local()
