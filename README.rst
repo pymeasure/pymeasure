@@ -43,7 +43,7 @@ Related Projects
 ----------------
 
 - `LECO Protocol <https://github.com/pymeasure/leco-protocol>`_: Open standard for laboratory equipment communication using modern protocols
-- `pyleco <https://github.com/pymeasure/pyleco>`_: Python library implementing LECO for distributed instrument control systems
+- `pyleco <https://github.com/pymeasure/pyleco>`_: Python library implementing LECO for distributed instrument control systems. PyLECO allows any PyMeasure instrument driver to be controlled remotely over a network: wrap the driver in an ``Actor`` on the instrument-side machine and use a ``TransparentDirector`` on the control-side machine. Communication is based on JSON-RPC over ZeroMQ, coordinated by a ``Coordinator`` server. Install with ``pip install pyleco``; see the `getting started guide <https://github.com/pymeasure/pyleco/blob/main/GETTING_STARTED.md>`_ for a tutorial.
 - `Python Lab Automation Landscape <https://github.com/pymeasure/python-lab-automation-landscape>`_: Curated collection of Python tools for laboratory automation and instrumentation
 
 
