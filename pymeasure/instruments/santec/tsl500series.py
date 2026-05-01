@@ -122,18 +122,6 @@ class TSL500Series(SCPIMixin, Instrument):
 
     # --- Wavelength control ---
 
-    wavelength_min = Instrument.measurement(
-        ":WAVelength:SWEep:RANGe:MINimum?",
-        """Get the minimum wavelength in the configurable sweep range
-        at the current sweep speed.""",
-    )
-
-    wavelength_max = Instrument.measurement(
-        ":WAVelength:SWEep:RANGe:MAXimum?",
-        """Get the maximum wavelength in the configurable sweep range
-        at the current sweep speed.""",
-    )
-
     wavelength_setpoint = Instrument.control(
         ":WAVelength?",
         ":WAVelength %g",
@@ -164,18 +152,6 @@ class TSL500Series(SCPIMixin, Instrument):
     )
 
     # --- Optical frequency control ---
-
-    frequency_min = Instrument.measurement(
-        ":FREQuency:SWEep:RANGe:MINimum?",
-        """Get the minimum frequency in the configurable sweep range
-        at the current sweep speed.""",
-    )
-
-    frequency_max = Instrument.measurement(
-        ":FREQuency:SWEep:RANGe:MAXimum?",
-        """Get the maximum frequency in the configurable sweep range
-        at the current sweep speed.""",
-    )
 
     frequency_setpoint = Instrument.control(
         ":FREQuency?",
@@ -220,8 +196,8 @@ class TSL500Series(SCPIMixin, Instrument):
         """Stop the wavelength sweep."""
         self.write(":WAVelength:SWEep 0")
 
-    sweep_staus = Instrument.measurement(
-        "WAVelength:SWEep?",
+    sweep_status = Instrument.measurement(
+        ":WAVelength:SWEep?",
         """Get the current sweep status as a SweepStatus enum.""",
         get_process=lambda v: SweepStatus(v),
     )

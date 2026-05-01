@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.instruments import Instrument
 from pymeasure.instruments.santec.tsl500series import TSL500Series
 
 
@@ -31,3 +32,27 @@ class TSL570(TSL500Series):
 
     def __init__(self, adapter, name="Santec TSL-570", **kwargs):
         super().__init__(adapter, name, **kwargs)
+
+    wavelength_min = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MINimum?",
+        """Get the minimum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    wavelength_max = Instrument.measurement(
+        ":WAVelength:SWEep:RANGe:MAXimum?",
+        """Get the maximum wavelength in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_min = Instrument.measurement(
+        ":FREQuency:SWEep:RANGe:MINimum?",
+        """Get the minimum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )
+
+    frequency_max = Instrument.measurement(
+        ":FREQuency:SWEep:RANGe:MAXimum?",
+        """Get the maximum frequency in the configurable sweep range
+        at the current sweep speed.""",
+    )

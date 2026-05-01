@@ -41,26 +41,6 @@ class TSL550(TSL500Series):
         respectively."""
         return "Legacy"
 
-    @property
-    def wavelength_min(self):
-        """Control the minimum wavelength (not avaliable)."""
-        raise AttributeError("TSL550.wavelength_min is not available.")
-
-    @property
-    def wavelength_max(self):
-        """Control the maximum wavelength (not avaliable)."""
-        raise AttributeError("TSL550.wavelength_max is not available.")
-
-    @property
-    def frequency_min(self):
-        """Control the minimum frequency (not avaliable)."""
-        raise AttributeError("TSL550.frequency_min is not available.")
-
-    @property
-    def frequency_max(self):
-        """Control the maximum frequency (not avaliable)."""
-        raise AttributeError("TSL550.frequency_max is not available.")
-
     laser_enabled = Instrument.control(
         ":POWer:STATe?",
         ":POWer:STATe %d",
