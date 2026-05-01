@@ -23,30 +23,35 @@
 #
 
 import logging
+from enum import IntEnum
+from warnings import warn
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
-from pymeasure.instruments.validators import truncated_range
+from pymeasure.instruments.validators import strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class SensorTypes(IntEnum):
+    PHOTODIODE = 1
+    THERMOPILE = 2
+    PYROELECTRIC = 3
+    FOUR_QUADRANT_THERMOPILE = 4
+
+
 class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
-    """Represents Thorlabs PM100USB powermeter."""
+    """Represents Thorlabs PM100USB powermeter interface.
+    Also compatible with the Thorlabs PM100D, PM100D2, PM100D3, and PM100A.
+    """
 
     def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
-        super().__init__(
-            adapter, name, **kwargs
-        )
-        self._set_flags()
+        super().__init__(adapter, name, **kwargs)
+        self.configure_sensor()
 
-    wavelength_min = Instrument.measurement(
-        "SENS:CORR:WAV? MIN", "Measure minimum wavelength, in nm"
-    )
+    wavelength_min = Instrument.measurement("SENS:CORR:WAV? MIN", "Get minimum wavelength, in nm")
 
-    wavelength_max = Instrument.measurement(
-        "SENS:CORR:WAV? MAX", "Measure maximum wavelength, in nm"
-    )
+    wavelength_max = Instrument.measurement("SENS:CORR:WAV? MAX", "Get maximum wavelength, in nm")
 
     @property
     def wavelength(self):
@@ -57,29 +62,50 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
     @wavelength.setter
     def wavelength(self, value):
         """Wavelength in nm."""
-        if self.wavelength_settable:
+        if self.is_wavelength_settable:
             # Store min and max wavelength to only request them once.
-            if not hasattr(self, "_wavelength_min"):
-                self._wavelength_min = self.wavelength_min
-            if not hasattr(self, "_wavelength_max"):
-                self._wavelength_max = self.wavelength_max
+            if not self._wavelength_range:
+                self._wavelength_range = (self.wavelength_min, self.wavelength_max)
 
-            value = truncated_range(
-                value, [self._wavelength_min, self._wavelength_max]
-            )
+            value = strict_range(value, self._wavelength_range)
             self.write(f"SENSE:CORR:WAV {value}")
         else:
-            raise AttributeError(
-                f"{self.sensor_name} does not allow setting the wavelength."
-            )
+            raise AttributeError(f"{self.sensor_name} does not allow setting the wavelength.")
+
+    @property
+    def is_power_sensor(self):
+        """Get whether the sensor can measure power,
+        i.e. is a photodiode, thermopile, or 4-quadrant thermopile sensor, bool."""
+        return self.sensor_type in {
+            SensorTypes.PHOTODIODE,
+            SensorTypes.THERMOPILE,
+            SensorTypes.FOUR_QUADRANT_THERMOPILE,
+        }
 
     @property
     def power(self):
-        """Measure the power in W."""
+        """Measure the power in W.
+        Only supported for photodiode, thermopile, and 4-quadrant thermopile sensors,
+        raises `AttributeError` otherwise."""
         if self.is_power_sensor:
             return self.values("MEAS:POW?")[0]
         else:
             raise AttributeError(f"{self.sensor_name} is not a power sensor.")
+
+    @property
+    def power_density(self):
+        """Measure the power density in W/cm^2.
+        Only supported for photodiode, thermopile, and 4-quadrant thermopile sensors,
+        raises `AttributeError` otherwise."""
+        if self.is_power_sensor:
+            return self.values("MEAS:PDEN?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a power sensor.")
+
+    @property
+    def is_energy_sensor(self):
+        """Get whether the sensor can measure energy, i.e. is a pyroelectric sensor, bool."""
+        return self.sensor_type in {SensorTypes.PYROELECTRIC}
 
     @property
     def energy(self):
@@ -87,44 +113,117 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         if self.is_energy_sensor:
             return self.values("MEAS:ENER?")[0]
         else:
-            raise AttributeError(
-                f"{self.sensor_name} is not an energy sensor."
-            )
+            raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
 
-    def _set_flags(self):
-        """Get sensor info and write flags."""
+    @property
+    def energy_density(self):
+        """Measure the energy density in J/cm^2.
+        Only supported for pyroelectric sensors, raises `AttributeError` otherwise."""
+        if self.is_energy_sensor:
+            return self.values("MEAS:EDEN?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not an energy sensor.")
+
+    @property
+    def is_current_sensor(self):
+        """Get whether the sensor can measure current, i.e. is a photodiode sensor, bool."""
+        return self.sensor_type in {SensorTypes.PHOTODIODE}
+
+    @property
+    def current(self):
+        """Measure the current in A.
+        Only supported for photodiode sensors, raises `AttributeError` otherwise."""
+        if self.is_current_sensor:
+            return self.values("MEAS:CURR?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a current sensor.")
+
+    @property
+    def is_voltage_sensor(self):
+        """Get whether the sensor can measure voltage,
+        i.e. is a pyroelectric, thermopile, or 4-quadrant thermopile sensor, bool."""
+        return self.sensor_type in {
+            SensorTypes.PYROELECTRIC,
+            SensorTypes.THERMOPILE,
+            SensorTypes.FOUR_QUADRANT_THERMOPILE,
+        }
+
+    @property
+    def voltage(self):
+        """Measure the voltage in V.
+        Only supported for pyroelectric, thermopile, or 4-quadrant thermopile sensors,
+        raises `AttributeError` otherwise."""
+        if self.is_voltage_sensor:
+            return self.values("MEAS:VOLT?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a voltage sensor.")
+
+    @property
+    def temperature(self):
+        """Measure the temperature in degC.
+        Only supported for certain sensors, raises `AttributeError` otherwise."""
+        if self.is_temperature_sensor:
+            return self.values("MEAS:TEMP?")[0]
+        else:
+            raise AttributeError(f"{self.sensor_name} is not a temperature sensor.")
+
+    frequency = Instrument.measurement("MEAS:FREQ?", """Measure the modulation frequency, in Hz.""")
+
+    def configure_sensor(self):
+        """Get sensor info and configure the `ThorlabsPM100USB` class for the sensor.
+        Call whenever the sensor is changed."""
         response = self.values("SYST:SENSOR:IDN?")
         if response[0] == "no sensor":
             raise OSError("No sensor connected.")
-        self.sensor_name = response[0]
-        self.sensor_sn = response[1]
-        self.sensor_cal_msg = response[2]
-        self.sensor_type = response[3]
-        self.sensor_subtype = response[4]
-        _flags_str = response[5]
+        self.sensor_name = response[0].replace('"', "")
+        self.sensor_sn = (
+            response[1].strip('"') if type(response[1]) == str else str(int(response[1]))
+        )
+        self.sensor_cal_msg = response[2].replace('"', "")
+        self.sensor_type = int(response[3])
+        self.sensor_subtype = int(response[4])
+        self.sensor_flags = int(response[5])
 
-        # interpretation of the flags, see p. 49 of the manual:
-        # https://www.thorlabs.de/_sd.cfm?fileName=17654-D02.pdf&partNumber=PM100D
+        self.is_flags_new_format = bool(self.sensor_flags & 1 << 31)
 
-        # Convert to binary representation and pad zeros to 9 bit for sensors
-        # where not all flags are present.
-        _flags_str = format(int(_flags_str), "09b")
-        # Reverse the order so it matches the flag order from the manual, i.e.
-        # from decimal values from 1 to 256.
-        _flags_str = _flags_str[::-1]
+        # Interpretation of the flags differs between the PM100D and the PM100D2/PM100D3.
+        # For more information please see the documentation.
+        # PM100D: page 49 of https://media.thorlabs.com/globalassets/items/p/pm/pm1/pm100d/17654-d02.pdf?v=0116021333  # noqa
+        # PM100D2/PM100D3: SYST:SENS#:IDN? section of https://github.com/Thorlabs/Light_Analysis_Examples/tree/main/Python/Thorlabs%20PMxxx%20Power%20Meters/SCPI/commandDocu  # noqa
+        if self.is_flags_new_format:
+            self.is_wavelength_settable = bool(self.sensor_flags & 1 << 2)
+            self.is_temperature_sensor = bool(self.sensor_flags & 1 << 12)
+        else:
+            self.is_wavelength_settable = bool(self.sensor_flags & 1 << 5)
+            self.is_temperature_sensor = bool(self.sensor_flags & 1 << 8)
 
-        # Convert to boolean.
-        self.flags = [x == "1" for x in _flags_str]
+        self._wavelength_range = None
 
-        # setting the flags; _dn are unused; decimal values as comments
-        (
-            self.is_power_sensor,  # 1
-            self.is_energy_sensor,  # 2
-            _d4,  # 4
-            _d8,  # 8
-            self.response_settable,  # 16
-            self.wavelength_settable,  # 32
-            self.tau_settable,  # 64
-            _d128,  # 128
-            self.has_temperature_sensor,  # 256
-        ) = self.flags
+    # For Maintaner: Is it necessary to deprecate properties that weren't exposed in the public API?
+    @property
+    def flags(self):
+        """Get the sensor flags, int.
+
+        .. deprecated:: 0.16
+           Instead use `sensor_flags`
+        """
+        warn(
+            """Deprecated to use `ThorlabsPM100USB.flags`.
+            Instead use `ThorlabsPM100USB.sensor_flags`.""",
+            FutureWarning,
+        )
+        return self.sensor_flags
+
+    @property
+    def wavelength_settable(self):
+        """Get whether the wavelength is settable, bool.
+
+        .. deprecated:: 0.16
+           Instead use `is_wavelength_settable`
+        """
+        warn(
+            """Deprecated to use `ThorlabsPM100USB.wavelength_settable`.
+            Instead use `ThorlabsPM100USB.is_wavelength_settable`.""",
+            FutureWarning,
+        )
+        return self.is_wavelength_settable
