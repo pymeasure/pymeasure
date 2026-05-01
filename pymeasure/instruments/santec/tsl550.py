@@ -24,7 +24,13 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-from pymeasure.instruments.santec.tsl500series import TSL500Series
+from pymeasure.instruments.santec.tsl500series import (
+    SweepMode,
+    SweepPattern,
+    SweepRouting,
+    SweepStatus,
+    TSL500Series,
+)
 
 
 class TSL550(TSL500Series):
@@ -61,7 +67,7 @@ class TSL550(TSL500Series):
 
     sweep_speed = Instrument.control(
         ":WAVelength:SWEep:SPEed?",
-        ":WAVelength:SWEep:SPEed %d",
+        ":WAVelength:SWEep:SPEed %f",
         """Control the sweep speed, in nm/s
         (float strictly in range 0.5 to 100; rounds to 1 decimal place).""",
         validator=strict_range,

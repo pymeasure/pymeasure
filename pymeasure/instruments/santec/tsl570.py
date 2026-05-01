@@ -23,7 +23,13 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.santec.tsl500series import TSL500Series
+from pymeasure.instruments.santec.tsl500series import (
+    SweepMode,
+    SweepPattern,
+    SweepRouting,
+    SweepStatus,
+    TSL500Series,
+)
 
 
 class TSL570(TSL500Series):
