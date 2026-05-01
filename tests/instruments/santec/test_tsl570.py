@@ -239,10 +239,10 @@ def test_stop_sweep():
         assert inst.stop_sweep() is None
 
 
-def test_sweep_staus():
-    protocol = [(b"WAVelength:SWEep?", b"0\n")]
+def test_sweep_status():
+    protocol = [(b":WAVelength:SWEep?", b"0\n")]
     with expected_protocol(TSL570, protocol) as inst:
-        value = inst.sweep_staus
+        value = inst.sweep_status
         assert value == SweepStatus.STOPPED
 
 
