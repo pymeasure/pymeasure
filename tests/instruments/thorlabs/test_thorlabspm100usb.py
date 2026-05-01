@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 # clear
 
+import pytest
+
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.thorlabs.thorlabspm100usb import ThorlabsPM100USB, SensorTypes
 
@@ -85,6 +87,12 @@ def test_energy_getter():
     ) as inst:
         inst.sensor_type = SensorTypes.PYROELECTRIC  # Override for test
         assert inst.energy == 1e-3
+
+
+def test_energy_raises():
+    with expected_protocol(ThorlabsPM100USB, [PM100D2_S130C_INIT_COMMS]) as inst:
+        with pytest.raises(AttributeError):
+            assert inst.energy == 1e-3
 
 
 def test_energy_density_getter():

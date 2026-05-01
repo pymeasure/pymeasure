@@ -64,12 +64,10 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         """Wavelength in nm."""
         if self.is_wavelength_settable:
             # Store min and max wavelength to only request them once.
-            if not hasattr(self, "_wavelength_min"):
-                self._wavelength_min = self.wavelength_min
-            if not hasattr(self, "_wavelength_max"):
-                self._wavelength_max = self.wavelength_max
+            if not self._wavelength_range:
+                self._wavelength_range = (self.wavelength_min, self.wavelength_max)
 
-            value = strict_range(value, [self._wavelength_min, self._wavelength_max])
+            value = strict_range(value, self._wavelength_range)
             self.write(f"SENSE:CORR:WAV {value}")
         else:
             raise AttributeError(f"{self.sensor_name} does not allow setting the wavelength.")
@@ -106,8 +104,7 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
 
     @property
     def is_energy_sensor(self):
-        """Get whether the sensor can measure energy, i.e. is a pyroelectric sensor, bool.
-        Only supported for Pyroelectric sensors, raises `AttributeError` otherwise."""
+        """Get whether the sensor can measure energy, i.e. is a pyroelectric sensor, bool."""
         return self.sensor_type in {SensorTypes.PYROELECTRIC}
 
     @property
@@ -153,8 +150,9 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
 
     @property
     def voltage(self):
-        """Measure the voltage in A.
-        Only supported for photodiode sensors, raises `AttributeError` otherwise."""
+        """Measure the voltage in V.
+        Only supported for pyroelectric, thermopile, or 4-quadrant thermopile sensors,
+        raises `AttributeError` otherwise."""
         if self.is_voltage_sensor:
             return self.values("MEAS:VOLT?")[0]
         else:
@@ -196,6 +194,8 @@ class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
         else:
             self.is_wavelength_settable = bool(self.sensor_flags & 1 << 5)
             self.is_temperature_sensor = bool(self.sensor_flags & 1 << 8)
+
+        self._wavelength_range = None
 
     # For Maintaner: Is it necessary to deprecate properties that weren't exposed in the public API?
     @property
