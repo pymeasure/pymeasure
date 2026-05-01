@@ -24,7 +24,7 @@
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-from pymeasure.instruments.santec.tsl500series import (
+from pymeasure.instruments.santec.tsl500series import (  # noqa: F401
     SweepMode,
     SweepPattern,
     SweepRouting,

@@ -23,7 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument
-from pymeasure.instruments.santec.tsl500series import (
+from pymeasure.instruments.santec.tsl500series import (  # noqa: F401
     SweepMode,
     SweepPattern,
     SweepRouting,
