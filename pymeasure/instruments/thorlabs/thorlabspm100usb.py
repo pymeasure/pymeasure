@@ -41,7 +41,9 @@ class SensorTypes(IntEnum):
 
 
 class ThorlabsPM100USB(SCPIUnknownMixin, Instrument):
-    """Represents Thorlabs PM100USB powermeter."""
+    """Represents Thorlabs PM100USB powermeter interface.
+    Also compatible with the Thorlabs PM100D, PM100D2, PM100D3, and PM100A.
+    """
 
     def __init__(self, adapter, name="ThorlabsPM100USB powermeter", **kwargs):
         super().__init__(adapter, name, **kwargs)
