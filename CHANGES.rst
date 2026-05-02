@@ -17,6 +17,18 @@ Deprecated
 ----------
 - Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
 - Replaced :code:`filer_synchronous` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`filter_synchronous`
+- Replaced :code:`query_operation_mode` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`operation_mode` property
+- Replaced :code:`query_system_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`system_settings` property
+- Replaced :code:`interrupt_sequence_command` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`interrupt_sequence`
+- Replaced :code:`sequence_program_listing` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`query_sequence_program`
+- Replaced :code:`digital_out_enable_data` attribute of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`digital_output_enable`
+- Replaced :code:`query_output_waveform` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`output_waveform_settings` property
+- Replaced :code:`query_measurement_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`measurement_range_settings` property
+- Replaced :code:`query_response_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`response_settings` property
+- Replaced :code:`query_data_output_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`data_output_settings` property
+- Replaced :code:`query_io_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`io_settings` property
+- Replaced :code:`calibration_init` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`init_calibration`
+- Replaced :code:`calibration_store_factor` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`store_calibration_factor`
 
 Version 0.15.0 (2025-01-15)
 ===========================

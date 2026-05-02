@@ -28,7 +28,7 @@ import os
 import re
 import sys
 from importlib import import_module
-from importlib.machinery import SourceFileLoader
+import importlib.util
 from datetime import datetime
 from string import Formatter
 
@@ -257,7 +257,10 @@ class Results:
         self.__dict__.update(state)
 
         # Restore the procedure
-        module = SourceFileLoader(self._module, self._file).load_module()
+        spec = importlib.util.spec_from_file_location(self._module, self._file)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[self._module] = module
+        spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
         self.procedure = cls()
