@@ -409,7 +409,11 @@ You can expose variables, instruments, and modules to this console by passing a 
             # 1. Create the console widget and expose variables to it
             self.console_widget = ConsoleWidget(
                 "Script Console",
-                namespace={'window': self, 'device': my_instrument, 'np': numpy}
+                namespace={
+                    'window': self, 
+                    'device': '<your_instrument>', # replace with your instrument instance
+                    'np': '<numpy_module>' # replace with numpy if imported
+                }
             )
             
             # 2. Append it manually so it appears as the last tab

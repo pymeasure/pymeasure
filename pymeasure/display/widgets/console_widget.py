@@ -44,7 +44,7 @@ class ConsoleWidget(TabWidget, PGConsoleWidget):
 
     :param name: Name of the widget. This is the text that will appear on the Tab in the GUI.
     :param parent: The Qt parent widget. Usually left as None or passed as the main window.
-    :param namespace: A dictionary containing the local variables and modules you want to expose 
+    :param namespace: A dictionary containing the local variables and modules you want to expose
         to the console environment. For example, `{'window': self, 'device': your_device}`
         allows you to access the `window` object and your instrument directly in the console.
     :param text: The initial welcome message displayed when the console is first opened.
