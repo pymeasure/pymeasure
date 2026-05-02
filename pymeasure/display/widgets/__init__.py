@@ -35,3 +35,4 @@ from .results_dialog import ResultsDialog
 from .sequencer_widget import SequencerWidget
 from .tab_widget import TabWidget
 from .table_widget import TableWidget
+from .console_widget import ConsoleWidget
