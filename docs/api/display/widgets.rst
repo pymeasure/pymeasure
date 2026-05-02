@@ -65,3 +65,7 @@ Widget classes
 .. automodule:: pymeasure.display.widgets.table_widget
     :members:
     :show-inheritance:
+
+.. automodule:: pymeasure.display.widgets.console_widget
+    :members:
+    :show-inheritance:
