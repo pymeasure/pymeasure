@@ -475,15 +475,23 @@ def test_wait_for_trigger_timeout_none():
 
 
 def test_wait_for_trigger_timeout_zero(monkeypatch):
+    class FakeTime:
+        def __init__(self):
+            self._times = iter((0.0, 0.001))
+
+        def time(self):
+            return next(self._times)
+
+        def sleep(self, delay):
+            pass
+
     with expected_protocol(
         Keysight33250A,
         [("*OPC?", None), (None, "0")],
     ) as inst:
-        # Force the first timeout check to observe elapsed time > 0.
-        times = iter((0.0, 0.001))
         monkeypatch.setattr(
-            "pymeasure.instruments.keysight.keysight33250A.time.time",
-            lambda: next(times),
+            "pymeasure.instruments.keysight.keysight33250A.time",
+            FakeTime(),
         )
         with pytest.raises(TimeoutError):
             inst.wait_for_trigger(timeout=0)
