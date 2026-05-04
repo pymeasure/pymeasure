@@ -25,6 +25,8 @@
 # Call signature:
 # $ pytest test_keysight35670A_with_device.py --device-address "GPIB0::14::INSTR"
 
+import warnings
+
 import pytest
 
 from pymeasure.instruments.keysight import Keysight35670A
@@ -81,9 +83,12 @@ def analyzer(connected_device_address):
     instr = Keysight35670A(connected_device_address, timeout=20000)
     try:
         instr.source_output_enabled = False
-    except Exception:
-        pass
-    _drain_system_error_queue(instr)
+    except Exception as exc:
+        warnings.warn(
+            f"Ignored error during safe-state setup cleanup: {exc!r}",
+            RuntimeWarning,
+        )
+    _assert_no_system_error(instr, "ensure_safe_state", max_reads=32)
     try:
         yield instr
     finally:
@@ -92,43 +97,41 @@ def analyzer(connected_device_address):
             instr.source_output_enabled = False
         except Exception as exc:
             teardown_notes.append(f"failed to force source_output_enabled=False: {exc!r}")
-        errors, last_reply = _drain_system_error_queue(instr)
-        if errors:
-            teardown_notes.append(
-                f"non-zero SYSTem:ERRor? during finalizer: errors={errors}; "
-                f"last_reply={last_reply!r}"
-            )
+        if teardown_notes:
+            pytest.fail("; ".join(teardown_notes))
+        _assert_no_system_error(instr, "teardown", max_reads=32)
         adapter = getattr(instr, "adapter", None)
         if adapter is not None:
             try:
                 adapter.close()
-            except Exception:
-                pass
+            except Exception as exc:
+                warnings.warn(
+                    f"Ignored error during analyzer teardown cleanup: {exc!r}",
+                    RuntimeWarning,
+                )
             finally:
                 if hasattr(adapter, "connection"):
                     adapter.connection = None
-        if teardown_notes:
-            pytest.fail("; ".join(teardown_notes))
 
 
 @pytest.fixture(autouse=True)
 def ensure_safe_state(analyzer, request):
     """Force output OFF and fail clearly when any post-test instrument error remains."""
     analyzer.source_output_enabled = False
-    _drain_system_error_queue(analyzer)
+    _assert_no_system_error(analyzer, "ensure_safe_state", max_reads=32)
     yield
     notes = []
     try:
         analyzer.source_output_enabled = False
     except Exception as exc:
         notes.append(f"could not force source_output_enabled=False: {exc!r}")
-    errors, last_reply = _drain_system_error_queue(analyzer)
-    if errors:
-        notes.append(
-            f"SYSTem:ERRor? after {request.node.name}: errors={errors}; last_reply={last_reply!r}"
-        )
     if notes:
         pytest.fail("; ".join(notes))
+    _assert_no_system_error(
+        analyzer,
+        f"ensure_safe_state after {request.node.name}",
+        max_reads=32,
+    )
 
 
 def test_hardware_identity_and_options(analyzer):
@@ -168,6 +171,8 @@ def test_hardware_source_safe_roundtrip_restores_state(analyzer):
         assert analyzer.source_frequency == pytest.approx(1000.0, abs=1e-3, rel=1e-6)
         analyzer.source_voltage_offset = 0.0
         assert analyzer.source_voltage_offset == pytest.approx(0.0, abs=1e-3, rel=1e-6)
+        analyzer.source_output_enabled = False
+        assert analyzer.source_output_enabled is False
     finally:
         try:
             analyzer.source_frequency = original_frequency
@@ -179,7 +184,6 @@ def test_hardware_source_safe_roundtrip_restores_state(analyzer):
                     analyzer.source_function = original_function
                 finally:
                     analyzer.source_output_enabled = False
-                    assert analyzer.source_output_enabled is False
 
 
 def test_hardware_input_ch1_coupling_roundtrip_restores_state(analyzer):
