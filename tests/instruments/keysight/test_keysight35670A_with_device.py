@@ -164,11 +164,24 @@ def analyzer(connected_device_address):
 def ensure_safe_state(analyzer, request):
     """Force output OFF and fail clearly when any post-test instrument error remains."""
     analyzer.source_output_enabled = False
+    setup_readback = analyzer.source_output_enabled
+    if setup_readback is not False:
+        pytest.fail(
+            "ensure_safe_state setup: expected source_output_enabled=False "
+            f"after write, got {setup_readback!r}"
+        )
     _assert_no_system_error(analyzer, "ensure_safe_state", max_reads=32)
     yield
     notes = []
     try:
         analyzer.source_output_enabled = False
+        teardown_readback = analyzer.source_output_enabled
+        if teardown_readback is not False:
+            pytest.fail(
+                f"ensure_safe_state after {request.node.name}: expected "
+                "source_output_enabled=False after write, got "
+                f"{teardown_readback!r}"
+            )
     except Exception as exc:
         notes.append(f"could not force source_output_enabled=False: {exc!r}")
     if notes:
