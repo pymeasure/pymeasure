@@ -509,6 +509,3 @@ def test_scpi_mixin_standard_commands():
         assert "33250A" in inst.id
         inst.clear()
         inst.reset()
-
-
-

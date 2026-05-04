@@ -164,6 +164,3 @@ def test_output_load_inf_or_50(generator):
     generator.output_load = "INF"
     measured_inf = generator.output_load
     assert math.isinf(measured_inf) or measured_inf >= 9.9e37
-
-
-
