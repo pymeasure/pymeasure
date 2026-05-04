@@ -24,6 +24,7 @@
 
 import math
 import time
+from typing import Callable, Optional
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -430,13 +431,17 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Send a trigger signal to the function generator."""
         self.write("*TRG;*WAI")
 
-    def wait_for_trigger(self, timeout=None, should_stop=lambda: False):
+    def wait_for_trigger(
+        self,
+        timeout: Optional[float] = None,
+        should_stop: Callable[[], bool] = lambda: False,
+    ) -> None:
         """Wait until the triggering has finished.
 
         The method sends ``*OPC?`` and waits until the instrument returns ``"1"``.
 
         :param timeout: Maximum number of seconds to wait. ``None`` waits indefinitely.
-        :param should_stop: Callable ``() -> bool`` returning ``True`` to abort waiting early.
+        :param should_stop: Callback returning ``True`` to abort waiting early.
         :raises TimeoutError: If ``timeout`` is not ``None`` and expires before completion.
         """
         self.write("*OPC?")
