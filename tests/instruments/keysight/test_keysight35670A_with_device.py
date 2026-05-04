@@ -99,17 +99,27 @@ def analyzer(connected_device_address):
     """Create one instrument instance per module with safe teardown and queue drain."""
     instr = Keysight35670A(connected_device_address, timeout=20000)
     adapter = getattr(instr, "adapter", None)
+    setup_error = None
+    test_error = None
     try:
         try:
             instr.source_output_enabled = False
-        except Exception as exc:
-            warnings.warn(
-                f"Ignored error during safe-state setup cleanup: {exc!r}",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-        _assert_no_system_error(instr, "setup", max_reads=32)
-        yield instr
+            if instr.source_output_enabled is not False:
+                raise RuntimeError(
+                    "Failed to disable Keysight 35670A source output during setup."
+                )
+            _assert_no_system_error(instr, "setup", max_reads=32)
+        except BaseException as exc:
+            _close_adapter(adapter, "analyzer setup failure")
+            adapter = None
+            setup_error = exc
+
+        if setup_error is None:
+            try:
+                yield instr
+            except BaseException as exc:
+                test_error = exc
+                raise
     finally:
         teardown_notes = []
         try:
@@ -128,8 +138,26 @@ def analyzer(connected_device_address):
 
         _close_adapter(adapter, "analyzer teardown")
 
+        if setup_error is not None:
+            if teardown_notes:
+                warnings.warn(
+                    "Ignored teardown issues after setup failure: "
+                    + "; ".join(teardown_notes),
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            raise setup_error
+
         if teardown_notes:
-            pytest.fail("; ".join(teardown_notes))
+            if test_error is not None:
+                warnings.warn(
+                    "Ignored teardown issues after test failure: "
+                    + "; ".join(teardown_notes),
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            else:
+                pytest.fail("; ".join(teardown_notes))
 
 
 @pytest.fixture(autouse=True)
@@ -221,7 +249,7 @@ def test_hardware_input_ch1_autorange_roundtrip_restores_state(analyzer):
     original_autorange_enabled = analyzer.ch1.autorange_enabled
     try:
         analyzer.ch1.autorange_enabled = True
-        assert isinstance(analyzer.ch1.autorange_enabled, bool)
+        assert analyzer.ch1.autorange_enabled is True
     finally:
         analyzer.ch1.autorange_enabled = original_autorange_enabled
 
@@ -287,7 +315,7 @@ def test_hardware_display_safe_roundtrip_restores_state(analyzer):
     original_display_enabled = analyzer.display_enabled
     try:
         analyzer.display_enabled = True
-        assert isinstance(analyzer.display_enabled, bool)
+        assert analyzer.display_enabled is True
     finally:
         analyzer.display_enabled = original_display_enabled
 
