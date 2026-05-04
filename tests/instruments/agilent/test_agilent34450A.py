@@ -390,7 +390,7 @@ class TestResistance:
 
     @pytest.mark.parametrize("resistance_4w_resolution", [3.00E-5, 2.00E-5, 1.50E-6,
                                                           "MIN", "DEF", "MAX"])
-    def test_voltage_ac_resolution(self, resistance_4w_resolution):
+    def test_resistance_4w_resolution(self, resistance_4w_resolution):
         with expected_protocol(
             Agilent34450A,
             [INITIALIZATION,
@@ -506,7 +506,7 @@ class TestFrequency:
             assert inst.frequency_aperture == frequency_aperture
 
 
-class TestTemparature:
+class TestTemperature:
     def test_configure_temperature(self):
         with expected_protocol(
             Agilent34450A,
