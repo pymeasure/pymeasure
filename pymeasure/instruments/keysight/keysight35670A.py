@@ -909,7 +909,9 @@ def _parse_ascii_or_definite_block_floats(reply) -> list[float]:
         try:
             decoded = payload.decode("ascii")
         except UnicodeDecodeError as exc:
-            raise ValueError("Binary definite blocks are not supported by this ASCII parser.") from exc
+            raise ValueError(
+                "Binary definite blocks are not supported by this ASCII parser."
+            ) from exc
         return _parse_ascii_floats(decoded)
 
     return _parse_ascii_floats(raw.decode("ascii"))
@@ -1116,6 +1118,7 @@ class Keysight35670AInputChannel(Channel):
         validator=strict_range,
         cast=float,
     )
+
 
 class Keysight35670ASenseWindow(Channel):
     """Represent a measurement SENSE window of the Keysight 35670A."""
@@ -1675,7 +1678,10 @@ class Keysight35670ATrace(Channel):
     x_user_frequency_factor = Channel.control(
         "CALCulate{ch}:UNIT:X:USER:FREQuency:FACTor?",
         "CALCulate{ch}:UNIT:X:USER:FREQuency:FACTor %g",
-        """Control the user frequency-domain X-axis conversion factor (float from 1e-15 to 1e15).""",
+        (
+            """Control the user frequency-domain X-axis conversion factor """
+            """(float from 1e-15 to 1e15)."""
+        ),
         values=[1e-15, 1e15],
         validator=strict_range,
         cast=float,
@@ -2204,7 +2210,11 @@ class Keysight35670ATrace(Channel):
     )
 
     def set_math_constant(
-            self, constant_register: int, real_part: float, imaginary_part: Optional[float] = None) -> None:
+        self,
+        constant_register: int,
+        real_part: float,
+        imaginary_part: Optional[float] = None,
+    ) -> None:
         """Set a math constant register value."""
         index = _math_register_selector(constant_register)
         real_value = float(strict_range(float(real_part), LIMIT_VALUE_RANGE))
