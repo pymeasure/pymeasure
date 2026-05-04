@@ -466,6 +466,29 @@ def test_wait_for_trigger():
         inst.wait_for_trigger(timeout=1)
 
 
+def test_wait_for_trigger_no_timeout():
+    with expected_protocol(
+        Agilent33250A,
+        [("*OPC?", None), (None, ""), (None, "0"), (None, "1")],
+    ) as inst:
+        inst.wait_for_trigger(timeout=None)
+
+
+def test_wait_for_trigger_zero_timeout(monkeypatch):
+    with expected_protocol(
+        Agilent33250A,
+        [("*OPC?", None), (None, "0")],
+    ) as inst:
+        # Force the first timeout check to observe elapsed time > 0.
+        times = iter((0.0, 0.001))
+        monkeypatch.setattr(
+            "pymeasure.instruments.agilent.agilent33250A.time.time",
+            lambda: next(times),
+        )
+        with pytest.raises(TimeoutError):
+            inst.wait_for_trigger(timeout=0)
+
+
 def test_scpi_mixin_standard_commands():
     with expected_protocol(
         Agilent33250A,

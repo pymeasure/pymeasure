@@ -32,7 +32,12 @@ from pyvisa.errors import VisaIOError
 
 
 def _normalize_inf_input(value):
-    """Normalize INF-like setter values."""
+    """Normalize INF-like setter values.
+
+    :param value: Input value from user code.
+    :returns: ``float("inf")`` for INF-like values, converted numeric values, or the original
+        non-numeric value.
+    """
     if isinstance(value, str):
         text = value.strip().strip('"').upper()
         if text in {"INF", "INFINITY", "+INF", "+INFINITY"}:
@@ -47,7 +52,11 @@ def _normalize_inf_input(value):
 
 
 def _normalize_inf_response(value):
-    """Normalize INF-like instrument responses."""
+    """Normalize INF-like instrument responses.
+
+    :param value: Raw value returned by the instrument.
+    :returns: Parsed numeric value or ``float("inf")`` for instrument infinity sentinel values.
+    """
     normalized = _normalize_inf_input(value)
     if isinstance(normalized, str):
         return normalized
@@ -57,7 +66,12 @@ def _normalize_inf_response(value):
 
 
 def _set_inf_or_numeric(value):
-    """Format a value for SCPI setters accepting finite values and INF."""
+    """Format a value for SCPI setters accepting finite values and INF.
+
+    :param value: Input load value.
+    :returns: SCPI-compatible numeric string or ``"INF"``.
+    :raises ValueError: If ``value`` is neither numeric nor INF-like.
+    """
     numeric = _normalize_inf_input(value)
     if isinstance(numeric, str):
         raise ValueError(f"Unsupported value '{value}'.")
@@ -67,7 +81,13 @@ def _set_inf_or_numeric(value):
 
 
 def _validate_output_load(value, values):
-    """Validate finite output load or INF-like values."""
+    """Validate finite output load or INF-like values.
+
+    :param value: Requested output load value.
+    :param values: Two-element inclusive range used for finite loads.
+    :returns: Validated finite load or ``float("inf")``.
+    :raises ValueError: If ``value`` is outside the valid range or not INF-like/numeric.
+    """
     normalized = _normalize_inf_input(value)
     if isinstance(normalized, str):
         raise ValueError(f"Output load '{value}' is not numeric and not INF-like.")
@@ -77,7 +97,12 @@ def _validate_output_load(value, values):
 
 
 def _get_output_load(value):
-    """Parse output load response to float or infinity."""
+    """Parse output load response to float or infinity.
+
+    :param value: Raw ``OUTP:LOAD?`` response.
+    :returns: Finite load as ``float`` or ``float("inf")``.
+    :raises ValueError: If response cannot be parsed.
+    """
     normalized = _normalize_inf_response(value)
     if isinstance(normalized, str):
         raise ValueError(f"Unexpected OUTP:LOAD response '{value}'.")
@@ -87,7 +112,13 @@ def _get_output_load(value):
 
 
 def _validate_burst_ncycles(value, _values):
-    """Validate finite burst cycle count or INF-like values."""
+    """Validate finite burst cycle count or INF-like values.
+
+    :param value: Requested burst cycle count.
+    :param _values: Unused values argument required by validator signature.
+    :returns: Integer cycle count or ``"INF"``.
+    :raises ValueError: If ``value`` is not an integer in [1, 1000000] or INF-like.
+    """
     normalized = _normalize_inf_input(value)
     if isinstance(normalized, str):
         raise ValueError(f"Burst cycles '{value}' is not numeric and not INF-like.")
@@ -102,7 +133,12 @@ def _validate_burst_ncycles(value, _values):
 
 
 def _set_burst_ncycles(value):
-    """Format burst cycle count for SCPI setter."""
+    """Format burst cycle count for SCPI setter.
+
+    :param value: Requested burst cycle count.
+    :returns: SCPI-compatible integer string or ``"INF"``.
+    :raises ValueError: If ``value`` cannot be represented as integer cycles or INF.
+    """
     if isinstance(value, str) and value.upper() == "INF":
         return "INF"
     normalized = _normalize_inf_input(value)
@@ -114,7 +150,12 @@ def _set_burst_ncycles(value):
 
 
 def _get_burst_ncycles(value):
-    """Parse burst cycle count response to int or INF."""
+    """Parse burst cycle count response to int or INF.
+
+    :param value: Raw ``BURS:NCYC?`` response.
+    :returns: Integer cycle count or ``"INF"``.
+    :raises ValueError: If response cannot be parsed.
+    """
     normalized = _normalize_inf_response(value)
     if isinstance(normalized, str):
         raise ValueError(f"Unexpected BURS:NCYC response '{value}'.")
@@ -389,8 +430,16 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Send a trigger signal to the function generator."""
         self.write("*TRG;*WAI")
 
-    def wait_for_trigger(self, timeout=3600, should_stop=lambda: False):
-        """Wait until the triggering has finished or timeout is reached."""
+    def wait_for_trigger(self, timeout=None, should_stop=lambda: False):
+        """Wait for trigger completion reported by ``*OPC?``.
+
+        Sends ``*OPC?`` and waits until the instrument returns ``"1"``.
+
+        :param timeout: Maximum seconds to wait. ``None`` waits indefinitely.
+        :param should_stop: Callable with signature ``() -> bool``. Return ``True`` to stop
+            waiting early.
+        :raises TimeoutError: If ``timeout`` is not ``None`` and expires before completion.
+        """
         self.write("*OPC?")
 
         t0 = time.time()
@@ -405,7 +454,7 @@ class Agilent33250A(SCPIMixin, Instrument):
             if response.strip() == "1":
                 return
 
-            if timeout != 0 and time.time() - t0 > timeout:
+            if timeout is not None and time.time() - t0 > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Agilent 33250A to finish the "
                     "triggering."
