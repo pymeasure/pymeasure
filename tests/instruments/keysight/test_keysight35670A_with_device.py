@@ -67,6 +67,23 @@ def _assert_no_system_error(analyzer, context, max_reads=32):
         )
 
 
+def _close_adapter(adapter, context):
+    """Close adapter best-effort and always clear adapter.connection when present."""
+    if adapter is None:
+        return
+    try:
+        adapter.close()
+    except Exception as exc:
+        warnings.warn(
+            f"Ignored error during {context} adapter cleanup: {exc!r}",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    finally:
+        if hasattr(adapter, "connection"):
+            adapter.connection = None
+
+
 def _has_ay6_option(options_reply):
     """Return True if options indicate 4-channel capability."""
     tokens = {
@@ -81,15 +98,17 @@ def _has_ay6_option(options_reply):
 def analyzer(connected_device_address):
     """Create one instrument instance per module with safe teardown and queue drain."""
     instr = Keysight35670A(connected_device_address, timeout=20000)
+    adapter = getattr(instr, "adapter", None)
     try:
-        instr.source_output_enabled = False
-    except Exception as exc:
-        warnings.warn(
-            f"Ignored error during safe-state setup cleanup: {exc!r}",
-            RuntimeWarning,
-        )
-    _assert_no_system_error(instr, "ensure_safe_state", max_reads=32)
-    try:
+        try:
+            instr.source_output_enabled = False
+        except Exception as exc:
+            warnings.warn(
+                f"Ignored error during safe-state setup cleanup: {exc!r}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+        _assert_no_system_error(instr, "setup", max_reads=32)
         yield instr
     finally:
         teardown_notes = []
@@ -97,21 +116,20 @@ def analyzer(connected_device_address):
             instr.source_output_enabled = False
         except Exception as exc:
             teardown_notes.append(f"failed to force source_output_enabled=False: {exc!r}")
+        try:
+            errors, last_reply = _drain_system_error_queue(instr, max_reads=32)
+            if errors:
+                teardown_notes.append(
+                    "teardown: error queue not empty; "
+                    f"errors={errors}; last_reply={last_reply!r}"
+                )
+        except Exception as exc:
+            teardown_notes.append(f"teardown drain failed: {exc!r}")
+
+        _close_adapter(adapter, "analyzer teardown")
+
         if teardown_notes:
             pytest.fail("; ".join(teardown_notes))
-        _assert_no_system_error(instr, "teardown", max_reads=32)
-        adapter = getattr(instr, "adapter", None)
-        if adapter is not None:
-            try:
-                adapter.close()
-            except Exception as exc:
-                warnings.warn(
-                    f"Ignored error during analyzer teardown cleanup: {exc!r}",
-                    RuntimeWarning,
-                )
-            finally:
-                if hasattr(adapter, "connection"):
-                    adapter.connection = None
 
 
 @pytest.fixture(autouse=True)
