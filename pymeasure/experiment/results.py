@@ -447,7 +447,10 @@ class Results:
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data, if any, to already loaded data
             # Get current filesize, if same as _last_file_size, return data
-            current_size = os.path.getsize(self.data_filename)
+            try:
+                current_size = os.path.getsize(self.data_filename)
+            except OSError:
+                return self._data
             if current_size == self._last_file_size:
                 return self._data
             skiprows = len(self._data) + self._header_count
