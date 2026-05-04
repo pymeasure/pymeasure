@@ -157,7 +157,6 @@ def test_hardware_system_readonly_queries(analyzer):
 
 def test_hardware_source_safe_roundtrip_restores_state(analyzer):
     """Set only safe source fields with output OFF and restore state in finally."""
-    original_output_enabled = analyzer.source_output_enabled
     original_function = analyzer.source_function
     original_frequency = analyzer.source_frequency
     original_offset = analyzer.source_voltage_offset
@@ -181,8 +180,6 @@ def test_hardware_source_safe_roundtrip_restores_state(analyzer):
                 finally:
                     analyzer.source_output_enabled = False
                     assert analyzer.source_output_enabled is False
-        if original_output_enabled is True:
-            analyzer.source_output_enabled = False
 
 
 def test_hardware_input_ch1_coupling_roundtrip_restores_state(analyzer):
@@ -211,6 +208,15 @@ def test_hardware_trace_ascii_data_smoke(analyzer):
     """Read trace points/data in ASCII after safe FFT setup and restore state."""
     original_mode = analyzer.instrument_mode
     original_data_format = analyzer.data_format
+    original_trace1_feed = None
+    original_trace1_feed_raw = None
+    try:
+        original_trace1_feed = analyzer.trace1.feed
+    except KeyError:
+        raw_feed = analyzer.ask("CALCulate1:FEED?").strip()
+        if raw_feed.startswith('"') and raw_feed.endswith('"'):
+            raw_feed = raw_feed[1:-1]
+        original_trace1_feed_raw = raw_feed
 
     try:
         analyzer.source_output_enabled = False
@@ -232,10 +238,16 @@ def test_hardware_trace_ascii_data_smoke(analyzer):
         assert len(x_axis) > 0
     finally:
         try:
-            analyzer.instrument_mode = original_mode
+            if original_trace1_feed is not None:
+                analyzer.trace1.feed = original_trace1_feed
+            elif original_trace1_feed_raw:
+                analyzer.write(f'CALCulate1:FEED "{original_trace1_feed_raw}"')
         finally:
-            analyzer.data_format = original_data_format
-            analyzer.source_output_enabled = False
+            try:
+                analyzer.instrument_mode = original_mode
+            finally:
+                analyzer.data_format = original_data_format
+                analyzer.source_output_enabled = False
 
 
 def test_hardware_format_data_roundtrip_restores_state(analyzer):
