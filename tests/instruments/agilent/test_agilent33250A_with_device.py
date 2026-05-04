@@ -26,11 +26,14 @@
 # python -m pytest tests/instruments/agilent/test_agilent33250A_with_device.py
 #   --device-address "GPIB::10::INSTR"
 
+import logging
 import math
 
 import pytest
 
 from pymeasure.instruments.agilent import Agilent33250A
+
+log = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
@@ -46,8 +49,8 @@ def force_output_off(generator):
     yield
     try:
         generator.output_enabled = False
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("Failed to disable output for %r during teardown: %s", generator, str(e))
 
 
 def test_idn_contains_33250a(generator):

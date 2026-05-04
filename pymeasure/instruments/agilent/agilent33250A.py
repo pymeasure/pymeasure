@@ -23,7 +23,7 @@
 #
 
 import math
-from time import time
+import time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -135,6 +135,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the output waveform shape.""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     frequency = Instrument.control(
@@ -144,6 +146,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         PULS 500e-6 to 50e6, USER/ARB 1e-6 to 25e6.""",
         validator=strict_range,
         values=[1e-6, 80e6],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     amplitude = Instrument.control(
@@ -151,6 +155,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the output amplitude.""",
         validator=strict_range,
         values=[1e-3, 10],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     amplitude_unit = Instrument.control(
@@ -158,6 +164,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the output amplitude unit.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     offset = Instrument.control(
@@ -165,6 +173,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the DC offset voltage.""",
         validator=strict_range,
         values=[-5, 5],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     voltage_high = Instrument.control(
@@ -172,6 +182,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the high voltage level.""",
         validator=strict_range,
         values=[-5, 5],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     voltage_low = Instrument.control(
@@ -179,6 +191,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the low voltage level.""",
         validator=strict_range,
         values=[-5, 5],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     square_dutycycle = Instrument.control(
@@ -188,6 +202,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         20-80% below 25 MHz, 40-60% from 25 to 50 MHz, and 50% above 50 MHz.""",
         validator=strict_range,
         values=[20, 80],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     ramp_symmetry = Instrument.control(
@@ -195,6 +211,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the ramp waveform symmetry in percent.""",
         validator=strict_range,
         values=[0, 100],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     pulse_period = Instrument.control(
@@ -203,6 +221,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         (float, strict from 20e-9 to 2000).""",
         validator=strict_range,
         values=[20e-9, 2000],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     pulse_width = Instrument.control(
@@ -211,6 +231,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         (float, strict from 8e-9 to 2000).""",
         validator=strict_range,
         values=[8e-9, 2000],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     pulse_transition = Instrument.control(
@@ -219,6 +241,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         (float, strict from 5e-9 to 1e-3).""",
         validator=strict_range,
         values=[5e-9, 1e-3],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     burst_ncycles = Instrument.control(
@@ -230,6 +254,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         set_process=_set_burst_ncycles,
         get_process=_get_burst_ncycles,
         cast=str,
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     output_load = Instrument.control(
@@ -241,6 +267,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         set_process=_set_inf_or_numeric,
         get_process=_get_output_load,
         cast=str,
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     output_enabled = Instrument.control(
@@ -249,6 +277,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     output_polarity = Instrument.control(
@@ -256,6 +286,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the output polarity (string, strict from NORM, INV).""",
         validator=strict_discrete_set,
         values=["NORM", "INV"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     sync_output_enabled = Instrument.control(
@@ -264,6 +296,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     burst_enabled = Instrument.control(
@@ -272,6 +306,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     burst_mode = Instrument.control(
@@ -279,6 +315,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the burst mode.""",
         validator=strict_discrete_set,
         values=["TRIG", "GAT"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     burst_period = Instrument.control(
@@ -287,6 +325,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         (float, strict from 1e-6 to 500).""",
         validator=strict_range,
         values=[1e-6, 500],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     burst_phase = Instrument.control(
@@ -295,6 +335,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         (float, strict from -360 to 360).""",
         validator=strict_range,
         values=[-360, 360],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     trigger_delay = Instrument.control(
@@ -302,6 +344,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the trigger delay in seconds (float, strict from 0 to 85).""",
         validator=strict_range,
         values=[0, 85],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     trigger_slope = Instrument.control(
@@ -309,6 +353,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the external trigger slope (string, strict from POS, NEG).""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     trigger_output_enabled = Instrument.control(
@@ -317,6 +363,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 1, False: 0},
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     trigger_output_slope = Instrument.control(
@@ -324,6 +372,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the trigger output slope (string, strict from POS, NEG).""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     trigger_source = Instrument.control(
@@ -331,6 +381,8 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Control the trigger source.""",
         validator=strict_discrete_set,
         values=["IMM", "EXT", "BUS"],
+        check_set_errors=True,
+        check_get_errors=True,
     )
 
     def trigger(self):
@@ -341,17 +393,19 @@ class Agilent33250A(SCPIMixin, Instrument):
         """Wait until the triggering has finished or timeout is reached."""
         self.write("*OPC?")
 
-        t0 = time()
+        t0 = time.time()
+        poll_delay = 0.01
+        max_poll_delay = 0.1
         while True:
             try:
-                ready = bool(self.read())
+                response = self.read()
             except VisaIOError:
-                ready = False
+                response = ""
 
-            if ready:
+            if response.strip() == "1":
                 return
 
-            if timeout != 0 and time() - t0 > timeout:
+            if timeout != 0 and time.time() - t0 > timeout:
                 raise TimeoutError(
                     "Timeout expired while waiting for the Agilent 33250A to finish the "
                     "triggering."
@@ -359,6 +413,9 @@ class Agilent33250A(SCPIMixin, Instrument):
 
             if should_stop():
                 return
+
+            time.sleep(poll_delay)
+            poll_delay = min(max_poll_delay, poll_delay * 1.5)
 
     def beep(self):
         """Cause a system beep."""

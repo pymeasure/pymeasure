@@ -27,7 +27,19 @@ import math
 import pytest
 
 from pymeasure.instruments.agilent.agilent33250A import Agilent33250A
-from pymeasure.test import expected_protocol
+from pymeasure.test import expected_protocol as _expected_protocol
+
+
+def expected_protocol(instrument_cls, comm_pairs, **kwargs):
+    """Apply default SCPI error-query checks after control get/set commands."""
+    no_error_check_commands = {"*TRG;*WAI", "SYST:BEEP", "*OPC?", "*IDN?", "*CLS", "*RST"}
+    protocol_with_checks = []
+    for command, response in comm_pairs:
+        protocol_with_checks.append((command, response))
+        if command is None or command in no_error_check_commands or command == "SYST:ERR?":
+            continue
+        protocol_with_checks.append(("SYST:ERR?", '0,"No error"'))
+    return _expected_protocol(instrument_cls, protocol_with_checks, **kwargs)
 
 
 @pytest.mark.parametrize("shape", ["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"])
@@ -449,7 +461,7 @@ def test_beep():
 def test_wait_for_trigger():
     with expected_protocol(
         Agilent33250A,
-        [("*OPC?", None), (None, ""), (None, "1")],
+        [("*OPC?", None), (None, ""), (None, "0"), (None, "1")],
     ) as inst:
         inst.wait_for_trigger(timeout=1)
 
