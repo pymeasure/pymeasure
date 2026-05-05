@@ -79,6 +79,56 @@ class Test_SCPIMixin:
             assert inst.check_errors() == [[-100, '"Command error"'],
                                            [-222, '"Data out of range"']]
 
+    def test_get_device_info(self):
+        with expected_protocol(
+                self.SCPIInstrument,
+                [("*IDN?", "Rohde&Schwarz,NGP804,1234,01.42")],
+                name="initial") as inst:
+            inst.get_device_info()
+            assert inst.vendor == "Rohde&Schwarz"
+            assert inst.name == "NGP804"
+            assert inst.serial_number == "1234"
+            assert inst.firmware_ref == "01.42"
+
+    def test_check_is_dev_supported_passes(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "NGP804")
+        inst.check_is_dev_supported(["NGP804", "NGP814"], " not supported")
+
+    def test_check_is_dev_supported_skips_when_list_is_none(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "Anything")
+        inst.check_is_dev_supported(None, " not supported")
+
+    def test_check_is_dev_supported_raises_when_not_in_list(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "Foo")
+        with pytest.raises(AssertionError, match="Foo not supported"):
+            inst.check_is_dev_supported(["NGP804"], " not supported")
+
+    def test_check_is_dev_supported_raises_when_name_is_none(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
+        inst.name = None
+        with pytest.raises(AssertionError, match="not opened"):
+            inst.check_is_dev_supported(["NGP804"], " not supported")
+
+    def test_shutdown_sets_isShutdown(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
+        assert inst.isShutdown is False
+        inst.shutdown()
+        assert inst.isShutdown is True
+
+    def test_close_delegates_to_adapter(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
+        called = {"close": 0}
+        inst.adapter.close = lambda: called.__setitem__("close", called["close"] + 1)
+        inst.close()
+        assert called["close"] == 1
+
+    def test_open_delegates_to_adapter(self):
+        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
+        called = {"open": 0}
+        inst.adapter.open = lambda: called.__setitem__("open", called["open"] + 1)
+        inst.open()
+        assert called["open"] == 1
+
 
 def test_SCPIunknownMixin():
     class SCPIunknownInstrument(SCPIUnknownMixin, Instrument):
