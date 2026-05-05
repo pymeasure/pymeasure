@@ -452,21 +452,21 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
         :returns: A list of the desired type, or strings where the casting fails.
         """
-        results: list[Union[T, str]]
         response = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             response = preprocess_reply(response)
-        results = response.split(separator, maxsplit=maxsplit)
-        for i, result in enumerate(results):
+        results: list[Union[T, str]] = []
+        for result in response.split(separator, maxsplit=maxsplit):
             try:
                 if cast is bool:
                     # Need to cast to float first since results are usually
                     # strings and bool of a non-empty string is always True
-                    results[i] = bool(float(result))
+                    results.append(bool(float(result)))  # type: ignore[arg-type]
                 else:
-                    results[i] = cast(result)
+                    results.append(cast(result))
             except Exception:
-                pass  # Keep as string
+                # Keep as string
+                results.append(result)
         return results
 
     def binary_values(self, command: str, query_delay: Optional[float] = None, **kwargs):
