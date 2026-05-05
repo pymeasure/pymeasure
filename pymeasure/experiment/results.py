@@ -217,6 +217,7 @@ class Results:
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
         self._metadata_count = -1
+        self._last_file_size = 0
 
         self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
@@ -445,6 +446,13 @@ class Results:
                 # Empty dataframe
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data, if any, to already loaded data
+            # Get current filesize, if same as _last_file_size, return data
+            try:
+                current_size = os.path.getsize(self.data_filename)
+            except OSError:
+                return self._data
+            if current_size == self._last_file_size:
+                return self._data
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
@@ -467,6 +475,8 @@ class Results:
                                            ignore_index=True)
             except Exception:
                 pass  # All data is up to date
+            # Update _last_file_size
+            self._last_file_size = current_size
         return self._data
 
     def reload(self):
