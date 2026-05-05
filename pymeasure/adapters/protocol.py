@@ -44,8 +44,6 @@ def to_bytes(
         return command
     elif isinstance(command, bytearray):
         return bytes(command)
-    elif command is None:
-        return None
     elif isinstance(command, str):
         return command.encode("utf-8")
     elif isinstance(command, (list, tuple)):
