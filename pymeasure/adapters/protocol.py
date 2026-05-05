@@ -117,7 +117,7 @@ class ProtocolAdapter(Adapter):
         """Compare the command with the expected one and fill the read."""
         self._write_bytes(to_bytes(command))
         assert self._write_buffer is None, (
-            f"Written bytes '{self._write_buffer}' do not match expected "
+            f"Written bytes '{self._write_buffer!r}' do not match expected "
             f"'{self.comm_pairs[self._index][0]}'.")
 
     def _write_bytes(self, content: bytes, **kwargs) -> None:
@@ -129,10 +129,10 @@ class ProtocolAdapter(Adapter):
         try:
             p_write, p_read = self.comm_pairs[self._index]
         except IndexError:
-            raise ValueError(f"No communication pair left to write {content}.")
+            raise ValueError(f"No communication pair left to write '{content!r}'.")
         if p_write is not None and self._write_buffer == to_bytes(p_write):
             assert self._read_buffer is None, (
-                f"Unread response '{self._read_buffer}' present when writing. "
+                f"Unread response '{self._read_buffer!r}' present when writing. "
                 "Maybe a property's 'check_set_errors' is not accounted for, "
                 "a read() call is missing in a method, or the defined protocol is incorrect?"
             )
@@ -173,9 +173,11 @@ class ProtocolAdapter(Adapter):
             except IndexError:
                 raise ValueError("No communication pair left for reading.")
             assert p_write is None, (
-                f"Written {self._write_buffer} do not match expected {p_write} prior to read."
+                f"Written '{self._write_buffer!r}' do not match expected '{p_write!r}' "
+                "prior to read."
                 if self._write_buffer
-                else "Unexpected read without prior write.")
+                else "Unexpected read without prior write."
+            )
             assert p_read is not None, "Communication pair cannot be (None, None)."
             self._index += 1
             p_read = to_bytes(p_read)
