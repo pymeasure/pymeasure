@@ -53,6 +53,11 @@ class Adapter:
         """Close connection upon garbage collection of the device."""
         self.close()
 
+    def open(self):
+        """Reopen the connection."""
+        if self.connection is not None:
+            self.connection.open()
+
     def close(self):
         """Close the connection."""
         if self.connection is not None:

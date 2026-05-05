@@ -129,6 +129,21 @@ def test_init_visa_fail():
         Instrument("abc", "def", visa_library="@xyz")
 
 
+def test_init_shared_resource_manager():
+    """``adapter`` accepts an existing ``pyvisa.ResourceManager``; ``name`` is used
+    as VISA resource name and the manager is reused by the underlying VISAAdapter."""
+    import pyvisa
+
+    rm = pyvisa.ResourceManager("@sim")
+    instr_a = Instrument(rm, "ASRL1::INSTR", includeSCPI=False)
+    instr_b = Instrument(rm, "ASRL2::INSTR", includeSCPI=False)
+    assert instr_a.adapter.manager is rm
+    assert instr_b.adapter.manager is rm
+    assert instr_a.resource_name == "ASRL1::INSTR"
+    assert instr_b.resource_name == "ASRL2::INSTR"
+    assert instr_a.vendor == "" and instr_a.serial_number == "" and instr_a.firmware_ref == ""
+
+
 def test_init_includeSCPI_implicit_warning():
     with pytest.warns(FutureWarning, match="includeSCPI"):
         Instrument("COM1", "def", visa_library="@sim")

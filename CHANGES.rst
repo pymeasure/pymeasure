@@ -1,6 +1,29 @@
 Upcoming Release
 ================
 
+New features
+------------
+- :code:`VISAAdapter` now accepts an existing :code:`pyvisa.ResourceManager`
+  as its :code:`visa_library` argument, so several adapters can share a
+  single resource manager.
+- :code:`Instrument` now accepts a :code:`pyvisa.ResourceManager` as the
+  first argument; in that case :code:`name` is interpreted as the VISA
+  resource name. Instruments also store identity metadata
+  (:code:`resource_name`, :code:`vendor`, :code:`serial_number`,
+  :code:`firmware_ref`) by default.
+- :code:`SCPIMixin` gains :code:`open`, :code:`close`, :code:`shutdown`,
+  :code:`get_device_info` (populates vendor/name/serial/firmware from
+  :code:`*IDN?`, overwriting :code:`self.name` with the reported model)
+  and :code:`check_is_dev_supported`.
+- :code:`Adapter` gains an :code:`open` method that mirrors the existing
+  :code:`close`, delegating to the underlying connection.
+
+Instruments
+-----------
+- Add Rohde & Schwarz NGPx power-supply family
+  (:code:`pymeasure.instruments.rohdeschwarz.ngpx.NGPx`) with per-channel
+  setpoints, measurements, OVP/OCP, tracking and fuse-link control.
+
 Removed
 -------
 - Remove support for Python 3.8
