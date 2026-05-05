@@ -146,19 +146,25 @@ class CommonBase:
         self._create_channels()
         super().__init__(**kwargs)
 
-    def write(self, command: str, **kwargs) -> None: ...
+    def write(self, command: str, **kwargs) -> None:
+        raise NotImplementedError("Subclasses must implement write.")
 
-    def write_bytes(self, content: bytes, **kwargs) -> None: ...
-
-    def read(self, **kwargs) -> str: ...
-
-    def read_bytes(self, count: int, **kwargs) -> bytes: ...
+    def write_bytes(self, content: bytes, **kwargs) -> None:
+        raise NotImplementedError("Subclasses must implement write_bytes.")
 
     def write_binary_values(
         self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
-    ) -> None: ...
+    ) -> None:
+        raise NotImplementedError("Subclasses must implement write_binary_values.")
 
-    def read_binary_values(self, **kwargs): ...
+    def read(self, **kwargs) -> str:
+        raise NotImplementedError("Subclasses must implement read.")
+
+    def read_bytes(self, count: int, **kwargs) -> bytes:
+        raise NotImplementedError("Subclasses must implement read_bytes.")
+
+    def read_binary_values(self, **kwargs):
+        raise NotImplementedError("Subclasses must implement read_binary_values.")
 
     class BaseChannelCreator:
         """Base class for ChannelCreator and MultiChannelCreator.
@@ -211,7 +217,7 @@ class CommonBase:
             if (isinstance(id, (str, int)) or id is None) and self.check_for_valid_class(cls):
                 self.pairs = ((cls, id),)
             else:
-                raise ValueError("Invalid definition of class '{cls}' and id '{id}'.")
+                raise ValueError(f"Invalid definition of class '{cls}' and id '{id}'.")
 
     class MultiChannelCreator(BaseChannelCreator):
         """Add channels to the parent class.
@@ -255,7 +261,7 @@ class CommonBase:
             elif isinstance(id, (list, tuple)) and self.check_for_valid_class(cls):
                 self.pairs = list(zip((cast(type[Child], cls),) * len(id), id))
             else:
-                raise ValueError("Invalid definition of classes '{cls}' and ids '{id}'.")
+                raise ValueError(f"Invalid definition of classes '{cls}' and ids '{id}'.")
             self.kwargs.setdefault("prefix", prefix)
 
     def _setup_special_names(self) -> list[str]:
@@ -311,7 +317,7 @@ class CommonBase:
                 elif isinstance(creator, CommonBase.ChannelCreator):
                     child = self.add_child(cls, id, attr_name=name, **creator.kwargs)
                 else:
-                    raise ValueError("Invalid class '{creator}' for channel creation.")
+                    raise ValueError(f"Invalid class '{creator}' for channel creation.")
                 child._protected = True
 
     def __setattr__(self, name: str, value: Any) -> None:
