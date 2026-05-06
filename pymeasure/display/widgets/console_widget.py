@@ -22,33 +22,27 @@
 # THE SOFTWARE.
 #
 
-import logging
-
 from pyqtgraph.console import ConsoleWidget as PGConsoleWidget
 
 from .tab_widget import TabWidget
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 class ConsoleWidget(TabWidget, PGConsoleWidget):
     """Display an interactive Python console in the GUI.
 
-    It allows executing arbitrary Python commands at runtime and debugging the
+    Allow executing arbitrary Python commands at runtime and debugging the
     application.
 
     It can be included in subclasses of
     :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`
     by adding it to the widget_list.
 
-    :param name: Name of the widget. This is the text that will appear on the Tab in the GUI.
-    :param parent: The Qt parent widget. Usually left as None or passed as the main window.
-    :param namespace: A dictionary containing the local variables and modules you want to expose
-        to the console environment. For example, `{'window': self, 'device': your_device}`
-        allows you to access the `window` object and your instrument directly in the console.
-    :param text: The initial welcome message displayed when the console is first opened.
+    :param name: Name of the widget, displayed on the tab in the GUI.
+    :param parent: The Qt parent widget.
+    :param namespace: A dictionary of variables and modules to expose
+        to the console. For example,
+        ``{'window': self, 'device': your_device}``.
+    :param text: The initial welcome message displayed in the console.
     """
 
-    def __init__(self, name, parent=None, namespace=None, text="Interactive Python Console\n"):
-        super().__init__(name=name, parent=parent, namespace=namespace, text=text)
+    pass
