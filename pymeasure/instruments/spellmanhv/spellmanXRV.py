@@ -337,7 +337,7 @@ class SpellmanXRV(Instrument):
 
         return response[0].partition(",")[2]  # remove command from response
 
-    def check_set_errors(self) -> list:
+    def check_set_errors(self) -> list[str]:
         """Check for errors after sending a command.
 
         :raise: ValueError if response is not ``$``
