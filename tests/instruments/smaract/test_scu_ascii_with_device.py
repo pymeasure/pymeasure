@@ -71,14 +71,14 @@ class TestSCUConfiguration:
 
     @pytest.mark.parametrize("value", [1, 3000, 18500])
     def test_check_freq_int_range(self, smaractascii, value):
-        result = smaractascii.check_freq(value)
+        result = smaractascii.check_frequency(value)
 
         assert isinstance(result, Q_)
         assert result.magnitude == value
         assert str(result.units) == 'hertz'
 
     def test_check_freq_with_str(self, smaractascii):
-        result = smaractascii.check_freq('5000 Hz')
+        result = smaractascii.check_frequency('5000 Hz')
         assert result == Q_(5000, 'Hz')
 
     def test_frequency(self, smaractascii):

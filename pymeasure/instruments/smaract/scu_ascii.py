@@ -29,7 +29,7 @@ import pyvisa
 
 from pymeasure.instruments import Instrument, Channel
 
-from pymeasure.instruments.smaract.utils import check_quantity_unit
+from pymeasure.instruments.smaract.utils import convert_quantity_to_magnitude
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -46,7 +46,7 @@ class SCUChannel(Channel):
         """Control the maximum frequency in an absolute move
         :param frequency, an int given in Hz in range [1;18500]
         """,
-        set_process=lambda v: check_quantity_unit(v, 'Hz'),
+        set_process=lambda v: convert_quantity_to_magnitude(v, 'Hz'),
         get_process=lambda s: Q_(int(s[6:]), 'Hz'),
     )
 
@@ -207,7 +207,7 @@ class SCUChannelLinear(SCUChannel):
     unit = 'µm'
 
     def move_abs(self, position: Q_):
-        self.write(f":MPA{self.id}P{check_quantity_unit(position, self.unit)}")
+        self.write(f":MPA{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
     @property
     def position(self):
@@ -219,7 +219,7 @@ class SCUChannelLinear(SCUChannel):
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
-        self.write(f":MPR{self.id}P{check_quantity_unit(position, self.unit)}")
+        self.write(f":MPR{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
 
 class SCUChannelAngular(SCUChannel):
@@ -238,7 +238,7 @@ class SCUChannelAngular(SCUChannel):
 
            :param position: A quantity with angular units (m°)
         """
-        self.write(f":MAA{self.id}P{check_quantity_unit(position, self.unit)}")
+        self.write(f":MAA{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
     def get_angle(self):
         """ Returns the current angle in m°"""
@@ -252,7 +252,7 @@ class SCUChannelAngular(SCUChannel):
 
            :param position: A quantity with angular units (m°)
         """
-        self.write(f":MAR{self.id}A{check_quantity_unit(position, self.unit)}")
+        self.write(f":MAR{self.id}A{convert_quantity_to_magnitude(position, self.unit)}")
 
 
 class SCUChannelStepper(SCUChannel):

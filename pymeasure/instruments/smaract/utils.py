@@ -14,12 +14,13 @@ def set_type(response_raw: str, index: int, unit: str = 'Hz'):
     return Q_(response_raw[index:], unit)
 
 
-def check_quantity_unit(input: Union[str, int, Q_], unit: str) -> int:
-    """Lets the user check if the given quantity unit is a valid unit"""
+def convert_quantity_to_magnitude(input: Union[str, int, Q_], unit: str) -> Union[int, float]:
+    """Lets the user convert the given quantity unit to a valid unit"""
     if isinstance(input, str):
         input = Q_(input)
     if isinstance(input, Q_):
-        return int(input.to(unit).magnitude)
+        value = input.to(unit).magnitude
+        return int(value) if value.is_integer() else value
     elif isinstance(input, int):
         return input
     else:
