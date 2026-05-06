@@ -25,7 +25,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
+from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, PositionerType
 from pymeasure.units import ureg
 
 Q_ = ureg.Quantity
@@ -153,6 +153,20 @@ def test_channel_get_positioner_type(channel):
             [(f':GST{channel}'.encode(), f':ST{channel}T21'.encode())],
     ) as inst:
         assert inst.channels[channel].positioner_type == f':ST{channel}T21'
+
+
+@pytest.mark.parametrize("channel, enum_value, expected_code", [
+    ("0", PositionerType.LINEAR_L, 21),
+    ("0", PositionerType.ROTARY_GC, 4),
+    ("0", PositionerType.LINEAR_M, 1),
+])
+def test_channel_positioner_type_setter(channel, enum_value, expected_code):
+    with expected_protocol(
+        SmarActSCULinear,
+        [(f':SST{channel}T{expected_code}'.encode(), None)],
+    ) as inst:
+
+        inst.channels[channel].positioner_type = enum_value
 
 
 @pytest.mark.parametrize("channel", CHANNELS)

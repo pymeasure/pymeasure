@@ -41,8 +41,8 @@ SENSOR = [True]
 
 
 @pytest.fixture(scope="module")
-def smaractascii(connected_device_address: str = "ASRL3::INSTR"):
-    """ connected_device_address as "ASRL3::INSTR" """
+def smaractascii(connected_device_address):
+    """ An example of working device : connected_device_address as "ASRL3::INSTR" """
     """ to use the tests in this file invoke pytest as:
         pytest -k scu_ascii --device-address "ASRL3::INSTR" TCPIP::x.y.z.k::port::SOCKET
         where you replace x.y.z.k byt the device IP address and port by its port address

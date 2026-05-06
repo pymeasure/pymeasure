@@ -497,20 +497,3 @@ class SmarActSCUStepper(SmarActSCU_ASCII):
     channel0 = Instrument.ChannelCreator(SCUChannelStepper, "0")
     channel1 = Instrument.ChannelCreator(SCUChannelStepper, "1")
     channel2 = Instrument.ChannelCreator(SCUChannelStepper, "2")
-
-if __name__ == "__main__":
-    inst = SmarActSCULinear('ASRL3::INSTR')
-    #inst.baudrate = 9600
-    pass
-
-    #import pyvisa
-    # rm = pyvisa.ResourceManager()
-    #ressources = rm.list_resources()
-    #print(ressources)
-    #
-    # inst = rm.open_resource(ressources[0])
-    # inst.write_termination = '\n'
-    # inst.read_termination = '\n'
-    # pass
-    #
-    inst.close()
