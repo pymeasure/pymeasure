@@ -242,7 +242,7 @@ class SpellmanXRV(Instrument):
                  name="Spellman XRV HV Power Supply",
                  query_delay=0.15,
                  baud_rate=9600,
-                 **kwargs):
+                 **kwargs) -> None:
         super().__init__(
             adapter, name,
             asrl={'baud_rate': baud_rate},
