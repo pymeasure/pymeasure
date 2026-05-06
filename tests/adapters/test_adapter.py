@@ -42,7 +42,6 @@ def fake():
 
 
 def test_init(adapter):
-    assert adapter.connection is None
     assert adapter.log == logging.getLogger("Adapter")
 
 

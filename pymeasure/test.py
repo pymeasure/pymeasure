@@ -73,6 +73,6 @@ def expected_protocol(
         "Unprocessed protocol definitions remain: "
         f"{comm_pairs[protocol._index:]}.")
     assert protocol._write_buffer is None, (
-        f"Non-empty write buffer remains: '{protocol._write_buffer}'.")
+        f"Non-empty write buffer remains: '{protocol._write_buffer!r}'.")
     assert protocol._read_buffer is None, (
-        f"Non-empty read buffer remains: '{protocol._read_buffer}'.")
+        f"Non-empty read buffer remains: '{protocol._read_buffer!r}'.")
