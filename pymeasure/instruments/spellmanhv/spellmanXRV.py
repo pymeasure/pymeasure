@@ -23,7 +23,7 @@
 #
 
 from enum import IntFlag
-from typing import Any
+from typing import Any, Union
 
 from pyvisa.constants import InterfaceType
 
