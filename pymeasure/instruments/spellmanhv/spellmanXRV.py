@@ -331,7 +331,7 @@ class SpellmanXRV(Instrument):
             calculated_checksum = self.checksum(string_to_check)
             got_checksum = response[2]
 
-            if got_checksum is not calculated_checksum:
+            if got_checksum != calculated_checksum:
                 string = f"Checksum error: expected '{calculated_checksum}', got '{got_checksum}'."
                 raise ConnectionError(string)
 
