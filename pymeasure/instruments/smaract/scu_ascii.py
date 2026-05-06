@@ -61,13 +61,14 @@ class SCUChannel(Channel):
         get_process=lambda x: int(x[-1]),
     )
 
-    def calibrate_sensor(self):
+    def calibrate_sensor(self) -> bool:
         """Calibrate the sensor. Has to be done before the use of :meth: 'move_to_ref'
            The user must ensure himself that the positioner is not close to a mechanical
-           limit before using this method"""
+           limit before using this method
+           :return: True if the sensor is calibrating, False otherwise"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
-        return status
+        return status == ':M0C'
 
     def set_zero_position(self):
         """Set the current position as position zero."""
@@ -201,11 +202,6 @@ class SCUChannel(Channel):
         """Stops any process."""
         self.write(f":S{self.id}")
 
-    @property
-    def position(self):
-        """Returns the current position in pint qunatity measured in micrometers."""
-        raise NotImplementedError
-
 
 class SCUChannelLinear(SCUChannel):
     unit = 'µm'
@@ -271,7 +267,7 @@ class SCUChannelStepper(SCUChannel):
         self._current_steps = 0
 
     @property
-    def position(self):
+    def position_steps(self):
         """ Returns the current estimated position in steps. """
         # We simply read our internal counter variable
         return self._current_steps
@@ -333,7 +329,7 @@ class SmarActSCU_ASCII(Instrument):
     channel2 = Instrument.ChannelCreator(SCUChannel, "2")
 
     def __init__(self, adapter, name='SCUController',
-                 includeSCPI=False, **kwargs):
+                 **kwargs):
         super().__init__(adapter, name, includeSCPI=False,
                          read_termination='\n',
                          write_termination='\n',
@@ -361,8 +357,8 @@ class SmarActSCU_ASCII(Instrument):
     def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
         """Check if amplitude is present and if it is inside the given boundary.
 
-               :param ampl : a quantity with amplitude units dV, if int then given in dV
-               """
+        :param ampl : a quantity with amplitude units dV, if int then given in dV
+        """
         if ampl is None:
             return self._amplitude
 
@@ -437,7 +433,7 @@ class SmarActSCU_ASCII(Instrument):
         """
         raise NotImplementedError
 
-    def move_rel(self, position: Q_, channel: int = 0):
+    def move_rel(self, position: Union[Q_, int], channel: int = 0):
         """Moves the relative distance given in µm from current position
 
         :param position: A quantity with length units (µm).
