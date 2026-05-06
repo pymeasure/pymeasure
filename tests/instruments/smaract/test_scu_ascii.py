@@ -44,12 +44,13 @@ def test_init():
 def test_close():
     with expected_protocol(
             SmarActSCULinear,
-            [(':GID',None)],  # no communication expected
+            [(':GID', None)],  # no communication expected
     ) as inst:
         inst.close()
         # verify instrument is no longer usable
         with pytest.raises(Exception):
             inst.ask(':GID')
+
 
 @pytest.mark.parametrize("channel", CHANNELS)
 def test_channel_frequency_max_setter(channel):
@@ -125,7 +126,7 @@ def test_channel_calibrate_sensor(channel):
             [(f':CS{channel}'.encode(), None),
              (f':M{channel}'.encode(), f':M{channel}C'.encode())],
     ) as inst:
-        assert inst.channels[channel].calibrate_sensor() == True
+        assert inst.channels[channel].calibrate_sensor() is True
 
 
 @pytest.mark.parametrize("channel", CHANNELS)

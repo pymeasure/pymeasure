@@ -26,6 +26,13 @@ from typing import Union
 from enum import Enum
 from pymeasure.units import ureg
 
+from pymeasure.instruments import Instrument, Channel
+
+from pymeasure.instruments.smaract.utils import convert_quantity_to_magnitude
+from pymeasure.instruments.validators import strict_discrete_set
+
+Q_ = ureg.Quantity
+
 
 class PositionerType(Enum):
     LINEAR_M = 1
@@ -73,16 +80,6 @@ class PositionerType(Enum):
     IRIS_SI_S1L1E = 40
 
 
-Q_ = ureg.Quantity
-
-import pyvisa
-
-from pymeasure.instruments import Instrument, Channel
-
-from pymeasure.instruments.smaract.utils import convert_quantity_to_magnitude
-from pymeasure.instruments.validators import strict_discrete_set
-
-
 # <channel> : zero-based channel index. Valid indices are 0,1 and 2
 # <angel> : the current angle of the position in millidegree
 
@@ -118,7 +115,7 @@ class SCUChannel(Channel):
            :return: True if the sensor is calibrating, False otherwise"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
-        return status == ':M0C'
+        return status == f":M{self.id}C"
 
     def set_zero_position(self):
         """Set the current position as position zero."""
@@ -160,6 +157,7 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
 
+        steps = self.parent.check_steps(steps)
         valid_freq = self.parent.check_frequency(freq)
         valid_ampl = self.parent.check_amplitude(ampl)
 
@@ -178,6 +176,7 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
 
+        steps = self.parent.check_steps(steps)
         valid_freq = self.parent.check_frequency(freq)
         valid_ampl = self.parent.check_amplitude(ampl)
 
@@ -200,12 +199,12 @@ class SCUChannel(Channel):
     def move_up_to_end(self):
         """Moves up until end of line"""
         self.write(f":MES{self.id}DU")
-        self._current_steps = -20000
+        self._current_steps = 20000
 
     def move_down_to_end(self):
         """Moves down until end of line"""
         self.write(f":MES{self.id}DD")
-        self._current_steps = 20000
+        self._current_steps = -20000
 
     def stop(self):
         """Stops any process."""
@@ -224,7 +223,6 @@ class SCUChannelLinear(SCUChannel):
         self.write(f":GP{self.id}")
         pos = self.read()
         return Q_(float(pos[4:]), self.unit)
-
 
     def move_rel(self, position: Q_):
         """Moves up a distance + current position"""
@@ -248,13 +246,6 @@ class SCUChannelAngular(SCUChannel):
            :param position: A quantity with angular units (m°)
         """
         self.write(f":MAA{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
-
-    def get_angle(self):
-        """ Returns the current angle in m°"""
-        self.write(f":GA{self.id}")
-        ang = self.read()
-        self.angle = (Q_(float(ang[4:]), self.unit))
-        return self.angle
 
     def move_rel(self, position: Q_):
         """Moves the relative angle given in m° from the current position closed-loop control.

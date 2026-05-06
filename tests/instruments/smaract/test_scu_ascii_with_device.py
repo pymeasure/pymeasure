@@ -26,11 +26,10 @@ import pytest
 from pymeasure.units import ureg
 import pyvisa
 
-Q_ = ureg.Quantity
-
 # Importing driver classes
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, SmarActSCUStepper
 
+Q_ = ureg.Quantity
 
 CHANNELS = ['0']
 # Here you may add multiple channels ['0', '1', '2', ...]
@@ -54,7 +53,7 @@ def smaractascii(connected_device_address):
 
 
 @pytest.fixture(scope="module")
-def smaractasciiSTEPPER(connected_device_address: str = "ASRL3::INSTR"):
+def smaractasciiSTEPPER(connected_device_address):
 
     instz = SmarActSCUStepper(adapter=connected_device_address)
     yield instz
@@ -82,13 +81,15 @@ class TestSCUIdentificate:
     @pytest.mark.parametrize("channel,issensor", zip(CHANNELS, SENSOR))
     def test_calibration(self, smaractascii, channel, issensor):
         status = smaractascii.channels[channel].calibrate_sensor()
-        assert status == True
+        assert status is True
 
     @pytest.mark.parametrize("channel", CHANNELS)
     def test_set_zero(self, smaractascii, channel):
-        pos = smaractascii.channels[channel].position
-        smaractascii.channels[channel].set_zero_position()
-        assert smaractascii.channels[channel].set_zero_position() != pos
+        ch = smaractascii.channels[channel]
+        pos_before = ch.position
+        ch.set_zero_position()
+        pos_after = ch.position
+        assert pos_after != pos_before
 
 
 class TestSCUConfiguration:

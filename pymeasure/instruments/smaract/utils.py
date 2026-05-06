@@ -28,6 +28,7 @@ from pymeasure.units import ureg
 
 Q_ = ureg.Quantity
 
+
 def set_type(response_raw: str, index: int, unit: str = 'Hz'):
     """Parse a device response substring into a Quantity with the given unit.
 
@@ -39,14 +40,14 @@ def set_type(response_raw: str, index: int, unit: str = 'Hz'):
     return Q_(response_raw[index:], unit)
 
 
-def convert_quantity_to_magnitude(input: Union[str, int, Q_], unit: str) -> Union[int, float]:
+def convert_quantity_to_magnitude(val: Union[str, int, Q_], unit: str) -> Union[int, float]:
     """Lets the user convert the given quantity unit to a valid unit"""
-    if isinstance(input, str):
-        input = Q_(input)
-    if isinstance(input, Q_):
-        value = input.to(unit).magnitude
+    if isinstance(val, str):
+        val = Q_(val)
+    if isinstance(val, Q_):
+        value = val.to(unit).magnitude
         return int(value) if value.is_integer() else value
-    elif isinstance(input, int):
-        return input
+    elif isinstance(val, int):
+        return val
     else:
-        raise TypeError('Invalid input for the instrument')
+        raise TypeError('Invalid value for the instrument')
