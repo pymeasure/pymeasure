@@ -532,9 +532,11 @@ class SpellmanXRV(Instrument):
         )
 
     def reset_hv_on_timer(self) -> None:
+        """Reset the HV on hours counter."""
         self.ask("30")
 
     def reset_errors(self) -> None:
+        """Reset the error register."""
         self.ask("31")
 
     power_limits = Instrument.control(
