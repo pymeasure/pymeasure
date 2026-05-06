@@ -153,18 +153,18 @@ wrong format of the parameter",
         """
         self.ask("HLD")
 
-    def intervall(self, intervall=None):
-        """Execute an intervall measurement.
+    def interval_measurement(self, interval=None):
+        """Execute an interval measurement.
 
-        :param int intervall: optional, measurement intervall in seconds
+        :param int interval: optional, measurement interval in seconds
 
-        If *intervall* is not specified a measurement with the current setting of the
+        If *interval* is not specified a measurement with the current setting of the
         :attr:`integration_time` is executed.
 
         .. note:: Write permission is required.
         """
-        if intervall is not None:
-            self.integration_time = intervall
+        if interval is not None:
+            self.integration_time = interval
         self.ask("INT")
 
     def measure(self):
