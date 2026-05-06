@@ -23,7 +23,55 @@
 #
 
 from typing import Union
+from enum import Enum
 from pymeasure.units import ureg
+
+
+class PositionerType(Enum):
+    LINEAR_M = 1
+    ROTARY_GC = 4
+    GONIOMETER_GD = 5
+    GONIOMETER_GE = 6
+    ROTARY_RA = 7
+    ROTARY_GF = 8
+    ROTARY_RB = 9
+    ROTARY_SR36M = 10
+    ROTARY_SR36ME = 11
+    ROTARY_SR50M = 12
+    ROTARY_SR50ME = 13
+    LINEAR_MM50 = 14
+    GONIOMETER_G935M = 15
+    LINEAR_MD = 16
+    TIP_TILT_TT254 = 17
+    LINEAR_LC = 18
+    ROTARY_LR = 19
+    LINEAR_LCD = 20
+    LINEAR_L = 21
+    LINEAR_LD = 22
+    LINEAR_LE = 23
+    LINEAR_LED = 24
+    LINEAR_SL_S1I1E1 = 25
+    LINEAR_SL_D1I1E1 = 26
+    LINEAR_SL_S1I2E2 = 27
+    LINEAR_SL_D1I2E2 = 28
+
+    TIP_TILT_ST_S1I1E2 = 29
+
+    GONIOMETER_SG_D1L1S = 30
+    GONIOMETER_SG_D1L1E = 31
+    GONIOMETER_SG_D1L2S = 32
+    GONIOMETER_SG_D1L2E = 33
+    GONIOMETER_SG_D1M1E = 34
+    GONIOMETER_SG_D1M2E = 35
+
+    IRIS_SI_S1L1S = 36
+    TIP_TILT_ST_S1I2E2 = 37
+
+    ROTARY_SR_T5L3S = 38
+
+    IRIS_SI_S1L4E = 39
+    IRIS_SI_S1L1E = 40
+
 
 Q_ = ureg.Quantity
 
@@ -79,47 +127,6 @@ class SCUChannel(Channel):
         else:
             raise ValueError("No sensor implemented on the instrument. Cannot set zero position")
 
-    POSITIONER_TYPES = {
-        1: "Linear – M",
-        4: "Rotary – GC",
-        5: "Goniometer – GD",
-        6: "Goniometer – GE",
-        7: "Rotary – RA",
-        8: "Rotary – GF",
-        9: "Rotary – RB",
-        10: "Rotary – SR36M",
-        11: "Rotary – SR36ME",
-        12: "Rotary – SR50M",
-        13: "Rotary – SR50ME",
-        14: "Linear – MM50",
-        15: "Goniometer – G935M",
-        16: "Linear – MD",
-        17: "Tip-Tilt – TT254",
-        18: "Linear – LC",
-        19: "Rotary – LR",
-        20: "Linear – LCD",
-        21: "Linear – L",
-        22: "Linear – LD",
-        23: "Linear – LE",
-        24: "Linear – LED",
-        25: "Linear – SL…S1I1E1",
-        26: "Linear – SL…D1I1E1",
-        27: "Linear – SL…S1I2E2",
-        28: "Linear – SL…D1I2E2",
-        29: "Tip-Tilt – ST…S1I1E2",
-        30: "Goniometer – SG…D1L1S",
-        31: "Goniometer – SG…D1L1E",
-        32: "Goniometer – SG…D1L2S",
-        33: "Goniometer – SG…D1L2E",
-        34: "Goniometer – SG…D1M1E",
-        35: "Goniometer – SG…D1M2E",
-        36: "Iris – SI…S1L1S",
-        37: "Tip-Tilt – ST…S1I2E2",
-        38: "Rotary – SR…T5L3S",
-        39: "Iris – SI…S1L4E",
-        40: "Iris – SI…S1L1E",
-    }
-
     @property
     def positioner_type(self):
         """Get the positioner/sensor type, could be linear or angular,
@@ -128,7 +135,7 @@ class SCUChannel(Channel):
         return self.read()
 
     @positioner_type.setter
-    def positioner_type(self, t: int):
+    def positioner_type(self, t: PositionerType):
         """Set the positioner/sensor type.
 
            CAUTION! The user has to use the 'SmarAct ASCII Programming Interface' for a
@@ -138,14 +145,14 @@ class SCUChannel(Channel):
            The list 'positioner_types' contains the available t values and corresponding properties
 
         """
-        if t in self.POSITIONER_TYPES:
-            self.write(f":SST{self.id}T{t}")
-        else:
-            raise ValueError(f"{t} is not a valid value, please choose from the list POSITIONER_TYPES")
+        if not isinstance(t, PositionerType):
+            raise ValueError("positioner_type must be a PositionerType Enum")
+
+        self.write(f":SST{self.id}T{t.value}")
 
     def move_steps_up(self, steps: int,
-                      freq: Union[int, Q_] = None,
-                      ampl: Union[int, Q_] = None):
+                      freq: Union[int, Q_, None] = None,
+                      ampl: Union[int, Q_, None] = None):
         """Move up.
 
         :param steps: Number of steps, an int in range [1;30000]
@@ -162,8 +169,8 @@ class SCUChannel(Channel):
         self.write(f":U{self.id}F{f_val}A{a_val}S{steps}")
 
     def move_steps_down(self, steps: int,
-                        freq: Union[int, Q_] = None,
-                        ampl: Union[int, Q_] = None):
+                        freq: Union[int, Q_, None] = None,
+                        ampl: Union[int, Q_, None] = None):
         """Move down.
 
         :param steps: Number of steps, an int in range [1;30000]
