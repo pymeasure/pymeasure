@@ -239,7 +239,8 @@ class SpellmanXRV(Instrument):
     filament = Instrument.ChannelCreator(Filament)
     unscaled = Instrument.ChannelCreator(UnscaledData)
 
-    def __init__(self, adapter: object,
+    def __init__(self,
+                 adapter: Union[Adapter, int, str],
                  name: str = "Spellman XRV HV Power Supply",
                  query_delay: float = 0.15,
                  baud_rate: int = 9600,
