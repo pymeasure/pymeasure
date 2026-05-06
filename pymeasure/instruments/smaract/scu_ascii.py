@@ -151,7 +151,7 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
 
-        valid_freq = self.parent.check_freq(freq)
+        valid_freq = self.parent.check_frequency(freq)
         valid_ampl = self.parent.check_amplitude(ampl)
 
         f_val = int(valid_freq.to('Hz').magnitude)
@@ -169,7 +169,7 @@ class SCUChannel(Channel):
         :param ampl: Amplitude, a quantity given in dV in range [150;1000] (or int)
         """
 
-        valid_freq = self.parent.check_freq(freq)
+        valid_freq = self.parent.check_frequency(freq)
         valid_ampl = self.parent.check_amplitude(ampl)
 
         f_val = int(valid_freq.to('Hz').magnitude)
@@ -355,9 +355,9 @@ class SmarActSCU_ASCII(Instrument):
 
     # CHECK AMPLITUDE
     def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
-        """Check if amplitude is present and if it is inside the given boundary.
+        """Check if voltage amplitude is present and if it is inside the given boundary.
 
-        :param ampl : a quantity with amplitude units dV, if int then given in dV
+        :param ampl : a quantity with voltage amplitude units dV, if int then given in dV
         """
         if ampl is None:
             return self._amplitude
@@ -383,25 +383,25 @@ class SmarActSCU_ASCII(Instrument):
 
     # CHECK FREQUENCY
 
-    def check_freq(self, freq: Union[int, str, Q_] = None) -> Q_:
+    def check_frequency(self, frequency: Union[int, str, Q_] = None) -> Q_:
         """ Check if closed-loop frequency is present and if it is inside the given boundary.
 
-        :param freq: a qunatity with frequency units in Hz, if int, then given in Hz
+        :param frequency: a qunatity with frequency units in Hz, if int, then given in Hz
         """
-        if freq is None:
+        if frequency is None:
             return self._freq
 
-        if isinstance(freq, int):
-            freq = Q_(freq, 'Hz')
+        if isinstance(frequency, int):
+            frequency = Q_(frequency, 'Hz')
 
-        if isinstance(freq, str):
-            freq = Q_(freq)
+        if isinstance(frequency, str):
+            frequency = Q_(frequency)
 
         # Vérification of limits
-        if not (Q_(1, 'Hz') <= freq <= Q_(18500, 'Hz')):
-            raise ValueError(f"Frequency {freq} out of range [1; 18500] Hz")
+        if not (Q_(1, 'Hz') <= frequency <= Q_(18500, 'Hz')):
+            raise ValueError(f"Frequency {frequency} out of range [1; 18500] Hz")
 
-        return freq
+        return frequency
 
     @property
     def frequency(self):
@@ -410,12 +410,13 @@ class SmarActSCU_ASCII(Instrument):
 
     @frequency.setter
     def frequency(self, value: Union[int, Q_]):
-        self._freq = self.check_freq(value)
+        self._freq = self.check_frequency(value)
 
     # CHECK STEPS
 
-    def check_steps(self, steps: int):
-        """Check if steps are present and if it is inside the given boundary."""
+    def check_steps(self, steps: int) -> int:
+        """Check if steps are present and if it is inside the given boundary. If there is no
+           value given, then take the stored one, else store the new value in _steps."""
         if steps is None:
             steps = self._steps
         else:
@@ -463,7 +464,7 @@ class SmarActSCU_ASCII(Instrument):
             raise ValueError(f"Invalid baudrate {baudrate}. Supported: {self.BAUDRATE}")
 
     def reset(self):
-        """Reset will be performed on the device. Has the same effect
+        """Reset the device. Has the same effect
            as a power-down/power-up cycle
         """
         self.write(':R')
