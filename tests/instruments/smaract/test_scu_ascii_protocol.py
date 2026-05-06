@@ -2,8 +2,9 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear
-from pint import Quantity as Q_
+from pymeasure.units import ureg
 
+Q_ = ureg.Quantity
 
 CHANNELS = ['0']
 
@@ -98,7 +99,7 @@ def test_channel_calibrate_sensor(channel):
             [(f':CS{channel}'.encode(), None),
              (f':M{channel}'.encode(), f':M{channel}C'.encode())],
     ) as inst:
-        assert inst.channels[channel].calibrate_sensor() == f':M{channel}C'
+        assert inst.channels[channel].calibrate_sensor() == True
 
 
 @pytest.mark.parametrize("channel", CHANNELS)

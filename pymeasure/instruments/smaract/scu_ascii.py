@@ -23,7 +23,9 @@
 #
 
 from typing import Union
-from pint import Quantity as Q_
+from pymeasure.units import ureg
+
+Q_ = ureg.Quantity
 
 import pyvisa
 

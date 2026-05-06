@@ -1,7 +1,8 @@
 from typing import Union
 
-from pint import Quantity as Q_
+from pymeasure.units import ureg
 
+Q_ = ureg.Quantity
 
 def set_type(response_raw: str, index: int, unit: str = 'Hz'):
     """Parse a device response substring into a Quantity with the given unit.
