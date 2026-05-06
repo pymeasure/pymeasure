@@ -27,7 +27,7 @@ from typing import Any, Union
 
 from pyvisa.constants import InterfaceType
 
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import Channel, Instrument, Adapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
