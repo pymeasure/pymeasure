@@ -22,17 +22,27 @@
 # THE SOFTWARE.
 #
 
-from .browser_widget import BrowserWidget
-from .fileinput_widget import FileInputWidget
-from .estimator_widget import EstimatorWidget, EstimatorThread
-from .image_frame import ImageFrame
-from .image_widget import ImageWidget
-from .inputs_widget import InputsWidget
-from .log_widget import LogWidget
-from .plot_frame import PlotFrame
-from .plot_widget import PlotWidget
-from .results_dialog import ResultsDialog
-from .sequencer_widget import SequencerWidget
+from pyqtgraph.console import ConsoleWidget as PGConsoleWidget
+
 from .tab_widget import TabWidget
-from .table_widget import TableWidget
-from .console_widget import ConsoleWidget
+
+
+class ConsoleWidget(TabWidget, PGConsoleWidget):
+    """Display an interactive Python console in the GUI.
+
+    Allow executing arbitrary Python commands at runtime and debugging the
+    application.
+
+    It can be included in subclasses of
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`
+    by adding it to the widget_list.
+
+    :param name: Name of the widget, displayed on the tab in the GUI.
+    :param parent: The Qt parent widget.
+    :param namespace: A dictionary of variables and modules to expose
+        to the console. For example,
+        ``{'window': self, 'device': your_device}``.
+    :param text: The initial welcome message displayed in the console.
+    """
+
+    pass
