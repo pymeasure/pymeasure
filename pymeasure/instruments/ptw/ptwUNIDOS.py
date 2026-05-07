@@ -25,7 +25,9 @@
 
 import logging
 import json
+from typing import Any, Union
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
@@ -37,8 +39,10 @@ log.addHandler(logging.NullHandler())
 class ptwUNIDOS(Instrument):
     """A class representing the PTW UNIDOS Tango/Romeo dosemeters."""
 
-    def __init__(self, adapter, name="PTW UNIDOS dosemeter",
-                 **kwargs):
+    def __init__(self,
+                 adapter: Union[Adapter, int, str],
+                 name: str = "PTW UNIDOS dosemeter",
+                 **kwargs: Any) -> None:
         super().__init__(
             adapter,
             name,
@@ -49,7 +53,7 @@ class ptwUNIDOS(Instrument):
             **kwargs
         )
 
-    def read(self):
+    def read(self) -> str:
         """Read the device response and check for errors.
 
         :return: Read string with semicolons replaced by comma
@@ -96,7 +100,7 @@ wrong format of the parameter",
             command, sep, response = got.partition(";")  # command is removed from response
             return response.replace(";", ",")
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after sending a command."""
 
         try:
@@ -107,7 +111,7 @@ wrong format of the parameter",
         else:
             return []
 
-    def errorflags_to_text(self, flags):
+    def errorflags_to_text(self, flags: str) -> str:
         """Convert the error flags to the error message(s).
 
         :param str flags:
@@ -139,21 +143,21 @@ wrong format of the parameter",
 # Methods #
 ###########
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the complete measurement history.
 
         .. note:: Write permission is required.
         """
         self.ask("CHR")
 
-    def hold(self):
+    def hold(self) -> None:
         """Set the measurment to HOLD state.
 
         .. note:: Write permission is required.
         """
         self.ask("HLD")
 
-    def interval_measurement(self, interval=None):
+    def interval_measurement(self, interval=None) -> None:
         """Execute an interval measurement.
 
         :param int interval: optional, measurement interval in seconds
@@ -167,21 +171,21 @@ wrong format of the parameter",
             self.integration_time = interval
         self.ask("INT")
 
-    def measure(self):
+    def measure(self) -> None:
         """Start the dose or charge measurement.
 
         .. note:: Write permission is required.
         """
         self.ask("STA")
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the dose and charge measurement values.
 
         .. note:: Write permission is required.
         """
         self.ask("RES")
 
-    def selftest(self):
+    def selftest(self) -> None:
         """Execute the electrometer selftest.
 
         The function returns before the end of the selftest.
@@ -192,7 +196,7 @@ wrong format of the parameter",
         """
         self.ask("AST")
 
-    def zero(self):
+    def zero(self) -> None:
         """Execute a zero correction measurement.
 
         The function returns before the end of the zero correction
@@ -457,7 +461,7 @@ wrong format of the parameter",
 # only read access is implemented #
 ###################################
 
-    def read_detector(self, guid="ALL"):
+    def read_detector(self, guid: str = "ALL") -> Union[dict, list[dict]]:
         """Read the properties of the requested detector.
 
         :param str guid: optional, ID of the detector. A list of all
