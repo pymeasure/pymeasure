@@ -111,7 +111,7 @@ wrong format of the parameter",
         else:
             return []
 
-    def errorflags_to_text(self, flags: str) -> str:
+    def errorflags_to_text(self, flags: str) -> list[str]:
         """Convert the error flags to the error message(s).
 
         :param str flags:

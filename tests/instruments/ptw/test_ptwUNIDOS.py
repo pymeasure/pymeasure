@@ -151,15 +151,15 @@ class TestProperties:
                                                "voltage": 300,
                                                "error": "0x0"}
 
-    @pytest.mark.parametrize("range", RANGES)
-    def test_range(self, range):
+    @pytest.mark.parametrize("measurement_range", RANGES)
+    def test_range(self, measurement_range):
         with expected_protocol(
             ptwUNIDOS,
-            [(f"RGE;{range}", f"RGE;{range}"),
-             ("RGE", f"RGE;{range}")],
+            [(f"RGE;{measurement_range}", f"RGE;{measurement_range}"),
+             ("RGE", f"RGE;{measurement_range}")],
         ) as inst:
-            inst.range = range
-            assert inst.range == range
+            inst.range = measurement_range
+            assert inst.range == measurement_range
 
     def test_range_max(self):
         with expected_protocol(
