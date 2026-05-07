@@ -264,7 +264,7 @@ class SCUChannelStepper(SCUChannel):
     Channel for an open-loop positioner without a sensor.
     All positions are estimated by counting steps.
     """
-    unit = 'step'
+    unit = ''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
