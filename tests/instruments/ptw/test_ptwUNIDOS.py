@@ -316,11 +316,11 @@ class TestJSON:
     def test_measurement_history(self):
         with expected_protocol(
             ptwUNIDOS,
-            [("RHR", 'RHR;{"key1":"value1";"key2":"value2"}')]
+            [("RHR", 'RHR;[{"key1":"value1"};{"key2":"value2"}]')]
         ) as inst:
-            assert inst.measurement_history == {"key1": "value1",
-                                                "key2": "value2",
-                                                }
+            assert inst.measurement_history == [{"key1": "value1"},
+                                                {"key2": "value2"},
+                                                ]
 
     def test_measurement_parameters(self):
         with expected_protocol(
