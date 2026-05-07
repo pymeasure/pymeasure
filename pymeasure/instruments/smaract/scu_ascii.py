@@ -85,6 +85,11 @@ class PositionerType(Enum):
 
 
 class SCUChannel(Channel):
+    """Base channel for a SmarAct SCU axis.
+    Provides the controls and motion helpers shared by linear, angular, and
+    stepper specialisations. """
+
+
     unit: str = ''
 
     frequency_max = Channel.control(
@@ -443,17 +448,16 @@ class SmarActSCU_ASCII(Instrument):
 
         ch = getattr(self, f"channel{channel}")
 
-        if position.magnitude >= 0:
-            ch.move_steps_up(position.magnitude)
-        else:
-            ch.move_steps_down(position.magnitude)
+        ch = getattr(self, f"channel{channel}")
+        ch.move_rel(position)
 
     BAUDRATE = (9600, 38400, 57600, 100000, 115200,
                 128000, 256000, 500000)
 
     def set_baudrate(self, baudrate: int):
         """Set the baudrate AND reset the instrument. Reseting is necessary to update the baudrate.
-
+           Keep in mind that this only changes the baudrate of the device. Meaning that a similar
+           change has to be done on the computer you are using, in order to sync communication.
         param baudrate : Currently supported baudrates are: 9600, 38400, 57600, 100000,
                          115200, 128000, 256000, 500000.
         """

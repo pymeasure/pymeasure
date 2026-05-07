@@ -41,12 +41,24 @@ def set_type(response_raw: str, index: int, unit: str = 'Hz'):
 
 
 def convert_quantity_to_magnitude(val: Union[str, int, Q_], unit: str) -> Union[int, float]:
-    """Lets the user convert the given quantity unit to a valid unit"""
+    """Convert a value to its magnitude in the specified unit.
+
+     :param val: Value as string, int, or :class:`pint.Quantity`.
+     :param unit: Target unit for conversion.
+     :returns: Integer magnitude when integral, otherwise float.
+     :raises TypeError: If ``val`` is not one of the accepted types.
+     """
     if isinstance(val, str):
         val = Q_(val)
+
     if isinstance(val, Q_):
         value = val.to(unit).magnitude
-        return int(value) if value.is_integer() else value
+
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+
+        return value
+
     elif isinstance(val, int):
         return val
     else:

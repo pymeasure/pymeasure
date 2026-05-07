@@ -209,7 +209,7 @@ class TestSCUMotion:
         (1500, ValueError),
     ])
     def test_baudrate(self, smaractascii, test_value, expected_outcome, channel):
-        if expected_outcome == ValueError:
+        if expected_outcome is ValueError:
             with pytest.raises(ValueError):
                 smaractascii.set_baudrate(test_value)
         else:
