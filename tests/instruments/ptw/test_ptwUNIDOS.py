@@ -114,7 +114,7 @@ class TestProperties:
 
     @pytest.mark.parametrize("it", [-3, 0, 1E12])
     def test_integration_time_limits(self, it):
-        with expected_protocol(ptwUNIDOS,[]) as inst:
+        with expected_protocol(ptwUNIDOS, []) as inst:
             with pytest.raises(ValueError):
                 inst.integration_time = it
 
