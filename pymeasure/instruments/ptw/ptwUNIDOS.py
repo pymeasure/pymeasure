@@ -214,9 +214,7 @@ wrong format of the parameter",
     autostart_level = Instrument.control(
         "ASL", "ASL;%s",
         """Control the threshold level of autostart measurements
-        (str strictly in "LOW", "MEDIUM", "HIGH").
-
-        :type: str, strictly in ``LOW``, ``MEDIUM``, ``HIGH``
+        (str, strictly ``LOW``, ``MEDIUM`` or ``HIGH``).
         """,
         validator=strict_discrete_set,
         values=["LOW", "MEDIUM", "HIGH"],
@@ -225,9 +223,7 @@ wrong format of the parameter",
 
     id = Instrument.measurement(
         "PTW",
-        """Get the dosemeter ID.
-
-        :return: list of str
+        """Get the dosemeter ID (list[str]).
 
         .. [name, type number, firmware version, hardware revision]
         """
@@ -235,9 +231,8 @@ wrong format of the parameter",
 
     integration_time = Instrument.control(
         "IT", "IT;%d",
-        """Control the time of the interval measurement in seconds (strictly from 1 to 3599999).
-
-        :type: int, strictly from ``1`` to ``3599999``
+        """Control the time of the interval measurement in seconds
+        (int, strictly from ``1`` to ``3599999``).
         """,
         validator=strict_range,
         values=[1, 3599999],
@@ -247,17 +242,13 @@ wrong format of the parameter",
 
     mac_address = Instrument.measurement(
         "MAC",
-        """Get the dosemeter MAC address.
-
-        :return: str
-        """
+        """Get the dosemeter MAC address (str)."""
         )
 
     measurement_result = Instrument.measurement(
         "MV",
-        """Get the measurement results.
+        """Get the measurement results (dict).
 
-        :return: dict
         :dict keys: ``status``,
                     ``charge``,
                     ``dose``,
@@ -283,9 +274,8 @@ wrong format of the parameter",
 
     range = Instrument.control(
         "RGE", "RGE;%s",
-        """Control the measurement range (str strictly in "VERY_LOW", "LOW", "MEDIUM", "HIGH").
-
-        :type: str, strictly in ``VERY_LOW``, ``LOW``, ``MEDIUM``, ``HIGH``
+        """Control the measurement range
+        (str, strictly ``VERY_LOW``, ``LOW``, ``MEDIUM`` or ``HIGH``).
         """,
         validator=strict_discrete_set,
         values=["VERY_LOW", "LOW", "MEDIUM", "HIGH"],
@@ -294,9 +284,8 @@ wrong format of the parameter",
 
     range_max = Instrument.measurement(
         "MVM",
-        """Get the max value of the current measurement range.
+        """Get the max value of the current measurement range (dict).
 
-        :return: dict
         :dict keys: ``range``,
                     ``current``,
                     ``doserate``,
@@ -312,9 +301,8 @@ wrong format of the parameter",
 
     range_res = Instrument.measurement(
         "MVR",
-        """Get the resolution of the measurement range.
+        """Get the resolution of the measurement range (dict).
 
-        :return: dict
         :dict keys: ``range``,
                     ``charge``,
                     ``dose``,
@@ -334,9 +322,8 @@ wrong format of the parameter",
 
     selftest_result = Instrument.measurement(
         "ASS",
-        """Get the dosemeter selftest status and result.
+        """Get the dosemeter selftest status and result (dict).
 
-        :return: dict
         :dict keys: ``status``,
                     ``time_remaining``,
                     ``time_total``,
@@ -356,18 +343,13 @@ wrong format of the parameter",
 
     serial_number = Instrument.measurement(
         "SER",
-        """Get the dosemeter serial number.
-
-        :return: int
-        """,
+        """Get the dosemeter serial number (int).""",
         cast=int
         )
 
     status = Instrument.measurement(
         "S",
-        """Get the measurement status.
-
-        :return: str
+        """Get the measurement status (str).
 
         The status string has of one of the following values: ``RES``,
         ``MEAS``, ``HOLD``, ``INT``, ``INTHLD``, ``ZERO``, ``AUTO``,
@@ -378,9 +360,7 @@ wrong format of the parameter",
 
     tfi = Instrument.measurement(
         "TFI",
-        """Get the telegram failure information.
-
-        :return: str
+        """Get the telegram failure information (str).
 
         The property provides information about the last failed command with HTTP request.
         """
@@ -415,9 +395,7 @@ wrong format of the parameter",
 
     voltage = Instrument.control(
         "HV", "HV;%d",
-        """Control the detector voltage in Volts.
-
-        :type: int,  strictly from ``-400`` to ``400`` and within detector limits
+        """Control the detector voltage in Volts (int,  strictly from ``-400`` to ``400``)
 
         The Limits of the detector are applied.
         """,
@@ -446,9 +424,8 @@ wrong format of the parameter",
 
     zero_status = Instrument.measurement(
         "NUS",
-        """Get the status of the zero correction measurement.
+        """Get the status of the zero correction measurement (dict).
 
-        :return: dict
         :dict keys:  ``status``,
                      ``time_remaining``,
                      ``time_total``
@@ -467,7 +444,7 @@ wrong format of the parameter",
         :param str guid: optional, ID of the detector. A list of all
             detectors is returned if *guid* is not passed.
 
-        :type: dict or list of dict
+        :type: dict or list[dict]
         :dict keys: ``calibrationFactor``,
                     ``calibrationFactorUnit``,
                     ``calibrationLab``,
@@ -505,9 +482,8 @@ wrong format of the parameter",
 
     lan_config = Instrument.measurement(
         "REC",
-        """Get the ethernet configuration.
+        """Get the ethernet configuration (dict).
 
-        :return: dict
         :dict keys: ``dns``,
                     ``ipv4``,
                     ``ipv6``
@@ -517,9 +493,8 @@ wrong format of the parameter",
 
     measurement_history = Instrument.measurement(
         "RHR",
-        """Get the measurement history.
+        """Get the measurement history (list[dict]).
 
-        :return: list of dict
         :dict keys: ``date``,
                     ``detector``,
                     ``dose``,
@@ -534,9 +509,8 @@ wrong format of the parameter",
 
     measurement_parameters = Instrument.measurement(
         "RMR",
-        """Get the measurement parameters.
+        """Get the measurement parameters (dict).
 
-        :return: dict
         :dict keys: ``correction``,
                     ``detectorGuid``,
                     ``highResolution``,
@@ -557,9 +531,8 @@ wrong format of the parameter",
 
     system_info = Instrument.measurement(
         "RIR",
-        """Get the system information.
+        """Get the system information (dict).
 
-        :return: dict
         :dict keys: ``calibrationDate``,
                     ``debugBuild``,
                     ``features``,
@@ -578,9 +551,8 @@ wrong format of the parameter",
 
     system_settings = Instrument.measurement(
         "RSR",
-        """Get the system settings.
+        """Get the system settings (dict).
 
-        :return: dict
         :dict keys: ``brightness``,
                     ``date``,
                     ``keyboardSound``,
@@ -596,9 +568,8 @@ wrong format of the parameter",
 
     wlan_config = Instrument.measurement(
         "RAC",
-        """Get the WLAN access point configuration.
+        """Get the WLAN access point configuration (dict).
 
-        :return: dict
         :dict keys: ``enabled``,
                     ``ssid``
         """,
