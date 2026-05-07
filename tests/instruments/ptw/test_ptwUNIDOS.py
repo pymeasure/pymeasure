@@ -114,10 +114,9 @@ class TestProperties:
 
     @pytest.mark.parametrize("it", [-3, 0, 1E12])
     def test_integration_time_limits(self, it):
-        try:
-            ptwUNIDOS.integration_time = it
-        except ValueError:
-            pass
+        with expected_protocol(ptwUNIDOS,[]) as inst:
+            with pytest.raises(ValueError):
+                inst.integration_time = it
 
     def test_mac_address(self):
         with expected_protocol(
@@ -257,10 +256,9 @@ class TestProperties:
 
     @pytest.mark.parametrize("voltage", [-401, 401, 1E3])
     def test_voltage_limits(self, voltage):
-        try:
-            ptwUNIDOS.voltage = voltage
-        except ValueError:
-            pass
+        with expected_protocol(ptwUNIDOS, []) as inst:
+            with pytest.raises(ValueError):
+                inst.voltage = voltage
 
     def test_write_enabled(self):
         with expected_protocol(
