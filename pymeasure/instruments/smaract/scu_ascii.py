@@ -219,7 +219,7 @@ class SCUChannelLinear(SCUChannel):
 
     @property
     def position(self):
-        """Returns the current position in micrometers."""
+        """Get the current position in micrometers."""
         self.write(f":GP{self.id}")
         pos = self.read()
         return Q_(float(pos[4:]), self.unit)
@@ -234,7 +234,7 @@ class SCUChannelAngular(SCUChannel):
 
     @property
     def angle(self):
-        """Returns the current angle in m°"""
+        """Get the current angle in m°"""
         self.write(f":GA{self.id}")
         ang = self.read()
         return Q_(float(ang[4:]), self.unit)
@@ -268,7 +268,7 @@ class SCUChannelStepper(SCUChannel):
 
     @property
     def position_steps(self):
-        """ Returns the current estimated position in steps. """
+        """ Get the current estimated position in steps. """
         # We simply read our internal counter variable
         return self._current_steps
 
