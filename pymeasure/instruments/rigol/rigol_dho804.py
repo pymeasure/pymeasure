@@ -49,7 +49,7 @@ Example usage::
     scope.timebase_offset = 0.0
 
     # Configure trigger
-    scope.trigger_source = "CH1"
+    scope.trigger_source = "CHAN1"
     scope.trigger_level = 0.5
     scope.trigger_slope = "POS"
     scope.trigger_sweep = "AUTO"
@@ -63,7 +63,6 @@ Example usage::
 """
 
 import logging
-import struct
 import numpy as np
 
 from pymeasure.instruments import Instrument, Channel
@@ -71,7 +70,6 @@ from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
-    truncated_range,
 )
 
 log = logging.getLogger(__name__)
@@ -199,20 +197,16 @@ class DHO804Channel(Channel):
 class DHO804(SCPIMixin, Instrument):
     """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit oscilloscope.
 
-    The DHO804 belongs to the DHO800/DHO900 series and uses SCPI commands
-    described in the *DHO800/DHO900 Programming Guide*.  Communication is
-    handled by PyVISA, supporting USB (USBTMC) and LAN (VXI-11).
-
     .. code-block:: python
 
-        from pymeasure.instruments.rigol.dho804 import DHO804
+        from pymeasure.instruments.rigol import DHO804
 
         scope = DHO804("TCPIP::192.168.1.100::INSTR")
 
         scope.ch_1.coupling = "DC"
         scope.ch_1.scale = 0.5
         scope.timebase_scale = 500e-6
-        scope.trigger_source = "CH1"
+        scope.trigger_source = "CHAN1"
         scope.trigger_level = 1.0
         scope.run()
 
@@ -226,7 +220,7 @@ class DHO804(SCPIMixin, Instrument):
 
     name = "Rigol DHO804"
 
-    # Channel container: ch_1 … ch_4
+    # Channel container: ch_1 to ch_4
     ch_1 = Instrument.ChannelCreator(DHO804Channel, 1)
     ch_2 = Instrument.ChannelCreator(DHO804Channel, 2)
     ch_3 = Instrument.ChannelCreator(DHO804Channel, 3)
@@ -235,6 +229,19 @@ class DHO804(SCPIMixin, Instrument):
     def __init__(self, resource_name, **kwargs):
         kwargs.setdefault("name", self.name)
         super().__init__(resource_name, **kwargs)
+        
+    def wait_for_opc(self, timeout=10):
+        """Block until the oscilloscope reports operation complete."""
+        self.ask("*OPC?")
+    
+    def clear_status(self):
+        """Clear the event status register (*CLS)."""
+        self.write("*CLS")
+    
+    @property
+    def status_byte(self):
+        """Return the status byte (*STB?, int)."""
+        return int(self.ask("*STB?"))
 
     # ================================================================== #
     #  ACQUISITION                                                        #
@@ -251,7 +258,7 @@ class DHO804(SCPIMixin, Instrument):
         * ``"ULTRa"``    – UltraAcquire (DHO-series specific)
         """,
         validator=strict_discrete_set,
-        values=["NORMal", "AVERages", "PEAK", "ULTRa"],
+        values=["NORM", "AVER", "PEAK", "ULTR"],
     )
 
     acquisition_averages = Instrument.control(
@@ -320,40 +327,40 @@ class DHO804(SCPIMixin, Instrument):
     trigger_mode = Instrument.control(
         ":TRIGger:MODE?",
         ":TRIGger:MODE %s",
-        """Control the trigger mode: ``"EDGE"``, ``"PULSe"``, ``"RUNT"``,
-        ``"WIND"``, ``"NEDG"``, ``"SLOPe"``, ``"VID"``, ``"PATTern"``,
-        ``"DELay"``, ``"TIMeout"``, ``"DURation"``, ``"SHOL"``,
+        """Control the trigger mode: ``"EDGE"``, ``"PULS"``, ``"RUNT"``,
+        ``"WIND"``, ``"NEDG"``, ``"SLOP"``, ``"VID"``, ``"PATT"``,
+        ``"DEL"``, ``"TIM"``, ``"DUR"``, ``"SHOL"``,
         ``"RS232"``, ``"IIC"``, ``"SPI"``, ``"CAN"``, ``"LIN"``.""",
         validator=strict_discrete_set,
-        values=["EDGE", "PULSe", "RUNT", "WIND", "NEDG", "SLOPe",
-                "VID", "PATTern", "DELay", "TIMeout", "DURation",
+        values=["EDGE", "PULS", "RUNT", "WIND", "NEDG", "SLOP",
+                "VID", "PATT", "DEL", "TIM", "DUR",
                 "SHOL", "RS232", "IIC", "SPI", "CAN", "LIN"],
     )
 
     trigger_sweep = Instrument.control(
         ":TRIGger:SWEep?",
         ":TRIGger:SWEep %s",
-        """Control the trigger sweep mode: ``"AUTO"``, ``"NORMal"``,
-        or ``"SINGle"``.""",
+        """Control the trigger sweep mode: ``"AUTO"``, ``"NORM"``,
+        or ``"SINGl"``.""",
         validator=strict_discrete_set,
-        values=["AUTO", "NORMal", "SINGle"],
+        values=["AUTO", "NORM", "SINGl"],
     )
 
     trigger_source = Instrument.control(
         ":TRIGger:EDGE:SOURce?",
         ":TRIGger:EDGE:SOURce %s",
-        """Control the edge trigger source channel: ``"CH1"`` … ``"CH4"``,
+        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CH4"``,
         ``"D0"`` … ``"D15"``, ``"AC"``, or ``"EXT"``.""",
         validator=strict_discrete_set,
         values=(
-            ["CH1", "CH2", "CH3", "CH4", "AC", "EXT"]
+            ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
             + [f"D{n}" for n in range(16)]
         ),
     )
 
     trigger_slope = Instrument.control(
-        ":TRIGger:EDGE:SLOPe?",
-        ":TRIGger:EDGE:SLOPe %s",
+        ":TRIG:EDGE:SLOPe?",
+        ":TRIG:EDGE:SLOPe %s",
         """Control the edge trigger slope: ``"POS"`` (rising), ``"NEG"``
         (falling), or ``"RFAL"`` (either).""",
         validator=strict_discrete_set,
@@ -370,10 +377,10 @@ class DHO804(SCPIMixin, Instrument):
     trigger_coupling = Instrument.control(
         ":TRIGger:COUPling?",
         ":TRIGger:COUPling %s",
-        """Control the trigger coupling: ``"AC"``, ``"DC"``, ``"LFReject"``,
-        or ``"HFReject"``.""",
+        """Control the trigger coupling: ``"AC"``, ``"DC"``, ``"LFR"``,
+        or ``"HFR"``.""",
         validator=strict_discrete_set,
-        values=["AC", "DC", "LFReject", "HFReject"],
+        values=["AC", "DC", "LFR", "HFR"],
     )
 
     trigger_holdoff = Instrument.control(
@@ -421,14 +428,14 @@ class DHO804(SCPIMixin, Instrument):
     #  MEASUREMENTS                                                       #
     # ================================================================== #
 
-    def measure(self, item, source="CH1"):
+    def measure(self, item, source="CHAN1"):
         """Query a built-in automatic measurement.
 
         :param item: Measurement item string, e.g. ``"VMAX"``, ``"VMIN"``,
-            ``"VPP"``, ``"VRMS"``, ``"VAVG"``, ``"PERiod"``, ``"FREQuency"``,
-            ``"RISE"``, ``"FALL"``, ``"NWIDth"``, ``"PWIDth"``, ``"PDUTy"``,
-            ``"NDUTy"``.
-        :param source: Source channel string, e.g. ``"CH1"``.
+            ``"VPP"``, ``"VRMS"``, ``"VAVG"``, ``"PER"``, ``"FREQ"``,
+            ``"RISE"``, ``"FALL"``, ``"NWID"``, ``"PWID"``, ``"PDUT"``,
+            ``"NDUT"``.
+        :param source: Source channel string, e.g. ``"CHAN1"``.
         :returns: Measured value as float, or ``float("nan")`` if the
             measurement is not available.
         """
@@ -449,10 +456,10 @@ class DHO804(SCPIMixin, Instrument):
     cursor_mode = Instrument.control(
         ":CURSor:MODE?",
         ":CURSor:MODE %s",
-        """Control the cursor mode: ``"OFF"``, ``"MANual"``, ``"TRACk"``,
+        """Control the cursor mode: ``"OFF"``, ``"MAN"``, ``"TRAC"``,
         or ``"XY"``.""",
         validator=strict_discrete_set,
-        values=["OFF", "MANual", "TRACk", "XY"],
+        values=["OFF", "MAN", "TRAC", "XY"],
     )
 
     # ================================================================== #
