@@ -89,7 +89,6 @@ class SCUChannel(Channel):
     Provides the controls and motion helpers shared by linear, angular, and
     stepper specialisations. """
 
-
     unit: str = ''
 
     frequency_max = Channel.control(
