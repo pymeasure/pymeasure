@@ -10,3 +10,4 @@ This section contains specific documentation on the Inficon instruments that are
    :maxdepth: 2
 
    sqm160
+   vgc501

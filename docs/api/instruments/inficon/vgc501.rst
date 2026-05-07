@@ -1,0 +1,7 @@
+#############################
+Inficon VGC501 Pressure Gauge
+#############################
+
+.. autoclass:: pymeasure.instruments.inficon.VGC501
+    :members:
+    :show-inheritance:
