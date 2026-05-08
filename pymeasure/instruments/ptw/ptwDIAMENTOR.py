@@ -25,6 +25,9 @@
 
 import logging
 
+from typing import Any, Union
+
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
@@ -36,10 +39,11 @@ log.addHandler(logging.NullHandler())
 class ptwDIAMENTOR(Instrument):
     """A class representing the PTW DIAMENTOR DAP dosemeters."""
 
-    def __init__(self, adapter,
-                 name="PTW DIAMENTOR DAP dosemeter",
-                 baud_rate=9600,
-                 **kwargs):
+    def __init__(self,
+                 adapter: Union[Adapter, int, str],
+                 name: str = "PTW DIAMENTOR DAP dosemeter",
+                 baud_rate: int = 9600,
+                 **kwargs: Any) -> None:
         super().__init__(
             adapter,
             name,
@@ -49,10 +53,8 @@ class ptwDIAMENTOR(Instrument):
             **kwargs
         )
 
-    def read(self):
+    def read(self) -> str:
         """Read the device response and check for errors.
-
-        :return: str
 
         :raises: *ValueError* for error response or *ConnectionError* for an unknown error
         """
@@ -82,7 +84,7 @@ class ptwDIAMENTOR(Instrument):
         else:
             return got
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after sending a command."""
 
         try:
@@ -97,11 +99,11 @@ class ptwDIAMENTOR(Instrument):
 # Methods #
 ###########
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the dose and charge measurement values."""
         self.ask("RES")
 
-    def execute_selftest(self):
+    def execute_selftest(self) -> None:
         """Execute the DIAMENTOR selftest.
 
         :raises: *ValueError* if selftest fails
