@@ -114,9 +114,8 @@ class ptwDIAMENTOR(Instrument):
 
     baudrate = Instrument.control(
         "BR", "BR%d",
-        """Control the baudrate.
-
-        :type: int, strictly in ``9600``, ``19200``, ``38400``, ``57600``, ``115200``
+        """Control the baudrate
+        (int, strictly ``9600``, ``19200``, ``38400``, ``57600`` or ``115200``).
 
         The baudrate is changed after sending the respone.
         """,
@@ -154,9 +153,8 @@ class ptwDIAMENTOR(Instrument):
 
     pressure = Instrument.control(
         "PRE", "PRE%04d",
-        """Control the atmospheric pressure in hPa.
-
-        :type: int, strictly from ``500`` to ``1500``, default: ``1013``
+        """Control the atmospheric pressure in hPa
+        (int, strictly from ``500`` to ``1500``, default: ``1013``).
 
         It is used for the air density correction.
         """,
@@ -169,14 +167,15 @@ class ptwDIAMENTOR(Instrument):
 
     id = Instrument.measurement(
         "PTW",
-        """Get the firmware version (str) ("CRS x.xx")""",
+        """Get the firmware version (str).
+
+        Example response: ``CRS 2.33``
+        """,
         )
 
     measurement = Instrument.measurement(
         "M",
-        """Get the measurement result.
-
-        :return: dict
+        """Get the measurement result (dict).
 
         :dict keys: ``dap``,
                     ``dap_rate``,
@@ -200,9 +199,8 @@ class ptwDIAMENTOR(Instrument):
 
     temperature = Instrument.control(
         "TMPA", "TMPA%02d",
-        """Control the chamber temperature in degree Celsius.
-
-        :type: int, strictly from ``0`` to ``70``, default: ``20``
+        """Control the chamber temperature in degree Celsius
+        (int, strictly from ``0`` to ``70``, default: ``20``).
 
         It is used for the air density correction.
         """,
@@ -215,9 +213,8 @@ class ptwDIAMENTOR(Instrument):
 
     dap_unit = Instrument.control(
         "U", "U%d",
-        """Control the dose-area-product (DAP) unit.
-
-        :type: str, strictly in ``cGycm2``, ``Gycm2``, ``uGym2``, ``Rcm2``
+        """Control the dose-area-product (DAP) unit (str, strictly
+        ``cGycm2``, ``Gycm2``, ``uGym2`` or ``Rcm2``).
 
         - ``cGycm2`` selects cGy*cm²
         - ``Gycm2`` selects Gy*cm²
@@ -237,9 +234,8 @@ class ptwDIAMENTOR(Instrument):
 
     calibration_factor = Instrument.control(
         "KA", "KA%s",
-        """Control the calibration factor of the measurement chamber in µGy*m²/s.
-
-        :type: float, strictly from ``1E8`` to ``9.999E12``, default: ``1.0E9``
+        """Control the calibration factor of the measurement chamber in µGy*m²/s (float,
+        strictly from ``1E8`` to ``9.999E12``, default: ``1.0E9``).
 
         The unit of the calibration factor is always µGy*m²/s.
         It is independent from the selected :attr:`dap_unit`.
@@ -260,9 +256,8 @@ class ptwDIAMENTOR(Instrument):
 
     correction_factor = Instrument.control(
         "KFA", "KFA%.3f",
-        """Control the correction factor of the chamber.
-
-        :type: float, strictly from ``0`` to ``9.999``, default: ``1.0``
+        """Control the correction factor of the chamber (float, strictly
+        from ``0`` to ``9.999``, default: ``1.0``).
         """,
         validator=strict_range,
         values=[0, 9.999],
