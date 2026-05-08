@@ -22,6 +22,9 @@
 # THE SOFTWARE.
 #
 
+from typing import Any, Union
+
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import SCPIMixin, Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range,
@@ -57,9 +60,10 @@ class AgilentB2981(SCPIMixin, Instrument):
 
     The B2981 is a Femto/Picoammeter."""
 
-    def __init__(self, adapter,
-                 name="Agilent/Keysight B2980A/B series",
-                 **kwargs):
+    def __init__(self,
+                 adapter: Union[Adapter, int, str],
+                 name: str = "Agilent/Keysight B2980A/B series",
+                 **kwargs: Any):
         super().__init__(
             adapter,
             name,
@@ -126,11 +130,11 @@ class AgilentB2981(SCPIMixin, Instrument):
 # Trigger system #
 ##################
 
-    def abort(self):
+    def abort(self) -> None:
         """Abort the all actions."""
         self.write(":ABOR:ALL")
 
-    def arm(self):
+    def arm(self) -> None:
         """Send an immediate arm trigger for all actions.
 
         When the status of all actions is initiated, the arm trigger
@@ -138,15 +142,15 @@ class AgilentB2981(SCPIMixin, Instrument):
         """
         self.write(":ARM:ALL")
 
-    def init(self):
+    def init(self) -> None:
         """Initiate a trigger for all actions."""
         self.write(":INIT:ALL")
 
-    def abort_acquisition(self):
+    def abort_acquisition(self) -> None:
         """Abort action 'ACQuire'."""
         self.write(":ABOR:ACQ")
 
-    def arm_acquisition(self):
+    def arm_acquisition(self) -> None:
         """Send an immediate arm trigger for action 'ACQuire'.
 
         When the status of action 'ACQuire' is initiated, the arm trigger
@@ -154,7 +158,7 @@ class AgilentB2981(SCPIMixin, Instrument):
         """
         self.write(":ARM:ACQ")
 
-    def init_acquisition(self):
+    def init_acquisition(self) -> None:
         """Initiate a trigger for action 'ACQuire'."""
         self.write(":INIT:ACQ")
 
@@ -761,11 +765,11 @@ class AgilentB2985(AgilentB2981):
 # Trigger functions for action 'TRANsient' (voltage source)#
 ############################################################
 
-    def abort_transient(self):
+    def abort_transient(self) -> None:
         """Abort action 'TRANSient'."""
         self.write(":ABOR:TRAN")
 
-    def arm_transient(self):
+    def arm_transient(self) -> None:
         """Send an immediate arm trigger for action 'TRANSient'.
 
         When the status of the specified action is initiated, the arm trigger
@@ -773,7 +777,7 @@ class AgilentB2985(AgilentB2981):
         """
         self.write(":ARM:TRAN")
 
-    def init_transient(self):
+    def init_transient(self) -> None:
         """Initiate a trigger for action 'TRANSient'."""
         self.write(":INIT:TRAN")
 
