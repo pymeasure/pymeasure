@@ -9,7 +9,7 @@ authors = [
     {name = "PyMeasure Developers"}
 ]
 description = "Scientific measurement library for instruments, experiments, and live-plotting"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
 license = {text = "MIT"}
 classifiers = [
@@ -21,7 +21,6 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
