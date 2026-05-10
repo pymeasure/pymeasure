@@ -217,6 +217,10 @@ class Worker(StoppableThread):
 
         try:
             self.procedure.startup()
+
+            if self.should_stop():
+                return
+
             self.procedure.evaluate_metadata()
             self.results.store_metadata()
             self.procedure.execute()
