@@ -116,9 +116,11 @@ class TestResults:
 
     @mock.patch('pymeasure.experiment.results.open', mock.mock_open(), create=True)
     @mock.patch('os.path.exists', return_value=True)
+    @mock.patch('os.path.getsize', return_value=0)
     @mock.patch('pymeasure.experiment.results.pd.read_csv')
     def test_regression_attr_data_when_up_to_date_should_retain_dtype(self,
                                                                       read_csv_mock,
+                                                                      getsize_mock,
                                                                       path_exists_mock):
         procedure_mock = mock.MagicMock(spec=Procedure)
         result = Results(procedure_mock, 'test.csv')
