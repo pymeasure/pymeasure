@@ -135,7 +135,8 @@ wrong format of the parameter",
 
         for n in range(len(err_txt)):
             if err_code & (2**n):
-                err_msg.append(err_txt[n])
+                if err_txt[n] is not None:
+                    err_msg.append(err_txt[n])
 
         return err_msg
 
