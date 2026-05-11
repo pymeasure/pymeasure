@@ -54,6 +54,14 @@ class TestMethods:
         ) as inst:
             inst.interval_measurement()
 
+    def test_intervall_deprecation_warning(self):
+        with pytest.warns(FutureWarning):
+            with expected_protocol(
+                ptwUNIDOS,
+                [("INT", "INT")]
+            ) as inst:
+                inst.intervall()
+
     def test_measure(self):
         with expected_protocol(
             ptwUNIDOS,

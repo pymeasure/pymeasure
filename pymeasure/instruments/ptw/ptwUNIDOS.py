@@ -25,6 +25,7 @@
 
 import logging
 import json
+import warnings
 from typing import Any, Union, Optional
 
 from pymeasure.adapters import Adapter
@@ -157,6 +158,18 @@ wrong format of the parameter",
         .. note:: Write permission is required.
         """
         self.ask("HLD")
+
+    def intervall(self, intervall: Optional[int] = None) -> None:
+        """Execute an interval measurement.
+
+        .. deprecated:: 0.16.0
+            Use :meth:`interval_measurement` instead.
+        """
+        warnings.warn(
+            "`intervall()` is deprecated, use 'interval_measurement()' instead",
+            FutureWarning
+            )
+        return self.interval_measurement(intervall)
 
     def interval_measurement(self, interval: Optional[int] = None) -> None:
         """Execute an interval measurement.
