@@ -160,7 +160,7 @@ wrong format of the parameter",
     def interval_measurement(self, interval: Optional[int] = None) -> None:
         """Execute an interval measurement.
 
-        :param int interval: optional, measurement interval in seconds
+        :param interval: optional, measurement interval in seconds
 
         If *interval* is not specified a measurement with the current setting of the
         :attr:`integration_time` is executed.
