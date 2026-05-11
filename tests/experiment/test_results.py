@@ -166,7 +166,7 @@ class TestPandas3Numpy2Compat:
     def test_results_numeric_dtype_preserved_after_reload(self, tmpdir):
         """Numeric dtypes must be preserved after writing and reloading a Results file."""
         class DummyProcedure(Procedure):
-            DATA_COLUMNS = ['x', 'y']
+            DATA_COLUMNS = ('x', 'y')
 
         procedure = DummyProcedure()
         filename = os.path.join(str(tmpdir), 'dtype_test.csv')
@@ -181,7 +181,7 @@ class TestPandas3Numpy2Compat:
     def test_results_numeric_dtype_preserved_after_incremental_read(self, tmpdir):
         """Numeric dtypes must not become object/str when reading new rows incrementally."""
         class DummyProcedure(Procedure):
-            DATA_COLUMNS = ['x', 'y']
+            DATA_COLUMNS = ('x', 'y')
 
         procedure = DummyProcedure()
         filename = os.path.join(str(tmpdir), 'incremental_dtype_test.csv')
@@ -201,7 +201,7 @@ class TestPandas3Numpy2Compat:
     def test_results_concat_sort_false_preserves_column_order(self, tmpdir):
         """pd.concat with sort=False must preserve column order from DATA_COLUMNS."""
         class DummyProcedure(Procedure):
-            DATA_COLUMNS = ['z', 'a', 'b']
+            DATA_COLUMNS = ('z', 'a', 'b')
 
         procedure = DummyProcedure()
         filename = os.path.join(str(tmpdir), 'column_order_test.csv')
@@ -226,7 +226,7 @@ class TestPandas3Numpy2Compat:
     def test_results_empty_file_returns_empty_dataframe(self, tmpdir):
         """An empty Results file must return an empty DataFrame without dtype errors."""
         class DummyProcedure(Procedure):
-            DATA_COLUMNS = ['x', 'y']
+            DATA_COLUMNS = ('x', 'y')
 
         procedure = DummyProcedure()
         filename = os.path.join(str(tmpdir), 'empty_test.csv')
