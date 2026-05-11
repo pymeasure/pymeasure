@@ -25,7 +25,7 @@
 
 import logging
 import json
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
