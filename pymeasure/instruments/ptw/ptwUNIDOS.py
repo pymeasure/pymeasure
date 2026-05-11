@@ -157,7 +157,7 @@ wrong format of the parameter",
         """
         self.ask("HLD")
 
-    def interval_measurement(self, interval=None) -> None:
+    def interval_measurement(self, interval: Optional[int] = None) -> None:
         """Execute an interval measurement.
 
         :param int interval: optional, measurement interval in seconds
