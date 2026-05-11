@@ -38,7 +38,10 @@ from pymeasure.instruments.santec.tsl500series import (  # noqa: F401
 
 class TSL570(TSL500Series):
     """Represents the Santec TSL-570 Tunable Laser and provides a high-level interface for
-    interacting with the instrument."""
+    interacting with the instrument.
+
+    Unless otherwise stated, units of wavelength and optical frequency are determined by
+    :attr:`TSL570.command_set`."""
 
     def __init__(self, adapter, name="Santec TSL-570", **kwargs):
         super().__init__(adapter, name, **kwargs)

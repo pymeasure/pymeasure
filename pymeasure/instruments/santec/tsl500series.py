@@ -91,7 +91,7 @@ class TSL500Series(SCPIMixin, Instrument):
     power_unit = Instrument.control(
         ":POWer:UNIT?",
         ":POWer:UNIT %d",
-        """Control the unit of power (str dBm or mW)""",
+        """Control the unit of power (str, 'dBm' or 'mW').""",
         validator=strict_discrete_set,
         values={"dBm": 0, "mW": 1},
         map_values=True,
@@ -185,14 +185,14 @@ class TSL500Series(SCPIMixin, Instrument):
 
     sweep_status = Instrument.measurement(
         ":WAVelength:SWEep?",
-        """Get the current sweep status as a SweepStatus enum.""",
+        """Get the current sweep status as a :class:`SweepStatus` enum.""",
         get_process=lambda v: SweepStatus(v),
     )
 
     sweep_mode = Instrument.control(
         ":WAVelength:SWEep:MODe?",
         ":WAVelength:SWEep:MODe %d",
-        """Control the sweep mode as a SweepMode enum.""",
+        """Control the sweep mode as a :class:`SweepMode` enum.""",
         validator=strict_discrete_set,
         values=[m.value for m in SweepMode],
         get_process=lambda v: SweepMode(v),
