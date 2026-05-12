@@ -22,48 +22,9 @@
 # THE SOFTWARE.
 #
 
-
-"""
-PyMeasure driver for the Rigol DHO804 digital oscilloscope.
-
-The DHO804 is a 4-channel, 12-bit, 250 MSa/s oscilloscope from the DHO800
-series.  The driver follows the modern PyMeasure Channel-based pattern and
-supports USB (USBTMC) and LAN (VXI-11 / raw socket) connections through
-PyVISA.
-
-Example usage::
-
-    from pymeasure.instruments.rigol.dho804 import DHO804
-
-    scope = DHO804("TCPIP::192.168.1.100::INSTR")
-
-    # Configure channel 1
-    ch1 = scope.ch_1
-    ch1.display = True
-    ch1.coupling = "DC"
-    ch1.scale = 1.0      # 1 V/div
-    ch1.offset = 0.0
-
-    # Configure timebase
-    scope.timebase_scale = 1e-3   # 1 ms/div
-    scope.timebase_offset = 0.0
-
-    # Configure trigger
-    scope.trigger_source = "CHAN1"
-    scope.trigger_level = 0.5
-    scope.trigger_slope = "POS"
-    scope.trigger_sweep = "AUTO"
-
-    # Acquire a single trace
-    scope.single()
-    scope.wait_for_opc()
-
-    # Download waveform from channel 1
-    time, voltage = scope.get_waveform(1)
-"""
-
 import logging
 import numpy as np
+from pyvisa.util import from_ieee_block
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -77,53 +38,36 @@ log.addHandler(logging.NullHandler())
 
 
 class DHO804Channel(Channel):
-    """A single analogue input channel of the Rigol DHO804.
-
-    Do not instantiate directly – use the channel accessors on
-    :class:`DHO804` (``scope.ch_1``, ``scope.ch_2``, …).
-
-    The channel prefix (e.g. ``:CHANnel1:``) is set by the
-    :class:`DHO804` instrument via ``ChannelCreator``.  All command strings
-    here are **relative** to that prefix – PyMeasure prepends it
-    automatically before sending to the instrument.
-    """
-
-    # -- Display -------------------------------------------------------- #
+    """A single analog input channel of the Rigol DHO804."""
 
     display = Channel.control(
-        ":CHAN{ch}:DISPlay?",
-        ":CHAN{ch}:DISPlay %d",
+        ":CHAN{ch}:DISP?",
+        ":CHAN{ch}:DISP %d",
         """Control whether the channel is displayed (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
 
-    # -- Coupling ------------------------------------------------------- #
-
     coupling = Channel.control(
-        ":CHAN{ch}:COUPling?",
-        ":CHAN{ch}:COUPling %s",
+        ":CHAN{ch}:COUP?",
+        ":CHAN{ch}:COUP %s",
         """Control the input coupling: ``"AC"``, ``"DC"``, or ``"GND"``.""",
         validator=strict_discrete_set,
         values=["AC", "DC", "GND"],
     )
 
-    # -- Bandwidth limit ------------------------------------------------ #
-
     bandwidth_limit = Channel.control(
-        ":CHAN{ch}:BWLimit?",
-        ":CHAN{ch}:BWLimit %s",
+        ":CHAN{ch}:BWL?",
+        ":CHAN{ch}:BWL %s",
         """Control the bandwidth limit: ``"OFF"``, ``"20M"``, or ``"100M"``.""",
         validator=strict_discrete_set,
         values=["OFF", "20M", "100M"],
     )
 
-    # -- Vertical scale ------------------------------------------------- #
-
     scale = Channel.control(
-        ":CHAN{ch}:SCALe?",
-        ":CHAN{ch}:SCALe %g",
+        ":CHAN{ch}:SCAL?",
+        ":CHAN{ch}:SCAL %g",
         """Control the vertical scale in V/div (float).
 
         Valid range: 500 µV/div – 10 V/div for a 1x probe.
@@ -133,20 +77,16 @@ class DHO804Channel(Channel):
         cast=float,
     )
 
-    # -- Vertical offset ------------------------------------------------ #
-
     offset = Channel.control(
-        ":CHAN{ch}:OFFSet?",
-        ":CHAN{ch}:OFFSet %g",
+        ":CHAN{ch}:OFFS?",
+        ":CHAN{ch}:OFFS %g",
         """Control the vertical offset in Volts (float).""",
         cast=float,
     )
 
-    # -- Probe ratio ---------------------------------------------------- #
-
     probe = Channel.control(
-        ":CHAN{ch}:PROBe?",
-        ":CHAN{ch}:PROBe %g",
+        ":CHAN{ch}:PROB?",
+        ":CHAN{ch}:PROB %g",
         """Control the probe attenuation ratio (float, e.g. 1, 10, 100).""",
         validator=strict_discrete_set,
         values=[0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5,
@@ -154,39 +94,33 @@ class DHO804Channel(Channel):
         cast=float,
     )
 
-    # -- Invert --------------------------------------------------------- #
-
     invert = Channel.control(
-        ":CHAN{ch}:INVert?",
-        ":CHAN{ch}:INVert %s",
+        ":CHAN{ch}:INV?",
+        ":CHAN{ch}:INV %s",
         """Control whether the channel waveform is inverted (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
     )
 
-    # -- Units ---------------------------------------------------------- #
-
     units = Channel.control(
-        ":CHAN{ch}:UNITs?",
-        ":CHAN{ch}:UNITs %s",
+        ":CHAN{ch}:UNIT?",
+        ":CHAN{ch}:UNIT %s",
         """Control the unit of the vertical axis: ``"VOLT"``, ``"WATT"``,
         ``"AMP"``, or ``"UNKN"``.""",
         validator=strict_discrete_set,
         values=["VOLT", "WATT", "AMP", "UNKN"],
     )
 
-    # -- Label ---------------------------------------------------------- #
-
     label = Channel.control(
-        ":CHAN{ch}:LABel?",
-        ":CHAN{ch}:LABel %s",
-        """Control the label shown for the channel (string, max 10 chars).""",
+        ":CHAN{ch}:LAB:CONT?",
+        ":CHAN{ch}:LAB:CONT %s",
+        """Control the label content shown for the channel (string, max 10 chars).""",
     )
 
-    label_display = Channel.control(
-        ":CHAN{ch}:LABel:DISPlay?",
-        ":CHAN{ch}:LABel:DISPlay %s",
+    label_show = Channel.control(
+        ":CHAN{ch}:LAB:SHOW?",
+        ":CHAN{ch}:LAB:SHOW %s",
         """Control whether the label is shown on screen (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -195,32 +129,10 @@ class DHO804Channel(Channel):
 
 
 class DHO804(SCPIMixin, Instrument):
-    """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit oscilloscope.
-
-    .. code-block:: python
-
-        from pymeasure.instruments.rigol import DHO804
-
-        scope = DHO804("TCPIP::192.168.1.100::INSTR")
-
-        scope.ch_1.coupling = "DC"
-        scope.ch_1.scale = 0.5
-        scope.timebase_scale = 500e-6
-        scope.trigger_source = "CHAN1"
-        scope.trigger_level = 1.0
-        scope.run()
-
-        t, v = scope.get_waveform(1)
-
-    :param resource_name: VISA resource string, e.g.
-        ``"USB0::0x1AB1::0x044C::DHO804XXXXXX::INSTR"`` or
-        ``"TCPIP::192.168.1.100::INSTR"``.
-    :param kwargs: Passed on to :class:`~pymeasure.instruments.Instrument`.
-    """
+    """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit oscilloscope."""
 
     name = "Rigol DHO804"
 
-    # Channel container: ch_1 to ch_4
     ch_1 = Instrument.ChannelCreator(DHO804Channel, 1)
     ch_2 = Instrument.ChannelCreator(DHO804Channel, 2)
     ch_3 = Instrument.ChannelCreator(DHO804Channel, 3)
@@ -235,12 +147,12 @@ class DHO804(SCPIMixin, Instrument):
         self.ask("*OPC?")
     
     def clear_status(self):
-        """Clear the event status register (*CLS)."""
+        """Clear the event status register (CLS)."""
         self.write("*CLS")
     
     @property
     def status_byte(self):
-        """Return the status byte (*STB?, int)."""
+        """Return the status byte (STB, int)."""
         return int(self.ask("*STB?"))
 
     # ================================================================== #
@@ -248,22 +160,22 @@ class DHO804(SCPIMixin, Instrument):
     # ================================================================== #
 
     acquisition_type = Instrument.control(
-        ":ACQuire:TYPE?",
-        ":ACQuire:TYPE %s",
+        ":ACQ:TYPE?",
+        ":ACQ:TYPE %s",
         """Control the acquisition mode:
 
-        * ``"NORMal"``   – Normal (default)
-        * ``"AVERages"`` – Average
+        * ``"NORM"``     – Normal (default)
+        * ``"AVER"``     – Average
         * ``"PEAK"``     – Peak detect
-        * ``"ULTRa"``    – UltraAcquire (DHO-series specific)
+        * ``"ULTR"``     – UltraAcquire (DHO-series specific)
         """,
         validator=strict_discrete_set,
         values=["NORM", "AVER", "PEAK", "ULTR"],
     )
 
     acquisition_averages = Instrument.control(
-        ":ACQuire:AVERages?",
-        ":ACQuire:AVERages %d",
+        ":ACQ:AVER?",
+        ":ACQ:AVER %d",
         """Control the number of averages (2 … 65536, powers of 2).""",
         validator=strict_discrete_set,
         values=[2**n for n in range(1, 17)],
@@ -271,8 +183,8 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     acquisition_memory_depth = Instrument.control(
-        ":ACQuire:MDEPth?",
-        ":ACQuire:MDEPth %s",
+        ":ACQ:MDEP?",
+        ":ACQ:MDEP %s",
         """Control the memory depth per channel.
 
         Accepted values: ``"AUTO"``, 1000, 10000, 100000, 1000000,
@@ -287,15 +199,15 @@ class DHO804(SCPIMixin, Instrument):
     @property
     def sample_rate(self):
         """Return the current sample rate in Sa/s (read-only, float)."""
-        return float(self.ask(":ACQuire:SRATe?"))
+        return float(self.ask(":ACQ:SRAT?"))
 
     # ================================================================== #
     #  TIMEBASE                                                           #
     # ================================================================== #
 
     timebase_scale = Instrument.control(
-        ":TIMebase:MAIN:SCALe?",
-        ":TIMebase:MAIN:SCALe %g",
+        ":TIM:MAIN:SCAL?",
+        ":TIM:MAIN:SCAL %g",
         """Control the horizontal (timebase) scale in s/div (float).
 
         Valid range: 1 ns/div – 1000 s/div.
@@ -306,15 +218,15 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     timebase_offset = Instrument.control(
-        ":TIMebase:MAIN:OFFSet?",
-        ":TIMebase:MAIN:OFFSet %g",
+        ":TIM:MAIN:OFFS?",
+        ":TIM:MAIN:OFFS %g",
         """Control the horizontal offset (trigger delay) in seconds (float).""",
         cast=float,
     )
 
     timebase_mode = Instrument.control(
-        ":TIMebase:MODE?",
-        ":TIMebase:MODE %s",
+        ":TIM:MODE?",
+        ":TIM:MODE %s",
         """Control the timebase mode: ``"MAIN"``, ``"XY"``, or ``"ROLL"``.""",
         validator=strict_discrete_set,
         values=["MAIN", "XY", "ROLL"],
@@ -325,8 +237,8 @@ class DHO804(SCPIMixin, Instrument):
     # ================================================================== #
 
     trigger_mode = Instrument.control(
-        ":TRIGger:MODE?",
-        ":TRIGger:MODE %s",
+        ":TRIG:MODE?",
+        ":TRIG:MODE %s",
         """Control the trigger mode: ``"EDGE"``, ``"PULS"``, ``"RUNT"``,
         ``"WIND"``, ``"NEDG"``, ``"SLOP"``, ``"VID"``, ``"PATT"``,
         ``"DEL"``, ``"TIM"``, ``"DUR"``, ``"SHOL"``,
@@ -338,29 +250,27 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     trigger_sweep = Instrument.control(
-        ":TRIGger:SWEep?",
-        ":TRIGger:SWEep %s",
+        ":TRIG:SWE?",
+        ":TRIG:SWE %s",
         """Control the trigger sweep mode: ``"AUTO"``, ``"NORM"``,
-        or ``"SINGl"``.""",
+        or ``"SING"``.""",
         validator=strict_discrete_set,
-        values=["AUTO", "NORM", "SINGl"],
+        values=["AUTO", "NORM", "SING"],
     )
 
     trigger_source = Instrument.control(
-        ":TRIGger:EDGE:SOURce?",
-        ":TRIGger:EDGE:SOURce %s",
-        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CH4"``,
-        ``"D0"`` … ``"D15"``, ``"AC"``, or ``"EXT"``.""",
+        ":TRIG:EDGE:SOUR?",
+        ":TRIG:EDGE:SOUR %s",
+        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CHAN4"``, ``"AC"``, or ``"EXT"``.""",
         validator=strict_discrete_set,
         values=(
             ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
-            + [f"D{n}" for n in range(16)]
         ),
     )
 
     trigger_slope = Instrument.control(
-        ":TRIG:EDGE:SLOPe?",
-        ":TRIG:EDGE:SLOPe %s",
+        ":TRIG:EDGE:SLOP?",
+        ":TRIG:EDGE:SLOP %s",
         """Control the edge trigger slope: ``"POS"`` (rising), ``"NEG"``
         (falling), or ``"RFAL"`` (either).""",
         validator=strict_discrete_set,
@@ -368,15 +278,15 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     trigger_level = Instrument.control(
-        ":TRIGger:EDGE:LEVel?",
-        ":TRIGger:EDGE:LEVel %g",
+        ":TRIG:EDGE:LEV?",
+        ":TRIG:EDGE:LEV %g",
         """Control the trigger level in Volts (float).""",
         cast=float,
     )
 
     trigger_coupling = Instrument.control(
-        ":TRIGger:COUPling?",
-        ":TRIGger:COUPling %s",
+        ":TRIG:COUP?",
+        ":TRIG:COUP %s",
         """Control the trigger coupling: ``"AC"``, ``"DC"``, ``"LFR"``,
         or ``"HFR"``.""",
         validator=strict_discrete_set,
@@ -384,8 +294,8 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     trigger_holdoff = Instrument.control(
-        ":TRIGger:HOLDoff?",
-        ":TRIGger:HOLDoff %g",
+        ":TRIG:HOLD?",
+        ":TRIG:HOLD %g",
         """Control the trigger holdoff time in seconds (float).""",
         cast=float,
     )
@@ -397,7 +307,7 @@ class DHO804(SCPIMixin, Instrument):
         Possible values: ``"TD"``, ``"WAIT"``, ``"RUN"``, ``"AUTO"``,
         ``"STOP"``.
         """
-        return self.ask(":TRIGger:STATus?").strip()
+        return self.ask(":TRIG:STAT?").strip()
 
     # ================================================================== #
     #  RUN CONTROL                                                        #
@@ -413,16 +323,16 @@ class DHO804(SCPIMixin, Instrument):
 
     def single(self):
         """Trigger a single acquisition."""
-        self.write(":SINGle")
+        self.write(":SING")
 
     def force_trigger(self):
         """Force a trigger event."""
-        self.write(":TFORce")
+        self.write(":TFOR")
 
     def autoset(self):
         """Execute AUTOSET to automatically configure timebase, channels, and
         trigger based on the input signals."""
-        self.write(":AUTOset")
+        self.write(":AUTO")
 
     # ================================================================== #
     #  MEASUREMENTS                                                       #
@@ -439,7 +349,7 @@ class DHO804(SCPIMixin, Instrument):
         :returns: Measured value as float, or ``float("nan")`` if the
             measurement is not available.
         """
-        result = self.ask(f":MEASure:ITEM? {item},{source}").strip()
+        result = self.ask(f":MEAS:ITEM? {item},{source}").strip()
         try:
             return float(result)
         except ValueError:
@@ -447,15 +357,15 @@ class DHO804(SCPIMixin, Instrument):
 
     def clear_measurements(self):
         """Remove all displayed measurements."""
-        self.write(":MEASure:CLEar:ALL")
+        self.write(":MEAS:CLE:ALL")
 
     # ================================================================== #
     #  CURSOR                                                             #
     # ================================================================== #
 
     cursor_mode = Instrument.control(
-        ":CURSor:MODE?",
-        ":CURSor:MODE %s",
+        ":CURS:MODE?",
+        ":CURS:MODE %s",
         """Control the cursor mode: ``"OFF"``, ``"MAN"``, ``"TRAC"``,
         or ``"XY"``.""",
         validator=strict_discrete_set,
@@ -468,11 +378,11 @@ class DHO804(SCPIMixin, Instrument):
 
     def clear_screen(self):
         """Clear the waveform display area."""
-        self.write(":DISPlay:CLEar")
+        self.write(":DISP:CLE")
 
     display_type = Instrument.control(
-        ":DISPlay:TYPE?",
-        ":DISPlay:TYPE %s",
+        ":DISP:TYPE?",
+        ":DISP:TYPE %s",
         """Control the waveform display type: ``"VECT"`` (vector) or
         ``"DOTS"``.""",
         validator=strict_discrete_set,
@@ -480,8 +390,8 @@ class DHO804(SCPIMixin, Instrument):
     )
 
     display_grading_time = Instrument.control(
-        ":DISPlay:GRADing:TIME?",
-        ":DISPlay:GRADing:TIME %s",
+        ":DISP:GRAD:TIME?",
+        ":DISP:GRAD:TIME %s",
         """Control the persistence time: ``"MIN"``, ``"0.1"``, ``"0.5"``,
         ``"1"``, ``"5"``, ``"10"``, or ``"INF"``.""",
         validator=strict_discrete_set,
@@ -494,7 +404,7 @@ class DHO804(SCPIMixin, Instrument):
 
     def _set_waveform_source(self, channel):
         """Set the waveform source to the given channel number (1-4)."""
-        self.write(f":WAVeform:SOURce CHANnel{channel}")
+        self.write(f":WAV:SOUR CHAN{channel}")
 
     def get_waveform_preamble(self, channel=1):
         """Return the waveform preamble for *channel* as a dict.
@@ -508,7 +418,7 @@ class DHO804(SCPIMixin, Instrument):
             ``yincrement``, ``yorigin``, ``yreference``.
         """
         self._set_waveform_source(channel)
-        raw = self.ask(":WAVeform:PREamble?").strip()
+        raw = self.ask(":WAV:PRE?").strip()
         parts = raw.split(",")
         keys = [
             "format", "type", "points", "count",
@@ -527,7 +437,7 @@ class DHO804(SCPIMixin, Instrument):
         preamble["yreference"] = int(preamble["yreference"])
         return preamble
 
-    def get_waveform(self, channel=1, mode="NORMal", fmt="BYTE"):
+    def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
         """Download a waveform from the oscilloscope.
 
         The scope must be stopped (or in single mode) before calling this
@@ -536,9 +446,9 @@ class DHO804(SCPIMixin, Instrument):
         :param channel: Channel number 1-4.
         :param mode: Waveform mode:
 
-            * ``"NORMal"``   – points shown on screen (up to 1200)
-            * ``"MAXimum"``  – all points in memory (slow)
-            * ``"RAW"``      – raw ADC samples from memory
+            * ``"NORM"``   – points shown on screen (up to 1200)
+            * ``"MAX"``    – all points in memory (slow)
+            * ``"RAW"``    – raw ADC samples from memory
 
         :param fmt: Data format: ``"BYTE"`` (8-bit unsigned) or
             ``"WORD"`` (16-bit unsigned, higher precision).
@@ -548,38 +458,27 @@ class DHO804(SCPIMixin, Instrument):
         """
         if fmt not in ("BYTE", "WORD"):
             raise ValueError(f"fmt must be 'BYTE' or 'WORD', got '{fmt}'")
-        if mode not in ("NORMal", "MAXimum", "RAW"):
+        if mode not in ("NORM", "MAX", "RAW"):
             raise ValueError(
-                f"mode must be 'NORMal', 'MAXimum', or 'RAW', got '{mode}'"
+                f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'"
             )
 
         self._set_waveform_source(channel)
-        self.write(f":WAVeform:MODE {mode}")
-        self.write(f":WAVeform:FORMat {fmt}")
+        self.write(f":WAV:MODE {mode}")
+        self.write(f":WAV:FORM {fmt}")
 
         # Read preamble for scaling coefficients
         pre = self.get_waveform_preamble(channel)
 
         # Request binary waveform data
-        self.write(":WAVeform:DATA?")
+        self.write(":WAV:DATA?")
         raw = self.read_bytes(-1)  # read all available bytes
 
-        # Parse IEEE 488.2 definite-length block header: #<N><N digits><data>
-        if raw[0:1] != b"#":
-            raise RuntimeError(
-                "Unexpected waveform data header: expected '#', "
-                f"got {raw[0:1]!r}"
-            )
-        n_digits = int(raw[1:2])
-        n_bytes = int(raw[2: 2 + n_digits])
-        data_start = 2 + n_digits
-        raw_data = raw[data_start: data_start + n_bytes]
-
-        # Unpack binary data
-        if fmt == "BYTE":
-            samples = np.frombuffer(raw_data, dtype=np.uint8).astype(float)
-        else:  # WORD – little-endian 16-bit unsigned
-            samples = np.frombuffer(raw_data, dtype="<u2").astype(float)
+        datatype = "B" if fmt == "BYTE" else "H"   # uint8 or uint16
+        samples = np.array(
+            from_ieee_block(raw, datatype=datatype),
+            dtype=float,
+        )
 
         # Convert to physical values using preamble
         voltage = (samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"]
@@ -591,17 +490,17 @@ class DHO804(SCPIMixin, Instrument):
         return time, voltage
 
     def get_waveform_ascii(self, channel=1):
-        """Download a waveform in ASCII format (slower but portable).
+        """Download a waveform in ASCII format (slower).
 
         :param channel: Channel number 1-4.
         :returns: Tuple ``(time_array, voltage_array)``.
         """
         self._set_waveform_source(channel)
-        self.write(":WAVeform:MODE NORMal")
-        self.write(":WAVeform:FORMat ASC")
+        self.write(":WAV:MODE NORM")
+        self.write(":WAV:FORM ASC")
 
         pre = self.get_waveform_preamble(channel)
-        raw = self.ask(":WAVeform:DATA?").strip()
+        raw = self.ask(":WAV:DATA?").strip()
 
         # ASCII response may start with a '#' block header or plain CSV
         if raw.startswith("#"):
@@ -611,32 +510,3 @@ class DHO804(SCPIMixin, Instrument):
         voltage = np.array([float(v) for v in raw.split(",") if v])
         time = np.arange(len(voltage)) * pre["xincrement"] + pre["xorigin"]
         return time, voltage
-
-    # ================================================================== #
-    #  SCREENSHOT                                                         #
-    # ================================================================== #
-
-    # def get_screenshot(self, filename=None):
-    #     """Capture a screenshot from the oscilloscope.
-
-    #     :param filename: If given, save the PNG data to this file path.
-    #     :returns: Raw PNG bytes.
-    #     """
-    #     self.write(":DISPlay:DATA? ON,OFF,PNG")
-    #     raw = self.read_bytes(-1)
-
-    #     # Strip IEEE block header
-    #     if raw[0:1] == b"#":
-    #         n_digits = int(raw[1:2])
-    #         n_bytes = int(raw[2: 2 + n_digits])
-    #         data_start = 2 + n_digits
-    #         png_data = raw[data_start: data_start + n_bytes]
-    #     else:
-    #         png_data = raw
-
-    #     if filename is not None:
-    #         with open(filename, "wb") as f:
-    #             f.write(png_data)
-    #         log.info("Screenshot saved to %s", filename)
-
-    #     return png_data
