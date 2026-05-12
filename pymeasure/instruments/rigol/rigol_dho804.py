@@ -470,14 +470,13 @@ class DHO804(SCPIMixin, Instrument):
         # Read preamble for scaling coefficients
         pre = self.get_waveform_preamble(channel)
 
-        # Request binary waveform data
-        self.write(":WAV:DATA?")
-        raw = self.read_bytes(-1)  # read all available bytes
-
         datatype = "B" if fmt == "BYTE" else "H"   # uint8 or uint16
-        samples = np.array(
-            from_ieee_block(raw, datatype=datatype),
-            dtype=float,
+        # handle IEEE encoded values via PyVISA function
+        samples = self.adapter.connection.query_binary_values(
+            ":WAV:DATA?", 
+            datatype=datatype, 
+            container=np.array,
+            is_big_endian=False
         )
 
         # Convert to physical values using preamble
