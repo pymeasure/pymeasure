@@ -469,7 +469,7 @@ class TestMeasurements:
                 (":MEAS:ITEM? FREQ,CHAN3", "1.0E+06"),
             ],
         ) as inst:
-            assert inst.measure("FREQ", "CHAN3") == pytest.approx(1e6)
+            assert inst.measure("FREQ", 3) == pytest.approx(1e6)
 
     def test_measure_unavailable_returns_nan(self):
         with expected_protocol(
@@ -593,7 +593,7 @@ class TestLiveDevice:
         assert real_instrument.sample_rate > 0
 
     def test_measure_vpp_returns_float(self, real_instrument):
-        result = real_instrument.measure("VPP", "CHAN1")
+        result = real_instrument.measure("VPP", 1)
         assert isinstance(result, float)
 
     def test_get_waveform_shape(self, real_instrument):

@@ -338,18 +338,18 @@ class DHO804(SCPIMixin, Instrument):
     #  MEASUREMENTS                                                       #
     # ================================================================== #
 
-    def measure(self, item, source="CHAN1"):
+    def measure(self, item, channel=1):
         """Query a built-in automatic measurement.
 
         :param item: Measurement item string, e.g. ``"VMAX"``, ``"VMIN"``,
             ``"VPP"``, ``"VRMS"``, ``"VAVG"``, ``"PER"``, ``"FREQ"``,
             ``"RISE"``, ``"FALL"``, ``"NWID"``, ``"PWID"``, ``"PDUT"``,
             ``"NDUT"``.
-        :param source: Source channel string, e.g. ``"CHAN1"``.
+        :param channel: Channel number 1-4.
         :returns: Measured value as float, or ``float("nan")`` if the
             measurement is not available.
         """
-        result = self.ask(f":MEAS:ITEM? {item},{source}").strip()
+        result = self.ask(f":MEAS:ITEM? {item},CHAN{channel}").strip()
         try:
             return float(result)
         except ValueError:
