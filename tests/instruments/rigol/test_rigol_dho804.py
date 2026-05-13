@@ -55,10 +55,35 @@ def real_instrument(request):
     yield scope
     scope.adapter.close()
 
+# ======================================================================= #
+#  Status and OPC                                                          #
+# ======================================================================= #
+
+
+class TestStatus:
+
+    def test_wait_for_opc(self):
+        with expected_protocol(
+            DHO804, [("*OPC?", "1")]
+        ) as inst:
+            inst.wait_for_opc()
+
+    def test_clear_status(self):
+        with expected_protocol(
+            DHO804, [("*CLS", None)]
+        ) as inst:
+            inst.clear_status()
+
+    def test_status_byte(self):
+        with expected_protocol(
+            DHO804, [("*STB?", "0")]
+        ) as inst:
+            assert inst.status_byte == 0
 
 # ======================================================================= #
 #  Channel properties                                                      #
 # ======================================================================= #
+
 
 class TestChannel:
     """One class covers all channel properties.
@@ -525,10 +550,95 @@ class TestCursorAndDisplay:
             with pytest.raises(ValueError):
                 inst.display_grading_time = "2"
 
+# ======================================================================= #
+#  Waveform                                                                #
+# ======================================================================= #
+
+
+# Minimal preamble string used across waveform tests
+PREAMBLE = "0,1,1000,1,4.0E-7,-2.0E-4,0,1.6E-3,-87,128"
+
+
+class TestWaveform:
+
+    def test_set_waveform_source(self):
+        with expected_protocol(
+            DHO804, [(":WAV:SOUR CHAN2", None)]
+        ) as inst:
+            inst._set_waveform_source(2)
+
+    def test_get_waveform_preamble(self):
+        with expected_protocol(
+            DHO804,
+            [
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:PRE?", PREAMBLE),
+            ],
+        ) as inst:
+            pre = inst.get_waveform_preamble(1)
+            assert pre["points"] == 1000
+            assert pre["xincrement"] == pytest.approx(4e-7)
+            assert pre["yincrement"] == pytest.approx(1.6e-3)
+            assert pre["yreference"] == 128
+            assert pre["xreference"] == 0
+
+    def test_get_waveform_invalid_fmt_raises(self):
+        with expected_protocol(DHO804, []) as inst:
+            with pytest.raises(ValueError):
+                inst.get_waveform(fmt="ASC")
+
+    def test_get_waveform_invalid_mode_raises(self):
+        with expected_protocol(DHO804, []) as inst:
+            with pytest.raises(ValueError):
+                inst.get_waveform(mode="INVALID")
+
+    def test_get_waveform_norm_byte(self):
+        raw_samples = bytes([128, 130, 126, 132])  # 4 uint8 samples
+        ieee_block = b'#1' + str(
+            len(raw_samples)).encode() + raw_samples + b'\n'
+
+        with expected_protocol(
+            DHO804,
+            [
+                (":TRIG:STAT?", "STOP"),          # was_running check
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE NORM", None),
+                (":WAV:FORM BYTE", None),
+                (":WAV:SOUR CHAN1", None),         # from get_waveform_preamble
+                (":WAV:PRE?", PREAMBLE),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 1000", None),
+                (":WAV:DATA?", ieee_block),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform(channel=1, mode="NORM", fmt="BYTE")
+            assert len(t) == 4
+            assert len(v) == 4
+
+    def test_get_waveform_ascii(self):
+        csv = "0.1,0.2,0.3,0.4"
+        with expected_protocol(
+            DHO804,
+            [
+                (":WAV:SOUR CHAN1", None),
+                (":WAV:MODE NORM", None),
+                (":WAV:FORM ASC", None),
+                (":WAV:SOUR CHAN1", None),   # from get_waveform_preamble
+                (":WAV:PRE?", PREAMBLE),
+                (":WAV:STAR 1", None),
+                (":WAV:STOP 1000", None),
+                (":WAV:DATA?", csv),
+            ],
+        ) as inst:
+            t, v = inst.get_waveform_ascii(channel=1)
+            assert len(v) == 4
+            assert v[0] == pytest.approx(0.1)
+            assert len(t) == len(v)
 
 # ======================================================================= #
 #  Live hardware tests                                                     #
 # ======================================================================= #
+
 
 class TestLiveDevice:
     """Smoke tests against real hardware (requires --device-address)."""
