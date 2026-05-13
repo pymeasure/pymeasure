@@ -169,10 +169,6 @@ class DHO804(SCPIMixin, Instrument):
     ch_3 = Instrument.ChannelCreator(DHO804Channel, 3)
     ch_4 = Instrument.ChannelCreator(DHO804Channel, 4)
 
-    def __init__(self, resource_name, **kwargs):
-        kwargs.setdefault("name", self.name)
-        super().__init__(resource_name, **kwargs)
-
     def wait_for_opc(self, timeout=10):
         """Block until the oscilloscope reports operation complete."""
         deadline = time.time() + timeout

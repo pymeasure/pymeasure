@@ -371,7 +371,8 @@ class TestTrigger:
         ) as inst:
             assert inst.trigger_sweep == "AUTO"
 
-    @pytest.mark.parametrize("value", ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "EXT", "AC"])
+    @pytest.mark.parametrize("value",
+                             ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "EXT", "AC"])
     def test_trigger_source_set(self, value):
         with expected_protocol(
             DHO804, [(f":TRIG:EDGE:SOUR {value}", None)]
@@ -581,7 +582,8 @@ class TestLiveDevice:
         real_instrument.trigger_level = original
 
     def test_trigger_status_is_valid(self, real_instrument):
-        assert real_instrument.trigger_status in ("TD", "WAIT", "RUN", "AUTO", "STOP")
+        assert real_instrument.trigger_status in ("TD", "WAIT", "RUN",
+                                                  "AUTO", "STOP")
 
     def test_run_stop_single(self, real_instrument):
         real_instrument.run()
