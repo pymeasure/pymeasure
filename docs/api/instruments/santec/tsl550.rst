@@ -1,8 +1,8 @@
 ############################
-Santec TSL-570 Tunable Laser
+Santec TSL-550 Tunable Laser
 ############################
 
-.. autoclass:: pymeasure.instruments.santec.tsl570.TSL570
+.. autoclass:: pymeasure.instruments.santec.tsl550.TSL550
     :members:
     :show-inheritance:
     :inherited-members: CommonBase
