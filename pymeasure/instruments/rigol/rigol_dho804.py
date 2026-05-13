@@ -60,7 +60,8 @@ class DHO804Channel(Channel):
     bandwidth_limit = Channel.control(
         ":CHAN{ch}:BWL?",
         ":CHAN{ch}:BWL %s",
-        """Control the bandwidth limit: ``"OFF"``, ``"20M"``, or ``"100M"``.""",
+        """Control the bandwidth limit: ``"OFF"``, ``"20M"``, or
+        ``"100M"``.""",
         validator=strict_discrete_set,
         values=["OFF", "20M", "100M"],
     )
@@ -89,9 +90,36 @@ class DHO804Channel(Channel):
         ":CHAN{ch}:PROB %g",
         """Control the probe attenuation ratio (float, e.g. 1, 10, 100).""",
         validator=strict_discrete_set,
-        values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5,
-                1, 2, 5, 10, 15, 20, 50, 100, 150, 200, 500, 1000,
-                1500, 2000, 5000, 10000, 15000, 20000, 50000],
+        values=[
+            0.001,
+            0.002,
+            0.005,
+            0.01,
+            0.02,
+            0.05,
+            0.1,
+            0.2,
+            0.5,
+            1,
+            2,
+            5,
+            10,
+            15,
+            20,
+            50,
+            100,
+            150,
+            200,
+            500,
+            1000,
+            1500,
+            2000,
+            5000,
+            10000,
+            15000,
+            20000,
+            50000,
+        ],
         cast=float,
     )
 
@@ -116,7 +144,8 @@ class DHO804Channel(Channel):
     label = Channel.control(
         ":CHAN{ch}:LAB:CONT?",
         ":CHAN{ch}:LAB:CONT %s",
-        """Control the label content shown for the channel (string, max 10 chars).""",
+        """Control the label content shown for the channel (string, max
+        10 chars).""",
     )
 
     label_show = Channel.control(
@@ -130,7 +159,8 @@ class DHO804Channel(Channel):
 
 
 class DHO804(SCPIMixin, Instrument):
-    """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit oscilloscope."""
+    """PyMeasure driver for the **Rigol DHO804** 4-channel 12-bit
+    oscilloscope."""
 
     name = "Rigol DHO804"
 
@@ -159,7 +189,7 @@ class DHO804(SCPIMixin, Instrument):
 
     @property
     def status_byte(self):
-        """Return the status byte (STB, int)."""
+        """Get the status byte (STB, int)."""
         return int(self.ask("*STB?"))
 
     # ================================================================== #
@@ -198,14 +228,23 @@ class DHO804(SCPIMixin, Instrument):
         10000000, 25000000, 50000000, 100000000, 200000000.
         """,
         validator=strict_discrete_set,
-        values=["AUTO", 1_000, 10_000, 100_000, 1_000_000,
-                10_000_000, 25_000_000, 50_000_000,
-                100_000_000, 200_000_000],
+        values=[
+            "AUTO",
+            1_000,
+            10_000,
+            100_000,
+            1_000_000,
+            10_000_000,
+            25_000_000,
+            50_000_000,
+            100_000_000,
+            200_000_000,
+        ],
     )
 
     @property
     def sample_rate(self):
-        """Return the current sample rate in Sa/s (read-only, float)."""
+        """Get the current sample rate in Sa/s (read-only, float)."""
         return float(self.ask(":ACQ:SRAT?"))
 
     # ================================================================== #
@@ -227,7 +266,8 @@ class DHO804(SCPIMixin, Instrument):
     timebase_offset = Instrument.control(
         ":TIM:MAIN:OFFS?",
         ":TIM:MAIN:OFFS %g",
-        """Control the horizontal offset (trigger delay) in seconds (float).""",
+        """Control the horizontal offset (trigger delay) in seconds
+        (float).""",
         cast=float,
     )
 
@@ -251,9 +291,25 @@ class DHO804(SCPIMixin, Instrument):
         ``"DEL"``, ``"TIM"``, ``"DUR"``, ``"SHOL"``,
         ``"RS232"``, ``"IIC"``, ``"SPI"``, ``"CAN"``, ``"LIN"``.""",
         validator=strict_discrete_set,
-        values=["EDGE", "PULS", "RUNT", "WIND", "NEDG", "SLOP",
-                "VID", "PATT", "DEL", "TIM", "DUR",
-                "SHOL", "RS232", "IIC", "SPI", "CAN", "LIN"],
+        values=[
+            "EDGE",
+            "PULS",
+            "RUNT",
+            "WIND",
+            "NEDG",
+            "SLOP",
+            "VID",
+            "PATT",
+            "DEL",
+            "TIM",
+            "DUR",
+            "SHOL",
+            "RS232",
+            "IIC",
+            "SPI",
+            "CAN",
+            "LIN",
+        ],
     )
 
     trigger_sweep = Instrument.control(
@@ -271,9 +327,7 @@ class DHO804(SCPIMixin, Instrument):
         """Control the edge trigger source channel: ``"CHAN1"`` … ``"CHAN4"``,
         ``"AC"``, or ``"EXT"``.""",
         validator=strict_discrete_set,
-        values=(
-            ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
-        ),
+        values=(["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]),
     )
 
     trigger_slope = Instrument.control(
@@ -310,7 +364,7 @@ class DHO804(SCPIMixin, Instrument):
 
     @property
     def trigger_status(self):
-        """Return the current trigger status string (read-only).
+        """Get the current trigger status string (read-only).
 
         Possible values: ``"TD"``, ``"WAIT"``, ``"RUN"``, ``"AUTO"``,
         ``"STOP"``.
@@ -415,7 +469,7 @@ class DHO804(SCPIMixin, Instrument):
         self.write(f":WAV:SOUR CHAN{channel}")
 
     def get_waveform_preamble(self, channel=1):
-        """Return the waveform preamble for *channel* as a dict.
+        """Get the waveform preamble for *channel* as a dict.
 
         The preamble encodes scaling information needed to convert raw
         samples to physical units.
@@ -429,9 +483,16 @@ class DHO804(SCPIMixin, Instrument):
         raw = self.ask(":WAV:PRE?").strip()
         parts = raw.split(",")
         keys = [
-            "format", "type", "points", "count",
-            "xincrement", "xorigin", "xreference",
-            "yincrement", "yorigin", "yreference",
+            "format",
+            "type",
+            "points",
+            "count",
+            "xincrement",
+            "xorigin",
+            "xreference",
+            "yincrement",
+            "yorigin",
+            "yreference",
         ]
         preamble = {}
         for key, val in zip(keys, parts):
@@ -450,14 +511,14 @@ class DHO804(SCPIMixin, Instrument):
 
         For ``"MAX"`` and ``"RAW"`` mode, the scope is automatically stopped
         before reading and restarted afterwards if it was running.
-    
+
         :param channel: Channel number 1-4.
         :param mode: Waveform mode:
-    
+
             * ``"NORM"``   - points shown on screen (up to 1000)
             * ``"MAX"``    - all points in memory (up to full memory depth)
             * ``"RAW"``    - raw ADC samples from memory
-    
+
         :param fmt: Data format: ``"BYTE"`` (8-bit unsigned) or
             ``"WORD"`` (16-bit unsigned, higher precision).
         :returns: Tuple ``(time_array, voltage_array)`` where both arrays
@@ -468,10 +529,11 @@ class DHO804(SCPIMixin, Instrument):
         if fmt not in ("BYTE", "WORD"):
             raise ValueError(f"fmt must be 'BYTE' or 'WORD', got '{fmt}'")
         if mode not in ("NORM", "MAX", "RAW"):
-            raise ValueError(f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'")
+            raise ValueError(
+                f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'")
 
         chunk_size = 1000
-        dtype = 'H' if fmt == "WORD" else 'B'
+        dtype = "H" if fmt == "WORD" else "B"
 
         # Stop scope if needed, remember state to restore later
         was_running = self.trigger_status != "STOP"
@@ -490,7 +552,8 @@ class DHO804(SCPIMixin, Instrument):
                 try:
                     n_total = int(float(self.ask(":ACQ:MDEP?")))
                 except (ValueError, TypeError):
-                    n_total = pre["points"]  # safe fallback for AUTO or unexpected response
+                    # safe fallback for AUTO or unexpected response
+                    n_total = pre["points"]
             else:
                 n_total = pre["points"]
 
@@ -507,7 +570,8 @@ class DHO804(SCPIMixin, Instrument):
                     n_data_bytes = int(self.read_bytes(n_digits))
                     raw = self.read_bytes(n_data_bytes)
                     self.read_bytes(1)  # trailing terminator
-                    all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
+                    all_samples.append(
+                        np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
             else:
                 self.write(":WAV:STAR 1")
                 self.write(f":WAV:STOP {min(n_total, chunk_size)}")
@@ -517,7 +581,8 @@ class DHO804(SCPIMixin, Instrument):
                 n_data_bytes = int(self.read_bytes(n_digits))
                 raw = self.read_bytes(n_data_bytes)
                 self.read_bytes(1)  # trailing terminator
-                all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
+                all_samples.append(
+                    np.frombuffer(raw, dtype=np.dtype(f"<{dtype}")))
 
         # Restore previous state
         finally:
@@ -525,7 +590,8 @@ class DHO804(SCPIMixin, Instrument):
                 self.run()
 
         samples = np.concatenate(all_samples)
-        voltage = (samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"]
+        voltage = ((samples - pre["yorigin"] - pre["yreference"])
+                   * pre["yincrement"])
         t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
         return t, voltage
 
@@ -533,9 +599,9 @@ class DHO804(SCPIMixin, Instrument):
         """Download a waveform in ASCII format.
 
         Uses ``"NORM"`` mode, returning up to 1000 points shown on screen.
-        For full memory depth use :meth:`get_waveform` with ``mode="MAX"`` 
+        For full memory depth use :meth:`get_waveform` with ``mode="MAX"``
         or ``mode="RAW"``.
-    
+
         :param channel: Channel number 1-4.
         :returns: Tuple ``(time_array, voltage_array)`` where both arrays
             are :class:`numpy.ndarray` with the time axis in seconds and
