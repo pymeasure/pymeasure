@@ -448,61 +448,93 @@ class DHO804(SCPIMixin, Instrument):
     def get_waveform(self, channel=1, mode="NORM", fmt="BYTE"):
         """Download a waveform from the oscilloscope.
 
-        The scope must be stopped (or in single mode) before calling this
-        method to ensure a stable waveform.
-
+        For ``"MAX"`` and ``"RAW"`` mode, the scope is automatically stopped
+        before reading and restarted afterwards if it was running.
+    
         :param channel: Channel number 1-4.
         :param mode: Waveform mode:
-
-            * ``"NORM"``   - points shown on screen (up to 1200)
-            * ``"MAX"``    - all points in memory (slow)
+    
+            * ``"NORM"``   - points shown on screen (up to 1000)
+            * ``"MAX"``    - all points in memory (up to full memory depth)
             * ``"RAW"``    - raw ADC samples from memory
-
+    
         :param fmt: Data format: ``"BYTE"`` (8-bit unsigned) or
             ``"WORD"`` (16-bit unsigned, higher precision).
         :returns: Tuple ``(time_array, voltage_array)`` where both arrays
             are :class:`numpy.ndarray` with the time axis in seconds and
             the voltage axis in Volts.
         """
+        
         if fmt not in ("BYTE", "WORD"):
             raise ValueError(f"fmt must be 'BYTE' or 'WORD', got '{fmt}'")
         if mode not in ("NORM", "MAX", "RAW"):
-            raise ValueError(
-                f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'"
-            )
-
+            raise ValueError(f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'")
+    
+        CHUNK_SIZE = 1000
+        dtype = 'H' if fmt == "WORD" else 'B'
+    
+        # Stop scope if needed, remember state to restore later
+        was_running = self.trigger_status != "STOP"
+        if mode in ("MAX", "RAW") and was_running:
+            self.stop()
+            time.sleep(0.1)  # kurz warten bis Scope wirklich gestoppt
+    
         self._set_waveform_source(channel)
         self.write(f":WAV:MODE {mode}")
         self.write(f":WAV:FORM {fmt}")
-
-        # Read preamble for scaling coefficients
+    
         pre = self.get_waveform_preamble(channel)
-        self.write(":WAV:STAR 1")
-        self.write(f":WAV:STOP {pre['points']}")
-
-        datatype = "B" if fmt == "BYTE" else "H"   # uint8 or uint16
-        # handle IEEE encoded values via PyVISA function
-        samples = self.adapter.connection.query_binary_values(
-            ":WAV:DATA?", 
-            datatype=datatype, 
-            container=np.array,
-            is_big_endian=False
-        )
-
-        # Convert to physical values using preamble
+    
+        if mode in ("MAX", "RAW"):
+            n_total = int(self.acquisition_memory_depth)
+        else:
+            n_total = pre['points']
+    
+        all_samples = []
+    
+        if mode in ("MAX", "RAW"):
+            for start in range(1, n_total + 1, CHUNK_SIZE):
+                stop = min(start + CHUNK_SIZE - 1, n_total)
+                self.write(f":WAV:STAR {start}")
+                self.write(f":WAV:STOP {stop}")
+                self.write(":WAV:DATA?")
+                header = self.read_bytes(2)
+                n_digits = int(chr(header[1]))
+                n_data_bytes = int(self.read_bytes(n_digits))
+                raw = self.read_bytes(n_data_bytes)
+                self.read_bytes(1)  # trailing terminator
+                all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
+        else:
+            self.write(":WAV:STAR 1")
+            self.write(f":WAV:STOP {min(n_total, CHUNK_SIZE)}")
+            self.write(":WAV:DATA?")
+            header = self.read_bytes(2)
+            n_digits = int(chr(header[1]))
+            n_data_bytes = int(self.read_bytes(n_digits))
+            raw = self.read_bytes(n_data_bytes)
+            self.read_bytes(1)  # trailing terminator
+            all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
+    
+        # Restore previous state
+        if was_running:
+            self.run()
+    
+        samples = np.concatenate(all_samples)
         voltage = (samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"]
-        time = (
-            np.arange(len(samples)) * pre["xincrement"]
-            + pre["xorigin"]
-        )
-
-        return time, voltage
+        t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
+        return t, voltage
 
     def get_waveform_ascii(self, channel=1):
-        """Download a waveform in ASCII format (slower).
+        """Download a waveform in ASCII format.
 
+        Uses ``"NORM"`` mode, returning up to 1000 points shown on screen.
+        For full memory depth use :meth:`get_waveform` with ``mode="MAX"`` 
+        or ``mode="RAW"``.
+    
         :param channel: Channel number 1-4.
-        :returns: Tuple ``(time_array, voltage_array)``.
+        :returns: Tuple ``(time_array, voltage_array)`` where both arrays
+            are :class:`numpy.ndarray` with the time axis in seconds and
+            the voltage axis in Volts.
         """
         self._set_waveform_source(channel)
         self.write(":WAV:MODE NORM")
