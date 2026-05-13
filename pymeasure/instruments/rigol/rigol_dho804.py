@@ -477,7 +477,7 @@ class DHO804(SCPIMixin, Instrument):
         was_running = self.trigger_status != "STOP"
         if mode in ("MAX", "RAW") and was_running:
             self.stop()
-            time.sleep(0.1)  # kurz warten bis Scope wirklich gestoppt
+            time.sleep(0.1)  # wait for scope to be stopped
 
         try:
             self._set_waveform_source(channel)
