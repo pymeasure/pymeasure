@@ -24,6 +24,7 @@
 
 import logging
 import numpy as np
+import time
 from pyvisa.util import from_ieee_block
 
 from pymeasure.instruments import Instrument, Channel
@@ -70,7 +71,7 @@ class DHO804Channel(Channel):
         ":CHAN{ch}:SCAL %g",
         """Control the vertical scale in V/div (float).
 
-        Valid range: 500 µV/div – 10 V/div for a 1x probe.
+        Valid range: 500 µV/div - 10 V/div for a 1x probe.
         """,
         validator=strict_range,
         values=[500e-6, 10.0],
@@ -89,8 +90,9 @@ class DHO804Channel(Channel):
         ":CHAN{ch}:PROB %g",
         """Control the probe attenuation ratio (float, e.g. 1, 10, 100).""",
         validator=strict_discrete_set,
-        values=[0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5,
-                10, 20, 50, 100, 200, 500, 1000],
+        values=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5,
+                1, 2, 5, 10, 15, 20, 50, 100, 150, 200, 500, 1000,
+                1500, 2000, 5000, 10000, 15000, 20000, 50000],
         cast=float,
     )
 
@@ -144,7 +146,13 @@ class DHO804(SCPIMixin, Instrument):
         
     def wait_for_opc(self, timeout=10):
         """Block until the oscilloscope reports operation complete."""
-        self.ask("*OPC?")
+        deadline = time.time() + timeout
+        while True:
+            if self.ask("*OPC?").strip() == "1":
+                return
+            if time.time() > deadline:
+                raise TimeoutError("wait_for_opc timed out after %s s" % timeout)
+            time.sleep(0.1)
     
     def clear_status(self):
         """Clear the event status register (CLS)."""
@@ -164,10 +172,10 @@ class DHO804(SCPIMixin, Instrument):
         ":ACQ:TYPE %s",
         """Control the acquisition mode:
 
-        * ``"NORM"``     – Normal (default)
-        * ``"AVER"``     – Average
-        * ``"PEAK"``     – Peak detect
-        * ``"ULTR"``     – UltraAcquire (DHO-series specific)
+        * ``"NORM"``     - Normal (default)
+        * ``"AVER"``     - Average
+        * ``"PEAK"``     - Peak detect
+        * ``"ULTR"``     - UltraAcquire (DHO-series specific)
         """,
         validator=strict_discrete_set,
         values=["NORM", "AVER", "PEAK", "ULTR"],
@@ -210,7 +218,7 @@ class DHO804(SCPIMixin, Instrument):
         ":TIM:MAIN:SCAL %g",
         """Control the horizontal (timebase) scale in s/div (float).
 
-        Valid range: 1 ns/div – 1000 s/div.
+        Valid range: 1 ns/div - 1000 s/div.
         """,
         validator=strict_range,
         values=[1e-9, 1000.0],
@@ -446,9 +454,9 @@ class DHO804(SCPIMixin, Instrument):
         :param channel: Channel number 1-4.
         :param mode: Waveform mode:
 
-            * ``"NORM"``   – points shown on screen (up to 1200)
-            * ``"MAX"``    – all points in memory (slow)
-            * ``"RAW"``    – raw ADC samples from memory
+            * ``"NORM"``   - points shown on screen (up to 1200)
+            * ``"MAX"``    - all points in memory (slow)
+            * ``"RAW"``    - raw ADC samples from memory
 
         :param fmt: Data format: ``"BYTE"`` (8-bit unsigned) or
             ``"WORD"`` (16-bit unsigned, higher precision).
@@ -469,6 +477,8 @@ class DHO804(SCPIMixin, Instrument):
 
         # Read preamble for scaling coefficients
         pre = self.get_waveform_preamble(channel)
+        self.write(":WAV:STAR 1")
+        self.write(f":WAV:STOP {pre['points']}")
 
         datatype = "B" if fmt == "BYTE" else "H"   # uint8 or uint16
         # handle IEEE encoded values via PyVISA function
@@ -499,6 +509,8 @@ class DHO804(SCPIMixin, Instrument):
         self.write(":WAV:FORM ASC")
 
         pre = self.get_waveform_preamble(channel)
+        self.write(":WAV:STAR 1")
+        self.write(f":WAV:STOP {pre['points']}")
         raw = self.ask(":WAV:DATA?").strip()
 
         # ASCII response may start with a '#' block header or plain CSV
