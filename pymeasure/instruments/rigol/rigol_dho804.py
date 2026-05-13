@@ -25,7 +25,6 @@
 import logging
 import numpy as np
 import time
-from pyvisa.util import from_ieee_block
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -143,7 +142,7 @@ class DHO804(SCPIMixin, Instrument):
     def __init__(self, resource_name, **kwargs):
         kwargs.setdefault("name", self.name)
         super().__init__(resource_name, **kwargs)
-        
+
     def wait_for_opc(self, timeout=10):
         """Block until the oscilloscope reports operation complete."""
         deadline = time.time() + timeout
@@ -269,7 +268,8 @@ class DHO804(SCPIMixin, Instrument):
     trigger_source = Instrument.control(
         ":TRIG:EDGE:SOUR?",
         ":TRIG:EDGE:SOUR %s",
-        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CHAN4"``, ``"AC"``, or ``"EXT"``.""",
+        """Control the edge trigger source channel: ``"CHAN1"`` … ``"CHAN4"``,
+        ``"AC"``, or ``"EXT"``.""",
         validator=strict_discrete_set,
         values=(
             ["CHAN1", "CHAN2", "CHAN3", "CHAN4", "AC", "EXT"]
@@ -479,24 +479,35 @@ class DHO804(SCPIMixin, Instrument):
             self.stop()
             time.sleep(0.1)  # kurz warten bis Scope wirklich gestoppt
     
-        self._set_waveform_source(channel)
-        self.write(f":WAV:MODE {mode}")
-        self.write(f":WAV:FORM {fmt}")
-    
-        pre = self.get_waveform_preamble(channel)
-    
-        if mode in ("MAX", "RAW"):
-            n_total = int(self.acquisition_memory_depth)
-        else:
-            n_total = pre['points']
-    
-        all_samples = []
-    
-        if mode in ("MAX", "RAW"):
-            for start in range(1, n_total + 1, CHUNK_SIZE):
-                stop = min(start + CHUNK_SIZE - 1, n_total)
-                self.write(f":WAV:STAR {start}")
-                self.write(f":WAV:STOP {stop}")
+        try:
+            self._set_waveform_source(channel)
+            self.write(f":WAV:MODE {mode}")
+            self.write(f":WAV:FORM {fmt}")
+        
+            pre = self.get_waveform_preamble(channel)
+        
+            if mode in ("MAX", "RAW"):
+                n_total = int(self.acquisition_memory_depth)
+            else:
+                n_total = pre['points']
+        
+            all_samples = []
+        
+            if mode in ("MAX", "RAW"):
+                for start in range(1, n_total + 1, CHUNK_SIZE):
+                    stop = min(start + CHUNK_SIZE - 1, n_total)
+                    self.write(f":WAV:STAR {start}")
+                    self.write(f":WAV:STOP {stop}")
+                    self.write(":WAV:DATA?")
+                    header = self.read_bytes(2)
+                    n_digits = int(chr(header[1]))
+                    n_data_bytes = int(self.read_bytes(n_digits))
+                    raw = self.read_bytes(n_data_bytes)
+                    self.read_bytes(1)  # trailing terminator
+                    all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
+            else:
+                self.write(":WAV:STAR 1")
+                self.write(f":WAV:STOP {min(n_total, CHUNK_SIZE)}")
                 self.write(":WAV:DATA?")
                 header = self.read_bytes(2)
                 n_digits = int(chr(header[1]))
@@ -504,21 +515,12 @@ class DHO804(SCPIMixin, Instrument):
                 raw = self.read_bytes(n_data_bytes)
                 self.read_bytes(1)  # trailing terminator
                 all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
-        else:
-            self.write(":WAV:STAR 1")
-            self.write(f":WAV:STOP {min(n_total, CHUNK_SIZE)}")
-            self.write(":WAV:DATA?")
-            header = self.read_bytes(2)
-            n_digits = int(chr(header[1]))
-            n_data_bytes = int(self.read_bytes(n_digits))
-            raw = self.read_bytes(n_data_bytes)
-            self.read_bytes(1)  # trailing terminator
-            all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
     
         # Restore previous state
-        if was_running:
-            self.run()
-    
+        finally:
+            if mode in ("MAX", "RAW") and was_running:
+                self.run()
+            
         samples = np.concatenate(all_samples)
         voltage = (samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"]
         t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
@@ -551,5 +553,5 @@ class DHO804(SCPIMixin, Instrument):
             raw = raw[2 + n_digits:]
 
         voltage = np.array([float(v) for v in raw.split(",") if v])
-        time = np.arange(len(voltage)) * pre["xincrement"] + pre["xorigin"]
-        return time, voltage
+        t = np.arange(len(voltage)) * pre["xincrement"] + pre["xorigin"]
+        return t, voltage
