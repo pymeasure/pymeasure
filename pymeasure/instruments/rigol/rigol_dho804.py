@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 
+import time
 import logging
 import numpy as np
-import time
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -150,13 +150,13 @@ class DHO804(SCPIMixin, Instrument):
             if self.ask("*OPC?").strip() == "1":
                 return
             if time.time() > deadline:
-                raise TimeoutError("wait_for_opc timed out after %s s" % timeout)
+                raise TimeoutError(f"wait_for_opc timed out after {timeout} s")
             time.sleep(0.1)
-    
+
     def clear_status(self):
         """Clear the event status register (CLS)."""
         self.write("*CLS")
-    
+
     @property
     def status_byte(self):
         """Return the status byte (STB, int)."""
@@ -464,38 +464,41 @@ class DHO804(SCPIMixin, Instrument):
             are :class:`numpy.ndarray` with the time axis in seconds and
             the voltage axis in Volts.
         """
-        
+
         if fmt not in ("BYTE", "WORD"):
             raise ValueError(f"fmt must be 'BYTE' or 'WORD', got '{fmt}'")
         if mode not in ("NORM", "MAX", "RAW"):
             raise ValueError(f"mode must be 'NORM', 'MAX', or 'RAW', got '{mode}'")
-    
-        CHUNK_SIZE = 1000
+
+        chunk_size = 1000
         dtype = 'H' if fmt == "WORD" else 'B'
-    
+
         # Stop scope if needed, remember state to restore later
         was_running = self.trigger_status != "STOP"
         if mode in ("MAX", "RAW") and was_running:
             self.stop()
             time.sleep(0.1)  # kurz warten bis Scope wirklich gestoppt
-    
+
         try:
             self._set_waveform_source(channel)
             self.write(f":WAV:MODE {mode}")
             self.write(f":WAV:FORM {fmt}")
-        
+
             pre = self.get_waveform_preamble(channel)
-        
+
             if mode in ("MAX", "RAW"):
-                n_total = int(self.acquisition_memory_depth)
+                try:
+                    n_total = int(float(self.ask(":ACQ:MDEP?")))
+                except (ValueError, TypeError):
+                    n_total = pre["points"]  # safe fallback for AUTO or unexpected response
             else:
-                n_total = pre['points']
-        
+                n_total = pre["points"]
+
             all_samples = []
-        
+
             if mode in ("MAX", "RAW"):
-                for start in range(1, n_total + 1, CHUNK_SIZE):
-                    stop = min(start + CHUNK_SIZE - 1, n_total)
+                for start in range(1, n_total + 1, chunk_size):
+                    stop = min(start + chunk_size - 1, n_total)
                     self.write(f":WAV:STAR {start}")
                     self.write(f":WAV:STOP {stop}")
                     self.write(":WAV:DATA?")
@@ -507,7 +510,7 @@ class DHO804(SCPIMixin, Instrument):
                     all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
             else:
                 self.write(":WAV:STAR 1")
-                self.write(f":WAV:STOP {min(n_total, CHUNK_SIZE)}")
+                self.write(f":WAV:STOP {min(n_total, chunk_size)}")
                 self.write(":WAV:DATA?")
                 header = self.read_bytes(2)
                 n_digits = int(chr(header[1]))
@@ -515,12 +518,12 @@ class DHO804(SCPIMixin, Instrument):
                 raw = self.read_bytes(n_data_bytes)
                 self.read_bytes(1)  # trailing terminator
                 all_samples.append(np.frombuffer(raw, dtype=np.dtype(f'<{dtype}')))
-    
+
         # Restore previous state
         finally:
             if mode in ("MAX", "RAW") and was_running:
                 self.run()
-            
+
         samples = np.concatenate(all_samples)
         voltage = (samples - pre["yorigin"] - pre["yreference"]) * pre["yincrement"]
         t = np.arange(len(samples)) * pre["xincrement"] + pre["xorigin"]
