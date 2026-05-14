@@ -36,7 +36,6 @@ CHANNELS = ['0']
 SENSOR = [True]
 
 # You can parameterize the following test"
-# with @pytest.mark.parametrize for your number of channels:")
 
 
 @pytest.fixture(scope="module")

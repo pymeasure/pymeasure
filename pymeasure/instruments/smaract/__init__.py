@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .scu_ascii import SmarActSCU_ASCII, SCUChannel
+from .scu_ascii import SmarActSCU_ASCII

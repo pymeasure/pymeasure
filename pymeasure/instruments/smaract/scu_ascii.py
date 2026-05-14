@@ -121,7 +121,7 @@ class SCUChannel(Channel):
         status = self.ask(f":M{self.id}")
         return status == f":M{self.id}C"
 
-    def set_zero_position(self):
+    def set_zero_position(self) -> None:
         """Set the current position as position zero."""
         if self.check_sensor_present():
             self.write(f":SZ{self.id}")
@@ -143,7 +143,7 @@ class SCUChannel(Channel):
            thorough knowledge of the differnet modes. It ensures the user, that the desired type
            exists, and has the possibility to be implemented to the program.
 
-           The list 'positioner_types' contains the available t values and corresponding properties
+           The enum :class:'PositionerType' contains the available t values and corresponding properties
 
         """
         if not isinstance(t, PositionerType):
@@ -196,22 +196,22 @@ class SCUChannel(Channel):
         return response == f':SP{self.id}P'
 
     def move_to_ref(self):
-        """Moves up/down to reference"""
+        """Move up/down to reference."""
         self.write(f":MTR{self.id}H0Z1")
         self._current_steps = 0
 
     def move_up_to_end(self):
-        """Moves up until end of line"""
+        """Move up until end of line."""
         self.write(f":MES{self.id}DU")
         self._current_steps = 20000
 
     def move_down_to_end(self):
-        """Moves down until end of line"""
+        """Move down until end of line."""
         self.write(f":MES{self.id}DD")
         self._current_steps = -20000
 
     def stop(self):
-        """Stops any process."""
+        """Stop any process."""
         self.write(f":S{self.id}")
 
 
@@ -229,7 +229,7 @@ class SCUChannelLinear(SCUChannel):
         return Q_(float(pos[4:]), self.unit)
 
     def move_rel(self, position: Q_):
-        """Moves up a distance + current position"""
+        """Move up a distance + current position."""
         self.write(f":MPR{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
 
@@ -244,7 +244,7 @@ class SCUChannelAngular(SCUChannel):
         return Q_(float(ang[4:]), self.unit)
 
     def move_abs(self, position: Q_):
-        """Moves to the absolute angle given in m° from the reference position via
+        """Move to the absolute angle given in m° from the reference position via
            closed-loop control.
 
            :param position: A quantity with angular units (m°)
@@ -252,7 +252,7 @@ class SCUChannelAngular(SCUChannel):
         self.write(f":MAA{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
     def move_rel(self, position: Q_):
-        """Moves the relative angle given in m° from the current position closed-loop control.
+        """Move the relative angle given in m° from the current position closed-loop control.
 
            :param position: A quantity with angular units (m°)
         """
@@ -273,11 +273,10 @@ class SCUChannelStepper(SCUChannel):
     @property
     def position_steps(self):
         """ Get the current estimated position in steps. """
-        # We simply read our internal counter variable
         return self._current_steps
 
     def move_rel(self, steps: Union[int, Q_]):
-        """Moves to the relative position given in steps from the current position
+        """Move to the relative position given in steps from the current position.
 
         :param steps : A quantity with the step as unit, given as integer,
                        with positive int = up, negative int = down.
@@ -296,7 +295,7 @@ class SCUChannelStepper(SCUChannel):
             self._current_steps = steps_val + old_steps
 
     def move_abs(self, position: Union[int, Q_]):
-        """Moves to the absolute position given in steps from the reference possition
+        """Move to the absolute position given in steps from the reference position.
         """
         if isinstance(position, Q_):
             target_steps = int(position.magnitude)
@@ -390,7 +389,7 @@ class SmarActSCU_ASCII(Instrument):
     def check_frequency(self, frequency: Union[int, str, Q_] = None) -> Q_:
         """ Check if closed-loop frequency is present and if it is inside the given boundary.
 
-        :param frequency: a qunatity with frequency units in Hz, if int, then given in Hz
+        :param frequency: a quantity with frequency units in Hz, if int, then given in Hz
         """
         if frequency is None:
             return self._freq
@@ -432,14 +431,14 @@ class SmarActSCU_ASCII(Instrument):
     # MOVEMENT
 
     def move_abs(self, position: Union[Q_, int]):
-        """Moves to the absolute position given in µm from the reference possition
+        """Move to the absolute position given in µm from the reference position.
 
         :param position : A quantity with length units (µm), if integer, then given in µm
         """
         raise NotImplementedError
 
     def move_rel(self, position: Union[Q_, int], channel: int = 0):
-        """Moves the relative distance given in µm from current position
+        """Move the relative distance given in µm from current position.
 
         :param position: A quantity with length units (µm).
         :param channel: Channel index (0, 1, or 2).
@@ -454,7 +453,7 @@ class SmarActSCU_ASCII(Instrument):
                 128000, 256000, 500000)
 
     def set_baudrate(self, baudrate: int):
-        """Set the baudrate AND reset the instrument. Reseting is necessary to update the baudrate.
+        """Set the baudrate AND reset the instrument. Resetting is necessary to update the baudrate.
            Keep in mind that this only changes the baudrate of the device. Meaning that a similar
            change has to be done on the computer you are using, in order to sync communication.
         param baudrate : Currently supported baudrates are: 9600, 38400, 57600, 100000,
