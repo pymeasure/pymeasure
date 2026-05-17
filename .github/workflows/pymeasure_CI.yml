@@ -106,6 +106,7 @@ jobs:
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
           # cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          micromamba-version: '2.6.0-0'
           cache-environment: false
           cache-downloads: false
       - name: Python version
