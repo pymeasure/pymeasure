@@ -103,6 +103,9 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
+          # Pegged: micromamba 2.6.1-0 has a broken Windows build (missing zlib.dll).
+          # See mamba-org/setup-micromamba#306 and micromamba-releases#97.
+          micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
@@ -125,8 +128,8 @@ jobs:
           echo "::add-matcher::.github/pytest.json"
           pytest
 
-  test_pandas3_numpy2:
-    name: pandas3+numpy2, Python ${{ matrix.python-version }}, ${{ matrix.os }}
+  test_pandas3:
+    name: pandas3, Python ${{ matrix.python-version }}, ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -143,14 +146,17 @@ jobs:
       - name: Install base pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
+          # Pegged: micromamba 2.6.1-0 has a broken Windows build (missing zlib.dll).
+          # See mamba-org/setup-micromamba#306 and micromamba-releases#97.
+          micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
           cache-downloads: false
       - name: Python version
         run: python --version
-      - name: Upgrade pandas and numpy to latest via pip
-        run: pip install "pandas>=3.0" "numpy>=2.0"
+      - name: Upgrade pandas to latest via pip
+        run: pip install "pandas>=3.0"
       - name: Install Pymeasure
         run: pip install .[tests]
       - name: Pymeasure version
