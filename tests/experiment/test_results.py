@@ -55,6 +55,8 @@ def test_csv_formatter_format_header():
 
 
 class Test_csv_formatter_format:
+    """Tests for CSVFormatter.format() value-rendering behavior."""
+
     def test_csv_formatter_format(self):
         """Tests CSVFormatter.format() method."""
         columns = ['t', 'x', 'y', 'z', 'V']
@@ -80,11 +82,13 @@ class Test_csv_formatter_format:
         assert formatter.format({head: value}) == result
 
     def test_newly_unitful(self):
+        """A unit inferred from the first value is recorded for subsequent rows."""
         formatter = CSVFormatter(columns=["count"])
         assert formatter.format({'count': 5 * ureg.km}) == "5000.0"
         assert formatter.units['count'] == ureg.m
 
     def test_no_newly_unitful(self):
+        """Dimensionless quantities must not be registered as units."""
         formatter = CSVFormatter(columns=["count"])
         assert formatter.format({'count': 5 * ureg.dimensionless}) == "5"
         assert formatter.units.get('count') is None
@@ -99,6 +103,7 @@ class Test_csv_formatter_format:
 
 
 def test_procedure_filestorage():
+    """Pickled Results must round-trip the procedure without mutating class-level defaults."""
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
@@ -112,6 +117,7 @@ def test_procedure_filestorage():
 
 
 class TestResults:
+    """Regression tests for the Results class."""
     # TODO: add a full set of Results tests
 
     @mock.patch('pymeasure.experiment.results.open', mock.mock_open(), create=True)
@@ -122,6 +128,7 @@ class TestResults:
                                                                       read_csv_mock,
                                                                       getsize_mock,
                                                                       path_exists_mock):
+        """Re-reading a file with no new rows must not downgrade dtype to object."""
         procedure_mock = mock.MagicMock(spec=Procedure)
         result = Results(procedure_mock, 'test.csv')
 
@@ -141,6 +148,7 @@ class TestResults:
         assert first_data.iloc[:, 0].dtype is second_data.iloc[:, 0].dtype
 
     def test_regression_param_str_should_not_include_newlines(self, tmpdir):
+        """Array-valued parameters must serialize to the header without embedded newlines."""
         class DummyProcedure(Procedure):
             par = Parameter('Generic Parameter with newline chars')
             DATA_COLUMNS = ['Foo', 'Bar', 'Baz']
@@ -153,7 +161,93 @@ class TestResults:
         assert (result.parameters['par'].value == np.linspace(1, 100, 17)).all()
 
 
+class TestPandas3Numpy2Compat:
+    """Tests verifying compatibility with pandas 3.0 and numpy 2.0."""
+
+    @staticmethod
+    def _write_rows(result, rows):
+        """Append data rows directly to the results file."""
+        with open(result.data_filename, 'a', encoding=Results.ENCODING) as f:
+            for row in rows:
+                f.write(result.format(row) + Results.LINE_BREAK)
+
+    def test_results_numeric_dtype_preserved_after_reload(self, tmpdir):
+        """Numeric dtypes must be preserved after writing and reloading a Results file."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ('x', 'y')
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'dtype_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 2.5} for i in range(5)])
+        result.reload()
+
+        assert result.data['x'].dtype == np.float64
+        assert result.data['y'].dtype == np.float64
+
+    def test_results_numeric_dtype_preserved_after_incremental_read(self, tmpdir):
+        """Numeric dtypes must not become object/str when reading new rows incrementally."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ('x', 'y')
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'incremental_dtype_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 1.5} for i in range(5)])
+        first_data = result.data
+        first_dtype = first_data['x'].dtype
+
+        self._write_rows(result, [{'x': float(i), 'y': float(i) * 1.5} for i in range(5, 10)])
+        second_data = result.data
+
+        assert second_data['x'].dtype == first_dtype
+        assert second_data['y'].dtype == first_dtype
+        assert len(second_data) == 10
+
+    def test_results_concat_sort_false_preserves_column_order(self, tmpdir):
+        """pd.concat with sort=False must preserve column order from DATA_COLUMNS."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ('z', 'a', 'b')
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'column_order_test.csv')
+        result = Results(procedure, filename)
+
+        self._write_rows(result, [
+            {'z': float(i), 'a': float(i + 1), 'b': float(i + 2)} for i in range(3)
+        ])
+        result.reload()
+
+        assert list(result.data.columns) == ['z', 'a', 'b']
+
+    def test_boolean_parameter_numpy_bool_(self):
+        """BooleanParameter must accept np.bool_ values (numpy 2.0 replacement for np.bool)."""
+        from pymeasure.experiment import BooleanParameter
+        p = BooleanParameter('Test')
+        p.value = np.bool_(True)
+        assert p.value is True
+        p.value = np.bool_(False)
+        assert p.value is False
+
+    def test_results_empty_file_returns_empty_dataframe(self, tmpdir):
+        """An empty Results file must return an empty DataFrame without dtype errors."""
+        class DummyProcedure(Procedure):
+            DATA_COLUMNS = ('x', 'y')
+
+        procedure = DummyProcedure()
+        filename = os.path.join(str(tmpdir), 'empty_test.csv')
+        result = Results(procedure, filename)
+
+        data = result.data
+        assert isinstance(data, pd.DataFrame)
+        assert list(data.columns) == ['x', 'y']
+        assert len(data) == 0
+
+
 def test_parameter_reading():
+    """Loading a Results CSV must round-trip all declared parameters from the header."""
     data_path = os.path.join(os.path.dirname(__file__), "data/results_for_testing_parameters.csv")
     test_string = "/test directory with space/test_filename.csv"
     iterations = 101

@@ -465,14 +465,14 @@ class Results:
                 encoding=Results.ENCODING,
             )
             try:
-                tmp_frame = pd.concat(chunks, ignore_index=True)
+                tmp_frame = pd.concat(chunks, ignore_index=True, sort=False)
                 # only append new data if there is any
                 # if no new data, tmp_frame dtype is object, which override's
                 # self._data's original dtype - this can cause problems plotting
                 # (e.g. if trying to plot int data on a log axis)
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
-                                           ignore_index=True)
+                                           ignore_index=True, sort=False)
             except Exception:
                 pass  # All data is up to date
             # Update _last_file_size
@@ -491,7 +491,7 @@ class Results:
             encoding=Results.ENCODING,
         )
         try:
-            self._data = pd.concat(chunks, ignore_index=True)
+            self._data = pd.concat(chunks, ignore_index=True, sort=False)
         except Exception:
             self._data = chunks.read()
 

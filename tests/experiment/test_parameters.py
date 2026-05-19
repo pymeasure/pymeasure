@@ -95,11 +95,11 @@ def test_boolean_value_error():
                          ["True", True],
                          ["true", True],
                          [1, True],
-                         [np.bool(True), True],
+                         [np.bool_(True), True],
                          ["False", False],
                          ["false", False],
                          [0, False],
-                         [np.bool(False), False],
+                         [np.bool_(False), False],
                          ))
 def test_boolean_value(value, mapping):
     p = BooleanParameter('Test')
