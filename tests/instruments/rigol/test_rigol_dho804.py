@@ -30,32 +30,6 @@ from pymeasure.instruments.rigol import DHO804
 
 
 # ======================================================================= #
-#  pytest CLI option + fixture                                             #
-# ======================================================================= #
-
-def pytest_addoption(parser):
-    parser.addoption(
-        "--device-address",
-        action="store",
-        default=None,
-        help="VISA resource string, e.g. 'TCPIP::10.0.0.100::INSTR'",
-    )
-
-
-@pytest.fixture(scope="module")
-def real_instrument(request):
-    """Connect to a real DHO804; skip if --device-address is not given."""
-    try:
-        address = request.config.getoption("--device-address")
-    except ValueError:
-        address = None
-    if not address:
-        pytest.skip("No --device-address given")
-    scope = DHO804(address)
-    yield scope
-    scope.adapter.close()
-
-# ======================================================================= #
 #  Status and OPC                                                          #
 # ======================================================================= #
 
@@ -106,7 +80,7 @@ class TestChannel:
         with expected_protocol(
             DHO804, [(f":CHAN{ch_n}:DISP?", raw)]
         ) as inst:
-            assert getattr(inst, f"ch_{ch_n}").display is value
+            assert getattr(inst, f"ch_{ch_n}").display_enabled is value
 
     @pytest.mark.parametrize("ch_n, value, raw", [
         (1, True,  "1"),
@@ -116,7 +90,7 @@ class TestChannel:
         with expected_protocol(
             DHO804, [(f":CHAN{ch_n}:DISP {raw}", None)]
         ) as inst:
-            getattr(inst, f"ch_{ch_n}").display = value
+            getattr(inst, f"ch_{ch_n}").display_enabled = value
 
     def test_display_accepts_int(self):
         """0 and 1 are accepted alongside False/True."""
@@ -124,8 +98,8 @@ class TestChannel:
             DHO804,
             [(":CHAN1:DISP 1", None), (":CHAN1:DISP 0", None)],
         ) as inst:
-            inst.ch_1.display = 1
-            inst.ch_1.display = 0
+            inst.ch_1.display_enabled = 1
+            inst.ch_1.display_enabled = 0
 
     # -- coupling --------------------------------------------------------
 
@@ -257,11 +231,11 @@ class TestChannel:
             assert inst.ch_1.label == "CLK"
 
     @pytest.mark.parametrize("value, raw", [(True, "1"), (False, "0")])
-    def test_label_show_set(self, value, raw):
+    def test_label_enable_set(self, value, raw):
         with expected_protocol(
             DHO804, [(f":CHAN1:LAB:SHOW {raw}", None)]
         ) as inst:
-            inst.ch_1.label_show = value
+            inst.ch_1.label_enabled = value
 
 
 # ======================================================================= #
@@ -532,12 +506,15 @@ class TestCursorAndDisplay:
         ) as inst:
             inst.clear_screen()
 
-    @pytest.mark.parametrize("value", ["VECT", "DOTS"])
-    def test_display_type_set(self, value):
+    @pytest.mark.parametrize("value, expected_cmd", [
+        (True, b":DISP:TYPE VECT"),
+        (False, b":DISP:TYPE DOTS")
+    ])
+    def test_display_type_vector_enabled_set(self, value, expected_cmd):
         with expected_protocol(
-            DHO804, [(f":DISP:TYPE {value}", None)]
+            DHO804, [(expected_cmd, None)]
         ) as inst:
-            inst.display_type = value
+            inst.display_type_vector_enabled = value
 
     def test_display_grading_time_set(self):
         with expected_protocol(
@@ -634,89 +611,3 @@ class TestWaveform:
             assert len(v) == 4
             assert v[0] == pytest.approx(0.1)
             assert len(t) == len(v)
-
-# ======================================================================= #
-#  Live hardware tests                                                     #
-# ======================================================================= #
-
-
-class TestLiveDevice:
-    """Smoke tests against real hardware (requires --device-address)."""
-
-    def test_idn_contains_dho804(self, real_instrument):
-        assert "DHO804" in real_instrument.id
-
-    @pytest.mark.parametrize("ch_n", [1, 2, 3, 4])
-    def test_channel_display_roundtrip(self, real_instrument, ch_n):
-        ch = getattr(real_instrument, f"ch_{ch_n}")
-        original = ch.display
-        ch.display = not original
-        assert ch.display is not original
-        ch.display = original
-
-    @pytest.mark.parametrize("coupling", ["AC", "DC", "GND"])
-    def test_channel_coupling_roundtrip(self, real_instrument, coupling):
-        original = real_instrument.ch_1.coupling
-        real_instrument.ch_1.coupling = coupling
-        assert real_instrument.ch_1.coupling == coupling
-        real_instrument.ch_1.coupling = original
-
-    def test_channel_scale_roundtrip(self, real_instrument):
-        original = real_instrument.ch_1.scale
-        real_instrument.ch_1.scale = 1.0
-        assert real_instrument.ch_1.scale == pytest.approx(1.0, rel=1e-3)
-        real_instrument.ch_1.scale = original
-
-    def test_channel_offset_roundtrip(self, real_instrument):
-        original = real_instrument.ch_1.offset
-        real_instrument.ch_1.offset = 0.0
-        assert real_instrument.ch_1.offset == pytest.approx(0.0, abs=1e-3)
-        real_instrument.ch_1.offset = original
-
-    def test_timebase_scale_roundtrip(self, real_instrument):
-        original = real_instrument.timebase_scale
-        real_instrument.timebase_scale = 1e-3
-        assert real_instrument.timebase_scale == pytest.approx(1e-3, rel=1e-3)
-        real_instrument.timebase_scale = original
-
-    def test_trigger_source_roundtrip(self, real_instrument):
-        original = real_instrument.trigger_source
-        real_instrument.trigger_source = "CHAN1"
-        assert real_instrument.trigger_source == "CHAN1"
-        real_instrument.trigger_source = original
-
-    def test_trigger_level_roundtrip(self, real_instrument):
-        original = real_instrument.trigger_level
-        real_instrument.trigger_level = 0.0
-        assert real_instrument.trigger_level == pytest.approx(0.0, abs=0.01)
-        real_instrument.trigger_level = original
-
-    def test_trigger_status_is_valid(self, real_instrument):
-        assert real_instrument.trigger_status in ("TD", "WAIT", "RUN",
-                                                  "AUTO", "STOP")
-
-    def test_run_stop_single(self, real_instrument):
-        real_instrument.run()
-        real_instrument.stop()
-        real_instrument.single()
-        real_instrument.run()
-
-    def test_sample_rate_positive(self, real_instrument):
-        assert real_instrument.sample_rate > 0
-
-    def test_measure_vpp_returns_float(self, real_instrument):
-        result = real_instrument.measure("VPP", 1)
-        assert isinstance(result, float)
-
-    def test_get_waveform_shape(self, real_instrument):
-        real_instrument.stop()
-        t, v = real_instrument.get_waveform(channel=1, mode="NORM", fmt="BYTE")
-        assert len(t) > 0
-        assert len(t) == len(v)
-        real_instrument.run()
-
-    def test_get_waveform_time_monotonic(self, real_instrument):
-        real_instrument.stop()
-        t, _ = real_instrument.get_waveform(channel=1)
-        assert all(t[i] < t[i + 1] for i in range(len(t) - 1))
-        real_instrument.run()

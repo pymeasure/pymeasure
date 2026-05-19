@@ -25,6 +25,7 @@
 import time
 import logging
 import numpy as np
+from enum import IntFlag
 
 from pymeasure.instruments import Instrument, Channel
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -37,10 +38,36 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+class EventStatusByte(IntFlag):
+    """Event Status Register (ESR) flags."""
+    NONE = 0
+    OPC = 1            # Bit 0: Operation Complete
+    B1 = 2             # Bit 1: unused
+    QYE = 4            # Bit 2: Query Error
+    DDE = 8            # Bit 3: Device Specific Error
+    EXE = 16           # Bit 4: Execution Error
+    CME = 32           # Bit 5: Command Error
+    B6 = 64            # Bit 6: unused
+    PON = 128          # Bit 7: Power On
+
+
+class StatusByte(IntFlag):
+    """Status Byte (STB) flags."""
+    NONE = 0
+    B0 = 1             # Bit 0: unused
+    B1 = 2             # Bit 1: unused
+    ERR_QUEUE = 4      # Bit 2: Error(s) in Queue
+    QDS = 8            # Bit 3: Questionable Data Summary
+    MAV = 16           # Bit 4: Message Available
+    SES = 32           # Bit 5: Standard Event Summary
+    MSS = 64           # Bit 6: Master Summary Status
+    OSR = 128          # Bit 7: Operation Status Register
+
+
 class DHO804Channel(Channel):
     """A single analog input channel of the Rigol DHO804."""
 
-    display = Channel.control(
+    display_enabled = Channel.control(
         ":CHAN{ch}:DISP?",
         ":CHAN{ch}:DISP %d",
         """Control whether the channel is displayed (bool).""",
@@ -148,7 +175,7 @@ class DHO804Channel(Channel):
         10 chars).""",
     )
 
-    label_show = Channel.control(
+    label_enabled = Channel.control(
         ":CHAN{ch}:LAB:SHOW?",
         ":CHAN{ch}:LAB:SHOW %s",
         """Control whether the label is shown on screen (bool).""",
@@ -174,11 +201,11 @@ class DHO804(SCPIMixin, Instrument):
 
     def wait_for_opc(self, timeout=10):
         """Block until the oscilloscope reports operation complete."""
-        deadline = time.time() + timeout
+        deadline = time.monotonic() + timeout
         while True:
             if self.ask("*OPC?").strip() == "1":
                 return
-            if time.time() > deadline:
+            if time.monotonic() > deadline:
                 raise TimeoutError(f"wait_for_opc timed out after {timeout} s")
             time.sleep(0.1)
 
@@ -186,10 +213,17 @@ class DHO804(SCPIMixin, Instrument):
         """Clear the event status register (CLS)."""
         self.write("*CLS")
 
-    @property
-    def status_byte(self):
-        """Get the status byte (STB, int)."""
-        return int(self.ask("*STB?"))
+    status_byte = Instrument.measurement(
+        "*STB?",
+        """Get the status byte (STB, IntFlag).""",
+        cast=lambda v: StatusByte(int(v))
+    )
+
+    event_status = Instrument.measurement(
+        "*ESR?",
+        """Get and clear the Standard Event Status Register (ESR, IntFlag).""",
+        cast=lambda v: EventStatusByte(int(v))
+    )
 
     # ================================================================== #
     #  ACQUISITION                                                        #
@@ -241,10 +275,11 @@ class DHO804(SCPIMixin, Instrument):
         ],
     )
 
-    @property
-    def sample_rate(self):
-        """Get the current sample rate in Sa/s (read-only, float)."""
-        return float(self.ask(":ACQ:SRAT?"))
+    sample_rate = Instrument.measurement(
+        ":ACQ:SRAT?",
+        """Get the current sample rate in Sa/s (float).""",
+        cast=float
+    )
 
     # ================================================================== #
     #  TIMEBASE                                                           #
@@ -363,7 +398,7 @@ class DHO804(SCPIMixin, Instrument):
 
     @property
     def trigger_status(self):
-        """Get the current trigger status string (read-only).
+        """Get the current trigger status string.
 
         Possible values: ``"TD"``, ``"WAIT"``, ``"RUN"``, ``"AUTO"``,
         ``"STOP"``.
@@ -441,13 +476,14 @@ class DHO804(SCPIMixin, Instrument):
         """Clear the waveform display area."""
         self.write(":DISP:CLE")
 
-    display_type = Instrument.control(
+    display_type_vector_enabled = Instrument.control(
         ":DISP:TYPE?",
         ":DISP:TYPE %s",
-        """Control the waveform display type: ``"VECT"`` (vector) or
-        ``"DOTS"``.""",
+        """Control the waveform display type: ``True`` for Vector or
+        ``False`` for Dots.""",
         validator=strict_discrete_set,
-        values=["VECT", "DOTS"],
+        values={True: "VECT", False: "DOTS"},
+        map_values=True,
     )
 
     display_grading_time = Instrument.control(

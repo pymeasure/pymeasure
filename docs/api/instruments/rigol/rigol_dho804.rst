@@ -1,6 +1,6 @@
-##############################
+#########################
 Rigol DHO804 Oscilloscope
-##############################
+#########################
 
 .. autoclass:: pymeasure.instruments.rigol.DHO804
     :members:
