@@ -24,7 +24,9 @@
 
 from inspect import getmembers
 import logging
-from typing import Any, Callable, cast, Optional, Protocol, Union, Sequence, TypeVar
+from typing import (
+    Any, Callable, cast, Literal, Optional, Protocol, Union, Sequence, TypeVar, overload,
+)
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -489,17 +491,65 @@ class CommonBase:
 
     # Property creators
     @staticmethod
+    @overload
+    def control(
+        get_command: Union[str, None],
+        set_command: Union[str, None],
+        docs: str,
+        validator: Callable[[V0, Vs], V2] = ...,
+        values: Vs = ...,
+        map_values: bool = ...,
+        get_process: Callable[[Any], Any] = ...,
+        get_process_list: Callable[[list[Any]], Any] = ...,
+        set_process: Callable[[V2], Any] = ...,
+        command_process: Optional[Callable[[str], str]] = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: Literal[True] = ...,
+        preprocess_reply: Optional[Callable[[str], str]] = ...,
+        separator: str = ...,
+        maxsplit: int = ...,
+        cast: Callable[[str], T] = ...,
+        values_kwargs: Optional[dict[str, Any]] = ...,
+        **kwargs,
+    ) -> DynamicProperty: ...
+
+    @staticmethod
+    @overload
+    def control(
+        get_command: Union[str, None],
+        set_command: Union[str, None],
+        docs: str,
+        validator: Callable[[V0, Vs], V2] = ...,
+        values: Vs = ...,
+        map_values: bool = ...,
+        get_process: Callable[[Any], Any] = ...,
+        get_process_list: Callable[[list[Any]], Any] = ...,
+        set_process: Callable[[V2], Any] = ...,
+        command_process: Optional[Callable[[str], str]] = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: Literal[False] = ...,
+        preprocess_reply: Optional[Callable[[str], str]] = ...,
+        separator: str = ...,
+        maxsplit: int = ...,
+        cast: Callable[[str], T] = ...,
+        values_kwargs: Optional[dict[str, Any]] = ...,
+        **kwargs,
+    ) -> property: ...
+
+    @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
         get_command: Union[str, None],
         set_command: Union[str, None],
         docs: str,
-        validator: Callable[[Any, Vs], V2] = lambda v, vs: v,
+        validator: Callable[[V0, Vs], V2] = lambda v, vs: v,
         values: Vs = (),
         map_values: bool = False,
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
         set_process: Callable[[V2], Any] = lambda v: v,
-        command_process: Optional[Callable] = None,
+        command_process: Optional[Callable[[str], str]] = None,
         check_set_errors: bool = False,
         check_get_errors: bool = False,
         dynamic: bool = False,
@@ -507,7 +557,7 @@ class CommonBase:
         separator: str = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
-        values_kwargs: Optional[dict] = None,
+        values_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> Union[property, DynamicProperty]:
         """Return a property for the class based on the supplied
@@ -605,7 +655,7 @@ class CommonBase:
             map_values: bool = map_values,
             get_process: Callable[[Any], Any] = get_process,
             get_process_list: Callable[[list[Any]], Any] = get_process_list,
-            command_process=command_process,
+            command_process: Callable[[str], str] = command_process,
             check_get_errors: bool = check_get_errors,
         ) -> Any:
             if get_command is None:
@@ -655,7 +705,7 @@ class CommonBase:
             values: Vs = values,
             map_values: bool = map_values,
             set_process: Callable[[V2], Any] = set_process,
-            command_process=command_process,
+            command_process: Callable[[str], str] = command_process,
             check_set_errors: bool = check_set_errors,
         ) -> None:
             if set_command is None:
@@ -701,6 +751,46 @@ class CommonBase:
             return property(fget, fset)
 
     @staticmethod
+    @overload
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        map_values: bool = ...,
+        get_process: Callable[[Any], Any] = ...,
+        get_process_list: Callable[[list[Any]], Any] = ...,
+        command_process: Optional[Callable[[str], str]] = ...,
+        check_get_errors: bool = ...,
+        dynamic: Literal[True] = ...,
+        preprocess_reply: Optional[Callable[[str], str]] = ...,
+        separator: str = ...,
+        maxsplit: int = ...,
+        cast: Callable[[str], T] = ...,
+        values_kwargs: Optional[dict[str, Any]] = ...,
+        **kwargs,
+    ) -> DynamicProperty: ...
+
+    @staticmethod
+    @overload
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        map_values: bool = ...,
+        get_process: Callable[[Any], Any] = ...,
+        get_process_list: Callable[[list[Any]], Any] = ...,
+        command_process: Optional[Callable[[str], str]] = ...,
+        check_get_errors: bool = ...,
+        dynamic: Literal[False] = ...,
+        preprocess_reply: Optional[Callable[[str], str]] = ...,
+        separator: str = ...,
+        maxsplit: int = ...,
+        cast: Callable[[str], T] = ...,
+        values_kwargs: Optional[dict[str, Any]] = ...,
+        **kwargs,
+    ) -> property: ...
+
+    @staticmethod
     def measurement(
         get_command: str,
         docs: str,
@@ -708,14 +798,14 @@ class CommonBase:
         map_values: bool = False,
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
-        command_process: Optional[Callable] = None,
+        command_process: Optional[Callable[[str], str]] = None,
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Optional[Callable[[str], str]] = None,
         separator: str = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
-        values_kwargs: Optional[dict] = None,
+        values_kwargs: Optional[dict[str, Any]] = None,
         **kwargs,
     ) -> Union[property, DynamicProperty]:
         """ Return a property for the class based on the supplied
@@ -780,13 +870,39 @@ class CommonBase:
                                   )
 
     @staticmethod
+    @overload
     def setting(
         set_command: str,
         docs: str,
-        validator: Callable[[Any, Vs], Any] = lambda x, y: x,
+        validator: Callable[[V0, Vs], V2] = ...,
+        values: Vs = ...,
+        map_values: bool = ...,
+        set_process: Callable[[V2], Any] = ...,
+        check_set_errors: bool = ...,
+        dynamic: Literal[True] = ...,
+    ) -> DynamicProperty: ...
+
+    @staticmethod
+    @overload
+    def setting(
+        set_command: str,
+        docs: str,
+        validator: Callable[[V0, Vs], V2] = ...,
+        values: Vs = ...,
+        map_values: bool = ...,
+        set_process: Callable[[V2], Any] = ...,
+        check_set_errors: bool = ...,
+        dynamic: Literal[False] = ...,
+    ) -> property: ...
+
+    @staticmethod
+    def setting(
+        set_command: str,
+        docs: str,
+        validator: Callable[[V0, Vs], V2] = lambda x, y: x,
         values: Vs = (),
         map_values: bool = False,
-        set_process: Callable[[Any], Any] = lambda v: v,
+        set_process: Callable[[V2], Any] = lambda v: v,
         check_set_errors: bool = False,
         dynamic: bool = False,
     ) -> Union[property, DynamicProperty]:
