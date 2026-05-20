@@ -15,6 +15,10 @@ Deprecated
 - Deprecate Toptica Ibeamsmart :code:`enable_continous`, use :code:`enable_continuous` instead.
 - Deprecate Thermotron 3800 :code:`initalize_oven`, use :code:`initialize_oven` instead.
 
+Changed
+-------
+- For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
+
 Version 0.16.0 (2026-05-20)
 ===========================
 
