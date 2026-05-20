@@ -189,6 +189,8 @@ class CommonBase:
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
     """
 
+    name: str
+
     # Variable holding the list of DynamicProperty parameters that are configurable
     # by users
     _fget_params_list = ('get_command',
