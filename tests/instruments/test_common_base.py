@@ -23,13 +23,21 @@
 #
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 import pytest
+try:
+    from typing_extensions import assert_type
+    TYPING_EXTENSION = True
+except ImportError:
+    TYPING_EXTENSION = False
 
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase, cast_or_str
-from pymeasure.adapters import FakeAdapter, ProtocolAdapter
+from pymeasure.instruments.common_base import (
+    DynamicProperty, CommonBase, IdType, InstrumentProperty, cast_or_str, identity,
+)
+from pymeasure.adapters import Adapter, FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
 
@@ -410,17 +418,17 @@ def test_MultiChannelCreator(args, pairs, kwargs):
 
 def test_MultiChannelCreator_different_list_lengths():
     with pytest.raises(AssertionError, match="Lengths"):
-        CommonBase.MultiChannelCreator(("A", "B", "C"), (Child,) * 2)
+        CommonBase.MultiChannelCreator(id=("A", "B", "C"), cls=(ChildChannel,) * 2)
 
 
 def test_ChannelCreator_invalid_input():
     with pytest.raises(ValueError, match="Invalid"):
-        CommonBase.ChannelCreator("A", {})
+        CommonBase.ChannelCreator("A", {}) # type: ignore
 
 
 # Test CommonBase communication
 def test_ask_writes_and_reads():
-    with expected_protocol(CommonBaseTesting, [("Sent", "Received")]) as inst:
+    with expected_protocol(CommonBaseTesting, [("Sent", "Received")]) as inst:  # type: ignore[arg-type]
         assert inst.ask("Sent") == "Received"
 
 
@@ -735,9 +743,9 @@ def test_control_get_process_list(dynamic):
         )
 
     # override get_process_list should only work when dynamic
-    Fake.x_get_process_list = lambda v: [0, "2"]
+    Fake.x_get_process_list = lambda v: [0, "2"]  # type: ignore[attr-defined]
 
-    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:  # type: ignore[arg-type]
         if dynamic:
             assert inst.x == [0, "2"]
         else:
@@ -779,7 +787,7 @@ def test_control_parameters_for_values():
             values_kwargs={'testing': True},
         )
 
-        def values(self, cmd, testing=False, **kwargs):
+        def values(self, cmd, testing=False, **kwargs): # type: ignore[override]
             self.testing = testing
             return super().values(cmd, **kwargs)
 
@@ -801,9 +809,9 @@ def test_measurement_parameters_for_values():
             values_kwargs={'testing': True},
         )
 
-        def values(self, cmd, testing=False, **kwargs):
+        def values(self, command, testing=False, **kwargs): # type: ignore[override]
             self.testing = testing
-            return super().values(cmd, **kwargs)
+            return super().values(command, **kwargs)
 
     fake = Fake()
     fake.write("5")
@@ -821,7 +829,7 @@ def test_measurement_cast(cast, expected):
         x = CommonBase.measurement(
             "x", "doc", cast=cast)
 
-    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:  # type: ignore[arg-type]
         assert instr.x == expected
 
 
@@ -833,7 +841,7 @@ def test_measurement_cast_int():
         x = CommonBase.measurement(
             "x", "doc", cast=int)
 
-    with expected_protocol(Fake, [("x", "5")]) as instr:
+    with expected_protocol(Fake, [("x", "5")]) as instr:  # type: ignore[arg-type]
         y = instr.x
         assert y == 5
         assert type(y) is int
@@ -847,7 +855,7 @@ def test_measurement_unitful_property():
         x = CommonBase.measurement(
             "x", "doc", get_process=lambda v: ureg.Quantity(v, ureg.m))
 
-    with expected_protocol(Fake, [("x", "5.5")]) as instr:
+    with expected_protocol(Fake, [("x", "5.5")]) as instr:  # type: ignore[arg-type]
         y = instr.x
         assert y.m_as(ureg.m) == 5.5
 
@@ -906,7 +914,7 @@ def test_control_multivalue(dynamic):
         )
 
     fake = Fake()
-    fake.x = (5, 6)
+    fake.x = (5, 6)  # type: ignore[assignment]
     assert fake.read() == '5,6'
 
 
@@ -1022,3 +1030,266 @@ def test_dynamic_property_values_defined_at_superclass_level():
     inst.fake_ctrl2 = 17  # should raise an error if change unsuccessful
     with pytest.raises(ValueError):
         inst.fake_ctrl2 = 2  # should not raise an error if change unsuccessful
+
+class ExampleControlTypes(CommonBase):
+    """Verify via type checker whether control types typing works.
+
+    Properties without explicit type annotations so that the type checker
+    infers the return type of ``CommonBase.control``. The expected types
+    are then checked with ``assert_type`` in the ``TYPE_CHECKING`` block
+    below, which catches cases where the inferred type is ``Any``
+    (a bare annotation would shadow that).
+    """
+    @staticmethod
+    def return_int(value: Any) -> int:
+        return 5
+
+    @staticmethod
+    def int_validator(value: int, values: Any) -> Any:
+        pass
+
+    no_arguments = CommonBase.control(
+        "g",
+        "s",
+        "d",
+    )
+
+    cast_only = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+    )
+
+    cast_function = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=return_int,
+    )
+
+    get_process_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+    )
+
+    get_process_with_cast_func = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=return_int,
+        get_process=identity,
+    )
+
+    get_process_list_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list= CommonBase.control(
+        "g",
+        "s",
+        "d",
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast_function = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=lambda v: int(v),
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    map_values = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+    )
+
+    map_values_validator = CommonBase.control(
+        "g",
+        "s",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+        validator=int_validator,
+    )
+
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleControlTypes.no_arguments, InstrumentProperty[float])
+    assert_type(ExampleControlTypes.cast_only, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.cast_function, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.get_process_with_cast, InstrumentProperty[int])
+    assert_type(ExampleControlTypes.get_process_list_with_cast, InstrumentProperty[list[int]])
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list,
+        InstrumentProperty[list[float] | float],
+    )
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list_with_cast,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(
+        ExampleControlTypes.get_process_and_get_process_list_with_cast_function,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(ExampleControlTypes.map_values, InstrumentProperty[Any])
+    assert_type(ExampleControlTypes.map_values, InstrumentProperty[int])
+
+
+class ExampleMeasurementTypes(CommonBase):
+    """Verify via type checker whether measurement types typing works."""
+
+    @staticmethod
+    def return_int(value: Any) -> int:
+        return 5
+
+    no_arguments = CommonBase.measurement(
+        "g",
+        "d",
+    )
+
+    cast_only = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+    )
+
+    cast_function = CommonBase.measurement(
+        "g",
+        "d",
+        cast=return_int,
+    )
+
+    get_process_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+    )
+
+    get_process_list_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list = CommonBase.measurement(
+        "g",
+        "d",
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    get_process_and_get_process_list_with_cast_function = CommonBase.measurement(
+        "g",
+        "d",
+        cast=lambda v: int(v),
+        get_process=identity,
+        get_process_list=identity,
+    )
+
+    map_values = CommonBase.measurement(
+        "g",
+        "d",
+        cast=int,
+        get_process=identity,
+        map_values=True,
+    )
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleMeasurementTypes.no_arguments, InstrumentProperty[float])
+    assert_type(ExampleMeasurementTypes.cast_only, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.cast_function, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.get_process_with_cast, InstrumentProperty[int])
+    assert_type(ExampleMeasurementTypes.get_process_list_with_cast, InstrumentProperty[list[int]])
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list,
+        InstrumentProperty[list[float] | float],
+    )
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list_with_cast,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(
+        ExampleMeasurementTypes.get_process_and_get_process_list_with_cast_function,
+        InstrumentProperty[list[int] | int],
+    )
+    assert_type(ExampleMeasurementTypes.map_values, InstrumentProperty[Any])
+
+
+class ExampleSettingTypes(CommonBase):
+    """Verify via type checker whether setting types typing works."""
+
+    @staticmethod
+    def int_validator(value: int, values: Any) -> Any:
+        pass
+
+    @staticmethod
+    def int_set_process(value: int) -> Any:
+        pass
+
+    default = CommonBase.setting(
+        "s %d",
+        "d",
+    )
+
+    validator = CommonBase.setting(
+        "s %d",
+        "d",
+        validator=int_validator,
+        set_process=lambda v: v,
+    )
+
+    validator_untyped = CommonBase.setting(
+        "s %d",
+        "d",
+        validator=strict_discrete_set,
+    )
+
+    set_process = CommonBase.setting(
+        "c",
+        "d",
+        set_process=int_set_process,
+    )
+
+
+if TYPE_CHECKING and TYPING_EXTENSION:
+    assert_type(ExampleSettingTypes.default, InstrumentProperty[Any])
+    assert_type(ExampleSettingTypes.validator, InstrumentProperty[int])
+    assert_type(ExampleSettingTypes.validator_untyped, InstrumentProperty[Any])
+    assert_type(ExampleSettingTypes.set_process, InstrumentProperty[int])
