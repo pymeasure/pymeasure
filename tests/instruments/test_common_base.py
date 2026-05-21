@@ -44,12 +44,18 @@ from pymeasure.instruments.validators import strict_discrete_set, strict_range, 
 class CommonBaseTesting(CommonBase):
     """Add read/write methods in order to use the ProtocolAdapter."""
 
-    def __init__(self, parent, id=None, *args, **kwargs):
+    parent: CommonBase | Adapter
+    id: IdType
+
+    def __init__(self, parent: CommonBase | Adapter, id: IdType = None, *args, **kwargs):
         if "test" in kwargs:
             self.test = kwargs.pop("test")
         super().__init__(*args, **kwargs)
         self.parent = parent
         self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         self.args = args
         self.kwargs = kwargs
 
@@ -64,6 +70,9 @@ class CommonBaseTesting(CommonBase):
 
 
 class GenericBase(CommonBaseTesting):
+    parent: CommonBase
+    id: IdType = 1
+
     #  Use truncated_range as this easily lets us test for the range boundaries
     fake_ctrl = CommonBase.control(
         "C{ch}:control?", "C{ch}:control %d", "docs",
@@ -153,10 +162,18 @@ class NewRangeBase(FakeBase):
     fake_measurement_values = {'X': 4, 'Y': 5, 'Z': 6}
 
 
-class Child(CommonBase):
+class ChildChannel(CommonBase):
     """A child, which accepts parent and id arguments."""
 
-    def __init__(self, parent, id=None, *args, **kwargs):
+    parent: CommonBase
+    id: IdType
+
+    def __init__(self, parent: CommonBase, id: IdType = None, *args, **kwargs):
+        self.parent = parent
+        self.id = id
+        self._name: str = ""
+        self._protected: bool = False
+        self._collection: str = ""
         super().__init__()
 
 
@@ -173,7 +190,7 @@ class SingleChannelParent(CommonBaseTesting):
     ch_C = CommonBase.ChannelCreator(GenericBase, "C")
     an_1 = CommonBase.ChannelCreator(GenericBase, 1, collection="analog", test=True)
     an_2 = CommonBase.ChannelCreator(GenericBase, 2, collection="analog", test=True)
-    function = CommonBase.ChannelCreator(Child)
+    function = CommonBase.ChannelCreator(ChildChannel)
 
 
 class MixChannelParent(CommonBaseTesting):
@@ -249,7 +266,7 @@ class TestInitWithChannelCreator:
         assert isinstance(parent.analog[1], GenericBase)
 
     def test_function(self, parent: SingleChannelParent):
-        assert isinstance(parent.function, Child)
+        assert isinstance(parent.function, ChildChannel)
 
     def test_removal_of_protected_children_fails(self, parent: SingleChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
@@ -402,9 +419,9 @@ class TestInheritanceWithChildren:
 
 # Test MultiChannelCreator
 @pytest.mark.parametrize("args, pairs, kwargs", (
-        ((Child, ["A", "B"]), [(Child, "A"), (Child, "B")], {'prefix': "ch_"}),
-        (((Child, GenericBase, Child), (1, 2, 3)),
-         [(Child, 1), (GenericBase, 2), (Child, 3)], {'prefix': "ch_"}),
+        ((ChildChannel, ["A", "B"]), [(ChildChannel, "A"), (ChildChannel, "B")], {'prefix': "ch_"}),
+        (((ChildChannel, GenericBase, ChildChannel), (1, 2, 3)),
+         [(ChildChannel, 1), (GenericBase, 2), (ChildChannel, 3)], {'prefix': "ch_"}),
 ))
 def test_MultiChannelCreator(args, pairs, kwargs):
     """Test whether the channel creator receives the right arguments."""

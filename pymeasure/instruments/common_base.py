@@ -42,8 +42,6 @@ class Child(Protocol):
     _protected: bool
     _collection: str
 
-    def __init__(self, parent: "CommonBase", id: IdType, **kwargs) -> None: ...
-
 
 T = TypeVar("T")
 T2 = TypeVar("T2")
@@ -235,18 +233,22 @@ class CommonBase:
     def read_binary_values(self, **kwargs):
         raise NotImplementedError("Subclasses must implement read_binary_values.")
 
-    class BaseChannelCreator:
+    class BaseChannelCreator(Generic[C]):
         """Base class for ChannelCreator and MultiChannelCreator.
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        pairs: Sequence[tuple[type[Child], IdType]] = ()
+        pairs: Sequence[tuple[type[C], IdType]] = ()
         kwargs: dict
+        _attr_name: str = ""
 
         def __init__(self, **kwargs) -> None:
             self.kwargs = kwargs
+
+        def __set_name__(self, owner, name):
+            self._attr_name = name
 
         def check_for_valid_class(self, cls: Any) -> bool:
             try:
@@ -255,7 +257,7 @@ class CommonBase:
                 valid_class = False
             return valid_class
 
-    class ChannelCreator(BaseChannelCreator):
+    class ChannelCreator(BaseChannelCreator[C]):
         """Add a single channel to the parent class.
 
         The child will be added to the parent instance at instantiation with
@@ -281,14 +283,27 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls: type[Child], id: IdType = None, **kwargs):
+        def __init__(self, cls: type[C], id: IdType = None, **kwargs):
             super().__init__(**kwargs)
             if (isinstance(id, (str, int)) or id is None) and self.check_for_valid_class(cls):
                 self.pairs = ((cls, id),)
             else:
                 raise ValueError(f"Invalid definition of class '{cls}' and id '{id}'.")
 
-    class MultiChannelCreator(BaseChannelCreator):
+        @overload
+        def __get__(self, obj: None, objtype: Any) -> "CommonBase.ChannelCreator[C]": ...
+
+        @overload
+        def __get__(self, obj: Any, objtype: Any) -> C: ...
+
+        def __get__(self, obj, objtype=None):
+            if obj is None:
+                return self
+            if self._attr_name in obj.__dict__:
+                return obj.__dict__[self._attr_name]
+            raise AttributeError(self._attr_name)
+
+    class MultiChannelCreator(BaseChannelCreator[C]):
         """Add channels to the parent class.
 
         The children will be added to the parent instance at instantiation with
@@ -318,8 +333,8 @@ class CommonBase:
 
         def __init__(
             self,
-            cls: type[Child] | Sequence[type[Child]],
-            id: IdType = None,
+            cls: type[C] | Sequence[type[C]],
+            id: IdType | list[IdType] | tuple[IdType, ...] |None = None,
             prefix: str | None = "ch_",
             **kwargs,
         ) -> None:
@@ -328,10 +343,23 @@ class CommonBase:
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
             elif isinstance(id, (list, tuple)) and self.check_for_valid_class(cls):
-                self.pairs = list(zip((cast(type[Child], cls),) * len(id), id))
+                self.pairs = list(zip((cast(type[C], cls),) * len(id), id))
             else:
                 raise ValueError(f"Invalid definition of classes '{cls}' and ids '{id}'.")
             self.kwargs.setdefault("prefix", prefix)
+
+        @overload
+        def __get__(self, obj: None, objtype: Any) -> "CommonBase.MultiChannelCreator[C]": ...
+
+        @overload
+        def __get__(self, obj: Any, objtype: Any) -> dict[int | str, C]: ...
+
+        def __get__(self, obj, objtype=None):
+            if obj is None:
+                return self
+            if self._attr_name in obj.__dict__:
+                return obj.__dict__[self._attr_name]
+            raise AttributeError(self._attr_name)
 
     def _setup_special_names(self) -> list[str]:
         """ Return list of class/instance special names.
@@ -365,9 +393,9 @@ class CommonBase:
         return channels
 
     @classmethod
-    def get_channel_pairs(cls: type["CommonBase"]):
+    def get_channel_pairs(cls: type["CommonBase"]) -> list[tuple[type[Child], IdType]]:
         """Return a list of all the Instrument's channel pairs"""
-        channel_pairs = []
+        channel_pairs: list[tuple[type[Child], IdType]] = []
         for name, creator in cls.get_channels():
             for pair in creator.pairs:
                 channel_pairs.append(pair)
@@ -441,7 +469,7 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
         """
-        child = cls(self, id, **kwargs)
+        child = cls(self, id, **kwargs) # type: ignore[reportCallIssue]
         collection_data = getattr(self, collection, {})
         if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
@@ -475,10 +503,9 @@ class CommonBase:
 
         :param child: Instance of the child to delete.
         """
-        if hasattr(child, "_protected"):
+        if getattr(child, "_protected", None):
             raise TypeError("You cannot remove channels defined at class level.")
-        if hasattr(child, "_collection"):
-            collection = getattr(self, child._collection)
+        if collection := getattr(self, child._collection, None):
             del collection[child.id]
         delattr(self, child._name)
 
