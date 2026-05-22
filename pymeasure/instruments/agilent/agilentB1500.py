@@ -413,7 +413,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     status_dict = self.cmu_status
                 else:
                     status_dict = self.smu_status
-                for index, digit in enumerate(bin(status)[2:]):
+                for index, digit in enumerate(f"{status:b}"):
                     # [2:] to chop off 0b
                     if digit == "1":
                         log.info("Agilent B1500%s: %s", name, status_dict[2**index])

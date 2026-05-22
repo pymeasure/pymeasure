@@ -24,7 +24,6 @@
 
 from __future__ import annotations
 import logging
-from typing import Union
 from collections.abc import Sequence
 from unittest.mock import MagicMock
 from warnings import warn
@@ -34,7 +33,7 @@ from .adapter import Adapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-BYTABLE = Union[bytes, bytearray, str, list[int], tuple[int, ...], int, float]
+BYTABLE = bytes | bytearray | str | list[int] | tuple[int, ...] | int | float
 
 
 def to_bytes(

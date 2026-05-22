@@ -180,7 +180,7 @@ class IntegerParameter(Parameter):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
-                raise ValueError(f"Units included in string ({units}) do not match"
+                raise ValueError(f"Units included in string ({units}) do not match "
                                  f"the units of the IntegerParameter ({self.units})")
 
         try:
@@ -269,7 +269,7 @@ class FloatParameter(Parameter):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
-                raise ValueError(f"Units included in string ({units}) do not match"
+                raise ValueError(f"Units included in string ({units}) do not match "
                                  f"the units of the FloatParameter ({self.units})")
 
         try:

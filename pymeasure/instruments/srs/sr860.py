@@ -622,8 +622,7 @@ class SR860(Instrument):
     # Strip Chart commands
     horizontal_time_div = Instrument.control(
         "GSPD?", "GSDP %i",
-        f"""Control the horizontal time/div with to the following table:{LIST_HORIZONTAL_TIME_DIV}
-        """,
+        f"""Control the horizontal time/div according to the following table:{LIST_HORIZONTAL_TIME_DIV}""",  # noqa: E501
         validator=strict_discrete_set,
         values=range(0, 16)
     )

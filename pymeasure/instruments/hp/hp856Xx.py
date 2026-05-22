@@ -2707,14 +2707,15 @@ class HP856Xx(Instrument):
             raise TypeError(f"Should be of type string but is '{type(window_mode)}'")
 
         if window_mode not in [e for e in WindowType]:
-            raise ValueError("Only accepts values of [{}] but was '{}'".format([e for e in
-                                                                            WindowType],
-                                                                           window_mode))
+            raise ValueError(
+                f"Only accepts values of [{[e for e in WindowType]}] but was '{window_mode}'"
+            )
 
         self.write(f"TWNDOW {trace},{window_mode}")
 
     video_average = Instrument.control(
-        "VAVG?", "VAVG %d",
+        "VAVG?",
+        "VAVG %d",
         """
         Control the video averaging function. Video averaging smooths the
         displayed trace without using a narrow bandwidth. 'video_average' sets the IF detector to
@@ -2732,7 +2733,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=np.arange(1, 999),
-        cast=int
+        cast=int,
     )
 
     video_average_enabled = Instrument.setting(

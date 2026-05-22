@@ -21,7 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 from math import sqrt, log10
+
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -129,15 +131,15 @@ class AFG3152CChannel(Channel):
         """Prepend the channel id for most writes."""
         return f'source{self.id}:{command}'
 
-    def enable(self):
-        self.parent.write("output%d:state on" % self.number)
+    def enable(self) -> None:
+        self.parent.write(f"output{self.id}:state on")
 
-    def disable(self):
-        self.parent.write("output%d:state off" % self.number)
+    def disable(self) -> None:
+        self.parent.write(f"output{self.id}:state off")
 
     def waveform(
         self, shape="SIN", frequency=1e6, units="VPP", amplitude=1, offset=0
-    ):
+    ) -> None:
         """General setting method for a complete wavefunction"""
         self.write(f"function:shape {shape}")
         self.write(f"frequency:fixed {frequency:e}")
@@ -171,8 +173,8 @@ class AFG3152C(SCPIUnknownMixin, Instrument):
         self.ch1 = AFG3152CChannel(self, 1)
         self.ch2 = AFG3152CChannel(self, 2)
 
-    def beep(self):
+    def beep(self) -> None:
         self.write("system:beep")
 
-    def opc(self):
+    def opc(self) -> int:
         return int(self.ask("*OPC?"))

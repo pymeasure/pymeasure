@@ -24,9 +24,7 @@
 
 from inspect import getmembers
 import logging
-from typing import (
-    Any, cast, Protocol, Union, TypeVar,
-)
+from typing import Any, cast, Protocol, TypeVar
 from collections.abc import Callable, Sequence
 from warnings import warn
 
@@ -34,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-IdType = Union[int, str, None]
+IdType = int | str | None
 
 
 class Child(Protocol):

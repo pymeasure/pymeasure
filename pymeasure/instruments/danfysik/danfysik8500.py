@@ -307,7 +307,7 @@ class Danfysik8500(Instrument):
         self.start_ramp()
 
     # self.setSequence(0, [0, 10], [0.01])
-    def set_sequence(self, stack:int , currents, times, multiplier=999999) -> None:
+    def set_sequence(self, stack: int, currents, times, multiplier=999999) -> None:
         """ Sets up an arbitrary ramp profile with a list of currents (Amps)
         and a list of interval times (seconds) on the specified stack number
         (0-15)
