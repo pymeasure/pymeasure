@@ -86,7 +86,7 @@ profile = "black"
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["E", "E9", "F63", "F7", "F82", "W",]
+extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
