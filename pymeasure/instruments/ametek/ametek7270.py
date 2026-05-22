@@ -296,7 +296,7 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
     def set_differential_mode(self, lineFiltering=True):
         """ Sets instrument to differential mode -- assuming it is in voltage mode """
         self.ask("VMODE 3")
-        self.ask("LF %d 0" % 3 if lineFiltering else 0)
+        self.ask(f"LF {3 if lineFiltering else 0} 0")
 
     def set_current_mode(self, low_noise=False):
         """ Sets instrument to current control mode with either low noise or high bandwidth"""
@@ -330,6 +330,6 @@ class Ametek7270(SCPIUnknownMixin, Instrument):
 
     def shutdown(self):
         """ Ensures the instrument in a safe state """
-        log.info("Shutting down %s" % self.name)
+        log.info(f"Shutting down {self.name}")
         self.voltage = 0.
         super().shutdown()

@@ -127,7 +127,7 @@ class Procedure:
 
     def measure(self):
         data = self.get_datapoint()
-        log.debug("Produced numbers: %s" % data)
+        log.debug(f"Produced numbers: {data}")
         self.emit('results', data)
 
     def _update_parameters(self):

@@ -123,4 +123,4 @@ class SerialAdapter(Adapter):
         self.connection.reset_input_buffer()
 
     def __repr__(self) -> str:
-        return "<SerialAdapter(port='%s')>" % self.connection.port
+        return f"<SerialAdapter(port='{self.connection.port}')>"

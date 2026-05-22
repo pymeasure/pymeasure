@@ -373,7 +373,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         :param parameter: same as the display_parameter property
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
-        output = self.ask("PAVA? %s" % parameter)
+        output = self.ask(f"PAVA? {parameter}")
         match = self._re_pava_response.match(output)
         if match:
             if match.group('parameter') != parameter:
@@ -387,11 +387,11 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
     def insert_id(self, command):
         # only in case of the BWL and PACU commands the syntax is different. Why? SIGLENT Why?
         if command[0:4] == "BWL ":
-            return "BWL C%d,%s" % (self.id, command[4:])
+            return f"BWL C{self.id},{command[4:]}"
         elif command[0:5] == "PACU ":
-            return "PACU %s,C%d" % (command[5:], self.id)
+            return f"PACU {command[5:]},C{self.id}"
         else:
-            return "C%d:%s" % (self.id, command)
+            return f"C{self.id}:{command}"
 
     # noinspection PyIncorrectDocstring
     def setup(self, **kwargs):

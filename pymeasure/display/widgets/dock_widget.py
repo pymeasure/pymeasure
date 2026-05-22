@@ -93,7 +93,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
         }
         with open(self.dock_layout_filename, 'w') as f:
             f.write(json.dumps(layout))
-        log.info('Saved dock layout to file %s' % self.dock_layout_filename)
+        log.info(f'Saved dock layout to file {self.dock_layout_filename}')
 
     def save_dock_action(self):
         save_dock_action = QtWidgets.QWidgetAction(self)
@@ -145,11 +145,11 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                 self.dock_area.restoreState(docks)
                 for idx, i in enumerate(self.plot_frames):
                     i.plot_frame.plot_widget.restoreState(plots[idx])
-                log.info('Loaded dock layout from file %s' % self.dock_layout_filename)
+                log.info(f'Loaded dock layout from file {self.dock_layout_filename}')
             else:
                 log.warning(
-                    'Number of displayed docks does not match number of docks in layout file %s'
-                    % self.dock_layout_filename)
+                    "Number of displayed docks does not match number of docks in layout file "
+                    f"{self.dock_layout_filename}")
 
     def new_curve(self, results, color=pg.intColor(0), **kwargs):
         if 'pen' not in kwargs:

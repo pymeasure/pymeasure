@@ -175,7 +175,7 @@ class TestPTWUnidosMethods:
     def test_interval_measurement(self, unidos, time):
         unidos.interval_measurement(time)
         sleep(0.1 * time)
-        assert unidos.status in ["INT"]
+        assert unidos.status == "INT"
         assert unidos.integration_time == time
 
 

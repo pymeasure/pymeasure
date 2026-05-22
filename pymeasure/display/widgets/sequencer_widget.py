@@ -546,7 +546,7 @@ class SequencerWidget(QtWidgets.QWidget):
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
             log.info(
-                "Queuing %d measurements based on the entered sequences." % len(sequence)
+                f"Queuing {len(sequence)} measurements based on the entered sequences."
             )
 
             for entry in sequence:
@@ -566,7 +566,7 @@ class SequencerWidget(QtWidgets.QWidget):
             filename = dialog.selectedFiles()[0]
             with open(filename, 'w') as file_object:
                 self.tree.save(file_object)
-            log.info('Saved sequence file %s' % filename)
+            log.info(f'Saved sequence file {filename}')
 
     def load_sequence(self, *, filename=None):
         """

@@ -93,7 +93,7 @@ class VISAAdapter(Adapter):
             self.manager = resource_name.manager
             return
         elif isinstance(resource_name, int):
-            resource_name = "GPIB0::%d::INSTR" % resource_name
+            resource_name = f"GPIB0::{resource_name}::INSTR"
 
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
@@ -218,4 +218,4 @@ class VISAAdapter(Adapter):
                 self.connection.timeout = timeout
 
     def __repr__(self) -> str:
-        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
+        return f"<VISAAdapter(resource='{self.connection.resource_name}')>"

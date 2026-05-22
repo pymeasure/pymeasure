@@ -47,11 +47,11 @@ class TDS2000(SCPIUnknownMixin, Instrument):
 
         @property
         def value(self):
-            return self.parent.values("%sVAL?" % self.preamble)
+            return self.parent.values(f"{self.preamble}VAL?")
 
         @property
         def source(self):
-            return self.parent.ask("%sSOU?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}SOU?").strip()
 
         @source.setter
         def source(self, value):
@@ -62,7 +62,7 @@ class TDS2000(SCPIUnknownMixin, Instrument):
 
         @property
         def type(self):
-            return self.parent.ask("%sTYP?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}TYP?").strip()
 
         @type.setter
         def type(self, value):
@@ -73,7 +73,7 @@ class TDS2000(SCPIUnknownMixin, Instrument):
 
         @property
         def unit(self):
-            return self.parent.ask("%sUNI?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}UNI?").strip()
 
         @unit.setter
         def unit(self, value):

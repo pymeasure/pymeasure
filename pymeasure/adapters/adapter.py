@@ -200,7 +200,7 @@ class Adapter:
         elif header_fmt == "empty":
             block = to_binary_block(values, b"", datatype, is_big_endian)
         else:
-            raise ValueError("Unsupported header_fmt: %s" % header_fmt)
+            raise ValueError(f"Unsupported header_fmt: {header_fmt}")
         return block
 
     def write_binary_values(

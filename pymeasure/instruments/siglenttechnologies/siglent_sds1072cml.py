@@ -65,10 +65,10 @@ class VoltageChannel(Channel):
         self.write("C{ch}:WF? ALL")
         response = self.read_bytes(count=-1, break_on_termchar=True)
         descriptor_dictionary = self.get_descriptor()
-        data_points = descriptor_dictionary["numDataPoints"] if descriptor_dictionary["numDataPoints"] else descriptor_dictionary["pointsScreen"]  # noqa: E501
+        data_points = descriptor_dictionary["numDataPoints"] or descriptor_dictionary["pointsScreen"]  # noqa: E501
         rawWaveform = list(
             struct.unpack_from(
-                "%db" % data_points,
+                f"{data_points}b",
                 response,
                 offset=descriptor_dictionary["descriptorOffset"],
             ),
@@ -269,7 +269,7 @@ class TriggerChannel(Channel):
                 dictIn.get("hold_type"),
                 dictIn.get("hold_value1"),
             ),
-            "level": lambda dictIn: "%.2eV" % dictIn.get("level"),
+            "level": lambda dictIn: "{:.2e}V".format(dictIn.get("level")),
             "coupling": lambda dictIn: dictIn.get("coupling"),
             "slope": lambda dictIn: dictIn.get("slope"),
             "mode": lambda dictIn: dictIn.get("mode"),
@@ -351,7 +351,7 @@ class SDS1072CML(SCPIMixin, Instrument):
 
         :param time: time in seconds to wait for
         """
-        self.write("WAIT %d" % int(time))
+        self.write(f"WAIT {int(time)}")
 
     def arm(self):
         """Change the acquisition mode from 'STOPPED' to 'SINGLE'.

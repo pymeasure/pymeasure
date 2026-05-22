@@ -80,7 +80,7 @@ class TestProcedure(Procedure):
                 # Read the powermeter and store the sensor reading in Watts.
                 'Power (W)': self.powermeter.read().m_as(u.W),
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)

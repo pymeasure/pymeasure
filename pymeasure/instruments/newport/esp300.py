@@ -122,8 +122,7 @@ class GeneralError(Exception):
         self.message = self.MESSAGES[self.error]
 
     def __str__(self):
-        return "Newport ESP300 reported the error: %s" % (
-            self.message)
+        return f"Newport ESP300 reported the error: {self.message}"
 
 
 class Axis:
@@ -209,12 +208,12 @@ class Axis:
         type can take integer values from 0 to 6.
         """
         home_type = strict_discrete_set(type, [0, 1, 2, 3, 4, 5, 6])
-        self.write("OR%d" % home_type)
+        self.write(f"OR{home_type}")
 
     def define_position(self, position):
         """ Overwrites the value of the current position with the given
         value. """
-        self.write("DH%g" % position)
+        self.write(f"DH{position:g}")
 
     def zero(self):
         """ Resets the axis position to be zero at the current poisiton.
@@ -225,7 +224,7 @@ class Axis:
         """ Blocks the program until the motion is completed. A further
         delay can be specified in seconds.
         """
-        self.write("WS%d" % (delay * 1e3))
+        self.write(f"WS{int(delay * 1e3)}")
         while not self.motion_done:
             sleep(interval)
 

@@ -794,11 +794,10 @@ class HP856Xx(Instrument):
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
         self.write("BLANK " + trace)
 
     def subtract_display_line_from_trace_b(self):
@@ -850,11 +849,10 @@ class HP856Xx(Instrument):
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
         self.write("CLRW " + trace)
 
@@ -1303,24 +1301,22 @@ class HP856Xx(Instrument):
         :type window: str
         """
         if not isinstance(source, str):
-            raise TypeError("Should be of type string but is '%s'" % type(source))
+            raise TypeError(f"Should be of type string but is '{type(source)}'")
 
         if not isinstance(destination, str):
-            raise TypeError("Should be of type string but is '%s'" % type(destination))
+            raise TypeError(f"Should be of type string but is '{type(destination)}'")
 
         if not isinstance(window, str):
-            raise TypeError("Should be of type string but is '%s'" % type(window))
+            raise TypeError(f"Should be of type string but is '{type(window)}'")
 
         if source not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           source))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{source}'")
         if destination not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           destination))
+            raise ValueError(
+                f"Only accepts values of [{[e for e in Trace]}] but was '{destination}'")
         if window not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           window))
-        self.write("FFT %s,%s,%s" % (source, destination, window))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{window}'")
+        self.write(f"FFT {source},{destination},{window}")
 
     frequency_offset = Instrument.control(
         "FOFFSET?", "FOFFSET %.11E Hz",
@@ -1486,13 +1482,12 @@ class HP856Xx(Instrument):
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
-        self.write("MINH %s" % trace)
+        self.write(f"MINH {trace}")
 
     marker_amplitude = Instrument.measurement(
         "MKA?",
@@ -1697,13 +1692,13 @@ class HP856Xx(Instrument):
             instr.search_peak(PeakSearchMode.NextHigh)
         """
         if not isinstance(mode, str):
-            raise TypeError("Should be of type string but is '%s'" % type(mode))
+            raise TypeError(f"Should be of type string but is '{type(mode)}'")
 
         if mode not in [e for e in PeakSearchMode]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             ([e for e in PeakSearchMode], mode))
+            raise ValueError(
+                f"Only accepts values of [{[e for e in PeakSearchMode]}] but was '{mode}'")
 
-        self.write("MKPK %s" % mode)
+        self.write(f"MKPK {mode}")
 
     marker_threshold = Instrument.control(
         "MKPT?", "MKPT %g {amplitude_unit}",
@@ -1850,13 +1845,12 @@ class HP856Xx(Instrument):
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
-        self.write("MXMH %s" % trace)
+        self.write(f"MXMH {trace}")
 
     normalize_trace_data_enabled = Instrument.control(
         "NORMLIZE?", "NORMLIZE %s",
@@ -1983,7 +1977,7 @@ class HP856Xx(Instrument):
                 isinstance(p2y, int)):
             raise TypeError("Should be of type int")
 
-        self.write("PLOT %d,%d,%d,%d" % (p1x, p1y, p2x, p2y))
+        self.write(f"PLOT {p1x},{p1y},{p2x},{p2y}")
 
     protect_state_enabled = Instrument.control(
         "PSTATE?", "PSTATE %s",
@@ -2039,20 +2033,18 @@ class HP856Xx(Instrument):
         ran = np.arange(0, 100, 0.1)
 
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if not isinstance(percent, float):
-            raise TypeError("Should be of type float but is '%s'" % type(percent))
+            raise TypeError(f"Should be of type float but is '{type(percent)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             ([e for e in Trace], trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
         if percent not in ran:
-            raise ValueError("Only accepts values in the range of %s but was '%s'" %
-                             (ran, percent))
+            raise ValueError(f"Only accepts values in the range of {ran} but was '{percent}'")
 
-        return float(self.ask("PWRBW %s,%.1f?" % (trace, percent)))
+        return float(self.ask(f"PWRBW {trace},{percent:.1f}?"))
 
     resolution_bandwidth = Instrument.control(
         "RB?", "RB %s",
@@ -2142,13 +2134,12 @@ class HP856Xx(Instrument):
         """
         values = ["LAST", "PWRON"] + [str(f) for f in range(0, 9)]
         if not (isinstance(inp, str) or isinstance(inp, int)):
-            raise TypeError("Should be of type 'str' or 'int' but is '%s'" % type(inp))
+            raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             (values, str(inp)))
+            raise ValueError(f"Only accepts values of [{values}] but was '{str(inp)}'")
 
-        self.write("RCLS %s" % str(inp))
+        self.write(f"RCLS {str(inp)}")
 
     def recall_trace(self, trace, number):
         """Recalls previously saved trace data to the display. See
@@ -2174,20 +2165,18 @@ class HP856Xx(Instrument):
         """
         ran = range(0, 7)
         if not isinstance(trace, str):
-            raise TypeError("Should be of type str but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type str but is '{type(trace)}'")
 
         if not isinstance(number, int):
-            raise TypeError("Should be of type int but is '%s'" % type(number))
+            raise TypeError(f"Should be of type int but is '{type(number)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             ([e for e in Trace], trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
         if number not in ran:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             (ran, number))
+            raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
 
-        self.write("RCLT %s,%s" % (trace, number))
+        self.write(f"RCLT {trace},{number}")
 
     def recall_thru(self):
         """Recalls the internally stored thru-reference trace into trace B.
@@ -2303,13 +2292,12 @@ class HP856Xx(Instrument):
         """
         values = ["PWRON"] + [str(f) for f in range(0, 9)]
         if not (isinstance(inp, str) or isinstance(inp, int)):
-            raise TypeError("Should be of type 'str' or 'int' but is '%s'" % type(inp))
+            raise TypeError(f"Should be of type 'str' or 'int' but is '{type(inp)}'")
 
         if str(inp) not in values:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             (values, str(inp)))
+            raise ValueError(f"Only accepts values of [{values}] but was '{str(inp)}'")
 
-        self.write("SAVES %s" % str(inp))
+        self.write(f"SAVES {str(inp)}")
 
     def save_trace(self, trace, number):
         """Saves the selected trace in the specified trace register.
@@ -2334,20 +2322,18 @@ class HP856Xx(Instrument):
         """
         ran = range(0, 7)
         if not isinstance(trace, str):
-            raise TypeError("Should be of type str but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type str but is '{type(trace)}'")
 
         if not isinstance(number, int):
-            raise TypeError("Should be of type int but is '%s'" % type(number))
+            raise TypeError(f"Should be of type int but is '{type(number)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             ([e for e in Trace], trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
         if number not in ran:
-            raise ValueError("Only accepts values of [%s] but was '%s'" %
-                             (ran, number))
+            raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
 
-        self.write("SAVET %s,%s" % (trace, number))
+        self.write(f"SAVET {trace},{number}")
 
     serial_number = Instrument.measurement(
         "SER?",
@@ -2377,7 +2363,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
-        set_process=lambda v: v if isinstance(v, str) else "%.11E Hz" % v,
+        set_process=lambda v: v if isinstance(v, str) else f"{v:.11E} Hz",
         get_process=lambda v: v if isinstance(v, str) else v
     )
 
@@ -2430,7 +2416,7 @@ class HP856Xx(Instrument):
         if input not in range(0, 255):
             raise ValueError("Bit mask needs to be between 0 ... 255")
 
-        self.write("SRQ %d" % input)
+        self.write(f"SRQ {input}")
 
     # `center_frequency_step_size` would be a command but is pretty unnecesary
 
@@ -2452,7 +2438,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["AUTO", "MAN"], np.arange(50E-6, 100)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.3f S" % v)
+        set_process=lambda v: v if isinstance(v, str) else (f"{v:.3f} S")
     )
 
     status = Instrument.measurement(
@@ -2588,9 +2574,9 @@ class HP856Xx(Instrument):
             raise TypeError("Parameter should be of type 'str'")
 
         if len(string) > 32:
-            raise ValueError("Title should have maximum 32 chars but has '%d'" % len(string))
+            raise ValueError(f"Title should have maximum 32 chars but has '{len(string)}'")
 
-        self.write("TITLE@%s@" % string)
+        self.write(f"TITLE@{string}@")
 
     trigger_mode = Instrument.control(
         "TM?", "TM %s",
@@ -2712,21 +2698,20 @@ class HP856Xx(Instrument):
         """
 
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
 
         if not isinstance(window_mode, str):
-            raise TypeError("Should be of type string but is '%s'" % type(window_mode))
+            raise TypeError(f"Should be of type string but is '{type(window_mode)}'")
 
         if window_mode not in [e for e in WindowType]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in
+            raise ValueError("Only accepts values of [{}] but was '{}'".format([e for e in
                                                                             WindowType],
                                                                            window_mode))
 
-        self.write("TWNDOW %s,%s" % (trace, window_mode))
+        self.write(f"TWNDOW {trace},{window_mode}")
 
     video_average = Instrument.control(
         "VAVG?", "VAVG %d",
@@ -2810,11 +2795,10 @@ class HP856Xx(Instrument):
         :raises ValueError: Value is 'TRA' nor 'TRB'
         """
         if not isinstance(trace, str):
-            raise TypeError("Should be of type string but is '%s'" % type(trace))
+            raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
         if trace not in [e for e in Trace]:
-            raise ValueError("Only accepts values of [%s] but was '%s'" % ([e for e in Trace],
-                                                                           trace))
+            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
         self.write("VIEW " + trace)
 
     video_trigger_level = Instrument.control(
@@ -3005,7 +2989,7 @@ class HP8560A(HP856Xx):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["OFF", "ON"], np.arange(-10, 2.8, 0.05)],
-        set_process=lambda v: v if isinstance(v, str) else ("%.2f {amplitude_unit}" % v)
+        set_process=lambda v: v if isinstance(v, str) else (f"{v:.2f} {{amplitude_unit}}")
     )
 
     source_power_enabled = Instrument.setting(
@@ -3165,16 +3149,16 @@ class HP8561B(HP856Xx):
         }
 
         if not isinstance(band, str):
-            raise TypeError("Frequency band should be of type string but is '%s'" % type(band))
+            raise TypeError(f"Frequency band should be of type string but is '{type(band)}'")
 
         if band not in frequency_mapping.keys():
-            raise ValueError("Should be one of the available bands but is '%s'" % band)
+            raise ValueError(f"Should be one of the available bands but is '{band}'")
 
         self.center_frequency_values = frequency_mapping[band]
         self.start_frequency_values = frequency_mapping[band]
         self.stop_frequency_values = frequency_mapping[band]
 
-        self.write("FULLBAND %s" % band)
+        self.write(f"FULLBAND {band}")
 
     harmonic_number_lock = Instrument.control(
         "HNLOCK?", "HNLOCK %d",

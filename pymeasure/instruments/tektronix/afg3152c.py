@@ -139,11 +139,11 @@ class AFG3152CChannel(Channel):
         self, shape="SIN", frequency=1e6, units="VPP", amplitude=1, offset=0
     ):
         """General setting method for a complete wavefunction"""
-        self.write("function:shape %s" % shape)
-        self.write("frequency:fixed %e" % frequency)
-        self.write("voltage:unit %s" % units)
-        self.write("voltage:amplitude %e%s" % (amplitude, units))
-        self.write("voltage:offset %eV" % offset)
+        self.write(f"function:shape {shape}")
+        self.write(f"frequency:fixed {frequency:e}")
+        self.write(f"voltage:unit {units}")
+        self.write(f"voltage:amplitude {amplitude:e}{units}")
+        self.write(f"voltage:offset {offset:e}V")
 
 
 class AFG3152C(SCPIUnknownMixin, Instrument):

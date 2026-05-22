@@ -69,9 +69,8 @@ class Listener(StoppableThread):
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
-        self.subscriber.connect('tcp://localhost:%d' % port)
-        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
-            self.__class__.__name__, topic, port))
+        self.subscriber.connect(f'tcp://localhost:{port}')
+        log.info(f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)

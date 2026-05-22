@@ -435,7 +435,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 if filename in self.manager.experiments:
                     QtWidgets.QMessageBox.warning(
                         self, "Load Error",
-                        "The file %s cannot be opened twice." % os.path.basename(filename)
+                        f"The file {os.path.basename(filename)} cannot be opened twice."
                     )
                 elif filename == '':
                     return
@@ -447,7 +447,7 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                             curve.update_data()
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
-                    log.info('Opened data file %s' % filename)
+                    log.info(f'Opened data file {filename}')
 
     def save_experiment_copy(self, source_filename):
         """Save a copy of the datafile to a selected folder and file.

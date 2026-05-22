@@ -61,10 +61,9 @@ class QListener(StoppableQThread):
         self.context = zmq.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect('tcp://localhost:%d' % port)
+        self.subscriber.connect(f'tcp://localhost:{port}')
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
-        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
-            self.__class__.__name__, topic, port))
+        log.info(f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)

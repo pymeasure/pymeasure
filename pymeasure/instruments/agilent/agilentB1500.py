@@ -735,8 +735,8 @@ class AgilentB1500(SCPIMixin, Instrument):
             measurement_trigger_delay, (0, 65.535), 0.0001
         )
         self.write(
-            "WT %g, %g, %g, %g, %g"
-            % (hold, delay, step_delay, step_trigger_delay, measurement_trigger_delay)
+            f"WT {hold:g}, {delay:g}, {step_delay:g},"
+            f" {step_trigger_delay:g}, {measurement_trigger_delay:g}"
         )
         self.check_errors()
 

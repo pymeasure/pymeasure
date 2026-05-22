@@ -71,7 +71,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * (i + 1) / self.iterations)
             sleep(self.delay)

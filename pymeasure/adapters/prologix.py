@@ -214,7 +214,7 @@ class PrologixAdapter(VISAAdapter):
         """
         # Overrides write instead of _write in order to ensure proper logging
         if self.address is not None and not command.startswith("++"):
-            super().write("++addr %d" % self.address, **kwargs)
+            super().write(f"++addr {self.address}", **kwargs)
         super().write(command, **kwargs)
 
     def _format_binary_values(self, values, datatype='f', is_big_endian=False, header_fmt="ieee"):
@@ -255,7 +255,7 @@ class PrologixAdapter(VISAAdapter):
         :returns: number of bytes written
         """
         if self.address is not None:
-            address_command = "++addr %d\n" % self.address
+            address_command = f"++addr {self.address}\n"
             self.write(address_command)
         super().write_binary_values(command, values, "\n", **kwargs)
 

@@ -105,7 +105,7 @@ class Instrument(CommonBase):
 
         super().__init__()
 
-        log.info("Initializing %s." % self.name)
+        log.info(f"Initializing {self.name}.")
 
     def __enter__(self: _Self) -> _Self:
         return self
