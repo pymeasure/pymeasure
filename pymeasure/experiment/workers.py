@@ -27,7 +27,8 @@ import logging
 import time
 import traceback
 from queue import Queue
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -233,8 +234,5 @@ class Worker(StoppableThread):
             self.stop()
 
     def __repr__(self):
-        return "<{}(port={},procedure={},should_stop={})>".format(
-            self.__class__.__name__, self.port,
-            self.procedure.__class__.__name__,
-            self.should_stop()
-        )
+        return (f"<{self.__class__.__name__}(port={self.port},"
+                f"procedure={self.procedure.__class__.__name__},should_stop={self.should_stop()})>")

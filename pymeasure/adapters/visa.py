@@ -23,7 +23,7 @@
 #
 
 import logging
-from typing import cast, Optional, Union
+from typing import cast, Union
 
 import pyvisa
 
@@ -71,13 +71,13 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    connection: Union[ProtocolAdapter, pyvisa.resources.MessageBasedResource]
+    connection: ProtocolAdapter | pyvisa.resources.MessageBasedResource
 
     def __init__(
         self,
         resource_name: Union[ProtocolAdapter, "VISAAdapter", int, str],
         visa_library: str = "",
-        log: Optional[logging.Logger] = None,
+        log: logging.Logger | None = None,
         **kwargs,
     ):
         super().__init__(log=log)

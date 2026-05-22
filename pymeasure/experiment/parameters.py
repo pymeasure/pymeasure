@@ -148,8 +148,8 @@ class Parameter:
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<{}(name={},value={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"default={self.default})>")
 
 
 class IntegerParameter(Parameter):
@@ -204,8 +204,8 @@ class IntegerParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},default={self.default})>")
 
 
 class BooleanParameter(Parameter):
@@ -293,8 +293,8 @@ class FloatParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},default={self.default})>")
 
 
 class VectorParameter(Parameter):
@@ -356,8 +356,8 @@ class VectorParameter(Parameter):
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},length={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self._length)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},length={self._length})>")
 
 
 class ListParameter(Parameter):
@@ -495,8 +495,8 @@ class PhysicalParameter(VectorParameter):
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},uncertaintyType={self._utype.value})>")
 
 
 class Measurable:
@@ -540,7 +540,7 @@ class Measurable:
         self._value = value
 
 
-class Metadata(object):
+class Metadata:
     """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the

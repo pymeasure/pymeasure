@@ -24,7 +24,10 @@
 
 from inspect import getmembers
 import logging
-from typing import Any, Callable, cast, Optional, Protocol, Union, Sequence, TypeVar
+from typing import (
+    Any, cast, Protocol, Union, TypeVar,
+)
+from collections.abc import Callable, Sequence
 from warnings import warn
 
 log = logging.getLogger(__name__)
@@ -153,7 +156,7 @@ class CommonBase:
         raise NotImplementedError("Subclasses must implement write_bytes.")
 
     def write_binary_values(
-        self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
+        self, command: str, values: Sequence[int | float], *args, **kwargs
     ) -> None:
         raise NotImplementedError("Subclasses must implement write_binary_values.")
 
@@ -249,9 +252,9 @@ class CommonBase:
 
         def __init__(
             self,
-            cls: Union[type[Child], Sequence[type[Child]]],
+            cls: type[Child] | Sequence[type[Child]],
             id: IdType = None,
-            prefix: Optional[str] = "ch_",
+            prefix: str | None = "ch_",
             **kwargs,
         ) -> None:
             super().__init__(**kwargs)
@@ -343,8 +346,8 @@ class CommonBase:
         cls: type[child],
         id: IdType = None,
         collection: str = "channels",
-        prefix: Optional[str] = "ch_",
-        attr_name: Optional[str] = "",
+        prefix: str | None = "ch_",
+        attr_name: str | None = "",
         **kwargs,
     ) -> child:
         """Add a child to this instance and return its index in the children list.
@@ -414,7 +417,7 @@ class CommonBase:
         delattr(self, child._name)
 
     # Communication functions
-    def wait_for(self, query_delay: Optional[float] = None) -> None:
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         Implement in subclass!
@@ -423,7 +426,7 @@ class CommonBase:
         """
         raise NotImplementedError("Implement in subclass!")
 
-    def ask(self, command: str, query_delay: Optional[float] = None) -> str:
+    def ask(self, command: str, query_delay: float | None = None) -> str:
         """Write a command to the instrument and return the read response.
 
         :param command: Command string to be sent to the instrument.
@@ -439,10 +442,10 @@ class CommonBase:
         command: str,
         separator: str = ",",
         cast: Callable[[str], T] = float,  # type: ignore[assignment]
-        preprocess_reply: Optional[Callable[[str], str]] = None,
+        preprocess_reply: Callable[[str], str] | None = None,
         maxsplit: int = -1,
         **kwargs,
-    ) -> list[Union[T, str]]:
+    ) -> list[T | str]:
         """Write a command to the instrument and return a list of formatted
         values from the result.
 
@@ -461,7 +464,7 @@ class CommonBase:
         response = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             response = preprocess_reply(response)
-        results: list[Union[T, str]] = []
+        results: list[T | str] = []
         for result in response.split(separator, maxsplit=maxsplit):
             try:
                 if cast is bool:
@@ -475,7 +478,7 @@ class CommonBase:
                 results.append(result)
         return results
 
-    def binary_values(self, command: str, query_delay: Optional[float] = None, **kwargs):
+    def binary_values(self, command: str, query_delay: float | None = None, **kwargs):
         """ Write a command to the instrument and return a numpy array of the binary data.
 
         :param command: Command to be sent to the instrument.
@@ -490,8 +493,8 @@ class CommonBase:
     # Property creators
     @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
-        get_command: Union[str, None],
-        set_command: Union[str, None],
+        get_command: str | None,
+        set_command: str | None,
         docs: str,
         validator: Callable[[Any, Vs], V2] = lambda v, vs: v,
         values: Vs = (),
@@ -499,17 +502,17 @@ class CommonBase:
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
         set_process: Callable[[V2], Any] = lambda v: v,
-        command_process: Optional[Callable] = None,
+        command_process: Callable | None = None,
         check_set_errors: bool = False,
         check_get_errors: bool = False,
         dynamic: bool = False,
-        preprocess_reply: Optional[Callable[[str], str]] = None,
+        preprocess_reply: Callable[[str], str] | None = None,
         separator: str = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
-        values_kwargs: Optional[dict] = None,
+        values_kwargs: dict | None = None,
         **kwargs,
-    ) -> Union[property, DynamicProperty]:
+    ) -> property | DynamicProperty:
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.
@@ -600,7 +603,7 @@ class CommonBase:
 
         def fget(
             self: "CommonBase",
-            get_command: Optional[str] = get_command,
+            get_command: str | None = get_command,
             values: Vs = values,
             map_values: bool = map_values,
             get_process: Callable[[Any], Any] = get_process,
@@ -640,8 +643,8 @@ class CommonBase:
                     raise KeyError(f"Value {value} not found in mapped values")
                 else:
                     raise ValueError(
-                        'Values of type `{}` are not allowed '
-                        'for Instrument.control'.format(type(values))
+                        f'Values of type `{type(values)}` are not allowed '
+                        'for Instrument.control'
                     )
             else:
                 vals = get_process_list(vals)
@@ -650,7 +653,7 @@ class CommonBase:
         def fset(
             self: "CommonBase",
             value: V0,
-            set_command: Optional[str] = set_command,
+            set_command: str | None = set_command,
             validator: Callable[[V0, Vs], V2] = validator,
             values: Vs = values,
             map_values: bool = map_values,
@@ -670,8 +673,8 @@ class CommonBase:
                 val = values[val]
             else:
                 raise ValueError(
-                    'Values of type `{}` are not allowed '
-                    'for CommonBase.control'.format(type(values))
+                    f'Values of type `{type(values)}` are not allowed '
+                    'for CommonBase.control'
                 )
             self.write(command_process(set_command) % val)
             if check_set_errors:
@@ -708,16 +711,16 @@ class CommonBase:
         map_values: bool = False,
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
-        command_process: Optional[Callable] = None,
+        command_process: Callable | None = None,
         check_get_errors: bool = False,
         dynamic: bool = False,
-        preprocess_reply: Optional[Callable[[str], str]] = None,
+        preprocess_reply: Callable[[str], str] | None = None,
         separator: str = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
-        values_kwargs: Optional[dict] = None,
+        values_kwargs: dict | None = None,
         **kwargs,
-    ) -> Union[property, DynamicProperty]:
+    ) -> property | DynamicProperty:
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -789,7 +792,7 @@ class CommonBase:
         set_process: Callable[[Any], Any] = lambda v: v,
         check_set_errors: bool = False,
         dynamic: bool = False,
-    ) -> Union[property, DynamicProperty]:
+    ) -> property | DynamicProperty:
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.

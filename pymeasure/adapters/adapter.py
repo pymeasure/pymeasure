@@ -23,7 +23,8 @@
 #
 
 import logging
-from typing import Optional, Protocol, Sequence, Union, runtime_checkable
+from typing import Protocol, runtime_checkable
+from collections.abc import Sequence
 
 import numpy as np
 from copy import copy
@@ -57,7 +58,7 @@ class Adapter:
 
     connection: ConnectionProtocol
 
-    def __init__(self, log: Optional[logging.Logger] = None, **kwargs):
+    def __init__(self, log: logging.Logger | None = None, **kwargs):
         super().__init__(**kwargs)
         if log is None:
             self.log = logging.getLogger("Adapter")
@@ -153,7 +154,7 @@ class Adapter:
     def read_binary_values(
         self,
         header_bytes: int = 0,
-        termination_bytes: Optional[int] = None,
+        termination_bytes: int | None = None,
         dtype=np.float32,
         sep: str = "",
         **kwargs,
@@ -178,7 +179,7 @@ class Adapter:
 
     def _format_binary_values(
         self,
-        values: Sequence[Union[int, float]],
+        values: Sequence[int | float],
         datatype: BINARY_DATATYPES = "f",
         is_big_endian: bool = False,
         header_fmt: str = "ieee",
@@ -203,7 +204,7 @@ class Adapter:
         return block
 
     def write_binary_values(
-        self, command: str, values: Sequence[Union[int, float]], termination: str = "", **kwargs
+        self, command: str, values: Sequence[int | float], termination: str = "", **kwargs
     ) -> int:
         """ Write binary data to the instrument, e.g. waveform for signal generators
 

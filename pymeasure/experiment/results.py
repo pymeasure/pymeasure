@@ -419,7 +419,7 @@ class Results:
         header = ""
         header_read = False
         header_count = 0
-        with open(data_filename, "r", encoding=Results.ENCODING) as f:
+        with open(data_filename, encoding=Results.ENCODING) as f:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
@@ -496,8 +496,5 @@ class Results:
             self._data = chunks.read()
 
     def __repr__(self):
-        return "<{}(filename='{}',procedure={},shape={})>".format(
-            self.__class__.__name__, self.data_filename,
-            self.procedure.__class__.__name__,
-            self.data.shape
-        )
+        return (f"<{self.__class__.__name__}(filename='{self.data_filename}',"
+                f"procedure={self.procedure.__class__.__name__},shape={self.data.shape})>")

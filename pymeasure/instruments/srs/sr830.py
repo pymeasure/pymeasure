@@ -267,48 +267,48 @@ class SR830(Instrument):
     )
     input_config = Instrument.control(
         "ISRC?", "ISRC %d",
-        """ An string property that controls the input configuration. Allowed
-        values are: {}""".format(INPUT_CONFIGS),
+        f""" An string property that controls the input configuration. Allowed
+        values are: {INPUT_CONFIGS}""",
         validator=strict_discrete_set,
         values=INPUT_CONFIGS,
         map_values=True
     )
     input_grounding = Instrument.control(
         "IGND?", "IGND %d",
-        """ An string property that controls the input shield grounding. Allowed
-        values are: {}""".format(INPUT_GROUNDINGS),
+        f""" An string property that controls the input shield grounding. Allowed
+        values are: {INPUT_GROUNDINGS}""",
         validator=strict_discrete_set,
         values=INPUT_GROUNDINGS,
         map_values=True
     )
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
-        """ An string property that controls the input coupling. Allowed
-        values are: {}""".format(INPUT_COUPLINGS),
+        f""" An string property that controls the input coupling. Allowed
+        values are: {INPUT_COUPLINGS}""",
         validator=strict_discrete_set,
         values=INPUT_COUPLINGS,
         map_values=True
     )
     input_notch_config = Instrument.control(
         "ILIN?", "ILIN %d",
-        """ An string property that controls the input line notch filter
-        status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
+        f""" An string property that controls the input line notch filter
+        status. Allowed values are: {INPUT_NOTCH_CONFIGS}""",
         validator=strict_discrete_set,
         values=INPUT_NOTCH_CONFIGS,
         map_values=True
     )
     reference_source = Instrument.control(
         "FMOD?", "FMOD %d",
-        """ An string property that controls the reference source. Allowed
-        values are: {}""".format(REFERENCE_SOURCES),
+        f""" An string property that controls the reference source. Allowed
+        values are: {REFERENCE_SOURCES}""",
         validator=strict_discrete_set,
         values=REFERENCE_SOURCES,
         map_values=True
     )
     reference_source_trigger = Instrument.control(
         "RSLP?", "RSLP %d",
-        """ A string property that controls the reference source triggering. Allowed
-             values are: {}""".format(REFERENCE_SOURCE_TRIGGER),
+        f""" A string property that controls the reference source triggering. Allowed
+             values are: {REFERENCE_SOURCE_TRIGGER}""",
         validator=strict_discrete_set,
         values=REFERENCE_SOURCE_TRIGGER,
         map_values=True

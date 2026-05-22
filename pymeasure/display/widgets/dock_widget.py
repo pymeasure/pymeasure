@@ -135,7 +135,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
 
         # Load dock layout file if it exists in the directory of the current procedure
         if path.exists(self.dock_layout_filename):
-            with open(self.dock_layout_filename, 'r') as f:
+            with open(self.dock_layout_filename) as f:
                 dock_layout = f.read()
             layout = json.loads(dock_layout)
             docks = layout['docks']

@@ -364,7 +364,7 @@ class SequenceDialog(QtWidgets.QFileDialog):
 
     def update_preview(self, filename):
         if not os.path.isdir(filename) and filename != '':
-            with open(filename, 'r') as file_object:
+            with open(filename) as file_object:
                 data = SequenceHandler(file_obj=file_object)
             tree_model = SequencerTreeModel(data=data)
             self.preview_param.setModel(tree_model)
@@ -585,6 +585,6 @@ class SequencerWidget(QtWidgets.QWidget):
             else:
                 return
 
-        with open(filename, 'r') as file_object:
+        with open(filename) as file_object:
             self.tree.model().load(file_object, append=append_flag)
         self.tree.expandAll()

@@ -3244,7 +3244,7 @@ class HP8561B(HP856Xx):
         turned off, MBIAS is set to 0. Default units are in milliamps.
         """,
         validator=strict_range,
-        values=[float(-10E3), int(10E3)],
+        values=[(-10E3), int(10E3)],
         cast=float
     )
 

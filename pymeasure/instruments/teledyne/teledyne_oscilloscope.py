@@ -72,7 +72,7 @@ def _trigger_select_num_pars(value):
         elif value[0] == "DROP":
             num_expected_pars = 4
     else:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     return num_expected_pars
 
 
@@ -84,18 +84,18 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     :param num_pars_finder: function to find the number of expected parameters
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) < 3 or len(value) > 5:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
     value = list(value)
     value[1] = sanitize_source(value[1])
     value = tuple(value)
     if value[0] not in values.keys():
-        raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
+        raise ValueError(f'Value {value[0]} not in the discrete set {values.keys()}')
     num_expected_pars = num_pars_finder(value)
     if len(value) != num_expected_pars:
-        raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
+        raise ValueError(f'Number of parameters {len(value)} != {num_expected_pars}')
     for i, element in enumerate(value[1:], start=1):
         if i < 3:
             strict_discrete_set(element, values=values[value[0]][i - 1])
@@ -146,8 +146,7 @@ def _remove_unit(value):
     if isinstance(value, float):
         return value
 
-    if value.endswith(" V"):
-        value = value[:-2]
+    value = value.removesuffix(" V")
 
     return float(value)
 
@@ -159,9 +158,9 @@ def _intensity_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 2:
-        raise ValueError('Number of parameters {} different from 2'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 2')
     for i in range(2):
         strict_discrete_range(value=value[i], values=values[i], step=1)
     return value
@@ -819,7 +818,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             # number of points still to read
             remaining_points = expected_points - read_points
             # number of points requested in a single chunk
-            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
+            requested_points = min(remaining_points, chunk_points)
             self.waveform_points = requested_points
             # number of bytes requested in a single chunk
             requested_bytes = requested_points + self._header_size + self._footer_size

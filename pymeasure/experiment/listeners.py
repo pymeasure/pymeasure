@@ -89,8 +89,8 @@ class Listener(StoppableThread):
         return self.poller.poll(self.timeout * 1000)  # poll timeout is in ms
 
     def __repr__(self):
-        return "<{}(port={},topic={},should_stop={})>".format(
-            self.__class__.__name__, self.port, self.topic, self.should_stop())
+        return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"
+                f"should_stop={self.should_stop()})>")
 
 
 class Recorder(QueueListener):

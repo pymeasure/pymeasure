@@ -161,8 +161,7 @@ class Procedure:
         for name, parameter in self._parameters.items():
             value = getattr(self, name)
             if value is None:
-                raise NameError("Missing {} '{}' in {}".format(
-                    parameter.__class__, name, self.__class__))
+                raise NameError(f"Missing {parameter.__class__} '{name}' in {self.__class__}")
 
     def parameter_values(self):
         """ Returns a dictionary of all the Parameter values and grabs any
@@ -211,8 +210,7 @@ class Procedure:
                 setattr(self, name, self._parameters[name].value)
             else:
                 if except_missing:
-                    raise NameError("Parameter '{}' does not belong to '{}'".format(
-                        name, repr(self)))
+                    raise NameError(f"Parameter '{name}' does not belong to '{repr(self)}'")
 
     def _update_metadata(self):
         """ Collects all the Metadata objects for the procedure and stores
@@ -311,10 +309,8 @@ class Procedure:
         return result
 
     def __repr__(self):
-        return "<{}(status={},parameters_are_set={})>".format(
-            self.__class__.__name__, self.STATUS_STRINGS[self.status],
-            self.parameters_are_set()
-        )
+        return (f"<{self.__class__.__name__}(status={self.STATUS_STRINGS[self.status]},"
+                f"parameters_are_set={self.parameters_are_set()})>")
 
 
 class UnknownProcedure(Procedure):

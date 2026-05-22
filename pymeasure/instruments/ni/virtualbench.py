@@ -81,7 +81,7 @@ class VirtualBench_Direct(pyvb.PyVirtualBench):
         self.release()
 
 
-class VirtualBench():
+class VirtualBench:
     """ Represents National Instruments Virtual Bench main frame.
 
     Subclasses implement the functionalities of the different modules:
@@ -143,8 +143,8 @@ class VirtualBench():
         :rtype: (int, float)
         """
         if not isinstance(timestamp, pyvb.Timestamp):
-            raise ValueError("{} is not a VirtualBench Timestamp object"
-                             .format(timestamp))
+            raise ValueError(f"{timestamp} is not a VirtualBench Timestamp object"
+                             )
         return self.vb.convert_timestamp_to_values(timestamp)
 
     def convert_values_to_timestamp(self, seconds_since_1970,
@@ -267,7 +267,7 @@ class VirtualBench():
         self.dmm = self.DigitalMultimeter(self.vb, reset=reset,
                                           vb_name=self.name)
 
-    class VirtualBenchInstrument():
+    class VirtualBenchInstrument:
         def __init__(self, acquire_instr, reset,
                      instr_identifier, vb_name=''):
             """Initialize instrument of VirtualBench device.

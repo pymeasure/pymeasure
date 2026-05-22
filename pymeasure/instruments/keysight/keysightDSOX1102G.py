@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Channel():
+class Channel:
     """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
 
     Implementation modeled on Channel object of Tektronix AFG3152C instrument. """

@@ -74,8 +74,7 @@ class AxisError(Exception):
         self.message = self.MESSAGES[self.error]
 
     def __str__(self):
-        return "Newport ESP300 axis {} reported the error: {}".format(
-            self.axis, self.message)
+        return f"Newport ESP300 axis {self.axis} reported the error: {self.message}"
 
 
 class GeneralError(Exception):
