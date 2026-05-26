@@ -42,7 +42,7 @@ Install PyMeasure in the editable mode and select optional extras.
 .. code-block:: bash
 
     cd /path/for/code/pymeasure
-    pip install -e .[tests,docs]
+    pip install -e .[gui,tests,docs]
 
 The ``-e`` will allow you to edit the files of PyMeasure and see the changes reflected.
 The square brackets include extra groups that allow you to run tests and build the documentation locally.
