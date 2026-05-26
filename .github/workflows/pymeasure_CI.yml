@@ -27,12 +27,10 @@ jobs:
         run: |
           python --version
           micromamba info
-      - name: Set up flake8 annotations
-        uses: rbialon/flake8-annotations@v1
-      - name: Lint with flake8
-        run: |
-          # Be sure to check for Python syntax errors or undefined names
-          flake8 . --count --extend-select=E9,F63,F7,F82 --show-source --statistics
+      - name: Lint with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --output-format github"
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
         if: always()  # run even if the previous step failed

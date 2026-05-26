@@ -940,7 +940,7 @@ class VirtualBench():
                 except Exception:
                     error()
                 # validate numbers in range 1-2
-                if not int(channel) in range(1, 3):
+                if int(channel) not in range(1, 3):
                     error()
                 # validate device name: either 'mso' or 'device_name/mso'
                 if device == 'mso':

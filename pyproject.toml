@@ -86,6 +86,9 @@ line-length = 100
 [tool.ruff.lint]
 extend-select = ["E", "E9", "F63", "F7", "F82", "W",]
 
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
+
 [tool.pyright.defineConstant]
 PYQT5 = true
 PYSIDE2 = false
