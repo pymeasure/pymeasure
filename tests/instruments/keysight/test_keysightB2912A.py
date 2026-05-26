@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -331,6 +331,49 @@ def test_measured_voltage():
         assert inst.ch2.measured_voltage == pytest.approx(0.456)
 
 
+# below tests captured from hardware B2912A via a
+# pymeasure.generator.Generator
+
+def test_measured_current_array():
+    block = (
+        b"#232\xbd\xce<\x8f\xd6\x06\xeaM\xbd\xd80s\x11\x9f!\xd7"
+        b"\xbd\xd9\x03\x8eC\xadH\xd0\xbd\xd9\x03\x8eC\xadH\xd0\n"
+    )
+    with expected_protocol(
+        KeysightB2912A,
+        [
+            (":form?", "ASC"),
+            (":form REAL,64", None),
+            (":fetc:arr:curr? (@1)", block),
+            (":form ASC", None),
+        ],
+    ) as inst:
+        values = inst.ch1.measured_current_array
+        assert values.dtype.kind == "f"
+        assert values.dtype.itemsize == 8
+        assert values == pytest.approx([-5.5e-11, -8.8e-11, -9.1e-11, -9.1e-11])
+
+
+def test_measured_voltage_array():
+    block = (
+        b"#232?\xb9\x99\x9bG\x18\xc3E?\xb9\x99\x99\x99\x99\x99\x99"
+        b"?\xb9\x99\x99\x99\x99\x99\x99?\xb9\x99\x97\xec\x1ao\xed\n"
+    )
+    with expected_protocol(
+        KeysightB2912A,
+        [
+            (":form?", "ASC"),
+            (":form REAL,64", None),
+            (":fetc:arr:volt? (@2)", block),
+            (":form ASC", None),
+        ],
+    ) as inst:
+        values = inst.ch2.measured_voltage_array
+        assert values.dtype.kind == "f"
+        assert values.dtype.itemsize == 8
+        assert values == pytest.approx([0.1000001, 0.1, 0.1, 0.0999999])
+
+
 # ──────────────── trigger configuration ───────────────────────
 
 
@@ -445,40 +488,91 @@ def test_abort():
         inst.ch2.abort()
 
 
-def test_idle():
-    with expected_protocol(
-        KeysightB2912A,
-        [(":idle1:all?", "1")],
-    ) as inst:
+# ──────────────────── channel idle property ───────────────────
+# ch1: acquire_idle=bit1 (2), transition_idle=bit4 (16) → both set = 18
+# ch2: acquire_idle=bit7 (128), transition_idle=bit10 (1024) → both set = 1152
+
+
+def test_ch1_idle_true():
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "18")]) as inst:
         assert inst.ch1.idle is True
 
 
-def test_idle_not_idle():
-    with expected_protocol(
-        KeysightB2912A,
-        [(":idle2:all?", "0")],
-    ) as inst:
+def test_ch1_idle_false():
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "0")]) as inst:
+        assert inst.ch1.idle is False
+
+
+def test_ch1_idle_partial():
+    # acquire_idle bit set but transition_idle not → False
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "2")]) as inst:
+        assert inst.ch1.idle is False
+
+
+def test_ch2_idle_true():
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "1152")]) as inst:
+        assert inst.ch2.idle is True
+
+
+def test_ch2_idle_false():
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "0")]) as inst:
         assert inst.ch2.idle is False
 
 
-# ───────────────── instrument-level methods ───────────────────
+# ───────────────── instrument-level idle property ─────────────
 
 
-def test_pop_err_no_error():
+def test_inst_idle_true():
+    # ch1 idle, then ch2 idle → both queried
     with expected_protocol(
         KeysightB2912A,
-        [("SYST:ERR?", '0,"No error"')],
+        [("STAT:OPER:COND?", "18"), ("STAT:OPER:COND?", "1152")],
     ) as inst:
-        code, desc = inst.pop_err()
-        assert code == 0
-        assert desc == "No error"
+        assert inst.idle is True
 
 
-def test_pop_err_with_error():
+def test_inst_idle_false_ch1():
+    # ch1 not idle → short-circuit, ch2 never queried
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "0")]) as inst:
+        assert inst.idle is False
+
+
+def test_inst_idle_false_ch2():
+    # ch1 idle, ch2 not → both queried
     with expected_protocol(
         KeysightB2912A,
-        [("SYST:ERR?", '-100,"Command error"')],
+        [("STAT:OPER:COND?", "18"), ("STAT:OPER:COND?", "0")],
     ) as inst:
-        code, desc = inst.pop_err()
-        assert code == -100
-        assert desc == "Command error"
+        assert inst.idle is False
+
+
+# ──────────────────── wait_for_idle ───────────────────────────
+
+
+def test_ch_wait_for_idle_returns():
+    # ch1 already idle → returns immediately after one poll
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "18")]) as inst:
+        inst.ch1.wait_for_idle()
+
+
+def test_ch_wait_for_idle_timeout():
+    # ch1 not idle and timeout=0 → raises ValueError after first poll
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "0")]) as inst:
+        with pytest.raises(ValueError):
+            inst.ch1.wait_for_idle(timeout=0)
+
+
+def test_inst_wait_for_idle_returns():
+    # both channels idle → returns after two polls
+    with expected_protocol(
+        KeysightB2912A,
+        [("STAT:OPER:COND?", "18"), ("STAT:OPER:COND?", "1152")],
+    ) as inst:
+        inst.wait_for_idle()
+
+
+def test_inst_wait_for_idle_timeout():
+    # ch1 not idle, timeout=0 → raises ValueError after first poll
+    with expected_protocol(KeysightB2912A, [("STAT:OPER:COND?", "0")]) as inst:
+        with pytest.raises(ValueError):
+            inst.wait_for_idle(timeout=0)

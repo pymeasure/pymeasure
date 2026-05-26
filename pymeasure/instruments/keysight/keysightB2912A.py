@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,12 @@
 from datetime import datetime, timedelta
 
 import numpy as np
-from pyvisa import VisaIOError
-
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
-from pymeasure.instruments.validators import strict_discrete_set, strict_range, joined_validators
+from pymeasure.instruments.validators import (
+    joined_validators,
+    strict_discrete_set,
+    strict_range,
+)
 
 
 class KeysightB2912AChannel(Channel):
@@ -66,8 +68,8 @@ class KeysightB2912AChannel(Channel):
     source_current = Channel.control(
         ":sour{ch}:curr?",
         ":sour{ch}:curr %g",
-        """Control the source current (float). This takes immediate
-        effect. `source_output_mode` needs to be set to "CURR".  """,
+        """Control the source current in Amps (float). This takes immediate
+        effect. :attr:`source_output_mode` needs to be set to "CURR".  """,
         validator=strict_range,
         values=[-3, 3],
     )
@@ -75,8 +77,8 @@ class KeysightB2912AChannel(Channel):
     source_current_triggered = Channel.control(
         ":sour{ch}:curr:trig?",
         ":sour{ch}:curr:trig %g",
-        """Control the /triggered/ source current (float). This takes immediate
-        effect. `source_output_mode` needs to be set to "CURR".  """,
+        """Control the *triggered* source current in Amps (float). This takes immediate
+        effect. :attr:`source_output_mode` needs to be set to "CURR".  """,
         validator=strict_range,
         values=[-3, 3],
     )
@@ -84,9 +86,9 @@ class KeysightB2912AChannel(Channel):
     source_voltage = Channel.control(
         ":sour{ch}:volt?",
         ":sour{ch}:volt %g",
-        """Control the source voltage (float). This takes immediate
-        effect. `source_output_mode` needs to be set to "VOLT". See also `
-        source_voltage_triggered`. """,
+        """Control the source voltage in Volts (float). This takes immediate
+        effect. :attr:`source_output_mode` needs to be set to "VOLT". See also
+        :attr:`source_voltage_triggered`. """,
         validator=strict_range,
         values=[-210, 210],
     )
@@ -94,8 +96,8 @@ class KeysightB2912AChannel(Channel):
     source_voltage_triggered = Channel.control(
         ":sour{ch}:volt:trig?",
         ":sour{ch}:volt:trig %g",
-        """Control the /triggered/ source voltage (float). This takes immediate
-        effect. `source_output_mode` needs to be set to "VOLT".  """,
+        """Control the *triggered* source voltage in Volts (float). This takes immediate
+        effect. :attr:`source_output_mode` needs to be set to "VOLT".  """,
         validator=strict_range,
         values=[-210, 210],
     )
@@ -113,7 +115,7 @@ class KeysightB2912AChannel(Channel):
     compliance_current = Channel.control(
         ":sens{ch}:curr:prot?",
         ":sens{ch}:curr:prot %g",
-        """Control the compliance current (float).""",
+        """Control the compliance current in Amps (float).""",
         validator=strict_range,
         values=[-3, 3],
     )
@@ -121,7 +123,7 @@ class KeysightB2912AChannel(Channel):
     compliance_voltage = Channel.control(
         ":sens{ch}:volt:prot?",
         ":sens{ch}:volt:prot %g",
-        """Control the compliance voltage (float).""",
+        """Control the compliance voltage in Volts (float).""",
         validator=strict_range,
         values=[-210, 210],
     )
@@ -129,7 +131,7 @@ class KeysightB2912AChannel(Channel):
     pulse_delay = Channel.control(
         ":sour{ch}:pulse:del?",
         ":sour{ch}:pulse:del %g",
-        """Control the pulse delay in s (float).""",
+        """Control the pulse delay in seconds (float).""",
         validator=strict_range,
         values=[0, 99999],
     )
@@ -137,7 +139,7 @@ class KeysightB2912AChannel(Channel):
     pulse_width = Channel.control(
         ":sour{ch}:pulse:widt?",
         ":sour{ch}:pulse:widt %g",
-        """Control the pulse width in s (float).""",
+        """Control the pulse width in seconds (float).""",
         validator=strict_range,
         values=[0, 99999],
     )
@@ -244,54 +246,56 @@ class KeysightB2912AChannel(Channel):
         self.write(":form REAL,64")
         try:
             self.write(f":fetc:arr:{v_or_c}? (@{self.id})")
-            # We can't use instrument `binary_values` since we need to set
-            # break_on_termchar=True.
-            raw_bytes = self.read_bytes(-1, break_on_termchar=True)
+            # Parse the IEEE-488.2 definite-length block by reading its header
+            # first, so we can read exactly the advertised number of payload
+            # bytes. This is more robust than reading the whole message with
+            # break_on_termchar=True, since the binary payload may itself contain
+            # bytes equal to the termination character.
+            header = self.read_bytes(2)  # "#" and the size-of-size digit
+            if not header.startswith(b"#"):
+                raise ValueError("Invalid IEEE-488.2 block header")
+            size_nbytes = int(chr(header[1]))  # size of the size integer
+            nbytes = int(self.read_bytes(size_nbytes).decode())
+            raw_bytes = self.read_bytes(nbytes)
+            if len(raw_bytes) != nbytes:
+                raise ValueError("Incomplete IEEE-488.2 payload")
+            self.read_bytes(1)  # consume the trailing termination character
         finally:
             self.write(f":form {old_format}")
 
-        if not raw_bytes.startswith(b"#"):
-            raise ValueError("Invalid IEEE-488.2 block header")
-        size_nbytes = int(chr(raw_bytes[1]))  # size of the size integer
-        nbytes = int(raw_bytes[2:2 + size_nbytes].decode())
-        raw_bytes = raw_bytes[2 + size_nbytes:-1]  # remove headers + newline byte
-        values = np.frombuffer(
+        return np.frombuffer(
             raw_bytes,
             dtype=np.dtype(">d"),
         ).astype(np.float64)
-        if values.size != nbytes // 8:
-            raise ValueError("Binary block length does not match float64 payload size")
-        return values
 
     trigger_source = Channel.setting(
         ":trig{ch}:sour %s",
         """Set the trigger source. Currently supported options are "TIM" (internal timer) and "AINT"
-        (auto). Note that this is not readable.
+        (auto).
 
         If switching from an active triggering sequence (i.e. auto (AINT) & trigger count set to
-        infinite), you'll need to call the abort() method first to avoid an error.  """,
+        infinite), you'll need to call the :meth:`abort()` method first to avoid an error.  """,
         validator=strict_discrete_set,
-        values=["TIM", "AINT"],  # "AUTO", "BUS", "INT1" "INT2", "LAN"
+        values=["TIM", "AINT"],  # instrument also supports "BUS", "INT1" "INT2", "LAN"
     )
 
     source_trigger_delay = Channel.control(
         ":trig{ch}:tran:del?",
         ":trig{ch}:tran:del %g",
-        """Control the source delay time.
+        """Control the source delay time in seconds.
         """,
     )
 
     measurement_trigger_delay = Channel.control(
         ":trig{ch}:acq:del?",
         ":trig{ch}:acq:del %g",
-        """Control the measurement delay time.
+        """Control the measurement delay time in seconds.
         """,
     )
 
     source_trigger_timer_period = Channel.setting(
         ":trig{ch}:tran:tim %s",
-        """Set the trigger period. `trigger_source` needs to be set to "TIM".
-        Note that this is not readable.
+        """Set the trigger period. :attr:`trigger_source` needs to be set to "TIM".
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[1e-5, 1e5], ["MIN", "MAX", "DEF"]],
@@ -300,8 +304,8 @@ class KeysightB2912AChannel(Channel):
 
     measurement_trigger_timer_period = Channel.setting(
         ":trig{ch}:acq:tim %s",
-        """Set the trigger period of the measurement trigger. `trigger_source`
-        needs to be set to "TIM". Note that this is not readable.""",
+        """Set the trigger period of the measurement trigger. :attr:`trigger_source`
+        needs to be set to "TIM".""",
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[1e-5, 1e5], ["MIN", "MAX", "DEF"]],
         set_process=lambda v: v if isinstance(v, str) else f"{v:g}",
@@ -310,7 +314,7 @@ class KeysightB2912AChannel(Channel):
     source_trigger_count = Channel.setting(
         ":trig{ch}:tran:coun %d",
         """Set the trigger count of the source trigger (from 1 to 100000 or 2147483647).
-        Note that this is not readable. Set to 2147483647 for infinite.
+        Set to 2147483647 for infinite.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[1, 100000], [2147483647]],
@@ -318,24 +322,27 @@ class KeysightB2912AChannel(Channel):
 
     measurement_trigger_count = Channel.setting(
         ":trig{ch}:acq:coun %d",
-        """Set the trigger count of the measurement trigger. Note that this is not readable.
+        """Set the trigger count of the measurement trigger.
         """,
         validator=joined_validators(strict_range, strict_discrete_set),
         values=[[1, 100000], [2147483647]],
     )
 
     def initiate(self):
-        """This is the B2912A manual's terminology for triggering."""
+        """Initiate the measurement sequence by arming the trigger."""
         self.write(":INIT (@{ch})")
 
-    idle = Channel.measurement(
-        ":idle{ch}:all?",
+    @property
+    def idle(self):
         """Get whether the triggering system is idle
-        (i.e. all source & measurements are complete)""",
-        cast=lambda value: bool(int(value)),
-    )
+        (i.e. all source & measurements are complete)"""
+        reg_val = int(self.ask("STAT:OPER:COND?"))
+        ch_offset = 0 if self.id == 1 else 6
+        acquire_idle = bool(reg_val & (1 << (1 + ch_offset)))
+        transition_idle = bool(reg_val & (1 << (4 + ch_offset)))
+        return acquire_idle and transition_idle
 
-    def wait_idle(self, timeout=1):
+    def wait_for_idle(self, timeout=1):
         """Block until all device actions (source and measurements) are complete.
 
         Parameters
@@ -349,17 +356,11 @@ class KeysightB2912AChannel(Channel):
             If the timeout is reached before the channel becomes idle.
         """
         end = datetime.now() + timedelta(seconds=timeout)
-        err = ValueError("timeout waiting for idle")
         while True:
-            try:
-                if self.idle:
-                    return
-                if datetime.now() >= end:
-                    raise err
-            except VisaIOError as e:
-                err = e
-                if datetime.now() >= end:
-                    raise e from None
+            if self.idle:
+                return
+            elif datetime.now() >= end:
+                raise ValueError("timeout waiting for idle")
 
     def abort(self):
         """Abort any acquisition or source output device actions."""
@@ -380,47 +381,27 @@ class KeysightB2912A(SCPIMixin, Instrument):
     def __init__(self, adapter, name="Keysight B2912A PSMU", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def wait_for_complete(self, timeout=1):
-        """Like the `SCPIMixin.complete` property, but tries until the
-        `timeout` (in seconds) has passed. Note that this does not
-        block until the trigger IDLE state (i.e. it does not wait for
-        measurements to be complete)
+    @property
+    def idle(self):
+        """Measure whether all device actions (source and measurements) are complete."""
+        return self.ch1.idle and self.ch2.idle
 
+    def wait_for_idle(self, timeout=1):
+        """Block until `self.idle` is true.
+
+        Parameters
+        ----------
+        timeout : float
+            Timeout in seconds (default 1).
+
+        Raises
+        ------
+        ValueError
+            If the timeout is reached before the instrument becomes idle.
         """
         end = datetime.now() + timedelta(seconds=timeout)
-        err = ValueError("timeout is too short.")
-        need_to_clear = False
         while True:
-            try:
-                retval = self.complete
-                if need_to_clear:
-                    self.clear()
-                if int(retval) == 1:
-                    return retval
-                # Not complete yet, check timeout before next poll
-                if datetime.now() >= end:
-                    raise err
-            except VisaIOError as e:
-                # an error in the isntr is generated if the communication times
-                # out. the need_to_clear flag keeps tracks of this and clears
-                # it. TODO should we call check_error instead to ensure there
-                # are no other errors?
-                need_to_clear = True
-                err = e
-                if datetime.now() >= end:
-                    raise e from None
-
-    def pop_err(self):
-        """Pop an error off the device's error queue. Returns a tuple
-        containing the code and error description. An error code 0
-        indicates success.
-
-        The Error queue can be cleared using the standard SCPI
-        ``KeysightB2912A.clear()`` method.
-
-        """
-        error_str = self.ask("SYST:ERR?").strip()
-        error_code_str, error_desc_str = error_str.split(",")
-        error_code = int(error_code_str)
-        error_desc = error_desc_str.strip('"')
-        return error_code, error_desc
+            if self.idle:
+                return
+            elif datetime.now() >= end:
+                raise ValueError("timeout waiting for idle")

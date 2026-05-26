@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,6 @@
 
 import pytest
 from pymeasure.instruments.keysight.keysightB2912A import KeysightB2912A
-# from pyvisa.errors import VisaIOError
-
-# pytest.skip("Only work with connected hardware", allow_module_level=True)
 
 
 @pytest.fixture(scope="module")
@@ -107,13 +104,6 @@ def test_pulse_width(keysightB2912A):
     assert keysightB2912A.ch1.pulse_width == 1
     keysightB2912A.ch2.pulse_width = 1e-3
     assert keysightB2912A.ch2.pulse_width == 1e-3
-
-
-# def test_measurement_mode(keysightB2912A):
-#     keysightB2912A.ch1.measurement_mode = "CURR"
-#     assert keysightB2912A.ch1.measurement_mode == "CURR"
-#     keysightB2912A.ch2.measurement_mode = "CURR"
-#     assert keysightB2912A.ch2.measurement_mode == "CURR"
 
 
 def test_current_measurement_range_auto(keysightB2912A):
@@ -221,32 +211,32 @@ def test_reset(keysightB2912A):
 def test_trig_src(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
         ch.trigger_source = "TIM"
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        assert len(keysightB2912A.check_errors()) == 0
 
 
 def test_trig_del(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
         ch.source_trigger_delay = 1
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        assert len(keysightB2912A.check_errors()) == 0
         ch.measurement_trigger_delay = 1
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        assert len(keysightB2912A.check_errors()) == 0
 
 
 def test_trig_count(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
         ch.source_trigger_count = 1
         ch.measurement_trigger_count = 1
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        assert len(keysightB2912A.check_errors()) == 0
 
 
 def test_trig_period(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
         ch.source_trigger_timer_period = 1
         ch.measurement_trigger_timer_period = 1
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        assert len(keysightB2912A.check_errors()) == 0
 
 
-def test_wait_for_complete(keysightB2912A):
+def test_wait_for_idle(keysightB2912A):
     for ch in keysightB2912A.ch1, keysightB2912A.ch2:
         ch.trigger_source = "TIM"
         ch.source_trigger_delay = 0
@@ -255,7 +245,23 @@ def test_wait_for_complete(keysightB2912A):
         ch.measurement_trigger_timer_period = 1
         ch.source_trigger_count = 10
         ch.measurement_trigger_count = 10
-        keysightB2912A.wait_for_complete(10)
+        keysightB2912A.wait_for_idle(10)
         ch.initiate()
-        keysightB2912A.wait_for_complete(11)
-        assert len(keysightB2912A.check_errors()) == 0  # TODO is this correct?
+        keysightB2912A.wait_for_idle(11)
+        assert len(keysightB2912A.check_errors()) == 0
+
+
+def test_wait_for_idle_timeout(keysightB2912A):
+    for ch in keysightB2912A.ch1, keysightB2912A.ch2:
+        ch.trigger_source = "TIM"
+        ch.source_trigger_delay = 0
+        ch.measurement_trigger_delay = 0
+        ch.source_trigger_timer_period = 1
+        ch.measurement_trigger_timer_period = 1
+        ch.source_trigger_count = 10
+        ch.measurement_trigger_count = 10
+        keysightB2912A.wait_for_idle(10)
+        ch.initiate()
+        with pytest.raises(ValueError):  # expect a timeout
+            keysightB2912A.wait_for_idle(1)
+        keysightB2912A.wait_for_idle(11)  # don't exit until idle
