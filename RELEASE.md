@@ -15,45 +15,48 @@
       * For the PR URLs: `by (@[\w-]+) in https://github.com/pymeasure/pymeasure/pull/(\d+)` to `($1, #$2)`.
       * For new contributors: ` made their first contribution in https://github.com/pymeasure/pymeasure/pull/\d+` to `, `
 4. Update the version number in CITATION.cff
-    * On the line starting with `version: `, replace the current version number with the new version number 
+    * On the line starting with `version:`, replace the current version number with the new version number
 5. Push the changes up as a PR
 6. Verify that the builds complete
-7. Merge the PR
-8. Create a new [release on GitHub](https://github.com/pymeasure/pymeasure/releases)
+7. Create a new [release on GitHub](https://github.com/pymeasure/pymeasure/releases)
     * Add a tag name in the format "vX.Y.Z" and select "create tag on publish"
+    * Select as target the branch you created (`v<version>_release`)
     * You'll have to paste in the changelog entry and probably edit it a bit as that form expects Markdown, not ReST (probably just removing `:code:` tags will be sufficient).
     * Publish the release
 8. Approve the _build and upload_ run under Actions.
    This will create the wheel and upload it to PyPI.
+9. Merge the PR
+10. Wait for conda to pick up the new release and automatically create a [PR in the conda feedstock](https://github.com/conda-forge/pymeasure-feedstock/pulls)
+11. If that PR is created, merge the conda-feedstock PR; otherwise follow the manual steps below.
 
 ## PyPI release - manually
 
-Official guide [here](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
+[Official guide](https://packaging.python.org/en/latest/tutorials/packaging-projects/).
 
 If the upload action does not work, you can create a PyPI release manually:
 
 1. Fetch `master`, build and check the source packages
-    - `python -m pip install --upgrade build twine`
-    - `python -m build`
-    - Check the distributions (`twine check dist/*`, version will not yet be correct)
+    * `python -m pip install --upgrade build twine`
+    * `python -m build`
+    * Check the distributions (`twine check dist/*`, version will not yet be correct)
 2. Ensure to have a git tag in the format "vX.Y.Z"
 3. Build final packages and confirm the correct version number is being used
-     - `python -m build`
-     - Check the distributions (`twine check dist/*`)
+     * `python -m build`
+     * Check the distributions (`twine check dist/*`)
 4. Upload the wheel and source distributions to the test server
-    - `python -m twine upload --repository testpypi dist/*`
-5. Verify the test repository: https://test.pypi.org/project/PyMeasure
+    * `python -m twine upload --repository testpypi dist/*`
+5. Verify the test repository: <https://test.pypi.org/project/PyMeasure>
 6. Confirm that the installation works (best in a separate environment)
-    - `python -m pip install --index-url https://test.pypi.org/simple/ --no-deps pymeasure`
+    * `python -m pip install --index-url https://test.pypi.org/simple/ --no-deps pymeasure`
 7. Upload to the real repository (`twine upload dist/PyMeasure-<version>*`)
-8. Verify that the package is updated: https://pypi.org/project/PyMeasure
+8. Verify that the package is updated: <https://pypi.org/project/PyMeasure>
 
-## conda-forge feedstock
+## conda-forge feedstock - manually
 
 1. Release to PyPI first (the feedstock pulls from there)
 2. Pull the latest `master` branch
 3. `git checkout -b v<version>_release`
-4. Get the SHA256 hash of the PyPI source package at https://pypi.org/project/PyMeasure/#files
+4. Get the SHA256 hash of the PyPI source package at <https://pypi.org/project/PyMeasure/#files>
 5. Update recipe/meta.yml with the checksum and version number. Important: Work in your personal fork of the feedstock repo (the conda-forge tooling requires that) and create a PR from there.
 6. Push the changes up as a PR
 7. Verify that the builds complete

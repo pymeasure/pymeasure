@@ -231,8 +231,8 @@ class BooleanParameter(Parameter):
             value = bool(value)
         elif isinstance(value, bool):
             value = value
-        elif isinstance(value, np.bool):
-            value = value
+        elif isinstance(value, np.bool_):
+            value = bool(value)
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
                              "type '%s'" % type(value))

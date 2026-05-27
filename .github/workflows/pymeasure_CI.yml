@@ -27,12 +27,10 @@ jobs:
         run: |
           python --version
           micromamba info
-      - name: Set up flake8 annotations
-        uses: rbialon/flake8-annotations@v1
-      - name: Lint with flake8
-        run: |
-          # Be sure to check for Python syntax errors or undefined names
-          flake8 . --count --extend-select=E9,F63,F7,F82 --show-source --statistics
+      - name: Lint with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --output-format github"
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
         if: always()  # run even if the previous step failed
@@ -103,6 +101,7 @@ jobs:
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
+          micromamba-version: '2.6.0-0'
           environment-file: '.github/pymeasure.yml'
           create-args: python=${{ matrix.python-version }}
           cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
@@ -114,6 +113,52 @@ jobs:
         run: pip install .[tests]
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
+      - name: Run pytest with xvfb
+        if: runner.os == 'Linux'
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          xvfb-run -a pytest
+      - name: Run pytest
+        if: runner.os != 'Linux'
+        run: |
+          echo "::add-matcher::.github/pytest.json"
+          pytest
+
+  test_pandas3:
+    name: pandas3, Python ${{ matrix.python-version }}, ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install base pymeasure requirements
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          # Pegged: micromamba 2.6.1-0 has a broken Windows build (missing zlib.dll).
+          # See mamba-org/setup-micromamba#306 and micromamba-releases#97.
+          micromamba-version: '2.6.0-0'
+          environment-file: '.github/pymeasure.yml'
+          create-args: python=${{ matrix.python-version }}
+          cache-environment-key: py${{ matrix.python-version }}-${{ matrix.os }}-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-downloads: false
+      - name: Python version
+        run: python --version
+      - name: Upgrade pandas to latest via pip
+        run: pip install "pandas>=3.0"
+      - name: Install Pymeasure
+        run: pip install .[tests]
+      - name: Pymeasure version
+        run: python -c "import pymeasure;print(pymeasure.__version__)"
+      - name: pandas and numpy versions
+        run: python -c "import pandas; import numpy; print('pandas', pandas.__version__, 'numpy', numpy.__version__)"
       - name: Run pytest with xvfb
         if: runner.os == 'Linux'
         run: |
