@@ -113,9 +113,9 @@ class SCUChannel(Channel):
     )
 
     def calibrate_sensor(self) -> bool:
-        """Calibrate the sensor. Has to be done before the use of :meth: 'move_to_ref'
+        """Calibrate the sensor. Has to be done before the use of :meth: 'move_to_ref'.
            The user must ensure himself that the positioner is not close to a mechanical
-           limit before using this method
+           limit before using this method.
            :return: True if the sensor is calibrating, False otherwise"""
         self.write(f':CS{self.id}')
         status = self.ask(f":M{self.id}")
@@ -143,7 +143,7 @@ class SCUChannel(Channel):
            thorough knowledge of the differnet modes. It ensures the user, that the desired type
            exists, and has the possibility to be implemented to the program.
 
-           The enum :class:'PositionerType' contains the available t values and corresponding properties
+           The enum :class:'PositionerType' contains the available t values and corresponding properties.
 
         """
         if not isinstance(t, PositionerType):
@@ -238,7 +238,7 @@ class SCUChannelAngular(SCUChannel):
 
     @property
     def angle(self):
-        """Get the current angle in m°"""
+        """Get the current angle in m°."""
         self.write(f":GA{self.id}")
         ang = self.read()
         return Q_(float(ang[4:]), self.unit)
@@ -247,14 +247,14 @@ class SCUChannelAngular(SCUChannel):
         """Move to the absolute angle given in m° from the reference position via
            closed-loop control.
 
-           :param position: A quantity with angular units (m°)
+           :param position: A quantity with angular units (m°).
         """
         self.write(f":MAA{self.id}P{convert_quantity_to_magnitude(position, self.unit)}")
 
     def move_rel(self, position: Q_):
         """Move the relative angle given in m° from the current position closed-loop control.
 
-           :param position: A quantity with angular units (m°)
+           :param position: A quantity with angular units (m°).
         """
         self.write(f":MAR{self.id}A{convert_quantity_to_magnitude(position, self.unit)}")
 
@@ -272,7 +272,7 @@ class SCUChannelStepper(SCUChannel):
 
     @property
     def position_steps(self):
-        """ Get the current estimated position in steps. """
+        """ Get the current estimated position in steps."""
         return self._current_steps
 
     def move_rel(self, steps: Union[int, Q_]):
@@ -360,7 +360,7 @@ class SmarActSCU_ASCII(Instrument):
     def check_amplitude(self, ampl: Union[int, str, Q_] = None) -> Q_:
         """Check if voltage amplitude is present and if it is inside the given boundary.
 
-        :param ampl : a quantity with voltage amplitude units dV, if int then given in dV
+        :param ampl : a quantity with voltage amplitude units dV, if int then given in dV.
         """
         if ampl is None:
             return self._amplitude
@@ -377,7 +377,7 @@ class SmarActSCU_ASCII(Instrument):
 
     @property
     def amplitude(self):
-        """ Control default amplitude. """
+        """ Control default amplitude."""
         return self._amplitude
 
     @amplitude.setter
@@ -389,7 +389,7 @@ class SmarActSCU_ASCII(Instrument):
     def check_frequency(self, frequency: Union[int, str, Q_] = None) -> Q_:
         """ Check if closed-loop frequency is present and if it is inside the given boundary.
 
-        :param frequency: a quantity with frequency units in Hz, if int, then given in Hz
+        :param frequency: a quantity with frequency units in Hz, if int, then given in Hz.
         """
         if frequency is None:
             return self._freq
@@ -408,7 +408,7 @@ class SmarActSCU_ASCII(Instrument):
 
     @property
     def frequency(self):
-        """ Control default frequency """
+        """ Control default frequency."""
         return self._freq
 
     @frequency.setter
@@ -433,7 +433,7 @@ class SmarActSCU_ASCII(Instrument):
     def move_abs(self, position: Union[Q_, int]):
         """Move to the absolute position given in µm from the reference position.
 
-        :param position : A quantity with length units (µm), if integer, then given in µm
+        :param position : A quantity with length units (µm), if integer, then given in µm.
         """
         raise NotImplementedError
 
@@ -467,7 +467,7 @@ class SmarActSCU_ASCII(Instrument):
 
     def reset(self):
         """Reset the device. Has the same effect
-           as a power-down/power-up cycle
+           as a power-down/power-up cycle.
         """
         self.write(':R')
 
