@@ -105,9 +105,36 @@ There is some automation in place to run the unit tests and check some coding st
 Your pull-request will be reviewed by the PyMeasure maintainers. Frequently there is some iteration and discussion based on that feedback until a pull request can be merged. This will happen either in the conversation tab or in inline code comments.
 
 Be aware that due to maintainer manpower limitations it might take a long time until PRs get reviewed and/or merged.
-In general, review effort scales badly with PR size. Therefore, **smaller PRs are much preferred**. Try to limit your contribution to one "aspect", e.g. one instrument (or a few if closely related), one bug fix, or one feature contribution.
+In general, review effort scales badly with PR size. Therefore, **smaller PRs are much preferred** — see :ref:`contribution-standards` for details.
 
 If you placed your contribution in a separate branch as suggested above, you can easily use your contribution in the meantime -- just check out your feature branch instead of `master`.
+
+.. _contribution-standards:
+
+Contribution standards
+======================
+
+All contributions (human or AI-assisted) must:
+
+1. Adhere to the :doc:`coding standards </dev/coding_standards>`.
+2. Be reviewed *by the contributor* before submission.
+3. Focus on **single logical changes** — avoid "shotgun" PRs. Try to limit your
+   contribution to one "aspect", e.g. one instrument (or a few if closely
+   related), one bug fix, or one feature.
+4. Respect reviewer time through clear documentation and atomic commits.
+
+**For AI-assisted contributions:**
+
+- Treat AI as a pair programmer — *you* are responsible for its output.
+- Code must pass the same review bar as human-written contributions.
+- PRs showing signs of unreviewed generation (e.g. hallucinated APIs,
+  style inconsistencies, boilerplate that doesn't match the codebase)
+  may be rejected with reference to these guidelines.
+
+.. hint::
+
+   Remember: Your name goes on the commit. Whether you wrote code with a
+   keyboard, Copilot, or ChatGPT, *you* own its quality.
 
 Unit testing
 ============
