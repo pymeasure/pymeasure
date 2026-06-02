@@ -96,6 +96,10 @@ class CTL200Adapter(SerialAdapter):
         return lines
 
     def write(self, command: str) -> None:
+        """Send a command and buffer the response lines.
+
+        :param command: Command string to send to the device.
+        """
         self._last_command = command.strip()
         super().write(command)
         self._response_buffer = self._read_until_prompt()
@@ -103,6 +107,11 @@ class CTL200Adapter(SerialAdapter):
                   self._response_buffer)
 
     def read(self) -> str:
+        """Return the next non-empty response line from the buffer.
+
+        :returns: The next response line, or empty string if buffer is
+        exhausted.
+        """
         while self._response_buffer:
             value = self._response_buffer.pop(0)
             if value.strip():
@@ -329,7 +338,7 @@ class CTL200(Instrument):
     laser_mod_gain = Instrument.control(
         "lmodgain",
         "lmodgain %g",
-        """Control the laser current modulation gain of auxillary input 1 in
+        """Control the laser current modulation gain of auxiliary input 1 in
         A/V (float, strict_range from -100 to 100).""",
         cast=float,
         validator=strict_range,
@@ -341,7 +350,7 @@ class CTL200(Instrument):
     tec_mod_gain = Instrument.control(
         "tmodgain",
         "tmodgain %g",
-        """Control the temperature modulation gain of auxillary input 2 in
+        """Control the temperature modulation gain of auxiliary input 2 in
         Ω/V (float, strict_range from -100000 to 100000).""",
         cast=float,
         validator=strict_range,
@@ -363,7 +372,6 @@ class CTL200(Instrument):
 
     @staticmethod
     def _parse_status(values):
-        print(values)
         keys = CTL200._STATUS_KEYS
         if len(values) != len(keys):
             raise ValueError(
