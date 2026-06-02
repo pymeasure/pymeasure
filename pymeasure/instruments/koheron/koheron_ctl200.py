@@ -25,7 +25,7 @@
 import logging
 import time
 from enum import IntFlag
-from pymeasure.adapters import SerialAdapter
+from pymeasure.adapters import SerialAdapter, Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,
@@ -66,6 +66,7 @@ class CTL200Adapter(SerialAdapter):
         self._response_buffer: list[str] = []
         time.sleep(0.05)
         self.connection.reset_input_buffer()
+        self.connection.reset_output_buffer()
 
     def _read_until_prompt(self) -> list[str]:
         raw = b""
@@ -128,15 +129,15 @@ class CTL200(Instrument):
                     "ain2"]
 
     def __init__(self, adapter, name="Koheron CTL200", **kwargs):
-        ADAPTER_KWARGS = {"baudrate", "timeout"}
-        adapter_kwargs = {k: v for k, v in kwargs.items() if
-                          k in ADAPTER_KWARGS}
-        instrument_kwargs = {k: v for k, v in kwargs.items() if
-                             k not in ADAPTER_KWARGS}
-        if isinstance(adapter, str):
-            adapter = CTL200Adapter(adapter, **adapter_kwargs)
+        adapter_kwargs = {}
+        for key in ["baudrate", "timeout", "write_termination", "read_termination"]:
+            if key in kwargs:
+                adapter_kwargs[key] = kwargs.pop(key)
 
-        super().__init__(adapter, name, includeSCPI=False, **instrument_kwargs)
+        if isinstance(adapter, str) and "::" not in adapter:
+            # only for serial ports, not VISA strings
+            adapter = CTL200Adapter(adapter, **adapter_kwargs)
+        super().__init__(adapter, name, includeSCPI=False, **kwargs)
 
     # -- Laser -----------------------------------------------------------
 
