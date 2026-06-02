@@ -24,8 +24,69 @@
 
 import pytest
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.koheron import CTL200
+from unittest.mock import MagicMock
+from pymeasure.instruments.koheron import CTL200, CTL200Adapter
 
+# =============================================================================
+# -- CTL200Adapter Tests
+# =============================================================================
+
+
+def make_mock_serial(chunks):
+    """Return a fake serial connection that yields chunks incrementally."""
+    conn = MagicMock()
+    conn.timeout = 1
+    conn.in_waiting = sum(len(c) for c in chunks)
+    # ensure no StopIteration
+    conn.read = MagicMock(side_effect=chunks + [b""])
+    return conn
+
+
+def make_adapter():
+    """Create adapter without running __init__, but with required attributes."""
+    adapter = CTL200Adapter.__new__(CTL200Adapter)
+    adapter.log = MagicMock()
+    adapter.write_termination = "\r\n"
+    adapter.read_termination = "\r\n"
+    adapter._response_buffer = []
+    adapter._last_command = ""
+    return adapter
+
+
+def test_read_until_prompt_parses_correctly():
+    adapter = make_adapter()
+    adapter._last_command = "CMD"
+
+    adapter.connection = make_mock_serial([
+        b"CMD\r\n",
+        b"123\r\n",
+        b">>\r\n"
+    ])
+
+    lines = adapter._read_until_prompt()
+    assert lines == ["123"]
+
+
+def test_write_buffers_response():
+    adapter = make_adapter()
+
+    adapter.connection = make_mock_serial([
+        b"CMD\r\n",
+        b"OK\r\n",
+        b">>\r\n"
+    ])
+
+    adapter.write("CMD")
+    assert adapter._response_buffer == ["OK"]
+
+
+def test_read_returns_buffered_lines():
+    adapter = make_adapter()
+    adapter._response_buffer = ["A", "B", ""]
+
+    assert adapter.read() == "A"
+    assert adapter.read() == "B"
+    assert adapter.read() == ""
 
 # =============================================================================
 # -- Laser Tests

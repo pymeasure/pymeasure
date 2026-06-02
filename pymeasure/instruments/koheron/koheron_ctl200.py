@@ -25,7 +25,7 @@
 import logging
 import time
 from enum import IntFlag
-from pymeasure.adapters import SerialAdapter, Adapter
+from pymeasure.adapters import SerialAdapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set,

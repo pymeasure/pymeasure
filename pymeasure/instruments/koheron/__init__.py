@@ -22,4 +22,4 @@
 # THE SOFTWARE.
 #
 
-from .koheron_ctl200 import CTL200
+from .koheron_ctl200 import CTL200, CTL200Adapter
