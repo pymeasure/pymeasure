@@ -141,20 +141,33 @@ def test_pid_parameters():
     with expected_protocol(
         CTL200,
         [
-            ("pgain 15.1", None),
-            ("pgain", "15.1"),
-            ("igain 2.3", None),
-            ("igain", "2.3"),
-            ("dgain 0.1", None),
-            ("dgain", "0.1"),
+            ("pgain 0.1", None),
+            ("pgain", "0.1"),
+            ("igain 0.03", None),
+            ("igain", "0.03"),
+            ("dgain 0", None),
+            ("dgain", "0"),
         ],
     ) as inst:
-        inst.pid_proportional = 15.1
-        assert inst.pid_proportional == 15.1
-        inst.pid_integral = 2.3
-        assert inst.pid_integral == 2.3
-        inst.pid_differential = 0.1
-        assert inst.pid_differential == 0.1
+        inst.pid_proportional = 0.1
+        assert inst.pid_proportional == 0.1
+        inst.pid_integral = 0.03
+        assert inst.pid_integral == 0.03
+        inst.pid_differential = 0
+        assert inst.pid_differential == 0
+
+
+@pytest.mark.parametrize("invalid_value", [-0.01, 0.11, -5, 2.0])
+def test_pid_parameters_out_of_bounds(invalid_value):
+    """Verify that PID gains raise ValueError when set outside the
+    [0, 0.1] range."""
+    with expected_protocol(CTL200, []) as inst:
+        with pytest.raises(ValueError):
+            inst.pid_proportional = invalid_value
+        with pytest.raises(ValueError):
+            inst.pid_integral = invalid_value
+        with pytest.raises(ValueError):
+            inst.pid_differential = invalid_value
 
 
 # =============================================================================
