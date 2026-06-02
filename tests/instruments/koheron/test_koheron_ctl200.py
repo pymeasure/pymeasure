@@ -24,7 +24,7 @@
 
 import pytest
 from pymeasure.test import expected_protocol
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from pymeasure.instruments.koheron import CTL200, CTL200Adapter
 
 # =============================================================================
@@ -42,46 +42,37 @@ def make_mock_serial(chunks):
     return conn
 
 
-def make_adapter():
-    """Create adapter without running __init__, but with required attributes."""
-    adapter = CTL200Adapter.__new__(CTL200Adapter)
-    adapter.log = MagicMock()
-    adapter.write_termination = "\r\n"
-    adapter.read_termination = "\r\n"
-    adapter._response_buffer = []
-    adapter._last_command = ""
-    return adapter
+@patch("serial.Serial")
+def test_read_until_prompt_parses_correctly(mock_serial):
+    """Parse response lines until the device prompt is reached."""
+    chunks = [b"CMD\r\n", b"123\r\n", b">>\r\n"]
+    mock_serial.return_value = make_mock_serial(chunks)
 
-
-def test_read_until_prompt_parses_correctly():
-    adapter = make_adapter()
+    adapter = CTL200Adapter("COM1")
     adapter._last_command = "CMD"
-
-    adapter.connection = make_mock_serial([
-        b"CMD\r\n",
-        b"123\r\n",
-        b">>\r\n"
-    ])
 
     lines = adapter._read_until_prompt()
     assert lines == ["123"]
 
 
-def test_write_buffers_response():
-    adapter = make_adapter()
+@patch("serial.Serial")
+def test_write_buffers_response(mock_serial):
+    """Buffer response lines after sending a command."""
+    chunks = [b"CMD\r\n", b"OK\r\n", b">>\r\n"]
+    mock_serial.return_value = make_mock_serial(chunks)
 
-    adapter.connection = make_mock_serial([
-        b"CMD\r\n",
-        b"OK\r\n",
-        b">>\r\n"
-    ])
-
+    adapter = CTL200Adapter("COM1")
     adapter.write("CMD")
+
     assert adapter._response_buffer == ["OK"]
 
 
-def test_read_returns_buffered_lines():
-    adapter = make_adapter()
+@patch("serial.Serial")
+def test_read_returns_buffered_lines(mock_serial):
+    """Return buffered response lines in sequence."""
+    mock_serial.return_value = make_mock_serial([])
+
+    adapter = CTL200Adapter("COM1")
     adapter._response_buffer = ["A", "B", ""]
 
     assert adapter.read() == "A"
