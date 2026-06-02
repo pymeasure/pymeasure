@@ -51,7 +51,7 @@ class KoheronError(IntFlag):
 
 
 class CTL200Adapter(SerialAdapter):
-    """Serial adapter for Koheron CTL200 do deal with echo responses."""
+    """Serial adapter for Koheron CTL200 to deal with echo responses."""
 
     def __init__(self, port, **kwargs):
         kwargs.setdefault("baudrate", 115200)
@@ -103,10 +103,11 @@ class CTL200Adapter(SerialAdapter):
                   self._response_buffer)
 
     def read(self) -> str:
-        if self._response_buffer:
+        while self._response_buffer:
             value = self._response_buffer.pop(0)
-            log.debug("read -> %r", value)
-            return value
+            if value.strip():
+                log.debug("read -> %r", value)
+                return value
         log.debug("read -> buffer empty, return ''")
         return ""
 
@@ -114,6 +115,9 @@ class CTL200Adapter(SerialAdapter):
 class CTL200(Instrument):
     """PyMeasure driver for the Koheron CTL200-0 digital
     laser diode controller."""
+
+    _STATUS_KEYS = ["lason", "vlaser", "itec", "vtec", "rtact", "iphd", "ain1",
+                    "ain2"]
 
     def __init__(self, adapter, name="Koheron CTL200", **kwargs):
         if isinstance(adapter, str):
@@ -148,7 +152,8 @@ class CTL200(Instrument):
     laser_current_limit = Instrument.control(
         "ilmax",
         "ilmax %g",
-        """Control the laser current software limit in A (float).""",
+        """Control the laser current software limit in A (float, strict_range
+        from 0 to 1).""",
         cast=float,
         validator=strict_range,
         values=[0, 1],
@@ -173,7 +178,7 @@ class CTL200(Instrument):
         "ldelay",
         "ldelay %g",
         """Control the delay time between controller startup and laser
-        startup in s (float).""",
+        startup in s (float, strict_range from 0.01 to 100).""",
         cast=float,
         validator=strict_range,
         values=[0.01, 100],
@@ -220,7 +225,8 @@ class CTL200(Instrument):
     pid_proportional = Instrument.control(
         "pgain",
         "pgain %g",
-        """Control the proportional gain of the TEC PID controller (float).""",
+        """Control the proportional gain of the TEC PID controller (float,
+        strict_range from 0 to 0.1).""",
         cast=float,
         validator=strict_range,
         values=[0, 0.1],
@@ -229,7 +235,8 @@ class CTL200(Instrument):
     pid_integral = Instrument.control(
         "igain",
         "igain %g",
-        """Control the integral gain of the TEC PID controller (float).""",
+        """Control the integral gain of the TEC PID controller (float,
+        strict_range from 0 to 0.1).""",
         cast=float,
         validator=strict_range,
         values=[0, 0.1],
@@ -238,7 +245,8 @@ class CTL200(Instrument):
     pid_differential = Instrument.control(
         "dgain",
         "dgain %g",
-        """Control the differential gain of the TEC PID controller (float).""",
+        """Control the differential gain of the TEC PID controller (float,
+        strict_range from 0 to 0.1).""",
         cast=float,
         validator=strict_range,
         values=[0, 0.1],
@@ -277,7 +285,8 @@ class CTL200(Instrument):
     tec_voltage_limit_min = Instrument.control(
         "vtmin",
         "vtmin %g",
-        """Control the minimum TEC voltage limit in V (float).""",
+        """Control the minimum TEC voltage limit in V (float, strict_range from
+        -3.3 to 0).""",
         validator=strict_range,
         values=[-3.3, 0.0],
         cast=float,
@@ -286,7 +295,8 @@ class CTL200(Instrument):
     tec_voltage_limit_max = Instrument.control(
         "vtmax",
         "vtmax %g",
-        """Control the maximum TEC voltage limit in V (float).""",
+        """Control the maximum TEC voltage limit in V (float, strict_range from
+        0 to 3.3).""",
         validator=strict_range,
         values=[0.0, 3.3],
         cast=float,
@@ -320,7 +330,7 @@ class CTL200(Instrument):
         "lmodgain",
         "lmodgain %g",
         """Control the laser current modulation gain of auxillary input 1 in
-        A/V (float).""",
+        A/V (float, strict_range from -100 to 100).""",
         cast=float,
         validator=strict_range,
         values=[-100, 100],
@@ -332,7 +342,7 @@ class CTL200(Instrument):
         "tmodgain",
         "tmodgain %g",
         """Control the temperature modulation gain of auxillary input 2 in
-        Ω/V (float).""",
+        Ω/V (float, strict_range from -100000 to 100000).""",
         cast=float,
         validator=strict_range,
         values=[-100000, 100000],
@@ -351,16 +361,25 @@ class CTL200(Instrument):
         cast=str,
     )
 
-    @property
-    def status(self):
-        """Get a dict with all status values ("lason", "vlaser", "itec",
-        "vtec", "rtact","iphd", "ain1", "ain2")."""
-        raw = self.ask("status").strip().split()
-        keys = ["lason", "vlaser", "itec", "vtec", "rtact",
-                "iphd", "ain1", "ain2"]
-        result = {k: float(v) for k, v in zip(keys, raw)}
+    @staticmethod
+    def _parse_status(values):
+        print(values)
+        keys = CTL200._STATUS_KEYS
+        if len(values) != len(keys):
+            raise ValueError(
+                f"Expected {len(keys)} status fields, got {len(values)}:"
+                f" {values}"
+            )
+        result = dict(zip(keys, (float(v) for v in values)))
         result["iphd"] *= 1e-3
         return result
+
+    status = Instrument.measurement(
+        "status",
+        """Get a dict with all status values ("lason", "vlaser", "itec",
+        "vtec", "rtact", "iphd", "ain1", "ain2").""",
+        get_process=lambda v: CTL200._parse_status(v.split()),
+    )
 
     board_temperature = Instrument.measurement(
         "tboard",

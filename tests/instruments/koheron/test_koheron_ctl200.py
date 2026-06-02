@@ -26,9 +26,6 @@ import pytest
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.koheron import CTL200
 
-# Import your driver class and exception/enum here
-# from your_module import CTL200, KoheronError
-
 
 # =============================================================================
 # -- Laser Tests
