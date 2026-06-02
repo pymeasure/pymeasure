@@ -217,23 +217,13 @@ class CTL200(Instrument):
         cast=float,
     )
 
-    tec_current = Instrument.measurement(
-        "itec",
-        """Get the TEC current in A (float).""",
-        cast=float,
-    )
-
-    tec_voltage = Instrument.measurement(
-        "vtec",
-        """Get the TEC voltage in V (float).""",
-        cast=float,
-    )
-
     pid_proportional = Instrument.control(
         "pgain",
         "pgain %g",
         """Control the proportional gain of the TEC PID controller (float).""",
         cast=float,
+        validator=strict_range,
+        values=[0, 0.1],
     )
 
     pid_integral = Instrument.control(
@@ -241,6 +231,8 @@ class CTL200(Instrument):
         "igain %g",
         """Control the integral gain of the TEC PID controller (float).""",
         cast=float,
+        validator=strict_range,
+        values=[0, 0.1],
     )
 
     pid_differential = Instrument.control(
@@ -248,6 +240,8 @@ class CTL200(Instrument):
         "dgain %g",
         """Control the differential gain of the TEC PID controller (float).""",
         cast=float,
+        validator=strict_range,
+        values=[0, 0.1],
     )
 
     # -- Protection ------------------------------------------------------
@@ -257,7 +251,7 @@ class CTL200(Instrument):
         "tprot %d",
         """Control whether temperature protection is enabled (bool). If
         temperature protection is enabled, the laser current is automatically
-        disabled id the thermistor resistance is outside the thermistor
+        disabled if the thermistor resistance is outside the set thermistor
         window.""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
@@ -267,16 +261,16 @@ class CTL200(Instrument):
     thermistor_window_min = Instrument.control(
         "rtmin",
         "rtmin %g",
-        """Control the minimum thermistor resistance in Ω (float) to trigger
-        temperature protection if enabled.""",
+        """Control the minimum thermistor resistance in Ω to trigger
+        temperature protection if enabled (float).""",
         cast=float,
     )
 
     thermistor_window_max = Instrument.control(
         "rtmax",
         "rtmax %g",
-        """Control the maximum thermistor resistance in Ω (float) to trigger
-        temperature protection if enabled.""",
+        """Control the maximum thermistor resistance in Ω to trigger
+        temperature protection if enabled (float).""",
         cast=float,
     )
 
