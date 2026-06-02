@@ -67,6 +67,16 @@ class StatusByte(IntFlag):
 class DHO804Channel(Channel):
     """A single analog input channel of the Rigol DHO804."""
 
+    PROBE_ATTENUATIONS = [
+        0.001, 0.002, 0.005,
+        0.01, 0.02, 0.05,
+        0.1, 0.2, 0.5,
+        1, 2, 5, 10, 15, 20, 50,
+        100, 150, 200, 500,
+        1000, 1500, 2000, 5000,
+        10000, 15000, 20000, 50000,
+        ]
+
     display_enabled = Channel.control(
         ":CHAN{ch}:DISP?",
         ":CHAN{ch}:DISP %d",
@@ -115,38 +125,12 @@ class DHO804Channel(Channel):
     probe = Channel.control(
         ":CHAN{ch}:PROB?",
         ":CHAN{ch}:PROB %g",
-        """Control the probe attenuation ratio (float, e.g. 1, 10, 100).""",
+        f"""Control the probe attenuation ratio (float).
+
+        Valid values: {PROBE_ATTENUATIONS}
+        """,
         validator=strict_discrete_set,
-        values=[
-            0.001,
-            0.002,
-            0.005,
-            0.01,
-            0.02,
-            0.05,
-            0.1,
-            0.2,
-            0.5,
-            1,
-            2,
-            5,
-            10,
-            15,
-            20,
-            50,
-            100,
-            150,
-            200,
-            500,
-            1000,
-            1500,
-            2000,
-            5000,
-            10000,
-            15000,
-            20000,
-            50000,
-        ],
+        values=PROBE_ATTENUATIONS,
         cast=float,
     )
 
