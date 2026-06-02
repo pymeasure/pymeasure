@@ -109,8 +109,7 @@ class CTL200Adapter(SerialAdapter):
     def read(self) -> str:
         """Return the next non-empty response line from the buffer.
 
-        :returns: The next response line, or empty string if buffer is
-        exhausted.
+        :returns: The next response line, or empty string if buffer is empty.
         """
         while self._response_buffer:
             value = self._response_buffer.pop(0)
@@ -129,14 +128,15 @@ class CTL200(Instrument):
                     "ain2"]
 
     def __init__(self, adapter, name="Koheron CTL200", **kwargs):
+        ADAPTER_KWARGS = {"baudrate", "timeout"}
+        adapter_kwargs = {k: v for k, v in kwargs.items() if
+                          k in ADAPTER_KWARGS}
+        instrument_kwargs = {k: v for k, v in kwargs.items() if
+                             k not in ADAPTER_KWARGS}
         if isinstance(adapter, str):
-            adapter = CTL200Adapter(adapter, **kwargs)
-        super().__init__(
-            adapter,
-            name,
-            includeSCPI=False,
-            **kwargs
-        )
+            adapter = CTL200Adapter(adapter, **adapter_kwargs)
+
+        super().__init__(adapter, name, includeSCPI=False, **instrument_kwargs)
 
     # -- Laser -----------------------------------------------------------
 
