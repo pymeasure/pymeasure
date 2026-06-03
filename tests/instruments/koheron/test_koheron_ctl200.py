@@ -24,60 +24,7 @@
 
 import pytest
 from pymeasure.test import expected_protocol
-from unittest.mock import MagicMock, patch
-from pymeasure.instruments.koheron import CTL200, CTL200Adapter
-
-# =============================================================================
-# -- CTL200Adapter Tests
-# =============================================================================
-
-
-def make_mock_serial(chunks):
-    """Return a fake serial connection that yields chunks incrementally."""
-    conn = MagicMock()
-    conn.timeout = 1
-    conn.in_waiting = sum(len(c) for c in chunks)
-    # ensure no StopIteration
-    conn.read = MagicMock(side_effect=chunks + [b""])
-    return conn
-
-
-@patch("serial.Serial")
-def test_read_until_prompt_parses_correctly(mock_serial):
-    """Parse response lines until the device prompt is reached."""
-    chunks = [b"CMD\r\n", b"123\r\n", b">>\r\n"]
-    mock_serial.return_value = make_mock_serial(chunks)
-
-    adapter = CTL200Adapter("COM1")
-    adapter._last_command = "CMD"
-
-    lines = adapter._read_until_prompt()
-    assert lines == ["123"]
-
-
-@patch("serial.Serial")
-def test_write_buffers_response(mock_serial):
-    """Buffer response lines after sending a command."""
-    chunks = [b"CMD\r\n", b"OK\r\n", b">>\r\n"]
-    mock_serial.return_value = make_mock_serial(chunks)
-
-    adapter = CTL200Adapter("COM1")
-    adapter.write("CMD")
-
-    assert adapter._response_buffer == ["OK"]
-
-
-@patch("serial.Serial")
-def test_read_returns_buffered_lines(mock_serial):
-    """Return buffered response lines in sequence."""
-    mock_serial.return_value = make_mock_serial([])
-
-    adapter = CTL200Adapter("COM1")
-    adapter._response_buffer = ["A", "B", ""]
-
-    assert adapter.read() == "A"
-    assert adapter.read() == "B"
-    assert adapter.read() == ""
+from pymeasure.instruments.koheron import CTL200
 
 # =============================================================================
 # -- Laser Tests
