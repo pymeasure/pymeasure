@@ -69,21 +69,18 @@ class CTL200(Instrument):
         cmd_clean = sent_command.strip()
         while True:
             line = self.read().replace("\x00", "").strip()
-            print(line)
             if line in ("", ">>"):
                 continue
             if line == cmd_clean:
                 continue
             if line.startswith(">>") and line.removeprefix(">>").strip() == cmd_clean:
                 continue
-            print("returned")
             return line
 
     def write(self, command):
         """Write command to device and read echo."""
         super().write(command)
         if self._is_test_run():
-            print("test run")
             return
 
         return self._read_cleaned_response(command)
