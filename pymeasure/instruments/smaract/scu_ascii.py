@@ -143,7 +143,8 @@ class SCUChannel(Channel):
            thorough knowledge of the differnet modes. It ensures the user, that the desired type
            exists, and has the possibility to be implemented to the program.
 
-           The enum :class:'PositionerType' contains the available t values and corresponding properties.
+           The enum :class:'PositionerType' contains the available t values
+           and corresponding properties.
 
         """
         if not isinstance(t, PositionerType):
