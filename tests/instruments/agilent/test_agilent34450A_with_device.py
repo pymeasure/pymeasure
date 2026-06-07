@@ -103,6 +103,11 @@ class TestAgilent34450A:
         # Assert that a beep is audible
         dmm.beep()
 
+    def test_local(self, make_reseted_dmm):
+        dmm = make_reseted_dmm
+        dmm.local()
+        assert dmm.check_errors() == []
+
     @pytest.mark.parametrize("case", MODES)
     def test_modes(self, make_reseted_dmm, case):
         dmm = make_reseted_dmm

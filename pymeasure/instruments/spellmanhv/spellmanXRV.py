@@ -23,10 +23,12 @@
 #
 
 from enum import IntFlag
+from typing import Any, Union
 
 from pyvisa.constants import InterfaceType
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.adapters import Adapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
@@ -238,11 +240,12 @@ class SpellmanXRV(Instrument):
     filament = Instrument.ChannelCreator(Filament)
     unscaled = Instrument.ChannelCreator(UnscaledData)
 
-    def __init__(self, adapter,
-                 name="Spellman XRV HV Power Supply",
-                 query_delay=0.15,
-                 baud_rate=9600,
-                 **kwargs):
+    def __init__(self,
+                 adapter: Union[Adapter, int, str],
+                 name: str = "Spellman XRV HV Power Supply",
+                 query_delay: float = 0.15,
+                 baud_rate: int = 9600,
+                 **kwargs: Any) -> None:
         super().__init__(
             adapter, name,
             asrl={'baud_rate': baud_rate},
@@ -262,7 +265,7 @@ class SpellmanXRV(Instrument):
         self.set_scaling()
 
     @staticmethod
-    def checksum(string_to_check):
+    def checksum(string_to_check: str) -> str:
         """Calculate the checksum.
 
         :param string_to_check: string to calculate the checksum from
@@ -292,7 +295,7 @@ class SpellmanXRV(Instrument):
         csb3 = 0x40 | csb2  # bitwise OR 0x40: set bit 6
         return chr(csb3)
 
-    def write(self, command):
+    def write(self, command: str) -> None:
         """Write to the instrument.
 
         Adds <STX> (0x02) in front and checksum + <ETX> (0x03) at end of every command before
@@ -306,14 +309,14 @@ class SpellmanXRV(Instrument):
         else:
             super().write(f"{STX}{command_with_comma}")
 
-    def wait_for(self, query_delay=0):
+    def wait_for(self, query_delay: float = 0) -> None:
         """Wait for some time.
 
         :param query_delay: override the global query_delay.
         """
         super().wait_for(query_delay or self.query_delay)
 
-    def read(self):
+    def read(self) -> str:
         """Read from the device and check for errors.
 
         :raise: ConnectionError if response doesn't start with <STX> or checksum is incorrect.
@@ -331,13 +334,13 @@ class SpellmanXRV(Instrument):
             calculated_checksum = self.checksum(string_to_check)
             got_checksum = response[2]
 
-            if got_checksum is not calculated_checksum:
+            if got_checksum != calculated_checksum:
                 string = f"Checksum error: expected '{calculated_checksum}', got '{got_checksum}'."
                 raise ConnectionError(string)
 
         return response[0].partition(",")[2]  # remove command from response
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after sending a command.
 
         :raise: ValueError if response is not ``$``
@@ -350,7 +353,7 @@ class SpellmanXRV(Instrument):
             string = f"ValueError: expected '{expected}', got '{got}'."
             raise ValueError(string)
 
-    def set_scaling(self):
+    def set_scaling(self) -> None:
         """Set the scaling factors.
 
         Used to set the scaling factor for
@@ -531,10 +534,12 @@ class SpellmanXRV(Instrument):
                                     },
         )
 
-    def reset_hv_on_timer(self):
+    def reset_hv_on_timer(self) -> None:
+        """Reset the HV on hours counter."""
         self.ask("30")
 
-    def reset_errors(self):
+    def reset_errors(self) -> None:
+        """Reset the error register."""
         self.ask("31")
 
     power_limits = Instrument.control(

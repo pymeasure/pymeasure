@@ -115,6 +115,7 @@ class Browser(QtWidgets.QTreeWidget):
         self.setColumnCount(len(header_labels))
         self.setHeaderLabels(header_labels)
         self.setSortingEnabled(True)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         if sort_by_filename:
             self.sortItems(1, QtCore.Qt.SortOrder.AscendingOrder)
 
