@@ -1,5 +1,13 @@
-Upcoming Release
-================
+Version 0.16.0 (2026-05-20)
+===========================
+
+Main items of this new release:
+
+- Add support for Python 3.13
+- Change policy to allow type hints (added already to instruments core)
+- 25 new instruments
+- :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore, only to a single value. Use :code:`get_process_list` parameter instead for processing a list of values.
+- Improve implementation of Keithley 2400, with some changes in functionality. Legacy implementation has been kept as :code:`Keithley2400Legacy`.
 
 Removed
 -------
@@ -8,15 +16,132 @@ Removed
 - Remove deprecated Adapter methods :code:`ask`, :code:`values`, and :code:`binary_values`
 - Remove deprecated Telnet and VXI adapters
 
-Changed features
-----------------
-- :code:`Instrument.control` does not apply :code:`get_process` to a returned list anymore, only to a single value. Use :code:`get_process_list` parameter instead for processing a list of values.
-- Improved implementation of Keithley 2400, with some changes in functionality. Legacy implementation has been kept as `Keithley2400Legacy`.
-
 Deprecated
 ----------
-- Replaced :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
-- Replaced :code:`filer_synchronous` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`filter_synchronous`
+- Replace :code:`sensitvity` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`sensitivity`
+- Replace :code:`filer_synchronous` attribute of :code:`pymeasure/instruments/srs/SR860.py` by :code:`filter_synchronous`
+- Replace :code:`query_operation_mode` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`operation_mode` property
+- Replace :code:`query_system_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`system_settings` property
+- Replace :code:`interrupt_sequence_command` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`interrupt_sequence`
+- Replace :code:`sequence_program_listing` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`query_sequence_program`
+- Replace :code:`digital_out_enable_data` attribute of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`digital_output_enable`
+- Replace :code:`query_output_waveform` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`output_waveform_settings` property
+- Replace :code:`query_measurement_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`measurement_range_settings` property
+- Replace :code:`query_response_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`response_settings` property
+- Replace :code:`query_data_output_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`data_output_settings` property
+- Replace :code:`query_io_settings` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`io_settings` property
+- Replace :code:`calibration_init` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`init_calibration`
+- Replace :code:`calibration_store_factor` method of :code:`pymeasure/instruments/advantest/advantestR624X.py` by :code:`store_calibration_factor`
+
+
+Instruments
+-----------
+- Add Aculight Argos OPO laser system (@BenediktBurger, #1046)
+- Add Agilent 33250A waveform generator (@PeterPirog, #1425)
+- Add Agilent B2980 electrometer series (@Falk3579, #1296)
+- Add Agilent E5270B (@Falk3579, #1340, #1359, #1365)
+- Add Agilent N8975A noise figure analyzer (@Falk3579, #1397)
+- Add FormFactor Velox Waferprobers (@Falk3579, #1385)
+- Add Ilxlightwave ldp3811 pulsed current source (@fg-lumentum, #1367)
+- Add Keithley 2510 Sourcemeter (@fg-lumentum, #1239, #1333)
+- Add Keithley 4200A-SCS (@Falk3579, #1332)
+- Add Keysight 81160A Pulse Function Arbitrary Noise Generator (@ilev-sergey, #1250)
+- Add Keysight PNAs (@Falk3579, #1356)
+- Add LakeShore 3xx temperature controllers (@DF9AS, #1334)
+- Add Oxford Instruments Mercury Intelligent Temperature Controller (@JAW90, #1198)
+- Add PTW Diamentor DAP dosemeter (@Falk3579, #1302, #1449)
+- Add PTW UNIDOS dosemeters (@Falk3579, #1279, #1442)
+- Add Santec TSL-500 series tunable laser with TSL-550 and TSL-770 (@fg-lumentum, #1253, #1390)
+- Add Siglent oscilloscope SDS1000XHD (@lucasbraud, #1325)
+- Add Spellman XRV high voltage power supplies (@Falk3579, #1329, #1440)
+- Add SRS LDC500Series (@fg-lumentum, #1278, #1346)
+- Add Thorlabs mbx series (@fg-lumentum, #1361)
+
+- Fix Temptronic tests (@ilev-sergey, #1277)
+- Fix HP3478A: use :code:`write_binary_values()` to request calibration data (@dl8dtl, #1263)
+- Fix docstring in Keithley4200 (@Falk3579, #1339)
+- Fix parameter ranges for Agilent33220A (@Patschke, #1342)
+- Fix Keithley 2000 :code:`voltage_nplc` and :code:`enable_filter` (@d-el, @chieh0517, #1360, #1393)
+- Fix :code:`read` of Racal 1992 (@BenediktBurger, #1355)
+
+- Update old docstrings to new style (@BenediktBurger, #1247, #1243)
+- Update Advantest R624X driver with sequence builders, hardware-verified fixes, and documentation (@wichers, #1408)
+- Update Agilent channels (@BenediktBurger, #1089)
+- Update Agilent 33500 properties and add SCPI mixin (@ilev-sergey, #1245, #1246)
+- Update Agilent 34450 with :code:`local()` and protocol tests (@Falk3579, #1427, #1436)
+- Update Agilent 4284A with new correction functionality (@Falk3579, #1304)
+- Update Agilent B1500 with SPGU and CMU module support and new documentation (@ilev-sergey, #1380, #1344, #1412)
+- Update Agilent B1500 SMU class to inherit from :code:`Channel` (@ilev-sergey, #1387)
+- Update Agilent E4408B with SCPIMixin and new docstrings (@BenediktBurger, #1438)
+- Update Agilent E4980A with tests (@Falk3579, #1300)
+- Update Keithley 2400 with a major rework (@fg-lumentum, #1347)
+- Update Keithley 2450's docstring to inform that buffer handling is currently unsupported (@dsimat, #1238)
+- Update Keithley 6221 with delta mode (@panasee, #1242)
+- Update MS464xB docstrings (@Falk3579, #1352)
+- Update SRS 860 with better method names (@panasee, #1289)
+- Update SRS 860 min ampl (@chieh0517, #1426)
+- Update Yokogawa Aq6370 series with sensitivity control sweep status, and with connections and traces (@fg-lumentum, @BenediktBurger, #1138, #1234, #1286, #1354)
+
+Instruments mechanics
+---------------------
+- Add :code:`_write_bytes()` and :code:`_read_bytes()` for Prologix adapter (@dl8dtl, #1259)
+- Add handling of SerialException in :code:`list_resources()` (@hvegh, #1287)
+- Add :code:`get_process_list` and make it dynamic (@BenediktBurger, @Falk3579, #1291, #1313, #1315)
+- Add typing to :code:`expected_protocol`, adapters, and :code:`Instrument` (@BenediktBurger, #1084, #1331)
+- Add concrete hint to property creators in docstring list (@BenediktBurger, #1281)
+- Add SCPI mixin test for devices (@fg-lumentum, #1391)
+- Update Prologix documentation (@dl8dtl, #1272)
+
+Automation
+----------
+- Add qtpy dependency for Qt version shimming (@Benbriel, #1285)
+- Add :code:`description` to :code:`Parameters` (@Benbriel, #1211)
+- Update procedures to emit results in batches (@jvdoorn, #1256)
+- Replace numeric constants by respective Qt enum values (@dl8dtl, #1265)
+- Use :code:`np.frombuffer` for removed :code:`np.fromstring(sep="")` (@BenediktBurger, #1330)
+- Update BooleanParameter to accept numpy.bool (@Falk3579, #1373)
+- In workers, check should_stop after :code:`startup()` before `execute()` (@breakU1, #1445)
+- Add vector parameter input (@Falk3579, #1376, #1377, #1382)
+- Replace :code:`load_module()` by :code:`exec_module()` (@Falk3579, #1415)
+- Add file size checking to :code:`Results.data` property to skip reading file if data hasn't changed. (@mcdo0486, #1429)
+
+GUI
+---
+- Add a console widget (@breakU1, #1431)
+- Update custom_ui and image_gui examples (@CasperSchippers, @Falk3579, #1266, #1337)
+- Update managed window with support for multi-selection for deleting and removing experiments (@breakU1, #1451)
+- Fix 'Ohm' units in examples (@Falk3579, #1338)
+
+Documentation
+-------------
+- Update documentation regarding type hints (@BenediktBurger, #1324)
+- Add sphinx-autodoc-typehints extension (@ilev-sergey, #1406)
+- Add AGENTS.md file for AI coding agents (@BenediktBurger, #1372)
+- Update Read the Docs to Ubuntu 24.04 (@cjermain, #1419)
+- Fix documentation typos (@ilev-sergey, #1249)
+
+Miscellaneous
+-------------
+- Add related projects to documentation (@BenediktBurger, #1335)
+- Add uv.lock file to gitignore (@maederan201, #1453)
+- Add Python 3.13 support. (@BenediktBurger, #1173)
+- Add dependapot configuration (@BenediktBurger, #1307)
+- Remove deprecated parts (@BenediktBurger, #1268)
+- Remove support for Python 3.8 (@BenediktBurger, #1317)
+- Update copyright (@ilev-sergey, @Falk3579, #1248, #1402, #1414)
+- Update pandas dependency to <4 (@maduka-ariyasiri, #1424)
+- Bump CI actions versions (@dependabot, #1327, #1328, #1351, #1353, #1386, #1417, #1418, #1408)
+- Fix ruff configuration (@ilev-sergey, #1236)
+- Fix formatting (@Falk3579, #1267, #1269, #1316, #1375)
+- Fix raise errors to show full stack trace (@BenediktBurger, #1270)
+- Fix failing CI (@CasperSchippers, #1454)
+
+New Contributors
+----------------
+@ilev-sergey, @Benbriel, @fg-lumentum, @dsimat, @panasee, @jvdoorn, @dl8dtl, @Falk3579, @hvegh, @dependabot[bot], @DF9AS, @Patschke, @d-el, @lucasbraud, @chieh0517, @breakU1, @PeterPirog, @maduka-ariyasiri
+
+**Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.15.0...v0.16.0
+
 
 Version 0.15.0 (2025-01-15)
 ===========================
@@ -71,14 +196,14 @@ Documentation
 Miscellaneous
 -------------
 - Prepare for v0.14.0 (@BenediktBurger, #1104)
-- add "Reaveal in File Explorer" to browser item context menu (@Did-Mas, #1188)
+- Add "Reveal in File Explorer" to browser item context menu (@Did-Mas, #1188)
 - Update numpy 2 test (@CasperSchippers, #1126)
-- Added an install group for building documentation (@RobertoRoos, #1180)
-- Removed setup.cfg, replaced by pyproject.toml (@RobertoRoos, #1182)
+- Add an install group for building documentation (@RobertoRoos, #1180)
+- Remove setup.cfg, replace by pyproject.toml (@RobertoRoos, #1182)
 
 New Contributors
 ----------------
-@Sionwage, @bernhardlang, @Aphelion82, @kpet, @mmerlo, @OrionSmedley, @ssimpson-ens, @Did-Mas, @emmanuel-ferdman, @icchalmers, @fthouin, @PfannenHans, @dirkjankrijnders, @J3NZ0L, @inonRAAAM, 
+@Sionwage, @bernhardlang, @Aphelion82, @kpet, @mmerlo, @OrionSmedley, @ssimpson-ens, @Did-Mas, @emmanuel-ferdman, @icchalmers, @fthouin, @PfannenHans, @dirkjankrijnders, @J3NZ0L, @inonRAAAM,
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.14.0...v0.15.0
 
@@ -180,7 +305,7 @@ Miscellaneous
 
 New Contributors
 ----------------
-@guuskuiper, @OptimisticBeliever, @fwutw, @afuetterer, @poje42, @Rybok, @AlecVercruysse, @ConnorGCarr, @mzen228, @jnnskls, @V0XNIHILI, @pyZerrenner, @JAW90, @driftregion, @jurajjasik, @Konradrundfunk 
+@guuskuiper, @OptimisticBeliever, @fwutw, @afuetterer, @poje42, @Rybok, @AlecVercruysse, @ConnorGCarr, @mzen228, @jnnskls, @V0XNIHILI, @pyZerrenner, @JAW90, @driftregion, @jurajjasik, @Konradrundfunk
 
 **Full Changelog**: https://github.com/pymeasure/pymeasure/compare/v0.13.1...v0.14.0
 

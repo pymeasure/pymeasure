@@ -28,7 +28,7 @@ import os
 import re
 import sys
 from importlib import import_module
-from importlib.machinery import SourceFileLoader
+import importlib.util
 from datetime import datetime
 from string import Formatter
 
@@ -217,6 +217,7 @@ class Results:
         self.parameters = procedure.parameter_objects()
         self._header_count = -1
         self._metadata_count = -1
+        self._last_file_size = 0
 
         self.formatter = CSVFormatter(columns=self.procedure.DATA_COLUMNS)
 
@@ -257,7 +258,10 @@ class Results:
         self.__dict__.update(state)
 
         # Restore the procedure
-        module = SourceFileLoader(self._module, self._file).load_module()
+        spec = importlib.util.spec_from_file_location(self._module, self._file)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[self._module] = module
+        spec.loader.exec_module(module)
         cls = getattr(module, self._class)
 
         self.procedure = cls()
@@ -442,6 +446,13 @@ class Results:
                 # Empty dataframe
                 self._data = pd.DataFrame(columns=self.procedure.DATA_COLUMNS)
         else:  # Concatenate additional data, if any, to already loaded data
+            # Get current filesize, if same as _last_file_size, return data
+            try:
+                current_size = os.path.getsize(self.data_filename)
+            except OSError:
+                return self._data
+            if current_size == self._last_file_size:
+                return self._data
             skiprows = len(self._data) + self._header_count
             chunks = pd.read_csv(
                 self.data_filename,
@@ -454,16 +465,18 @@ class Results:
                 encoding=Results.ENCODING,
             )
             try:
-                tmp_frame = pd.concat(chunks, ignore_index=True)
+                tmp_frame = pd.concat(chunks, ignore_index=True, sort=False)
                 # only append new data if there is any
                 # if no new data, tmp_frame dtype is object, which override's
                 # self._data's original dtype - this can cause problems plotting
                 # (e.g. if trying to plot int data on a log axis)
                 if len(tmp_frame) > 0:
                     self._data = pd.concat([self._data, tmp_frame],
-                                           ignore_index=True)
+                                           ignore_index=True, sort=False)
             except Exception:
                 pass  # All data is up to date
+            # Update _last_file_size
+            self._last_file_size = current_size
         return self._data
 
     def reload(self):
@@ -478,7 +491,7 @@ class Results:
             encoding=Results.ENCODING,
         )
         try:
-            self._data = pd.concat(chunks, ignore_index=True)
+            self._data = pd.concat(chunks, ignore_index=True, sort=False)
         except Exception:
             self._data = chunks.read()
 

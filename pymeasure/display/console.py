@@ -213,7 +213,7 @@ class ManagedConsole(QtCore.QCoreApplication):
         else:
             for name in args:
                 opt_name = name.replace("_", "-")
-                if not (opt_name in parser.special_options):
+                if opt_name not in parser.special_options:
                     self.parameter_values[name] = args[name]
 
         if progressbar and not args['no_progressbar']:

@@ -302,6 +302,11 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
         item = self.browser.itemAt(position)
 
         if item is not None:
+            selected_items = self.browser.selectedItems()
+            if item not in selected_items:
+                selected_items = [item]
+
+            experiments = [self.manager.experiments.with_browser_item(i) for i in selected_items]
             experiment = self.manager.experiments.with_browser_item(item)
 
             menu = QtWidgets.QMenu(self)
@@ -309,6 +314,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             # Open
             action_open = QtGui.QAction(menu)
             action_open.setText("Open Data Externally")
+            if len(experiments) > 1:
+                action_open.setEnabled(False)
             action_open.triggered.connect(
                 lambda: self.open_file_externally(experiment.results.data_filename))
             menu.addAction(action_open)
@@ -316,6 +323,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             # Reveal in file explorer
             action_reveal = QtGui.QAction(menu)
             action_reveal.setText("Reveal in File Explorer")
+            if len(experiments) > 1:
+                action_reveal.setEnabled(False)
             action_reveal.triggered.connect(
                 lambda: self.reveal_in_file_explorer(experiment.results.data_filename))
             menu.addAction(action_reveal)
@@ -323,6 +332,8 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             # Save a copy of the datafile
             action_save = QtGui.QAction(menu)
             action_save.setText("Save Data File Copy")
+            if len(experiments) > 1:
+                action_save.setEnabled(False)
             action_save.triggered.connect(
                 lambda: self.save_experiment_copy(experiment.results.data_filename))
             menu.addAction(action_save)
@@ -330,54 +341,75 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
             # Change Color
             action_change_color = QtGui.QAction(menu)
             action_change_color.setText("Change Color")
+            if len(experiments) > 1:
+                action_change_color.setEnabled(False)
             action_change_color.triggered.connect(
                 lambda: self.change_color(experiment))
             menu.addAction(action_change_color)
 
             # Remove
             action_remove = QtGui.QAction(menu)
-            action_remove.setText("Remove Graph")
+            action_remove.setText(f"Remove Graph{'s' if len(experiments) > 1 else ''}")
             if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
+                if self.manager.running_experiment() in experiments:  # Experiment running
                     action_remove.setEnabled(False)
-            action_remove.triggered.connect(lambda: self.remove_experiment(experiment))
+            action_remove.triggered.connect(lambda: self.remove_experiment(experiments))
             menu.addAction(action_remove)
 
             # Delete
             action_delete = QtGui.QAction(menu)
-            action_delete.setText("Delete Data File")
+            action_delete.setText(f"Delete Data File{'s' if len(experiments) > 1 else ''}")
             if self.manager.is_running():
-                if self.manager.running_experiment() == experiment:  # Experiment running
+                if self.manager.running_experiment() in experiments:  # Experiment running
                     action_delete.setEnabled(False)
-            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiment))
+            action_delete.triggered.connect(lambda: self.delete_experiment_data(experiments))
             menu.addAction(action_delete)
 
             # Use parameters
             action_use = QtGui.QAction(menu)
             action_use.setText("Use These Parameters")
+            if len(experiments) > 1:
+                action_use.setEnabled(False)
             action_use.triggered.connect(
                 lambda: self.set_parameters(experiment.procedure.parameter_objects()))
             menu.addAction(action_use)
             menu.exec(self.browser.viewport().mapToGlobal(position))
 
     def remove_experiment(self, experiment):
+        experiments = experiment if isinstance(experiment, list) else [experiment]
+        if len(experiments) > 1:
+            message = f"Are you sure you want to remove these {len(experiments)} graphs?"
+        else:
+            message = "Are you sure you want to remove the graph?"
+
         reply = QtWidgets.QMessageBox.question(self, 'Remove Graph',
-                                               "Are you sure you want to remove the graph?",
+                                               message,
                                                QtWidgets.QMessageBox.StandardButton.Yes |
                                                QtWidgets.QMessageBox.StandardButton.No,
                                                QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.manager.remove(experiment)
+            for exp in experiments:
+                self.manager.remove(exp)
 
     def delete_experiment_data(self, experiment):
+        experiments = experiment if isinstance(experiment, list) else [experiment]
+        if len(experiments) > 1:
+            message = f"Are you sure you want to delete these {len(experiments)} data files?"
+        else:
+            message = "Are you sure you want to delete this data file?"
+
         reply = QtWidgets.QMessageBox.question(self, 'Delete Data',
-                                               "Are you sure you want to delete this data file?",
+                                               message,
                                                QtWidgets.QMessageBox.StandardButton.Yes |
                                                QtWidgets.QMessageBox.StandardButton.No,
                                                QtWidgets.QMessageBox.StandardButton.No)
         if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.manager.remove(experiment)
-            os.unlink(experiment.data_filename)
+            for exp in experiments:
+                self.manager.remove(exp)
+                try:
+                    os.unlink(exp.data_filename)
+                except OSError:
+                    log.warning(f"Could not delete file {exp.data_filename}")
 
     def show_experiments(self):
         root = self.browser.invisibleRootItem()

@@ -22,11 +22,27 @@
 # THE SOFTWARE.
 #
 
-from .keysight33250A import Keysight33250A
-from .keysight81160A import Keysight81160A
-from .keysightDSOX1102G import KeysightDSOX1102G
-from .keysightE3631A import KeysightE3631A
-from .keysightE36312A import KeysightE36312A
-from .keysightN5767A import KeysightN5767A
-from .keysightN7776C import KeysightN7776C
-from .keysightPNA import KeysightPNA
+from pyqtgraph.console import ConsoleWidget as PGConsoleWidget
+
+from .tab_widget import TabWidget
+
+
+class ConsoleWidget(TabWidget, PGConsoleWidget):
+    """Display an interactive Python console in the GUI.
+
+    Allow executing arbitrary Python commands at runtime and debugging the
+    application.
+
+    It can be included in subclasses of
+    :class:`ManagedWindowBase<pymeasure.display.windows.managed_window.ManagedWindowBase>`
+    by adding it to the widget_list.
+
+    :param name: Name of the widget, displayed on the tab in the GUI.
+    :param parent: The Qt parent widget.
+    :param namespace: A dictionary of variables and modules to expose
+        to the console. For example,
+        ``{'window': self, 'device': your_device}``.
+    :param text: The initial welcome message displayed in the console.
+    """
+
+    pass

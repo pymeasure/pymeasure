@@ -520,7 +520,7 @@ class TestKeithley2306:
         instr.ch(channel).sense_mode = sense_mode
         instr.ch(channel).average_count = average_count
         time.sleep(0.1)
-        assert type(instr.ch(channel).reading) == float
+        assert isinstance(instr.ch(channel).reading, float)
 
     @pytest.mark.parametrize("sense_mode", SENSE_MODES)
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)

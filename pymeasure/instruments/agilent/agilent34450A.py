@@ -179,7 +179,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         values=[3.00E-5, 2.00E-5, 1.50E-6, "MAX", "MIN", "DEF"]
     )
     voltage_ac_range = Instrument.control(
-        ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
+        ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:AC:RANG:AUTO 0;:SENS:VOLT:AC:RANG %s",
         """ Control the AC voltage range in Volts, which can
         take values 100E-3, 1, 10, 100, 750, as well as "MIN", "MAX", or "DEF"
         (10 V).
@@ -521,6 +521,11 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         """ Sounds a system beep.
         """
         self.write(":SYST:BEEP")
+
+    def local(self):
+        """ Set the instrument to local mode and return control to its front panel.
+        """
+        self.write(":SYST:LOC")
 
     def _conf_parser(self, conf_values):
         """
