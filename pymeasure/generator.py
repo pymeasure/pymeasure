@@ -438,7 +438,7 @@ class Generator:
     def instantiate(self, instrument_class,
                     adapter: Union[str, int],
                     manufacturer: str,
-                    adapter_kwargs: dict,
+                    adapter_kwargs: dict | None = None,
                     **kwargs) -> TestInstrument:
         """
         Instantiate the instrument and store the instantiation communication.
