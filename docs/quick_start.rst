@@ -7,7 +7,7 @@ This section provides instructions for getting up and running quickly with PyMea
 Setting up Python
 =================
 
-The easiest way to install the necessary Python environment for PyMeasure is through the `Anaconda distribution`_, which includes 720 scientific packages. The advantage of using this approach over just relying on the :code:`pip` installer is that Anaconda correctly installs the required Qt libraries. 
+The easiest way to install the necessary Python environment for PyMeasure is through the `Anaconda distribution`_, which includes 720 scientific packages. The advantage of using this approach over just relying on the :code:`pip` installer is that Anaconda correctly installs the Qt libraries needed for the GUI features.
 
 Download and install the appropriate Python version of `Anaconda`_ for your operating system.
 
@@ -29,25 +29,32 @@ Open a terminal and type the following commands (on Windows look for the `Anacon
     conda config --add channels conda-forge
     conda install pymeasure
 
-This will install PyMeasure and all the required dependencies. 
+This will install PyMeasure and all the required dependencies.
 
 Install with ``pip``
 --------------------
 
-PyMeasure can also be installed with :code:`pip`. 
+PyMeasure can also be installed with :code:`pip`.
 
 .. code-block:: bash
 
     pip install pymeasure
- 
-Depending on your operating system, using this method may require additional work to install the required dependencies, which include the Qt libraries.
+
+For the live-plotting and GUI features, include the ``gui`` extra and a Qt binding:
+
+.. code-block:: bash
+
+    pip install pymeasure[gui] PyQt5
+
+You can replace ``PyQt5`` with ``PyQt6``, ``PySide2``, or ``PySide6`` depending on your preference.
+The ``conda`` install includes Qt libraries automatically, but with ``pip`` you need to install one explicitly.
 
 Installing VISA
 ---------------
 Typically, communication with your instrument will happen using PyVISA, which is installed automatically.
 However, this needs a VISA implementation installed to handle device communication.
 If you do not already know what this means, install the pure-Python :code:`pyvisa-py` package (using the same installation you used above).
-If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__. 
+If you want to know more, consult `the PyVISA documentation <https://pyvisa.readthedocs.io/en/latest/introduction/configuring.html>`__.
 
 
 Checking the version
