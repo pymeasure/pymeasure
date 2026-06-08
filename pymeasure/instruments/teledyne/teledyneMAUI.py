@@ -188,7 +188,7 @@ class MAUIWaveformDescriptor:
         horiz_os            = unpack('<d',desc[180:188])[0]
         pixel_os            = unpack('<d',desc[188:196])[0]
         vunit               = desc[196:244].split(b'\x00',1)[0].decode('ascii')
-        hunit               = desc[244:296].split(b'\x00',1)[0].decode('ascii')
+        hunit               = desc[244:292].split(b'\x00',1)[0].decode('ascii')
         huncert             = unpack('<f',desc[292:296])[0]
         # trigger_time        = desc[296:312]    # structure
         acq_duration        = unpack('<f',desc[312:316])[0]
@@ -312,6 +312,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
     def __init__(self, adapter, name="Teledyne Oscilloscope", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         self.waveform_descriptor = None
+        self._footer_size = 1  # bytes
 
     def vbs_write(self, message: str):
         """Write a VBS command directly to the device.
@@ -416,7 +417,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
             self.waveform_descriptor = MAUIWaveformDescriptor.parse_desc(descb)
             # Get data
             binary_values = self.binary_values(f"{src}:WF? {block}", dtype=np.uint8)
-        if num_bytes is not None and len(binary_values) != num_bytes-1:
+        if num_bytes is not None and len(binary_values) != num_bytes:
             raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
 
@@ -437,7 +438,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         transmitted_points = int(message_header[-9:])
         received_points = len(message) - self._header_size - self._footer_size
-        if transmitted_points-1 != received_points:
+        if transmitted_points != received_points:
             raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
                              f"number of received points ({received_points})")
 
@@ -508,7 +509,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
         - X axis : the scale is given by descriptor.horiz_ival*i + descriptor.horiz_os for i = 0,1,...,N. 
         :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
 
-        data_points = np.array(unpack('<'+'b'*len(ydata),ydata))
+        # data_points = np.array(unpack('<'+'b'*len(ydata),ydata))
+        data_points = ydata.view(np.int8)
         data_points = data_points*self.waveform_descriptor.vgain
         if preamble['source'] != 'MATH':
             data_points = data_points - self.waveform_descriptor.vos 
@@ -590,7 +592,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         # Sanitize the input arguments
         if not sparsing:
             sparsing = self.waveform_sparsing
-        elif sparsing == 0:
+        if sparsing == 0:
             sparsing = 1
         if requested_points is None:
             requested_points = self.waveform_points
