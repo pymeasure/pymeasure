@@ -205,12 +205,12 @@ class MAUIWaveformDescriptor:
 
         return cls(desc_name, desc_templ_name, desc_comm_type, desc_comm_order, wave_desc_len,
                     user_txt_len, trig_time_arr, ris_time_arr, wave_arr_1, wave_arr_2, instr_name,
-                    instr_num, trace_label, wave_arr_count, pts_per_screen , first_valid, 
-                    last_valid, first_pt, sparsing_factor, segment_num, subarr_count, 
-                    sweeps_per_acq , pts_per_pair, pair_offset, vgain, vos, max_value, 
-                    min_value, nominal_bits, nom_subarr_count, horiz_ival, horiz_os, 
-                    pixel_os, vunit, hunit, huncert, acq_duration, ca_record_type, 
-                    processing_done, ris_sweeps, time_base, vcoupling, probe_atten, 
+                    instr_num, trace_label, wave_arr_count, pts_per_screen , first_valid,
+                    last_valid, first_pt, sparsing_factor, segment_num, subarr_count,
+                    sweeps_per_acq , pts_per_pair, pair_offset, vgain, vos, max_value,
+                    min_value, nominal_bits, nom_subarr_count, horiz_ival, horiz_os,
+                    pixel_os, vunit, hunit, huncert, acq_duration, ca_record_type,
+                    processing_done, ris_sweeps, time_base, vcoupling, probe_atten,
                     fixed_vgain, bwlimit, vertical_vernier, acq_vos, wave_src)
 
 
@@ -389,7 +389,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         # Method instead of property since no reply is sent
         self.write("FRTR")
 
-    
+ 
 
     ##################
     #    Waveform    #
@@ -491,8 +491,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
             first_point = read_points * sparsing
             self.waveform_first_point = first_point
             # read chunk of points
-            values = self._digitize(src=self.waveform_source, 
-                                    block=block, 
+            values = self._digitize(src=self.waveform_source,
+                                    block=block,
                                     num_bytes=requested_bytes)
             # perform many sanity checks on the received data
             self._header_footer_sanity_checks(values,block=block)
@@ -507,7 +507,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         preamble['sampling_rate'] = 1/self.waveform_descriptor.horiz_ival
 
         return data, preamble
-    
+
 
     def _process_data(self, ydata, preamble):
         """Apply scale and offset to the data points acquired from the scope.
@@ -587,7 +587,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         self.hardcopy_setup(**kwargs)
         return super().download_image()
 
-    def download_waveform(self, source, requested_points=None, sparsing=None, 
+    def download_waveform(self, source, requested_points=None, sparsing=None,
                           block='DAT1', format='WORD'):
         """Get data points from the specified source of the oscilloscope.
 
