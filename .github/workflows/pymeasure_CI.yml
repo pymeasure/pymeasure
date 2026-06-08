@@ -65,7 +65,7 @@ jobs:
       - name: Python version
         run: python --version
       - name: Install Pymeasure
-        run: pip install -e .[tests]  # editable for covtest
+        run: pip install -e .[gui,tests]  # editable for covtest
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Test for Coverage
@@ -74,7 +74,7 @@ jobs:
           echo "::add-matcher::.github/pytest.json"
           xvfb-run -a pytest --cov=pymeasure --cov-report=xml
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
@@ -110,7 +110,7 @@ jobs:
         run: python --version
       - name: Install Pymeasure
         # If the pytest problem matcher stops working because of bad paths, do an editable install
-        run: pip install .[tests]
+        run: pip install .[gui,tests]
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: Run pytest with xvfb
@@ -154,7 +154,7 @@ jobs:
       - name: Upgrade pandas to latest via pip
         run: pip install "pandas>=3.0"
       - name: Install Pymeasure
-        run: pip install .[tests]
+        run: pip install .[gui,tests]
       - name: Pymeasure version
         run: python -c "import pymeasure;print(pymeasure.__version__)"
       - name: pandas and numpy versions
