@@ -417,6 +417,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
             self.waveform_descriptor = MAUIWaveformDescriptor.parse_desc(descb)
             # Get data
             binary_values = self.binary_values(f"{src}:WF? {block}", dtype=np.uint8)
+            # NOTE: data stored as bytes for now, but if format is WORD it must be converted
+            # to signed 16-bit integer
         if num_bytes is not None and len(binary_values) != num_bytes:
             raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
@@ -442,7 +444,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
             raise ValueError(f"Number of transmitted points ({transmitted_points}) != "
                              f"number of received points ({received_points})")
 
-    def _acquire_data(self, requested_points=0, sparsing=1, block='DAT1'):
+    def _acquire_data(self, requested_points=0, sparsing=1, block='DAT1', format='WORD'):
         """Acquire raw data points from the scope. The header, footer and number of points are
         sanity-checked, but they are not processed otherwise. For a description of the input
         arguments refer to the download_waveform method.
@@ -452,8 +454,6 @@ class TeledyneMAUI(TeledyneOscilloscope):
         :return: raw data points as numpy array and waveform preamble
         """
         # Setup waveform acquisition parameters
-        if sparsing == 0:
-            sparsing = 1
         self.waveform_sparsing = sparsing
         self.waveform_points = requested_points
         self.waveform_first_point = 0
@@ -481,7 +481,13 @@ class TeledyneMAUI(TeledyneOscilloscope):
             requested_points = chunk_points if remaining_points > chunk_points else remaining_points
             self.waveform_points = requested_points
             # number of bytes requested in a single chunk
-            requested_bytes = requested_points + self._header_size + self._footer_size
+            if format == 'BYTE':
+                bytes_per_point = 1
+            elif format == 'WORD':
+                bytes_per_point = 2
+            else:
+                raise ValueError(f"Expected data format {format}. Options are BYTE or WORD.")
+            requested_bytes = requested_points*bytes_per_point + self._header_size + self._footer_size
             # read the next chunk starting from this points
             first_point = read_points * sparsing
             self.waveform_first_point = first_point
@@ -509,8 +515,12 @@ class TeledyneMAUI(TeledyneOscilloscope):
         - X axis : the scale is given by descriptor.horiz_ival*i + descriptor.horiz_os for i = 0,1,...,N. 
         :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
 
-        # data_points = np.array(unpack('<'+'b'*len(ydata),ydata))
-        data_points = ydata.view(np.int8)
+        if self.waveform_descriptor.desc_comm_type == 0:
+            data_points = ydata.view(np.int8)
+        elif self.waveform_descriptor.desc_comm_type == 1:
+            data_points = ydata.view(np.int16)
+        else:
+            raise ValueError(f"Unexpected communication type {self.waveform_descriptor.desc_comm_type}, expected 0 (byte) or 1 (word).")
         data_points = data_points*self.waveform_descriptor.vgain
         if preamble['source'] != 'MATH':
             data_points = data_points - self.waveform_descriptor.vos 
@@ -571,7 +581,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         self.hardcopy_setup(**kwargs)
         return super().download_image()
     
-    def download_waveform(self, source, requested_points=None, sparsing=None, block='DAT1'):
+    def download_waveform(self, source, requested_points=None, sparsing=None, block='DAT1', format='WORD'):
         """Get data points from the specified source of the oscilloscope.
 
         The returned objects are two np.ndarray of data and time points and a dict with the
@@ -586,19 +596,22 @@ class TeledyneMAUI(TeledyneOscilloscope):
                point every 4 points is read. If 0 or None the sparsing of the previous call is
                assumed, i.e. the value of the sparsing stored in the oscilloscope memory.
         :param block: waveform data block. "DESC","TEXT","TIME","DAT1","DAT2","ALL"
+        :param format: communication data format. "BYTE", "WORD"
         :return: data_ndarray, time_ndarray, waveform_preamble_dict: see waveform_preamble
                  property for dict format.
         """
         # Sanitize the input arguments
-        if not sparsing:
-            sparsing = self.waveform_sparsing
+        if sparsing is None:
+            sparsing = self.waveform_sparsing 
         if sparsing == 0:
             sparsing = 1
         if requested_points is None:
-            requested_points = self.waveform_points
+            requested_points = self.acquisition_sample_size()//sparsing # self.waveform_points
         self.waveform_source = sanitize_source(source)
+        # Configure format
+        self.write(f"COMM_FORMAT DEF9,{format},BIN")
         # Acquire the Y data and the preamble
-        ydata, preamble = self._acquire_data(requested_points, sparsing, block=block)
+        ydata, preamble = self._acquire_data(requested_points, sparsing, block=block, format=format)
         # Update the preamble with info about actually acquired data
         preamble["transmitted_points"] = len(ydata)
         preamble["requested_points"] = requested_points
