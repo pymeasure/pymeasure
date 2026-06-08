@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-from math import sqrt, log10
+from math import sqrt, log10, pi
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -51,6 +51,10 @@ class AFG3152CChannel(Channel):
         ),
     }  # Vpp, Vrms and dBm limits
     UNIT_LIMIT = ["VPP", "VRMS", "DBM"]
+    PHASE_LIMIT = {
+        "DEG": [-180, 180],
+        "RAD": [-pi, pi]
+    }
     IMP_LIMIT = [1, 1e4]
 
     shape = Instrument.control(
@@ -102,10 +106,25 @@ class AFG3152CChannel(Channel):
 
     frequency = Instrument.control(
         "frequency:fixed?",
-        "frequency:fixed %e",
+        "frequency:fixed %f",
         """ Control the frequency. (float)""",
         validator=strict_range,
         values=FREQ_LIMIT,
+    )
+
+    phase_rad = Instrument.control(
+        "phase:adjust?", "phase:adjust %e RAD",
+        """Control the phase in radians (float).""",
+        validator=strict_range,
+        values=PHASE_LIMIT['RAD']
+    )
+
+    phase_deg = Instrument.control(
+        "phase:adjust?", "phase:adjust %e DEG",
+        """Control the phase in degrees (float)""",
+        validator=strict_range,
+        values=PHASE_LIMIT['DEG'],
+        get_process=lambda x: x * 180 / pi
     )
 
     duty = Instrument.control(
