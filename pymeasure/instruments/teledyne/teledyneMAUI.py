@@ -29,8 +29,7 @@ from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscillo
 from struct import unpack
 from dataclasses import dataclass
 import numpy as np
-from decimal import Decimal
-import re 
+import re
 
 
 def sanitize_source(source):
@@ -204,16 +203,15 @@ class MAUIWaveformDescriptor:
         acq_vos             = unpack('<f',desc[340:344])[0]
         wave_src            = unpack('<h',desc[344:346])[0]
 
-        return cls(desc_name, desc_templ_name, desc_comm_type, desc_comm_order, wave_desc_len  , user_txt_len   ,
-                    trig_time_arr, ris_time_arr, wave_arr_1, wave_arr_2, instr_name,
-                    instr_num, trace_label, wave_arr_count, pts_per_screen , first_valid,
-                    last_valid, first_pt, sparsing_factor, segment_num, subarr_count,
-                    sweeps_per_acq , pts_per_pair, pair_offset, vgain, vos,
-                    max_value, min_value, nominal_bits, nom_subarr_count, horiz_ival,
-                    horiz_os, pixel_os, vunit, hunit, huncert,
-                    acq_duration, ca_record_type , processing_done, ris_sweeps,
-                    time_base, vcoupling, probe_atten, fixed_vgain, bwlimit,
-                    vertical_vernier, acq_vos, wave_src)
+        return cls(desc_name, desc_templ_name, desc_comm_type, desc_comm_order, wave_desc_len,
+                    user_txt_len, trig_time_arr, ris_time_arr, wave_arr_1, wave_arr_2, instr_name,
+                    instr_num, trace_label, wave_arr_count, pts_per_screen , first_valid, 
+                    last_valid, first_pt, sparsing_factor, segment_num, subarr_count, 
+                    sweeps_per_acq , pts_per_pair, pair_offset, vgain, vos, max_value, 
+                    min_value, nominal_bits, nom_subarr_count, horiz_ival, horiz_os, 
+                    pixel_os, vunit, hunit, huncert, acq_duration, ca_record_type, 
+                    processing_done, ris_sweeps, time_base, vcoupling, probe_atten, 
+                    fixed_vgain, bwlimit, vertical_vernier, acq_vos, wave_src)
 
 
 class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
@@ -487,12 +485,15 @@ class TeledyneMAUI(TeledyneOscilloscope):
                 bytes_per_point = 2
             else:
                 raise ValueError(f"Expected data format {format}. Options are BYTE or WORD.")
-            requested_bytes = requested_points*bytes_per_point + self._header_size + self._footer_size
+            requested_bytes = requested_points*bytes_per_point + self._header_size \
+                + self._footer_size
             # read the next chunk starting from this points
             first_point = read_points * sparsing
             self.waveform_first_point = first_point
             # read chunk of points
-            values = self._digitize(src=self.waveform_source, block=block, num_bytes=requested_bytes)
+            values = self._digitize(src=self.waveform_source, 
+                                    block=block, 
+                                    num_bytes=requested_bytes)
             # perform many sanity checks on the received data
             self._header_footer_sanity_checks(values,block=block)
             self._npoints_sanity_checks(values)
@@ -501,7 +502,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
             i += 1
         data = np.concatenate(data)
         preamble = self.waveform_preamble
-        
+
         # Determine sampling rate (horizontal interval) from waveform descriptor
         preamble['sampling_rate'] = 1/self.waveform_descriptor.horiz_ival
 
@@ -512,19 +513,24 @@ class TeledyneMAUI(TeledyneOscilloscope):
         """Apply scale and offset to the data points acquired from the scope.
         - Y axis : the scale is given by descriptor.vgain and the offset -descriptor.vos. the
         offset is not applied for the MATH source.
-        - X axis : the scale is given by descriptor.horiz_ival*i + descriptor.horiz_os for i = 0,1,...,N. 
-        :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble) """
+        - X axis : the scale is given by descriptor.horiz_ival*i + descriptor.horiz_os for
+        i = 0,1,...,N.
+        :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble)"""
 
         if self.waveform_descriptor.desc_comm_type == 0:
             data_points = ydata.view(np.int8)
         elif self.waveform_descriptor.desc_comm_type == 1:
             data_points = ydata.view(np.int16)
         else:
-            raise ValueError(f"Unexpected communication type {self.waveform_descriptor.desc_comm_type}, expected 0 (byte) or 1 (word).")
+            raise ValueError(
+                f"Unexpected communication type {self.waveform_descriptor.desc_comm_type},"\
+                     +" expected 0 (byte) or 1 (word)."
+                )
         data_points = data_points*self.waveform_descriptor.vgain
         if preamble['source'] != 'MATH':
-            data_points = data_points - self.waveform_descriptor.vos 
-        time_points = np.arange(len(data_points))*self.waveform_descriptor.horiz_ival*preamble['sparsing'] + self.waveform_descriptor.horiz_os
+            data_points = data_points - self.waveform_descriptor.vos
+        time_points = np.arange(len(data_points))*self.waveform_descriptor.horiz_ival \
+            *preamble['sparsing'] + self.waveform_descriptor.horiz_os
         return data_points, time_points, preamble
 
 
@@ -580,8 +586,9 @@ class TeledyneMAUI(TeledyneOscilloscope):
         kwargs.setdefault("destination", "REMOTE")
         self.hardcopy_setup(**kwargs)
         return super().download_image()
-    
-    def download_waveform(self, source, requested_points=None, sparsing=None, block='DAT1', format='WORD'):
+
+    def download_waveform(self, source, requested_points=None, sparsing=None, 
+                          block='DAT1', format='WORD'):
         """Get data points from the specified source of the oscilloscope.
 
         The returned objects are two np.ndarray of data and time points and a dict with the
@@ -602,7 +609,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         """
         # Sanitize the input arguments
         if sparsing is None:
-            sparsing = self.waveform_sparsing 
+            sparsing = self.waveform_sparsing
         if sparsing == 0:
             sparsing = 1
         if requested_points is None:
