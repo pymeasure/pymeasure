@@ -389,7 +389,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         # Method instead of property since no reply is sent
         self.write("FRTR")
 
- 
+
 
     ##################
     #    Waveform    #
