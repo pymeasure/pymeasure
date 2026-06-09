@@ -74,7 +74,8 @@ class Chroma63600_Channel(Channel):
     _BOOLS = {True: "ON", False: "OFF"}
     MODES = ["CCL","CCM","CCH", "CRL","CRH", "CVL","CRM","CRH", "CPL","CPM","CPH", "CZL","CZM",
              "CZH", "CCDL","CCDM","CCDH", "CCFSL","CCFSM","CCFSH", "TIML","TIMM","TIMH", "SWDL",
-             "SWDM","SWDH", "OCPL","OCPM","OCPH", "PROG", "MPPTL","MPPTM","MPPTH","UDWL,UDWM,UDWH"]
+             "SWDM","SWDH", "OCPL","OCPM","OCPH", "PROG", "MPPTL","MPPTM","MPPTH","UDWL","UDWM",
+             "UDWH"]
 
     def insert_id(self, command):
         """Set current channel before performing command"""
@@ -83,7 +84,7 @@ class Chroma63600_Channel(Channel):
     active = Instrument.control(
         "CHANNEL:ACTIVE?",
         "CHANNEL:ACTIVE %s",
-        """Enable or disable load module, can be ON or OFF""",
+        """Set enabled or disabled for the load module, can be ON or OFF""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
@@ -98,7 +99,7 @@ class Chroma63600_Channel(Channel):
     )
     status = Instrument.measurement(
         "LOAD:PROTECTION?",  # Synonym: FETCH:STATUS?
-        """Return the status of the electronic load.
+        """Get the status of the electronic load.
 
         +--------+-----------------------------+
         | bit(s) | description                 |
@@ -128,7 +129,7 @@ class Chroma63600_Channel(Channel):
     )
     identify = Instrument.measurement(
         "CHAN:ID?",
-        """Request the module to identify itself."""
+        """Get module identification string."""
     )
     current = Instrument.measurement(
         "FETCH:CURRENT?",
@@ -148,12 +149,12 @@ class Chroma63600_Channel(Channel):
     )
     protection_clear = Instrument.setting(
         "LOAD:PROTECTION:CLEAR",
-        """Resets the status of the electronic load."""
+        """Set the status of the electronic load to a clear state."""
     )
     activate_short = Instrument.control(
         "LOAD:SHORT?",
         "LOAD:SHORT %s",
-        """Activate or deactivate the short-circuit simulation.""",
+        """Set active or unactive for the short-circuit simulation.""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
@@ -188,7 +189,7 @@ class Chroma63600_Channel(Channel):
         validator=strict_discrete_set,
         values=MODES,
         get_process=lambda v: (InstrMode(v),) if v=="PROG" else \
-                            (InstrMode(v[:-1]),InstrModeRange(v[-1])),
+                              (InstrMode(v[:-1]),InstrModeRange(v[-1])),
     )
 
     # TIMING MODE
@@ -202,7 +203,7 @@ class Chroma63600_Channel(Channel):
     )
     watt_hours = Instrument.measurement(
         "FETCH:WH?",
-        "Get the watt-hour measured in timing mode."
+        """Get the watt-hour measured in timing mode."""
     )
 
 
@@ -478,15 +479,15 @@ class Chroma63600(SCPIMixin, Instrument):
 
     currents = Instrument.measurement(
         "MEAS:ALLC?",
-        """Return all channel currents as a list."""
+        """Get all channel currents as a list."""
     )
 
     voltages = Instrument.measurement(
         "MEAS:ALLV?",
-        """Return all channel voltages as a list."""
+        """Get all channel voltages as a list."""
     )
 
     powers = Instrument.measurement(
         "MEAS:ALLP?",
-        """Return all channel powers as a list."""
+        """Get all channel powers as a list."""
     )

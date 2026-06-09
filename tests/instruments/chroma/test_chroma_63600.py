@@ -21,12 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
-
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.chroma.chroma_63600 import Chroma63600
-# from pymeasure.instruments.chroma.chroma_63600 import Chroma63610_80_20,Chroma63630_80_60
 
 
 def test_init():
