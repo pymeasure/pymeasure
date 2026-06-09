@@ -42,7 +42,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format="%H:%M:%S"):
+def replace_placeholders(string, procedure, date_format="%Y_%m_%d", time_format="%H_%M_%S"):
     """Replace placeholders in string with values from procedure parameters.
 
     Replaces the placeholders in the provided string with the values of the
