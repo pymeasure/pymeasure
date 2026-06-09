@@ -34,7 +34,7 @@ class Chroma66205(SCPIMixin, Instrument):
     6620x instruments.
     """
 
-    def __init__(self, adapter, name="Chroma 63600", **kwargs):
+    def __init__(self, adapter, name="Chroma 66205", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -55,14 +55,14 @@ class Chroma66205(SCPIMixin, Instrument):
         """Control number of measurements to average in averaging mode. Must be a power of 2
         between 1 and 64 inclusive.""",
         validator=strict_discrete_set,
-        values=[1,2,3,4,8,16,32,64],
+        values=[1,2,4,8,16,32,64],
     )
     window_time = Instrument.control(
         "CONF:MEAS:WINDOW?",
         "CONF:MEAS:WINDOW %f",
         """Control window time, from 0.1s to 60.0s in 0.1s increments.""",
         validator=truncated_range,
-        values = [0.,60.]
+        values = [0.1,60.]
     )
     window_interval = Instrument.control(
         "CONF:MEAS:WINDOW:UPDATE?",
@@ -73,7 +73,7 @@ class Chroma66205(SCPIMixin, Instrument):
     )
     integrate = Instrument.control(
         "CONF:INTEGRATE?",
-        "CONF:INTEGERATE %s",
+        "CONF:INTEGRATE %s",
         """Control meter integration ON or OFF.""",
         validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
@@ -134,11 +134,11 @@ class Chroma66205(SCPIMixin, Instrument):
         "FETCH? IDC",
         """Get the last measured DC current."""
     )
-    current = Instrument.measurement(
+    current_peak_pos = Instrument.measurement(
         "FETCH? IPK+",
         """Get the last measured positive peak current."""
     )
-    current = Instrument.measurement(
+    current_peak_neg = Instrument.measurement(
         "FETCH? IPK-",
         """Get the last measured negative peak current."""
     )
