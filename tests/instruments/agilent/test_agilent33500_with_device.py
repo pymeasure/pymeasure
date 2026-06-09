@@ -39,7 +39,7 @@ pytest.skip('Only works with connected hardware', allow_module_level=True)
 def generator():
     try:
         generator = Agilent33500("TCPIP::192.168.225.208::inst0::INSTR")
-    except IOError:
+    except OSError:
         print("Not able to connect to waveform generator")
         assert False
 

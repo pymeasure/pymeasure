@@ -797,8 +797,7 @@ class AWG401x_AWG(AWG401x_base):
 
         def __iter__(self):
             try:
-                for el in self._data:
-                    yield el
+                yield from self._data
             except KeyError:
                 return
 

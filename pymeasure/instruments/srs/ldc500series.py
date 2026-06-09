@@ -253,7 +253,7 @@ class LDC500SeriesPD(Channel):
         Parmeters:
             power (float): Real time power measurement, in mW."""
 
-        self.write("CALP %g" % power)
+        self.write(f"CALP {power:g}")
 
     power = Instrument.measurement(
         "RWPD?",

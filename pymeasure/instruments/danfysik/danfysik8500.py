@@ -80,8 +80,7 @@ class Danfysik8500(Instrument):
         result = super().read()
         search = re.search(r"^\?\x07\s(?P<name>.*)$", result, re.MULTILINE)
         if search:
-            raise Exception("Danfysik raised the error: %s" % (
-                            search.groups()[0]))
+            raise Exception(f"Danfysik raised the error: {search.groups()[0]}")
         else:
             return result
 
@@ -108,7 +107,7 @@ class Danfysik8500(Instrument):
     @polarity.setter
     def polarity(self, value):
         polarity = "+" if value > 0 else "-"
-        self.write("PO %s" % polarity)
+        self.write(f"PO {polarity}")
 
     def reset_interlocks(self):
         """ Resets the instrument interlocks.
@@ -141,7 +140,7 @@ class Danfysik8500(Instrument):
             return int(match.groupdict()['hex'], 16)
         else:
             raise Exception("Danfysik status not properly returned. Instead "
-                            "got '%s'" % status)
+                            f"got '{status}'")
 
     @property
     def current(self):
@@ -168,7 +167,7 @@ class Danfysik8500(Instrument):
         if abs(ppm) < 0 or abs(ppm) > 1e6:
             raise RangeException("Danfysik 8500 requires parts per million "
                                  "to be an appropriate integer")
-        self.write("DA 0,%d" % ppm)
+        self.write(f"DA 0,{ppm}")
 
     @property
     def current_setpoint(self):
@@ -267,7 +266,7 @@ class Danfysik8500(Instrument):
 
         :param time: The time delay time in seconds
         """
-        self.write("RAMPSET %f" % time)
+        self.write(f"RAMPSET {time:f}")
 
     def start_ramp(self):
         """ Starts the current ramp.
@@ -308,36 +307,35 @@ class Danfysik8500(Instrument):
         self.start_ramp()
 
     # self.setSequence(0, [0, 10], [0.01])
-    def set_sequence(self, stack, currents, times, multiplier=999999):
+    def set_sequence(self, stack: int, currents, times, multiplier=999999) -> None:
         """ Sets up an arbitrary ramp profile with a list of currents (Amps)
         and a list of interval times (seconds) on the specified stack number
         (0-15)
         """
         self.clear_sequence(stack)
         if min(times) >= 1 and max(times) <= 65535:
-            self.write("SLOW %i" % stack)
+            self.write(f"SLOW {stack}")
         elif min(times) >= 0.1 and max(times) <= 6553.5:
-            self.write("FAST %i" % stack)
+            self.write(f"FAST {stack}")
             times = [0.1 * x for x in times]
         else:
             raise RangeException("Timing for Danfysik 8500 ramp sequence is"
                                  " out of range")
         for i in range(len(times)):
-            self.write("WSA %i,%i,%i,%i" % (
-                stack,
-                int(6250 * abs(currents[i])),
-                int(6250 * abs(currents[i + 1])), times[i])
+            self.write(
+                f"WSA {stack},{int(6250 * abs(currents[i]))},"
+                f"{int(6250 * abs(currents[i + 1]))},{times[i]}"
             )
-        self.write("MULT %i,%i" % (stack, multiplier))
+        self.write(f"MULT {stack},{multiplier}")
 
-    def clear_sequence(self, stack):
+    def clear_sequence(self, stack: int) -> None:
         """ Clears the sequence by the stack number.
 
         :param stack: A stack number between 0-15
         """
-        self.write("CSS %i" % stack)
+        self.write(f"CSS {stack}")
 
-    def sync_sequence(self, stack, delay=0):
+    def sync_sequence(self, stack: int, delay=0) -> None:
         """ Arms the ramp sequence to be triggered by a hardware
         input to pin P33 1&2 (10 to 24 V) or a TS command. If a
         delay is provided, the sequence will start after the delay.
@@ -345,16 +343,16 @@ class Danfysik8500(Instrument):
         :param stack: A stack number between 0-15
         :param delay: A delay time in seconds
         """
-        self.write("SYNC %i, %i" % (stack, delay))
+        self.write(f"SYNC {stack}, {delay}")
 
-    def start_sequence(self, stack):
+    def start_sequence(self, stack: int) -> None:
         """ Starts a sequence by the stack number.
 
         :param stack: A stack number between 0-15
         """
-        self.write("TS %i" % stack)
+        self.write(f"TS {stack}")
 
-    def stop_sequence(self):
+    def stop_sequence(self) -> None:
         """ Stops the currently running sequence.
         """
         self.write("STOP")
@@ -364,4 +362,4 @@ class Danfysik8500(Instrument):
 
         :param stack: A stack number between 0-15
         """
-        return re.search("R%i," % stack, self.ask("S2")) is not None
+        return re.search(f"R{stack},", self.ask("S2")) is not None

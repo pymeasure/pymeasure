@@ -238,7 +238,7 @@ class HP437B(Instrument):
         """
         Calibrate a sensor to the power meter with a 'calibration_factor' in percent.
         """
-        self.write("CL%.1fPCT" % calibration_factor)
+        self.write(f"CL{calibration_factor:.1f}PCT")
 
     @property
     def calibration_factor(self):
@@ -260,7 +260,7 @@ class HP437B(Instrument):
         values = [1.0, 150.0]
         strict_range(float(calibration_factor), values)
 
-        self.write("KB%3.1fPCT" % float(calibration_factor))
+        self.write(f"KB{float(calibration_factor):3.1f}PCT")
         self.check_errors()
 
     display_enabled = Instrument.setting(
@@ -429,7 +429,7 @@ class HP437B(Instrument):
         values = [-299.999, 299.999]
         strict_range(limit, values)
 
-        self.write("LH%7.3fEN" % limit)
+        self.write(f"LH{limit:7.3f}EN")
         self.check_errors()
 
     @property
@@ -452,7 +452,7 @@ class HP437B(Instrument):
         values = [-299.999, 299.999]
         strict_range(limit, values)
 
-        self.write("LL%7.3fEN" % limit)
+        self.write(f"LL{limit:7.3f}EN")
         self.check_errors()
 
     limit_high_hit = Instrument.measurement(
@@ -535,7 +535,7 @@ class HP437B(Instrument):
     def offset(self, offset):
         values = [-99.99, 99.99]
         strict_range(offset, values)
-        self.write("OS%5.2fEN" % offset)
+        self.write(f"OS{offset:5.2f}EN")
 
     def reset(self):
         self.write("*RST")

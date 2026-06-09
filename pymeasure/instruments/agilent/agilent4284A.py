@@ -391,7 +391,7 @@ class Agilent4284A(SCPIMixin, Instrument):
         b_data = []
         sweep_return = []
         for i in range(loops + 1):
-            param_str = ",".join(['%g' % p for p in param_div[i]])
+            param_str = ",".join([f'{p:g}' for p in param_div[i]])
             self.write(f"LIST:{param_dict[sweep_mode][0]} {param_str};:TRIG:IMM")
             status_event_register = int(self.ask("STAT:OPER?"))
             while (status_event_register & 8) != 8:  # Sweep bit no. 3

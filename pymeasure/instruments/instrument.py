@@ -24,7 +24,8 @@
 
 import logging
 import time
-from typing import Optional, Sequence, TypeVar, Union
+from typing import TypeVar
+from collections.abc import Sequence
 from warnings import warn
 
 from .common_base import CommonBase
@@ -78,9 +79,9 @@ class Instrument(CommonBase):
     # noinspection PyPep8Naming
     def __init__(
         self,
-        adapter: Union[Adapter, int, str],
+        adapter: Adapter | int | str,
         name: str,
-        includeSCPI: Optional[bool] = None,
+        includeSCPI: bool | None = None,
         **kwargs,
     ):
         # Setup communication before possible children require the adapter.
@@ -104,12 +105,12 @@ class Instrument(CommonBase):
 
         super().__init__()
 
-        log.info("Initializing %s." % self.name)
+        log.info(f"Initializing {self.name}.")
 
     def __enter__(self: _Self) -> _Self:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> Optional[bool]:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:
         self.shutdown()
         return None
 
@@ -187,7 +188,7 @@ class Instrument(CommonBase):
         return self.adapter.read_bytes(count, **kwargs)
 
     def write_binary_values(
-        self, command: str, values: Sequence[Union[int, float]], *args, **kwargs
+        self, command: str, values: Sequence[int | float], *args, **kwargs
     ) -> None:
         """Write binary values to the device.
 
@@ -202,7 +203,7 @@ class Instrument(CommonBase):
         return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
-    def wait_for(self, query_delay: Optional[float] = None) -> None:
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.

@@ -79,8 +79,8 @@ def replace_placeholders(string, procedure, date_format="%Y-%m-%d", time_format=
     invalid_keys = [i[1] for i in Formatter().parse(string)
                     if i[1] is not None and i[1] not in placeholders]
     if invalid_keys:
-        raise KeyError("The following placeholder-keys are not valid: '%s'; "
-                       "valid keys are: '%s'." % (
+        raise KeyError("The following placeholder-keys are not valid: '{}'; "
+                       "valid keys are: '{}'.".format(
                            "', '".join(invalid_keys),
                            "', '".join(placeholders.keys())
                        ))
@@ -108,10 +108,10 @@ def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
         i = 1
         basename = f"{prefix}{now.strftime(datetimeformat)}"
         basepath = os.path.join(directory, basename)
-        filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
+        filename = f"{basepath}_{i}{suffix}.{ext}"
         while os.path.exists(filename):
             i += 1
-            filename = "%s_%d%s.%s" % (basepath, i, suffix, ext)
+            filename = f"{basepath}_{i}{suffix}.{ext}"
     else:
         basename = f"{prefix}{now.strftime(datetimeformat)}{suffix}.{ext}"
         filename = os.path.join(directory, basename)
@@ -283,7 +283,7 @@ class Results:
         h = []
         procedure = re.search("'(?P<name>[^']+)'",
                               repr(self.procedure_class)).group("name")
-        h.append("Procedure: <%s>" % procedure)
+        h.append(f"Procedure: <{procedure}>")
         h.append("Parameters:")
         for name, parameter in self.parameters.items():
             h.append("\t{}: {}".format(parameter.name, str(
@@ -371,7 +371,7 @@ class Results:
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
                 if partitioned_line[1] != separator:
-                    raise Exception("Error partitioning header line %s." % line)
+                    raise Exception(f"Error partitioning header line {line}.")
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
@@ -419,7 +419,7 @@ class Results:
         header = ""
         header_read = False
         header_count = 0
-        with open(data_filename, "r", encoding=Results.ENCODING) as f:
+        with open(data_filename, encoding=Results.ENCODING) as f:
             while not header_read:
                 line = f.readline()
                 if line.startswith(Results.COMMENT):
@@ -496,8 +496,5 @@ class Results:
             self._data = chunks.read()
 
     def __repr__(self):
-        return "<{}(filename='{}',procedure={},shape={})>".format(
-            self.__class__.__name__, self.data_filename,
-            self.procedure.__class__.__name__,
-            self.data.shape
-        )
+        return (f"<{self.__class__.__name__}(filename='{self.data_filename}',"
+                f"procedure={self.procedure.__class__.__name__},shape={self.data.shape})>")

@@ -72,7 +72,7 @@ class SR510(Instrument):
     status = Instrument.measurement(
         "Y",
         """A string property representing the bits set within the SR510 status byte""",
-        get_process=lambda s: bin(int(s))[2:],
+        get_process=lambda s: f"{int(s):b}",
     )
 
     output = Instrument.measurement(
