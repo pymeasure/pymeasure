@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from enum import StrEnum,IntFlag
+from enum import Enum,IntFlag
 
 from pymeasure.instruments import Instrument,Channel
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -44,7 +44,7 @@ class InstrStatus(IntFlag):
     OK = 0
 
 
-class InstrMode(StrEnum):
+class InstrMode(str,Enum):
     """Instrument modes. Each mode has low (L), medium (M), and high (H) ranges,
     except for constant resistance (CR) mode, which only has L and H. The range
     is not included in this enum."""
@@ -62,7 +62,7 @@ class InstrMode(StrEnum):
     MAXIMUM_POWER_POINT_TRACKER="MPPT"
 
 
-class InstrModeRange(StrEnum):
+class InstrModeRange(str,Enum):
     """Instrument mode ranges."""
     LOW_RANGE="L"
     MEDIUM_RANGE="M"
