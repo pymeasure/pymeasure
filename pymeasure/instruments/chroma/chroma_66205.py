@@ -422,7 +422,7 @@ class Chroma66205(SCPIMixin, Instrument):
     trigger = Instrument.control(
         "TRIGGER?",
         "TRIGGER %s",
-        """Trigger energy calculation, inrush, or limit (go/no-go).
+        """Set trigger for energy calculation, inrush, or limit (go/no-go).
         Status is STOP|FINISH|RUNNING.
         To trigger, pass 'ON'. To stop or reset integration cycle, pass 'OFF'.""",
     )
