@@ -78,19 +78,19 @@ class Chroma63600_Channel(Channel):
              "UDWH"]
 
     def insert_id(self, command):
-        """Set current channel before performing command"""
+        """Set current channel before performing command."""
         return f"CHAN {self.id};{command}"
 
-    active = Instrument.control(
+    active = Channel.control(
         "CHANNEL:ACTIVE?",
         "CHANNEL:ACTIVE %s",
-        """Set enabled or disabled for the load module, can be ON or OFF""",
+        """Control whether to enable the load module (bool).""",
         validator=strict_discrete_set,
         values=_BOOLS,
         map_values=True,
     )
 
-    enabled = Instrument.control(
+    enabled = Channel.control(
         "LOAD?",
         "LOAD %s",
         """Control current channel active status, can be ``True`` (ON) or ``False`` (OFF).""",
@@ -98,7 +98,7 @@ class Chroma63600_Channel(Channel):
         values=_BOOLS,
         map_values=True,
     )
-    status = Instrument.measurement(
+    status = Channel.measurement(
         "LOAD:PROTECTION?",  # Synonym: FETCH:STATUS?
         """Get the status of the electronic load.
 
@@ -128,31 +128,31 @@ class Chroma63600_Channel(Channel):
         """,
         get_process=lambda v: InstrStatus(v)
     )
-    identify = Instrument.measurement(
+    identify = Channel.measurement(
         "CHAN:ID?",
         """Get module identification string."""
     )
-    current = Instrument.measurement(
+    current = Channel.measurement(
         "FETCH:CURRENT?",
         """Get current measured at electronic load input."""
     )
-    frequency = Instrument.measurement(
+    frequency = Channel.measurement(
         "FETCH:FREQUENCY?",
         """Get the frequency measured in frequency sweep mode or sine wave dynamic mode."""
     )
-    power = Instrument.measurement(
+    power = Channel.measurement(
         "FETCH:POWER?",
         """Get power measured at electronic load input."""
     )
-    voltage = Instrument.measurement(
+    voltage = Channel.measurement(
         "FETCH:VOLTAGE?",
         """Get the voltage measured at the electronic load input."""
     )
-    protection_clear = Instrument.setting(
+    protection_clear = Channel.setting(
         "LOAD:PROTECTION:CLEAR",
         """Set the status of the electronic load to a clear state."""
     )
-    activate_short = Instrument.control(
+    activate_short = Channel.control(
         "LOAD:SHORT?",
         "LOAD:SHORT %s",
         """Set active or unactive for the short-circuit simulation.""",
@@ -160,7 +160,7 @@ class Chroma63600_Channel(Channel):
         values=_BOOLS,
         map_values=True,
     )
-    mode = Instrument.control(
+    mode = Channel.control(
         ":MODE?",
         ":MODE %s",
         """Set the operational mode of the electronic load.
@@ -194,15 +194,15 @@ class Chroma63600_Channel(Channel):
     )
 
     # TIMING MODE
-    amp_hours = Instrument.measurement(
+    amp_hours = Channel.measurement(
         "FETCH:AH?",
         """Get ampere-hour measured in timing mode.""",
     )
-    time = Instrument.measurement(
+    time = Channel.measurement(
         "FETCH:TIME?",
         """Get time measured in timing mode."""
     )
-    watt_hours = Instrument.measurement(
+    watt_hours = Channel.measurement(
         "FETCH:WH?",
         """Get the watt-hour measured in timing mode."""
     )
@@ -212,96 +212,96 @@ class Chroma63630_80_60(Chroma63600_Channel):
     """Represents a Chroma 63630-80-60 single load module."""
 
     # CONSTANT CURRENT MODE (STATIC)
-    current_setpoint_1 = Instrument.control(
+    current_setpoint_1 = Channel.control(
         "CURRENT:STATIC:L1?",
         "CURRENT:STATIC:L1 %g",
-        """Control the L1 static current set point in constant current mode""",
+        """Control the L1 static current set point in constant current mode.""",
         validator=truncated_range,
         values=[0,60],
     )
-    current_setpoint_2 = Instrument.control(
+    current_setpoint_2 = Channel.control(
         "CURRENT:STATIC:L2?",
         "CURRENT:STATIC:L2 %g",
-        """Control the L2 static current set point in constant current mode""",
+        """Control the L2 static current set point in constant current mode.""",
         validator=truncated_range,
         values=[0,60],
     )
 
     # CONSTANT VOLTAGE MODE
-    voltage_setpoint_1 = Instrument.control(
+    voltage_setpoint_1 = Channel.control(
         "VOLTAGE:STATIC:L1?",
         "VOLTAGE:STATIC:L1 %g",
-        """Control the L1 voltage set point in constant voltage mode""",
+        """Control the L1 voltage set point in constant voltage mode.""",
         validator=truncated_range,
         values=[0,80],
     )
-    voltage_setpoint_2 = Instrument.control(
+    voltage_setpoint_2 = Channel.control(
         "VOLTAGE:STATIC:L2?",
         "VOLTAGE:STATIC:L2 %g",
-        """Control the L2 voltage set point in constant voltage mode""",
+        """Control the L2 voltage set point in constant voltage mode.""",
         validator=truncated_range,
         values=[0,80],
     )
-    current_limit = Instrument.control(
+    current_limit = Channel.control(
         "VOLTAGE:STATIC:ILIMIT?",
         "VOLTAGE:STATIC:ILIMIT %g",
-        """Set the current limit in constant voltage mode""",
+        """Set the current limit in constant voltage mode.""",
         validator=truncated_range,
         values=[0,60],
     )
     # CONSTANT POWER MODE
-    power_setpoint_1 = Instrument.control(
+    power_setpoint_1 = Channel.control(
         "POWER:STATIC:L1?",
         "POWER:STATIC:L1 %g",
-        """Control the L1 power set point in constant power mode""",
+        """Control the L1 power set point in constant power mode.""",
         validator=truncated_range,
         values=[0,300],
     )
-    power_setpoint_2 = Instrument.control(
+    power_setpoint_2 = Channel.control(
         "POWER:STATIC:L2?",
         "POWER:STATIC:L2 %g",
-        """Control the L2 power set point in constant power mode""",
+        """Control the L2 power set point in constant power mode.""",
         validator=truncated_range,
         values=[0,300],
     )
     # CONSTANT RESISTANCE MODE
-    resistance_setpoint_1 = Instrument.control(
+    resistance_setpoint_1 = Channel.control(
         "RESISTANCE:STATIC:L1?",
         "RESISTANCE:STATIC:L1 %g",
-        """Control the L1 resistance set point in constant resistance mode""",
+        """Control the L1 resistance set point in constant resistance mode.""",
         validator=truncated_range,
         values=[0.015,3000],
     )
-    resistance_setpoint_2 = Instrument.control(
+    resistance_setpoint_2 = Channel.control(
         "RESISTANCE:STATIC:L2?",
         "RESISTANCE:STATIC:L2 %g",
-        """Control the L2 resistance set point in constant resistance mode""",
+        """Control the L2 resistance set point in constant resistance mode.""",
         validator=truncated_range,
         values=[0.015,3000],
     )
     # CONSTANT IMPEDANCE MODE
-    parallel_load_capacitance_setpoint = Instrument.control(
+    parallel_load_capacitance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:CL?",
         "IMPEDANCE:STATIC:CL %g",
-        """Set the equivalent parallel load capacitance in constant impedance mode""",
+        """Set the equivalent parallel load capacitance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    series_inductance_setpoint = Instrument.control(
+    series_inductance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:LS?",
         "IMPEDANCE:STATIC:LS %g",
-        """Set the equivalent series inductance in constant impedance mode""",
+        """Set the equivalent series inductance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    series_resistance_setpoint = Instrument.control(
+    series_resistance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:RS?",
         "IMPEDANCE:STATIC:RS %g",
-        """Set the equivalent series resistance in constant impedance mode""",
+        """Set the equivalent series resistance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    parallel_load_resistance_setpoint = Instrument.control(
+    parallel_load_resistance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:RL?",
         "IMPEDANCE:STATIC:RL %g",
         """Set the equivalent parallel load resistance in constant impedance mode.""",
@@ -314,96 +314,96 @@ class Chroma63610_80_20(Chroma63600_Channel):
     """Represents one channel of a Chroma 63610-80-20 double load module."""
 
     # CONSTANT CURRENT MODE (STATIC)
-    current_setpoint_1 = Instrument.control(
+    current_setpoint_1 = Channel.control(
         "CURRENT:STATIC:L1?",
         "CURRENT:STATIC:L1 %g",
-        """Control the L1 static current set point in constant current mode""",
+        """Control the L1 static current set point in constant current mode.""",
         validator=truncated_range,
         values=[0,20],
     )
-    current_setpoint_2 = Instrument.control(
+    current_setpoint_2 = Channel.control(
         "CURRENT:STATIC:L2?",
         "CURRENT:STATIC:L2 %g",
-        """Control the L2 static current set point in constant current mode""",
+        """Control the L2 static current set point in constant current mode.""",
         validator=truncated_range,
         values=[0,20],
     )
 
     # CONSTANT VOLTAGE MODE
-    voltage_setpoint_1 = Instrument.control(
+    voltage_setpoint_1 = Channel.control(
         "VOLTAGE:STATIC:L1?",
         "VOLTAGE:STATIC:L1 %g",
-        """Control the L1 voltage set point in constant voltage mode""",
+        """Control the L1 voltage set point in constant voltage mode.""",
         validator=truncated_range,
         values=[0,80],
     )
-    voltage_setpoint_2 = Instrument.control(
+    voltage_setpoint_2 = Channel.control(
         "VOLTAGE:STATIC:L2?",
         "VOLTAGE:STATIC:L2 %g",
-        """Control the L2 voltage set point in constant voltage mode""",
+        """Control the L2 voltage set point in constant voltage mode.""",
         validator=truncated_range,
         values=[0,80],
     )
-    current_limit = Instrument.control(
+    current_limit = Channel.control(
         "VOLTAGE:STATIC:ILIMIT?",
         "VOLTAGE:STATIC:ILIMIT %g",
-        """Set the current limit in constant voltage mode""",
+        """Set the current limit in constant voltage mode.""",
         validator=truncated_range,
         values=[0,20],
     )
     # CONSTANT POWER MODE
-    power_setpoint_1 = Instrument.control(
+    power_setpoint_1 = Channel.control(
         "POWER:STATIC:L1?",
         "POWER:STATIC:L1 %g",
-        """Control the L1 power set point in constant power mode""",
+        """Control the L1 power set point in constant power mode.""",
         validator=truncated_range,
         values=[0,100],
     )
-    power_setpoint_2 = Instrument.control(
+    power_setpoint_2 = Channel.control(
         "POWER:STATIC:L2?",
         "POWER:STATIC:L2 %g",
-        """Control the L2 power set point in constant power mode""",
+        """Control the L2 power set point in constant power mode.""",
         validator=truncated_range,
         values=[0,100],
     )
     # CONSTANT RESISTANCE MODE
-    resistance_setpoint_1 = Instrument.control(
+    resistance_setpoint_1 = Channel.control(
         "RESISTANCE:STATIC:L1?",
         "RESISTANCE:STATIC:L1 %g",
-        """Control the L1 resistance set point in constant resistance mode""",
+        """Control the L1 resistance set point in constant resistance mode.""",
         validator=truncated_range,
         values=[0.04,12000],
     )
-    resistance_setpoint_2 = Instrument.control(
+    resistance_setpoint_2 = Channel.control(
         "RESISTANCE:STATIC:L2?",
         "RESISTANCE:STATIC:L2 %g",
-        """Control the L2 resistance set point in constant resistance mode""",
+        """Control the L2 resistance set point in constant resistance mode.""",
         validator=truncated_range,
         values=[0.04,12000],
     )
     # CONSTANT IMPEDANCE MODE
-    parallel_load_capacitance_setpoint = Instrument.control(
+    parallel_load_capacitance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:CL?",
         "IMPEDANCE:STATIC:CL %g",
-        """Set the equivalent parallel load capacitance in constant impedance mode""",
+        """Set the equivalent parallel load capacitance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    series_inductance_setpoint = Instrument.control(
+    series_inductance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:LS?",
         "IMPEDANCE:STATIC:LS %g",
-        """Set the equivalent series inductance in constant impedance mode""",
+        """Set the equivalent series inductance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    series_resistance_setpoint = Instrument.control(
+    series_resistance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:RS?",
         "IMPEDANCE:STATIC:RS %g",
-        """Set the equivalent series resistance in constant impedance mode""",
+        """Set the equivalent series resistance in constant impedance mode.""",
         # validator=truncated_range,
         # values=[0,0],
     )
-    parallel_load_resistance_setpoint = Instrument.control(
+    parallel_load_resistance_setpoint = Channel.control(
         "IMPEDANCE:STATIC:RL?",
         "IMPEDANCE:STATIC:RL %g",
         """Set the equivalent parallel load resistance in constant impedance mode.""",
