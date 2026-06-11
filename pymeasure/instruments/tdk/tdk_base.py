@@ -385,7 +385,7 @@ class TDK_Lambda_Base(Instrument):
         Ramps the power supply down to zero current using the
         ``self.ramp_to_current(0.0)`` method and turns the output off.
         """
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         self.ramp_to_current(0.0)
         self.output_enabled = False
         super().shutdown()

@@ -23,7 +23,7 @@
 #
 
 import logging
-from typing import cast, Optional, Union
+from typing import cast, Union
 
 import pyvisa
 
@@ -71,13 +71,13 @@ class VISAAdapter(Adapter):
         *implementing an instrument*.
     """
 
-    connection: Union[ProtocolAdapter, pyvisa.resources.MessageBasedResource]
+    connection: ProtocolAdapter | pyvisa.resources.MessageBasedResource
 
     def __init__(
         self,
         resource_name: Union[ProtocolAdapter, "VISAAdapter", int, str],
         visa_library: str = "",
-        log: Optional[logging.Logger] = None,
+        log: logging.Logger | None = None,
         **kwargs,
     ):
         super().__init__(log=log)
@@ -93,7 +93,7 @@ class VISAAdapter(Adapter):
             self.manager = resource_name.manager
             return
         elif isinstance(resource_name, int):
-            resource_name = "GPIB0::%d::INSTR" % resource_name
+            resource_name = f"GPIB0::{resource_name}::INSTR"
 
         self.resource_name = resource_name
         self.manager = pyvisa.ResourceManager(visa_library)
@@ -218,4 +218,4 @@ class VISAAdapter(Adapter):
                 self.connection.timeout = timeout
 
     def __repr__(self) -> str:
-        return "<VISAAdapter(resource='%s')>" % self.connection.resource_name
+        return f"<VISAAdapter(resource='{self.connection.resource_name}')>"

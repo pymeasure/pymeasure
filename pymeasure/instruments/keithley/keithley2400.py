@@ -441,8 +441,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             range via `Keithley2400.current_range` or `Keithley2400.current_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring current.")
+        self.write(f":SENS:FUNC 'CURR';:SENS:CURR:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:
@@ -515,7 +515,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and compliance voltage via `Keithley2400.compliance_voltage`.""",
             FutureWarning,
         )
-        log.info("%s is sourcing current." % self.name)
+        log.info(f"{self.name} is sourcing current.")
         self.source_mode = "current"
         if current_range is None:
             self.auto_range_source()
@@ -598,8 +598,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             range via `Keithley2400.voltage_range` or `Keithley2400.voltage_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring voltage." % self.name)
-        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring voltage.")
+        self.write(f":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -672,7 +672,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and compliance current via `Keithley2400.compliance_current`.""",
             FutureWarning,
         )
-        log.info("%s is sourcing voltage." % self.name)
+        log.info(f"{self.name} is sourcing voltage.")
         self.source_mode = "voltage"
         if voltage_range is None:
             self.auto_range_source()
@@ -757,8 +757,8 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             `Keithley2400.resistance_range_auto_enabled`.""",
             FutureWarning,
         )
-        log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;" % nplc)
+        log.info(f"{self.name} is measuring resistance.")
+        self.write(f":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC {nplc:f};")
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -1064,9 +1064,9 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         if arm * trigger > 2500 or arm * trigger < 0:
             raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
         if arm < trigger:
-            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
+            self.write(f":ARM:COUN {arm};:TRIG:COUN {trigger}")
         else:
-            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+            self.write(f":TRIG:COUN {trigger};:ARM:COUN {arm}")
 
     def set_timed_arm(self, interval):
         """Set up the measurement to be taken with the internal
@@ -1085,7 +1085,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         )
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+        self.write(f":ARM:SOUR TIM;:ARM:TIM {interval:.3f}")
 
     def disable_output_trigger(self):
         """Disable the output trigger for the Trigger layer
@@ -1122,7 +1122,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             and `Keithley2400.trigger_output_line`.""",
             FutureWarning,
         )
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+        self.write(f":TRIG:OUTP {after};:TRIG:OLIN {line};")
 
     ######
     # UI #
@@ -1244,7 +1244,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
 
     def shutdown(self):
         """Ensure that the current or voltage is turned to zero and disable the output."""
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         if self.source_mode == "current":
             self.ramp_to_current(0.0)
         else:

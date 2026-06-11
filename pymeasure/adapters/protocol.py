@@ -24,7 +24,7 @@
 
 from __future__ import annotations
 import logging
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 from unittest.mock import MagicMock
 from warnings import warn
 
@@ -33,7 +33,7 @@ from .adapter import Adapter
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-BYTABLE = Union[bytes, bytearray, str, list[int], tuple[int, ...], int, float]
+BYTABLE = bytes | bytearray | str | list[int] | tuple[int, ...] | int | float
 
 
 def to_bytes(
@@ -78,9 +78,9 @@ class ProtocolAdapter(Adapter):
 
     def __init__(
         self,
-        comm_pairs: Optional[Sequence[tuple[Union[BYTABLE, None], Union[BYTABLE, None]]]] = None,
-        connection_attributes: Optional[dict] = None,
-        connection_methods: Optional[dict] = None,
+        comm_pairs: Sequence[tuple[BYTABLE | None, BYTABLE | None]] | None = None,
+        connection_attributes: dict | None = None,
+        connection_methods: dict | None = None,
         **kwargs,
     ):
         """Generate the adapter and initialize internal buffers."""
@@ -93,15 +93,15 @@ class ProtocolAdapter(Adapter):
         for pair in comm_pairs:
             if len(pair) != 2:
                 raise ValueError(f'Comm_pairs element {pair} does not have two elements!')
-        self._read_buffer: Optional[bytes] = None
-        self._write_buffer: Optional[bytes] = None
+        self._read_buffer: bytes | None = None
+        self._write_buffer: bytes | None = None
         self.comm_pairs = comm_pairs
         self._index = 0
         # Setup attributes
         self._setup_connection(connection_attributes, connection_methods)
 
     def _setup_connection(
-        self, connection_attributes: Optional[dict], connection_methods: Optional[dict]
+        self, connection_attributes: dict | None, connection_methods: dict | None
     ) -> None:
         self.connection = MagicMock()
         if connection_attributes is not None:

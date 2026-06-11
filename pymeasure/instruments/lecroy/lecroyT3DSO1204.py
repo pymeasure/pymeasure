@@ -40,9 +40,9 @@ def _math_define_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
     for i in range(3):
         strict_discrete_set(output[i], values=values[i])
@@ -56,9 +56,9 @@ def _measure_delay_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))
     if output[1][0] > output[2][0]:
         raise ValueError(f'First channel number {output[1]} must be <= than second one {output[2]}')

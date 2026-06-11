@@ -232,7 +232,7 @@ class IPS120_10(OxfordInstrumentsBase):
         if isinstance(status, str):
             raise SwitchHeaterError(
                 "IPS 120-10: switch heater status reported issue with "
-                "switch heater: %s" % status)
+                f"switch heater: {status}")
 
         return status
 
@@ -298,7 +298,7 @@ class IPS120_10(OxfordInstrumentsBase):
         try:
             heater_on = self.switch_heater_enabled
         except SwitchHeaterError as e:
-            log.error("IPS 120-10: Switch heater status reported issue: %s" % e)
+            log.error(f"IPS 120-10: Switch heater status reported issue: {e}")
             field = self.demand_field
         else:
             if heater_on:

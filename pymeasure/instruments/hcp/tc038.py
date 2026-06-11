@@ -23,7 +23,6 @@
 #
 
 import logging
-from typing import Union
 
 from pymeasure.instruments import Instrument
 from pymeasure.adapters import Adapter
@@ -91,7 +90,7 @@ class TC038(Instrument):
 
     def __init__(
         self,
-        adapter: Union[Adapter, int, str],
+        adapter: Adapter | int | str,
         name: str = "TC038",
         address: int = 1,
         timeout: int = 1000,

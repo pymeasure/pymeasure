@@ -1384,8 +1384,7 @@ class AdvantestR624X(Instrument):
 
         """
         program_number = truncated_range(program_number, [1, 20])
-        if command.endswith(';'):
-            command = command[:-1]
+        command = command.removesuffix(';')
         for subcmd in command.split(';'):
             prefix = subcmd.strip().split()[0].lower() if subcmd.strip() else ''
             if prefix and prefix not in HIGHSPEED_SEQUENCE_COMMANDS:

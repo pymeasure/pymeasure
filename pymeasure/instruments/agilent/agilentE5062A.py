@@ -209,7 +209,7 @@ class VNAChannel(Channel):
     def visible_traces(self, value):
         value = int(float(value))
         value = strict_range(value, [1, 4])
-        self.write("CALC{ch}:PARameter:COUNt %d" % value)
+        self.write(f"CALC{{ch}}:PARameter:COUNt {value}")
         self._update_trace_count(value)
 
     power = Channel.control(
@@ -238,7 +238,7 @@ class VNAChannel(Channel):
     def attenuation(self, value):
         value = int(float(value))
         value = strict_discrete_set(value, [0, 10, 20, 30, 40])
-        self.write("SOURce{ch}:POWer:ATTenuation %d" % value)
+        self.write(f"SOURce{{ch}}:POWer:ATTenuation {value}")
         self._update_power_values(value)
 
     display_layout = Channel.control(

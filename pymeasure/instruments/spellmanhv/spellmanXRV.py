@@ -23,7 +23,7 @@
 #
 
 from enum import IntFlag
-from typing import Any, Union
+from typing import Any
 
 from pyvisa.constants import InterfaceType
 
@@ -241,7 +241,7 @@ class SpellmanXRV(Instrument):
     unscaled = Instrument.ChannelCreator(UnscaledData)
 
     def __init__(self,
-                 adapter: Union[Adapter, int, str],
+                 adapter: Adapter | int | str,
                  name: str = "Spellman XRV HV Power Supply",
                  query_delay: float = 0.15,
                  baud_rate: int = 9600,

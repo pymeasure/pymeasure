@@ -113,7 +113,7 @@ class Axis(Channel):
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
-        set_process=lambda a: " ".join("%d" % v for v in a),
+        set_process=lambda a: " ".join(f"{v}" for v in a),
         separator='\r\n', cast=int, check_set_errors=True)
 
     pattern_down = Instrument.control(
@@ -124,7 +124,7 @@ class Axis(Channel):
         needs to be an array with 256 integer values. """,
         validator=truncated_int_array_strict_length,
         values=[256, [0, 255]],
-        set_process=lambda a: " ".join("%d" % v for v in a),
+        set_process=lambda a: " ".join(f"{v}" for v in a),
         separator='\r\n', cast=int, check_set_errors=True)
 
     output_voltage = Instrument.measurement(
