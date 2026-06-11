@@ -61,7 +61,7 @@ class AgilentB2981(SCPIMixin, Instrument):
     The B2981 is a Femto/Picoammeter."""
 
     def __init__(self,
-                 adapter: Union[Adapter, int, str],
+                 adapter: Adapter | int | str,
                  name: str = "Agilent/Keysight B2980A/B series",
                  **kwargs: Any):
         super().__init__(
