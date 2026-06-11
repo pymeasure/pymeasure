@@ -89,6 +89,7 @@ class Chroma63600_Channel(Channel):
         values=_BOOLS,
         map_values=True,
     )
+
     enabled = Instrument.control(
         "LOAD?",
         "LOAD %s",
