@@ -24,6 +24,7 @@
 
 import numpy as np
 from enum import Enum
+import time
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -257,6 +258,7 @@ class Chroma66205(SCPIMixin, Instrument):
         "CONF:FILT:FREQ?",
         "CONF:FILT:FREQ %s",
         """Set the low pass filter on the path of frequency detect, True (ON) or False (OFF).""",
+        validator=strict_discrete_set,
         values={True:"ON",False:"OFF"},
         map_values=True,
     )
@@ -307,7 +309,7 @@ class Chroma66205(SCPIMixin, Instrument):
         if A not in self.CHANNEL_A_DISPLAY_OPTS:
             raise ValueError(f"Parameter {A} not valid for display A. Must be "
                              f"one of: {self.CHANNEL_A_DISPLAY_OPTS}")
-        if B not in self.CHANNEL_A_DISPLAY_OPTS:
+        if B not in self.CHANNEL_B_DISPLAY_OPTS:
             raise ValueError(f"Parameter {B} not valid for display B. Must be "
                              f"one of: {self.CHANNEL_B_DISPLAY_OPTS}")
         if C not in self.CHANNEL_C_DISPLAY_OPTS:
@@ -444,8 +446,12 @@ class Chroma66205(SCPIMixin, Instrument):
         if tr != "RUNNING":
             print(f"Warning: Triggered but trigger is not set to 'RUNNING' (instead got {tr})")
         else:
+            timeout_duration = integration_time_s*1.5  # use 1.5x expected integration time
+            start_time = time.monotonic()
             while self.trigger == "RUNNING":
-                pass
+                if time.monotonic() - start_time > timeout_duration:
+                    raise TimeoutError(f"Integration was expected to take {integration_time_s} "
+                                       f"secs, but took longer than {timeout_duration} secs.")
         return self.energy_wh
 
     def capture_waveform(self,param:str='V'):
@@ -455,6 +461,8 @@ class Chroma66205(SCPIMixin, Instrument):
         timeout = 100
         while self.ask('WAVEFORM:CAPTURE?') != 'OK\n' and timeout > 0:
             timeout -= 1
+        if timeout  <= 0:
+            raise TimeoutError("Waveform capture timeout.")
         print("Receiving waveform. This may take a minute...")
         bvals = self.binary_values(f'WAVEFORM:DATA? {param}',dtype=np.uint8)
         print("Done.")
