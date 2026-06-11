@@ -176,14 +176,13 @@ class Sound_Channel:
         """ Reads a set of values from the instrument through the adapter,
         passing on any keyword arguments.
         """
-        return self.instrument.values("SOUR:TEL:MOD:SOUN%d:%s" % (
-                                      self.number, command), **kwargs)
+        return self.instrument.values(f"SOUR:TEL:MOD:SOUN{self.number}:{command}", **kwargs)
 
     def ask(self, command):
-        self.instrument.ask("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+        self.instrument.ask(f"SOUR:TEL:MOD:SOUN:{self.number}:{command}")
 
     def write(self, command):
-        self.instrument.write("SOUR:TEL:MOD:SOUN:%d:%s" % (self.number, command))
+        self.instrument.write(f"SOUR:TEL:MOD:SOUN:{self.number}:{command}")
 
     def read(self):
         self.instrument.read()
@@ -220,15 +219,11 @@ class SFM(SCPIMixin, Instrument):
 
         """
         if subsystem is None:
-            self.write("CAL:MOD%d" % (number))
+            self.write(f"CAL:MOD{number}")
         else:
             self.write(
-                "CAL:MOD%d:%s" % (
-                    number,
-                    strict_discrete_set(subsystem,
-                                        ["NIC", "NICAM", "VIS", "VISION", "SOUN1",
-                                         "SOUND1", "SOUN2", "SOUND2", "COD", "CODER"])
-                )
+                f"CAL:MOD{number}:"
+                f"{strict_discrete_set(subsystem, ['NIC', 'NICAM', 'VIS', 'VISION', 'SOUN1', 'SOUND1', 'SOUN2', 'SOUND2', 'COD', 'CODER'])}"  # noqa: E501
             )
 
     # INST (Manual 3.6.4)

@@ -404,8 +404,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         :param resistance: Upper limit of resistance in Ohms, from -210 MOhms to 210 MOhms
         :param auto_range: Enables auto_range if True, else uses the set resistance
         """
-        log.info("%s is measuring resistance." % self.name)
-        self.write(":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC %f;:FORM:ELEM RES;" % nplc)
+        log.info(f"{self.name} is measuring resistance.")
+        self.write(f":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC {nplc:f};:FORM:ELEM RES;")
         if auto_range:
             self.write(":SENS:RES:RANG:AUTO 1;")
         else:
@@ -419,8 +419,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         :param voltage: Upper limit of voltage in Volts, from -210 V to 210 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
-        log.info("%s is measuring voltage." % self.name)
-        self.write(":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC %f;:FORM:ELEM VOLT;" % nplc)
+        log.info(f"{self.name} is measuring voltage.")
+        self.write(f":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC {nplc:f};:FORM:ELEM VOLT;")
         if auto_range:
             self.write(":SENS:VOLT:RANG:AUTO 1;")
         else:
@@ -434,8 +434,8 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         :param current: Upper limit of current in Amps, from -1.05 A to 1.05 A
         :param auto_range: Enables auto_range if True, else uses the set current
         """
-        log.info("%s is measuring current." % self.name)
-        self.write(":SENS:FUNC 'CURR';:SENS:CURR:NPLC %f;:FORM:ELEM CURR;" % nplc)
+        log.info(f"{self.name} is measuring current.")
+        self.write(f":SENS:FUNC 'CURR';:SENS:CURR:NPLC {nplc:f};:FORM:ELEM CURR;")
         if auto_range:
             self.write(":SENS:CURR:RANG:AUTO 1;")
         else:
@@ -458,7 +458,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
                                    :attr:`~.Keithley2400Legacy.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2400Legacy.current_range` value or None
         """
-        log.info("%s is sourcing current." % self.name)
+        log.info(f"{self.name} is sourcing current.")
         self.source_mode = "current"
         if current_range is None:
             self.auto_range_source()
@@ -476,7 +476,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
                                    :attr:`~.Keithley2400Legacy.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2400Legacy.voltage_range` value or None
         """
-        log.info("%s is sourcing voltage." % self.name)
+        log.info(f"{self.name} is sourcing voltage.")
         self.source_mode = "voltage"
         if voltage_range is None:
             self.auto_range_source()
@@ -580,9 +580,9 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         if arm * trigger > 2500 or arm * trigger < 0:
             raise RangeException("Keithley 2400 has a combined maximum of 2500 counts")
         if arm < trigger:
-            self.write(":ARM:COUN %d;:TRIG:COUN %d" % (arm, trigger))
+            self.write(f":ARM:COUN {arm};:TRIG:COUN {trigger}")
         else:
-            self.write(":TRIG:COUN %d;:ARM:COUN %d" % (trigger, arm))
+            self.write(f":TRIG:COUN {trigger};:ARM:COUN {arm}")
 
     def sample_continuously(self):
         """Cause the instrument to continuously read samples
@@ -599,7 +599,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         """
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 2400 can only be time triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+        self.write(f":ARM:SOUR TIM;:ARM:TIM {interval:.3f}")
 
     def trigger_on_external(self, line=1):
         """Configure the measurement trigger to be taken from a
@@ -608,7 +608,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         :param line: A trigger line from 1 to 4
         """
         cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
-        cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
+        cmd += f":ARM:ILIN {line};:TRIG:ILIN {line};"
         self.write(cmd)
 
     def output_trigger_on_external(self, line=1, after="DEL"):
@@ -620,7 +620,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         :param line: A trigger line from 1 to 4
         :param after: An event string that determines when to trigger
         """
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+        self.write(f":TRIG:OUTP {after};:TRIG:OLIN {line};")
 
     def disable_output_trigger(self):
         """Disable the output trigger for the Trigger layer"""
@@ -693,16 +693,16 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         num = int(float(stopI - startI) / float(stepI)) + 1
         currRange = 1.2 * max(abs(stopI), abs(startI))
         # self.write(":SOUR:CURR 0.0")
-        self.write(":SENS:VOLT:PROT %g" % compliance)
-        self.write(":SOUR:DEL %g" % delay)
-        self.write(":SOUR:CURR:RANG %g" % currRange)
+        self.write(f":SENS:VOLT:PROT {compliance:g}")
+        self.write(f":SOUR:DEL {delay:g}")
+        self.write(f":SOUR:CURR:RANG {currRange:g}")
         self.write(":SOUR:SWE:RANG FIX")
         self.write(":SOUR:CURR:MODE SWE")
         self.write(":SOUR:SWE:SPAC LIN")
-        self.write(":SOUR:CURR:STAR %g" % startI)
-        self.write(":SOUR:CURR:STOP %g" % stopI)
-        self.write(":SOUR:CURR:STEP %g" % stepI)
-        self.write(":TRIG:COUN %d" % num)
+        self.write(f":SOUR:CURR:STAR {startI:g}")
+        self.write(f":SOUR:CURR:STOP {stopI:g}")
+        self.write(f":SOUR:CURR:STEP {stepI:g}")
+        self.write(f":TRIG:COUN {num}")
         if backward:
             currents = np.linspace(stopI, startI, num)
             self.write(":SOUR:SWE:DIR DOWN")
@@ -741,7 +741,7 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
     def shutdown(self):
         """Ensure that the current or voltage is turned to zero
         and disable the output."""
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         if self.source_mode == "current":
             self.ramp_to_current(0.0)
         else:

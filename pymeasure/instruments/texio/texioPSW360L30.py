@@ -73,7 +73,7 @@ class TexioPSW360L30(Keithley2260B):
         code, message = self.next_error
         while code != 0:
             t = time.time()
-            log.info("TEXIO PSW-360L30 reported error: %d, %s" % (code, message))
+            log.info(f"TEXIO PSW-360L30 reported error: {code}, {message}")
             code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")

@@ -557,8 +557,7 @@ class SMU(AgilentMeasurementChannel):
         if self.parent.analyzer_mode == 'SWEEP':
             self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
     @property
@@ -589,11 +588,9 @@ class SMU(AgilentMeasurementChannel):
         values = self.__validate_compl()
         value = validator(comp, values)
         if self.parent.analyzer_mode == 'SWEEP':
-            self.write(":PAGE:MEAS:CONS:{}:COMP {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:CONS:{self.channel}:COMP {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{}:COMP {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel}:COMP {value}")
         self.check_errors()
 
     current_name = Channel.control(
@@ -683,8 +680,7 @@ class VSU(AgilentMeasurementChannel):
         if self.parent.analyzer_mode == 'SWEEP':
             self.write(f":PAGE:MEAS:CONS:{{ch}} {value}")
         else:
-            self.write(":PAGE:MEAS:SAMP:CONS:{} {}".format(
-                self.channel, value))
+            self.write(f":PAGE:MEAS:SAMP:CONS:{self.channel} {value}")
         self.check_errors()
 
 

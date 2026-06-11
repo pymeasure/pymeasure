@@ -186,8 +186,8 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the software limits for motion based on
         the count unit where 4000 counts is 1 revolution
         """
-        self.write("LSPOS%d" % int(positive))
-        self.write("LSNEG%d" % int(negative))
+        self.write(f"LSPOS{int(positive)}")
+        self.write(f"LSNEG{int(negative)}")
 
     @property
     def echo(self):

@@ -27,7 +27,8 @@ import logging
 import time
 import traceback
 from queue import Queue
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -88,10 +89,10 @@ class Worker(StoppableThread):
         if self.port is not None and zmq is not None:
             try:
                 self.context = zmq.Context()
-                log.debug("Worker ZMQ Context: %r" % self.context)
+                log.debug(f"Worker ZMQ Context: {self.context!r}")
                 self.publisher = self.context.socket(zmq.PUB)
-                self.publisher.bind('tcp://*:%d' % self.port)
-                log.info("Worker connected to tcp://*:%d" % self.port)
+                self.publisher.bind(f'tcp://*:{self.port}')
+                log.info(f"Worker connected to tcp://*:{self.port}")
                 # wait so that the socket will be ready before starting to emit messages
                 time.sleep(0.3)
             except Exception:
@@ -233,8 +234,5 @@ class Worker(StoppableThread):
             self.stop()
 
     def __repr__(self):
-        return "<{}(port={},procedure={},should_stop={})>".format(
-            self.__class__.__name__, self.port,
-            self.procedure.__class__.__name__,
-            self.should_stop()
-        )
+        return (f"<{self.__class__.__name__}(port={self.port},"
+                f"procedure={self.procedure.__class__.__name__},should_stop={self.should_stop()})>")

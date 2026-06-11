@@ -405,13 +405,13 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         data = ", ".join(datapoints)
 
         # Write the data points to the Keithley 6221
-        self.write(":SOUR:WAVE:ARB:DATA %s" % data)
+        self.write(f":SOUR:WAVE:ARB:DATA {data}")
 
         # Copy the written data to the specified location
-        self.write(":SOUR:WAVE:ARB:COPY %d" % location)
+        self.write(f":SOUR:WAVE:ARB:COPY {location}")
 
         # Select the newly made arbitrary waveform as waveform function
-        self.waveform_function = "arbitrary%d" % location
+        self.waveform_function = f"arbitrary{location}"
 
     def enable_source(self):
         """ Enables the source of current or voltage depending on the
@@ -491,7 +491,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         if interval > 99999.99 or interval < 0.001:
             raise RangeException("Keithley 6221 can only be time"
                                  " triggered between 1 mS and 1 Ms")
-        self.write(":ARM:SOUR TIM;:ARM:TIM %.3f" % interval)
+        self.write(f":ARM:SOUR TIM;:ARM:TIM {interval:.3f}")
 
     def trigger_on_external(self, line=1):
         """ Configures the measurement trigger to be taken from a
@@ -500,7 +500,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         :param line: A trigger line from 1 to 4
         """
         cmd = ":ARM:SOUR TLIN;:TRIG:SOUR TLIN;"
-        cmd += ":ARM:ILIN %d;:TRIG:ILIN %d;" % (line, line)
+        cmd += f":ARM:ILIN {line};:TRIG:ILIN {line};"
         self.write(cmd)
 
     def output_trigger_on_external(self, line=1, after='DEL'):
@@ -512,7 +512,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
         :param line: A trigger line from 1 to 4
         :param after: An event string that determines when to trigger
         """
-        self.write(":TRIG:OUTP %s;:TRIG:OLIN %d;" % (after, line))
+        self.write(f":TRIG:OUTP {after};:TRIG:OLIN {line};")
 
     def disable_output_trigger(self):
         """ Disables the output trigger for the Trigger layer
@@ -521,7 +521,7 @@ class Keithley6221(KeithleyBuffer, SCPIMixin, Instrument):
 
     def shutdown(self):
         """ Disables the output. """
-        log.info("Shutting down %s." % self.name)
+        log.info(f"Shutting down {self.name}.")
         self.disable_source()
         super().shutdown()
 

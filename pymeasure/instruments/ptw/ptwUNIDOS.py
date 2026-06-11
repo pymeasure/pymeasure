@@ -26,7 +26,7 @@
 import logging
 import json
 import warnings
-from typing import Any, Union, Optional
+from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
@@ -41,7 +41,7 @@ class ptwUNIDOS(Instrument):
     """A class representing the PTW UNIDOS Tango/Romeo dosemeters."""
 
     def __init__(self,
-                 adapter: Union[Adapter, int, str],
+                 adapter: Adapter | int | str,
                  name: str = "PTW UNIDOS dosemeter",
                  **kwargs: Any) -> None:
         super().__init__(
@@ -159,7 +159,7 @@ wrong format of the parameter",
         """
         self.ask("HLD")
 
-    def intervall(self, intervall: Optional[int] = None) -> None:
+    def intervall(self, intervall: int | None = None) -> None:
         """Execute an interval measurement.
 
         .. deprecated:: 0.16.0
@@ -171,7 +171,7 @@ wrong format of the parameter",
             )
         return self.interval_measurement(intervall)
 
-    def interval_measurement(self, interval: Optional[int] = None) -> None:
+    def interval_measurement(self, interval: int | None = None) -> None:
         """Execute an interval measurement.
 
         :param interval: optional, measurement interval in seconds
@@ -452,7 +452,7 @@ wrong format of the parameter",
 # only read access is implemented #
 ###################################
 
-    def read_detector(self, guid: str = "ALL") -> Union[dict, list[dict]]:
+    def read_detector(self, guid: str = "ALL") -> dict | list[dict]:
         """Read the properties of the requested detector.
 
         :param str guid: optional, ID of the detector. A list of all

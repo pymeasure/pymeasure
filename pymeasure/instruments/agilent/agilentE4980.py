@@ -122,8 +122,8 @@ Select trigger source; accept the values:
         self.write("FORM ASC")
         # trigger in sequential mode
         self.write("LIST:MODE SEQ")
-        lista_str = ",".join(['%e' % f for f in freq_list])
-        self.write("LIST:FREQ %s" % lista_str)
+        lista_str = ",".join([f'{f:e}' for f in freq_list])
+        self.write(f"LIST:FREQ {lista_str}")
         # trigger
         self.write("INIT:CONT ON")
         self.write(":TRIG:IMM")

@@ -26,6 +26,8 @@ import logging
 import time
 import numpy as np
 from enum import Enum, IntFlag
+from typing import Any
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, truncated_discrete_set
@@ -33,31 +35,6 @@ from pymeasure.instruments.validators import (
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-# for Python>3.9, these two methods can be static methods in the class
-def _generate_1_2_5_sequence(min, max):
-    """ Generate a list of a 1-2-5 sequence between min and max. """
-    exp_min = int(np.log10(min))
-    exp_max = int(np.log10(max))
-
-    seq_1_2_5 = np.array([1, 2, 5])
-    sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
-    sequence = sequence.flatten()
-    sequence = sequence[(sequence >= min) & (sequence <= max)]
-
-    return list(sequence)
-
-
-def _boolean_control(identifier, state_index, docs, inverted=False, **kwargs):
-    return Instrument.control(
-        'CST', identifier + '%d', docs,
-        validator=strict_discrete_set,
-        values=[True, False],
-        get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
-        set_process=lambda x: int(inverted ^ x),
-        **kwargs
-    )
 
 
 class Status(IntFlag):
@@ -92,6 +69,31 @@ class HP8116A(Instrument):
             **kwargs
         )
         self.has_option_001 = self._check_has_option_001()
+
+    @staticmethod
+    def _generate_1_2_5_sequence(min: float, max: float) -> list[float]:
+        """ Generate a list of a 1-2-5 sequence between min and max. """
+        exp_min = int(np.log10(min))
+        exp_max = int(np.log10(max))
+
+        seq_1_2_5 = np.array([1, 2, 5])
+        sequence = np.array([seq_1_2_5 * (10 ** exp) for exp in range(exp_min - 1, exp_max + 1)])
+        sequence = sequence.flatten()
+        sequence = sequence[(sequence >= min) & (sequence <= max)]
+
+        return list(sequence)
+
+    @staticmethod
+    def _boolean_control(identifier: str, state_index: int, docs: str,
+                         inverted: bool = False, **kwargs: Any) -> Any:
+        return Instrument.control(
+            'CST', identifier + '%d', docs,
+            validator=strict_discrete_set,
+            values=[True, False],
+            get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
+            set_process=lambda x: int(inverted ^ x),
+            **kwargs
+        )
 
     class Digit(Enum):
         """ Enum of the digits used with the autovernier

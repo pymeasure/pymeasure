@@ -512,8 +512,7 @@ class AnritsuMS464xB(SCPIUnknownMixin, Instrument):
         data = self.read_bytes(bytes_to_transfer)
         with open(filename, "w") as textfile:
             data_list = data.split(b"\r\n")
-            for s in data_list:
-                textfile.write(str(s)[2 : len(s)] + "\n")  # noqa
+            textfile.writelines(str(s)[2:len(s)] + "\n" for s in data_list)
 
 
 class Port(Channel):

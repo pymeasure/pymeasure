@@ -71,7 +71,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * (i + 1) / self.iterations)
             sleep(self.delay)
@@ -86,7 +86,7 @@ class TestProcedure(Procedure):
 class MainWindow(ManagedWindow):
 
     def __init__(self):
-        super(MainWindow, self).__init__(
+        super().__init__(
             procedure_class=TestProcedure,
             inputs=['iterations', 'delay', 'seed'],
             displays=['iterations', 'delay', 'seed'],

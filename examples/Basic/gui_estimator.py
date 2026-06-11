@@ -67,7 +67,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
@@ -106,8 +106,8 @@ class TestProcedure(Procedure):
 
         estimates = list()
 
-        estimates.append(("Duration", "%d s" % int(duration)))
-        estimates.append(("Number of lines", "%d" % int(self.iterations)))
+        estimates.append(("Duration", f"{int(duration)} s"))
+        estimates.append(("Number of lines", f"{int(self.iterations)}"))
 
         estimates.append(("Sequence length", str(sequence_length)))
 

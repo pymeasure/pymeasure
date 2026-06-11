@@ -520,7 +520,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:RANG:AUTO 1" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:RANG:AUTO 1")
 
     def enable_reference(self, mode=None):
         """ Enables the reference for the active mode,
@@ -528,7 +528,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:STAT 1" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:STAT 1")
 
     def disable_reference(self, mode=None):
         """ Disables the reference for the active mode,
@@ -536,7 +536,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:STAT 0" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:STAT 0")
 
     def acquire_reference(self, mode=None):
         """ Sets the active value as the reference for the active mode,
@@ -544,7 +544,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:ACQ" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:ACQ")
 
     def enable_filter(self, mode=None, type='repeat', count=1):
         """ Enables the averaging filter for the active mode,
@@ -564,7 +564,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:AVER:STAT 0" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:STAT 0")
 
     def local(self):
         """ Returns control to the instrument panel, and enables

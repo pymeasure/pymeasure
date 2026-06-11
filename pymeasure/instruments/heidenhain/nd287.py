@@ -108,6 +108,6 @@ class ND287(Instrument):
             err_str = None
 
         if err_str is not None:
-            log.error("Heidenhain ND287 error message received: %s" % err_str)
+            log.error(f"Heidenhain ND287 error message received: {err_str}")
 
         return err_str
