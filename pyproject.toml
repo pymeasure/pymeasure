@@ -9,7 +9,7 @@ authors = [
     {name = "PyMeasure Developers"}
 ]
 description = "Scientific measurement library for instruments, experiments, and live-plotting"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
 license = {text = "MIT"}
 classifiers = [
@@ -21,11 +21,11 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
@@ -34,11 +34,13 @@ dependencies = [
     "pint",
     "pyvisa>=1.9",
     "pyserial>=2.7",
-    "pyqtgraph>=0.12",
-    "qtpy>=2.4",
 ]
 
 [project.optional-dependencies]
+gui = [
+    "pyqtgraph>=0.12",
+    "qtpy>=2.4",
+]
 tcp = [
     "pyzmq>=16.0.2",
     "cloudpickle>=0.3.1",
@@ -84,7 +86,10 @@ profile = "black"
 line-length = 100
 
 [tool.ruff.lint]
-extend-select = ["E", "E9", "F63", "F7", "F82", "W",]
+extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
 
 [tool.pyright.defineConstant]
 PYQT5 = true

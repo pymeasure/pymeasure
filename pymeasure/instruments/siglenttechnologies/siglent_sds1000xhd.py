@@ -345,11 +345,11 @@ class WaveformChannel(Channel):
                 recv_byte = recv_byte[:truncated_bytes]
                 actual_points = len(recv_byte) // 2
 
-            convert_data = struct.unpack("%dh" % actual_points, recv_byte)
+            convert_data = struct.unpack(f"{actual_points}h", recv_byte)
         else:
             # Calculate actual length of data received and adjust points if needed
             actual_points = len(recv_byte)  # 1 byte per point for BYTE format
-            convert_data = struct.unpack("%db" % actual_points, recv_byte)
+            convert_data = struct.unpack(f"{actual_points}b", recv_byte)
 
         # Calculate the voltage value and time value
         time_value = []

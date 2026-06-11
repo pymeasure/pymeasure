@@ -247,7 +247,7 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         """
         # Using pyvisa's method bypassing the normal read.
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
-                        datatype=u'd'))
+                        datatype='d'))
 
     def close(self):
         """

@@ -74,7 +74,7 @@ def test_metadata_fget_evaluation():
     def test_method():
         return "teststring"
 
-    class TestAttribute():
+    class TestAttribute:
         def callable(self):
             return 84
 

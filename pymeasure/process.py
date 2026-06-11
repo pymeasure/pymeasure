@@ -62,5 +62,4 @@ class StoppableProcess(context.Process):
         return self._should_stop.is_set()
 
     def __repr__(self):
-        return "<{}(should_stop={})>".format(
-            self.__class__.__name__, self.should_stop())
+        return f"<{self.__class__.__name__}(should_stop={self.should_stop()})>"

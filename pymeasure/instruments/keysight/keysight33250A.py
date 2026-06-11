@@ -24,7 +24,7 @@
 
 import math
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
@@ -433,7 +433,7 @@ class Keysight33250A(SCPIMixin, Instrument):
 
     def wait_for_trigger(
         self,
-        timeout: Optional[float] = None,
+        timeout: float | None = None,
         should_stop: Callable[[], bool] = lambda: False,
     ) -> None:
         """Wait until the triggering has finished.

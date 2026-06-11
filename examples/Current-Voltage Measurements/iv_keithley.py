@@ -83,7 +83,7 @@ class IVProcedure(Procedure):
 
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
-            log.debug("Measuring current: %g mA" % current)
+            log.debug(f"Measuring current: {current:g} mA")
 
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)

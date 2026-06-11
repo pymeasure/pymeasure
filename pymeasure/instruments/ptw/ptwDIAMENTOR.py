@@ -25,7 +25,7 @@
 
 import logging
 
-from typing import Any, Union
+from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
@@ -40,7 +40,7 @@ class ptwDIAMENTOR(Instrument):
     """A class representing the PTW DIAMENTOR DAP dosemeters."""
 
     def __init__(self,
-                 adapter: Union[Adapter, int, str],
+                 adapter: Adapter | int | str,
                  name: str = "PTW DIAMENTOR DAP dosemeter",
                  baud_rate: int = 9600,
                  **kwargs: Any) -> None:
