@@ -22,6 +22,8 @@
 # THE SOFTWARE.
 #
 
+import numpy as np
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set,truncated_range
@@ -45,9 +47,9 @@ class Chroma66205(SCPIMixin, Instrument):
     mode = Instrument.control(
         "CONF:MEAS:MODE?",
         "CONF:MEAS:MODE %s",
-        """Control measurement mode. Can be WINDOW or AVERAGE.""",
+        """Control measurement mode. Can be RMS, DC, or VMEAN.""",
         validator=strict_discrete_set,
-        values=["WINDOW","AVERAGE"]
+        values=["RMS","DC","VMEAN"]
     )
     averages = Instrument.control(
         "CONF:MEAS:AVERAGE?",
@@ -79,6 +81,13 @@ class Chroma66205(SCPIMixin, Instrument):
         values={True:"ON",False:"OFF"},
         map_values=True,
     )
+    integration_mode = Instrument.control(
+        "CONF:INTEG:MODE?",
+        "CONF:INTEG:MODE %s",
+        """Set the mode of execution in integration mode. Can be NORMAL or CONTINUE.""",
+        validator=strict_discrete_set,
+        values=["NORMAL","CONTINUE"],
+    )
     integration_time = Instrument.control(
         "CONF:INTEGRATE:TIME?",
         "CONF:INTEGRATE:TIME %d",
@@ -89,17 +98,17 @@ class Chroma66205(SCPIMixin, Instrument):
     filter = Instrument.control(
         "CONF:FILTER?",
         "CONF:FILTER %s",
-        """Set the low pass filter ON or OFF.""",
+        """Set the bandwidth of the digital low pass filter on input signal path.
+        Can be OFF, BW500, or BW5500.""",
         validator=strict_discrete_set,
+        values=["OFF","BW500","BW5500"],
+    )
+    filter_frequency = Instrument.control(
+        "CONF:FILT:FREQ?",
+        "CONF:FILT:FREQ %s",
+        """Set the low pass filter on the path of frequency detect, True (ON) or False (OFF).""",
         values={True:"ON",False:"OFF"},
         map_values=True,
-    )
-    energy_unit = Instrument.control(
-        "CONF:ENERGY:MODE?",
-        "CONF:ENERGY:MODE %s",
-        """Set energy unit to joules (JOULES) or watt-hours (WHR).""",
-        validator=strict_discrete_set,
-        values=["JOULES","WHR"]
     )
     energy_time = Instrument.control(
         "CONF:ENERGY:TIME?",
@@ -110,7 +119,7 @@ class Chroma66205(SCPIMixin, Instrument):
     )
 
     # MEASUREMENTS #
-    voltage = Instrument.measurement(
+    voltage_rms = Instrument.measurement(
         "FETCH? V",
         """Get the last measured RMS voltage."""
     )
@@ -126,7 +135,11 @@ class Chroma66205(SCPIMixin, Instrument):
         "FETCH? VPK-",
         """Get the last measured negative peak voltage."""
     )
-    current = Instrument.measurement(
+    voltage_mean = Instrument.measurement(
+        "FETCH? VMEAN",
+        """Get the last measured mean voltage."""
+    )
+    current_rms = Instrument.measurement(
         "FETCH? I",
         """Get the last measured RMS current."""
     )
@@ -150,7 +163,7 @@ class Chroma66205(SCPIMixin, Instrument):
         "FETCH? CFI",
         """Get the last measured current crest factor."""
     )
-    power = Instrument.measurement(
+    power_real = Instrument.measurement(
         "FETCH? W",
         """Get the last measured RMS power."""
     )
@@ -161,6 +174,10 @@ class Chroma66205(SCPIMixin, Instrument):
     power_factor = Instrument.measurement(
         "FETCH? PF",
         """Get the last measured power factor."""
+    )
+    phase = Instrument.measurement(
+        "FETCH? DEG",
+        """Get phase in degrees."""
     )
     power_apparent = Instrument.measurement(
         "FETCH? VA",
@@ -182,8 +199,64 @@ class Chroma66205(SCPIMixin, Instrument):
         "FETCH? THDI",
         """Get the last measured current THD."""
     )
-    energy = Instrument.measurement(
-        "MEAS:POW:ENER?",
-        """Get the last measured energy, with units according to CONF:ENERGY:MODE."""
+    energy_wh = Instrument.measurement(
+        "FETCH? WH",
+        """Get the last measured energy in units of watt-hours."""
     )
+    charge_ah = Instrument.measurement(
+        "FETCH? AH",
+        """Get the last measured charge in units of amp-hours."""
+    )
+    trigger_mode = Instrument.control(
+        "TRIG:MODE?",
+        "TRIG:MODE %s",
+        """Set which mode will be triggered by trigger command.
+        Can be NONE|INTEGRATION|INRUSH|LIMIT.""",
+        validator=strict_discrete_set,
+        values=["NONE","INTEGRATION","INRUSH","LIMIT"],
+    )
+    trigger = Instrument.control(
+        "TRIGGER?",
+        "TRIGGER %s",
+        """Trigger energy calculation, inrush, or limit (go/no-go).
+        Status is STOP|FINISH|RUNNING.
+        To trigger, pass 'ON'. To stop or reset integration cycle, pass 'OFF'.""",
+    )
+
+    def integrate_energy(self,integration_time_s: float=10.):
+        # Set up
+        self.energy_time = integration_time_s
+        self.trigger_mode = "INTEGRATION"
+        # Check state and reset if necessary
+        if self.trigger == "FINISH":
+            self.trigger = "OFF"  # Reset
+        # Trigger
+        self.trigger = "ON"
+        tr = self.trigger
+        if tr != "RUNNING":
+            print(f"Warning: Triggered but trigger is not set to 'RUNNING' (instead got {tr})")
+        else:
+            while self.trigger == "RUNNING":
+                pass
+        return self.energy_wh
+
+    def capture_waveform(self,param:str='V'):
+        """Get waveform as ts,wave for voltage (V) or current (I)."""
+        if param not in ['I','V']:
+            raise ValueError(f"Unexpected parameter {param}. Must be 'V' or 'I'.")
+        timeout = 100
+        while self.ask('WAVEFORM:CAPTURE?') != 'OK\n' and timeout > 0:
+            timeout -= 1
+        print("Receiving waveform. This may take a minute...")
+        bvals = self.binary_values(f'WAVEFORM:DATA? {param}',dtype=np.uint8)
+        print("Done.")
+        bvals = bvals[len('#48192'):-1]  # strip
+        wave = bvals.view(np.float32)
+
+        # Wave contains exactly two 60Hz cycles, so sample rate is 61440 (=2048 Samples / 2 * 60Hz)
+        # This might not be consistent across all settings and configurations?
+        Fs=61.44e3
+        ts = np.arange(0,len(wave)/Fs,1/Fs)
+        return ts,wave
+
 
