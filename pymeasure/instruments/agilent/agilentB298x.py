@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from typing import Any, Union
+from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import SCPIMixin, Instrument
