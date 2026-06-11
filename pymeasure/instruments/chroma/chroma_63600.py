@@ -427,17 +427,10 @@ class Chroma63600(SCPIMixin, Instrument):
             **kwargs
         )
 
-        # Initialize default channels for a 63600-5. Makes testing easier.
-        self.init_default_channels()
-
-    def init_default_channels(self):
-        """Populate default channels."""
+        # Populate default channel for testing purposes
         self.add_child(Chroma63630_80_60,1)
-        self.add_child(Chroma63630_80_60,3)
-        self.add_child(Chroma63630_80_60,5)
-        self.add_child(Chroma63630_80_60,7)
-        self.add_child(Chroma63610_80_20,9)
-        self.add_child(Chroma63610_80_20,10)
+        # Auto-discover channels
+        self.discover_channels()
 
     def create_channels(self, channel_class_list: list[type[Chroma63600_Channel]]):
         """Populate the channels of the Chroma 63600-x mainframe.
@@ -472,10 +465,46 @@ class Chroma63600(SCPIMixin, Instrument):
                 raise NotImplementedError("Only Chroma 63610-80-20 and 63630-80-60 channels are" \
                                           +" currently supported.")
 
-    run = Instrument.setting(
-        ":RUN",
-        "Set all electronic loads to ON."
-    )
+    def discover_channels(self,Nslots : int = 5):
+        """Discover and populate channels programmatically.
+
+        The mainframe always leaves space for two channels per load (left and right).
+        The 63610-80-20 has a left and right channel. Other loads (63630-80-60,
+        6363-600-16, 63640-80-80, 63640-150-60) have a single channel per load.
+
+        Note that even if a single-channel load is added, the channel ID increases by
+        _two_. For example, adding five 63630-80-60 loads would result in having channels
+        1, 3, 5, 7, and 9. If the third load were a 63610-80-20 (two channel load), the
+        channels would be 1, 3, 5, 6, 7, and 9.
+
+        :param Nslots: Number of mainframe slots in the unit, either 1, 2, or 5 for the -1, -2,
+                       and -5 mainframes. For N slots, there are up to 2N channels.
+        """
+        # Reset channels
+        if self.channels:
+            channels_copy = self.channels.copy()
+            for i,ch in channels_copy.items():
+                self.remove_child(ch)
+
+        # Auto-discover and add channels
+        for i in range(1,Nslots*2+1):
+            if self.ask(f'CHAN {i};CHAN?') == str(i):
+                # This channel exists, get its id and add it
+                chid = self.ask('CHAN:ID?').split(',')[1]
+                if chid == '63630-80-60':
+                    self.add_child(Chroma63630_80_60,i)
+                elif chid in ['63610-80-20L','63610-80-20R']:
+                    self.add_child(Chroma63610_80_20,i)
+                else:
+                    raise NotImplementedError("Only Chroma 63610-80-20 and 63630-80-60 channels " \
+                                             +"are currently supported.")
+
+    def run(self, state: bool = True):
+        """Set all electronic loads to ON (True) or OFF (False).
+        :param state: True or False, determines Enabled state of loads.
+        """
+        for chid,ch in self.channels.items():
+            ch.enabled = state
 
     currents = Instrument.measurement(
         "MEAS:ALLC?",
