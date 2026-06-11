@@ -90,6 +90,7 @@ This file provides guidance to agents when working with code in this repository.
 - Add type and information about validators (if applicable) at the end of the summary line
 - Example property docstring: `"""Control the voltage in Volts (float strictly from -1 to 1)."""`
 - Docstrings should only contain information relevant for using a property/method, not internal details
+- reStructuredText heading underlines must be exactly as long as the heading text
 
 ## Core Architecture Patterns
 
