@@ -112,14 +112,12 @@ class DHO804Channel(Channel):
         """,
         validator=strict_range,
         values=[500e-6, 10.0],
-        cast=float,
     )
 
     offset = Channel.control(
         ":CHAN{ch}:OFFS?",
         ":CHAN{ch}:OFFS %g",
         """Control the vertical offset in Volts (float).""",
-        cast=float,
     )
 
     probe = Channel.control(
@@ -131,7 +129,6 @@ class DHO804Channel(Channel):
         """,
         validator=strict_discrete_set,
         values=PROBE_ATTENUATIONS,
-        cast=float,
     )
 
     invert = Channel.control(
@@ -262,7 +259,6 @@ class DHO804(SCPIMixin, Instrument):
     sample_rate = Instrument.measurement(
         ":ACQ:SRAT?",
         """Get the current sample rate in Sa/s (float).""",
-        cast=float
     )
 
     # ================================================================== #
@@ -278,7 +274,6 @@ class DHO804(SCPIMixin, Instrument):
         """,
         validator=strict_range,
         values=[1e-9, 1000.0],
-        cast=float,
     )
 
     timebase_offset = Instrument.control(
@@ -286,7 +281,6 @@ class DHO804(SCPIMixin, Instrument):
         ":TIM:MAIN:OFFS %g",
         """Control the horizontal offset (trigger delay) in seconds
         (float).""",
-        cast=float,
     )
 
     timebase_mode = Instrument.control(
@@ -361,7 +355,6 @@ class DHO804(SCPIMixin, Instrument):
         ":TRIG:EDGE:LEV?",
         ":TRIG:EDGE:LEV %g",
         """Control the trigger level in Volts (float).""",
-        cast=float,
     )
 
     trigger_coupling = Instrument.control(
@@ -377,7 +370,6 @@ class DHO804(SCPIMixin, Instrument):
         ":TRIG:HOLD?",
         ":TRIG:HOLD %g",
         """Control the trigger holdoff time in seconds (float).""",
-        cast=float,
     )
 
     @property
