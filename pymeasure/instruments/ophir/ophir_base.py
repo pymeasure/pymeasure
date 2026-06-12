@@ -103,8 +103,7 @@ class OphirCommunication(Instrument):
     """
     Base class for serial communication with Ophir devices, does not contain properties.
 
-    This communication is ASCII based and suitable for RS-232 and USB
-    communication.
+    This communication is ASCII based and suitable for RS-232 and USB communication.
 
     For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
@@ -122,6 +121,13 @@ class OphirCommunication(Instrument):
             usb={"write_termination": "\n", "read_termination": "\n"},
             **kwargs,
         )
+        try:
+            from pyvisa.constants import InterfaceType
+
+            info = self.adapter.connection.resource_info(self.adapter.resource_name) # type: ignore
+            self._is_rs232 = info.interface_type == InterfaceType.asrl
+        except (AttributeError, TypeError):
+            self._is_rs232 = False
 
     """
     The device expects a command and always responds.
@@ -237,9 +243,8 @@ class OphirBase(OphirCommunication):
 
     def start_streaming(self, downsampling: int = 0) -> None:
         """Start streaming mode, where the device sends every `downsampling` measurement."""
-        RS232 = True  # TODO make the check
-        if RS232:
-            # only for RS232 kommunication. Only needed once.
+        if self._is_rs232:
+            # only for RS232 communication. Only needed once.
             self.ask("DU")  # full DUplex, necessary for streaming mode
         self.ask(f"CS1{downsampling or ''}")
         # Continuous Send. CS {int(on/off)} {every X measurement} {response format}
