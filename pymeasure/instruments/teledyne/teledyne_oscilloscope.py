@@ -610,7 +610,9 @@ class TeledyneOscilloscope(SCPIMixin, Instrument, metaclass=ABCMeta):
         return tb_setup
 
     def timebase_setup(self, scale=None, offset=None):
-        """Set up timebase. Unspecified parameters are not modified. Modifying a single parameter
+        """Set up timebase.
+
+        Unspecified parameters are not modified. Modifying a single parameter
         might impact other parameters. Refer to oscilloscope documentation and make multiple
         consecutive calls to timebase_setup if needed.
 
@@ -746,9 +748,10 @@ class TeledyneOscilloscope(SCPIMixin, Instrument, metaclass=ABCMeta):
 
     def _digitize(self, src, num_bytes=None):
         """Acquire waveforms according to the settings of the acquire commands.
-        Note.
-        If the requested number of bytes is not specified, the default chunk size is used,
-        but in such a case it cannot be quaranteed that the message is received in its entirety.
+
+        .. Note::
+            If the requested number of bytes is not specified, the default chunk size is used,
+            but in such a case it cannot be quaranteed that the message is received in its entirety.
 
         :param src: source of data: "C1", "C2", "C3", "C4", "MATH".
         :param: num_bytes: number of bytes expected from the scope (including the header and
@@ -763,6 +766,7 @@ class TeledyneOscilloscope(SCPIMixin, Instrument, metaclass=ABCMeta):
 
     def _header_footer_sanity_checks(self, message):
         """Check that the header follows the predefined format.
+
         The format of the header is DAT2,#9XXXXXXX where XXXXXXX is the number of acquired
         points, and it is zero padded.
         Then check that the footer is present. The footer is a double line-carriage \n\n
@@ -770,13 +774,14 @@ class TeledyneOscilloscope(SCPIMixin, Instrument, metaclass=ABCMeta):
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         # Sanity check on header and footer
         if message_header[0:7] != "DAT2,#9":
-            raise ValueError(f"Waveform data in invalid : header is {message_header}")
+            raise ValueError(f"Waveform data is invalid : header is {message_header}")
         message_footer = bytes(message[-self._footer_size:]).decode("ascii")
         if message_footer != "\n\n":
-            raise ValueError(f"Waveform data in invalid : footer is {message_footer}")
+            raise ValueError(f"Waveform data is invalid : footer is {message_footer}")
 
     def _npoints_sanity_checks(self, message):
         """Check that the number of transmitted points is consistent with the message length.
+
         :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         transmitted_points = int(message_header[-9:])
@@ -786,13 +791,17 @@ class TeledyneOscilloscope(SCPIMixin, Instrument, metaclass=ABCMeta):
                              f"number of received points ({received_points})")
 
     def _acquire_data(self, requested_points=0, sparsing=1):
-        """Acquire raw data points from the scope. The header, footer and number of points are
-        sanity-checked, but they are not processed otherwise. For a description of the input
-        arguments refer to the download_waveform method.
-        If the number of expected points is big enough, the transmission is split in smaller
+        """Acquire raw data points from the scope.
+
+        The header, footer and number of points are sanity-checked, but they are not
+        processed otherwise. For a description of the input arguments refer to the
+        :meth:`download_waveform` method.
+
+        If the number of expected points is too large, the transmission is split in smaller
         chunks of 20k points and read one chunk at a time. I do not know the reason why,
-        but if the chunk size is big enough the transmission does not complete successfully.
-        :return: raw data points as numpy array and waveform preamble
+        but if the chunk size is too large the transmission does not complete successfully.
+
+        :return: raw data points as tuple of numpy array and waveform preamble
         """
         # Setup waveform acquisition parameters
         self.waveform_sparsing = sparsing
