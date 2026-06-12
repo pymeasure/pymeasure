@@ -24,6 +24,7 @@
 
 from enum import IntEnum
 
+from pymeasure.adapters import Adapter
 from .ophir_base import AverageMixin, KeyMixin, OphirBase
 
 
@@ -35,6 +36,6 @@ class NovaII(AverageMixin, KeyMixin, OphirBase):
         EXPOSURE = 4
         POSITION = 5
 
-    def __init__(self, adapter, name="NovaII", **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "NovaII", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.modes_values = self.Modes

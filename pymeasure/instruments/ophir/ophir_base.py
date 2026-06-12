@@ -24,10 +24,15 @@
 
 from enum import Enum, IntFlag, IntEnum
 
-from typing import Union
+from typing import Any, TypedDict, TypeVar
+from collections.abc import Callable
 
+from pymeasure.adapters import Adapter
+from pymeasure.instruments.common_base import CommonBase
 from pymeasure.instruments import Instrument
 
+
+T = TypeVar("T")
 
 class Capabilities(IntFlag):
     # Bit 0 is lit if sensor can measure power.
@@ -85,6 +90,13 @@ class ScreenModes(IntEnum):
     POSITION = 5
 
 
+class HeadInfo(TypedDict):
+    sensortype: str
+    serialnumber: str
+    name: str
+    capabilities: Capabilities
+
+
 class OphirCommunication(Instrument):
     """
     Base class for serial communication with Ophir devices, does not contain properties.
@@ -95,7 +107,7 @@ class OphirCommunication(Instrument):
     For USB exists a COM (win32) object as well, which can be used as an alternative to this driver.
     """
 
-    def __init__(self, adapter, name="Ophir", **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -118,25 +130,31 @@ class OphirCommunication(Instrument):
     - RS-232 requires additionally carriage return before "\n".
     """
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Send a command to the device."""
-        super().write("$" + command)
+        super().write("$" + command, **kwargs)
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read a response."""
-        reply = super().read()
+        reply = super().read(**kwargs)
         if reply[0] == "*":
             # Turn overrange into an inf float.
             return reply[1:].replace("OVER", "inf")
         else:
             raise ConnectionError(reply[1:])
 
-    def values(self, command, **kwargs):
-        """Read values."""
-        kwargs["separator"] = None
-        return super().values(command, **kwargs)
+    def values(
+        self,
+        command: str,
+        separator: str | None = ",",
+        cast: Callable[[str], T] = float,  # type: ignore[assignment]
+        **kwargs,
+    ) -> list[T | str]:
+        """Write a command to the instrument and return a list of formatted values from the result.
+        """
+        return super().values(command, separator=None, cast=cast, **kwargs)
 
-    def check_errors(self):
+    def check_errors(self) -> list[Any]:
         """Check for errors after setting a value."""
         self.read()  # which does error-checking.
         return []
@@ -172,14 +190,14 @@ class OphirBase(OphirCommunication):
     )
 
     @property
-    def head_information(self):
+    def head_information(self) -> HeadInfo:
         """Get information about the sensor head."""
         got = self.ask("HI")  # Head Information
         sensortype, serialnumber, name, capabilitiesString = got.split(maxsplit=3)
         # got is of type: sensortype serialnumber capabilities_byte
         capabilitiesInt = int(capabilitiesString, base=16)
         capabilities = Capabilities(capabilitiesInt)
-        self.headInfo = {
+        self.headInfo: HeadInfo = {
             "sensortype": sensortype,
             "serialnumber": serialnumber,
             "name": name,
@@ -206,7 +224,7 @@ class OphirBase(OphirCommunication):
 
     def reset(self) -> None:
         """Reset the device, for example after a head change."""
-        return self.ask("RE")
+        self.ask("RE")
 
     def start_streaming(self, downsampling: int = 0) -> None:
         """Start streaming mode, where the device sends every `downsampling` measurement."""
@@ -214,10 +232,10 @@ class OphirBase(OphirCommunication):
         if RS232:
             # only for RS232 kommunication. Only needed once.
             self.ask("DU")  # full DUplex, necessary for streaming mode
-        self.ask(f"CS1{downsampling if downsampling else ''}")
+        self.ask(f"CS1{downsampling or ''}")
         # Continuous Send. CS {int(on/off)} {every X measurement} {response format}
 
-    def stop_streaming(self):
+    def stop_streaming(self) -> None:
         """Stop streaming mode."""
         self.ask("CS0")
 
@@ -271,7 +289,7 @@ class OphirBase(OphirCommunication):
         # not Pulsar
     )
 
-    def getAllRanges(self):
+    def getAllRanges(self) -> dict[str, Any]:
         """
         Get all possible ranges.
 
@@ -280,7 +298,7 @@ class OphirBase(OphirCommunication):
         # doesn't work with NOVA I
         ranges = self.values("AR", separator=None, cast=str)
         index = -1 if ranges[1] == "AUTO" else 0
-        values = {}
+        values: dict[str, Any] = {}
         for range in ranges[1:]:
             values[range] = index
             index += 1
@@ -297,7 +315,7 @@ class OphirBase(OphirCommunication):
             options = [
                 values[0],
                 [float(v) for v in values[4:]],
-                [float(values[1], float(values[2]))],
+                [float(values[1]), float(values[2])],
             ]
         else:
             options = [values[0], values[2:]]
@@ -322,7 +340,7 @@ class OphirBase(OphirCommunication):
         "WL %i", """Set the wavelength of the currently selected index in nm (int)."""
     )
 
-    def get_all_wavelengths(self):
+    def get_all_wavelengths(self) -> str:
         """Get all possible wavelengths."""
         # doesn't work with NOVA I
         return self.ask("AW")  # All Wavelengths
@@ -415,7 +433,7 @@ class OphirBase(OphirCommunication):
         """
         self.ask(f"HC{config}")  # Head Configuration
 
-    def save_instrument_configuration(self):
+    def save_instrument_configuration(self) -> None:
         """
         Save instrument configuration.
 
@@ -423,13 +441,13 @@ class OphirBase(OphirCommunication):
         """
         self.ask("IC")  # Instrument Configuration
 
-    def zero(self):
+    def zero(self) -> None:
         """Zero the measurement circuitry. Recommended once every two months."""
         self.ask("ZE")  # ZEro
 
-    def zero_abort(self):
+    def zero_abort(self) -> None:
         """Abort a zeroing, if underway and return the status as string."""
-        return self.ask("ZA")  # Zero Abort
+        self.ask("ZA")  # Zero Abort
 
     zero_status = Instrument.measurement(
         "ZQ",  # Zero Query
@@ -438,7 +456,7 @@ class OphirBase(OphirCommunication):
         get_process_list=lambda v: " ".join(v),
     )
 
-    def save_zero(self):
+    def save_zero(self) -> None:
         """Save result of zeroing process to memory."""
         self.ask("ZS")  # Zero Save
 
@@ -561,17 +579,17 @@ class AverageMixin:
     )
 
 
-class KeyMixin:
+class KeyMixin(CommonBase):
     """Mixin for pressing keys remotely."""
 
     Keys = Keys
 
-    def key_legends(self):
+    def key_legends(self) -> str:
         """Return the legends of the keys. A tilde '~' indicates active key."""
         return self.ask("KL")  # Key Legends
         # Nova, Vega, NovaII, LaserStar
 
-    def press_key(self, key: Union[str, int, Keys]):
+    def press_key(self, key: str | int | Keys) -> None:
         """
         Simulate a keypress.
 
@@ -593,4 +611,4 @@ class KeyMixin:
         }
         if isinstance(key, str):
             key = keys[key]
-        return self.ask(f"SK{key}")  # Simulate Key-press
+        self.ask(f"SK{key}")  # Simulate Key-press

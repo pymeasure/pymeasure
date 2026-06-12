@@ -22,6 +22,7 @@
 # THE SOFTWARE.
 #
 
+from pymeasure.adapters import Adapter
 from .ophir_base import KeyMixin, OphirCommunication, OphirBase
 
 
@@ -41,7 +42,7 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
     SL, SP, VE, WL, WN, WW
     """
 
-    def __init__(self, adapter, name="Nova", **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "Nova", **kwargs):
         super().__init__(adapter, name=name, **kwargs)
         # Set timeouts for Nova device.
         self._power_timeout = 0
@@ -83,12 +84,12 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
 
     # additional working
     @property
-    def power_timeout(self):
+    def power_timeout(self) -> float:
         """Control the timeout in ms waiting for a power signal."""
         return self._power_timeout
 
     @power_timeout.setter
-    def power_timeout(self, timeout=0):
+    def power_timeout(self, timeout: float = 0) -> None:
         """Control the timeout in ms waiting for a power signal."""
         self._power_timeout = timeout
         if timeout:
@@ -97,12 +98,12 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
             self.power_command_process = lambda c: c
 
     @property
-    def energy_timeout(self):
+    def energy_timeout(self) -> float:
         """Control the timeout in ms waiting for an energy signal."""
         return self._energy_timeout
 
     @energy_timeout.setter
-    def energy_timeout(self, timeout=0):
+    def energy_timeout(self, timeout: float = 0) -> None:
         """Control the timeout in ms waiting for an energy signal."""
         self._energy_timeout = timeout
         if timeout:
