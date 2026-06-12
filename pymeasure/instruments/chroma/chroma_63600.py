@@ -112,7 +112,7 @@ class Chroma63600_Channel(Channel):
     )
     current = Channel.measurement(
         "FETCH:CURRENT?",
-        """Get current measured at electronic load input."""
+        """Measure current at electronic load input in Amps (float)."""
     )
     frequency = Channel.measurement(
         "FETCH:FREQUENCY?",
@@ -126,11 +126,11 @@ class Chroma63600_Channel(Channel):
         "FETCH:VOLTAGE?",
         """Get the voltage measured at the electronic load input."""
     )
-    protection_clear = Channel.setting(
-        "LOAD:PROTECTION:CLEAR",
+    def clear_protection_state(self):
         """Set the status of the electronic load to a clear state."""
-    )
-    activate_short = Channel.control(
+        self.write("LOAD:PROTECTION:CLEAR")
+
+    short_circuit_enabled = Channel.control(
         "LOAD:SHORT?",
         "LOAD:SHORT %s",
         """Set active or unactive for the short-circuit simulation.""",
@@ -444,7 +444,7 @@ class Chroma63600(SCPIMixin, Instrument):
                 raise NotImplementedError("Only Chroma 63610-80-20 and 63630-80-60 channels are" \
                                           +" currently supported.")
 
-    def discover_channels(self,Nslots : int = 5):
+    def discover_channels(self,Nslots: int = 5):
         """Discover and populate channels programmatically.
 
         The mainframe always leaves space for two channels per load (left and right).
@@ -462,11 +462,11 @@ class Chroma63600(SCPIMixin, Instrument):
         # Reset channels
         if self.channels:
             channels_copy = self.channels.copy()
-            for i,ch in channels_copy.items():
+            for i, ch in channels_copy.items():
                 self.remove_child(ch)
 
         # Auto-discover and add channels
-        for i in range(1,Nslots*2+1):
+        for i in range(1, Nslots*2+1):
             if self.ask(f'CHAN {i};CHAN?') == str(i):
                 # This channel exists, get its id and add it
                 chid = self.ask('CHAN:ID?').split(',')[1]
@@ -475,14 +475,15 @@ class Chroma63600(SCPIMixin, Instrument):
                 elif chid in ['63610-80-20L','63610-80-20R']:
                     self.add_child(Chroma63610_80_20,i)
                 else:
-                    raise NotImplementedError("Only Chroma 63610-80-20 and 63630-80-60 channels " \
-                                             +"are currently supported.")
+                    raise NotImplementedError(
+                        "Only Chroma 63610-80-20 and 63630-80-60 channels "
+                        "are currently supported.")
 
     def run(self, state: bool = True):
         """Set all electronic loads to ON (True) or OFF (False).
         :param state: True or False, determines Enabled state of loads.
         """
-        for chid,ch in self.channels.items():
+        for chid, ch in self.channels.items():
             ch.enabled = state
 
     currents = Instrument.measurement(
