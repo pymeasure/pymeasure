@@ -491,7 +491,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
             # number of points still to read
             remaining_points = expected_points - read_points
             # number of points requested in a single chunk
-            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
+            requested_points = min(remaining_points, chunk_points)
             self.waveform_points = requested_points
             # number of bytes requested in a single chunk
             if format == 'BYTE':
