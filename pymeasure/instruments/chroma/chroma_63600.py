@@ -406,43 +406,10 @@ class Chroma63600(SCPIMixin, Instrument):
             **kwargs
         )
 
-        # Populate default channel for testing purposes
-        self.add_child(Chroma63630_80_60,1)
+        # Populate a default channel for fallback
+        self.add_child(Chroma63630_80_60, 1)
         # Auto-discover channels
         self.discover_channels()
-
-    def create_channels(self, channel_class_list: list[type[Chroma63600_Channel]]):
-        """Populate the channels of the Chroma 63600-x mainframe.
-
-        Pass a list of Chroma63600_Channel subclasses (not objects). The classes are
-        used to add channels, dependent on the type of load (single or double). The
-        mainframe always leaves space for two channels per load (left and right).
-        The 63610-80-20 has a left and right channel. Other loads (63630-80-60,
-        6363-600-16, 63640-80-80, 63640-150-60) have a single channel per load.
-
-        Note that even if a single-channel load is added, the channel ID increases by
-        _two_. For example, adding five 63630-80-60 loads would result in having channels
-        1, 3, 5, 7, and 9. If the third load were a 63610-80-20 (two channel load), the
-        channels would be 1, 3, 5, 6, 7, and 9.
-        """
-        if self.channels:
-            channels_copy = self.channels.copy()
-            for i,ch in channels_copy.items():
-                self.remove_child(ch)
-
-        i = 1
-        for ch_cls in channel_class_list:
-            if ch_cls == Chroma63610_80_20:  # Double, add two channels
-                self.add_child(ch_cls,i)
-                i += 1
-                self.add_child(ch_cls,i)
-                i += 1
-            elif ch_cls == Chroma63630_80_60:  # Single, add one channel
-                self.add_child(ch_cls,i)
-                i += 2  # Still add 2, one channel skipped
-            else:
-                raise NotImplementedError("Only Chroma 63610-80-20 and 63630-80-60 channels are" \
-                                          +" currently supported.")
 
     def discover_channels(self,Nslots: int = 5):
         """Discover and populate channels programmatically.

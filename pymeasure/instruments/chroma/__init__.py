@@ -22,6 +22,6 @@
 # THE SOFTWARE.
 #
 
-from .chroma_63600 import Chroma63600, Chroma63630_80_60, Chroma63610_80_20
+from .chroma_63600 import Chroma63600
 
 
