@@ -22,14 +22,15 @@
 # THE SOFTWARE.
 #
 
+from dataclasses import dataclass
+import re
+from struct import unpack
+
+import numpy as np
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
     TeledyneOscilloscopeChannel, _results_list_to_dict
-
-from struct import unpack
-from dataclasses import dataclass
-import numpy as np
-import re
 
 
 def sanitize_source(source):
@@ -54,14 +55,13 @@ def sanitize_source(source):
 
 
 class _ChunkResizer:
-    """The only purpose of this class is to resize the chunk size of the instrument adapter.
+    """Resize the chunk size of the instrument adapter.
 
     This is necessary when reading a big chunk of data from the oscilloscope like image dumps and
     waveforms.
 
     .. Note::
-        Only if the new chunk size is bigger than the current chunk size, it is resized.
-
+        Chunk size is only resized if the new chunk size is bigger than the current chunk size.
     """
 
     def __init__(self, adapter, chunk_size):
@@ -142,15 +142,16 @@ class MAUIWaveformDescriptor:
 
     @classmethod
     def parse_desc(cls,desc: bytes):
-        """
-        Get description with something like this:
-            self.write(f"{self.waveform_source}:WF? DESC")
-            desc = self.read_bytes(-1)
-        Assumes COMM_HEADER == OFF
+        """Parse waveform descriptor from bytes, assuming COMM_HEADER=="OFF".
+
+        .. Note::
+            Assumes COMM_HEADER == OFF.
+
+        :return: MAUIWaveformDescriptor object.
         """
         # Check for header
         if desc[0:7].decode('ascii') == 'DESC,#9':
-            desc = desc[len('DESC,#9000000000'):]  # don't need this
+            desc = desc[len('DESC,#9000000000'):]  # Remove header
 
         # parse
         desc_name           = desc[0:16].split(b'\x00',1)[0].decode('ascii')
@@ -397,7 +398,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     def _digitize(self, src, num_bytes=None, block='DAT1'):
         """Acquire waveforms according to the settings of the acquire commands.
-        Note.
+
         If the requested number of bytes is not specified, the default chunk size is used,
         but in such a case it cannot be guaranteed that the message is received in its entirety.
 
@@ -408,32 +409,35 @@ class TeledyneMAUI(TeledyneOscilloscope):
         :return: bytearray with raw data.
         """
         with _ChunkResizer(self.adapter, num_bytes):
-            # Get descriptor
+            # Get descriptor  TODO Refactor into its own method
             self.write(f"{self.waveform_source}:WF? DESC")
             dd = self.read_bytes(-1)
             descb = dd[len('DESC,#9000000000'):]
             self.waveform_descriptor = MAUIWaveformDescriptor.parse_desc(descb)
             # Get data
             binary_values = self.binary_values(f"{src}:WF? {block}", dtype=np.uint8)
-            # NOTE: data stored as bytes for now, but if format is WORD it must be converted
-            # to signed 16-bit integer
+            # NOTE: Payload is stored as raw bytes for now. But it must be converted to bytes or
+            # words according to the data format option before it can be interpreted. This is
+            # done in _process_data(), before scaling.
         if num_bytes is not None and len(binary_values) != num_bytes:
             raise BufferError(f"read bytes ({len(binary_values)}) != requested bytes ({num_bytes})")
         return binary_values
 
     def _header_footer_sanity_checks(self, message, block='DAT1'):
         """Check that the header follows the predefined format.
+
         The format of the header is <block>,#9XXXXXXX where XXXXXXX is the number of acquired
         points, and it is zero padded.
-        Then check that the footer is present. The footer is a double line-carriage \n\n
+
         :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         # Sanity check on header and footer
         if message_header[0:7] != f"{block},#9":
-            raise ValueError(f"Waveform data in invalid : header is {message_header}")
+            raise ValueError(f"Waveform data is invalid : header is {message_header}")
 
     def _npoints_sanity_checks(self, message):
         """Check that the number of transmitted points is consistent with the message length.
+
         :param message: raw bytes received from the scope """
         message_header = bytes(message[0:self._header_size]).decode("ascii")
         transmitted_points = int(message_header[-9:])
@@ -443,13 +447,17 @@ class TeledyneMAUI(TeledyneOscilloscope):
                              f"number of received points ({received_points})")
 
     def _acquire_data(self, requested_points=0, sparsing=1, block='DAT1', format='WORD'):
-        """Acquire raw data points from the scope. The header, footer and number of points are
-        sanity-checked, but they are not processed otherwise. For a description of the input
-        arguments refer to the download_waveform method.
-        If the number of expected points is big enough, the transmission is split in smaller
+        """Acquire raw data points from the scope.
+
+        The header, footer and number of points are sanity-checked, but they are not processed
+        otherwise. For a description of the input arguments refer to the :meth:`download_waveform`
+        method.
+
+        If the number of expected points is too large, the transmission is split into smaller
         chunks of 20k points and read one chunk at a time. I do not know the reason why,
-        but if the chunk size is big enough the transmission does not complete successfully.
-        :return: raw data points as numpy array and waveform preamble
+        but if the chunk size is too large the transmission does not complete successfully.
+
+        :return: raw data points as tuple of numpy array and waveform preamble.
         """
         # Setup waveform acquisition parameters
         self.waveform_sparsing = sparsing
@@ -463,7 +471,7 @@ class TeledyneMAUI(TeledyneOscilloscope):
         else:
             expected_points = int(sample_points / sparsing)
 
-        # If the number of points is big enough, split the data in small chunks and read it one
+        # If the number of points is too large, split the data in small chunks and read it one
         # chunk at a time. For less than a certain amount of points we do not bother splitting them.
         chunk_bytes = 20000
         chunk_points = chunk_bytes - self._header_size - self._footer_size
@@ -511,10 +519,12 @@ class TeledyneMAUI(TeledyneOscilloscope):
 
     def _process_data(self, ydata, preamble):
         """Apply scale and offset to the data points acquired from the scope.
+
         - Y axis : the scale is given by descriptor.vgain and the offset -descriptor.vos. the
         offset is not applied for the MATH source.
         - X axis : the scale is given by descriptor.horiz_ival*i + descriptor.horiz_os for
         i = 0,1,...,N.
+
         :return: tuple of (numpy array of Y points, numpy array of X points, waveform preamble)"""
 
         if self.waveform_descriptor.desc_comm_type == 0:
