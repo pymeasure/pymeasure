@@ -141,7 +141,7 @@ class MAUIWaveformDescriptor:
     wave_src            : int
 
     @classmethod
-    def parse_desc(cls,desc: bytes):
+    def parse_descriptor(cls,desc: bytes):
         """Parse waveform descriptor from bytes, assuming COMM_HEADER=="OFF".
 
         .. Note::
@@ -396,6 +396,16 @@ class TeledyneMAUI(TeledyneOscilloscope):
     #    Waveform    #
     ##################
 
+    def read_waveform_descriptor(self) -> MAUIWaveformDescriptor:
+        """Read and parse instrument waveform descriptor.
+
+        :return: MAUIWaveformDescriptor
+        """
+        self.write(f"{self.waveform_source}:WF? DESC")
+        dd = self.read_bytes(-1)
+        descb = dd[len('DESC,#9000000000'):]
+        return MAUIWaveformDescriptor.parse_descriptor(descb)
+
     def _digitize(self, src, num_bytes=None, block='DAT1'):
         """Acquire waveforms according to the settings of the acquire commands.
 
@@ -409,11 +419,8 @@ class TeledyneMAUI(TeledyneOscilloscope):
         :return: bytearray with raw data.
         """
         with _ChunkResizer(self.adapter, num_bytes):
-            # Get descriptor  TODO Refactor into its own method
-            self.write(f"{self.waveform_source}:WF? DESC")
-            dd = self.read_bytes(-1)
-            descb = dd[len('DESC,#9000000000'):]
-            self.waveform_descriptor = MAUIWaveformDescriptor.parse_desc(descb)
+            # Get descriptor
+            self.waveform_descriptor = self.read_waveform_descriptor()
             # Get data
             binary_values = self.binary_values(f"{src}:WF? {block}", dtype=np.uint8)
             # NOTE: Payload is stored as raw bytes for now. But it must be converted to bytes or
