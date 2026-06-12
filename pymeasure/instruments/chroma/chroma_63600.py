@@ -102,29 +102,7 @@ class Chroma63600_Channel(Channel):
         "LOAD:PROTECTION?",  # Synonym: FETCH:STATUS?
         """Get the status of the electronic load.
 
-        +--------+-----------------------------+
-        | bit(s) | description                 |
-        +--------+-----------------------------+
-        | 15-9   | Not assigned                |
-        +--------+-----------------------------+
-        |   8    | Remote inhibit              |
-        +--------+-----------------------------+
-        |   7    | Fan failure                 |
-        +--------+-----------------------------+
-        |   6    | Max sine wave current limit |
-        +--------+-----------------------------+
-        |   5    | Synchronization timeout     |
-        +--------+-----------------------------+
-        |   4    | Reverse voltage on input    |
-        +--------+-----------------------------+
-        |   3    | Over power                  |
-        +--------+-----------------------------+
-        |   2    | Over current                |
-        +--------+-----------------------------+
-        |   1    | Over voltage                |
-        +--------+-----------------------------+
-        |   0    | Over temperature            |
-        +--------+-----------------------------+
+    Returns :class:`InstrStatus`.
         """,
         get_process=lambda v: InstrStatus(v)
     )
