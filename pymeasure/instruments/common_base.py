@@ -438,21 +438,20 @@ class CommonBase:
     def values(
         self,
         command: str,
-        separator: str = ",",
+        separator: str | None = ",",
         cast: Callable[[str], T] = float,  # type: ignore[assignment]
         preprocess_reply: Callable[[str], str] | None = None,
         maxsplit: int = -1,
         **kwargs,
     ) -> list[T | str]:
-        """Write a command to the instrument and return a list of formatted
-        values from the result.
+        """Write a command to the instrument and return a list of formatted values from the result.
 
         :param command: SCPI command to be sent to the instrument.
         :param preprocess_reply: Optional callable used to preprocess the string
             received from the instrument, before splitting it.
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
-            the device into a list.
+            the device into a list. None splits on any whitespace (see :code:`str.split`).
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
@@ -505,7 +504,7 @@ class CommonBase:
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Callable[[str], str] | None = None,
-        separator: str = ",",
+        separator: str | None = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
@@ -545,7 +544,7 @@ class CommonBase:
             received from the instrument, before splitting it.
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
-            the device into a list.
+            the device into a list. None splits on any whitespace (see :code:`str.split`).
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
@@ -713,7 +712,7 @@ class CommonBase:
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Callable[[str], str] | None = None,
-        separator: str = ",",
+        separator: str | None = ",",
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
@@ -745,7 +744,7 @@ class CommonBase:
             received from the instrument, before splitting it.
             The callable returns the processed string.
         :param separator: A separator character to split the string returned by
-            the device into a list.
+            the device into a list. None splits on any whitespace (see :code:`str.split`).
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
