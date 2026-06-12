@@ -160,14 +160,14 @@ def test_diffuser_setter():
         inst.diffuser = "IN"
 
 
-def test_filter_getter():
+def test_sensor_filter_getter():
     with expected_protocol(OphirBase, [("$FQ", "*1 OUT IN")]) as inst:
-        assert inst.filter == "OUT"
+        assert inst.sensor_filter == "OUT"
 
 
-def test_filter_setter():
+def test_sensor_filter_setter():
     with expected_protocol(OphirBase, [("$FQ2", "*2 OUT IN")]) as inst:
-        inst.filter = "IN"
+        inst.sensor_filter = "IN"
 
 
 def test_mains_getter():

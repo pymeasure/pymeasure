@@ -27,7 +27,7 @@ from .ophir_base import KeyMixin, OphirCommunication, OphirBase
 
 
 class NovaEnums:
-    """This method is needed to separate the enums from the Nova for the documentation"""
+    """Provides enums separately from Nova to improve documentation layout."""
 
     Capabilities = OphirBase.Capabilities
     LegacyModes = OphirBase.LegacyModes

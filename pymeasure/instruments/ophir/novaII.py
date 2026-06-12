@@ -29,7 +29,10 @@ from .ophir_base import AverageMixin, KeyMixin, OphirBase
 
 
 class NovaII(AverageMixin, KeyMixin, OphirBase):
+    """Represents an Ophir Nova II laser power/energy meter."""
+
     class Modes(IntEnum):
+        """Measurement modes supported by the Nova II."""
         PASSIVE = 1
         POWER = 2
         ENERGY = 3

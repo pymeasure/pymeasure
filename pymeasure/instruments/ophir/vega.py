@@ -29,7 +29,10 @@ from .ophir_base import AverageMixin, KeyMixin, OphirBase
 
 
 class Vega(AverageMixin, KeyMixin, OphirBase):
+    """Represents an Ophir Vega laser power/energy meter."""
+
     class Modes(IntEnum):
+        """Measurement modes supported by the Vega."""
         PASSIVE = 1
         POWER = 2
         ENERGY = 3

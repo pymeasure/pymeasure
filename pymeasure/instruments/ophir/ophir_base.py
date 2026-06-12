@@ -137,6 +137,8 @@ class OphirCommunication(Instrument):
     def read(self, **kwargs) -> str:
         """Read a response."""
         reply = super().read(**kwargs)
+        if not reply:
+            raise ConnectionError("Empty response from device.")
         if reply[0] == "*":
             # Turn overrange into an inf float.
             return reply[1:].replace("OVER", "inf")
@@ -197,13 +199,13 @@ class OphirBase(OphirCommunication):
         # got is of type: sensortype serialnumber capabilities_byte
         capabilitiesInt = int(capabilitiesString, base=16)
         capabilities = Capabilities(capabilitiesInt)
-        self.headInfo: HeadInfo = {
+        head_info: HeadInfo = {
             "sensortype": sensortype,
             "serialnumber": serialnumber,
             "name": name,
             "capabilities": capabilities,
         }
-        return self.headInfo
+        return head_info
 
     head_type = Instrument.measurement(
         "HT",
@@ -219,7 +221,7 @@ class OphirBase(OphirCommunication):
         check_set_errors=True,
         values={9600: 1, 19200: 2, 38400: 3, 300: 4, 1200: 5, 4800: 6},
         map_values=True,
-        get_process_list=lambda v: v[v[0]],
+        get_process_list=lambda v: v[int(v[0])],
     )
 
     def reset(self) -> None:
@@ -299,8 +301,8 @@ class OphirBase(OphirCommunication):
         ranges = self.values("AR", separator=None, cast=str)
         index = -1 if ranges[1] == "AUTO" else 0
         values: dict[str, Any] = {}
-        for range in ranges[1:]:
-            values[range] = index
+        for rng in ranges[1:]:
+            values[rng] = index
             index += 1
         self.range_values = values
         self.range_map_values = True
@@ -367,7 +369,7 @@ class OphirBase(OphirCommunication):
         # not Pulsar
     )
 
-    filter = Instrument.control(
+    sensor_filter = Instrument.control(
         "FQ",
         "FQ%i",  # Filter Query
         """Control photodiode sensors filter.""",
@@ -486,7 +488,7 @@ class OphirBase(OphirCommunication):
         cast=str,
         values={"LOW": 1, "MEDIUM": 2, "HIGH": 3},
         map_values=True,
-        check_get_errors=True,
+        check_set_errors=True,
     )
 
     energy_ready = Instrument.measurement(
