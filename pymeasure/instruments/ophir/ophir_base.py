@@ -25,14 +25,16 @@
 from enum import Enum, IntFlag, IntEnum
 
 from typing import Any, TypedDict, TypeVar
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments.common_base import CommonBase
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 
 T = TypeVar("T")
+
 
 class Capabilities(IntFlag):
     # Bit 0 is lit if sensor can measure power.
@@ -176,6 +178,10 @@ class OphirBase(OphirCommunication):
     Modes = Modes
     ScreenModes = ScreenModes
 
+    def __init__(self, adapter: Adapter | str | int, name: str = "Ophir", **kwargs):
+        super().__init__(adapter, name, **kwargs)
+        self.wavelength_get_process_list = self._wavelength_get_process
+
     # INFORMATION ABOUT DEVICE AND HEAD
     id = Instrument.measurement(
         "II",  # Instrument Information
@@ -226,6 +232,7 @@ class OphirBase(OphirCommunication):
 
     def reset(self) -> None:
         """Reset the device, for example after a head change."""
+        self.wavelength_values = None
         self.ask("RE")
 
     def start_streaming(self, downsampling: int = 0) -> None:
@@ -309,51 +316,93 @@ class OphirBase(OphirCommunication):
         return values
 
     # Wavelength
-    @property
-    def wavelength_options(self):
-        """Get a list of all wavelengths or a list of the wavelength limits."""
-        values = self.values("AW", cast=str)  # All Wavelengths
+    def _extract_wavelengths(
+        self, values: list[str]
+    ) -> tuple[float | None | str, tuple[float, float] | None, Sequence[float | str | None]]:
         if values[0] == "CONTINUOUS":
-            options = [
-                values[0],
-                [float(v) for v in values[4:]],
-                [float(values[1]), float(values[2])],
-            ]
+            limits = (float(values[1]), float(values[2]))
+            entries = [None if v == "NONE" else float(v) for v in values[4:]]
+            current = entries[int(values[3]) - 1]
         else:
-            options = [values[0], values[2:]]
-        self.wavelength_values = [None] + options[1]
-        return options
+            entries = values[2:]
+            current = entries[int(values[1]) - 1]
+            limits = None
+        self.wavelength_values = [None] + entries  # indices start with 1
+        self.wavelength_value_values = limits
+        return current, limits, entries
+
+    def _wavelength_get_process(self, values):
+        return self._extract_wavelengths(values)[0]
+
+    @property
+    def wavelength_list(
+        self,
+    ) -> tuple[tuple[float, float] | None, Sequence[float | str | None]]:
+        """Get wavelength limits for continuous sensor and wavelength list."""
+        values = self.values("AW", cast=str)  # All Wavelengths
+        current, limits, entries = self._extract_wavelengths(values)
+        return limits, entries
 
     wavelength = Instrument.control(
         "AW",
         "WI%i",
-        """Control the selected wavelength range.""",
+        """Control the selected wavelength (range) in list of wavelengths.
+
+        Read this attribute or :attr:`wavelength_list` to update the list of available
+        wavelengths. Use :attr:`wavelength_value` to set the value of the current wavelength entry.
+        """,
         # AW, WI not available for NOVA I
         cast=str,
+        validator=strict_discrete_set,
         map_values=True,
-        get_process_list=lambda v: v[int(v[1]) + 1]
-        if v[0] == "DISCRETE"
-        else v[int(v[3] + 3)],
+        get_process_list=lambda v: v,
         check_set_errors=True,
         dynamic=True,
     )
 
     wavelength_value = Instrument.setting(
-        "WL %i", """Set the wavelength of the currently selected index in nm (int)."""
+        "WL %i",
+        """Set the wavelength of the currently selected entry in nm (continuous sensor only, int).
+        """,
+        values=(0, float("inf")),
+        validator=strict_range,
+        dynamic=True,
     )
 
-    def get_all_wavelengths(self) -> str:
-        """Get all possible wavelengths."""
-        # doesn't work with NOVA I
-        return self.ask("AW")  # All Wavelengths
+    wavelength_index = Instrument.control(
+        "AW",
+        "WI%i",
+        """Control the index of the wavelength in the wavelength list.""",
+        get_process_list=lambda v: int(v[3]) if v[0] == "CONTINUOUS" else int(v[1]),
+        set_process=lambda v: v + 1,
+        check_set_errors=True,
+    )
+
+    def define_wavelength_entry(self, index: int, value: int) -> None:
+        """Define the wavelength in nm at index (0 based) in the wavelength list.
+
+        The slot of the wavelength list must be empty, you can clear it with
+        :meth:`clear_wavelength_entry`.
+        See the currently defined entries and wavelength limits with :attr:`wavelength_list`.
+        """
+        if not 0 <= index <= 5:
+            raise ValueError("Index must be between 0 and 5.")
+        self.ask(f"WD {index + 1} {value}")
+
+    def clear_wavelength_entry(self, index: int) -> None:
+        """Clear the wavelength at index (0 based) in the wavelength list.
+
+        It must not be the currently active index.
+        To set a new value use :meth:`define_wavelength_entry`.
+        See the currently defined entries and wavelength limits with :attr:`wavelength_list`.
+        """
+        if not 0 <= index <= 5:
+            raise ValueError("Index must be between 0 and 5.")
+        self.ask(f"WE {index + 1}")
 
     """
         # Additional commands not yet implemented
-        WE erase a wavelength from the list
-        WI set the wavelength to index
-        WL set currently active wavelength to value
         WW set to discrete wavelenth
-        WD Add a wavelength to the list
     """
 
     # Specific measurement

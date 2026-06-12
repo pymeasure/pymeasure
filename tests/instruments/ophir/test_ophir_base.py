@@ -23,6 +23,7 @@
 #
 
 
+import pytest
 from pytest import raises
 
 from pymeasure.test import expected_protocol
@@ -145,6 +146,71 @@ def test_getAllRanges():
 
 
 # Wavelength
+class TestWavelength:
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                ((350, 1100), [633, 488, 978, None, None, None]),
+            ),
+            ("*DISCRETE 1 VIS NIR", (None, ["VIS", "NIR"])),
+        ],
+    )
+    def test_wavelength_list(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength_list == result
+
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                633,
+            ),
+            ("*DISCRETE 1 VIS NIR", "VIS"),
+        ],
+    )
+    def test_wavelength_getter(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength == result
+
+    def test_wavelength_setter(self):
+        with expected_protocol(
+            OphirBase,
+            [
+                ("$AW", "*CONTINUOUS 193 12000 4 248 366 532 1064 NONE 10.6"),
+                ("$WI1", "*"),
+            ],
+        ) as inst:
+            inst.wavelength  # read wavelength to set the limits
+            inst.wavelength = 248
+
+    def test_define_wavelength_entry(self):
+        with expected_protocol(OphirBase, [("$WD 4 428", "*")]) as inst:
+            inst.define_wavelength_entry(3, 428)
+
+    def test_clear_wavelength_entry(self):
+        with expected_protocol(OphirBase, [("$WE 4", "*")]) as inst:
+            inst.clear_wavelength_entry(3)
+
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                1,
+            ),
+            ("*DISCRETE 1 VIS NIR", 1),
+        ],
+    )
+    def test_wavelength_index_getter(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength_index == result
+
+    def test_wavelength_index_setter(self):
+        with expected_protocol(OphirBase, [("$WI5", "*")]) as inst:
+            inst.wavelength_index = 4
 
 
 # Special measurement
