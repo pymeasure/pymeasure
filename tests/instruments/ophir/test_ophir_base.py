@@ -102,47 +102,60 @@ def test_units():
 
 
 # Range
-def test_range_getter():
-    with expected_protocol(OphirBase, [("$RN", "*4")]) as inst:
-        assert inst.range == 4
+class TestRange:
+    def test_range_getter(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$RN", "*4")],
+        ) as inst:
+            inst.range_entries  # to set the values
+            assert inst.range == "3.00uW"
 
+    def test_range_setter(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$WN1", "*")],
+        ) as inst:
+            inst.range_entries  # to set the values
+            inst.range = "3.00mW"
 
-def test_range_setter():
-    with expected_protocol(OphirBase, [("$WN1", "*")]) as inst:
-        inst.range = 1
+    def test_range_index_getter(self):
+        with expected_protocol(OphirBase, [("$RN", "*4")]) as inst:
+            assert inst.range_index == 4
 
+    def test_range_index_setter(self):
+        with expected_protocol(OphirBase, [("$WN1", "*")]) as inst:
+            inst.range_index = 0
 
-def test_range_values():
-    with expected_protocol(OphirBase, [("$WN-1", "*")]) as inst:
-        inst.range_map_values = True
-        inst.range_values = {
-            "AUTO": -1,
-            "30.0mW": 0,
-            "3.00mW": 1,
-            "300uW": 2,
-            "30.0uW": 3,
-            "3.00uW": 4,
-            "300nW": 5,
-            "30.0nW": 6,
-        }
-        inst.range = "AUTO"
+    def test_range_values(self):
+        with expected_protocol(OphirBase, [("$WN-1", "*")]) as inst:
+            inst.range_values = {
+                "AUTO": -1,
+                "30.0mW": 0,
+                "3.00mW": 1,
+                "300uW": 2,
+                "30.0uW": 3,
+                "3.00uW": 4,
+                "300nW": 5,
+                "30.0nW": 6,
+            }
+            inst.range = "AUTO"
 
-
-def test_getAllRanges():
-    with expected_protocol(
-        OphirBase,
-        [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW")],
-    ) as inst:
-        assert inst.getAllRanges() == {
-            "AUTO": -1,
-            "30.0mW": 0,
-            "3.00mW": 1,
-            "300uW": 2,
-            "30.0uW": 3,
-            "3.00uW": 4,
-            "300nW": 5,
-            "30.0nW": 6,
-        }
+    def test_range_entries(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW")],
+        ) as inst:
+            assert inst.range_entries == {
+                "AUTO": -1,
+                "30.0mW": 0,
+                "3.00mW": 1,
+                "300uW": 2,
+                "30.0uW": 3,
+                "3.00uW": 4,
+                "300nW": 5,
+                "30.0nW": 6,
+            }
 
 
 # Wavelength

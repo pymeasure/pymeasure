@@ -239,6 +239,7 @@ class OphirBase(OphirCommunication):
     def reset(self) -> None:
         """Reset the device, for example after a head change."""
         self.wavelength_values = None
+        self.range_values = None
         self.ask("RE")
 
     def start_streaming(self, downsampling: int = 0) -> None:
@@ -285,9 +286,12 @@ class OphirBase(OphirCommunication):
     range = Instrument.control(
         "RN",  # Read raNge
         "WN%i",  # Write raNge
-        """Control the current range setting.""",
+        """Control the current range setting, See :attr:`range_entries` for possible values.""",
         cast=int,
+        values=[],
+        map_values=True,
         check_set_errors=True,
+        validator=strict_discrete_set,
         dynamic=True,
     )
 
@@ -303,22 +307,35 @@ class OphirBase(OphirCommunication):
         # not Pulsar
     )
 
-    def getAllRanges(self) -> dict[str, Any]:
+    def _extract_ranges(self, ranges: list[str]) -> dict[str, int]:
+        index = -1 if ranges[1] == "AUTO" else 0
+        indices: dict[str, int] = {}
+        for rng in ranges[1:]:
+            indices[rng] = index
+            index += 1
+        self.range_values = indices
+        self.range_map_values = True
+        return indices
+
+    @property
+    def range_entries(self) -> dict[str, int]:
         """
-        Get all possible ranges.
+        Get all possible ranges and their index.
 
         Auto is, if present, -1. The range with the highest numeric value is 0.
         """
         # doesn't work with NOVA I
         ranges = self.values("AR", separator=None, cast=str)
-        index = -1 if ranges[1] == "AUTO" else 0
-        values: dict[str, Any] = {}
-        for rng in ranges[1:]:
-            values[rng] = index
-            index += 1
-        self.range_values = values
-        self.range_map_values = True
-        return values
+        return self._extract_ranges(ranges)
+
+    range_index = Instrument.control(
+        "RN",
+        "WN%i",
+        """Control the index of the range in the list of ranges.""",
+        set_process=lambda v: v + 1,
+        check_set_errors=True,
+        cast=int,
+    )
 
     # Wavelength
     def _extract_wavelengths(
