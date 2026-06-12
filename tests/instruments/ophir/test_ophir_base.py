@@ -1,0 +1,298 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2026 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+
+import pytest
+from pytest import raises
+
+from pymeasure.test import expected_protocol
+
+from pymeasure.instruments.ophir.ophir_base import OphirBase, Modes, ScreenModes, Capabilities
+
+
+def test_read_processes_response():
+    with expected_protocol(
+        OphirBase,
+        [(None, "* Afas 23 45e-3")],
+    ) as inst:
+        assert inst.read() == " Afas 23 45e-3"
+
+
+def test_read_raises_error():
+    with expected_protocol(
+        OphirBase,
+        [(None, "?COM ERROR")],
+    ) as inst:
+        with raises(ConnectionError) as exc:
+            inst.read()
+        assert str(exc.value) == "COM ERROR"
+
+
+def test_init():
+    with expected_protocol(OphirBase, []):
+        pass  # verify init communication
+
+
+# INFORMATION ABOUT DEVICE AND HEAD
+def test_id():
+    with expected_protocol(OphirBase, [("$II", "* USBD 113217 SH2USB")]) as inst:
+        assert inst.id == ["USBD", "113217", "SH2USB"]
+
+
+def test_head1():
+    # From manual
+    with expected_protocol(OphirBase, [("$HI", "* TH 12345 03AP 00000183")]) as inst:
+        assert inst.head_information == {
+            "sensortype": "TH",
+            "serialnumber": "12345",
+            "name": "03AP",
+            "capabilities": Capabilities.POWER | Capabilities.ENERGY | Capabilities(384),
+        }
+
+
+def test_head2():
+    # From manual
+    with expected_protocol(OphirBase, [("$HI", "* PY 22323 PE10-C 80000003")]) as inst:
+        assert inst.head_information == {
+            "sensortype": "PY",
+            "serialnumber": "22323",
+            "name": "PE10-C",
+            "capabilities": Capabilities.POWER | Capabilities.ENERGY | Capabilities.FREQUENCY,
+        }
+
+
+# CONFIG
+# In general
+
+
+def test_mode_getter():
+    with expected_protocol(OphirBase, [("$MM0", "*2")]) as inst:
+        assert inst.mode == Modes.POWER
+
+
+def test_mode_setter():
+    with expected_protocol(OphirBase, [("$MM3", "*")]) as inst:
+        inst.mode = Modes.ENERGY
+
+
+def test_units():
+    with expected_protocol(OphirBase, [("$SI", "* W")]) as inst:
+        assert inst.units == "W"
+
+
+# Range
+class TestRange:
+    def test_range_getter(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$RN", "*4")],
+        ) as inst:
+            inst.range_entries  # to set the values
+            assert inst.range == "3.00uW"
+
+    def test_range_setter(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW"), ("$WN1", "*")],
+        ) as inst:
+            inst.range_entries  # to set the values
+            inst.range = "3.00mW"
+
+    def test_range_index_getter(self):
+        with expected_protocol(OphirBase, [("$RN", "*4")]) as inst:
+            assert inst.range_index == 4
+
+    def test_range_index_setter(self):
+        with expected_protocol(OphirBase, [("$WN1", "*")]) as inst:
+            inst.range_index = 0
+
+    def test_range_values(self):
+        with expected_protocol(OphirBase, [("$WN-1", "*")]) as inst:
+            inst.range_values = {
+                "AUTO": -1,
+                "30.0mW": 0,
+                "3.00mW": 1,
+                "300uW": 2,
+                "30.0uW": 3,
+                "3.00uW": 4,
+                "300nW": 5,
+                "30.0nW": 6,
+            }
+            inst.range = "AUTO"
+
+    def test_range_entries(self):
+        with expected_protocol(
+            OphirBase,
+            [("$AR", "* 3 AUTO 30.0mW 3.00mW 300uW 30.0uW 3.00uW 300nW 30.0nW")],
+        ) as inst:
+            assert inst.range_entries == {
+                "AUTO": -1,
+                "30.0mW": 0,
+                "3.00mW": 1,
+                "300uW": 2,
+                "30.0uW": 3,
+                "3.00uW": 4,
+                "300nW": 5,
+                "30.0nW": 6,
+            }
+
+
+# Wavelength
+class TestWavelength:
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                ((350, 1100), [633, 488, 978, None, None, None]),
+            ),
+            ("*DISCRETE 1 VIS NIR", (None, ["VIS", "NIR"])),
+        ],
+    )
+    def test_wavelength_list(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength_list == result
+
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                633,
+            ),
+            ("*DISCRETE 1 VIS NIR", "VIS"),
+        ],
+    )
+    def test_wavelength_getter(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength == result
+
+    def test_wavelength_setter(self):
+        with expected_protocol(
+            OphirBase,
+            [
+                ("$AW", "*CONTINUOUS 193 12000 4 248 366 532 1064 NONE 10.6"),
+                ("$WI1", "*"),
+            ],
+        ) as inst:
+            inst.wavelength  # read wavelength to set the limits
+            inst.wavelength = 248
+
+    def test_define_wavelength_entry(self):
+        with expected_protocol(OphirBase, [("$WD 4 428", "*")]) as inst:
+            inst.define_wavelength_entry(3, 428)
+
+    def test_clear_wavelength_entry(self):
+        with expected_protocol(OphirBase, [("$WE 4", "*")]) as inst:
+            inst.clear_wavelength_entry(3)
+
+    @pytest.mark.parametrize(
+        "response, result",
+        [
+            (
+                "*CONTINUOUS 350 1100 1 633 488 978 NONE NONE NONE",
+                1,
+            ),
+            ("*DISCRETE 1 VIS NIR", 1),
+        ],
+    )
+    def test_wavelength_index_getter(self, response, result):
+        with expected_protocol(OphirBase, [("$AW", response)]) as inst:
+            assert inst.wavelength_index == result
+
+    def test_wavelength_index_setter(self):
+        with expected_protocol(OphirBase, [("$WI5", "*")]) as inst:
+            inst.wavelength_index = 4
+
+
+# Special measurement
+
+
+def test_diffuser_getter():
+    with expected_protocol(OphirBase, [("$DQ", "*1 OUT IN")]) as inst:
+        assert inst.diffuser == "OUT"
+
+
+def test_diffuser_setter():
+    with expected_protocol(OphirBase, [("$DQ2", "*2 OUT IN")]) as inst:
+        inst.diffuser = "IN"
+
+
+def test_sensor_filter_getter():
+    with expected_protocol(OphirBase, [("$FQ", "*1 OUT IN")]) as inst:
+        assert inst.sensor_filter == "OUT"
+
+
+def test_sensor_filter_setter():
+    with expected_protocol(OphirBase, [("$FQ2", "*2 OUT IN")]) as inst:
+        inst.sensor_filter = "IN"
+
+
+def test_mains_getter():
+    with expected_protocol(OphirBase, [("$MA", "* 1 50Hz 60Hz")]) as inst:
+        assert inst.mains == "50Hz"
+
+
+def test_mains_setter():
+    with expected_protocol(OphirBase, [("$MA1", "*1 50Hz 60Hz")]) as inst:
+        inst.mains = "50Hz"
+
+
+# Other settings
+
+
+def test_screen_mode_setter():
+    with expected_protocol(OphirBase, [("$FS1", "*")]) as inst:
+        inst.screen_mode = ScreenModes.ENERGY
+
+
+# Measurements
+
+
+def test_energy():
+    with expected_protocol(OphirBase, [("$SE", "*1.300E-5")]) as inst:
+        assert inst.energy == 1.3e-5
+
+
+def test_energy_flag():
+    with expected_protocol(OphirBase, [("$EF", "*1")]) as inst:
+        assert inst.energy_flag is True
+
+
+def test_frequency():
+    with expected_protocol(OphirBase, [("$SF", "*1.000E3")]) as inst:
+        assert inst.frequency == 1000
+
+
+def test_power():
+    with expected_protocol(OphirBase, [("$SP", "*1.300E-5")]) as inst:
+        assert inst.power == 1.3e-5
+
+
+def test_position():
+    with expected_protocol(
+        OphirBase,
+        [("$BT", "* F 00000000 X -1.50 Y -0.9 S 6.50")],
+    ) as inst:
+        assert inst.position == [-1.5, -0.9, 6.5]
