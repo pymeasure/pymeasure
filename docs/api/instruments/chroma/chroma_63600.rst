@@ -6,10 +6,10 @@ Chroma 63600 Electronic Load Bank
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.chroma.Chroma63610_80_20
+.. autoclass:: pymeasure.instruments.chroma.chroma_63600.Chroma63630_80_60
     :members:
     :show-inheritance:
 
-.. autoclass:: pymeasure.instruments.chroma.Chroma63630_80_60
+.. autoclass:: pymeasure.instruments.chroma.chroma_63600.Chroma63610_80_20
     :members:
     :show-inheritance:
