@@ -39,7 +39,7 @@ class AMI430(SCPIMixin, Instrument):
         magnet = AMI430("TCPIP::web.address.com::7180::SOCKET")
 
 
-        magnet.coilconst = 1.182                 # kGauss/A
+        magnet.coilconst = 1.182                 # kGauss/A (Actual units are defined in power supply settings)
         magnet.voltage_limit = 2.2               # Sets the voltage limit in V
 
         magnet.target_current = 10               # Sets the target current to 10 A
@@ -49,7 +49,7 @@ class AMI430(SCPIMixin, Instrument):
         magnet.ramp_rate_field = 0.0422         # Sets the ramp rate in kGauss/s
         magnet.ramp                             # Initiates the ramping
         magnet.pause                            # Pauses the ramping
-        magnet.status                           # Returns the status of the magnet
+        magnet.state                           # Returns the status of the magnet
 
         magnet.ramp_to_current(5)             # Ramps the current to 5 A
 
@@ -117,7 +117,7 @@ class AMI430(SCPIMixin, Instrument):
                                    )
 
     state = Instrument.measurement("STATE?",
-                                   """Get the field in kGauss of the magnet.
+                                   """Get the status of the magnet.
         """
                                    )
 
@@ -138,7 +138,7 @@ class AMI430(SCPIMixin, Instrument):
 
     def has_persistent_switch_enabled(self):
         """ Returns a boolean if the persistent switch is enabled. """
-        return bool(self.ask("PSwitch?"))
+        return bool(int(self.ask("PSwitch?")))
 
     def enable_persistent_switch(self):
         """ Enables the persistent switch. """
