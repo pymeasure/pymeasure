@@ -1,0 +1,250 @@
+#
+# This file is part of the PyMeasure package.
+#
+# Copyright (c) 2013-2026 PyMeasure Developers
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+
+import pytest
+
+from pymeasure.test import expected_protocol
+from pymeasure.instruments.smaract.scu_ascii import SmarActSCULinear, PositionerType
+from pymeasure.units import ureg
+
+Q_ = ureg.Quantity
+
+CHANNELS = ['0']
+
+
+def test_init():
+    with expected_protocol(
+            SmarActSCULinear,
+            [],
+    ):
+        pass  # verify the expected communication.
+
+
+def test_close():
+    with expected_protocol(
+            SmarActSCULinear,
+            [(':GID', None)],  # no communication expected
+    ) as inst:
+        inst.close()
+        # verify instrument is no longer usable
+        with pytest.raises(Exception):
+            inst.ask(':GID')
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_frequency_max_setter(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':SCLF{channel}F500'.encode(), None)],
+    ) as inst:
+        inst.channels[channel].frequency_max = Q_(500, 'Hz')
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_frequency_max_getter(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':GCLF{channel}'.encode(), b':CLF0F500')],
+    ) as inst:
+        assert inst.channels[channel].frequency_max.magnitude == 500
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_safe_direction_setter(channel):
+    for comm_pairs, value in ((((f':SSD{channel}D1'.encode(), None),), True),
+                              (((f':SSD{channel}D0'.encode(), None),), False)):
+        with expected_protocol(
+                SmarActSCULinear,
+                comm_pairs,
+        ) as inst:
+            inst.channels[channel].safe_direction_up_enabled = value
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_safe_direction_getter(channel):
+    for comm_pairs, value in (
+            (((f':GSD{channel}'.encode(), f':SD{channel}D1'.encode()),), True),
+            (((f':GSD{channel}'.encode(), f':SD{channel}D0'.encode()),),  False),
+    ):
+        with expected_protocol(
+                SmarActSCULinear,
+                comm_pairs,
+        ) as inst:
+            assert inst.channels[channel].safe_direction_up_enabled == value
+
+
+def test_model_getter():
+    with expected_protocol(
+            SmarActSCULinear,
+            [(b':I', b':ISmarAct CU-1D')],
+    ) as inst:
+        assert inst.model == 'SmarAct CU-1D'
+
+
+def test_serial_nb_getter():
+    with expected_protocol(
+            SmarActSCULinear,
+            [(b':GID', b':ID722998302')],
+    ) as inst:
+        assert inst.serial_nb == '722998302'
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_ask(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':M{channel}'.encode(), f':M{channel}S'.encode())],
+    ) as inst:
+        assert inst.ask(*(f':M{channel}',), ) == f':M{channel}S'
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_calibrate_sensor(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':CS{channel}'.encode(), None),
+             (f':M{channel}'.encode(), f':M{channel}C'.encode())],
+    ) as inst:
+        assert inst.channels[channel].calibrate_sensor() is True
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_check_sensor_present(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':GSP{channel}'.encode(), f':SP{channel}P'.encode())],
+    ) as inst:
+        assert inst.channels[channel].check_sensor_present() is True
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_get_position(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':GP{channel}'.encode(), f':P{channel}P-0.5'.encode())],
+    ) as inst:
+        assert inst.channels[channel].position == Q_(-0.5, 'um')
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_get_positioner_type(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':GST{channel}'.encode(), f':ST{channel}T21'.encode())],
+    ) as inst:
+        assert inst.channels[channel].positioner_type == f':ST{channel}T21'
+
+
+@pytest.mark.parametrize("channel, enum_value, expected_code", [
+    ("0", PositionerType.LINEAR_L, 21),
+    ("0", PositionerType.ROTARY_GC, 4),
+    ("0", PositionerType.LINEAR_M, 1),
+])
+def test_channel_positioner_type_setter(channel, enum_value, expected_code):
+    with expected_protocol(
+        SmarActSCULinear,
+        [(f':SST{channel}T{expected_code}'.encode(), None)],
+    ) as inst:
+
+        inst.channels[channel].positioner_type = enum_value
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_abs(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':MPA{channel}P100'.encode(), None)],
+    ) as inst:
+        inst.channels[channel].move_abs((Q_(100, 'um')))
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_rel(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':MPR{channel}P50'.encode(), None)],
+    ) as inst:
+        inst.channels[channel].move_rel((Q_(50, 'um')))
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_steps_down(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':D{channel}F3000A400S100'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].move_steps_down(*(100,), ) is None
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_steps_up(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':U{channel}F3000A400S100'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].move_steps_up(*(100,), ) is None
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_down_to_end(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':MES{channel}DD'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].move_down_to_end() is None
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_up_to_end(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':MES{channel}DU'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].move_up_to_end() is None
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_move_to_ref(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':MTR{channel}H0Z1'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].move_to_ref() is None
+
+
+@pytest.mark.parametrize("channel", CHANNELS)
+def test_channel_stop(channel):
+    with expected_protocol(
+            SmarActSCULinear,
+            [(f':S{channel}'.encode(), None)],
+    ) as inst:
+        assert inst.channels[channel].stop() is None
+
+
+def test_reset():
+    with expected_protocol(
+            SmarActSCULinear,
+            [(b':R', None)],
+    ) as inst:
+        assert inst.reset() is None

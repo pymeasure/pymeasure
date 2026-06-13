@@ -24,6 +24,7 @@
 
 import io
 import logging
+from typing import Union, Optional
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel
@@ -434,7 +435,11 @@ class Generator:
         self._index = self._stream.tell()
         return self._init_comm_pairs + comm
 
-    def instantiate(self, instrument_class, adapter, manufacturer, adapter_kwargs=None, **kwargs):
+    def instantiate(self, instrument_class,
+                    adapter: Union[str, int],
+                    manufacturer: str,
+                    adapter_kwargs: Optional[dict] = None,
+                    **kwargs) -> TestInstrument:
         """
         Instantiate the instrument and store the instantiation communication.
 
