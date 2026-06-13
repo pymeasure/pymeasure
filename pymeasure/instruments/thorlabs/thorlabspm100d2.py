@@ -22,10 +22,25 @@
 # THE SOFTWARE.
 #
 
-from .thorlabspm100usb import ThorlabsPM100USB
-from .thorlabspm100a import ThorlabsPM100A
-from .thorlabspm100d import ThorlabsPM100D
-from .thorlabspm100d2 import ThorlabsPM100D2
-from .thorlabspm100d3 import ThorlabsPM100D3
-from .thorlabspro8000 import ThorlabsPro8000
-from .thorlabsmbxseries import ThorlabsMBXSeries
+from pymeasure.instruments.thorlabs.thorlabspm100usb import ThorlabsPM100USB, SensorTypes  # noqa
+
+from enum import IntFlag
+
+
+class SensorFlagMap(IntFlag):
+    # For interpretation of the sensor flags `SYST:SENS#:IDN?` section of
+    # https://github.com/Thorlabs/Light_Analysis_Examples/tree/main/Python/Thorlabs%20PMxxx%20Power%20Meters/SCPI/commandDocu  # noqa
+    WAVELENGTH_SETTABLE = 1 << 2
+    TEMPERATURE_SENSOR = 1 << 12
+    NEW_FLAG_FORMAT = 1 << 31
+
+
+class ThorlabsPM100D2(ThorlabsPM100USB):
+    """Represents Thorlabs PM100D2 powermeter interface."""
+
+    sensor_flag_map = SensorFlagMap
+    uses_new_flag_format = True
+
+    @staticmethod
+    def _format_sn(sn):
+        return sn.strip('"')

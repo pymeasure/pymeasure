@@ -10,5 +10,9 @@ This section contains specific documentation on the Thorlabs instruments that ar
    :maxdepth: 2
 
    thorlabspm100usb
+   thorlabspm100a
+   thorlabspm100d
+   thorlabspm100d2
+   thorlabspm100d3
    thorlabspro8000
    thorlabsmbxseries
