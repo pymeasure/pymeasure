@@ -28,6 +28,8 @@ from typing import TypeVar
 from collections.abc import Sequence
 from warnings import warn
 
+from pyvisa import ResourceManager
+
 from .common_base import CommonBase
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
@@ -52,6 +54,10 @@ class Instrument(CommonBase):
     defining the target of your connection.
 
     When ``adapter`` is an integer, a GPIB resource name is created based on that.
+    When ``adapter`` is a :class:`pyvisa.ResourceManager`, a
+    :py:class:`~pymeasure.adapters.VISAAdapter` is constructed that reuses this
+    resource manager; in that case ``name`` is interpreted as the VISA resource
+    name for the connection.
     In either case a :py:class:`~pymeasure.adapters.VISAAdapter` is constructed based on that
     resource name.
     Keyword arguments can be used to further configure the connection.
@@ -85,12 +91,15 @@ class Instrument(CommonBase):
         **kwargs,
     ):
         # Setup communication before possible children require the adapter.
-        if isinstance(adapter, (int, str)):
-            try:
+        try:
+            if isinstance(adapter, ResourceManager):
+                adapter = VISAAdapter(name, adapter, **kwargs)
+            elif isinstance(adapter, (int, str)):
                 adapter = VISAAdapter(adapter, **kwargs)
-            except ImportError:
-                raise Exception("Invalid Adapter provided for Instrument since"
-                                " PyVISA is not present")
+        except ImportError as err:
+            raise Exception(
+                "Invalid Adapter provided for Instrument since PyVISA is not present"
+            ) from err
         self.adapter = adapter
         if includeSCPI is True:
             warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
@@ -102,6 +111,12 @@ class Instrument(CommonBase):
         self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
+        self.resource_name = getattr(self.adapter, "resource_name", name)
+        # Only seed the identity fields on subclasses that don't already
+        # define them as (read-only) properties of their own.
+        for _attr in ("vendor", "serial_number", "firmware_ref"):
+            if not hasattr(type(self), _attr):
+                setattr(self, _attr, "")
 
         super().__init__()
 
