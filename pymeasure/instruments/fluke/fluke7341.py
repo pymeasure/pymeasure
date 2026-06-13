@@ -36,7 +36,6 @@ class Fluke7341(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 2400},
             **kwargs
         )

@@ -64,12 +64,11 @@ class LakeShore421(Instrument):
             asrl={'baud_rate': baud_rate, 'data_bits': 7, 'stop_bits': 10, 'parity': 1},
             read_termination='\r',
             write_termination='\n',
-            includeSCPI=False,
             **kwargs
         )
         self.last_write_time = time()
 
-    def _raw_to_field(self, field_raw, multiplier_name):
+    def _raw_to_field(self, field_raw: str, multiplier_name: str):
         if not field_raw == "OL":
             multiplier = getattr(self, multiplier_name)
             field = multiplier * field_raw
@@ -78,7 +77,7 @@ class LakeShore421(Instrument):
 
         return field
 
-    def _field_to_raw(self, field, multiplier_name):
+    def _field_to_raw(self, field: float, multiplier_name: str) -> float:
         multiplier = getattr(self, multiplier_name)
         return field / multiplier
 
@@ -97,7 +96,7 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def field(self):
+    def field(self) -> float:
         """ Get the field in the current units. This property takes into
         account the field multiplier. Get np.nan if field is out of range.
         """
@@ -132,7 +131,7 @@ class LakeShore421(Instrument):
         return np.round(range * probe_multiplier * unit_multiplier, 3)
 
     @field_range.setter
-    def field_range(self, range):
+    def field_range(self, range) -> None:
         probe_multiplier = self.RANGE_MULTIPLIER_PROBE[self.PROBE_TYPES[self.probe_type]]
         unit_multiplier = self.RANGE_MULTIPLIER_UNIT[self.unit]
         ranges = np.array(self.RANGES) * probe_multiplier * unit_multiplier
@@ -171,7 +170,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    def zero_probe(self, wait=True):
+    def zero_probe(self, wait: bool = True) -> None:
         """ Reset the probe value to 0. It is normally used with a zero gauss
         chamber, but may also be used with an open probe to cancel the Earth
         magnetic field. To cancel larger magnetic fields, the relative mode
@@ -261,7 +260,7 @@ class LakeShore421(Instrument):
         """
         return self._raw_to_field(self.max_hold_field_raw, "max_hold_multiplier")
 
-    def max_hold_reset(self):
+    def max_hold_reset(self) -> None:
         """ Clears the stored Max Hold value. """
         self.write("MAXC")
 
@@ -317,7 +316,7 @@ class LakeShore421(Instrument):
         return self._raw_to_field(self.relative_setpoint_raw, "relative_setpoint_multiplier")
 
     @relative_setpoint.setter
-    def relative_setpoint(self, value):
+    def relative_setpoint(self, value: float) -> None:
         self.relative_setpoint_raw = self._field_to_raw(value, "relative_setpoint_multiplier")
 
     # ALARM MODE
@@ -384,7 +383,7 @@ class LakeShore421(Instrument):
         return self._raw_to_field(self.alarm_low_raw, "alarm_low_multiplier")
 
     @alarm_low.setter
-    def alarm_low(self, value):
+    def alarm_low(self, value) -> None:
         self.alarm_low_raw = self._field_to_raw(value, "alarm_low_multiplier")
 
     alarm_high_raw = Instrument.control(
@@ -410,7 +409,7 @@ class LakeShore421(Instrument):
     def alarm_high(self, value):
         self.alarm_high_raw = self._field_to_raw(value, "alarm_high_multiplier")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Close the serial connection to the system. """
         self.adapter.connection.close()
         super().shutdown()
@@ -419,7 +418,7 @@ class LakeShore421(Instrument):
     # Redefined methods to ensure time between writes #
     ###################################################
 
-    def delay_write(self):
+    def delay_write(self) -> None:
         if self.WRITE_DELAY is None:
             return
 
@@ -428,6 +427,6 @@ class LakeShore421(Instrument):
 
         self.last_write_time = time()
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         self.delay_write()
-        super().write(command)
+        super().write(command, **kwargs)

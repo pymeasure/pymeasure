@@ -24,7 +24,10 @@
 
 import logging
 from enum import IntFlag
+from typing import Literal
+from collections.abc import Callable
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument, validators
 from pyvisa.constants import Parity, StopBits
 
@@ -33,7 +36,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def emission_validator(value, values):
+def emission_validator(value: bool, values) -> Literal['ON'] | Literal['OFF']:
     if value is True:
         return "ON"
     elif value is False:
@@ -41,17 +44,17 @@ def emission_validator(value, values):
     raise ValueError(f"Value is {value}, but a boolean or 'ON' or 'OFF' required.")
 
 
-def setpoint_validator(value, values):
+def setpoint_validator(value: float, values: tuple[float, float]) -> float:
     if value == 0:
         return value
     else:
         return validators.strict_range(value, values)
 
 
-def power_get_process_generator(minimum):
+def power_get_process_generator(minimum: float) -> Callable[[float | str], float | str]:
     """Generate a get_process for the power property."""
-    def get_process(value):
-        if isinstance(value, float):
+    def get_process(value: float | str) -> float | str:
+        if isinstance(value, (float, int)):
             return value
         elif value == "Off":
             return 0
@@ -68,13 +71,12 @@ class YAR(Instrument):
     This is the RS232 command set. GPIB has different commands.
     """
 
-    def __init__(self, adapter, name="YAR fiber amplifier", **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "YAR fiber amplifier", **kwargs):
         """Establish communication with the device."""
         kwargs.setdefault("write_termination", "\r")
         kwargs.setdefault("read_termination", "\r")
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={'parity': Parity.none, 'stop_bits': StopBits.one},
                          **kwargs)
 
@@ -95,15 +97,15 @@ class YAR(Instrument):
         UNEXPECTED_EMISSION = 1 << 19
         SEEDLASER_FAIL = 1 << 20
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read an instrument answer and check whether it is an error."""
-        reply = super().read().split(":")
+        reply = super().read(**kwargs).split(":")
         if reply[0] == "ERR":
             raise ConnectionError(f"Reading error '{reply}'.")
         else:
             return reply[-1].strip()
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property.
 
         Called if :code:`check_set_errors=True` is set for that property.
@@ -124,7 +126,7 @@ class YAR(Instrument):
         return self.values("RMN")[0]
 
     @property
-    def status(self):
+    def status(self) -> "YAR.Status":
         """Get the current status."""
         got = int(self.values("STA")[0])
         return self.Status(got)
@@ -148,14 +150,14 @@ class YAR(Instrument):
     )
 
     @property
-    def power_range(self):
+    def power_range(self) -> tuple[float, float]:
         """Get the power limits in W."""
         low = self.values("RNP")[0]
         high = self.values("RMP")[0]
-        return [low, high]
+        return (low, high)
 
     power_setpoint = Instrument.control(
-        "RPS", "SPS %g", """Control output power setpoint in W.""",
+        "RPS", "SPS %g", """Control output power setpoint in W (float).""",
         values=(1, 2),
         validator=setpoint_validator,
         check_set_errors=True,
@@ -181,6 +183,6 @@ class YAR(Instrument):
     minimum_display_power = Instrument.measurement(
         "RDPT", """Measure the minimum displayable output power in W.""")
 
-    def clear(self):
+    def clear(self) -> None:
         """Reset all errors."""
-        return self.ask("RERR")
+        self.ask("RERR")

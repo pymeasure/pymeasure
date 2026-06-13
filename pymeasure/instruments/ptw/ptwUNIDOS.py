@@ -48,13 +48,12 @@ class ptwUNIDOS(Instrument):
             adapter,
             name,
             read_termination="\r\n",
-            includeSCPI=False,
             timeout=20000,
             encoding="utf8",
             **kwargs
         )
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read the device response and check for errors.
 
         :return: Read string with semicolons replaced by comma
@@ -62,7 +61,7 @@ class ptwUNIDOS(Instrument):
         :raises: *ValueError* for error response or *ConnectionError* for an unknown error
         """
 
-        got = super().read()
+        got = super().read(**kwargs)
 
         if got.startswith("E"):
             error_code = got.replace(";", "").strip()
@@ -153,7 +152,7 @@ wrong format of the parameter",
         self.ask("CHR")
 
     def hold(self) -> None:
-        """Set the measurment to HOLD state.
+        """Set the measurement to HOLD state.
 
         .. note:: Write permission is required.
         """

@@ -104,19 +104,6 @@ def test_fake_instrument():
     assert fake.values("5") == [5]
 
 
-class Test_includeSCPI_parameter:
-    def test_not_defined_includeSCPI_raises_warning(self):
-        with pytest.warns(FutureWarning) as record:
-            Instrument(name="test", adapter=ProtocolAdapter())
-        msg = str(record[0].message)
-        assert msg == ("It is deprecated to specify `includeSCPI` implicitly, use "
-                       "`includeSCPI=False` or inherit the `SCPIMixin` class instead.")
-
-    def test_not_defined_includeSCPI_is_interpreted_as_true(self):
-        inst = Instrument(name="test", adapter=ProtocolAdapter())
-        assert inst.SCPI is True
-
-
 @pytest.mark.parametrize("adapter", (("COM1", 87, "USB")))
 def test_init_visa(adapter):
     Instrument(adapter, "def", visa_library="@sim")
@@ -131,7 +118,7 @@ def test_init_visa_fail():
 
 def test_init_includeSCPI_implicit_warning():
     with pytest.warns(FutureWarning, match="includeSCPI"):
-        Instrument("COM1", "def", visa_library="@sim")
+        Instrument("COM1", "def", visa_library="@sim", includeSCPI=False)
 
 
 def test_init_includeSCPI_explicit_warning():
@@ -213,47 +200,6 @@ class TestWaiting:
         instr.adapter.comm_pairs = [("abc", "abcdefgh")]
         instr.binary_values("abc")
         assert instr.waited is None
-
-
-@pytest.mark.parametrize("method, write, reply", (("id", "*IDN?", "xyz"),
-                                                  ("complete", "*OPC?", "1"),
-                                                  ("status", "*STB?", "189"),
-                                                  ("options", "*OPT?", "a9"),
-                                                  ))
-def test_SCPI_properties(method, write, reply):
-    with expected_protocol(
-            Instrument,
-            [(write, reply)],
-            name="test") as instr:
-        assert getattr(instr, method) == reply
-
-
-@pytest.mark.parametrize("method, write", (("clear", "*CLS"),
-                                           ("reset", "*RST")
-                                           ))
-def test_SCPI_write_commands(method, write):
-    with expected_protocol(
-            Instrument,
-            [(write, None)],
-            name="test") as instr:
-        getattr(instr, method)()
-
-
-def test_instrument_check_errors():
-    with expected_protocol(
-            Instrument,
-            [("SYST:ERR?", "17,funny stuff"),
-             ("SYST:ERR?", "0")],
-            name="test") as instr:
-        assert instr.check_errors() == [[17, "funny stuff"]]
-
-
-@pytest.mark.parametrize("method", ("id", "complete", "status", "options",
-                                    "clear", "reset", "check_errors"
-                                    ))
-def test_SCPI_false_raises_errors(method):
-    with pytest.raises(NotImplementedError):
-        getattr(Instrument(FakeAdapter(), "abc", includeSCPI=False), method)()
 
 
 # Channel

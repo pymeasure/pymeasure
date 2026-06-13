@@ -59,16 +59,8 @@ class Instrument(CommonBase):
     Otherwise, the passed :py:class:`~pymeasure.adapters.Adapter` object is used and any keyword
     arguments are discarded.
 
-    This class defines basic SCPI commands by default. This can be disabled with
-    :code:`includeSCPI` for instruments not compatible with the standard SCPI commands.
-
     :param adapter: A string, integer, or :py:class:`~pymeasure.adapters.Adapter` subclass object
     :param string name: The name of the instrument. Often the model designation by default.
-    :param includeSCPI: An obligatory boolean, which toggles the inclusion of standard SCPI commands
-
-        .. deprecated:: 0.14
-            If True, inherit the :class:`~pymeasure.instruments.generic_types.SCPIMixin` class
-            instead.
 
     :param \\**kwargs: In case ``adapter`` is a string or integer, additional arguments passed on
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
@@ -81,9 +73,12 @@ class Instrument(CommonBase):
         self,
         adapter: Adapter | int | str,
         name: str,
-        includeSCPI: bool | None = None,
         **kwargs,
     ):
+        if "includeSCPI" in kwargs.keys():
+            warn("Defining SCPI base functionality with `includeSCPI` is deprecated, inherit "
+                 "the `SCPIMixin` class instead if it supports SCPI.", FutureWarning)
+            kwargs.pop("includeSCPI")
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
             try:
@@ -92,14 +87,6 @@ class Instrument(CommonBase):
                 raise Exception("Invalid Adapter provided for Instrument since"
                                 " PyVISA is not present")
         self.adapter = adapter
-        if includeSCPI is True:
-            warn("Defining SCPI base functionality with `includeSCPI=True` is deprecated, inherit "
-                 "the `SCPIMixin` class instead.", FutureWarning)
-        elif includeSCPI is None:
-            warn("It is deprecated to specify `includeSCPI` implicitly, use "
-                 "`includeSCPI=False` or inherit the `SCPIMixin` class instead.", FutureWarning)
-            includeSCPI = True
-        self.SCPI = includeSCPI
         self.isShutdown = False
         self.name = name
 
@@ -113,52 +100,6 @@ class Instrument(CommonBase):
     def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:
         self.shutdown()
         return None
-
-    # SCPI default properties
-    @property
-    def complete(self):
-        """Get the synchronization bit.
-
-        This property allows synchronization between a controller and a device. The Operation
-        Complete query places an ASCII character 1 into the device's Output Queue when all pending
-        selected device operations have been finished.
-        """
-        if self.SCPI:
-            return self.ask("*OPC?").strip()
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    @property
-    def status(self):
-        """ Get the status byte and Master Summary Status bit. """
-        if self.SCPI:
-            return self.ask("*STB?").strip()
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    @property
-    def options(self):
-        """ Get the device options installed. """
-        if self.SCPI:
-            return self.ask("*OPT?").strip()
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    @property
-    def id(self):
-        """ Get the identification of the instrument. """
-        if self.SCPI:
-            return self.ask("*IDN?").strip()
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    @property
-    def next_error(self):
-        """Get the next error of the instrument (tuple of code and message)."""
-        if self.SCPI:
-            return self.values("SYST:ERR?")
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
     def write(self, command: str, **kwargs) -> None:
@@ -211,44 +152,10 @@ class Instrument(CommonBase):
         if query_delay:
             time.sleep(query_delay)
 
-    # SCPI default methods
-    def clear(self) -> None:
-        """ Clears the instrument status byte
-        """
-        if self.SCPI:
-            self.write("*CLS")
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
-    def reset(self) -> None:
-        """ Resets the instrument. """
-        if self.SCPI:
-            self.write("*RST")
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
-
     def shutdown(self) -> None:
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info(f"Finished shutting down {self.name}")
-
-    def check_errors(self) -> list:
-        """Read all errors from the instrument and log them.
-
-        :return: List of error entries.
-        """
-        if self.SCPI:
-            errors = []
-            while True:
-                err = self.next_error
-                if int(err[0]) != 0:
-                    log.error(f"{self.name}: {err[0]}, {err[1]}")
-                    errors.append(err)
-                else:
-                    break
-            return errors
-        else:
-            raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     def check_get_errors(self) -> list:
         """Check for errors after having gotten a property and log them.

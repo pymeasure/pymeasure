@@ -26,6 +26,7 @@ import logging
 from math import log10
 from enum import Enum, IntFlag
 from datetime import datetime
+from typing import Any
 
 import numpy as np
 
@@ -568,7 +569,7 @@ class ErrorCode:
     # integer representation of error code
     code = 0
 
-    def __init__(self, code):
+    def __init__(self, code: int | str) -> None:
         """Initialize an ErrorCode.
 
         :param code: Representing an error as id or short description
@@ -588,10 +589,10 @@ class ErrorCode:
 
         (self.short, self.long) = self.__error_code_list[self.code]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ErrorCode(\"" + self.short + " - " + self.long + "\")"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> Any:
         return self.code == other.code
 
 
@@ -609,7 +610,6 @@ class HP856Xx(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )

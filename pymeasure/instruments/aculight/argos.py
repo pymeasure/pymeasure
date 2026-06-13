@@ -26,6 +26,7 @@
 from typing import NamedTuple
 
 # third party packages
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
 
@@ -37,7 +38,7 @@ def state_to_float(line: str) -> float:
     return float(line.split("=")[-1])
 
 
-def generate_state_extraction_method(index):
+def generate_state_extraction_method(index: int):
     """Generate a method, which returns one of the states according to the index."""
     def extract_state(values):
         return state_to_float(values[index])
@@ -68,29 +69,35 @@ class Argos(Instrument):
     :param query_delay: Delay between write and read in seconds.
     """
 
-    def __init__(self, adapter, name="Argos 2400 OPO system", query_delay=0.01, **kwargs):
+    def __init__(
+        self,
+        adapter: Adapter | str | int,
+        name: str = "Argos 2400 OPO system",
+        query_delay: float = 0.01,
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name,
             baud_rate=4800,
             write_termination="\n",
             read_termination="\n\rOPO>",
-            includeSCPI=False,
-            **kwargs)
+            **kwargs,
+        )
         """
         8 data bits, no parity, 1 stop bit, no flow control
         """
         self.query_delay = query_delay
         # read starts with space and ends with "\n\rOPO>"
 
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.
         """
         super().wait_for(self.query_delay if query_delay is None else query_delay)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Read after setting."""
         got = self.read()
         if "setting changed" not in got:

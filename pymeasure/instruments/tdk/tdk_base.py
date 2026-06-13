@@ -63,13 +63,12 @@ class TDK_Lambda_Base(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'read_termination': "\r", 'write_termination': "\r"},
             **kwargs
         )
         self.address = address
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """
         Only use this command for setting commands, i.e. non-querying commands.
 
@@ -328,17 +327,17 @@ class TDK_Lambda_Base(Instrument):
     # Methods
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear FEVE and SEVE registers to zero."""
         self.write("CLS")
         self.check_errors()
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the instrument to default values."""
         self.write("RST")
         self.check_errors()
 
-    def foldback_reset(self):
+    def foldback_reset(self) -> None:
         """Reset the fold back delay to 0 s, restoring the standard 250 ms
         delay.
 
@@ -347,24 +346,24 @@ class TDK_Lambda_Base(Instrument):
         self.write("FDBRST")
         self.check_errors()
 
-    def save(self):
+    def save(self) -> None:
         """Save current instrument settings."""
         self.write("SAV")
         self.check_errors()
 
-    def recall(self):
+    def recall(self) -> None:
         """Recall last saved instrument settings."""
         self.write("RCL")
         self.check_errors()
 
-    def set_max_over_voltage(self):
+    def set_max_over_voltage(self) -> None:
         """Set the over voltage protection to the maximum level for the power
         supply.
         """
         self.write("OVM")
         self.check_errors()
 
-    def ramp_to_current(self, target_current, steps=20, pause=0.2):
+    def ramp_to_current(self, target_current, steps: int = 20, pause: float = 0.2) -> None:
         """Ramps to a target current from the set current value over
         a certain number of linear steps, each separated by a pause duration.
 
@@ -379,7 +378,7 @@ class TDK_Lambda_Base(Instrument):
             self.current_setpoint = current
             sleep(pause)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Safety shutdown the power supply.
 
         Ramps the power supply down to zero current using the

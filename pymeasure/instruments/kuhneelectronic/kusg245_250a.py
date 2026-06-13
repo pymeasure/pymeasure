@@ -28,21 +28,21 @@ from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import truncated_range, truncated_discrete_set
 
 
-byteorder = 'big'
-encoding = 'utf-8'
+BYTEORDER = 'big'
+ENCODING = 'utf-8'
 termination_character = "\r"
 reflection_limit_map = {0: 0, 1: 100, 2: 150, 3: 180, 4: 200, 5: 230}
 
 
-def _has_correct_termination_character(b):
-    return b[-1] == termination_character.encode(encoding=encoding)[0]
+def _has_correct_termination_character(b: bytes) -> bool:
+    return b[-1] == termination_character.encode(encoding=ENCODING)[0]
 
 
-def _err_msg_invalid_termination_character(b):
+def _err_msg_invalid_termination_character(b: bytes) -> str:
     return f"Invalid termination character received: {hex(b[-1])}"
 
 
-def _is_expecting_acknowledgement(command):
+def _is_expecting_acknowledgement(command: str) -> bool:
     if command in ["v", "5", "8", "6", "7", "T"]:
         return False
     if command.endswith("?"):
@@ -76,14 +76,13 @@ class Kusg245_250A(Instrument):
         p_rev = generator.power_reverse         # Reads reflected power in Watts
     """
 
-    def __init__(self, adapter, name="KU SG 2.45 250 A", power_limit=250, **kwargs):
+    def __init__(self, adapter, name: str = "KU SG 2.45 250 A", power_limit: int = 250, **kwargs):
         assert 0 < power_limit <= 250, "Param 'power_limit' is out of bounds (0, 250)."
         super().__init__(adapter,
                          name,
                          asrl={"baud_rate": 115200,
                                "read_termination": termination_character,
                                "write_termination": termination_character},
-                         includeSCPI=False,
                          **kwargs)
 
         self._power_limit = power_limit
@@ -92,39 +91,39 @@ class Kusg245_250A(Instrument):
     version = Instrument.measurement("v", """Get firmware version.""")
 
     @property
-    def voltage_5v(self):
+    def voltage_5v(self) -> float:
         """Measure internal 5V supply voltage in Volts."""
         self.write("5")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
-            return 103.0 / 4700.0 * int.from_bytes(b[:2], byteorder=byteorder)
+            return 103.0 / 4700.0 * int.from_bytes(b[:2], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
-    def voltage_32v(self):
+    def voltage_32v(self) -> float:
         """Measure 32V supply voltage in Volts."""
         self.write("8")
         b = self.read_bytes(3)
         if _has_correct_termination_character(b):
-            return 1282.0 / 8200.0 * int.from_bytes(b[:2], byteorder=byteorder)
+            return 1282.0 / 8200.0 * int.from_bytes(b[:2], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
-    def power_forward(self):
+    def power_forward(self) -> int:
         """Measure forward power in Watts."""
         self.write("6")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1], byteorder=byteorder)
+            return int.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @property
-    def power_reverse(self):
+    def power_reverse(self) -> int:
         """Measure reverse power in Watts."""
         self.write("7")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1], byteorder=byteorder)
+            return int.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     temperature = Instrument.measurement(
@@ -133,7 +132,7 @@ class Kusg245_250A(Instrument):
     )
 
     @property
-    def external_enabled(self):
+    def external_enabled(self) -> bool:
         """Control whether amplifier enabling is done
         via external inputs on 8-pin connector
         or via serial interface (boolean).
@@ -141,18 +140,18 @@ class Kusg245_250A(Instrument):
         self.write("r?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1], byteorder=byteorder)
+            return bool.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @external_enabled.setter
-    def external_enabled(self, value):
+    def external_enabled(self, value: bool) -> None:
         if value:
             self.write("R")
         else:
             self.write("r")
 
     @property
-    def bias_enabled(self):
+    def bias_enabled(self) -> bool:
         """Control whether transistor biasing is enabled (boolean).
 
         Biasing must be enabled before switching RF on
@@ -161,18 +160,18 @@ class Kusg245_250A(Instrument):
         self.write("x?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1], byteorder=byteorder)
+            return bool.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @bias_enabled.setter
-    def bias_enabled(self, value):
+    def bias_enabled(self, value: bool) -> None:
         if value:
             self.write("X")
         else:
             self.write("x")
 
     @property
-    def rf_enabled(self):
+    def rf_enabled(self) -> bool:
         """Control whether RF output is enabled (boolean).
 
         .. note::
@@ -183,18 +182,18 @@ class Kusg245_250A(Instrument):
         self.write("o?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1], byteorder=byteorder)
+            return bool.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @rf_enabled.setter
-    def rf_enabled(self, value):
+    def rf_enabled(self, value: bool) -> None:
         if value:
             self.write("O")
         else:
             self.write("o")
 
     @property
-    def pulse_mode_enabled(self):
+    def pulse_mode_enabled(self) -> bool:
         """Control whether pulse mode is enabled (boolean).
 
         .. note::
@@ -205,27 +204,27 @@ class Kusg245_250A(Instrument):
         self.write("p?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1], byteorder=byteorder)
+            return bool.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @pulse_mode_enabled.setter
-    def pulse_mode_enabled(self, value):
+    def pulse_mode_enabled(self, value: bool) -> None:
         if value:
             self.write("P")
         else:
             self.write("p")
 
     @property
-    def freq_steps_fine_enabled(self):
+    def freq_steps_fine_enabled(self) -> bool:
         """Control whether fine frequency steps are enabled (boolean)."""
         self.write("fm?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return bool.from_bytes(b[:1], byteorder=byteorder)
+            return bool.from_bytes(b[:1], byteorder=BYTEORDER)
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @freq_steps_fine_enabled.setter
-    def freq_steps_fine_enabled(self, value):
+    def freq_steps_fine_enabled(self, value: bool) -> None:
         if value:
             self.write("fm1")
         else:
@@ -301,7 +300,7 @@ class Kusg245_250A(Instrument):
     )
 
     @property
-    def phase_shift(self):
+    def phase_shift(self) -> float:
         """Control phase shift in degrees (float from 0 to 358.6).
 
         Resolution: 8-bits. Values out of range are truncated.
@@ -309,16 +308,16 @@ class Kusg245_250A(Instrument):
         self.write("H?")
         b = self.read_bytes(2)
         if _has_correct_termination_character(b):
-            return int.from_bytes(b[:1], byteorder=byteorder) / 256.0 * 360.0
+            return int.from_bytes(b[:1], byteorder=BYTEORDER) / 256.0 * 360.0
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @phase_shift.setter
-    def phase_shift(self, value):
+    def phase_shift(self, value: float) -> None:
         value = int(round(truncated_range(value, [0, 358.6])) / 360.0 * 256.0)
         self.write(f"H{value:03d}")
 
     @property
-    def reflection_limit(self):
+    def reflection_limit(self) -> int:
         """Control limit of reflection in Watts
         (integer in 0 - no limit, 100, 150, 180, 200, 230).
 
@@ -336,13 +335,13 @@ class Kusg245_250A(Instrument):
         raise ConnectionError(_err_msg_invalid_termination_character(b))
 
     @reflection_limit.setter
-    def reflection_limit(self, value):
+    def reflection_limit(self, value: int) -> None:
         value = truncated_discrete_set(value, reflection_limit_map.values())
         inv_reflection_limit_map = {v: k for k, v in reflection_limit_map.items()}
         value = inv_reflection_limit_map[value]
         self.write(f"B{value:d}")
 
-    def tune(self, power):
+    def tune(self, power: int) -> None:
         """Find and set frequency with lowest reflection
         at a given power.
 
@@ -353,14 +352,14 @@ class Kusg245_250A(Instrument):
         power = truncated_range(power, [0, self._power_limit])
         self.write(f"b{power:03d}")
 
-    def clear_VSWR_error(self):
+    def clear_VSWR_error(self) -> None:
         """Clear the VSWR error.
 
         See: :attr:`~.Kusg245_250A.reflection_limit`.
         """
         self.write("z")
 
-    def store_settings(self):
+    def store_settings(self) -> None:
         """Save actual settings to EEPROM.
 
         The following parameters are stored:
@@ -375,7 +374,7 @@ class Kusg245_250A(Instrument):
         """
         self.write("SE")
 
-    def turn_off(self):
+    def turn_off(self) -> None:
         """Safe turn-off the generator.
 
         1. Disable RF output.
@@ -384,7 +383,7 @@ class Kusg245_250A(Instrument):
         self.rf_enabled = False
         self.bias_enabled = False
 
-    def turn_on(self):
+    def turn_on(self) -> None:
         """Safe turn-on the generator.
 
         1. Activate biasing.
@@ -394,7 +393,7 @@ class Kusg245_250A(Instrument):
         time.sleep(0.500)  # not sure if needed
         self.rf_enabled = True
 
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         super().write(command, **kwargs)
         if _is_expecting_acknowledgement(command):
             s = self.read()

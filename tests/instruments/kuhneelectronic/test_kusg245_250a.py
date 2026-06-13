@@ -25,10 +25,10 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.kuhneelectronic import Kusg245_250A
-from pymeasure.instruments.kuhneelectronic.kusg245_250a import termination_character, encoding
+from pymeasure.instruments.kuhneelectronic.kusg245_250a import termination_character, ENCODING
 
 
-termination_character = termination_character.encode(encoding=encoding)[0]
+termination_character = termination_character.encode(encoding=ENCODING)[0]
 
 
 def test_voltage_5v():

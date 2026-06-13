@@ -26,6 +26,7 @@ import logging
 
 from enum import IntEnum
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 
 
@@ -33,7 +34,7 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def CRC16(data):
+def CRC16(data: bytes | list[int]) -> list[int]:
     """Calculate the CRC16 checksum for the data byte array."""
     CRC = 0xFFFF
     for octet in data:
@@ -67,15 +68,19 @@ class TC038D(Instrument):
 
     byteMode = 4
 
-    def __init__(self, adapter, name="TC038D", address=1, timeout=1000,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: Adapter | str | int,
+        name: str = "TC038D",
+        address: int = 1,
+        timeout: int = 1000,
+        **kwargs,
+    ):
         """Initialize the device."""
-        super().__init__(adapter, name, timeout=timeout,
-                         includeSCPI=False,
-                         **kwargs)
+        super().__init__(adapter, name, timeout=timeout, **kwargs)
         self.address = address
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the device.
 
         :param str command: comma separated string of:
@@ -104,34 +109,35 @@ class TC038D(Instrument):
             if values:
                 data.extend(int(values[0]).to_bytes(2, "big"))  # 2B test data
         data += CRC16(data)
-        self.write_bytes(bytes(data))
+        self.write_bytes(bytes(data), **kwargs)
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read response and interpret the number, returning it as a string."""
         # Slave address, function
-        got = self.read_bytes(2)
+        got = self.read_bytes(2, **kwargs)
         if got[1] == Functions.R:
             # length of data to follow
-            length = self.read_bytes(1)
+            length = self.read_bytes(1, **kwargs)
             # data length, 2 Byte CRC
-            read = self.read_bytes(length[0] + 2)
+            read = self.read_bytes(length[0] + 2, **kwargs)
             if read[-2:] != bytes(CRC16(got + length + read[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return str(int.from_bytes(read[:-2], byteorder="big", signed=True))
         elif got[1] == Functions.W:
             # start address, number elements, CRC; each 2 Bytes long
-            got += self.read_bytes(2 + 2 + 2)
+            got += self.read_bytes(2 + 2 + 2, **kwargs)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
+            return ""
         elif got[1] == Functions.ECHO:
             # start address 0, data, CRC; each 2B
-            got += self.read_bytes(2 + 2 + 2)
+            got += self.read_bytes(2 + 2 + 2, **kwargs)
             if got[-2:] != bytes(CRC16(got[:-2])):
                 raise ConnectionError("Response CRC does not match.")
             return str(int.from_bytes(got[-4:-2], "big"))
         else:  # an error occurred
             # got[1] is functioncode + 0x80
-            end = self.read_bytes(3)  # error code and CRC
+            end = self.read_bytes(3, **kwargs)  # error code and CRC
             errors = {0x02: "Wrong start address.",
                       0x03: "Variable data error.",
                       0x04: "Operation error."}
@@ -140,7 +146,7 @@ class TC038D(Instrument):
             else:
                 raise ConnectionError(f"Unknown read error. Received: {got} {end}")
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property.
 
         Called if :code:`check_set_errors=True` is set for that property.
@@ -153,7 +159,7 @@ class TC038D(Instrument):
         else:
             return []
 
-    def ping(self, test_data=0):
+    def ping(self, test_data=0) -> None:
         """Test the connection sending an integer up to 65535, checks the response."""
         assert int(self.ask(f"ECHO,0,{test_data}")) == test_data
 

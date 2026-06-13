@@ -48,17 +48,16 @@ class ptwDIAMENTOR(Instrument):
             adapter,
             name,
             baud_rate=baud_rate,
-            includeSCPI=False,
             timeout=2000,
             **kwargs
         )
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read the device response and check for errors.
 
         :raises: *ValueError* for error response or *ConnectionError* for an unknown error
         """
-        got = super().read()
+        got = super().read(**kwargs)
 
         if got.startswith("E"):
 

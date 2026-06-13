@@ -35,7 +35,6 @@ class SCPIMixin:
     """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("includeSCPI", False)  # in order not to trigger the deprecation warning
         super().__init__(*args, **kwargs)
 
     # SCPI default properties
@@ -77,15 +76,15 @@ class SCPIMixin:
     )
 
     # SCPI default methods
-    def clear(self):
+    def clear(self) -> None:
         """Clear the instrument status byte."""
         self.write("*CLS")
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the instrument."""
         self.write("*RST")
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """ Read all errors from the instrument.
 
         :return: List of error entries.

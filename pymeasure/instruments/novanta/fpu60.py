@@ -24,11 +24,19 @@
 
 import logging
 import re
+from typing import TypedDict
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+class OperationTimes(TypedDict):
+    psu: int
+    laser: int
+    laser_above_1A: int
 
 
 class Fpu60(Instrument):
@@ -38,14 +46,20 @@ class Fpu60(Instrument):
     The instrument responds to every command sent.
     """
 
-    def __init__(self, adapter, name="Laserquantum fpu60 power supply unit", **kwargs):
-        super().__init__(adapter,
-                         name=name,
-                         includeSCPI=False,
-                         asrl={'baud_rate': 19200},
-                         write_termination="\r",
-                         read_termination="\r\n",
-                         **kwargs)
+    def __init__(
+        self,
+        adapter: Adapter | str | int,
+        name: str = "Laserquantum fpu60 power supply unit",
+        **kwargs,
+    ):
+        super().__init__(
+            adapter,
+            name=name,
+            asrl={"baud_rate": 19200},
+            write_termination="\r",
+            read_termination="\r\n",
+            **kwargs,
+        )
 
     interlock_enabled = Instrument.measurement(
         "INTERLOCK?",
@@ -113,17 +127,18 @@ class Fpu60(Instrument):
     software_version = Instrument.measurement("SOFTVER?", """Get the software version (str).""",
                                               cast=str)
 
-    def get_operation_times(self):
+    def get_operation_times(self) -> OperationTimes:
         """Get the operation times in minutes as a dictionary."""
         self.write("TIMERS?")
-        timers = {}
-        timers['psu'] = int(re.search(r"\d+", self.read()).group())
-        timers['laser'] = int(re.search(r"\d+", self.read()).group())
-        timers['laser_above_1A'] = int(re.search(r"\d+", self.read()).group())
+        timers: OperationTimes = {
+            "psu": int(re.search(r"\d+", self.read()).group()),
+            "laser": int(re.search(r"\d+", self.read()).group()),
+            "laser_above_1A": int(re.search(r"\d+", self.read()).group()),
+        }
         self.read()  # an empty line is at the end.
         return timers
 
-    def disable_emission(self):
+    def disable_emission(self) -> None:
         """Disable emission and unlock the button afterwards.
 
         You have to press the physical button to enable emission again.
@@ -131,7 +146,7 @@ class Fpu60(Instrument):
         self.ask("LASER=OFF")
         self.ask("LASER=ON")  # unlocks emission button, does NOT start emission!
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.

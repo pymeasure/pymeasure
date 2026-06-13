@@ -25,7 +25,7 @@
 from pymeasure.instruments import Channel, Instrument
 
 
-def calculate_checksum(msg):
+def calculate_checksum(msg: bytes) -> bytes:
     """calculate a two byte Cyclic Redundancy Check based on 14 bits
 
     Parameters
@@ -35,7 +35,7 @@ def calculate_checksum(msg):
     """
     # check if message contains data
     if not msg:
-        return chr(0) + chr(0)
+        return (chr(0) + chr(0)).encode()
     # initialize CRC
     crc = 0x3fff
     # loop over characters in message
@@ -114,14 +114,13 @@ class SQM160(Instrument):
                  baud_rate=19200, **kwargs):
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="",
                          read_termination="",
                          asrl=dict(baud_rate=baud_rate),
                          timeout=3000,
                          **kwargs)
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Reads a response message from the instrument.
 
         This method also checks for a correct checksum.
@@ -131,7 +130,7 @@ class SQM160(Instrument):
         :raises ConnectionError: if a checksum error is detected or a wrong
                                  response status is detected.
         """
-        header = self.read_bytes(2)
+        header = self.read_bytes(2, **kwargs)
         # check valid header
         if header[0] != 33:  # b"!"
             raise ConnectionError(f"invalid header start byte '{header[0]}' received")
@@ -139,7 +138,7 @@ class SQM160(Instrument):
         if length <= 0:
             raise ConnectionError(f"invalid message length '{header[1]}' -> length {length}")
 
-        response_status = self.read_bytes(1)
+        response_status = self.read_bytes(1, **kwargs)
         if response_status == b"C":
             raise ConnectionError("invalid command response received")
         elif response_status == b"D":
@@ -148,10 +147,10 @@ class SQM160(Instrument):
             raise ConnectionError(f"unknown response status character '{response_status}'")
 
         if length - 1 > 0:
-            data = self.read_bytes(length - 1)
+            data = self.read_bytes(length - 1, **kwargs)
         else:
             data = b""
-        chksum = self.read_bytes(2)
+        chksum = self.read_bytes(2, **kwargs)
         calculated_checksum = calculate_checksum(
             header[1].to_bytes(length=1, byteorder='big') + response_status + data)
         if chksum == calculated_checksum:
@@ -161,13 +160,13 @@ class SQM160(Instrument):
                 f"checksum error in received message '{header + response_status + data}' "
                 f"with checksum '{calculated_checksum}' but received '{chksum}'")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the device."""
         length = chr(len(command) + 34)
         message = f"{length}{command}".encode()
-        self.write_bytes(b"!" + message + calculate_checksum(message))
+        self.write_bytes(b"!" + message + calculate_checksum(message), **kwargs)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check the errors after setting a property."""
         self.read()
         return []  # no error happened
@@ -207,12 +206,12 @@ class SQM160(Instrument):
         map_values=True,
     )
 
-    def reset_system_parameters(self):
+    def reset_system_parameters(self) -> None:
         """Reset all film and system parameters."""
         self.write("Z")
         self.read()  # read obligatory response message
 
-    def reset_thickness_rate(self):
+    def reset_thickness_rate(self) -> None:
         """Reset the average thickness and rate.
 
         This also sets all active Sensor Rates and Thicknesses to zero
@@ -220,7 +219,7 @@ class SQM160(Instrument):
         self.write("S")
         self.read()  # read obligatory response message
 
-    def reset_time(self):
+    def reset_time(self) -> None:
         """Reset the time of the monitor to zero.
         """
         self.write("T")

@@ -441,7 +441,7 @@ class SR860(Instrument):
     # For consistency with other lock-in instrument classes
     adc4 = aux_in_4
 
-    def snap(self, val1="X", val2="Y", val3=None):
+    def snap(self, val1="X", val2="Y", val3=None) -> list[float]:
         """retrieve 2 or 3 parameters at once
         parameters can be chosen by index, or enumeration as follows:
 
@@ -505,7 +505,7 @@ class SR860(Instrument):
                 cast=float,
             )
 
-    def snap_all(self):
+    def snap_all(self) -> list[float]:
         """snap X,Y,R,THETA parameters at once"""
         return self.values(
             command="SNAPD?",
@@ -551,7 +551,7 @@ class SR860(Instrument):
         map_values=True
     )
 
-    def screenshot(self):
+    def screenshot(self) -> None:
         """Take screenshot on device
         The DCAP command saves a screenshot to a USB memory stick.
         This command is the same as pressing the [Screen Shot] key.
@@ -632,6 +632,5 @@ class SR860(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )

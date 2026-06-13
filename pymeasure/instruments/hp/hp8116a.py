@@ -28,6 +28,7 @@ import numpy as np
 from enum import Enum, IntFlag
 from typing import Any
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, truncated_discrete_set
@@ -58,14 +59,13 @@ class HP8116A(Instrument):
     The resolution for all floating point instrument parameters is 3 digits.
     """
 
-    def __init__(self, adapter, name="Hewlett-Packard 8116A", **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "Hewlett-Packard 8116A", **kwargs):
         kwargs.setdefault('read_termination', '\r\n')
         kwargs.setdefault('write_termination', '\r\n')
         kwargs.setdefault('send_end', True)
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
         self.has_option_001 = self._check_has_option_001()

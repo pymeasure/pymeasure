@@ -103,7 +103,6 @@ class TC038(Instrument):
             write_termination="\r",
             read_termination="\r",
             parity=Parity.even,
-            includeSCPI=False,
             **kwargs,
         )
         self.address: int = address

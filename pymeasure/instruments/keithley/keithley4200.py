@@ -22,8 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
 from enum import IntFlag
+
+from pymeasure.adapters import Adapter
+from pymeasure.instruments import Instrument, Channel
 
 
 class StatusCode(IntFlag):
@@ -51,7 +53,7 @@ class StatusCode(IntFlag):
 class SMU(Channel):
     """A class representing the SMU (source/measure unit) channel."""
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable the SMU."""
         self.write("US;DV{ch}")
         self.check_set_errors()
@@ -136,16 +138,9 @@ class Keithley4200(Instrument):
     Currently, the driver is only working with the ethernet interface.
     """
 
-    def __init__(self, adapter,
-                 name="Keithley 4200A-SCS",
-                 **kwargs):
+    def __init__(self, adapter: Adapter | str | int, name: str = "Keithley 4200A-SCS", **kwargs):
         super().__init__(
-            adapter,
-            name,
-            includeSCPI=False,
-            tcpip={"write_termination": "\0",
-                   "read_termination": "\0"},
-            **kwargs
+            adapter, name, tcpip={"write_termination": "\0", "read_termination": "\0"}, **kwargs
         )
 
         options = self.options
@@ -154,7 +149,7 @@ class Keithley4200(Instrument):
             if "SMU" in element.upper():
                 self.add_smu(id)
 
-    def add_smu(self, id):
+    def add_smu(self, id: int | str) -> None:
         """Add a SMU channel to the device."""
         self.add_child(SMU,
                        id=id,
@@ -162,7 +157,7 @@ class Keithley4200(Instrument):
                        collection="smu",
                        )
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after sending a command.
 
         :raise: ValueError if response is not 'ACK'
@@ -175,7 +170,7 @@ class Keithley4200(Instrument):
 
         return []
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all data from the buffer.
 
         It also clears bit B0 (DATA_READY) of the status byte.

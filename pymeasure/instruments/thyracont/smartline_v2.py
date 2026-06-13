@@ -24,13 +24,14 @@
 
 from enum import IntEnum
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument, Channel, validators
 from pyvisa.constants import Parity, StopBits
 
 from .smartline_v1 import calculate_checksum
 
 
-def compose_data(value):
+def compose_data(value: float | int | str) -> str:
     """Generate a string with the length of `value` and the `value` itself afterwards.
 
     :param value: Value to send to the device.
@@ -49,7 +50,7 @@ class Sources(IntEnum):
     RELATIVE = 7
 
 
-def str_to_source(source_string):
+def str_to_source(source_string: str) -> Sources:
     """Turn a string with a source number to a `Sources` enum. Useful for `cast` parameter."""
     return Sources(int(source_string))
 
@@ -67,7 +68,7 @@ class SensorChannel(Channel):
 
     _id = -1  # obligatory channel number, define in channel types
 
-    def __init__(self, parent, id=None, **kwargs):
+    def __init__(self, parent: Instrument, id: None | Sources = None, **kwargs):
         # id parameter is necessary for usage with `ChannelCreator`.
         if id is None or id == self._id:
             super().__init__(parent, id=self._id, **kwargs)
@@ -221,7 +222,7 @@ class SmartlineV2(Instrument):
         - Data length is number of data in bytes (padding with zeroes on left)
         - Checksum: Add the decimal numbers of the characters before, mod 64, add 64, show as ASCII.
 
-    :param adress: The device address in the range 1-16.
+    :param address: The device address in the range 1-16.
     """
 
     Sources = Sources
@@ -237,10 +238,16 @@ class SmartlineV2(Instrument):
               '_UNSUP': "Unsupported Data for that command.",
               '_SEDIS': "Sensor element disabled."}
 
-    def __init__(self, adapter, name="Thyracont SmartlineV2 Transmitter", baud_rate=115200,
-                 address=1, timeout=250,
-                 **kwargs):
-        super().__init__(adapter, name=name, includeSCPI=False,
+    def __init__(
+        self,
+        adapter: Adapter | str | int,
+        name: str = "Thyracont SmartlineV2 Transmitter",
+        baud_rate: int = 115200,
+        address: int = 1,
+        timeout: int = 250,
+        **kwargs,
+    ):
+        super().__init__(adapter, name=name,
                          write_termination="\r",
                          read_termination="\r",
                          timeout=timeout,
@@ -252,12 +259,12 @@ class SmartlineV2(Instrument):
                          )
         self.address = address  # 1-16
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Write a command to the device."""
         message = f"{self.address:03}{command}"
-        super().write(f"{message}{calculate_checksum(message)}")
+        super().write(f"{message}{calculate_checksum(message)}", **kwargs)
 
-    def write_composition(self, accessCode, command, data=""):
+    def write_composition(self, accessCode: int, command: str, data: float | str = "") -> None:
         """Write a command with an accessCode and optional data to the device.
 
         :param accessCode: How to access the device.
@@ -266,17 +273,23 @@ class SmartlineV2(Instrument):
         """
         self.write(f"{accessCode}{command}{compose_data(data)}")
 
-    def ask(self, command_message, query_delay=None):
+    def ask(self, command: str, query_delay: float | None = None) -> str:
         """Ask for some value and check that the response matches the original command.
 
         :param str command_message: Access code, command, length, and content.
             The command sent is compared to the response command.
         """
-        self.write(command_message)
+        self.write(command)
         self.wait_for(query_delay)
-        return self.read(command_message[1:3])
+        return self.read(command[1:3])
 
-    def ask_manually(self, accessCode, command, data="", query_delay=None):
+    def ask_manually(
+        self,
+        accessCode: int,
+        command: str,
+        data: float | str = "",
+        query_delay: float | None = None,
+    ) -> str:
         """
         Send a message to the transmitter and return its answer.
 
@@ -290,7 +303,7 @@ class SmartlineV2(Instrument):
         self.wait_for(query_delay)
         return self.read(command)
 
-    def read(self, command=None):
+    def read(self, command: str | None = None, **kwargs) -> str:
         """Read from the device and do error checking.
 
         :param str command: Original command sent to the device to compare it with the response.
@@ -298,7 +311,7 @@ class SmartlineV2(Instrument):
         """
         # Sometimes the answer contains 0x00 or values above 127, such that
         # decoding fails.
-        response = self.read_bytes(-1, break_on_termchar=True)
+        response = self.read_bytes(-1, break_on_termchar=True, **kwargs)
         response = response.replace(b"\x00", b"")
 
         # b"\r" is the termination character
@@ -312,7 +325,7 @@ class SmartlineV2(Instrument):
             raise ConnectionError("Response checksum is wrong.")
         return got[8:-1]
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check the errors after setting a property."""
         self.read()
         return []  # no error happened
@@ -358,17 +371,17 @@ class SmartlineV2(Instrument):
         check_set_errors=True,
     )
 
-    def set_high(self, high=""):
+    def set_high(self, high="") -> None:
         """Set the high pressure to `high` pressure in mbar."""
         self.ask_manually(2, "AH", high)
 
-    def set_low(self, low=""):
+    def set_low(self, low="") -> None:
         """Set the low pressure to `low` pressure in mbar."""
         self.ask_manually(2, "AL", low)
 
     " Sensor parameters"
 
-    def get_sensor_transition(self):
+    def get_sensor_transition(self) -> str:
         """
         Get the current sensor transition between sensors.
 
@@ -393,15 +406,15 @@ class SmartlineV2(Instrument):
         }
         return mapping.get(got, got)
 
-    def set_default_sensor_transition(self):
+    def set_default_sensor_transition(self) -> None:
         """Set the senstor transition mode to the default value, depends on the device."""
         self.ask_manually(2, "ST", "1")
 
-    def set_continuous_sensor_transition(self, low, high):
+    def set_continuous_sensor_transition(self, low: float, high: float) -> None:
         """Set the sensor transition mode to "continuous" mode between `low` and `high` (floats)."""
         self.ask_manually(2, "ST", f"F{low}T{high}")
 
-    def set_direct_sensor_transition(self, transition_point):
+    def set_direct_sensor_transition(self, transition_point: float) -> None:
         """Set the sensor transition to "direct" mode.
 
         :param float transition_point: Switch between the sensors at that value.

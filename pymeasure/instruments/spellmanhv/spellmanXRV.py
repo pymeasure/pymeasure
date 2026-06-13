@@ -251,7 +251,6 @@ class SpellmanXRV(Instrument):
             asrl={'baud_rate': baud_rate},
             read_termination=ETX,
             write_termination=ETX,
-            includeSCPI=False,
             timeout=2000,
             **kwargs)
 
@@ -295,7 +294,7 @@ class SpellmanXRV(Instrument):
         csb3 = 0x40 | csb2  # bitwise OR 0x40: set bit 6
         return chr(csb3)
 
-    def write(self, command: str) -> None:
+    def write(self, command: str, **kwargs) -> None:
         """Write to the instrument.
 
         Adds <STX> (0x02) in front and checksum + <ETX> (0x03) at end of every command before
@@ -305,24 +304,24 @@ class SpellmanXRV(Instrument):
         command_with_comma = command + ","
         if self.checksum_enabled:
             checksum = self.checksum(command_with_comma)
-            super().write(f"{STX}{command_with_comma}{checksum}")
+            super().write(f"{STX}{command_with_comma}{checksum}", **kwargs)
         else:
-            super().write(f"{STX}{command_with_comma}")
+            super().write(f"{STX}{command_with_comma}", **kwargs)
 
-    def wait_for(self, query_delay: float = 0) -> None:
+    def wait_for(self, query_delay: float | None = 0) -> None:
         """Wait for some time.
 
         :param query_delay: override the global query_delay.
         """
         super().wait_for(query_delay or self.query_delay)
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read from the device and check for errors.
 
         :raise: ConnectionError if response doesn't start with <STX> or checksum is incorrect.
                 The checksum check is omitted for TCPIP connections.
         """
-        got = super().read()
+        got = super().read(**kwargs)
 
         if not got.startswith(STX):
             raise ConnectionError("Expected <STX> at begin of received message.")
