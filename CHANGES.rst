@@ -4,6 +4,7 @@ Upcoming release
 Removed
 -------
 - Remove GUI dependencies from default dependencies. Install pymeasure with gui dependencies with :code:`pip install pymeasure[gui]`. Conda still installs all dependencies.
+- Remove deprecated SCPI methods and properties from :code:`Instrument`.
 
 
 Version 0.16.0 (2026-05-20)
