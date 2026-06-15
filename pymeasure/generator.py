@@ -24,7 +24,6 @@
 
 import io
 import logging
-from typing import Union, Optional
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel

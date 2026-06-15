@@ -176,7 +176,7 @@ def test_channel_move_abs(channel):
             SmarActSCULinear,
             [(f':MPA{channel}P100'.encode(), None)],
     ) as inst:
-        inst.channels[channel].move_abs((Q_(100, 'um')))
+        inst.channels[channel].move_abs(Q_(100, 'um'))
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
@@ -185,7 +185,7 @@ def test_channel_move_rel(channel):
             SmarActSCULinear,
             [(f':MPR{channel}P50'.encode(), None)],
     ) as inst:
-        inst.channels[channel].move_rel((Q_(50, 'um')))
+        inst.channels[channel].move_rel(Q_(50, 'um'))
 
 
 @pytest.mark.parametrize("channel", CHANNELS)
