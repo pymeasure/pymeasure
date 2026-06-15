@@ -4,7 +4,12 @@ Upcoming release
 Removed
 -------
 - Remove GUI dependencies from default dependencies. Install pymeasure with gui dependencies with :code:`pip install pymeasure[gui]`. Conda still installs all dependencies.
+- Remove deprecated Toptica Ibeamsmart methods: :code:`laser_enabled`, :code:`channel1_enabled` :code:`channel2_enabled`, use :code:`emission` and the driver channels.
 
+Deprecated
+----------
+- Deprecate Toptica Ibeamsmart :code:`enable_continous`, use :code:`enable_continuous` instead.
+- Deprecate Thermotron 3800 :code:`initalize_oven`, use :code:`initialize_oven` instead.
 
 Version 0.16.0 (2026-05-20)
 ===========================
