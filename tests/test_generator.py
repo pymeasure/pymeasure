@@ -254,7 +254,7 @@ class Test_generator:
         TC038.string_test = TC038.control("test?", "test %s",  # type: ignore
                                           "Control some string.", cast=str,  # type: ignore
                                           get_process=lambda v: v[7:-1])
-        generator.instantiate(TC038, adapter, "hcp",{})
+        generator.instantiate(TC038, adapter, "hcp")
         return generator
 
     def test_instantiate(self, generator):
@@ -617,7 +617,7 @@ class TestTestInstrument:
     def inst(self):
         generator = Generator()
         adapter = ProtocolAdapter()
-        inst = generator.instantiate(FakeTestInstrument, adapter, "fake",{})
+        inst = generator.instantiate(FakeTestInstrument, adapter, "fake")
         return inst
 
     def test_channel_setter(self, inst):

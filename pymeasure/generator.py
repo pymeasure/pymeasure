@@ -436,9 +436,9 @@ class Generator:
         return self._init_comm_pairs + comm
 
     def instantiate(self, instrument_class,
-                    adapter: Union[str, int],
+                    adapter: str | int,
                     manufacturer: str,
-                    adapter_kwargs: Optional[dict] = None,
+                    adapter_kwargs: dict | None = None,
                     **kwargs) -> TestInstrument:
         """
         Instantiate the instrument and store the instantiation communication.
