@@ -36,11 +36,10 @@ class FakeInstrument(Instrument):
     for testing purposes.
     """
 
-    def __init__(self, adapter=None, name="Fake Instrument", includeSCPI=False, **kwargs):
+    def __init__(self, adapter=None, name="Fake Instrument", **kwargs):
         super().__init__(
             FakeAdapter(**kwargs),
             name,
-            includeSCPI=includeSCPI,
             **kwargs
         )
 
@@ -91,7 +90,6 @@ class SwissArmyFake(FakeInstrument):
     def __init__(self, name="Mock instrument", wait=.1, **kwargs):
         super().__init__(
             name=name,
-            includeSCPI=False,
             **kwargs
         )
         self._wait = wait

@@ -65,7 +65,6 @@ class HP8116A(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
         self.has_option_001 = self._check_has_option_001()

@@ -116,7 +116,6 @@ class IBeamSmart(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination='\r\n',
             write_termination='\r\n',
             asrl={'baud_rate': baud_rate},

@@ -76,7 +76,7 @@ class PM6669(Instrument):
     """Represents the Philips PM 6669 instrument."""
 
     def __init__(self, adapter, name="Philips PM 6669", **kwargs):
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        super().__init__(adapter, name, **kwargs)
         self.write("EOI ON")
         self.freerun_enabled = False
         self.backlog = Queue()

@@ -45,7 +45,6 @@ class NIDAQ(Instrument):
         super().__init__(
             None,
             "NIDAQ",
-            includeSCPI=False,
             **kwargs)
         for chan in self._daq.get_AI_channels():
             self.add_property(chan)

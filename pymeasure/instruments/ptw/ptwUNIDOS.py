@@ -48,7 +48,6 @@ class ptwUNIDOS(Instrument):
             adapter,
             name,
             read_termination="\r\n",
-            includeSCPI=False,
             timeout=20000,
             encoding="utf8",
             **kwargs

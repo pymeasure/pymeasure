@@ -110,7 +110,6 @@ class HPLegacyInstrument(Instrument):
     def __init__(self, adapter, name="HP legacy instrument", **kwargs):
         super().__init__(
             adapter, name,
-            includeSCPI=False,
             **kwargs,
         )
 

@@ -61,7 +61,6 @@ class Danfysik8500(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             write_termination="\r",
             read_termination="\r",
             timeout=500,

@@ -37,7 +37,6 @@ class Thermotron3800(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 

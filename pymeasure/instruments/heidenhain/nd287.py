@@ -67,7 +67,6 @@ class ND287(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             write_termination="\r",
             **kwargs
         )
