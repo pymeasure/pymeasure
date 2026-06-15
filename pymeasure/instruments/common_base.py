@@ -26,7 +26,6 @@ from inspect import getmembers
 import logging
 from typing import Any, cast, Protocol, TypeVar
 from collections.abc import Callable, Sequence
-from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -128,7 +127,6 @@ class CommonBase:
                          'map_values',
                          'get_process',
                          'get_process_list',
-                         'command_process',
                          'check_get_errors')
 
     _fset_params_list = ('set_command',
@@ -136,7 +134,6 @@ class CommonBase:
                          'values',
                          'map_values',
                          'set_process',
-                         'command_process',
                          'check_set_errors')
 
     # Prefix used to store reserved variables
@@ -499,7 +496,6 @@ class CommonBase:
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
         set_process: Callable[[V2], Any] = lambda v: v,
-        command_process: Callable | None = None,
         check_set_errors: bool = False,
         check_get_errors: bool = False,
         dynamic: bool = False,
@@ -508,7 +504,6 @@ class CommonBase:
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
-        **kwargs,
     ) -> property | DynamicProperty:
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
@@ -530,12 +525,6 @@ class CommonBase:
         :param get_process_list: A function that takes the value list and processes it.
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
-        :param command_process: A function that takes a command and allows processing
-            before executing the command
-
-            .. deprecated:: 0.12
-                Use a dynamic property instead.
-
         :param check_set_errors: Toggles checking errors after setting
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
@@ -549,10 +538,6 @@ class CommonBase:
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
-        :param \\**kwargs: Keyword arguments for :meth:`values`.
-
-            .. deprecated:: 0.12
-                Use `values_kwargs` dictionary parameter instead.
 
         Example of usage of dynamic parameter is as follows:
 
@@ -587,16 +572,6 @@ class CommonBase:
         """
         if values_kwargs is None:
             values_kwargs = {}
-        if kwargs:
-            warn(f"Do not use keyword arguments {kwargs} as `control` parameter "
-                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
-                 FutureWarning)
-            values_kwargs.update(kwargs)
-
-        if command_process is None:
-            command_process = lambda c: c  # noqa: E731
-        else:
-            warn("Do not use `command_process`, use a dynamic property instead.", FutureWarning)
 
         def fget(
             self: "CommonBase",
@@ -605,28 +580,29 @@ class CommonBase:
             map_values: bool = map_values,
             get_process: Callable[[Any], Any] = get_process,
             get_process_list: Callable[[list[Any]], Any] = get_process_list,
-            command_process=command_process,
             check_get_errors: bool = check_get_errors,
         ) -> Any:
             if get_command is None:
                 raise LookupError("Property can not be read.")
-            vals = self.values(command_process(get_command),
-                               separator=separator,
-                               cast=cast,
-                               preprocess_reply=preprocess_reply,
-                               maxsplit=maxsplit,
-                               **values_kwargs)
+            vals = self.values(
+                get_command,
+                separator=separator,
+                cast=cast,
+                preprocess_reply=preprocess_reply,
+                maxsplit=maxsplit,
+                **values_kwargs,
+            )
             if check_get_errors:
                 try:
                     error_list = self.check_get_errors()
                 except Exception as exc:
                     log.error("Exception raised while getting a property with the command "
-                              f"""'{command_process(get_command)}': '{str(exc)}'.""")
+                              f"""'{get_command}': '{str(exc)}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
                     log.error("Error received after trying to get a property with the command "
-                              f"""'{command_process(get_command)}': '{"', '".join(errors)}'.""")
+                              f"""'{get_command}': '{"', '".join(errors)}'.""")
             if len(vals) == 1:
                 value = get_process(vals[0])
                 if not map_values:
@@ -655,7 +631,6 @@ class CommonBase:
             values: Vs = values,
             map_values: bool = map_values,
             set_process: Callable[[V2], Any] = set_process,
-            command_process=command_process,
             check_set_errors: bool = check_set_errors,
         ) -> None:
             if set_command is None:
@@ -673,19 +648,19 @@ class CommonBase:
                     f'Values of type `{type(values)}` are not allowed '
                     'for CommonBase.control'
                 )
-            self.write(command_process(set_command) % val)
+            self.write(set_command % val)
             if check_set_errors:
                 try:
                     error_list = self.check_set_errors()
                 except Exception as exc:
                     log.error("Exception raised while setting a property with the command "
-                              f"""'{command_process(set_command) % val}': '{str(exc)}'.""")
+                              f"""'{set_command % val}': '{str(exc)}'.""")
                     raise
                 errors = [str(error) for error in error_list]
                 if errors:
                     log.error(
                         "Error received after trying to set a property with the command "
-                        f"""'{command_process(set_command) % val}': '{"', '".join(errors)}'."""
+                        f"""'{set_command % val}': '{"', '".join(errors)}'."""
                     )
 
         # Add the specified document string to the getter
@@ -708,7 +683,6 @@ class CommonBase:
         map_values: bool = False,
         get_process: Callable[[Any], Any] = lambda v: v,
         get_process_list: Callable[[list[Any]], Any] = lambda v: v,
-        command_process: Callable | None = None,
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Callable[[str], str] | None = None,
@@ -716,7 +690,6 @@ class CommonBase:
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
-        **kwargs,
     ) -> property | DynamicProperty:
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
@@ -731,12 +704,6 @@ class CommonBase:
         :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param get_process_list: A function that takes the value list and processes it.
-        :param command_process: A function that take a command and allows processing
-            before executing the command, for getting
-
-            .. deprecated:: 0.12
-                Use a dynamic property instead.
-
         :param check_get_errors: Toggles checking errors after getting
         :param dynamic: Specify whether the property parameters are meant to be changed in
             instances or subclasses. See :meth:`control` for an usage example.
@@ -749,18 +716,9 @@ class CommonBase:
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
-        :param \\**kwargs: Keyword arguments for :meth:`values`.
-
-            .. deprecated:: 0.12
-                Use `values_kwargs` dictionary parameter instead.
         """
         if values_kwargs is None:
             values_kwargs = {}
-        if kwargs:
-            warn(f"Do not use keyword arguments {kwargs} as `measurement` parameter "
-                 f"for the `values` method, use `values_kwargs` parameter instead. docs:\n{docs}",
-                 FutureWarning)
-            values_kwargs.update(kwargs)
 
         return CommonBase.control(get_command=get_command,
                                   set_command=None,
@@ -769,7 +727,6 @@ class CommonBase:
                                   map_values=map_values,
                                   get_process=get_process,
                                   get_process_list=get_process_list,
-                                  command_process=command_process,
                                   check_get_errors=check_get_errors,
                                   dynamic=dynamic,
                                   preprocess_reply=preprocess_reply,
