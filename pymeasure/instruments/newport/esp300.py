@@ -233,9 +233,7 @@ class ESP300(SCPIUnknownMixin, Instrument):
     """ Represents the Newport ESP 300 Motion Controller
     and provides a high-level for interacting with the instrument.
 
-    By default this instrument is constructed with x, y, and phi
-    attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the available axes. Axes are controlled
+    By default this instrument is constructed with 3 axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
     class.
     """
@@ -253,10 +251,7 @@ class ESP300(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        # Defines default axes, which can be overwritten
-        self.x = Axis(1, self)
-        self.y = Axis(2, self)
-        self.phi = Axis(3, self)
+        self.axes = [Axis(1, self), Axis(2, self), Axis(3, self)]
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
@@ -279,23 +274,6 @@ class ESP300(SCPIUnknownMixin, Instrument):
                 errors.append(GeneralError(code))
             code = self.error
         return errors
-
-    @property
-    def axes(self):
-        """ Get a list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
-        objects that are present. """
-        axes = []
-        directory = dir(self)
-        for name in directory:
-            if name == 'axes':
-                continue  # Skip this property
-            try:
-                item = getattr(self, name)
-                if isinstance(item, Axis):
-                    axes.append(item)
-            except TypeError:
-                continue
-        return axes
 
     def enable(self):
         """ Enables all of the axes associated with this controller.
