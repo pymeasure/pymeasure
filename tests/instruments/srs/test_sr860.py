@@ -22,24 +22,29 @@
 # THE SOFTWARE.
 #
 
-from enum import IntEnum
+import pytest
 
-from pymeasure.instruments.instrument import AdapterType
+from pymeasure.instruments.srs.sr860 import SR860
+from pymeasure.test import expected_protocol
 
-from .ophir_base import AverageMixin, KeyMixin, OphirBase
+
+@pytest.mark.parametrize("value", (0, 1))
+def test_timebase_getter(value):
+    with expected_protocol(SR860, [("TBMODE?", f"{value}")]) as inst:
+        assert inst.timebase == value
 
 
-class NovaII(AverageMixin, KeyMixin, OphirBase):
-    """Represents an Ophir Nova II laser power/energy meter."""
+@pytest.mark.parametrize("value", (0, 1))
+def test_timebase_setter(value):
+    with expected_protocol(SR860, [(f"TBMODE {value}", None)]) as inst:
+        inst.timebase = value
 
-    class Modes(IntEnum):
-        """Measurement modes supported by the Nova II."""
-        PASSIVE = 1
-        POWER = 2
-        ENERGY = 3
-        EXPOSURE = 4
-        POSITION = 5
 
-    def __init__(self, adapter: AdapterType, name: str = "NovaII", **kwargs):
-        super().__init__(adapter, name, **kwargs)
-        self.modes_values = self.Modes
+def test_front_panel_getter():
+    with expected_protocol(SR860, [("DBLK?", "1")]) as inst:
+        assert inst.front_panel == "1"
+
+
+def test_front_panel_setter():
+    with expected_protocol(SR860, [("DBLK 1", None)]) as inst:
+        inst.front_panel = "1"

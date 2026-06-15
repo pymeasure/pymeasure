@@ -51,7 +51,7 @@ def hp8753e(connected_device_address):
             prologix = PrologixAdapter(
                 resource_name=prologix_address,
                 visa_library="@py",
-                auto=1,
+                auto=True,
                 address=gpib_address,
             )
 

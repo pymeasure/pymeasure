@@ -29,6 +29,8 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     CMU,
     SMU,
     SPGU,
+    ADCMode,
+    ADCType,
     ControlMode,
     MFCMUMeasurementMode,
     PgSelectorConnectionStatus,
@@ -94,6 +96,13 @@ class TestB1500:
         """Test that smu_names is the SMU-only subset of unit_names."""
         with expected_protocol(AgilentB1500Mock, []) as inst:
             assert inst.smu_names == {inst.smu1.id: "SMU1"}
+
+    def test_adc_setup(self):
+        with expected_protocol(
+            AgilentB1500,
+            [("AIT 0, 1", None), ("ERRX?", '0,"No error"')],
+        ) as inst:
+            inst.adc_setup(ADCType.HSADC, mode=ADCMode.MANUAL)
 
 
 class AgilentB1500Mock(AgilentB1500):
@@ -500,3 +509,4 @@ class TestCMU:
             [(f"SSP 2, {path.value}", None)],
         ) as inst:
             inst.cmu.set_scuu_path(path)
+

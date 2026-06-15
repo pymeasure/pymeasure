@@ -84,7 +84,7 @@ class TeledyneMAUIChannel(TeledyneOscilloscopeChannel):
         ch_setup = {
             "channel": self.id,
             "attenuation": self.probe_attenuation,
-            "bandwidth_limit": self.bwlimit[f"C{self.id}"],
+            "bandwidth_limit": self.bwlimit[f"C{self.id}"],  # pyright: ignore[reportArgumentType]
             "coupling": self.coupling,
             "offset": self.offset,
             "display": self.display,
