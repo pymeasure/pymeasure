@@ -26,6 +26,7 @@ from time import sleep
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_discrete_set
+from warnings import warn
 
 
 class AxisError(Exception):
@@ -252,6 +253,21 @@ class ESP300(SCPIUnknownMixin, Instrument):
             **kwargs
         )
         self.axes = [Axis(1, self), Axis(2, self), Axis(3, self)]
+
+    def x(self):
+        warn("The x attribute is deprecated."
+             "Axes are now directly accessed through the axes attribute.", FutureWarning)
+        return self.axes[0]
+
+    def y(self):
+        warn("The y attribute is deprecated."
+             "Axes are now directly accessed through the axes attribute.", FutureWarning)
+        return self.axes[1]
+
+    def phi(self):
+        warn("The phi attribute is deprecated."
+             "Axes are now directly accessed through the axes attribute.", FutureWarning)
+        return self.axes[2]
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
