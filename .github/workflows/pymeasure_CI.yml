@@ -7,8 +7,35 @@ on:
   pull_request:
 
 jobs:
-  docs_lint:
-    name: Docs and Linting
+  lint_typecheck:
+    name: Lint and Type Check
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install pymeasure requirements
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: .github/pymeasure.yml
+          cache-environment-key: pylatest-ubuntu-latest-mamba-${{ env.CACHE_NUMBER }}-${{ hashFiles('environment.yml') }}
+          cache-downloads: false
+      - name: Python version
+        run: python --version
+      - name: Lint with ruff
+        uses: astral-sh/ruff-action@v3
+        with:
+          args: "check --output-format github"
+      - name: Install Pymeasure for type checking
+        run: pip install -e .[typecheck]
+      - name: Type check with ty
+        run: ty check --output-format github
+
+  docs:
+    name: Docs
     runs-on: "ubuntu-latest"
     defaults:
       run:
@@ -27,19 +54,14 @@ jobs:
         run: |
           python --version
           micromamba info
-      - name: Lint with ruff
-        uses: astral-sh/ruff-action@v3
-        with:
-          args: "check --output-format github"
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Generate docs
-        if: always()  # run even if the previous step failed
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
           make html SPHINXOPTS="-W --keep-going"
       - name: Run doctests
-        if: always()  # run even if the previous step failed
+        if: always()
         working-directory: ./docs
         run: |
           echo "::add-matcher::.github/sphinx.json"
