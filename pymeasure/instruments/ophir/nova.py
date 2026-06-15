@@ -93,9 +93,9 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
         """Control the timeout in ms waiting for a power signal."""
         self._power_timeout = timeout
         if timeout:
-            self.power_command_process = lambda c: f"{c}{timeout / 100:.0f}"
+            self.power_get_command = f"SP{timeout / 100:.0f}"
         else:
-            self.power_command_process = lambda c: c
+            self.power_get_command = "SP"
 
     @property
     def energy_timeout(self) -> float:
@@ -107,6 +107,6 @@ class Nova(KeyMixin, NovaEnums, OphirCommunication):
         """Control the timeout in ms waiting for an energy signal."""
         self._energy_timeout = timeout
         if timeout:
-            self.energy_command_process = lambda c: f"{c}{timeout / 100:.0f}"
+            self.energy_get_command = f"SE{timeout / 100:.0f}"
         else:
-            self.energy_command_process = lambda c: c
+            self.energy_get_command = "SE"

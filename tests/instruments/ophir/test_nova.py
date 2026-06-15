@@ -33,6 +33,11 @@ LegacyModes = Nova.LegacyModes
 
 
 def test_Nova_power():
+    with expected_protocol(Nova, [("$SP", "*1.300E-5")]) as inst:
+        assert inst.power == 1.3e-5
+
+
+def test_Nova_power_timeout():
     with expected_protocol(Nova, [("$SP10", "*1.300E-5")]) as inst:
         inst.power_timeout = 1000
         assert inst.power == 1.3e-5
