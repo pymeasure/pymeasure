@@ -22,7 +22,6 @@
 # THE SOFTWARE.
 #
 
-from typing import Union
 from enum import Enum
 from pymeasure.units import ureg
 
