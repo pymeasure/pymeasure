@@ -35,7 +35,6 @@ class SCPIMixin:
     """Mixin class for SCPI instruments with the default implementation of base SCPI commands."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("includeSCPI", False)  # in order not to trigger the deprecation warning
         super().__init__(*args, **kwargs)
 
     # SCPI default properties
