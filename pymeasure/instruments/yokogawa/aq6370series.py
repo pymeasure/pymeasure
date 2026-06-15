@@ -23,8 +23,10 @@
 
 import logging
 from time import time, sleep
+from typing import Literal
+from collections.abc import Callable, Sequence
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import AdapterType, Instrument, InstrumentProperty, SCPIMixin
 from pymeasure.instruments.channel import Channel
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from pyvisa.util import from_binary_block
@@ -38,7 +40,7 @@ class Trace(Channel):
         """Delete data of the trace."""
         self.write(":TRACe:DELETE {ch}")
 
-    mode = Channel.control(
+    mode: InstrumentProperty[str] = Channel.control(
         ":TRACe:ATTRibute:{ch}?",
         ":TRACe:ATTRibute:{ch} %s",
         """Control the mode of the trace.""",
@@ -53,7 +55,9 @@ class Trace(Channel):
         cast=int,
     )
 
-    def get_axis_data(self, axis="Y", samples=None):
+    def get_axis_data(
+        self, axis: Literal["X"] | Literal["Y"] = "Y", samples: tuple[int, int] | None = None
+    ) -> list[float]:
         """Get the data of an axi in m (X) or displayed units (Y).
 
         :param samples: Optionally tuple of the slice to retrieve, e.g. [0, 10]
@@ -70,9 +74,9 @@ class AQ6370Series(SCPIMixin, Instrument):
 
     def __init__(
         self,
-        adapter,
-        name="Yokogawa AQ3670D OSA",
-        baud_rate=115200,
+        adapter: AdapterType,
+        name: str = "Yokogawa AQ3670D OSA",
+        baud_rate: int = 115200,
         **kwargs,
     ):
         super().__init__(
@@ -100,7 +104,7 @@ class AQ6370Series(SCPIMixin, Instrument):
     TRF = Instrument.ChannelCreator(Trace, "TRF")
     TRG = Instrument.ChannelCreator(Trace, "TRG")
 
-    def authenticate_ethernet(self, username, password=""):
+    def authenticate_ethernet(self, username: str, password: str = "") -> None:
         """Authenticate for an ethernet connection."""
         # Open the connection. It has to be closed at the end.
         assert self.ask(f'OPEN "{username}"') == "AUTHENTICATE CRAM-MD5."
@@ -109,15 +113,15 @@ class AQ6370Series(SCPIMixin, Instrument):
 
     # Control sweep status -------------------------------------------------------------------------
 
-    def trigger(self):
+    def trigger(self) -> None:
         """Perform a single sweep according to previous conditions."""
         self.write("*TRG")  # "Trigger"
 
-    def abort(self):
+    def abort(self) -> None:
         """Stop operations such as measurements and calibration."""
         self.write(":ABORt")
 
-    def initiate_sweep(self):
+    def initiate_sweep(self) -> None:
         """Initiate a sweep."""
         self.write(":INITiate:IMMediate")
 
@@ -127,7 +131,12 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: bool(int(x) & 1),
     )
 
-    def wait_for_sweep_complete(self, should_stop=lambda: False, timeout=3600, delay=0):
+    def wait_for_sweep_complete(
+        self,
+        should_stop: Callable[..., bool] = lambda: False,
+        timeout: float = 3600,
+        delay: float = 0,
+    ) -> bool:
         """Block the program, waiting for the sweep to complete.
 
         :param should_stop: Function that returns True to stop waiting.
@@ -171,13 +180,13 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: int(x),
     )
 
-    def set_level_position_to_max(self):
+    def set_level_position_to_max(self) -> None:
         """Set the reference level position to the maximum value."""
         self.write(":CALCulate:MARKer:MAXimum:SRLevel")
 
     # Sweep settings -------------------------------------------------------------------------------
 
-    sweep_mode = Instrument.control(
+    sweep_mode: InstrumentProperty[str] = Instrument.control(
         ":INITiate:SMODe?",
         ":INITiate:SMODe %s",
         "Control the sweep mode (str 'SINGLE', 'REPEAT', 'AUTO', 'SEGMENT').",
@@ -194,7 +203,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         values=[0, 99999],
     )
 
-    automatic_sample_number = Instrument.control(
+    automatic_sample_number: InstrumentProperty[bool] = Instrument.control(
         ":SENSe:SWEep:POINts:AUTO?",
         ":SENSe:SWEep:POINts:AUTO %d",
         "Control the automatic sample number (bool).",
@@ -212,7 +221,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         get_process=lambda x: int(x),
     )
 
-    sensitivity = Instrument.control(
+    sensitivity: InstrumentProperty[str] = Instrument.control(
         ":SENSe:SENSe?",
         ":SENSe:SENSe %s",
         """Control the sweep sensitivity
@@ -260,7 +269,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         dynamic=True,
     )
 
-    wavelength_automatic_center = Instrument.control(
+    wavelength_automatic_center: InstrumentProperty[bool] = Instrument.control(
         ":calc:mark:max:scenter:auto?",
         ":calc:mark:max:scenter:auto %s",
         """Control whether the wavelength center follows the maximum (bool).""",
@@ -289,7 +298,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         cast=str,
     )
 
-    def copy_trace(self, source, destination):
+    def copy_trace(self, source: str, destination: str) -> None:
         """
         Copy the data of specified trace to the another trace.
 
@@ -299,7 +308,7 @@ class AQ6370Series(SCPIMixin, Instrument):
 
         self.write(f":TRACe:COPY TR{source.replace('TR', '')},TR{destination.replace('TR', '')}")
 
-    def delete_trace(self, trace):
+    def delete_trace(self, trace: str) -> None:
         """
         Delete the specified trace.
 
@@ -311,7 +320,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         else:
             self.write(f":TRACe:DELete TR{trace.replace('TR', '')}")
 
-    def get_xdata(self, trace="TRA"):
+    def get_xdata(self, trace: str = "TRA") -> list[float]:
         """
         Measure the x-axis data of specified trace, output wavelength in m.
 
@@ -321,7 +330,7 @@ class AQ6370Series(SCPIMixin, Instrument):
 
         return self.values(f":TRACe:X? TR{trace.replace('TR', '')}")
 
-    def get_ydata(self, trace="TRA"):
+    def get_ydata(self, trace: str = "TRA") -> list[float]:
         """
         Measure the y-axis data of specified trace, output power in dBm.
 
@@ -333,11 +342,11 @@ class AQ6370Series(SCPIMixin, Instrument):
 
     # Analysis -------------------------------------------------------------------------------------
 
-    def execute_analysis(self):
+    def execute_analysis(self) -> None:
         """Execute the analysis with the current analysis settings."""
         self.write(":CALCulate")
 
-    def get_analysis(self):
+    def get_analysis(self) -> None:
         """
         Query the analysis results of latest analysis. If no analysis has been
         performed, returns query error.
@@ -358,7 +367,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         cast=str,
     )
 
-    def get_binary_data(self, bitness=64):
+    def get_binary_data(self, bitness: Literal[32] | Literal[64] = 64) -> Sequence[int | float]:
         header = self.read_bytes(2)
         assert (
             chr(header[0]) == "#"

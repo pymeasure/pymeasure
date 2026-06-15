@@ -105,7 +105,7 @@ class HPLegacyInstrument(Instrument):
     Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
 
     """
-    status_desc = StatusBitsBase  # To be overriden by subclasses
+    status_desc = StatusBitsBase  # To be overridden by subclasses
 
     def __init__(self, adapter, name="HP legacy instrument", **kwargs):
         super().__init__(
@@ -118,13 +118,13 @@ class HPLegacyInstrument(Instrument):
 
         log.info(f"Initializing {self.name}")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         if command == "B":
-            self.write_bytes(b"B")
+            self.write_bytes(b"B", **kwargs)
         else:
-            super().write(command)
+            super().write(command, **kwargs)
 
-    def values(self, command, **kwargs):
+    def values(self, command: str, **kwargs):
         if command == "B":
             self.write_bytes(b"B")
             return self.read_bytes(-1, **kwargs)
@@ -141,21 +141,21 @@ class HPLegacyInstrument(Instrument):
         reply = bytearray(self.read_bytes(self.status_bytes_count))
         return self.status_bits.from_buffer(reply)
 
-    def GPIB_trigger(self):
+    def GPIB_trigger(self) -> None:
         """
-        Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
+        Initiate trigger via low-level GPIB-command (aka GET - group execute trigger)
 
         """
         self.adapter.connection.assert_trigger()
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Initatiates a reset (like a power-on reset) of the HP3478A
 
         """
         self.adapter.connection.clear()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """
         provides a way to gracefully close the connection to the HP3478A
 

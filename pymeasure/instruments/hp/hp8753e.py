@@ -29,14 +29,15 @@ from time import time as now
 import numpy as np
 from pyvisa import VisaIOError
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument
+from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class HP8753E(Instrument):
+class HP8753E(SCPIMixin, Instrument):
     """Represents the HP8753E Vector Network Analyzer
     and provides a high-level interface for taking sweeps of the
     scattering or measurement parameters.
@@ -58,12 +59,12 @@ class HP8753E(Instrument):
 
     def __init__(
         self,
-        adapter=None,
-        name=None,
-        min_frequency=30.0e3,
-        max_frequency=6.0e9,
-        min_power=-70,
-        max_power=10,
+        adapter: AdapterType,
+        name: str | None = None,
+        min_frequency: float = 30.0e3,
+        max_frequency: float = 6.0e9,
+        min_power: float = -70,
+        max_power: float = 10,
         **kwargs,
     ):
         super().__init__(adapter=adapter, name=name, **kwargs)
@@ -190,11 +191,11 @@ class HP8753E(Instrument):
         values={True: 1, False: 0, "ON": 1, "OFF": 0},
     )
 
-    def averaging_restart(self):
+    def averaging_restart(self) -> None:
         """Restart sweep averaging."""
         self.write("AVERREST")
 
-    def emit_beep(self):
+    def emit_beep(self) -> None:
         """Make the VNA emit a beep"""
         self.write("EMIB")
 
@@ -326,12 +327,12 @@ class HP8753E(Instrument):
         values=ALLOWED_BANDWIDTH,
     )
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the instrument. May cause RF Output power to be enabled!"""
         self.write("*RST")
         sleep(0.25)
 
-    def scan(self, timeout=10):
+    def scan(self, timeout: float = 10) -> None:
         """Initiates a scan with the number of averages specified and
         blocks until the operation is complete.
 
@@ -374,7 +375,7 @@ class HP8753E(Instrument):
             _ = self.read()
             sleep(0.25)
 
-    def scan_single(self):
+    def scan_single(self) -> None:
         """Initiates a single scan or N scans averaged based on averaging
         This function is not blocking.
         """
@@ -394,7 +395,7 @@ class HP8753E(Instrument):
         return np.linspace(self.start_frequency, self.stop_frequency, num=self.scan_points)
 
     @property
-    def data_complex(self, timeout=10):
+    def data_complex(self, timeout: float = 10):
         """
         Get the complex s-parameter measurements from the last scan.
         This function is blocking until it is completed.
@@ -461,6 +462,7 @@ class HP8753E(Instrument):
 
         return data
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Shutdown - Disables RF Output."""
         self.output_enabled = False
+        super().shutdown()

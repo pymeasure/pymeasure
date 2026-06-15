@@ -87,18 +87,18 @@ class LakeShore425(Instrument):
             **kwargs
         )
 
-    def auto_range(self):
+    def auto_range(self) -> None:
         """ Sets the field range to automatically adjust """
         self.write("AUTO")
 
-    def dc_mode(self, wideband=True):
+    def dc_mode(self, wideband: bool = True) -> None:
         """ Sets up a steady-state (DC) measurement of the field """
         if wideband:
             self.mode = (1, 0, 1)
         else:
             self.mode = (1, 0, 2)
 
-    def ac_mode(self, wideband=True):
+    def ac_mode(self, wideband: bool = True) -> None:
         """ Sets up a measurement of an oscillating (AC) field """
         if wideband:
             self.mode = (2, 1, 1)
@@ -111,11 +111,11 @@ class LakeShore425(Instrument):
         return tuple(self.values("RDGMODE?"))
 
     @mode.setter
-    def mode(self, value):
+    def mode(self, value) -> None:
         mode, filter, band = value
         self.write(f"RDGMODE {mode},{filter},{band}")
 
-    def zero_probe(self):
+    def zero_probe(self) -> None:
         """ Initiates the zero field sequence to calibrate the probe """
         self.write("ZPROBE")
 

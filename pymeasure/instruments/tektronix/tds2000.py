@@ -88,4 +88,4 @@ class TDS2000(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        self.measurement = TDS2000.Measurement(self)
+        self.measurement: TDS2000.Measurement = TDS2000.Measurement(self)

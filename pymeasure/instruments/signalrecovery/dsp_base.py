@@ -28,6 +28,7 @@
 
 import logging
 from time import sleep, time
+from typing import Any
 import numpy as np
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import modular_range_bidirectional
@@ -99,7 +100,7 @@ class DSPBase(Instrument):
             **kwargs
         )
 
-    def read(self, **kwargs):
+    def read(self, **kwargs) -> str:
         """Read the response and remove extra unicode character from instrument readings."""
         return super().read(**kwargs).replace('\x00', '')
 
@@ -295,12 +296,12 @@ class DSPBase(Instrument):
         self.write(f"SEN {value}")
 
     @property
-    def auto_gain(self):
+    def auto_gain(self) -> bool:
         """Control lock-in amplifier for automatic AC gain."""
         return int(self.values("AUTOMATIC")) == 1
 
     @auto_gain.setter
-    def auto_gain(self, value):
+    def auto_gain(self, value: bool) -> None:
         if value:
             self.write("AUTOMATIC 1")
         else:
@@ -445,52 +446,55 @@ class DSPBase(Instrument):
         in the curve buffer.
         """,
         cast=int,
+        get_process_list=lambda vals: vals,
     )
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Methods
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def set_voltage_mode(self):
+    def set_voltage_mode(self) -> None:
         """Sets lock-in amplifier to measure a voltage signal."""
         self.write("IMODE 0")
 
-    def setDifferentialMode(self, lineFiltering=True):
+    def setDifferentialMode(self, lineFiltering: bool = True) -> None:
         """Sets lock-in amplifier to differential mode, measuring A-B."""
         self.write("VMODE 3")
         self.write(f"LF {3 if lineFiltering else 0} 0")
 
-    def setChannelAMode(self):
+    def setChannelAMode(self) -> None:
         """Sets lock-in amplifier to measure a voltage signal only from the A
         input connector.
         """
         self.write("VMODE 1")
 
-    def auto_sensitivity(self):
+    def auto_sensitivity(self) -> None:
         """Adjusts the full-scale sensitivity so signal's magnitude lies
         between 30 - 90 % of full-scale.
         """
         self.write("AS")
 
-    def auto_phase(self):
+    def auto_phase(self) -> None:
         """Adjusts the reference absolute phase to maximize the X channel
         output and minimize the Y channel output signals.
         """
         self.write("AQN")
 
-    def init_curve_buffer(self):
+    def init_curve_buffer(self) -> None:
         """Initializes the curve storage memory and status variables. All
         record of previously taken curves is removed.
         """
         self.write("NC")
 
-    def set_buffer(self, points, quantities=None, interval=10.0e-3):
+    def set_buffer(
+        self, points: int, quantities: list[str] | None = None, interval: float = 10.0e-3
+    ) -> None:
         """Prepares the curve buffer for a measurement.
 
-        :param int points:
+        :param points:
             Number of points to be recorded in the curve buffer
 
-        :param list quantities:
+        :param quantities:
             List containing the quantities (strings) that are to be
             recorded in the curve buffer, can be any of:
             'x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1', 'adc2',
@@ -501,7 +505,7 @@ class DSPBase(Instrument):
             'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2'.
             Default is 'x' and 'y'.
 
-        :param float interval:
+        :param interval:
             The interval between two subsequent points stored in the
             curve buffer in s. Default is 10 ms.
         """
@@ -529,14 +533,14 @@ class DSPBase(Instrument):
         self.curve_buffer_interval = int(interval * 1000)
         self.init_curve_buffer()
 
-    def start_buffer(self):
+    def start_buffer(self) -> None:
         """Initiates data acquisition. Acquisition starts at the current
         position in the curve buffer and continues at the rate set by the STR
         command until the buffer is full.
         """
         self.write("TD")
 
-    def wait_for_buffer(self, timeout=None, delay=0.1):
+    def wait_for_buffer(self, timeout: float | None = None, delay: float = 0.1) -> None:
         """ Method that waits until the curve buffer is filled
         """
         start = time()
@@ -545,15 +549,15 @@ class DSPBase(Instrument):
             if timeout is not None and time() < start + timeout:
                 break
 
-    def get_buffer(self, quantity=None,
-                   convert_to_float=True, wait_for_buffer=True):
+    def get_buffer(self, quantity: str | None = None,
+                   convert_to_float: bool = True, wait_for_buffer: bool = True):
         """Retrieves the buffer after it has been filled. The data retrieved
         from the lock-in is in a fixed-point format, which requires translation
         before it can be interpreted as meaningful data. When
         `convert_to_float` is True the conversion is performed (if possible)
         before returning the data.
 
-        :param str quantity:
+        :param quantity:
             If provided, names the quantity that is to be retrieved from the
             curve buffer; can be any of:
             'x', 'y', 'magnitude', 'phase', 'sensitivity', 'adc1', 'adc2',
@@ -563,7 +567,7 @@ class DSPBase(Instrument):
             'x2', 'y2', 'magnitude2', 'phase2', 'sensitivity2'.
             If no quantity is provided, all available data is retrieved.
 
-        :param bool convert_to_float:
+        :param convert_to_float:
             Bool that determines whether to convert the fixed-point buffer-data
             to meaningful floating point values via the `buffer_to_float`
             method. If True, this method tries to convert all the available
@@ -571,7 +575,7 @@ class DSPBase(Instrument):
             will be raised. If False, this conversion is not performed and the
             raw buffer-data is returned.
 
-        :param bool wait_for_buffer:
+        :param wait_for_buffer:
             Bool that determines whether to wait for the data acquisition to
             finished if this method is called before the acquisition is
             finished. If True, the method waits until the buffer is filled
@@ -629,8 +633,8 @@ class DSPBase(Instrument):
 
         return data
 
-    def buffer_to_float(self, buffer_data, sensitivity=None,
-                        sensitivity2=None, raise_error=True):
+    def buffer_to_float(self, buffer_data: dict[str, Any], sensitivity=None,
+                        sensitivity2=None, raise_error: bool = True) -> dict:
         """Converts fixed-point buffer data to floating point data.
 
         The provided data is converted as much as possible, but there are some
@@ -648,7 +652,7 @@ class DSPBase(Instrument):
         - Converting the frequency requires both 'frequency part 1' and
           'frequency part 2'.
 
-        :param dict buffer_data:
+        :param buffer_data:
             The data to be converted. Must be in the format as returned by the
             `get_buffer` method: a dict of numpy arrays.
 
@@ -664,22 +668,21 @@ class DSPBase(Instrument):
             Same as the first sensitivity argument, but for X2, Y2, magnitude2
             and noise2.
 
-        :param bool raise_error:
+        :param raise_error:
             Determines whether an exception is raised in case not all keys
             provided in buffer_data can be converted. If False, the columns
             that cannot be converted are omitted in the returned dict.
 
         :return: Floating-point buffer data
-        :rtype: dict
         """
 
         data = {}
 
-        def maybe_raise(message):
+        def maybe_raise(message: str) -> None:
             if raise_error:
                 raise ValueError(message)
 
-        def convert_if_present(keys, multiply_by=1):
+        def convert_if_present(keys: list[str], multiply_by: float = 1) -> None:
             """Copy any available entries from buffer_data to data, scale with
             multiply_by.
             """
@@ -747,7 +750,7 @@ class DSPBase(Instrument):
 
         return data
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Safely shutdown the lock-in amplifier.
 
         Sets oscillator amplitude to 0 V and AC gain to 0 dB.

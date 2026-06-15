@@ -298,7 +298,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         "*OPT?",
         """Get the lists of the installed cards in the Keithley 2700.
         Returns a dict with the integer card numbers on the position.""",
-        cast=False
+        cast=str
     )
 
     ###########

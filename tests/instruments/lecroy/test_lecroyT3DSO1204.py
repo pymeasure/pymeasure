@@ -376,7 +376,7 @@ def test_math_define():
              ]
     ) as instr:
         instr.math_define = ("channel2", "*", "channel4")
-        assert instr.math_define == ["EQN", "'C2*C4'"]
+        assert instr.math_define == ("EQN", "'C2*C4'")
 
 
 def test_acquisition_type_average():

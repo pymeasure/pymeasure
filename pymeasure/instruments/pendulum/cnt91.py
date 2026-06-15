@@ -26,7 +26,7 @@ import logging
 from time import sleep
 from warnings import warn
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import AdapterType, Instrument, SCPIUnknownMixin
 from pymeasure.instruments.validators import (
     strict_discrete_set,
     strict_range,
@@ -48,7 +48,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
 
     CHANNELS = {"A": 1, "B": 2, "C": 3, "E": 4, "INTREF": 6}
 
-    def __init__(self, adapter, name="Pendulum CNT-91", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Pendulum CNT-91", **kwargs):
         # allow long-term measurements, add 30 s for data transfer
         kwargs.setdefault("timeout", 24 * 60 * 60 * 1000 + 30)
         kwargs.setdefault("read_termination", "\n")
@@ -61,7 +61,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         )
 
     @property
-    def batch_size(self):
+    def batch_size(self) -> int:
         """Get maximum number of buffer entries that can be transmitted at once."""
         if not hasattr(self, "_batch_size"):
             self._batch_size = int(self.ask("FORM:SMAX?"))
@@ -107,7 +107,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         return self.gate_time
 
     @measurement_time.setter
-    def measurement_time(self, value):
+    def measurement_time(self, value: float) -> None:
         warn("`measurement_time` is deprecated, use `gate_time` instead.", FutureWarning)
         self.gate_time = value
 
@@ -138,7 +138,7 @@ class CNT91(SCPIUnknownMixin, Instrument):
         map_values=True,
     )
 
-    def read_buffer(self, n=MAX_BUFFER_SIZE):
+    def read_buffer(self, n: int = MAX_BUFFER_SIZE) -> list[float]:
         """
         Read out `n` samples from the buffer.
 
@@ -152,7 +152,9 @@ class CNT91(SCPIUnknownMixin, Instrument):
             sleep(0.01)
         return self.values(f":FETC:ARR? {'MAX' if n == MAX_BUFFER_SIZE else n}")
 
-    def configure_frequency_array_measurement(self, n_samples, channel, back_to_back=True):
+    def configure_frequency_array_measurement(
+        self, n_samples: int, channel: str, back_to_back=True
+    ) -> None:
         """
         Configure the counter for an array of measurements.
 
@@ -162,18 +164,18 @@ class CNT91(SCPIUnknownMixin, Instrument):
         """
         n_samples = truncated_range(n_samples, [MIN_BUFFER_SIZE, MAX_BUFFER_SIZE])
         channel = strict_discrete_set(channel, self.CHANNELS)
-        channel = self.CHANNELS[channel]
-        self.write(f":CONF:ARR:FREQ{':BTB' if back_to_back else ''} {n_samples},(@{channel})")
+        channel_nr = self.CHANNELS[channel]
+        self.write(f":CONF:ARR:FREQ{':BTB' if back_to_back else ''} {n_samples},(@{channel_nr})")
 
     def buffer_frequency_time_series(
         self,
-        channel,
-        n_samples,
-        sample_rate=None,  # deprecated, only kept for backwards compatibility
-        gate_time=None,
-        trigger_source=None,
-        back_to_back=True,
-    ):
+        channel: str,
+        n_samples: int,
+        sample_rate: float | None=None,  # deprecated, only kept for backwards compatibility
+        gate_time: float | None = None,
+        trigger_source: str | None = None,
+        back_to_back: bool = True,
+    ) -> None:
         """
         Record a time series to the buffer and read it out after completion.
 

@@ -23,10 +23,10 @@
 #
 
 from pymeasure.instruments.validators import strict_discrete_set
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import AdapterType, Instrument
 
 
-def calculate_checksum(msg):
+def calculate_checksum(msg: str) -> str:
     """Calculate a 1 bytes checksum mapped to a printable ASCII character.
 
     The checksum is calculated by the sum of the decimal values of each message
@@ -67,17 +67,25 @@ class SmartlineV1(Instrument):
     # API is described in detail in this link:
     # https://wiki.kern.phys.au.dk/Interface_protokoll_Thyracont_eng5.pdf
 
-    def __init__(self, adapter, name="Thyracont Vacuum Gauge V1", address=1,
-                 baud_rate=9600, **kwargs):
-        super().__init__(adapter,
-                         name,
-                         write_termination="\r",
-                         read_termination="\r",
-                         asrl=dict(baud_rate=baud_rate),
-                         **kwargs)
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Thyracont Vacuum Gauge V1",
+        address: int = 1,
+        baud_rate: int = 9600,
+        **kwargs,
+    ):
+        super().__init__(
+            adapter,
+            name,
+            write_termination="\r",
+            read_termination="\r",
+            asrl=dict(baud_rate=baud_rate),
+            **kwargs,
+        )
         self.address = address
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Reads a response message from the instrument.
 
         This method also checks for a correct checksum.
@@ -86,7 +94,7 @@ class SmartlineV1(Instrument):
         :rtype: string
         :raises ValueError: if a checksum error is detected
         """
-        msg = super().read()
+        msg = super().read(**kwargs)
         chksum = calculate_checksum(msg[:-1])
         if msg[-1] == chksum:
             return msg[:-1]
@@ -95,7 +103,7 @@ class SmartlineV1(Instrument):
                 f"checksum error in received message {msg} "
                 f"with checksum {chksum} but received {msg[-1]}")
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         """Writes a command to the instrument.
 
         This method adds the required address and checksum.
@@ -103,9 +111,9 @@ class SmartlineV1(Instrument):
         :param str command: command to be sent to the instrument
         """
         fullcmd = f"{self.address:03d}" + command
-        super().write(fullcmd + calculate_checksum(fullcmd))
+        super().write(fullcmd + calculate_checksum(fullcmd), **kwargs)
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         reply = self.read()
         if len(reply) < 4:
             raise ConnectionError(f"Reply of instrument ('{reply}') too short.")

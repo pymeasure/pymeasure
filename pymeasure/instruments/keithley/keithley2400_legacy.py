@@ -6,6 +6,7 @@ import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.errors import RangeException
+from pymeasure.instruments.common_base import identity
 from pymeasure.instruments.validators import truncated_range, strict_discrete_set
 
 from .buffer import KeithleyBuffer
@@ -288,24 +289,28 @@ class Keithley2400Legacy(KeithleyBuffer, SCPIMixin, Instrument):
         ":CALC3:FORM MEAN;:CALC3:DATA?;",
         """ Get the calculated means for voltage, current, and resistance from the buffer data
         as a list (list of floats). """,
+        get_process_list=identity,
     )
 
     maximums = Instrument.measurement(
         ":CALC3:FORM MAX;:CALC3:DATA?;",
         """ Get the calculated maximums for voltage, current, and resistance from the buffer data
         as a list (list of floats). """,
+        get_process_list=identity,
     )
 
     minimums = Instrument.measurement(
         ":CALC3:FORM MIN;:CALC3:DATA?;",
         """ Get the calculated minimums for voltage, current, and resistance from the buffer data
         as a list (list of floats). """,
+        get_process_list=identity,
     )
 
     standard_devs = Instrument.measurement(
         ":CALC3:FORM SDEV;:CALC3:DATA?;",
         """ Get the calculated standard deviations for voltage, current, and resistance from the
         buffer data as a list (list of floats). """,
+        get_process_list=identity,
     )
 
     ###########

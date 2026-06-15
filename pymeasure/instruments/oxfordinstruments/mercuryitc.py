@@ -45,7 +45,7 @@ class TemperatureSensor(Channel):
     Therefore loop control is kept with other temperature sensor properties.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:
@@ -163,7 +163,7 @@ class Heater(Channel):
     loop, or otherwise set to operate in open-loop configuration.
     """
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """The MercuryiTC responds to every communication (get and set).
         This simply reads back on setting a property."""
         try:

@@ -26,6 +26,7 @@ import logging
 from math import log10
 from enum import Enum, IntFlag
 from datetime import datetime
+from typing import Any
 
 import numpy as np
 
@@ -569,7 +570,7 @@ class ErrorCode:
     # integer representation of error code
     code = 0
 
-    def __init__(self, code):
+    def __init__(self, code: int | str) -> None:
         """Initialize an ErrorCode.
 
         :param code: Representing an error as id or short description
@@ -589,10 +590,10 @@ class ErrorCode:
 
         (self.short, self.long) = self.__error_code_list[self.code]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ErrorCode(\"" + self.short + " - " + self.long + "\")"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> Any:
         return self.code == other.code
 
 
@@ -2603,7 +2604,7 @@ class HP856Xx(Instrument):
         cast=str,
     )
 
-    def _get_trace_data(self, trace):
+    def _get_trace_data(self, trace: Trace) -> list[float]:
         self.write("TDF M")
 
         amp_units = str(self.ask("AUNITS?"))
@@ -2641,7 +2642,7 @@ class HP856Xx(Instrument):
 
         return result_values
 
-    def get_trace_data_a(self):
+    def get_trace_data_a(self) -> list[float]:
         """
         Get the data of trace A as a list.
 
@@ -2650,7 +2651,7 @@ class HP856Xx(Instrument):
         """
         return self._get_trace_data(Trace.A)
 
-    def get_trace_data_b(self):
+    def get_trace_data_b(self) -> list[float]:
         """
         Get the data of trace B as a list.
 
@@ -2658,6 +2659,10 @@ class HP856Xx(Instrument):
         Right now it doesn't support the linear scaling due to the manual just being wrong.
         """
         return self._get_trace_data(Trace.B)
+
+    @staticmethod
+    def _write_list(value: list[float | str]) -> str:
+        return ",".join([str(i) for i in value])
 
     set_trace_data_a = Instrument.setting(
         "TDF P;TRA %s",
@@ -2669,7 +2674,7 @@ class HP856Xx(Instrument):
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
         """,
-        set_process=lambda v: ",".join([str(i) for i in v]),
+        set_process=_write_list,
     )
 
     set_trace_data_b = Instrument.setting(
@@ -2682,10 +2687,10 @@ class HP856Xx(Instrument):
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
         """,
-        set_process=lambda v: ",".join([str(i) for i in v]),
+        set_process=_write_list,
     )
 
-    def trigger_sweep(self):
+    def trigger_sweep(self) -> None:
         """Command the spectrum analyzer to take one full sweep across the trace display.
         Commands following TS are not executed until after the analyzer has finished the trace
         sweep. This ensures that the instrument is set to a known condition before subsequent

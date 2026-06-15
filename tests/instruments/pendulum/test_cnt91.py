@@ -208,7 +208,7 @@ def test_buffer_frequency_time_series():
             (b":INIT", None),
         ],
     ) as inst:
-        assert inst.buffer_frequency_time_series(*("A", 10), **{"gate_time": 0.1}) is None
+        assert inst.buffer_frequency_time_series("A", 10, gate_time=0.1) is None
 
 
 @pytest.mark.parametrize(

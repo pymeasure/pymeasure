@@ -55,15 +55,16 @@ class HP8657B(Instrument):
         OFF = 4
         DC_FM = 5
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """
         Method to read the error status register
         as the 8657B does not support any readout of values, this will return 0 and log a warning
 
         """
         log.warning("HP8657B Does not support error status readout")
+        return []
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Reset the instrument to power-on default settings
 

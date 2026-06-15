@@ -28,9 +28,7 @@ import json
 import warnings
 from typing import Any
 
-from pymeasure.adapters import Adapter
-from pymeasure.instruments import Instrument
-from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments import AdapterType, cast_or_str, Instrument
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
 
@@ -38,11 +36,14 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
+def load_json_data(values: list[str]) -> dict[str, Any]:
+    return json.loads(",".join(values))
+
 class ptwUNIDOS(Instrument):
     """A class representing the PTW UNIDOS Tango/Romeo dosemeters."""
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "PTW UNIDOS dosemeter",
                  **kwargs: Any) -> None:
         super().__init__(
@@ -54,7 +55,7 @@ class ptwUNIDOS(Instrument):
             **kwargs
         )
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read the device response and check for errors.
 
         :return: Read string with semicolons replaced by comma
@@ -62,7 +63,7 @@ class ptwUNIDOS(Instrument):
         :raises: *ValueError* for error response or *ConnectionError* for an unknown error
         """
 
-        got = super().read()
+        got = super().read(**kwargs)
 
         if got.startswith("E"):
             error_code = got.replace(";", "").strip()
@@ -153,7 +154,7 @@ wrong format of the parameter",
         self.ask("CHR")
 
     def hold(self) -> None:
-        """Set the measurment to HOLD state.
+        """Set the measurement to HOLD state.
 
         .. note:: Write permission is required.
         """
@@ -517,8 +518,8 @@ wrong format of the parameter",
                     ``ipv4``,
                     ``ipv6``
         """,
-        cast=cast_or_str(float),
-        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        cast=str,
+        get_process_list=load_json_data,
         )
 
     measurement_history = Instrument.measurement(
@@ -534,7 +535,7 @@ wrong format of the parameter",
         """,
         cast=str,
         get_process=lambda v: json.loads(v) if v != "[]" else [],
-        get_process_list=lambda v: json.loads(",".join(v)),
+        get_process_list=load_json_data,
         )
 
     measurement_parameters = Instrument.measurement(
@@ -556,8 +557,8 @@ wrong format of the parameter",
                     ``triggerReset``,
                     ``triggerSensitivity``
         """,
-        cast=cast_or_str(float),
-        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        cast=str,
+        get_process_list=load_json_data,
         )
 
     system_info = Instrument.measurement(
@@ -577,8 +578,8 @@ wrong format of the parameter",
                     ``testTemperature``,
                     ``typeNumber``
         """,
-        cast=cast_or_str(float),
-        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        cast=str,
+        get_process_list=load_json_data,
         )
 
     system_settings = Instrument.measurement(
@@ -595,8 +596,8 @@ wrong format of the parameter",
                     ``timezone``,
                     ``volume``
         """,
-        cast=cast_or_str(float),
-        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        cast=str,
+        get_process_list=load_json_data,
         )
 
     wlan_config = Instrument.measurement(
@@ -606,6 +607,6 @@ wrong format of the parameter",
         :dict keys: ``enabled``,
                     ``ssid``
         """,
-        cast=cast_or_str(float),
-        get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
+        cast=str,
+        get_process_list=load_json_data,
         )

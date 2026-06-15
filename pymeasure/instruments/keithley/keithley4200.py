@@ -22,9 +22,9 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, Channel
-from pymeasure.instruments.common_base import cast_or_str
 from enum import IntFlag
+
+from pymeasure.instruments import AdapterType, cast_or_str, Instrument, Channel
 
 
 class StatusCode(IntFlag):
@@ -52,7 +52,7 @@ class StatusCode(IntFlag):
 class SMU(Channel):
     """A class representing the SMU (source/measure unit) channel."""
 
-    def disable(self):
+    def disable(self) -> None:
         """Disable the SMU."""
         self.write("US;DV{ch}")
         self.check_set_errors()
@@ -139,9 +139,7 @@ class Keithley4200(Instrument):
     Currently, the driver is only working with the ethernet interface.
     """
 
-    def __init__(self, adapter,
-                 name="Keithley 4200A-SCS",
-                 **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Keithley 4200A-SCS", **kwargs):
         super().__init__(
             adapter,
             name,
@@ -156,7 +154,7 @@ class Keithley4200(Instrument):
             if "SMU" in element.upper():
                 self.add_smu(id)
 
-    def add_smu(self, id):
+    def add_smu(self, id: int | str) -> None:
         """Add a SMU channel to the device."""
         self.add_child(SMU,
                        id=id,
@@ -164,7 +162,7 @@ class Keithley4200(Instrument):
                        collection="smu",
                        )
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after sending a command.
 
         :raise: ValueError if response is not 'ACK'
@@ -177,7 +175,7 @@ class Keithley4200(Instrument):
 
         return []
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all data from the buffer.
 
         It also clears bit B0 (DATA_READY) of the status byte.

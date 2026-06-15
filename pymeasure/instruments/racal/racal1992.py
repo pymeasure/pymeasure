@@ -23,6 +23,8 @@
 
 import logging
 import time
+from typing import Literal
+from collections.abc import Iterable
 
 from pymeasure.instruments import Instrument
 
@@ -94,7 +96,7 @@ class Racal1992(Instrument):
     }
 
     @staticmethod
-    def decode(v: str, allowed_types=None):
+    def decode(v: str, allowed_types: Iterable[str] | str | None = None) -> float | int:
         """Decode received message.
 
         All values returned follow the same format: 2 letters to indicate
@@ -120,6 +122,10 @@ class Racal1992(Instrument):
         else:
             raise ValueError("Unsupported return type")
 
+    @staticmethod
+    def _map_operating_mode(mode: str) -> str:
+        return Racal1992.operating_modes[mode]
+
     operating_mode = Instrument.setting(
             "%s",
             """Set operating mode.
@@ -135,7 +141,7 @@ class Racal1992(Instrument):
                 'total_a_by_b',
                 'frequency_c'
             """,
-            set_process=(lambda mode: Racal1992.operating_modes[mode]),
+            set_process=_map_operating_mode,
         )
 
     resolution = Instrument.control(
@@ -247,10 +253,10 @@ class Racal1992(Instrument):
             cast=str,
         )
 
-    def read(self, **kwargs):
+    def read(self, **kwargs) -> str:
         return self.read_bytes(21, **kwargs).decode('utf-8').strip("\r\n")
 
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Add a space in front of all commands that are sent to the
         instrument to work around weird model issue.
 
@@ -258,14 +264,14 @@ class Racal1992(Instrument):
         And it fixes a real issue that's seen on a few devices."""
         super().write(' ' + command, **kwargs)
 
-    def read_and_decode(self, allowed_types=None):
+    def read_and_decode(self, allowed_types: Iterable[str] | str | None = None) -> float | int:
         v = self.read()
         return Racal1992.decode(v, allowed_types)
 
     # ============================================================
     # Channel-specific settings
     # ============================================================
-    def channel_settings(self, channel_name, **settings):
+    def channel_settings(self, channel_name: Literal["A"] | Literal["B"], **settings) -> None:
         """Set channel configuration parameters.
 
         :param channel_name: 'A' or 'B'
@@ -315,21 +321,21 @@ class Racal1992(Instrument):
     # ============================================================
     # IP - Instrument Preset
     # ============================================================
-    def preset(self):
+    def preset(self) -> None:
         """Configure instrument with default presets."""
         self.write('IP')
 
     # ============================================================
     # RE - Reset measurement
     # ============================================================
-    def reset_measurement(self):
+    def reset_measurement(self) -> None:
         """Reset ongoing measurement."""
         self.write('RE')
 
     # ============================================================
     # Wait for measurement value
     # ============================================================
-    def wait_for_measurement(self, timeout=None, progressDots=False):
+    def wait_for_measurement(self, timeout: float | None = None, progressDots: bool = False):
         """Wait until a new measurement is available.
 
         :param timeout: number of seconds to wait before timeout exception.
@@ -355,7 +361,7 @@ class Racal1992(Instrument):
     # Measured value
     # ============================================================
     @property
-    def measured_value(self):
+    def measured_value(self) -> float:
         """Get measured value.
 
         A Racal-Dana 1992 doesn't return measurement data after a request for

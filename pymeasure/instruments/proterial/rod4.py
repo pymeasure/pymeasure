@@ -127,7 +127,7 @@ class ROD4(Instrument):
         check_set_errors=True
         )
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Read 'OK' from ROD-4 after setting."""
         response = self.read()
         if response != 'OK':

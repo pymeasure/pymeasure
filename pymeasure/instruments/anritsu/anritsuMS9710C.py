@@ -43,17 +43,17 @@ r_value_units = re.compile(r"([-\d]*\.\d*)(.*)")
 truncated_range_or_off = joined_validators(strict_discrete_set, truncated_range)
 
 
-def _int_or_neg_one(v):
+def _int_or_neg_one(v: str) -> int:
     try:
         return int(v)
     except ValueError:
         return -1
 
 
-def _parse_trace_peak(vals):
+def _parse_trace_peak(vals: list[str]) -> list[str | float]:
     """Parse the returned value from a trace peak query."""
     ll, p = vals
-    res = [ll]
+    res: list[str | float] = [ll]
     m = r_value_units.match(p)
     if m is not None:
         data = list(m.groups())
@@ -85,13 +85,14 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     ese2 = Instrument.control(
         "ESE2?", "ESE2 %d",
         "Control Extended Event Status Enable Register 2",
-        get_process=int
+        get_process=int,
     )
 
     esr2 = Instrument.control(
         "ESR2?", "ESR2 %d",
         "Control Extended Event Status Register 2",
-        get_process=_int_or_neg_one
+        get_process=_int_or_neg_one,
+        cast=str,
     )
 
     ###########
@@ -123,19 +124,22 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
         'MKV?', 'MKV %s',
         "Control Wavelength Marker Value (wavelength or freq.?)",
         validator=strict_discrete_set,
-        values=["WL", "FREQ"]
+        values=["WL", "FREQ"],
+        cast=str,
     )
 
     wavelength_value_in = Instrument.control(
         'WDP?', 'WDP %s',
         "Control Wavelength value in Vacuum or Air",
         validator=strict_discrete_set,
-        values=["VACUUM", "AIR"]
+        values=["VACUUM", "AIR"],
+        cast=str,
     )
 
     level_scale = Instrument.measurement(
         'LVS?', "Get Current Level Scale",
-        values=["LOG", "LIN"]
+        values=["LOG", "LIN"],
+        cast=str,
     )
 
     level_log = Instrument.control(
@@ -151,7 +155,8 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     level_opt_attn = Instrument.control(
         "ATT?", "ATT %s", "Control Optical Attenuation Status (ON/OFF)",
         validator=strict_discrete_set,
-        values=ONOFF
+        values=ONOFF,
+        cast=str,
     )
 
     resolution = Instrument.control(
@@ -164,14 +169,16 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
         "ARES?", "ARES %s", "Control Resolution Actual (ON/OFF)",
         validator=strict_discrete_set,
         values=ONOFF,
-        map_values=True
+        map_values=True,
+        cast=str,
 
     )
 
     resolution_vbw = Instrument.control(
         "VBW?", "VBW %s", "Control Video Bandwidth Resolution",
         validator=strict_discrete_set,
-        values=["1MHz", "100kHz", "10kHz", "1kHz", "100Hz", "10Hz"]
+        values=["1MHz", "100kHz", "10kHz", "1kHz", "100Hz", "10Hz"],
+        cast=str,
     )
 
     average_point = Instrument.control(
@@ -202,13 +209,15 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     peak_search = Instrument.control(
         "PKS?", "PKS %s", "Control Peak Search Mode",
         validator=strict_discrete_set,
-        values=["PEAK", "NEXT", "LAST", "LEFT", "RIGHT"]
+        values=["PEAK", "NEXT", "LAST", "LEFT", "RIGHT"],
+        cast=str,
     )
 
     dip_search = Instrument.control(
         "DPS?", "DPS %s", "Control Dip Search Mode",
         validator=strict_discrete_set,
-        values=["DIP", "NEXT", "LAST", "LEFT", "RIGHT"]
+        values=["DIP", "NEXT", "LAST", "LEFT", "RIGHT"],
+        cast=str,
     )
 
     analysis = Instrument.control(
@@ -216,7 +225,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     )
 
     analysis_result = Instrument.measurement(
-        "ANAR?", "Get anaysis result from current scan."
+        "ANAR?", "Get analysis result from current scan."
     )
 
     ##########################
@@ -259,7 +268,8 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
         "MSL?", "MSL %s",
         "Control Memory Data Select.",
         validator=strict_discrete_set,
-        values=["A", "B"]
+        values=["A", "B"],
+        cast=str,
     )
 
     ###########################
@@ -275,7 +285,8 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     trace_marker = Instrument.control(
         "TMK?", "TMK %f",
         "Control the trace marker with a wavelength.  Returns the trace wavelength and power.",
-        get_process_list=_parse_trace_peak
+        get_process_list=_parse_trace_peak,
+        cast=str,
     )
 
     @property
@@ -287,7 +298,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
             self.sampling_points
         )
 
-    def read_memory(self, slot="A"):
+    def read_memory(self, slot: str = "A"):
         """Read the scan saved in a memory slot."""
         cond_attr = f"data_memory_{slot.lower()}_condition"
         data_attr = f"data_memory_{slot.lower()}_values"
@@ -298,7 +309,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
 
         return wavelengths, power
 
-    def wait(self, n=3, delay=1):
+    def wait(self, n: int = 3, delay: float = 1) -> None:
         """Query OPC Command and waits for appropriate response."""
         log.info("Wait for OPC")
         res = self.ask("*OPC?")
@@ -313,7 +324,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
 
         log.debug(res)
 
-    def wait_for_sweep(self, n=20, delay=0.5):
+    def wait_for_sweep(self, n: int = 20, delay: float = 0.5) -> None:
         """Wait for a sweep to stop.
 
         This is performed by checking bit 1 of the ESR2.
@@ -329,19 +340,19 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
         if n <= 0:
             log.warning(f"Sweep Timeout Occurred ({int(delay * n)} s)")
 
-    def single_sweep(self, **kwargs):
+    def single_sweep(self, **kwargs) -> None:
         """Perform a single sweep and wait for completion."""
         log.debug("Performing a Spectrum Sweep")
         self.clear()
         self.write('SSI')
         self.wait_for_sweep(**kwargs)
 
-    def center_at_peak(self, **kwargs):
+    def center_at_peak(self, **kwargs) -> None:
         """Center the spectrum at the measured peak."""
         self.write("PKC")
         self.wait(**kwargs)
 
-    def measure_peak(self):
+    def measure_peak(self) -> list[str | float]:
         """Measure the peak and return the trace marker."""
         self.peak_search = "PEAK"
         return self.trace_marker
