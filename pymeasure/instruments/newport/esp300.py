@@ -256,21 +256,32 @@ class ESP300(SCPIUnknownMixin, Instrument):
 
     @property
     def x(self):
-        warn("The x attribute is deprecated."
+        """ Deprecated. Use axes[0] instead.
+        """
+        warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
-               FutureWarning, stacklevel=2)
+             FutureWarning,
+             stacklevel=2)
         return self.axes[0]
+
     @property
     def y(self):
-        warn("The y attribute is deprecated."
+        """ Deprecated. Use axes[1] instead.
+        """
+        warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
-               FutureWarning, stacklevel=2)
+             FutureWarning,
+             stacklevel=2)
         return self.axes[1]
+
     @property
     def phi(self):
-        warn("The phi attribute is deprecated."
+        """ Deprecated. Use axes[2] instead.
+        """
+        warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
-               FutureWarning, stacklevel=2)
+             FutureWarning,
+             stacklevel=2)
         return self.axes[2]
 
     def clear_errors(self):
