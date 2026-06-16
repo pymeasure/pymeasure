@@ -25,13 +25,13 @@
 import logging
 from warnings import warn
 
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL
+from pymeasure.instruments.rohdeschwarz.fsseries import FSL as _FSLSeries
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class FSL(FSL):
+class FSL(_FSLSeries):
     def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
         warn(
             "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "

@@ -136,7 +136,7 @@ class PLBase(SCPIUnknownMixin, Instrument):
 
 
 class PL068P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 6], current_range=[0, 8]
     )
 
@@ -145,7 +145,7 @@ class PL068P(PLBase):
 
 
 class PL155P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 15], current_range=[0, 5]
     )
 
@@ -154,7 +154,7 @@ class PL155P(PLBase):
 
 
 class PL303P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
 
@@ -163,7 +163,7 @@ class PL303P(PLBase):
 
 
 class PL601P(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 60], current_range=[0, 1.5]
     )
 
@@ -172,10 +172,10 @@ class PL601P(PLBase):
 
 
 class PL303QMDP(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_2: PLChannel = Instrument.ChannelCreator(
+    ch_2 = Instrument.ChannelCreator(
         PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
     )
 
@@ -184,13 +184,13 @@ class PL303QMDP(PLBase):
 
 
 class PL303QMTP(PLBase):
-    ch_1: PLChannel = Instrument.ChannelCreator(
+    ch_1 = Instrument.ChannelCreator(
         PLChannel, "1", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_2: PLChannel = Instrument.ChannelCreator(
+    ch_2 = Instrument.ChannelCreator(
         PLChannel, "2", voltage_range=[0, 30], current_range=[0, 3]
     )
-    ch_3: PLChannel = Instrument.ChannelCreator(
+    ch_3 = Instrument.ChannelCreator(
         PLChannel, "3", voltage_range=[0, 30], current_range=[0, 3]
     )
 

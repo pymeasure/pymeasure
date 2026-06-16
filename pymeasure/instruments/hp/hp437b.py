@@ -22,9 +22,10 @@
 # THE SOFTWARE.
 #
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from enum import Enum, IntEnum, IntFlag
 from typing import Any
+from collections.abc import Sequence
 
 from pymeasure.instruments import AdapterType, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -722,7 +723,7 @@ class HP437B(Instrument):
         self.check_errors()
 
     def sensor_data_write_cal_factor_table(
-        self, sensor_id: int, frequency_table: Iterable[float], cal_fac_table: Iterable
+        self, sensor_id: int, frequency_table: Sequence[float], cal_fac_table: Sequence[float]
     ) -> None:
         """
         Write the 'calibration_table' for 'sensor_id' to the Sensor Data
