@@ -24,6 +24,7 @@
 
 import gc
 import logging
+import os
 import tempfile
 import time
 
@@ -70,7 +71,9 @@ def create_filename(title):
     if 'Filename' in config._sections:
         filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
     else:
-        filename = tempfile.mktemp()
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.unlink(filename)
     return filename
 
 
