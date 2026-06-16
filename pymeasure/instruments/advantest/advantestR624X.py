@@ -2093,22 +2093,24 @@ class SMUChannel(Channel):
         will be output. Call :meth:`~.AdvantestR624X.read_measurement`
         afterward to read the data.
 
-        The recommended usage pattern (per the instrument manual) is::
+        The recommended usage pattern (per the instrument manual) is:
+
+        .. code-block:: python
 
             smu.ch_A.select_for_output()   # Select channel A
             smu.trigger()                   # Trigger measurement
             value = smu.read_measurement()  # Read channel A data
 
-        Or, when data already exists from a previous trigger::
+        Or, when data already exists from a previous trigger:
+
+        .. code-block:: python
 
             smu.ch_B.select_for_output()   # Switch to channel B
             value = smu.read_measurement()  # Read channel B data
 
-        .. note::
-
-            Reading measurements with the RMM command does not affect channel
-            specification with the FCH command. In the default state,
-            the measurement data of channel A is output.
+        Reading measurements with the RMM command does not affect channel
+        specification with the FCH command. In the default state,
+        the measurement data of channel A is output.
 
         """
         self.write("fch_0{ch}?")
