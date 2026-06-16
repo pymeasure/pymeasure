@@ -26,12 +26,14 @@ import gc
 import logging
 import tempfile
 import time
+from collections.abc import Callable
 
 import numpy as np
+import pandas as pd
 
-from pymeasure.log import console_log, setup_logging
-
+from ..log import console_log, setup_logging
 from .config import get_config, set_mpl_rcparams
+from .procedure import Procedure
 from .results import Results, unique_filename
 from .workers import Worker
 
@@ -61,17 +63,23 @@ def get_array_zero(maxval, step):
                            np.arange(-maxval, 0, step)))
 
 
-def create_filename(title):
-    """
-    Create a new filename according to the style defined in the config file.
-    If no config is specified, create a temporary file.
+def create_filename(title: str) -> tuple[int | None, str]:
+    """Create a new filename according to the style defined in the config file.
+
+    If no config is specified, create a temporary file via ``mkstemp`` and keep
+    the descriptor open so the file reservation can be handed to ``Results``.
+
+    :returns: A ``(fd, filename)`` tuple. The fd is ``None`` in the config branch
+        (no reservation held) and an open ``mkstemp`` descriptor in the temp
+        branch.
     """
     config = get_config()
     if 'Filename' in config._sections:
         filename = unique_filename(suffix=f'_{title}', **config._sections['Filename'])
+        fd = None
     else:
-        filename = tempfile.mktemp()
-    return filename
+        fd, filename = tempfile.mkstemp()
+    return fd, filename
 
 
 class Experiment:
@@ -103,7 +111,12 @@ class Experiment:
     :param _data_timeout: Time limit for how long live plotting should wait for datapoints.
     """
 
-    def __init__(self, title, procedure, analyse=(lambda x: x)):
+    def __init__(
+        self,
+        title: str,
+        procedure: Procedure,
+        analyse: Callable[[pd.DataFrame], pd.DataFrame] = (lambda x: x),
+    ):
         self.title = title
         self.procedure = procedure
         self.measlist = []
@@ -122,10 +135,10 @@ class Experiment:
             self.scribe = console_log(log)
         self.scribe.start()
 
-        self.filename = create_filename(self.title)
+        fd, self.filename = create_filename(self.title)
         log.info(f"Using data file: {self.filename}")
 
-        self.results = Results(self.procedure, self.filename)
+        self.results = Results(self.procedure, self.filename, file_descriptor=fd)
         log.info("Set up Results")
 
         self.worker = Worker(self.results, self.scribe.queue, logging.DEBUG)
