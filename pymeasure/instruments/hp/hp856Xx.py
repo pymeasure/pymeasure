@@ -50,6 +50,11 @@ except ImportError:
             return self.value
 
 
+def _enum_list(enum_cls: type[Enum]) -> list:
+    """Return a list of enum members. Wrapper to satisfy type checkers."""
+    return list(enum_cls)
+
+
 class WindowType(StrEnum):
     """Enumeration to represent the different window mode for FFT functions"""
 
@@ -728,7 +733,7 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["AUTO", "MAN"], np.arange(10, 80, 10)],
-        cast=int,
+        cast=cast_or_str(int),
     )
 
     amplitude_unit = Instrument.control(
@@ -746,7 +751,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[str(e).upper() for e in AmplitudeUnits],
+        values=[str(e).upper() for e in _enum_list(AmplitudeUnits)],
         cast=str,
         set_process=lambda v: str(v).upper(),
     )
@@ -798,8 +803,8 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
         self.write("BLANK " + trace)
 
     def subtract_display_line_from_trace_b(self):
@@ -853,8 +858,8 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         self.write("CLRW " + trace)
 
@@ -889,7 +894,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in CouplingMode],
+        values=_enum_list(CouplingMode),
         cast=str,
     )
 
@@ -918,7 +923,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in DemodulationMode],
+        values=_enum_list(DemodulationMode),
         cast=str,
     )
 
@@ -991,7 +996,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in DetectionModes],
+        values=_enum_list(DetectionModes),
         cast=str,
     )
 
@@ -1314,13 +1319,13 @@ class HP856Xx(Instrument):
         if not isinstance(window, str):
             raise TypeError(f"Should be of type string but is '{type(window)}'")
 
-        if source not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{source}'")
-        if destination not in [e for e in Trace]:
+        if source not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{source}'")
+        if destination not in _enum_list(Trace):
             raise ValueError(
-                f"Only accepts values of [{[e for e in Trace]}] but was '{destination}'")
-        if window not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{window}'")
+                f"Only accepts values of [{_enum_list(Trace)}] but was '{destination}'")
+        if window not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{window}'")
         self.write(f"FFT {source},{destination},{window}")
 
     frequency_offset = Instrument.control(
@@ -1371,7 +1376,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in FrequencyReference],
+        values=_enum_list(FrequencyReference),
         cast=str,
     )
 
@@ -1490,8 +1495,8 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         self.write(f"MINH {trace}")
 
@@ -1700,9 +1705,9 @@ class HP856Xx(Instrument):
         if not isinstance(mode, str):
             raise TypeError(f"Should be of type string but is '{type(mode)}'")
 
-        if mode not in [e for e in PeakSearchMode]:
+        if mode not in _enum_list(PeakSearchMode):
             raise ValueError(
-                f"Only accepts values of [{[e for e in PeakSearchMode]}] but was '{mode}'")
+                f"Only accepts values of [{_enum_list(PeakSearchMode)}] but was '{mode}'")
 
         self.write(f"MKPK {mode}")
 
@@ -1853,8 +1858,8 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         self.write(f"MXMH {trace}")
 
@@ -2044,8 +2049,8 @@ class HP856Xx(Instrument):
         if not isinstance(percent, float):
             raise TypeError(f"Should be of type float but is '{type(percent)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if percent not in ran:
             raise ValueError(f"Only accepts values in the range of {ran} but was '{percent}'")
@@ -2177,8 +2182,8 @@ class HP856Xx(Instrument):
         if not isinstance(number, int):
             raise TypeError(f"Should be of type int but is '{type(number)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if number not in ran:
             raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
@@ -2334,8 +2339,8 @@ class HP856Xx(Instrument):
         if not isinstance(number, int):
             raise TypeError(f"Should be of type int but is '{type(number)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if number not in ran:
             raise ValueError(f"Only accepts values of [{ran}] but was '{number}'")
@@ -2512,7 +2517,7 @@ class HP856Xx(Instrument):
         Type: :code:`str` or :class:`SweepCoupleMode`
         """,
         validator=strict_discrete_set,
-        values=[e for e in SweepCoupleMode],
+        values=_enum_list(SweepCoupleMode),
         cast=str,
     )
 
@@ -2527,7 +2532,7 @@ class HP856Xx(Instrument):
         Type: :code:`str` or :class:`SweepOut`
         """,
         validator=strict_discrete_set,
-        values=[e for e in SweepOut],
+        values=_enum_list(SweepOut),
         cast=str,
     )
 
@@ -2546,7 +2551,7 @@ class HP856Xx(Instrument):
             You are doing.
         """,
         validator=strict_discrete_set,
-        values=[e for e in TraceDataFormat],
+        values=_enum_list(TraceDataFormat),
         cast=str,
     )
 
@@ -2600,7 +2605,7 @@ class HP856Xx(Instrument):
         a "T" appears on the left edge of the display.
         """,
         validator=strict_discrete_set,
-        values=[e for e in TriggerMode],
+        values=_enum_list(TriggerMode),
         cast=str,
     )
 
@@ -2718,15 +2723,15 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
 
         if not isinstance(window_mode, str):
             raise TypeError(f"Should be of type string but is '{type(window_mode)}'")
 
-        if window_mode not in [e for e in WindowType]:
+        if window_mode not in _enum_list(WindowType):
             raise ValueError(
-                f"Only accepts values of [{[e for e in WindowType]}] but was '{window_mode}'"
+                f"Only accepts values of [{_enum_list(WindowType)}] but was '{window_mode}'"
             )
 
         self.write(f"TWNDOW {trace},{window_mode}")
@@ -2816,8 +2821,8 @@ class HP856Xx(Instrument):
         if not isinstance(trace, str):
             raise TypeError(f"Should be of type string but is '{type(trace)}'")
 
-        if trace not in [e for e in Trace]:
-            raise ValueError(f"Only accepts values of [{[e for e in Trace]}] but was '{trace}'")
+        if trace not in _enum_list(Trace):
+            raise ValueError(f"Only accepts values of [{_enum_list(Trace)}] but was '{trace}'")
         self.write("VIEW " + trace)
 
     video_trigger_level = Instrument.control(
@@ -2897,7 +2902,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=strict_discrete_set,
-        values=[e for e in SourceLevelingControlMode],
+        values=_enum_list(SourceLevelingControlMode),
         cast=str,
     )
 
@@ -3270,7 +3275,7 @@ class HP8561B(HP856Xx):
         or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
         """,
         validator=strict_discrete_set,
-        values=[e for e in MixerMode],
+        values=_enum_list(MixerMode),
         cast=str,
     )
 
