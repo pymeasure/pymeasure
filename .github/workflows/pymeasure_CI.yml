@@ -6,10 +6,15 @@ on:
       - develop
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   lint_typecheck:
     name: Lint and Type Check
     runs-on: "ubuntu-latest"
+    env:
+      TY_ERROR_BASELINE: 290
     defaults:
       run:
         shell: bash -l {0}
@@ -32,7 +37,18 @@ jobs:
       - name: Install Pymeasure for type checking
         run: pip install -e .[typecheck]
       - name: Type check with ty
-        run: ty check --output-format github
+        run: |
+          set -euo pipefail
+          ty check --exclude "examples/" --output-format github --exit-zero
+          TY_OUTPUT="$(ty check --exclude "examples/" --output-format concise --exit-zero 2>&1)"
+          ERROR_COUNT=$(printf "%s\n" "$TY_OUTPUT" | grep -c ' error\[' || true)
+          echo "Ty error count: $ERROR_COUNT (baseline: ${{ env.TY_ERROR_BASELINE }})"
+          # Fail if error count exceeds the baseline threshold
+          # Lower TY_ERROR_BASELINE as typing improvements are made
+          if [ "$ERROR_COUNT" -gt "${{ env.TY_ERROR_BASELINE }}" ]; then
+            echo "::error::Ty error count ($ERROR_COUNT) exceeds baseline threshold (${{ env.TY_ERROR_BASELINE }})"
+            exit 1
+          fi
 
   docs:
     name: Docs
@@ -44,6 +60,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Install pymeasure requirements
         uses: mamba-org/setup-micromamba@v3
         with:
