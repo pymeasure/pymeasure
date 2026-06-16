@@ -28,6 +28,7 @@ import inspect
 from copy import deepcopy
 import importlib.util
 import re
+from typing import Any
 from pint import UndefinedUnitError
 
 from .parameters import Parameter, Measurable, Metadata
@@ -66,7 +67,7 @@ class Procedure:
         RUNNING: 'Running'
     }
 
-    _parameters = {}
+    _parameters: dict[str, Parameter] = {}
 
     def __init__(self, **kwargs):
         self.status = Procedure.QUEUED
@@ -105,7 +106,7 @@ class Procedure:
                         "DATA_COLUMNS contains valid Pint units.")
         return units
 
-    def gen_measurement(self):
+    def gen_measurement(self) -> None:
         """Create MEASURE and DATA_COLUMNS variables for get_datapoint method."""
         # TODO: Refactor measurable-s implementation to be consistent with parameters
 
@@ -125,27 +126,28 @@ class Procedure:
         data = {key: getattr(self, self.MEASURE[key]).value for key in self.MEASURE}
         return data
 
-    def measure(self):
+    def measure(self) -> None:
         data = self.get_datapoint()
         log.debug(f"Produced numbers: {data}")
         self.emit('results', data)
 
-    def _update_parameters(self):
+    def _update_parameters(self) -> None:
         """ Collects all the Parameter objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set in
         their stead
         """
         if not self._parameters:
             self._parameters = {}
+        self._param_values: dict[str, Any] = {}
         for item, parameter in inspect.getmembers(self.__class__):
             if isinstance(parameter, Parameter):
                 self._parameters[item] = deepcopy(parameter)
                 if parameter.is_set():
-                    setattr(self, item, parameter.value)
+                    self._param_values[item] = parameter.value
                 else:
-                    setattr(self, item, None)
+                    self._param_values[item] = None
 
-    def parameters_are_set(self):
+    def parameters_are_set(self) -> bool:
         """ Returns True if all parameters are set """
         for name, parameter in self._parameters.items():
             if getattr(self, name) is None:
@@ -191,7 +193,7 @@ class Procedure:
             result[name] = parameter
         return result
 
-    def refresh_parameters(self):
+    def refresh_parameters(self) -> None:
         """ Enforces that all the parameters are re-cast and updated in the meta
         dictionary
         """
@@ -200,35 +202,35 @@ class Procedure:
             parameter.value = value
             setattr(self, name, parameter.value)
 
-    def set_parameters(self, parameters, except_missing=True):
+    def set_parameters(self, parameters, except_missing=True) -> None:
         """ Sets a dictionary of parameters and raises an exception if additional
         parameters are present if except_missing is True
         """
         for name, value in parameters.items():
             if name in self._parameters:
-                self._parameters[name].value = value
-                setattr(self, name, self._parameters[name].value)
+                setattr(self, name, value)
             else:
                 if except_missing:
                     raise NameError(f"Parameter '{name}' does not belong to '{repr(self)}'")
 
-    def _update_metadata(self):
+    def _update_metadata(self) -> None:
         """ Collects all the Metadata objects for the procedure and stores
         them in a meta dictionary so that the actual values can be set and used
         in their stead
         """
         self._metadata = {}
+        self._metadata_values = {}
 
         for item, metadata in inspect.getmembers(self.__class__):
             if isinstance(metadata, Metadata):
                 self._metadata[item] = deepcopy(metadata)
 
                 if metadata.is_set():
-                    setattr(self, item, metadata.value)
+                    self._metadata_values[item] = metadata.value
                 else:
-                    setattr(self, item, None)
+                    self._metadata_values[item] = None
 
-    def evaluate_metadata(self):
+    def evaluate_metadata(self) -> None:
         """ Evaluates all Metadata objects, fixing their values to the current value
         """
         for item, metadata in self._metadata.items():
@@ -328,7 +330,7 @@ class UnknownProcedure(Procedure):
 
 class ProcedureWrapper:
 
-    def __init__(self, procedure):
+    def __init__(self, procedure: Procedure):
         self.procedure = procedure
 
     def __getstate__(self):
@@ -344,12 +346,12 @@ class ProcedureWrapper:
         del state['procedure']
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         self.__dict__.update(state)
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec)
+        module = importlib.util.module_from_spec(spec) # type: ignore[reportArgumentType]
         sys.modules[self._module] = module
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)

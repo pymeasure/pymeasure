@@ -42,13 +42,13 @@ class RandomProcedure(Procedure):
         random.seed(self.seed)
 
     def execute(self):
-        for i in range(self.iterations):
+        for i in range(self.iterations):  # ty:ignore[invalid-argument-type]
             data = {
                 'Iteration': i,
                 'Random Number': random.random()
             }
             self.emit('results', data)
-            self.emit('progress', 100. * i / self.iterations)
-            sleep(self.delay)
+            self.emit('progress', 100. * i / self.iterations)  # ty:ignore[unsupported-operator]
+            sleep(self.delay)  # ty:ignore[invalid-argument-type]
             if self.should_stop():
                 break

@@ -225,9 +225,9 @@ class TestPandas3Numpy2Compat:
         """BooleanParameter must accept np.bool_ values (numpy 2.0 replacement for np.bool)."""
         from pymeasure.experiment import BooleanParameter
         p = BooleanParameter('Test')
-        p.value = np.bool_(True)
+        p.value = np.bool_(True)  # ty:ignore[invalid-assignment]
         assert p.value is True
-        p.value = np.bool_(False)
+        p.value = np.bool_(False)  # ty:ignore[invalid-assignment]
         assert p.value is False
 
     def test_results_empty_file_returns_empty_dataframe(self, tmpdir):
