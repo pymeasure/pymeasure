@@ -620,7 +620,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 log.error(f"Invalid filename provided: {E.args[0]}")
                 return
         else:
-            filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
+            fd, filename = tempfile.mkstemp(prefix='TempFile_', suffix='.csv')
+            os.close(fd)
+            os.unlink(filename)
 
         results = Results(procedure, filename)
 
