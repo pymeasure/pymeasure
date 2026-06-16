@@ -42,8 +42,6 @@ class Child(Protocol):
     _protected: bool
     _collection: str
 
-    def __init__(self, parent: "CommonBase", id: IdType, **kwargs) -> None: ...
-
 
 T = TypeVar("T")
 T2 = TypeVar("T2")
@@ -327,7 +325,7 @@ class CommonBase:
         def __init__(
             self,
             cls: type[C] | Sequence[type[C]],
-            id: IdType = None,
+            id: IdType | list[IdType] | tuple[IdType, ...] |None = None,
             prefix: str | None = "ch_",
             **kwargs,
         ) -> None:
@@ -462,7 +460,7 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
         """
-        child = cls(self, id, **kwargs)
+        child = cls(self, id, **kwargs) # type: ignore[reportCallIssue]
         collection_data = getattr(self, collection, {})
         if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
@@ -496,10 +494,9 @@ class CommonBase:
 
         :param child: Instance of the child to delete.
         """
-        if hasattr(child, "_protected"):
+        if child._protected:
             raise TypeError("You cannot remove channels defined at class level.")
-        if hasattr(child, "_collection"):
-            collection = getattr(self, child._collection)
+        if collection := getattr(self, child._collection, None):
             del collection[child.id]
         delattr(self, child._name)
 
