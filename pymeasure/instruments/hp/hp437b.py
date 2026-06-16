@@ -23,7 +23,7 @@
 #
 
 import logging
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Sequence
 from enum import Enum, IntEnum, IntFlag
 from typing import Any
 
@@ -721,7 +721,7 @@ class HP437B(Instrument):
         self.check_errors()
 
     def sensor_data_write_cal_factor_table(
-        self, sensor_id: int, frequency_table: Iterable[float], cal_fac_table: Iterable
+        self, sensor_id: int, frequency_table: Sequence[float], cal_fac_table: Sequence[float]
     ) -> None:
         """
         Write the 'calibration_table' for 'sensor_id' to the Sensor Data

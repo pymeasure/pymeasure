@@ -132,10 +132,24 @@ class Fpu60(Instrument):
     def get_operation_times(self) -> OperationTimes:
         """Get the operation times in minutes as a dictionary."""
         self.write("TIMERS?")
+
+        psu_line = self.read()
+        laser_line = self.read()
+        laser_1a_line = self.read()
+
+        psu_match = re.search(r"\d+", psu_line)
+        laser_match = re.search(r"\d+", laser_line)
+        laser_1a_match = re.search(r"\d+", laser_1a_line)
+        if psu_match is None or laser_match is None or laser_1a_match is None:
+            raise ValueError(
+                "Failed to parse timer response lines: "
+                f"{psu_line!r}, {laser_line!r}, {laser_1a_line!r}"
+            )
+
         timers: OperationTimes = {
-            "psu": int(re.search(r"\d+", self.read()).group()),
-            "laser": int(re.search(r"\d+", self.read()).group()),
-            "laser_above_1A": int(re.search(r"\d+", self.read()).group()),
+            "psu": int(psu_match.group()),
+            "laser": int(laser_match.group()),
+            "laser_above_1A": int(laser_1a_match.group()),
         }
         self.read()  # an empty line is at the end.
         return timers

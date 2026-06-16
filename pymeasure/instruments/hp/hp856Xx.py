@@ -26,7 +26,6 @@ import logging
 from datetime import datetime
 from enum import Enum, IntFlag
 from math import log10
-from typing import Any
 
 import numpy as np
 
@@ -592,7 +591,9 @@ class ErrorCode:
     def __repr__(self) -> str:
         return "ErrorCode(\"" + self.short + " - " + self.long + "\")"
 
-    def __eq__(self, other) -> Any:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ErrorCode):
+            return NotImplemented
         return self.code == other.code
 
 

@@ -421,7 +421,7 @@ def test_display_parameter():
              ]
     ) as instr:
         instr.display_parameter(parameter="PKPK", channel=1)
-        instr.ch(2).display_parameter = "MEAN"
+        instr.ch_2.display_parameter = "MEAN"
 
 
 def test_measure_parameter():
