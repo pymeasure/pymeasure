@@ -449,6 +449,12 @@ def test_values_fallback_emits_futurewarning():
         result = cb.values("X,Y,Z")
     assert result == ["X", "Y", "Z"]
 
+def test_values_fallback_raises_futurewarning_in_pymeasure():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    # "match" should match pyproject.toml error raising
+    with pytest.raises(FutureWarning, match=r"Cannot cast.*In a future version"):
+        cb.values("X,Y,Z")
+
 
 def test_binary_values(fake):
     fake.read_binary_values = fake.read

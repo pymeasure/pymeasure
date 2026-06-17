@@ -91,6 +91,11 @@ extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error:Cannot cast.*In a future version:FutureWarning",
+]
+
 [tool.pyright.defineConstant]
 PYQT5 = true
 PYSIDE2 = false
