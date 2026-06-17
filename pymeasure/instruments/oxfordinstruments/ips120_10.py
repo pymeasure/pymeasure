@@ -140,6 +140,7 @@ class IPS120_10(OxfordInstrumentsBase):
     version = Instrument.measurement(
         "V",
         """ A string property that returns the version of the IPS. """,
+        cast=str,
     )
 
     control_mode = Instrument.control(

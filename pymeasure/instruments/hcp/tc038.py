@@ -153,7 +153,7 @@ class TC038(Instrument):
         "WRD" + registers["setpoint"] + ",01",
         "WWR" + registers["setpoint"] + ",01,%s",
         """Control the setpoint of the temperature controller in °C.""",
-        get_process=_data_to_temp,
+        cast=_data_to_temp,
         set_process=lambda temp: f"{int(round(temp * 10)):04X}",
         check_set_errors=True,
     )
@@ -161,18 +161,19 @@ class TC038(Instrument):
     temperature = Instrument.measurement(
         "WRD" + registers["temperature"] + ",01",
         """Measure the current temperature in °C.""",
-        get_process=_data_to_temp,
+        cast=_data_to_temp,
     )
 
     monitored_value = Instrument.measurement(
         "WRM",
         """Measure the currently monitored value. For default it is the current
         temperature in °C.""",
-        get_process=_data_to_temp,
+        cast=_data_to_temp,
     )
 
     information = Instrument.measurement(
         "INF6",
         """Get the information about the device and its capabilities.""",
         get_process=lambda got: got[7:-1],
+        cast=str,
     )

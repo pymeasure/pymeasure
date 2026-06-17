@@ -336,6 +336,7 @@ class SmartlineV2(Instrument):
         docs="""Control the unit shown in the display. ('mbar', 'Torr', 'hPa')""",
         values=['mbar', 'Torr', 'hPa'],
         validator=validators.strict_discrete_set,
+        cast=str,
         set_process=compose_data,
         check_set_errors=True,
     )

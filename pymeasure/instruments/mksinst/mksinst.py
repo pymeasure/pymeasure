@@ -46,6 +46,7 @@ class RelayChannel(Channel):
         "SS{ch}?",
         """Get the setpoint relay status""",
         values={True: "SET", False: "CLEAR"},
+        cast=str,
     )
 
     setpoint = Channel.control(
@@ -65,6 +66,7 @@ class RelayChannel(Channel):
         """Control the switching direction""",
         validator=strict_discrete_set,
         values=["ABOVE", "BELOW"],
+        cast=str,
         check_set_errors=True,
     )
 

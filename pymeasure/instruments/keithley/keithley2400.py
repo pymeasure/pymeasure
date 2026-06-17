@@ -28,7 +28,7 @@ from warnings import warn
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import Instrument, SCPIMixin, cast_or_str
 from pymeasure.errors import RangeException
 from pymeasure.instruments.validators import (
     strict_range,
@@ -107,6 +107,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"current": "CURR", "voltage": "VOLT"},
         map_values=True,
+        cast=str,
     )
 
     source_delay = Instrument.control(
@@ -171,6 +172,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
            Instead use :attr:`~.auto_zero_enabled` or :meth:`~.auto_zero_once`.""",
         values={True: 1, False: 0, "ONCE": "ONCE"},
         map_values=True,
+        cast=cast_or_str(float),
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.auto_zero`. "
             "Instead use `Keithley2400.auto_zero_enabled` or `Keithley2400.auto_zero_once`"
@@ -208,6 +210,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "GUAR": "GUAR",  # ''
         },
         map_values=True,
+        cast=str,
     )
 
     auto_output_off_enabled = Instrument.control(
@@ -286,6 +289,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["ON", "OFF"],
         map_values=False,
+        cast=str,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_state`. "
             "Instead use `Keithley2400.filter_enabled`."
@@ -303,6 +307,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "REP", False: "MOV"},
         map_values=True,
+        cast=str,
     )
 
     filter_type = Instrument.control(
@@ -318,6 +323,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["REP", "MOV"],
         map_values=False,
+        cast=str,
         get_process=_deprecate_process(
             "Deprecated to use `Keithley2400.filter_type`. "
             "Instead use `Keithley2400.repeat_filter_enabled`."
@@ -700,6 +706,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         selected. When `False`, `source_current` and `voltage_range` are controlled manually.""",
         values={True: "AUTO", False: "MAN"},
         map_values=True,
+        cast=str,
     )
 
     resistance_range = Instrument.control(
@@ -919,6 +926,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={"immediate": "IMM", "trigger_link": "TLIN"},
         map_values=True,
+        cast=str,
     )
 
     arm_source = Instrument.control(
@@ -935,6 +943,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "bus": "BUS",
         },
         map_values=True,
+        cast=str,
     )
 
     trigger_output_event = Instrument.control(
@@ -950,6 +959,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "none": "NONE",
         },
         map_values=True,
+        cast=str,
     )
 
     arm_output_event = Instrument.control(
@@ -964,6 +974,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
             "none": "NONE",
         },
         map_values=True,
+        cast=str,
     )
 
     def disable_output_triggers(self):
@@ -1216,6 +1227,7 @@ class Keithley2400(KeithleyBuffer, SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "FRON", False: "REAR"},
         map_values=True,
+        cast=str,
     )
 
     def use_rear_terminals(self):

@@ -79,8 +79,8 @@ class ChannelInstrument(Instrument):
         self.add_child(GenericChannel, "A")
         self.add_child(GenericChannel, "B")
 
-    def check_errors(self):
-        err = self.values("SYST:ERR?")
+    def check_errors(self) -> list[str]:
+        err = self.values("SYST:ERR?", cast=str)
         if err:
             self.errors.append(err)
         return err

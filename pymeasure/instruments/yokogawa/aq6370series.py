@@ -267,6 +267,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     resolution_bandwidth = Instrument.control(
@@ -285,6 +286,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         ":TRACe:ACTive?",
         ":TRACe:ACTive %d",
         "Control the active trace (str 'A', 'B', 'C', ...).",
+        cast=str,
     )
 
     def copy_trace(self, source, destination):
@@ -353,6 +355,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         ":FORMat:DATA %s",
         """Control the data transfer format. It returns to default ASCII at reset.""",
         values=["ASCII", "REAL,32", "REAL,64"],
+        cast=str,
     )
 
     def get_binary_data(self, bitness=64):

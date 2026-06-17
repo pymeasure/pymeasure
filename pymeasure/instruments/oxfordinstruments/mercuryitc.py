@@ -78,7 +78,8 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1],
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     control_loop_P = Channel.control(
@@ -147,7 +148,8 @@ class TemperatureSensor(Channel):
         preprocess_reply=lambda v: v.split(":")[-1],
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
 
@@ -276,7 +278,8 @@ class MercuryiTC(Instrument):
 
     identity = Instrument.measurement(
         "*IDN?",
-        """Get identity of unit."""
+        """Get identity of unit.""",
+        cast=str,
     )
 
     TS_MB = Instrument.ChannelCreator(

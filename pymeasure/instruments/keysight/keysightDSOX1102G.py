@@ -25,7 +25,7 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -413,7 +413,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         # Other waveform formats raise UnicodeDecodeError
         self.waveform_format = "ascii"
 
-        data = self.values(":waveform:data?")
+        data = self.values(":waveform:data?", cast=cast_or_str(float))
         # Strip header from first data element
         data[0] = float(data[0][10:])
 

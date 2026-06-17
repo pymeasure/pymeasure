@@ -110,7 +110,8 @@ class TDK_Lambda_Base(Instrument):
         """,
         check_set_errors=True,
         validator=strict_discrete_set,
-        values=["LOC", "REM", "LLO"]
+        values=["LOC", "REM", "LLO"],
+        cast=str
     )
 
     multidrop_capability = Instrument.measurement(
@@ -147,7 +148,8 @@ class TDK_Lambda_Base(Instrument):
         """Get the identity of the instrument.
 
         Returns a list of instrument manufacturer and model in the format: ``["LAMBDA", "GENX-Y"]``
-        """
+        """,
+        cast=str
     )
 
     version = Instrument.measurement(
@@ -155,7 +157,8 @@ class TDK_Lambda_Base(Instrument):
         """Get the software version on instrument.
 
         Returns the software version as an ASCII string.
-        """
+        """,
+        cast=str
     )
 
     serial = Instrument.measurement(
@@ -163,7 +166,8 @@ class TDK_Lambda_Base(Instrument):
         """Get the serial number of the instrument.
 
         Returns the serial number of of the instrument as an ASCII string.
-        """
+        """,
+        cast=str
     )
 
     last_test_date = Instrument.measurement(
@@ -171,7 +175,8 @@ class TDK_Lambda_Base(Instrument):
         """Get the date of the last test, possibly calibration date.
 
         Returns a string in the format: yyyy/mm/dd.
-        """
+        """,
+        cast=str
     )
 
     voltage_setpoint = Instrument.control(
@@ -212,7 +217,8 @@ class TDK_Lambda_Base(Instrument):
         When power supply is on, the returned value will be either ``'CV'`` for
         control voltage or ``'CC'`` for or control current. If the power supply
         is off, the returned value will be ``'OFF'``.
-        """
+        """,
+        cast=str
     )
 
     display = Instrument.measurement(
@@ -258,7 +264,8 @@ class TDK_Lambda_Base(Instrument):
         check_set_errors=True,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     foldback_enabled = Instrument.control(
@@ -271,7 +278,8 @@ class TDK_Lambda_Base(Instrument):
         check_set_errors=True,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     foldback_delay = Instrument.control(
@@ -321,7 +329,8 @@ class TDK_Lambda_Base(Instrument):
         check_set_errors=True,
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

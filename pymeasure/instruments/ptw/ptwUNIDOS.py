@@ -30,6 +30,7 @@ from typing import Any
 
 from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
 
@@ -232,7 +233,8 @@ wrong format of the parameter",
         """,
         validator=strict_discrete_set,
         values=["LOW", "MEDIUM", "HIGH"],
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     id = Instrument.measurement(
@@ -240,7 +242,8 @@ wrong format of the parameter",
         """Get the dosemeter ID (list[str]).
 
         .. [name, type number, firmware version, hardware revision]
-        """
+        """,
+        cast=str,
         )
 
     integration_time = Instrument.control(
@@ -256,7 +259,8 @@ wrong format of the parameter",
 
     mac_address = Instrument.measurement(
         "MAC",
-        """Get the dosemeter MAC address (str)."""
+        """Get the dosemeter MAC address (str).""",
+        cast=str,
         )
 
     measurement_result = Instrument.measurement(
@@ -273,6 +277,7 @@ wrong format of the parameter",
                     ``voltage``,
                     ``error``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "status": v[0],
             "charge": float(str(v[1]) + str(v[2])),
@@ -293,7 +298,8 @@ wrong format of the parameter",
         """,
         validator=strict_discrete_set,
         values=["VERY_LOW", "LOW", "MEDIUM", "HIGH"],
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     range_max = Instrument.measurement(
@@ -305,6 +311,7 @@ wrong format of the parameter",
                     ``doserate``,
                     ``timebase``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "range": v[0],
             "current": float(str(v[1]) + str(v[2])),
@@ -324,6 +331,7 @@ wrong format of the parameter",
                     ``doserate``,
                     ``timebase``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "range": v[0],
             "charge": float(str(v[1]) + str(v[2])),
@@ -345,6 +353,7 @@ wrong format of the parameter",
                     ``medium``,
                     ``high``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "status": v[0],
             "time_remaining": v[1],
@@ -369,7 +378,8 @@ wrong format of the parameter",
         ``MEAS``, ``HOLD``, ``INT``, ``INTHLD``, ``ZERO``, ``AUTO``,
         ``AUTO_MEAS``, ``AUTO_HOLD``, ``EOM``, ``WAIT``, ``INIT``,
         ``ERROR``, ``SELF_TEST`` or ``TST``
-        """
+        """,
+        cast=str,
         )
 
     tfi = Instrument.measurement(
@@ -377,7 +387,8 @@ wrong format of the parameter",
         """Get the telegram failure information (str).
 
         The property provides information about the last failed command with HTTP request.
-        """
+        """,
+        cast=str,
         )
 
     autostart_enabled = Instrument.control(
@@ -386,7 +397,8 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     autoreset_enabled = Instrument.control(
@@ -395,7 +407,8 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     electrical_units_enabled = Instrument.control(
@@ -404,7 +417,8 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     voltage = Instrument.control(
@@ -432,7 +446,8 @@ wrong format of the parameter",
         set_process=lambda v: "" if (v) else f";{int(v)}",  # "TOK" = request write permission
                                                             # "TOK;0" = release write permision
                                                             # "TOK;1" = get status
-        get_process_list=lambda v: True if (v[1] == "true") else False,
+        cast=str,
+        get_process_list=lambda v: v[1] == "true",
         check_set_errors=True
         )
 
@@ -444,6 +459,7 @@ wrong format of the parameter",
                      ``time_remaining``,
                      ``time_total``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {"status": v[0], "time_remaining": v[1], "time_total": v[2]},
     )
 
@@ -502,6 +518,7 @@ wrong format of the parameter",
                     ``ipv4``,
                     ``ipv6``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
@@ -540,6 +557,7 @@ wrong format of the parameter",
                     ``triggerReset``,
                     ``triggerSensitivity``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
@@ -560,6 +578,7 @@ wrong format of the parameter",
                     ``testTemperature``,
                     ``typeNumber``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
@@ -577,6 +596,7 @@ wrong format of the parameter",
                     ``timezone``,
                     ``volume``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
@@ -587,5 +607,6 @@ wrong format of the parameter",
         :dict keys: ``enabled``,
                     ``ssid``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )

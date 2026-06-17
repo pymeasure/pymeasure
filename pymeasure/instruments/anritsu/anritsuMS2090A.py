@@ -176,7 +176,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:CONT?",
         """
         Returns the Control Channel measurement in json format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_eirpower = Instrument.measurement(
@@ -204,14 +205,16 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:EMF?",
         """
         Return the current EMF measurement data. JSON format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_emf_meter = Instrument.measurement(
         "FET:EMF:MET?",
         """
         Return the live EMF measurement data. JSON format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_emf_meter_sample = Instrument.measurement(
@@ -233,7 +236,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:MIMO:ANT?",
         """
         Returns the sync power measurement in json format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_ocupied_bw = Instrument.measurement(
@@ -255,7 +259,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:PAN?",
         """
         Return the current Pulse Analyzer measurement data. JSON format
-        """
+        """,
+        cast=str,
     )
 
     fetch_pci = Instrument.measurement(
@@ -269,7 +274,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:PDSC?",
         """
         Returns the Data Channel Measurements in JSON format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_peak = Instrument.measurement(
@@ -283,14 +289,16 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:RRM?",
         """
         Returns the Radio Resource Management in JSON format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_scan = Instrument.measurement(
         "FET:SCAN?",
         """
         Returns the cell scanner measurements in JSON format
-        """
+        """,
+        cast=str,
     )
 
     fetch_semask = Instrument.measurement(
@@ -311,21 +319,24 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "FET:SYNC:EVM?",
         """
         Returns the Sync EVM measurement in JSON format.
-        """
+        """,
+        cast=str,
     )
 
     fetch_sync_power = Instrument.measurement(
         "FET:SYNC:POW?",
         """
         Returns the sync power measurements in JSON format
-        """
+        """,
+        cast=str,
     )
 
     fetch_tae = Instrument.measurement(
         "FET:TAE?",
         """
         Returns the Time Alignment Error in JSON format.
-        """
+        """,
+        cast=str,
     )
 
     init_continuous = Instrument.control(
@@ -333,7 +344,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         "Specified whether the sweep/measurement is triggered continuously",
         values=ONOFF,
         map_values=True,
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
+        cast=str,
     )
 
     init_spa_self = Instrument.measurement(
@@ -350,7 +362,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         """,
         values=ONOFF,
         map_values=True,
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
+        cast=str,
     )
 
     meas_acpower = Instrument.measurement(
@@ -417,7 +430,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         """,
         values=ONOFF,
         map_values=True,
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
+        cast=str,
     )
 
     meas_int_power = Instrument.measurement(
@@ -443,7 +457,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         Sets or queries whether the instrument will automatically save an IQ capture when
         losing sync
         """,
-        values=OFFFIRSTREPEAT
+        values=OFFFIRSTREPEAT,
+        cast=str,
     )
 
     meas_ota_mapp = Instrument.measurement(
@@ -462,7 +477,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         """,
         values=ONOFF,
         map_values=True,
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
+        cast=str,
     )
 
     view_sense_modes = Instrument.measurement(
@@ -471,7 +487,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         Returns a list of available modes for the Spa application. The response is a
         comma-separated list of mode names. See command [:SENSe]:MODE for the mode name
         specification.
-        """
+        """,
+        cast=str,
     )
 
     sense_mode = Instrument.control(
@@ -480,6 +497,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         Set the operational mode of the Spa app.
         """,
         values=SPAMODES,
+        cast=str,
     )
 
     preamp = Instrument.control(
@@ -490,7 +508,8 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
         """,
         values=ONOFF,
         map_values=True,
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
+        cast=str,
     )
 
     def init_sweep(self):
