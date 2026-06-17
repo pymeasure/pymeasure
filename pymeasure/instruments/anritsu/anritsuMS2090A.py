@@ -340,7 +340,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     init_continuous = Instrument.control(
-        "INIT:CONT?", "INIT:CONT %g",
+        "INIT:CONT?", "INIT:CONT %s",
         "Specified whether the sweep/measurement is triggered continuously",
         values=ONOFF,
         map_values=True,
@@ -356,7 +356,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     active_state = Instrument.control(
-        "INST:ACT:STAT?", "INST:ACT:STAT %g",
+        "INST:ACT:STAT?", "INST:ACT:STAT %s",
         docs="""
         The "set" state indicates that the instrument is used by someone.
         """,
@@ -424,7 +424,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     meas_emf_meter_sample = Instrument.control(
-        "MEASure:EMF:METer:SAMPle:STATe?", "MEASure:EMF:METer:SAMPle:STATe%g",
+        "MEASure:EMF:METer:SAMPle:STATe?", "MEASure:EMF:METer:SAMPle:STATe%s",
         docs="""
         Start or Stop applying the measurement results to the currently selected sample
         """,
@@ -452,7 +452,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     meas_iq_capture_fail = Instrument.control(
-        "MEASure:IQ:CAPTure:FAIL?", "MEASure:IQ:CAPTure:FAIL %g",
+        "MEASure:IQ:CAPTure:FAIL?", "MEASure:IQ:CAPTure:FAIL %s",
         """
         Sets or queries whether the instrument will automatically save an IQ capture when
         losing sync
@@ -470,7 +470,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     meas_ota_run = Instrument.control(
-        "MEASure:OTA:MAPPing:RUN?", "MEASure:OTA:MAPPing:RUN %g",
+        "MEASure:OTA:MAPPing:RUN?", "MEASure:OTA:MAPPing:RUN %s",
         """
         Turn on/off OTA Coverage Mapping Data Collection. The instrument must be in
         Coverage Mapping measurement for the command to be effective
@@ -492,7 +492,7 @@ class AnritsuMS2090A(SCPIMixin, Instrument):
     )
 
     sense_mode = Instrument.control(
-        "MODE?", ":MODE %g",
+        "MODE?", ":MODE %s",
         """
         Set the operational mode of the Spa app.
         """,
