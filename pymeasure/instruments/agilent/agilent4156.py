@@ -451,6 +451,7 @@ class AgilentMeasurementChannel(Channel):
             instr.smu1.voltage_name = "Vbase"
         """,
         set_process=check_current_voltage_name,
+        cast=str,
     )
 
     def reset_settings(self):
@@ -482,6 +483,7 @@ class AgilentMeasurementChannel(Channel):
         check_get_errors=True,
         check_set_errors=True,
         dynamic=True,
+        cast=str,
     )
 
     channel_function = Channel.control(
@@ -495,6 +497,7 @@ class AgilentMeasurementChannel(Channel):
         check_set_errors=True,
         validator=strict_discrete_set,
         values=["VAR1", "VAR2", "VARD", "CONS"],
+        cast=str,
     )
 
 
@@ -525,6 +528,7 @@ class SMU(AgilentMeasurementChannel):
         check_set_errors=True,
         validator=strict_discrete_set,
         values=["0OHM", "10KOHM", "100KOHM", "1MOHM"],
+        cast=str,
     )
 
     @property
@@ -606,6 +610,7 @@ class SMU(AgilentMeasurementChannel):
             instr.smu1.voltage_name = "Vbase"
         """,
         set_process=check_current_voltage_name,
+        cast=str,
     )
 
     def __validate_cons(self):

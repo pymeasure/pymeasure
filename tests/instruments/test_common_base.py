@@ -28,7 +28,7 @@ import pytest
 
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase
+from pymeasure.instruments.common_base import DynamicProperty, CommonBase, cast_or_str
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -48,11 +48,11 @@ class CommonBaseTesting(CommonBase):
     def wait_for(self, query_delay=0):
         pass
 
-    def write(self, command):
-        self.parent.write(command)
+    def write(self, command, **kwargs):
+        self.parent.write(command, **kwargs)
 
-    def read(self):
-        return self.parent.read()
+    def read(self, **kwargs):
+        return self.parent.read(**kwargs)
 
 
 class GenericBase(CommonBaseTesting):
@@ -80,11 +80,6 @@ class GenericBase(CommonBaseTesting):
         """A special control with different channel specifiers for get and set.""",
         cast=str,
     )
-
-
-@pytest.fixture()
-def generic():
-    return GenericBase()
 
 
 class FakeBase(CommonBaseTesting):
@@ -115,7 +110,8 @@ class FakeBase(CommonBaseTesting):
         values=(1, 10),
         dynamic=True,
         check_get_errors=True,
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
     )
 
 
@@ -430,19 +426,34 @@ def test_ask_writes_and_reads():
 
 @pytest.mark.parametrize("value, kwargs, result",
                          (("5,6,7", {}, [5, 6, 7]),
+                          ("5.1,6,x", {"cast": cast_or_str(float)}, [5.1, 6, "x"]),
+                          ("5,6,x", {"cast": cast_or_str(int)}, [5, 6, "x"]),
                           ("5.6.7", {'separator': '.'}, [5, 6, 7]),
                           ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
+                          ("X,Y,Z", {"cast": str}, ['X', 'Y', 'Z']),
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
+                          ("X.Y.Z", {"separator": ".", "cast":str}, ["X", "Y", "Z"]),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
                           ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
-                          ("X,Y,Z", {'maxsplit': 1}, ["X", "Y,Z"]),
-                          ("X,Y,Z", {'maxsplit': 0}, ["X,Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 1, "cast": str}, ["X", "Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 0, "cast": str}, ["X,Y,Z"]),
                           ))
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
+
+
+def test_values_fallback_emits_futurewarning():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    with pytest.warns(FutureWarning, match=r"Cannot cast.*In a future version"):
+        result = cb.values("X,Y,Z")
+    assert result == ["X", "Y", "Z"]
+
+def test_values_fallback_raises_futurewarning_in_pymeasure():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    # "match" should match pyproject.toml error raising
+    with pytest.raises(FutureWarning, match=r"Cannot cast.*In a future version"):
+        cb.values("X,Y,Z")
 
 
 def test_binary_values(fake):
@@ -648,7 +659,7 @@ def test_control_invalid_values_get():
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "%d", "",
-            values=b"abasdfe", map_values=True)
+            values=b"abasdfe", map_values=True, cast=str)
 
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x
@@ -700,6 +711,7 @@ def test_control_get_process(dynamic):
             values=[0, 10],
             get_process=lambda v: int(v.replace('JUNK', '')),
             dynamic=dynamic,
+            cast=str,
         )
 
     fake = Fake()
@@ -785,7 +797,7 @@ def test_measurement_parameters_for_values():
             "JUNK%d",
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
-            cast=int,
+            cast=cast_or_str(int),
             values_kwargs={'testing': True},
         )
 

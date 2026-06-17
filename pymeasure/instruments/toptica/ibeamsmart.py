@@ -53,9 +53,10 @@ class DriverChannel(Channel):
         """Control the enabled state of the driver channel.""",
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
+        get_process=lambda s: s == 'ON',
         set_process=lambda v: "en" if v else "di",
         check_set_errors=True,
+        cast=str,
     )
 
 
@@ -170,10 +171,12 @@ class IBeamSmart(Instrument):
 
     version = Instrument.measurement(
         "ver", """Get Firmware version number.""",
+        cast=str,
     )
 
     serial = Instrument.measurement(
         "serial", """Get Serial number of the laser system.""",
+        cast=str,
     )
 
     temp = Instrument.measurement(
@@ -196,9 +199,10 @@ class IBeamSmart(Instrument):
         """Control emission status of the laser diode driver (bool).""",
         validator=strict_discrete_set,
         values=[True, False],
-        get_process=lambda s: True if s == 'ON' else False,
+        get_process=lambda s: s == 'ON',
         set_process=lambda v: "on" if v else "off",
         check_set_errors=True,
+        cast=str,
     )
 
     power = Instrument.control(

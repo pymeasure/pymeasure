@@ -65,6 +65,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
+        cast=str,
         get_process=lambda v: v.replace('"', '')
     )
 

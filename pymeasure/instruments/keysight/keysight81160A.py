@@ -182,6 +182,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         ":DATA{ch}:NVOL:CAT?",
         """Get the available user waveforms in memory (list[str]).""",
         preprocess_reply=lambda v: v.replace('"', "").replace("\n", ""),
+        cast=str,
     )
 
     trigger_mode = Instrument.control(
@@ -191,6 +192,7 @@ class Keysight81160AChannel(Agilent33500Channel):
         validator=strict_discrete_set,
         values=TRIGGER_MODES,
         dynamic=True,
+        cast=str,
     )
 
     trigger_count = Instrument.control(

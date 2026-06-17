@@ -28,7 +28,7 @@ from typing import TypeVar
 from collections.abc import Sequence
 from warnings import warn
 
-from .common_base import CommonBase
+from .common_base import CommonBase, cast_or_str
 from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
 
@@ -156,7 +156,7 @@ class Instrument(CommonBase):
     def next_error(self):
         """Get the next error of the instrument (tuple of code and message)."""
         if self.SCPI:
-            return self.values("SYST:ERR?")
+            return self.values("SYST:ERR?", cast=cast_or_str(float))
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 

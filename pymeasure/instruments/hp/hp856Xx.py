@@ -30,6 +30,7 @@ from datetime import datetime
 import numpy as np
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
     joined_validators, strict_range
 
@@ -648,7 +649,7 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "1", False: "0", "FULL": "FULL", "CURR": "CURR"},
-        cast=str
+        cast=str,
     )
 
     trace_a_minus_b_enabled = Instrument.control(
@@ -672,7 +673,7 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     trace_a_minus_b_plus_dl_enabled = Instrument.control(
@@ -695,7 +696,7 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     annotation_enabled = Instrument.control(
@@ -708,7 +709,7 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     attenuation = Instrument.control(
@@ -746,7 +747,8 @@ class HP856Xx(Instrument):
         """,
         validator=strict_discrete_set,
         values=[str(e).upper() for e in AmplitudeUnits],
-        set_process=lambda v: str(v).upper()
+        cast=str,
+        set_process=lambda v: str(v).upper(),
     )
 
     def write(self, command, **kwargs):
@@ -828,7 +830,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[0, 1],
-        dynamic=True
+        dynamic=True,
     )
 
     def clear_write_trace(self, trace):
@@ -887,7 +889,8 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in CouplingMode]
+        values=[e for e in CouplingMode],
+        cast=str,
     )
 
     demodulation_mode = Instrument.control(
@@ -915,7 +918,8 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in DemodulationMode]
+        values=[e for e in DemodulationMode],
+        cast=str,
     )
 
     demodulation_agc_enabled = Instrument.control(
@@ -938,7 +942,7 @@ class HP856Xx(Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     demodulation_time = Instrument.control(
@@ -987,7 +991,8 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in DetectionModes]
+        values=[e for e in DetectionModes],
+        cast=str,
     )
 
     # now implemented as a property but due to the ability of the underlying gpib command to
@@ -1010,7 +1015,7 @@ class HP856Xx(Instrument):
             if instr.display_line == 0:
                 pass
 
-        """
+        """,
     )
 
     display_line_enabled = Instrument.setting(
@@ -1025,7 +1030,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         validator=strict_discrete_set,
-        values={True: "ON", False: "OFF"}
+        values={True: "ON", False: "OFF"},
     )
 
     done = Instrument.measurement(
@@ -1046,7 +1051,7 @@ class HP856Xx(Instrument):
             if instr.done:
                 do_something()
 
-        """
+        """,
     )
 
     def check_done(self):
@@ -1101,7 +1106,7 @@ class HP856Xx(Instrument):
             yeah
 
         """,
-        cast=ErrorCode,
+        cast=cast_or_str(ErrorCode),
         get_process=lambda value: [],
     )
 
@@ -1119,7 +1124,7 @@ class HP856Xx(Instrument):
             1998
 
         """,
-        cast=int
+        cast=int,
     )
 
     start_frequency = Instrument.control(
@@ -1141,7 +1146,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[0, 1],
-        dynamic=True
+        dynamic=True,
     )
 
     stop_frequency = Instrument.control(
@@ -1163,7 +1168,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[0, 1],
-        dynamic=True
+        dynamic=True,
     )
 
     sampling_frequency = Instrument.measurement(
@@ -1174,7 +1179,7 @@ class HP856Xx(Instrument):
         Diagnostic Attribute
 
         Type: :code:`float`
-        """
+        """,
     )
 
     lo_frequency = Instrument.measurement(
@@ -1185,7 +1190,7 @@ class HP856Xx(Instrument):
         Diagnostic Attribute
 
         Type: :code:`float`
-        """
+        """,
     )
 
     mroll_frequency = Instrument.measurement(
@@ -1197,7 +1202,7 @@ class HP856Xx(Instrument):
         Diagnostic Attribute
 
         Type: :code:`float`
-        """
+        """,
     )
 
     oroll_frequency = Instrument.measurement(
@@ -1209,7 +1214,7 @@ class HP856Xx(Instrument):
         Diagnostic Attribute
 
         Type: :code:`float`
-        """
+        """,
     )
 
     xroll_frequency = Instrument.measurement(
@@ -1221,7 +1226,7 @@ class HP856Xx(Instrument):
         Diagnostic Attribute
 
         Type: :code:`float`
-        """
+        """,
     )
 
     sampler_harmonic_number = Instrument.measurement(
@@ -1234,7 +1239,7 @@ class HP856Xx(Instrument):
 
         Type: :code:`int`
         """,
-        get_process=lambda v: int(float(v))
+        get_process=lambda v: int(float(v)),
     )
 
     # practically you could also write "OFF" to actively disable it or reset via "IP"
@@ -1257,7 +1262,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     def do_fft(self, source, destination, window):
@@ -1340,7 +1345,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[0, 1],
-        dynamic=True
+        dynamic=True,
     )
 
     frequency_reference_source = Instrument.control(
@@ -1366,7 +1371,8 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_discrete_set,
-        values=[e for e in FrequencyReference]
+        values=[e for e in FrequencyReference],
+        cast=str,
     )
 
     def set_full_span(self):
@@ -1396,7 +1402,7 @@ class HP856Xx(Instrument):
         map_values=True,
         values={True: "1", False: "0"},
         validator=strict_discrete_set,
-        cast=str
+        cast=str,
     )
 
     def hold(self):
@@ -1421,7 +1427,7 @@ class HP856Xx(Instrument):
 
         """,
         maxsplit=0,
-        cast=str
+        cast=str,
     )
 
     def preset(self):
@@ -1453,7 +1459,7 @@ class HP856Xx(Instrument):
         """,
         cast=int,
         validator=strict_discrete_set,
-        values=[0, 1, 2, 5, 10]
+        values=[0, 1, 2, 5, 10],
     )
 
     def set_linear_scale(self):
@@ -1504,7 +1510,7 @@ class HP856Xx(Instrument):
             unit = instr.amplitude_unit
             print("Level: %f %s" % (level, unit))
 
-        """
+        """,
     )
 
     def set_marker_to_center_frequency(self):
@@ -1529,7 +1535,7 @@ class HP856Xx(Instrument):
             # print frequency of second marker in case it got moved automatically
             print(instr.marker_delta)
 
-        """
+        """,
     )
 
     # the documentation mentions this command, but it doesn't work on my unit and a
@@ -1562,7 +1568,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[0, 1],
-        dynamic=True
+        dynamic=True,
     )
 
     frequency_counter_mode_enabled = Instrument.setting(
@@ -1583,7 +1589,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     frequency_counter_resolution = Instrument.control(
@@ -1610,7 +1616,7 @@ class HP856Xx(Instrument):
         values=[1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6],
         maxsplit=0,
         preprocess_reply=lambda v: str(int(float(v))),
-        cast=int
+        cast=int,
     )
 
     def set_marker_minimum(self):
@@ -1646,7 +1652,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     def deactivate_marker(self, all_markers=False):
@@ -1720,7 +1726,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_range,
-        values=[-200, 30]
+        values=[-200, 30],
     )
 
     peak_excursion = Instrument.control(
@@ -1747,7 +1753,7 @@ class HP856Xx(Instrument):
 
         """,
         validator=strict_range,
-        values=[0.1, 99]
+        values=[0.1, 99],
     )
 
     def set_marker_to_reference_level(self):
@@ -1789,7 +1795,7 @@ class HP856Xx(Instrument):
             if instr.marker_time == 2:
                 pass
 
-        """
+        """,
     )
 
     marker_signal_tracking_enabled = Instrument.control(
@@ -1808,7 +1814,7 @@ class HP856Xx(Instrument):
         map_values=True,
         validator=strict_discrete_set,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     mixer_level = Instrument.control(
@@ -1822,7 +1828,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         cast=int,
-        values=[-80, -10]
+        values=[-80, -10],
     )
 
     def set_maximum_hold(self, trace):
@@ -1877,7 +1883,7 @@ class HP856Xx(Instrument):
         map_values=True,
         validator=strict_discrete_set,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     normalized_reference_level = Instrument.control(
@@ -1911,7 +1917,7 @@ class HP856Xx(Instrument):
         """,
         validator=strict_range,
         values=[-200, 30],
-        cast=int
+        cast=int,
     )
 
     normalized_reference_position = Instrument.control(
@@ -1933,7 +1939,7 @@ class HP856Xx(Instrument):
                 pass
         """,
         validator=strict_range,
-        values=[0.0, 10.0]
+        values=[0.0, 10.0],
     )
 
     display_parameters = Instrument.measurement(
@@ -1952,7 +1958,7 @@ class HP856Xx(Instrument):
         """,
         maxsplit=4,
         cast=int,
-        get_process_list=tuple
+        get_process_list=tuple,
     )
 
     def plot(self, p1x, p1y, p2x, p2y):
@@ -1992,7 +1998,7 @@ class HP856Xx(Instrument):
         map_values=True,
         validator=strict_discrete_set,
         values={True: "1", False: "0"},
-        cast=str
+        cast=str,
     )
 
     def get_power_bandwidth(self, trace, percent):
@@ -2058,8 +2064,9 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["AUTO", "MAN"], np.arange(10, 2e6)],
+        cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{int(v)} Hz",
-        get_process=lambda v: v if isinstance(v, str) else int(v)
+        get_process=lambda v: v if isinstance(v, str) else int(v),
     )
 
     resolution_bandwidth_to_span_ratio = Instrument.control(
@@ -2071,7 +2078,7 @@ class HP856Xx(Instrument):
         parameters adjust the ratio in a 1, 2, 5 sequence. The default ratio is 0.011.
         """,
         validator=strict_range,
-        values=np.arange(0.002, 0.10, 0.001)
+        values=np.arange(0.002, 0.10, 0.001),
     )
 
     def recall_open_short_average(self):
@@ -2193,8 +2200,8 @@ class HP856Xx(Instrument):
 
         Type: :code:`datetime.date`
         """,
-        get_process=lambda v: datetime.strptime(v, '%y%m%d').date(),
-        cast=str
+        get_process=lambda v: datetime.strptime(v, "%y%m%d").date(),
+        cast=str,
     )
 
     reference_level = Instrument.control(
@@ -2208,7 +2215,7 @@ class HP856Xx(Instrument):
         :attr:`amplitude_unit`. Minimum reference level is -120.0 dBm or 2.2 uV
 
         Type: :code:`float`
-        """
+        """,
     )
 
     reference_level_calibration = Instrument.control(
@@ -2241,7 +2248,7 @@ class HP856Xx(Instrument):
         """,
         cast=int,
         validator=strict_range,
-        values=[-33, 33]
+        values=[-33, 33],
     )
 
     reference_offset = Instrument.control(
@@ -2257,7 +2264,7 @@ class HP856Xx(Instrument):
         """,
         cast=int,
         values=[-100, 100],
-        validator=strict_range
+        validator=strict_range,
     )
 
     request_service_conditions = Instrument.control(
@@ -2273,7 +2280,7 @@ class HP856Xx(Instrument):
             print(instr.request_service_conditions)
             StatusRegister.ERROR_PRESENT|TRIGGER
         """,
-        get_process=lambda v: StatusRegister(int(v))
+        get_process=lambda v: StatusRegister(int(v)),
     )
 
     def save_state(self, inp):
@@ -2340,7 +2347,7 @@ class HP856Xx(Instrument):
         """
         Get the spectrum analyzer serial number.
         """,
-        cast=str
+        cast=str,
     )
 
     def sweep_single(self):
@@ -2363,8 +2370,9 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["FULL", "ZERO"], [float("-inf"), float("inf")]],
+        cast=cast_or_str(float),
         set_process=lambda v: v if isinstance(v, str) else f"{v:.11E} Hz",
-        get_process=lambda v: v if isinstance(v, str) else v
+        get_process=lambda v: v if isinstance(v, str) else v,
     )
 
     squelch = Instrument.control(
@@ -2391,7 +2399,8 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["ON", "OFF"], range(-220, 30)],
-        set_process=lambda v: v if isinstance(v, str) else f"{v} {{amplitude_unit}}"
+        cast=cast_or_str(float),
+        set_process=lambda v: v if isinstance(v, str) else f"{v} {{amplitude_unit}}",
     )
 
     squelch_enabled = Instrument.setting(
@@ -2401,7 +2410,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     def request_service(self, input):
@@ -2437,8 +2446,9 @@ class HP856Xx(Instrument):
         cannot be adjusted.
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
-        values=[["AUTO", "MAN"], np.arange(50E-6, 100)],
-        set_process=lambda v: v if isinstance(v, str) else (f"{v:.3f} S")
+        values=[["AUTO", "MAN"], np.arange(50e-6, 100)],
+        cast=cast_or_str(float),
+        set_process=lambda v: v if isinstance(v, str) else (f"{v:.3f} S"),
     )
 
     status = Instrument.measurement(
@@ -2449,7 +2459,7 @@ class HP856Xx(Instrument):
         The RQS and associated bits are cleared in the same way that a serial poll command would
         clear them.
         """,
-        get_process=lambda v: StatusRegister(int(v))
+        get_process=lambda v: StatusRegister(int(v)),
     )
 
     def store_open(self):
@@ -2496,13 +2506,14 @@ class HP856Xx(Instrument):
         Control the sweep couple mode which is either a stimulus-response or spectrum-analyzer
         auto-coupled sweep time. In stimulus-response mode, auto-coupled sweep times are usually
         much faster for swept-response measurements. Stimulus-response auto-coupled sweep times
-        are typicallly valid in stimulus-response measurements when the system’s frequency span is
+        are typically valid in stimulus-response measurements when the system's frequency span is
         less than 20 times the bandwidth of the device under test.
 
         Type: :code:`str` or :class:`SweepCoupleMode`
         """,
         validator=strict_discrete_set,
-        values=[e for e in SweepCoupleMode]
+        values=[e for e in SweepCoupleMode],
+        cast=str,
     )
 
     sweep_output = Instrument.control(
@@ -2516,7 +2527,8 @@ class HP856Xx(Instrument):
         Type: :code:`str` or :class:`SweepOut`
         """,
         validator=strict_discrete_set,
-        values=[e for e in SweepOut]
+        values=[e for e in SweepOut],
+        cast=str,
     )
 
     trace_data_format = Instrument.control(
@@ -2534,7 +2546,8 @@ class HP856Xx(Instrument):
             You are doing.
         """,
         validator=strict_discrete_set,
-        values=[e for e in TraceDataFormat]
+        values=[e for e in TraceDataFormat],
+        cast=str,
     )
 
     threshold = Instrument.control(
@@ -2560,7 +2573,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     def set_title(self, string):
@@ -2587,7 +2600,8 @@ class HP856Xx(Instrument):
         a "T" appears on the left edge of the display.
         """,
         validator=strict_discrete_set,
-        values=[e for e in TriggerMode]
+        values=[e for e in TriggerMode],
+        cast=str,
     )
 
     def _get_trace_data(self, trace):
@@ -2656,7 +2670,7 @@ class HP856Xx(Instrument):
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
         """,
-        set_process=lambda v: (','.join([str(i) for i in v])),
+        set_process=lambda v: ",".join([str(i) for i in v]),
     )
 
     set_trace_data_b = Instrument.setting(
@@ -2669,7 +2683,7 @@ class HP856Xx(Instrument):
             The string based method this attribute is using takes its time. Something around 5000ms
             timeout at the adapter seems to work well.
         """,
-        set_process=lambda v: (','.join([str(i) for i in v]))
+        set_process=lambda v: ",".join([str(i) for i in v]),
     )
 
     def trigger_sweep(self):
@@ -2743,7 +2757,7 @@ class HP856Xx(Instrument):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     video_bandwidth = Instrument.control(
@@ -2767,8 +2781,8 @@ class HP856Xx(Instrument):
         """,
         validator=joined_validators(strict_discrete_set, strict_range),
         values=[["AUTO", "MAN"], np.arange(1, 3e6)],
-        cast=int,
-        set_process=lambda v: v if isinstance(v, str) else f"{v} Hz"
+        cast=cast_or_str(float),
+        set_process=lambda v: v if isinstance(v, str) else f"{v} Hz",
     )
 
     video_bandwidth_to_resolution_bandwidth = Instrument.control(
@@ -2781,7 +2795,7 @@ class HP856Xx(Instrument):
         new ratio—the resolution bandwidth does not change value.
         """,
         validator=strict_range,
-        values=np.arange(0.002, 0.10, 0.001)
+        values=np.arange(0.002, 0.10, 0.001),
     )
 
     def view_trace(self, trace):
@@ -2812,7 +2826,7 @@ class HP856Xx(Instrument):
         Type: :code:`float`
         """,
         validator=strict_range,
-        values=[-220, 30]
+        values=[-220, 30],
     )
 
 
@@ -2879,7 +2893,8 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=strict_discrete_set,
-        values=[e for e in SourceLevelingControlMode]
+        values=[e for e in SourceLevelingControlMode],
+        cast=str,
     )
 
     tracking_adjust_coarse = Instrument.control(
@@ -2897,7 +2912,7 @@ class HP8560A(HP856Xx):
         """,
         validator=strict_range,
         values=[0, 255],
-        cast=int
+        cast=int,
     )
 
     tracking_adjust_fine = Instrument.control(
@@ -2915,7 +2930,7 @@ class HP8560A(HP856Xx):
         """,
         validator=strict_range,
         values=[0, 255],
-        cast=int
+        cast=int,
     )
 
     source_power_offset = Instrument.control(
@@ -2933,7 +2948,7 @@ class HP8560A(HP856Xx):
         """,
         validator=strict_range,
         values=[-100, 100],
-        cast=int
+        cast=int,
     )
 
     source_power_step = Instrument.control(
@@ -2948,7 +2963,7 @@ class HP8560A(HP856Xx):
             Only available with an HP 8560A Option 002.
         """,
         validator=strict_range,
-        values=np.arange(0.1, 12.75, 0.05)
+        values=np.arange(0.1, 12.75, 0.05),
     )
 
     source_power_sweep = Instrument.control(
@@ -2975,7 +2990,7 @@ class HP8560A(HP856Xx):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     source_power = Instrument.control(
@@ -2990,7 +3005,8 @@ class HP8560A(HP856Xx):
         """,
         validator=joined_validators(strict_discrete_set, truncated_discrete_set),
         values=[["OFF", "ON"], np.arange(-10, 2.8, 0.05)],
-        set_process=lambda v: v if isinstance(v, str) else (f"{v:.2f} {{amplitude_unit}}")
+        cast=cast_or_str(float),
+        set_process=lambda v: v if isinstance(v, str) else (f"{v:.2f} {{amplitude_unit}}"),
     )
 
     source_power_enabled = Instrument.setting(
@@ -3000,7 +3016,7 @@ class HP8560A(HP856Xx):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     def activate_source_peak_tracking(self):
@@ -3067,7 +3083,7 @@ class HP8561B(HP856Xx):
         querying 'conversion_loss' returns a zero.
         """,
         validator=strict_range,
-        values=[0, float("inf")]
+        values=[0, float("inf")],
     )
 
     def set_fullband(self, band):
@@ -3176,7 +3192,7 @@ class HP8561B(HP856Xx):
         """,
         validator=strict_range,
         values=[1, 54],
-        cast=int
+        cast=int,
     )
 
     harmonic_number_lock_enabled = Instrument.setting(
@@ -3186,7 +3202,7 @@ class HP8561B(HP856Xx):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     def unlock_harmonic_number(self):
@@ -3216,7 +3232,7 @@ class HP8561B(HP856Xx):
         """
         Measure the frequency of the last identified signal. After an instrument preset or an
         invalid signal identification, IDFREQ returns a “0”.
-        """
+        """,
     )
 
     mixer_bias = Instrument.control(
@@ -3229,8 +3245,8 @@ class HP8561B(HP856Xx):
         turned off, MBIAS is set to 0. Default units are in milliamps.
         """,
         validator=strict_range,
-        values=[(-10E3), int(10E3)],
-        cast=float
+        values=[(-10e3), int(10e3)],
+        cast=float,
     )
 
     mixer_bias_enabled = Instrument.setting(
@@ -3240,7 +3256,7 @@ class HP8561B(HP856Xx):
         """,
         map_values=True,
         values={True: "ON", False: "OFF"},
-        validator=strict_discrete_set
+        validator=strict_discrete_set,
     )
 
     mixer_mode = Instrument.control(
@@ -3250,7 +3266,8 @@ class HP8561B(HP856Xx):
         or supply an external mixer. Takes enum 'MixerMode' or string 'INT', 'EXT'
         """,
         validator=strict_discrete_set,
-        values=[e for e in MixerMode]
+        values=[e for e in MixerMode],
+        cast=str,
     )
 
     def peak_preselector(self):
@@ -3298,5 +3315,5 @@ class HP8561B(HP856Xx):
         map_values=True,
         validator=strict_discrete_set,
         values={True: "1", False: "0", "AUTO": "AUTO", "MAN": "MAN"},
-        cast=str
+        cast=str,
     )

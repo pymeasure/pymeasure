@@ -126,6 +126,7 @@ class EurotestHPP120256(Instrument):
         # getter device response: "U, RANGE=3.000kV, VALUE=2.458kV"
         validator=strict_range,
         values=VOLTAGE_RANGE,
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
@@ -138,6 +139,7 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=CURRENT_RANGE,
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
@@ -150,6 +152,7 @@ class EurotestHPP120256(Instrument):
         # hence the convenience of the get_process.
         validator=strict_range,
         values=VOLTAGE_RAMP_RANGE,
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
@@ -160,6 +163,7 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage will return 2458.0,
         # hence the convenience of the get_process.
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
@@ -170,8 +174,9 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "U, RANGE=3.000kV, VALUE=2.458kV", then voltage_range will return 3000.0,
         # hence the convenience of the get_process.
+        cast=str,
         get_process_list=lambda r:
-        float(EurotestHPP120256.regex.search(r[1]).groups()[0])
+        float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
 
     current = Instrument.measurement(
@@ -180,6 +185,7 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA", then current will return a 1739.0,
         # hence the convenience of the get_process."""
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[2].strip()).groups()[0])
     )
@@ -190,6 +196,7 @@ class EurotestHPP120256(Instrument):
         # This property is a get so, the instrument will return a string like this:
         # "I, RANGE=5000mA, VALUE=1739mA, then current_range will return a 5000.0,
         # hence the convenience of the get_process.
+        cast=str,
         get_process_list=lambda r:
         float(EurotestHPP120256.regex.search(r[1].strip()).groups()[0])
     )
@@ -202,6 +209,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_discrete_set,
         values={True: 'ENable', False: 'DISable'},
         map_values=True,
+        cast=str,
         get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
@@ -217,6 +225,7 @@ class EurotestHPP120256(Instrument):
         validator=strict_discrete_set,
         values={True: 'ON', False: 'OFF'},
         map_values=True,
+        cast=str,
         get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
@@ -227,6 +236,7 @@ class EurotestHPP120256(Instrument):
     id = Instrument.measurement(
         "ID",
         """Get the identification of the instrument (string) """,
+        cast=str,
         get_process_list=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )
@@ -253,6 +263,7 @@ class EurotestHPP120256(Instrument):
         # local  b2     remote              local
         # kilena b1     kill disable        kill enable
         # on     b0     off                 high voltage is ON
+        cast=str,
         get_process_list=lambda r:
         EurotestHPP120256.EurotestHPP120256Status(
             int(r[1].strip()[:-1].encode(EurotestHPP120256.response_encoding).
@@ -271,6 +282,7 @@ class EurotestHPP120256(Instrument):
         # LAM,TRIP ERROR Software current trip occurred
         # LAM,INPUT ERROR Wrong command received
         # LAM,OK Status OK
+        cast=str,
         get_process_list=lambda r:
         r[1].strip().encode(EurotestHPP120256.response_encoding).decode('utf-8', 'ignore')
     )

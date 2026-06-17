@@ -29,6 +29,7 @@ from enum import Enum, IntFlag
 from typing import Any
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import (
     strict_discrete_set, strict_range, truncated_discrete_set
 )
@@ -90,6 +91,7 @@ class HP8116A(Instrument):
             'CST', identifier + '%d', docs,
             validator=strict_discrete_set,
             values=[True, False],
+            cast=cast_or_str(float),
             get_process_list=lambda x: inverted ^ bool(int(x[state_index][1])),
             set_process=lambda x: int(inverted ^ x),
             **kwargs
@@ -267,6 +269,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=OPERATING_MODES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.OPERATING_MODES_INV[x[0]]
     )
 
@@ -278,6 +281,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=CONTROL_MODES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.CONTROL_MODES_INV[x[1]]
     )
 
@@ -289,6 +293,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=TRIGGER_SLOPES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.TRIGGER_SLOPES_INV[x[2]]
     )
 
@@ -300,6 +305,7 @@ class HP8116A(Instrument):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
+        cast=cast_or_str(float),
         get_process_list=lambda x: HP8116A.SHAPES_INV[x[3]]
     )
 
@@ -338,6 +344,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -361,6 +368,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[8e-9, 999.001e-3],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
@@ -372,6 +380,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[10e-3, 16.001],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -383,6 +392,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.95, 7.95001],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -394,6 +404,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-7.9, 8.001],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -405,6 +416,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[-8, 7.9001],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_voltage),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_voltage)
     )
@@ -416,6 +428,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1, 1999],
+        cast=cast_or_str(float),
         get_process=lambda x: int(x[4:8])
     )
 
@@ -426,6 +439,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[20e-9, 999.001e-3],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )
@@ -437,6 +451,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -447,6 +462,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -459,6 +475,7 @@ class HP8116A(Instrument):
         """,
         validator=strict_range,
         values=[1e-3, 52.5001e6],
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_frequency),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_frequency)
     )
@@ -470,6 +487,7 @@ class HP8116A(Instrument):
         """,
         validator=truncated_discrete_set,
         values=_generate_1_2_5_sequence(10e-3, 500),
+        cast=cast_or_str(float),
         set_process=lambda x: HP8116A._get_value_with_unit(x, HP8116A._units_time),
         get_process=lambda x: HP8116A._parse_value_with_unit(x, HP8116A._units_time)
     )

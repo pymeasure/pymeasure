@@ -52,6 +52,7 @@ class Fpu60(Instrument):
         """Get the interlock enabled status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
+        cast=str,
     )
 
     emission_enabled = Instrument.measurement(
@@ -59,6 +60,7 @@ class Fpu60(Instrument):
         """Measure the emission status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
+        cast=str,
     )
 
     power = Instrument.measurement(
@@ -83,6 +85,7 @@ class Fpu60(Instrument):
         # get response: "SHUTTER OPEN", "SHUTTER CLOSED"
         values={True: "OPEN", False: "CLOSE"},
         map_values=True,
+        cast=str,
         preprocess_reply=lambda r: r.replace("SHUTTER ", "").replace("D", ""),
         check_set_errors=True,
     )
