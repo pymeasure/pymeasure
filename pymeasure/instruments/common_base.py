@@ -26,6 +26,7 @@ from inspect import getmembers
 import logging
 from typing import Any, cast, Protocol, TypeVar
 from collections.abc import Callable, Sequence
+from warnings import warn
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -49,6 +50,30 @@ T = TypeVar("T")
 V0 = TypeVar("V0")
 Vs = TypeVar("Vs")
 V2 = TypeVar("V2")
+
+
+def cast_or_str(cast_func: Callable[[str], T]) -> Callable[[str], T | str]:
+    """Return a cast function that tries to cast but falls back to the original string.
+
+    This is useful for instrument responses that may contain a mix of numeric
+    and string values (e.g. ``"SP,5,NP,1000"`` or ``"0,No Error"``).
+
+    :param cast_func: A callable to attempt casting with (e.g. ``float`` or ``int``).
+    :returns: A callable that returns the cast value on success, or the original
+        string on failure.
+
+    Example usage with :meth:`CommonBase.values`::
+
+        inst.values("SYST:ERR?", cast=cast_or_str(float))
+    """
+
+    def _cast_or_str(value: str) -> T | str:
+        try:
+            return cast_func(value)
+        except (ValueError, TypeError):
+            return value
+
+    return _cast_or_str
 
 
 class DynamicProperty(property):
@@ -436,11 +461,11 @@ class CommonBase:
         self,
         command: str,
         separator: str | None = ",",
-        cast: Callable[[str], T] = float,  # type: ignore[assignment]
+        cast: type[T] | Callable[[str], T] = float,  # type: ignore[assignment,ty:invalid-parameter-default]
         preprocess_reply: Callable[[str], str] | None = None,
         maxsplit: int = -1,
         **kwargs,
-    ) -> list[T | str]:
+    ) -> list[T]:
         """Write a command to the instrument and return a list of formatted values from the result.
 
         :param command: SCPI command to be sent to the instrument.
@@ -452,24 +477,41 @@ class CommonBase:
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
+
+            .. deprecated:: 0.17.0
+                If casting fails, the element is kept as a string. In a future version this
+                will raise an error instead. To explicitly allow mixed types, use a dedicated
+                function, e.g. with :func:`cast_or_str` as cast function.
+
         :param \\**kwargs: Keyword arguments to be passed to the :meth:`ask` method.
-        :returns: A list of the desired type, or strings where the casting fails.
+        :returns: A list of the desired type, or (deprecated) of str where the casting fails.
         """
         response = self.ask(command, **kwargs).strip()
         if callable(preprocess_reply):
             response = preprocess_reply(response)
-        results: list[T | str] = []
+        if cast is str:
+            result = response.split(separator, maxsplit=maxsplit)
+            return result # type: ignore[return-type]  # ty:ignore[invalid-return-type]
+        results: list[T] = []
         for result in response.split(separator, maxsplit=maxsplit):
             try:
                 if cast is bool:
                     # Need to cast to float first since results are usually
                     # strings and bool of a non-empty string is always True
-                    results.append(bool(float(result)))  # type: ignore[arg-type]
+                    results.append(bool(float(result)))  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
                 else:
-                    results.append(cast(result))
+                    results.append(cast(result)) # type: ignore[call-arg]
             except Exception:
                 # Keep as string
-                results.append(result)
+                warn(
+                    f"Cannot cast '{result}' with '{cast}' for command '{command}'. "
+                    f"In a future version this will raise an error. "
+                    f"Use `cast=str` to return strings, or `cast=cast_or_str({cast})` "
+                    f"to allow mixed types.",
+                    FutureWarning,
+                    stacklevel=2,
+                )
+                results.append(result)  # type: ignore[arg-type]
         return results
 
     def binary_values(self, command: str, query_delay: float | None = None, **kwargs):
@@ -537,6 +579,11 @@ class CommonBase:
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
+
+            .. deprecated:: 0.17.0
+                If casting fails, the element is kept as a string, see :meth:`values`.
+                To explicitly allow mixed types, use :func:`cast_or_str` as the cast function.
+
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
 
         Example of usage of dynamic parameter is as follows:
@@ -715,6 +762,11 @@ class CommonBase:
         :param maxsplit: The string returned by the device is split at most `maxsplit` times.
             -1 (default) indicates no limit.
         :param cast: A type to cast each element of the split string.
+
+            .. deprecated:: 0.17.0
+                If casting fails, the element is kept as a string, see :meth:`values`.
+                To explicitly allow mixed types, use :func:`cast_or_str` as the cast function.
+
         :param dict values_kwargs: Further keyword arguments for :meth:`values`.
         """
         if values_kwargs is None:
