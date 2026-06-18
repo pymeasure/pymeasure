@@ -26,7 +26,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from warnings import warn
 
 T = TypeVar("T")
 NumericT = TypeVar("NumericT", bound=(float | int | Decimal))
@@ -36,14 +37,11 @@ ValidatorFunc = Callable[[Any, Any], Any]
 if TYPE_CHECKING:
     import numpy as np
 
-    _NumericSeq = Sequence[int | float] | np.ndarray
-
-_T = TypeVar("_T")
-_ValidatorFunc = Callable[[Any, Any], Any]
+    NumericSeq = Sequence[NumericT] | np.ndarray
 
 
-def strict_range(value: int | float, values: _NumericSeq) -> int | float:
-    """ Provides a validator function that returns the value
+def strict_range(value: NumericT, values: NumericSeq) -> NumericT:
+    """Provides a validator function that returns the value
     if its value is less than or equal to the maximum and
     greater than or equal to the minimum of ``values``.
     Otherwise it raises a ValueError.
@@ -58,10 +56,22 @@ def strict_range(value: int | float, values: _NumericSeq) -> int | float:
         raise ValueError(f'Value of {value:g} is not in range [{min(values):g},{max(values):g}]')
 
 
+@overload
 def strict_discrete_range(
-    value: int | float, values: _NumericSeq, step: int | float
-) -> int | float:
-    """ Provides a validator function that returns the value
+    value: int, values: list[int] | tuple[int, int], step: int
+) -> int: ...
+
+
+@overload
+def strict_discrete_range(
+    value: NumericT, values: NumericSeq, step: NumericT
+) -> NumericT: ...
+
+
+def strict_discrete_range(
+    value: NumericT, values: NumericSeq, step: NumericT
+) -> NumericT:
+    """Provides a validator function that returns the value
     if its value is less than the maximum and greater than the
     minimum of the range and is a multiple of step.
     Otherwise it raises a ValueError.
@@ -94,7 +104,7 @@ def strict_discrete_set(value: T, values: Iterable[T] | dict[T, Any]) -> T:
         raise ValueError(f'Value of {value} is not in the discrete set {values}')
 
 
-def truncated_range(value: int | float, values: _NumericSeq) -> int | float:
+def truncated_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the closest
     range bound.
@@ -110,7 +120,7 @@ def truncated_range(value: int | float, values: _NumericSeq) -> int | float:
         return min(values)
 
 
-def modular_range(value: int | float, values: _NumericSeq) -> int | float:
+def modular_range(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the value,
     modulo the max of the range.
@@ -121,7 +131,7 @@ def modular_range(value: int | float, values: _NumericSeq) -> int | float:
     return value % max(values)
 
 
-def modular_range_bidirectional(value: int | float, values: _NumericSeq) -> int | float:
+def modular_range_bidirectional(value: NumericT, values: NumericSeq) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the range. Otherwise it returns the value,
     modulo the max of the range. Allows negative values.
@@ -135,7 +145,7 @@ def modular_range_bidirectional(value: int | float, values: _NumericSeq) -> int 
         return -1 * (abs(value) % max(values))
 
 
-def truncated_discrete_set(value: _T, values: Iterable[_T]) -> _T:
+def truncated_discrete_set(value: NumericT, values: Iterable[NumericT]) -> NumericT:
     """ Provides a validator function that returns the value
     if it is in the discrete set. Otherwise, it returns the smallest
     value that is larger than the value.
@@ -152,7 +162,7 @@ def truncated_discrete_set(value: _T, values: Iterable[_T]) -> _T:
     return values[-1]
 
 
-def joined_validators(*validators: _ValidatorFunc) -> _ValidatorFunc:
+def joined_validators(*validators: ValidatorFunc) -> ValidatorFunc:
     """Returns a validator function that represents a list of validators joined together.
 
     A value passed to the validator is returned if it passes any validator (not all of them).
@@ -190,16 +200,30 @@ def joined_validators(*validators: _ValidatorFunc) -> _ValidatorFunc:
     return validate
 
 
-def discreteTruncate(
-    number: int | float, discreteSet: _NumericSeq
-) -> int | float | Literal[False]:
-    """ Truncates the number to the closest element in the positive discrete set.
+def truncated_discrete_set_positive(
+    number: NumericT, discrete_set: NumericSeq
+) -> NumericT | Literal[False]:
+    """Truncates the number to the closest element in the positive discrete set.
     Returns False if the number is larger than the maximum value or negative.
     """
     if number < 0:
         return False
-    discreteSet = sorted(discreteSet)
-    for item in discreteSet:
+    discrete_set = sorted(discrete_set)
+    for item in discrete_set:
         if number <= item:
             return item
     return False
+
+
+def discreteTruncate(number: NumericT, discreteSet: NumericSeq) -> NumericT | Literal[False]:
+    """Truncates the number to the closest element in the positive discrete set.
+    Returns False if the number is larger than the maximum value or negative.
+
+    .. deprecated:: 0.17.0
+        Use :func:`truncated_discrete_set_positive` instead.
+    """
+    warn(
+        "'discreteTruncate' validator is deprecated, use 'discrete_truncate' instead.",
+        FutureWarning,
+    )
+    return truncated_discrete_set_positive(number=number, discrete_set=discreteSet)

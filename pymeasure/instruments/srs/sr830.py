@@ -28,7 +28,7 @@ import numpy as np
 from enum import IntFlag
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_discrete_set, \
-    truncated_discrete_set, truncated_range, discreteTruncate
+    truncated_discrete_set, truncated_range, truncated_discrete_set_positive
 
 
 class LIAStatus(IntFlag):
@@ -432,9 +432,9 @@ class SR830(Instrument):
             percent = precent
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        channel = self.CHANNELS.index(channel) + 1
-        expand = discreteTruncate(expand, self.EXPANSION_VALUES)
-        self.write(f"OEXP {channel},{percent:.2f},{expand}")
+        ch_num = self.CHANNELS.index(channel) + 1
+        expand = truncated_discrete_set_positive(expand, self.EXPANSION_VALUES)  # ty:ignore[invalid-assignment]
+        self.write(f"OEXP {ch_num},{percent:.2f},{expand}")
 
     def output_conversion(self, channel: str):
         """ Returns a function that can be used to determine
@@ -460,7 +460,7 @@ class SR830(Instrument):
         if frequency is None:
             index = 14  # Trigger
         else:
-            frequency = discreteTruncate(frequency, SR830.SAMPLE_FREQUENCIES)
+            frequency = truncated_discrete_set_positive(frequency, SR830.SAMPLE_FREQUENCIES)
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
         self.write(f"SRAT{index:f}")
 
