@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -72,7 +72,7 @@ class SR510(Instrument):
     status = Instrument.measurement(
         "Y",
         """A string property representing the bits set within the SR510 status byte""",
-        get_process=lambda s: bin(int(s))[2:],
+        get_process=lambda s: f"{int(s):b}",
     )
 
     output = Instrument.measurement(

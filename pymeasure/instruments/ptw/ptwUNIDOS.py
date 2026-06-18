@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,12 @@
 
 import logging
 import json
+import warnings
+from typing import Any
 
+from pymeasure.adapters import Adapter
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import (strict_discrete_set,
                                               strict_range)
 
@@ -37,8 +41,10 @@ log.addHandler(logging.NullHandler())
 class ptwUNIDOS(Instrument):
     """A class representing the PTW UNIDOS Tango/Romeo dosemeters."""
 
-    def __init__(self, adapter, name="PTW UNIDOS dosemeter",
-                 **kwargs):
+    def __init__(self,
+                 adapter: Adapter | int | str,
+                 name: str = "PTW UNIDOS dosemeter",
+                 **kwargs: Any) -> None:
         super().__init__(
             adapter,
             name,
@@ -49,7 +55,7 @@ class ptwUNIDOS(Instrument):
             **kwargs
         )
 
-    def read(self):
+    def read(self) -> str:
         """Read the device response and check for errors.
 
         :return: Read string with semicolons replaced by comma
@@ -96,7 +102,7 @@ wrong format of the parameter",
             command, sep, response = got.partition(";")  # command is removed from response
             return response.replace(";", ",")
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list[str]:
         """Check for errors after sending a command."""
 
         try:
@@ -107,7 +113,7 @@ wrong format of the parameter",
         else:
             return []
 
-    def errorflags_to_text(self, flags):
+    def errorflags_to_text(self, flags: str) -> list[str]:
         """Convert the error flags to the error message(s).
 
         :param str flags:
@@ -131,7 +137,8 @@ wrong format of the parameter",
 
         for n in range(len(err_txt)):
             if err_code & (2**n):
-                err_msg.append(err_txt[n])
+                if err_txt[n] is not None:
+                    err_msg.append(err_txt[n])
 
         return err_msg
 
@@ -139,49 +146,61 @@ wrong format of the parameter",
 # Methods #
 ###########
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the complete measurement history.
 
         .. note:: Write permission is required.
         """
         self.ask("CHR")
 
-    def hold(self):
+    def hold(self) -> None:
         """Set the measurment to HOLD state.
 
         .. note:: Write permission is required.
         """
         self.ask("HLD")
 
-    def intervall(self, intervall=None):
-        """Execute an intervall measurement.
+    def intervall(self, intervall: int | None = None) -> None:
+        """Execute an interval measurement.
 
-        :param int intervall: optional, measurement intervall in seconds
+        .. deprecated:: 0.16.0
+            Use :meth:`interval_measurement` instead.
+        """
+        warnings.warn(
+            "`intervall()` is deprecated, use 'interval_measurement()' instead",
+            FutureWarning
+            )
+        return self.interval_measurement(intervall)
 
-        If *intervall* is not specified a measurement with the current setting of the
+    def interval_measurement(self, interval: int | None = None) -> None:
+        """Execute an interval measurement.
+
+        :param interval: optional, measurement interval in seconds
+
+        If *interval* is not specified a measurement with the current setting of the
         :attr:`integration_time` is executed.
 
         .. note:: Write permission is required.
         """
-        if intervall is not None:
-            self.integration_time = intervall
+        if interval is not None:
+            self.integration_time = interval
         self.ask("INT")
 
-    def measure(self):
+    def measure(self) -> None:
         """Start the dose or charge measurement.
 
         .. note:: Write permission is required.
         """
         self.ask("STA")
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the dose and charge measurement values.
 
         .. note:: Write permission is required.
         """
         self.ask("RES")
 
-    def selftest(self):
+    def selftest(self) -> None:
         """Execute the electrometer selftest.
 
         The function returns before the end of the selftest.
@@ -192,7 +211,7 @@ wrong format of the parameter",
         """
         self.ask("AST")
 
-    def zero(self):
+    def zero(self) -> None:
         """Execute a zero correction measurement.
 
         The function returns before the end of the zero correction
@@ -210,30 +229,27 @@ wrong format of the parameter",
     autostart_level = Instrument.control(
         "ASL", "ASL;%s",
         """Control the threshold level of autostart measurements
-        (str strictly in "LOW", "MEDIUM", "HIGH").
-
-        :type: str, strictly in ``LOW``, ``MEDIUM``, ``HIGH``
+        (str, strictly ``LOW``, ``MEDIUM`` or ``HIGH``).
         """,
         validator=strict_discrete_set,
         values=["LOW", "MEDIUM", "HIGH"],
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     id = Instrument.measurement(
         "PTW",
-        """Get the dosemeter ID.
-
-        :return: list of str
+        """Get the dosemeter ID (list[str]).
 
         .. [name, type number, firmware version, hardware revision]
-        """
+        """,
+        cast=str,
         )
 
     integration_time = Instrument.control(
         "IT", "IT;%d",
-        """Control the time of the interval measurement in seconds (strictly from 1 to 3599999).
-
-        :type: int, strictly from ``1`` to ``3599999``
+        """Control the time of the interval measurement in seconds
+        (int, strictly from ``1`` to ``3599999``).
         """,
         validator=strict_range,
         values=[1, 3599999],
@@ -243,17 +259,14 @@ wrong format of the parameter",
 
     mac_address = Instrument.measurement(
         "MAC",
-        """Get the dosemeter MAC address.
-
-        :return: str
-        """
+        """Get the dosemeter MAC address (str).""",
+        cast=str,
         )
 
     measurement_result = Instrument.measurement(
         "MV",
-        """Get the measurement results.
+        """Get the measurement results (dict).
 
-        :return: dict
         :dict keys: ``status``,
                     ``charge``,
                     ``dose``,
@@ -264,6 +277,7 @@ wrong format of the parameter",
                     ``voltage``,
                     ``error``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "status": v[0],
             "charge": float(str(v[1]) + str(v[2])),
@@ -279,25 +293,25 @@ wrong format of the parameter",
 
     range = Instrument.control(
         "RGE", "RGE;%s",
-        """Control the measurement range (str strictly in "VERY_LOW", "LOW", "MEDIUM", "HIGH").
-
-        :type: str, strictly in ``VERY_LOW``, ``LOW``, ``MEDIUM``, ``HIGH``
+        """Control the measurement range
+        (str, strictly ``VERY_LOW``, ``LOW``, ``MEDIUM`` or ``HIGH``).
         """,
         validator=strict_discrete_set,
         values=["VERY_LOW", "LOW", "MEDIUM", "HIGH"],
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     range_max = Instrument.measurement(
         "MVM",
-        """Get the max value of the current measurement range.
+        """Get the max value of the current measurement range (dict).
 
-        :return: dict
         :dict keys: ``range``,
                     ``current``,
                     ``doserate``,
                     ``timebase``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "range": v[0],
             "current": float(str(v[1]) + str(v[2])),
@@ -308,9 +322,8 @@ wrong format of the parameter",
 
     range_res = Instrument.measurement(
         "MVR",
-        """Get the resolution of the measurement range.
+        """Get the resolution of the measurement range (dict).
 
-        :return: dict
         :dict keys: ``range``,
                     ``charge``,
                     ``dose``,
@@ -318,6 +331,7 @@ wrong format of the parameter",
                     ``doserate``,
                     ``timebase``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "range": v[0],
             "charge": float(str(v[1]) + str(v[2])),
@@ -330,9 +344,8 @@ wrong format of the parameter",
 
     selftest_result = Instrument.measurement(
         "ASS",
-        """Get the dosemeter selftest status and result.
+        """Get the dosemeter selftest status and result (dict).
 
-        :return: dict
         :dict keys: ``status``,
                     ``time_remaining``,
                     ``time_total``,
@@ -340,6 +353,7 @@ wrong format of the parameter",
                     ``medium``,
                     ``high``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {
             "status": v[0],
             "time_remaining": v[1],
@@ -352,34 +366,29 @@ wrong format of the parameter",
 
     serial_number = Instrument.measurement(
         "SER",
-        """Get the dosemeter serial number.
-
-        :return: int
-        """,
+        """Get the dosemeter serial number (int).""",
         cast=int
         )
 
     status = Instrument.measurement(
         "S",
-        """Get the measurement status.
-
-        :return: str
+        """Get the measurement status (str).
 
         The status string has of one of the following values: ``RES``,
         ``MEAS``, ``HOLD``, ``INT``, ``INTHLD``, ``ZERO``, ``AUTO``,
         ``AUTO_MEAS``, ``AUTO_HOLD``, ``EOM``, ``WAIT``, ``INIT``,
         ``ERROR``, ``SELF_TEST`` or ``TST``
-        """
+        """,
+        cast=str,
         )
 
     tfi = Instrument.measurement(
         "TFI",
-        """Get the telegram failure information.
-
-        :return: str
+        """Get the telegram failure information (str).
 
         The property provides information about the last failed command with HTTP request.
-        """
+        """,
+        cast=str,
         )
 
     autostart_enabled = Instrument.control(
@@ -388,7 +397,8 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     autoreset_enabled = Instrument.control(
@@ -397,7 +407,8 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     electrical_units_enabled = Instrument.control(
@@ -406,14 +417,13 @@ wrong format of the parameter",
         validator=strict_discrete_set,
         map_values=True,
         values={True: "true", False: "false"},
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
         )
 
     voltage = Instrument.control(
         "HV", "HV;%d",
-        """Control the detector voltage in Volts.
-
-        :type: int,  strictly from ``-400`` to ``400`` and within detector limits
+        """Control the detector voltage in Volts (int,  strictly from ``-400`` to ``400``)
 
         The Limits of the detector are applied.
         """,
@@ -436,19 +446,20 @@ wrong format of the parameter",
         set_process=lambda v: "" if (v) else f";{int(v)}",  # "TOK" = request write permission
                                                             # "TOK;0" = release write permision
                                                             # "TOK;1" = get status
-        get_process_list=lambda v: True if (v[1] == "true") else False,
+        cast=str,
+        get_process_list=lambda v: v[1] == "true",
         check_set_errors=True
         )
 
     zero_status = Instrument.measurement(
         "NUS",
-        """Get the status of the zero correction measurement.
+        """Get the status of the zero correction measurement (dict).
 
-        :return: dict
         :dict keys:  ``status``,
                      ``time_remaining``,
                      ``time_total``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: {"status": v[0], "time_remaining": v[1], "time_total": v[2]},
     )
 
@@ -457,13 +468,13 @@ wrong format of the parameter",
 # only read access is implemented #
 ###################################
 
-    def read_detector(self, guid="ALL"):
+    def read_detector(self, guid: str = "ALL") -> dict | list[dict]:
         """Read the properties of the requested detector.
 
         :param str guid: optional, ID of the detector. A list of all
             detectors is returned if *guid* is not passed.
 
-        :type: dict or list of dict
+        :type: dict or list[dict]
         :dict keys: ``calibrationFactor``,
                     ``calibrationFactorUnit``,
                     ``calibrationLab``,
@@ -501,21 +512,20 @@ wrong format of the parameter",
 
     lan_config = Instrument.measurement(
         "REC",
-        """Get the ethernet configuration.
+        """Get the ethernet configuration (dict).
 
-        :return: dict
         :dict keys: ``dns``,
                     ``ipv4``,
                     ``ipv6``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     measurement_history = Instrument.measurement(
         "RHR",
-        """Get the measurement history.
+        """Get the measurement history (list[dict]).
 
-        :return: list of dict
         :dict keys: ``date``,
                     ``detector``,
                     ``dose``,
@@ -530,9 +540,8 @@ wrong format of the parameter",
 
     measurement_parameters = Instrument.measurement(
         "RMR",
-        """Get the measurement parameters.
+        """Get the measurement parameters (dict).
 
-        :return: dict
         :dict keys: ``correction``,
                     ``detectorGuid``,
                     ``highResolution``,
@@ -548,14 +557,14 @@ wrong format of the parameter",
                     ``triggerReset``,
                     ``triggerSensitivity``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     system_info = Instrument.measurement(
         "RIR",
-        """Get the system information.
+        """Get the system information (dict).
 
-        :return: dict
         :dict keys: ``calibrationDate``,
                     ``debugBuild``,
                     ``features``,
@@ -569,14 +578,14 @@ wrong format of the parameter",
                     ``testTemperature``,
                     ``typeNumber``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     system_settings = Instrument.measurement(
         "RSR",
-        """Get the system settings.
+        """Get the system settings (dict).
 
-        :return: dict
         :dict keys: ``brightness``,
                     ``date``,
                     ``keyboardSound``,
@@ -587,16 +596,17 @@ wrong format of the parameter",
                     ``timezone``,
                     ``volume``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )
 
     wlan_config = Instrument.measurement(
         "RAC",
-        """Get the WLAN access point configuration.
+        """Get the WLAN access point configuration (dict).
 
-        :return: dict
         :dict keys: ``enabled``,
                     ``ssid``
         """,
+        cast=cast_or_str(float),
         get_process_list=lambda v: json.loads(",".join(v))  # list -> str -> dict
         )

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -141,7 +141,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         :param channels: a list of channel numbers, or single channel number
         """
         clist = clist_validator(channels, self.CLIST_VALUES)
-        state = self.ask("ROUTe:MULTiple:STATe? %s" % clist)
+        state = self.ask(f"ROUTe:MULTiple:STATe? {clist}")
 
         return state
 
@@ -216,7 +216,7 @@ class Keithley2700(KeithleyBuffer, SCPIMixin, Instrument):
         """
 
         if slot is not None and self.cards[slot] != "7709":
-            raise ValueError("No 7709 card installed in slot %g" % slot)
+            raise ValueError(f"No 7709 card installed in slot {slot:g}")
 
         if isinstance(rows, str) and isinstance(columns, str):
             raise ValueError("Only one parameter can be 'all'")

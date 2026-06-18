@@ -39,6 +39,7 @@ Instruments by manufacturer:
    edwards/index
    eurotest/index
    fluke/index
+   formfactor/index
    fwbell/index
    heidenhain/index
    hcp/index
@@ -56,6 +57,7 @@ Instruments by manufacturer:
    newport/index
    ni/index
    novanta/index
+   ophir/index
    oxfordinstruments/index
    parker/index
    philips/index

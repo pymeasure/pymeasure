@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,6 +58,7 @@ class Relay(RelayChannel):
                 "piezo": "PZ",
                 "cold cathode": "CC",
                 },
+        cast=str,
         check_set_errors=True,
     )
 
@@ -152,6 +153,7 @@ class MKS974B(MKSInstrument):
                 "pressure dose setpoint exceeded": "R",
                 "Cold Cathode On": "G",
                 },
+        cast=str,
     )
 
     pirani_pressure = Instrument.measurement(
@@ -178,6 +180,7 @@ class MKS974B(MKSInstrument):
         validator=strict_discrete_set,
         map_values=True,
         values={u: u.value for u in Unit},
+        cast=str,
         check_set_errors=True,
     )
 
@@ -196,5 +199,6 @@ class MKS974B(MKSInstrument):
         values={True: "ON",
                 False: "OFF",
                 },
+        cast=str,
         check_set_errors=True,
     )

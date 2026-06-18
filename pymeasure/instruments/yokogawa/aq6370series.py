@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -267,6 +267,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     resolution_bandwidth = Instrument.control(
@@ -285,6 +286,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         ":TRACe:ACTive?",
         ":TRACe:ACTive %d",
         "Control the active trace (str 'A', 'B', 'C', ...).",
+        cast=str,
     )
 
     def copy_trace(self, source, destination):
@@ -353,6 +355,7 @@ class AQ6370Series(SCPIMixin, Instrument):
         ":FORMat:DATA %s",
         """Control the data transfer format. It returns to default ASCII at reset.""",
         values=["ASCII", "REAL,32", "REAL,64"],
+        cast=str,
     )
 
     def get_binary_data(self, bitness=64):

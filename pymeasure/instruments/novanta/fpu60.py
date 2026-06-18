@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ class Fpu60(Instrument):
         """Get the interlock enabled status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
+        cast=str,
     )
 
     emission_enabled = Instrument.measurement(
@@ -59,6 +60,7 @@ class Fpu60(Instrument):
         """Measure the emission status (bool).""",
         values={True: "ENABLED", False: "DISABLED"},
         map_values=True,
+        cast=str,
     )
 
     power = Instrument.measurement(
@@ -83,6 +85,7 @@ class Fpu60(Instrument):
         # get response: "SHUTTER OPEN", "SHUTTER CLOSED"
         values={True: "OPEN", False: "CLOSE"},
         map_values=True,
+        cast=str,
         preprocess_reply=lambda r: r.replace("SHUTTER ", "").replace("D", ""),
         check_set_errors=True,
     )

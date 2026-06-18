@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ class SequenceEvaluationError(Exception):
     pass
 
 
-class SequenceItem(object):
+class SequenceItem:
     """ Class representing a sequence row """
     column_map = {
         0: "level",
@@ -164,26 +164,24 @@ class SequenceHandler:
             except TypeError:
                 if log_enabled:
                     log.error("TypeError, likely a typo in one of the " +
-                              "functions for parameter '{}', depth {}".format(
-                                  name, depth
-                              ))
+                              f"functions for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationError("TypeError, likely a typo")
             except SyntaxError:
                 if log_enabled:
                     log.error("SyntaxError, likely unbalanced brackets " +
-                              "for parameter '{}', depth {}".format(name, depth))
+                              f"for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationError("SyntaxError, likely unbalanced brackets")
             except ValueError:
                 if log_enabled:
                     log.error("ValueError, likely wrong function argument " +
-                              "for parameter '{}', depth {}".format(name, depth))
+                              f"for parameter '{name}', depth {depth}")
                 raise SequenceEvaluationError("ValueError, likely wrong function argument")
             except Exception as e:
                 raise SequenceEvaluationError(e)
         else:
             if log_enabled:
                 log.error("No sequence entered for " +
-                          "for parameter '{}', depth {}".format(name, depth))
+                          f"for parameter '{name}', depth {depth}")
             raise SequenceEvaluationError("No sequence entered")
 
         evaluated_string = np.array(evaluated_string)

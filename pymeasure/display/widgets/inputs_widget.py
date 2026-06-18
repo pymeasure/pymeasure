@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -91,7 +91,7 @@ class InputsWidget(QtWidgets.QWidget):
         for name in self._inputs:
             if not isinstance(getattr(self, name), self.NO_LABEL_INPUTS):
                 label = QtWidgets.QLabel(self)
-                label.setText("%s:" % parameters[name].name)
+                label.setText(f"{parameters[name].name}:")
                 vbox.addWidget(label)
                 self.labels[name] = label
 

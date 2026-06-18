@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,7 @@ class DigitalChannelP(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'IN', False: 'OUT'},
+        cast=str,
     )
 
     enabled = Channel.control(
@@ -63,6 +64,7 @@ class DigitalChannelN(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'IN', False: 'OUT'},
+        cast=str,
     )
 
     enabled = Channel.control(
@@ -117,9 +119,10 @@ class AnalogInputFastChannel(Channel):
         """,
         validator=strict_discrete_set,
         values=['LV', 'HV'],
+        cast=str,
     )
 
-    def get_data(self, npts: int = None, format='ASCII') -> np.ndarray:
+    def get_data(self, npts: int | None = None, format='ASCII') -> np.ndarray:
         """ Read data from the buffer
 
         :param npts: number of points to be read
@@ -229,8 +232,11 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               set_process=lambda date: date.strftime('%Y,%m,%d'),
                               )
 
-    board_name = Instrument.measurement("SYST:BRD:Name?",
-                                        """Get the RedPitaya board name""")
+    board_name = Instrument.measurement(
+        "SYST:BRD:Name?",
+        """Get the RedPitaya board name""",
+        cast=str,
+    )
 
     def digital_reset(self):
         """Reset the state of all digital lines"""
@@ -272,6 +278,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'ON', False: 'OFF'},
+        cast=str,
     )
 
     acq_units = Instrument.control(
@@ -279,6 +286,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         """Control the output data units (str), either 'RAW', or 'VOLTS' (default)""",
         validator=strict_discrete_set,
         values=['RAW', 'VOLTS'],
+        cast=str,
     )
 
     buffer_length = Instrument.measurement(
@@ -310,6 +318,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
         """Get the trigger status (bool), if True the trigger as been fired (or is disabled)""",
         map_values=True,
         values={True: 'TD', False: 'WAIT'},
+        cast=str,
     )
 
     acq_trigger_position = Instrument.measurement(

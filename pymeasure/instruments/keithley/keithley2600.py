@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,8 +95,7 @@ class Channel:
         return self.instrument.values(f'print(smu{self.channel}.{cmd})')
 
     def binary_values(self, cmd, header_bytes=0, dtype=np.float32):
-        return self.instrument.binary_values('print(smu%s.%s)' %
-                                             (self.channel, cmd,), header_bytes, dtype)
+        return self.instrument.binary_values(f'print(smu{self.channel}.{cmd})', header_bytes, dtype)
 
     def check_errors(self):
         return self.instrument.check_errors()
@@ -225,9 +224,9 @@ class Channel:
         :param voltage: Upper limit of voltage in Volts, from -200 V to 200 V
         :param auto_range: Enables auto_range if True, else uses the set voltage
         """
-        log.info("%s is measuring voltage." % self.channel)
+        log.info(f"{self.channel} is measuring voltage.")
         self.write('measure.v()')
-        self.write('measure.nplc=%f' % nplc)
+        self.write(f'measure.nplc={nplc:f}')
         if auto_range:
             self.write('measure.autorangev=1')
         else:
@@ -240,9 +239,9 @@ class Channel:
         :param current: Upper limit of current in Amps, from -1.5 A to 1.5 A
         :param auto_range: Enables auto_range if True, else uses the set current
         """
-        log.info("%s is measuring current." % self.channel)
+        log.info(f"{self.channel} is measuring current.")
         self.write('measure.i()')
-        self.write('measure.nplc=%f' % nplc)
+        self.write(f'measure.nplc={nplc:f}')
         if auto_range:
             self.write('measure.autorangei=1')
         else:
@@ -265,7 +264,7 @@ class Channel:
                                    :attr:`~.Keithley2600.compliance_voltage`
         :param current_range: A :attr:`~.Keithley2600.current_range` value or None
         """
-        log.info("%s is sourcing current." % self.channel)
+        log.info(f"{self.channel} is sourcing current.")
         self.source_mode = 'current'
         if current_range is None:
             self.auto_range_source()
@@ -283,7 +282,7 @@ class Channel:
                                    :attr:`~.Keithley2600.compliance_current`
         :param voltage_range: A :attr:`~.Keithley2600.voltage_range` value or None
         """
-        log.info("%s is sourcing voltage." % self.channel)
+        log.info(f"{self.channel} is sourcing voltage.")
         self.source_mode = 'voltage'
         if voltage_range is None:
             self.auto_range_source()
@@ -317,7 +316,7 @@ class Channel:
     def shutdown(self):
         """ Ensures that the current or voltage is turned to zero
         and disables the output. """
-        log.info("Shutting down channel %s." % self.channel)
+        log.info(f"Shutting down channel {self.channel}.")
         if self.source_mode == 'current':
             self.ramp_to_current(0.0)
         else:

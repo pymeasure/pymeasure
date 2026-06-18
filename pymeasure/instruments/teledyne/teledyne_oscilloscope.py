@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ import time
 from decimal import Decimal
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -72,7 +72,7 @@ def _trigger_select_num_pars(value):
         elif value[0] == "DROP":
             num_expected_pars = 4
     else:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     return num_expected_pars
 
 
@@ -84,18 +84,18 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     :param num_pars_finder: function to find the number of expected parameters
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) < 3 or len(value) > 5:
-        raise ValueError('Number of parameters {} can only be 3, 4, 5'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
     value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
     value = list(value)
     value[1] = sanitize_source(value[1])
     value = tuple(value)
     if value[0] not in values.keys():
-        raise ValueError('Value {} not in the discrete set {}'.format(value[0], values.keys()))
+        raise ValueError(f'Value {value[0]} not in the discrete set {values.keys()}')
     num_expected_pars = num_pars_finder(value)
     if len(value) != num_expected_pars:
-        raise ValueError('Number of parameters {} != {}'.format(len(value), num_expected_pars))
+        raise ValueError(f'Number of parameters {len(value)} != {num_expected_pars}')
     for i, element in enumerate(value[1:], start=1):
         if i < 3:
             strict_discrete_set(element, values=values[value[0]][i - 1])
@@ -104,7 +104,7 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     return value
 
 
-def _trigger_select_get_process(value):
+def _trigger_select_get_process(value: list[str]) -> list[str | float]:
     """Process the output of the trigger_select property.
 
     The format of the input list is
@@ -131,7 +131,7 @@ def _trigger_select_get_process(value):
     return output
 
 
-def _results_list_to_dict(results):
+def _results_list_to_dict(results: list[str]) -> dict[str, str]:
     """Turn a list into a dict, using the uneven indices as keys.
 
     E.g. turn ['C1', 'OFF', 'C2', 'OFF'] into {'C1': 'OFF', 'C2': 'OFF'}
@@ -146,8 +146,7 @@ def _remove_unit(value):
     if isinstance(value, float):
         return value
 
-    if value.endswith(" V"):
-        value = value[:-2]
+    value = value.removesuffix(" V")
 
     return float(value)
 
@@ -159,9 +158,9 @@ def _intensity_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 2:
-        raise ValueError('Number of parameters {} different from 2'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 2')
     for i in range(2):
         strict_discrete_range(value=value[i], values=values[i], step=1)
     return value
@@ -229,6 +228,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     coupling = Instrument.control(
@@ -236,7 +236,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the coupling with a string parameter ("ac 1M", "dc 1M", "ground").""",
         validator=strict_discrete_set,
         values={"ac 1M": "A1M", "dc 1M": "D1M", "ground": "GND"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     display = Instrument.control(
@@ -244,7 +245,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the display enabled state. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     offset = Instrument.control(
@@ -282,7 +284,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     trigger_level = Instrument.control(
@@ -322,6 +325,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=TRIGGER_SLOPES,
         map_values=True,
         dynamic=True,
+        cast=str,
     )
 
     _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
@@ -374,7 +378,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         :param parameter: same as the display_parameter property
         """
         parameter = strict_discrete_set(value=parameter, values=self._measurable_parameters)
-        output = self.ask("PAVA? %s" % parameter)
+        output = self.ask(f"PAVA? {parameter}")
         match = self._re_pava_response.match(output)
         if match:
             if match.group('parameter') != parameter:
@@ -388,11 +392,11 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
     def insert_id(self, command):
         # only in case of the BWL and PACU commands the syntax is different. Why? SIGLENT Why?
         if command[0:4] == "BWL ":
-            return "BWL C%d,%s" % (self.id, command[4:])
+            return f"BWL C{self.id},{command[4:]}"
         elif command[0:5] == "PACU ":
-            return "PACU %s,C%d" % (command[5:], self.id)
+            return f"PACU {command[5:]},C{self.id}"
         else:
-            return "C%d:%s" % (self.id, command)
+            return f"C{self.id}:{command}"
 
     # noinspection PyIncorrectDocstring
     def setup(self, **kwargs):
@@ -562,6 +566,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         • OFF — header is omitted from the response and units in numbers are suppressed.""",
         validator=strict_discrete_set,
         values=["OFF", "SHORT", "LONG"],
+        cast=str,
     )
 
     ###########
@@ -575,6 +580,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     ##################
@@ -658,7 +664,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("NP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     waveform_sparsing = Instrument.control(
@@ -670,7 +677,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("SP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     waveform_first_point = Instrument.control(
@@ -680,7 +688,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("FP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     ##################
@@ -693,7 +702,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         Assign for example 500, 100e6, "100K", "25MA".
 
         The reply will always be a float.
-        """
+        """,
     )
 
     @property
@@ -715,7 +724,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         - "yoffset": value that is represented at center of screen in Volts
 
         """
-        vals = self.values("WFSU?")
+        vals = self.values("WFSU?", cast=cast_or_str(float))
         preamble = {
             "sparsing": vals[vals.index("SP") + 1],
             "requested_points": vals[vals.index("NP") + 1],
@@ -819,7 +828,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
             # number of points still to read
             remaining_points = expected_points - read_points
             # number of points requested in a single chunk
-            requested_points = chunk_points if remaining_points > chunk_points else remaining_points
+            requested_points = min(remaining_points, chunk_points)
             self.waveform_points = requested_points
             # number of bytes requested in a single chunk
             requested_bytes = requested_points + self._header_size + self._footer_size
@@ -947,7 +956,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     _trigger_select_vals = {
@@ -969,7 +979,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         get_process_list=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_vals,
-        dynamic=True
+        dynamic=True,
+        cast=cast_or_str(float),
     )
 
     def center_trigger(self):
@@ -1132,5 +1143,6 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Set the intensity level of the grid or the trace in percent """,
         validator=_intensity_validator,
         values=[[0, 100], [0, 100]],
-        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]}
+        cast=cast_or_str(float),
+        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]},
     )

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,14 +25,14 @@ import logging
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-class Channel():
+class Channel:
     """ Implementation of a Keysight DSOX1102G Oscilloscope channel.
 
     Implementation modeled on Channel object of Tektronix AFG3152C instrument. """
@@ -115,14 +115,13 @@ class Channel():
         """ Reads a set of values from the instrument through the adapter,
         passing on any key-word arguments.
         """
-        return self.instrument.values(":channel%d:%s" % (
-            self.number, command), **kwargs)
+        return self.instrument.values(f":channel{self.number}:{command}", **kwargs)
 
     def ask(self, command):
-        self.instrument.ask(":channel%d:%s" % (self.number, command))
+        self.instrument.ask(f":channel{self.number}:{command}")
 
     def write(self, command):
-        self.instrument.write(":channel%d:%s" % (self.number, command))
+        self.instrument.write(f":channel{self.number}:{command}")
 
     def setup(self, bwlimit=None, coupling=None, display=None, invert=None, label=None, offset=None,
               probe_attenuation=None, vertical_range=None, scale=None):
@@ -186,7 +185,7 @@ class Channel():
         # Using the instrument's ask method because Channel.ask() adds the prefix ":channelX:", and
         # to query the configuration details, we actually need to ask ":channelX?", without a
         # second ":"
-        ch_setup_raw = self.instrument.ask(":channel%d?" % self.number).strip("\n")
+        ch_setup_raw = self.instrument.ask(f":channel{self.number}?").strip("\n")
 
         # ch_setup_raw hat the following format:
         # :CHAN1:RANG +40.0E+00;OFFS +0.00000E+00;COUP DC;IMP ONEM;DISP 1;BWL 0;
@@ -414,7 +413,7 @@ class KeysightDSOX1102G(SCPIUnknownMixin, Instrument):
         # Other waveform formats raise UnicodeDecodeError
         self.waveform_format = "ascii"
 
-        data = self.values(":waveform:data?")
+        data = self.values(":waveform:data?", cast=cast_or_str(float))
         # Strip header from first data element
         data[0] = float(data[0][10:])
 

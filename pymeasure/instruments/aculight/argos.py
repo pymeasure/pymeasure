@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -118,14 +118,14 @@ class Argos(Instrument):
                       seed_voltage=state_to_float(seed))
         return state
 
-    version = Instrument.measurement("ver", "Get the firmware version.", cast=str)  # type: ignore
+    version = Instrument.measurement("ver", "Get the firmware version.", cast=str)
 
     temperature_setpoint = Instrument.control(
         "state",
         "temp %.3f",
         "Control the crystal temperature setpoint in °C.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(0),
         validator=strict_range,
         values=[30, 100],
@@ -137,7 +137,7 @@ class Argos(Instrument):
         "etalon %.3f",
         "Control the etalon angle in degrees.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(1),
         validator=strict_range,
         values=[-12, 12],
@@ -149,7 +149,7 @@ class Argos(Instrument):
         "seed %.3f",
         "Control the seed source tuning voltage.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(2),
         validator=strict_range,
         values=[0, 5],
@@ -160,6 +160,6 @@ class Argos(Instrument):
         "state",
         "Get the current crystal temperature in °C.",
         separator="\n\r",
-        cast=str,  # type: ignore
+        cast=str,
         get_process_list=generate_state_extraction_method(3),
     )

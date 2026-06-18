@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,10 +61,10 @@ class QListener(StoppableQThread):
         self.context = zmq.Context()
         log.debug(f"{self.__class__.__name__} has ZMQ Context: {self.context!r}")
         self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect('tcp://localhost:%d' % port)
+        self.subscriber.connect(f'tcp://localhost:{port}')
         self.subscriber.setsockopt(zmq.SUBSCRIBE, topic.encode())
-        log.info("%s connected to '%s' topic on tcp://localhost:%d" % (
-            self.__class__.__name__, topic, port))
+        log.info(
+            f"{self.__class__.__name__} connected to '{topic}' topic on tcp://localhost:{port}")
 
         self.poller = zmq.Poller()
         self.poller.register(self.subscriber, zmq.POLLIN)
@@ -81,8 +81,8 @@ class QListener(StoppableQThread):
         return self.poller.poll(self.timeout)
 
     def __repr__(self):
-        return "<{}(port={},topic={},should_stop={})>".format(
-            self.__class__.__name__, self.port, self.topic, self.should_stop())
+        return (f"<{self.__class__.__name__}(port={self.port},topic={self.topic},"
+                f"should_stop={self.should_stop()})>")
 
 
 class Monitor(QtCore.QThread):

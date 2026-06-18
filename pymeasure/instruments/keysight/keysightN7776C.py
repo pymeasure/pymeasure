@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -247,7 +247,7 @@ class KeysightN7776C(SCPIUnknownMixin, Instrument):
         """
         # Using pyvisa's method bypassing the normal read.
         return np.array(self.adapter.connection.query_binary_values('sour0:read:data? llog',
-                        datatype=u'd'))
+                        datatype='d'))
 
     def close(self):
         """

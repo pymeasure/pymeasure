@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,9 +38,7 @@ def strict_range(value, values):
     if min(values) <= value <= max(values):
         return value
     else:
-        raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
-            value, min(values), max(values)
-        ))
+        raise ValueError(f'Value of {value:g} is not in range [{min(values):g},{max(values):g}]')
 
 
 def strict_discrete_range(value, values, step):
@@ -60,9 +58,7 @@ def strict_discrete_range(value, values, step):
             Decimal(str(value)) % Decimal(str(step)) == 0):
         return value
     else:
-        raise ValueError('Value of {:g} is not a multiple of {:g}'.format(
-            value, step
-        ))
+        raise ValueError(f'Value of {value:g} is not a multiple of {step:g}')
 
 
 def strict_discrete_set(value, values):
@@ -76,9 +72,7 @@ def strict_discrete_set(value, values):
     if value in values:
         return value
     else:
-        raise ValueError('Value of {} is not in the discrete set {}'.format(
-            value, values
-        ))
+        raise ValueError(f'Value of {value} is not in the discrete set {values}')
 
 
 def truncated_range(value, values):

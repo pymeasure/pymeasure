@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,22 @@
 
 import logging
 import time
+from typing import TypeVar
+from collections.abc import Sequence
 from warnings import warn
 
-from .common_base import CommonBase
+from .common_base import CommonBase, cast_or_str
+from ..adapters.adapter import Adapter
 from ..adapters.visa import VISAAdapter
+
+_Self = TypeVar("_Self", bound="Instrument")  # typing.Self for Python>3.10
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
 class Instrument(CommonBase):
-    """ The base class for all Instrument definitions.
+    """The base class for all Instrument definitions.
 
     It makes use of one of the :py:class:`~pymeasure.adapters.Adapter` classes for communication
     with the connected hardware device. This decouples the instrument/command definition from the
@@ -69,10 +74,16 @@ class Instrument(CommonBase):
         to :py:class:`~pymeasure.adapters.VISAAdapter` (check there for details).
         Discarded otherwise.
     """
+    adapter: Adapter
 
     # noinspection PyPep8Naming
-    def __init__(self, adapter, name, includeSCPI=None,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: Adapter | int | str,
+        name: str,
+        includeSCPI: bool | None = None,
+        **kwargs,
+    ):
         # Setup communication before possible children require the adapter.
         if isinstance(adapter, (int, str)):
             try:
@@ -94,13 +105,14 @@ class Instrument(CommonBase):
 
         super().__init__()
 
-        log.info("Initializing %s." % self.name)
+        log.info(f"Initializing {self.name}.")
 
-    def __enter__(self):
+    def __enter__(self: _Self) -> _Self:
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool | None:
         self.shutdown()
+        return None
 
     # SCPI default properties
     @property
@@ -144,12 +156,12 @@ class Instrument(CommonBase):
     def next_error(self):
         """Get the next error of the instrument (tuple of code and message)."""
         if self.SCPI:
-            return self.values("SYST:ERR?")
+            return self.values("SYST:ERR?", cast=cast_or_str(float))
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
     # Wrapper functions for the Adapter object
-    def write(self, command, **kwargs):
+    def write(self, command: str, **kwargs) -> None:
         """Write a string command to the instrument appending `write_termination`.
 
         :param command: command string to be sent to the instrument
@@ -157,15 +169,15 @@ class Instrument(CommonBase):
         """
         self.adapter.write(command, **kwargs)
 
-    def write_bytes(self, content, **kwargs):
+    def write_bytes(self, content: bytes, **kwargs) -> None:
         """Write the bytes `content` to the instrument."""
         self.adapter.write_bytes(content, **kwargs)
 
-    def read(self, **kwargs):
+    def read(self, **kwargs) -> str:
         """Read up to (excluding) `read_termination` or the whole read buffer."""
         return self.adapter.read(**kwargs)
 
-    def read_bytes(self, count, **kwargs):
+    def read_bytes(self, count: int, **kwargs) -> bytes:
         """Read a certain number of bytes from the instrument.
 
         :param int count: Number of bytes to read. A value of -1 indicates to
@@ -175,7 +187,9 @@ class Instrument(CommonBase):
         """
         return self.adapter.read_bytes(count, **kwargs)
 
-    def write_binary_values(self, command, values, *args, **kwargs):
+    def write_binary_values(
+        self, command: str, values: Sequence[int | float], *args, **kwargs
+    ) -> None:
         """Write binary values to the device.
 
         :param command: Command to send.
@@ -189,7 +203,7 @@ class Instrument(CommonBase):
         return self.adapter.read_binary_values(**kwargs)
 
     # Communication functions
-    def wait_for(self, query_delay=None):
+    def wait_for(self, query_delay: float | None = None) -> None:
         """Wait for some time. Used by 'ask' to wait before reading.
 
         :param query_delay: Delay between writing and reading in seconds. None is default delay.
@@ -198,7 +212,7 @@ class Instrument(CommonBase):
             time.sleep(query_delay)
 
     # SCPI default methods
-    def clear(self):
+    def clear(self) -> None:
         """ Clears the instrument status byte
         """
         if self.SCPI:
@@ -206,19 +220,19 @@ class Instrument(CommonBase):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    def reset(self):
+    def reset(self) -> None:
         """ Resets the instrument. """
         if self.SCPI:
             self.write("*RST")
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Brings the instrument to a safe and stable state"""
         self.isShutdown = True
         log.info(f"Finished shutting down {self.name}")
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """Read all errors from the instrument and log them.
 
         :return: List of error entries.
@@ -236,7 +250,7 @@ class Instrument(CommonBase):
         else:
             raise NotImplementedError("Non SCPI instruments require implementation in subclasses")
 
-    def check_get_errors(self):
+    def check_get_errors(self) -> list:
         """Check for errors after having gotten a property and log them.
 
         Called if :code:`check_get_errors=True` is set for that property.
@@ -247,7 +261,7 @@ class Instrument(CommonBase):
         """
         return self.check_errors()
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having set a property and log them.
 
         Called if :code:`check_set_errors=True` is set for that property.

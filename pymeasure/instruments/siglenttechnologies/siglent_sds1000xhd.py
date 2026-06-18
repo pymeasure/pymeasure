@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 import struct
 import math
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import (
     strict_range, strict_discrete_set
@@ -49,6 +50,7 @@ class AnalogChannel(Channel):
         "Control the channel coupling mode (str): 'DC', 'AC', or 'GND'.",
         validator=strict_discrete_set,
         values=["DC", "AC", "GND"],
+        cast=str,
     )
 
     probe = Channel.control(
@@ -75,6 +77,7 @@ class AnalogChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     display_enabled = Channel.control(
@@ -86,6 +89,7 @@ class AnalogChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     bandwidth_limit_enabled = Channel.control(
@@ -95,6 +99,7 @@ class AnalogChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     invert = Channel.control(
@@ -104,6 +109,7 @@ class AnalogChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     label = Channel.control(
@@ -111,6 +117,7 @@ class AnalogChannel(Channel):
         ":CHANnel{ch}:LABel:TEXT '%s'",
         "Control the channel label text (str).",
         preprocess_reply=lambda v: v.strip('\r\n\t \'"'),
+        cast=str,
     )
 
     unit = Channel.control(
@@ -119,6 +126,7 @@ class AnalogChannel(Channel):
         "Control the channel unit (str): 'V' or 'A'.",
         validator=strict_discrete_set,
         values=["V", "A"],
+        cast=str,
     )
 
 
@@ -140,6 +148,7 @@ class WaveformChannel(Channel):
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
+        cast=str,
     )
 
     start_point = Channel.control(
@@ -202,6 +211,7 @@ class WaveformChannel(Channel):
         """,
         validator=strict_discrete_set,
         values=["BYTE", "WORD"],
+        cast=str,
     )
 
     def _parse_preamble_descriptor(self, raw_data):
@@ -345,11 +355,11 @@ class WaveformChannel(Channel):
                 recv_byte = recv_byte[:truncated_bytes]
                 actual_points = len(recv_byte) // 2
 
-            convert_data = struct.unpack("%dh" % actual_points, recv_byte)
+            convert_data = struct.unpack(f"{actual_points}h", recv_byte)
         else:
             # Calculate actual length of data received and adjust points if needed
             actual_points = len(recv_byte)  # 1 byte per point for BYTE format
-            convert_data = struct.unpack("%db" % actual_points, recv_byte)
+            convert_data = struct.unpack(f"{actual_points}b", recv_byte)
 
         # Calculate the voltage value and time value
         time_value = []
@@ -376,6 +386,7 @@ class AdvancedMeasurementItem(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     source1 = Channel.control(
@@ -386,6 +397,7 @@ class AdvancedMeasurementItem(Channel):
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
+        cast=str,
     )
 
     source2 = Channel.control(
@@ -398,6 +410,7 @@ class AdvancedMeasurementItem(Channel):
         values=["C1", "C2", "C3", "C4", "F1", "F2", "F3", "F4",
                 "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15"],
+        cast=str,
     )
 
     statistics_all = Channel.measurement(
@@ -407,30 +420,35 @@ class AdvancedMeasurementItem(Channel):
         """,
         preprocess_reply=lambda v: v.strip(),
         separator=None,
+        cast=cast_or_str(str),
     )
 
     statistics_current = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? CURRent",
         """Get the current statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     statistics_mean = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MEAN",
         """Get the mean statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     statistics_maximum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MAXimum",
         """Get the maximum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     statistics_minimum = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? MINimum",
         """Get the minimum statistical value in NR3 format (scientific notation, e.g., 1.23E+2).""",
         get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     statistics_stddev = Channel.measurement(
@@ -439,12 +457,14 @@ class AdvancedMeasurementItem(Channel):
         Returns the standard deviation in NR3 format (e.g., 1.23E+2).
         """,
         get_process=lambda v: float(v) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     statistics_count = Channel.measurement(
         ":MEASure:ADVanced:P{ch}:STATistics? COUNt",
         """Get the count of measurements used for statistics calculation.""",
         get_process=lambda v: int(float(v)) if str(v).strip() != "OFF" else str(v).strip(),
+        cast=cast_or_str(float),
     )
 
     type = Channel.control(
@@ -462,6 +482,7 @@ class AdvancedMeasurementItem(Channel):
                 "REDGES", "FEDGES", "EDGES", "PPULSES", "NPULSES", "PHA", "SKEW",
                 "FRR", "FRF", "FFR", "FFF", "LRR", "LRF", "LFR", "LFF", "PACArea",
                 "NACArea", "ACArea", "ABSACArea", "PSLOPE", "NSLOPE", "TSR", "TSF", "THR", "THF"],
+        cast=str,
     )
 
     value = Channel.control(
@@ -494,6 +515,7 @@ class MeasureChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     advanced_mode_enabled = Channel.control(
@@ -503,6 +525,7 @@ class MeasureChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ADVanced", False: "SIMPle"},
         map_values=True,
+        cast=str,
     )
 
     advanced_line_number = Channel.control(
@@ -522,6 +545,7 @@ class MeasureChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     # Simple measurement properties
@@ -532,6 +556,7 @@ class MeasureChannel(Channel):
         validator=strict_discrete_set,
         values=["CHANnel1", "CHANnel2", "CHANnel3", "CHANnel4",
                 "FUNCtion1", "FUNCtion2", "FUNCtion3", "FUNCtion4"],
+        cast=str,
     )
 
     def get_simple_value(self, measurement_type):
@@ -561,6 +586,7 @@ class MeasureChannel(Channel):
         except for delay measurements.""",
         preprocess_reply=lambda v: v.strip(),
         separator=None,
+        cast=str,
     )
 
     simple_item = Channel.setting(
@@ -613,6 +639,7 @@ class AcquisitionChannel(Channel):
         validator=strict_discrete_set,
         values={True: "FAST", False: "SLOW"},
         map_values=True,
+        cast=str,
     )
 
     interpolation_enabled = Channel.control(
@@ -623,6 +650,7 @@ class AcquisitionChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     memory_management = Channel.control(
@@ -639,6 +667,7 @@ class AcquisitionChannel(Channel):
                      according to storage depth and time base.""",
         validator=strict_discrete_set,
         values=["AUTO", "FSRate", "FMDepth"],
+        cast=str,
     )
 
     plot_mode = Channel.control(
@@ -653,6 +682,7 @@ class AcquisitionChannel(Channel):
         "strip chart" recording and is ideal for low-frequency signals.""",
         validator=strict_discrete_set,
         values=["YT", "XY", "ROLL"],
+        cast=str,
     )
 
     memory_depth = Channel.control(
@@ -664,6 +694,7 @@ class AcquisitionChannel(Channel):
         common options but should be validated for your specific instrument.""",
         validator=strict_discrete_set,
         values=["AUTO", "10K", "100K", "1M", "10M", "50M"],
+        cast=str,
     )
 
     count = Channel.control(
@@ -690,6 +721,7 @@ class AcquisitionChannel(Channel):
         validator=strict_discrete_set,
         values={True: "10Bits", False: "8Bits"},
         map_values=True,
+        cast=str,
     )
 
     sequence_mode = Channel.control(
@@ -699,6 +731,7 @@ class AcquisitionChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     sequence_count = Channel.control(
@@ -728,7 +761,8 @@ class AcquisitionChannel(Channel):
         - 'ERES': Enhanced resolution mode""",
         validator=strict_discrete_set,
         values=["NORMal", "PEAK", "AVERage", "ERES"],
-        get_process=lambda v: v.strip().split(',')[0],  # Extract base type from response
+        get_process=lambda v: v.strip().split(',')[0],
+        cast=str,
     )
 
 
@@ -756,6 +790,7 @@ class TimebaseChannel(Channel):
                   around the position of the horizontal display.""",
         validator=strict_discrete_set,
         values=["DELay", "POSition"],
+        cast=str,
     )
 
     reference_position = Channel.control(
@@ -791,6 +826,7 @@ class TimebaseChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     window_delay = Channel.control(
@@ -855,11 +891,13 @@ class TriggerChannel(Channel):
         """,
         validator=strict_discrete_set,
         values=["AUTO", "NORMal", "SINGle", "FTRIG"],
+        cast=str,
     )
 
     status = Channel.measurement(
         ":TRIGger:STATus?",
         docs="""Get the current trigger status, such as STOP, READY, ARM, TD, WAIT, etc.""",
+        cast=str,
     )
 
     type = Channel.measurement(
@@ -868,6 +906,7 @@ class TriggerChannel(Channel):
         - "type": trigger type (EDGE, SLOPe, PULSe, VIDeo, WINDow, INTerval, DROPout,
         RUNT, PATTern, QUALified, DELay, NEDGe, SHOLd, IIC, SPI, UART, CAN, LIN, etc.)
         """,
+        cast=str,
     )
 
     # EDGE trigger specific measurements
@@ -877,6 +916,7 @@ class TriggerChannel(Channel):
         """Control the coupling mode of the edge trigger.""",
         validator=strict_discrete_set,
         values=["DC", "AC", "LFREJect", "HFREJect"],
+        cast=str,
     )
 
     edge_hld_event = Channel.control(
@@ -916,6 +956,7 @@ class TriggerChannel(Channel):
         validator=strict_discrete_set,
         values=["OFF", "EVENTS", "TIME"],
         get_process=lambda v: v.upper(),
+        cast=str,
     )
 
     edge_hld_start = Channel.control(
@@ -924,6 +965,7 @@ class TriggerChannel(Channel):
         """Control the initial position of the edge trigger holdoff.""",
         validator=strict_discrete_set,
         values=["LAST_TRIG", "ACQ_START"],
+        cast=str,
     )
 
     edge_high_impedance = Channel.control(
@@ -936,6 +978,7 @@ class TriggerChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ONEMeg", False: "FIFTy"},
         map_values=True,
+        cast=str,
     )
 
     edge_level = Channel.control(
@@ -956,6 +999,7 @@ class TriggerChannel(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     edge_slope = Channel.control(
@@ -964,6 +1008,7 @@ class TriggerChannel(Channel):
         """Control the slope of the edge trigger.""",
         validator=strict_discrete_set,
         values=["RISing", "FALLing", "ALTernate"],
+        cast=str,
     )
 
     edge_source = Channel.control(
@@ -973,6 +1018,7 @@ class TriggerChannel(Channel):
         validator=strict_discrete_set,
         values=["C1", "C2", "C3", "C4", "D0", "D1", "D2", "D3", "D4", "D5", "D6", "D7",
                 "D8", "D9", "D10", "D11", "D12", "D13", "D14", "D15", "EX", "EX5", "LINE"],
+        cast=str,
     )
 
     def force_trigger(self):

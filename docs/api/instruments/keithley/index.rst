@@ -15,6 +15,7 @@ This section contains specific documentation on the Keithley instruments that ar
    keithley2281S
    keithley2306
    keithley2400
+   keithley2400_legacy
    keithley2450
    keithley2510
    keithley2600

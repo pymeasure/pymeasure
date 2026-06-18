@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+from enum import IntFlag
+from time import sleep
+from warnings import warn
+
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range
-from time import sleep
-from enum import IntFlag
 
 
 class Thermotron3800(Instrument):
@@ -100,8 +102,19 @@ class Thermotron3800(Instrument):
         '''
         self.write("STOP")
 
-    def initalize_oven(self, wait=True):
-        '''
+    def initalize_oven(self, wait: bool = True) -> None:
+        """Initialize the oven.
+
+        .. deprecated:: 0.17.0
+            Use :meth:`initialize_oven` instead.
+        """
+        warn("The method `initalize_oven` is deprecated, use `initialize_oven` instead.",
+             FutureWarning)
+        self.initialize_oven(wait=wait)
+
+    def initialize_oven(self, wait: bool = True) -> None:
+        """Initialize the oven and optionally wait some time.
+
         The manufacturer recommends a 3 second wait time after after initializing the oven.
         The optional "wait" variable should remain true, unless the 3 second wait time is
         taken care of on the user end. The wait time is split up in the following way:
@@ -109,7 +122,7 @@ class Thermotron3800(Instrument):
         2 seconds (optional wait time from this function (initialize_oven)).
 
         :return: None
-        '''
+        """
         self.write("INIT")
         if wait:
             sleep(2)

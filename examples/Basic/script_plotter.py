@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100. * i / self.iterations)
             sleep(self.delay)
@@ -84,12 +84,12 @@ if __name__ == "__main__":
     scribe.start()
 
     filename = tempfile.mktemp()
-    log.info("Using data file: %s" % filename)
+    log.info(f"Using data file: {filename}")
 
     procedure = TestProcedure()
     procedure.iterations = 200
     procedure.delay = 0.1
-    log.info("Set up TestProcedure with %d iterations" % procedure.iterations)
+    log.info(f"Set up TestProcedure with {procedure.iterations} iterations")
 
     results = Results(procedure, filename)
     log.info("Set up Results")

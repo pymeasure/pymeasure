@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@ from pymeasure.instruments.agilent.agilent33500 import Agilent33500
 from math import pi, sin
 
 
-pytest.skip('Only works with connected hardware', allow_module_level=True)
 # from pyvisa.errors import VisaIOError
 
 ############
@@ -35,11 +34,11 @@ pytest.skip('Only works with connected hardware', allow_module_level=True)
 ############
 
 
-@pytest.fixture(scope="session")
-def generator():
+@pytest.fixture(scope="module")
+def generator(connected_device_address):
     try:
-        generator = Agilent33500("TCPIP::192.168.225.208::inst0::INSTR")
-    except IOError:
+        generator = Agilent33500(connected_device_address)
+    except OSError:
         print("Not able to connect to waveform generator")
         assert False
 

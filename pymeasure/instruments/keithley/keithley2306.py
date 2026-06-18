@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,6 +51,7 @@ class Keithley2306Channel(Channel):
         validator=strict_discrete_set,
         values={'low': 'LOW', 'high': 'HIGH'},
         map_values=True,
+        cast=str,
     )
 
     sense_mode = Channel.control(
@@ -62,6 +63,7 @@ class Keithley2306Channel(Channel):
         values={'voltage': 'VOLT', 'current': 'CURR', 'dvm': 'DVM',
                 'pulse_current': 'PCUR', 'long_integration': 'LINT'},
         map_values=True,
+        cast=str,
         get_process=lambda v: v.replace('"', ''),
     )
 
@@ -142,6 +144,7 @@ class Keithley2306Channel(Channel):
         validator=strict_discrete_set,
         values={'high': 'HIGH', 'low': 'LOW', 'average': 'AVER'},
         map_values=True,
+        cast=str,
     )
 
     def pulse_current_time_auto(self):
@@ -226,6 +229,7 @@ class Keithley2306Channel(Channel):
         validator=strict_discrete_set,
         values={'rising': 'RISING', 'falling': 'FALLING', 'neither': 'NEITHER'},
         map_values=True,
+        cast=str,
     )
 
     long_integration_time = Channel.control(
@@ -333,6 +337,7 @@ class Keithley2306Channel(Channel):
         validator=strict_discrete_set,
         values={'limit': 'LIM', 'trip': 'TRIP'},
         map_values=True,
+        cast=str,
     )
 
     source_current_limit_enabled = Channel.measurement(
@@ -563,7 +568,8 @@ class Relay(Channel):
         or open (False). """,
         validator=strict_discrete_set,
         values={True: 'ONE', False: 'ZERO'},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
 
@@ -617,6 +623,7 @@ class Keithley2306(SCPIUnknownMixin, Instrument):
         ":DISP:TEXT:DATA?", ":DISP:TEXT:DATA \"%s\"",
         """Control text to be displayed, takes strings
         up to 32 characters. """,
+        cast=str,
         get_process=lambda v: v.replace('"', '')
     )
 

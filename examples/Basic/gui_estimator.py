@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +67,7 @@ class TestProcedure(Procedure):
                 'Iteration': i,
                 'Random Number': random.random()
             }
-            log.debug("Produced numbers: %s" % data)
+            log.debug(f"Produced numbers: {data}")
             self.emit('results', data)
             self.emit('progress', 100 * i / self.iterations)
             sleep(self.delay)
@@ -106,8 +106,8 @@ class TestProcedure(Procedure):
 
         estimates = list()
 
-        estimates.append(("Duration", "%d s" % int(duration)))
-        estimates.append(("Number of lines", "%d" % int(self.iterations)))
+        estimates.append(("Duration", f"{int(duration)} s"))
+        estimates.append(("Number of lines", f"{int(self.iterations)}"))
 
         estimates.append(("Sequence length", str(sequence_length)))
 

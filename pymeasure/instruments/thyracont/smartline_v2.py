@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -336,6 +336,7 @@ class SmartlineV2(Instrument):
         docs="""Control the unit shown in the display. ('mbar', 'Torr', 'hPa')""",
         values=['mbar', 'Torr', 'hPa'],
         validator=validators.strict_discrete_set,
+        cast=str,
         set_process=compose_data,
         check_set_errors=True,
     )

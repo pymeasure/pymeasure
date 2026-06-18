@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -101,6 +101,7 @@ need_init_communication = [
     "SwissArmyFake",
     "FakeInstrument",
     "ThorlabsPM100USB",
+    "Keithley2400",
     "Keithley2700",
     "TC038",
     "Agilent34450A",
@@ -112,13 +113,13 @@ need_init_communication = [
     "ANC300Controller",
     "Keithley2281S",
     "SpellmanXRV",
+    "YAR",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
     "Agilent33521A",
     "Agilent8257D",
     "Agilent8722ES",
-    "AgilentE4408B",
     "AgilentE4980",
     "AnritsuMS2090A",
     "DPSeriesMotorController",

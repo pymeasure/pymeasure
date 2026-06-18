@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -209,7 +209,7 @@ class EstimatorWidget(QtWidgets.QWidget):
         if len(estimates) != self.number_of_estimates:
             raise ValueError(
                 "Number of estimates changed after initialisation "
-                "(from %d to %d)." % (self.number_of_estimates, len(estimates))
+                f"(from {self.number_of_estimates} to {len(estimates)})."
             )
 
         for idx, estimate in enumerate(estimates):
@@ -219,11 +219,11 @@ class EstimatorWidget(QtWidgets.QWidget):
     def _estimates_from_duration(self, duration, sequence_length):
         estimates = list()
 
-        estimates.append(("Duration", "%d s" % int(duration)))
+        estimates.append(("Duration", f"{int(duration)} s"))
 
         if hasattr(self._parent, "sequencer"):
             estimates.append(("Sequence length", str(sequence_length)))
-            estimates.append(("Sequence duration", "%d s" % int(sequence_length * duration)))
+            estimates.append(("Sequence duration", f"{int(sequence_length * duration)} s"))
 
         estimates.append(('Measurement finished at', str(datetime.now() + timedelta(
             seconds=duration))[:-7]))

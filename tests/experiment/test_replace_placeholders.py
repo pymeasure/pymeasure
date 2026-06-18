@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,3 +61,7 @@ def test_replace_placeholders():
     assert replace_placeholders(
         "{date}--{time}", fake, date_format=date_format, time_format=time_format
     ) == date + '--' + time
+
+    # The default time format must not contain characters that are invalid in
+    # filenames on Windows (e.g. the colon ":"), see issue #1468.
+    assert ":" not in replace_placeholders("{time}", fake)

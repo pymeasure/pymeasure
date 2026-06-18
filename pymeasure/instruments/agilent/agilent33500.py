@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 # Parts of this code were copied and adapted from the Agilent33220A class.
 
 import logging
-from pymeasure.instruments import Instrument, Channel, SCPIMixin
+from pymeasure.instruments import Instrument, Channel, SCPIMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 from time import time
 from pyvisa.errors import VisaIOError
@@ -56,6 +56,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
+        cast=str,
     )
 
     frequency = Instrument.control(
@@ -83,6 +84,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
         dynamic=True,
+        cast=str,
     )
 
     offset = Instrument.control(
@@ -157,6 +159,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
         dynamic=True,
+        cast=str,
     )
 
     pulse_width = Instrument.control(
@@ -203,6 +206,7 @@ class Agilent33500Channel(Channel):
         is always 50 Ohm, this setting can be used to correct the displayed voltage for
         loads unmatched to 50 Ohm.""",
         dynamic=True,
+        cast=cast_or_str(float),
     )
 
     burst_state = Instrument.control(
@@ -222,6 +226,7 @@ class Agilent33500Channel(Channel):
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
         dynamic=True,
+        cast=str,
     )
 
     burst_period = Instrument.control(
@@ -247,6 +252,7 @@ class Agilent33500Channel(Channel):
         "SOUR{ch}:FUNC:ARB %s",
         """ Control the arbitrary signal to use from the volatile memory of the device.""",
         dynamic=True,
+        cast=str,
     )
 
     arb_advance = Instrument.control(
@@ -256,6 +262,7 @@ class Agilent33500Channel(Channel):
         Can be set to 'TRIG<GER>' or 'SRAT<E>' (default).""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGER", "SRAT", "SRATE"],
+        cast=str,
     )
 
     arb_filter = Instrument.control(
@@ -265,6 +272,7 @@ class Agilent33500Channel(Channel):
         Can be set to 'NORM<AL>', 'STEP' and 'OFF'.""",
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
+        cast=str,
     )
 
     arb_srate = Instrument.control(
@@ -389,6 +397,7 @@ class Agilent33500(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["SIN", "SQU", "TRI", "RAMP", "PULS", "PRBS", "NOIS", "ARB", "DC"],
         dynamic=True,
+        cast=str,
     )
 
     frequency = Instrument.control(
@@ -416,6 +425,7 @@ class Agilent33500(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
         dynamic=True,
+        cast=str,
     )
 
     offset = Instrument.control(
@@ -490,6 +500,7 @@ class Agilent33500(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["WIDT", "WIDTH", "DCYC", "DCYCLE"],
         dynamic=True,
+        cast=str,
     )
 
     pulse_width = Instrument.control(
@@ -536,6 +547,7 @@ class Agilent33500(SCPIMixin, Instrument):
         is always 50 Ohm, this setting can be used to correct the displayed voltage for
         loads unmatched to 50 Ohm.""",
         dynamic=True,
+        cast=cast_or_str(float),
     )
 
     burst_state = Instrument.control(
@@ -555,6 +567,7 @@ class Agilent33500(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGERED", "GAT", "GATED"],
         dynamic=True,
+        cast=str,
     )
 
     burst_period = Instrument.control(
@@ -580,6 +593,7 @@ class Agilent33500(SCPIMixin, Instrument):
         "FUNC:ARB %s",
         """ Control the arbitrary signal to use from the volatile memory of the device.""",
         dynamic=True,
+        cast=str,
     )
 
     arb_advance = Instrument.control(
@@ -589,6 +603,7 @@ class Agilent33500(SCPIMixin, Instrument):
         Can be set to 'TRIG<GER>' or 'SRAT<E>' (default).""",
         validator=strict_discrete_set,
         values=["TRIG", "TRIGGER", "SRAT", "SRATE"],
+        cast=str,
     )
 
     arb_filter = Instrument.control(
@@ -598,6 +613,7 @@ class Agilent33500(SCPIMixin, Instrument):
         Can be set to 'NORM<AL>', 'STEP' and 'OFF'.""",
         validator=strict_discrete_set,
         values=["NORM", "NORMAL", "STEP", "OFF"],
+        cast=str,
     )
     # TODO: This implementation is currently not working. Do not know why.
     # arb_period = Instrument.control(
@@ -751,6 +767,7 @@ class Agilent33500(SCPIMixin, Instrument):
         """ Control the trigger source (str).""",
         validator=strict_discrete_set,
         values=["IMM", "IMMEDIATE", "EXT", "EXTERNAL", "BUS"],
+        cast=str,
     )
 
     ext_trig_out = Instrument.control(

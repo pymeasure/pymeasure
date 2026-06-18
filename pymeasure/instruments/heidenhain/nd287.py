@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -108,6 +108,6 @@ class ND287(Instrument):
             err_str = None
 
         if err_str is not None:
-            log.error("Heidenhain ND287 error message received: %s" % err_str)
+            log.error(f"Heidenhain ND287 error message received: {err_str}")
 
         return err_str

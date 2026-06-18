@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -63,6 +63,7 @@ class LDC500SeriesLD(Channel):
         Laser will only operate with a closed interlock.""",
         values={True: "CLOSED", False: "OPEN"},
         map_values=True,
+        cast=str,
     )
 
     enabled = Instrument.control(
@@ -72,6 +73,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     mode = Instrument.control(
@@ -93,6 +95,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values=["CC", "CP"],
         check_set_errors=True,
+        cast=str,
     )
 
     # --- direct ld current control ---
@@ -136,6 +139,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
     # --- ld voltage control ---
@@ -163,6 +167,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     modulation_bandwidth = Instrument.control(
@@ -181,6 +186,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
 
@@ -194,6 +200,7 @@ class LDC500SeriesPD(Channel):
         validator=strict_discrete_set,
         values={"mW": "ON", "uA": "OFF"},
         map_values=True,
+        cast=str,
     )
 
     bias = Instrument.control(
@@ -253,7 +260,7 @@ class LDC500SeriesPD(Channel):
         Parmeters:
             power (float): Real time power measurement, in mW."""
 
-        self.write("CALP %g" % power)
+        self.write(f"CALP {power:g}")
 
     power = Instrument.measurement(
         "RWPD?",
@@ -304,6 +311,7 @@ class LDC500SeriesTEC(Channel):
         If ``mode`` is changed from "CC" to "CT", the present value of the temperature sensor
         is measured, and the CT setpoint is set to this measurement.
         """,
+        cast=str,
     )
 
     thermometer_type = Instrument.control(

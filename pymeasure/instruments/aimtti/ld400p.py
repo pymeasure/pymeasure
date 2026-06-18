@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,6 +67,7 @@ class LD400P(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["C", "P", "R", "G", "V"],
         get_process=lambda v: v.replace("MODE ", ""),
+        cast=str,
     )
 
     level_select = Instrument.control(
@@ -79,6 +80,7 @@ class LD400P(SCPIMixin, Instrument):
         validator=strict_discrete_set,
         values=["A", "B", "T", "V", "E"],
         get_process=lambda v: v.replace("LVLSEL ", ""),
+        cast=str,
     )
 
     level_a = Instrument.control(

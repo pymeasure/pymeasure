@@ -211,6 +211,7 @@ Classes to communicate with the instrument:
 * :class:`SMU`: Instantiated by main instrument class for every SMU
 * :class:`SPGU`: Instantiated by main instrument class for every SPGU
 * :class:`SPGUChannel`: Instantiated by SPGU for each channel
+* :class:`CMU`: Instantiated by main instrument class for CMU
 
 All `query` commands return a human readable dict of settings. These are intended for debugging/logging/file headers, not for passing to the accompanying setting commands.
 
@@ -227,6 +228,10 @@ All `query` commands return a human readable dict of settings. These are intende
     :show-inheritance:
     :member-order: bysource
 .. autoclass:: SPGUChannel
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+.. autoclass:: CMU
     :members:
     :show-inheritance:
     :member-order: bysource
@@ -275,6 +280,6 @@ It's purpose is only logging or documentation.
 
 .. automodule:: pymeasure.instruments.agilent.agilentB1500
     :members: 
-    :exclude-members: AgilentB1500, SMU, SPGU, SPGUChannel, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
+    :exclude-members: AgilentB1500, SMU, SPGU, SPGUChannel, CMU, QueryLearn, Ranging, SMUCurrentRanging, SMUVoltageRanging
     :show-inheritance:
     :member-order: bysource

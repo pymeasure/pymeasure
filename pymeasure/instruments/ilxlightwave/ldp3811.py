@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 
 import logging
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, cast_or_str
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 try:
@@ -61,8 +61,8 @@ class LDP3811(Instrument):
     def __init__(self, adapter, name="ILX Lightwave LDP 3811", includeSCPI=False, **kwargs):
         super().__init__(adapter, name, includeSCPI, **kwargs)
 
-    def check_errors(self):
-        errors = self.values("ERRORS?")
+    def check_errors(self) -> list[float | str]:
+        errors = self.values("ERRORS?", cast=cast_or_str(float))
         for err in errors:
             log.error(err)
         return errors
@@ -82,6 +82,7 @@ class LDP3811(Instrument):
         """Control the mode as an :class:`LDP3811Mode` enum.""",
         validator=strict_discrete_set,
         values=LDP3811Mode,
+        cast=str,
         get_process=lambda v: LDP3811Mode(v),
     )
 
