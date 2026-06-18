@@ -1377,7 +1377,7 @@ class Ranging:
         # distinguish between limited and fixed ranging
         # omitting 'limited auto ranging'/'range fixed'
         # defaults to 'limited auto ranging'
-        inverse_ranges = {0: "Auto Ranging"}
+        inverse_ranges: dict[int, str | tuple[str, str]] = {0: "Auto Ranging"}
         for key, value in ranges.items():
             if isinstance(value, tuple):
                 for v in value:

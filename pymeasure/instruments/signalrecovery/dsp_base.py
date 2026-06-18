@@ -298,7 +298,7 @@ class DSPBase(Instrument):
     @property
     def auto_gain(self) -> bool:
         """Control lock-in amplifier for automatic AC gain."""
-        return int(self.values("AUTOMATIC")) == 1
+        return int(self.values("AUTOMATIC")[0]) == 1
 
     @auto_gain.setter
     def auto_gain(self, value: bool) -> None:

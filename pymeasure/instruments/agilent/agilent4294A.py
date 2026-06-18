@@ -92,13 +92,21 @@ class Agilent4294A(SCPIMixin, Instrument):
     )
 
     measurement_type = Instrument.control(
-        "MEAS?", "MEAS %d", "Control the measurement type. See MEASUREMENT_TYPES",
-        validator=strict_discrete_set, values=MEASUREMENT_TYPES,
+        "MEAS?",
+        "MEAS %d",
+        "Control the measurement type. See MEASUREMENT_TYPES",
+        validator=strict_discrete_set,
+        values=MEASUREMENT_TYPES,
+        cast=str,
     )
 
     active_trace = Instrument.control(
-        "TRAC?", "TRAC %s", "Control the active trace",
-        validator=strict_discrete_set, values=["A", "B"]
+        "TRAC?",
+        "TRAC %s",
+        "Control the active trace",
+        validator=strict_discrete_set,
+        values=["A", "B"],
+        cast=str,
     )
 
     title = Instrument.control(

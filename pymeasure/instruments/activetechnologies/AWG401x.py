@@ -70,15 +70,17 @@ class ChannelBase(Channel):
     )
 
     delay_max = Instrument.measurement(
-        None,
+        "",
         """Get maximum delay (int).""",
-        dynamic=True
+        dynamic=True,
+        cast=int,
     )
 
     delay_min = Instrument.measurement(
-        None,
+        "",
         """Get minimum delay (int).""",
-        dynamic=True
+        dynamic=True,
+        cast=int,
     )
 
 

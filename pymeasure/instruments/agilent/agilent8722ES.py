@@ -91,7 +91,7 @@ class Agilent8722ES(SCPIUnknownMixin, Instrument):
     @property
     def parameter(self):
         for parameter in Agilent8722ES.SCATTERING_PARAMETERS:
-            if int(self.values(f"{parameter}?")) == 1:
+            if int(self.values(f"{parameter}?")[0]) == 1:
                 return parameter
         return None
 

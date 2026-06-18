@@ -93,12 +93,15 @@ class Axis(Channel):
         cast=int, check_set_errors=True)
 
     mode = Instrument.control(
-        "getm", "setm %s",
+        "getm",
+        "setm %s",
         """Control axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
         'stp+', 'stp-'. Available modes depend on the actual axis model.""",
         validator=strict_discrete_set,
-        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
-        check_set_errors=True)
+        values=["gnd", "inp", "cap", "stp", "off", "stp+", "stp-"],
+        check_set_errors=True,
+        cast=str,
+    )
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",

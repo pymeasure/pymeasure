@@ -1807,7 +1807,7 @@ class SMUChannel(Channel):
         self.current_range = current_range[id]
 
     def insert_id(self, command: str) -> str:
-        return command.format_map({self.placeholder: ord(self.id) - 64})
+        return command.format_map({self.placeholder: ord(str(self.id)) - 64})
 
     def clear_measurement_buffer(self) -> None:
         """Clear the measurement data buffer (``MBC``)."""

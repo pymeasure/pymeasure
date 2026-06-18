@@ -407,8 +407,8 @@ class SR830(Instrument):
         """ Offsets the channel (X, Y, or R) to zero """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        channel = self.CHANNELS.index(channel) + 1
-        self.write(f"AOFF {channel}")
+        ch_num = self.CHANNELS.index(channel) + 1
+        self.write(f"AOFF {ch_num}")
 
     def get_scaling(self, channel: str) -> tuple[float, int]:
         """ Returns the offset percent and the expansion term
@@ -416,8 +416,8 @@ class SR830(Instrument):
         """
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
-        channel = self.CHANNELS.index(channel) + 1
-        offset, expand = self.ask(f"OEXP? {channel}").split(',')
+        ch_num = self.CHANNELS.index(channel) + 1
+        offset, expand = self.ask(f"OEXP? {ch_num}").split(',')
         return float(offset), self.EXPANSION_VALUES[int(expand)]
 
     def set_scaling(self, channel: str, percent: float, expand: int = 0, precent=None) -> None:

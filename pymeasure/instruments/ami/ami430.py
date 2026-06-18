@@ -116,10 +116,12 @@ class AMI430(SCPIMixin, Instrument):
         """
                                    )
 
-    state = Instrument.measurement("STATE?",
-                                   """Get the field in kGauss of the magnet.
-        """
-                                   )
+    state = Instrument.measurement(
+        "STATE?",
+        """Get the field in kGauss of the magnet.
+        """,
+        cast=int,
+    )
 
     def zero(self):
         """ Initiates the ramping of the magnetic field to zero

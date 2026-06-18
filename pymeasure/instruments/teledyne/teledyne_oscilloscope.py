@@ -31,6 +31,7 @@ from typing import Any, Literal
 from collections.abc import Callable
 from collections.abc import Sequence
 import numpy as np
+from typing import cast
 
 from pymeasure.adapters.adapter import Adapter
 from pymeasure.instruments import (
@@ -91,33 +92,35 @@ def _trigger_select_num_pars(value: Sequence) -> Literal[3] | Literal[4] | Liter
 
 
 def _trigger_select_validator(
-    value: tuple, values, num_pars_finder: Callable[..., int] = _trigger_select_num_pars
-):
+    value: tuple[str | float, ...] | list[str | float],
+    values: dict[str, tuple[list[str], list[str], list[float]]],
+    num_pars_finder: Callable[..., int] = _trigger_select_num_pars,
+) -> tuple[str | float, ...]:
     """Validate the input of the trigger_select property.
 
-    :param value: input parameters as a tuple
+    :param value: input parameters
     :param values: allowed space for each parameter
     :param num_pars_finder: function to find the number of expected parameters
     """
-    if not isinstance(value, tuple):
-        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
+    if not isinstance(value, (tuple, list)):
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple or list')
     if len(value) < 3 or len(value) > 5:
         raise ValueError(f'Number of parameters {len(value)} can only be 3, 4, 5')
-    value = tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value))
-    value = list(value)
-    value[1] = sanitize_source(value[1])
-    value = tuple(value)
-    if value[0] not in values.keys():
-        raise ValueError(f'Value {value[0]} not in the discrete set {values.keys()}')
+
+    value_list = list(tuple(map(lambda v: v.upper() if isinstance(v, str) else v, value)))
+    value_list[1] = sanitize_source(value_list[1])
+
+    if value_list[0] not in values.keys():
+        raise ValueError(f'Value {value_list[0]} not in the discrete set {values.keys()}')
     num_expected_pars = num_pars_finder(value)
-    if len(value) != num_expected_pars:
-        raise ValueError(f'Number of parameters {len(value)} != {num_expected_pars}')
-    for i, element in enumerate(value[1:], start=1):
+    if len(value_list) != num_expected_pars:
+        raise ValueError(f'Number of parameters {len(value_list)} != {num_expected_pars}')
+    for i, element in enumerate(value_list[1:], start=1):
         if i < 3:
-            strict_discrete_set(element, values=values[value[0]][i - 1])
+            strict_discrete_set(element, values=values[value_list[0]][i - 1])
         else:
-            strict_range(element, values=values[value[0]][i - 1])
-    return value
+            strict_range(cast(float, element), values=values[value_list[0]][i - 1])
+    return tuple(value_list)
 
 
 def _trigger_select_get_process(value: list[str]) -> list[str | float]:
@@ -985,7 +988,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         cast=str,
     )
 
-    _trigger_select_vals = {
+    _trigger_select_vals: dict[str, list[list[float] | list[str]]] = {
         "EDGE": [["C1", "C2", "C3", "C4", "LINE"], ["TI", "OFF"], [80e-9, 1.5]],
         "DROP": [["C1", "C2", "C3", "C4"], ["TI"], [2e-9, 4.2]],
         "GLIT": [["C1", "C2", "C3", "C4"], ["PS", "PL", "P2", "P1"], [2e-9, 4.2], [2e-9, 4.2]],

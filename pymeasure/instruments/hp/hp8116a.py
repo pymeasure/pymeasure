@@ -253,6 +253,10 @@ class HP8116A(Instrument):
                 num_bytes = 29
             elif command[0] == 'I':
                 num_bytes = 14
+            else:
+                raise ValueError(
+                    "`num_bytes` must be specified unless command is 'CST' or starts with 'I'"
+                )
 
         # The first character is always a space or a leftover character from the previous command,
         # when the number of bytes read was too large or too small.
