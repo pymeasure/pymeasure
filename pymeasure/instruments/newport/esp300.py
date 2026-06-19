@@ -24,7 +24,7 @@
 
 from time import sleep
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
 from warnings import warn
 
@@ -230,7 +230,7 @@ class Axis:
             sleep(interval)
 
 
-class ESP300(SCPIUnknownMixin, Instrument):
+class ESP300(SCPIMixin, Instrument):
     """ Represents the Newport ESP 300 Motion Controller
     and provides a high-level for interacting with the instrument.
 
