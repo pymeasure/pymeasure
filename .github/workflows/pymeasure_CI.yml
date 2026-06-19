@@ -46,6 +46,18 @@ jobs:
           version: PATH
           annotate: all
         continue-on-error: true
+      - name: Check pyright error baseline
+        if: success() || failure()
+        run: |
+          set -euo pipefail
+          ERROR_COUNT=$(pyright --outputjson 2>/dev/null \
+            | python -c "import sys,json; print(json.load(sys.stdin)['summary']['errorCount'])" || true)
+          BASELINE=126
+          echo "Pyright errors: $ERROR_COUNT (baseline: $BASELINE)"
+          if [ "$ERROR_COUNT" -gt "$BASELINE" ]; then
+            echo "::error::Pyright errors ($ERROR_COUNT) exceed baseline ($BASELINE)"
+            exit 1
+          fi
 
   docs:
     name: Docs
