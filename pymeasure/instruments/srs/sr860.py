@@ -24,11 +24,11 @@
 
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set, truncated_range
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, SCPIMIxin
 import warnings
 
 
-class SR860(Instrument):
+class SR860(SCPIMIxin, Instrument):
 
     SENSITIVITIES = [
         1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.002,
