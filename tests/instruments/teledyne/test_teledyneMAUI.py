@@ -81,11 +81,11 @@ def test_bwlimit():
              (b"BWL?", b"C1,ON"),
              ]
     ) as instr:
-        instr.ch_1.bwlimit = "OFF"
+        instr.ch_1.bwlimit = "OFF"  # type: ignore
         assert instr.bwlimit["C1"] == "OFF"
-        instr.ch_1.bwlimit = "200MHZ"
+        instr.ch_1.bwlimit = "200MHZ"  # type: ignore
         assert instr.bwlimit["C1"] == "200MHZ"
-        instr.ch_1.bwlimit = "ON"
+        instr.ch_1.bwlimit = "ON"  # type: ignore
         assert instr.bwlimit["C1"] == "ON"
 
 
