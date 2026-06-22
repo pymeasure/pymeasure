@@ -134,11 +134,10 @@ class CSVFormatter(logging.Formatter):
         self.units = Procedure.parse_columns(columns)
         self.delimiter = delimiter
 
-    def format(self, record):
+    def format(self, record: dict) -> str:
         """Formats a record as csv.
 
         :param record: record to format.
-        :type record: dict
         :return: a string
         """
         line = []
@@ -299,7 +298,7 @@ class Results:
         """
         return self.formatter.format_header() + Results.LINE_BREAK
 
-    def format(self, data: logging.LogRecord) -> str:
+    def format(self, data: dict) -> str:
         """ Returns a formatted string containing the data to be written
         to a file
         """

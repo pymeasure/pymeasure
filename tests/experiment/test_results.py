@@ -205,7 +205,7 @@ class TestPandas3Numpy2Compat:
 
         assert second_data['x'].dtype == first_dtype
         assert second_data['y'].dtype == first_dtype
-        assert len(second_data) == 10
+        assert len(second_data) == 10  # type: ignore
 
     def test_results_concat_sort_false_preserves_column_order(self, tmpdir):
         """pd.concat with sort=False must preserve column order from DATA_COLUMNS."""
