@@ -24,7 +24,7 @@
 
 from inspect import getmembers
 import logging
-from typing import Any, cast, Protocol, TypeVar
+from typing import Any, cast, Generic, overload, Protocol, TypeVar
 from collections.abc import Callable, Sequence
 from warnings import warn
 
@@ -76,7 +76,33 @@ def cast_or_str(cast_func: Callable[[str], T]) -> Callable[[str], T | str]:
     return _cast_or_str
 
 
-class DynamicProperty(property):
+class InstrumentProperty(property, Generic[T]):
+    """A typed property base class for instrument properties."""
+
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "InstrumentProperty[T]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type | None = None) -> T: ...
+
+    def __get__(self, obj, objtype=None):
+        if obj is None:
+            return self
+        if self.fget is None:
+            raise AttributeError("unreadable")
+        return self.fget(obj)
+
+    def __set__(self, obj: object, value: T) -> None:
+        if self.fset is None:
+            raise AttributeError("unsettable")
+        self.fset(obj, value)
+
+
+class StaticProperty(InstrumentProperty[T]):
+    """A typed property for static (non-dynamic) instrument properties."""
+
+
+class DynamicProperty(InstrumentProperty[T]):
     """ Class that allows managing python property behaviour in a "dynamic" fashion
 
     The class allows passing, in addition to regular property parameters, a list of
@@ -110,6 +136,12 @@ class DynamicProperty(property):
         self.name = ""
         self.prefix = prefix
 
+    @overload
+    def __get__(self, obj: None, objtype: type) -> "DynamicProperty[T]": ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type | None = None) -> T: ...
+
     def __get__(self, obj, objtype=None):
         if obj is None:
             # Property return itself when invoked from a class
@@ -124,7 +156,7 @@ class DynamicProperty(property):
                 kwargs[attr] = getattr(obj, attr_instance_name)
         return self.fget(obj, **kwargs)
 
-    def __set__(self, obj, value):
+    def __set__(self, obj: object, value: T) -> None:
         if self.fset is None:
             raise AttributeError(f"Can't set attribute {self.name}")
         kwargs = {}
@@ -546,7 +578,7 @@ class CommonBase:
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
-    ) -> property | DynamicProperty:
+    ) -> InstrumentProperty[Any]:
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
         instrument. See also :meth:`measurement` and :meth:`setting`.
@@ -720,7 +752,7 @@ class CommonBase:
                                    fset_params_list=CommonBase._fset_params_list,
                                    prefix=CommonBase.__reserved_prefix)
         else:
-            return property(fget, fset)
+            return StaticProperty(fget, fset)
 
     @staticmethod
     def measurement(
@@ -737,7 +769,7 @@ class CommonBase:
         maxsplit: int = -1,
         cast: Callable[[str], T] = float,
         values_kwargs: dict | None = None,
-    ) -> property | DynamicProperty:
+    ) -> InstrumentProperty[Any]:
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
         read from the instrument, not set.
@@ -798,7 +830,7 @@ class CommonBase:
         set_process: Callable[[Any], Any] = lambda v: v,
         check_set_errors: bool = False,
         dynamic: bool = False,
-    ) -> property | DynamicProperty:
+    ) -> InstrumentProperty[Any]:
         """Return a property for the class based on the supplied
         commands. This property may be set, but raises an exception
         when being read from the instrument.

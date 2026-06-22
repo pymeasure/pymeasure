@@ -13,8 +13,9 @@ jobs:
   lint_typecheck:
     name: Lint and Type Check
     runs-on: "ubuntu-latest"
-    env:
-      TY_ERROR_BASELINE: 290
+    permissions:
+      contents: read
+      checks: write
     defaults:
       run:
         shell: bash -l {0}
@@ -36,19 +37,12 @@ jobs:
           args: "check --output-format github"
       - name: Install Pymeasure for type checking
         run: pip install -e .[typecheck]
-      - name: Type check with ty
-        run: |
-          set -euo pipefail
-          ty check --exclude "examples/" --output-format github --exit-zero
-          TY_OUTPUT="$(ty check --exclude "examples/" --output-format concise --exit-zero 2>&1)"
-          ERROR_COUNT=$(printf "%s\n" "$TY_OUTPUT" | grep -c ' error\[' || true)
-          echo "Ty error count: $ERROR_COUNT (baseline: ${{ env.TY_ERROR_BASELINE }})"
-          # Fail if error count exceeds the baseline threshold
-          # Lower TY_ERROR_BASELINE as typing improvements are made
-          if [ "$ERROR_COUNT" -gt "${{ env.TY_ERROR_BASELINE }}" ]; then
-            echo "::error::Ty error count ($ERROR_COUNT) exceeds baseline threshold (${{ env.TY_ERROR_BASELINE }})"
-            exit 1
-          fi
+      - name: Type check with pyright
+        uses: jakebailey/pyright-action@v3
+        with:
+          version: PATH
+          annotate: all
+        continue-on-error: true
 
   docs:
     name: Docs

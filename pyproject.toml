@@ -58,7 +58,7 @@ docs = [
     "sphinx_autodoc_typehints>=2.3.0",
 ]
 typecheck = [
-    "ty>=0.0.49,<0.1",
+    "pyright>=1.1.400",
 ]
 
 [project.urls]
@@ -99,19 +99,13 @@ filterwarnings = [
     "error:Cannot cast.*In a future version:FutureWarning",
 ]
 
-[tool.ty.environment]
-python-version = "3.10"
-
-[tool.ty.rules]
-unresolved-import = "warn"
-unresolved-attribute = "warn"
-not-subscriptable = "warn"
-invalid-method-override = "warn"
-unsupported-operator = "warn"
-invalid-parameter-default = "warn"
-
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportAttributeAccessIssue = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalMemberAccess = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportOperatorIssue = "warning"
+defineConstant = { PYQT5 = true, PYSIDE2 = false, PYQT6 = false, PYSIDE6 = false }
