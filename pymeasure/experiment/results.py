@@ -31,7 +31,7 @@ from datetime import datetime
 from decimal import Decimal
 from importlib import import_module
 from string import Formatter
-from typing import Any
+from typing import Any, TypeVar, cast, overload
 
 import pandas as pd
 import pint
@@ -40,11 +40,15 @@ from pymeasure.units import ureg
 
 from .procedure import Procedure, ProcedureStatus, UnknownProcedure
 
+P = TypeVar("P", bound=Procedure)
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def replace_placeholders(string, procedure, date_format="%Y_%m_%d", time_format="%H_%M_%S"):
+def replace_placeholders(
+    string: str, procedure: Procedure, date_format: str = "%Y_%m_%d", time_format: str = "%H_%M_%S"
+) -> str:
     """Replace placeholders in string with values from procedure parameters.
 
     Replaces the placeholders in the provided string with the values of the
@@ -90,47 +94,50 @@ def replace_placeholders(string, procedure, date_format="%Y_%m_%d", time_format=
     return string.format(**placeholders)
 
 
-def unique_filename(directory, prefix='DATA', suffix='', ext='csv',
-                    dated_folder=False, index=True, datetimeformat="%Y-%m-%d",
-                    procedure=None):
-    """ Returns a unique filename based on the directory and prefix
-    """
+def unique_filename(
+    directory: os.PathLike | str,
+    prefix: str = "DATA",
+    suffix: str = "",
+    ext: str = "csv",
+    dated_folder: bool = False,
+    index: bool = True,
+    datetimeformat: str = "%Y-%m-%d",
+    procedure: Procedure | None = None,
+) -> str:
+    """Returns a unique filename based on the directory and prefix"""
     now = datetime.now()
-    directory = os.path.abspath(directory)
+    _directory = os.path.abspath(directory)
 
     if procedure is not None:
         prefix = replace_placeholders(prefix, procedure)
         suffix = replace_placeholders(suffix, procedure)
 
     if dated_folder:
-        directory = os.path.join(directory, now.strftime('%Y-%m-%d'))
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+        _directory = os.path.join(_directory, now.strftime('%Y-%m-%d'))
+    if not os.path.exists(_directory):
+        os.makedirs(_directory)
     if index:
         i = 1
         basename = f"{prefix}{now.strftime(datetimeformat)}"
-        basepath = os.path.join(directory, basename)
+        basepath = os.path.join(_directory, basename)
         filename = f"{basepath}_{i}{suffix}.{ext}"
         while os.path.exists(filename):
             i += 1
             filename = f"{basepath}_{i}{suffix}.{ext}"
     else:
         basename = f"{prefix}{now.strftime(datetimeformat)}{suffix}.{ext}"
-        filename = os.path.join(directory, basename)
+        filename = os.path.join(_directory, basename)
     return filename
 
 
 class CSVFormatter(logging.Formatter):
-    """ Formatter of data results """
+    """csv Formatter of data results for a given list of columns (=header).
 
-    def __init__(self, columns, delimiter=','):
-        """Creates a csv formatter for a given list of columns (=header).
+    :param columns: list of column names.
+    :param delimiter: delimiter between columns.
+    """
 
-        :param columns: list of column names.
-        :type columns: list
-        :param delimiter: delimiter between columns.
-        :type delimiter: str
-        """
+    def __init__(self, columns: list[str], delimiter: str = ","):
         super().__init__()
         self.columns = columns
         self.units = Procedure.parse_columns(columns)
@@ -140,7 +147,6 @@ class CSVFormatter(logging.Formatter):
         """Formats a record as csv.
 
         :param record: record to format.
-        :type record: dict
         :return: a string
         """
         line = []
@@ -187,12 +193,12 @@ class CSVFormatter(logging.Formatter):
                         line.append(f"{value}")
         return self.delimiter.join(line)
 
-    def format_header(self):
+    def format_header(self) -> str:
         return self.delimiter.join(self.columns)
 
 
 class Results:
-    """ The Results class provides a convenient interface to reading and
+    """The Results class provides a convenient interface to reading and
     writing data in connection with a :class:`.Procedure` object.
 
     :cvar COMMENT: The character used to identify a comment (default: #)
@@ -211,7 +217,7 @@ class Results:
     CHUNK_SIZE = 1000
     ENCODING = "utf-8"
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure: Procedure, data_filename: list[str] | tuple[str] | str):
         if not isinstance(procedure, Procedure):
             raise TypeError("Results require a Procedure object")
         self.procedure = procedure
@@ -240,9 +246,9 @@ class Results:
                 with open(filename, 'w', encoding=Results.ENCODING) as f:
                     f.write(self.header())
                     f.write(self.labels())
-            self._data = None
+            self._data: pd.DataFrame | None = None
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         # Get all information needed to reconstruct procedure
         self._parameters = self.procedure.parameter_values()
         self._class = self.procedure.__class__.__name__
@@ -256,17 +262,22 @@ class Results:
         del state['procedure_class']
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
+        if spec is None:
+            raise ValueError(
+                f"Specifications cannot be loaded for module '{self._module}' at '{self._file}'."
+            )
         module = importlib.util.module_from_spec(spec)
         sys.modules[self._module] = module
-        spec.loader.exec_module(module)
-        cls = getattr(module, self._class)
+        if spec.loader is not None:
+            spec.loader.exec_module(module)
+        cls = cast(type[Procedure], getattr(module, self._class))
 
-        self.procedure: Procedure = cls()
+        self.procedure = cls()
         self.procedure.set_parameters(self._parameters)
 
         self.procedure_class = cls
@@ -277,9 +288,8 @@ class Results:
         del self._module
         del self._file
 
-    def header(self):
-        """ Returns a text header to accompany a datafile so that the procedure
-        can be reconstructed
+    def header(self) -> str:
+        """Return a text header to accompany a datafile so that the procedure can be reconstructed.
         """
         h = []
         procedure = re.search("'(?P<name>[^']+)'",
@@ -294,28 +304,26 @@ class Results:
         h = [Results.COMMENT + line for line in h]  # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
-    def labels(self):
-        """ Returns the columns labels as a string to be written
-        to the file
-        """
+    def labels(self) -> str:
+        """Return the columns labels as a string to be written to the file."""
         return self.formatter.format_header() + Results.LINE_BREAK
 
-    def format(self, data):
-        """ Returns a formatted string containing the data to be written
-        to a file
+    def format(self, data: dict[str, Any]) -> str:
+        """ Return a formatted string containing the data to be written
+        to a file.
         """
         return self.formatter.format(data)
 
-    def parse(self, line):
-        """ Returns a dictionary containing the data from the line """
+    def parse(self, line: str) -> dict[str, str]:
+        """Return a dictionary containing the data from the line."""
         data = {}
         items = line.split(Results.DELIMITER)
         for i, key in enumerate(self.procedure.DATA_COLUMNS):
             data[key] = items[i]
         return data
 
-    def metadata(self):
-        """ Returns a text header for the metadata to write into the datafile """
+    def metadata(self) -> None | str:
+        """Return a text header for the metadata to write into the datafile."""
         if not self.procedure.metadata_objects():
             return
 
@@ -328,8 +336,8 @@ class Results:
         m = [Results.COMMENT + line for line in m]  # Comment each line
         return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
 
-    def store_metadata(self):
-        """ Inserts the metadata header (if any) into the datafile """
+    def store_metadata(self) -> None:
+        """Inserts the metadata header (if any) into the datafile."""
         c_header = self.metadata()
         if c_header is None:
             return
@@ -344,20 +352,25 @@ class Results:
 
         self._header_count += self._metadata_count
 
+    @overload
     @staticmethod
-    def parse_header(header, procedure_class=None):
-        """ Returns a Procedure object with the parameters as defined in the
-        header text.
-        """
-        if procedure_class is not None:
-            procedure = procedure_class()
-        else:
-            procedure = None
+    def parse_header(header: str, procedure_class: type[P]) -> P: ...
 
-        header = header.split(Results.LINE_BREAK)
+    @overload
+    @staticmethod
+    def parse_header(header: str, procedure_class: None = None) -> Procedure | UnknownProcedure: ...
+
+    @staticmethod
+    def parse_header(
+        header: str, procedure_class: type[P] | None = None
+    ) -> P | Procedure | UnknownProcedure:
+        """Return a Procedure object with the parameters as defined in the header text."""
+
+        header_list = header.split(Results.LINE_BREAK)
         procedure_module = None
+        procedure_class_name = None
         parameters = {}
-        for line in header:
+        for line in header_list:
             if line.startswith(Results.COMMENT):
                 line = line[1:]  # Uncomment
             else:
@@ -366,8 +379,9 @@ class Results:
             if line.startswith("Procedure"):
                 regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
                 search = re.search(regex, line)
-                procedure_module = search.group("module")
-                procedure_class = search.group("class")
+                if search is not None:
+                    procedure_module = search.group("module")
+                    procedure_class_name = search.group("class")
             elif line.startswith("\t"):
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
@@ -376,13 +390,17 @@ class Results:
                 else:
                     parameters[partitioned_line[0]] = partitioned_line[2]
 
-        if procedure is None:
-            if procedure_class is None:
+        if procedure_class is not None:
+            procedure = procedure_class()
+        else:
+            if procedure_class_name is None:
                 raise ValueError("Header does not contain the Procedure class")
             try:
-                procedure_module = import_module(procedure_module)
-                procedure_class = getattr(procedure_module, procedure_class)
-                procedure = procedure_class()
+                procedure_module = import_module(procedure_module)  # type: ignore
+                imported_procedure_class = cast(
+                    type[Procedure], getattr(procedure_module, procedure_class_name)
+                )
+                procedure = imported_procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
                 log.warning("Unknown Procedure being used")
@@ -395,7 +413,7 @@ class Results:
             else:
                 log.warning(
                     f"Parameter \"{parameter.name}\" not found when loading " +
-                    f"'{procedure_class}', setting default value")
+                    f"'{procedure_class or procedure_class_name}', setting default value")
                 setattr(procedure, name, parameter.default)
 
         # Fill the procedure with the metadata found
@@ -411,9 +429,9 @@ class Results:
         return procedure
 
     @staticmethod
-    def load(data_filename, procedure_class=None):
-        """ Returns a Results object with the associated Procedure object and
-        data
+    def load(data_filename: str, procedure_class: type[Procedure] | None = None) -> "Results":
+        """ Return a Results object with the associated Procedure object and
+        data.
         """
         header = ""
         header_read = False
@@ -453,11 +471,11 @@ class Results:
             if current_size == self._last_file_size:
                 return self._data
             skiprows = len(self._data) + self._header_count
-            chunks = pd.read_csv(
+            chunks = pd.read_csv(  # type: ignore
                 self.data_filename,
                 comment=Results.COMMENT,
                 header=0,
-                names=self._data.columns,
+                names=self._data.columns,  # pyright: ignore[reportArgumentType]
                 chunksize=Results.CHUNK_SIZE,
                 skiprows=skiprows,
                 iterator=True,
@@ -478,9 +496,9 @@ class Results:
             self._last_file_size = current_size
         return self._data
 
-    def reload(self):
+    def reload(self) -> None:
         """ Perform a full reload of the file data, neglecting
-        any changes in the comments
+        any changes in the comments.
         """
         chunks = pd.read_csv(
             self.data_filename,
@@ -494,6 +512,7 @@ class Results:
         except Exception:  # noqa: BLE001
             self._data = chunks.read()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"<{self.__class__.__name__}(filename='{self.data_filename}',"
-                f"procedure={self.procedure.__class__.__name__},shape={self.data.shape})>")
+                f"procedure={self.procedure.__class__.__name__},"
+                f"shape={self.data.shape if self.data is not None else ''})>")
