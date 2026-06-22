@@ -240,16 +240,19 @@ class SmartlineV2(Instrument):
     def __init__(self, adapter, name="Thyracont SmartlineV2 Transmitter", baud_rate=115200,
                  address=1, timeout=250,
                  **kwargs):
-        super().__init__(adapter, name=name, includeSCPI=False,
-                         write_termination="\r",
-                         read_termination="\r",
-                         timeout=timeout,
-                         asrl={'baud_rate': baud_rate,
-                               'parity': Parity.none,
-                               'stop_bits': StopBits.one,
-                               },
-                         **kwargs
-                         )
+        super().__init__(
+            adapter,
+            name=name,
+            write_termination="\r",
+            read_termination="\r",
+            timeout=timeout,
+            asrl={
+                "baud_rate": baud_rate,
+                "parity": Parity.none,
+                "stop_bits": StopBits.one,
+            },
+            **kwargs,
+        )
         self.address = address  # 1-16
 
     def write(self, command):

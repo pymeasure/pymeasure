@@ -86,6 +86,5 @@ class SR510(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs,
         )

@@ -272,7 +272,6 @@ class MercuryiTC(Instrument):
             name=name,
             read_termination="\n",
             write_termination="\n",
-            includeSCPI=False,
             **kwargs
         )
 

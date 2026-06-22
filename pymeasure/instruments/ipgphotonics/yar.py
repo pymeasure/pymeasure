@@ -76,7 +76,6 @@ class YAR(Instrument):
         kwargs.setdefault("read_termination", "\r")
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={'parity': Parity.none, 'stop_bits': StopBits.one},
                          **kwargs)
 

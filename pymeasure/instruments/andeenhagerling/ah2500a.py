@@ -49,7 +49,6 @@ class AH2500A(Instrument):
             write_termination=write_termination,
             read_termination=read_termination,
             timeout=timeout,
-            includeSCPI=False,
             **kwargs
         )
         self._triggered = False

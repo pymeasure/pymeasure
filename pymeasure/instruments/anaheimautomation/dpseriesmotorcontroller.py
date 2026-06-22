@@ -204,7 +204,6 @@ class DPSeriesMotorController(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'baud_rate': 38400},
             **kwargs
         )

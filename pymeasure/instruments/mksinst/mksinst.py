@@ -94,7 +94,6 @@ class MKSInstrument(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination=";",  # in reality its ";FF"
             # which is, however, invalid for pyvisa. Therefore extra bytes have to
             # be read in the read() method and the terminators are hardcoded here.

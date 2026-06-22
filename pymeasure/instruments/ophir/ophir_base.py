@@ -112,7 +112,6 @@ class OphirCommunication(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={
                 "write_termination": "\r\n",
                 "read_termination": "\r\n",

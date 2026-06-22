@@ -66,7 +66,7 @@ class HP8753E(Instrument):
         max_power=10,
         **kwargs,
     ):
-        super().__init__(adapter=adapter, name=name, includeSCPI=False, **kwargs)
+        super().__init__(adapter=adapter, name=name, **kwargs)
 
         self._manu = ""
         self._model = ""

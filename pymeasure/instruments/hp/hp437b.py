@@ -191,7 +191,6 @@ class HP437B(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )

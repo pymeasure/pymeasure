@@ -107,7 +107,6 @@ class EurotestHPP120256(Instrument):
             write_termination="\n",
             read_termination="",
             send_end=True,
-            includeSCPI=False,
             timeout=timeout,
             **kwargs
         )

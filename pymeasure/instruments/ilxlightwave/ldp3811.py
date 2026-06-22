@@ -58,8 +58,8 @@ class LDP3811(Instrument):
     """Represents the ILX Lightwave LDP3811 Pulsed Laser Diode Driver
     and provides a high-level interface for interacting with the instrument."""
 
-    def __init__(self, adapter, name="ILX Lightwave LDP 3811", includeSCPI=False, **kwargs):
-        super().__init__(adapter, name, includeSCPI, **kwargs)
+    def __init__(self, adapter, name="ILX Lightwave LDP 3811", **kwargs):
+        super().__init__(adapter, name, **kwargs)
 
     def check_errors(self) -> list[float | str]:
         errors = self.values("ERRORS?", cast=cast_or_str(float))
