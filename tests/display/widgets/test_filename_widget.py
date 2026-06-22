@@ -113,7 +113,7 @@ def test_placeholder_completer_split_path_open_brace_populates_model():
     completer.splitPath("data{")
     model = completer.model()
     assert model.rowCount() == 2
-    items = [model.data(model.index(i), QtCore.Qt.DisplayRole) for i in range(model.rowCount())]
+    items = [model.data(model.index(i), QtCore.Qt.DisplayRole) for i in range(model.rowCount())]  # pyright: ignore[reportCallIssue, reportOptionalMemberAccess]
     assert "data{foo}" in items
     assert "data{bar}" in items
 

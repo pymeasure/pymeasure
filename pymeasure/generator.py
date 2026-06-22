@@ -254,7 +254,7 @@ class ByteFormatter(logging.Formatter):
 class ByteStreamHandler(logging.StreamHandler):
     """Logging handler using bytes streams."""
 
-    terminator = b"\n"  # type: ignore
+    terminator: bytes = b"\n"  # type: ignore[override]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
