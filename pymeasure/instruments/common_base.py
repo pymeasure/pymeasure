@@ -76,6 +76,10 @@ def cast_or_str(cast_func: Callable[[str], T]) -> Callable[[str], T | str]:
     return _cast_or_str
 
 
+def identity(input: T) -> T:
+    return input
+
+
 class InstrumentProperty(property, Generic[T]):
     """A typed property base class for instrument properties."""
 
