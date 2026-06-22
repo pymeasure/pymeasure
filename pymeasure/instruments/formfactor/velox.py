@@ -26,6 +26,7 @@
 import logging
 
 from pymeasure.instruments import Channel, Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
 log = logging.getLogger(__name__)
@@ -159,7 +160,7 @@ class WaferMap(Channel):
         """
         return self.values("StepNextDie",
                            separator=" ",
-                           cast=int,
+                           cast=cast_or_str(int),
                            )
 
     def step_to_die(self, x_pos, y_pos, s_pos=None):
@@ -231,6 +232,7 @@ class Velox(SCPIMixin, Instrument):
     version = Instrument.measurement(
         "ReportSoftwareVersion",
         """Get the main software version of Velox (str).""",
+        cast=str,
         )
 
     def read(self):

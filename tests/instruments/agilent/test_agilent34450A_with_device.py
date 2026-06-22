@@ -27,7 +27,10 @@ from pymeasure.instruments.agilent.agilent34450A import Agilent34450A
 from pyvisa.errors import VisaIOError
 
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+@pytest.fixture(scope="module")
+def device(connected_device_address):
+    device = Agilent34450A(connected_device_address)
+    return device
 
 
 class TestAgilent34450A:
@@ -38,11 +41,6 @@ class TestAgilent34450A:
         - A Agilent34450A device should be connected to the computer;
         - The device's address must be set in the RESOURCE constant.
     """
-
-    ###############################################################
-    # Agilent34450A device goes here:
-    RESOURCE = "USB0::10893::45848::MY56511723::0::INSTR"
-    ###############################################################
 
     #########################
     # PARAMETRIZATION CASES #
@@ -70,13 +68,12 @@ class TestAgilent34450A:
                           [1E-4, 1E-4], [1E-3, 1E-3], [1E-2, 1E-2], ["MIN", 1E-9], ["MAX", 1E-2],
                           ["DEF", 1E-6]]
 
-    DMM = Agilent34450A(RESOURCE)
-
     ############
     # FIXTURES #
     ############
     @pytest.fixture
-    def make_reseted_dmm(self):
+    def make_reseted_dmm(self, device: Agilent34450A):
+        self.DMM = device
         self.DMM.reset()
         return self.DMM
 

@@ -15,7 +15,7 @@
       * For the PR URLs: `by (@[\w-]+) in https://github.com/pymeasure/pymeasure/pull/(\d+)` to `($1, #$2)`.
       * For new contributors: ` made their first contribution in https://github.com/pymeasure/pymeasure/pull/\d+` to `, `
 4. Update the version number in CITATION.cff
-    * On the line starting with `version:`, replace the current version number with the new version number
+    * On the line starting with `version: `, replace the current version number with the new version number
 5. Push the changes up as a PR
 6. Verify that the builds complete
 7. Create a new [release on GitHub](https://github.com/pymeasure/pymeasure/releases)

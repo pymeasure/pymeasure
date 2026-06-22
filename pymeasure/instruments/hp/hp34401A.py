@@ -24,6 +24,7 @@
 
 from warnings import warn
 from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set
 
 
@@ -111,6 +112,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values=FUNCTIONS,
         map_values=True,
+        cast=str,
         get_process=lambda v: v.strip('"'),
     )
 
@@ -152,6 +154,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         2-wire ohms, and 4-wire ohms.""",
         validator=strict_discrete_set,
         values=[0.02, 0.2, 1, 10, 100, "MIN", "MAX"],
+        cast=cast_or_str(float),
     )
 
     gate_time = Instrument.control(
@@ -163,6 +166,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         or 1 second (6.5 digits).""",
         validator=strict_discrete_set,
         values=[0.01, 0.1, 1, "MIN", "MAX"],
+        cast=cast_or_str(float),
     )
 
     detector_bandwidth = Instrument.control(
@@ -172,6 +176,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         Valid values: 3, 20, 200, "MIN", "MAX".""",
         validator=strict_discrete_set,
         values=[3, 20, 200, "MIN", "MAX"],
+        cast=cast_or_str(float),
     )
 
     autozero_enabled = Instrument.control(
@@ -209,6 +214,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         Returns "FRONT" or "REAR".""",
         values={"FRONT": "FRON", "REAR": "REAR"},
         map_values=True,
+        cast=str,
     )
 
     # Trigger related commands
@@ -238,6 +244,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         Ext Trig (external trigger) terminal.""",
         validator=strict_discrete_set,
         values=["IMM", "BUS", "EXT"],
+        cast=str,
     )
 
     trigger_delay = Instrument.control(
@@ -245,6 +252,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         """Control the trigger delay in seconds.
 
         Valid values (incl. floats): 0 to 3600 seconds, "MIN", "MAX".""",
+        cast=cast_or_str(float),
     )
 
     trigger_auto_delay_enabled = Instrument.control(
@@ -264,6 +272,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         """Controls the number of samples per trigger event.
 
         Valid values: 1 to 50000, "MIN", "MAX".""",
+        cast=cast_or_str(float),
     )
 
     trigger_count = Instrument.control(
@@ -273,6 +282,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
         Valid values: 1 to 50000, "MIN", "MAX", "INF".
         The INFinite parameter instructs the multimeter to continuously accept triggers
         (you must send a device clear to return to the "idle" state).""",
+        cast=cast_or_str(float),
     )
 
     stored_reading = Instrument.measurement(
@@ -298,6 +308,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
 
         The text can be up to 12 characters long;
         any additional characters are truncated my the multimeter.""",
+        cast=str,
         get_process=lambda x: x.strip('"'),
     )
 
@@ -333,6 +344,7 @@ class HP34401A(SCPIUnknownMixin, Instrument):
     scpi_version = Instrument.measurement(
         "SYST:VERS?",
         """The SCPI version of the multimeter.""",
+        cast=str,
     )
 
     stored_readings_count = Instrument.measurement(

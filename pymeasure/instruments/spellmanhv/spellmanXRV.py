@@ -29,6 +29,7 @@ from pyvisa.constants import InterfaceType
 
 from pymeasure.instruments import Channel, Instrument
 from pymeasure.adapters import Adapter
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
@@ -478,7 +479,8 @@ class SpellmanXRV(Instrument):
     dsp = Instrument.measurement(
         "23",
         """Get the DSP part number and version (list).""",
-        )
+        cast=cast_or_str(float),
+    )
 
     configuration = Instrument.measurement(
         "27",
@@ -559,7 +561,8 @@ class SpellmanXRV(Instrument):
     fpga = Instrument.measurement(
         "43",
         """Get the FPGA part number and version (list).""",
-        )
+        cast=cast_or_str(float),
+    )
 
     errors = Instrument.measurement(
         "68",

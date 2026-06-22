@@ -75,7 +75,8 @@ class Agilent4284ASpot(Channel):
         See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
         )
 
 
@@ -130,7 +131,8 @@ class Agilent4284ACorrection(Channel):
         See :attr:`.Agilent4284A.impedance_mode` for detailed explanation.
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
         )
 
     cable_length = Channel.control(
@@ -261,7 +263,8 @@ class Agilent4284A(SCPIMixin, Instrument):
         * YTR: Admittance magnitude [Ohm] and phase [rad]
         """,
         validator=strict_discrete_set,
-        values=IMPEDANCE_MODES
+        values=IMPEDANCE_MODES,
+        cast=str,
     )
 
     impedance_range = Instrument.control(

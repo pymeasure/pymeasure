@@ -94,7 +94,7 @@ class Racal1992(Instrument):
     }
 
     @staticmethod
-    def decode(v, allowed_types=None):
+    def decode(v: str, allowed_types=None):
         """Decode received message.
 
         All values returned follow the same format: 2 letters to indicate
@@ -143,7 +143,8 @@ class Racal1992(Instrument):
             "SRS %d",
             """Control the resolution of the counter with an integer from 3 to 10 that
             specifies the number of significant digits. """,
-            get_process=(lambda v: Racal1992.decode(v, "RS"))
+            get_process=(lambda v: Racal1992.decode(v, "RS")),
+            cast=str,
         )
 
     delay_enable = Instrument.setting(
@@ -157,7 +158,8 @@ class Racal1992(Instrument):
             "RDT",
             "SDT %f",
             """Control delay time.""",
-            get_process=(lambda v: Racal1992.decode(v, "DT"))
+            get_process=(lambda v: Racal1992.decode(v, "DT")),
+            cast=str,
         )
 
     special_function_enable = Instrument.setting(
@@ -172,33 +174,38 @@ class Racal1992(Instrument):
             "RSF",
             "S%d",
             """Control special function.""",
-            get_process=(lambda v: Racal1992.decode(v, "SF"))
+            get_process=(lambda v: Racal1992.decode(v, "SF")),
+            cast=str,
         )
 
     # FIXME: not tested on real instrument!
     total_so_far = Instrument.measurement(
             "RF",
             """Get total number of events so far.""",
-            get_process=(lambda v: Racal1992.decode(v, "RF"))
+            get_process=(lambda v: Racal1992.decode(v, "RF")),
+            cast=str,
         )
 
     software_version = Instrument.measurement(
             "RMS",
             "Get instrument software version",
-            get_process=(lambda v: Racal1992.decode(v, "MS"))
+            get_process=(lambda v: Racal1992.decode(v, "MS")),
+            cast=str,
         )
 
     gpib_software_version = Instrument.measurement(
             "RGS",
             "Get GPIB software version",
-            get_process=(lambda v: Racal1992.decode(v, "GS"))
+            get_process=(lambda v: Racal1992.decode(v, "GS")),
+            cast=str,
         )
 
     device_type = Instrument.measurement(
             "RUT",
             """Get unit device type. Should return 1992 for a Racal-Dana 1992
             or 1991 for a Racal-Dana 1991.""",
-            get_process=(lambda v: Racal1992.decode(v, "UT"))
+            get_process=(lambda v: Racal1992.decode(v, "UT")),
+            cast=str,
         )
 
     math_mode = Instrument.setting(
@@ -212,28 +219,32 @@ class Racal1992(Instrument):
             "RMX",
             "SMX %f",
             """Control math constant X.""",
-            get_process=(lambda v: Racal1992.decode(v, "MX"))
+            get_process=(lambda v: Racal1992.decode(v, "MX")),
+            cast=str,
         )
 
     math_z = Instrument.control(
             "RMZ",
             "SMZ %f",
             """Control math constant Z.""",
-            get_process=(lambda v: Racal1992.decode(v, "MZ"))
+            get_process=(lambda v: Racal1992.decode(v, "MZ")),
+            cast=str,
         )
 
     trigger_level_a = Instrument.control(
             "RLA",
             "SLA %f",
             """Control trigger level for channel A""",
-            get_process=(lambda v: Racal1992.decode(v, "LA"))
+            get_process=(lambda v: Racal1992.decode(v, "LA")),
+            cast=str,
         )
 
     trigger_level_b = Instrument.control(
             "RLB",
             "SLB %f",
             """Control trigger level for channel B""",
-            get_process=(lambda v: Racal1992.decode(v, "LB"))
+            get_process=(lambda v: Racal1992.decode(v, "LB")),
+            cast=str,
         )
 
     def read(self, **kwargs):

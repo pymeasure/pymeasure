@@ -28,7 +28,7 @@ from typing import Any, TypedDict, TypeVar
 from collections.abc import Callable, Sequence
 
 from pymeasure.adapters import Adapter
-from pymeasure.instruments.common_base import CommonBase
+from pymeasure.instruments.common_base import CommonBase, cast_or_str
 from pymeasure.instruments import Instrument
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -394,6 +394,7 @@ class OphirBase(OphirCommunication):
         "AW",
         "WI%i",
         """Control the index of the wavelength in the wavelength list.""",
+        cast=cast_or_str(float),
         get_process_list=lambda v: int(v[3]) if v[0] == "CONTINUOUS" else int(v[1]),
         set_process=lambda v: v + 1,
         check_set_errors=True,

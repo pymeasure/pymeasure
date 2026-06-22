@@ -63,6 +63,7 @@ class Fluke7341(Instrument):
         """Control the temperature unit: `c` for Celsius and `f` for Fahrenheit`.""",
         validator=strict_discrete_set,
         values=('c', 'f'),
+        cast=str,
     )
 
     temperature = Instrument.measurement("t",

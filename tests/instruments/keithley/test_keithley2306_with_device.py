@@ -27,7 +27,11 @@ import pytest
 import math
 from pymeasure.instruments.keithley.keithley2306 import Keithley2306
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+
+@pytest.fixture(scope="module")
+def device(connected_device_address) -> Keithley2306:
+    device = Keithley2306(connected_device_address)
+    return device
 
 
 class TestKeithley2306:
@@ -38,11 +42,6 @@ class TestKeithley2306:
         - A Keithley2306 device should be connected to the computer;
         - The device's address must be set in the RESOURCE constant;
     """
-
-    ##################################################
-    # Keithley2306 device address goes here:
-    RESOURCE = "USB0::10893::6039::CN57266430::INSTR"
-    ##################################################
 
     #########################
     # PARAMETRIZATION CASES #
@@ -84,8 +83,6 @@ class TestKeithley2306:
     SOURCE_CURRENTS = [0.006, 1, 5]
     SOURCE_CURRENT_LIMIT_TYPES = ['limit', 'trip']
 
-    INSTR = Keithley2306(RESOURCE)
-
     ############
     # FIXTURES #
     ############
@@ -101,7 +98,8 @@ class TestKeithley2306:
             self.INSTR.relay(i).closed = False
 
     @pytest.fixture
-    def instr(self):
+    def instr(self, device: Keithley2306):
+        self.INSTR = device
         self.INSTR.reset()
         return self.INSTR
 

@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments.common_base import cast_or_str
 from enum import IntFlag
 
 
@@ -83,6 +84,7 @@ class SMU(Channel):
     voltage = Channel.measurement(
         "US;TV{ch}",
         """Measure the voltage in Volts (float).""",
+        cast=str,
         get_process=lambda v: float(v[3:]),
         )
 
@@ -121,6 +123,7 @@ class SMU(Channel):
     current = Channel.measurement(
         "US;TI{ch}",
         """Measure the current in Amps.""",
+        cast=str,
         get_process=lambda v: float(v[3:]),
         )
 
@@ -192,6 +195,7 @@ class Keithley4200(Instrument):
     status = Instrument.measurement(
         "SP",
         """Get the status byte (IntFlag).""",
+        cast=cast_or_str(float),
         get_process=lambda v: StatusCode(int(v)),
         )
 

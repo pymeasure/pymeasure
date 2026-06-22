@@ -88,7 +88,7 @@ class Kusg245_250A(Instrument):
         self._power_limit = power_limit
         self.power_setpoint_values = [0, power_limit]
 
-    version = Instrument.measurement("v", """Get firmware version.""")
+    version = Instrument.measurement("v", """Get firmware version.""", cast=str)
 
     @property
     def voltage_5v(self):
@@ -241,6 +241,7 @@ class Kusg245_250A(Instrument):
         """,
         validator=truncated_range,
         values=[2400, 2500],
+        cast=str,
         get_process=lambda v: int(v[:-3]) if v.endswith("MHz") else None,
     )
 
@@ -256,6 +257,7 @@ class Kusg245_250A(Instrument):
         """,
         validator=truncated_range,
         values=[2400000, 2500000],
+        cast=str,
         set_process=lambda v: round(v, -1),
         get_process=lambda v: int(v[:-3]) if v.endswith("kHz") else None,
     )

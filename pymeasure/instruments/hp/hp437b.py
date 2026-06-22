@@ -198,7 +198,7 @@ class HP437B(Instrument):
     def check_errors(self):
         errors = []
         while True:
-            err = self.values("ERR?")
+            err = self.values("ERR?", cast=int)
             # exclude upper limit and lower limit hit from real errors
             if int(err[0]) != 0 and int(err[0]) != 21 and int(err[0]) != 23:
                 log.error(f"{self.name}: {err[0]}, {Errors[err[0]]}")
@@ -311,7 +311,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.DutyCycleStatus),
         check_set_errors=True
     )
@@ -350,7 +350,7 @@ class HP437B(Instrument):
         Control the filter mode. By switching over from automatic to manual (true to false)
         the instrument implicitly keeps (holds) the filter value from the automatic selection.
         """,
-        cast=bool,
+        cast=str,
         get_process=_getstatus(StatusMessage.AutoFilterStatus),
         set_process=lambda v: "FA" if v else "FH",
         check_set_errors=True
@@ -364,6 +364,7 @@ class HP437B(Instrument):
         """,
         values=[1, 2, 4, 8, 16, 32, 64, 128, 256, 512],
         validator=strict_discrete_set,
+        cast=str,
         get_process=_getstatus(StatusMessage.Filter, (lambda x: 2 ** x)),
         check_set_errors=True
     )
@@ -403,7 +404,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.LimitsCheckingStatus),
         check_set_errors=True
     )
@@ -461,7 +462,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.LimitsStatus),
     )
 
@@ -472,7 +473,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 2, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.LimitsStatus),
     )
 
@@ -495,7 +496,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.PowerRefStatus),
         check_set_errors=True
     )
@@ -507,7 +508,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.OffsetStatus),
         check_set_errors=True
     )
@@ -590,7 +591,7 @@ class HP437B(Instrument):
         """,
         map_values=True,
         values={True: 1, False: 0},
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.RelativeModeStatus),
         check_set_errors=True
     )
@@ -612,7 +613,7 @@ class HP437B(Instrument):
 
         """,
         values=[e for e in MeasurementUnit],
-        cast=int,
+        cast=str,
         get_process=_getstatus(StatusMessage.MeasurementUnits, lambda v: MeasurementUnit(v)),
     )
 
@@ -631,7 +632,7 @@ class HP437B(Instrument):
         """,
         validator=strict_discrete_set,
         values={True: "LN", False: "LG"},
-        cast=bool,
+        cast=str,
         map_values=True,
         get_process=_getstatus(StatusMessage.LinearLogStatus, lambda v: {0: "LN", 1: "LG"}[v])
     )
@@ -836,10 +837,11 @@ class HP437B(Instrument):
         "SM", "%s",
         """
         Control the automatic range.
-        The power meter divides each sensor’s power range into 5 ranges of 10 dB each. Range 1
+        The power meter divides each sensor's power range into 5 ranges of 10 dB each. Range 1
         is the most sensitive (lowest power levels), and Range 5 is the least sensitive (highest
         power levels). The range can be set either automatically or manually.
         """,
+        cast=str,
         get_process=_getstatus(StatusMessage.AutomaticRangeStatus, lambda v: bool(v)),
         set_process=lambda v: "RM0EN" if v is True else "RH"
     )
@@ -852,6 +854,7 @@ class HP437B(Instrument):
         """,
         values=[1, 5],
         validator=strict_range,
+        cast=str,
         get_process=_getstatus(StatusMessage.Range)
     )
 
@@ -887,6 +890,7 @@ class HP437B(Instrument):
         """
         Get the operating mode the power meter is currently in.
         """,
+        cast=str,
         get_process=_getstatus(StatusMessage.OperatingMode, lambda v: OperatingMode(v))
     )
 
@@ -916,6 +920,7 @@ class HP437B(Instrument):
         """,
         values=[e for e in TriggerMode],
         validator=strict_discrete_set,
+        cast=str,
         get_process=_getstatus(StatusMessage.TriggerMode, lambda v: TriggerMode(v)),
         set_process=lambda v: int(v)
     )
@@ -963,6 +968,7 @@ class HP437B(Instrument):
         """,
         values=[e for e in GroupTriggerMode],
         validator=strict_discrete_set,
+        cast=str,
         get_process=_getstatus(StatusMessage.GroupTriggerMode, lambda v: GroupTriggerMode(v)),
         set_process=lambda v: int(v)
     )

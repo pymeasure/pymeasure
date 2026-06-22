@@ -25,6 +25,7 @@
 import struct
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
@@ -53,6 +54,7 @@ class VoltageChannel(Channel):
         values={"DC": "D", "AC": "A"},
         map_values=True,
         get_process=lambda v: v.split(" ", 1)[-1][0],
+        cast=str,
     )
 
     def get_waveform(self):
@@ -194,6 +196,7 @@ class TriggerChannel(Channel):
             "hold_type": v[4],
             "hold_value1": v[6],
         },
+        cast=cast_or_str(float),
     )
 
     trigger_level = Channel.measurement(
@@ -207,6 +210,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "level": float(v.split(" ", 1)[-1][:-2]),
         },
+        cast=str,
     )
 
     trigger_slope = Channel.measurement(
@@ -220,6 +224,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "slope": v.split(" ", 1)[-1],
         },
+        cast=str,
     )
 
     trigger_mode = Channel.measurement(
@@ -230,6 +235,7 @@ class TriggerChannel(Channel):
 
         """,
         get_process=lambda v: {"mode": v.split(" ", 1)[-1]},
+        cast=str,
     )
 
     trigger_coupling = Channel.measurement(
@@ -243,6 +249,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "coupling": v.split(" ", 1)[-1],
         },
+        cast=str,
     )
 
     def set_trigger_config(self, **kwargs):
@@ -332,18 +339,21 @@ class SDS1072CML(SCPIMixin, Instrument):
         "SAST?",
         "Get the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process=lambda v: v.split(" ", 1)[-1],
+        cast=str,
     )
 
     internal_state = Instrument.measurement(
         "INR?",
         "Get the scope's Internal state change register and clears it.",
         get_process=lambda v: v.split(" ", 1)[-1],
+        cast=str,
     )
 
     is_ready = Instrument.measurement(
         "SAST?",
         "Get whether the scope is ready for the next acquisition (bool)",
         get_process=lambda v: v.split(" ", 1)[-1] in ["Stop", "Ready", "Armed"],
+        cast=str,
     )
 
     def wait(self, time):
@@ -380,6 +390,7 @@ class SDS1072CML(SCPIMixin, Instrument):
             dict_in.get("number"),
             dict_in.get("first"),
         ),
+        cast=cast_or_str(float),
     )
 
     template = Instrument.measurement(

@@ -62,6 +62,7 @@ class AFG3152CChannel(Channel):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
+        cast=str,
     )
 
     unit = Instrument.control(
@@ -70,6 +71,7 @@ class AFG3152CChannel(Channel):
         """ Control the amplitude unit. (str)""",
         validator=strict_discrete_set,
         values=UNIT_LIMIT,
+        cast=str,
     )
 
     amp_vpp = Instrument.control(

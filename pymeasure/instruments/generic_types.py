@@ -26,6 +26,7 @@ import logging
 from warnings import warn
 
 from .instrument import Instrument
+from .common_base import cast_or_str
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -73,6 +74,7 @@ class SCPIMixin:
         """Get the next error in the queue.
         If you want to read and log all errors, use :meth:`check_errors` instead.
         """,
+        cast=cast_or_str(float),
     )
 
     # SCPI default methods

@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
@@ -85,6 +85,7 @@ class LakeShore421(Instrument):
         "FIELD?",
         """ Get the field in the current units and multiplier
         """,
+        cast=cast_or_str(float),
     )
 
     field_multiplier = Instrument.measurement(
@@ -93,6 +94,7 @@ class LakeShore421(Instrument):
         """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
@@ -108,6 +110,7 @@ class LakeShore421(Instrument):
         Valid values are G (Gauss), T (Tesla). """,
         validator=strict_discrete_set,
         values=UNITS,
+        cast=str,
     )
 
     field_range_raw = Instrument.control(
@@ -192,11 +195,13 @@ class LakeShore421(Instrument):
         """,
         values=PROBE_TYPES,
         map_values=True,
+        cast=int,
     )
 
     serial_number = Instrument.measurement(
         "SNUM?",
-        """ Get the serial number of the probe. """
+        """ Get the serial number of the probe. """,
+        cast=str,
     )
 
     display_filter_enabled = Instrument.control(
@@ -242,6 +247,7 @@ class LakeShore421(Instrument):
         """ Get the largest field since the last reset in the current units
         and multiplier.
         """,
+        cast=cast_or_str(float),
     )
 
     max_hold_multiplier = Instrument.measurement(
@@ -250,6 +256,7 @@ class LakeShore421(Instrument):
         """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
@@ -278,6 +285,7 @@ class LakeShore421(Instrument):
         "RELR?",
         """ Get the relative field in the current units and the current
         multiplier. """,
+        cast=cast_or_str(float),
     )
 
     relative_multiplier = Instrument.measurement(
@@ -286,6 +294,7 @@ class LakeShore421(Instrument):
         field. """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
@@ -307,6 +316,7 @@ class LakeShore421(Instrument):
         """ Get the multiplier for the setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
@@ -374,6 +384,7 @@ class LakeShore421(Instrument):
         """ Get the multiplier for the lower alarm setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
@@ -397,6 +408,7 @@ class LakeShore421(Instrument):
         """ Get the multiplier for the upper alarm setpoint field. """,
         values=MULTIPLIERS,
         map_values=True,
+        cast=str,
     )
 
     @property
