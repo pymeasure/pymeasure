@@ -33,7 +33,7 @@ init_comm = [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None)]
 
 def test_init():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm,
     ):
         pass
@@ -41,7 +41,7 @@ def test_init():
 
 def test_init_different_config():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 1", None), ("++eoi 0", None), ("++eos 0", None)],
             auto=True, eoi=False, eos="\r\n",
     ):
@@ -51,7 +51,7 @@ def test_init_different_config():
 @pytest.mark.parametrize("message, value", (("1", True), ("0", False)))
 def test_auto(message, value):
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm + [("++auto", message)],
     ) as adapter:
         assert adapter.auto is value
@@ -59,7 +59,7 @@ def test_auto(message, value):
 
 def test_gpib_read_timeout():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             init_comm + [
                 ("++read_tmo_ms 700", None),
                 ("++read_tmo_ms", 700)
@@ -71,7 +71,7 @@ def test_gpib_read_timeout():
 
 def test_write():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("something", None)],
     ) as adapter:
@@ -80,7 +80,7 @@ def test_write():
 
 def test_write_address():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("++addr 5", None), ("something", None)],
             address=5,
@@ -90,7 +90,7 @@ def test_write_address():
 
 def test_read():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("write", None), ("++read eoi", "response")],
     ) as adapter:
@@ -100,7 +100,7 @@ def test_read():
 
 def test_write_bytes():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              (b"something", None)],
     ) as adapter:
@@ -115,7 +115,7 @@ def test_write_bytes():
 )
 def test_write_binary_values(test_input, expected):
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              (expected, None)]
     ) as adapter:
@@ -124,7 +124,7 @@ def test_write_binary_values(test_input, expected):
 
 def test_wait_for_srq():
     with expected_protocol(
-            PrologixAdapter,
+            PrologixAdapter,  # type: ignore
             [("++auto 0", None), ("++eoi 1", None), ("++eos 2", None),
              ("++srq", None), ("++read eoi", "0"), ("++srq", None), ("++read eoi", "1")]
     ) as adapter:

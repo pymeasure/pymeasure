@@ -194,7 +194,7 @@ class MKS937B(MKSInstrument):
         Allowed units are Unit.Torr, Unit.mbar, Unit.Pa, Unit.uHg.""",
         validator=strict_discrete_set,
         map_values=True,
-        values={u: u.value for u in Unit},
+        values={u: u.value for u in Unit},  # type: ignore
         cast=str,
         check_set_errors=True,
     )

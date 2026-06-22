@@ -218,7 +218,7 @@ class RedPitayaScpi(SCPIMixin, Instrument):
                               """Control the time on board
                               time should be given as a datetime.time object""",
                               get_process_list=lambda _tstr:
-                              datetime.time(*[int(split) for split in _tstr]),
+                              datetime.time(*[int(split) for split in _tstr]),  # type: ignore
                               set_process=lambda _time:
                               _time.strftime('%H,%M,%S'),
                               )

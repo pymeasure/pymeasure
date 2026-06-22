@@ -43,7 +43,7 @@ class NIDAQ(Instrument):
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq = ni.NIDAQ(name)
         super().__init__(
-            None,
+            None,  # type: ignore
             "NIDAQ",
             **kwargs)
         for chan in self._daq.get_AI_channels():

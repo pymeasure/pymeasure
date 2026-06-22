@@ -59,7 +59,7 @@ def test_duty_cycle_setter():
             HP8116AWithMockStatus,
             init_comm + [(b"DTY 34.5 %", None)],
     ) as instr:
-        instr.duty_cycle = 34.5
+        instr.duty_cycle = 34.5  # type: ignore
 
 
 def test_sweep_time():

@@ -67,7 +67,7 @@ def test_nested_adapter():
 
 def test_ProtocolAdapter():
     with expected_protocol(
-            VISAAdapter,
+            VISAAdapter,  # type: ignore
             [(b"some bytes written", b"Response")]
     ) as adapter:
         adapter.write_bytes(b"some bytes written")

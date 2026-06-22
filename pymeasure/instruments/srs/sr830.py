@@ -433,7 +433,7 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         ch_num = self.CHANNELS.index(channel) + 1
-        expand = truncated_discrete_set_positive(expand, self.EXPANSION_VALUES)  # ty:ignore[invalid-assignment]
+        expand = truncated_discrete_set_positive(expand, self.EXPANSION_VALUES)
         self.write(f"OEXP {ch_num},{percent:.2f},{expand}")
 
     def output_conversion(self, channel: str):

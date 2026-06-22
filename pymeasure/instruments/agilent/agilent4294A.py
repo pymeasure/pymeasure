@@ -177,7 +177,7 @@ class Agilent4294A(SCPIMixin, Instrument):
 
         df = pd.DataFrame(
             np.hstack((freqs.reshape(-1, 1), adata, bdata)),
-            columns=["Frequency", "A Real", "A Imag", "B Real", "B Imag"]
+            columns=["Frequency", "A Real", "A Imag", "B Real", "B Imag"]  # type: ignore
         )
 
         if path is not None:

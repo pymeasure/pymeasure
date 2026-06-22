@@ -213,7 +213,7 @@ class _ChunkResizer:
                 and hasattr(self.adapter.connection, "chunk_size")):
             if self.new_chunk_size > self.adapter.connection.chunk_size:
                 self.old_chunk_size = self.adapter.connection.chunk_size
-                self.adapter.connection.chunk_size = self.new_chunk_size
+                self.adapter.connection.chunk_size = self.new_chunk_size  # type: ignore
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.old_chunk_size is not None:
@@ -1163,14 +1163,13 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
 
     def display_parameter(self, parameter: str, channel: int | str) -> None:
         """Same as the display_parameter method in the Channel subclass."""
-        self.ch(channel).display_parameter = parameter
+        self.ch(channel).display_parameter = parameter  # type: ignore
 
     def measure_parameter(self, parameter: str, channel: str) -> float:
         """
         Same as the measure_parameter method in the Channel subclass
         """
-        # noinspection PyArgumentList
-        return self.ch(channel).measure_parameter(parameter)
+        return self.ch(channel).measure_parameter(parameter)  # type: ignore
 
     ###############
     #   Display   #
