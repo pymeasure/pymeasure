@@ -55,10 +55,13 @@ class Worker(StoppableThread):
     thread, a Recorder is run to write the results to
     """
 
-    def __init__(self, results, log_queue=None, log_level=logging.INFO, port=None):
-        """ Constructs a Worker to perform the Procedure
-        defined in the file at the filepath
-        """
+    def __init__(
+        self,
+        results: Results,
+        log_queue: Queue | None = None,
+        log_level: int = logging.INFO,
+        port: int | None = None,
+    ):
         super().__init__()
 
         self.port = port
@@ -100,7 +103,7 @@ class Worker(StoppableThread):
                 self.context = None
                 self.publisher = None
 
-    def join(self, timeout: int = 0):
+    def join(self, timeout: float | None = None) -> None:
         try:
             super().join(timeout)
         except (KeyboardInterrupt, SystemExit):
@@ -108,7 +111,7 @@ class Worker(StoppableThread):
             self.stop()
             super().join(0)
 
-    def emit(self, topic: str, record: Any):
+    def emit(self, topic: str, record: Any) -> None:
         """ Emits data of some topic over TCP """
         log.debug("Emitting message: %s %s", topic, record)
 
@@ -126,10 +129,10 @@ class Worker(StoppableThread):
         elif topic == 'status' or topic == 'progress':
             self.monitor_queue.put((topic, record))
 
-    def handle_record(self, record: dict[str, Any]):
-        self.recorder.handle(record)
+    def handle_record(self, record: dict[str, Any]) -> None:
+        self.recorder.handle(record)  # type: ignore
 
-    def handle_batch_record(self, record: Any):
+    def handle_batch_record(self, record: Any) -> None:
         if self._is_dictionary_of_sequences(record):
             lengths = list(len(value) for value in record.values())
             if not all(length == lengths[0] for length in lengths):
@@ -162,11 +165,11 @@ class Worker(StoppableThread):
             in record.values()
         )
 
-    def handle_abort(self):
+    def handle_abort(self) -> None:
         log.exception("User stopped Worker execution prematurely")
         self.update_status(Procedure.ABORTED)
 
-    def handle_error(self):
+    def handle_error(self) -> None:
         log.exception("Worker caught an error on %r", self.procedure)
         traceback_str = traceback.format_exc()
         self.emit('error', traceback_str)
@@ -175,11 +178,11 @@ class Worker(StoppableThread):
     def is_last(self):
         raise NotImplementedError('should be monkey patched by a manager')
 
-    def update_status(self, status: int):
+    def update_status(self, status: int) -> None:
         self.procedure.status = status
         self.emit('status', status)
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.procedure.shutdown()
 
         if self.should_stop() and self.procedure.status == Procedure.RUNNING:
@@ -197,7 +200,7 @@ class Worker(StoppableThread):
             self.publisher.close()
             self.context.term()
 
-    def run(self):
+    def run(self) -> None:
         log.info("Worker thread started")
 
         self.procedure = self.results.procedure
@@ -233,6 +236,6 @@ class Worker(StoppableThread):
             self.shutdown()
             self.stop()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"<{self.__class__.__name__}(port={self.port},"
                 f"procedure={self.procedure.__class__.__name__},should_stop={self.should_stop()})>")

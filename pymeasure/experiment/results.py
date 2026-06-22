@@ -209,7 +209,7 @@ class Results:
     CHUNK_SIZE = 1000
     ENCODING = "utf-8"
 
-    def __init__(self, procedure, data_filename):
+    def __init__(self, procedure: Procedure, data_filename: list[str] | tuple[str] | str):
         if not isinstance(procedure, Procedure):
             raise ValueError("Results require a Procedure object")
         self.procedure = procedure
@@ -240,7 +240,7 @@ class Results:
                     f.write(self.labels())
             self._data = None
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict:
         # Get all information needed to reconstruct procedure
         self._parameters = self.procedure.parameter_values()
         self._class = self.procedure.__class__.__name__
@@ -254,12 +254,12 @@ class Results:
         del state['procedure_class']
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state) -> None:
         self.__dict__.update(state)
 
         # Restore the procedure
         spec = importlib.util.spec_from_file_location(self._module, self._file)
-        module = importlib.util.module_from_spec(spec)
+        module = importlib.util.module_from_spec(spec)  # type: ignore
         sys.modules[self._module] = module
         spec.loader.exec_module(module)
         cls = getattr(module, self._class)
@@ -276,7 +276,7 @@ class Results:
         del self._module
         del self._file
 
-    def header(self):
+    def header(self) -> str:
         """ Returns a text header to accompany a datafile so that the procedure
         can be reconstructed
         """
@@ -293,19 +293,19 @@ class Results:
         h = [Results.COMMENT + line for line in h]  # Comment each line
         return Results.LINE_BREAK.join(h) + Results.LINE_BREAK
 
-    def labels(self):
+    def labels(self) -> str:
         """ Returns the columns labels as a string to be written
         to the file
         """
         return self.formatter.format_header() + Results.LINE_BREAK
 
-    def format(self, data):
+    def format(self, data: logging.LogRecord) -> str:
         """ Returns a formatted string containing the data to be written
         to a file
         """
         return self.formatter.format(data)
 
-    def parse(self, line):
+    def parse(self, line: str) -> dict[str, str]:
         """ Returns a dictionary containing the data from the line """
         data = {}
         items = line.split(Results.DELIMITER)
@@ -313,7 +313,7 @@ class Results:
             data[key] = items[i]
         return data
 
-    def metadata(self):
+    def metadata(self) -> None | str:
         """ Returns a text header for the metadata to write into the datafile """
         if not self.procedure.metadata_objects():
             return
@@ -327,7 +327,7 @@ class Results:
         m = [Results.COMMENT + line for line in m]  # Comment each line
         return Results.LINE_BREAK.join(m) + Results.LINE_BREAK
 
-    def store_metadata(self):
+    def store_metadata(self) -> None:
         """ Inserts the metadata header (if any) into the datafile """
         c_header = self.metadata()
         if c_header is None:
@@ -344,8 +344,10 @@ class Results:
         self._header_count += self._metadata_count
 
     @staticmethod
-    def parse_header(header, procedure_class=None):
-        """ Returns a Procedure object with the parameters as defined in the
+    def parse_header(
+        header: str, procedure_class: type[Procedure] | None = None
+    ) -> Procedure | UnknownProcedure:
+        """Returns a Procedure object with the parameters as defined in the
         header text.
         """
         if procedure_class is not None:
@@ -353,10 +355,10 @@ class Results:
         else:
             procedure = None
 
-        header = header.split(Results.LINE_BREAK)
+        header_list = header.split(Results.LINE_BREAK)
         procedure_module = None
         parameters = {}
-        for line in header:
+        for line in header_list:
             if line.startswith(Results.COMMENT):
                 line = line[1:]  # Uncomment
             else:
@@ -366,7 +368,7 @@ class Results:
                 regex = r"<(?:(?P<module>[^>]+)\.)?(?P<class>[^.>]+)>"
                 search = re.search(regex, line)
                 procedure_module = search.group("module")
-                procedure_class = search.group("class")
+                procedure_class_name = search.group("class")
             elif line.startswith("\t"):
                 separator = ": "
                 partitioned_line = line[1:].partition(separator)
@@ -379,8 +381,8 @@ class Results:
             if procedure_class is None:
                 raise ValueError("Header does not contain the Procedure class")
             try:
-                procedure_module = import_module(procedure_module)
-                procedure_class = getattr(procedure_module, procedure_class)
+                procedure_module = import_module(procedure_module)  # type: ignore
+                procedure_class = getattr(procedure_module, procedure_class_name)
                 procedure = procedure_class()
             except ImportError:
                 procedure = UnknownProcedure(parameters)
@@ -412,7 +414,7 @@ class Results:
         return procedure
 
     @staticmethod
-    def load(data_filename, procedure_class=None):
+    def load(data_filename: str, procedure_class: type[Procedure] | None = None) -> "Results":
         """ Returns a Results object with the associated Procedure object and
         data
         """
@@ -454,7 +456,7 @@ class Results:
             if current_size == self._last_file_size:
                 return self._data
             skiprows = len(self._data) + self._header_count
-            chunks = pd.read_csv(
+            chunks = pd.read_csv(  # type: ignore
                 self.data_filename,
                 comment=Results.COMMENT,
                 header=0,
@@ -479,7 +481,7 @@ class Results:
             self._last_file_size = current_size
         return self._data
 
-    def reload(self):
+    def reload(self) -> None:
         """ Preforms a full reloading of the file data, neglecting
         any changes in the comments
         """
@@ -495,6 +497,6 @@ class Results:
         except Exception:
             self._data = chunks.read()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"<{self.__class__.__name__}(filename='{self.data_filename}',"
                 f"procedure={self.procedure.__class__.__name__},shape={self.data.shape})>")
