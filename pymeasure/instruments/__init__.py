@@ -24,6 +24,6 @@
 
 from .channel import Channel
 from .instrument import AdapterType, Instrument
-from .common_base import cast_or_str
+from .common_base import cast_or_str, IdType
 from .resources import find_serial_port, list_resources
 from .generic_types import SCPIMixin, SCPIUnknownMixin
