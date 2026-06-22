@@ -39,7 +39,7 @@ class ProgressBar:
     """
 
     def __init__(self):
-        self.data = np.empty()
+        self.data = np.empty()  # type: ignore
         self.progress_percentage = []
         self.progress_times = []
 

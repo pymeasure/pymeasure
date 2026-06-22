@@ -283,7 +283,7 @@ class SequencerTreeView(QtWidgets.QTreeView):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.width = self.viewport().size().width()
+        self.width = self.viewport().size().width()  # type: ignore
 
     def save(self, filename=None):
         self.model().save(filename)
@@ -300,7 +300,7 @@ class SequencerTreeView(QtWidgets.QTreeView):
 
     def activate_persistent_editor(self):
         model = self.model()
-        for item in model:
+        for item in model:  # type: ignore
             index = model.index(item.row(), 1, model.parent(item))
             self.openPersistentEditor(index)
 
@@ -356,7 +356,7 @@ class SequenceDialog(QtWidgets.QFileDialog):
         else:
             self.setAcceptMode(QtWidgets.QFileDialog.AcceptMode.AcceptSave)
             self.setFileMode(QtWidgets.QFileDialog.FileMode.AnyFile)
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)

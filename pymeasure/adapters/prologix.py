@@ -279,7 +279,7 @@ class PrologixAdapter(VISAAdapter):
         :param \\**kwargs: Keyword arguments for the connection itself.
         :returns bytes: Bytes response of the instrument (including termination).
         """
-        avail = self.connection.get_visa_attribute(VI_ATTR_ASRL_AVAIL_NUM)
+        avail = self.connection.get_visa_attribute(VI_ATTR_ASRL_AVAIL_NUM)  # type: ignore
         if avail == 0:
             # nothing buffered, need to request data from Prologix
             self.write("++read eoi")

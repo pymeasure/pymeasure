@@ -633,7 +633,7 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         self.layout_label.setText('Layout:')
 
         self.column_index_combo = QtWidgets.QComboBox(self)
-        self.layout = QtWidgets.QComboBox(self)
+        self.layout = QtWidgets.QComboBox(self)  # type: ignore
         self.column_index_combo.addItem('<None>')
         for column in self.columns:
             self.column_index_combo.addItem(column)
@@ -666,7 +666,7 @@ class TableWidget(TabWidget, QtWidgets.QWidget):
         hbox.addWidget(self.column_index_label)
         hbox.addWidget(self.column_index_combo)
         hbox.addWidget(self.layout_label)
-        hbox.addWidget(self.layout)
+        hbox.addWidget(self.layout)  # type: ignore
 
         vbox.addLayout(hbox)
         vbox.addWidget(self.table)

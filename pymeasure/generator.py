@@ -231,13 +231,13 @@ class ByteFormatter(logging.Formatter):
 
     def format(self, record):
         return b"".join((record.msg.replace(r"%s", "").encode(),
-                         *[self.make_bytes(arg) for arg in record.args]))  # type: ignore
+                         *[self.make_bytes(arg) for arg in record.args]))
 
 
 class ByteStreamHandler(logging.StreamHandler):
     """Logging handler using bytes streams."""
 
-    terminator = b"\n"  # type: ignore
+    terminator: bytes = b"\n"  # type: ignore[override]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
