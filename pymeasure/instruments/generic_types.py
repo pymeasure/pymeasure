@@ -25,7 +25,7 @@
 import logging
 from warnings import warn
 
-from .common_base import cast_or_str, CommonBase
+from .common_base import cast_or_str, CommonBase, identity
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -74,6 +74,7 @@ class SCPIMixin(CommonBase):
         If you want to read and log all errors, use :meth:`check_errors` instead.
         """,
         cast=cast_or_str(float),
+        get_process_list=identity,
     )
 
     # SCPI default methods
@@ -85,7 +86,7 @@ class SCPIMixin(CommonBase):
         """Reset the instrument."""
         self.write("*RST")
 
-    def check_errors(self) -> list:
+    def check_errors(self) -> list[list[float | str]]:
         """Read all errors from the instrument.
 
         :return: List of error entries.
