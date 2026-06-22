@@ -67,7 +67,7 @@ class Input:
         """
         Update the parameter value with the Input GUI element's current value.
         """
-        self._parameter.value = self.value()
+        self._parameter.value = self.value()  # type: ignore
 
     @property
     def parameter(self):

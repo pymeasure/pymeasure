@@ -26,6 +26,8 @@ import logging
 from collections.abc import Sequence
 from typing import cast
 
+from qtpy.QtWidgets import QGraphicsObject
+
 from ...experiment.results import Results
 from ..curves import ResultsImage
 from ..Qt import QtCore, QtWidgets
@@ -122,5 +124,5 @@ class ImageWidget(TabWidget[ResultsImage], QtWidgets.QWidget):
         curve.update_data()
         self.plot.addItem(curve)
 
-    def remove(self, curve: ResultsImage) -> None:
+    def remove(self, curve: QGraphicsObject) -> None:
         self.plot.removeItem(curve)

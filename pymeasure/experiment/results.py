@@ -480,7 +480,7 @@ class Results:
         return results
 
     @property
-    def data(self):
+    def data(self) -> pd.DataFrame:
         # Need to update header count for correct referencing
         if self._header_count == -1:
             self._header_count = len(
@@ -524,7 +524,7 @@ class Results:
                 pass  # All data is up to date
             # Update _last_file_size
             self._last_file_size = current_size
-        return self._data
+        return cast(pd.DataFrame, self._data)
 
     def reload(self) -> None:
         """ Perform a full reload of the file data, neglecting
