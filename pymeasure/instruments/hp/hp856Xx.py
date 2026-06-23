@@ -24,29 +24,19 @@
 
 import logging
 from math import log10
-from enum import Enum, IntFlag
+from enum import IntFlag
 from datetime import datetime
 
 import numpy as np
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, truncated_discrete_set, \
     joined_validators, strict_range
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-
-
-try:
-    from enum import StrEnum
-except ImportError:
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available / pymeasure relies on python <=
-        3.10.x."""
-
-        def __str__(self):
-            return self.value
 
 
 class WindowType(StrEnum):
