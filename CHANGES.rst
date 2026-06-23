@@ -6,6 +6,7 @@ Removed
 - Remove GUI dependencies from default dependencies. Install pymeasure with gui dependencies with :code:`pip install pymeasure[gui]`. Conda still installs all dependencies.
 - Remove deprecated :code:`control` parameters :code:`command_process` and :code:`kwargs`.
 - Remove deprecated Toptica Ibeamsmart methods: :code:`laser_enabled`, :code:`channel1_enabled` :code:`channel2_enabled`, use :code:`emission` and the driver channels.
+- Deprecate ESP300 attributes :code:`x`, :code:`y`, :code:`phi`, use :code:`axes` list instead.
 
 Deprecated
 ----------
