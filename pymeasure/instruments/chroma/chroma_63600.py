@@ -446,7 +446,7 @@ class Chroma63600(SCPIMixin, Instrument):
                         "Only Chroma 63610-80-20 and 63630-80-60 channels "
                         "are currently supported.")
 
-    def run(self, state: bool = True):
+    def enable_all(self, state: bool = True):
         """Set all electronic loads to ON (True) or OFF (False).
         :param state: True or False, determines Enabled state of loads.
         """
