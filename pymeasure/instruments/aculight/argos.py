@@ -75,7 +75,6 @@ class Argos(Instrument):
             baud_rate=4800,
             write_termination="\n",
             read_termination="\n\rOPO>",
-            includeSCPI=False,
             **kwargs)
         """
         8 data bits, no parity, 1 stop bit, no flow control

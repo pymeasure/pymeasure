@@ -114,7 +114,6 @@ class SQM160(Instrument):
                  baud_rate=19200, **kwargs):
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="",
                          read_termination="",
                          asrl=dict(baud_rate=baud_rate),

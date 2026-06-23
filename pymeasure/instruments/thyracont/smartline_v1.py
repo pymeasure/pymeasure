@@ -71,7 +71,6 @@ class SmartlineV1(Instrument):
                  baud_rate=9600, **kwargs):
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="\r",
                          read_termination="\r",
                          asrl=dict(baud_rate=baud_rate),

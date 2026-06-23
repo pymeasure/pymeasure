@@ -49,7 +49,6 @@ class ptwDIAMENTOR(Instrument):
             adapter,
             name,
             baud_rate=baud_rate,
-            includeSCPI=False,
             timeout=2000,
             **kwargs
         )

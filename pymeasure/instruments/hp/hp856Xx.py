@@ -610,7 +610,6 @@ class HP856Xx(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             send_end=True,
             **kwargs,
         )

@@ -63,7 +63,6 @@ class TDK_Lambda_Base(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             asrl={'read_termination': "\r", 'write_termination': "\r"},
             **kwargs
         )

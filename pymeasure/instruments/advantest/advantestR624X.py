@@ -965,7 +965,7 @@ class AdvantestR624X(Instrument):
     """
 
     def __init__(self, adapter, name="R624X Source meter Base Class", **kwargs):
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        super().__init__(adapter, name, **kwargs)
         self.sequence = []
         self.store_to_sequence = False
         self.sequence_line_count = 0

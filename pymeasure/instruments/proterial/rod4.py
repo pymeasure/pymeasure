@@ -106,10 +106,7 @@ class ROD4(Instrument):
     """
 
     def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
-        super().__init__(
-            adapter, name, read_termination='\r', write_termination='\r',
-            includeSCPI=False, **kwargs
-        )
+        super().__init__(adapter, name, read_termination="\r", write_termination="\r", **kwargs)
 
     ch_1 = Instrument.ChannelCreator(ROD4Channel, 1)
     ch_2 = Instrument.ChannelCreator(ROD4Channel, 2)

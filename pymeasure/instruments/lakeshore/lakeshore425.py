@@ -84,7 +84,6 @@ class LakeShore425(Instrument):
                   'parity': 1,  # odd
                   'data_bits': 7
                   },
-            includeSCPI=False,
             **kwargs
         )
 

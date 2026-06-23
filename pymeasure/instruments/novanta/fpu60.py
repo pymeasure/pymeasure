@@ -41,7 +41,6 @@ class Fpu60(Instrument):
     def __init__(self, adapter, name="Laserquantum fpu60 power supply unit", **kwargs):
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={'baud_rate': 19200},
                          write_termination="\r",
                          read_termination="\r\n",

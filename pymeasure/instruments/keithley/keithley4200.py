@@ -145,7 +145,6 @@ class Keithley4200(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             tcpip={"write_termination": "\0",
                    "read_termination": "\0"},
             **kwargs

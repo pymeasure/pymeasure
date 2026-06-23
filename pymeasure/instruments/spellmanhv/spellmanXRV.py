@@ -252,7 +252,6 @@ class SpellmanXRV(Instrument):
             asrl={'baud_rate': baud_rate},
             read_termination=ETX,
             write_termination=ETX,
-            includeSCPI=False,
             timeout=2000,
             **kwargs)
 

@@ -83,7 +83,6 @@ class Kusg245_250A(Instrument):
                          asrl={"baud_rate": 115200,
                                "read_termination": termination_character,
                                "write_termination": termination_character},
-                         includeSCPI=False,
                          **kwargs)
 
         self._power_limit = power_limit
