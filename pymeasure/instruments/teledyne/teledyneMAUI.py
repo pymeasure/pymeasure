@@ -166,9 +166,9 @@ class TeledyneMAUI(TeledyneOscilloscope):
         - "trigger_type": condition that will trigger the acquisition of waveforms
           [edge,slew,glit,intv,runt,drop]
         - "source": trigger source [c1,c2,c3,c4]
-        - "hold_type": hold type (refer to page 172 of programing guide)
-        - "hold_value1": hold value1 (refer to page 172 of programing guide)
-        - "hold_value2": hold value2 (refer to page 172 of programing guide)
+        - "hold_type": hold type (refer to page 172 of programming guide)
+        - "hold_value1": hold value1 (refer to page 172 of programming guide)
+        - "hold_value2": hold value2 (refer to page 172 of programming guide)
         - "coupling": input coupling for the selected trigger sources
         - "level": trigger level voltage for the active trigger source
         - "slope": trigger slope of the specified trigger source

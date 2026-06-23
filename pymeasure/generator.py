@@ -314,7 +314,7 @@ class Generator:
     def __init__(self):
         self._stream = io.BytesIO()
         self._index = 0
-        self._init_comm_pairs = []  # Initializiation comm_pairs
+        self._init_comm_pairs = []  # Initialization comm_pairs
         # Dictionaries for parametrized tests
         self._getters = {}
         self._setters = {}

@@ -191,7 +191,7 @@ class DPSeriesMotorController(Instrument):
         In addition to the keyword arguments that can be set for the Instrument base class, this
         class has the following kwargs:
 
-        :param address: (int) Address that the motor controller uses for serial communiation.
+        :param address: (int) Address that the motor controller uses for serial communication.
         :param encoder_enabled: (bool) Flag to indicate if the driver should use an encoder input
             to set its position property.
         """

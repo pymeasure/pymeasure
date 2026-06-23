@@ -216,7 +216,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     )
 
     analysis_result = Instrument.measurement(
-        "ANAR?", "Get anaysis result from current scan."
+        "ANAR?", "Get analysis result from current scan."
     )
 
     ##########################

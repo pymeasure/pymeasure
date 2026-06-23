@@ -107,7 +107,7 @@ class MKSInstrument(Instrument):
 
     def _extract_reply(self, reply):
         """ preprocess_reply function which tries to extract <Response> from
-        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the orignal string
+        '@<aaa>ACK<Response>;FF'. If <Response> can not be identified the original string
         is returned.
         :param reply: reply string
         :returns: string with only the response, or the original string

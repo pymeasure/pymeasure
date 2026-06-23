@@ -162,8 +162,8 @@ class TriggerChannel(Channel):
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
-        - "hold_type": hold type (refer to page 131 of programing guide)
-        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        - "hold_type": hold type (refer to page 131 of programming guide)
+        - "hold_value1": hold value1 (refer to page 131 of programming guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         - "mode": behavior of the trigger following a triggering event
@@ -185,8 +185,8 @@ class TriggerChannel(Channel):
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
-        - "hold_type": hold type (refer to page 131 of programing guide)
-        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        - "hold_type": hold type (refer to page 131 of programming guide)
+        - "hold_value1": hold value1 (refer to page 131 of programming guide)
 
         """,
         preprocess_reply=lambda v: v.split(" ", 1)[1],
@@ -257,8 +257,8 @@ class TriggerChannel(Channel):
         - "type": condition that will trigger the acquisition of waveforms [EDGE,
         slew,GLIT,intv,runt,drop]
         - "source": trigger source (str, {EX,EX/5,C1,C2})
-        - "hold_type": hold type (refer to page 131 of programing guide)
-        - "hold_value1": hold value1 (refer to page 131 of programing guide)
+        - "hold_type": hold type (refer to page 131 of programming guide)
+        - "hold_value1": hold value1 (refer to page 131 of programming guide)
         - "level": Level at which the trigger will be set (float)
         - "slope": (str,{POS,NEG,WINDOW}) Triggers on rising, falling or Window.
         - "mode": behavior of the trigger following a triggering event
@@ -266,7 +266,7 @@ class TriggerChannel(Channel):
         - "coupling":  (str,{AC,DC}) Coupling to the trigger channel
 
         Returns a flag indicating if all specified entries were correctly set on the oscilloscope
-        and updates the interal trigger configuration
+        and updates the internal trigger configuration
         """
         trigger_config_dict = self.get_trigger_config()
         # self.trigger_config_dict=trigger_config_dict

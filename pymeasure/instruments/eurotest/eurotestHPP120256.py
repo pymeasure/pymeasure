@@ -312,7 +312,7 @@ class EurotestHPP120256(Instrument):
         Sets the voltage output setting to zero and the ramp setting
         to a value determined by the voltage_rate parameter.
         In summary, the method conducts (ramps) the voltage output to zero
-        at a determinated voltage changing rate (ramp in V/s).
+        at a determined voltage changing rate (ramp in V/s).
         :param voltage_rate: Is the changing rate (ramp in V/s) for the ramp setting
         """
         log.info(f"Executing the ramp_to_zero function with ramp: {voltage_rate} V/s.")
@@ -327,7 +327,7 @@ class EurotestHPP120256(Instrument):
 
         Checks the voltage output every check_period seconds and raises an exception
         if the voltage output doesn't reach the voltage setting until the timeout time.
-        :param voltage_setpoint: the voltage in kVolts setted in the HV power supply which
+        :param voltage_setpoint: the voltage in kVolts set in the HV power supply which
         should be present at the output after some time (depends on the ramp setting).
         :param abs_output_voltage_error: absolute error in kVolts for being considered
         an output voltage reached.

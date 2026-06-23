@@ -222,13 +222,13 @@ class PrologixAdapter(VISAAdapter):
 
         :param values: data to be written to the device.
         :param datatype: the format string for a single element. See struct module.
-        :param is_big_endian: boolean indicating endianess.
+        :param is_big_endian: boolean indicating endianness.
         :param header_fmt: Format of the header prefixing the data ("ieee", "hp", "empty").
         :return: binary string.
         :rtype: bytes
         """
         block = super()._format_binary_values(values, datatype, is_big_endian, header_fmt)
-        # Prologix needs certian characters to be escaped.
+        # Prologix needs certain characters to be escaped.
         # Special care must be taken when sending binary data to instruments. If any of the
         # following characters occur in the binary data -- CR (ASCII 13), LF (ASCII 10), ESC
         # (ASCII 27), '+' (ASCII 43) - they must be escaped by preceding them with an ESC

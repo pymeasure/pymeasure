@@ -1108,7 +1108,7 @@ class KeithleyDMM6500(SCPIMixin, Instrument):
         """ Control the number of buffer points.
         This does not represent actual points in the buffer, but the configuration
         value instead. `0` means the largest buffer possible based on the available
-        memory when the bufer is created.""",
+        memory when the buffer is created.""",
         validator=truncated_range,
         values=[0, 6_000_000],
         cast=int,

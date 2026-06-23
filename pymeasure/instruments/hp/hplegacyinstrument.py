@@ -105,7 +105,7 @@ class HPLegacyInstrument(Instrument):
     Class for legacy HP instruments from the era before SPCI, based on `pymeasure.Instrument`
 
     """
-    status_desc = StatusBitsBase  # To be overriden by subclasses
+    status_desc = StatusBitsBase  # To be overridden by subclasses
 
     def __init__(self, adapter, name="HP legacy instrument", **kwargs):
         super().__init__(
@@ -144,7 +144,7 @@ class HPLegacyInstrument(Instrument):
 
     def GPIB_trigger(self):
         """
-        Initate trigger via low-level GPIB-command (aka GET - group execute trigger)
+        Initiate trigger via low-level GPIB-command (aka GET - group execute trigger)
 
         """
         self.adapter.connection.assert_trigger()

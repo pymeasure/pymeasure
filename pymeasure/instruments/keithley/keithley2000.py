@@ -337,7 +337,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     frequency_aperature = Instrument.control(
         ":SENS:FREQ:APER?", ":SENS:FREQ:APER %g",
-        """ Control (floating) the frequency aperature in seconds,
+        """ Control (floating) the frequency aperture in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,
@@ -378,7 +378,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     period_aperature = Instrument.control(
         ":SENS:PER:APER?", ":SENS:PER:APER %g",
-        """ Control (floating) the period aperature in seconds,
+        """ Control (floating) the period aperture in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,

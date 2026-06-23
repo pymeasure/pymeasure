@@ -122,7 +122,7 @@ class HP8657B(Instrument):
         "FM %3.1fKZ",
         """
         Set the peak deviation in kHz for the FM function,
-        useable range 0.1 - 400 kHz
+        usable range 0.1 - 400 kHz
 
         *NOTE*:
             the maximum usable deviation is depending on the output frequency, refer to the
