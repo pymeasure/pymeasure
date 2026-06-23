@@ -23,19 +23,10 @@
 #
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel
-
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-        # Python>3.10 remove it.
 
 
 class Unit(StrEnum):
