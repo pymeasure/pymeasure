@@ -22,7 +22,10 @@
 # THE SOFTWARE.
 #
 
-from pymeasure.instruments import Instrument, cast_or_str
+from typing import Literal
+
+from pymeasure.instruments import cast_or_str, Instrument
+from pymeasure.instruments.common_base import InstrumentProperty
 from pymeasure.instruments.validators import strict_discrete_set, \
     truncated_discrete_set
 
@@ -47,7 +50,7 @@ class LakeShore421(Instrument):
     handle writes any faster.
     """
 
-    MULTIPLIERS = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
+    MULTIPLIERS: dict[float, str] = {1e3: 'k', 1: '', 1e-3: 'm', 1e-6: 'n'}
     PROBE_TYPES = {"High Sensitivity": 0,
                    "High Stability": 1,
                    "Ultra-High Sensitivity": 2}
@@ -68,7 +71,7 @@ class LakeShore421(Instrument):
         )
         self.last_write_time = time()
 
-    def _raw_to_field(self, field_raw, multiplier_name):
+    def _raw_to_field(self, field_raw: float | Literal["OL"], multiplier_name: str) -> float:
         if not field_raw == "OL":
             multiplier = getattr(self, multiplier_name)
             field = multiplier * field_raw
@@ -77,7 +80,7 @@ class LakeShore421(Instrument):
 
         return field
 
-    def _field_to_raw(self, field, multiplier_name):
+    def _field_to_raw(self, field: float, multiplier_name: str) -> float:
         multiplier = getattr(self, multiplier_name)
         return field / multiplier
 
@@ -88,7 +91,7 @@ class LakeShore421(Instrument):
         cast=cast_or_str(float),
     )
 
-    field_multiplier = Instrument.measurement(
+    field_multiplier: InstrumentProperty[float] = Instrument.measurement(
         "FIELDM?",
         """ Get the field multiplier for the returned magnetic field.
         """,
@@ -98,7 +101,7 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def field(self):
+    def field(self) -> float:
         """ Get the field in the current units. This property takes into
         account the field multiplier. Get np.nan if field is out of range.
         """
@@ -134,7 +137,7 @@ class LakeShore421(Instrument):
         return np.round(range * probe_multiplier * unit_multiplier, 3)
 
     @field_range.setter
-    def field_range(self, range):
+    def field_range(self, range) -> None:
         probe_multiplier = self.RANGE_MULTIPLIER_PROBE[self.PROBE_TYPES[self.probe_type]]
         unit_multiplier = self.RANGE_MULTIPLIER_UNIT[self.unit]
         ranges = np.array(self.RANGES) * probe_multiplier * unit_multiplier
@@ -143,7 +146,7 @@ class LakeShore421(Instrument):
 
         self.field_range_raw = self.RANGES.index(range)
 
-    auto_range = Instrument.control(
+    auto_range: InstrumentProperty[bool] = Instrument.control(
         "AUTO?", "AUTO %d",
         """ Control the auto-range option of the
         meter. Valid values are True and False. Note that the auto-range is
@@ -154,7 +157,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    fast_mode = Instrument.control(
+    fast_mode: InstrumentProperty[bool] = Instrument.control(
         "FAST?", "FAST %d",
         """ Control the fast-mode option of the
         meter. Valid values are True and False. When enabled, the relative
@@ -173,7 +176,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    def zero_probe(self, wait=True):
+    def zero_probe(self, wait: bool = True) -> None:
         """ Reset the probe value to 0. It is normally used with a zero gauss
         chamber, but may also be used with an open probe to cancel the Earth
         magnetic field. To cancel larger magnetic fields, the relative mode
@@ -188,7 +191,7 @@ class LakeShore421(Instrument):
         if wait:
             sleep(20)
 
-    probe_type = Instrument.measurement(
+    probe_type: InstrumentProperty[str] = Instrument.measurement(
         "TYPE?",
         """ Get type of field-probe used with the gaussmeter. Possible
         values are High Sensitivity, High Stability, or Ultra-High Sensitivity.
@@ -204,7 +207,7 @@ class LakeShore421(Instrument):
         cast=str,
     )
 
-    display_filter_enabled = Instrument.control(
+    display_filter_enabled: InstrumentProperty[bool] = Instrument.control(
         "FILT?", "FILT %d",
         """ Control the display filter to make it
         more readable when the probe is exposed to a noisy field. The filter
@@ -215,7 +218,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    front_panel_locked = Instrument.control(
+    front_panel_locked: InstrumentProperty[bool] = Instrument.control(
         "LOCK?", "LOCK %d",
         """ Control the lock state of all front panel entries
         except pressing the Alarm key to silence alarms. """,
@@ -233,7 +236,7 @@ class LakeShore421(Instrument):
     )
 
     # MAX HOLD
-    max_hold_enabled = Instrument.control(
+    max_hold_enabled: InstrumentProperty[bool] = Instrument.control(
         "MAX?", "MAX %d",
         """ Control the Max Hold function to
         store the largest field since the last reset (with max_hold_reset). """,
@@ -267,7 +270,7 @@ class LakeShore421(Instrument):
         """
         return self._raw_to_field(self.max_hold_field_raw, "max_hold_multiplier")
 
-    def max_hold_reset(self):
+    def max_hold_reset(self) -> None:
         """ Clears the stored Max Hold value. """
         self.write("MAXC")
 
@@ -298,7 +301,7 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def relative_field(self):
+    def relative_field(self) -> float:
         """ Get the relative field in the current units. This property
         takes into account the field multiplier. Returns np.nan if field is
         out of range.
@@ -320,17 +323,17 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def relative_setpoint(self):
+    def relative_setpoint(self) -> float:
         """ Control the setpoint for the relative field mode in
         the current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.relative_setpoint_raw, "relative_setpoint_multiplier")
 
     @relative_setpoint.setter
-    def relative_setpoint(self, value):
+    def relative_setpoint(self, value: float) -> None:
         self.relative_setpoint_raw = self._field_to_raw(value, "relative_setpoint_multiplier")
 
     # ALARM MODE
-    alarm_mode_enabled = Instrument.control(
+    alarm_mode_enabled: InstrumentProperty[bool] = Instrument.control(
         "ALARM?", "ALARM %d",
         """ Control the alarm mode. """,
         validator=strict_discrete_set,
@@ -338,7 +341,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    alarm_audible = Instrument.control(
+    alarm_audible: InstrumentProperty[bool] = Instrument.control(
         "ALMB?", "ALMB %d",
         """ Control the audible alarm
         beeper. """,
@@ -347,7 +350,7 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    alarm_in_out = Instrument.control(
+    alarm_in_out: InstrumentProperty[str] = Instrument.control(
         "ALMB?", "ALMB %d",
         """ Control whether an active alarm is caused
         when the field reading is inside ("Inside") or outside ("Outside") of
@@ -357,14 +360,14 @@ class LakeShore421(Instrument):
         map_values=True,
     )
 
-    alarm_active = Instrument.measurement(
+    alarm_active: InstrumentProperty[bool] = Instrument.measurement(
         "ALMS?",
         """ Get whether the alarm is triggered. """,
         values={True: 1, False: 0},
         map_values=True,
     )
 
-    alarm_sort_enabled = Instrument.control(
+    alarm_sort_enabled: InstrumentProperty[bool] = Instrument.control(
         "ALMSORT?", "ALMSORT %d",
         """ Control the alarm Sort Pass/Fail
         function. """,
@@ -379,7 +382,7 @@ class LakeShore421(Instrument):
         current units and multiplier. """,
     )
 
-    alarm_low_multiplier = Instrument.measurement(
+    alarm_low_multiplier: InstrumentProperty[float] = Instrument.measurement(
         "ALMLM?",
         """ Get the multiplier for the lower alarm setpoint field. """,
         values=MULTIPLIERS,
@@ -388,13 +391,13 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def alarm_low(self):
+    def alarm_low(self) -> float:
         """ Control the lower setpoint for the alarm mode in the
         current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.alarm_low_raw, "alarm_low_multiplier")
 
     @alarm_low.setter
-    def alarm_low(self, value):
+    def alarm_low(self, value: float) -> None:
         self.alarm_low_raw = self._field_to_raw(value, "alarm_low_multiplier")
 
     alarm_high_raw = Instrument.control(
@@ -403,7 +406,7 @@ class LakeShore421(Instrument):
         current unit and multiplier. """,
     )
 
-    alarm_high_multiplier = Instrument.measurement(
+    alarm_high_multiplier: InstrumentProperty[float] = Instrument.measurement(
         "ALMHM?",
         """ Get the multiplier for the upper alarm setpoint field. """,
         values=MULTIPLIERS,
@@ -412,16 +415,16 @@ class LakeShore421(Instrument):
     )
 
     @property
-    def alarm_high(self):
+    def alarm_high(self) -> float:
         """ Control the upper setpoint for the alarm mode in the
         current units. This takes into account the field multiplier. """
         return self._raw_to_field(self.alarm_high_raw, "alarm_high_multiplier")
 
     @alarm_high.setter
-    def alarm_high(self, value):
+    def alarm_high(self, value: float) -> None:
         self.alarm_high_raw = self._field_to_raw(value, "alarm_high_multiplier")
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """ Close the serial connection to the system. """
         self.adapter.connection.close()
         super().shutdown()
@@ -430,7 +433,7 @@ class LakeShore421(Instrument):
     # Redefined methods to ensure time between writes #
     ###################################################
 
-    def delay_write(self):
+    def delay_write(self) -> None:
         if self.WRITE_DELAY is None:
             return
 
@@ -439,6 +442,6 @@ class LakeShore421(Instrument):
 
         self.last_write_time = time()
 
-    def write(self, command):
+    def write(self, command: str, **kwargs) -> None:
         self.delay_write()
-        super().write(command)
+        super().write(command, **kwargs)

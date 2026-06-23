@@ -93,12 +93,15 @@ class Axis(Channel):
         cast=int, check_set_errors=True)
 
     mode = Instrument.control(
-        "getm", "setm %s",
+        "getm",
+        "setm %s",
         """Control axis mode. This can be 'gnd', 'inp', 'cap', 'stp', 'off',
         'stp+', 'stp-'. Available modes depend on the actual axis model.""",
         validator=strict_discrete_set,
-        values=['gnd', 'inp', 'cap', 'stp', 'off', 'stp+', 'stp-'],
-        check_set_errors=True)
+        values=["gnd", "inp", "cap", "stp", "off", "stp+", "stp-"],
+        check_set_errors=True,
+        cast=str,
+    )
 
     offset_voltage = Instrument.control(
         "geta", "seta %.3f",
@@ -159,17 +162,17 @@ class Axis(Channel):
         check_set_errors=True,
     )
 
-    def insert_id(self, command):
+    def insert_id(self, command: str) -> str:
         """Insert the channel id in a command replacing `placeholder`.
 
         Add axis id to a command string at the correct position after the
         initial command, but before a potential value.
         """
         cmdparts = command.split()
-        cmdparts.insert(1, self.id)
+        cmdparts.insert(1, str(self.id))
         return ' '.join(cmdparts)
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stop any motion of the axis """
         self.write('stop')
         self.check_set_errors()

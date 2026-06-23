@@ -442,9 +442,10 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 else:
                     results = Results.load(filename)
                     experiment = self.new_experiment(results)
-                    for curve in experiment.curve_list:
-                        if curve:
-                            curve.update_data()
+                    if experiment.curve_list:
+                        for curve in experiment.curve_list:
+                            if curve:
+                                curve.update_data()
                     experiment.browser_item.progressbar.setValue(100)
                     self.manager.load(experiment)
                     log.info(f'Opened data file {filename}')
@@ -620,7 +621,9 @@ class ManagedWindowBase(QtWidgets.QMainWindow):
                 log.error(f"Invalid filename provided: {E.args[0]}")
                 return
         else:
-            filename = tempfile.mktemp(prefix='TempFile_', suffix='.csv')
+            fd, filename = tempfile.mkstemp(prefix='TempFile_', suffix='.csv')
+            os.close(fd)
+            os.unlink(filename)
 
         results = Results(procedure, filename)
 

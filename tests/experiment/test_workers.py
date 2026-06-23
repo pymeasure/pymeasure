@@ -40,7 +40,9 @@ tcp_libs_available = bool(importlib.util.find_spec('cloudpickle')
 
 def test_worker_stop():
     procedure = RandomProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -53,7 +55,9 @@ def test_worker_finish():
     procedure = RandomProcedure()
     procedure.iterations = 100
     procedure.delay = 0.001
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -69,7 +73,9 @@ def test_worker_closes_file_after_finishing():
     procedure = RandomProcedure()
     procedure.iterations = 100
     procedure.delay = 0.001
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     worker = Worker(results)
     worker.start()
@@ -87,7 +93,9 @@ def test_zmq_does_not_crash_worker(caplog):
     See https://github.com/ralph-group/pymeasure/issues/168
     """
     procedure = RandomProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     # If we define a port here we get ZMQ communication
     # if cloudpickle is installed
@@ -113,7 +121,9 @@ def test_zmq_topic_filtering_works(caplog):
             self.emit('progress', 99)
 
     procedure = ThreeEmitsProcedure()
-    file = tempfile.mktemp()
+    fd, file = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(file)
     results = Results(procedure, file)
     received = []
     worker = Worker(results, port=5888, log_level=logging.DEBUG)

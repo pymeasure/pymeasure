@@ -25,16 +25,16 @@ import pytest
 
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.kuhneelectronic import Kusg245_250A
-from pymeasure.instruments.kuhneelectronic.kusg245_250a import termination_character, encoding
+from pymeasure.instruments.kuhneelectronic.kusg245_250a import termination_character, ENCODING
 
 
-termination_character = termination_character.encode(encoding=encoding)[0]
+termination_character_byte: int = termination_character.encode(encoding=ENCODING)[0]
 
 
 def test_voltage_5v():
     with expected_protocol(
         Kusg245_250A,
-        [("5", bytes([0, 1, termination_character]))],
+        [("5", bytes([0, 1, termination_character_byte]))],
     ) as inst:
         assert inst.voltage_5v == 103.0 / 4700.0
 
@@ -42,7 +42,7 @@ def test_voltage_5v():
 def test_voltage_32v():
     with expected_protocol(
         Kusg245_250A,
-        [("8", bytes([0, 1, termination_character]))],
+        [("8", bytes([0, 1, termination_character_byte]))]
     ) as inst:
         assert inst.voltage_32v == 1282.0 / 8200.0
 
@@ -50,7 +50,7 @@ def test_voltage_32v():
 def test_power_forward():
     with expected_protocol(
         Kusg245_250A,
-        [("6", bytes([255, termination_character]))],
+        [("6", bytes([255, termination_character_byte]))]
     ) as inst:
         assert inst.power_forward == 255
 
@@ -58,7 +58,7 @@ def test_power_forward():
 def test_power_reverse():
     with expected_protocol(
         Kusg245_250A,
-        [("7", bytes([255, termination_character]))],
+        [("7", bytes([255, termination_character_byte]))]
     ) as inst:
         assert inst.power_reverse == 255
 
@@ -68,9 +68,9 @@ def test_external_enabled():
         Kusg245_250A,
         [
             ("R", "A"),
-            ("r?", bytes([1, termination_character])),
+            ("r?", bytes([1, termination_character_byte])),
             ("r", "A"),
-            ("r?", bytes([0, termination_character]))
+            ("r?", bytes([0, termination_character_byte])),
         ],
     ) as inst:
         inst.external_enabled = True
@@ -84,9 +84,9 @@ def test_bias_enabled():
         Kusg245_250A,
         [
             ("X", "A"),
-            ("x?", bytes([1, termination_character])),
+            ("x?", bytes([1, termination_character_byte])),
             ("x", "A"),
-            ("x?", bytes([0, termination_character]))
+            ("x?", bytes([0, termination_character_byte])),
         ],
     ) as inst:
         inst.bias_enabled = True
@@ -100,9 +100,9 @@ def test_rf_enabled():
         Kusg245_250A,
         [
             ("O", "A"),
-            ("o?", bytes([1, termination_character])),
+            ("o?", bytes([1, termination_character_byte])),
             ("o", "A"),
-            ("o?", bytes([0, termination_character]))
+            ("o?", bytes([0, termination_character_byte])),
         ],
     ) as inst:
         inst.rf_enabled = True
@@ -116,9 +116,9 @@ def test_pulse_mode_enabled():
         Kusg245_250A,
         [
             ("P", "A"),
-            ("p?", bytes([1, termination_character])),
+            ("p?", bytes([1, termination_character_byte])),
             ("p", "A"),
-            ("p?", bytes([0, termination_character]))
+            ("p?", bytes([0, termination_character_byte])),
         ],
     ) as inst:
         inst.pulse_mode_enabled = True
@@ -132,9 +132,9 @@ def test_freq_steps_fine_enabled():
         Kusg245_250A,
         [
             ("fm1", "A"),
-            ("fm?", bytes([1, termination_character])),
+            ("fm?", bytes([1, termination_character_byte])),
             ("fm0", "A"),
-            ("fm?", bytes([0, termination_character]))
+            ("fm?", bytes([0, termination_character_byte])),
         ],
     ) as inst:
         inst.freq_steps_fine_enabled = True
@@ -258,11 +258,11 @@ def test_phase_shift():
         Kusg245_250A,
         [
             ("H088", "A"),
-            ("H?", bytes([88, termination_character])),
+            ("H?", bytes([88, termination_character_byte])),
             ("H000", "A"),
-            ("H?", bytes([0, termination_character])),
+            ("H?", bytes([0, termination_character_byte])),
             ("H255", "A"),
-            ("H?", bytes([255, termination_character])),
+            ("H?", bytes([255, termination_character_byte])),
         ],
     ) as inst:
         inst.phase_shift = 124
@@ -278,11 +278,11 @@ def test_reflection_limit():
         Kusg245_250A,
         [
             ("B0", "A"),
-            ("B?", bytes([0, termination_character])),
+            ("B?", bytes([0, termination_character_byte])),
             ("B4", "A"),
-            ("B?", bytes([4, termination_character])),
+            ("B?", bytes([4, termination_character_byte])),
             ("B5", "A"),
-            ("B?", bytes([5, termination_character]))
+            ("B?", bytes([5, termination_character_byte])),
         ],
     ) as inst:
         inst.reflection_limit = 0

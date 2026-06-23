@@ -106,7 +106,7 @@ Select trigger source; accept the values:
         # format: output ascii
         self.write("FORM ASC")
 
-    def freq_sweep(self, freq_list, return_freq=False):
+    def freq_sweep(self, freq_list: list[float], return_freq: bool = False):
         """
         Run frequency list sweep using sequential trigger.
 
@@ -147,7 +147,7 @@ Select trigger source; accept the values:
             return a_data, b_data
 
     # TODO: maybe refactor as property?
-    def aperture(self, time=None, averages=1):
+    def aperture(self, time: str | None = None, averages: int = 1) -> tuple[str, int] | None:
         """
         Set and get aperture.
 

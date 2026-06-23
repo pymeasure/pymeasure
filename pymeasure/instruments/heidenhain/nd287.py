@@ -23,8 +23,12 @@
 #
 
 import logging
+from typing import Literal
+from collections.abc import Callable
+
 from pyvisa.errors import VisaIOError
-from pymeasure.instruments import Instrument
+
+from pymeasure.instruments import AdapterType, Instrument
 
 
 log = logging.getLogger(__name__)
@@ -34,34 +38,41 @@ log.addHandler(logging.NullHandler())
 class ND287(Instrument):
     """ Represents the Heidenhain ND287 position display unit used to readout and display
         absolute position measured by Heidenhain encoders.
+
+    :param: units: Specify the units that the gauge is working in.
+        Valid values are "inch" and "mm" with "mm" being the default.
     """
+
+    _units: Literal["mm"] | Literal["inch"]
 
     status = Instrument.measurement(
         "\x1BA0800", "Get the encoder's status bar"
     )
 
     # get_process lambda functions used in the position property
-    position_get_process_map = {
+    position_get_process_map: dict[Literal["mm"] | Literal["inch"], Callable[[str], float]] = {
         "mm": lambda p: float(p.split("\x02")[-1]) * 1e-4,
         "inch": lambda p: float(p.split("\x02")[-1]) * 1e-5
     }
 
     position = Instrument.measurement(
-        "\x1BA0200", """Measure the encoder's current position (float).
+        "\x1bA0200",
+        """Measure the encoder's current position (float).
                         Note that the get_process performs a mapping from the returned
                         value to a float measured in the units specified by :attr:`.ND287.units`.
                         The get_process is modified dynamically as this mapping changes slightly
                         between different units.""",
         get_process=position_get_process_map["mm"],
-        dynamic=True
+        dynamic=True,
     )
 
-    def __init__(self, adapter, name="Heidenhain ND287", units="mm", **kwargs):
-        """ Initialize the nd287 with a carriage return write termination.
-
-        :param: units: Specify the units that the gauge is working in.
-        Valid values are "inch" and "mm" with "mm" being the default.
-        """
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Heidenhain ND287",
+        units: Literal["mm"] | Literal["inch"] = "mm",
+        **kwargs,
+    ):
         self._units = units
 
         super().__init__(
@@ -72,7 +83,7 @@ class ND287(Instrument):
         )
 
     @property
-    def id(self):
+    def id(self) -> str:
         """ Get the string identification property for the device.
         """
         self.write("\x1BA0000")
@@ -80,7 +91,7 @@ class ND287(Instrument):
         return id_str
 
     @property
-    def units(self):
+    def units(self) -> str:
         """ Control the unit of measure set on the device.
             Valid values are 'mm' and 'inch' Note that this parameter can only be set
             manually on the device. So this argument only ensures that the instance units
@@ -90,7 +101,7 @@ class ND287(Instrument):
         return self._units
 
     @units.setter
-    def units(self, unit):
+    def units(self, unit: Literal["mm"] | Literal["inch"]) -> None:
         if unit in self.position_get_process_map.keys():
             self._units = unit
             self.position_get_process = self.position_get_process_map[unit]

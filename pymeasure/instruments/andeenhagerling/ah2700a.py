@@ -57,6 +57,7 @@ class AH2700A(AH2500A):
         values=[50, 20000],
         # typical reply: "FREQUENCY      1200.0 Hz"
         get_process=lambda v: float(AH2500A._renumeric.search(v).group(0)),
+        cast=str,
     )
 
     def reset(self):

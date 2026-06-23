@@ -24,7 +24,7 @@
 
 from enum import IntEnum
 
-from pymeasure.adapters import Adapter
+from pymeasure.instruments.instrument import AdapterType
 from .ophir_base import AverageMixin, KeyMixin, OphirBase
 
 
@@ -39,6 +39,6 @@ class Vega(AverageMixin, KeyMixin, OphirBase):
         EXPOSURE = 4
         POSITION = 5
 
-    def __init__(self, adapter: Adapter | str | int, name: str = "Vega", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Vega", **kwargs):
         super().__init__(adapter, name, **kwargs)
         self.modes_values = self.Modes

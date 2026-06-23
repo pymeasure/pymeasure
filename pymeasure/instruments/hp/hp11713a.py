@@ -134,7 +134,7 @@ class HP11713A(Instrument):
             **kwargs,
         )
 
-    def attenuation_x(self, attenuation):
+    def attenuation_x(self, attenuation) -> None:
         """ Set switches according to the attenuation in dB for X
 
         The set attenuation will be rounded to the next available step.
@@ -154,7 +154,7 @@ class HP11713A(Instrument):
         self.ch_1.enabled, self.ch_2.enabled, self.ch_3.enabled, self.ch_4.enabled = \
             self.ATTENUATOR_X[int(round(attenuation, rounding))]
 
-    def attenuation_y(self, attenuation):
+    def attenuation_y(self, attenuation) -> None:
         """ Set switches according to the attenuation in dB for Y
 
         The set attenuation will be rounded to the next available step.
@@ -174,7 +174,7 @@ class HP11713A(Instrument):
         self.ch_5.enabled, self.ch_6.enabled, self.ch_7.enabled, self.ch_8.enabled = \
             self.ATTENUATOR_Y[int(round(attenuation, rounding))]
 
-    def deactivate_all(self):
+    def deactivate_all(self) -> None:
         """
         Deactivate all switches to polarity 'B'.
         """

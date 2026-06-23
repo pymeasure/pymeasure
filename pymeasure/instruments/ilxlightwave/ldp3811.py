@@ -25,20 +25,8 @@
 import logging
 
 from pymeasure.instruments import Instrument, cast_or_str
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-
-        # Python>3.10 remove it.
-
-        def __str__(self):
-            return str(self.value)
 
 
 log = logging.getLogger(__name__)
@@ -94,14 +82,14 @@ class LDP3811(Instrument):
     )
 
     @property
-    def current_setpoint(self):
+    def current_setpoint(self) -> float:
         """Control the current setpoint, in mA (float, strictly in range 0 to
         (:attr:`~.current_limit_500` if :attr:`~.current_range_500_enabled`
         else :attr:`~.current_limit_200`))."""
         return self.values("SET:LDI?")[0]
 
     @current_setpoint.setter
-    def current_setpoint(self, value):
+    def current_setpoint(self, value: float) -> None:
         current_limit = (
             self.current_limit_500 if self.current_range_500_enabled else self.current_limit_200
         )
@@ -145,24 +133,24 @@ class LDP3811(Instrument):
     )
 
     @property
-    def duty_cycle_setpoint(self):
+    def duty_cycle_setpoint(self) -> float:
         """Control the duty cycle (pulse width / pulse repetition interval) as a percentage
         (float, strictly in range (100 * :attr:`~.pulse_width` / 6500) to 100)."""
         return self.values("SET:CDC?")[0]
 
     @duty_cycle_setpoint.setter
-    def duty_cycle_setpoint(self, value):
+    def duty_cycle_setpoint(self, value: float) -> None:
         value = strict_range(value, (100 * self.pulse_width / 6500, 100))
         self.write(f"CDC {value}")
 
-    def set_to_min_duty_cycle(self):
+    def set_to_min_duty_cycle(self) -> float:
         """Set the duty cycle to the minimum valid value given the present mode, pulse width,
         and pulse repetition interval, and return the duty cycle."""
         self.write("CDC 0.01")  # The instrument implicitly truncates to the closest valid value
         self.check_errors()
         return self.duty_cycle_setpoint
 
-    def set_to_max_duty_cycle(self):
+    def set_to_max_duty_cycle(self) -> float:
         """Set the duty cycle to the maximum valid value given the present mode, pulse width,
         and pulse repetition interval, and return the duty cycle."""
         self.write("CDC 100")  # The instrument implicitly truncates to the closest valid value
@@ -175,13 +163,13 @@ class LDP3811(Instrument):
     )
 
     @property
-    def pulse_repetition_interval_setpoint(self):
+    def pulse_repetition_interval_setpoint(self) -> float:
         """Control the pulse repetition interval, in us
         (float, strictly in range max(1, :attr:`~.pulse_width`) to 6500)."""
         return self.values("SET:PRI?")[0]
 
     @pulse_repetition_interval_setpoint.setter
-    def pulse_repetition_interval_setpoint(self, value):
+    def pulse_repetition_interval_setpoint(self, value: float) -> None:
         value = strict_range(value, (max(1, self.pulse_width), 6500))
         self.write(f"PRI {value}")
 
@@ -191,12 +179,12 @@ class LDP3811(Instrument):
     )
 
     @property
-    def pulse_width_setpoint(self):
+    def pulse_width_setpoint(self) -> float:
         """Control the pulse width, in us (float strictly in range 0.1 to
         :attr:`~.pulse_repetition_interval`."""
         return self.values("SET:PW?")[0]
 
     @pulse_width_setpoint.setter
-    def pulse_width_setpoint(self, value):
+    def pulse_width_setpoint(self, value: float) -> None:
         value = strict_range(value, (0.1, self.pulse_repetition_interval))
         self.write(f"PW {value}")

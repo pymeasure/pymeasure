@@ -25,6 +25,11 @@
 import logging
 
 from os.path import basename
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pymeasure.display.browser import BaseBrowserItem
+    from pymeasure.display.curves import ResultsCurve
 
 from .Qt import QtCore
 from .listeners import Monitor
@@ -47,7 +52,13 @@ class Experiment(QtCore.QObject):
     :param browser_item: :class:`.BaseBrowserItem` based object
     """
 
-    def __init__(self, results, curve_list=None, browser_item=None, parent=None):
+    def __init__(
+        self,
+        results,
+        curve_list: "list[ResultsCurve] | None" = None,
+        browser_item: "BaseBrowserItem | None" = None,
+        parent: QtCore.QObject | None = None,
+    ):
         super().__init__(parent)
         self.results = results
         self.data_filename = self.results.data_filename

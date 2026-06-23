@@ -39,6 +39,7 @@ python console.py --seed 12345 #Console version
 
 import sys
 import random
+import os
 import tempfile
 from time import sleep
 
@@ -96,7 +97,9 @@ class MainWindow(ManagedWindow):
         self.setWindowTitle('GUI Example')
 
     def queue(self):
-        filename = tempfile.mktemp()
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.unlink(filename)
 
         procedure = self.make_procedure()
         results = Results(procedure, filename)

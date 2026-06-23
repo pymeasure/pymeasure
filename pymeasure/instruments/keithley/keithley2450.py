@@ -275,25 +275,29 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     means = Instrument.measurement(
         ":TRACe:STATistics:AVERage?",
         """Get the calculated means (averages) for voltage,
-        current, and resistance from the buffer data  as a list. """
+        current, and resistance from the buffer data  as a list. """,
+        get_process_list=lambda vals: vals,
     )
 
     maximums = Instrument.measurement(
         ":TRACe:STATistics:MAXimum?",
         """ Get the calculated maximums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=lambda vals: vals,
     )
 
     minimums = Instrument.measurement(
         ":TRACe:STATistics:MINimum?",
         """ Get the calculated minimums for voltage, current, and
-        resistance from the buffer data as a list. """
+        resistance from the buffer data as a list. """,
+        get_process_list=lambda vals: vals,
     )
 
     standard_devs = Instrument.measurement(
         ":TRACe:STATistics:STDDev?",
         """ Get the calculated standard deviations for voltage,
-        current, and resistance from the buffer data as a list. """
+        current, and resistance from the buffer data as a list. """,
+        get_process_list=lambda vals: vals,
     )
 
     ###########

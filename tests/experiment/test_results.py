@@ -107,7 +107,9 @@ def test_procedure_filestorage():
     assert RandomProcedure.iterations.value == 100
     procedure = RandomProcedure()
     procedure.iterations = 101
-    resultfile = tempfile.mktemp()
+    fd, resultfile = tempfile.mkstemp()
+    os.close(fd)
+    os.unlink(resultfile)
     results = Results(procedure, resultfile)
 
     new_results = pickle.loads(pickle.dumps(results))
@@ -203,7 +205,7 @@ class TestPandas3Numpy2Compat:
 
         assert second_data['x'].dtype == first_dtype
         assert second_data['y'].dtype == first_dtype
-        assert len(second_data) == 10
+        assert len(second_data) == 10  # type: ignore
 
     def test_results_concat_sort_false_preserves_column_order(self, tmpdir):
         """pd.concat with sort=False must preserve column order from DATA_COLUMNS."""
@@ -225,9 +227,9 @@ class TestPandas3Numpy2Compat:
         """BooleanParameter must accept np.bool_ values (numpy 2.0 replacement for np.bool)."""
         from pymeasure.experiment import BooleanParameter
         p = BooleanParameter('Test')
-        p.value = np.bool_(True)
+        p.value = np.bool_(True)  # ty:ignore[invalid-assignment]
         assert p.value is True
-        p.value = np.bool_(False)
+        p.value = np.bool_(False)  # ty:ignore[invalid-assignment]
         assert p.value is False
 
     def test_results_empty_file_returns_empty_dataframe(self, tmpdir):

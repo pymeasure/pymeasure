@@ -24,17 +24,21 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 import logging
 import re
 import time
 from collections import Counter, OrderedDict, namedtuple
 from enum import IntEnum
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 
 from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.channel import Channel
+from pymeasure.instruments.common_base import IdType
+from pymeasure.instruments.instrument import AdapterType
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -54,11 +58,17 @@ class AgilentB1500(SCPIMixin, Instrument):
     and provide a high-level interface for taking different kinds of
     measurements.
     """
+    smus: dict[IdType, SMU]
 
-    def __init__(self, adapter, name="Agilent B1500 Semiconductor Parameter Analyzer", **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Agilent B1500 Semiconductor Parameter Analyzer",
+        **kwargs,
+    ):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
-        self._smu_names = {}
-        self._smu_references = {}
+        self._smu_names: dict[int, str] = {}
+        self._smu_references: dict[int, SMU] = {}
 
     @property
     def smu_references(self):
@@ -70,7 +80,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Get all SMU names as dict."""
         return self._smu_names
 
-    def query_learn(self, query_type):
+    def query_learn(self, query_type: str | int) -> dict[str, str]:
         """Query settings from the instrument. (``*LRN?``)
 
         :param int or str query_type: Query type (number according to manual)
@@ -78,7 +88,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         return QueryLearn.query_learn(self.ask, query_type)
 
-    def query_learn_header(self, query_type, **kwargs):
+    def query_learn_header(self, query_type: str | int, **kwargs):
         """Query settings from the instrument. (``*LRN?``)
 
         Return dict of settings in human-readable format for debugging
@@ -91,7 +101,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         return QueryLearn.query_learn_header(self.ask, query_type, self._smu_references, **kwargs)
 
-    def query_modules(self):
+    def query_modules(self) -> dict[int, str]:
         """Query module models from the instrument.
 
         Return dictionary of channel and module type.
@@ -112,7 +122,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             "B1530A": "WGFMU",
             "B1520A/N1301A": "MFCMU",
         }
-        out = {}
+        out: dict[int, str] = {}
         for i, module in enumerate(modules):
             module = module.split(",")
             if not module[0] == "0":
@@ -123,7 +133,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                     raise NotImplementedError(f"Module {module[0]} is not implemented yet!")
         return out
 
-    def initialize_all_smus(self):
+    def initialize_all_smus(self) -> None:
         """Initialize all SMUs.
 
         Query available modules and create a :class:`.SMU` instance for each.
@@ -146,7 +156,7 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self._smu_names[channel] = self.smus[i].name
                 i += 1
 
-    def initialize_all_spgus(self):
+    def initialize_all_spgus(self) -> None:
         """Initialize all SPGUs.
 
         Query available modules and create a :class:`.SPGU` instance for each.
@@ -157,7 +167,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             if module_type == "SPGU":
                 self.add_child(SPGU, channel, collection="spgus", prefix="spgu")
 
-    def initialize_cmu(self):
+    def initialize_cmu(self) -> None:
         """Initialize CMU.
 
         Query available modules and create a :class:`.CMU` instance for the CMU.
@@ -207,14 +217,14 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         self.write(f"ERSSP {port.value}, {status.value}")
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """Check for errors. (``ERRX?``)"""
         error = self.ask("ERRX?")
         error = re.match(
             r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error
         ).groups()
         if int(error[0]) == 0:
-            return
+            return []
         else:
             raise OSError(f"Agilent B1500 Error {error[0]}: {error[1]}")
 
@@ -225,29 +235,28 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         return self.complete
 
-    def clear_buffer(self):
+    def clear_buffer(self) -> None:
         """Clear output data buffer. (``BC``)"""
         self.write("BC")
 
-    def clear_timer(self):
+    def clear_timer(self) -> None:
         """Clear timer count. (``TSR``)"""
         self.write("TSR")
 
-    def send_trigger(self):
+    def send_trigger(self) -> None:
         """Send trigger to start measurement (except High Speed Spot). (``XE``)"""
         self.write("XE")
 
     @property
-    def auto_calibration(self):
+    def auto_calibration(self) -> bool:
         """Control SMU auto-calibration every 30 minutes (bool). (``CM``)"""
         response = self.query_learn(31)["CM"]
         response = bool(int(response))
         return response
 
     @auto_calibration.setter
-    def auto_calibration(self, setting):
-        setting = int(setting)
-        self.write(f"CM {setting}")
+    def auto_calibration(self, setting: bool) -> None:
+        self.write(f"CM {int(setting)}")
         self.check_errors()
 
     ######################################
@@ -261,7 +270,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param dict smu_names: Dictionary of channel and SMU name
         """
 
-        channels = {
+        channels: dict[str, str | int] = {
             "A": 101,
             "B": 201,
             "C": 301,
@@ -338,7 +347,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         }
         data_names_int = {"Sampling index"}  # convert to int instead of float
 
-        def __init__(self, smu_names, output_format_str):
+        def __init__(self, smu_names, output_format_str: str = ""):
             """Store parameters of the chosen output format for later usage in data processing.
 
             Data Names: e.g. "Voltage (V)" or "Current Measurement (A)"
@@ -384,17 +393,19 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.data_names = {}  # no header
             self.smu_names = smu_names
 
-        def check_status(self, status_string, name=None, cmu=False):
+        def check_status(
+            self, status_string: str, name: str | None = None, cmu: bool = False
+        ) -> None:
             """Check returned status of instrument.
 
             If not null or end of data, message is written to log.info.
 
-            :param str status_string: Status string returned by the instrument when reading data.
-            :param str name: Name of the SMU channel, defaults to None
-            :param bool cmu: Whether or not channel is CMU, defaults to False (SMU)
+            :param status_string: Status string returned by the instrument when reading data.
+            :param name: Name of the SMU channel, defaults to None
+            :param cmu: Whether or not channel is CMU, defaults to False (SMU)
             """
 
-            def log_failed():
+            def log_failed() -> None:
                 log.info("Agilent B1500: check_status not possible for status %s", status_string)
 
             if name is None:
@@ -429,14 +440,14 @@ class AgilentB1500(SCPIMixin, Instrument):
             else:
                 log_failed()
 
-        def format_channel_check_status(self, status_string, channel_string):
+        def format_channel_check_status(self, status_string: str, channel_string: str) -> str | int:
             """Return channel number for given channel letter.
 
             Check for not null status of the channel and write according
             message to log.info.
 
-            :param str status_string: Status string returned by the instrument when reading data.
-            :param str channel_string: Channel string returned by the instrument
+            :param status_string: Status string returned by the instrument when reading data.
+            :param channel_string: Channel string returned by the instrument
             :return: Channel name
             :rtype: str
             """
@@ -455,13 +466,16 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.check_status(status_string)
                 return channel
 
+        def format_single(self, element: str) -> tuple[str, str | int, str, float]:
+            raise NotImplementedError
+
     class _data_formatting_FMT1(_data_formatting_generic):
         """Data formatting for FMT1 format."""
 
-        def __init__(self, smu_names={}, output_format_string="FMT1"):
+        def __init__(self, smu_names={}, output_format_string: str = "FMT1"):
             super().__init__(smu_names, output_format_string)
 
-        def format_single(self, element):
+        def format_single(self, element: str) -> tuple[str, str | int, str, float]:
             """Format single measurement value.
 
             :param str element: Single measurement value read from the instrument
@@ -492,10 +506,10 @@ class AgilentB1500(SCPIMixin, Instrument):
         def __init__(self, smu_names={}):
             super().__init__(smu_names, "FMT21")
 
-        def format_single(self, element):
+        def format_single(self, element: str) -> tuple[str, str | int, str, float]:
             """Format single measurement value.
 
-            :param str element: Single measurement value read from the instrument
+            :param element: Single measurement value read from the instrument
             :return: Status (three digits), channel, data name, value
             :rtype: (str, str, str, float)
             """
@@ -511,15 +525,19 @@ class AgilentB1500(SCPIMixin, Instrument):
 
             return (status, channel, data_name, value)
 
-    def _data_formatting(self, output_format_str, smu_names={}):
+    def _data_formatting(
+        self, output_format_str: str, smu_names: dict | None = None
+    ) -> AgilentB1500._data_formatting_generic | None:
         """Return data formatting class for given data format string.
 
-        :param str output_format_str: Data output format, e.g. ``FMT21``
-        :param dict smu_names: Dictionary of channels and SMU names, defaults to {}
+        :param output_format_str: Data output format, e.g. ``FMT21``
+        :param smu_names: Dictionary of channels and SMU names, defaults to {}
         :return: Corresponding formatting class
         :rtype: class
         """
-        classes = {
+        if smu_names is None:
+            smu_names = {}
+        classes: dict[str, type[AgilentB1500._data_formatting_generic]] = {
             "FMT1": self._data_formatting_FMT1,
             "FMT11": self._data_formatting_FMT11,
             "FMT21": self._data_formatting_FMT21,
@@ -535,7 +553,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         else:
             return format_class(smu_names=smu_names)
 
-    def data_format(self, output_format, mode=0):
+    def data_format(self, output_format: int, mode: int = 0) -> None:
         """Specify data output format. Check documentation for parameters. (``FMT``)
 
         Should be called once per session to set the data format for
@@ -543,8 +561,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
         Currently implemented are format 1, 11, and 21.
 
-        :param str output_format: Output format string, e.g. ``FMT21``
-        :param int mode: Data output mode, defaults to 0 (only measurement data is returned)
+        :param output_format: Output format string, e.g. ``11``
+        :param mode: Data output mode, defaults to 0 (only measurement data is returned)
         """
         # restrict to implemented formats
         output_format = strict_discrete_set(output_format, [1, 11, 21])
@@ -563,14 +581,16 @@ class AgilentB1500(SCPIMixin, Instrument):
                 "instead channel numbers will be used. "
                 "Call data_format after initializing all SMUs."
             )
-        self._data_format = self._data_formatting(f"FMT{output_format}", self._smu_names)
+        self._data_format: AgilentB1500._data_formatting_generic | None = self._data_formatting(
+            f"FMT{output_format}", self._smu_names
+        )
 
     ######################################
     # Measurement Settings
     ######################################
 
     @property
-    def parallel_meas(self):
+    def parallel_meas(self) -> bool:
         """Control whether parallel measurements are enabled (bool). (``PAD``)
 
         Effective for SMUs using HSADC and measurement modes 1, 2, 10, 18.
@@ -582,9 +602,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         return response
 
     @parallel_meas.setter
-    def parallel_meas(self, setting):
-        setting = int(setting)
-        self.write(f"PAD {setting}")
+    def parallel_meas(self, setting: bool) -> None:
+        self.write(f"PAD {int(setting)}")
         self.check_errors()
 
     def query_meas_settings(self):
@@ -619,7 +638,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """Read ADC settings (55, 56) from the instrument."""
         return {**self.query_learn_header(55), **self.query_learn_header(56)}
 
-    def adc_setup(self, adc_type, mode, N=""):
+    def adc_setup(self, adc_type: ADCType | int | str, mode: ADCMode | int, N: str = "") -> None:
         """Set up operation mode and parameters of ADC for each ADC type.
         (``AIT``)
 
@@ -835,33 +854,32 @@ class AgilentB1500(SCPIMixin, Instrument):
     # Read out of data
     ######################################
 
-    def read_data(self, number_of_points):
+    def read_data(self, number_of_points: int):
         """Read all data from buffer and return Pandas DataFrame.
 
         Specify number of measurement points for correct splitting of the data list.
 
-        :param int number_of_points: Number of measurement points
+        :param number_of_points: Number of measurement points
         :return: Measurement Data
         :rtype: pd.DataFrame
         """
-        data = self.read()
-        data = data.split(",")
-        data = np.array(data)
-        data = np.split(data, number_of_points)
-        data = pd.DataFrame(data=data)
-        data = data.applymap(self._data_format.format_single)
-        heads = data.iloc[[0]].applymap(lambda x: " ".join(x[1:3]))
+        data_list = self.read().split(",")
+        data_array = np.array(data_list)
+        data_array_list = np.split(data_array, number_of_points)
+        data = pd.DataFrame(data=data_array_list)
+        data_mapped = data.applymap(self._data_format.format_single)
+        heads = data_mapped.iloc[[0]].applymap(lambda x: " ".join(x[1:3]))
         # channel & data_type
-        heads = heads.to_numpy().tolist()  # 2D List
-        heads = heads[0]  # first row
-        data = data.applymap(lambda x: x[3])
-        data.columns = heads
-        return data
+        heads_list = heads.to_numpy().tolist()  # 2D List
+        first_row = heads_list[0]
+        data_twice_mapped = data_mapped.applymap(lambda x: x[3])
+        data_twice_mapped.columns = first_row
+        return data_twice_mapped
 
-    def read_channels(self, nchannels):
+    def read_channels(self, nchannels: int):
         """Read data for 1 measurement point from the buffer for the specified number of channels.
 
-        :param int nchannels: Number of channels which return data (includes measurement
+        :param nchannels: Number of channels which return data (includes measurement
             channels and sweep sources, depending on data output settings)
         :return: Measurement data
         :rtype: tuple
@@ -1359,7 +1377,7 @@ class Ranging:
         # distinguish between limited and fixed ranging
         # omitting 'limited auto ranging'/'range fixed'
         # defaults to 'limited auto ranging'
-        inverse_ranges = {0: "Auto Ranging"}
+        inverse_ranges: dict[int, str | tuple[str, str]] = {0: "Auto Ranging"}
         for key, value in ranges.items():
             if isinstance(value, tuple):
                 for v in value:
@@ -1648,21 +1666,23 @@ class SPGUChannel(Channel):
         """Control the load impedance (``SER``) in Ohm (float).""",
     )
 
-    def set_output_voltage(self, source=1, base_voltage=0, peak_voltage=0):
+    def set_output_voltage(
+        self, source: SPGUSignalSource | int = 1, base_voltage: float = 0, peak_voltage: float = 0
+    ) -> None:
         """Set the output voltage of the SPGU channel. (``SPV``)
 
-        :param SPGUSignalSource or int source: Signal source for the output voltage,
+        :param source: Signal source for the output voltage,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float base_voltage: Pulse base voltage or DC output voltage in V,
+        :param base_voltage: Pulse base voltage or DC output voltage in V,
             defaults to 0
-        :param float peak_voltage: Pulse peak voltage in V, defaults to 0
+        :param peak_voltage: Pulse peak voltage in V, defaults to 0
         """
         source = SPGUSignalSource.get(source).value
         base_voltage = strict_range(base_voltage, (-40, 40))
         peak_voltage = strict_range(peak_voltage, (-40, 40))
         self.write(f"SPV {{ch}}, {source}, {base_voltage}, {peak_voltage}")
 
-    def get_output_voltage(self, source=1):
+    def get_output_voltage(self, source: SPGUSignalSource | int = 1) -> tuple[float, float]:
         """Get the output voltage of the specified signal source. (``SPV?``)
 
         :param SPGUSignalSource or int source: Signal source
@@ -1686,23 +1706,23 @@ class SPGUChannel(Channel):
 
     def set_pulse_timings(
         self,
-        source=1,
-        delay=0,
-        width=1e-7,
-        rise_time=2e-8,
-        fall_time=None,
-    ):
+        source: SPGUSignalSource | int = 1,
+        delay: float = 0,
+        width: float = 1e-7,
+        rise_time: float = 2e-8,
+        fall_time: float | None = None,
+    ) -> None:
         """Set the timing parameters for the SPGU channel. (``SPT``)
 
         The SPGU operating mode must be set to PG with the ``SIM 0`` command before setting
         the pulse timings.
 
-        :param SPGUSignalSource or int source: Signal source for the pulse timings,
+        :param source: Signal source for the pulse timings,
             defaults to :attr:`SPGUSignalSource.PULSE_SIGNAL_1`
-        :param float delay: Pulse delay in seconds, defaults to 0
-        :param float width: Pulse width in seconds, defaults to 1e-7
-        :param float rise_time: Pulse rise time in seconds, defaults to 2e-8
-        :param float fall_time: Pulse fall time in seconds, defaults to rise_time if None
+        :param delay: Pulse delay in seconds, defaults to 0
+        :param width: Pulse width in seconds, defaults to 1e-7
+        :param rise_time: Pulse rise time in seconds, defaults to 2e-8
+        :param fall_time: Pulse fall time in seconds, defaults to rise_time if None
         """
         source = SPGUSignalSource.get(source)
         if source == SPGUSignalSource.DC:
@@ -1712,7 +1732,7 @@ class SPGUChannel(Channel):
             command += f", {fall_time}"
         self.write(command)
 
-    def get_pulse_timings(self, source=1):
+    def get_pulse_timings(self, source: SPGUSignalSource | int = 1) -> tuple[float, ...]:
         """Get the timing parameters for the SPGU channel. (``SPT?``)
 
         The SPGU operating mode must be set to PG with the ``SIM 0`` command before getting the
@@ -1724,10 +1744,9 @@ class SPGUChannel(Channel):
         :rtype: tuple
         """
         source = SPGUSignalSource.get(source).value
-        response = self.ask(f"SPT? {{ch}}, {source}")
-        return tuple(map(float, response.split(",")))
+        return tuple(self.values(f"SPT? {{ch}}, {source}", separator=","))
 
-    def apply_setup(self):
+    def apply_setup(self) -> None:
         """Apply the current setup to the SPGU channel. (``SPUPD``)
 
         Depends on the :attr:`SPGU.operation_mode` (``SIM``):
@@ -1864,18 +1883,18 @@ class CMU(Channel):
                 f"series resistance = {series_resistance}"
             )
 
-        path = SCUUPath.get(path)
-        if path == SCUUPath.CMU:
+        path_int = SCUUPath.get(path)
+        if path_int == SCUUPath.CMU:
             log_settings_change(0, 100, "20 mA", "OFF")
         else:
             log_settings_change(
                 0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
             )
-        self.write(f"SSP {{ch}}, {path.value}")
+        self.write(f"SSP {{ch}}, {path_int.value}")
 
 
 def _set_cv_parameters_base(
-    id: int,
+    id: IdType,
     mode: SweepMode | int | str,
     start: float,
     stop: float,
@@ -1910,13 +1929,13 @@ class CustomIntEnum(IntEnum):
     .. automethod:: __str__
     """
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Give title case string of enum value."""
         return str(self.name).replace("_", " ").title()
         # str() conversion just because of pylint bug
 
     @classmethod
-    def get(cls, input_value):
+    def get(cls, input_value: int | str) -> CustomIntEnum:
         """Give Enum member by specifying name or value.
 
         :param str or int input_value: Enum name or value
@@ -1931,11 +1950,11 @@ class CustomIntEnum(IntEnum):
 class ADCType(CustomIntEnum):
     """ADC Type."""
 
-    HSADC = (0,)  #: High-speed ADC
-    HRADC = (1,)  #: High-resolution ADC
-    HSADC_PULSED = (2,)  #: High-speed ADC for pulsed measurements
+    HSADC = 0  #: High-speed ADC
+    HRADC = 1  #: High-resolution ADC
+    HSADC_PULSED = 2  #: High-speed ADC for pulsed measurements
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.name).replace("_", " ")
         # .title() str() conversion just because of pylint bug
 
@@ -2170,7 +2189,7 @@ class QueryLearn:
     """Methods to issue and process ``*LRN?`` (learn) command and response."""
 
     @staticmethod
-    def query_learn(ask, query_type):
+    def query_learn(ask: Callable[[str], str], query_type: str | int) -> dict[str, str]:
         """Issue ``*LRN?`` (learn) command to the instrument to read
         configuration.
         Return dictionary of commands and set values.
@@ -2223,16 +2242,22 @@ class QueryLearn:
         return response_dict
 
     @classmethod
-    def query_learn_header(cls, ask, query_type, smu_references, single_command=False):
+    def query_learn_header(
+        cls,
+        ask: Callable[[str], str],
+        query_type: int | str,
+        smu_references: dict,
+        single_command: str | Literal[False]=False,
+    ):
         """Issue ``*LRN?`` (learn) command to the instrument to
         read configuration.
         Processes information to human readable values for debugging
         purposes or file headers.
 
         :param Instrument.ask ask: ask method of the instrument
-        :param int or str query_type: Number according to Programming Guide
-        :param dict smu_references: SMU references by channel
-        :param str single_command: if only a single command should be returned,
+        :param query_type: Number according to Programming Guide
+        :param smu_references: SMU references by channel
+        :param single_command: if only a single command should be returned,
                                    defaults to False
         :return: Read configuration
         :rtype: dict
@@ -2249,7 +2274,9 @@ class QueryLearn:
         return ret
 
     @staticmethod
-    def to_dict(parameters, names, *args):
+    def to_dict(
+        parameters: str | dict, names: Sequence[str | tuple[str, Callable[[Any], Any]]], *args
+    ) -> OrderedDict:
         """Take parameters returned by :meth:`query_learn` and ordered list
         of corresponding parameter names (optional function) and return
         dict of parameters including names.
@@ -2267,14 +2294,15 @@ class QueryLearn:
         else:
             parameters_iter = enumerate(parameters)
         for i, parameter in parameters_iter:
-            if isinstance(names[i], tuple):
-                ret[names[i][0]] = names[i][1](parameter, *args)
+            element = names[i]
+            if isinstance(element, tuple):
+                ret[element[0]] = element[1](parameter, *args)
             else:
-                ret[names[i]] = parameter
+                ret[element] = parameter
         return ret
 
     @staticmethod
-    def _get_smu(key, smu_references):
+    def _get_smu(key, smu_references: dict[int, SMU]) -> SMU:
         # command without channel
         command = re.findall(r"(?P<command>[A-Z]+)", key)[0]
         channel = key[len(command) :]  # noqa: E203

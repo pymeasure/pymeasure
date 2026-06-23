@@ -28,8 +28,7 @@ import time
 from warnings import warn
 
 from pyvisa.errors import VisaIOError
-
-from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments import AdapterType, Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 log = logging.getLogger(__name__)
@@ -89,16 +88,20 @@ class IBeamSmart(Instrument):
 
     ch_5 = Instrument.ChannelCreator(DriverChannel, 5)
 
-    def __init__(self, adapter, name="Toptica IBeam Smart laser diode",
-                 baud_rate=115200,
-                 **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Toptica IBeam Smart laser diode",
+        baud_rate: int = 115200,
+        **kwargs,
+    ):
         super().__init__(
             adapter,
             name,
-            read_termination='\r\n',
-            write_termination='\r\n',
-            asrl={'baud_rate': baud_rate},
-            **kwargs
+            read_termination="\r\n",
+            write_termination="\r\n",
+            asrl={"baud_rate": baud_rate},
+            **kwargs,
         )
         # configure communication mode: no repeating and no command prompt
         self.write('echo off')
@@ -111,7 +114,7 @@ class IBeamSmart(Instrument):
             log.warning("Adapter does not have 'flush_read_buffer' method.")
         self.ask('talk usual')
 
-    def read(self):
+    def read(self, **kwargs) -> str:
         """Read a reply of the instrument and extract the values, if possible.
 
         Reads a reply of the instrument which consists of at least two
@@ -128,14 +131,14 @@ class IBeamSmart(Instrument):
 
         :return: string containing the ASCII response of the instrument (without '[OK]').
         """
-        reply = super().read()  # read back the LF+CR which is always sent back
+        reply = super().read(**kwargs)  # read back the LF+CR which is always sent back
         if reply != "":
             raise ValueError(
                 f"Error, no empty line at begin of message, instead '{reply}'")
         msg = []
         try:
             while True:
-                line = super().read()
+                line = super().read(**kwargs)
                 if line == '[OK]':
                     break
                 msg.append(line)
@@ -153,7 +156,7 @@ class IBeamSmart(Instrument):
         else:
             return reply
 
-    def check_set_errors(self):
+    def check_set_errors(self) -> list:
         """Check for errors after having gotten a property and log them.
 
         Checks if the last reply is only '[OK]', otherwise a ValueError is
@@ -235,19 +238,19 @@ class IBeamSmart(Instrument):
         """Enable pulsing mode.
 
         The optical output is controlled by a digital
-        input signal on a dedicated connnector on the device."""
+        input signal on a dedicated connector on the device."""
         self.emission = True
         self.ch_2.enabled = True
         self.write('en ext')
         self.check_set_errors()
 
-    def disable(self):
+    def disable(self) -> None:
         """Shutdown all laser operation."""
         self.write('di 0')
         self.check_set_errors()
         self.emission = False
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         """Brings the instrument to a safe and stable state."""
         self.disable()
         super().shutdown()

@@ -53,20 +53,20 @@ def test_integer_value():
     with pytest.raises(ValueError):
         _ = p.value  # not set
     with pytest.raises(ValueError):
-        p.value = 'a'  # not an integer
-    p.value = 0.5  # a float
+        p.value = 'a'  # ty:ignore[invalid-assignment]  # not an integer
+    p.value = 0.5  # ty:ignore[invalid-assignment]  # a float
     assert p.value == 0
-    p.value = False  # a boolean
+    p.value = False  # ty:ignore[invalid-assignment]  # a boolean
     assert p.value == 0
     p.value = 10
     assert p.value == 10
-    p.value = '5'
+    p.value = '5'  # ty:ignore[invalid-assignment]
     assert p.value == 5
-    p.value = '11 tests'
+    p.value = '11 tests'  # ty:ignore[invalid-assignment]
     assert p.value == 11
     assert p.units == 'tests'
     with pytest.raises(ValueError):
-        p.value = '31 incorrect units'  # not the correct units
+        p.value = '31 incorrect units'  # ty:ignore[invalid-assignment]  # not the correct units
 
 
 def test_integer_bounds():
@@ -84,9 +84,9 @@ def test_boolean_value_error():
     with pytest.raises(ValueError):
         _ = p.value  # not set
     with pytest.raises(ValueError):
-        p.value = 'a'  # a string
+        p.value = 'a'  # ty:ignore[invalid-assignment]  # a string
     with pytest.raises(ValueError):
-        p.value = 10  # a number other than 0 or 1
+        p.value = 10  # ty:ignore[invalid-assignment]  # a number other than 0 or 1
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default']
 
@@ -112,18 +112,18 @@ def test_float_value():
     with pytest.raises(ValueError):
         _ = p.value  # not set
     with pytest.raises(ValueError):
-        p.value = 'a'  # not a float
-    p.value = False  # boolean
+        p.value = 'a'  # ty:ignore[invalid-assignment]  # not a float
+    p.value = False  # ty:ignore[invalid-assignment]  # boolean
     assert p.value == 0.0
     p.value = 100
     assert p.value == 100.0
-    p.value = '1.06'
+    p.value = '1.06'  # ty:ignore[invalid-assignment]
     assert p.value == 1.06
-    p.value = '11.3 tests'
+    p.value = '11.3 tests'  # ty:ignore[invalid-assignment]
     assert p.value == 11.3
     assert p.units == 'tests'
     with pytest.raises(ValueError):
-        p.value = '31.3 incorrect units'  # not the correct units
+        p.value = '31.3 incorrect units'  # ty:ignore[invalid-assignment]  # not the correct units
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default',
                              ('decimals are', 'decimals')]
@@ -195,13 +195,13 @@ def test_list_order():
 def test_vector_error():
     p = VectorParameter('test', length=3, units='tests')
     with pytest.raises(ValueError):
-        p.value = '[0, 1, 2] wrong unit'
+        p.value = '[0, 1, 2] wrong unit'  # ty:ignore[invalid-assignment]
     with pytest.raises(ValueError):
-        p.value = [1, 2]
+        p.value = [1, 2]  # ty:ignore[invalid-assignment]
     with pytest.raises(ValueError):
-        p.value = ['a', 'b']
+        p.value = ['a', 'b']  # ty:ignore[invalid-assignment]
     with pytest.raises(ValueError):
-        p.value = '0, 1, 2'
+        p.value = '0, 1, 2'  # ty:ignore[invalid-assignment]
 
     assert p.cli_args[0] is None
     assert p.cli_args[1] == [('units are', 'units'), 'default', ('length is', '_length')]
@@ -218,4 +218,6 @@ def test_vector(value, mapping):
     p.value = value
     assert p.value == mapping
 
-# TODO: Add tests for Measurable
+# NOTE: p.value = ... on standalone Parameter objects triggers ty false positives
+# because Parameter.__set__ (descriptor protocol for Procedure classes) confuses
+# the type checker. Runtime behavior is correct — the property setter is used.

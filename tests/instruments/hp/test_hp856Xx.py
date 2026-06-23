@@ -71,7 +71,7 @@ class TestHP856Xx:
             instr.attenuation = 16
             assert instr.attenuation == 20
 
-    @pytest.mark.parametrize("amplitude_unit", [e for e in AmplitudeUnits])
+    @pytest.mark.parametrize("amplitude_unit", list(AmplitudeUnits))  # type: ignore
     def test_amplitude_units(self, amplitude_unit):
         with expected_protocol(
                 HP856Xx,
@@ -117,7 +117,7 @@ class TestHP856Xx:
         ) as instr:
             getattr(instr, function)()
 
-    @pytest.mark.parametrize("trace", [e for e in Trace])
+    @pytest.mark.parametrize("trace", list(Trace))  # type: ignore
     def test_blank_trace(self, trace):
         with expected_protocol(
                 HP856Xx,
@@ -153,7 +153,7 @@ class TestHP856Xx:
             setattr(instr, function, max_freq)
             assert getattr(instr, function) == max_freq
 
-    @pytest.mark.parametrize("trace", [e for e in Trace])
+    @pytest.mark.parametrize("trace", list(Trace))  # type: ignore
     def test_clear_write_trace(self, trace):
         with expected_protocol(
                 HP856Xx,
@@ -172,7 +172,7 @@ class TestHP856Xx:
             with pytest.raises(TypeError):
                 instr.clear_write_trace(0)
 
-    @pytest.mark.parametrize("coupling", [e for e in CouplingMode])
+    @pytest.mark.parametrize("coupling", list(CouplingMode))  # type: ignore
     def test_coupling(self, coupling):
         with expected_protocol(
                 HP856Xx,
@@ -182,7 +182,7 @@ class TestHP856Xx:
             instr.coupling = coupling
             assert instr.coupling == coupling
 
-    @pytest.mark.parametrize("demod_mode", [e for e in DemodulationMode])
+    @pytest.mark.parametrize("demod_mode", list(DemodulationMode))  # type: ignore
     def test_demodulation_mode(self, demod_mode):
         with expected_protocol(
                 HP856Xx,
@@ -211,7 +211,7 @@ class TestHP856Xx:
             instr.demodulation_time = 10.2
             assert instr.demodulation_time == 10.3
 
-    @pytest.mark.parametrize("detector_mode", [e for e in DetectionModes])
+    @pytest.mark.parametrize("detector_mode", list(DetectionModes))  # type: ignore
     def test_detector_mode(self, detector_mode):
         with expected_protocol(
                 HP856Xx,
@@ -308,7 +308,7 @@ class TestHP856Xx:
             with pytest.raises(ValueError):
                 instr.do_fft("TRAZ", "zuo", "TEWST")
 
-    @pytest.mark.parametrize("frequency_reference", [e for e in FrequencyReference])
+    @pytest.mark.parametrize("frequency_reference", list(FrequencyReference))  # type: ignore
     def test_frequency_reference_source(self, frequency_reference):
         with expected_protocol(
                 HP856Xx,
@@ -368,7 +368,7 @@ class TestHP856Xx:
             ("set_maximum_hold", "MXMH")
         ]
     )
-    @pytest.mark.parametrize("trace", [e for e in Trace])
+    @pytest.mark.parametrize("trace", list(Trace))  # type: ignore
     def test_hold(self, trace, function, cmdstr):
         with expected_protocol(
                 HP856Xx,
@@ -436,7 +436,7 @@ class TestHP856Xx:
                     ("MKFCR?", 1e4)
                 ]
         ) as instr:
-            instr.frequency_counter_resolution = 1e3
+            instr.frequency_counter_resolution = int(1e3)
             assert instr.frequency_counter_resolution == 1e4
 
     @pytest.mark.parametrize("all_markers, cmdstring", [(True, " ALL"), (False, "")])
@@ -449,7 +449,7 @@ class TestHP856Xx:
         ) as instr:
             instr.deactivate_marker(all_markers)
 
-    @pytest.mark.parametrize("mode", [e for e in PeakSearchMode])
+    @pytest.mark.parametrize("mode", list(PeakSearchMode))  # type: ignore
     def test_minimum_hold(self, mode):
         with expected_protocol(
                 HP856Xx,
@@ -702,7 +702,7 @@ class TestHP856Xx:
             instr.sweep_time = "AUTO"
             assert instr.sweep_time == 10
 
-    @pytest.mark.parametrize("mode", [e for e in SweepCoupleMode])
+    @pytest.mark.parametrize("mode", list(SweepCoupleMode))  # type: ignore
     def test_sweep_couple(self, mode):
         with expected_protocol(
                 HP856Xx,
@@ -712,7 +712,7 @@ class TestHP856Xx:
             instr.sweep_couple = mode
             assert instr.sweep_couple == mode
 
-    @pytest.mark.parametrize("mode", [e for e in SweepOut])
+    @pytest.mark.parametrize("mode", list(SweepOut))  # type: ignore
     def test_sweep_output(self, mode):
         with expected_protocol(
                 HP856Xx,
@@ -722,7 +722,7 @@ class TestHP856Xx:
             instr.sweep_output = mode
             assert instr.sweep_output == mode
 
-    @pytest.mark.parametrize("mode", [e for e in TraceDataFormat])
+    @pytest.mark.parametrize("mode", list(TraceDataFormat))  # type: ignore
     def test_trace_data_format(self, mode):
         with expected_protocol(
                 HP856Xx,
@@ -756,7 +756,7 @@ class TestHP856Xx:
         ) as instr:
             instr.set_title("TestString")
 
-    @pytest.mark.parametrize("mode", [e for e in TriggerMode])
+    @pytest.mark.parametrize("mode", list(TriggerMode))  # type: ignore
     def test_trigger_mode(self, mode):
         with expected_protocol(
                 HP856Xx,
@@ -922,7 +922,7 @@ class TestHP856Xx:
             instr.video_bandwidth_to_resolution_bandwidth = 0.005
             assert instr.video_bandwidth_to_resolution_bandwidth == 0.005
 
-    @pytest.mark.parametrize("trace", [e for e in Trace])
+    @pytest.mark.parametrize("trace", list(Trace))  # type: ignore
     def test_view_trace(self, trace):
         with expected_protocol(
                 HP856Xx,
@@ -943,7 +943,7 @@ class TestHP856Xx:
 
 class TestHP8560A:
 
-    @pytest.mark.parametrize("mode", [e for e in SourceLevelingControlMode])
+    @pytest.mark.parametrize("mode", list(SourceLevelingControlMode))  # type: ignore
     def test_source_leveling_control(self, mode):
         with expected_protocol(
                 HP8560A,
@@ -1028,7 +1028,7 @@ class TestHP8560A:
 
 class TestHP8561B:
 
-    @pytest.mark.parametrize("mixer_mode", [e for e in MixerMode])
+    @pytest.mark.parametrize("mixer_mode", list(MixerMode))  # type: ignore
     def test_external_mixer(self, mixer_mode):
         with expected_protocol(
                 HP8561B,

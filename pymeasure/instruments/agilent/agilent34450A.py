@@ -24,6 +24,7 @@
 
 import re
 import logging
+from typing import Literal
 
 from pymeasure.instruments import Instrument, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set
@@ -63,7 +64,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         "ac current", "voltage", "ac voltage", "resistance", "4w resistance", "current frequency",
         "voltage frequency", "continuity", "diode", "temperature", or "capacitance"."""
         get_command = ":configure?"
-        vals = self._conf_parser(self.values(get_command))
+        vals = self._conf_parser(self.values(get_command, cast=str))
         # Return only the mode parameter
         inv_modes = {v: k for k, v in self.MODES.items()}
         mode = inv_modes[vals[0]]
@@ -386,14 +387,14 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
                                         based on the active :attr:`~.Agilent34450A.mode`. """
                                         )
 
-    def __init__(self, adapter, name="HP/Agilent/Keysight 34450A Multimeter", **kwargs):
+    def __init__(self, adapter, name: str = "HP/Agilent/Keysight 34450A Multimeter", **kwargs):
         super().__init__(
             adapter, name, timeout=10000, **kwargs
         )
         # Configuration changes can necessitate up to 8.8 secs (per datasheet)
         self.check_errors()
 
-    def configure_voltage(self, voltage_range="AUTO", ac=False, resolution="DEF"):
+    def configure_voltage(self, voltage_range="AUTO", ac: bool = False, resolution="DEF") -> None:
         """ Configures the instrument to measure voltage.
 
         :param voltage_range: A voltage in Volts to set the voltage range.
@@ -421,7 +422,7 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_current(self, current_range="AUTO", ac=False, resolution="DEF"):
+    def configure_current(self, current_range="AUTO", ac: bool = False, resolution="DEF") -> None:
         """ Configures the instrument to measure current.
 
         :param current_range: A current in Amps to set the current range.
@@ -449,8 +450,13 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             raise TypeError('Value of ac should be a boolean.')
 
-    def configure_resistance(self, resistance_range="AUTO", wires=2, resolution="DEF"):
-        """ Configures the instrument to measure resistance.
+    def configure_resistance(
+        self,
+        resistance_range: float | str = "AUTO",
+        wires: Literal[2] | Literal[4] = 2,
+        resolution: float | str = "DEF",
+    ) -> None:
+        """Configures the instrument to measure resistance.
 
         :param resistance_range: A resistance in Ohms to set the resistance range, can be 100,
                 1E3, 10E3, 100E3, 1E6, 10E6, 100E6, as well as "MIN", "MAX", "DEF" (1E3), or "AUTO".
@@ -476,9 +482,13 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
             raise ValueError("Incorrect wires value, Agilent 34450A only supports 2 or 4 wire"
                              "resistance measurement.")
 
-    def configure_frequency(self, measured_from="voltage_ac",
-                            measured_from_range="AUTO", aperture="DEF"):
-        """ Configures the instrument to measure frequency.
+    def configure_frequency(
+        self,
+        measured_from: Literal["voltage_ac"] | Literal["current_ac"] = "voltage_ac",
+        measured_from_range: float | str = "AUTO",
+        aperture: float | str = "DEF",
+    ) -> None:
+        """Configures the instrument to measure frequency.
 
         :param measured_from: "voltage_ac" or "current_ac"
         :param measured_from_range: range of measured_from. AC voltage can have ranges 100E-3,
@@ -505,17 +515,17 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
                              '"voltage_ac" or "current_ac".')
         self.frequency_aperture = aperture
 
-    def configure_temperature(self):
+    def configure_temperature(self) -> None:
         """ Configures the instrument to measure temperature.
         """
         self.mode = 'temperature'
 
-    def configure_diode(self):
+    def configure_diode(self) -> None:
         """ Configures the instrument to measure diode voltage.
         """
         self.mode = 'diode'
 
-    def configure_capacitance(self, capacitance_range="AUTO"):
+    def configure_capacitance(self, capacitance_range: float | str = "AUTO") -> None:
         """ Configures the instrument to measure capacitance.
 
         :param capacitance_range: A capacitance in Farads to set the capacitance range, can be
@@ -528,22 +538,22 @@ class Agilent34450A(SCPIUnknownMixin, Instrument):
         else:
             self.capacitance_range = capacitance_range
 
-    def configure_continuity(self):
+    def configure_continuity(self) -> None:
         """ Configures the instrument to measure continuity.
         """
         self.mode = 'continuity'
 
-    def beep(self):
+    def beep(self) -> None:
         """ Sounds a system beep.
         """
         self.write(":SYST:BEEP")
 
-    def local(self):
+    def local(self) -> None:
         """ Set the instrument to local mode and return control to its front panel.
         """
         self.write(":SYST:LOC")
 
-    def _conf_parser(self, conf_values):
+    def _conf_parser(self, conf_values: list[str] | str) -> list[str]:
         """
         Parse the string of configuration parameters read from Agilent34450A with
         command ":configure?" and returns a list of parameters.

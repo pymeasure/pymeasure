@@ -67,7 +67,7 @@ class TexioPSW360L30(Keithley2260B):
     def __init__(self, adapter, name="TEXIO PSW-360L30 Power Supply", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def check_errors(self):
+    def check_errors(self) -> list:
         """ Log any system errors reported by the instrument.
         """
         code, message = self.next_error
@@ -77,3 +77,4 @@ class TexioPSW360L30(Keithley2260B):
             code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")
+        return []

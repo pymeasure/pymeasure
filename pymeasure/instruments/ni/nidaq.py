@@ -43,7 +43,7 @@ class NIDAQ(Instrument):
     def __init__(self, name='Dev1', *args, **kwargs):
         self._daq = ni.NIDAQ(name)
         super().__init__(
-            None,
+            None,  # type: ignore
             "NIDAQ",
             **kwargs)
         for chan in self._daq.get_AI_channels():
@@ -54,12 +54,12 @@ class NIDAQ(Instrument):
     def add_property(self, chan, set=False):
         if set:
             def fset(self, value): return self.set_chan(chan, value)
-            def fget(self): return getattr(self, f'_{chan}')
+            def fget1(self): return getattr(self, f'_{chan}')
             setattr(self, f'_{chan}', None)
-            setattr(self.__class__, chan, property(fset=fset, fget=fget))
+            setattr(self.__class__, chan, property(fset=fset, fget=fget1))
         else:
-            def fget(self): return self.get_chan(chan)
-            setattr(self.__class__, chan, property(fget=fget))
+            def fget2(self): return self.get_chan(chan)
+            setattr(self.__class__, chan, property(fget=fget2))
         setattr(self.get, chan, lambda: getattr(self, chan))
 
     def get_chan(self, chan):

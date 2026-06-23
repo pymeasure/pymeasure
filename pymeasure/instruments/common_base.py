@@ -24,7 +24,7 @@
 
 from inspect import getmembers
 import logging
-from typing import Any, cast, Generic, overload, Protocol, TypeVar
+from typing import Any, Generic, Literal, cast, Protocol, TypeVar, overload
 from collections.abc import Callable, Sequence
 from warnings import warn
 
@@ -42,14 +42,11 @@ class Child(Protocol):
     _protected: bool
     _collection: str
 
-    def __init__(self, parent: "CommonBase", id: IdType, **kwargs) -> None: ...
 
-
-child = TypeVar("child", bound=Child)
 T = TypeVar("T")
-V0 = TypeVar("V0")
-Vs = TypeVar("Vs")
-V2 = TypeVar("V2")
+T2 = TypeVar("T2")
+C = TypeVar("C", bound=Child)
+TCast = TypeVar("TCast")
 
 
 def cast_or_str(cast_func: Callable[[str], T]) -> Callable[[str], T | str]:
@@ -74,6 +71,10 @@ def cast_or_str(cast_func: Callable[[str], T]) -> Callable[[str], T | str]:
             return value
 
     return _cast_or_str
+
+
+def identity(input: T) -> T:
+    return input
 
 
 class InstrumentProperty(property, Generic[T]):
@@ -177,6 +178,8 @@ class CommonBase:
     :meth:`control` and its derivatives :meth:`measurement` and :meth:`setting`.
     """
 
+    name: str
+
     # Variable holding the list of DynamicProperty parameters that are configurable
     # by users
     _fget_params_list = ('get_command',
@@ -221,18 +224,22 @@ class CommonBase:
     def read_binary_values(self, **kwargs):
         raise NotImplementedError("Subclasses must implement read_binary_values.")
 
-    class BaseChannelCreator:
+    class BaseChannelCreator(Generic[C]):
         """Base class for ChannelCreator and MultiChannelCreator.
 
         :param cls: Class for all children or tuple/list of classes, one for each child.
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        pairs: Sequence[tuple[type[Child], IdType]] = ()
+        pairs: Sequence[tuple[type[C], IdType]] = ()
         kwargs: dict
+        _attr_name: str = ""
 
         def __init__(self, **kwargs) -> None:
             self.kwargs = kwargs
+
+        def __set_name__(self, owner, name):
+            self._attr_name = name
 
         def check_for_valid_class(self, cls: Any) -> bool:
             try:
@@ -241,7 +248,7 @@ class CommonBase:
                 valid_class = False
             return valid_class
 
-    class ChannelCreator(BaseChannelCreator):
+    class ChannelCreator(BaseChannelCreator[C]):
         """Add a single channel to the parent class.
 
         The child will be added to the parent instance at instantiation with
@@ -267,14 +274,27 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for all children.
         """
 
-        def __init__(self, cls: type[Child], id: IdType = None, **kwargs):
+        def __init__(self, cls: type[C], id: IdType = None, **kwargs):
             super().__init__(**kwargs)
             if (isinstance(id, (str, int)) or id is None) and self.check_for_valid_class(cls):
                 self.pairs = ((cls, id),)
             else:
                 raise ValueError(f"Invalid definition of class '{cls}' and id '{id}'.")
 
-    class MultiChannelCreator(BaseChannelCreator):
+        @overload
+        def __get__(self, obj: None, objtype: Any) -> "CommonBase.ChannelCreator[C]": ...
+
+        @overload
+        def __get__(self, obj: Any, objtype: Any) -> C: ...
+
+        def __get__(self, obj, objtype=None):
+            if obj is None:
+                return self
+            if self._attr_name in obj.__dict__:
+                return obj.__dict__[self._attr_name]
+            raise AttributeError(self._attr_name)
+
+    class MultiChannelCreator(BaseChannelCreator[C]):
         """Add channels to the parent class.
 
         The children will be added to the parent instance at instantiation with
@@ -304,8 +324,8 @@ class CommonBase:
 
         def __init__(
             self,
-            cls: type[Child] | Sequence[type[Child]],
-            id: IdType = None,
+            cls: type[C] | Sequence[type[C]],
+            id: IdType | list[IdType] | tuple[IdType, ...] |None = None,
             prefix: str | None = "ch_",
             **kwargs,
         ) -> None:
@@ -314,10 +334,23 @@ class CommonBase:
                 assert (len(id) == len(cls)), "Lengths of cls and id do not match."
                 self.pairs = list(zip(cls, id))
             elif isinstance(id, (list, tuple)) and self.check_for_valid_class(cls):
-                self.pairs = list(zip((cast(type[Child], cls),) * len(id), id))
+                self.pairs = list(zip((cast(type[C], cls),) * len(id), id))
             else:
                 raise ValueError(f"Invalid definition of classes '{cls}' and ids '{id}'.")
             self.kwargs.setdefault("prefix", prefix)
+
+        @overload
+        def __get__(self, obj: None, objtype: Any) -> "CommonBase.MultiChannelCreator[C]": ...
+
+        @overload
+        def __get__(self, obj: Any, objtype: Any) -> dict[int | str, C]: ...
+
+        def __get__(self, obj, objtype=None):
+            if obj is None:
+                return self
+            if self._attr_name in obj.__dict__:
+                return obj.__dict__[self._attr_name]
+            raise AttributeError(self._attr_name)
 
     def _setup_special_names(self) -> list[str]:
         """ Return list of class/instance special names.
@@ -395,13 +428,13 @@ class CommonBase:
     # Channel management
     def add_child(
         self,
-        cls: type[child],
+        cls: type[C],
         id: IdType = None,
         collection: str = "channels",
         prefix: str | None = "ch_",
         attr_name: str | None = "",
         **kwargs,
-    ) -> child:
+    ) -> C:
         """Add a child to this instance and return its index in the children list.
 
         The newly created child may be accessed either by the id in the
@@ -427,7 +460,7 @@ class CommonBase:
         :param \\**kwargs: Keyword arguments for the channel creator.
         :returns: Instance of the created child.
         """
-        child = cls(self, id, **kwargs)
+        child = cls(self, id, **kwargs) # type: ignore[reportCallIssue]
         collection_data = getattr(self, collection, {})
         if isinstance(collection_data, CommonBase.BaseChannelCreator):
             collection_data = {}
@@ -461,10 +494,9 @@ class CommonBase:
 
         :param child: Instance of the child to delete.
         """
-        if hasattr(child, "_protected"):
+        if child._protected:
             raise TypeError("You cannot remove channels defined at class level.")
-        if hasattr(child, "_collection"):
-            collection = getattr(self, child._collection)
+        if collection := getattr(self, child._collection, None):
             del collection[child.id]
         delattr(self, child._name)
 
@@ -493,7 +525,7 @@ class CommonBase:
         self,
         command: str,
         separator: str | None = ",",
-        cast: type[T] | Callable[[str], T] = float,  # type: ignore[assignment,ty:invalid-parameter-default]
+        cast: type[T] | Callable[[str], T] = float,
         preprocess_reply: Callable[[str], str] | None = None,
         maxsplit: int = -1,
         **kwargs,
@@ -523,14 +555,14 @@ class CommonBase:
             response = preprocess_reply(response)
         if cast is str:
             result = response.split(separator, maxsplit=maxsplit)
-            return result # type: ignore[return-type]  # ty:ignore[invalid-return-type]
+            return result  # type: ignore[return-type]
         results: list[T] = []
         for result in response.split(separator, maxsplit=maxsplit):
             try:
                 if cast is bool:
                     # Need to cast to float first since results are usually
                     # strings and bool of a non-empty string is always True
-                    results.append(bool(float(result)))  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+                    results.append(bool(float(result)))  # type: ignore[arg-type]
                 else:
                     results.append(cast(result)) # type: ignore[call-arg]
             except Exception:
@@ -560,24 +592,370 @@ class CommonBase:
 
     # Property creators
     @staticmethod
+    @overload  # cast: type[TCast] + both get_process and get_process_list
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: Callable[[TCast], T2],
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + get_process only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: Callable[[TCast], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + get_process_list only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: None = ...,
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + no processes
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[TCast]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + both get_process and get_process_list
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: Callable[[float], T2],
+        get_process_list: Callable[[list[float]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + get_process only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: Callable[[float], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + get_process_list only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: None = ...,
+        get_process_list: Callable[[list[float]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + no processes
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[float]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + both get_process and get_process_list
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: Callable[[TCast], T2],
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + get_process only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: Callable[[TCast], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + get_process_list only
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: None = ...,
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + no processes
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[TCast]: ...
+
+    @staticmethod
+    @overload  # map_values and validator
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Callable[[T, Any], Any],
+        values: Any = ...,
+        *,
+        map_values: bool = ...,
+        cast: Any = ...,
+        get_process: Any = ...,
+        get_process_list: Any = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # map_values=True
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        map_values: Literal[True] = ...,
+        cast: Any = ...,
+        get_process: Any = ...,
+        get_process_list: Any = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[Any]: ...
+
+    @staticmethod
+    @overload  # map_values: bool fallback
+    def control(
+        get_command: str | None,
+        set_command: str | None,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        map_values: bool = ...,
+        cast: Any = ...,
+        get_process: Any = ...,
+        get_process_list: Any = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[Any]: ...
+
+    @staticmethod
     def control(  # noqa: C901 accept that this is a complex method
         get_command: str | None,
         set_command: str | None,
         docs: str,
-        validator: Callable[[Any, Vs], V2] = lambda v, vs: v,
-        values: Vs = (),
+        validator: Callable[[Any, Any], Any] = lambda v, vs: v,
+        values: Any = (),
+        *,
         map_values: bool = False,
-        get_process: Callable[[Any], Any] = lambda v: v,
-        get_process_list: Callable[[list[Any]], Any] = lambda v: v,
-        set_process: Callable[[V2], Any] = lambda v: v,
+        get_process: Callable[[Any], Any] | None = None,
+        get_process_list: Callable[[list[Any]], Any] | None = None,
+        set_process: Callable[[Any], Any] = lambda v: v,
         check_set_errors: bool = False,
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Callable[[str], str] | None = None,
         separator: str | None = ",",
         maxsplit: int = -1,
-        cast: Callable[[str], T] = float,
-        values_kwargs: dict | None = None,
+        cast: type | Callable[[str], Any] = float,
+        values_kwargs: dict[str, Any] | None = None,
     ) -> InstrumentProperty[Any]:
         """Return a property for the class based on the supplied
         commands. This property may be set and read from the
@@ -593,7 +971,9 @@ class CommonBase:
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-            interpreted as a map
+            interpreted as a map. When True, the property return type is :code:`Any`;
+            add an explicit type hint (e.g. :code:`InstrumentProperty[str]`) to
+            restore type information for type checkers and IDEs.
         :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param get_process_list: A function that takes the value list and processes it.
@@ -652,10 +1032,20 @@ class CommonBase:
         if values_kwargs is None:
             values_kwargs = {}
 
+        if get_process is None:
+            def _get_process(v: T) -> T:
+                return v
+            get_process = _get_process
+
+        if get_process_list is None:
+            def _get_process_list(v: list[T]) -> list[T]:
+                return v
+            get_process_list = _get_process_list
+
         def fget(
             self: "CommonBase",
             get_command: str | None = get_command,
-            values: Vs = values,
+            values: Any = values,
             map_values: bool = map_values,
             get_process: Callable[[Any], Any] = get_process,
             get_process_list: Callable[[list[Any]], Any] = get_process_list,
@@ -663,7 +1053,7 @@ class CommonBase:
         ) -> Any:
             if get_command is None:
                 raise LookupError("Property can not be read.")
-            vals = self.values(
+            vals: list[Any] = self.values(
                 get_command,
                 separator=separator,
                 cast=cast,
@@ -704,12 +1094,12 @@ class CommonBase:
 
         def fset(
             self: "CommonBase",
-            value: V0,
+            value: Any,
             set_command: str | None = set_command,
-            validator: Callable[[V0, Vs], V2] = validator,
-            values: Vs = values,
+            validator: Callable[[Any, Any], Any] = validator,
+            values: Any = values,
             map_values: bool = map_values,
-            set_process: Callable[[V2], Any] = set_process,
+            set_process: Callable[[Any], Any] = set_process,
             check_set_errors: bool = check_set_errors,
         ) -> None:
             if set_command is None:
@@ -755,20 +1145,268 @@ class CommonBase:
             return StaticProperty(fget, fset)
 
     @staticmethod
+    @overload  # cast: type[TCast] + both get_process and get_process_list
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: Callable[[TCast], T2],
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + get_process only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: Callable[[TCast], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + get_process_list only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: None = ...,
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[TCast] + no processes
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[TCast],
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[TCast]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + both get_process and get_process_list
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: Callable[[float], T2],
+        get_process_list: Callable[[list[float]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + get_process only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: Callable[[float], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + get_process_list only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: None = ...,
+        get_process_list: Callable[[list[float]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: type[float]=... + no processes
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: type[float] = ...,
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[float]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + both get_process and get_process_list
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: Callable[[TCast], T2],
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T | T2]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + get_process only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: Callable[[TCast], T],
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + get_process_list only
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: None = ...,
+        get_process_list: Callable[[list[TCast]], T],
+        map_values: Literal[False] = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload  # cast: Callable + no processes
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        cast: Callable[[str], TCast],
+        get_process: None = ...,
+        map_values: Literal[False] = ...,
+        get_process_list: None = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[TCast]: ...
+
+    @staticmethod
+    @overload  # map_values=True or map_values: bool fallback
+    def measurement(
+        get_command: str,
+        docs: str,
+        values: Any = ...,
+        *,
+        map_values: bool = ...,
+        cast: Any = ...,
+        get_process: Any = ...,
+        get_process_list: Any = ...,
+        check_get_errors: bool = ...,
+        dynamic: bool = ...,
+        preprocess_reply: Any = ...,
+        separator: str | None = ...,
+        maxsplit: int = ...,
+        values_kwargs: Any = ...,
+    ) -> InstrumentProperty[Any]: ...
+
+    @staticmethod
     def measurement(
         get_command: str,
         docs: str,
         values: Any = (),
+        *,
         map_values: bool = False,
-        get_process: Callable[[Any], Any] = lambda v: v,
-        get_process_list: Callable[[list[Any]], Any] = lambda v: v,
+        get_process: Callable[[Any], Any] | None = None,
+        get_process_list: Callable[[list[Any]], Any] | None = None,
         check_get_errors: bool = False,
         dynamic: bool = False,
         preprocess_reply: Callable[[str], str] | None = None,
         separator: str | None = ",",
         maxsplit: int = -1,
-        cast: Callable[[str], T] = float,
-        values_kwargs: dict | None = None,
+        cast: type | Callable[[str], Any] = float,
+        values_kwargs: dict[str, Any] | None = None,
     ) -> InstrumentProperty[Any]:
         """ Return a property for the class based on the supplied
         commands. This is a measurement quantity that may only be
@@ -779,7 +1417,9 @@ class CommonBase:
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-            interpreted as a map
+            interpreted as a map. When True, the property return type is :code:`Any`;
+            add an explicit type hint (e.g. :code:`InstrumentProperty[str]`) to
+            restore type information. See :meth:`control` for details.
         :param get_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param get_process_list: A function that takes the value list and processes it.
@@ -804,28 +1444,72 @@ class CommonBase:
         if values_kwargs is None:
             values_kwargs = {}
 
-        return CommonBase.control(get_command=get_command,
-                                  set_command=None,
-                                  docs=docs,
-                                  values=values,
-                                  map_values=map_values,
-                                  get_process=get_process,
-                                  get_process_list=get_process_list,
-                                  check_get_errors=check_get_errors,
-                                  dynamic=dynamic,
-                                  preprocess_reply=preprocess_reply,
-                                  separator=separator,
-                                  maxsplit=maxsplit,
-                                  cast=cast,
-                                  values_kwargs=values_kwargs,
-                                  )
+        return CommonBase.control(
+            get_command=get_command,
+            set_command=None,
+            docs=docs,
+            values=values,
+            map_values=map_values,
+            get_process=get_process,
+            get_process_list=get_process_list,
+            check_get_errors=check_get_errors,
+            dynamic=dynamic,
+            preprocess_reply=preprocess_reply,
+            separator=separator,
+            maxsplit=maxsplit,
+            cast=cast,
+            values_kwargs=values_kwargs,
+        )
+
+    @staticmethod
+    @overload
+    def setting(
+        set_command: str,
+        docs: str,
+        validator: Callable[[T, Any], Any],
+        values: Any = ...,
+        *,
+        map_values: bool = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        dynamic: bool = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload
+    def setting(
+        set_command: str,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        set_process: Callable[[T], Any],
+        map_values: bool = ...,
+        check_set_errors: bool = ...,
+        dynamic: bool = ...,
+    ) -> InstrumentProperty[T]: ...
+
+    @staticmethod
+    @overload
+    def setting(
+        set_command: str,
+        docs: str,
+        validator: Any = ...,
+        values: Any = ...,
+        *,
+        map_values: bool = ...,
+        set_process: Any = ...,
+        check_set_errors: bool = ...,
+        dynamic: bool = ...,
+    ) -> InstrumentProperty[Any]: ...
 
     @staticmethod
     def setting(
         set_command: str,
         docs: str,
-        validator: Callable[[Any, Vs], Any] = lambda x, y: x,
-        values: Vs = (),
+        validator: Callable[[Any, Any], Any] = lambda x, y: x,
+        values: Any = (),
+        *,
         map_values: bool = False,
         set_process: Callable[[Any], Any] = lambda v: v,
         check_set_errors: bool = False,
@@ -842,7 +1526,9 @@ class CommonBase:
         :param values: A list, tuple, range, or dictionary of valid values, that can be used
             as to map values if :code:`map_values` is True.
         :param map_values: A boolean flag that determines if the values should be
-            interpreted as a map
+            interpreted as a map. When True, the property return type is :code:`Any`;
+            add an explicit type hint (e.g. :code:`InstrumentProperty[str]`) to
+            restore type information. See :meth:`control` for details.
         :param set_process: A function that takes a value and allows processing
             before value mapping, returning the processed value
         :param check_set_errors: Toggles checking errors after setting
@@ -850,16 +1536,17 @@ class CommonBase:
             instances or subclasses. See :meth:`control` for an usage example.
         """
 
-        return CommonBase.control(get_command=None,
-                                  set_command=set_command,
-                                  docs=docs,
-                                  validator=validator,
-                                  values=values,
-                                  map_values=map_values,
-                                  set_process=set_process,
-                                  check_set_errors=check_set_errors,
-                                  dynamic=dynamic,
-                                  )
+        return CommonBase.control(
+            get_command=None,
+            set_command=set_command,
+            docs=docs,
+            validator=validator,
+            values=values,
+            map_values=map_values,
+            set_process=set_process,
+            check_set_errors=check_set_errors,
+            dynamic=dynamic,
+        )
 
     def check_errors(self) -> list:
         """Read all errors from the instrument and log them.

@@ -23,18 +23,25 @@
 #
 
 import logging
+from typing import Literal
 import warnings
 
 import numpy as np
 
-from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments import (
+    AdapterType,
+    Instrument,
+    InstrumentProperty,
+    SCPIMixin,
+    cast_or_str,
+)
 from pymeasure.instruments.validators import strict_discrete_set
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def _number_or_auto(value):
+def _number_or_auto(value: float | str) -> str:
     """
     Evaluates whether input for bandwidth settings and sweep time is a number (requires space) or
     AUTO (requires no space).
@@ -54,7 +61,12 @@ class FSSeries(SCPIMixin, Instrument):
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
-    def __init__(self, adapter, name="Rohde&Schwarz FS series instrument", **kwargs):
+    def __init__(
+        self,
+        adapter: AdapterType,
+        name: str = "Rohde&Schwarz FS series instrument",
+        **kwargs,
+    ):
         super().__init__(adapter, name, **kwargs)
 
     # Frequency settings ---------------------------------------------------------------------------
@@ -95,6 +107,7 @@ class FSSeries(SCPIMixin, Instrument):
         "BAND:RES%s",
         "Control resolution bandwidth in Hz. Can be set to 'AUTO'",
         set_process=_number_or_auto,
+        cast=cast_or_str(float),
     )
 
     video_bandwidth = Instrument.control(
@@ -102,6 +115,7 @@ class FSSeries(SCPIMixin, Instrument):
         "BAND:VID%s",
         "Control video bandwidth in Hz. Can be set to 'AUTO'",
         set_process=_number_or_auto,
+        cast=cast_or_str(float),
     )
 
     # Sweeping -------------------------------------------------------------------------------------
@@ -112,9 +126,10 @@ class FSSeries(SCPIMixin, Instrument):
         "SWE:TIME%s",
         "Control sweep time in s. Can be set to 'AUTO'.",
         set_process=_number_or_auto,
+        cast=cast_or_str(float),
     )
 
-    continuous_sweep_enabled = Instrument.control(
+    continuous_sweep_enabled: InstrumentProperty[bool] = Instrument.control(
         "INIT:CONT?",
         "INIT:CONT %s",
         "Control continuous (True) or single sweep (False)",
@@ -123,11 +138,11 @@ class FSSeries(SCPIMixin, Instrument):
         map_values=True,
     )
 
-    def single_sweep(self):
+    def single_sweep(self) -> None:
         """Perform a single sweep with synchronization."""
         self.write("INIT; *WAI")
 
-    def continue_single_sweep(self):
+    def continue_single_sweep(self) -> None:
         """Continue with single sweep with synchronization."""
         self.write("INIT:CONM; *WAI")
 
@@ -147,7 +162,7 @@ class FSSeries(SCPIMixin, Instrument):
 
     # Markers --------------------------------------------------------------------------------------
 
-    def create_marker(self, num=1, is_delta_marker=False):
+    def create_marker(self, num: int = 1, is_delta_marker: bool = False) -> "FSSeries.Marker":
         """
         Create a marker.
 
@@ -158,7 +173,7 @@ class FSSeries(SCPIMixin, Instrument):
         return self.Marker(self, num, is_delta_marker)
 
     class Marker:
-        def __init__(self, instrument, num, is_delta_marker):
+        def __init__(self, instrument: "FSSeries", num: int, is_delta_marker: bool):
             """
             Marker and Delta Marker class.
 
@@ -180,27 +195,27 @@ class FSSeries(SCPIMixin, Instrument):
 
             self.activate()
 
-        def read(self):
+        def read(self) -> str:
             return self.instrument.read()
 
-        def write(self, command):
+        def write(self, command) -> None:
             self.instrument.write(f"CALC:{self.name}:{command}")
 
-        def ask(self, command):
+        def ask(self, command) -> str:
             return self.instrument.ask(f"CALC:{self.name}:{command}")
 
-        def values(self, command, **kwargs):
+        def values(self, command: str, **kwargs):
             """
             Read a set of values from the instrument through the adapter, passing on any keyword
             arguments.
             """
             return self.instrument.values(f"CALC:{self.name}:{command}", **kwargs)
 
-        def activate(self):
+        def activate(self) -> None:
             """Activate a marker."""
             self.write("STAT ON")
 
-        def disable(self):
+        def disable(self) -> None:
             """Disable a marker."""
             self.write("STAT OFF")
 
@@ -216,7 +231,7 @@ class FSSeries(SCPIMixin, Instrument):
             "Control peak excursion in dB.",
         )
 
-        def to_trace(self, n_trace=1):
+        def to_trace(self, n_trace: int = 1) -> None:
             """
             Set marker to trace.
 
@@ -224,11 +239,11 @@ class FSSeries(SCPIMixin, Instrument):
             """
             self.write(f"TRAC {n_trace}")
 
-        def to_peak(self):
+        def to_peak(self) -> None:
             """Set marker to highest peak within the span."""
             self.write("MAX")
 
-        def to_next_peak(self, direction="right"):
+        def to_next_peak(self, direction: Literal["left"] | Literal["right"] = "right") -> None:
             """
             Set marker to next peak.
 
@@ -236,7 +251,7 @@ class FSSeries(SCPIMixin, Instrument):
             """
             self.write(f"MAX:{direction}")
 
-        def zoom(self, value):
+        def zoom(self, value: float | str) -> None:
             """
             Zoom in to a frequency span or by a factor.
 
@@ -254,10 +269,10 @@ class FSL(FSSeries):
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
-    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Rohde&Schwarz FSL", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def read_trace(self, n_trace=1):
+    def read_trace(self, n_trace: int = 1):
         """
         Read trace data.
 
@@ -277,10 +292,10 @@ class FSW(FSSeries):
     "1.2 GHz") or as a float value in the base units (Hz, dBm, etc.).
     """
 
-    def __init__(self, adapter, name="Rohde&Schwarz FSW", **kwargs):
+    def __init__(self, adapter: AdapterType, name: str = "Rohde&Schwarz FSW", **kwargs):
         super().__init__(adapter, name, **kwargs)
 
-    def read_trace(self, n_trace=1):
+    def read_trace(self, n_trace: int = 1):
         """
         Read trace data of the active trace.
 
@@ -302,21 +317,23 @@ class FSW(FSSeries):
 
     # Auto Settings --------------------------------------------------------------------------------
 
-    def auto_all(self):
+    def auto_all(self) -> None:
         """Adjust all determinable settings automatically."""
         self.write(":ADJ:ALL")
 
-    def auto_freq(self):
+    def auto_freq(self) -> None:
         """Adjust center frequency automatically."""
         self.write(":ADJ:FREQ")
 
-    def auto_level(self):
+    def auto_level(self) -> None:
         """Adjust reference level automatically."""
         self.write(":ADJ:LEV")
 
     # Channels -------------------------------------------------------------------------------------
 
-    def create_channel(self, channel_type, channel_name):
+    def create_channel(
+        self, channel_type: Literal["PNOISE"] | Literal["SANALYZER"], channel_name: str
+    ) -> None:
         """Create a new channel.
 
         :param channel_type: Type of channel to be created.For example "PNOISE" or "SANALYZER"
@@ -333,7 +350,7 @@ class FSW(FSSeries):
         else:
             self.write(f"INST:CRE:NEW {channel_type}, '{channel_name}'")
 
-    def delete_channel(self, channel_name):
+    def delete_channel(self, channel_name: str) -> None:
         """Deletes an active channel."""
         strict_discrete_set(channel_name, list((self.available_channels).keys()))
         self.write(f"INST:DEL '{channel_name}'")
@@ -344,9 +361,7 @@ class FSW(FSSeries):
         Convert a list of available channels to a dictionary of form {channel_name: channel_type}.
 
         :param raw: List of channel types and channel names
-        :type raw: list of string
         :return: dictionary of form {channel_name : channel_type}
-        :rtype: dict
         """
         d = {
             set_keys.strip("'"): set_values.strip("'")
@@ -362,14 +377,14 @@ class FSW(FSSeries):
         cast=str,
     )
 
-    def select_channel(self, channel_name):
+    def select_channel(self, channel_name: str) -> None:
         """Select an open channel
 
         :param channel_name: Channel to be selected.
         """
         self.write(f"INST:SEL '{channel_name}'")
 
-    def rename_channel(self, current_name, new_name):
+    def rename_channel(self, current_name: str, new_name: str) -> None:
         """Rename current_name of a channel to a new_name.
 
         :param current_name: Channel to be renamed
@@ -379,7 +394,7 @@ class FSW(FSSeries):
         self.write(f"INST:REN '{current_name}', '{new_name}'")
 
     @property
-    def active_channel(self):
+    def active_channel(self) -> str:
         """
         Control the name of the active channel. Note: The channel needs to be open on the device!
 
@@ -394,9 +409,9 @@ class FSW(FSSeries):
         return name
 
     @active_channel.setter
-    def activate_channel(self, channel):
-        availabel_channels = [chan for chan in self.available_channels.keys()]
-        channel = strict_discrete_set(channel, availabel_channels)
+    def activate_channel(self, channel) -> None:
+        available_channels = [chan for chan in self.available_channels.keys()]
+        channel = strict_discrete_set(channel, available_channels)
         self.write(f"INST '{channel}'")
 
     split_view = Instrument.control(

@@ -247,6 +247,27 @@ The dictionary now maps the keys to specific values. The values and keys can be 
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be significantly extended by using validators and maps.
 
+.. _map-values-type-hints:
+
+Type hints for mapped properties
+================================
+
+When :code:`map_values=True` is used, the property's return type cannot be inferred automatically and falls back to :code:`Any`. This means type checkers and IDEs will not know the expected type of the property value. You can add an explicit type hint to the property assignment to restore type information:
+
+.. code-block:: python
+
+    sensitivity: InstrumentProperty[str] = Instrument.control(
+        ":SENS?", ":SENS %s",
+        """Control the sweep sensitivity (str in 'LOW', 'MID', 'HIGH').""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"LOW": 0, "MID": 1, "HIGH": 2},
+    )
+
+Without the :code:`InstrumentProperty[str]` annotation, a type checker would infer the property type as :code:`InstrumentProperty[Any]`. The annotation makes it clear that accessing :code:`instrument.sensitivity` returns a :code:`str`.
+
+:code:`InstrumentProperty` is available from :mod:`pymeasure.instruments.common_base`.
+
 .. _boolean-properties:
 
 Boolean properties

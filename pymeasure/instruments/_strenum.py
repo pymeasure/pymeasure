@@ -22,21 +22,30 @@
 # THE SOFTWARE.
 #
 
-import logging
-from warnings import warn
+"""Internal helper providing :class:`StrEnum` on all supported Python versions.
 
-from pymeasure.instruments.rohdeschwarz.fsseries import FSL as _FSLSeries
+The standard library only ships :class:`enum.StrEnum` from Python 3.11 on.
+pymeasure supports Python 3.10+, so this module re-exports the native class on
+3.11+ and supplies a compatible fallback (``str`` + ``Enum`` with
+``__str__`` returning the value) on 3.10.
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+Using ``sys.version_info`` instead of ``try: ... except ImportError`` keeps
+static type checkers (pyright) happy across target versions: they pick the
+matching branch unambiguously.
+"""
+
+import sys
+
+if sys.version_info >= (3, 11):
+    from enum import StrEnum
+else:  # pragma: no cover
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Backport of :class:`enum.StrEnum` for Python 3.10."""
+
+        def __str__(self) -> str:
+            return self.value
 
 
-class FSL(_FSLSeries):
-    def __init__(self, adapter, name="Rohde&Schwarz FSL", **kwargs):
-        warn(
-            "Import `FSL` from `pymeasure.instruments.rohdeschwarz.fsl` is "
-            "deprecated since version 0.15. Import `FSL` from "
-            "`pymeasure.instruments.rohdeschwarz` instead.",
-            FutureWarning,
-        )
-        super().__init__(adapter, name, **kwargs)
+__all__ = ["StrEnum"]

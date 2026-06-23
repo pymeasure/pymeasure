@@ -29,6 +29,8 @@ from pymeasure.instruments.agilent.agilentB1500 import (
     CMU,
     SMU,
     SPGU,
+    ADCMode,
+    ADCType,
     ControlMode,
     MFCMUMeasurementMode,
     PgSelectorConnectionStatus,
@@ -72,6 +74,13 @@ class TestB1500:
             [(f"ERSSP {port.value}, {status.value}", None)],
         ) as inst:
             inst.set_port_connection(port, status)
+
+    def test_adc_setup(self):
+        with expected_protocol(
+            AgilentB1500,
+            [("AIT 0, 1", None), ("ERRX?", '0,"No error"')],
+        ) as inst:
+            inst.adc_setup(ADCType.HSADC, mode=ADCMode.MANUAL)
 
 
 class AgilentB1500Mock(AgilentB1500):
@@ -324,3 +333,4 @@ class TestCMU:
             [(f"SSP 2, {path.value}", None)],
         ) as inst:
             inst.cmu.set_scuu_path(path)
+

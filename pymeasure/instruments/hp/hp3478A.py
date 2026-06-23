@@ -258,12 +258,16 @@ class HP3478A(HPLegacyInstrument):
         """
         self.write("D1")
 
+    @staticmethod
+    def _configure_display_text(raw: str) -> str:
+        return str.upper(raw[0:12])
+
     display_text = HPLegacyInstrument.setting(
         "D2%s",
         """Displays up to 12 upper-case ASCII characters on the display.
 
         """,
-        set_process=(lambda x: str.upper(x[0:12])),
+        set_process=_configure_display_text,
     )
 
     display_text_no_symbol = HPLegacyInstrument.setting(
@@ -272,7 +276,7 @@ class HP3478A(HPLegacyInstrument):
         disables all symbols on the display.
 
         """,
-        set_process=(lambda x: str.upper(x[0:12])),
+        set_process=_configure_display_text,
     )
 
     measure_ACI = HPLegacyInstrument.measurement(

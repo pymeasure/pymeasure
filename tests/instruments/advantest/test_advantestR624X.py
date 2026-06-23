@@ -64,7 +64,7 @@ def test_set_current():
          ("spot 1,2.3120e-03", None),
          (None, "ABCD 7.311e-4")]
     ) as inst:
-        inst.ch_A.current_source(0, 0.000211, 2.13e-4)
+        inst.ch_A.current_source(CurrentRange.AUTO, 0.000211, 2.13e-4)
         inst.ch_A.change_source_current = 23.12e-4
         assert inst.read_measurement() == 0.0007311
 

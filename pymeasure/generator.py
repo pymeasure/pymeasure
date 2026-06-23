@@ -22,27 +22,42 @@
 # THE SOFTWARE.
 #
 
+from collections.abc import Iterable
 import io
 import logging
+from typing import Any, Generic, TypeVar
+from collections.abc import Callable
 
 from pymeasure.adapters import VISAAdapter
 from pymeasure.instruments import Channel
+from pymeasure.instruments.common_base import CommonBase
+from pymeasure.instruments.instrument import AdapterType
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def write_generic_test(file, header_text, cls_name, comm_text,
-                       test,
-                       inkwargs=None):
+T = TypeVar("T", bound=CommonBase)
+COMM_PAIR = tuple[bytes | None, bytes | None]
+FileLike = io.TextIOWrapper | io.StringIO
+
+
+def write_generic_test(
+    file: FileLike,
+    header_text: list[str],
+    cls_name: str,
+    comm_text: list[str],
+    test: str,
+    inkwargs: dict[str, Any] | None = None,
+):
     """Write a generic test.
 
     :param fileLike file: File to write to.
-    :param list[str] header_text: Text of the header (parametrization, test name etc.)
-    :param str cls_name: Name of the instrument class.
-    :param list[str] comm_text: List of str of communication pairs
-    :param str test: Test to assert for.
-    :param dict[str, Any] inkwargs: Dictionary of instrument instantiation kwargs.
+    :param header_text: Text of the header (parametrization, test name etc.)
+    :param cls_name: Name of the instrument class.
+    :param comm_text: List of str of communication pairs
+    :param test: Test to assert for.
+    :param inkwargs: Dictionary of instrument instantiation kwargs.
     """
     if inkwargs is None:
         args_text = "",
@@ -75,21 +90,22 @@ def write_generic_test(file, header_text, cls_name, comm_text,
     )
 
 
-def write_test(file,
-               test_name,
-               cls_name,
-               comm_pairs,
-               test,
-               inkwargs=None,
-               ):
+def write_test(
+    file: FileLike,
+    test_name: str,
+    cls_name: str,
+    comm_pairs: list[COMM_PAIR],
+    test: str,
+    inkwargs: dict[str, Any] | None = None,
+):
     """Write a single test.
 
     :param file: File to write to.
-    :param str test_name: Name of the test.
-    :param str cls_name: Name of the instrument class.
-    :param list[tuple[bytes | None, bytes | None]] comm_pairs_list: List of communication pairs.
-    :param str test: Test to assert for.
-    :param dict[str, Any] inkwargs: Dictionary of instrument instantiation kwargs.
+    :param test_name: Name of the test.
+    :param cls_name: Name of the instrument class.
+    :param comm_pairs_list: List of communication pairs.
+    :param test: Test to assert for.
+    :param inkwargs: Dictionary of instrument instantiation kwargs.
     """
     write_generic_test(
         file=file,
@@ -101,24 +117,24 @@ def write_test(file,
     )
 
 
-def write_parametrized_test(file,
-                            test_name,
-                            cls_name,
-                            comm_pairs_list,
-                            values_list,
-                            test,
-                            inkwargs=None,
-                            ):
+def write_parametrized_test(
+    file: FileLike,
+    test_name: str,
+    cls_name: str,
+    comm_pairs_list: list[list[COMM_PAIR]],
+    values_list: list[Any],
+    test: str,
+    inkwargs: dict[str, Any] | None = None,
+) -> None:
     """Write a parametrized test for properties.
 
     :param file: File to write to.
-    :param str test_name: Name of the test.
-    :param str cls_name: Name of the instrument class.
-    :param list[list[tuple[bytes | None, bytes | None]]] comm_pairs_list: List of communication
-        pairs list for each test.
-    :param list[Any] values_list: List of expected values.
-    :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
-    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
+    :param test_name: Name of the test.
+    :param cls_name: Name of the instrument class.
+    :param comm_pairs_list: List of communication pairs list for each test.
+    :param values_list: List of expected values.
+    :param test: Test to assert for. :code:`'value'` is the expected parametrized value.
+    :param inkwargs: Dictionary of instrument instantiation kwargs.
     """
     params = [f"    ({cp},\n     {v}),\n".replace(
         "), (", "),\n      (") for cp, v in zip(comm_pairs_list, values_list)]
@@ -136,28 +152,28 @@ def write_parametrized_test(file,
                        )
 
 
-def write_parametrized_method_test(file,
-                                   test_name,
-                                   cls_name,
-                                   comm_pairs_list,
-                                   args_list,
-                                   kwargs_list,
-                                   values_list,
-                                   test,
-                                   inkwargs=None,
-                                   ):
+def write_parametrized_method_test(
+    file: FileLike,
+    test_name: str,
+    cls_name: str,
+    comm_pairs_list: list[list[COMM_PAIR]],
+    args_list: list[tuple[Any, ...]],
+    kwargs_list: list[dict[str, Any]],
+    values_list: list[Any],
+    test: str,
+    inkwargs: dict[str, Any] | None = None,
+):
     """Write a parametrized test for a method, taking in account additional arguments.
 
     :param file: File to write to.
-    :param str name: Name of the test.
-    :param str cls_name: Name of the instrument class.
-    :param list[list[tuple[bytes | None, bytes | None]]] comm_pairs_list: List of communication
-        pairs list for each test.
-    :param list[tuple[Any, ...]] args_list: List of arguments lists for the method.
-    :param list[dict[str, Any]] kwargs_list: List of keyword dictionaries for the method.
-    :param list[Any] values_list: List of expected values.
-    :param str test: Test to assert for. :code:`'value'` is the expected parametrized value.
-    :param dict inkwargs: Dictionary of instrument instantiation kwargs.
+    :param name: Name of the test.
+    :param cls_name: Name of the instrument class.
+    :param comm_pairs_list: List of communication pairs list for each test.
+    :param args_list: List of arguments lists for the method.
+    :param kwargs_list: List of keyword dictionaries for the method.
+    :param values_list: List of expected values.
+    :param test: Test to assert for. :code:`'value'` is the expected parametrized value.
+    :param inkwargs: Dictionary of instrument instantiation kwargs.
     """
     z = zip(comm_pairs_list, args_list, kwargs_list, values_list)
     params = [f"    ({cp},\n     {a}, {k}, {v}),\n".replace(
@@ -177,7 +193,7 @@ def write_parametrized_method_test(file,
     )
 
 
-def parse_stream(stream):
+def parse_stream(stream: io.BytesIO) -> list[COMM_PAIR]:
     """
     Parse the data stream.
 
@@ -186,7 +202,7 @@ def parse_stream(stream):
 
     :return list[tuple[bytes | None, bytes | None]]: List of communication pairs
     """
-    comm = []
+    comm: list[COMM_PAIR] = []
     lines = stream.readlines()
     write = None
     read = None
@@ -222,29 +238,29 @@ class ByteFormatter(logging.Formatter):
     """Logging formatter with bytes values for the test generation."""
 
     @staticmethod
-    def make_bytes(value):
+    def make_bytes(value: bytes | bytearray | str) -> bytes | bytearray:
         if isinstance(value, (bytes, bytearray)):
             return value
         if isinstance(value, str):
             return value.encode()
         raise ValueError(f"value '{value}' is neither str nor bytes.")
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> bytes:
         return b"".join((record.msg.replace(r"%s", "").encode(),
-                         *[self.make_bytes(arg) for arg in record.args]))  # type: ignore
+                         *[self.make_bytes(arg) for arg in record.args]))
 
 
 class ByteStreamHandler(logging.StreamHandler):
     """Logging handler using bytes streams."""
 
-    terminator = b"\n"  # type: ignore
+    terminator: bytes = b"\n"  # type: ignore[override]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.formatter = ByteFormatter()
 
 
-class TestInstrument:
+class TestInstrument(Generic[T]):
     """A man-in-the-middle instrument, which logs property access and method calls.
 
     :param instrument: The real instrument, given by the generator.
@@ -252,12 +268,12 @@ class TestInstrument:
     :param name: Name in case of a channel with trailing period, for example :code:`"ch_1."`.
     """
 
-    def __init__(self, instrument, generator, name=""):
+    def __init__(self, instrument: T, generator: "Generator", name: str = ""):
         self._inst = instrument
         self._generator = generator
         self._name = name
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         if name.startswith("_"):
             # return private and special attributes to prevent recursion
             return super().__getattribute__(name)
@@ -281,7 +297,7 @@ class TestInstrument:
                 self._generator._store_property_getter_test(self._name + name, value)
                 return value
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value):
         if name.startswith("_"):
             # set private and special attributes to prevent recursion
             super().__setattr__(name, value)
@@ -314,13 +330,16 @@ class Generator:
     def __init__(self):
         self._stream = io.BytesIO()
         self._index = 0
-        self._init_comm_pairs = []  # Initializiation comm_pairs
+        self._init_comm_pairs: list[COMM_PAIR] = []  # Initialization comm_pairs
         # Dictionaries for parametrized tests
-        self._getters = {}
-        self._setters = {}
-        self._calls = {}
+        self._getters: dict[str, tuple[list[list[COMM_PAIR]], list[Any]]] = {}
+        self._setters: dict[str, tuple[list[list[COMM_PAIR]], list[Any]]] = {}
+        self._calls: dict[
+            str,
+            tuple[list[list[COMM_PAIR]], list[tuple[Any, ...]], list[dict[str, Any]], list[Any]],
+        ] = {}
 
-    def write_init_test(self, file):
+    def write_init_test(self, file: FileLike) -> None:
         """Write the header and init test."""
         file.write(self._header)
         write_test(file, "init", self._class, self._init_comm_pairs,
@@ -328,7 +347,7 @@ class Generator:
                    self._inkwargs,
                    )
 
-    def write_getter_test(self, file, property, parameters):
+    def write_getter_test(self, file: FileLike, property: str, parameters) -> None:
         """Write a getter test."""
         if len(parameters[0]) == 1:
             v = parameters[1][0]
@@ -350,7 +369,7 @@ class Generator:
                                     inkwargs=self._inkwargs,
                                     )
 
-    def write_setter_test(self, file, property, parameters):
+    def write_setter_test(self, file: FileLike, property: str, parameters) -> None:
         """Write a setter test."""
         if len(parameters[0]) == 1:
             v = parameters[1][0]
@@ -371,7 +390,7 @@ class Generator:
                                     inkwargs=self._inkwargs,
                                     )
 
-    def write_method_test(self, file, method, parameters):
+    def write_method_test(self, file: FileLike, method: str, parameters) -> None:
         """Write a test for a method."""
         if len(parameters[0]) == 1:
             v = parameters[-1][0]
@@ -397,7 +416,7 @@ class Generator:
                                            inkwargs=self._inkwargs,
                                            )
 
-    def write_property_tests(self, file):
+    def write_property_tests(self, file: FileLike) -> None:
         """Write tests for properties in alphabetic order.
 
         If getter and setter exist, the setter is the first test.
@@ -411,12 +430,12 @@ class Generator:
                 # new condition (not elif), as properties can be in setters and in getters tests.
                 self.write_getter_test(file, property, self._getters[property])
 
-    def write_method_tests(self, file):
+    def write_method_tests(self, file: FileLike) -> None:
         """Write all parametrized method tests in alphabetic order."""
         for method in sorted(self._calls.keys()):
             self.write_method_test(file, method, self._calls[method])
 
-    def write_file(self, filename="tests.py"):
+    def write_file(self, filename: str | io.StringIO = "tests.py") -> None:
         """Write the tests into the file.
 
         :param filename: Name to save the tests to, may contain the path, e.g. "/tests/test_abc.py".
@@ -434,7 +453,14 @@ class Generator:
         self._index = self._stream.tell()
         return self._init_comm_pairs + comm
 
-    def instantiate(self, instrument_class, adapter, manufacturer, adapter_kwargs=None, **kwargs):
+    def instantiate(
+        self,
+        instrument_class: type[T],
+        adapter: AdapterType,
+        manufacturer: str,
+        adapter_kwargs: dict[str, Any] | None = None,
+        **kwargs,
+    ) -> TestInstrument[T]:
         """
         Instantiate the instrument and store the instantiation communication.
 
@@ -469,13 +495,13 @@ class Generator:
                                 " PyVISA is not present")
         adapter.log.addHandler(ByteStreamHandler(self._stream))
         adapter.log.setLevel(logging.DEBUG)
-        self.inst = instrument_class(adapter, **kwargs)
+        self.inst = instrument_class(adapter, **kwargs) # type: ignore[reportCallIssue]
         self._init_comm_pairs = self.parse_stream()  # communication of instantiation.
         self._inkwargs = kwargs  # instantiation kwargs
         self.test_inst = TestInstrument(self.inst, self)
         return self.test_inst
 
-    def _store_property_getter_test(self, property, value):
+    def _store_property_getter_test(self, property: str, value: Any) -> str | Any:
         """Store the property getter test with returned `value`."""
         comm = self.parse_stream()
         if property not in self._getters:
@@ -485,14 +511,14 @@ class Generator:
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
         return value
 
-    def test_property_getter(self, property):
+    def test_property_getter(self, property: str) -> Any:
         """Test getting the `property` of the instrument, adding it to the list."""
         log.info(f"Test property {property} getter.")
         value = getattr(self.inst, property)
         self._store_property_getter_test(property, value)
         return value
 
-    def _store_property_setter_test(self, property, value):
+    def _store_property_setter_test(self, property: str, value: Any) -> None:
         """Store the property setter test with `value`."""
         comm = self.parse_stream()
         if property not in self._setters:
@@ -501,13 +527,13 @@ class Generator:
         c.append(comm)
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
 
-    def test_property_setter(self, property, value):
+    def test_property_setter(self, property: str, value: Any) -> None:
         """Test setting the `property` of the instrument to `value`, adding it to the list."""
         log.info(f"Test property {property} setter.")
         setattr(self.inst, property, value)
         self._store_property_setter_test(property, value)
 
-    def _test_method(self, method, method_name, *args, **kwargs):
+    def _test_method(self, method: Callable, method_name: str, *args, **kwargs) -> Any:
         """Test calling `method` with the full `method_name` and `args` and `kwargs`."""
         value = method(*args, **kwargs)
         comm = self.parse_stream()
@@ -520,14 +546,14 @@ class Generator:
         v.append(f"\'{value}\'" if isinstance(value, str) else value)
         return value
 
-    def test_method(self, method_name, *args, **kwargs):
+    def test_method(self, method_name: str, *args, **kwargs) -> Any:
         """Test calling the `method_name` of the instruments with `args` and `kwargs`."""
         log.info(f"Test method {method_name}.")
         method = getattr(self.inst, method_name)
         return self._test_method(method, method_name, *args, **kwargs)
 
     # batch tests
-    def test_property_setter_batch(self, property, values):
+    def test_property_setter_batch(self, property: str, values: Iterable[Any]) -> None:
         """Test setting `property` to each element in `values`."""
         for value in values:
             self.test_property_setter(property, value)

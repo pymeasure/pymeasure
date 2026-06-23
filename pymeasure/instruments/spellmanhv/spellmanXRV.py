@@ -27,9 +27,7 @@ from typing import Any
 
 from pyvisa.constants import InterfaceType
 
-from pymeasure.instruments import Channel, Instrument
-from pymeasure.adapters import Adapter
-from pymeasure.instruments.common_base import cast_or_str
+from pymeasure.instruments import AdapterType, cast_or_str, Channel, Instrument
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 # https://www.spellmanhv.com/en/high-voltage-power-supplies/XRV
@@ -242,7 +240,7 @@ class SpellmanXRV(Instrument):
     unscaled = Instrument.ChannelCreator(UnscaledData)
 
     def __init__(self,
-                 adapter: Adapter | int | str,
+                 adapter: AdapterType,
                  name: str = "Spellman XRV HV Power Supply",
                  query_delay: float = 0.15,
                  baud_rate: int = 9600,
@@ -295,7 +293,7 @@ class SpellmanXRV(Instrument):
         csb3 = 0x40 | csb2  # bitwise OR 0x40: set bit 6
         return chr(csb3)
 
-    def write(self, command: str) -> None:
+    def write(self, command: str, **kwargs) -> None:
         """Write to the instrument.
 
         Adds <STX> (0x02) in front and checksum + <ETX> (0x03) at end of every command before
@@ -305,24 +303,24 @@ class SpellmanXRV(Instrument):
         command_with_comma = command + ","
         if self.checksum_enabled:
             checksum = self.checksum(command_with_comma)
-            super().write(f"{STX}{command_with_comma}{checksum}")
+            super().write(f"{STX}{command_with_comma}{checksum}", **kwargs)
         else:
-            super().write(f"{STX}{command_with_comma}")
+            super().write(f"{STX}{command_with_comma}", **kwargs)
 
-    def wait_for(self, query_delay: float = 0) -> None:
+    def wait_for(self, query_delay: float | None = 0) -> None:
         """Wait for some time.
 
         :param query_delay: override the global query_delay.
         """
         super().wait_for(query_delay or self.query_delay)
 
-    def read(self) -> str:
+    def read(self, **kwargs) -> str:
         """Read from the device and check for errors.
 
         :raise: ConnectionError if response doesn't start with <STX> or checksum is incorrect.
                 The checksum check is omitted for TCPIP connections.
         """
-        got = super().read()
+        got = super().read(**kwargs)
 
         if not got.startswith(STX):
             raise ConnectionError("Expected <STX> at begin of received message.")
@@ -461,6 +459,7 @@ class SpellmanXRV(Instrument):
             ``anode_current``
 
         """,
+        get_process_list=lambda vals: {},
         dynamic=True
         )
 
@@ -606,7 +605,8 @@ class SpellmanXRV(Instrument):
                     ``lvps_neg``
 
         """,
-        dynamic=True
+        get_process_list=lambda vals: {},
+        dynamic=True,
         )
 
     temperature = Instrument.measurement(

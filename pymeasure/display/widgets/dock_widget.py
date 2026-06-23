@@ -70,7 +70,7 @@ class DockWidget(TabWidget, QtWidgets.QWidget):
                                                   procedure_class.__name__ + '_dock_layout.json')
         self.x_axis_labels = x_axis_labels
         self.y_axis_labels = y_axis_labels
-        self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))
+        self.num_plots = max(len(self.x_axis_labels), len(self.y_axis_labels))  # type: ignore
         self.linewidth = linewidth
 
         self.dock_area = DockArea()

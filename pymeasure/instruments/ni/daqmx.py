@@ -156,12 +156,12 @@ class DAQmx:
         """a simple error checking routine"""
         if err < 0:
             buf_size = 100
-            buf = ctypes.create_string_buffer('\000' * buf_size)
+            buf = ctypes.create_string_buffer(b'\000' * buf_size)
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
             raise RuntimeError(f'nidaq call failed with error {err}: {repr(buf.value)}')
         if err > 0:
             buf_size = 100
-            buf = ctypes.create_string_buffer('\000' * buf_size)
+            buf = ctypes.create_string_buffer(b'\000' * buf_size)
             nidaq.DAQmxGetErrorString(err, ctypes.byref(buf), buf_size)
             raise RuntimeError(f'nidaq generated warning {err}: {repr(buf.value)}')
 

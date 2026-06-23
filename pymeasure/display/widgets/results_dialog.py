@@ -85,7 +85,7 @@ class ResultsDialog(QtWidgets.QFileDialog):
         metadata_vbox_widget.setLayout(metadata_vbox)
         preview_tab.addTab(param_vbox_widget, "Run Parameters")
         preview_tab.addTab(metadata_vbox_widget, "Metadata")
-        self.layout().addWidget(preview_tab, 0, 5, 4, 1)
+        self.layout().addWidget(preview_tab, 0, 5, 4, 1)  # type: ignore
         self.layout().setColumnStretch(5, 1)
         self.setMinimumSize(900, 500)
         self.resize(900, 500)
