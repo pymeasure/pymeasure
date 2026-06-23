@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, SCPIMixin
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set
 from time import sleep
 
@@ -62,7 +63,7 @@ class FWBell5080(SCPIMixin, Instrument):
         ":MEASure:FLUX?",
         """ Measure the field in the appropriate units (float).
         """,
-        # Remove units
+        cast=cast_or_str(float),
         get_process=lambda v: float(v.replace('T', '').replace('G', '').replace('Am', ''))
 
     )
@@ -81,7 +82,8 @@ class FWBell5080(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=UNITS,
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     range = Instrument.control(

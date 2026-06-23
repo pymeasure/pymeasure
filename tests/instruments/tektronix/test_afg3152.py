@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,3 +47,19 @@ def test_beep():
         [("system:beep", None)],
     ) as inst:
         inst.beep()
+
+
+def test_enable():
+    with expected_protocol(
+        AFG3152C,
+        [("output1:state on", None)],
+    ) as inst:
+        inst.ch1.enable()
+
+
+def test_disable():
+    with expected_protocol(
+        AFG3152C,
+        [("output1:state off", None)],
+    ) as inst:
+        inst.ch1.disable()

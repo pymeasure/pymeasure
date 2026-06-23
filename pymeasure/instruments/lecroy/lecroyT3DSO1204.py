@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 import logging
 import re
 
-from pymeasure.instruments import Instrument
+from pymeasure.instruments import Instrument, cast_or_str
 from pymeasure.instruments.teledyne.teledyne_oscilloscope import TeledyneOscilloscope, \
     TeledyneOscilloscopeChannel, sanitize_source
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
@@ -40,9 +40,9 @@ def _math_define_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (sanitize_source(value[0]), value[1], sanitize_source(value[2]))
     for i in range(3):
         strict_discrete_set(output[i], values=values[i])
@@ -56,9 +56,9 @@ def _measure_delay_validator(value, values):
     :param values: allowed space for each parameter
     """
     if not isinstance(value, tuple):
-        raise ValueError('Input value {} of trigger_select should be a tuple'.format(value))
+        raise ValueError(f'Input value {value} of trigger_select should be a tuple')
     if len(value) != 3:
-        raise ValueError('Number of parameters {} different from 3'.format(len(value)))
+        raise ValueError(f'Number of parameters {len(value)} different from 3')
     output = (value[0], sanitize_source(value[1]), sanitize_source(value[2]))
     if output[1][0] > output[2][0]:
         raise ValueError(f'First channel number {output[1]} must be <= than second one {output[2]}')
@@ -86,7 +86,8 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
         """,
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     invert = Instrument.control(
@@ -94,7 +95,8 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
         """Control the inversion of the input signal (strict bool).""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscopeChannel._BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     skew_factor = Instrument.control(
@@ -126,7 +128,8 @@ class LeCroyT3DSO1204Channel(TeledyneOscilloscopeChannel):
         Volts).
         """,
         validator=strict_discrete_set,
-        values=["A", "V"]
+        values=["A", "V"],
+        cast=str,
     )
 
 
@@ -242,16 +245,24 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
     ###############
 
     acquisition_type = Instrument.control(
-        "ACQW?", "ACQW %s",
+        "ACQW?",
+        "ACQW %s",
         """Control the type of data acquisition.
 
         Can be 'normal', 'peak', 'average', 'highres'.
         """,
         validator=strict_discrete_set,
-        values={"normal": "SAMPLING", "peak": "PEAK_DETECT", "average": "AVERAGE",
-                "highres": "HIGH_RES"},
+        values={
+            "normal": "SAMPLING",
+            "peak": "PEAK_DETECT",
+            "average": "AVERAGE",
+            "highres": "HIGH_RES",
+        },
         map_values=True,
-        get_process=lambda v: [v[0].lower(), int(v[1])] if len(v) == 2 and v[0] == "AVERAGE" else v
+        cast=str,
+        get_process_list=lambda v: [v[0].lower(), int(v[1])]
+        if len(v) == 2 and v[0] == "AVERAGE"
+        else v,
     )
 
     acquisition_average = Instrument.control(
@@ -265,7 +276,8 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         "SAST?", """Get the acquisition status of the scope.""",
         values={"stopped": "Stop", "triggered": "Trig'd", "ready": "Ready", "auto": "Auto",
                 "armed": "Arm"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     acquisition_sampling_rate = Instrument.measurement(
@@ -347,7 +359,8 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         validator=strict_discrete_set,
         values={7e3: "7K", 7e4: "70K", 7e5: "700K", 7e6: "7M",
                 14e3: "14K", 14e4: "140K", 14e5: "1.4M", 14e6: "14M"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     @property
@@ -375,7 +388,7 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         - "ydiv": vertical scale (units per division) in Volts
         - "yoffset": value that is represented at center of screen in Volts
         """
-        vals = self.values("WFSU?")
+        vals = self.values("WFSU?", cast=cast_or_str(float))
         preamble = {
             "sparsing": vals[vals.index("SP") + 1],
             "requested_points": vals[vals.index("NP") + 1],
@@ -428,7 +441,8 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
 
         """,
         validator=_math_define_validator,
-        values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]]
+        values=[["C1", "C2", "C3", "C4"], ["*", "/", "+", "-"], ["C1", "C2", "C3", "C4"]],
+        cast=str,
     )
 
     math_vdiv = Instrument.control(
@@ -502,7 +516,8 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         """Control the bottom menu enabled state (strict bool).""",
         validator=strict_discrete_set,
         values=TeledyneOscilloscope._BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     grid_display = Instrument.control(
@@ -510,5 +525,6 @@ class LeCroyT3DSO1204(TeledyneOscilloscope):
         """Control the type of the grid which is used to display (FULL, HALF, OFF).""",
         validator=strict_discrete_set,
         values={"full": "FULL", "half": "HALF", "off": "OFF"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )

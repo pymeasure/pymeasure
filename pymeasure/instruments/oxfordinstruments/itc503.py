@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,9 +52,9 @@ def pointer_validator(value, values):
     """
 
     if not isinstance(value, (list, tuple)):
-        raise TypeError('{:g} is not a list or tuple'.format(value))
+        raise TypeError(f'{value:g} is not a list or tuple')
     if not len(value) == 2:
-        raise IndexError('{:g} is not of length 2'.format(value))
+        raise IndexError(f'{value:g} is not of length 2')
     return tuple(strict_range(v, values) for v in value)
 
 

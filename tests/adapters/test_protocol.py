@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,15 +39,15 @@ def adapter():
                                     ([1, 2, 3, 4], b"\x01\x02\x03\x04"),
                                     (5, b"5"),
                                     (4.6, b"4.6"),
-                                    (None, None),
                                     ))
 def test_to_bytes(input, output):
     assert to_bytes(input) == output
 
 
-def test_to_bytes_invalid():
+@mark.parametrize("value", (5.5j, None))
+def test_to_bytes_invalid(value):
     with raises(TypeError):
-        to_bytes(5.5j)
+        to_bytes(value)
 
 
 def test_protocol_instantiation():

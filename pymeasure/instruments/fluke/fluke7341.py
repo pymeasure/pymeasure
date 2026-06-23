@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,7 @@ class Fluke7341(Instrument):
         """Control the temperature unit: `c` for Celsius and `f` for Fahrenheit`.""",
         validator=strict_discrete_set,
         values=('c', 'f'),
+        cast=str,
     )
 
     temperature = Instrument.measurement("t",
@@ -75,5 +76,5 @@ class Fluke7341(Instrument):
     id = Instrument.measurement("*ver",
                                 """Get the instrument model.""",
                                 cast=str,
-                                get_process=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
+                                get_process_list=lambda x: f"Fluke,{x[0][4:]},NA,{x[1]}",
                                 )

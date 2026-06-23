@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -89,7 +89,7 @@ def test_resolution_linear(resolution):
     with expected_protocol(
             HP437B,
             [("SM", "000000110017000A0002000000"),
-             ("RE%dEN" % code, None),
+             (f"RE{code}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.resolution = value
@@ -101,7 +101,7 @@ def test_resolution_logarithmic(resolution):
     with expected_protocol(
             HP437B,
             [("SM", "000000110017001A0002000001"),
-             ("RE%dEN" % code, None),
+             (f"RE{code}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.resolution = value
@@ -111,7 +111,7 @@ def test_resolution_logarithmic(resolution):
 def test_sensor_type(sensor_type):
     with expected_protocol(
             HP437B,
-            [("SE%dEN" % int(sensor_type.value), None),
+            [(f"SE{int(sensor_type.value)}EN", None),
              ("ERR?", "000")],
     ) as instr:
         instr.sensor_type = sensor_type

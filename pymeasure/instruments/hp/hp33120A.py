@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,8 @@ class HP33120A(SCPIUnknownMixin, Instrument):
         noise, dc, and user. (str)""",
         validator=strict_discrete_set,
         values=SHAPES,
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     frequency = Instrument.control(
@@ -120,7 +121,8 @@ class HP33120A(SCPIUnknownMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=AMPLITUDE_UNITS,
-        map_values=True
+        map_values=True,
+        cast=str
     )
 
     burst_enabled = Instrument.control(
@@ -136,6 +138,7 @@ class HP33120A(SCPIUnknownMixin, Instrument):
         """Control internal or external gate source for burst modulation""",
         validator=strict_discrete_set,
         values=['INT', 'EXT'],
+        cast=str,
     )
 
     burst_count = Instrument.control(

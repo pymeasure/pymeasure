@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -227,7 +227,8 @@ class Keithley2182(SCPIMixin, KeithleyBuffer, Instrument):
         Valid options are `voltage` and `temperature`.""",
         validator=strict_discrete_set,
         values={'voltage': '"VOLT:DC"', 'temperature': '"TEMP"'},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     ###############
@@ -266,7 +267,8 @@ class Keithley2182(SCPIMixin, KeithleyBuffer, Instrument):
         """Control the thermocouple type for temperature measurements.
         Valid options are B, E, J, K, N, R, S, and T.""",
         validator=strict_discrete_set,
-        values=('B', 'E', 'J', 'K', 'N', 'R', 'S', 'T')
+        values=('B', 'E', 'J', 'K', 'N', 'R', 'S', 'T'),
+        cast=str,
     )
 
     temperature_nplc = Instrument.control(
@@ -286,6 +288,7 @@ class Keithley2182(SCPIMixin, KeithleyBuffer, Instrument):
         simulated (SIM). Default is INT.""",
         validator=strict_discrete_set,
         values=('SIM', 'INT'),
+        cast=str,
     )
 
     temperature_simulated_reference = Instrument.control(

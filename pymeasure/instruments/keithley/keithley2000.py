@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     mode = Instrument.control(
         ":CONF?", ":CONF:%s",
-        """ A string property that controls the configuration mode for measurements,
+        """ Control (string) the configuration mode for measurements,
         which can take the values: ``current`` (DC), ``current ac``,
         ``voltage`` (DC),  ``voltage ac``, ``resistance`` (2-wire),
         ``resistance 4W`` (4-wire), ``period``,
@@ -65,13 +65,14 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         validator=strict_discrete_set,
         values=MODES,
         map_values=True,
+        cast=str,
         get_process=lambda v: v.replace('"', '')
     )
 
     beep_state = Instrument.control(
         ":SYST:BEEP:STAT?",
         ":SYST:BEEP:STAT %g",
-        """ A string property that enables or disables the system status beeper,
+        """ Control whether the system status beeper is enabled,
         which can take the values: ``enabled`` and ``disabled``. """,
         validator=strict_discrete_set,
         values={'enabled': 1, 'disabled': 0},
@@ -84,12 +85,12 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     current = Instrument.measurement(
         ":READ?",
-        """ Reads a DC or AC current measurement in Amps, based on the
+        """ Get a DC or AC current measurement in Amps, based on the
         active :attr:`~.Keithley2000.mode`. """
     )
     current_range = Instrument.control(
         ":SENS:CURR:RANG?", ":SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG %g",
-        """ A floating point property that controls the DC current range in
+        """ Control (floating) the DC current range in
         Amps, which can take values from 0 to 3.1 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -97,21 +98,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     current_reference = Instrument.control(
         ":SENS:CURR:REF?", ":SENS:CURR:REF %g",
-        """ A floating point property that controls the DC current reference
+        """ Control (floating) the DC current reference
         value in Amps, which can take values from -3.1 to 3.1 A. """,
         validator=truncated_range,
         values=[-3.1, 3.1]
     )
     current_nplc = Instrument.control(
         ":SENS:CURR:NPLC?", ":SENS:CURR:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the DC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     current_digits = Instrument.control(
         ":SENS:CURR:DIG?", ":SENS:CURR:DIG %d",
-        """ An integer property that controls the number of digits in the DC current
+        """ Control (integer) the number of digits in the DC current
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -119,7 +120,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     current_ac_range = Instrument.control(
         ":SENS:CURR:AC:RANG?", ":SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG %g",
-        """ A floating point property that controls the AC current range in
+        """ Control (floating) the AC current range in
         Amps, which can take values from 0 to 3.1 A.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -127,21 +128,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     current_ac_reference = Instrument.control(
         ":SENS:CURR:AC:REF?", ":SENS:CURR:AC:REF %g",
-        """ A floating point property that controls the AC current reference
+        """ Control (floating) the AC current reference
         value in Amps, which can take values from -3.1 to 3.1 A. """,
         validator=truncated_range,
         values=[-3.1, 3.1]
     )
     current_ac_nplc = Instrument.control(
         ":SENS:CURR:AC:NPLC?", ":SENS:CURR:AC:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the AC current measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     current_ac_digits = Instrument.control(
         ":SENS:CURR:AC:DIG?", ":SENS:CURR:AC:DIG %d",
-        """ An integer property that controls the number of digits in the AC current
+        """ Control (integer) the number of digits in the AC current
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -149,7 +150,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     current_ac_bandwidth = Instrument.control(
         ":SENS:CURR:AC:DET:BAND?", ":SENS:CURR:AC:DET:BAND %g",
-        """ A floating point property that sets the AC current detector
+        """ Control (floating) the AC current detector
         bandwidth in Hz, which can take the values 3, 30, and 300 Hz. """,
         validator=truncated_discrete_set,
         values=[3, 30, 300]
@@ -161,12 +162,12 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     voltage = Instrument.measurement(
         ":READ?",
-        """ Reads a DC or AC voltage measurement in Volts, based on the
+        """ Get a DC or AC voltage measurement in Volts, based on the
         active :attr:`~.Keithley2000.mode`. """
     )
     voltage_range = Instrument.control(
         ":SENS:VOLT:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG %g",
-        """ A floating point property that controls the DC voltage range in
+        """ Control (floating) the DC voltage range in
         Volts, which can take values from 0 to 1010 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -174,21 +175,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     voltage_reference = Instrument.control(
         ":SENS:VOLT:REF?", ":SENS:VOLT:REF %g",
-        """ A floating point property that controls the DC voltage reference
+        """ Control (floating) the DC voltage reference
         value in Volts, which can take values from -1010 to 1010 V. """,
         validator=truncated_range,
         values=[-1010, 1010]
     )
     voltage_nplc = Instrument.control(
-        ":SENS:CURRVOLT:NPLC?", ":SENS:VOLT:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        ":SENS:VOLT:NPLC?", ":SENS:VOLT:NPLC %g",
+        """ Control (floating) the number of power line cycles
         (NPLC) for the DC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     voltage_digits = Instrument.control(
         ":SENS:VOLT:DIG?", ":SENS:VOLT:DIG %d",
-        """ An integer property that controls the number of digits in the DC voltage
+        """ Control (integer) the number of digits in the DC voltage
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -196,7 +197,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     voltage_ac_range = Instrument.control(
         ":SENS:VOLT:AC:RANG?", ":SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG %g",
-        """ A floating point property that controls the AC voltage range in
+        """ Control (floating) the AC voltage range in
         Volts, which can take values from 0 to 757.5 V.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -204,21 +205,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     voltage_ac_reference = Instrument.control(
         ":SENS:VOLT:AC:REF?", ":SENS:VOLT:AC:REF %g",
-        """ A floating point property that controls the AC voltage reference
+        """ Control (floating) the AC voltage reference
         value in Volts, which can take values from -757.5 to 757.5 Volts. """,
         validator=truncated_range,
         values=[-757.5, 757.5]
     )
     voltage_ac_nplc = Instrument.control(
         ":SENS:VOLT:AC:NPLC?", ":SENS:VOLT:AC:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the AC voltage measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     voltage_ac_digits = Instrument.control(
         ":SENS:VOLT:AC:DIG?", ":SENS:VOLT:AC:DIG %d",
-        """ An integer property that controls the number of digits in the AC voltage
+        """ Control (integer) the number of digits in the AC voltage
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -226,7 +227,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     voltage_ac_bandwidth = Instrument.control(
         ":SENS:VOLT:AC:DET:BAND?", ":SENS:VOLT:AC:DET:BAND %g",
-        """ A floating point property that sets the AC voltage detector
+        """ Control (floating) the AC voltage detector
         bandwidth in Hz, which can take the values  3, 30, and 300 Hz. """,
         validator=truncated_discrete_set,
         values=[3, 30, 300]
@@ -238,12 +239,12 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     resistance = Instrument.measurement(
         ":READ?",
-        """ Reads a resistance measurement in Ohms for both 2-wire and 4-wire
+        """ Get a resistance measurement in Ohms for both 2-wire and 4-wire
         configurations, based on the active :attr:`~.Keithley2000.mode`. """
     )
     resistance_range = Instrument.control(
         ":SENS:RES:RANG?", ":SENS:RES:RANG:AUTO 0;:SENS:RES:RANG %g",
-        """ A floating point property that controls the 2-wire resistance range
+        """ Control (floating) the 2-wire resistance range
         in Ohms, which can take values from 0 to 120 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -251,21 +252,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     resistance_reference = Instrument.control(
         ":SENS:RES:REF?", ":SENS:RES:REF %g",
-        """ A floating point property that controls the 2-wire resistance
+        """ Control (floating) the 2-wire resistance
         reference value in Ohms, which can take values from 0 to 120 MOhms. """,
         validator=truncated_range,
         values=[0, 120e6]
     )
     resistance_nplc = Instrument.control(
         ":SENS:RES:NPLC?", ":SENS:RES:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the 2-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     resistance_digits = Instrument.control(
         ":SENS:RES:DIG?", ":SENS:RES:DIG %d",
-        """ An integer property that controls the number of digits in the 2-wire
+        """ Control (integer) the number of digits in the 2-wire
         resistance readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -273,7 +274,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     resistance_4W_range = Instrument.control(
         ":SENS:FRES:RANG?", ":SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG %g",
-        """ A floating point property that controls the 4-wire resistance range
+        """ Control (floating) the 4-wire resistance range
         in Ohms, which can take values from 0 to 120 MOhms.
         Auto-range is disabled when this property is set. """,
         validator=truncated_range,
@@ -281,21 +282,21 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     resistance_4W_reference = Instrument.control(
         ":SENS:FRES:REF?", ":SENS:FRES:REF %g",
-        """ A floating point property that controls the 4-wire resistance
+        """ Control (floating) the 4-wire resistance
         reference value in Ohms, which can take values from 0 to 120 MOhms. """,
         validator=truncated_range,
         values=[0, 120e6]
     )
     resistance_4W_nplc = Instrument.control(
         ":SENS:FRES:NPLC?", ":SENS:FRES:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the 4-wire resistance measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     resistance_4W_digits = Instrument.control(
         ":SENS:FRES:DIG?", ":SENS:FRES:DIG %d",
-        """ An integer property that controls the number of digits in the 4-wire
+        """ Control (integer) the number of digits in the 4-wire
         resistance readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -308,19 +309,19 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     frequency = Instrument.measurement(
         ":READ?",
-        """ Reads a frequency measurement in Hz, based on the
+        """ Get a frequency measurement in Hz, based on the
         active :attr:`~.Keithley2000.mode`. """
     )
     frequency_reference = Instrument.control(
         ":SENS:FREQ:REF?", ":SENS:FREQ:REF %g",
-        """ A floating point property that controls the frequency reference
+        """ Control (floating) the frequency reference
         value in Hz, which can take values from 0 to 15 MHz. """,
         validator=truncated_range,
         values=[0, 15e6]
     )
     frequency_digits = Instrument.control(
         ":SENS:FREQ:DIG?", ":SENS:FREQ:DIG %d",
-        """ An integer property that controls the number of digits in the frequency
+        """ Control (integer) the number of digits in the frequency
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -328,7 +329,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     frequency_threshold = Instrument.control(
         ":SENS:FREQ:THR:VOLT:RANG?", ":SENS:FREQ:THR:VOLT:RANG %g",
-        """ A floating point property that controls the voltage signal threshold
+        """ Control (floating) the voltage signal threshold
         level in Volts for the frequency measurement, which can take values
         from 0 to 1010 V. """,
         validator=truncated_range,
@@ -336,7 +337,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     frequency_aperature = Instrument.control(
         ":SENS:FREQ:APER?", ":SENS:FREQ:APER %g",
-        """ A floating point property that controls the frequency aperature in seconds,
+        """ Control (floating) the frequency aperature in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,
@@ -349,19 +350,19 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     period = Instrument.measurement(
         ":READ?",
-        """ Reads a period measurement in seconds, based on the
+        """ Get a period measurement in seconds, based on the
         active :attr:`~.Keithley2000.mode`. """
     )
     period_reference = Instrument.control(
         ":SENS:PER:REF?", ":SENS:PER:REF %g",
-        """ A floating point property that controls the period reference value
+        """ Control (floating) the period reference value
         in seconds, which can take values from 0 to 1 s. """,
         validator=truncated_range,
         values=[0, 1]
     )
     period_digits = Instrument.control(
         ":SENS:PER:DIG?", ":SENS:PER:DIG %d",
-        """ An integer property that controls the number of digits in the period
+        """ Control (integer) the number of digits in the period
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -369,7 +370,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     period_threshold = Instrument.control(
         ":SENS:PER:THR:VOLT:RANG?", ":SENS:PRE:THR:VOLT:RANG %g",
-        """ A floating point property that controls the voltage signal threshold
+        """ Control (floating) the voltage signal threshold
         level in Volts for the period measurement, which can take values
         from 0 to 1010 V. """,
         validator=truncated_range,
@@ -377,7 +378,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     period_aperature = Instrument.control(
         ":SENS:PER:APER?", ":SENS:PER:APER %g",
-        """ A floating point property that controls the period aperature in seconds,
+        """ Control (floating) the period aperature in seconds,
         which sets the integration period and measurement speed. Takes values
         from 0.01 to 1.0 s. """,
         validator=truncated_range,
@@ -390,26 +391,26 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     temperature = Instrument.measurement(
         ":READ?",
-        """ Reads a temperature measurement in Celsius, based on the
+        """ Get a temperature measurement in Celsius, based on the
         active :attr:`~.Keithley2000.mode`. """
     )
     temperature_reference = Instrument.control(
         ":SENS:TEMP:REF?", ":SENS:TEMP:REF %g",
-        """ A floating point property that controls the temperature reference value
+        """ Control (floating) the temperature reference value
         in Celsius, which can take values from -200 to 1372 C. """,
         validator=truncated_range,
         values=[-200, 1372]
     )
     temperature_nplc = Instrument.control(
         ":SENS:TEMP:NPLC?", ":SENS:TEMP:NPLC %g",
-        """ A floating point property that controls the number of power line cycles
+        """ Control (floating) the number of power line cycles
         (NPLC) for the temperature measurements, which sets the integration period
         and measurement speed. Takes values from 0.01 to 10, where 0.1, 1, and 10 are
         Fast, Medium, and Slow respectively. """
     )
     temperature_digits = Instrument.control(
         ":SENS:TEMP:DIG?", ":SENS:TEMP:DIG %d",
-        """ An integer property that controls the number of digits in the temperature
+        """ Control (integer) the number of digits in the temperature
         readings, which can take values from 4 to 7. """,
         validator=truncated_discrete_set,
         values=[4, 5, 6, 7],
@@ -422,7 +423,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
     trigger_count = Instrument.control(
         ":TRIG:COUN?", ":TRIG:COUN %d",
-        """ An integer property that controls the trigger count,
+        """ Control (integer) the trigger count,
         which can take values from 1 to 9,999. """,
         validator=truncated_range,
         values=[1, 9999],
@@ -430,7 +431,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
     )
     trigger_delay = Instrument.control(
         ":TRIG:SEQ:DEL?", ":TRIG:SEQ:DEL %g",
-        """ A floating point property that controls the trigger delay
+        """ Control (floating) the trigger delay
         in seconds, which can take values from 1 to 9,999,999.999 s. """,
         validator=truncated_range,
         values=[0, 999999.999]
@@ -520,7 +521,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:RANG:AUTO 1" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:RANG:AUTO 1")
 
     def enable_reference(self, mode=None):
         """ Enables the reference for the active mode,
@@ -528,7 +529,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:STAT 1" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:STAT 1")
 
     def disable_reference(self, mode=None):
         """ Disables the reference for the active mode,
@@ -536,7 +537,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:STAT 0" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:STAT 0")
 
     def acquire_reference(self, mode=None):
         """ Sets the active value as the reference for the active mode,
@@ -544,7 +545,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:REF:ACQ" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:REF:ACQ")
 
     def enable_filter(self, mode=None, type='repeat', count=1):
         """ Enables the averaging filter for the active mode,
@@ -554,9 +555,9 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
         :param type: The type of averaging filter, either 'repeat' or 'moving'.
         :param count: A number of averages, which can take take values from 1 to 100
         """
-        self.write(":SENS:%s:AVER:STAT 1")
-        self.write(":SENS:%s:AVER:TCON %s")
-        self.write(":SENS:%s:AVER:COUN %d")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:STAT 1")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:TCON {type}")
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:COUN {count}")
 
     def disable_filter(self, mode=None):
         """ Disables the averaging filter for the active mode,
@@ -564,7 +565,7 @@ class Keithley2000(KeithleyBuffer, SCPIUnknownMixin, Instrument):
 
         :param mode: A valid :attr:`~.Keithley2000.mode` name, or None for the active mode
         """
-        self.write(":SENS:%s:AVER:STAT 0" % self._mode_command(mode))
+        self.write(f":SENS:{self._mode_command(mode)}:AVER:STAT 0")
 
     def local(self):
         """ Returns control to the instrument panel, and enables

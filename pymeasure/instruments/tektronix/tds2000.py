@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -47,43 +47,40 @@ class TDS2000(SCPIUnknownMixin, Instrument):
 
         @property
         def value(self):
-            return self.parent.values("%sVAL?" % self.preamble)
+            return self.parent.values(f"{self.preamble}VAL?")
 
         @property
         def source(self):
-            return self.parent.ask("%sSOU?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}SOU?").strip()
 
         @source.setter
         def source(self, value):
             if value in TDS2000.Measurement.SOURCE_VALUES:
                 self.parent.write(f"{self.preamble}SOU {value}")
             else:
-                raise ValueError("Invalid source ('{}') provided to {}".format(
-                                 self.parent, value))
+                raise ValueError(f"Invalid source ('{self.parent}') provided to {value}")
 
         @property
         def type(self):
-            return self.parent.ask("%sTYP?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}TYP?").strip()
 
         @type.setter
         def type(self, value):
             if value in TDS2000.Measurement.TYPE_VALUES:
                 self.parent.write(f"{self.preamble}TYP {value}")
             else:
-                raise ValueError("Invalid type ('{}') provided to {}".format(
-                                 self.parent, value))
+                raise ValueError(f"Invalid type ('{self.parent}') provided to {value}")
 
         @property
         def unit(self):
-            return self.parent.ask("%sUNI?" % self.preamble).strip()
+            return self.parent.ask(f"{self.preamble}UNI?").strip()
 
         @unit.setter
         def unit(self, value):
             if value in TDS2000.Measurement.UNIT_VALUES:
                 self.parent.write(f"{self.preamble}UNI {value}")
             else:
-                raise ValueError("Invalid unit ('{}') provided to {}".format(
-                                 self.parent, value))
+                raise ValueError(f"Invalid unit ('{self.parent}') provided to {value}")
 
     def __init__(self, adapter, name="Tektronix TDS 2000 Oscilloscope", **kwargs):
         super().__init__(

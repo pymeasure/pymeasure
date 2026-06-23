@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 #
 
-from time import sleep
+from time import time, sleep
 from enum import IntEnum
 
 from pymeasure.errors import Error
@@ -63,6 +63,7 @@ class LDC500SeriesLD(Channel):
         Laser will only operate with a closed interlock.""",
         values={True: "CLOSED", False: "OPEN"},
         map_values=True,
+        cast=str,
     )
 
     enabled = Instrument.control(
@@ -72,6 +73,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     mode = Instrument.control(
@@ -93,6 +95,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values=["CC", "CP"],
         check_set_errors=True,
+        cast=str,
     )
 
     # --- direct ld current control ---
@@ -136,6 +139,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
     # --- ld voltage control ---
@@ -163,6 +167,7 @@ class LDC500SeriesLD(Channel):
         validator=strict_discrete_set,
         values={True: "ON", False: "OFF"},
         map_values=True,
+        cast=str,
     )
 
     modulation_bandwidth = Instrument.control(
@@ -181,6 +186,7 @@ class LDC500SeriesLD(Channel):
         """,
         validator=strict_discrete_set,
         values=("HIGH", "LOW"),
+        cast=str,
     )
 
 
@@ -194,6 +200,7 @@ class LDC500SeriesPD(Channel):
         validator=strict_discrete_set,
         values={"mW": "ON", "uA": "OFF"},
         map_values=True,
+        cast=str,
     )
 
     bias = Instrument.control(
@@ -253,7 +260,7 @@ class LDC500SeriesPD(Channel):
         Parmeters:
             power (float): Real time power measurement, in mW."""
 
-        self.write("CALP %g" % power)
+        self.write(f"CALP {power:g}")
 
     power = Instrument.measurement(
         "RWPD?",
@@ -284,7 +291,7 @@ class LDC500SeriesTEC(Channel):
     enabled = Instrument.control(
         "TEON?",
         "TEON %d",
-        """Control whether the laser diode current source is enabled (bool).""",
+        """Control whether the TEC current source is enabled (bool).""",
         validator=strict_discrete_set,
         values={True: 1, False: 0},
         map_values=True,
@@ -304,6 +311,7 @@ class LDC500SeriesTEC(Channel):
         If ``mode`` is changed from "CC" to "CT", the present value of the temperature sensor
         is measured, and the CT setpoint is set to this measurement.
         """,
+        cast=str,
     )
 
     thermometer_type = Instrument.control(
@@ -429,6 +437,58 @@ class LDC500SeriesTEC(Channel):
     @resistance_limits.setter
     def resistance_limits(self, res_limits):
         self.resistance_low_limit, self.resistance_high_limit = res_limits
+
+    def check_temperature_stability(self, tolerance=0.1, period=10, points=64):
+        """Determine whether the temperature is stable at the temperature setpoint over a specified
+        period.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :return: True if stable, False otherwise.
+        """
+
+        t_start = time()
+
+        while time() - t_start < period:
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                return False
+
+        return True
+
+    def wait_for_temperature_stable(
+        self,
+        tolerance=0.1,
+        period=10,
+        should_stop=lambda: False,
+        timeout=60,
+    ):
+        """Block the program, waiting for the temperature to stabilize at the temperature setpoint.
+
+        :param tolerance: Maximum allowed deviation from temperature setpoint,
+            in degrees Centigrade.
+        :param period: Time period over which stability is checked, in seconds.
+        :param should_stop: Function that returns True to stop waiting.
+        :param timeout: Maximum waiting time, in seconds.
+        :return: True when stable, False if stopped by should_stop.
+        :raises TimeoutError: If the temperature does not stabilize within the timeout period.
+        """
+
+        t_start_timeout = time()
+        t_start_period = time()
+
+        while time() - t_start_timeout < timeout:
+
+            if abs(self.temperature - self.temperature_setpoint) > tolerance:
+                t_start_period = time()
+
+            if time() - t_start_period >= period:
+                return True
+
+            if should_stop():
+                return False
+
+        raise TimeoutError("Timed out waiting for temperature to stabilize.")
 
 
 class LDC500Series(SCPIMixin, Instrument):

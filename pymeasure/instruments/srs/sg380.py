@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -80,7 +80,7 @@ class SG380(SCPIUnknownMixin, Instrument):
             truncated_range(frequency, (SG380.MIN_RF, 2 * SG380.MAX_RF))
         else:
             truncated_range(frequency, (SG380.MIN_RF, SG380.MAX_RF))
-        self.write("FREQ%.6f" % frequency)
+        self.write(f"FREQ{frequency:.6f}")
 
     @property
     def mod_type(self):
@@ -96,7 +96,7 @@ class SG380(SCPIUnknownMixin, Instrument):
             raise RuntimeError('IQ option not installed')
         else:
             index = SG380.MOD_TYPES_VALUES.index(type_)
-        self.write("TYPE%d" % index)
+        self.write(f"TYPE{index}")
 
     @property
     def mod_function(self):
@@ -110,4 +110,4 @@ class SG380(SCPIUnknownMixin, Instrument):
             index = 1
         else:
             index = SG380.MOD_FUNCTIONS.index(function)
-        self.write("MFNC%d" % index)
+        self.write(f"MFNC{index}")

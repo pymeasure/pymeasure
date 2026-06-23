@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -72,7 +72,7 @@ def test_setting_failed():
             init_comm + [("la off", ""), (None, "abc"), (None, "[OK]")],
     ) as inst:
         with pytest.raises(ValueError):
-            inst.laser_enabled = False
+            inst.emission = False
 
 
 def test_enable_channel():
@@ -88,24 +88,6 @@ def test_enable_channel():
         assert inst.ch_3.enabled is True
         inst.ch_2.enabled = False
         assert inst.ch_2.enabled is False
-
-
-def test_channel1_enabled_getter():
-    with expected_protocol(
-            IBeamSmart,
-            init_comm + [("sta ch 1", ""), (None, "ON"), (None, "[OK]")],
-    ) as inst:
-        with pytest.warns(FutureWarning):
-            assert inst.channel1_enabled is True
-
-
-def test_channel1_enabled_setter():
-    with expected_protocol(
-            IBeamSmart,
-            init_comm + [("en 1", ""), (None, "[OK]")],
-    ) as inst:
-        with pytest.warns(FutureWarning):
-            inst.channel1_enabled = True
 
 
 def test_channel_power():

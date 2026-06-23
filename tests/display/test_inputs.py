@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,10 @@ import pytest
 from unittest import mock
 
 from pymeasure.display.Qt import QtCore
-from pymeasure.display.inputs import ScientificInput, BooleanInput, ListInput
-from pymeasure.experiment.parameters import BooleanParameter, ListParameter, FloatParameter
+from pymeasure.display.inputs import (ScientificInput, BooleanInput, ListInput,
+                                      VectorInput)
+from pymeasure.experiment.parameters import (BooleanParameter, ListParameter, FloatParameter,
+                                             VectorParameter)
 
 
 @pytest.mark.parametrize("default_value", [True, False])
@@ -267,3 +269,15 @@ class TestScientificInput:
 
         # Reset the locale settings
         QtCore.QLocale.setDefault(QtCore.QLocale.system())
+
+
+class TestVectorInput:
+    def test_init_from_param(self, qtbot):
+        vector_param = VectorParameter('vector_test',
+                                       default=[-1.35, 2, 3.6e+5],
+                                       )
+
+        vector_param = VectorInput(vector_param)
+        qtbot.addWidget(vector_param)
+
+        assert "[-1.35, 2.0, 360000.0]" == vector_param.value()

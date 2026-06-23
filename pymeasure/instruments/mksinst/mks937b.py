@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -73,6 +73,7 @@ class Relay(RelayChannel):
                 True: "ENABLE",
                 "SET": "SET",
                 },
+        cast=str,
         check_set_errors=True,
     )
 
@@ -89,6 +90,7 @@ class PressureChannel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
+        cast=str,
         check_set_errors=True,
     )
 
@@ -100,6 +102,7 @@ class IonGaugeAndPressureChannel(PressureChannel):
         """Get ion gauge status of the channel.""",
         map_values=True,
         values=_ion_gauge_status,
+        cast=str,
     )
 
 
@@ -192,5 +195,6 @@ class MKS937B(MKSInstrument):
         validator=strict_discrete_set,
         map_values=True,
         values={u: u.value for u in Unit},
+        cast=str,
         check_set_errors=True,
     )

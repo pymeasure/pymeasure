@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,10 @@
 
 import logging
 from enum import IntFlag
+from typing import Literal
+from collections.abc import Callable
 
-from pymeasure.instruments import Instrument, validators
+from pymeasure.instruments import Instrument, cast_or_str, validators
 from pyvisa.constants import Parity, StopBits
 
 
@@ -48,10 +50,10 @@ def setpoint_validator(value, values):
         return validators.strict_range(value, values)
 
 
-def power_get_process_generator(minimum):
+def power_get_process_generator(minimum: float) -> Callable[..., float]:
     """Generate a get_process for the power property."""
-    def get_process(value):
-        if isinstance(value, float):
+    def get_process(value: float | Literal["Off"] | Literal["Low"]) -> float:
+        if isinstance(value, (float, int)):
             return value
         elif value == "Off":
             return 0
@@ -121,7 +123,7 @@ class YAR(Instrument):
     @property
     def id(self):
         """Get the model number."""
-        return self.values("RMN")[0]
+        return self.values("RMN", cast=str)[0]
 
     @property
     def status(self):
@@ -143,6 +145,7 @@ class YAR(Instrument):
     power = Instrument.measurement(
         "ROP",
         "Measure current output power in W.",
+        cast=cast_or_str(float),
         get_process=power_get_process_generator(0.1),
         dynamic=True,
     )

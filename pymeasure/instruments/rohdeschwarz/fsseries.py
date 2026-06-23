@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ log.addHandler(logging.NullHandler())
 
 def _number_or_auto(value):
     """
-    Evaluates wether input for bandwidth settings and sweep time is a number (requires space) or
+    Evaluates whether input for bandwidth settings and sweep time is a number (requires space) or
     AUTO (requires no space).
     """
     if isinstance(value, str) and value.upper() == "AUTO":
@@ -142,6 +142,7 @@ class FSSeries(SCPIMixin, Instrument):
         """,
         validator=strict_discrete_set,
         values=["WRIT", "MAXH", "MINH", "AVER", "VIEW"],
+        cast=str,
     )
 
     # Markers --------------------------------------------------------------------------------------
@@ -337,7 +338,8 @@ class FSW(FSSeries):
         strict_discrete_set(channel_name, list((self.available_channels).keys()))
         self.write(f"INST:DEL '{channel_name}'")
 
-    def _channel_list_to_dict(raw):
+    @staticmethod
+    def _channel_list_to_dict(raw: list[str]) -> dict[str, str]:
         """
         Convert a list of available channels to a dictionary of form {channel_name: channel_type}.
 
@@ -355,8 +357,9 @@ class FSW(FSSeries):
 
     available_channels = Instrument.measurement(
         "INST:LIST?",
-        "Measure open channel names and corresponding types",
-        get_process=_channel_list_to_dict,
+        "Get open channel names and corresponding types",
+        get_process_list=_channel_list_to_dict,
+        cast=str,
     )
 
     def select_channel(self, channel_name):
@@ -383,7 +386,7 @@ class FSW(FSSeries):
         :return: active channel name
         :rtype: string
         """
-        name = self.values("INST?")[0]
+        name = self.values("INST?", cast=str)[0]
         if name == "SAN":
             name = "Spectrum"
         elif name == "PNO":
@@ -402,6 +405,7 @@ class FSW(FSSeries):
         "Control the viewmode of the device: True for split view or False for single channel view",
         values={True: "SPL", False: "SING"},
         map_values=True,
+        cast=str,
     )
 
     # Overview -------------------------------------------------------------------------------------

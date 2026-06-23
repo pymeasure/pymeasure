@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -50,7 +50,7 @@ class AgilentE4980(SCPIUnknownMixin, Instrument):
     impedance = Instrument.measurement(
         ":FETCH?",
         "Measured data A and B, according to :attr:`~.AgilentE4980.mode`",
-        get_process=lambda x: x[:2])
+        get_process_list=lambda x: x[:2])
 
     mode = Instrument.control("FUNCtion:IMPedance:TYPE?", "FUNCtion:IMPedance:TYPE %s",
                               """
@@ -122,8 +122,8 @@ Select trigger source; accept the values:
         self.write("FORM ASC")
         # trigger in sequential mode
         self.write("LIST:MODE SEQ")
-        lista_str = ",".join(['%e' % f for f in freq_list])
-        self.write("LIST:FREQ %s" % lista_str)
+        lista_str = ",".join([f'{f:e}' for f in freq_list])
+        self.write(f"LIST:FREQ {lista_str}")
         # trigger
         self.write("INIT:CONT ON")
         self.write(":TRIG:IMM")

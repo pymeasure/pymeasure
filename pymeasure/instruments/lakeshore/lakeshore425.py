@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -114,7 +114,7 @@ class LakeShore425(Instrument):
     @mode.setter
     def mode(self, value):
         mode, filter, band = value
-        self.write("RDGMODE %d,%d,%d" % (mode, filter, band))
+        self.write(f"RDGMODE {mode},{filter},{band}")
 
     def zero_probe(self):
         """ Initiates the zero field sequence to calibrate the probe """

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ class BKPrecision9130B(SCPIUnknownMixin, Instrument):
         values {CHANNEL_NUMS}. (int)""",
         validator=strict_discrete_set,
         values=CHANNEL_NUMS,
-        get_process=lambda x: int(x[2])
+        get_process_list=lambda x: int(x[2])
     )
 
     def __init__(self, adapter, name="BK Precision 9130B Source", **kwargs):
@@ -73,4 +73,4 @@ class BKPrecision9130B(SCPIUnknownMixin, Instrument):
     def voltage(self, level):
         voltage_range = [0, 5] if self.channel == 3 else [0, 30]
         new_level = truncated_range(level, voltage_range)
-        self.write("SOURce:VOLTage:LEVel:IMMediate:AMPLitude %g" % new_level)
+        self.write(f"SOURce:VOLTage:LEVel:IMMediate:AMPLitude {new_level:g}")

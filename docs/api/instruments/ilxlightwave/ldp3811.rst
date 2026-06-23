@@ -1,0 +1,8 @@
+####################
+ILX Lighwave LDP3811
+####################
+
+.. autoclass:: pymeasure.instruments.ilxlightwave.LDP3811
+    :members:
+    :show-inheritance:
+    :inherited-members: CommonBase

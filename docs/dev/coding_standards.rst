@@ -14,23 +14,28 @@ The `PEP8 style guide`_ and `PEP257 docstring conventions`_ should be followed.
 
 Function and variable names should be lower case with underscores as needed to separate words. CamelCase should only be used for class names, unless working with Qt, where its use is common.
 
-In addition, there is a configuration for the `flake8`_ linter present. Our codebase should not trigger any warnings.
-Many editors/IDEs can run this tool in the background while you work, showing results inline. Alternatively, you can run ``flake8`` in the repository root to check for problems. In addition, our automation on Github also runs some checkers. As this results in a much slower feedback loop for you, it's not recommended to rely only on this.
+In addition, there is a configuration for the `ruff`_ linter present. Our codebase should not trigger any warnings.
+Many editors/IDEs can run this tool in the background while you work, showing results inline.
+Alternatively, you can run ``ruff check`` in the repository root to check for problems.
+In addition, our automation on Github also runs some checkers.
+As this results in a much slower feedback loop for you, it's not recommended to rely only on this.
 
-.. _flake8: https://flake8.pycqa.org/en/latest/
+.. _ruff: https://docs.astral.sh/ruff/linter/
 
-It is allowed but not required to use the `black`_ code formatter. 
+It is allowed but not required to use the `black`_ code formatter.
 To avoid introducing unrelated changes when working on an existing file, it is recommended to use the `darker`_ tool instead of `black`.
 This helps to keep the focus on the implementation instead of unrelated formatting, and thereby facilitates code reviews.
 :code:`darker` is compatible with :code:`black`, but only formats regions that show as changed in Git.
-If there are conflicts between :code:`black`/:code:`darker`'s output and flake8 (especially related to `E203`_), flake8 takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
+If there are conflicts between :code:`black`/:code:`darker`'s output and ruff (especially related to `E203`_), ruff takes precedence. Use ``#noqa : E203`` to disable E203 warnings for a specific line if appropriate.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _darker: https://github.com/akaihola/darker
 .. _E203: https://www.flake8rules.com/rules/E203.html
 
-There are no plans to support type hinting in PyMeasure code. This adds a lot of additional code to manage, without a clear advantage for this project. 
-Type documentation should be placed in the docstring where not clear from the variable name.
+You may add type hints as you see fit.
+All type hints should adhere to the guidelines set out in the `typing`_ package.
+
+.. _typing: https://docs.python.org/3/library/typing.html
 
 Documentation
 =============

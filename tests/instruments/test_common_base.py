@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import pytest
 
 from pymeasure.units import ureg
 from pymeasure.test import expected_protocol
-from pymeasure.instruments.common_base import DynamicProperty, CommonBase
+from pymeasure.instruments.common_base import DynamicProperty, CommonBase, cast_or_str
 from pymeasure.adapters import FakeAdapter, ProtocolAdapter
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, truncated_range
 
@@ -48,11 +48,11 @@ class CommonBaseTesting(CommonBase):
     def wait_for(self, query_delay=0):
         pass
 
-    def write(self, command):
-        self.parent.write(command)
+    def write(self, command, **kwargs):
+        self.parent.write(command, **kwargs)
 
-    def read(self):
-        return self.parent.read()
+    def read(self, **kwargs):
+        return self.parent.read(**kwargs)
 
 
 class GenericBase(CommonBaseTesting):
@@ -80,11 +80,6 @@ class GenericBase(CommonBaseTesting):
         """A special control with different channel specifiers for get and set.""",
         cast=str,
     )
-
-
-@pytest.fixture()
-def generic():
-    return GenericBase()
 
 
 class FakeBase(CommonBaseTesting):
@@ -115,7 +110,8 @@ class FakeBase(CommonBaseTesting):
         values=(1, 10),
         dynamic=True,
         check_get_errors=True,
-        check_set_errors=True
+        check_set_errors=True,
+        cast=str,
     )
 
 
@@ -430,31 +426,34 @@ def test_ask_writes_and_reads():
 
 @pytest.mark.parametrize("value, kwargs, result",
                          (("5,6,7", {}, [5, 6, 7]),
+                          ("5.1,6,x", {"cast": cast_or_str(float)}, [5.1, 6, "x"]),
+                          ("5,6,x", {"cast": cast_or_str(int)}, [5, 6, "x"]),
                           ("5.6.7", {'separator': '.'}, [5, 6, 7]),
                           ("5,6,7", {'cast': str}, ['5', '6', '7']),
-                          ("X,Y,Z", {}, ['X', 'Y', 'Z']),
+                          ("X,Y,Z", {"cast": str}, ['X', 'Y', 'Z']),
                           ("X,Y,Z", {'cast': str}, ['X', 'Y', 'Z']),
-                          ("X.Y.Z", {'separator': '.'}, ['X', 'Y', 'Z']),
+                          ("X.Y.Z", {"separator": ".", "cast":str}, ["X", "Y", "Z"]),
                           ("0,5,7.1", {'cast': bool}, [False, True, True]),
                           ("x5x", {'preprocess_reply': lambda v: v.strip("x")}, [5]),
-                          ("X,Y,Z", {'maxsplit': 1}, ["X", "Y,Z"]),
-                          ("X,Y,Z", {'maxsplit': 0}, ["X,Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 1, "cast": str}, ["X", "Y,Z"]),
+                          ("X,Y,Z", {'maxsplit': 0, "cast": str}, ["X,Y,Z"]),
                           ))
 def test_values(value, kwargs, result):
     cb = CommonBaseTesting(FakeAdapter(), "test")
     assert cb.values(value, **kwargs) == result
 
 
-def test_global_preprocess_reply():
-    with pytest.warns(FutureWarning, match="deprecated"):
-        cb = CommonBaseTesting(FakeAdapter(), preprocess_reply=lambda v: v.strip("x"))
-        assert cb.values("x5x") == [5]
+def test_values_fallback_emits_futurewarning():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    with pytest.warns(FutureWarning, match=r"Cannot cast.*In a future version"):
+        result = cb.values("X,Y,Z")
+    assert result == ["X", "Y", "Z"]
 
-
-def test_values_global_preprocess_reply():
-    cb = CommonBaseTesting(FakeAdapter())
-    cb.preprocess_reply = lambda v: v.strip("x")
-    assert cb.values("x5x") == [5]
+def test_values_fallback_raises_futurewarning_in_pymeasure():
+    cb = CommonBaseTesting(FakeAdapter(), "test")
+    # "match" should match pyproject.toml error raising
+    with pytest.raises(FutureWarning, match=r"Cannot cast.*In a future version"):
+        cb.values("X,Y,Z")
 
 
 def test_binary_values(fake):
@@ -567,11 +566,15 @@ def test_control_validator(dynamic):
         )
 
     fake = Fake()
+    fake.x_validator = truncated_range  # works only if dynamic
     fake.x = 5
     assert fake.read() == '5'
     fake.x = 5
     assert fake.x == 5
-    with pytest.raises(ValueError):
+    if not dynamic:
+        with pytest.raises(ValueError):
+            fake.x = 20
+    else:
         fake.x = 20
 
 
@@ -587,8 +590,12 @@ def test_control_validator_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_map_values = False  # works only if dynamic
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '5'  # no mapping
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     with pytest.raises(ValueError):
@@ -607,12 +614,19 @@ def test_control_dict_map(dynamic):
         )
 
     fake = Fake()
+    fake.x_values = {1: 1, 20: 2, 5: 3}
     fake.x = 5
-    assert fake.read() == '1'
+    if dynamic:
+        assert fake.read() == '3'
+    else:
+        assert fake.read() == '1'
     fake.x = 5
     assert fake.x == 5
     fake.x = 20
-    assert fake.read() == '3'
+    if dynamic:
+        assert fake.read() == '2'
+    else:
+        assert fake.read() == '3'
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -645,7 +659,7 @@ def test_control_invalid_values_get():
     class Fake(FakeBase):
         x = CommonBase.control(
             "", "%d", "",
-            values=b"abasdfe", map_values=True)
+            values=b"abasdfe", map_values=True, cast=str)
 
     with pytest.raises(ValueError, match="Values of type"):
         Fake().x
@@ -674,10 +688,18 @@ def test_control_process(dynamic):
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v
+    fake.x_set_process = lambda v: v
     fake.x = 10e-3
-    assert fake.read() == '10'
+    if dynamic:
+        assert fake.read() == '0'
+    else:
+        assert fake.read() == '10'
     fake.x = 30e-3
-    assert fake.x == 30e-3
+    if dynamic:
+        assert fake.x == 0
+    else:
+        assert fake.x == 30e-3
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -689,13 +711,37 @@ def test_control_get_process(dynamic):
             values=[0, 10],
             get_process=lambda v: int(v.replace('JUNK', '')),
             dynamic=dynamic,
+            cast=str,
         )
 
     fake = Fake()
+    fake.x_get_process = lambda v: v  # works only if dynamic
     fake.x = 5
     assert fake.read() == 'JUNK5'
-    fake.x = 5
-    assert fake.x == 5
+    fake.x = 6
+    if dynamic:
+        assert fake.x == 'JUNK6'
+    else:
+        assert fake.x == 6
+
+
+@pytest.mark.parametrize("dynamic", [False, True])
+def test_control_get_process_list(dynamic):
+    class Fake(CommonBaseTesting):
+        x = CommonBase.control(
+            "G", "%d", "doc",
+            get_process_list=lambda v: [v[0] + 1, *v, len(v)],
+            dynamic=dynamic,
+        )
+
+    # override get_process_list should only work when dynamic
+    Fake.x_get_process_list = lambda v: [0, "2"]
+
+    with expected_protocol(Fake, [("G", "0, 1, 2, 3.4")]) as inst:
+        if dynamic:
+            assert inst.x == [0, "2"]
+        else:
+            assert inst.x == [1, 0, 1, 2, 3.4, 4]
 
 
 @pytest.mark.parametrize("dynamic", [False, True])
@@ -718,43 +764,7 @@ def test_control_preprocess_reply_property(dynamic):
     fake.x = 5
     assert fake.x == 5
     fake.x = 5
-    assert type(fake.x) == int
-
-
-def test_control_kwargs_handed_to_values():
-    """Test that kwargs parameters are handed to `values` method."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake(FakeBase):
-            x = CommonBase.control(
-                "", "JUNK%d",
-                "",
-                preprocess_reply=lambda v: v.replace('JUNK', ''),
-                cast=int,
-                testing=True,
-            )
-
-            def values(self, cmd, testing=False, **kwargs):
-                self.testing = testing
-                return super().values(cmd, **kwargs)
-
-    fake = Fake()
-    fake.x = 5
-    fake.x
-    assert fake.testing is True
-
-
-def test_control_warning_at_kwargs():
-    """Test whether a control kwarg raises a warning."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake(CommonBase):
-            x = CommonBase.control("", "", "", testing=True)
-
-
-def test_measurement_warning_at_kwargs():
-    """Test whether a measurement kwarg raises a warning."""
-    with pytest.warns(FutureWarning, match="Do not use keyword arguments"):
-        class Fake2(CommonBase):
-            x2 = CommonBase.measurement("", "", testing=True)
+    assert type(fake.x) is int
 
 
 def test_control_parameters_for_values():
@@ -787,7 +797,7 @@ def test_measurement_parameters_for_values():
             "JUNK%d",
             "",
             preprocess_reply=lambda v: v.replace('JUNK', ''),
-            cast=int,
+            cast=cast_or_str(int),
             values_kwargs={'testing': True},
         )
 

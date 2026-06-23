@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
+import numpy as np
 
 
 class Parameter:
@@ -146,8 +148,8 @@ class Parameter:
         return str(self._value) if self.is_set() else ''
 
     def __repr__(self):
-        return "<{}(name={},value={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"default={self.default})>")
 
 
 class IntegerParameter(Parameter):
@@ -178,14 +180,14 @@ class IntegerParameter(Parameter):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
-                raise ValueError("Units included in string (%s) do not match"
-                                 "the units of the IntegerParameter (%s)" % (units, self.units))
+                raise ValueError(f"Units included in string ({units}) do not match "
+                                 f"the units of the IntegerParameter ({self.units})")
 
         try:
             value = int(value)
         except ValueError:
             raise ValueError("IntegerParameter given non-integer value of "
-                             "type '%s'" % type(value))
+                             f"type '{type(value)}'")
         if value < self.minimum:
             raise ValueError("IntegerParameter value is below the minimum")
         elif value > self.maximum:
@@ -196,14 +198,14 @@ class IntegerParameter(Parameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%d" % self._value
+        result = f"{self._value:d}"
         if self.units:
-            result += " %s" % self.units
+            result += f" {self.units}"
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},default={self.default})>")
 
 
 class BooleanParameter(Parameter):
@@ -224,14 +226,16 @@ class BooleanParameter(Parameter):
             elif value.lower() == "false":
                 value = False
             else:
-                raise ValueError("BooleanParameter given string value of '%s'" % value)
+                raise ValueError(f"BooleanParameter given string value of '{value}'")
         elif isinstance(value, (int, float)) and value in [0, 1]:
             value = bool(value)
         elif isinstance(value, bool):
             value = value
+        elif isinstance(value, np.bool_):
+            value = bool(value)
         else:
             raise ValueError("BooleanParameter given non-boolean value of "
-                             "type '%s'" % type(value))
+                             f"type '{type(value)}'")
         return value
 
 
@@ -265,14 +269,14 @@ class FloatParameter(Parameter):
         if isinstance(value, str):
             value, _, units = value.strip().partition(" ")
             if units != "" and units != self.units:
-                raise ValueError("Units included in string (%s) do not match"
-                                 "the units of the FloatParameter (%s)" % (units, self.units))
+                raise ValueError(f"Units included in string ({units}) do not match "
+                                 f"the units of the FloatParameter ({self.units})")
 
         try:
             value = float(value)
         except ValueError:
             raise ValueError("FloatParameter given non-float value of "
-                             "type '%s'" % type(value))
+                             f"type '{type(value)}'")
         if value < self.minimum:
             raise ValueError("FloatParameter value is below the minimum")
         elif value > self.maximum:
@@ -283,14 +287,14 @@ class FloatParameter(Parameter):
     def __str__(self):
         if not self.is_set():
             return ''
-        result = "%g" % self._value
+        result = f"{self._value:g}"
         if self.units:
-            result += " %s" % self.units
+            result += f" {self.units}"
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},default={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self.default)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},default={self.default})>")
 
 
 class VectorParameter(Parameter):
@@ -310,7 +314,7 @@ class VectorParameter(Parameter):
         self._length = length
         self.units = units
         super().__init__(name, **kwargs)
-        self._help_fields.append('_length')
+        self._help_fields.append(('length is', '_length'))
 
     def convert(self, value):
         if isinstance(value, str):
@@ -324,20 +328,20 @@ class VectorParameter(Parameter):
                                  " denoted by square brackets if initializing"
                                  " by string.")
             raw_list = value[1:-1].split(",")
-        elif isinstance(value, (list, tuple)):
+        elif isinstance(value, (list, tuple, np.ndarray)):
             raw_list = value
         else:
             raise ValueError("VectorParameter given undesired value of "
-                             "type '%s'" % type(value))
+                             f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "
-                             "%d instead of %d" % (len(raw_list), self._length))
+                             f"{len(raw_list)} instead of {self._length}")
         try:
             value = [float(ve) for ve in raw_list]
 
         except ValueError:
-            raise ValueError("VectorParameter given input '%s' that could "
-                             "not be converted to floats." % str(value))
+            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+                             "not be converted to floats.")
 
         return value
 
@@ -348,12 +352,12 @@ class VectorParameter(Parameter):
             return ''
         result = "".join(repr(self.value).split())
         if self.units:
-            result += " %s" % self.units
+            result += f" {self.units}"
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},length={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self._length)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},length={self._length})>")
 
 
 class ListParameter(Parameter):
@@ -395,7 +399,7 @@ class ListParameter(Parameter):
             value = self._choices[str(value)]
         else:
             raise ValueError("Invalid choice for parameter. "
-                             "Must be one of %s" % str(self._choices))
+                             f"Must be one of {str(self._choices)}")
 
         return value
 
@@ -441,15 +445,15 @@ class PhysicalParameter(VectorParameter):
             raw_list = value
         else:
             raise ValueError("VectorParameter given undesired value of "
-                             "type '%s'" % type(value))
+                             f"type '{type(value)}'")
         if len(raw_list) != self._length:
             raise ValueError("VectorParameter given value of length "
-                             "%d instead of %d" % (len(raw_list), self._length))
+                             f"{len(raw_list)} instead of {self._length}")
         try:
             value = [float(ve) for ve in raw_list]
         except ValueError:
-            raise ValueError("VectorParameter given input '%s' that could "
-                             "not be converted to floats." % str(value))
+            raise ValueError(f"VectorParameter given input '{str(value)}' that could "
+                             "not be converted to floats.")
         # Uncertainty must be non-negative
         value[1] = abs(value[1])
 
@@ -485,14 +489,14 @@ class PhysicalParameter(VectorParameter):
             return ''
         result = f"{self._value[0]:g} +/- {self._value[1]:g}"
         if self.units:
-            result += " %s" % self.units
+            result += f" {self.units}"
         if self._utype.value is not None:
-            result += " (%s)" % self._utype.value
+            result += f" ({self._utype.value})"
         return result
 
     def __repr__(self):
-        return "<{}(name={},value={},units={},uncertaintyType={})>".format(
-            self.__class__.__name__, self.name, self._value, self.units, self._utype.value)
+        return (f"<{self.__class__.__name__}(name={self.name},value={self._value},"
+                f"units={self.units},uncertaintyType={self._utype.value})>")
 
 
 class Measurable:
@@ -536,7 +540,7 @@ class Measurable:
         self._value = value
 
 
-class Metadata(object):
+class Metadata:
     """ Encapsulates the information for metadata of the experiment with
     information about the name, the fget function and the units, if supplied.
     If no fget function is specified, the value property will return the
@@ -611,6 +615,6 @@ class Metadata(object):
         result = self.fmt % self.value
 
         if self.units is not None:
-            result += " %s" % self.units
+            result += f" {self.units}"
 
         return result
