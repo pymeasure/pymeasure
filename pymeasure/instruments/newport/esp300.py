@@ -256,7 +256,9 @@ class ESP300(SCPIMixin, Instrument):
 
     @property
     def x(self):
-        """ Get the first axis of the controller. Deprecated, Use axes[0] instead.
+        """ Get the first axis of the controller.
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[0]` instead.
         """
         warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
@@ -266,7 +268,9 @@ class ESP300(SCPIMixin, Instrument):
 
     @property
     def y(self):
-        """ Get the second axis of the controller. Deprecated, Use axes[1] instead.
+        """ Get the second axis of the controller.
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[1]` instead.
         """
         warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
@@ -276,7 +280,9 @@ class ESP300(SCPIMixin, Instrument):
 
     @property
     def phi(self):
-        """ Get the third axis of the controller. Deprecated, Use axes[2] instead.
+        """ Get the third axis of the controller.
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[2]` instead.
         """
         warn("The x attribute is deprecated. "
              "Axes are now directly accessed through the axes attribute.",
