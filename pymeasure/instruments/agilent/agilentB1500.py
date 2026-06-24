@@ -2291,7 +2291,7 @@ class QueryLearn:
         return ret
 
     @staticmethod
-    def to_dict(parameters: str | list, names: list, *args) -> dict:
+    def to_dict(parameters: str | list, names: list, *args) -> OrderedDict:
         """Take parameters returned by :meth:`query_learn` and ordered list
         of corresponding parameter names (optional function) and return
         dict of parameters including names.
