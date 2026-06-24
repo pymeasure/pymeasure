@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -267,48 +267,48 @@ class SR830(Instrument):
     )
     input_config = Instrument.control(
         "ISRC?", "ISRC %d",
-        """ An string property that controls the input configuration. Allowed
-        values are: {}""".format(INPUT_CONFIGS),
+        f""" An string property that controls the input configuration. Allowed
+        values are: {INPUT_CONFIGS}""",
         validator=strict_discrete_set,
         values=INPUT_CONFIGS,
         map_values=True
     )
     input_grounding = Instrument.control(
         "IGND?", "IGND %d",
-        """ An string property that controls the input shield grounding. Allowed
-        values are: {}""".format(INPUT_GROUNDINGS),
+        f""" An string property that controls the input shield grounding. Allowed
+        values are: {INPUT_GROUNDINGS}""",
         validator=strict_discrete_set,
         values=INPUT_GROUNDINGS,
         map_values=True
     )
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
-        """ An string property that controls the input coupling. Allowed
-        values are: {}""".format(INPUT_COUPLINGS),
+        f""" An string property that controls the input coupling. Allowed
+        values are: {INPUT_COUPLINGS}""",
         validator=strict_discrete_set,
         values=INPUT_COUPLINGS,
         map_values=True
     )
     input_notch_config = Instrument.control(
         "ILIN?", "ILIN %d",
-        """ An string property that controls the input line notch filter
-        status. Allowed values are: {}""".format(INPUT_NOTCH_CONFIGS),
+        f""" An string property that controls the input line notch filter
+        status. Allowed values are: {INPUT_NOTCH_CONFIGS}""",
         validator=strict_discrete_set,
         values=INPUT_NOTCH_CONFIGS,
         map_values=True
     )
     reference_source = Instrument.control(
         "FMOD?", "FMOD %d",
-        """ An string property that controls the reference source. Allowed
-        values are: {}""".format(REFERENCE_SOURCES),
+        f""" An string property that controls the reference source. Allowed
+        values are: {REFERENCE_SOURCES}""",
         validator=strict_discrete_set,
         values=REFERENCE_SOURCES,
         map_values=True
     )
     reference_source_trigger = Instrument.control(
         "RSLP?", "RSLP %d",
-        """ A string property that controls the reference source triggering. Allowed
-             values are: {}""".format(REFERENCE_SOURCE_TRIGGER),
+        f""" A string property that controls the reference source triggering. Allowed
+             values are: {REFERENCE_SOURCE_TRIGGER}""",
         validator=strict_discrete_set,
         values=REFERENCE_SOURCE_TRIGGER,
         map_values=True
@@ -391,7 +391,6 @@ class SR830(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )
 
@@ -409,7 +408,7 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
-        self.write("AOFF %d" % channel)
+        self.write(f"AOFF {channel}")
 
     def get_scaling(self, channel):
         """ Returns the offset percent and the expansion term
@@ -418,19 +417,24 @@ class SR830(Instrument):
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
-        offset, expand = self.ask("OEXP? %d" % channel).split(',')
+        offset, expand = self.ask(f"OEXP? {channel}").split(',')
         return float(offset), self.EXPANSION_VALUES[int(expand)]
 
-    def set_scaling(self, channel, precent, expand=0):
+    def set_scaling(self, channel, percent, expand=0, precent=None) -> None:
         """ Sets the offset of a channel (X=1, Y=2, R=3) to a
         certain percent (-105% to 105%) of the signal, with
         an optional expansion term (0, 10=1, 100=2)
+
+        .. deprecated:: 0.17.0
+            The `precent` parameter is deprecated, use `percent` instead for same functionality.
         """
+        if precent is not None:
+            percent = precent
         if channel not in self.CHANNELS:
             raise ValueError('SR830 channel is invalid')
         channel = self.CHANNELS.index(channel) + 1
         expand = discreteTruncate(expand, self.EXPANSION_VALUES)
-        self.write("OEXP %i,%.2f,%i" % (channel, precent, expand))
+        self.write(f"OEXP {channel},{percent:.2f},{expand}")
 
     def output_conversion(self, channel):
         """ Returns a function that can be used to determine
@@ -458,10 +462,10 @@ class SR830(Instrument):
         else:
             frequency = discreteTruncate(frequency, SR830.SAMPLE_FREQUENCIES)
             index = SR830.SAMPLE_FREQUENCIES.index(frequency)
-        self.write("SRAT%f" % index)
+        self.write(f"SRAT{index:f}")
 
     def aquireOnTrigger(self, enable=True):
-        self.write("TSTR%d" % enable)
+        self.write(f"TSTR{int(enable)}")
 
     @property
     def reserve(self):
@@ -473,7 +477,7 @@ class SR830(Instrument):
             index = 1
         else:
             index = SR830.RESERVE_VALUES.index(reserve)
-        self.write("RMOD%d" % index)
+        self.write(f"RMOD{index}")
 
     def is_out_of_range(self):
         """ Returns True if the magnitude is out of range
@@ -486,7 +490,7 @@ class SR830(Instrument):
         """
         self.write('LIAE 2,1')
         while self.is_out_of_range():
-            self.write("SENS%d" % (int(self.ask("SENS?")) + 1))
+            self.write(f"SENS{int(self.ask('SENS?')) + 1}")
             time.sleep(5.0 * self.time_constant)
             self.write("*CLS")
         # Set the range as low as possible
@@ -579,8 +583,7 @@ class SR830(Instrument):
         """
         if end is None:
             end = self.buffer_count
-        return self.binary_values("TRCB?%d,%d,%d" % (
-            channel, start, end - start))
+        return self.binary_values(f"TRCB?{channel},{start},{end - start}")
 
     def reset_buffer(self):
         self.write("REST")

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ class TexioPSW360L30(Keithley2260B):
         code, message = self.next_error
         while code != 0:
             t = time.time()
-            log.info("TEXIO PSW-360L30 reported error: %d, %s" % (code, message))
+            log.info(f"TEXIO PSW-360L30 reported error: {code}, {message}")
             code, message = self.next_error
             if (time.time() - t) > 10:
                 log.warning("Timed out for TEXIO PSW-360L30 error retrieval.")

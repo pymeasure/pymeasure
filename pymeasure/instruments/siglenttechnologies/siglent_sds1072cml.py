@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 import struct
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments.validators import truncated_discrete_set, truncated_range
 
@@ -53,6 +54,7 @@ class VoltageChannel(Channel):
         values={"DC": "D", "AC": "A"},
         map_values=True,
         get_process=lambda v: v.split(" ", 1)[-1][0],
+        cast=str,
     )
 
     def get_waveform(self):
@@ -65,10 +67,10 @@ class VoltageChannel(Channel):
         self.write("C{ch}:WF? ALL")
         response = self.read_bytes(count=-1, break_on_termchar=True)
         descriptor_dictionary = self.get_descriptor()
-        data_points = descriptor_dictionary["numDataPoints"] if descriptor_dictionary["numDataPoints"] else descriptor_dictionary["pointsScreen"]  # noqa: E501
+        data_points = descriptor_dictionary["numDataPoints"] or descriptor_dictionary["pointsScreen"]  # noqa: E501
         rawWaveform = list(
             struct.unpack_from(
-                "%db" % data_points,
+                f"{data_points}b",
                 response,
                 offset=descriptor_dictionary["descriptorOffset"],
             ),
@@ -194,6 +196,7 @@ class TriggerChannel(Channel):
             "hold_type": v[4],
             "hold_value1": v[6],
         },
+        cast=cast_or_str(float),
     )
 
     trigger_level = Channel.measurement(
@@ -207,6 +210,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "level": float(v.split(" ", 1)[-1][:-2]),
         },
+        cast=str,
     )
 
     trigger_slope = Channel.measurement(
@@ -220,6 +224,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "slope": v.split(" ", 1)[-1],
         },
+        cast=str,
     )
 
     trigger_mode = Channel.measurement(
@@ -230,6 +235,7 @@ class TriggerChannel(Channel):
 
         """,
         get_process=lambda v: {"mode": v.split(" ", 1)[-1]},
+        cast=str,
     )
 
     trigger_coupling = Channel.measurement(
@@ -243,6 +249,7 @@ class TriggerChannel(Channel):
             "source": v.split(":", 1)[0],
             "coupling": v.split(" ", 1)[-1],
         },
+        cast=str,
     )
 
     def set_trigger_config(self, **kwargs):
@@ -269,7 +276,7 @@ class TriggerChannel(Channel):
                 dictIn.get("hold_type"),
                 dictIn.get("hold_value1"),
             ),
-            "level": lambda dictIn: "%.2eV" % dictIn.get("level"),
+            "level": lambda dictIn: "{:.2e}V".format(dictIn.get("level")),
             "coupling": lambda dictIn: dictIn.get("coupling"),
             "slope": lambda dictIn: dictIn.get("slope"),
             "mode": lambda dictIn: dictIn.get("mode"),
@@ -332,18 +339,21 @@ class SDS1072CML(SCPIMixin, Instrument):
         "SAST?",
         "Get the sampling status of the scope (Stop, Ready, Trig'd, Armed)",
         get_process=lambda v: v.split(" ", 1)[-1],
+        cast=str,
     )
 
     internal_state = Instrument.measurement(
         "INR?",
         "Get the scope's Internal state change register and clears it.",
         get_process=lambda v: v.split(" ", 1)[-1],
+        cast=str,
     )
 
     is_ready = Instrument.measurement(
         "SAST?",
         "Get whether the scope is ready for the next acquisition (bool)",
         get_process=lambda v: v.split(" ", 1)[-1] in ["Stop", "Ready", "Armed"],
+        cast=str,
     )
 
     def wait(self, time):
@@ -351,7 +361,7 @@ class SDS1072CML(SCPIMixin, Instrument):
 
         :param time: time in seconds to wait for
         """
-        self.write("WAIT %d" % int(time))
+        self.write(f"WAIT {int(time)}")
 
     def arm(self):
         """Change the acquisition mode from 'STOPPED' to 'SINGLE'.
@@ -380,6 +390,7 @@ class SDS1072CML(SCPIMixin, Instrument):
             dict_in.get("number"),
             dict_in.get("first"),
         ),
+        cast=cast_or_str(float),
     )
 
     template = Instrument.measurement(

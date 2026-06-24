@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -83,13 +83,12 @@ class Kusg245_250A(Instrument):
                          asrl={"baud_rate": 115200,
                                "read_termination": termination_character,
                                "write_termination": termination_character},
-                         includeSCPI=False,
                          **kwargs)
 
         self._power_limit = power_limit
         self.power_setpoint_values = [0, power_limit]
 
-    version = Instrument.measurement("v", """Get firmware version.""")
+    version = Instrument.measurement("v", """Get firmware version.""", cast=str)
 
     @property
     def voltage_5v(self):
@@ -242,6 +241,7 @@ class Kusg245_250A(Instrument):
         """,
         validator=truncated_range,
         values=[2400, 2500],
+        cast=str,
         get_process=lambda v: int(v[:-3]) if v.endswith("MHz") else None,
     )
 
@@ -257,6 +257,7 @@ class Kusg245_250A(Instrument):
         """,
         validator=truncated_range,
         values=[2400000, 2500000],
+        cast=str,
         set_process=lambda v: round(v, -1),
         get_process=lambda v: int(v[:-3]) if v.endswith("kHz") else None,
     )

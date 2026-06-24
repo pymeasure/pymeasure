@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,11 @@ import pytest
 import math
 from pymeasure.instruments.keithley.keithley2306 import Keithley2306
 
-pytest.skip('Only work with connected hardware', allow_module_level=True)
+
+@pytest.fixture(scope="module")
+def device(connected_device_address) -> Keithley2306:
+    device = Keithley2306(connected_device_address)
+    return device
 
 
 class TestKeithley2306:
@@ -38,11 +42,6 @@ class TestKeithley2306:
         - A Keithley2306 device should be connected to the computer;
         - The device's address must be set in the RESOURCE constant;
     """
-
-    ##################################################
-    # Keithley2306 device address goes here:
-    RESOURCE = "USB0::10893::6039::CN57266430::INSTR"
-    ##################################################
 
     #########################
     # PARAMETRIZATION CASES #
@@ -84,8 +83,6 @@ class TestKeithley2306:
     SOURCE_CURRENTS = [0.006, 1, 5]
     SOURCE_CURRENT_LIMIT_TYPES = ['limit', 'trip']
 
-    INSTR = Keithley2306(RESOURCE)
-
     ############
     # FIXTURES #
     ############
@@ -101,7 +98,8 @@ class TestKeithley2306:
             self.INSTR.relay(i).closed = False
 
     @pytest.fixture
-    def instr(self):
+    def instr(self, device: Keithley2306):
+        self.INSTR = device
         self.INSTR.reset()
         return self.INSTR
 
@@ -520,7 +518,7 @@ class TestKeithley2306:
         instr.ch(channel).sense_mode = sense_mode
         instr.ch(channel).average_count = average_count
         time.sleep(0.1)
-        assert type(instr.ch(channel).reading) == float
+        assert isinstance(instr.ch(channel).reading, float)
 
     @pytest.mark.parametrize("sense_mode", SENSE_MODES)
     @pytest.mark.parametrize("average_count", AVERAGE_COUNTS)

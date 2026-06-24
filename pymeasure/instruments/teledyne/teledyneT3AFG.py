@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,8 @@
 #
 
 import logging
+from typing import TypeVar
+from collections.abc import Callable
 
 from pymeasure.instruments import Instrument, Channel, SCPIMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
@@ -30,11 +32,15 @@ from pymeasure.instruments.validators import strict_range, strict_discrete_set
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+T = TypeVar("T")
 
-def get_process_generator_search(keyword, unit, type):
+
+def get_process_generator_search(
+    keyword: str, unit: str, type: Callable[[str], T]
+) -> Callable[[list[str]], T | None]:
     """Generate a get_process method searching for keyword, stripping unit"""
 
-    def selector(values):
+    def selector(values: list[str]) -> T | None:
         if keyword in values:
             try:
                 return type(values[values.index(keyword) + 1].strip(unit))
@@ -56,8 +62,8 @@ class SignalChannel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: 'ON', False: 'OFF'},
-        # Replace ON and OFF with True and False in both get and set
-        get_process_list=lambda x: True if x[0].split(' ')[1] == 'ON' else False,
+        get_process_list=lambda x: x[0].split(' ')[1] == 'ON',
+        cast=str,
     )
 
     wavetype = Channel.control(
@@ -69,6 +75,7 @@ class SignalChannel(Channel):
         validator=strict_discrete_set,
         values=['SINE', 'SQUARE', 'RAMP', 'PULSE', 'NOISE', 'ARB', 'DC', 'PRBS', 'IQ'],
         get_process_list=lambda x: x[1],
+        cast=str,
     )
 
     frequency = Channel.control(
@@ -81,6 +88,7 @@ class SignalChannel(Channel):
         get_process_list=get_process_generator_search('FRQ', 'HZ', float),
         dynamic=True,
         check_set_errors=True,
+        cast=str,
     )
 
     amplitude = Channel.control(
@@ -95,6 +103,7 @@ class SignalChannel(Channel):
         get_process_list=get_process_generator_search('AMP', 'V', float),
         dynamic=True,
         check_set_errors=True,
+        cast=str,
     )
 
     offset = Channel.control(
@@ -109,6 +118,7 @@ class SignalChannel(Channel):
         get_process_list=get_process_generator_search('OFST', 'V', float),
         dynamic=True,
         check_set_errors=True,
+        cast=str,
     )
 
     max_output_amplitude = Channel.control(
@@ -119,6 +129,7 @@ class SignalChannel(Channel):
         values=[0, 20],
         get_process_list=get_process_generator_search('MAX_OUTPUT_AMP', 'V', float),
         dynamic=True,
+        cast=str,
     )
 
 

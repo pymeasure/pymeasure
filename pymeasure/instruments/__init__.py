@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 from .channel import Channel
-from .instrument import Instrument
+from .instrument import AdapterType, Instrument
+from .common_base import cast_or_str
 from .resources import find_serial_port, list_resources
 from .generic_types import SCPIMixin, SCPIUnknownMixin

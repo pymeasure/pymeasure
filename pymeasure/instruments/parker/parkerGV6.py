@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -186,8 +186,8 @@ class ParkerGV6(SCPIUnknownMixin, Instrument):
         """ Set the software limits for motion based on
         the count unit where 4000 counts is 1 revolution
         """
-        self.write("LSPOS%d" % int(positive))
-        self.write("LSNEG%d" % int(negative))
+        self.write(f"LSPOS{int(positive)}")
+        self.write(f"LSNEG{int(negative)}")
 
     @property
     def echo(self):

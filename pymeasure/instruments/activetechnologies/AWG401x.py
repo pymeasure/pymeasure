@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -251,14 +251,14 @@ class ChannelAFG(ChannelBase):
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude? MAXimum",
         """Get the maximum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: float(value.replace("VPP", ""))
+        preprocess_reply=lambda s: s.removeprefix("VPP"),
     )
 
     voltage_amplitude_min = Instrument.measurement(
         "SOURce{ch}:VOLTage:LEVel:IMMediate:AMPLitude? MINimum",
         """Get the minimum amplitude voltage level that can
         be set to the output waveform.""",
-        get_process=lambda value: float(value.replace("VPP", ""))
+        preprocess_reply=lambda s: s.removeprefix("VPP"),
     )
 
     voltage_offset = Instrument.control(
@@ -736,7 +736,7 @@ class AWG401x_AWG(AWG401x_base):
         """This class inherit from MutableMapping in order to create a custom
         dict to lazy load, modify, delete and create instrument waveform."""
 
-        def __init__(self, parent):
+        def __init__(self, parent: Instrument):
             self.parent = parent
             self.reset()
 
@@ -797,8 +797,7 @@ class AWG401x_AWG(AWG401x_base):
 
         def __iter__(self):
             try:
-                for el in self._data:
-                    yield el
+                yield from self._data
             except KeyError:
                 return
 
@@ -812,7 +811,7 @@ class AWG401x_AWG(AWG401x_base):
 
         def reset(self):
             """Reset the class reloading the waveforms from instrument"""
-            waveforms_name = self.parent.values("WLISt:LIST?")
+            waveforms_name = self.parent.values("WLISt:LIST?", cast=str)
             self._data = {v: None for v in waveforms_name}
 
         def _get_waveform(self, waveform_name):
@@ -839,12 +838,12 @@ class AWG401x_AWG(AWG401x_base):
         def __getitem__(self, key):
             if key <= 0:
                 raise IndexError("Entry numeration start from 1")
-            if key > int(self.parent.values("SEQuence:LENGth?")[0]):
+            if key > int(self.parent.values("SEQuence:LENGth?", cast=int)[0]):
                 raise IndexError("Index out of range")
             return SequenceEntry(self.parent, self.num_ch, key)
 
         def __len__(self):
-            return int(self.parent.values("SEQuence:LENGth?")[0])
+            return int(self.parent.values("SEQuence:LENGth?", cast=int)[0])
 
 
 class SequenceEntry(Channel):

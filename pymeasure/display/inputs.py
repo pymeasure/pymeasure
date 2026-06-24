@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -59,7 +59,7 @@ class Input:
             self.setValue(parameter.value)
 
         if hasattr(parameter, 'units') and parameter.units:
-            self.setSuffix(" %s" % parameter.units)
+            self.setSuffix(f" {parameter.units}")
 
         self.setToolTip(parameter._cli_help_fields())
 
@@ -169,7 +169,7 @@ class ListInput(Input, QtWidgets.QComboBox):
         # Override from :class:`Input`
         try:
             if hasattr(parameter, 'units') and parameter.units:
-                suffix = " %s" % parameter.units
+                suffix = f" {parameter.units}"
             else:
                 suffix = ""
 
@@ -187,7 +187,7 @@ class ListInput(Input, QtWidgets.QComboBox):
             self.setCurrentIndex(index)
         except (TypeError, ValueError) as e:  # no choices or choice invalid
             raise ValueError("Invalid choice for parameter. "
-                             "Must be one of %s" % str(self._parameter.choices)) from e
+                             f"Must be one of {str(self._parameter.choices)}") from e
 
     def setSuffix(self, value):
         pass
@@ -235,7 +235,7 @@ class ScientificInput(Input, QtWidgets.QDoubleSpinBox):
         if self._parameter.units:
             text = text[:-(len(self._parameter.units) + 1)]
             result = self.validator.validate(text, pos)
-            return result[0], result[1] + " %s" % self._parameter.units, result[2]
+            return result[0], result[1] + f" {self._parameter.units}", result[2]
         else:
             return self.validator.validate(text, pos)
 

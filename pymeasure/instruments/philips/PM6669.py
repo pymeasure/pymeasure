@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ from enum import Enum, IntFlag
 from queue import Queue
 
 from pymeasure.instruments import Instrument
+from pymeasure.instruments.common_base import cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range
 
 
@@ -76,7 +77,7 @@ class PM6669(Instrument):
     """Represents the Philips PM 6669 instrument."""
 
     def __init__(self, adapter, name="Philips PM 6669", **kwargs):
-        super().__init__(adapter, name, includeSCPI=False, **kwargs)
+        super().__init__(adapter, name, **kwargs)
         self.write("EOI ON")
         self.freerun_enabled = False
         self.backlog = Queue()
@@ -133,7 +134,7 @@ class PM6669(Instrument):
         """Reset the instruments to default settings"""
         self.write("DCL")
 
-    id = Instrument.measurement("ID?", """Get the instrument identification """)
+    id = Instrument.measurement("ID?", """Get the instrument identification """, cast=str)
 
 
 PM6669.measuring_function = Instrument.control(
@@ -156,6 +157,7 @@ PM6669.measuring_function = Instrument.control(
         Functions.TOT_A: "TOTM   A",
     },
     map_values=True,
+    cast=str,
 )
 
 PM6669.gate_enabled = Instrument.control(
@@ -179,7 +181,8 @@ PM6669.measurement_time = Instrument.control(
     """Control the measurement time in seconds""",
     validator=strict_range,
     values=[0, 10],
-    get_process_list=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") is True else 0,
+    cast=cast_or_str(float),
+    get_process_list=lambda x: float(x[0][5:]) if x[0].startswith("MTIME") else 0,
 )
 
 PM6669.freerun_enabled = Instrument.control(
@@ -189,8 +192,9 @@ PM6669.freerun_enabled = Instrument.control(
     validator=strict_discrete_set,
     values={True: "ON", False: "OFF"},
     map_values=True,
+    cast=cast_or_str(float),
     get_process_list=lambda x: (x[1].split("\n")[0][5:] == " ON")
-    if x[0].startswith("MTIME") is True
+    if x[0].startswith("MTIME")
     else 0,
 )
 
@@ -202,17 +206,20 @@ PM6669.measurement_timeout = Instrument.control(
         this timeout only has meaning when freerun is off.""",
     validator=strict_range,
     values=[0, 25.5],
-    get_process_list=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") is True else 0,
+    cast=cast_or_str(float),
+    get_process_list=lambda x: float(x[2][5:]) if x[0].startswith("MTIME") else 0,
 )
 
 PM6669.SRQMask = Instrument.control(
     "BUS?",
     "MSR %i",
     """Control the SRQ mask""",
+    cast=cast_or_str(float),
     get_process_list=lambda x: MSRFlag(int(x[0].split(",")[0].split(" ")[-1])),
 )
 
 PM6669.measurement_settings = Instrument.measurement(
     "MEAC?",
-    """Get the measurement settings from the device """
+    """Get the measurement settings from the device """,
+    cast=str,
 )

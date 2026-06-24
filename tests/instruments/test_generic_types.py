@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,7 @@
 import pytest
 
 from pymeasure.test import expected_protocol
-from pymeasure.adapters import ProtocolAdapter
-from pymeasure.instruments.generic_types import SCPIMixin, SCPIUnknownMixin
+from pymeasure.instruments.generic_types import SCPIMixin
 from pymeasure.instruments import Instrument
 
 
@@ -34,9 +33,6 @@ class Test_SCPIMixin:
     class SCPIInstrument(SCPIMixin, Instrument):
         pass
 
-    def test_init(self):
-        inst = self.SCPIInstrument(ProtocolAdapter(), "test")
-        assert inst.SCPI is False  # should not be set by the new init
 
     @pytest.mark.parametrize("method, write, reply", (
         ("id", "*IDN?", "xyz, abc"),
@@ -78,12 +74,3 @@ class Test_SCPIMixin:
                 name="test") as inst:
             assert inst.check_errors() == [[-100, '"Command error"'],
                                            [-222, '"Data out of range"']]
-
-
-def test_SCPIunknownMixin():
-    class SCPIunknownInstrument(SCPIUnknownMixin, Instrument):
-        pass
-
-    with pytest.warns(FutureWarning):
-        inst = SCPIunknownInstrument(ProtocolAdapter(), "test")
-    assert inst.SCPI is False

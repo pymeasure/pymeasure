@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,6 @@ class OxfordInstrumentsBase(Instrument):
 
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={
                              'baud_rate': 9600,
                              'data_bits': 8,
@@ -178,4 +177,4 @@ class OxfordInstrumentsBase(Instrument):
         return bool(match)
 
     def __repr__(self):
-        return "<OxfordInstrumentsAdapter(adapter='%s')>" % self.adapter.connection.resource_name
+        return f"<OxfordInstrumentsAdapter(adapter='{self.adapter.connection.resource_name}')>"

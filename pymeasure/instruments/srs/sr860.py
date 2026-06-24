@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -118,7 +118,7 @@ class SR860(Instrument):
         """A floating point property that represents the reference sine-wave
         voltage in Volts. This property can be set.""",
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
 
     timebase = Instrument.control(
@@ -130,24 +130,24 @@ class SR860(Instrument):
     )
     dcmode = Instrument.control(
         "REFM?", "REFM %d",
-        """A string property that represents the sine out dc mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_DCMODE),
+        f"""A string property that represents the sine out dc mode.
+        This property can be set. Allowed values are:{INPUT_DCMODE}""",
         validator=strict_discrete_set,
         values=INPUT_DCMODE,
         map_values=True
     )
     reference_source = Instrument.control(
         "RSRC?", "RSRC %d",
-        """A string property that represents the reference source.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCESOURCE),
+        f"""A string property that represents the reference source.
+        This property can be set. Allowed values are:{INPUT_REFERENCESOURCE}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCESOURCE,
         map_values=True
     )
     reference_triggermode = Instrument.control(
         "RTRG?", "RTRG %d",
-        """A string property that represents the external reference trigger mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCETRIGGERMODE),
+        f"""A string property that represents the external reference trigger mode.
+        This property can be set. Allowed values are:{INPUT_REFERENCETRIGGERMODE}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCETRIGGERMODE,
         map_values=True
@@ -156,24 +156,24 @@ class SR860(Instrument):
 
     reference_externalinput = Instrument.control(
         "REFZ?", "REFZ&d",
-        """A string property that represents the external reference input.
-        This property can be set. Allowed values are:{}""".format(INPUT_REFERENCEEXTERNALINPUT),
+        f"""A string property that represents the external reference input.
+        This property can be set. Allowed values are:{INPUT_REFERENCEEXTERNALINPUT}""",
         validator=strict_discrete_set,
         values=INPUT_REFERENCEEXTERNALINPUT,
         map_values=True
     )
     input_signal = Instrument.control(
         "IVMD?", "IVMD %d",
-        """A string property that represents the signal input.
-        This property can be set. Allowed values are:{}""".format(INPUT_SIGNAL_INPUT),
+        f"""A string property that represents the signal input.
+        This property can be set. Allowed values are:{INPUT_SIGNAL_INPUT}""",
         validator=strict_discrete_set,
         values=INPUT_SIGNAL_INPUT,
         map_values=True
     )
     input_voltage_mode = Instrument.control(
         "ISRC?", "ISRC %d",
-        """A string property that represents the voltage input mode.
-        This property can be set. Allowed values are:{}""".format(INPUT_VOLTAGE_MODE),
+        f"""A string property that represents the voltage input mode.
+        This property can be set. Allowed values are:{INPUT_VOLTAGE_MODE}""",
         validator=strict_discrete_set,
         values=INPUT_VOLTAGE_MODE,
         map_values=True
@@ -182,16 +182,16 @@ class SR860(Instrument):
 
     input_coupling = Instrument.control(
         "ICPL?", "ICPL %d",
-        """A string property that represents the input coupling.
-        This property can be set. Allowed values are:{}""".format(INPUT_COUPLING),
+        f"""A string property that represents the input coupling.
+        This property can be set. Allowed values are:{INPUT_COUPLING}""",
         validator=strict_discrete_set,
         values=INPUT_COUPLING,
         map_values=True
     )
     input_shields = Instrument.control(
         "IGND?", "IGND %d",
-        """A string property that represents the input shield grounding.
-        This property can be set. Allowed values are:{}""".format(INPUT_SHIELDS),
+        f"""A string property that represents the input shield grounding.
+        This property can be set. Allowed values are:{INPUT_SHIELDS}""",
         validator=strict_discrete_set,
         values=INPUT_SHIELDS,
         map_values=True
@@ -200,16 +200,16 @@ class SR860(Instrument):
 
     input_range = Instrument.control(
         "IRNG?", "IRNG %d",
-        """A string property that represents the input range.
-        This property can be set. Allowed values are:{}""".format(INPUT_RANGE),
+        f"""A string property that represents the input range.
+        This property can be set. Allowed values are:{INPUT_RANGE}""",
         validator=strict_discrete_set,
         values=INPUT_RANGE,
         map_values=True
     )
     input_current_gain = Instrument.control(
         "ICUR?", "ICUR %d",
-        """A string property that represents the current input gain.
-        This property can be set. Allowed values are:{}""".format(INPUT_GAIN),
+        f"""A string property that represents the current input gain.
+        This property can be set. Allowed values are:{INPUT_GAIN}""",
         validator=strict_discrete_set,
         values=INPUT_GAIN,
         map_values=True
@@ -256,8 +256,8 @@ class SR860(Instrument):
     )
     filter_synchronous = Instrument.control(
         "SYNC?", "SYNC %d",
-        """A string property that represents the synchronous filter.
-        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        f"""A string property that represents the synchronous filter.
+        This property can be set. Allowed values are:{INPUT_FILTER}""",
         validator=strict_discrete_set,
         values=INPUT_FILTER,
         map_values=True
@@ -278,8 +278,8 @@ class SR860(Instrument):
 
     filter_advanced = Instrument.control(
         "ADVFILT?", "ADVFIL %d",
-        """A string property that represents the advanced filter.
-        This property can be set. Allowed values are:{}""".format(INPUT_FILTER),
+        f"""A string property that represents the advanced filter.
+        This property can be set. Allowed values are:{INPUT_FILTER}""",
         validator=strict_discrete_set,
         values=INPUT_FILTER,
         map_values=True
@@ -317,28 +317,28 @@ class SR860(Instrument):
         """Floating point property representing the preset sine out amplitude, for the A1 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset2 = Instrument.control(
         "PSTA? 1", "PSTA1, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A2 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset3 = Instrument.control(
         "PSTA? 2", "PSTA2, %0.9e",
         """Floating point property representing the preset sine out amplitude, for the A3 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_amplitudepreset4 = Instrument.control(
         "PSTA? 3", "PSTA 3, %0.9e",
-        """Floating point property representing the preset sine out amplitude, for the A3 preset button.
+        """Floating point property representing the preset sine out amplitude, for the A4 preset button.
         This property can be set.""",  # noqa: E501
         validator=truncated_range,
-        values=[1e-9, 2]
+        values=[0, 2]
     )
     sine_dclevelpreset1 = Instrument.control(
         "PSTL? 0", "PSTL 0, %0.3e",
@@ -561,29 +561,29 @@ class SR860(Instrument):
 
     parameter_DAT1 = Instrument.control(
         "CDSP? 0", "CDSP 0, %i",
-        """A integer property that assigns a parameter to data channel 1(green).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 1(green).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
         values=range(0, 16)
     )
     parameter_DAT2 = Instrument.control(
         "CDSP? 1", "CDSP 1, %i",
-        """A integer property that assigns a parameter to data channel 2(blue).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 2(blue).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
         values=range(0, 16)
     )
     parameter_DAT3 = Instrument.control(
         "CDSP? 2", "CDSP 2, %i",
-        """A integer property that assigns a parameter to data channel 3(yellow).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 3(yellow).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
         values=range(0, 16)
     )
     parameter_DAT4 = Instrument.control(
         "CDSP? 3", "CDSP 3, %i",
-        """A integer property that assigns a parameter to data channel 3(orange).
-        This parameters can be set. Allowed values are:{}""".format(LIST_PARAMETER),
+        f"""A integer property that assigns a parameter to data channel 3(orange).
+        This parameters can be set. Allowed values are:{LIST_PARAMETER}""",
         validator=strict_discrete_set,
         values=range(0, 16)
     )
@@ -622,8 +622,7 @@ class SR860(Instrument):
     # Strip Chart commands
     horizontal_time_div = Instrument.control(
         "GSPD?", "GSDP %i",
-        """A integer property for the horizontal time/div according to the following table:{}
-        """.format(LIST_HORIZONTAL_TIME_DIV),
+        f"""Control the horizontal time/div according to the following table:{LIST_HORIZONTAL_TIME_DIV}""",  # noqa: E501
         validator=strict_discrete_set,
         values=range(0, 16)
     )
@@ -633,6 +632,5 @@ class SR860(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             **kwargs
         )

@@ -2,12 +2,6 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=8.1.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.ruff]
-line-length = 100
-
-[tool.ruff.lint]
-extend-select = ["E"]
-
 [project]
 name = "PyMeasure"
 dynamic = ["version", "readme"]
@@ -15,7 +9,7 @@ authors = [
     {name = "PyMeasure Developers"}
 ]
 description = "Scientific measurement library for instruments, experiments, and live-plotting"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["measure", "instrument", "experiment control", "automate", "graph", "plot"]
 license = {text = "MIT"}
 classifiers = [
@@ -27,24 +21,26 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
 ]
 dependencies = [
     "numpy>=1.6.1,<3",
-    "pandas>=0.14,<3",
+    "pandas>=0.14,<4",
     "pint",
     "pyvisa>=1.9",
     "pyserial>=2.7",
-    "pyqtgraph>=0.12",
-    "qtpy>=2.4",
 ]
 
 [project.optional-dependencies]
+gui = [
+    "pyqtgraph>=0.12",
+    "qtpy>=2.4",
+]
 tcp = [
     "pyzmq>=16.0.2",
     "cloudpickle>=0.3.1",
@@ -59,6 +55,10 @@ tests = [
 docs = [
     "sphinx>=5.0.0",
     "sphinx_rtd_theme>=1.1.0",
+    "sphinx_autodoc_typehints>=2.3.0",
+]
+typecheck = [
+    "pyright>=1.1.400",
 ]
 
 [project.urls]
@@ -85,8 +85,27 @@ line-length = 100
 [tool.isort]
 profile = "black"
 
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error:Cannot cast.*In a future version:FutureWarning",
+]
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportAttributeAccessIssue = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalMemberAccess = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportOperatorIssue = "warning"
+defineConstant = { PYQT5 = true, PYSIDE2 = false, PYQT6 = false, PYSIDE6 = false }

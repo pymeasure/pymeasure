@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -106,10 +106,7 @@ class ROD4(Instrument):
     """
 
     def __init__(self, adapter, name="ROD-4 MFC Controller", **kwargs):
-        super().__init__(
-            adapter, name, read_termination='\r', write_termination='\r',
-            includeSCPI=False, **kwargs
-        )
+        super().__init__(adapter, name, read_termination="\r", write_termination="\r", **kwargs)
 
     ch_1 = Instrument.ChannelCreator(ROD4Channel, 1)
     ch_2 = Instrument.ChannelCreator(ROD4Channel, 2)

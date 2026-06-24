@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -364,7 +364,7 @@ class SequenceDialog(QtWidgets.QFileDialog):
 
     def update_preview(self, filename):
         if not os.path.isdir(filename) and filename != '':
-            with open(filename, 'r') as file_object:
+            with open(filename) as file_object:
                 data = SequenceHandler(file_obj=file_object)
             tree_model = SequencerTreeModel(data=data)
             self.preview_param.setModel(tree_model)
@@ -546,7 +546,7 @@ class SequencerWidget(QtWidgets.QWidget):
             log.error("Evaluation of one of the sequence strings went wrong, no sequence queued.")
         else:
             log.info(
-                "Queuing %d measurements based on the entered sequences." % len(sequence)
+                f"Queuing {len(sequence)} measurements based on the entered sequences."
             )
 
             for entry in sequence:
@@ -566,7 +566,7 @@ class SequencerWidget(QtWidgets.QWidget):
             filename = dialog.selectedFiles()[0]
             with open(filename, 'w') as file_object:
                 self.tree.save(file_object)
-            log.info('Saved sequence file %s' % filename)
+            log.info(f'Saved sequence file {filename}')
 
     def load_sequence(self, *, filename=None):
         """
@@ -585,6 +585,6 @@ class SequencerWidget(QtWidgets.QWidget):
             else:
                 return
 
-        with open(filename, 'r') as file_object:
+        with open(filename) as file_object:
             self.tree.model().load(file_object, append=append_flag)
         self.tree.expandAll()

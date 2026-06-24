@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,7 @@ class PLChannel(Channel):
         values=[0, 6],
         dynamic=True,
         get_process=lambda x: float(x[3:]),
+        cast=str,
     )
 
     current_limit = Channel.control(
@@ -55,18 +56,21 @@ class PLChannel(Channel):
         values=[0, 1.5],
         dynamic=True,
         get_process=lambda x: float(x[3:]),
+        cast=str,
     )
 
     voltage = Channel.measurement(
         "V{ch}O?",
         """ Measure the output readback voltage for this output channel in Volts.""",
         get_process=lambda x: float(x[:-1]),
+        cast=str,
     )
 
     current = Channel.measurement(
         "I{ch}O?",
         """ Measure the output readback current for this output channel in Amps.""",
         get_process=lambda x: float(x[:-1]),
+        cast=str,
     )
 
     current_range = Channel.control(

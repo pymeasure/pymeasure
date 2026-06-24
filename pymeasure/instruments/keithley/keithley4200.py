@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 #
 
 from pymeasure.instruments import Instrument, Channel
+from pymeasure.instruments.common_base import cast_or_str
 from enum import IntFlag
 
 
@@ -83,6 +84,7 @@ class SMU(Channel):
     voltage = Channel.measurement(
         "US;TV{ch}",
         """Measure the voltage in Volts (float).""",
+        cast=str,
         get_process=lambda v: float(v[3:]),
         )
 
@@ -121,6 +123,7 @@ class SMU(Channel):
     current = Channel.measurement(
         "US;TI{ch}",
         """Measure the current in Amps.""",
+        cast=str,
         get_process=lambda v: float(v[3:]),
         )
 
@@ -142,7 +145,6 @@ class Keithley4200(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             tcpip={"write_termination": "\0",
                    "read_termination": "\0"},
             **kwargs
@@ -193,6 +195,7 @@ class Keithley4200(Instrument):
     status = Instrument.measurement(
         "SP",
         """Get the status byte (IntFlag).""",
+        cast=cast_or_str(float),
         get_process=lambda v: StatusCode(int(v)),
         )
 

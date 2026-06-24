@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -298,7 +298,8 @@ class PandasModelBase(QtCore.QAbstractTableModel):
             df = None
         else:
             # Concatenate pandas data frames
-            df = pd.concat(df_list, axis=self.concat_axis).replace(to_replace=np.nan, value="")
+            df = pd.concat(df_list, axis=self.concat_axis, sort=False)
+            df = df.replace(to_replace=np.nan, value="")
         return df
 
     def set_index(self, index):

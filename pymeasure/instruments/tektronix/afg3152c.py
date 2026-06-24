@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
+
 from math import sqrt, log10
+
 from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
 
@@ -60,6 +62,7 @@ class AFG3152CChannel(Channel):
         validator=strict_discrete_set,
         values=SHAPES,
         map_values=True,
+        cast=str,
     )
 
     unit = Instrument.control(
@@ -68,6 +71,7 @@ class AFG3152CChannel(Channel):
         """ Control the amplitude unit. (str)""",
         validator=strict_discrete_set,
         values=UNIT_LIMIT,
+        cast=str,
     )
 
     amp_vpp = Instrument.control(
@@ -129,21 +133,21 @@ class AFG3152CChannel(Channel):
         """Prepend the channel id for most writes."""
         return f'source{self.id}:{command}'
 
-    def enable(self):
-        self.parent.write("output%d:state on" % self.number)
+    def enable(self) -> None:
+        self.parent.write(f"output{self.id}:state on")
 
-    def disable(self):
-        self.parent.write("output%d:state off" % self.number)
+    def disable(self) -> None:
+        self.parent.write(f"output{self.id}:state off")
 
     def waveform(
         self, shape="SIN", frequency=1e6, units="VPP", amplitude=1, offset=0
-    ):
+    ) -> None:
         """General setting method for a complete wavefunction"""
-        self.write("function:shape %s" % shape)
-        self.write("frequency:fixed %e" % frequency)
-        self.write("voltage:unit %s" % units)
-        self.write("voltage:amplitude %e%s" % (amplitude, units))
-        self.write("voltage:offset %eV" % offset)
+        self.write(f"function:shape {shape}")
+        self.write(f"frequency:fixed {frequency:e}")
+        self.write(f"voltage:unit {units}")
+        self.write(f"voltage:amplitude {amplitude:e}{units}")
+        self.write(f"voltage:offset {offset:e}V")
 
 
 class AFG3152C(SCPIUnknownMixin, Instrument):
@@ -171,8 +175,8 @@ class AFG3152C(SCPIUnknownMixin, Instrument):
         self.ch1 = AFG3152CChannel(self, 1)
         self.ch2 = AFG3152CChannel(self, 2)
 
-    def beep(self):
+    def beep(self) -> None:
         self.write("system:beep")
 
-    def opc(self):
+    def opc(self) -> int:
         return int(self.ask("*OPC?"))

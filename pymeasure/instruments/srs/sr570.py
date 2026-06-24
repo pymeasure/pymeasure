@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,8 +77,8 @@ class SR570(SCPIUnknownMixin, Instrument):
 
     filter_type = Instrument.setting(
         "FLTT %d",
-        """ A string that sets the filter type.
-        Allowed values are: {}""".format(FILT_TYPES),
+        f""" A string that sets the filter type.
+        Allowed values are: {FILT_TYPES}""",
         validator=truncated_discrete_set,
         values=FILT_TYPES,
         map_values=True)
@@ -132,8 +132,8 @@ class SR570(SCPIUnknownMixin, Instrument):
 
     gain_mode = Instrument.setting(
         "GNMD %d",
-        """ A string that sets the gain mode.
-        Allowed values are: {}""".format(GAIN_MODES),
+        f""" A string that sets the gain mode.
+        Allowed values are: {GAIN_MODES}""",
         validator=truncated_discrete_set,
         values=GAIN_MODES,
         map_values=True)

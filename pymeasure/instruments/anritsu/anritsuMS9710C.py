@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,8 +52,8 @@ def _int_or_neg_one(v):
 
 def _parse_trace_peak(vals):
     """Parse the returned value from a trace peak query."""
-    l, p = vals
-    res = [l]
+    ll, p = vals
+    res = [ll]
     m = r_value_units.match(p)
     if m is not None:
         data = list(m.groups())
@@ -76,7 +76,7 @@ class AnritsuMS9710C(SCPIUnknownMixin, Instrument):
     #  Mappings #
     #############
     ONOFF = ["ON", "OFF"]
-    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}
+    ONOFF_MAPPING = {True: 'ON', False: 'OFF', 1: 'ON', 0: 'OFF', 'ON': 'ON', 'OFF': 'OFF'}  # noqa: F601,E501
 
     ######################
     #  Status Registers  #

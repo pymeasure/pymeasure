@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,6 @@ class SmartlineV1(Instrument):
                  baud_rate=9600, **kwargs):
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="\r",
                          read_termination="\r",
                          asrl=dict(baud_rate=baud_rate),

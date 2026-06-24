@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,11 +36,10 @@ class FakeInstrument(Instrument):
     for testing purposes.
     """
 
-    def __init__(self, adapter=None, name="Fake Instrument", includeSCPI=False, **kwargs):
+    def __init__(self, adapter=None, name="Fake Instrument", **kwargs):
         super().__init__(
             FakeAdapter(**kwargs),
             name,
-            includeSCPI=includeSCPI,
             **kwargs
         )
 
@@ -91,7 +90,6 @@ class SwissArmyFake(FakeInstrument):
     def __init__(self, name="Mock instrument", wait=.1, **kwargs):
         super().__init__(
             name=name,
-            includeSCPI=False,
             **kwargs
         )
         self._wait = wait

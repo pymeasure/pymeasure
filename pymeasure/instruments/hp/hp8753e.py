@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ class HP8753E(Instrument):
         max_power=10,
         **kwargs,
     ):
-        super().__init__(adapter=adapter, name=name, includeSCPI=False, **kwargs)
+        super().__init__(adapter=adapter, name=name, **kwargs)
 
         self._manu = ""
         self._model = ""
@@ -307,9 +307,9 @@ class HP8753E(Instrument):
         (str from ['S11', 'S21', 'S12', 'S22', 'A', 'B', 'R'])"""
         if value in self.MEASURING_PARAMETERS:
             if value in self.MEASURING_PARAMETER_MAP:
-                self.write("%s" % self.MEASURING_PARAMETER_MAP[value])
+                self.write(f"{self.MEASURING_PARAMETER_MAP[value]}")
             else:
-                self.write("%s" % value)
+                self.write(f"{value}")
         else:
             raise ValueError(
                 f"Invalid value '{value}' scattering parameter requested for \

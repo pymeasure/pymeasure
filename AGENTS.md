@@ -15,10 +15,11 @@ This file provides guidance to agents when working with code in this repository.
 - Install in development mode: `pip install -e .`
 - Run tests: `python -m pytest` or `pytest`
 - Run tests with coverage: `python -m pytest --cov=pymeasure`
-- Lint with flake8: `flake8` (max-line-length=100, max-complexity=15)
+- Lint with ruff: `ruff check` (max-line-length=100, max-complexity=15)
 - Format with black: `black .` (line-length=100)
 - Sort imports with isort: `isort .`
 - Run single test: `python -m pytest tests/test_file.py::test_function`
+- Type check with pyright: `pyright`
 
 ## Code Style Guidelines
 

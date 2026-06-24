@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -86,7 +86,7 @@ class IVProcedure(Procedure):
 
         log.info("Starting to sweep through current")
         for i, current in enumerate(currents):
-            log.debug("Measuring current: %g mA" % current)
+            log.debug(f"Measuring current: {current:g} mA")
 
             self.source.source_current = current
             # Or use self.source.ramp_to_current(current, delay=0.1)

@@ -1,7 +1,7 @@
 #
 # This file is part of the PyMeasure package.
 #
-# Copyright (c) 2013-2025 PyMeasure Developers
+# Copyright (c) 2013-2026 PyMeasure Developers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -101,6 +101,7 @@ need_init_communication = [
     "SwissArmyFake",
     "FakeInstrument",
     "ThorlabsPM100USB",
+    "Keithley2400",
     "Keithley2700",
     "TC038",
     "Agilent34450A",
@@ -112,13 +113,13 @@ need_init_communication = [
     "ANC300Controller",
     "Keithley2281S",
     "SpellmanXRV",
+    "YAR",
 ]
 # Instruments whose property docstrings are not YET in accordance with the style (Get, Set, Control)
 grandfathered_docstring_instruments = [
     "Agilent33521A",
     "Agilent8257D",
     "Agilent8722ES",
-    "AgilentE4408B",
     "AgilentE4980",
     "AnritsuMS2090A",
     "DPSeriesMotorController",
@@ -165,7 +166,7 @@ def test_name_argument(cls):
 
 # This uses a pyvisa-sim default instrument, we could also define our own.
 SIM_RESOURCE = "ASRL2::INSTR"
-is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim"))
+is_pyvisa_sim_not_installed = not bool(importlib.util.find_spec("pyvisa_sim")) # type: ignore
 
 
 @pytest.mark.skipif(
@@ -187,21 +188,7 @@ def test_kwargs_to_adapter(cls):
 
 @pytest.mark.parametrize("cls", devices)
 @pytest.mark.filterwarnings(
-    "error:It is deprecated to specify `includeSCPI` implicitly:FutureWarning"
-)
-def test_includeSCPI_explicitly_set(cls):
-    if cls.__name__ in (*proper_adapters, *need_init_communication):
-        pytest.skip(f"{cls.__name__} cannot be tested without communication.")
-    elif cls.__name__ == "Instrument":
-        pytest.skip("`Instrument` requires a `name` parameter.")
-
-    cls(adapter=MagicMock())
-    # assert that no error is raised
-
-
-@pytest.mark.parametrize("cls", devices)
-@pytest.mark.filterwarnings(
-    "error:Defining SCPI base functionality with `includeSCPI=True` is deprecated:FutureWarning"
+    "error:Defining SCPI base functionality with `includeSCPI` is deprecated:FutureWarning"
 )
 def test_includeSCPI_not_set_to_True(cls):
     if cls.__name__ in (*proper_adapters, *need_init_communication):
