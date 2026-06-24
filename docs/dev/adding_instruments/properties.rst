@@ -35,11 +35,11 @@ For example, if our "Extreme 5000" has the :code:`:TEMP?` command, we can write 
 
 .. testcode::
     :hide:
-    
+
     # We have to fake this silently because the FakeInstrument cannot do
     # a measurement property, it only mirrors values that you sent first.
     Extreme5000.cell_temp = 127.2
-    
+
 You will notice that a documentation string is required, see :ref:`docstrings` for details.
 
 When we use this property we will get the temperature of the reaction cell.
@@ -103,7 +103,7 @@ If you have a property with a restricted range, you can use the :func:`strict_ra
 For example, if our "Extreme 5000" can only support voltages from -1 V to 1 V, we can modify our previous example to use a strict validator over this range.
 
 .. testcode::
-  
+
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """Control the voltage in Volts (float strictly from -1 to 1).""",
@@ -226,7 +226,7 @@ Dictionaries provide a more flexible method for mapping between real-values and 
 The dictionary now maps the keys to specific values. The values and keys can be any type, so this can support properties that use strings:
 
 .. testcode::
-  
+
     Extreme5000.channel = Instrument.control(
         ":CHAN?", ":CHAN %d",
         """Control the measurement channel (string strictly in 'X', 'Y', 'Z').""",
@@ -246,27 +246,7 @@ The dictionary now maps the keys to specific values. The values and keys can be 
     'Y'
 
 As you have seen, the :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>` function can be significantly extended by using validators and maps.
-
-.. _map-values-type-hints:
-
-Type hints for mapped properties
-================================
-
-When :code:`map_values=True` is used, the property's return type cannot be inferred automatically and falls back to :code:`Any`. This means type checkers and IDEs will not know the expected type of the property value. You can add an explicit type hint to the property assignment to restore type information:
-
-.. code-block:: python
-
-    sensitivity: InstrumentProperty[str] = Instrument.control(
-        ":SENS?", ":SENS %s",
-        """Control the sweep sensitivity (str in 'LOW', 'MID', 'HIGH').""",
-        validator=strict_discrete_set,
-        map_values=True,
-        values={"LOW": 0, "MID": 1, "HIGH": 2},
-    )
-
-Without the :code:`InstrumentProperty[str]` annotation, a type checker would infer the property type as :code:`InstrumentProperty[Any]`. The annotation makes it clear that accessing :code:`instrument.sensitivity` returns a :code:`str`.
-
-:code:`InstrumentProperty` is available from :mod:`pymeasure.instruments.common_base`.
+See :ref:`type-hints-property-creators` for how :code:`map_values` and the other parameters affect the inferred property type.
 
 .. _boolean-properties:
 
@@ -392,6 +372,83 @@ The same can be also achieved by the `preprocess_reply` keyword argument to :fun
         # notice how we don't need to cast to float anymore
     )
 
+.. _type-hints-property-creators:
+
+Type hints for property creators
+================================
+
+The property creators :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, and :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>` are overloaded so that type checkers (see :ref:`coding-standards`) and IDEs can infer the return type of a property from its definition parameters (:code:`cast`, :code:`get_process`, :code:`get_process_list`, :code:`set_process`, and :code:`validator`).
+This contract is pinned by :code:`assert_type` tests in :mod:`tests.instruments.test_common_base`, which fail at type-check time if the inferred type drifts.
+
+Single-value vs. list return type
+*********************************
+
+By default, a property returns a **single value**.
+Its type follows :code:`cast` (default :code:`float`), or the return type of :code:`get_process` if one is supplied.
+
+Supplying :code:`get_process_list` switches the property to **list mode**: the property returns a :code:`list` of values (more precisely, whatever :code:`get_process_list` returns).
+This happens even if :code:`get_process_list` is the no-op :func:`identity <pymeasure.instruments.common_base.identity>`, which exists precisely to opt into list mode without transforming the list.
+
+.. code-block:: python
+
+    from pymeasure.instruments.common_base import identity
+
+    # Returns a single int (cast=int, single-value mode)
+    voltage: InstrumentProperty[int] = Instrument.control(
+        ":VOLT?", ":VOLT %d",
+        """Control the voltage in Volts (int).""",
+        cast=int,
+    )
+
+    # Returns a list[int] (get_process_list=identity enables list mode)
+    voltages: InstrumentProperty[list[int]] = Instrument.control(
+        ":VOLT?", ":VOLT %d",
+        """Control the voltages in Volts (list[int]).""",
+        cast=int,
+        get_process_list=identity,
+    )
+
+How each parameter contributes to the inferred type
+***************************************************
+
+:code:`cast`
+    The element type. Defaults to :code:`float`.
+
+:code:`get_process`
+    Its return type replaces the single-value type. Only relevant in single-value mode (i.e. when :code:`get_process_list` is not given).
+
+:code:`get_process_list`
+    Its return type becomes the whole property type and enables list mode. Supplying :code:`identity` keeps the list unchanged while opting into list mode.
+
+:code:`set_process`
+    On :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`, its input type informs the property type.
+
+:code:`validator`
+    Informative to type checkers only when :code:`map_values=True` (on :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`) or on :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`; otherwise it is ignored for type inference.
+
+.. _map-values-type-hints:
+
+Mapped properties
+*****************
+
+When :code:`map_values=True` is used, the property's return type cannot be inferred automatically and falls back to :code:`Any`.
+This means type checkers and IDEs will not know the expected type of the property value. You can add an explicit type hint to the property assignment to restore type information:
+
+.. code-block:: python
+
+    sensitivity: InstrumentProperty[str] = Instrument.control(
+        ":SENS?", ":SENS %s",
+        """Control the sweep sensitivity (str in 'LOW', 'MID', 'HIGH').""",
+        validator=strict_discrete_set,
+        map_values=True,
+        values={"LOW": 0, "MID": 1, "HIGH": 2},
+    )
+
+Without the :code:`InstrumentProperty[str]` annotation, a type checker would infer the property type as :code:`InstrumentProperty[Any]`.
+The annotation makes it clear that accessing :code:`instrument.sensitivity` returns a :code:`str`.
+
+:code:`InstrumentProperty` is available from :mod:`pymeasure.instruments.common_base`.
+
 Checking the instrument for errors
 **********************************
 If you need to separately ask your instrument about its error state after getting/setting, use the parameters :code:`check_get_errors` and :code:`check_set_errors` of :meth:`~pymeasure.instruments.common_base.CommonBase.control`, respectively.
@@ -415,7 +472,7 @@ The :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.cont
         """
     )
 
-In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards. 
+In use, we could set the voltage to 200 mV, and the Frequency to 931 Hz, and read both values immediately afterwards.
 
 .. doctest::
 
@@ -440,7 +497,7 @@ You need to define an attribute whose name is `<property name>_<property_paramet
 Pay attention *not* to inadvertently define other class attribute or instance attribute names matching this pattern, since they could unintentionally modify the property behaviour.
 
 .. note::
-   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read. 
+   To clearly distinguish these special attributes from normal class/instance attributes, they can only be set, not read.
 
 The mechanism works for all the parameters in properties, except :code:`dynamic` and :code:`docs` -- see :func:`Instrument.control <pymeasure.instruments.common_base.CommonBase.control>`, :func:`Instrument.measurement <pymeasure.instruments.common_base.CommonBase.measurement>`, :func:`Instrument.setting <pymeasure.instruments.common_base.CommonBase.setting>`.
 
@@ -450,7 +507,7 @@ Let's assume we have an instrument with a command that accepts a different valid
 The code below shows how this can be accomplished with dynamic properties.
 
 .. testcode::
-  
+
     Extreme5000.voltage = Instrument.control(
         ":VOLT?", ":VOLT %g",
         """Control the voltage in Volts (float).""",
@@ -551,7 +608,7 @@ Another use case involves maintaining compatibility between instruments with com
         # ...full class definition code here
 
     class MultimeterB(MultimeterA):
-        # Same as brand A multimeter, but the command to read voltage 
+        # Same as brand A multimeter, but the command to read voltage
         # is slightly different
         voltage_get_command = "VOLTAGE?"
 

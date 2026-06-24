@@ -1,3 +1,5 @@
+.. _coding-standards:
+
 ################
 Coding Standards
 ################
@@ -36,6 +38,23 @@ You may add type hints as you see fit.
 All type hints should adhere to the guidelines set out in the `typing`_ package.
 
 .. _typing: https://docs.python.org/3/library/typing.html
+
+Type checking
+=============
+
+The `pyright`_ type checker is configured for PyMeasure and runs on every change in our continuous integration.
+You can install it together with the linter via the :code:`dev` extra::
+
+    pip install -e .[dev]
+
+Run it from the repository root::
+
+    pyright
+
+Many editors and IDEs can integrate pyright for inline feedback while you work, which is recommended over relying only on CI.
+The property creators (see :ref:`type-hints-property-creators`) are heavily overloaded so that pyright can infer precise return types for instrument properties.
+
+.. _pyright: https://github.com/microsoft/pyright
 
 Documentation
 =============
