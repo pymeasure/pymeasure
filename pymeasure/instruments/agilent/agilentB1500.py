@@ -215,13 +215,14 @@ class AgilentB1500(SCPIMixin, Instrument):
     def check_errors(self):
         """Check for errors. (``ERRX?``)"""
         error = self.ask("ERRX?")
-        error = re.match(
-            r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error
-        ).groups()
-        if int(error[0]) == 0:
+        match = re.match(r'(?P<errorcode>[+-]?\d+(?:\.\d+)?),"(?P<errortext>[\w\s.]+)', error)
+        if match is None:
+            raise ValueError(f"Could not parse error response: {error!r}")
+        code, message = match.groups()
+        if int(code) == 0:
             return
         else:
-            raise OSError(f"Agilent B1500 Error {error[0]}: {error[1]}")
+            raise OSError(f"Agilent B1500 Error {code}: {message}")
 
     def check_idle(self) -> str:
         """Check if instrument is idle. (``*OPC?``)
