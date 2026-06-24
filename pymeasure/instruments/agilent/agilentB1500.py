@@ -463,6 +463,16 @@ class AgilentB1500(SCPIMixin, Instrument):
                 self.check_status(status_string)
                 return channel
 
+        def format_single(self, element: str) -> tuple[str, str, str, float]:
+            """Format a single measurement value.
+
+            Implemented by the format-specific subclasses.
+
+            :param element: Single measurement value read from the instrument
+            :return: Status, channel, data name, value
+            """
+            raise NotImplementedError
+
     class _data_formatting_FMT1(_data_formatting_generic):
         """Data formatting for FMT1 format."""
 
