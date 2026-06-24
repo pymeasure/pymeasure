@@ -856,6 +856,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param number_of_points: Number of measurement points
         :return: Measurement Data
         """
+        if self._data_format is None:
+            raise ValueError("No data format set. Call data_format() before reading data.")
         data = self.read()
         data = data.split(",")
         data = np.array(data)
@@ -877,6 +879,8 @@ class AgilentB1500(SCPIMixin, Instrument):
             channels and sweep sources, depending on data output settings)
         :return: Measurement data
         """
+        if self._data_format is None:
+            raise ValueError("No data format set. Call data_format() before reading data.")
         data = self.read_bytes(self._data_format.size * nchannels)
         data = data.decode("ASCII")
         data = data.rstrip("\r,")
