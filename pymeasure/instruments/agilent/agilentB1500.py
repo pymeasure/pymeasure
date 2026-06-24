@@ -251,8 +251,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @auto_calibration.setter
     def auto_calibration(self, setting: bool) -> None:
-        setting = int(setting)
-        self.write(f"CM {setting}")
+        value = int(setting)
+        self.write(f"CM {value}")
         self.check_errors()
 
     ######################################
@@ -588,8 +588,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @parallel_meas.setter
     def parallel_meas(self, setting: bool) -> None:
-        setting = int(setting)
-        self.write(f"PAD {setting}")
+        value = int(setting)
+        self.write(f"PAD {value}")
         self.check_errors()
 
     def query_meas_settings(self) -> dict:
@@ -610,8 +610,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param mode: Measurement mode
         :param args: SMU or CMU references
         """
-        mode = MeasMode.get(mode)
-        cmd = f"MM {mode.value}"
+        mode_enum = MeasMode.get(mode)
+        cmd = f"MM {mode_enum.value}"
         for smu in args:
             if isinstance(smu, (SMU, CMU)):
                 cmd += f", {smu.id}"
@@ -638,13 +638,13 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param N: additional parameter, check documentation, defaults to ``''``
         """
 
-        adc_type = ADCType.get(adc_type)
-        mode = ADCMode.get(mode)
-        if (adc_type == ADCType["HRADC"]) and (mode == ADCMode["TIME"]):
+        adc_type_enum = ADCType.get(adc_type)
+        mode_enum = ADCMode.get(mode)
+        if (adc_type_enum == ADCType["HRADC"]) and (mode_enum == ADCMode["TIME"]):
             raise ValueError("Time ADC mode is not available for HRADC")
-        command = f"AIT {adc_type.value}, {mode.value}"
+        command = f"AIT {adc_type_enum.value}, {mode_enum.value}"
         if not N == "":
-            if mode == ADCMode["TIME"]:
+            if mode_enum == ADCMode["TIME"]:
                 command += f", {N}"
             else:
                 command += f", {N}"
@@ -661,8 +661,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         if number > 0:
             number = strict_range(number, range(1, 1024))
-            mode = AutoManual.get(mode).value
-            self.write(f"AV {number}, {mode}")
+            mode_value = AutoManual.get(mode).value
+            self.write(f"AV {number}, {mode_value}")
         else:
             number = strict_range(number, range(-1, -101, -1))
             self.write(f"AV {number}")
@@ -680,8 +680,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @adc_auto_zero.setter
     def adc_auto_zero(self, setting: bool) -> None:
-        setting = int(setting)
-        self.write(f"AZ {setting}")
+        value = int(setting)
+        self.write(f"AZ {value}")
         self.check_errors()
 
     @property
@@ -693,8 +693,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @time_stamp.setter
     def time_stamp(self, setting: bool) -> None:
-        setting = int(setting)
-        self.write(f"TSC {setting}")
+        value = int(setting)
+        self.write(f"TSC {value}")
         self.check_errors()
 
     def query_time_stamp_setting(self) -> dict:
@@ -708,8 +708,8 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param N: Coefficient for initial wait time, default: 1
         :param offset: Offset for wait time, defaults to 0
         """
-        wait_type = WaitTimeType.get(wait_type).value
-        self.write(f"WAT {wait_type}, {N}, {offset}")
+        wait_type_value = WaitTimeType.get(wait_type).value
+        self.write(f"WAT {wait_type_value}, {N}, {offset}")
         self.check_errors()
 
     ######################################
@@ -762,9 +762,9 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
-        abort = abort_values[abort]
-        post = StaircaseSweepPostOutput.get(post)
-        self.write(f"WM {abort}, {post.value}")
+        abort_value = abort_values[abort]
+        post_enum = StaircaseSweepPostOutput.get(post)
+        self.write(f"WM {abort_value}, {post_enum.value}")
         self.check_errors()
 
     ######################################
@@ -787,8 +787,8 @@ class AgilentB1500(SCPIMixin, Instrument):
 
     @sampling_mode.setter
     def sampling_mode(self, mode: SamplingMode | str) -> None:
-        mode = SamplingMode.get(mode).value
-        self.write(f"ML {mode}")
+        mode_value = SamplingMode.get(mode).value
+        self.write(f"ML {mode_value}")
         self.check_errors()
 
     def sampling_timing(
@@ -839,9 +839,9 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         abort_values = {True: 2, False: 1}
         abort = strict_discrete_set(abort, abort_values)
-        abort = abort_values[abort]
-        post = SamplingPostOutput.get(post).value
-        self.write(f"MSC {abort}, {post}")
+        abort_value = abort_values[abort]
+        post_value = SamplingPostOutput.get(post).value
+        self.write(f"MSC {abort_value}, {post_value}")
         self.check_errors()
 
     ######################################
@@ -1014,8 +1014,8 @@ class SMU(Channel):
 
     @filter.setter
     def filter(self, setting: bool) -> None:
-        setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"FL {setting}, {{ch}}")
+        value = strict_discrete_set(int(setting), (0, 1))
+        self.write(f"FL {value}, {{ch}}")
         self.check_errors()
 
     @property
@@ -1027,8 +1027,8 @@ class SMU(Channel):
 
     @series_resistor.setter
     def series_resistor(self, setting: bool) -> None:
-        setting = strict_discrete_set(int(setting), (0, 1))
-        self.write(f"SSR {{ch}}, {setting}")
+        value = strict_discrete_set(int(setting), (0, 1))
+        self.write(f"SSR {{ch}}, {value}")
         self.check_errors()
 
     @property
@@ -1043,8 +1043,8 @@ class SMU(Channel):
 
     @meas_op_mode.setter
     def meas_op_mode(self, op_mode: MeasOpMode | str) -> None:
-        op_mode = MeasOpMode.get(op_mode)
-        self.write(f"CMM {{ch}}, {op_mode.value}")
+        op_mode_enum = MeasOpMode.get(op_mode)
+        self.write(f"CMM {{ch}}, {op_mode_enum.value}")
         self.check_errors()
 
     @property
@@ -1059,8 +1059,8 @@ class SMU(Channel):
 
     @adc_type.setter
     def adc_type(self, adc_type: ADCType | str) -> None:
-        adc_type = ADCType.get(adc_type)
-        self.write(f"AAD {{ch}}, {adc_type.value}")
+        adc_type_enum = ADCType.get(adc_type)
+        self.write(f"AAD {{ch}}, {adc_type_enum.value}")
         self.check_errors()
 
     ######################################
@@ -1100,8 +1100,8 @@ class SMU(Channel):
         if not comp == "":
             cmd += f", {comp}"
             if not comp_polarity == "":
-                comp_polarity = CompliancePolarity.get(comp_polarity).value
-                cmd += f", {comp_polarity}"
+                comp_polarity_value = CompliancePolarity.get(comp_polarity).value
+                cmd += f", {comp_polarity_value}"
                 if not comp_range == "":
                     cmd += f", {comp_range}"
         self.write(cmd)
@@ -1269,8 +1269,8 @@ class SMU(Channel):
             source_range = self.current_ranging.output(source_range).index
         else:
             raise ValueError("Source Type must be Current or Voltage.")
-        mode = SweepMode.get(mode).value
-        if mode in [2, 4]:
+        mode_value = SweepMode.get(mode).value
+        if mode_value in [2, 4]:
             if start >= 0 and stop >= 0:
                 pass
             elif start <= 0 and stop <= 0:
@@ -1279,7 +1279,7 @@ class SMU(Channel):
                 raise ValueError("For Log Sweep Start and Stop Values must have the same polarity.")
         steps = strict_range(steps, range(1, 10002))
         # check on comp value not yet implemented
-        cmd += f"{{ch}}, {mode}, {source_range}, {start}, {stop}, {steps}, {comp}"
+        cmd += f"{{ch}}, {mode_value}, {source_range}, {start}, {stop}, {steps}, {comp}"
         if not Pcomp == "":
             cmd += f", {Pcomp}"
         self.write(cmd)
@@ -1632,27 +1632,27 @@ class SPGU(Channel):
             output duration for :attr:`SPGUOutputMode.DURATION`.
             Not used for :attr:`SPGUOutputMode.FREE_RUN`
         """
-        mode = SPGUOutputMode.get(mode)
+        mode_enum = SPGUOutputMode.get(mode)
 
-        if mode == SPGUOutputMode.FREE_RUN:
-            self.write(f"SPRM {mode.value}")
+        if mode_enum == SPGUOutputMode.FREE_RUN:
+            self.write(f"SPRM {mode_enum.value}")
             return
 
         if condition is None:
-            raise ValueError(f"Condition must be specified when mode is {mode}")
+            raise ValueError(f"Condition must be specified when mode is {mode_enum}")
 
-        if mode == SPGUOutputMode.COUNT:
+        if mode_enum == SPGUOutputMode.COUNT:
             if not (1 <= condition <= 1_000_000):
                 raise ValueError("Condition must be between 1 and 1,000,000 when mode is COUNT.")
 
-        elif mode == SPGUOutputMode.DURATION:
+        elif mode_enum == SPGUOutputMode.DURATION:
             if not (1e-6 <= condition <= 31_556_926):
                 raise ValueError(
                     "Condition must be between 0.000001 and 31,556,926 seconds (1 year) "
                     "when mode is DURATION."
                 )
 
-        self.write(f"SPRM {mode.value}, {int(condition)}")
+        self.write(f"SPRM {mode_enum.value}, {int(condition)}")
 
     def get_output_mode(self) -> tuple[SPGUOutputMode, float | None]:
         """Get the current operating mode and condition for SPGU channel outputs. (``SPRM?``)
@@ -1906,14 +1906,14 @@ class CMU(Channel):
                 f"series resistance = {series_resistance}"
             )
 
-        path = SCUUPath.get(path)
-        if path == SCUUPath.CMU:
+        path_enum = SCUUPath.get(path)
+        if path_enum == SCUUPath.CMU:
             log_settings_change(0, 100, "20 mA", "OFF")
         else:
             log_settings_change(
                 0, 20, "100 uA", "Condition before the connection is changed from SMU to MFCMU"
             )
-        self.write(f"SSP {{ch}}, {path.value}")
+        self.write(f"SSP {{ch}}, {path_enum.value}")
 
 
 def _set_cv_parameters_base(
