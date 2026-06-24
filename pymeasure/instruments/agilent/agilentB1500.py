@@ -613,7 +613,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         mode_enum = MeasMode.get(mode)
         cmd = f"MM {mode_enum.value}"
         for smu in args:
-            if isinstance(smu, (SMU, CMU)):
+            if isinstance(smu, SMU | CMU):
                 cmd += f", {smu.id}"
         self.write(cmd)
         self.check_errors()
