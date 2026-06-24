@@ -438,7 +438,7 @@ class AgilentB1500(SCPIMixin, Instrument):
             else:
                 log_failed()
 
-        def format_channel_check_status(self, status_string: str, channel_string: str) -> str:
+        def format_channel_check_status(self, status_string: str, channel_string: str) -> str | int:
             """Return channel number for given channel letter.
 
             Check for not null status of the channel and write according
