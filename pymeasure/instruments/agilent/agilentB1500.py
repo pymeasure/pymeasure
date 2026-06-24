@@ -1420,7 +1420,7 @@ class Ranging:
         self.indizes = indizes  # Name -> Index
         self.ranges = ranges  # Index -> Name
 
-    def __call__(self, input_value: str | int) -> _Range:
+    def __call__(self, input_value: str | int) -> Ranging._Range:
         """Give named tuple (name/index) of given Range.
 
         Throws error if range is not supported by this SMU.
