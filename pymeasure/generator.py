@@ -434,7 +434,11 @@ class Generator:
         self._index = self._stream.tell()
         return self._init_comm_pairs + comm
 
-    def instantiate(self, instrument_class, adapter, manufacturer, adapter_kwargs=None, **kwargs):
+    def instantiate(self, instrument_class,
+                    adapter: str | int,
+                    manufacturer: str,
+                    adapter_kwargs: dict | None = None,
+                    **kwargs) -> TestInstrument:
         """
         Instantiate the instrument and store the instantiation communication.
 
