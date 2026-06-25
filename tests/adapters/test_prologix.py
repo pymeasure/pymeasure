@@ -129,3 +129,106 @@ def test_wait_for_srq():
              ("++srq", None), ("++read eoi", "0"), ("++srq", None), ("++read eoi", "1")]
     ) as adapter:
         adapter.wait_for_srq()
+
+
+@pytest.mark.parametrize("index, value", [(0, "\r\n"), (1, "\r"), (2, "\n"), (3, "")])
+def test_eos_getter(index, value):
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++eos", str(index))],
+    ) as adapter:
+        assert adapter.eos == value
+
+
+@pytest.mark.parametrize("value, index", [("\r\n", 0), ("\r", 1), ("\n", 2), ("", 3)])
+def test_eos_setter(value, index):
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [(f"++eos {index}", None)],
+    ) as adapter:
+        adapter.eos = value
+
+
+def test_version():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++ver", "Prologix v1.2.3")],
+    ) as adapter:
+        assert adapter.version == "Prologix v1.2.3"
+
+
+def test_reset():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++rst", None)],
+    ) as adapter:
+        adapter.reset()
+
+
+def test_write_binary_values_with_address():
+    expected = b'OUTP#13\x01\x02\x03\n'
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++addr 5\n", None), (expected, None)],
+            address=5,
+    ) as adapter:
+        adapter.write_binary_values("OUTP", [1, 2, 3], datatype='B')
+
+
+def test_read_bytes_requests_data_when_unavailable():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++read eoi", b"data")],
+    ) as adapter:
+        adapter.connection.get_visa_attribute = lambda attr: 0
+        assert adapter._read_bytes(4) == b"data"
+
+
+def test_read_bytes_reads_buffered_data():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [(None, b"data")],
+    ) as adapter:
+        adapter.connection.get_visa_attribute = lambda attr: 4
+        assert adapter._read_bytes(4) == b"data"
+
+
+def test_gpib_returns_new_adapter():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm,
+    ) as adapter:
+        adapter.manager = None
+        new_adapter = adapter.gpib(9)
+        assert isinstance(new_adapter, PrologixAdapter)
+        assert new_adapter.connection is adapter.connection
+        assert new_adapter.address == 9
+
+
+def test_wait_for_srq_timeout():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm + [("++srq", None), ("++read eoi", "0")],
+    ) as adapter:
+        with pytest.raises(TimeoutError):
+            adapter.wait_for_srq(timeout=0, delay=0)
+
+
+def test_repr_with_address():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm,
+            address=5,
+    ) as adapter:
+        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert repr(adapter) == ("<PrologixAdapter(resource_name='ASRL5::INSTR', "
+                                 "address=5)>")
+
+
+def test_repr_without_address():
+    with expected_protocol(
+            PrologixAdapter,
+            init_comm,
+    ) as adapter:
+        adapter.connection.resource_name = "ASRL5::INSTR"
+        assert repr(adapter) == "<PrologixAdapter(resource_name='ASRL5::INSTR')>"
