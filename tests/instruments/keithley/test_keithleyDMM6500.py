@@ -883,3 +883,955 @@ def test_trigger_single_autozero():
              (b'AZER:ONCE', None)],
     ) as inst:
         assert inst.trigger_single_autozero() is None
+
+
+###################
+# Current setters #
+###################
+
+
+def test_current_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:RANG:AUTO 0;:SENS:CURR:RANG 0.01', None)],
+    ) as inst:
+        inst.current_range = 0.01
+
+
+def test_current_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:REL 0.5', None)],
+    ) as inst:
+        inst.current_relative = 0.5
+
+
+def test_current_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:REL:STAT 1', None)],
+    ) as inst:
+        inst.current_relative_enabled = True
+
+
+def test_current_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:NPLC 2', None)],
+    ) as inst:
+        inst.current_nplc = 2
+
+
+def test_current_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:CURR:DIG 3', None)],
+    ) as inst:
+        inst.current_digits = 3
+
+
+def test_current_ac_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:AC:RANG:AUTO 0;:SENS:CURR:AC:RANG 0.01', None)],
+    ) as inst:
+        inst.current_ac_range = 0.01
+
+
+def test_current_ac_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:AC:REL 0.5', None)],
+    ) as inst:
+        inst.current_ac_relative = 0.5
+
+
+def test_current_ac_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:AC:REL:STAT 1', None)],
+    ) as inst:
+        inst.current_ac_relative_enabled = True
+
+
+def test_current_ac_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:CURR:AC:DIG 3', None)],
+    ) as inst:
+        inst.current_ac_digits = 3
+
+
+def test_current_ac_bandwidth_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CURR:AC:DET:BAND 30', None)],
+    ) as inst:
+        inst.current_ac_bandwidth = 30
+
+
+###################
+# Voltage setters #
+###################
+
+
+def test_voltage_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:RANG 1', None)],
+    ) as inst:
+        inst.voltage_range = 1
+
+
+def test_voltage_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:REL 0.5', None)],
+    ) as inst:
+        inst.voltage_relative = 0.5
+
+
+def test_voltage_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:REL:STAT 1', None)],
+    ) as inst:
+        inst.voltage_relative_enabled = True
+
+
+def test_voltage_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:NPLC 1', None)],
+    ) as inst:
+        inst.voltage_nplc = 1
+
+
+def test_voltage_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:VOLT:DIG 3', None)],
+    ) as inst:
+        inst.voltage_digits = 3
+
+
+def test_voltage_ac_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:RANG:AUTO 0;:SENS:VOLT:AC:RANG 1', None)],
+    ) as inst:
+        inst.voltage_ac_range = 1
+
+
+def test_voltage_ac_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:AC:REL 0.5', None)],
+    ) as inst:
+        inst.voltage_ac_relative = 0.5
+
+
+def test_voltage_ac_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:AC:REL:STAT 1', None)],
+    ) as inst:
+        inst.voltage_ac_relative_enabled = True
+
+
+def test_voltage_ac_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:VOLT:AC:DIG 3', None)],
+    ) as inst:
+        inst.voltage_ac_digits = 3
+
+
+def test_voltage_ac_bandwidth_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:AC:DET:BAND 3', None)],
+    ) as inst:
+        inst.voltage_ac_bandwidth = 3
+
+
+#######################
+# Resistance setters #
+#######################
+
+
+def test_resistance_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:RES:RANG:AUTO 0;:SENS:RES:RANG 1e+07', None)],
+    ) as inst:
+        inst.resistance_range = 1e7
+
+
+def test_resistance_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:RES:REL 1', None)],
+    ) as inst:
+        inst.resistance_relative = 1.0
+
+
+def test_resistance_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:RES:REL:STAT 1', None)],
+    ) as inst:
+        inst.resistance_relative_enabled = True
+
+
+def test_resistance_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:RES:NPLC 1', None)],
+    ) as inst:
+        inst.resistance_nplc = 1
+
+
+def test_resistance_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:RES:DIG 3', None)],
+    ) as inst:
+        inst.resistance_digits = 3
+
+
+def test_resistance_4W_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FRES:RANG:AUTO 0;:SENS:FRES:RANG 1e+07', None)],
+    ) as inst:
+        inst.resistance_4W_range = 1e7
+
+
+def test_resistance_4W_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FRES:REL 1', None)],
+    ) as inst:
+        inst.resistance_4W_relative = 1.0
+
+
+def test_resistance_4W_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FRES:REL:STAT 1', None)],
+    ) as inst:
+        inst.resistance_4W_relative_enabled = True
+
+
+def test_resistance_4W_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FRES:NPLC 1', None)],
+    ) as inst:
+        inst.resistance_4W_nplc = 1
+
+
+def test_resistance_4W_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:FRES:DIG 3', None)],
+    ) as inst:
+        inst.resistance_4W_digits = 3
+
+
+######################
+# Frequency setters #
+######################
+
+
+def test_frequency_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FREQ:REL 100', None)],
+    ) as inst:
+        inst.frequency_relative = 100
+
+
+def test_frequency_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FREQ:REL:STAT 1', None)],
+    ) as inst:
+        inst.frequency_relative_enabled = True
+
+
+def test_frequency_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:FREQ:DIG 3', None)],
+    ) as inst:
+        inst.frequency_digits = 3
+
+
+def test_frequency_threshold_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FREQ:THR:RANG 10', None)],
+    ) as inst:
+        inst.frequency_threshold = 10
+
+
+def test_frequency_threshold_auto_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FREQ:THR:RANG:AUTO 1', None)],
+    ) as inst:
+        inst.frequency_threshold_auto_enabled = True
+
+
+def test_frequency_aperature_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FREQ:APER 0.2', None)],
+    ) as inst:
+        inst.frequency_aperature = 0.2
+
+
+###################
+# Period setters #
+###################
+
+
+def test_period_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:PER:REL 0.5', None)],
+    ) as inst:
+        inst.period_relative = 0.5
+
+
+def test_period_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:PER:REL:STAT 1', None)],
+    ) as inst:
+        inst.period_relative_enabled = True
+
+
+def test_period_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:PER:DIG 3', None)],
+    ) as inst:
+        inst.period_digits = 3
+
+
+def test_period_threshold_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:PRE:THR:RANG 0.1', None)],
+    ) as inst:
+        inst.period_threshold = 0.1
+
+
+def test_period_threshold_auto_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:PER:THR:RANG:AUTO 1', None)],
+    ) as inst:
+        inst.period_threshold_auto_enabled = True
+
+
+def test_period_aperature_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:PER:APER 0.2', None)],
+    ) as inst:
+        inst.period_aperature = 0.2
+
+
+###################
+# Miscellaneous #
+###################
+
+
+def test_command_set_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'*LANG TSP', None)],
+    ) as inst:
+        inst.command_set = 'TSP'
+
+
+def test_system_time_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SYST:TIME 2023, 09, 21', None)],
+    ) as inst:
+        inst.system_time = '2023, 09, 21'
+
+
+def test_display_screen_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:SCR HOME', None)],
+    ) as inst:
+        inst.display_screen = 'HOME'
+
+
+def test_buffer_points_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':TRAC:POIN 100', None)],
+    ) as inst:
+        inst.buffer_points = 100
+
+
+def test_scan_count_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':ROUT:SCAN:COUN:SCAN 5', None)],
+    ) as inst:
+        inst.scan_count = 5
+
+
+def test_scan_interval_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':ROUT:SCAN:INT 10', None)],
+    ) as inst:
+        inst.scan_interval = 10
+
+
+def test_close():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None)],
+    ) as inst:
+        assert inst.close() is None
+
+
+def test_exit():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None)],
+    ) as inst:
+        assert inst.__exit__(None, None, None) is None
+
+
+#######################
+# Additional methods #
+#######################
+
+
+def test_enable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC?', b'CURR:DC\n'),
+             (b':SENS:CURR:DC:AVER:STAT 1', None),
+             (b':SENS:CURR:DC:AVER:TCON repeat', None),
+             (b':SENS:CURR:DC:AVER:COUN 1', None),
+             (b':SENS:CURR:DC:AVER:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.enable_filter() == '1\n'
+
+
+def test_enable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 1', None),
+             (b':SENS:VOLT:DC:AVER:TCON repeat', None),
+             (b':SENS:VOLT:DC:AVER:COUN 1', None),
+             (b':SENS:VOLT:DC:AVER:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.enable_filter(mode="voltage") == '1\n'
+
+
+def test_disable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC?', b'CURR:DC\n'),
+             (b':SENS:CURR:DC:AVER:STAT 0', None),
+             (b':SENS:CURR:DC:AVER:STAT?', b'0\n')],
+    ) as inst:
+        assert inst.disable_filter() == '0\n'
+
+
+def test_disable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 0', None),
+             (b':SENS:VOLT:DC:AVER:STAT?', b'0\n')],
+    ) as inst:
+        assert inst.disable_filter(mode="voltage") == '0\n'
+
+
+def test_beep():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SYST:BEEP 1000, 0.5', None)],
+    ) as inst:
+        assert inst.beep(1000, 0.5) is None
+
+
+#########################
+# Temperature measure #
+#########################
+
+
+def test_measure_temperature():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "TEMP"', None)],
+    ) as inst:
+        assert inst.measure_temperature() is None
+
+
+def test_temperature_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'25.5\n')],
+    ) as inst:
+        assert inst.temperature == 25.5
+
+
+def test_temperature_relative_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_relative == 1.0
+
+
+def test_temperature_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL 1', None)],
+    ) as inst:
+        inst.temperature_relative = 1.0
+
+
+def test_temperature_relative_enabled_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_relative_enabled is True
+
+
+def test_temperature_relative_enabled_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:REL:STAT 1', None)],
+    ) as inst:
+        inst.temperature_relative_enabled = True
+
+
+def test_temperature_nplc_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:NPLC?', b'1\n')],
+    ) as inst:
+        assert inst.temperature_nplc == 1.0
+
+
+def test_temperature_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:TEMP:NPLC 2', None)],
+    ) as inst:
+        inst.temperature_nplc = 2
+
+
+def test_temperature_digits_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:TEMP:DIG?', b'4\n')],
+    ) as inst:
+        assert inst.temperature_digits == 4
+
+
+def test_temperature_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:TEMP:DIG 4', None)],
+    ) as inst:
+        inst.temperature_digits = 4
+
+
+######################
+# Capacitance measure #
+#######################
+
+
+def test_measure_capacitance():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "CAP"', None),
+             (b':SENS:CAP:RANG:AUTO 0;:SENS:CURR:RANG 0.001', None)],
+    ) as inst:
+        assert inst.measure_capacitance() is None
+
+
+def test_capacitance_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'1e-06\n')],
+    ) as inst:
+        assert inst.capacitance == 1e-6
+
+
+def test_capacitance_relative_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL?', b'0.0001\n')],
+    ) as inst:
+        assert inst.capacitance_relative == 0.0001
+
+
+def test_capacitance_relative_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL 0.0001', None)],
+    ) as inst:
+        inst.capacitance_relative = 0.0001
+
+
+def test_capacitance_relative_status_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL:STAT?', b'1\n')],
+    ) as inst:
+        assert inst.capacitance_relative_status is True
+
+
+def test_capacitance_relative_status_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:REL:STAT 1', None)],
+    ) as inst:
+        inst.capacitance_relative_status = True
+
+
+def test_capacitance_range_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:RANG?', b'1e-06\n')],
+    ) as inst:
+        assert inst.capacitance_range == 1e-6
+
+
+def test_capacitance_range_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:CAP:RANG:AUTO 0;:SENS:CURR:RANG 1e-06', None)],
+    ) as inst:
+        inst.capacitance_range = 1e-6
+
+
+def test_capacitance_digits_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:CAP:DIG?', b'4\n')],
+    ) as inst:
+        assert inst.capacitance_digits == 4
+
+
+def test_capacitance_digits_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':DISP:CAP:DIG 4', None)],
+    ) as inst:
+        inst.capacitance_digits = 4
+
+
+###############
+# Diode measure #
+###############
+
+
+def test_measure_diode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "DIOD"', None)],
+    ) as inst:
+        assert inst.measure_diode() is None
+
+
+def test_diode_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':READ?', b'0.7\n')],
+    ) as inst:
+        assert inst.diode == 0.7
+
+
+def test_diode_bias_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:BIAS:LEV?', b'0.001\n')],
+    ) as inst:
+        assert inst.diode_bias == 0.001
+
+
+def test_diode_bias_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:BIAS:LEV 0.001', None)],
+    ) as inst:
+        inst.diode_bias = 0.001
+
+
+def test_diode_nplc_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:NPLC?', b'1\n')],
+    ) as inst:
+        assert inst.diode_nplc == 1.0
+
+
+def test_diode_nplc_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:DIOD:NPLC 2', None)],
+    ) as inst:
+        inst.diode_nplc = 2
+
+
+####################
+# Continuity measure #
+####################
+
+
+def test_measure_continuity():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "CONT"', None)],
+    ) as inst:
+        assert inst.measure_continuity() is None
+
+
+######################
+# Scanner card properties #
+#######################
+
+
+def test_points_in_buffer_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'TRAC:ACT?', b'100\n')],
+    ) as inst:
+        assert inst.points_in_buffer == 100
+
+
+def test_data_format_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'FORMAT:DATA?', b'ASC\n')],
+    ) as inst:
+        assert inst.data_format == 'ASC'
+
+
+def test_data_format_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'FORMAT:DATA ASC', None)],
+    ) as inst:
+        inst.data_format = 'ASC'
+
+
+def test_scan_id_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SYST:CARD1:IDN?', b'Keithley|Model 2000-SCAN\n')],
+    ) as inst:
+        assert inst.scan_id == ['Keithley', 'Model 2000-SCAN']
+
+
+def test_scan_vch_start_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VCH:STAR?', b'1\n')],
+    ) as inst:
+        assert inst.scan_vch_start == 1
+
+
+def test_scan_vch_end_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VCH:END?', b'10\n')],
+    ) as inst:
+        assert inst.scan_vch_end == 10
+
+
+def test_scan_card_vmax_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b'SYST:CARD1:VMAX?', b'300\n')],
+    ) as inst:
+        assert inst.scan_card_vmax == 300
+
+
+@pytest.mark.parametrize("value, command", (
+    (True, b':SYST:PCAR1 2000'),
+    (False, b':SYST:PCAR1 0'),
+))
+def test_pseudo_scanner_enabled_setter(value, command):
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (command, None)],
+    ) as inst:
+        inst.pseudo_scanner_enabled = value
+
+
+###############################
+# ScannerCard2000Channel tests #
+###############################
+
+
+def test_channel_mode_setter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC "VOLT:DC", (@1)', None)],
+    ) as inst:
+        inst.channels[1].mode = "voltage"
+
+
+def test_channel_mode_getter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n')],
+    ) as inst:
+        assert inst.channels[1].mode == "voltage"
+
+
+def test_channel_enable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n'),
+              (b':SENS:VOLT:DC:AVER:STAT 1, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:TCON repeat, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:COUN 1, (@1)', None),
+              (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'1\n')],
+    ) as inst:
+        assert inst.channels[1].enable_filter() == '1\n'
+
+
+def test_channel_enable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 1, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:TCON repeat, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:COUN 1, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'1\n')],
+    ) as inst:
+        assert inst.channels[1].enable_filter(mode="voltage") == '1\n'
+
+
+def test_channel_disable_filter():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:FUNC? (@1)', b'"VOLT:DC"\n'),
+             (b':SENS:VOLT:DC:AVER:STAT 0, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'0\n')],
+    ) as inst:
+        assert inst.channels[1].disable_filter() == '0\n'
+
+
+def test_channel_disable_filter_mode():
+    with expected_protocol(
+            KeithleyDMM6500,
+            [(b'*LANG SCPI', None),
+             (b':SENS:VOLT:DC:AVER:STAT 0, (@1)', None),
+             (b':SENS:VOLT:DC:AVER:STAT? (@1)', b'0\n')],
+    ) as inst:
+        assert inst.channels[1].disable_filter(mode="voltage") == '0\n'
