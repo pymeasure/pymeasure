@@ -1,0 +1,7 @@
+##########################################################################
+Wentworth S200 semi-automatic production probe station up to 200 mm wafers
+##########################################################################
+
+.. autoclass:: pymeasure.instruments.wentworthlabs.s200
+    :members:
+    :show-inheritance:

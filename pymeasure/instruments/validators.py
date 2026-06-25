@@ -25,6 +25,24 @@
 from decimal import Decimal
 
 
+def multivalue_strict_range(values_to_validate, values):
+    """ Provides a validator function that returns the
+    values to validate if every value is less than or equal to the maximum and
+    greater than or equal to the minimum of ``values``.
+    Otherwise it raises a ValueError.
+
+    :param values_to_validate: The values to validate (list, tuple, etc.)
+    :param values: A range of values (range, list, etc.)
+    :raises: ValueError if the one of the values to validate is out of the range
+    """
+    for value in values_to_validate:
+        if min(values) > value or value > max(values):
+            raise ValueError('Value of {:g} is not in range [{:g},{:g}]'.format(
+                value, min(values), max(values)
+            ))
+    return values_to_validate
+
+
 def strict_range(value, values):
     """ Provides a validator function that returns the value
     if its value is less than or equal to the maximum and
