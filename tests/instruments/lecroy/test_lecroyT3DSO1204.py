@@ -476,5 +476,215 @@ def test_intensity():
         assert instr.intensity == {"GRID": 50, "TRACE": 100}
 
 
+def test_invert():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"C1:INVS OFF", None),
+             (b"C1:INVS?", b"OFF"),
+             (b"C1:INVS ON", None),
+             (b"C1:INVS?", b"ON"),
+             ]
+    ) as instr:
+        instr.ch_1.invert = False
+        assert instr.ch_1.invert is False
+        instr.ch_1.invert = True
+        assert instr.ch_1.invert is True
+
+
+def test_unit():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"C1:UNIT A", None),
+             (b"C1:UNIT?", b"A"),
+             (b"C1:UNIT V", None),
+             (b"C1:UNIT?", b"V"),
+             ]
+    ) as instr:
+        instr.ch_1.unit = "A"
+        assert instr.ch_1.unit == "A"
+        instr.ch_1.unit = "V"
+        assert instr.ch_1.unit == "V"
+
+
+def test_trigger_level2():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"C1:TRLV2 1.50E-01V", None),
+             (b"C1:TRLV2?", b"1.50E-01"),
+             ]
+    ) as instr:
+        instr.ch_1.trigger_level2 = 0.15
+        assert instr.ch_1.trigger_level2 == 0.15
+
+
+def test_timebase_hor_magnify():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"HMAG 1.00E-06S", None),
+             (b"HMAG?", b"1.00E-06"),
+             ]
+    ) as instr:
+        instr.timebase_hor_magnify = 1e-6
+        assert instr.timebase_hor_magnify == 1e-6
+
+
+def test_timebase_hor_position():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"HPOS 1.00E-06S", None),
+             (b"HPOS?", b"1.00E-06"),
+             ]
+    ) as instr:
+        instr.timebase_hor_position = 1e-6
+        assert instr.timebase_hor_position == 1e-6
+
+
+def test_acquisition_average():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"AVGA 16", None),
+             (b"AVGA?", b"16"),
+             ]
+    ) as instr:
+        instr.acquisition_average = 16
+        assert instr.acquisition_average == 16
+
+
+def test_acquisition_status():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"SAST?", b"Trig'd"),
+             (b"SAST?", b"Stop"),
+             ]
+    ) as instr:
+        assert instr.acquisition_status == "triggered"
+        assert instr.acquisition_status == "stopped"
+
+
+def test_acquisition_sampling_rate():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"SARA?", b"1.00E+09"),
+             ]
+    ) as instr:
+        assert instr.acquisition_sampling_rate == 1e9
+
+
+def test_measure_delay_valid():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"MEAD FRR,C1-C2", None),
+             (b"MEAD?", b"1.50E+00"),
+             ]
+    ) as instr:
+        instr.measure_delay = ("FRR", "C1", "C2")
+        assert instr.measure_delay == 1.5
+
+
+def test_measure_delay_invalid_non_tuple():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None)],
+    ) as instr:
+        with pytest.raises(ValueError):
+            instr.measure_delay = "FRR"
+
+
+def test_measure_delay_invalid_wrong_length():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None)],
+    ) as instr:
+        with pytest.raises(ValueError):
+            instr.measure_delay = ("FRR", "C1")
+
+
+@pytest.mark.xfail(reason="Production bug: _measure_delay_validator compares output[1][0] > "
+                          "output[2][0] (first char only), so the order check never fires for "
+                          "C1-C4 sources. See lecroyT3DSO1204.py:63.",
+                   strict=True)
+def test_measure_delay_invalid_source_order():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None)],
+    ) as instr:
+        with pytest.raises(ValueError):
+            instr.measure_delay = ("FRR", "C2", "C1")
+
+
+def test_acquisition_sample_size_math():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"DEF?", b"EQN,'C1+C2'"),
+             (b"SANU? C1", b"3.50E+06"),
+             (b"SANU? C1", b"2.50E+06"),
+             ]
+    ) as instr:
+        assert instr.acquisition_sample_size("MATH") == 2.5e6
+
+
+def test_acquisition_sample_size_invalid_source():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None)],
+    ) as instr:
+        with pytest.raises(ValueError):
+            instr.acquisition_sample_size("C5")
+
+
+def test_timebase_dict():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"TDIV?", b"5.00E-04"),
+             (b"TRDL?", b"-0.00E+00"),
+             (b"HMAG?", b"1.00E-06"),
+             (b"HPOS?", b"2.00E-06"),
+             ]
+    ) as instr:
+        tb = instr.timebase
+        assert set(tb.keys()) == {"timebase_scale", "timebase_offset",
+                                  "timebase_hor_magnify", "timebase_hor_position"}
+        assert tb["timebase_scale"] == 5e-4
+        assert tb["timebase_offset"] == 0.0
+        assert tb["timebase_hor_magnify"] == 1e-6
+        assert tb["timebase_hor_position"] == 2e-6
+
+
+def test_timebase_setup_only_specified():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"TDIV 1.00E-03S", None),
+             (b"HMAG 1.00E-06S", None),
+             ]
+    ) as instr:
+        instr.timebase_setup(scale=1e-3, hor_magnify=1e-6)
+
+
+def test_acquisition_type_non_average():
+    with expected_protocol(
+            LeCroyT3DSO1204,
+            [(b"CHDR OFF", None),
+             (b"ACQW?", b"PEAK_DETECT"),
+             (b"ACQW?", b"SAMPLING"),
+             (b"ACQW?", b"HIGH_RES"),
+             ]
+    ) as instr:
+        assert instr.acquisition_type == "peak"
+        assert instr.acquisition_type == "normal"
+        assert instr.acquisition_type == "highres"
+
+
 if __name__ == '__main__':
     pytest.main()
