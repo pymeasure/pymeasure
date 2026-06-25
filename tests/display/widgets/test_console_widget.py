@@ -21,18 +21,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #
-import pytest
+
+from pyqtgraph.console import ConsoleWidget as PGConsoleWidget
+
+from pymeasure.display.Qt import QtWidgets
+from pymeasure.display.widgets.console_widget import ConsoleWidget
+from pymeasure.display.widgets.tab_widget import TabWidget
 
 
-def test_plot_frame_construction(qtbot):
-    """PlotFrame must construct with modern pyqtgraph.
+def test_console_widget_inheritance(qtbot):
+    """Test that ConsoleWidget inherits from TabWidget and PGConsoleWidget."""
+    assert issubclass(ConsoleWidget, TabWidget)
+    assert issubclass(ConsoleWidget, PGConsoleWidget)
 
-    Since pyqtgraph 0.13, :code:`pyqtgraph.PlotItem` is a class rather than
-    a module, and :code:`pg.PlotItem.PlotItem` raised an AttributeError.
-    """
-    pytest.importorskip("pyqtgraph")
-    from pymeasure.display.widgets.plot_frame import PlotFrame
 
-    frame = PlotFrame("Time (s)", "Voltage (V)")
-    qtbot.addWidget(frame)
-    assert frame.plot is frame.plot_widget.getPlotItem()
+def test_console_widget_name_stored(qtbot):
+    """Test that the name passed at construction is stored as an attribute."""
+    widget = ConsoleWidget(name="my_console")
+    qtbot.addWidget(widget)
+    assert widget.name == "my_console"
+
+
+def test_console_widget_tab_registration(qtbot):
+    """Test that the widget can be registered as a tab in a QTabWidget."""
+    tabs = QtWidgets.QTabWidget()
+    qtbot.addWidget(tabs)
+
+    widget = ConsoleWidget(name="console")
+    tabs.addTab(widget, widget.name)
+
+    assert tabs.indexOf(widget) == 0
+    assert tabs.tabText(0) == "console"

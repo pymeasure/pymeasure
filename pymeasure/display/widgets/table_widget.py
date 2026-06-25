@@ -365,7 +365,7 @@ class PandasModelByRow(PandasModelBase):
         for res in self.results_list:
             if res == results:
                 break
-            rows += results.rows
+            rows += res.rows
         return rows + row, col
 
     @property
