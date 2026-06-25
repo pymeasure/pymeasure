@@ -71,12 +71,13 @@ class TestBufferCurve:
         with qtbot.waitSignal(curve.data_updated, timeout=1000):
             curve.append(1.0, 2.0)
         assert curve._ptr == 1
+        # append() calls setData(buffer[:self._ptr]) with the *pre-increment*
+        # pointer, and pyqtgraph stores no data for an empty slice, so the
+        # visible data is empty (None) after the first append; the appended
+        # point becomes visible on the *next* append.
         x, y = curve.getData()
-        # setData is called with the slice [:0], so no points are displayed yet
-        # (the just-appended point becomes visible on the *next* append).
-        if x is not None:
-            assert len(x) == 0
-            assert len(y) == 0
+        assert x is None
+        assert y is None
         assert curve._buffer[0, 0] == 1.0
         assert curve._buffer[0, 1] == 2.0
 
