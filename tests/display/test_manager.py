@@ -562,6 +562,91 @@ class TestBaseManager:
             mock_experiment.browser_item.setProgress.assert_called_once_with(100)
             mock_next.assert_called_once()
 
+    def test_next_starts_worker_and_monitor(self, manager, mock_experiment, qtbot):
+        """Test next() constructs and starts a Worker and Monitor and connects signals."""
+        # Arrange
+        mock_experiment.results = mock.MagicMock()
+        manager.experiments.append(mock_experiment)
+
+        with mock.patch("pymeasure.display.manager.Worker") as mock_worker_cls, \
+                mock.patch("pymeasure.display.manager.Monitor") as mock_monitor_cls:
+            mock_worker = mock.MagicMock()
+            mock_monitor = mock.MagicMock()
+            mock_worker_cls.return_value = mock_worker
+            mock_monitor_cls.return_value = mock_monitor
+
+            # Act
+            manager.next()
+
+            # Assert
+            mock_worker_cls.assert_called_once_with(
+                mock_experiment.results, port=manager.port, log_level=manager.log_level
+            )
+            mock_monitor_cls.assert_called_once_with(mock_worker.monitor_queue)
+            assert manager._running_experiment is mock_experiment
+            mock_worker.start.assert_called_once()
+            mock_monitor.start.assert_called_once()
+            mock_monitor.worker_running.connect.assert_called_once_with(manager._running)
+            mock_monitor.worker_failed.connect.assert_called_once_with(manager._failed)
+            mock_monitor.worker_abort_returned.connect.assert_called_once_with(
+                manager._abort_returned
+            )
+            mock_monitor.worker_finished.connect.assert_called_once_with(manager._finish)
+            mock_monitor.progress.connect.assert_called_once_with(manager._update_progress)
+            mock_monitor.status.connect.assert_called_once_with(manager._update_status)
+            mock_monitor.log.connect.assert_called_once_with(manager._update_log)
+
+    def test_running_emits_running_signal(self, manager, mock_experiment, qtbot):
+        """Test _running emits the running signal with the running experiment."""
+        # Arrange
+        manager._running_experiment = mock_experiment
+
+        # Act & Assert
+        with qtbot.waitSignal(manager.running, timeout=1000) as blocker:
+            manager._running()
+
+        assert blocker.args == [mock_experiment]
+
+    def test_running_when_not_running_no_emit(self, manager, qtbot):
+        """Test _running does not emit when no experiment is running."""
+        # Arrange
+        received = []
+        manager.running.connect(lambda experiment: received.append(experiment))
+
+        # Act
+        manager._running()
+
+        # Assert
+        assert received == []
+
+    def test_clear_removes_all_experiments(self, manager):
+        """Test clear removes all experiments via remove with status checks."""
+        # Arrange
+        exp1 = mock.MagicMock(spec=Experiment)
+        exp1.procedure = mock.MagicMock(spec=Procedure)
+        exp1.procedure.status = Procedure.QUEUED
+        exp2 = mock.MagicMock(spec=Experiment)
+        exp2.procedure = mock.MagicMock(spec=Procedure)
+        exp2.procedure.status = Procedure.QUEUED
+        manager.experiments.append(exp1)
+        manager.experiments.append(exp2)
+
+        removed = []
+        original_remove = manager.remove
+
+        def track_remove(experiment):
+            removed.append(experiment)
+            original_remove(experiment)
+
+        manager.remove = track_remove
+
+        # Act
+        manager.clear()
+
+        # Assert
+        assert len(manager.experiments.queue) == 0
+        assert removed == [exp1, exp2]
+
 
 class TestManager:
     """Test cases for Manager class"""
