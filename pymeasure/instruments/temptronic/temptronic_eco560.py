@@ -51,7 +51,7 @@ class ECO560ErrorCode(IntFlag):
         256     DUT_OPEN_LOOP
         128     INTERNAL_ERROR
         64      OPEN_PURGE_TEMPERATURE_SENSOR
-        32      AIR_SENSOR_OPEN
+        32      NO_PURGE_FLOW
         16      LOW_INPUT_AIR_PRESSURE
         8       LOW_FLOW
         4       SETPOINT_OUT_OF_RANGE
@@ -80,13 +80,18 @@ class ECO560ErrorCode(IntFlag):
     OK = 0                              # ok state
 
 
+def error_code_get_process(v: str) -> ECO560ErrorCode:
+    """Convert the ``EROR?`` reply into an :class:`ECO560ErrorCode`."""
+    return ECO560ErrorCode(int(v))
+
+
 class ECO560(ATSBase):
     """Represent the TemptronicECO560 instruments.
     """
 
     temperature_limit_air_low_values = [-150, 25]
 
-    error_code_get_process = lambda v: ECO560ErrorCode(int(v))  # noqa: E731
+    error_code_get_process = error_code_get_process
 
     copy_active_setup_file = None
     # Not Implemented in ECO-560

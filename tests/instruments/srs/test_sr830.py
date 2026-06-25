@@ -23,7 +23,7 @@
 #
 import pytest
 
-from pymeasure.instruments.srs.sr830 import SR830
+from pymeasure.instruments.srs.sr830 import SR830, ERRStatus, LIAStatus
 from pymeasure.test import expected_protocol
 
 
@@ -229,9 +229,10 @@ def test_adc4_alias():
     (1e-9, "AUXV1,1e-09;"),
     (1e-7, "AUXV1,1e-07;"),
     (-1e-7, "AUXV1,-1e-07;"),
+    (1, "AUXV1,1;"),
     (10.0, "AUXV1,10;"),
 ))
-def test_aux_out_small_values(value, command):
+def test_aux_out_1_set(value, command):
     """Verify that aux outputs transmit sub-microvolt values without truncation.
 
     Using %f would silently round values smaller than 1e-6 to zero.
