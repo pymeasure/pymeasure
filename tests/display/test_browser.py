@@ -424,3 +424,152 @@ class TestBrowser:
         assert "voltage" in browser.measured_quantities
         assert "current" in browser.measured_quantities
         assert "resistance" in browser.measured_quantities
+
+
+class TestBrowserItemEdgeCases:
+    """Edge-case tests for BrowserItem, complementing the main tests above."""
+
+    @pytest.fixture
+    def tree_and_item(self, qtbot):
+        """Create a tree and a BrowserItem added to it; keep both alive."""
+        results = mock.MagicMock(spec=Results)
+        results.data_filename = "/path/to/test_data.csv"
+        results.procedure = mock.MagicMock(spec=Procedure)
+        results.procedure.status = Procedure.QUEUED
+        color = QtGui.QColor(255, 255, 255)
+        tree = QtWidgets.QTreeWidget()
+        qtbot.addWidget(tree)
+        item = BrowserItem(results=results, color=color)
+        tree.addTopLevelItem(item)
+        tree.show()
+        return tree, item
+
+    def test_browser_item_set_progress_zero_and_max(self, tree_and_item):
+        """setProgress(0) and setProgress(100) are valid at progressbar bounds."""
+        _, item = tree_and_item
+        item.setProgress(0)
+        assert item.progressbar.value() == 0
+        item.setProgress(100)
+        assert item.progressbar.value() == 100
+
+    def test_browser_item_set_progress_negative_clamps(self, tree_and_item):
+        """setProgress(-10) does not store an in-range value (QProgressBar rejects it)."""
+        _, item = tree_and_item
+        item.setProgress(-10)
+        # QProgressBar ignores values outside [minimum, maximum]; value stays at last set (0).
+        assert item.progressbar.value() <= 0
+
+    def test_browser_item_set_progress_over_100_clamps(self, tree_and_item):
+        """setProgress(150) does not exceed the progressbar maximum (100)."""
+        _, item = tree_and_item
+        # Set a valid in-range value first so we have a known baseline.
+        item.setProgress(50)
+        assert item.progressbar.value() == 50
+        item.setProgress(150)
+        # Out-of-range values are rejected by QProgressBar.
+        assert item.progressbar.value() <= 100
+
+    def test_browser_item_initial_filename_basename(self, qtbot):
+        """data_filename with a path renders only the basename in column 1."""
+        results = mock.MagicMock(spec=Results)
+        results.data_filename = "/a/b/c.csv"
+        results.procedure = mock.MagicMock(spec=Procedure)
+        results.procedure.status = Procedure.QUEUED
+        color = QtGui.QColor(255, 255, 255)
+        tree = QtWidgets.QTreeWidget()
+        qtbot.addWidget(tree)
+        item = BrowserItem(results=results, color=color)
+        tree.addTopLevelItem(item)
+        assert item.text(1) == "c.csv"
+
+    def test_browser_item_status_queued_initial(self, tree_and_item):
+        """Initial status text is 'Queued' when constructed with QUEUED status."""
+        _, item = tree_and_item
+        assert item.text(3) == "Queued"
+
+
+class TestBaseBrowserItemStatusLabelAllStatuses:
+    """Parametrized test that every Procedure status maps to the expected label."""
+
+    @pytest.mark.parametrize("status,expected_label", [
+        (Procedure.QUEUED, "Queued"),
+        (Procedure.RUNNING, "Running"),
+        (Procedure.FAILED, "Failed"),
+        (Procedure.ABORTED, "Aborted"),
+        (Procedure.FINISHED, "Finished"),
+    ])
+    def test_base_browser_item_status_label_all_statuses(self, status, expected_label):
+        """Each Procedure status maps to the expected status_label value."""
+        assert BaseBrowserItem.status_label[status] == expected_label
+
+
+def _make_mock_procedure_class():
+    """Helper: build a mock procedure class with named parameters."""
+    procedure_class = mock.MagicMock()
+    param1 = mock.MagicMock()
+    param1.name = "Voltage"
+    param2 = mock.MagicMock()
+    param2.name = "Current"
+    procedure_class.voltage_param = param1
+    procedure_class.current_param = param2
+    return procedure_class
+
+
+class TestBrowserEdgeCases:
+    """Edge-case tests for Browser, complementing the main tests above."""
+
+    @pytest.fixture
+    def mock_procedure_class(self):
+        """Create a mock procedure class for testing."""
+        return _make_mock_procedure_class()
+
+    def test_browser_add_preserves_item_checked_state(self, mock_procedure_class, qtbot):
+        """An item added via Browser.add remains in the Checked state."""
+        browser = Browser(
+            procedure_class=mock_procedure_class,
+            display_parameters=["voltage_param"],
+            measured_quantities=["voltage"],
+        )
+        qtbot.addWidget(browser)
+
+        mock_experiment = mock.MagicMock()
+        mock_experiment.procedure.DATA_COLUMNS = ["voltage"]
+        mock_experiment.procedure.parameter_objects.return_value = {}
+
+        mock_results = mock.MagicMock(spec=Results)
+        mock_results.data_filename = "/path/to/test_data.csv"
+        mock_results.procedure = mock.MagicMock(spec=Procedure)
+        mock_results.procedure.status = Procedure.QUEUED
+        color = QtGui.QColor(255, 255, 255)
+        browser_item = BrowserItem(results=mock_results, color=color)
+        temp_tree = QtWidgets.QTreeWidget()
+        qtbot.addWidget(temp_tree)
+        temp_tree.addTopLevelItem(browser_item)
+        mock_experiment.browser_item = browser_item
+
+        added_item = browser.add(mock_experiment)
+
+        assert added_item.checkState(0) == QtCore.Qt.CheckState.Checked
+
+    def test_browser_no_display_parameters(self, mock_procedure_class, qtbot):
+        """With display_parameters=[], column count is 4 (Graph, Filename, Progress, Status)."""
+        browser = Browser(
+            procedure_class=mock_procedure_class,
+            display_parameters=[],
+            measured_quantities=["voltage"],
+        )
+        qtbot.addWidget(browser)
+        assert browser.columnCount() == 4
+        labels = [browser.headerItem().text(i) for i in range(4)]
+        assert labels == ["Graph", "Filename", "Progress", "Status"]
+
+    def test_browser_sort_by_filename_false(self, mock_procedure_class, qtbot):
+        """sort_by_filename=False (default): sorting enabled state is True."""
+        browser = Browser(
+            procedure_class=mock_procedure_class,
+            display_parameters=["voltage_param"],
+            measured_quantities=["voltage"],
+            sort_by_filename=False,
+        )
+        qtbot.addWidget(browser)
+        assert browser.isSortingEnabled() is True
