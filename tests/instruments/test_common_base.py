@@ -193,20 +193,20 @@ def test_dynamic_property_fset_unset():
 # Test CommonBase.MultipleChannelCreator child management
 class TestInitWithMultipleChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> MultiChannelParent:
         return MultiChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: MultiChannelParent):
         assert len(parent.channels) == 3
         assert parent.ch_A == parent.channels['A']
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: MultiChannelParent):
         assert len(parent.analog) == 2
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: MultiChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
@@ -217,8 +217,8 @@ class TestInitWithMultipleChannelCreator:
         p2 = MultiChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 5
+    def test_channel_pairs_length(self, parent: MultiChannelParent):
+        assert len(parent.get_channel_pairs()) == 5
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -227,27 +227,27 @@ class TestInitWithMultipleChannelCreator:
 # Test CommonBase.ChannelCreator child management
 class TestInitWithChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> SingleChannelParent:
         return SingleChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: SingleChannelParent):
         assert len(parent.channels) == 3
         assert parent.ch_A == parent.channels['A']
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: SingleChannelParent):
         assert len(parent.analog) == 2
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_function(self, parent):
+    def test_function(self, parent: SingleChannelParent):
         assert isinstance(parent.function, Child)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: SingleChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
-    def test_removal_of_protected_single_children_fails(self, parent):
+    def test_removal_of_protected_single_children_fails(self, parent: SingleChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.function)
 
@@ -258,8 +258,8 @@ class TestInitWithChannelCreator:
         p2 = SingleChannelParent(ProtocolAdapter())  # second instance of that class
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 6
+    def test_channel_pairs_length(self, parent: SingleChannelParent):
+        assert len(parent.get_channel_pairs()) == 6
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.ch_A, CommonBase.ChannelCreator)
@@ -271,22 +271,22 @@ class TestInitWithChannelCreator:
 # child management
 class TestInitWithMixChannelCreator:
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> MixChannelParent:
         return MixChannelParent(ProtocolAdapter())
 
-    def test_channels(self, parent):
+    def test_channels(self, parent: MixChannelParent):
         assert len(parent.channels) == 5
         assert parent.ch_A == parent.channels['A']
         assert parent.output_Z == parent.channels['Z']
         assert isinstance(parent.ch_A, GenericBase)
         assert isinstance(parent.output_Z, GenericBase)
 
-    def test_analog(self, parent):
+    def test_analog(self, parent: MixChannelParent):
         assert len(parent.analog) == 10
         assert parent.an_1 == parent.analog[1]
         assert isinstance(parent.analog[1], GenericBase)
 
-    def test_removal_of_protected_children_fails(self, parent):
+    def test_removal_of_protected_children_fails(self, parent: MixChannelParent):
         with pytest.raises(TypeError, match="cannot remove channels defined at class"):
             parent.remove_child(parent.ch_A)
 
@@ -299,8 +299,8 @@ class TestInitWithMixChannelCreator:
         assert isinstance(p2.analog[1], GenericBase)  # verify that it worked a second time
         assert isinstance(p2.output_Z, GenericBase)
 
-    def test_channel_pairs_length(self, parent):
-        assert len(parent.get_channel_pairs(parent.__class__)) == 15
+    def test_channel_pairs_length(self, parent: MixChannelParent):
+        assert len(parent.get_channel_pairs()) == 15
 
     def test_channel_creator_remains_unchanged_as_class_attribute(self, parent):
         assert isinstance(parent.__class__.channels, CommonBase.MultiChannelCreator)
@@ -312,41 +312,41 @@ class TestAddChild:
     """Test the `add_child` method"""
 
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> CommonBaseTesting:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A", test=5)
         parent.add_child(GenericBase, "B")
         parent.add_child(GenericBase, prefix=None, collection="function")
         return parent
 
-    def test_correct_class(self, parent):
+    def test_correct_class(self, parent: CommonBaseTesting):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_arguments(self, parent):
+    def test_arguments(self, parent: CommonBaseTesting):
         assert parent.channels["A"].id == "A"
         assert parent.channels["A"].test == 5
 
-    def test_attribute_access(self, parent):
+    def test_attribute_access(self, parent: CommonBaseTesting):
         assert parent.ch_B == parent.channels["B"]
 
-    def test_len(self, parent):
+    def test_len(self, parent: CommonBaseTesting):
         assert len(parent.channels) == 2
 
-    def test_attributes(self, parent):
+    def test_attributes(self, parent: CommonBaseTesting):
         assert parent.ch_A._name == "ch_A"
         assert parent.ch_B._collection == "channels"
 
-    def test_overwriting_list_raises_error(self, parent):
+    def test_overwriting_list_raises_error(self, parent: CommonBaseTesting):
         """A single channel is only allowed, if there is no list of that name."""
         with pytest.raises(ValueError, match="already exists"):
             parent.add_child(GenericBase, prefix=None)
 
-    def test_single_channel(self, parent):
+    def test_single_channel(self, parent: CommonBaseTesting):
         """Test, that id=None creates a single channel."""
         assert isinstance(parent.function, GenericBase)
         assert parent.function._name == "function"
 
-    def test_evaluating_false_id_creates_channels(self, parent):
+    def test_evaluating_false_id_creates_channels(self, parent: CommonBaseTesting):
         """Test that an id evaluating false (e.g. 0) creates a channels list."""
         parent.add_child(GenericBase, 0, collection="special")
         assert isinstance(parent.special, dict)
@@ -354,7 +354,7 @@ class TestAddChild:
 
 class TestRemoveChild:
     @pytest.fixture()
-    def parent_without_children(self):
+    def parent_without_children(self) -> CommonBaseTesting:
         parent = CommonBaseTesting(ProtocolAdapter())
         parent.add_child(GenericBase, "A")
         parent.add_child(GenericBase, "B")
@@ -379,16 +379,16 @@ class TestInheritanceWithChildren:
         function = CommonBase.ChannelCreator(GenericBase, "overridden", prefix=None)
 
     @pytest.fixture()
-    def parent(self):
+    def parent(self) -> InstrumentSubclass:
         return self.InstrumentSubclass(ProtocolAdapter())
 
-    def test_inherited_children_are_present(self, parent):
+    def test_inherited_children_are_present(self, parent: InstrumentSubclass):
         assert isinstance(parent.ch_A, GenericBase)
 
-    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent):
+    def test_ChannelCreator_is_replaced_by_channel_collection(self, parent: InstrumentSubclass):
         assert not isinstance(parent.channels, CommonBase.ChannelCreator)
 
-    def test_overridden_child_is_present(self, parent):
+    def test_overridden_child_is_present(self, parent: InstrumentSubclass):
         assert parent.function.id == "overridden"
 
 
