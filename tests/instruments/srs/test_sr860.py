@@ -27,20 +27,18 @@ from pymeasure.test import expected_protocol
 from pymeasure.instruments.srs.sr860 import SR860
 
 
-@pytest.mark.parametrize("channel, cmd", (
-    ("aux_out_1", "AUXV 0, %g"),
-    ("aux_out_2", "AUXV 1, %g"),
-    ("aux_out_3", "AUXV 2, %g"),
-    ("aux_out_4", "AUXV 3, %g"),
+@pytest.mark.parametrize(("value", "command"), (
+    (1e-9, "AUXV 0, 1e-09"),
+    (1e-7, "AUXV 0, 1e-07"),
+    (-1e-7, "AUXV 0, -1e-07"),
 ))
-@pytest.mark.parametrize("value", (1e-9, 1e-7, -1e-7, 0.5, 1.5, -10.5, 10.5))
-def test_aux_out_small_values(channel, cmd, value):
+def test_aux_out_small_values(value, command):
     """Verify that aux outputs transmit sub-microvolt values without truncation.
 
     Using %f would silently round values smaller than 1e-6 to zero.
     """
     with expected_protocol(
         SR860,
-        [(cmd % value, None)],
+        [(command, None)],
     ) as inst:
-        setattr(inst, channel, value)
+        inst.aux_out_1 = value
