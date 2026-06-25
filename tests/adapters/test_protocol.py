@@ -248,3 +248,14 @@ def test_write_and_read_with_and_without_bytes():
 def test_comm_pairs_are_all_length_2(pairs):
     with raises(ValueError):
         ProtocolAdapter(pairs)
+
+
+def test_to_bytes_bytearray():
+    assert to_bytes(bytearray(b"xy")) == b"xy"
+
+
+def test_flush_read_buffer_delegates_to_connection(adapter):
+    adapter.flush_read_buffer()
+    assert adapter.connection.flush.call_args_list == [
+        call("pyvisa.constants.BufferOperation.discard_read_buffer")
+    ]
