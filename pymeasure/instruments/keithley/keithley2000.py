@@ -371,7 +371,7 @@ class Keithley2000(KeithleyBuffer, SCPIMixin, Instrument):
         cast=int
     )
     period_threshold = Instrument.control(
-        ":SENS:PER:THR:VOLT:RANG?", ":SENS:PRE:THR:VOLT:RANG %g",
+        ":SENS:PER:THR:VOLT:RANG?", ":SENS:PER:THR:VOLT:RANG %g",
         """ Control (floating) the voltage signal threshold
         level in Volts for the period measurement, which can take values
         from 0 to 1010 V. """,
