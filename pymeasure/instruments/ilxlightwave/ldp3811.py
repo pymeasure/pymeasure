@@ -25,20 +25,8 @@
 import logging
 
 from pymeasure.instruments import Instrument, cast_or_str
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_range, strict_discrete_set
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-
-        # Python>3.10 remove it.
-
-        def __str__(self):
-            return str(self.value)
 
 
 log = logging.getLogger(__name__)
