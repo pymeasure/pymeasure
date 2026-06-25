@@ -25,19 +25,23 @@
 from pymeasure.test import expected_protocol
 from pymeasure.instruments.tektronix.afg3152c import AFG3152C
 
+import pytest
 
-def test_shape():
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_shape(channel):
     # Demonstrate message prefix identifying the channel
     # Note how the implementation of the shape property does not show that
     # prefix (it is added in the Channel class)
     with expected_protocol(
         AFG3152C,
-        [("source1:function:shape?", "LOR"),
-         ("source2:function:shape HAV", None),
+        [(f"source{channel}:function:shape?", "LOR"),
+         (f"source{channel}:function:shape HAV", None),
          ],
     ) as inst:
-        assert inst.ch1.shape == 'lorentz'
-        inst.ch2.shape = 'haversine'
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.shape == 'lorentz'
+        ch.shape = 'haversine'
 
 
 def test_beep():
@@ -63,3 +67,169 @@ def test_disable():
         [("output1:state off", None)],
     ) as inst:
         inst.ch1.disable()
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_unit(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:voltage:unit?", "VPP"),
+         (f"source{channel}:voltage:unit DBM", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.unit == "VPP"
+        ch.unit = "DBM"
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_amp_vpp(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:voltage:amplitude?", "1.000000e+00"),
+         (f"source{channel}:voltage:amplitude 2.000000e+00VPP", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.amp_vpp == 1
+        ch.amp_vpp = 2
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_amp_dbm(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:voltage:amplitude?", "1.000000e+00"),
+         (f"source{channel}:voltage:amplitude 2.000000e+00DBM", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.amp_dbm == 1
+        ch.amp_dbm = 2
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_amp_vrms(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:voltage:amplitude?", "1.000000e+00"),
+         (f"source{channel}:voltage:amplitude 2.000000e+00VRMS", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.amp_vrms == 1
+        ch.amp_vrms = 2
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_offset(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:voltage:offset?", "0.000000e+00"),
+         (f"source{channel}:voltage:offset 5.000000e-01", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.offset == 0
+        ch.offset = 0.5
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_frequency(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:frequency:fixed?", "1.000000e+06"),
+         (f"source{channel}:frequency:fixed 1.000000e+03", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.frequency == 1e6
+        ch.frequency = 1e3
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_duty(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:pulse:dcycle?", "50.000"),
+         (f"source{channel}:pulse:dcycle 25.000", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.duty == 50
+        ch.duty = 25
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_impedance(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:output:impedance?", "50"),
+         (f"source{channel}:output:impedance 1000", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        assert ch.impedance == 50
+        ch.impedance = 1000
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_waveform(channel):
+    with expected_protocol(
+        AFG3152C,
+        [(f"source{channel}:function:shape SIN", None),
+         (f"source{channel}:frequency:fixed 1.000000e+06", None),
+         (f"source{channel}:voltage:unit VPP", None),
+         (f"source{channel}:voltage:amplitude 1.000000e+00VPP", None),
+         (f"source{channel}:voltage:offset 0.000000e+00V", None),
+         ],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        ch.waveform(shape="SIN", frequency=1e6, units="VPP", amplitude=1, offset=0)
+
+
+def test_opc():
+    with expected_protocol(
+        AFG3152C,
+        [("*OPC?", "1")],
+    ) as inst:
+        assert inst.opc() == 1
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_frequency_out_of_range_raises(channel):
+    with expected_protocol(
+        AFG3152C,
+        [],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        with pytest.raises(ValueError):
+            ch.frequency = 0
+        with pytest.raises(ValueError):
+            ch.frequency = 200e6
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_amp_vpp_out_of_range_raises(channel):
+    with expected_protocol(
+        AFG3152C,
+        [],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        with pytest.raises(ValueError):
+            ch.amp_vpp = 0
+        with pytest.raises(ValueError):
+            ch.amp_vpp = 20
+
+
+@pytest.mark.parametrize("channel", [1, 2])
+def test_duty_out_of_range_raises(channel):
+    with expected_protocol(
+        AFG3152C,
+        [],
+    ) as inst:
+        ch = getattr(inst, f"ch{channel}")
+        with pytest.raises(ValueError):
+            ch.duty = 0
+        with pytest.raises(ValueError):
+            ch.duty = 100

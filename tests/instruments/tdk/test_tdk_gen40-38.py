@@ -67,3 +67,78 @@ def test_invalid_current_setpoint():
                  (b"PC 50", b"OK"), ]
         ) as instr:
             instr.current_setpoint = 50
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Dynamic range differences: Gen40-38 over_voltage [2, 44], under_voltage [0, 38]
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_over_voltage_within_range():
+    with expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"OVP 20", b"OK"),
+             (b"OVP?", b"20")]
+    ) as instr:
+        instr.over_voltage = 20
+        assert instr.over_voltage == 20
+
+
+def test_over_voltage_at_upper_bound():
+    with expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"OVP 44", b"OK")]
+    ) as instr:
+        instr.over_voltage = 44
+
+
+def test_over_voltage_above_upper_bound_invalid():
+    with pytest.raises(ValueError):
+        with expected_protocol(
+                TDK_Gen40_38,
+                [(b"ADR 6", b"OK"),
+                 (b"OVP 45", b"OK")]
+        ) as instr:
+            instr.over_voltage = 45
+
+
+def test_over_voltage_below_lower_bound_invalid():
+    # Gen40-38 over_voltage lower bound is 2.
+    with pytest.raises(ValueError):
+        with expected_protocol(
+                TDK_Gen40_38,
+                [(b"ADR 6", b"OK"),
+                 (b"OVP 1", b"OK")]
+        ) as instr:
+            instr.over_voltage = 1
+
+
+def test_under_voltage_within_range():
+    with expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"UVL 10", b"OK"),
+             (b"UVL?", b"10")]
+    ) as instr:
+        instr.under_voltage = 10
+        assert instr.under_voltage == 10
+
+
+def test_under_voltage_at_upper_bound():
+    with expected_protocol(
+            TDK_Gen40_38,
+            [(b"ADR 6", b"OK"),
+             (b"UVL 38", b"OK")]
+    ) as instr:
+        instr.under_voltage = 38
+
+
+def test_under_voltage_above_upper_bound_invalid():
+    with pytest.raises(ValueError):
+        with expected_protocol(
+                TDK_Gen40_38,
+                [(b"ADR 6", b"OK"),
+                 (b"UVL 39", b"OK")]
+        ) as instr:
+            instr.under_voltage = 39
