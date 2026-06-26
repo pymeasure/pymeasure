@@ -29,7 +29,8 @@ from warnings import warn
 import numpy as np
 
 from pymeasure.instruments import Instrument, SCPIMixin
-from pymeasure.instruments.validators import truncated_range, strict_discrete_set
+from pymeasure.instruments.validators import strict_discrete_set, truncated_range
+
 from .buffer import KeithleyBuffer
 
 # Setup logging
@@ -341,6 +342,89 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
         values=[1, 100],
         cast=int)
 
+    ############################
+    # Auto-zero and Sense Count #
+    ############################
+
+    current_autozero = Instrument.control(
+        ":SENS:CURR:AZER?",
+        ":SENS:CURR:AZER %s",
+        """ Control (string) the auto-zero state for current measurements.
+        Valid values are 'ON' and 'OFF'. """,
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+    )
+
+    current_autorange = Instrument.control(
+        ":SENS:CURR:RANG:AUTO?",
+        ":SENS:CURR:RANG:AUTO %d",
+        """ Control (bool) whether the current measurement range is selected
+        automatically. When set to True the instrument picks the optimal range. """,
+        values={True: 1, False: 0},
+        map_values=True,
+    )
+
+    sense_count = Instrument.control(
+        ":SENS:COUNT?",
+        ":SENS:COUNT %d",
+        """ Control (integer) the number of measurements made per trigger,
+        from 1 to 300 000. """,
+        validator=truncated_range,
+        values=[1, 300000],
+        cast=int,
+    )
+
+    ###################
+    # Source readback #
+    ###################
+
+    source_voltage_readback = Instrument.control(
+        ":SOUR:VOLT:READ:BACK?",
+        ":SOUR:VOLT:READ:BACK %s",
+        """ Control (string) whether the source voltage is measured and
+        returned as the source reading. Valid values are 'ON' and 'OFF'. """,
+        validator=strict_discrete_set,
+        values=["ON", "OFF"],
+    )
+
+    ###########
+    # Display #
+    ###########
+
+    display_light_state = Instrument.control(
+        ":DISP:LIGH:STAT?",
+        ":DISP:LIGH:STAT %s",
+        """ Control (string) the front-panel backlight brightness.
+        Valid values are 'ON100', 'ON75', 'ON50', 'ON25', and 'BLAC' (off). """,
+        validator=strict_discrete_set,
+        values=["ON100", "ON75", "ON50", "ON25", "BLAC"],
+    )
+
+    ######################
+    # System error queue #
+    ######################
+
+    error_count = Instrument.measurement(
+        ":SYST:ERR:COUN?",
+        """ Get the number of errors currently in the error queue. """,
+        cast=int,
+    )
+
+    next_error = Instrument.measurement(
+        ":SYST:ERR:NEXT?",
+        """ Get and remove the next error from the error queue as a string. """,
+    )
+
+    ################
+    # Trace buffer #
+    ################
+
+    trace_actual_end = Instrument.measurement(
+        ":TRACe:ACTual:END?",
+        """ Get the index of the last populated reading in the default trace buffer. """,
+        cast=int,
+    )
+
     #####################
     # Output subsystem #
     #####################
@@ -613,6 +697,64 @@ class Keithley2450(KeithleyBuffer, SCPIMixin, Instrument):
     def std_resistance(self):
         """ Get the resistance standard deviation from the buffer """
         return self.standard_devs[2]
+
+    def clear_status(self):
+        """Clears the event registers and error queue (*CLS)."""
+        self.write("*CLS")
+
+    def autozero_once(self):
+        """Performs a single auto-zero correction on the sense subsystem."""
+        self.write(":SENS:AZER:ONCE")
+
+    def initiate(self):
+        """Initiates the trigger model to start a measurement or sweep."""
+        self.write("INIT")
+
+    def staircase_sweep_voltage(self, v_from, v_to, n_steps, delay=1e-4):
+        """Configures a linear staircase voltage sweep.
+
+        :param v_from: Start voltage in Volts
+        :param v_to: Stop voltage in Volts
+        :param n_steps: Number of steps
+        :param delay: Delay in seconds between voltage step and measurement
+        """
+        self.write(f":SOUR:SWE:VOLT:LIN {v_from}, {v_to}, {n_steps}, {delay}, 1, BEST, OFF, OFF")
+
+    def voltage_list_sweep(self, waveform, n_times, delay=0):
+        """Configures a voltage list sweep from an arbitrary waveform.
+
+        Waveforms longer than 100 points are automatically sent in chunks
+        using the append command.
+
+        :param waveform: A sequence of voltage values in Volts
+        :param n_times: Number of times to repeat the sweep
+        :param delay: Delay in seconds between each voltage step and measurement
+        """
+
+        def fmt(values):
+            return ", ".join(f"{v:.3g}" for v in values)
+
+        self.write(":SOUR:FUNC VOLT")
+        n_points = len(waveform)
+        if n_points > 100:
+            chunks = np.array_split(np.array(waveform), int(np.ceil(n_points / 100)))
+            self.write(f":SOUR:LIST:VOLT {fmt(chunks[0])}")
+            for chunk in chunks[1:]:
+                self.write(f":SOUR:LIST:VOLT:APP {fmt(chunk)}")
+        else:
+            self.write(f":SOUR:LIST:VOLT {fmt(waveform)}")
+        self.write(f":SOUR:SWE:VOLT:LIST 1, {delay}, {n_times}")
+
+    def get_trace_data(self, ending_index, buffer_name="defbuffer1"):
+        """Retrieves relative time, source, and reading columns from a trace buffer.
+
+        :param ending_index: Last reading index to retrieve (from :attr:`trace_actual_end`)
+        :param buffer_name: Name of the buffer to read from (default: 'defbuffer1')
+        :returns: Raw comma-separated string of (time, source, reading) triplets
+        """
+        return self.ask(
+            f':TRAce:DATA? 1, {ending_index}, "{buffer_name}", RELative, SOURce, READing'
+        )
 
     def use_rear_terminals(self):
         """ Enables the rear terminals for measurement, and
