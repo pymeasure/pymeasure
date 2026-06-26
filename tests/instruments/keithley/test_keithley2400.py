@@ -24,6 +24,9 @@
 
 import math
 
+import numpy as np
+import pytest
+
 from pymeasure.test import expected_protocol
 
 from pymeasure.instruments.keithley.keithley2400 import Keithley2400
@@ -916,3 +919,288 @@ def test_front_terminals_enabled_setter():
         [INIT_COMMS, (":ROUTE:TERMINALS REAR", None)],
     ) as inst:
         inst.front_terminals_enabled = False
+
+
+###############################
+# Deprecated measure methods #
+###############################
+
+
+def test_measure_current_auto_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'CURR';:SENS:CURR:NPLC 1.000000;", None),
+            (":SENS:CURR:RANG:AUTO 1;", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_current()
+
+
+def test_measure_current_manual_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'CURR';:SENS:CURR:NPLC 2.000000;", None),
+            (":SENSE:CURRENT:RANGE 0.001", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_current(nplc=2, current=0.001, auto_range=False)
+
+
+def test_measure_voltage_auto_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC 1.000000;", None),
+            (":SENS:VOLT:RANG:AUTO 1;", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_voltage()
+
+
+def test_measure_voltage_manual_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'VOLT';:SENS:VOLT:NPLC 2.000000;", None),
+            (":SENSE:VOLTAGE:RANGE 20", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_voltage(nplc=2, voltage=20, auto_range=False)
+
+
+def test_measure_resistance_auto_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC 1.000000;", None),
+            (":SENS:RES:RANG:AUTO 1;", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_resistance()
+
+
+def test_measure_resistance_manual_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SENS:FUNC 'RES';:SENS:RES:MODE MAN;:SENS:RES:NPLC 1.000000;", None),
+            (":SENSE:RESISTANCE:RANGE 100000", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.measure_resistance(nplc=1, resistance=1e5, auto_range=False)
+
+
+############################
+# Deprecated apply methods #
+############################
+
+
+def test_apply_current_auto_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SOURCE:FUNCTION CURR", None),
+            (":SOURCE:FUNCTION?", "CURR"),
+            (":SOUR:CURR:RANG:AUTO 1", None),
+            (":SENSE:VOLTAGE:PROTECTION 10", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.apply_current(compliance_voltage=10)
+
+
+def test_apply_current_manual_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SOURCE:FUNCTION CURR", None),
+            (":SOURCE:CURRENT:RANGE 0.001", None),
+            (":SENSE:VOLTAGE:PROTECTION 10", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.apply_current(current_range=0.001, compliance_voltage=10)
+
+
+def test_apply_voltage_auto_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SOURCE:FUNCTION VOLT", None),
+            (":SOURCE:FUNCTION?", "VOLT"),
+            (":SOUR:VOLT:RANG:AUTO 1", None),
+            (":SENSE:CURRENT:PROTECTION 0.1", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.apply_voltage(compliance_current=0.1)
+
+
+def test_apply_voltage_manual_range():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SOURCE:FUNCTION VOLT", None),
+            (":SOURCE:VOLTAGE:RANGE 20", None),
+            (":SENSE:CURRENT:PROTECTION 0.1", None),
+            ("SYST:ERR?", '0, "No error"'),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            inst.apply_voltage(voltage_range=20, compliance_current=0.1)
+
+
+#######################
+# Ramp methods        #
+#######################
+
+
+@pytest.mark.parametrize("steps", [1, 3, 5])
+def test_ramp_to_current(steps):
+    """ramp_to_current reads source_current once then writes source_current N times."""
+    start = 0.0
+    target = 1.0
+    expected_writes = [
+        (f":SOURCE:CURRENT {v:g}", None)
+        for v in np.linspace(start, target, steps)
+    ]
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SOURCE:CURRENT?", start)] + expected_writes,
+    ) as inst:
+        inst.ramp_to_current(target, steps=steps, pause=0)
+
+
+@pytest.mark.parametrize("steps", [1, 3, 5])
+def test_ramp_to_voltage(steps):
+    """ramp_to_voltage reads source_voltage once then writes source_voltage N times."""
+    start = 0.0
+    target = 20.0
+    expected_writes = [
+        (f":SOURCE:VOLTAGE {v:g}", None)
+        for v in np.linspace(start, target, steps)
+    ]
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SOURCE:VOLTAGE?", start)] + expected_writes,
+    ) as inst:
+        inst.ramp_to_voltage(target, steps=steps, pause=0)
+
+
+##########################
+# Trigger/UI/misc methods#
+##########################
+
+
+def test_trigger_immediately():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":ARM:SOURCE IMM", None),
+            (":TRIGGER:SOURCE IMM", None),
+        ],
+    ) as inst:
+        inst.trigger_immediately()
+
+
+def test_sample_continuously():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":TRAC:FEED:CONT NEV", None),  # disable_buffer
+            (":ARM:OUTPUT NONE", None),  # disable_output_triggers
+            (":TRIGGER:OUTPUT NONE", None),
+            (":ARM:SOURCE IMM", None),  # trigger_immediately
+            (":TRIGGER:SOURCE IMM", None),
+        ],
+    ) as inst:
+        inst.sample_continuously()
+
+
+def test_beep():
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":SYST:BEEP 440, 0.5", None)],
+    ) as inst:
+        inst.beep(440, 0.5)
+
+
+def test_triad():
+    with expected_protocol(
+        Keithley2400,
+        [
+            INIT_COMMS,
+            (":SYST:BEEP 440, 0.1", None),
+            (":SYST:BEEP 550, 0.1", None),
+            (":SYST:BEEP 660, 0.1", None),
+        ],
+    ) as inst:
+        inst.triad(440, 0.1)
+
+
+#########################
+# Deprecated error prop #
+#########################
+
+
+def test_error_deprecated():
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, ("SYST:ERR?", '-113, "Undefined header"')],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            assert inst.error == [-113, ' "Undefined header"']
+
+
+######################################
+# trigger_count * arm_count > 2500 #
+######################################
+
+
+def test_trigger_count_exceeds_product():
+    """Setting trigger_count such that trigger_count * arm_count > 2500 raises ValueError."""
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":ARM:COUNT?", 100)],
+    ) as inst:
+        with pytest.raises(ValueError):
+            inst.trigger_count = 100  # 100 * 100 = 10000 > 2500
+
+
+def test_arm_count_exceeds_product():
+    """Setting arm_count such that arm_count * trigger_count > 2500 raises ValueError."""
+    with expected_protocol(
+        Keithley2400,
+        [INIT_COMMS, (":TRIGGER:COUNT?", 100)],
+    ) as inst:
+        with pytest.raises(ValueError):
+            inst.arm_count = 100  # 100 * 100 = 10000 > 2500

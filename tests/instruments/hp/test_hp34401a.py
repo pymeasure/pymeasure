@@ -384,3 +384,161 @@ def test_self_test_result():
         ],
     ) as inst:
         assert 0 == inst.self_test_result
+
+
+# Deprecated measurement properties
+
+
+@pytest.mark.parametrize("property_, command", [
+    ("voltage_ac", "MEAS:VOLT:AC? DEF,DEF"),
+    ("current_dc", "MEAS:CURR:DC? DEF,DEF"),
+    ("current_ac", "MEAS:CURR:AC? DEF,DEF"),
+    ("resistance", "MEAS:RES? DEF,DEF"),
+    ("resistance_4w", "MEAS:FRES? DEF,DEF"),
+])
+def test_deprecated_measurement_properties(property_, command):
+    with expected_protocol(
+        HP34401A,
+        [
+            (command, "1"),
+        ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            assert 1 == getattr(inst, property_)
+
+
+# range_ for non-DCV/FREQ functions
+
+
+@pytest.mark.parametrize("function_, prefix", [
+    ("ACV", "VOLT:AC"), ("DCI", "CURR"), ("ACI", "CURR:AC"),
+    ("R2W", "RES"), ("R4W", "FRES"),
+])
+def test_range_other(function_, prefix):
+    scpi = HP34401A.FUNCTIONS[function_]
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"{scpi}\"", None),
+                ("FUNC?", scpi),
+                (f"{prefix}:RANG?", "1"),
+                ("FUNC?", scpi),
+                (f"{prefix}:RANG 1", None),
+            ],
+    ) as inst:
+        inst.function_ = function_
+        assert 1 == inst.range_
+        inst.range_ = 1
+
+
+# autorange for non-DCV/FREQ functions
+
+
+@pytest.mark.parametrize("function_, prefix", [
+    ("ACV", "VOLT:AC"), ("DCI", "CURR"), ("ACI", "CURR:AC"),
+    ("R2W", "RES"), ("R4W", "FRES"),
+])
+@pytest.mark.parametrize("enabled", [True, False])
+def test_autorange_other(function_, prefix, enabled):
+    scpi = HP34401A.FUNCTIONS[function_]
+    with expected_protocol(
+            HP34401A,
+            [
+                (f"FUNC \"{scpi}\"", None),
+                ("FUNC?", scpi),
+                (f"{prefix}:RANG:AUTO?", "1" if enabled else "0"),
+                ("FUNC?", scpi),
+                (f"{prefix}:RANG:AUTO {1 if enabled else 0}", None),
+            ],
+    ) as inst:
+        inst.function_ = function_
+        assert enabled == inst.autorange
+        inst.autorange = enabled
+
+
+# remote_control_enabled
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_remote_control_enabled(enabled):
+    mapped = "REM" if enabled else "LOC"
+    with expected_protocol(
+            HP34401A,
+            [
+                ("SYST: ", mapped),
+                (f"SYST:{mapped}", None),
+            ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            assert enabled == inst.remote_control_enabled
+        inst.remote_control_enabled = enabled
+
+
+# remote_lock_enabled
+
+
+@pytest.mark.parametrize("enabled", [True, False])
+def test_remote_lock_enabled(enabled):
+    mapped = "RWL" if enabled else "LOC"
+    with expected_protocol(
+            HP34401A,
+            [
+                ("SYST: ", mapped),
+                (f"SYST:{mapped}", None),
+            ],
+    ) as inst:
+        with pytest.warns(FutureWarning):
+            assert enabled == inst.remote_lock_enabled
+        inst.remote_lock_enabled = enabled
+
+
+# write command-substitution behavior
+
+
+def test_write_substitutes_function():
+    with expected_protocol(
+            HP34401A,
+            [
+                ("FUNC \"VOLT\"", None),
+                ("FUNC?", "VOLT"),
+                ("VOLT:NPLC 1", None),
+            ],
+    ) as inst:
+        inst.function_ = "DCV"
+        inst.write("{function}:NPLC 1")
+
+
+def test_write_substitutes_function_prefix_for_range():
+    with expected_protocol(
+            HP34401A,
+            [
+                ("FUNC \"FREQ\"", None),
+                ("FUNC?", "FREQ"),
+                ("FREQ:VOLT:RANG 1", None),
+            ],
+    ) as inst:
+        inst.function_ = "FREQ"
+        inst.write("{function_prefix_for_range}:RANG 1")
+
+
+def test_write_substitutes_function_prefix_for_range_dcv():
+    with expected_protocol(
+            HP34401A,
+            [
+                ("FUNC \"VOLT\"", None),
+                ("FUNC?", "VOLT"),
+                ("VOLT:RANG 1", None),
+            ],
+    ) as inst:
+        inst.function_ = "DCV"
+        inst.write("{function_prefix_for_range}:RANG 1")
+
+
+def test_write_no_substitution():
+    with expected_protocol(
+            HP34401A,
+            [
+                ("SYST:BEEP", None),
+            ],
+    ) as inst:
+        inst.write("SYST:BEEP")
