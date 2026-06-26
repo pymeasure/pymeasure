@@ -57,6 +57,10 @@ docs = [
     "sphinx_rtd_theme>=1.1.0",
     "sphinx_autodoc_typehints>=2.3.0",
 ]
+dev = [
+    "pyright>=1.1.400",
+    "ruff",
+]
 
 [project.urls]
 Repository = "https://github.com/pymeasure/pymeasure"
@@ -91,8 +95,18 @@ extend-select = ["E", "E9", "F63", "F7", "F82", "W", "UP", "FURB"]
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = ["F401"]
 
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error:Cannot cast.*In a future version:FutureWarning",
+]
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportAttributeAccessIssue = "warning"
+reportOptionalSubscript = "warning"
+reportOptionalMemberAccess = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportOperatorIssue = "warning"
+defineConstant = { PYQT5 = true, PYSIDE2 = false, PYQT6 = false, PYSIDE6 = false }

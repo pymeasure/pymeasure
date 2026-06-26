@@ -61,7 +61,6 @@ class OxfordInstrumentsBase(Instrument):
 
         super().__init__(adapter,
                          name=name,
-                         includeSCPI=False,
                          asrl={
                              'baud_rate': 9600,
                              'data_bits': 8,

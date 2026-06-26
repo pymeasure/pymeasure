@@ -29,7 +29,7 @@ import time
 from decimal import Decimal
 import numpy as np
 
-from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, Channel, SCPIUnknownMixin, cast_or_str
 from pymeasure.instruments.validators import strict_discrete_set, strict_range, \
     strict_discrete_range
 
@@ -104,7 +104,7 @@ def _trigger_select_validator(value, values, num_pars_finder=_trigger_select_num
     return value
 
 
-def _trigger_select_get_process(value):
+def _trigger_select_get_process(value: list[str]) -> list[str | float]:
     """Process the output of the trigger_select property.
 
     The format of the input list is
@@ -131,7 +131,7 @@ def _trigger_select_get_process(value):
     return output
 
 
-def _results_list_to_dict(results):
+def _results_list_to_dict(results: list[str]) -> dict[str, str]:
     """Turn a list into a dict, using the uneven indices as keys.
 
     E.g. turn ['C1', 'OFF', 'C2', 'OFF'] into {'C1': 'OFF', 'C2': 'OFF'}
@@ -228,6 +228,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     coupling = Instrument.control(
@@ -235,7 +236,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the coupling with a string parameter ("ac 1M", "dc 1M", "ground").""",
         validator=strict_discrete_set,
         values={"ac 1M": "A1M", "dc 1M": "D1M", "ground": "GND"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     display = Instrument.control(
@@ -243,7 +245,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """Control the display enabled state. (strict bool)""",
         validator=strict_discrete_set,
         values=_BOOLS,
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     offset = Instrument.control(
@@ -281,7 +284,8 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"ac": "AC", "dc": "DC", "lowpass": "HFREJ", "highpass": "LFREJ"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     trigger_level = Instrument.control(
@@ -321,6 +325,7 @@ class TeledyneOscilloscopeChannel(Channel, metaclass=ABCMeta):
         values=TRIGGER_SLOPES,
         map_values=True,
         dynamic=True,
+        cast=str,
     )
 
     _measurable_parameters = ["PKPK", "MAX", "MIN", "AMPL", "TOP", "BASE", "CMEAN", "MEAN", "RMS",
@@ -561,6 +566,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         • OFF — header is omitted from the response and units in numbers are suppressed.""",
         validator=strict_discrete_set,
         values=["OFF", "SHORT", "LONG"],
+        cast=str,
     )
 
     ###########
@@ -574,6 +580,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         values=TeledyneOscilloscopeChannel.BANDWIDTH_LIMITS,
         get_process_list=_results_list_to_dict,
         dynamic=True,
+        cast=str,
     )
 
     ##################
@@ -657,7 +664,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("NP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     waveform_sparsing = Instrument.control(
@@ -669,7 +677,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("SP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     waveform_first_point = Instrument.control(
@@ -679,7 +688,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         given segment. The first data point starts at zero and is strictly positive.""",
         validator=strict_range,
         get_process_list=lambda vals: vals[vals.index("FP") + 1],
-        values=[0, sys.maxsize]
+        values=[0, sys.maxsize],
+        cast=cast_or_str(float),
     )
 
     ##################
@@ -692,7 +702,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         Assign for example 500, 100e6, "100K", "25MA".
 
         The reply will always be a float.
-        """
+        """,
     )
 
     @property
@@ -714,7 +724,7 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         - "yoffset": value that is represented at center of screen in Volts
 
         """
-        vals = self.values("WFSU?")
+        vals = self.values("WFSU?", cast=cast_or_str(float))
         preamble = {
             "sparsing": vals[vals.index("SP") + 1],
             "requested_points": vals[vals.index("NP") + 1],
@@ -946,7 +956,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """,
         validator=strict_discrete_set,
         values={"stopped": "STOP", "normal": "NORM", "single": "SINGLE", "auto": "AUTO"},
-        map_values=True
+        map_values=True,
+        cast=str,
     )
 
     _trigger_select_vals = {
@@ -968,7 +979,8 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         get_process_list=_trigger_select_get_process,
         validator=_trigger_select_validator,
         values=_trigger_select_vals,
-        dynamic=True
+        dynamic=True,
+        cast=cast_or_str(float),
     )
 
     def center_trigger(self):
@@ -1131,5 +1143,6 @@ class TeledyneOscilloscope(SCPIUnknownMixin, Instrument, metaclass=ABCMeta):
         """Set the intensity level of the grid or the trace in percent """,
         validator=_intensity_validator,
         values=[[0, 100], [0, 100]],
-        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]}
+        cast=cast_or_str(float),
+        get_process_list=lambda v: {v[0]: v[1], v[2]: v[3]},
     )

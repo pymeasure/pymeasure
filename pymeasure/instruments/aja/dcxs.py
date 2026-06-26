@@ -43,7 +43,6 @@ class DCXS(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             write_termination="",
             read_termination="",
             asrl={"baud_rate": 38400},

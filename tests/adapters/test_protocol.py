@@ -47,7 +47,7 @@ def test_to_bytes(input, output):
 @mark.parametrize("value", (5.5j, None))
 def test_to_bytes_invalid(value):
     with raises(TypeError):
-        to_bytes(value)  # type: ignore
+        to_bytes(value)
 
 
 def test_protocol_instantiation():
