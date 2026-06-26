@@ -177,6 +177,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the output waveform shape.""",
         validator=strict_discrete_set,
         values=["SIN", "SQU", "RAMP", "PULS", "NOIS", "DC", "USER"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -206,6 +207,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the output amplitude unit.""",
         validator=strict_discrete_set,
         values=["VPP", "VRMS", "DBM"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -328,6 +330,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the output polarity (string, strict from NORM, INV).""",
         validator=strict_discrete_set,
         values=["NORM", "INV"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -357,6 +360,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the burst mode.""",
         validator=strict_discrete_set,
         values=["TRIG", "GAT"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -395,6 +399,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the external trigger slope (string, strict from POS, NEG).""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -414,6 +419,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the trigger output slope (string, strict from POS, NEG).""",
         validator=strict_discrete_set,
         values=["POS", "NEG"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )
@@ -423,6 +429,7 @@ class Keysight33250A(SCPIMixin, Instrument):
         """Control the trigger source.""",
         validator=strict_discrete_set,
         values=["IMM", "EXT", "BUS"],
+        cast=str,
         check_set_errors=True,
         check_get_errors=True,
     )

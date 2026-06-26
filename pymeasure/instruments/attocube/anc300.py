@@ -290,7 +290,6 @@ class ANC300Controller(Instrument):
         super().__init__(
             adapter,
             name,
-            includeSCPI=False,
             read_termination=self.termination_str,
             write_termination=self.termination_str,
             **kwargs

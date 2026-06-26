@@ -24,8 +24,9 @@
 
 from time import sleep
 
-from pymeasure.instruments import Instrument, SCPIUnknownMixin
+from pymeasure.instruments import Instrument, SCPIMixin
 from pymeasure.instruments.validators import strict_discrete_set
+from warnings import warn
 
 
 class AxisError(Exception):
@@ -229,13 +230,11 @@ class Axis:
             sleep(interval)
 
 
-class ESP300(SCPIUnknownMixin, Instrument):
+class ESP300(SCPIMixin, Instrument):
     """ Represents the Newport ESP 300 Motion Controller
     and provides a high-level for interacting with the instrument.
 
-    By default this instrument is constructed with x, y, and phi
-    attributes that represent axes 1, 2, and 3. Custom implementations
-    can overwrite this depending on the available axes. Axes are controlled
+    By default this instrument is constructed with 3 axes. Axes are controlled
     through an :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
     class.
     """
@@ -253,10 +252,49 @@ class ESP300(SCPIUnknownMixin, Instrument):
             name,
             **kwargs
         )
-        # Defines default axes, which can be overwritten
-        self.x = Axis(1, self)
-        self.y = Axis(2, self)
-        self.phi = Axis(3, self)
+        self.axes = [Axis(1, self), Axis(2, self), Axis(3, self)]
+
+    @property
+    def x(self):
+        """ Get the first axis of the controller.
+
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[0]` instead.
+
+        """
+        warn("The x attribute is deprecated. "
+             "Axes are now directly accessed through the axes attribute.",
+             FutureWarning,
+             stacklevel=2)
+        return self.axes[0]
+
+    @property
+    def y(self):
+        """ Get the second axis of the controller.
+
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[1]` instead.
+
+        """
+        warn("The x attribute is deprecated. "
+             "Axes are now directly accessed through the axes attribute.",
+             FutureWarning,
+             stacklevel=2)
+        return self.axes[1]
+
+    @property
+    def phi(self):
+        """ Get the third axis of the controller.
+
+        .. deprecated:: 0.17.0
+            Use :attr:`axes[2]` instead.
+
+        """
+        warn("The x attribute is deprecated. "
+             "Axes are now directly accessed through the axes attribute.",
+             FutureWarning,
+             stacklevel=2)
+        return self.axes[2]
 
     def clear_errors(self):
         """ Clears the error messages by checking until a 0 code is
@@ -279,23 +317,6 @@ class ESP300(SCPIUnknownMixin, Instrument):
                 errors.append(GeneralError(code))
             code = self.error
         return errors
-
-    @property
-    def axes(self):
-        """ Get a list of the :class:`Axis <pymeasure.instruments.newport.esp300.Axis>`
-        objects that are present. """
-        axes = []
-        directory = dir(self)
-        for name in directory:
-            if name == 'axes':
-                continue  # Skip this property
-            try:
-                item = getattr(self, name)
-                if isinstance(item, Axis):
-                    axes.append(item)
-            except TypeError:
-                continue
-        return axes
 
     def enable(self):
         """ Enables all of the axes associated with this controller.

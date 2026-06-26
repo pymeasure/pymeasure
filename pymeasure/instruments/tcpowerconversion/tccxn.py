@@ -150,7 +150,6 @@ class CXN(Instrument):
         self.address = address
         super().__init__(adapter,
                          name,
-                         includeSCPI=False,
                          write_termination="",
                          read_termination="",
                          asrl=dict(baud_rate=38400),

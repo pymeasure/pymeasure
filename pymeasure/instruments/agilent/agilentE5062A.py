@@ -65,7 +65,8 @@ class VNATrace(Channel):
         """Control the measurement parameter of the trace (str). Can be
         S11, S21, S12, or S22""",
         validator=strict_discrete_set,
-        values=['S11', 'S12', 'S21', 'S22']
+        values=['S11', 'S12', 'S21', 'S22'],
+        cast=str,
     )
 
 
@@ -155,7 +156,8 @@ class VNAChannel(Channel):
         Defaults to linear. Note that the API for configuring segment type
         sweeps is not implememented in this class.""",
         validator=strict_discrete_set,
-        values=['LIN', 'LOG', 'SEGM', 'POW']
+        values=['LIN', 'LOG', 'SEGM', 'POW'],
+        cast=str,
     )
 
     averaging_enabled = Channel.control(
@@ -271,7 +273,8 @@ class VNAChannel(Channel):
 
         """,
         validator=strict_discrete_set,
-        values=DISPLAY_LAYOUT_OPTIONS
+        values=DISPLAY_LAYOUT_OPTIONS,
+        cast=str,
     )
 
     TRACE_FORMAT = [
@@ -324,7 +327,8 @@ class VNAChannel(Channel):
 
         """,
         validator=strict_discrete_set,
-        values=TRACE_FORMAT
+        values=TRACE_FORMAT,
+        cast=str,
         )
 
     def _read_binary_data(self):
@@ -520,7 +524,8 @@ class AgilentE5062A(SCPIMixin, Instrument):
         e.g. ``AgilentE5062A.channels[1].visible_traces``
         """,
         validator=strict_discrete_set,
-        values=DISPLAY_LAYOUT_OPTIONS
+        values=DISPLAY_LAYOUT_OPTIONS,
+        cast=str,
     )
 
     output_enabled = Instrument.control(
@@ -558,7 +563,9 @@ class AgilentE5062A(SCPIMixin, Instrument):
             'INT',
             'EXT',
             'MAN',
-            'BUS'])
+            'BUS'],
+        cast=str,
+    )
 
     def trigger_bus(self):
         """If the trigger source is BUS and the VNA is waiting for a trigger

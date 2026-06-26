@@ -23,19 +23,10 @@
 #
 
 from pymeasure.instruments import Channel, Instrument
+from pymeasure.instruments._strenum import StrEnum
 from pymeasure.instruments.validators import strict_discrete_set
 
 from .mksinst import MKSInstrument, RelayChannel
-
-
-try:
-    from enum import StrEnum
-except ImportError:
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        """Until StrEnum is broadly available from the standard library"""
-        # Python>3.10 remove it
 
 
 _ion_gauge_status = {"Wait": "W",
@@ -73,6 +64,7 @@ class Relay(RelayChannel):
                 True: "ENABLE",
                 "SET": "SET",
                 },
+        cast=str,
         check_set_errors=True,
     )
 
@@ -89,6 +81,7 @@ class PressureChannel(Channel):
         validator=strict_discrete_set,
         map_values=True,
         values={True: "ON", False: "OFF"},
+        cast=str,
         check_set_errors=True,
     )
 
@@ -100,6 +93,7 @@ class IonGaugeAndPressureChannel(PressureChannel):
         """Get ion gauge status of the channel.""",
         map_values=True,
         values=_ion_gauge_status,
+        cast=str,
     )
 
 
@@ -192,5 +186,6 @@ class MKS937B(MKSInstrument):
         validator=strict_discrete_set,
         map_values=True,
         values={u: u.value for u in Unit},
+        cast=str,
         check_set_errors=True,
     )
