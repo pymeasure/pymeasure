@@ -14,6 +14,11 @@ Deprecated
 - Deprecate to silently fall back to str in :code:`values` (and the property creators :code:`control` etc.) if casting fails. Use a dedicated method, for example :code:`cast_or_str(float)`, instead.
 - Deprecate Toptica Ibeamsmart :code:`enable_continous`, use :code:`enable_continuous` instead.
 - Deprecate Thermotron 3800 :code:`initalize_oven`, use :code:`initialize_oven` instead.
+- Deprecate :code:`discreteTruncate` validator, use :code:`truncated_discrete_set_positive` instead.
+
+Changed
+-------
+- For property creators :code:`Instrument.control`... the conversion parameters (:code:`cast` etc.) are keyword only, now.
 
 Version 0.16.0 (2026-05-20)
 ===========================
