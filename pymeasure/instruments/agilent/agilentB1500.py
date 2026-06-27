@@ -540,8 +540,6 @@ class AgilentB1500(SCPIMixin, Instrument):
         :param smu_names: Dictionary of channels and SMU names, defaults to {}
         :return: Corresponding formatting class
         """
-        if smu_names is None:
-            smu_names = {}
         classes: dict[str, type[AgilentB1500._data_formatting_generic]] = {
             "FMT1": self._data_formatting_FMT1,
             "FMT11": self._data_formatting_FMT11,
