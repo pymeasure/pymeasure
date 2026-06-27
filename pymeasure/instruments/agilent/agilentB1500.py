@@ -68,6 +68,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         super().__init__(adapter, name, read_termination="\r\n", write_termination="\r\n", **kwargs)
         self._smu_names: dict[int, str] = {}
         self._smu_references: dict[int, SMU] = {}
+        self._data_format: AgilentB1500._data_formatting_generic | None = None
 
     @property
     def smu_references(self) -> ValuesView[SMU]:
@@ -1843,7 +1844,7 @@ class CMU(Channel):
 
         :param measurement_mode: Measurement mode.
         """
-        if hasattr(self.parent, "_data_format") and self.parent._data_format.format in [
+        if self.parent._data_format is not None and self.parent._data_format.format in [
             "FMT3",
             "FMT4",
             "FMT13",
