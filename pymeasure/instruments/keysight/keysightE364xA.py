@@ -105,6 +105,9 @@ class KeysightE364XASingleOutput(SCPIMixin, Instrument):
     """
 
     _default_name = "KeysightE364XASingleOutput"
+    _max_voltage = {}
+    _max_current = {}
+    _range_map = {}
 
     def __init__(self, adapter, name=None, voltage_range="LOW", **kwargs):
         super().__init__(
@@ -203,6 +206,10 @@ class KeysightE364XADualOutput(SCPIMixin, Instrument):
     :type voltage_range: tuple(str, str) with any combination of "LOW" or "HIGH"
     """
     _default_name = "KeysightE364XADualOutput"
+    _max_voltage = {}
+    _max_current = {}
+    _range_map = {}
+
     ch_1 = Instrument.ChannelCreator(KeysightE364XAChannel, 1)
     ch_2 = Instrument.ChannelCreator(KeysightE364XAChannel, 2)
 
