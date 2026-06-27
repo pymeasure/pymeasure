@@ -37,7 +37,7 @@ import pandas as pd
 
 from pymeasure.instruments import AdapterType, Instrument, SCPIMixin
 from pymeasure.instruments.channel import Channel
-from pymeasure.instruments.common_base import IdType
+from pymeasure.instruments.common_base import IdType, InstrumentProperty
 from pymeasure.instruments.validators import (
     strict_discrete_range,
     strict_discrete_set,
@@ -198,7 +198,7 @@ class AgilentB1500(SCPIMixin, Instrument):
         """
         self.write("RZ")
 
-    io_control_mode = Instrument.control(
+    io_control_mode: InstrumentProperty[ControlMode] = Instrument.control(
         "ERMOD?",
         "ERMOD %s",
         "Control the control mode for the digital I/O ports (:class:`ControlMode`). (``ERMOD``)",
@@ -1617,7 +1617,7 @@ class SPGU(Channel):
         self.ch1 = self.add_child(SPGUChannel, int(f"{self.id}01"), prefix="ch")
         self.ch2 = self.add_child(SPGUChannel, int(f"{self.id}02"), prefix="ch")
 
-    output = Channel.setting(
+    output: InstrumentProperty[bool] = Channel.setting(
         "%s",
         """Set SPGU output state. (``SRP``, ``SPP``)
         When enabled, starts SPGU output. When disabled, stops output and channels output
@@ -1627,7 +1627,7 @@ class SPGU(Channel):
         map_values=True,
     )
 
-    operation_mode = Channel.control(
+    operation_mode: InstrumentProperty[SPGUOperationMode] = Channel.control(
         "SIM?",
         "SIM %d",
         """Control mode for the Semiconductor Pulse Generator Unit (SPGU). (``SIM``)
@@ -1637,7 +1637,7 @@ class SPGU(Channel):
         set_process=lambda v: SPGUOperationMode(v).value,
     )
 
-    period = Channel.control(
+    period: InstrumentProperty[float] = Channel.control(
         "SPPER?",
         "SPPER %f",
         """Control the pulse period for SPGU channels (``SPPER``) in seconds (float).
@@ -1689,7 +1689,7 @@ class SPGU(Channel):
         mode, condition = response.split(",")
         return SPGUOutputMode(int(mode)), float(condition) if condition else None
 
-    complete = Channel.measurement(
+    complete: InstrumentProperty[bool] = Channel.measurement(
         "SPST?",
         """Get whether the SPGU output has finished. (``SPST?``)""",
         get_process=lambda v: not bool(v),
@@ -1699,7 +1699,7 @@ class SPGU(Channel):
 class SPGUChannel(Channel):
     """SPGU Channel of the Agilent B1500 mainframe."""
 
-    enabled = Channel.setting(
+    enabled: InstrumentProperty[bool] = Channel.setting(
         "%s {ch}",
         """Control SPGU channel enable/disable state. (``CN``, ``CL``)""",
         validator=strict_discrete_set,
@@ -1707,7 +1707,7 @@ class SPGUChannel(Channel):
         map_values=True,
     )
 
-    load_impedance = Channel.control(
+    load_impedance: InstrumentProperty[float] = Channel.control(
         "SER? {ch}",
         "SER {ch}, %f",
         """Control the load impedance (``SER``) in Ohm (float).""",
@@ -1740,7 +1740,7 @@ class SPGUChannel(Channel):
         base_voltage, peak_voltage = map(float, response.split(","))
         return base_voltage, peak_voltage
 
-    output_mode = Channel.control(
+    output_mode: InstrumentProperty[SPGUChannelOutputMode] = Channel.control(
         "SPM? {ch}",
         "SPM {ch}, %d",
         """Control the output mode of the SPGU channel. (``SPM``)
@@ -1813,7 +1813,7 @@ class CMU(Channel):
         slot = strict_discrete_set(slot, range(1, 11))
         super().__init__(parent, slot, **kwargs)
 
-    enabled = Channel.setting(
+    enabled: InstrumentProperty[bool] = Channel.setting(
         "%s {ch}",
         """Control CMU enable/disable state. (``CN``, ``CL``)""",
         validator=strict_discrete_set,
@@ -1821,14 +1821,14 @@ class CMU(Channel):
         map_values=True,
     )
 
-    voltage_ac = Channel.setting(
+    voltage_ac: InstrumentProperty[float] = Channel.setting(
         "ACV {ch}, %f",
         """Set AC voltage amplitude in V. (``ACV``)""",
         validator=strict_range,
         values=[0.0, 0.25],
     )
 
-    frequency_ac = Channel.setting(
+    frequency_ac: InstrumentProperty[float] = Channel.setting(
         "FC {ch}, %f",
         """Set AC voltage frequency in Hz. (``FC``)""",
         validator=strict_range,
